@@ -18,12 +18,16 @@
 //! - The new reference is the alternating run maxima with `|e| ≥ |h|`: same-sign neighbours are
 //!   merged, and the `n + 2` consecutive points containing the global maximum are kept.
 //! - The bracket is `[levelled, max|e|]`, with `levelled` the smaller of `|h|` and the smallest
-//!   `|e|` on the reference (de la Vallée Poussin), so it never inverts. Rounding can still put
-//!   `|h|` above `max|e|`; both stop tests bound that excess too.
+//!   `|e|` on the reference, so it never inverts. Both ends are residuals of this module's own
+//!   floating-point evaluation, not certified bounds: de la Vallée Poussin bounds the discrete
+//!   minimax error E* by the exact errors, so E* lies within that evaluation's rounding of the
+//!   bracket, not necessarily inside it. Rounding can also put `|h|` above `max|e|`; both stop
+//!   tests bound that excess too.
 //! - It stops when the bracket is within `1e-12 max|e|` (`Converged`). It stops `NoiseLimited`
 //!   only when the bracket is within the rounding level `64 ε max|f|`, `|h|` is at least half of
-//!   `max|e|`, the fit is the best seen, and the exchange can no longer raise `|h|`: `|h|` did not
-//!   rise over the previous step, or the exchange finds no new reference or returns this one.
+//!   `max|e|`, the fit is the best seen, and the exchange is spent: it finds no new reference, or
+//!   returns this one or one run before. The next reference depends on this one alone, so every
+//!   later fit would repeat one already seen. A step whose `|h|` did not rise is not enough.
 //!   Otherwise a run ends `Degenerate`, `Stalled` or at the iteration cap, with the best fit seen.
 //! - Every tie goes to the lowest index and every sum runs in index order, so a fit is
 //!   bit-reproducible and independent of sample order and duplicates.
@@ -36,7 +40,7 @@ use super::*;
 const MAX_DEGREE: usize = 12;
 /// The exchange stops after this many steps.
 const MAX_ITERATIONS: usize = 32;
-/// The relative width of the certified bracket at which the exchange stops.
+/// The relative width of the bracket at which the exchange stops `Converged`.
 const TOLERANCE: f64 = 1e-12;
 /// The deepest subdivision [`certify`] accepts.
 const MAX_CERTIFY_DEPTH: usize = 64;
@@ -48,7 +52,7 @@ enum Stop {
     Converged,
     /// Both bracket measures are within `64 ε max|f|`, the rounding level of the errors, but not
     /// within `TOLERANCE max|e|`; `|h| ≥ max|e| / 2`; the fit is the best seen; and the exchange
-    /// can no longer raise `|h|`.
+    /// is spent: it finds no new reference, or returns this one or one run before.
     NoiseLimited,
     /// The samples lie on a polynomial of the degree, to a few ulps.
     ExactFit,
@@ -68,10 +72,13 @@ struct Minimax {
     hi: f64,
     /// Chebyshev coefficients in `t`.
     chebyshev: Vec<f64>,
-    /// The smaller of `|h|` and the smallest `|e|` on the final reference: a lower bound of the
-    /// discrete minimax error, never above `max_error`.
+    /// The smaller of `|h|` and the smallest `|e|` on the final reference, never above
+    /// `max_error`. In exact arithmetic it would bound the discrete minimax error from below (de
+    /// la Vallée Poussin); as computed it does so only up to rounding.
     levelled: f64,
-    /// The largest error over the samples: an upper bound.
+    /// The largest computed error over the samples, by Clenshaw at the rounded `t`. Not a
+    /// certified upper bound: the exact errors, and the discrete minimax error with them, can
+    /// exceed it by up to the rounding of that evaluation.
     max_error: f64,
     /// The exchange step that produced this fit.
     iterations: usize,
@@ -266,7 +273,9 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
     }
     let noise = 64.0 * f64::EPSILON * f_max;
     let mut best: Option<Minimax> = None;
-    let mut previous_h: Option<f64> = None;
+    // Every reference run so far. The next reference is a function of the current one alone, so
+    // an exchange that returns one of these can only repeat fits already seen.
+    let mut visited: Vec<Vec<usize>> = Vec::with_capacity(MAX_ITERATIONS);
     for iteration in 1..=MAX_ITERATIONS {
         let rows: Vec<Vec<f64>> = reference
             .iter()
@@ -330,32 +339,28 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
                 ..fit
             });
         }
-        // Within the rounding level of the errors themselves the bracket cannot be certified any
-        // tighter, but a fit whose |h| is still rising, or is far below max|e|, is not done.
+        // Within the rounding level of the errors the bracket closes no further, but a fit whose
+        // |h| is far below max|e| is not done, and neither is one the exchange can still improve.
+        // A step whose |h| did not rise does not show that the next cannot raise it, so the noise
+        // limit needs a spent exchange: no new reference, this one, or one run before.
         let noisy = width <= noise && excess <= noise && h >= max_error / 2.0 && improved;
-        if noisy && previous_h.is_some_and(|p| h <= p) {
-            return Ok(Minimax {
-                stop: Stop::NoiseLimited,
-                ..fit
-            });
-        }
         let next = exchange(&errors, h, global, n + 2)
             .or_else(|| single_exchange(&errors, &reference, global));
-        // An exchange that finds no new reference, or returns this one, cannot raise |h| either:
-        // inside the rounding level that is the noise limit, outside it a degenerate or stalled run.
-        if noisy && next.as_ref().is_none_or(|next| *next == reference) {
+        visited.push(reference.clone());
+        if noisy && next.as_ref().is_none_or(|next| visited.contains(next)) {
             return Ok(Minimax {
                 stop: Stop::NoiseLimited,
                 ..fit
             });
         }
+        // Otherwise no new reference, or this one, is a degenerate or stalled run, and a reference
+        // run before only repeats fits already seen until the cap.
         let Some(next) = next else {
             return Ok(ending(best, Stop::Degenerate, iteration).expect("set above"));
         };
         if next == reference {
             return Ok(ending(best, Stop::Stalled, iteration).expect("set above"));
         }
-        previous_h = Some(h);
         reference = next;
     }
     Ok(ending(best, Stop::IterationLimit, MAX_ITERATIONS).expect("at least one step ran"))
@@ -389,8 +394,9 @@ fn exchange(errors: &[f64], h: f64, global: usize, size: usize) -> Option<Vec<us
     if let Some((_, at)) = run {
         extrema.push(at);
     }
-    // A reference point's error is |h| only up to rounding, so the bar sits a hair below it; any
-    // alternating set at or above it still raises |h| (de la Vallée Poussin).
+    // A reference point's error is |h| only up to rounding, so the bar sits a hair below it. On
+    // an alternating set at or above it the next |h| is, in exact arithmetic, at least the bar (de
+    // la Vallée Poussin); rounding can still lower it, so no stop rests on one step's |h|.
     let bar = h * (1.0 - 1e-9);
     let mut kept: Vec<usize> = Vec::new();
     for i in extrema
@@ -518,8 +524,8 @@ struct Proposal {
 
 /// The lowered form of `fit` over the variable leaf `x`, when it is worth proposing in place of
 /// `subtree`. It must have fewer nodes than `subtree`, fit `node_budget` and the expression limits
-/// (64 nodes, depth 16) on its own, and stay, in its own evaluation order, within the fit's bound
-/// on `samples`: `max_error (1 + 1e-6) + 64 ε max|f|`. Otherwise `None`. The lowered tree is
+/// (64 nodes, depth 16) on its own, and stay, in its own evaluation order, within an allowance on
+/// `samples` of `max_error (1 + 1e-6) + 64 ε max|f|`. Otherwise `None`. The lowered tree is
 /// usually deeper than the subtree it replaces (depth `2n + 1`), so the caller must re-validate
 /// the whole program under its scope; the wiring PR does that before any native re-score.
 fn propose(
@@ -660,30 +666,40 @@ enum Certificate {
 /// enclosure (Garloff 1993) in outward-rounded interval arithmetic, subdividing at the midpoint
 /// up to `max_depth`. Protected division returns 0 below |Q| = 1e-12, so a `threshold` below
 /// 1e-12 is refused. So is a degree above `MAX_DEGREE` (the binomial ratios are exact well past
-/// it) and a `max_depth` above `MAX_CERTIFY_DEPTH`, which bounds the work.
+/// it), a `max_depth` above `MAX_CERTIFY_DEPTH`, which bounds the work, and an infinite end. So
+/// is a `q` whose Horner evaluation could overflow on `[lo, hi]`: the evaluation-error bound
+/// holds only when no intermediate does.
 fn certify(q: &[f64], lo: f64, hi: f64, threshold: f64, max_depth: usize) -> Certificate {
     if q.is_empty()
         || q.len() > MAX_DEGREE + 1
         || threshold.is_nan()
         || threshold < 1e-12
         || max_depth > MAX_CERTIFY_DEPTH
-        || lo.is_nan()
-        || hi.is_nan()
+        || !lo.is_finite()
+        || !hi.is_finite()
         || lo >= hi
         || q.iter().any(|c| !c.is_finite())
     {
         return Certificate::Refused;
     }
     let m = q.len() - 1;
-    // Horner's forward error bound (Higham): γ_{2m} Σ |q_j| M^j with γ_k = k u / (1 - k u).
+    // Horner's forward error bound (Higham): γ_{2m} Σ |q_j| M^j with γ_k = k u / (1 - k u) and
+    // M = max(|lo|, |hi|). It needs every intermediate finite: at |v| ≤ M the product and the sum
+    // of the step that adds q_k are at most (1 + γ_{2m}) B_k, B_k = Σ_{j ≥ k} |q_j| M^(j - k).
+    // Horner's rule on |q| and M, rounded upward, gives each B_k (B_0 is the bound's sum), and all
+    // must stay below f64::MAX / 2, which leaves a factor of 2 for that rounding growth.
     let u = f64::EPSILON / 2.0;
     let gamma = (2 * m) as f64 * u / (1.0 - (2 * m) as f64 * u);
     let reach = lo.abs().max(hi.abs());
-    let bound: f64 = q
-        .iter()
-        .enumerate()
-        .map(|(j, c)| c.abs() * reach.powi(j as i32))
-        .sum::<f64>();
+    let mut bound = q[m].abs();
+    let mut largest = bound;
+    for &c in q[..m].iter().rev() {
+        bound = ((reach * bound).next_up() + c.abs()).next_up();
+        largest = largest.max(bound);
+    }
+    if largest > f64::MAX / 2.0 {
+        return Certificate::Refused;
+    }
     let margin = threshold + 2.0 * gamma * bound;
     // q̂(s) = q(lo + (hi - lo) s), expanded in powers of s.
     let width = Interval::point(hi).sub(Interval::point(lo));
@@ -1358,5 +1374,170 @@ mod tests {
         assert_eq!((stalled.iterations, stalled.steps), (1, 1));
         let singular = minimax(&geometric(27), 3).unwrap();
         assert_eq!((singular.iterations, singular.steps), (1, 2));
+    }
+
+    /// Independent review of B19 (R1): one step whose |h| fell was taken for a spent exchange. On
+    /// these 18 samples at degree 5 the run stopped NoiseLimited at step 9 with max|e| = 2.29e-5,
+    /// where the next exchange raises |h| and reaches 1.72e-5.
+    #[test]
+    fn a_noise_floor_stop_needs_a_spent_exchange_not_a_falling_h() {
+        let samples = [
+            (-0.999990739939228, 9999999999.999983),
+            (-0.9978979429134074, 10000000000.000017),
+            (0.7074203759847726, 10000000000.00001),
+            (0.912930560725927, 10000000000.000006),
+            (-0.6831402736477055, 9999999999.999983),
+            (-0.977500969634282, 9999999999.999985),
+            (-0.8789742671837542, 10000000000.000002),
+            (-0.9985609737561163, 9999999999.999983),
+            (-0.8468934336899454, 10000000000.000017),
+            (-0.3649387527514045, 10000000000.000015),
+            (0.23064368667000013, 9999999999.999989),
+            (-0.8362009505253496, 9999999999.999985),
+            (-0.309612662189795, 9999999999.999989),
+            (0.44993701364736216, 9999999999.999989),
+            (-0.526377661688965, 9999999999.999992),
+            (-0.010832884454037295, 10000000000.00001),
+            (-0.8262491006272136, 10000000000.000004),
+            (0.6818349395106322, 10000000000.000015),
+        ];
+        let fit = minimax(&samples, 5).unwrap();
+        assert_eq!(
+            (fit.stop, fit.iterations),
+            (Stop::NoiseLimited, 10),
+            "{fit:?}"
+        );
+        assert!(fit.max_error <= 1.71661376953125e-5, "{fit:?}");
+        assert!(fit.levelled <= fit.max_error, "{fit:?}");
+    }
+
+    /// `a + b` as the rounded sum and its exact error (Knuth's TwoSum).
+    fn two_sum(a: f64, b: f64) -> (f64, f64) {
+        let sum = a + b;
+        let b_part = sum - a;
+        (sum, (a - (sum - b_part)) + (b - b_part))
+    }
+
+    /// `a b` as the rounded product and its exact error (Dekker's TwoProduct, splitting at
+    /// 2^27 + 1, with no fused multiply-add).
+    fn two_product(a: f64, b: f64) -> (f64, f64) {
+        let split = |x: f64| {
+            let scaled = 134_217_729.0 * x;
+            let high = scaled - (scaled - x);
+            (high, x - high)
+        };
+        let product = a * b;
+        let ((a_high, a_low), (b_high, b_low)) = (split(a), split(b));
+        let error = ((a_high * b_high - product) + a_high * b_low + a_low * b_high) + a_low * b_low;
+        (product, error)
+    }
+
+    /// The sign of the exact sum of `terms`. Shewchuk's grow-expansion keeps the sum exactly, as
+    /// nonoverlapping components of increasing magnitude, and the largest one decides.
+    fn exact_sign(terms: &[f64]) -> i8 {
+        let mut expansion: Vec<f64> = Vec::new();
+        for &term in terms {
+            let mut carry = term;
+            let mut grown = Vec::with_capacity(expansion.len() + 1);
+            for &component in &expansion {
+                let (sum, error) = two_sum(carry, component);
+                if error != 0.0 {
+                    grown.push(error);
+                }
+                carry = sum;
+            }
+            if carry != 0.0 {
+                grown.push(carry);
+            }
+            expansion = grown;
+        }
+        expansion
+            .last()
+            .map_or(0, |&c| (c > 0.0) as i8 - (c < 0.0) as i8)
+    }
+
+    /// Independent review of B19 (R2): `levelled` and `max_error` are residuals of this module's
+    /// floating-point evaluation, not certified bounds on the discrete minimax error E*. On 1e10 +
+    /// tanh(5x) at degree 2 the exact errors of the returned polynomial alternate on the reference
+    /// 3.7e-7 above `max_error`, so E* exceeds it (de la Vallée Poussin). E* still lies within the
+    /// rounding level `64 ε max|f|` of it, because every exact error does.
+    #[test]
+    fn the_bracket_is_a_floating_point_residual_not_a_certified_bound() {
+        let samples = grid(-1.0, 1.0, 2001, |x| 1e10 + (5.0 * x).tanh());
+        let fit = minimax(&samples, 2).unwrap();
+        assert!(fit.levelled <= fit.max_error, "{fit:?}");
+        let unique = prepare(&samples).unwrap();
+        let [c0, c1, c2] = fit.chebyshev[..] else {
+            panic!("{fit:?}")
+        };
+        // f - (c0 + c1 t + c2 (2 t² - 1)) as an exact sum of doubles. The map to t is exact on
+        // [-1, 1], so these are the errors at the sample abscissae themselves.
+        let error_terms = |(v, f): (f64, f64)| -> [f64; 9] {
+            let t = fit.t(v);
+            assert_eq!(t.to_bits(), v.to_bits());
+            let (square, square_error) = two_product(t, t);
+            let (linear, linear_error) = two_product(c1, t);
+            let (high, high_error) = two_product(c2, square);
+            let (low, low_error) = two_product(c2, square_error);
+            [
+                f,
+                -c0,
+                c2,
+                -linear,
+                -linear_error,
+                -2.0 * high,
+                -2.0 * high_error,
+                -2.0 * low,
+                -2.0 * low_error,
+            ]
+        };
+        let signed = |terms: [f64; 9], sign: i8, extra: [f64; 2]| -> Vec<f64> {
+            let sign = f64::from(sign);
+            terms.iter().map(|x| sign * x).chain(extra).collect()
+        };
+        // On the reference the exact errors alternate, each more than 3e-7 above max_error.
+        let mut previous = 0;
+        for &r in &fit.reference {
+            let terms = error_terms(unique[r]);
+            let sign = exact_sign(&terms);
+            assert!(sign != 0 && sign != previous, "{r}");
+            let excess = signed(terms, sign, [-fit.max_error, -3e-7]);
+            assert_eq!(exact_sign(&excess), 1, "{r}: {fit:?}");
+            previous = sign;
+        }
+        // Every exact error, and so E* too, is within the rounding level of max_error.
+        let f_max = unique.iter().map(|(_, f)| f.abs()).fold(0.0f64, f64::max);
+        let noise = 64.0 * f64::EPSILON * f_max;
+        for &sample in &unique {
+            let terms = error_terms(sample);
+            for sign in [1, -1] {
+                let excess = signed(terms, sign, [-fit.max_error, -noise]);
+                assert_eq!(exact_sign(&excess), -1, "{sample:?}");
+            }
+        }
+    }
+
+    /// Independent review of B19 (R3): Horner's error bound holds only when no intermediate
+    /// overflows. 1 + 1e308 v + 1e308 v² on [0.8, 0.9] was certified with a finite margin although
+    /// Horner overflows at 0.9 (0.9 · 1e308 + 1e308): the weighted sum Σ |q_j| M^j stays finite.
+    #[test]
+    fn the_certificate_refuses_a_horner_evaluation_that_can_overflow() {
+        let q = [1.0, 1e308, 1e308];
+        assert!(horner(&q, 0.9).is_infinite());
+        assert_eq!(certify(&q, 0.8, 0.9, 1e-12, 8), Certificate::Refused);
+        // Every coefficient below f64::MAX / 2, and a partial sum still overflows at 0.7.
+        let q = [1.0, 8.9e307, 8.9e307, 8.9e307, 8.9e307];
+        assert!(horner(&q, 0.7).is_infinite());
+        assert_eq!(certify(&q, 0.6, 0.7, 1e-12, 8), Certificate::Refused);
+        // Partial sums within f64::MAX / 2 are certified, with a finite margin.
+        match certify(&[1.0, 4e307, 4e307], 0.8, 0.9, 1e-12, 8) {
+            Certificate::Positive { margin, .. } => assert!(margin.is_finite(), "{margin}"),
+            other => panic!("{other:?}"),
+        }
+        // An infinite end leaves M unbounded.
+        assert_eq!(
+            certify(&[1.0, 0.0, 1.0], f64::NEG_INFINITY, 0.0, 1e-12, 8),
+            Certificate::Refused
+        );
     }
 }
