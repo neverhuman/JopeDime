@@ -188,3 +188,6 @@ impl ScalarProducerProfile {
         &self.base
     }
 }
+
+// B05–B07: strict typed admission for producer-bound model readers.
+mod admission;
