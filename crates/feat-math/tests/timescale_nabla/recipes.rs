@@ -460,7 +460,7 @@ fn prediction_checkpoint_budget_refuses_atomically_in_all_routes() {
         )
         .unwrap();
     let mut public = VersionedModel::from_json(&native.to_json().unwrap()).unwrap();
-    let before = public.to_json().unwrap();
+    let before = native.to_json().unwrap();
     for bytes in [9 * 1024 * 1024, 3 * 1024 * 1024] {
         let oversized = OrderedRow {
             group: GroupKey::categorical("q".repeat(bytes)).unwrap(),
@@ -474,7 +474,10 @@ fn prediction_checkpoint_budget_refuses_atomically_in_all_routes() {
                 faults: 0
             })
         ));
-        assert_eq!(public.to_json().unwrap(), before);
+        let VersionedModel::TimeGradientV2(checkpoint) = &public else {
+            panic!("wrong public variant")
+        };
+        assert_eq!(checkpoint.to_json().unwrap(), before);
     }
     let expected = public.predict_ordered(&rows[4..]).unwrap();
     let mut replay = VersionedModel::from_json(&before).unwrap();
