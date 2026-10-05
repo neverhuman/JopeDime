@@ -87,3 +87,34 @@ unchanged Clippy floor; the prior failed-main proof is preserved. Final
 correction after-gates and fresh hosted CI/review remain pending. Lane D
 advisory R3 nested-Step repro is preserved and covered in both export routes.
 Lane A completes #178 then #177 and hands off idle; B10/B11 belong to Lane D.
+
+
+Correction-02 addresses independent review R4–R6 on unmerged head
+`f301a672d8cd75820ca2d4c166c34654dc8cad1c`. Only these opt-in libraries adapt
+legacy generated helpers: row sum/mean start at negative zero; floating min/max
+use explicit ordered comparisons with right-operand zero ties and one-NaN
+handling; Python floor and negative rounding retain the resulting zero sign.
+Generated Rust/C++ power calls retain a runtime exponent, preventing constant
+reciprocal rewrites from changing the evaluator's separately rounded result.
+All frozen emitter/MathExpr/identity inputs remain unchanged. This is a correction
+of the unmerged version-2 library, with no legacy emission transition.
+
+Two additional nonignored regressions execute 30 compositions per export route,
+including reductions, nested min/max/NaN, floor/round, sqrt/log1p/trigonometric
+zero producers and reciprocal-to-final-finite-guard compositions. Widths 2 and
+512 cover every signed-zero prefix in both orders, both all-zero signs,
+minimum subnormals and rounding boundaries: 15,900 held-out rows per route,
+95,400 backend prediction-word comparisons across stored winner and independent
+training/restoration. Recipes additionally compare coefficient/MSE words and
+complete serialized winner bytes. Test drivers compress repeated input words
+by their bits and expand at runtime without removing cases or assertions.
+Both initial reproducing failures and the incomplete oversized compile probe
+are preserved in external correction evidence; neither is labeled passed.
+
+Owner D3 correction gates are focused tests plus final PR tier, affected
+compatibility, owned lint/held-floor and lane audit; affected training recipes
+also run ASan/UBSan and C++20. The completed full card run remains bound to
+`50245d4fcab6997a258a06f9c117c5f8d527ade2`, and is not relabeled as execution of
+these corrected helpers. Current main's shared baseline is reused. Qualification,
+actual exits, named test/skip inventories and exact-head CI/review are recorded
+under `/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/correction-02-signed-zero`.
