@@ -1,0 +1,32 @@
+{
+  "schema": "feat-math.scalar-artifact-ip-fixture.v1",
+  "carriers": [
+    "row",
+    "elementwise"
+  ],
+  "input_width": 2,
+  "function_ids": [
+    13,
+    19,
+    20,
+    21,
+    22
+  ],
+  "stable_reductions": [
+    "sum",
+    "mean",
+    "l1",
+    "l2"
+  ],
+  "policies": [
+    "stable-preserve-body",
+    "legacy-preserve-body"
+  ],
+  "label_bits": [
+    4602678819172646912,
+    13826050856027422720,
+    4598175219545276416,
+    13821547256400052224
+  ],
+  "contract": "Existing shipped-text lint; no exemptions for new manifest, model or codec metadata"
+}
