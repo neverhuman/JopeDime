@@ -1046,3 +1046,7 @@ mod savgol_v2;
 // B13: goertzel_bank coverage under the same target.
 #[path = "row_vector/goertzel_v2.rs"]
 mod goertzel_v2;
+
+// B05–B07: scalar models under the existing registered closure target.
+#[path = "scalar_v2/model.rs"]
+mod scalar_model_v2;
