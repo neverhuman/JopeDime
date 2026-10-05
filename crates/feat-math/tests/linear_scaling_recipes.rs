@@ -22,6 +22,12 @@ fn training_recipe_admission_preserves_hard_error_refusals() {
         assert!(emit_training_recipe(&MathExpr::parse(source).unwrap(), width).is_err());
     }
     assert!(emit_training_recipe(&MathExpr::parse("c0").unwrap(), 1).is_ok());
+    for case in signed_zero::stored_clip_cases() {
+        assert!(
+            emit_training_recipe(&MathExpr::parse(case.source).unwrap(), case.train[0].len(),)
+                .is_err()
+        );
+    }
 }
 
 #[test]
@@ -104,6 +110,67 @@ fn run(command: &mut Command) -> String {
         String::from_utf8_lossy(&output.stderr)
     );
     String::from_utf8(output.stdout).unwrap()
+}
+
+#[test]
+fn training_recipes_refuse_an_unrepresentable_nonzero_slope() {
+    let scratch = tempfile::tempdir_in(std::env::var_os("TMPDIR").unwrap()).unwrap();
+    let dir = scratch.path();
+    let artifact = emit_training_recipe(&MathExpr::parse("c0").unwrap(), 1).unwrap();
+    let rows = vec![vec![0.0], vec![-1e12], vec![1e12], vec![1e-300]];
+    let labels = [0.0, 0.0, 0.0, 1.0];
+    let model = dir.join("model.rs");
+    let library = dir.join("librecipe.rlib");
+    fs::write(&model, artifact.rust).unwrap();
+    run(Command::new("rustc")
+        .args([
+            "--edition=2021",
+            "-O",
+            "--crate-type=lib",
+            "--crate-name=recipe",
+        ])
+        .arg(&model)
+        .arg("-o")
+        .arg(&library));
+    let driver = dir.join("driver.rs");
+    fs::write(&driver, format!(
+        "extern crate recipe; fn main() {{ assert!(matches!(recipe::scaled_train(&{}, &{}), Err(\"linear-scaling coefficients\"))); }}",
+        table(&rows, 0), encoded(&labels, 0),
+    )).unwrap();
+    let rust_binary = dir.join("rust-bin");
+    run(Command::new("rustc")
+        .args(["--edition=2021", "-O", "--extern"])
+        .arg(format!("recipe={}", library.display()))
+        .arg(&driver)
+        .arg("-o")
+        .arg(&rust_binary));
+    run(&mut Command::new(rust_binary));
+    fs::write(dir.join("model.py"), artifact.python).unwrap();
+    fs::write(dir.join("driver.py"), format!(
+        "from struct import unpack\nfrom model import scaled_train\ntry: scaled_train({}, {})\nexcept ValueError as error: assert str(error) == 'linear-scaling coefficients'\nelse: raise AssertionError('unrepresentable nonzero slope admitted')\n",
+        table(&rows, 1), encoded(&labels, 1),
+    )).unwrap();
+    run(Command::new("python3")
+        .arg(dir.join("driver.py"))
+        .env("PYTHONDONTWRITEBYTECODE", "1"));
+    let cpp = dir.join("driver.cpp");
+    fs::write(&cpp, format!(
+        "{}\n#include <string>\nstatic double from_bits(std::uint64_t bits) {{ double value; std::memcpy(&value,&bits,8); return value; }}\nint main() {{ try {{ scaled_train({}, {}); }} catch(const std::invalid_argument& error) {{ return std::string(error.what()) == \"linear-scaling coefficients\" ? 0 : 2; }} return 1; }}\n",
+        artifact.cpp17, table(&rows, 2), encoded(&labels, 2),
+    )).unwrap();
+    let binary = dir.join("cpp-bin");
+    let mut compiler = Command::new("g++");
+    compiler.arg(format!(
+        "-std=c++{}",
+        std::env::var("JOPE_CPP_STD").unwrap_or_else(|_| "17".into())
+    ));
+    compiler.args(["-O2", "-ffp-contract=off", "-fno-fast-math"]);
+    if let Ok(sanitizer) = std::env::var("JOPE_FITTED_CPP_SANITIZER") {
+        compiler.arg(format!("-fsanitize={sanitizer}"));
+        compiler.args(["-fno-omit-frame-pointer", "-fno-pie", "-no-pie"]);
+    }
+    run(compiler.arg(&cpp).arg("-o").arg(&binary));
+    run(&mut Command::new(binary));
 }
 
 fn execute_recipe(

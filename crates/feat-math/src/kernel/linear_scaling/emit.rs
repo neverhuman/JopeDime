@@ -68,6 +68,20 @@ pub(super) fn rust_scalar_library(source: &str) -> Result<String> {
     library = library
         .replace("m = m.min(v);", "m = if m < v { m } else { v };")
         .replace("m = m.max(v);", "m = if m > v { m } else { v };");
+    // The planner includes this helper only for Clip trees. Freeze both bound
+    // ties here too; f64 min/max may otherwise choose a constant zero under -O.
+    if library.contains("fn m_clip(") {
+        let bounds = "    let lo = a.min(b);\n    let hi = a.max(b);";
+        if library.matches(bounds).count() != 1 {
+            return Err(super::Error::Unsupported(
+                "linear-scaling clip library binding".into(),
+            ));
+        }
+        library = library.replace(
+            bounds,
+            "    let lo = if a.is_nan() { b } else if b.is_nan() || a < b { a } else { b };\n    let hi = if a.is_nan() { b } else if b.is_nan() || a > b { a } else { b };",
+        );
+    }
     // f64 min/max leave zero ties unspecified to the optimizer. These private
     // expression methods freeze the evaluator's observed right-operand ties.
     let methods = "\n    trait ScalarExt { fn scalar_min(self,b:f64)->f64; fn scalar_max(self,b:f64)->f64; }\n    impl ScalarExt for f64 {\n        fn scalar_min(self,b:f64)->f64 { if self.is_nan(){b}else if b.is_nan() || self<b{self}else{b} }\n        fn scalar_max(self,b:f64)->f64 { if self.is_nan(){b}else if b.is_nan() || self>b{self}else{b} }\n    }\n";

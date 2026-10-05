@@ -86,11 +86,24 @@ fn training_refuses_invalid_tables_and_nonfinite_labels_before_calibration() {
     ] {
         assert!(LinearScaledWinner::fit_training(&expression, &rows, &targets).is_err());
     }
-    for source in ["x", "c1", "NaN"] {
-        if let Ok(expr) = MathExpr::parse(source) {
-            assert!(LinearScaledWinner::fit_training(&expr, &[vec![1.0]], &[1.0]).is_err());
-        }
+    for source in ["x", "c1"] {
+        let expr = MathExpr::parse(source).unwrap();
+        assert!(LinearScaledWinner::fit_training(&expr, &[vec![1.0]], &[1.0]).is_err());
     }
+    assert!(MathExpr::parse("NaN").is_err());
+}
+
+#[test]
+fn unrepresentable_nonzero_slope_is_a_typed_refusal() {
+    let error = LinearScaledWinner::fit_training(
+        &MathExpr::parse("c0").unwrap(),
+        &[vec![0.0], vec![-1e12], vec![1e12], vec![1e-300]],
+        &[0.0, 0.0, 0.0, 1.0],
+    )
+    .unwrap_err();
+    assert!(
+        matches!(error, Error::NonFinite(ref reason) if reason == "linear-scaling coefficients")
+    );
 }
 
 #[test]
@@ -235,13 +248,48 @@ fn exported_predictions(dir: &Path, winner: &LinearScaledWinner, rows: &[Vec<f64
     let cpp = dir.join("model.cpp");
     let executable = dir.join("cpp-bin");
     fs::write(&cpp,format!("{}\n#include <cstdio>\n#include <string>\nstatic double from_bits(std::uint64_t b) {{ double v; std::memcpy(&v,&b,8); return v; }}\nint main() {{ const std::vector<std::vector<double>> rows={cpp_rows}; for(double v:scaled_predict(rows)){{std::uint64_t b;std::memcpy(&b,&v,8);std::printf(\"%016llx\\n\",static_cast<unsigned long long>(b));}} bool refused=false;try{{scaled_predict({{{{}}}});}}catch(const std::invalid_argument&){{refused=true;}}if(!refused)return 3; refused=false;try{{scaled_predict({{std::vector<double>({width},std::numeric_limits<double>::quiet_NaN())}});}}catch(const std::invalid_argument&){{refused=true;}}return refused?0:4; }}",artifact.cpp17)).unwrap();
-    run(Command::new("g++")
-        .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
-        .arg(&cpp)
-        .arg("-o")
-        .arg(&executable));
+    let mut compiler = Command::new("g++");
+    compiler.arg(format!(
+        "-std=c++{}",
+        std::env::var("JOPE_CPP_STD").unwrap_or_else(|_| "17".into())
+    ));
+    compiler.args(["-O2", "-ffp-contract=off", "-fno-fast-math"]);
+    if let Ok(sanitizer) = std::env::var("JOPE_FITTED_CPP_SANITIZER") {
+        compiler.arg(format!("-fsanitize={sanitizer}"));
+        compiler.args(["-fno-omit-frame-pointer", "-fno-pie", "-no-pie"]);
+    }
+    run(compiler.arg(&cpp).arg("-o").arg(&executable));
     let cpp = run(&mut Command::new(&executable));
     [rust, python, cpp]
+}
+
+#[test]
+fn stored_clip_bound_ties_preserve_optimized_three_language_bits() {
+    let scratch = tempfile::tempdir_in(std::env::var_os("TMPDIR").unwrap()).unwrap();
+    for (index, case) in signed_zero::stored_clip_cases().into_iter().enumerate() {
+        let expression = MathExpr::parse(case.source).unwrap();
+        assert!(feat_math::kernel::linear_scaling::emit_training_recipe(
+            &expression,
+            case.train[0].len(),
+        )
+        .is_err());
+        let fit = LinearScaledWinner::fit_training(&expression, &case.train, &case.labels).unwrap();
+        let winner = LinearScaledWinner::from_bytes(&fit.winner.to_bytes().unwrap()).unwrap();
+        let mut expected = String::new();
+        for value in winner.predict(&case.test).unwrap() {
+            writeln!(expected, "{:016x}", value.to_bits()).unwrap();
+        }
+        for (language, actual) in ["rust", "python", "cpp"]
+            .into_iter()
+            .zip(exported_predictions(
+                &scratch.path().join(index.to_string()),
+                &winner,
+                &case.test,
+            ))
+        {
+            assert_eq!(actual, expected, "{}: {language}", case.source);
+        }
+    }
 }
 
 #[test]

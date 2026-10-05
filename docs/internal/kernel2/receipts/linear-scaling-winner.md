@@ -1,7 +1,7 @@
 # Opt-in scalar calibration and persisted winner
 
 Status: first scalar library slice; full B09 search/serving admission remains held.
-Current combined base: `4183d24ae5832c114d0194d4a6a7128647027782` (#187 fixture repair; merged B08 routing, B12 and B13 retained).
+Current correction base: `79a31f7650b5199e636524ac85ec58af7e09ae43` (merged B14); shared baseline PR2234/33 skipped, main4316/70 skipped. The candidate adds21 nonignored tests:13 winner,7 recipe,1 private evaluator unit. Expected final selection PR2255/33 and main4337/70; current-main execution comes from the shared baseline, not this correction. Historical source-bound counts below describe earlier attempts.
 Initial standalone proof base: `b036848460f3a2887fcdc6120db97152a3c01490`.
 Profile: `feat-math.scalar-linear-scaling.v2`.
 
@@ -45,7 +45,7 @@ TMPDIR=/home/ubuntu/.cache/jope-test-tmp/bt-implementation \
 cargo test --locked -p feat-math --test linear_scaling_v2
 ```
 
-Nine tests cover exact `y=3*c0+7`, constant fallback, malformed shape/targets,
+The initial nine-test proof covered exact `y=3*c0+7`, constant fallback, malformed shape/targets,
 tiny features, overflow refusal, malformed/truncated/unknown envelopes,
 signed coefficient bits, deterministic widths 1..16, poisoned outer folds,
 and stored-winner Rust/Python/C++17 output-bit parity. Seven formula families
@@ -72,7 +72,7 @@ and evaluator identity inputs remain byte-identical. PR #176 is merged in the cu
 The owner authorized inclusion of the qualified local training-library follow-up
 in PR #178, after a fresh-main baseline, on 2026-10-04.
 
-## Combined PR #178 qualification
+## Historical combined PR #178 qualification
 
 The shared repaired-main baseline at `6df43201750b50ffcee908333e2f90dee8672829` passed PR2108/29 and
 main4190/66, Python231/2, golden16/16 and fitted18/18 in both matrices. The
@@ -148,3 +148,38 @@ are tracked in `B09_LINEAR_SCALING/correction-04-power`. Final qualification,
 exact-head hosted CI and fresh independent native approval remain required;
 old source-bound passing gates do not certify this correction. Full B09
 shipping search/EEC/utility/serving and VarPro stay outside this library slice.
+
+
+## Correction-05: Clip bound ties and observable refusals
+
+Lane D advisory5994937113 and independent exact-head COMMENT5415170521
+identified signed-zero Clip bounds still using optimizer-dependent Rust min/max
+on `ff7ecde112030420919ca78ac5d9010d8dc12df6`. The actual stored-winner export
+mismatched native in four of five initial probes; the new repository regression
+fails on that source. Only the private v2 Rust library rewrites the Clip bounds
+to NaN-aware ordered selects with right-operand ties, and refuses unexpected
+helper text. Frozen emitters and evaluator identity remain unchanged. Training
+recipe admission continues to refuse every Clip tree.
+
+Twenty stored-winner Clip cohorts cover the five reported shapes and five finite
+nested variants at widths4/512, both zero-bound signs/orders, positive/negative
+inputs, minimum subnormals and finite extremes. The finite nested variants keep
+zero signs observable without relying on a constant-feature fit. They add640
+held-out rows to the existing stored-winner composition proof. The shared Pow
+corpus also pins the independently divergent base2 and base8/1024 exponents.
+Together both routes execute117384 exact backend prediction-word comparisons
+(native vs Rust/Python/C++), plus fit coefficients/MSE/state and refusals.
+
+A private evaluator unit checks Owned binding for mixed zeros at widths4/512
+and Borrowed ordinary/single-sign/nonzero-extrema controls. This makes the
+binding guard observable in unoptimized CI as well as release execution. Native
+and all three independent training recipes explicitly refuse the cancellation
+case whose nonzero slope is unrepresentable: c0 rows0,-1e12,1e12,1e-300 with
+targets0,0,0,1. Stored-export C++ drivers now honor the same strict sanitizer
+and C++20 matrix selectors as the training recipes.
+
+Source-bound failed attempts and actual exits are preserved under
+`B09_LINEAR_SCALING/correction-04-power`; new final-head light gates, release
+proof and affected matrices belong to `B09_LINEAR_SCALING/correction-05-clip`.
+No pending qualification, CI or native approval is asserted passed here. Full
+shipping search/profile/EEC/utility/serving and VarPro remain held.

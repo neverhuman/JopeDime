@@ -102,6 +102,8 @@ pub fn cases() -> Vec<Case> {
             let mut exponents = vec![
                 -7.75,
                 -5.13,
+                f64::from_bits(0x3ffb985e89c77e28),
+                f64::from_bits(0xc01730353bb00a2e),
                 f64::from_bits(0xc00921f9f01b866e),
                 f64::from_bits(0xc005ae147ae147ae),
                 -1.23,
@@ -191,6 +193,69 @@ pub fn encoded(values: &[f64], backend: usize) -> String {
         1 => format!("[{out}]"),
         _ => format!("{{{out}}}"),
     }
+}
+
+// Clip training recipes remain refused. Stored winners still admit these trees,
+// and a reciprocal makes the bound's zero sign observable after optimization.
+pub fn stored_clip_cases() -> Vec<Case> {
+    let mut cases = Vec::new();
+    for source in [
+        "c1+min(clip(c0,0,c2)^-1,1)",
+        "c1+min(clip(c0,-0,c2)^-1,1)",
+        "c1+min(clip(c0,0,-0)^-1,1)",
+        "c1+min(clip(c0,-0,0)^-1,1)",
+        "c1+min(clip(c0,c3,c2)^-1,1)+min(clip(c0,c2,c3)^-1,1)",
+        "c1+min(max(clip(c0,0,c2)^-1,-1),1)",
+        "c1+min(max(clip(c0,-0,c2)^-1,-1),1)",
+        "c1+min(max(clip(c0,0,-0)^-1,-1),1)",
+        "c1+min(max(clip(c0,-0,0)^-1,-1),1)",
+        "c1+min(max(clip(c0,c3,c2)^-1,-1),1)+min(max(clip(c0,c2,c3)^-1,-1),1)",
+    ] {
+        let expression = MathExpr::parse(source).unwrap();
+        for width in [4, 512] {
+            let train = [0.0, 1.0, 2.0]
+                .into_iter()
+                .map(|value| {
+                    let mut row = vec![1.0; width];
+                    row[1] = value;
+                    row
+                })
+                .collect::<Vec<_>>();
+            let labels = train
+                .iter()
+                .map(|row| 3.0 * expression.eval_row(row).unwrap() + 7.0)
+                .collect();
+            let mut test = Vec::new();
+            for value in [
+                -5.0,
+                5.0,
+                -0.0,
+                0.0,
+                -f64::from_bits(1),
+                f64::from_bits(1),
+                -f64::MAX,
+                f64::MAX,
+            ] {
+                for a in [-0.0, 0.0] {
+                    for b in [-0.0, 0.0] {
+                        let mut row = vec![1.0; width];
+                        row[0] = value;
+                        row[1] = 2.0;
+                        row[2] = a;
+                        row[3] = b;
+                        test.push(row);
+                    }
+                }
+            }
+            cases.push(Case {
+                source,
+                train,
+                labels,
+                test,
+            });
+        }
+    }
+    cases
 }
 
 pub fn table(rows: &[Vec<f64>], backend: usize) -> String {

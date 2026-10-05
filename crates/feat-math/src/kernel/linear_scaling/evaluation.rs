@@ -79,3 +79,41 @@ fn bind_extrema(node: &Expr, lower: f64, upper: f64) -> Expr {
         _ => node.clone(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mixed_zero_extrema_bind_before_optimized_evaluation() {
+        for source in ["row_min", "row_max"] {
+            let expression = MathExpr::parse(source).unwrap();
+            let evaluator = Evaluator::new(&expression).unwrap();
+            for width in [4, 512] {
+                for last in [-0.0_f64, 0.0] {
+                    let mut row = vec![-last; width];
+                    row[width - 1] = last;
+                    let bound = evaluator.for_row(&row).unwrap();
+                    assert!(matches!(bound, Cow::Owned(_)), "{source}, {width}");
+                    assert_eq!(bound.eval_row(&row).unwrap().to_bits(), last.to_bits());
+                    let ast = bind_extrema(expression.ast(), last, last);
+                    assert!(matches!(ast, Expr::Const(v) if v.to_bits() == last.to_bits()));
+                }
+                for row in [vec![-0.0; width], vec![0.0; width]] {
+                    assert!(matches!(evaluator.for_row(&row).unwrap(), Cow::Borrowed(_)));
+                }
+                let mut row = vec![0.0; width];
+                row[..3].copy_from_slice(&[-1.0, 1.0, -0.0]);
+                assert!(matches!(evaluator.for_row(&row).unwrap(), Cow::Borrowed(_)));
+            }
+        }
+        let expression = MathExpr::parse("c0").unwrap();
+        assert!(matches!(
+            Evaluator::new(&expression)
+                .unwrap()
+                .for_row(&[-0.0, 0.0])
+                .unwrap(),
+            Cow::Borrowed(_)
+        ));
+    }
+}
