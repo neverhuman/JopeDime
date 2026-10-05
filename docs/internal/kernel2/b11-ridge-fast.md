@@ -13,8 +13,9 @@ payload, which Rust leaves unspecified in either build; an optimized build was s
 two loops' NaNs opposite signs. NaN positions, infinities, signed zeros and every finite bit are
 kept:
 
-- **Column moments.** One row-major pass of per-column accumulators replaces one strided pass per
-  column. Each column still sums its rows in ascending order from `0.0`.
+- **Column moments.** Two row-major passes of per-column accumulators, the sums and then the
+  squared deviations from the means, replace the legacy pair of strided passes per column. Each
+  column still sums its rows in ascending order from `0.0`.
 - **Normal equations.** Every Gram and right-hand-side entry is a running sum that starts at `0.0`
   and adds `z_ri z_rj` (and `z_ri yc_r`) in ascending row order, as the legacy one-row-at-a-time
   rank-one update did. Rows run in panels of 128, which are packed column block by column block.
@@ -26,12 +27,23 @@ kept:
 
 Rust neither fuses multiply-adds nor reassociates by default, and the kernel relies on that. A
 verbatim copy of the previous loop is the test oracle. The oracle's bits are compared on designs
-covering constant, heavy-tailed (the ±20 clamp is active), near-duplicate, integer-valued and
-signed-zero columns, at widths that are and are not multiples of the tile, at the penalty floor,
-with zero-variance and huge constant columns, and on inputs that really overflow or are not
-finite: a column of `f64::MAX`, alternating `±f64::MAX`, a single `+inf` or NaN cell, and a `-inf`
-or NaN label. Each of those cases is checked to reach a non-finite value, and NaNs compare by
-position.
+covering constant, heavy-tailed, near-duplicate, integer-valued and signed-zero columns, at widths
+that are and are not multiples of the tile, at the penalty floor, with zero-variance and huge
+constant columns, and on inputs that really overflow or are not finite: a column of `f64::MAX`,
+alternating `±f64::MAX`, a single `+inf` or NaN cell, and a `-inf` or NaN label. Each of those
+cases is checked to reach a non-finite value, and NaNs compare by position.
+
+The ±20 standardization clamp needs a design of its own. Samuelson's inequality bounds a finite
+column's standardized values by √(n − 1), about 17.3 for the at most 300 rows of the designs
+above, so none of their finite cells reaches the clamp. The `+inf` cell's column standardizes its
+other cells to −inf, which the clamp maps to −20, but the cell itself standardizes to NaN, so
+every Gram entry of that column is NaN in both fits and no compared bit depends on the clamp. The
+`#[ignore]`d kernel benchmark's 3333-row designs put 5 to 158 cells per width past the clamp, and
+no CI tier runs ignored tests. One more design therefore plants a dominant positive value and a
+dominant negative value in two columns of a 500-row design, which standardize to about ±22.3. It
+asserts that they pass both bounds of the clamp and compares the bits. It also checks the certified
+factor's coefficients against the fit's weights bit for bit, and leave-one-out residuals through
+the clamp against brute-force refits.
 
 ## Certified scoring in the surrogate search
 
@@ -48,8 +60,8 @@ cases, bit for bit, with less work:
   computation, so shared transform prefixes are fitted once per fold. The cache's counted bytes
   never pass its 1 GiB budget, not even within a generation. They are the f64 payload and the
   serialized fit, not allocation overhead. A full cache refuses new keys until a
-  generation-boundary sweep drops the entries a whole generation passed without using, and a
-  refused key is recomputed on its next miss, with identical bits.
+  generation-boundary sweep drops the entries used in neither the current nor the previous
+  generation. A refused key is recomputed on its next miss, with identical bits.
 - **Exact keys.** The memo and the stage cache key on each stage's exact encoding: its op and every
   parameter in key order, length-prefixed and type-tagged, with every float as its IEEE-754 bits.
   They never key on canonical text, which prints a float within 1e-12 of an integer as that
@@ -60,12 +72,13 @@ cases, bit for bit, with less work:
   1e-12 of zero, two NaNs and strings that read as numbers or bools apart in the stage cache, a
   cached fit of `symlog c` = 1.0 + 5e-13 equal to its plain fit, and, through the whole search on
   one thread and on four, the independent review's two `lag` seeds that print alike scored as
-  `Refit` scores them. The memo keys on the encodings themselves; a stage-cache key is the
-  SHA-256 of its length-prefixed fields, so two different chains share one only through a
-  SHA-256 collision. Neither key holds the data: one scorer serves one search run, whose rows,
-  labels, folds and case rows are fixed. The search's own genome memo, which merges genomes whose
-  whole canonical text matches, is unchanged and acts identically in both modes, so it never
-  makes them differ.
+  `Refit` scores them. The memo keys on the encodings themselves. A stage-cache key is a SHA-256
+  chain: the root hashes the domain tag, the length-prefixed context tag, the fold count, the fold
+  and the optional target's exact encoding, and each stage hashes the previous key with its own
+  exact encoding, so two different chains share a key only through a SHA-256 collision. Neither
+  key holds the data: one scorer serves one search run, whose rows, labels, folds and case rows
+  are fixed. The search's own genome memo, which merges genomes whose whole canonical text
+  matches, is unchanged and acts identically in both modes, so it never makes them differ.
 - **Changes to the shared `StageCache`.** Two. Its other users are the campaigns' `exact_cv`
   command, which uses it unless `JOPE_STAGE_CACHE=0`, and the train-only study.
   - Its keys are exact. Before B11 two stages that printed alike shared one entry, so the second
@@ -77,13 +90,15 @@ cases, bit for bit, with less work:
     could pass the budget within a generation, and evicted oldest-first at the next sweep. Its
     other users still get the same values; only which entries stay resident, and so the hit
     counts, can differ.
-- **Order and threads.** Distinct surrogates are scored once each, in candidate order. The result
-  is the same on one thread and on four. `Observer::on_scoring` reports `candidates` and
-  `surrogate_reuses`, which follow the candidate stream alone. It also reports the stage-cache
+- **Order and threads.** Each distinct surrogate is scored once, for the first candidate that
+  carries it. Distinct surrogates are scored in parallel, and results return in candidate order.
+  The result is the same on one thread and on four. `Observer::on_scoring` reports `candidates`
+  and `surrogate_reuses`, which follow the candidate stream alone. It also reports the stage-cache
   `stage_hits` and `stage_misses`, which are instrumentation and depend on thread scheduling.
 - **Refusals.** It applies to the surrogate search only, under `FaultPolicy::Legacy`.
-  `RidgeScoring::validate` refuses the race and the strict policies, and the search panics with
-  that reason when it is given either; tests run both panics.
+  `RidgeScoring::validate` refuses the race and the strict policies. The search panics with that
+  reason when it is given either, except `evolve_lite_race_with_exact_initial_population`, which
+  returns it; tests cover both panics and the returned refusal.
 
 ## Certified tools (`kernel/ridge_fast.rs`, profile `feat-math.ridge-fast.v1`)
 
@@ -121,15 +136,16 @@ This note quotes no speedup. Timing evidence is under
 `/home/ubuntu/jope-evidence/kernel2/bt/B11_RIDGE_FAST/`. Every session ran on xbabe2 (128 CPUs,
 shared with other lanes). The later sessions (`bench-final/session-*/`) ran through
 `bench-final/bench-final.sh`, which builds the head's unit tests and the parent's harness
-(`bench-final/parent_throughput.rs`) in release mode and runs the same tests with
-`--ignored --exact`. Each session's `provenance.txt`, like the earlier end-to-end sessions'
-(`prep/e2e-*/provenance.txt`), records the head and parent it measured, the binaries' hashes and
-the host load. Sessions started after `bench-final.sh` gained its host line also record the host
-at run time; the first `bench-final` session carries it only as an annotation added afterwards,
-and the `prep/` sessions not at all. Sessions before exact keys measured earlier heads of this
-card; the pull request lists every session with the head it measured. The benches assert nothing
-about speed. There are three `#[ignore]`d timing benches, all unit tests in
-`kernel/ridge_fast.rs`:
+(`bench-final/parent_throughput.rs`) in release mode. It then runs the head's
+`ridge_fast_v1_throughput` bench once and `kernel_benchmark` three times, with `--exact --ignored`,
+and the parent harness's test with `--ignored`; the `B11_SHARE` bench is not part of it. Each
+session's `provenance.txt`, like the earlier end-to-end sessions' (`prep/e2e-*/provenance.txt`),
+records the head and parent it measured, the binaries' hashes and the host load. Sessions started
+after `bench-final.sh` gained its host line also record the host at run time; the first
+`bench-final` session carries it only as an annotation added afterwards, and the `prep/` sessions
+not at all. Sessions before exact keys measured earlier heads of this card; the pull request lists
+every session with the head it measured. The benches assert nothing about speed. There are three
+`#[ignore]`d timing benches, all unit tests in `kernel/ridge_fast.rs`:
 
 - the fast fit against the verbatim legacy loop at four widths (`B11_KERNEL` lines):
   `cargo test --release -p feat-math --lib kernel::ridge_fast::tests::kernel_benchmark -- --ignored --nocapture`;
