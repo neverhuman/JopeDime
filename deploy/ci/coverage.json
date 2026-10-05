@@ -66,6 +66,7 @@
         "cargo test -q --locked -p jope-ci",
         "cargo test -q --locked -p jope-records --lib -- coverage:: scope_check:: parity:: readme::",
         "python3 deploy/ci/test-receipt.py",
+        "python3 deploy/dl-trainonly/test_contracts.py",
         "bash deploy/ci/check.sh",
         "cargo deny --all-features check bans licenses sources",
         "python3 deploy/ci/test-results.py",
@@ -6974,6 +6975,16 @@
         "weekly"
       ],
       "scope": "Configured workflow/job; current execution unqualified."
+    },
+    "python:deploy/dl-trainonly/test_contracts.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of GPU budget reservations and train-only output manifest custody; synthetic CPU controls, no compute or S3 qualification."
     },
     "python:deploy/ci/test-receipt.py": {
       "discovery": {
