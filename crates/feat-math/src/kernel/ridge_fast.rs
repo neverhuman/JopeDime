@@ -491,8 +491,11 @@ mod tests {
         assert_eq!(bits(&fast.predict(&probe)), bits(&legacy.predict(&probe)));
     }
 
-    /// Gaussian columns mixed with the hard kinds: constant, heavy-tailed (the clamp is active),
-    /// near-duplicate, integer-valued and signed zeros.
+    /// Gaussian columns mixed with the hard kinds: constant, heavy-tailed, near-duplicate,
+    /// integer-valued and signed zeros. A finite column standardizes to |z| ≤ √(n − 1), so designs
+    /// of at most 300 rows stay inside the ±20 clamp. The 500-row design of
+    /// `a_design_that_binds_the_clamp_matches_the_legacy_fit` passes it, and so do the ignored
+    /// `kernel_benchmark`'s 3333-row designs.
     fn design(seed: u64, n: usize, p: usize) -> (Rows, Vec<f64>) {
         let mut rng = Pcg32::new(seed, 11);
         let x: Rows = (0..n)
@@ -538,6 +541,43 @@ mod tests {
             for lambda_frac in [0.02, 0.2, 1e-9] {
                 assert_identical(&x, &y, lambda_frac);
             }
+        }
+    }
+
+    #[test]
+    fn a_design_that_binds_the_clamp_matches_the_legacy_fit() {
+        // A value that dominates its column standardizes to nearly ±√(n − 1), Samuelson's bound:
+        // ≈ 22.3 for 500 rows, past the ±20 clamp, which both fits then apply. One positive and
+        // one negative plant bind both bounds.
+        let (mut x, y) = design(8, 500, 13);
+        x[0][1] = 1e12;
+        x[1][7] = -1e12;
+        let (means, scales) = std_fit(&x);
+        let high = (x[0][1] - means[1]) / scales[1];
+        let low = (x[1][7] - means[7]) / scales[7];
+        assert!(
+            high > 20.0,
+            "the positive plant must pass the clamp, z = {high}"
+        );
+        assert!(
+            low < -20.0,
+            "the negative plant must pass the clamp, z = {low}"
+        );
+        for lambda_frac in [0.02, 0.2, 1e-9] {
+            assert_identical(&x, &y, lambda_frac);
+        }
+        // The certified design standardizes through the same clamp: its factor solves to the
+        // fit's weights bit for bit, which fails if either side drops either bound. PRESS still
+        // matches refits.
+        let d = Design::from_rows(&x, &y, 0.02).unwrap();
+        let factor = Factor::new(&d).unwrap();
+        let fit = RidgeModel::fit(&x, &y, 0.02);
+        assert_eq!(bits(&factor.coefficients()), bits(&fit.w[1..]));
+        let loo = leave_one_out(&d, &factor).unwrap();
+        let reference = brute_force_leave_one_out(&d).unwrap();
+        let scale = reference.iter().fold(0.0f64, |m, e| m.max(e.abs()));
+        for (fast, slow) in loo.residuals.iter().zip(&reference) {
+            assert!((fast - slow).abs() <= 1e-10 * scale);
         }
     }
 
@@ -669,7 +709,7 @@ mod tests {
             let press: f64 = reference.iter().map(|e| e * e).sum();
             assert!((loo.press - press).abs() <= 1e-10 * press);
         }
-        // The legacy surrogate design, with its clamped heavy-tailed columns, agrees as well.
+        // The legacy surrogate design, with its heavy-tailed columns, agrees as well.
         let (x, y) = design(45, 60, 12);
         let d = Design::from_rows(&x, &y, 0.02).unwrap();
         let loo = leave_one_out(&d, &Factor::new(&d).unwrap()).unwrap();
