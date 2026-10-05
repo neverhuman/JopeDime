@@ -370,3 +370,63 @@ fn stored_winner_compositions_preserve_signed_zero_prediction_bits() {
         assert_eq!(winner.to_bytes().unwrap(), bytes);
     }
 }
+
+#[test]
+fn versioned_row_extrema_have_explicit_zero_ties_at_every_width() {
+    for source in ["min(row_min^-1,1)", "min(row_max^-1,1)"] {
+        let expression = MathExpr::parse(source).unwrap();
+        for width in 1..=512 {
+            let train = [1.0, 2.0, 4.0].map(|v| vec![v; width]);
+            let fit =
+                LinearScaledWinner::fit_training(&expression, &train, &[10.0, 8.5, 7.75]).unwrap();
+            assert_eq!(fit.winner.coefficients(), [3.0, 7.0]);
+            let bytes = fit.winner.to_bytes().unwrap();
+            let mut rows = Vec::new();
+            let mut expected = Vec::new();
+            for background in [0.0_f64, -0.0] {
+                for tail in [0.0_f64, -0.0] {
+                    let mut row = vec![background; width];
+                    row[width - 1] = tail;
+                    rows.push(row);
+                    // Right zero tie: -0^-1 is -infinity, sanitized at the
+                    // expression root to0; +0^-1 is +infinity, min(...,1)=1.
+                    expected.push(if tail.is_sign_negative() {
+                        7.0_f64.to_bits()
+                    } else {
+                        10.0_f64.to_bits()
+                    });
+                }
+            }
+            assert_eq!(
+                fit.winner
+                    .predict(&rows)
+                    .unwrap()
+                    .into_iter()
+                    .map(f64::to_bits)
+                    .collect::<Vec<_>>(),
+                expected,
+                "{source} width {width}"
+            );
+            assert_eq!(fit.winner.to_bytes().unwrap(), bytes);
+            // Fit must use the same zero policy as stored predictions.
+            let zero_labels = expected
+                .iter()
+                .map(|&word| f64::from_bits(word))
+                .collect::<Vec<_>>();
+            let replay =
+                LinearScaledWinner::fit_training(&expression, &rows, &zero_labels).unwrap();
+            assert_eq!(replay.winner.coefficients(), [3.0, 7.0]);
+            assert_eq!(replay.training_mse.to_bits(), 0.0_f64.to_bits());
+            assert_eq!(
+                replay
+                    .winner
+                    .predict(&rows)
+                    .unwrap()
+                    .into_iter()
+                    .map(f64::to_bits)
+                    .collect::<Vec<_>>(),
+                expected
+            );
+        }
+    }
+}

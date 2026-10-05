@@ -21,13 +21,12 @@ pub(super) fn fit_training(
     };
     validate(&winner)?;
     check_rows(rows, winner.input_width)?;
-    let compiled = expression
-        .compile()
-        .map_err(|e| Error::Domain(e.to_string()))?;
+    let evaluator = super::evaluation::Evaluator::new(expression)?;
     let values = rows
         .iter()
         .map(|row| {
-            compiled
+            evaluator
+                .for_row(row)?
                 .eval_row(row)
                 .map_err(|e| Error::Domain(e.to_string()))
         })
