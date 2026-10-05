@@ -1,8 +1,8 @@
 # Explicit scalar calibration training libraries
 
-Qualified local continuation now included in PR #178 on
-`kernel2/bt09-linear-scaling`, rebased onto remote main
-`4183d24ae5832c114d0194d4a6a7128647027782` after #187.
+Current correction is included in PR #178 on
+`kernel2/bt09-linear-scaling`, based on remote main
+`79a31f7650b5199e636524ac85ec58af7e09ae43` after B14. Shared baseline PR2234/33 skipped and main4316/70 skipped is reused. The candidate adds21 nonignored tests:13 winner,7 recipe,1 private evaluator unit; expected selection PR2255/33 and main4337/70. Historical source-bound counts below describe earlier attempts, not current qualification.
 The rebase preserves merged ordered-fit/model and row-vector dispatch arms;
 the three calibration/export corrections remain confined to the opt-in library.
 Original dependency `e5266782121dc0cf131aa9e7ff4ee6a496e7d4a5` and local
@@ -44,7 +44,7 @@ JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --t
 JOPE_CPP_STD=20 cargo test -p feat-math --locked --test linear_scaling_recipes
 ```
 
-Five new nonignored tests cover admission, native extraction compatibility,
+The initial five-test recipe proof covered admission, native extraction compatibility,
 the 1,705-fit adjacent-feature oracle, representable subnormal loss and
 nineteen independent train-and-predict corpora. Every generated model is restored
 before predicting. Comparisons include two coefficient words, MSE, complete
@@ -73,7 +73,7 @@ the new entry point. Standalone calibrated CSV wrappers, shipping selection and
 CLI integration, full profile generation/EEC, equal-budget six-dataset utility
 and Baseline/serving promotion remain held. No VarPro or later-card work.
 
-Combined requalification compares the preceding baseline PR2108/29, main4190/66
+Historical combined requalification compared the preceding baseline PR2108/29, main4190/66
 and all fourteen new tests from winner plus recipes: expected PR2122/29 and
 main4204/66. All normal after gates, dedicated recipe ASan/UBSan and C++20,
 protected-input/skip/Clippy/audit comparisons and exact-head hosted CI plus
@@ -165,3 +165,38 @@ are tracked in `B09_LINEAR_SCALING/correction-04-power`. Final qualification,
 exact-head hosted CI and fresh independent native approval remain required;
 old source-bound passing gates do not certify this correction. Full B09
 shipping search/EEC/utility/serving and VarPro stay outside this library slice.
+
+
+## Correction-05: Clip bound ties and observable refusals
+
+Lane D advisory5994937113 and independent exact-head COMMENT5415170521
+identified signed-zero Clip bounds still using optimizer-dependent Rust min/max
+on `ff7ecde112030420919ca78ac5d9010d8dc12df6`. The actual stored-winner export
+mismatched native in four of five initial probes; the new repository regression
+fails on that source. Only the private v2 Rust library rewrites the Clip bounds
+to NaN-aware ordered selects with right-operand ties, and refuses unexpected
+helper text. Frozen emitters and evaluator identity remain unchanged. Training
+recipe admission continues to refuse every Clip tree.
+
+Twenty stored-winner Clip cohorts cover the five reported shapes and five finite
+nested variants at widths4/512, both zero-bound signs/orders, positive/negative
+inputs, minimum subnormals and finite extremes. The finite nested variants keep
+zero signs observable without relying on a constant-feature fit. They add640
+held-out rows to the existing stored-winner composition proof. The shared Pow
+corpus also pins the independently divergent base2 and base8/1024 exponents.
+Together both routes execute117384 exact backend prediction-word comparisons
+(native vs Rust/Python/C++), plus fit coefficients/MSE/state and refusals.
+
+A private evaluator unit checks Owned binding for mixed zeros at widths4/512
+and Borrowed ordinary/single-sign/nonzero-extrema controls. This makes the
+binding guard observable in unoptimized CI as well as release execution. Native
+and all three independent training recipes explicitly refuse the cancellation
+case whose nonzero slope is unrepresentable: c0 rows0,-1e12,1e12,1e-300 with
+targets0,0,0,1. Stored-export C++ drivers now honor the same strict sanitizer
+and C++20 matrix selectors as the training recipes.
+
+Source-bound failed attempts and actual exits are preserved under
+`B09_LINEAR_SCALING/correction-04-power`; new final-head light gates, release
+proof and affected matrices belong to `B09_LINEAR_SCALING/correction-05-clip`.
+No pending qualification, CI or native approval is asserted passed here. Full
+shipping search/profile/EEC/utility/serving and VarPro remain held.

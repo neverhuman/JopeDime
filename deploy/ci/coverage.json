@@ -7889,7 +7889,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "B09 opt-in scalar training-fold calibration, exact constant-feature fallback, typed finite/shape refusal, versioned stored slope/intercept and typed raw tree, deterministic width/poison replay, and Rust/Python/C++17 explicit fitted-library winner bit parity. No VarPro, legacy scoring/default changes, shipping selection/CLI integration, full train-and-predict recipe or Baseline utility promotion."
+      "scope": "B09 opt-in scalar training-fold calibration, exact constant-feature fallback, typed finite/shape refusal, versioned stored slope/intercept and typed raw tree, deterministic width/poison replay, and Rust/Python/C++17 explicit fitted-library winner bit parity. Signed-zero Clip bound ties execute in optimized exports. No VarPro, legacy scoring/default changes, shipping selection/CLI integration or Baseline utility promotion."
     },
     "target:feat-math/test/linear_scaling_recipes": {
       "discovery": {
@@ -7905,7 +7905,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "B09 local stacked training-library recipe continuation: explicit train-fold fitting, exact persisted variant2 coefficient and expression words, ordered native/Rust/Python/C++17 fit/MSE/inference bit parity across11 corpora, strict input and malformed-state refusal, hard-error clip recipe admission refusal. No standalone CSV wrapper, arbitrary winner loader, shipping search/CLI integration, VarPro or Baseline utility promotion; parked predecessor #178 required before landing."
+      "scope": "B09 opt-in training-library recipes: explicit train-fold fitting, exact persisted variant2 coefficient/expression words, native/Rust/Python/C++17 fit/MSE/state/inference bit parity, signed-zero and runtime-power composition families, unrepresentable nonzero-slope refusal, strict input/malformed-state and Clip recipe admission refusal. No standalone CSV wrapper, arbitrary winner loader, shipping search/CLI integration, VarPro or Baseline utility promotion."
     }
   }
 }
