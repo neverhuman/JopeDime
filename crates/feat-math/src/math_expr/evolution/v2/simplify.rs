@@ -1,0 +1,913 @@
+//! Bounded Remez compression (B19): the discrete minimax polynomial of a one-variable subtree on
+//! its observed training range, lowered to ordinary AST nodes. A rational denominator comes only
+//! with a pole-free certificate.
+//!
+//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]` until B18 merges and the
+//! search move is wired. Nothing outside its tests calls it. A compressed subtree is a proposal:
+//! the native protected re-score of the whole program decides acceptance, never the
+//! approximation error alone.
+//!
+//! Algorithm: the second Remez exchange on the sample abscissae (Pachón and Trefethen, BIT 49,
+//! 2009), in the Chebyshev basis on `t = (2v - (a + b)) / (b - a)`.
+//! - It starts from the Chebyshev extrema.
+//! - Each step solves `Σ c_j T_j(t_r) + (-1)^r h = f_r` on the reference by Gaussian elimination
+//!   with partial pivoting.
+//! - The new reference is the alternating run maxima with `|e| ≥ |h|`: same-sign neighbours are
+//!   merged, and the `n + 2` consecutive points containing the global maximum are kept.
+//! - It stops when `max|e| - |h| ≤ 1e-12 max|e|` (the de la Vallée Poussin bracket), or at the
+//!   iteration cap, and keeps the best fit seen.
+//! - Every tie goes to the lowest index and every sum runs in index order, so a fit is
+//!   bit-reproducible and independent of sample order and duplicates.
+
+use super::*;
+
+/// The largest degree fitted.
+const MAX_DEGREE: usize = 12;
+/// The exchange stops after this many steps.
+const MAX_ITERATIONS: usize = 32;
+/// The relative width of the certified bracket at which the exchange stops.
+const TOLERANCE: f64 = 1e-12;
+
+/// Why a fit stopped.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Stop {
+    /// `max|e| - |h| ≤ TOLERANCE max|e|`.
+    Converged,
+    /// The samples lie on a polynomial of the degree, to a few ulps.
+    ExactFit,
+    /// The exchange returned the same reference.
+    Stalled,
+    IterationLimit,
+    /// Fewer than `n + 2` alternating extrema, or a singular reference system.
+    Degenerate,
+}
+
+/// A discrete minimax fit.
+#[derive(Clone, Debug, PartialEq)]
+struct Minimax {
+    /// The fit interval: the smallest and largest sample abscissa.
+    lo: f64,
+    hi: f64,
+    /// Chebyshev coefficients in `t`.
+    chebyshev: Vec<f64>,
+    /// `|h|` on the final reference: a lower bound of the discrete minimax error.
+    levelled: f64,
+    /// The largest error over the samples: an upper bound.
+    max_error: f64,
+    iterations: usize,
+    stop: Stop,
+    /// The final reference, as indices into the sorted unique samples.
+    reference: Vec<usize>,
+}
+
+impl Minimax {
+    fn t(&self, v: f64) -> f64 {
+        (2.0 * v - (self.lo + self.hi)) / (self.hi - self.lo)
+    }
+
+    fn eval(&self, v: f64) -> f64 {
+        clenshaw(&self.chebyshev, self.t(v))
+    }
+
+    /// Monomial coefficients in `v` (ascending powers). This conversion is ill-conditioned when
+    /// the interval sits far from 0; the native re-score decides.
+    fn monomial(&self) -> Vec<f64> {
+        let alpha = 2.0 / (self.hi - self.lo);
+        let beta = -(self.lo + self.hi) / (self.hi - self.lo);
+        let n = self.chebyshev.len();
+        let mut out = vec![0.0; n];
+        let mut previous = vec![1.0];
+        add_scaled(&mut out, &previous, self.chebyshev[0]);
+        if n == 1 {
+            return out;
+        }
+        let mut current = vec![beta, alpha];
+        add_scaled(&mut out, &current, self.chebyshev[1]);
+        for &c in &self.chebyshev[2..] {
+            // T_{k+1} = 2 (α v + β) T_k - T_{k-1}.
+            let mut next = vec![0.0; current.len() + 1];
+            for (power, &a) in current.iter().enumerate() {
+                next[power] += 2.0 * beta * a;
+                next[power + 1] += 2.0 * alpha * a;
+            }
+            for (power, &a) in previous.iter().enumerate() {
+                next[power] -= a;
+            }
+            add_scaled(&mut out, &next, c);
+            previous = current;
+            current = next;
+        }
+        out
+    }
+}
+
+fn add_scaled(out: &mut [f64], polynomial: &[f64], scale: f64) {
+    for (o, &a) in out.iter_mut().zip(polynomial) {
+        *o += scale * a;
+    }
+}
+
+/// `Σ c_k T_k(t)` by Clenshaw's recurrence.
+fn clenshaw(c: &[f64], t: f64) -> f64 {
+    let (mut b1, mut b2) = (0.0f64, 0.0f64);
+    for &ck in c.iter().skip(1).rev() {
+        let b0 = ck + 2.0 * t * b1 - b2;
+        b2 = b1;
+        b1 = b0;
+    }
+    c[0] + t * b1 - b2
+}
+
+/// `T_0(t) .. T_n(t)`.
+fn chebyshev_row(t: f64, n: usize) -> Vec<f64> {
+    let mut row = Vec::with_capacity(n + 1);
+    row.push(1.0);
+    if n >= 1 {
+        row.push(t);
+    }
+    for k in 2..=n {
+        row.push(2.0 * t * row[k - 1] - row[k - 2]);
+    }
+    row
+}
+
+/// `A x = b` by Gaussian elimination with partial pivoting (pivot ties go to the lowest row), or
+/// `None` when a pivot is zero or a result is not finite.
+fn solve(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
+    let m = b.len();
+    for k in 0..m {
+        let pivot = (k..m).fold(k, |p, r| if a[r][k].abs() > a[p][k].abs() { r } else { p });
+        if a[pivot][k] == 0.0 || !a[pivot][k].is_finite() {
+            return None;
+        }
+        a.swap(k, pivot);
+        b.swap(k, pivot);
+        let (top, bottom) = a.split_at_mut(k + 1);
+        let pivot_row = &top[k];
+        let (b_top, b_bottom) = b.split_at_mut(k + 1);
+        for (row, rhs) in bottom.iter_mut().zip(b_bottom.iter_mut()) {
+            let factor = row[k] / pivot_row[k];
+            if factor == 0.0 {
+                continue;
+            }
+            for (value, &above) in row[k..].iter_mut().zip(&pivot_row[k..]) {
+                *value -= factor * above;
+            }
+            *rhs -= factor * b_top[k];
+        }
+    }
+    let mut x = vec![0.0; m];
+    for k in (0..m).rev() {
+        let mut s = b[k];
+        for (coefficient, known) in a[k][k + 1..].iter().zip(&x[k + 1..]) {
+            s -= coefficient * known;
+        }
+        x[k] = s / a[k][k];
+    }
+    x.iter().all(|v| v.is_finite()).then_some(x)
+}
+
+/// The sorted unique samples, or why the fit cannot start.
+fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
+    if samples
+        .iter()
+        .any(|(v, f)| !v.is_finite() || !f.is_finite())
+    {
+        return Err("a sample is not finite");
+    }
+    let mut sorted = samples.to_vec();
+    sorted.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)));
+    let mut unique: Vec<(f64, f64)> = Vec::with_capacity(sorted.len());
+    for (v, f) in sorted {
+        match unique.last() {
+            // `==` so -0.0 and 0.0 are one abscissa.
+            Some(&(lv, lf)) if lv == v => {
+                if lf.to_bits() != f.to_bits() {
+                    return Err("one abscissa has two targets");
+                }
+            }
+            _ => unique.push((v, f)),
+        }
+    }
+    Ok(unique)
+}
+
+/// The discrete minimax polynomial of `degree` on `samples` of `(v, f(v))`.
+fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static str> {
+    if degree > MAX_DEGREE {
+        return Err("degree above the cap");
+    }
+    let unique = prepare(samples)?;
+    let n = degree;
+    let count = unique.len();
+    if count < n + 2 {
+        return Err("fewer than degree + 2 distinct abscissae");
+    }
+    let (lo, hi) = (unique[0].0, unique[count - 1].0);
+    if lo >= hi || !(hi - lo).is_finite() {
+        return Err("empty or overflowing interval");
+    }
+    let t: Vec<f64> = unique
+        .iter()
+        .map(|(v, _)| (2.0 * v - (lo + hi)) / (hi - lo))
+        .collect();
+    let f: Vec<f64> = unique.iter().map(|(_, f)| *f).collect();
+    let f_max = f.iter().map(|v| v.abs()).fold(0.0f64, f64::max);
+    // The Chebyshev extrema, each at its nearest unused sample (ties to the lower index).
+    let mut reference = Vec::with_capacity(n + 2);
+    for j in 0..n + 2 {
+        let target = -(std::f64::consts::PI * j as f64 / (n + 1) as f64).cos();
+        let floor = reference.last().map_or(0, |&r: &usize| r + 1);
+        let ceiling = count - (n + 2 - j);
+        let nearest = (floor..=ceiling)
+            .min_by(|&a, &b| {
+                (t[a] - target)
+                    .abs()
+                    .total_cmp(&(t[b] - target).abs())
+                    .then(a.cmp(&b))
+            })
+            .expect("a nonempty range");
+        reference.push(nearest);
+    }
+    let mut best: Option<Minimax> = None;
+    for iteration in 1..=MAX_ITERATIONS {
+        let rows: Vec<Vec<f64>> = reference
+            .iter()
+            .enumerate()
+            .map(|(i, &r)| {
+                let mut row = chebyshev_row(t[r], n);
+                row.push(if i % 2 == 0 { 1.0 } else { -1.0 });
+                row
+            })
+            .collect();
+        let rhs: Vec<f64> = reference.iter().map(|&r| f[r]).collect();
+        let Some(x) = solve(rows, rhs) else {
+            return best
+                .map(|b| Minimax {
+                    stop: Stop::Degenerate,
+                    ..b
+                })
+                .ok_or("singular first reference");
+        };
+        let (chebyshev, h) = (x[..=n].to_vec(), x[n + 1]);
+        let errors: Vec<f64> = (0..count)
+            .map(|i| f[i] - clenshaw(&chebyshev, t[i]))
+            .collect();
+        let (mut global, mut max_error) = (0usize, 0.0f64);
+        for (i, e) in errors.iter().enumerate() {
+            if e.abs() > max_error {
+                max_error = e.abs();
+                global = i;
+            }
+        }
+        let fit = Minimax {
+            lo,
+            hi,
+            chebyshev,
+            levelled: h.abs(),
+            max_error,
+            iterations: iteration,
+            stop: Stop::IterationLimit,
+            reference: reference.clone(),
+        };
+        let improved = best.as_ref().is_none_or(|b| fit.max_error < b.max_error);
+        if improved {
+            best = Some(fit.clone());
+        }
+        if max_error <= 4.0 * f64::EPSILON * f_max {
+            return Ok(Minimax {
+                stop: Stop::ExactFit,
+                ..fit
+            });
+        }
+        // The bracket cannot close below the rounding noise of the errors themselves.
+        let noise = 64.0 * f64::EPSILON * f_max;
+        if max_error - h.abs() <= (TOLERANCE * max_error).max(noise) {
+            return Ok(Minimax {
+                stop: Stop::Converged,
+                ..fit
+            });
+        }
+        let next = exchange(&errors, h.abs(), global, n + 2)
+            .or_else(|| single_exchange(&errors, &reference, global));
+        let Some(next) = next else {
+            return Ok(Minimax {
+                stop: Stop::Degenerate,
+                ..best.expect("set above")
+            });
+        };
+        if next == reference {
+            return Ok(Minimax {
+                stop: Stop::Stalled,
+                ..best.expect("set above")
+            });
+        }
+        reference = next;
+    }
+    Ok(Minimax {
+        stop: Stop::IterationLimit,
+        ..best.expect("at least one step ran")
+    })
+}
+
+/// The next reference: the maximum of each run of same-sign errors, those with `|e| ≥ |h|`,
+/// same-sign neighbours merged to the larger, then `size` consecutive points containing the
+/// global maximum. `None` when fewer than `size` alternate.
+fn exchange(errors: &[f64], h: f64, global: usize, size: usize) -> Option<Vec<usize>> {
+    let sign = |e: f64| (e > 0.0) as i8 - (e < 0.0) as i8;
+    let mut extrema: Vec<usize> = Vec::new();
+    let mut run: Option<(i8, usize)> = None;
+    for (i, &e) in errors.iter().enumerate() {
+        let s = sign(e);
+        if s == 0 {
+            continue;
+        }
+        match run {
+            Some((rs, at)) if rs == s => {
+                if e.abs() > errors[at].abs() {
+                    run = Some((rs, i));
+                }
+            }
+            Some((_, at)) => {
+                extrema.push(at);
+                run = Some((s, i));
+            }
+            None => run = Some((s, i)),
+        }
+    }
+    if let Some((_, at)) = run {
+        extrema.push(at);
+    }
+    // A reference point's error is |h| only up to rounding, so the bar sits a hair below it; any
+    // alternating set at or above it still raises |h| (de la Vallée Poussin).
+    let bar = h * (1.0 - 1e-9);
+    let mut kept: Vec<usize> = Vec::new();
+    for i in extrema
+        .into_iter()
+        .filter(|&i| errors[i].abs() >= bar || i == global)
+    {
+        match kept.last() {
+            Some(&last) if sign(errors[last]) == sign(errors[i]) => {
+                if errors[i].abs() > errors[last].abs() {
+                    *kept.last_mut().expect("nonempty") = i;
+                }
+            }
+            _ => kept.push(i),
+        }
+    }
+    if kept.len() < size {
+        return None;
+    }
+    let position = kept.iter().position(|&i| i == global)?;
+    let start = position.saturating_sub(size - 1).min(kept.len() - size);
+    Some(kept[start..start + size].to_vec())
+}
+
+/// The first Remez algorithm's single-point exchange (Pachón and Trefethen §2): the global
+/// maximum replaces the reference point beside it whose error has the same sign, or enters at an
+/// end, shifting the reference, so the signs keep alternating. `None` when the global maximum is
+/// already a reference point.
+fn single_exchange(errors: &[f64], reference: &[usize], global: usize) -> Option<Vec<usize>> {
+    if reference.contains(&global) {
+        return None;
+    }
+    let same = |a: usize, b: usize| (errors[a] > 0.0) == (errors[b] > 0.0);
+    let mut next = reference.to_vec();
+    let last = next.len() - 1;
+    if global < next[0] {
+        if same(global, next[0]) {
+            next[0] = global;
+        } else {
+            next.pop();
+            next.insert(0, global);
+        }
+    } else if global > next[last] {
+        if same(global, next[last]) {
+            next[last] = global;
+        } else {
+            next.remove(0);
+            next.push(global);
+        }
+    } else {
+        let j = next.iter().position(|&r| r > global)? - 1;
+        if same(global, next[j]) {
+            next[j] = global;
+        } else {
+            next[j + 1] = global;
+        }
+    }
+    Some(next)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Lowering.
+
+/// `Σ a_k x^k` in Horner form over the leaf `x`, as ordinary AST nodes: `Add`/`Sub` of finite
+/// literals and `Mul` by `x`. A negative non-leading coefficient becomes a `Sub`, and a zero one
+/// is skipped. No `Pow` (its precision is unspecified) and no new node type.
+fn lower(coefficients: &[f64], x: &Expr) -> Option<Expr> {
+    if coefficients.is_empty() || coefficients.iter().any(|c| !c.is_finite()) {
+        return None;
+    }
+    let n = coefficients.len() - 1;
+    let mut acc = literal(coefficients[n]);
+    for &a in coefficients[..n].iter().rev() {
+        let product = Expr::Binary(BinOp::Mul, Box::new(x.clone()), Box::new(acc));
+        acc = if a == 0.0 {
+            product
+        } else if a > 0.0 {
+            Expr::Binary(BinOp::Add, Box::new(product), Box::new(Expr::Const(a)))
+        } else {
+            Expr::Binary(BinOp::Sub, Box::new(product), Box::new(Expr::Const(-a)))
+        };
+    }
+    Some(acc)
+}
+
+/// The one variable a subtree reads, and its `(v, f)` samples on the training rows. `None` when it
+/// reads no variable or more than one, or any row raises any fault or gives a non-finite value.
+fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec<(f64, f64)>)> {
+    fn variables(expr: &Expr, out: &mut Vec<Var>) {
+        match expr {
+            Expr::Var(v) => {
+                if !out.contains(v) {
+                    out.push(*v);
+                }
+            }
+            Expr::Const(_) => {}
+            Expr::Unary(_, a) => variables(a, out),
+            Expr::Binary(_, a, b) => {
+                variables(a, out);
+                variables(b, out);
+            }
+            Expr::Call(_, args) => args.iter().for_each(|a| variables(a, out)),
+        }
+    }
+    let mut found = Vec::new();
+    variables(&subtree.root, &mut found);
+    let [var] = found[..] else {
+        return None;
+    };
+    let leaf = MathExpr::from_ast(Expr::Var(var)).ok()?;
+    let mut out = Vec::with_capacity(rows.len());
+    for row in rows {
+        let (v, v_faults) = leaf.eval_row_traced(row);
+        let (f, f_faults) = subtree.eval_row_traced(row);
+        if !v_faults.is_empty() || !f_faults.is_empty() || !v.is_finite() || !f.is_finite() {
+            return None;
+        }
+        out.push((v, f));
+    }
+    Some((var, out))
+}
+
+// ---------------------------------------------------------------------------------------------
+// The pole-free certificate for a rational proposal's denominator.
+
+/// A closed interval of reals, widened outward by one ulp after every operation.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Interval {
+    lo: f64,
+    hi: f64,
+}
+
+impl Interval {
+    fn point(x: f64) -> Self {
+        Self { lo: x, hi: x }
+    }
+
+    fn add(self, o: Self) -> Self {
+        Self {
+            lo: (self.lo + o.lo).next_down(),
+            hi: (self.hi + o.hi).next_up(),
+        }
+    }
+
+    fn sub(self, o: Self) -> Self {
+        Self {
+            lo: (self.lo - o.hi).next_down(),
+            hi: (self.hi - o.lo).next_up(),
+        }
+    }
+
+    fn mul(self, o: Self) -> Self {
+        let p = [
+            self.lo * o.lo,
+            self.lo * o.hi,
+            self.hi * o.lo,
+            self.hi * o.hi,
+        ];
+        let lo = p.iter().copied().fold(f64::INFINITY, f64::min);
+        let hi = p.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        Self {
+            lo: lo.next_down(),
+            hi: hi.next_up(),
+        }
+    }
+
+    fn half(self) -> Self {
+        // Halving is exact unless it underflows; widen anyway.
+        Self {
+            lo: (self.lo * 0.5).next_down(),
+            hi: (self.hi * 0.5).next_up(),
+        }
+    }
+}
+
+/// The verdict of [`certify`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Certificate {
+    /// `Q ≥ margin` on the whole interval.
+    Positive { margin: f64, depth: usize },
+    /// `Q ≤ -margin` on the whole interval.
+    Negative { margin: f64, depth: usize },
+    /// Not proven within the subdivision depth: the proposal is refused.
+    Refused,
+}
+
+/// Whether the polynomial `q` (ascending powers of `v`) stays at least `threshold` plus its
+/// floating-point evaluation error away from zero on `[lo, hi]`. The proof is the Bernstein
+/// enclosure (Garloff 1993) in outward-rounded interval arithmetic, subdividing at the midpoint
+/// up to `max_depth`. Protected division returns 0 below |Q| = 1e-12, so a rational proposal
+/// needs `threshold ≥ 1e-12`.
+fn certify(q: &[f64], lo: f64, hi: f64, threshold: f64, max_depth: usize) -> Certificate {
+    if q.is_empty() || lo.is_nan() || hi.is_nan() || lo >= hi || q.iter().any(|c| !c.is_finite()) {
+        return Certificate::Refused;
+    }
+    let m = q.len() - 1;
+    // Horner's forward error bound (Higham): γ_{2m} Σ |q_j| M^j with γ_k = k u / (1 - k u).
+    let u = f64::EPSILON / 2.0;
+    let gamma = (2 * m) as f64 * u / (1.0 - (2 * m) as f64 * u);
+    let reach = lo.abs().max(hi.abs());
+    let bound: f64 = q
+        .iter()
+        .enumerate()
+        .map(|(j, c)| c.abs() * reach.powi(j as i32))
+        .sum::<f64>();
+    let margin = threshold + 2.0 * gamma * bound;
+    // q̂(s) = q(lo + (hi - lo) s), expanded in powers of s.
+    let width = Interval::point(hi).sub(Interval::point(lo));
+    let base = Interval::point(lo);
+    let mut shifted = vec![Interval::point(0.0); m + 1];
+    for (j, &c) in q.iter().enumerate() {
+        // c (lo + w s)^j = Σ_l C(j, l) c lo^(j - l) w^l s^l.
+        for (l, slot) in shifted.iter_mut().enumerate().take(j + 1) {
+            let mut term = Interval::point(c).mul(Interval::point(binomial(j, l)));
+            for _ in 0..(j - l) {
+                term = term.mul(base);
+            }
+            for _ in 0..l {
+                term = term.mul(width);
+            }
+            *slot = slot.add(term);
+        }
+    }
+    // Bernstein coefficients b_i = Σ_{l ≤ i} C(i, l) / C(m, l) q̂_l.
+    let bernstein: Vec<Interval> = (0..=m)
+        .map(|i| {
+            (0..=i).fold(Interval::point(0.0), |sum, l| {
+                let ratio = binomial(i, l) / binomial(m, l);
+                let ratio = Interval {
+                    lo: ratio.next_down(),
+                    hi: ratio.next_up(),
+                };
+                sum.add(ratio.mul(shifted[l]))
+            })
+        })
+        .collect();
+    let mut pending = vec![(bernstein, 0usize)];
+    let (mut positive, mut negative, mut deepest) = (true, true, 0usize);
+    while let Some((b, depth)) = pending.pop() {
+        deepest = deepest.max(depth);
+        let all_above = b.iter().all(|c| c.lo > margin);
+        let all_below = b.iter().all(|c| c.hi < -margin);
+        if all_above {
+            negative = false;
+            continue;
+        }
+        if all_below {
+            positive = false;
+            continue;
+        }
+        if depth == max_depth {
+            return Certificate::Refused;
+        }
+        let (left, right) = de_casteljau_halves(&b);
+        pending.push((right, depth + 1));
+        pending.push((left, depth + 1));
+    }
+    match (positive, negative) {
+        (true, false) => Certificate::Positive {
+            margin,
+            depth: deepest,
+        },
+        (false, true) => Certificate::Negative {
+            margin,
+            depth: deepest,
+        },
+        _ => Certificate::Refused,
+    }
+}
+
+fn binomial(n: usize, k: usize) -> f64 {
+    (0..k).fold(1.0, |acc, i| acc * (n - i) as f64 / (i + 1) as f64)
+}
+
+/// The Bernstein coefficients of the two halves of the interval (de Casteljau at 1/2).
+fn de_casteljau_halves(b: &[Interval]) -> (Vec<Interval>, Vec<Interval>) {
+    let m = b.len();
+    let mut work = b.to_vec();
+    let mut left = Vec::with_capacity(m);
+    let mut right = vec![Interval::point(0.0); m];
+    left.push(work[0]);
+    right[m - 1] = work[m - 1];
+    for level in 1..m {
+        for i in 0..(m - level) {
+            work[i] = work[i].add(work[i + 1]).half();
+        }
+        left.push(work[0]);
+        right[m - 1 - level] = work[m - 1 - level];
+    }
+    (left, right)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Pcg32;
+
+    fn grid(lo: f64, hi: f64, points: usize, f: impl Fn(f64) -> f64) -> Vec<(f64, f64)> {
+        (0..points)
+            .map(|i| {
+                let v = lo + (hi - lo) * i as f64 / (points - 1) as f64;
+                (v, f(v))
+            })
+            .collect()
+    }
+
+    fn close(actual: f64, expected: f64, relative: f64) -> bool {
+        (actual - expected).abs() <= relative * expected.abs()
+    }
+
+    #[test]
+    fn exp_on_the_unit_interval_matches_the_published_minimax_errors() {
+        // Atkinson, An Introduction to Numerical Analysis, §4.4: ρ_n(e^x) on [-1, 1], n = 1..9.
+        let published = [
+            2.79e-1, 4.50e-2, 5.53e-3, 5.47e-4, 4.52e-5, 3.21e-6, 2.00e-7, 1.11e-8, 5.52e-10,
+        ];
+        let samples = grid(-1.0, 1.0, 4001, f64::exp);
+        for (n, rho) in published.iter().enumerate().map(|(i, r)| (i + 1, *r)) {
+            let fit = minimax(&samples, n).unwrap();
+            assert!(fit.levelled <= fit.max_error, "n={n}: {fit:?}");
+            // Three printed significant digits: half a unit in the last place is at most 5e-3
+            // relative. The discrete minimax can only be at or below the continuous one.
+            assert!(
+                close(fit.max_error, rho, 5e-3),
+                "n={n}: {} vs {rho}",
+                fit.max_error
+            );
+            assert!(
+                matches!(fit.stop, Stop::Converged | Stop::Stalled),
+                "n={n}: {:?}",
+                fit.stop
+            );
+            assert!(fit.iterations <= 20, "n={n}: {} steps", fit.iterations);
+        }
+    }
+
+    #[test]
+    fn the_linear_fit_is_the_closed_form_when_the_alternation_point_is_sampled() {
+        // a1 = sinh 1, x* = ln(sinh 1), a0 = (e - sinh(1) x*) / 2, ρ1 = (1/e + sinh(1) x*) / 2.
+        let s = 1f64.sinh();
+        let star = s.ln();
+        let a0 = (1f64.exp() - s * star) / 2.0;
+        let rho = ((-1f64).exp() + s * star) / 2.0;
+        let mut samples = grid(-1.0, 1.0, 801, f64::exp);
+        samples.push((star, star.exp()));
+        let fit = minimax(&samples, 1).unwrap();
+        let monomial = fit.monomial();
+        assert!(close(monomial[1], s, 1e-14), "{monomial:?}");
+        assert!(close(monomial[0], a0, 1e-14), "{monomial:?}");
+        assert!(
+            close(fit.max_error, rho, 1e-14),
+            "{} vs {rho}",
+            fit.max_error
+        );
+        assert!(close(fit.levelled, rho, 1e-13));
+    }
+
+    #[test]
+    fn quadratic_and_cubic_coefficients_match_their_published_digits() {
+        let samples = grid(-1.0, 1.0, 4001, f64::exp);
+        let quadratic = minimax(&samples, 2).unwrap().monomial();
+        for (a, b) in quadratic.iter().zip([0.9890, 1.1302, 0.5540]) {
+            assert!((a - b).abs() <= 1e-4, "{quadratic:?}");
+        }
+        let cubic = minimax(&samples, 3).unwrap().monomial();
+        for (a, b) in cubic.iter().zip([0.994579, 0.995668, 0.542973, 0.179533]) {
+            assert!((a - b).abs() <= 2e-6, "{cubic:?}");
+        }
+    }
+
+    #[test]
+    fn higher_degree_fixtures_from_sollya_and_chebfun() {
+        // Sollya: remez(exp(x), 5, [0;1]) has error 1.129569802274787e-6.
+        let fit = minimax(&grid(0.0, 1.0, 4001, f64::exp), 5).unwrap();
+        assert!(
+            close(fit.max_error, 1.129569802274787e-6, 1e-3),
+            "{}",
+            fit.max_error
+        );
+        // Pachón and Trefethen, Table 1, degree 10 on [-1, 1].
+        let f1 = |x: f64| (x + 0.5).tanh() - (x - 0.5).tanh();
+        let fit = minimax(&grid(-1.0, 1.0, 8001, f1), 10).unwrap();
+        assert!(
+            close(fit.max_error, 0.000_000_300_091_95, 1e-3),
+            "{}",
+            fit.max_error
+        );
+        let f2 = |x: f64| x.exp().sin();
+        let fit = minimax(&grid(-1.0, 1.0, 8001, f2), 10).unwrap();
+        assert!(
+            close(fit.max_error, 0.000_001_786_234_00, 1e-3),
+            "{}",
+            fit.max_error
+        );
+    }
+
+    #[test]
+    fn the_final_reference_alternates_at_the_levelled_error() {
+        let samples = grid(-1.0, 1.0, 2001, |x| (2.0 * x).sin() + 0.3 * x);
+        let fit = minimax(&samples, 4).unwrap();
+        let unique = prepare(&samples).unwrap();
+        let errors: Vec<f64> = fit
+            .reference
+            .iter()
+            .map(|&r| unique[r].1 - fit.eval(unique[r].0))
+            .collect();
+        for pair in errors.windows(2) {
+            assert!(pair[0] * pair[1] < 0.0, "{errors:?}");
+        }
+        for e in &errors {
+            assert!(
+                close(e.abs(), fit.levelled, 1e-9),
+                "{errors:?} vs {}",
+                fit.levelled
+            );
+        }
+    }
+
+    #[test]
+    fn fits_ignore_sample_order_and_duplicates() {
+        let samples = grid(-2.0, 3.0, 701, |x| (0.7 * x).cos() * x);
+        let reference = minimax(&samples, 5).unwrap();
+        let mut rng = Pcg32::new(0xB19, 1);
+        for _ in 0..4 {
+            let mut shuffled = samples.clone();
+            shuffled.extend(samples.iter().step_by(7).copied());
+            for i in (1..shuffled.len()).rev() {
+                let j = rng.next_u32() as usize % (i + 1);
+                shuffled.swap(i, j);
+            }
+            let fit = minimax(&shuffled, 5).unwrap();
+            let bits = |m: &Minimax| m.chebyshev.iter().map(|c| c.to_bits()).collect::<Vec<_>>();
+            assert_eq!(bits(&fit), bits(&reference));
+            assert_eq!(fit.reference, reference.reference);
+            assert_eq!(fit.max_error.to_bits(), reference.max_error.to_bits());
+        }
+    }
+
+    #[test]
+    fn exact_polynomials_and_refusals() {
+        let cubic = |x: f64| 0.5 - 1.25 * x + 0.75 * x * x * x;
+        let fit = minimax(&grid(-1.0, 1.0, 101, cubic), 3).unwrap();
+        assert_eq!(fit.stop, Stop::ExactFit);
+        assert!(fit.max_error <= 1e-15);
+        assert_eq!(
+            minimax(&grid(0.0, 1.0, 4, f64::exp), 3).unwrap_err(),
+            "fewer than degree + 2 distinct abscissae"
+        );
+        assert!(minimax(&[(1.0, 1.0), (1.0, 2.0), (2.0, 3.0), (3.0, 1.0)], 1).is_err());
+        assert!(minimax(&[(1.0, f64::NAN), (2.0, 1.0), (3.0, 1.0)], 1).is_err());
+        assert!(minimax(&grid(0.0, 1.0, 100, f64::exp), MAX_DEGREE + 1).is_err());
+        let one_point: Vec<(f64, f64)> = (0..10).map(|_| (2.0, 1.0)).collect();
+        assert!(minimax(&one_point, 1).is_err());
+    }
+
+    fn native(expr: &Expr, v: f64) -> (f64, FaultSet) {
+        MathExpr::from_ast(expr.clone())
+            .unwrap()
+            .eval_row_traced(&[v])
+    }
+
+    #[test]
+    fn lowering_uses_ordinary_nodes_within_the_published_budget() {
+        let x = Expr::Var(Var::Col(0));
+        let cases: [(&[f64], usize, usize); 4] = [
+            (&[1.25, 0.5], 5, 3),
+            (&[1.25, 0.5, 0.75], 9, 5),
+            (&[1.25, 0.5, 0.75, 0.125], 13, 7),
+            // Negative non-leading coefficients become Sub at no extra cost.
+            (&[-1.25, -0.5, 0.75], 9, 5),
+        ];
+        for (coefficients, nodes, height) in cases {
+            let tree = lower(coefficients, &x).unwrap();
+            assert_eq!(count_nodes(&tree), nodes, "{coefficients:?}");
+            assert_eq!(depth(&tree), height, "{coefficients:?}");
+            for v in [-1.5, -0.25, 0.0, 0.6, 2.0] {
+                let expected = coefficients.iter().rev().fold(0.0, |acc, c| acc * v + c);
+                let (value, faults) = native(&tree, v);
+                assert!(faults.is_empty());
+                assert!(
+                    (value - expected).abs() <= 1e-14 * expected.abs().max(1.0),
+                    "{coefficients:?} at {v}"
+                );
+            }
+        }
+        // A negative leading coefficient is a literal, two nodes.
+        let tree = lower(&[1.0, -2.0], &x).unwrap();
+        assert_eq!(count_nodes(&tree), 6);
+        assert!(lower(&[1.0, f64::NAN], &x).is_none());
+        assert!(lower(&[], &x).is_none());
+    }
+
+    #[test]
+    fn a_one_variable_subtree_compresses_and_the_native_value_decides_outside_the_range() {
+        let rows: Vec<Vec<f64>> = (0..201)
+            .map(|i| vec![-1.0 + f64::from(i) / 100.0, 7.0])
+            .collect();
+        let subtree = MathExpr::parse("exp(0.5*c0)+0.25").unwrap();
+        let (var, points) = samples(&subtree, &rows).unwrap();
+        assert_eq!(var, Var::Col(0));
+        let fit = minimax(&points, 3).unwrap();
+        let tree = lower(&fit.monomial(), &Expr::Var(var)).unwrap();
+        let compressed = MathExpr::from_ast(tree).unwrap();
+        // On the training range the lowered tree is within the minimax error, up to rounding.
+        for row in &rows {
+            let (a, _) = compressed.eval_row_traced(row);
+            let (b, _) = subtree.eval_row_traced(row);
+            assert!(
+                (a - b).abs() <= fit.max_error * (1.0 + 1e-6) + 1e-15,
+                "{row:?}"
+            );
+        }
+        // Outside it the polynomial drifts: only a native re-score on held-out rows can tell.
+        let (a, _) = compressed.eval_row_traced(&[4.0, 7.0]);
+        let (b, _) = subtree.eval_row_traced(&[4.0, 7.0]);
+        assert!((a - b).abs() > 100.0 * fit.max_error, "{a} vs {b}");
+        // Subtrees reading two variables, or faulting on a row, are not sampled.
+        assert!(samples(&MathExpr::parse("c0*c1").unwrap(), &rows).is_none());
+        assert!(samples(&MathExpr::parse("log(c0)").unwrap(), &rows).is_none());
+        assert!(samples(&MathExpr::parse("3.0").unwrap(), &rows).is_none());
+    }
+
+    #[test]
+    fn the_bernstein_certificate_proves_only_pole_free_denominators() {
+        // 1 + 0.5 v² on [0, 1]: at least 1.
+        assert!(matches!(
+            certify(&[1.0, 0.0, 0.5], 0.0, 1.0, 1e-12, 4),
+            Certificate::Positive { .. }
+        ));
+        // A root inside the interval: v - 0.3 and v² - 0.25 on [0, 1].
+        assert_eq!(
+            certify(&[-0.3, 1.0], 0.0, 1.0, 1e-12, 6),
+            Certificate::Refused
+        );
+        assert_eq!(
+            certify(&[-0.25, 0.0, 1.0], 0.0, 1.0, 1e-12, 6),
+            Certificate::Refused
+        );
+        // A minimum of 5e-13 sits below the protected-division threshold.
+        assert_eq!(
+            certify(&[5e-13 + 0.25, -1.0, 1.0], 0.0, 1.0, 1e-12, 8),
+            Certificate::Refused
+        );
+        // A negative denominator is certified as such, and subdivision tightens the enclosure.
+        assert!(matches!(
+            certify(&[-2.0, 0.0, 1.0], -1.0, 1.0, 1e-12, 4),
+            Certificate::Negative { .. }
+        ));
+        match certify(&[0.3, -1.0, 1.0], 0.0, 1.0, 1e-12, 8) {
+            Certificate::Positive { depth, .. } => assert!(depth >= 1),
+            other => panic!("{other:?}"),
+        }
+        assert_eq!(certify(&[1.0], 1.0, 1.0, 1e-12, 4), Certificate::Refused);
+        assert_eq!(
+            certify(&[f64::NAN], 0.0, 1.0, 1e-12, 4),
+            Certificate::Refused
+        );
+    }
+
+    #[test]
+    fn interval_operations_enclose_their_exact_results() {
+        let a = Interval::point(0.1);
+        let b = Interval::point(0.2);
+        let sum = a.add(b);
+        assert!(sum.lo < 0.30000000000000004 && sum.hi > 0.3);
+        let product = Interval { lo: -1.0, hi: 2.0 }.mul(Interval { lo: -3.0, hi: 0.5 });
+        assert!(product.lo <= -6.0 && product.hi >= 3.0);
+        let halves = de_casteljau_halves(&[Interval::point(1.0), Interval::point(3.0)]);
+        assert!(halves.0[1].lo <= 2.0 && halves.0[1].hi >= 2.0);
+        assert_eq!(halves.1[1], Interval::point(3.0));
+    }
+}
