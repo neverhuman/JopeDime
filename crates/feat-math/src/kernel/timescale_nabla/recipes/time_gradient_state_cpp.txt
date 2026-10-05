@@ -1,4 +1,4 @@
-struct TimeGradientRejection : OrderedError {std::uint32_t faults;TimeGradientRejection(const char* kind,std::uint32_t bits):OrderedError(kind),faults(bits){}};
+struct TimeGradientRejection : OrderedError {TimeGradientRejection(const char* kind,std::uint32_t bits):OrderedError(kind,bits){}};
 struct TimeGradientState {
     double minimum_gap;std::size_t width;std::string input,cut;std::size_t train_end,total_rows,ordinal=0;
     std::map<OrderedGroup,std::tuple<double,std::size_t,std::size_t>> groups;
