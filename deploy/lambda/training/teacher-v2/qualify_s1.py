@@ -69,9 +69,19 @@ MUTANTS = {
             "legacy_failed_live_admission_cannot_mint_s1_history",
         ),
         "legacy_failed_resume": (
-            "validate_history(&value, &self.context)?;",
-            "// legacy failed rows admitted",
+            'if value["selection_protocol"] != SELECTION_PROTOCOL\n',
+            "if false\n",
             "legacy_failed_resume_cannot_change_seen_programs",
+        ),
+        "unknown_history_status": (
+            '|| !matches!(\n            value["status"].as_str(),\n            Some("completed" | "failed" | "timeout")\n        )',
+            "|| false",
+            "malformed_history_refuses_before_any_replay_state_change",
+        ),
+        "duplicate_history_delivery": (
+            "if !unique.insert(row.program.program_sha256.clone()) {",
+            'if !unique.insert(format!("{}:{}", row.program.program_sha256, rows.len())) {',
+            "duplicate_history_cannot_advance_completed_generations",
         ),
     },
     "lambda-worker": {
@@ -116,6 +126,12 @@ def intended_rust_failure(output, assertion, exit_code):
         "legacy_failed_live_admission_cannot_mint_s1_history": [
             "S1_ASSERT_LEGACY_LIVE_ADMISSION",
             "S1_ASSERT_REPLAY_REFUSED",
+        ],
+        "malformed_history_refuses_before_any_replay_state_change": [
+            "S1_ASSERT_HISTORY_ADMISSION", "S1_ASSERT_HISTORY_ATOMIC",
+        ],
+        "duplicate_history_cannot_advance_completed_generations": [
+            "S1_ASSERT_HISTORY_DUPLICATE", "S1_ASSERT_HISTORY_REIMPORT",
         ],
     }.get(assertion, [])
     return (

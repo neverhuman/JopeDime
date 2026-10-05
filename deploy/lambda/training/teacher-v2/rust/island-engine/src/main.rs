@@ -158,7 +158,7 @@ struct Island {
     completed: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 struct SampleManifest {
     context_sha256: String,
     oof_rows: usize,
@@ -177,12 +177,14 @@ struct Pending {
     proposal_draw: u64,
 }
 
+#[derive(Clone)]
 struct Engine {
     context: String,
     proposal_binary: PathBuf,
     all: HashMap<String, Individual>,
     islands: Vec<Island>,
     seen: HashSet<String>,
+    applied_results: HashSet<String>,
     active: HashSet<String>,
     active_semantics: HashSet<String>,
     pending: HashMap<String, Pending>,
@@ -334,23 +336,9 @@ impl Engine {
             all.get_mut(&hash).unwrap().roots = roots;
         }
         let mut seen = HashSet::new();
-        for line in BufReader::new(File::open(seen_jsonl)?).lines() {
-            let value: Value = serde_json::from_str(&line?)?;
-            validate_history(&value, &context)?;
-            if let Some(hash) = value
-                .get("program")
-                .and_then(|x| x.get("program_sha256"))
-                .and_then(Value::as_str)
-            {
-                seen.insert(hash.to_owned());
-                if let Some(birth) = value
-                    .get("program")
-                    .and_then(|x| x.get("birth_seq"))
-                    .and_then(Value::as_u64)
-                {
-                    max_birth = max_birth.max(birth);
-                }
-            }
+        for row in read_history(seen_jsonl, &context)? {
+            max_birth = max_birth.max(row.program.birth_seq);
+            seen.insert(row.program.program_sha256);
         }
         let seed = u64::from_str_radix(&context[..16], 16)? ^ 0x15A1_A5E5_2026_0002;
         let islands = POLICIES
@@ -368,6 +356,7 @@ impl Engine {
             all,
             islands,
             seen,
+            applied_results: HashSet::new(),
             active: HashSet::new(),
             active_semantics: HashSet::new(),
             pending: HashMap::new(),
@@ -681,95 +670,35 @@ impl Engine {
     }
 
     fn load_resume(&mut self, path: &Path) -> Result<()> {
-        for line in BufReader::new(File::open(path)?).lines() {
-            let value: Value = serde_json::from_str(&line?)?;
-            validate_history(&value, &self.context)?;
-            let hash = value
-                .get("program")
-                .and_then(|x| x.get("program_sha256"))
-                .and_then(Value::as_str)
-                .unwrap_or_default()
-                .to_owned();
-            if !hash.is_empty() {
-                self.seen.insert(hash);
+        let rows = read_history(path, &self.context)?;
+        for row in &rows {
+            if self.applied_results.contains(&row.program.program_sha256) {
+                bail!("replayed terminal program result")
             }
-            if value.get("status").and_then(Value::as_str) != Some("completed") {
-                continue;
+        }
+        // Reselection can fail too. Commit the complete import, including RNG,
+        // only after every record and every resulting island has passed.
+        let mut staged = self.clone();
+        for row in rows {
+            let hash = row.program.program_sha256.clone();
+            staged.seen.insert(hash.clone());
+            staged.applied_results.insert(hash.clone());
+            staged.next_birth = staged.next_birth.max(row.program.birth_seq + 1);
+            staged.proposal_seq = staged.proposal_seq.max(row.proposal_seq);
+            staged.next_draw = staged.next_draw.max(row.next_draw);
+            if let Some(individual) = row.individual {
+                staged.all.insert(hash.clone(), individual);
+                staged.islands[row.island_id].archive.push(hash);
+                staged.islands[row.island_id].completed += 1;
+                staged.new_completed += 1;
             }
-            let island_id = value
-                .get("island_id")
-                .and_then(Value::as_u64)
-                .ok_or_else(|| anyhow!("resume completed row missing island_id"))?
-                as usize;
-            let individual = self.individual_from_scored(&value)?;
-            self.next_birth = self.next_birth.max(individual.program.birth_seq + 1);
-            self.proposal_seq = self.proposal_seq.max(
-                value
-                    .get("proposal_seq")
-                    .and_then(Value::as_u64)
-                    .unwrap_or(0),
-            );
-            self.next_draw = self.next_draw.max(
-                value
-                    .get("proposal_draw")
-                    .and_then(Value::as_u64)
-                    .map(|draw| draw + 1)
-                    .unwrap_or(0),
-            );
-            let hash = individual.program.program_sha256.clone();
-            self.all.insert(hash.clone(), individual);
-            self.islands[island_id].archive.push(hash);
-            self.islands[island_id].completed += 1;
-            self.new_completed += 1;
         }
         for island_id in 0..ISLANDS {
-            self.reselect(island_id)?;
+            staged.reselect(island_id)?;
         }
-        self.migration_epoch = self.new_completed / MIGRATION_INTERVAL;
+        staged.migration_epoch = staged.new_completed / MIGRATION_INTERVAL;
+        *self = staged;
         Ok(())
-    }
-
-    fn individual_from_scored(&self, value: &Value) -> Result<Individual> {
-        if value["selection_protocol"] != SELECTION_PROTOCOL
-            || value["schema"] != "jope.island-scored-evaluation/s1-v1"
-        {
-            bail!("historical/test-derived resume is not S1")
-        }
-        let program: Program = serde_json::from_value(value["program"].clone())?;
-        Ok(Individual {
-            program,
-            full_prediction_sha256: value["full_prediction_sha256"]
-                .as_str()
-                .ok_or_else(|| anyhow!("missing semantic hash"))?
-                .to_owned(),
-            signature: decode_f32(
-                value["semantic_signature_f32_b64"].as_str().unwrap(),
-                SIGNATURE,
-            )?,
-            cases: decode_f32(
-                value["sampled_absolute_error_f32_b64"].as_str().unwrap(),
-                CASES,
-            )?,
-            fitness: value["fitness"].as_f64().unwrap(),
-            cv_gate_passed: value["cv_gate_passed"].as_bool().unwrap(),
-            cv_fold_wins: value["cv_fold_wins"].as_u64().unwrap(),
-            cv_geomean_rmse_ratio: value["cv_geomean_rmse_ratio"].as_f64().unwrap(),
-            cv_mean_log_ratio: value["cv_mean_log_ratio"].as_f64().unwrap(),
-            cv_tail_log_ratio: value["cv_tail_log_ratio"].as_f64().unwrap(),
-            cv_log_ratio_sd: value["cv_log_ratio_sd"].as_f64().unwrap(),
-            test_rmse: value["test_rmse"].as_f64(),
-            test_rmse_ratio: value["test_rmse_ratio"].as_f64(),
-            complexity_open_parens: value["complexity_open_parens"].as_u64().unwrap(),
-            billed_ms: value.get("billed_ms").and_then(Value::as_u64),
-            max_memory_used_mb: value.get("max_memory_used_mb").and_then(Value::as_u64),
-            result_key: value["result_key"].as_str().unwrap_or_default().to_owned(),
-            roots: serde_json::from_value(value["roots"].clone())?,
-            born_completed: value["born_completed"].as_u64().unwrap_or(0),
-            origin_island: value
-                .get("origin_island")
-                .and_then(Value::as_u64)
-                .map(|x| x as usize),
-        })
     }
 
     fn parent_pool(&mut self, island_id: usize) -> Vec<String> {
@@ -989,6 +918,7 @@ impl Engine {
         }
         let status = record["status"].as_str().unwrap_or("missing");
         if status != "completed" {
+            self.applied_results.insert(program.program_sha256.clone());
             self.pending.remove(&program.program_sha256);
             return Ok(json!({
                 "schema":"jope.island-scored-evaluation/s1-v1",
@@ -1004,6 +934,8 @@ impl Engine {
             }));
         }
         let mut individual = self.score_record(record, program, result_key)?;
+        self.applied_results
+            .insert(individual.program.program_sha256.clone());
         self.pending.remove(&individual.program.program_sha256);
         individual.origin_island = Some(island_id);
         individual.born_completed = self.new_completed;
@@ -1446,11 +1378,110 @@ impl Engine {
     }
 }
 
-fn validate_history(value: &Value, context: &str) -> Result<()> {
-    if value["selection_protocol"] != SELECTION_PROTOCOL || value["context_sha256"] != context {
+struct HistoryRow {
+    program: Program,
+    island_id: usize,
+    proposal_seq: u64,
+    next_draw: u64,
+    individual: Option<Individual>,
+}
+
+fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
+    if value["selection_protocol"] != SELECTION_PROTOCOL
+        || value["context_sha256"] != context
+        || value["schema"] != "jope.island-scored-evaluation/s1-v1"
+        || !matches!(
+            value["status"].as_str(),
+            Some("completed" | "failed" | "timeout")
+        )
+    {
         bail!("history is not the admitted S1 context/protocol")
     }
-    Ok(())
+    let program: Program = serde_json::from_value(value["program"].clone())?;
+    if program.dsl.is_empty()
+        || program.operator.is_empty()
+        || program.program_sha256.len() != 64
+        || !program
+            .program_sha256
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        || program.birth_seq.checked_add(1).is_none()
+    {
+        bail!("invalid history program")
+    }
+    let island_id = usize::try_from(
+        value["island_id"]
+            .as_u64()
+            .ok_or_else(|| anyhow!("history missing island_id"))?,
+    )?;
+    if island_id >= ISLANDS {
+        bail!("invalid history island")
+    }
+    let proposal_seq = value["proposal_seq"]
+        .as_u64()
+        .ok_or_else(|| anyhow!("history missing proposal_seq"))?;
+    let next_draw = value["proposal_draw"]
+        .as_u64()
+        .and_then(|draw| draw.checked_add(1))
+        .ok_or_else(|| anyhow!("history missing or overflowing proposal_draw"))?;
+    let individual = if value["status"] == "completed" {
+        let mut scored = value.clone();
+        scored["program_sha256"] = json!(program.program_sha256);
+        // Optional test diagnostics remain outside CV selection/admission.
+        for field in ["test_rmse", "test_rmse_ratio"] {
+            scored[field] = value[field].as_f64().map_or(Value::Null, |x| json!(x));
+        }
+        let mut individual = Individual::from_semantic(serde_json::from_value(scored)?)?;
+        if individual
+            .signature
+            .iter()
+            .chain(&individual.cases)
+            .any(|x| !x.is_finite())
+            || [
+                individual.fitness,
+                individual.cv_geomean_rmse_ratio,
+                individual.cv_mean_log_ratio,
+                individual.cv_tail_log_ratio,
+                individual.cv_log_ratio_sd,
+            ]
+            .iter()
+            .any(|x| !x.is_finite())
+        {
+            bail!("nonfinite scored history")
+        }
+        individual.roots = serde_json::from_value(value["roots"].clone())?;
+        individual.born_completed = value["born_completed"]
+            .as_u64()
+            .ok_or_else(|| anyhow!("history missing born_completed"))?;
+        if value["origin_island"].as_u64() != Some(island_id as u64) {
+            bail!("history origin island mismatch")
+        }
+        individual.origin_island = Some(island_id);
+        Some(individual)
+    } else {
+        None
+    };
+    Ok(HistoryRow {
+        program,
+        island_id,
+        proposal_seq,
+        next_draw,
+        individual,
+    })
+}
+
+fn read_history(path: &Path, context: &str) -> Result<Vec<HistoryRow>> {
+    let mut rows = Vec::new();
+    let mut unique = HashSet::new();
+    for line in BufReader::new(File::open(path)?).lines() {
+        let value: Value = serde_json::from_str(&line?)?;
+        let row = validate_history(&value, context)?;
+        if !unique.insert(row.program.program_sha256.clone()) {
+            bail!("duplicate terminal program result in history")
+        }
+        rows.push(row);
+    }
+    Ok(rows)
 }
 
 fn validate_sample(sample: &SampleManifest) -> Result<()> {
@@ -1599,6 +1630,7 @@ mod tests {
             all: HashMap::new(),
             islands: Vec::new(),
             seen: HashSet::new(),
+            applied_results: HashSet::new(),
             active: HashSet::new(),
             active_semantics: HashSet::new(),
             pending: HashMap::new(),
@@ -1819,8 +1851,7 @@ mod tests {
     fn stale_resume_and_semantic_cache_are_refused() {
         let e = s1_engine();
         assert!(
-            e.individual_from_scored(&json!({"schema":"jope.island-scored-evaluation/v1"}))
-                .is_err()
+            validate_history(&json!({"schema":"jope.island-scored-evaluation/v1"}), "c").is_err()
         );
         let (record, p) = record(3, 9);
         let individual = e.score_record(&record, p.clone(), String::new()).unwrap();
@@ -1850,10 +1881,20 @@ mod tests {
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
         fs::create_dir_all(&dir).unwrap();
         let path = dir.join(format!("resume-{}.jsonl", std::process::id()));
-        fs::write(&path,serde_json::to_vec(&json!({"schema":"jope.island-scored-evaluation/v1","context_sha256":"c","status":"failed","program":{"program_sha256":"old-test-derived"}})).unwrap()).unwrap();
-        assert!(e.load_resume(&path).is_err());
-        assert_eq!(e.seen, before, "S1_ASSERT_LEGACY_SEEN_RETAINED");
-        assert!(validate_history(&json!({"selection_protocol":SELECTION_PROTOCOL,"context_sha256":"c","status":"failed"}),"c").is_ok());
+        let issued = issued_history("failed", 1_000_007);
+        let mut old_schema = issued.clone();
+        old_schema["schema"] = json!("jope.island-scored-evaluation/v1");
+        let mut missing_protocol = issued;
+        missing_protocol
+            .as_object_mut()
+            .unwrap()
+            .remove("selection_protocol");
+        for legacy in [old_schema, missing_protocol] {
+            fs::write(&path, serde_json::to_vec(&legacy).unwrap()).unwrap();
+            assert!(e.load_resume(&path).is_err());
+            assert_eq!(e.seen, before, "S1_ASSERT_LEGACY_SEEN_RETAINED");
+        }
+        assert!(validate_history(&json!({"selection_protocol":SELECTION_PROTOCOL,"context_sha256":"c","status":"failed"}),"c").is_err());
         fs::remove_file(path).unwrap();
     }
 
@@ -1935,6 +1976,195 @@ mod tests {
         assert_eq!(POPULATION, 64);
         assert_eq!(ISLANDS * ISLAND_SIZE, 64);
         assert_eq!(MIGRATION_INTERVAL, 192);
+    }
+
+    fn issued_history(status: &str, id: u64) -> Value {
+        let mut e = seeded_s1_engine();
+        let (mut row, program) = record(id, id + 1);
+        row["context_sha256"] = json!(e.context);
+        row["program"] = json!(program);
+        row["status"] = json!(status);
+        e.pending.insert(
+            program.program_sha256.clone(),
+            Pending {
+                island_id: 0,
+                proposal_seq: 1,
+                proposal_draw: 2,
+            },
+        );
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(format!("issued-{id}-{}.gz", std::process::id()));
+        let mut compressed = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+        compressed
+            .write_all(
+                &serde_json::to_vec(&json!({
+                    "schema":"jope.s1-invocation/v1", "record":row
+                }))
+                .unwrap(),
+            )
+            .unwrap();
+        fs::write(&path, compressed.finish().unwrap()).unwrap();
+        let result = e.accept(0, &path, String::new()).unwrap();
+        fs::remove_file(path).unwrap();
+        result
+    }
+
+    fn replay_state(e: &Engine) -> Value {
+        let mut seen = e.seen.iter().cloned().collect::<Vec<_>>();
+        seen.sort();
+        let mut active = e.active.iter().cloned().collect::<Vec<_>>();
+        active.sort();
+        let mut semantics = e.active_semantics.iter().cloned().collect::<Vec<_>>();
+        semantics.sort();
+        let mut applied = e.applied_results.iter().cloned().collect::<Vec<_>>();
+        applied.sort();
+        json!({"all":e.all, "seen":seen, "active":active, "semantics":semantics, "applied":applied,
+            "next_birth":e.next_birth, "next_draw":e.next_draw, "proposal_seq":e.proposal_seq,
+            "new_completed":e.new_completed, "migration_epoch":e.migration_epoch,
+            "rng_position":e.rng.get_word_pos().to_string(),
+            "islands":e.islands.iter().map(|i| json!({"archive":i.archive,
+                "population":i.population, "completed":i.completed})).collect::<Vec<_>>()})
+    }
+
+    #[test]
+    fn malformed_history_refuses_before_any_replay_state_change() {
+        let good = issued_history("completed", 1_000_001);
+        let failed = issued_history("failed", 1_000_002);
+        let mut malformed = Vec::new();
+        for (field, value) in [
+            ("schema", json!("jope.island-scored-evaluation/v1")),
+            ("status", json!("unknown")),
+            ("status", Value::Null),
+            ("program", json!({"program_sha256":"incomplete"})),
+            ("island_id", json!(ISLANDS)),
+        ] {
+            let mut row = failed.clone();
+            row[field] = value;
+            malformed.push(row);
+        }
+        let mut incomplete = good.clone();
+        incomplete.as_object_mut().unwrap().remove("fitness");
+        malformed.push(incomplete);
+        let mut wrong_island = good.clone();
+        wrong_island["island_id"] = json!(ISLANDS);
+        malformed.push(wrong_island);
+        for (field, value) in [
+            ("origin_island", json!(1)),
+            ("proposal_draw", json!(u64::MAX)),
+            ("semantic_signature_f32_b64", json!("broken")),
+            (
+                "sampled_absolute_error_f32_b64",
+                json!(encode_f32(&[f32::NAN; CASES])),
+            ),
+        ] {
+            let mut row = good.clone();
+            row[field] = value;
+            malformed.push(row);
+        }
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        let path = dir.join(format!("invalid-batch-{}.jsonl", std::process::id()));
+        for row in malformed {
+            let mut e = seeded_s1_engine();
+            let before = replay_state(&e);
+            fs::write(&path, format!("{}\n{}\n", good, row)).unwrap();
+            assert!(e.load_resume(&path).is_err(), "S1_ASSERT_HISTORY_ADMISSION");
+            assert_eq!(replay_state(&e), before, "S1_ASSERT_HISTORY_ATOMIC");
+            assert!(
+                !e.seen
+                    .contains(good["program"]["program_sha256"].as_str().unwrap())
+            );
+        }
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn duplicate_history_cannot_advance_completed_generations() {
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        let path = dir.join(format!("duplicate-batch-{}.jsonl", std::process::id()));
+        for (id, status) in [
+            (1_000_003, "completed"),
+            (1_000_004, "failed"),
+            (1_000_005, "timeout"),
+        ] {
+            let row = issued_history(status, id);
+            let mut e = seeded_s1_engine();
+            let before = replay_state(&e);
+            fs::write(&path, format!("{}\n{}\n", row, row)).unwrap();
+            assert!(e.load_resume(&path).is_err(), "S1_ASSERT_HISTORY_DUPLICATE");
+            assert_eq!(
+                replay_state(&e),
+                before,
+                "S1_ASSERT_HISTORY_DUPLICATE_ATOMIC"
+            );
+            fs::write(&path, format!("{row}\n")).unwrap();
+            e.load_resume(&path).unwrap();
+            assert_eq!(e.new_completed, u64::from(status == "completed"));
+            let accepted = replay_state(&e);
+            assert!(e.load_resume(&path).is_err(), "S1_ASSERT_HISTORY_REIMPORT");
+            assert_eq!(
+                replay_state(&e),
+                accepted,
+                "S1_ASSERT_HISTORY_REIMPORT_ATOMIC"
+            );
+        }
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn seen_history_uses_the_same_terminal_validation() {
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        let path = dir.join(format!("seen-admission-{}.jsonl", std::process::id()));
+        for (id, status) in [
+            (1_000_010, "completed"),
+            (1_000_011, "failed"),
+            (1_000_012, "timeout"),
+        ] {
+            let row = issued_history(status, id);
+            fs::write(&path, format!("{row}\n")).unwrap();
+            let admitted = read_history(&path, "c").unwrap();
+            assert_eq!(admitted.len(), 1);
+            assert_eq!(
+                admitted[0].program.program_sha256,
+                row["program"]["program_sha256"]
+            );
+            for (field, value) in [
+                ("schema", json!("old")),
+                ("status", json!("unknown")),
+                ("status", Value::Null),
+                ("island_id", json!(ISLANDS)),
+                ("program", json!({"program_sha256":"incomplete"})),
+            ] {
+                let mut invalid = row.clone();
+                invalid[field] = value;
+                fs::write(&path, format!("{invalid}\n")).unwrap();
+                assert!(
+                    read_history(&path, "c").is_err(),
+                    "S1_ASSERT_SEEN_ADMISSION"
+                );
+            }
+        }
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn history_selection_failure_keeps_previous_state() {
+        let row = issued_history("completed", 1_000_013);
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        let path = dir.join(format!("history-selection-{}.jsonl", std::process::id()));
+        fs::write(&path, format!("{row}\n")).unwrap();
+        let mut e = seeded_s1_engine();
+        e.islands[0].population.clear();
+        e.islands[0].archive.clear();
+        let before = replay_state(&e);
+        assert!(e.load_resume(&path).is_err());
+        assert_eq!(replay_state(&e), before, "S1_ASSERT_SELECTION_ROLLBACK");
+        fs::remove_file(path).unwrap();
     }
 
     #[test]
