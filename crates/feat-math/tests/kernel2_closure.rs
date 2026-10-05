@@ -1070,3 +1070,7 @@ mod producer_profile_v2;
 // B05–B07: strict producer-bound model reader and frozen format-2 replay.
 #[path = "scalar_v2/producer_reader.rs"]
 mod producer_reader_v2;
+
+// B05–B07: generic admitted fit and artifact provenance closure.
+#[path = "scalar_v2/producer_binding.rs"]
+mod producer_binding_v2;
