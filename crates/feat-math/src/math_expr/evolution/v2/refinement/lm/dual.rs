@@ -24,8 +24,13 @@
 //!     overflow on the way.
 //!   - Where a `^` coefficient (`e a^(e-1)` or `v ln a`) or the `erf` or `tanh` coefficient leaves
 //!     the normal range, each lane is formed in the log domain, accurate to about 1e-12 relative.
-//!     The `^` base term first tries the ratio form `(e v) (a' / a)`, while `v` is normal.
+//!     The `^` base term first tries the ratio form `(e v) (a' / a)`, while `v` is normal; where
+//!     `a' / a` or the ratio leaves the range, that product is formed on mantissas and exponents.
+//!   - `exp` applies its clamp factor to `v` before the lane, so the tie's half slope is not lost
+//!     to `v a'` overflowing first.
 //!   - Where `v²` overflows (`|v|` above about 1.34e154), `atan` divides by `v` twice.
+//!   - Every other rule's lane is one product or quotient of the incoming lane with one factor in
+//!     range, or a sum in which a site's lane has one nonzero term (a site lies in one operand).
 //!
 //!   A slope that is itself outside the normal range at its node is lost: below it, the lane keeps
 //!   only a subnormal's bits, or is 0; above it, see the last paragraph.
@@ -91,6 +96,27 @@ fn join(m: f64, e: i32) -> f64 {
         e += 600;
     }
     x * f64::from_bits(((e + 1023) as u64) << 52)
+}
+
+/// `Π numerators / Π denominators`, formed on mantissas and exponents separately and joined once,
+/// so no intermediate under- or overflows: the result is lost only where it is itself out of range.
+/// A zero numerator gives 0; a denominator is never 0.
+fn product(numerators: &[f64], denominators: &[f64]) -> f64 {
+    let (mut m, mut e) = (1.0f64, 0i32);
+    for &x in numerators {
+        if x == 0.0 {
+            return 0.0;
+        }
+        let (mx, ex) = split(x);
+        m *= mx;
+        e += ex;
+    }
+    for &x in denominators {
+        let (mx, ex) = split(x);
+        m /= mx;
+        e -= ex;
+    }
+    join(m, e)
 }
 
 /// `±exp(log_c) · d` for a slope coefficient `±exp(log_c)` outside the normal range, formed in the
@@ -518,9 +544,11 @@ fn finite_or_zero(value: f64, nonsmooth: &mut bool) -> f64 {
 /// `e a^(e-1) a'` lane by lane. An explicit slope (`computed` false: a zero base, or e = 0), or a
 /// computed `by_base` that is a finite normal number, is used directly. A computed one outside
 /// that range is taken in the ratio form `(e v) (a'_k / a)` while `v` is normal and `e v` finite
-/// (a large base with e < 0 underflows `e a^(e-1)` while `v` is normal), and in the log domain
-/// otherwise (both underflow for a tiny base and e > 1). A lane whose `a'_k` is 0 stays 0. A lane
-/// that is not finite is 0 and marks the row nonsmooth.
+/// (a large base with e < 0 underflows `e a^(e-1)` while `v` is normal); where `a'_k / a` or the
+/// ratio leaves the range, the same product `e v a'_k / a` is formed on mantissas and exponents
+/// ([`product`]). Otherwise (both underflow for a tiny base and e > 1) it is taken in the log
+/// domain. A lane whose `a'_k` is 0 stays 0. A lane that is not finite is 0 and marks the row
+/// nonsmooth.
 fn base_lanes(
     p: usize,
     by_base: f64,
@@ -547,7 +575,16 @@ fn base_lanes(
     for (lane, d) in out.iter_mut().zip(&a.d).take(p) {
         if *d != 0.0 {
             let term = if ratio {
-                ev * (d / a.v)
+                // `a'_k / a` can leave the normal range (a tiny base) where the slope does not;
+                // the same product is then formed on mantissas and exponents.
+                let quotient = d / a.v;
+                let direct = ev * quotient;
+                if quotient.is_finite() && quotient.abs() >= f64::MIN_POSITIVE && direct.is_finite()
+                {
+                    direct
+                } else {
+                    product(&[e, v, *d], &[a.v])
+                }
             } else {
                 log_lane(negative, log_c, *d)
             };
@@ -596,7 +633,15 @@ fn call_tangent(p: usize, func: Func, operands: &[&Dual], v: f64, nonsmooth: &mu
             let e = (-a.v.abs()).exp();
             scale(p, factor * (e / ((1.0 + e) * (1.0 + e))), &a.d)
         }
-        Func::Exp => clamped(p, a.v, -30.0, 30.0, &scale(p, v, &a.d), nonsmooth),
+        Func::Exp => {
+            let factor = clamp_factor(a.v, -30.0, 30.0);
+            if factor == 0.5 {
+                *nonsmooth = true;
+            }
+            // The clamp factor meets v before the lane: at the tie, v a' can overflow where the
+            // half slope does not. Halving is exact, so elsewhere the bits are those of (v a') f.
+            scale(p, factor * v, &a.d)
+        }
         Func::Log if a.v > 1e-300 => divide(p, &a.d, a.v),
         Func::Log => ZERO,
         // The evaluator's asinh squares its argument too, so where v² overflows its value is not
@@ -1191,6 +1236,52 @@ mod tests {
             29.0 * e / ((1.0 + e) * (1.0 + e)),
             1e-14,
         );
+    }
+
+    /// Independent review of #195, R9 and R10: an intermediate overflowed although the slope at the
+    /// node is finite, in the `^` ratio form (`a'/a` for a tiny base) and in `exp` at its clamp tie
+    /// (`v a'` before the factor 1/2). Each expected slope is formed in an order whose
+    /// intermediates stay in range, and checked against the review's 100-digit values.
+    #[test]
+    fn ratio_and_clamp_factor_products_keep_their_slope() {
+        // R9: a = 1e-312 × 5e-12 = 2^-1074, e = 0.01, a' = 5e-12: e v a'/a ≈ 5.917e306.
+        let source = "(1e-312*c0)^0.01";
+        let (expression, _) = sites_of(source);
+        let (value, _) = native(&expression, &[5e-12]);
+        let a = 1e-312f64 * 5e-12;
+        let slope = (0.01 * value * 5e-12) / a;
+        assert!(
+            (slope - 5.917294631406019e306).abs() <= 1e-12 * slope,
+            "{slope}"
+        );
+        check_slope(source, &[5e-12], slope, 1e-12);
+        check_slope(
+            "((1e-312*c0)^0.01)*c1",
+            &[5e-12, 1e-300],
+            slope * 1e-300,
+            1e-12,
+        );
+        // R10: at exp's clamp tie (argument exactly 30) the slope is half of e^30 a', with
+        // a' = 3e295: 0.5 e^30 3e295 ≈ 1.603e308 at the exp node, then times 0.01.
+        let source = "0.01*exp(1.0*c0-c1+30.0)";
+        let (expression, sites) = sites_of(source);
+        let program = Program::lower(&expression.root, &sites).unwrap();
+        let row = [3e295, 3e295];
+        let dual = program.row(&theta_of(&expression, &sites), &row);
+        let (value, faults) = native(&expression, &row);
+        assert_eq!(dual.value.to_bits(), value.to_bits());
+        assert!(value.is_finite() && faults.is_empty(), "{value} {faults:?}");
+        let expected = 0.01 * ((0.5 * 30f64.exp()) * 3e295);
+        assert!((expected - 1.6029711872286693e306).abs() <= 1e-12 * expected);
+        // Sites in order: 0.01, 1.0, 30.0; the 1.0 lane is the one through the tie.
+        assert_eq!(theta_of(&expression, &sites), vec![0.01, 1.0, 30.0]);
+        let lane = dual.tangent[1];
+        assert!(
+            (lane - expected).abs() <= 1e-14 * expected,
+            "{lane} against {expected}"
+        );
+        // The tie is differentiated, so the row is nonsmooth.
+        assert!(dual.nonsmooth);
     }
 
     #[test]
