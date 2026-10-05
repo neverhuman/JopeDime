@@ -3,7 +3,7 @@ static void time_gradient_checkpoint(const TimeGradientState& state,const Model&
     const auto& head=predictor.head;
     std::size_t array=2+(bytes.empty()?0:bytes.size()-1);for(auto v:bytes) array+=std::to_string(v).size();
     const auto word_array=[](const std::vector<double>& values) {std::size_t n=2+(values.empty()?0:values.size()-1);for(double v:values) n+=13+std::to_string(ordered_bits(v)).size();return n;};
-    const auto fold="{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train_end)+",\"total_rows\":"+std::to_string(total_rows)+"}";
+    const auto fold="{\"cut_id\":"+ordered_json_string(state.cut)+",\"train_end\":"+std::to_string(state.train_end)+",\"total_rows\":"+std::to_string(state.total_rows)+"}";
     if(@MODEL_BASE_BYTES@+fold.size()+array+word_array(head.means)+word_array(head.scales)+word_array(head.w)>16*1024*1024) throw OrderedError("resource");
 }
 struct OrderedRow {OrderedGroup group;double timestamp;std::vector<double> values;};

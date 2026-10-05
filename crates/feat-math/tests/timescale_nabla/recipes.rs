@@ -498,9 +498,9 @@ fn prediction_checkpoint_budget_refuses_atomically_in_all_routes() {
     ] {
         let source = p.emit_recipe(lang).unwrap().source;
         let mut driver = match lang {
-            TimeGradientLanguage::Rust => rust_driver(&rows, &[1., 2., 3., 4.], &[]),
-            TimeGradientLanguage::Python => python_driver(&rows, &[1., 2., 3., 4.], &[]),
-            TimeGradientLanguage::Cpp17 => cpp_driver(&rows, &[1., 2., 3., 4.], &[], false),
+            TimeGradientLanguage::Rust => rust_driver(&rows, &[1., 2., 3., 4.], &[vec![]]),
+            TimeGradientLanguage::Python => python_driver(&rows, &[1., 2., 3., 4.], &[vec![]]),
+            TimeGradientLanguage::Cpp17 => cpp_driver(&rows, &[1., 2., 3., 4.], &[vec![]], false),
         };
         let (marker, guard) = match lang {
             TimeGradientLanguage::Rust => (
@@ -526,7 +526,7 @@ for size in [9*1024*1024,3*1024*1024]:
         execute(&dir, &format!("budget-{lang:?}"), &(source + &driver), lang);
     }
     let fitted = native.emit_fitted_cpp17().unwrap();
-    let driver = cpp_driver(&rows,&[1.,2.,3.,4.],&[],true).replacen("bool refused=false;",r#"bool refused=false;for(auto size:{9u*1024u*1024u,3u*1024u*1024u}) {bool stopped=false;try {model.predict({OrderedRow{OrderedGroup::categorical(std::string(size,'q')),0.5,{1.,2.}}});}catch(const OrderedError& e){stopped=true;if(std::string(e.what())!="resource"||e.faults)return 22;}if(!stopped||model.state_bytes()!=initial)return 23;}"#,1);
+    let driver = cpp_driver(&rows,&[1.,2.,3.,4.],&[vec![]],true).replacen("bool refused=false;",r#"bool refused=false;for(auto size:{9u*1024u*1024u,3u*1024u*1024u}) {bool stopped=false;try {model.predict({OrderedRow{OrderedGroup::categorical(std::string(size,'q')),0.5,{1.,2.}}});}catch(const OrderedError& e){stopped=true;if(std::string(e.what())!="resource"||e.faults)return 22;}if(!stopped||model.state_bytes()!=initial)return 23;}"#,1);
     execute(
         &dir,
         "budget-fitted",
