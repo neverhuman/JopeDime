@@ -173,7 +173,7 @@ fn model_late_invalid_batch_and_strict_envelopes() {
     for window in 2..=129 {
         let config = Config::new(2, 64, window).unwrap();
         let p = PathStatsProgram::new(
-            config.clone(),
+            config,
             input(),
             GenomeIr::parse("(pipe X (ridge lambda_frac=0.001))").unwrap(),
         )
