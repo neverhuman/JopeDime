@@ -445,3 +445,89 @@ fn irregular_recipes_fitted_and_checkpoints_match_native_bits() {
     .unwrap();
     println!("24 compiled B15 recipes/fitted at {}", dir.display());
 }
+
+#[test]
+fn prediction_checkpoint_budget_refuses_atomically_in_all_routes() {
+    use feat_math::kernel::wire_v2::{VersionError, VersionedModel};
+    let p = program(0.125);
+    let rows = rows();
+    let native = p
+        .fit_training(
+            &rows[..4],
+            &[1., 2., 3., 4.],
+            TaskMode::Forecasting,
+            FoldBoundary::new("recipe-cut", 4, 8).unwrap(),
+        )
+        .unwrap();
+    let mut public = VersionedModel::from_json(&native.to_json().unwrap()).unwrap();
+    let before = public.to_json().unwrap();
+    for bytes in [9 * 1024 * 1024, 3 * 1024 * 1024] {
+        let oversized = OrderedRow {
+            group: GroupKey::categorical("q".repeat(bytes)).unwrap(),
+            timestamp: 0.5,
+            values: vec![1., 2.],
+        };
+        assert!(matches!(
+            public.predict_ordered(&[oversized]),
+            Err(VersionError::StageRejected {
+                kind: feat_math::kernel::Error::Resource(_),
+                faults: 0
+            })
+        ));
+        assert_eq!(public.to_json().unwrap(), before);
+    }
+    let expected = public.predict_ordered(&rows[4..]).unwrap();
+    let mut replay = VersionedModel::from_json(&before).unwrap();
+    assert_eq!(
+        expected.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+        replay
+            .predict_ordered(&rows[4..])
+            .unwrap()
+            .iter()
+            .map(|v| v.to_bits())
+            .collect::<Vec<_>>()
+    );
+    let dir = tempfile::tempdir().unwrap().keep();
+    for lang in [
+        TimeGradientLanguage::Rust,
+        TimeGradientLanguage::Python,
+        TimeGradientLanguage::Cpp17,
+    ] {
+        let source = p.emit_recipe(lang).unwrap().source;
+        let mut driver = match lang {
+            TimeGradientLanguage::Rust => rust_driver(&rows, &[1., 2., 3., 4.], &[]),
+            TimeGradientLanguage::Python => python_driver(&rows, &[1., 2., 3., 4.], &[]),
+            TimeGradientLanguage::Cpp17 => cpp_driver(&rows, &[1., 2., 3., 4.], &[], false),
+        };
+        let (marker, guard) = match lang {
+            TimeGradientLanguage::Rust => (
+                "let initial=model.state_bytes().unwrap();",
+                r#"for bytes in [9*1024*1024,3*1024*1024] { let bad=OrderedRow{group:OrderedGroup::Text("q".repeat(bytes)),timestamp:0.5,values:vec![1.,2.]};let e=model.predict(&[bad]).unwrap_err();assert_eq!(e.kind,"resource");assert_eq!(e.faults,0);assert_eq!(model.state_bytes().unwrap(),initial); }"#,
+            ),
+            TimeGradientLanguage::Python => (
+                "initial=model.state_bytes()",
+                r#"
+for size in [9*1024*1024,3*1024*1024]:
+ try: model.predict([OrderedRow('q'*size,0.5,[1.,2.])])
+ except OrderedError as error: assert str(error)=='resource' and error.faults==0
+ else: raise AssertionError('oversized continuation accepted')
+ assert model.state_bytes()==initial
+"#,
+            ),
+            TimeGradientLanguage::Cpp17 => (
+                "bool refused=false;",
+                r#"for(auto size:{9u*1024u*1024u,3u*1024u*1024u}) { bool stopped=false;try {model.predict({OrderedRow{OrderedGroup::categorical(std::string(size,'q')),0.5,{1.,2.}}});}catch(const OrderedError& e){stopped=true;if(std::string(e.what())!="resource"||e.faults)return 20;}if(!stopped||model.state_bytes()!=initial)return 21;}"#,
+            ),
+        };
+        driver = driver.replacen(marker, &format!("{marker}\n{guard}"), 1);
+        execute(&dir, &format!("budget-{lang:?}"), &(source + &driver), lang);
+    }
+    let fitted = native.emit_fitted_cpp17().unwrap();
+    let driver = cpp_driver(&rows,&[1.,2.,3.,4.],&[],true).replacen("bool refused=false;",r#"bool refused=false;for(auto size:{9u*1024u*1024u,3u*1024u*1024u}) {bool stopped=false;try {model.predict({OrderedRow{OrderedGroup::categorical(std::string(size,'q')),0.5,{1.,2.}}});}catch(const OrderedError& e){stopped=true;if(std::string(e.what())!="resource"||e.faults)return 22;}if(!stopped||model.state_bytes()!=initial)return 23;}"#,1);
+    execute(
+        &dir,
+        "budget-fitted",
+        &(fitted.source + &driver),
+        TimeGradientLanguage::Cpp17,
+    );
+}
