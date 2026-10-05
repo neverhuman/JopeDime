@@ -12,8 +12,8 @@ struct PathState {
         ordered_text(out,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train_end)+",\"total_rows\":"+std::to_string(total_rows)+"}");return out;
     }
     std::pair<std::vector<double>,std::vector<std::uint32_t>> push(OrderedGroup group,double time,const std::vector<double>& row) {
-        if(row.size()!=1)throw OrderedError("shape");if(!std::isfinite(time))throw OrderedError("domain");group=ordered_group(std::move(group));
-        const auto previous=groups.find(group);if(previous!=groups.end() && time<std::get<0>(previous->second))throw OrderedError("domain");if(ordinal>=total_rows)throw OrderedError("bounds");
+        if(row.size()!=1)throw OrderedError("shape");group=ordered_group(std::move(group));if(ordinal>=total_rows)throw OrderedError("bounds");if(!std::isfinite(time))throw OrderedError("domain");
+        const auto previous=groups.find(group);if(previous!=groups.end() && time<std::get<0>(previous->second))throw OrderedError("domain");
         auto saved=history.count(group)?history.at(group):std::vector<double>{};saved.push_back(row[0]);if(saved.size()>window)saved.erase(saved.begin());
         std::uint32_t flags=saved.size()<window?@BOUNDARYFAULT@:0;std::vector<double> values(5,0.0);bool has_value=false,has_increment=false;double prior=0.0,increment=0.0,products=0.0;
         for(double raw:saved){const double value=std::isfinite(raw)?raw:0.0;if(!std::isfinite(raw))flags|=@INPUTFAULT@;if(has_value){double delta=value-prior;if(std::abs(delta)>1e6)flags|=@CLAMPFAULT@;delta=std::clamp(delta,-1e6,1e6);const double square=delta*delta;values[0]+=square;if(has_increment)products+=std::abs(increment)*std::abs(delta);if(delta>0.0)values[3]+=square;if(delta<0.0)values[4]+=square;increment=delta;has_increment=true;}prior=value;has_value=true;}

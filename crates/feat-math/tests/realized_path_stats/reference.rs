@@ -37,6 +37,18 @@ fn independent_energy_and_high_precision_bipower_reference() {
         for (column, word) in refs.iter().enumerate() {
             let reference = f64::from_bits(word.as_u64().unwrap());
             assert!(output.values[column].is_finite());
+            // Energy references are exact for this dyadic fixture; only the
+            // derived jump subtraction can amplify bipower rounding in ULPs.
+            if column == 1 {
+                assert!(
+                    output.values[column]
+                        .to_bits()
+                        .abs_diff(reference.to_bits())
+                        <= 2
+                );
+            } else if column != 2 {
+                assert_eq!(output.values[column].to_bits(), reference.to_bits());
+            }
             assert!(
                 output.values[column]
                     .to_bits()

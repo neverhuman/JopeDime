@@ -69,6 +69,19 @@ pub(super) fn reference(mut model: PathStatsModel, rows: &[OrderedRow]) -> Strin
         prediction.faults,
         hex(&state(&model))
     );
+    let complete = state(&model);
+    for timestamp in [f64::NAN, -f64::MAX, f64::INFINITY] {
+        let bad = OrderedRow {
+            group: rows[0].group.clone(),
+            timestamp,
+            values: vec![1.],
+        };
+        assert!(matches!(
+            model.predict(&[bad]),
+            Err(feat_math::kernel::Error::Bounds(_))
+        ));
+        assert_eq!(state(&model), complete);
+    }
     model.finish().unwrap();
     text
 }
@@ -132,7 +145,8 @@ fn main() {{
  model.replace_state(&initial).unwrap();assert_eq!(initial,model.state_bytes().unwrap());
  println!("initial:{{}}",output_hex(&initial));let (values,faults)=model.predict(&rows[4..]).unwrap();
  println!("values:{{}}",values.iter().map(|v|format!("{{:016x}}",v.to_bits())).collect::<Vec<_>>().join(","));
- println!("faults:{{faults:?}}");println!("final:{{}}",output_hex(&model.state_bytes().unwrap()));model.finish().unwrap();
+ println!("faults:{{faults:?}}");println!("final:{{}}",output_hex(&model.state_bytes().unwrap()));
+ let complete=model.state_bytes().unwrap();for timestamp in [f64::NAN,-f64::MAX,f64::INFINITY] {{let bad=OrderedRow{{group:rows[0].group.clone(),timestamp,values:vec![1.]}};assert_eq!(model.predict(&[bad]).unwrap_err(),"bounds");assert_eq!(model.state_bytes().unwrap(),complete);}}model.finish().unwrap();
  assert!(fit_ordered(&rows,&[0.;8],2,"recipe-cut",4,8).is_err());
  assert!(fit_ordered(&rows[..4],&[f64::MAX;4],2,"recipe-cut",4,8).is_err());
 }}
@@ -198,7 +212,14 @@ model.replace_state(initial);assert model.state_bytes()==initial
 print('initial:'+initial.hex())
 values,faults=model.predict(rows[4:])
 print('values:'+','.join(format(struct.unpack('<Q',struct.pack('<d',v))[0],'016x') for v in values))
-print('faults:'+str(faults));print('final:'+model.state_bytes().hex());model.finish()
+print('faults:'+str(faults));print('final:'+model.state_bytes().hex())
+complete=model.state_bytes()
+for timestamp in [float('nan'),-word(0x7fefffffffffffff),float('inf')]:
+ try: model.predict([OrderedRow(rows[0].group,timestamp,[1.0])])
+ except OrderedError as error: assert error.kind=='bounds'
+ else: raise AssertionError('exhausted fold must refuse')
+ assert model.state_bytes()==complete
+model.finish()
 refused(lambda:fit_ordered(rows,[0.]*8,'forecasting','recipe-cut',4,8))
 refused(lambda:fit_ordered(rows[:4],[word(0x7fefffffffffffff)]*4,'forecasting','recipe-cut',4,8))
 "#
@@ -286,7 +307,8 @@ int main() {{
  const auto replay=other.predict(continuation);if(result.first.size()!=replay.first.size()||result.second!=replay.second)return 7;for(std::size_t i=0;i<result.first.size();i++)if(ordered_bits(result.first[i])!=ordered_bits(replay.first[i]))return 10;
  std::cout<<"initial:"<<output_hex(initial)<<'\n'<<"values:";for(std::size_t i=0;i<result.first.size();i++){{if(i)std::cout<<',';std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<ordered_bits(result.first[i]);}}
  std::cout<<std::dec<<"\nfaults:[";for(std::size_t i=0;i<result.second.size();i++){{if(i)std::cout<<", ";std::cout<<'[';for(std::size_t j=0;j<result.second[i].size();j++){{if(j)std::cout<<", ";std::cout<<result.second[i][j];}}std::cout<<']';}}
- std::cout<<"]\nfinal:"<<output_hex(model.state_bytes())<<'\n';model.finish();{fit_checks}
+ std::cout<<"]\nfinal:"<<output_hex(model.state_bytes())<<'\n';
+ const auto complete=model.state_bytes();for(double timestamp:{{std::numeric_limits<double>::quiet_NaN(),-std::numeric_limits<double>::max(),std::numeric_limits<double>::infinity()}}){{refused=false;try{{model.predict({{OrderedRow{{rows[0].group,timestamp,{{1.0}}}}}});}}catch(const OrderedError& error){{refused=std::string(error.what())=="bounds";}}if(!refused||model.state_bytes()!=complete)return 17;}}model.finish();{fit_checks}
 }}
 "#
     )

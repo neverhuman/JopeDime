@@ -28,15 +28,15 @@ class PathState:
     def push(self, group, timestamp, row):
         if len(row)!=1:
             raise OrderedError('shape')
+        group=_group(group)
+        if self.ordinal>=self.fold['total_rows']:
+            raise OrderedError('bounds')
         timestamp=_ordered_float(timestamp)
         if not math.isfinite(timestamp):
             raise OrderedError('domain')
-        group=_group(group)
         previous=self.groups.get(group)
         if previous is not None and timestamp<previous[0]:
             raise OrderedError('domain')
-        if self.ordinal>=self.fold['total_rows']:
-            raise OrderedError('bounds')
         history=(self.history.get(group,[])+[_ordered_float(row[0])])[-self.window:]
         flags=@BOUNDARYFAULT@ if len(history)<self.window else 0
         values,prior,increment,products=[0.0]*5,None,None,0.0
