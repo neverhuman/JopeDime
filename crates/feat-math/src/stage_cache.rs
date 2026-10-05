@@ -3,13 +3,19 @@
 //! pipeline prefix on the same CV fold.
 //!
 //! The input block to stage i is fully determined by (train-data identity,
-//! fold plan, fold, target-stage canonical text, canonical stages 0..i-1), so
-//! a chain hash over canonical stage text is a sound content address — no
-//! data hashing is needed, and a cache hit reproduces bit-identical results
-//! because it returns the output of the identical computation. The cache is
-//! therefore invisible in every score, prediction, and receipt.
+//! fold plan, fold, target stage, stages 0..i-1), so a chain hash over each
+//! stage's exact encoding (`write_exact_stage`: its op and every parameter,
+//! floats as their IEEE-754 bits) is a sound content address — no data hashing
+//! is needed, and a cache hit reproduces bit-identical results because it
+//! returns the output of the identical computation. Canonical stage text is not
+//! a key: it prints a float within 1e-12 of an integer as that integer, so two
+//! different stages can print alike. Every field of a key (context tag, folds,
+//! fold, optional target, each stage) is length-prefixed or fixed-width, and a
+//! key is the SHA-256 of that encoding, so two different chains share a key
+//! only through a SHA-256 collision. The cache is therefore invisible in every
+//! score, prediction, and receipt.
 
-use crate::dsl::Stage;
+use crate::dsl::{ParamValue, Stage};
 use crate::ops::FittedOp;
 use crate::Rows;
 use sha2::{Digest, Sha256};
@@ -30,6 +36,47 @@ pub struct StageCacheCtx {
     pub context_tag: String,
     pub folds: usize,
     pub fold: usize,
+}
+
+/// Appends the exact encoding of `stage` to `out`: its op, then every parameter in key order,
+/// each name and string length-prefixed and each value type-tagged, with every float as its
+/// IEEE-754 bits. Two stages encode alike only when their ops and parameters match exactly,
+/// floats bit for bit, so an encoding names one computation.
+pub(crate) fn write_exact_stage(stage: &Stage, out: &mut Vec<u8>) {
+    write_prefixed(out, stage.op.as_bytes());
+    out.extend_from_slice(&(stage.params.len() as u64).to_le_bytes());
+    for (name, value) in &stage.params {
+        write_prefixed(out, name.as_bytes());
+        match value {
+            ParamValue::Int(v) => {
+                out.push(0);
+                out.extend_from_slice(&v.to_le_bytes());
+            }
+            ParamValue::Float(v) => {
+                out.push(1);
+                out.extend_from_slice(&v.to_bits().to_le_bytes());
+            }
+            ParamValue::Bool(v) => {
+                out.push(2);
+                out.push(u8::from(*v));
+            }
+            ParamValue::Str(v) => {
+                out.push(3);
+                write_prefixed(out, v.as_bytes());
+            }
+        }
+    }
+}
+
+fn write_prefixed(out: &mut Vec<u8>, bytes: &[u8]) {
+    out.extend_from_slice(&(bytes.len() as u64).to_le_bytes());
+    out.extend_from_slice(bytes);
+}
+
+fn exact_stage(stage: &Stage) -> Vec<u8> {
+    let mut out = Vec::new();
+    write_exact_stage(stage, &mut out);
+    out
 }
 
 /// Chain key over (context, target, stage prefix). Opaque by design: callers
@@ -73,13 +120,17 @@ impl StageCache {
 
     pub fn chain_root(&self, ctx: &StageCacheCtx, target: Option<&Stage>) -> ChainKey {
         let mut hasher = Sha256::new();
-        hasher.update(b"jope-stage-cache.v1\0");
+        hasher.update(b"jope-stage-cache.v2\0");
+        hasher.update((ctx.context_tag.len() as u64).to_le_bytes());
         hasher.update(ctx.context_tag.as_bytes());
-        hasher.update(b"\0");
         hasher.update((ctx.folds as u64).to_le_bytes());
         hasher.update((ctx.fold as u64).to_le_bytes());
-        if let Some(stage) = target {
-            hasher.update(stage.to_string().as_bytes());
+        match target {
+            Some(stage) => {
+                hasher.update([1u8]);
+                hasher.update(exact_stage(stage));
+            }
+            None => hasher.update([0u8]),
         }
         ChainKey(hasher.finalize().into())
     }
@@ -87,7 +138,7 @@ impl StageCache {
     pub fn chain_extend(&self, key: &ChainKey, stage: &Stage) -> ChainKey {
         let mut hasher = Sha256::new();
         hasher.update(key.0);
-        hasher.update(stage.to_string().as_bytes());
+        hasher.update(exact_stage(stage));
         ChainKey(hasher.finalize().into())
     }
 
@@ -204,10 +255,149 @@ mod tests {
         let a = cache.chain_extend(&base, &stage("(standardize)"));
         let b = cache.chain_extend(&base, &stage("(standardize append=true)"));
         assert!(a != b, "stage params must alter the chain");
-        // Canonical text is parameter-order independent by construction.
+        // The exact encoding walks parameters in key order, so source order does not matter.
         let c1 = cache.chain_extend(&base, &stage("(rff_cos gamma=1.5 n=8 seed=3)"));
         let c2 = cache.chain_extend(&base, &stage("(rff_cos seed=3 n=8 gamma=1.5)"));
         assert!(c1 == c2, "param order must not alter the chain");
+    }
+
+    #[test]
+    fn stages_that_print_alike_get_distinct_keys_and_entries() {
+        // Canonical text prints a float within 1e-12 of an integer as that integer, so `near`
+        // prints exactly as `exact` does although it is a different computation.
+        let exact = stage("(rff_cos gamma=1.0 n=8 seed=3)");
+        let mut near = exact.clone();
+        near.params
+            .insert("gamma".to_string(), ParamValue::Float(1.0 + 5e-13));
+        assert_ne!(1.0f64.to_bits(), (1.0f64 + 5e-13).to_bits());
+        assert_eq!(exact.to_string(), near.to_string());
+        let cache = StageCache::new(DEFAULT_BYTE_CAP);
+        let base = cache.chain_root(&ctx(), None);
+        let exact_key = cache.chain_extend(&base, &exact);
+        let near_key = cache.chain_extend(&base, &near);
+        assert!(
+            exact_key != near_key,
+            "print-alike stages must not share a key"
+        );
+        assert!(
+            cache.chain_root(&ctx(), Some(&exact)) != cache.chain_root(&ctx(), Some(&near)),
+            "print-alike target stages must not share a root"
+        );
+        // An entry for one is never a hit for the other, and an equal stage still hits.
+        cache.begin_generation(0);
+        let block = Arc::new(vec![vec![0.0; 2]; 3]);
+        cache.insert(exact_key, FittedOp::Sigmoid { append: false }, block);
+        assert!(cache.get(&near_key).is_none());
+        assert!(cache
+            .get(&cache.chain_extend(&base, &exact.clone()))
+            .is_some());
+        // Signed zero, an integer against its float, and a string against a number differ too.
+        let with = |name: &str, value: ParamValue| {
+            let mut s = Stage::new("winsor_clip");
+            s.params.insert(name.to_string(), value);
+            cache.chain_extend(&base, &s)
+        };
+        assert!(with("q", ParamValue::Float(0.0)) != with("q", ParamValue::Float(-0.0)));
+        assert!(with("k", ParamValue::Int(1)) != with("k", ParamValue::Float(1.0)));
+        assert!(with("k", ParamValue::Str("1".into())) != with("k", ParamValue::Int(1)));
+        assert!(with("k", ParamValue::Bool(true)) != with("k", ParamValue::Int(1)));
+    }
+
+    #[test]
+    fn every_value_class_that_prints_alike_keys_apart() {
+        let cache = StageCache::new(DEFAULT_BYTE_CAP);
+        let base = cache.chain_root(&ctx(), None);
+        let symlog = |value: ParamValue| {
+            let mut stage = Stage::new("symlog");
+            stage.params.insert("c".to_string(), value);
+            stage
+        };
+        let float = ParamValue::Float;
+        let text = |value: &str| ParamValue::Str(value.to_string());
+        assert_ne!(f64::NAN.to_bits(), (-f64::NAN).to_bits());
+        // Each pair prints one canonical text for two different values: a float near an
+        // integer, a float near zero on either side, two NaNs, and a string that reads as a
+        // number or a bool.
+        for (left, right) in [
+            (float(1.0), float(1.0 + 5e-13)),
+            (float(0.0), float(1e-13)),
+            (float(-0.0), float(-1e-13)),
+            (float(f64::NAN), float(-f64::NAN)),
+            (text("1.5"), float(1.5)),
+            (text("7"), ParamValue::Int(7)),
+            (text("true"), ParamValue::Bool(true)),
+        ] {
+            let (a, b) = (symlog(left.clone()), symlog(right.clone()));
+            assert_eq!(
+                a.to_string(),
+                b.to_string(),
+                "{left:?} and {right:?} print alike"
+            );
+            assert!(
+                cache.chain_extend(&base, &a) != cache.chain_extend(&base, &b),
+                "{left:?} and {right:?} share a stage key"
+            );
+            assert!(
+                cache.chain_root(&ctx(), Some(&a)) != cache.chain_root(&ctx(), Some(&b)),
+                "{left:?} and {right:?} share a target root"
+            );
+        }
+        // The type tag separates an integer from the float with the same eight bytes.
+        assert!(
+            cache.chain_extend(&base, &symlog(ParamValue::Int(1)))
+                != cache.chain_extend(&base, &symlog(float(f64::from_bits(1))))
+        );
+        // The display text is unchanged.
+        assert_eq!(symlog(float(1.0 + 5e-13)).to_string(), "(symlog c=1.0)");
+        assert_eq!(symlog(float(-1e-13)).to_string(), "(symlog c=-0.0)");
+        assert_eq!(symlog(text("1.5")).to_string(), "(symlog c=1.5)");
+    }
+
+    #[test]
+    fn a_print_alike_constant_gets_its_own_fit_through_the_cache() {
+        use crate::dsl::DslExpr;
+        use crate::model::{fit, fit_with_stage_cache, Model};
+        use crate::GenomeIr;
+        let mut rng = crate::Pcg32::new(11, 3);
+        let x: Rows = (0..60)
+            .map(|_| (0..3).map(|_| rng.next_f64() * 4.0 - 2.0).collect())
+            .collect();
+        let y: Vec<f64> = x.iter().map(|row| row[0] - 0.5 * row[1] * row[2]).collect();
+        let genome = |c: f64| {
+            let mut symlog = Stage::new("symlog");
+            symlog.params.insert("c".to_string(), ParamValue::Float(c));
+            GenomeIr::Pipeline(DslExpr {
+                stages: vec![symlog, Stage::new("ridge")],
+            })
+        };
+        let bits = |model: &Model| -> Vec<u64> {
+            model
+                .predict(&x)
+                .unwrap()
+                .iter()
+                .map(|v| v.to_bits())
+                .collect()
+        };
+        let cache = StageCache::new(DEFAULT_BYTE_CAP);
+        cache.begin_generation(0);
+        let mut predictions = Vec::new();
+        // 1.0 and 1.0 + 5e-13 both print as (symlog c=1.0).
+        for c in [1.0, 1.0 + 5e-13] {
+            let plain = fit(&genome(c), &x, &y).unwrap();
+            let cached = fit_with_stage_cache(&genome(c), &x, &y, &cache, &ctx()).unwrap();
+            assert_eq!(
+                serde_json::to_string(&plain).unwrap(),
+                serde_json::to_string(&cached).unwrap(),
+                "c = {c:e}"
+            );
+            assert_eq!(bits(&plain), bits(&cached), "c = {c:e}");
+            predictions.push(bits(&cached));
+        }
+        // The constant reaches the predictions, so a shared entry would have been wrong.
+        assert_ne!(predictions[0], predictions[1]);
+        // Each symlog stage missed and was fitted: the second never took the first's entry.
+        let (hits, misses, _) = cache.stats();
+        assert_eq!((hits, misses), (0, 2));
     }
 
     #[test]
