@@ -464,7 +464,14 @@ mod tests {
         let verbs: Vec<&str> = pipeline.get_subcommands().map(|c| c.get_name()).collect();
         assert_eq!(
             verbs,
-            ["run", "verify-receipt", "evolve", "lineage", "score"]
+            [
+                "run",
+                "verify-receipt",
+                "evolve",
+                "lineage",
+                "score",
+                "invent"
+            ]
         );
         let lineage = pipeline.find_subcommand("lineage").unwrap();
         let verbs: Vec<&str> = lineage.get_subcommands().map(|c| c.get_name()).collect();

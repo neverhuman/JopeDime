@@ -194,6 +194,44 @@ pub enum Cmd {
         #[arg(long)]
         json: bool,
     },
+    /// Search a header CSV and print ranked candidate programs jain-math can execute
+    /// (jope.candidates.v1): the candidate generator behind jain-core's Jope invention engine.
+    /// Regression only; every value must be numeric and finite. Exit 3 when nothing executable
+    /// was measured.
+    Invent {
+        /// Header CSV of training rows.
+        #[arg(long)]
+        train: PathBuf,
+        /// The target column's header name.
+        #[arg(long)]
+        target: String,
+        /// A new or empty directory for the per-cut search evidence.
+        #[arg(long)]
+        work_dir: PathBuf,
+        /// Per-cut budget (1..=1000 attempts / 1..=600 active seconds); an in-flight fit may overrun time.
+        #[arg(long, default_value = "evaluations=64,seconds=300")]
+        budget: String,
+        /// Fold seed for the cut preparation.
+        #[arg(long, default_value_t = crate::DEFAULT_SEED)]
+        seed: u64,
+        /// Seed of the search's random streams.
+        #[arg(long, default_value_t = crate::DEFAULT_SEED)]
+        rng_seed: u64,
+        /// Cuts of the five-fold partition to search (1..=5).
+        #[arg(long, default_value_t = 3)]
+        cuts: usize,
+        /// Most candidates to print (1..=64), best first.
+        #[arg(long, default_value_t = 8)]
+        top_k: usize,
+        #[command(flatten)]
+        parallel: ParallelArgs,
+        /// The commit the caller runs (40 or 64 lowercase hex), reported as git_sha.
+        #[arg(long)]
+        source_commit: Option<String>,
+        /// Print one jope.candidates.v1 document, including on failure.
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -462,6 +500,75 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     }
                     Ok(ExitCode::FAILURE)
                 }
+            }
+        }
+        Cmd::Invent {
+            train,
+            target,
+            work_dir,
+            budget,
+            seed,
+            rng_seed,
+            cuts,
+            top_k,
+            parallel,
+            source_commit,
+            json,
+        } => {
+            let outcome = Budget::parse(&budget).and_then(|budget| {
+                let options = crate::invent::InventOptions {
+                    budget,
+                    seed,
+                    rng_seed,
+                    cuts,
+                    top_k,
+                    threads: parallel.threads,
+                    islands: parallel.islands,
+                    migration_interval: parallel.migration_interval,
+                    cpu_ceiling_millicores: parallel.cpu_ceiling,
+                    source_commit,
+                    cancel: Some(crate::parallel::termination_flag()?),
+                    ..crate::invent::InventOptions::new(train, target, work_dir)
+                };
+                crate::invent::invent(&options)
+            });
+            match outcome {
+                Ok(candidates) => {
+                    if json {
+                        println!("{}", serde_json::to_string(&candidates)?);
+                    } else {
+                        for c in &candidates.candidates {
+                            println!(
+                                "{:>2}. hold RMSE {:.6}, hold R2 {:.6}  {}",
+                                c.rank, c.mean_hold_rmse, c.mean_hold_r2, c.genome
+                            );
+                        }
+                        println!(
+                            "{} candidate(s) from {} ranked program(s); {} left out as not \
+                             executable in jain-math {}",
+                            candidates.candidates.len(),
+                            candidates.ranked,
+                            candidates.excluded_not_executable,
+                            candidates.vocabulary.jain_math_rev
+                        );
+                    }
+                    Ok(if candidates.ok {
+                        ExitCode::SUCCESS
+                    } else {
+                        ExitCode::from(crate::invent::NO_CANDIDATES_EXIT)
+                    })
+                }
+                // Cancellation keeps its own exit status (see `exec`).
+                Err(error) if crate::parallel::is_cancelled(&error) => Err(error),
+                Err(error) if json => {
+                    println!(
+                        "{}",
+                        serde_json::json!({"schema": crate::invent::SCHEMA, "ok": false,
+                                           "error": format!("{error:#}")})
+                    );
+                    Ok(ExitCode::from(2))
+                }
+                Err(error) => Err(error),
             }
         }
     }

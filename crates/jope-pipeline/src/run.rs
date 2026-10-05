@@ -138,7 +138,7 @@ pub fn check_cancelled(options: &RunOptions) -> Result<()> {
 }
 
 /// A full git object id: 40 (SHA-1) or 64 (SHA-256) lowercase hex digits.
-fn is_commit(value: &str) -> bool {
+pub(crate) fn is_commit(value: &str) -> bool {
     matches!(value.len(), 40 | 64)
         && value
             .bytes()
