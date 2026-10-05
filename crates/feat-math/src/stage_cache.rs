@@ -113,11 +113,21 @@ impl StageCache {
         }
     }
 
+    /// Keeps the entry when its bytes fit under the cap with everything already resident; an
+    /// entry that does not fit is dropped, and a later miss recomputes the identical block. The
+    /// resident total therefore never passes the cap, between sweeps included.
     pub fn insert(&self, key: ChainKey, fitted: FittedOp, block: Arc<Rows>) {
         let block_bytes = block.iter().map(|row| row.len() * 8).sum::<usize>();
         let fitted_bytes = serde_json::to_vec(&fitted).map_or(1024, |bytes| bytes.len());
         let bytes = block_bytes + fitted_bytes;
-        if bytes > self.byte_cap {
+        let reserved = self
+            .bytes
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |resident| {
+                resident
+                    .checked_add(bytes)
+                    .filter(|total| *total <= self.byte_cap)
+            });
+        if reserved.is_err() {
             return;
         }
         let entry = Arc::new(StageCacheEntry {
@@ -132,7 +142,6 @@ impl StageCache {
         if let Some(previous) = shard.insert(key.0, entry) {
             self.bytes.fetch_sub(previous.bytes, Ordering::Relaxed);
         }
-        self.bytes.fetch_add(bytes, Ordering::Relaxed);
     }
 
     /// Generation-boundary maintenance: drop entries not used in the current
@@ -261,5 +270,39 @@ mod tests {
         let resident = keys.iter().filter(|key| cache.get(key).is_some()).count();
         assert!(resident < 5, "eviction must have removed entries");
         assert!(cache.stats().2 <= 400, "resident bytes exceed the cap");
+    }
+
+    #[test]
+    fn insertions_never_pass_the_byte_cap_between_sweeps() {
+        let cache = StageCache::new(400);
+        cache.begin_generation(0);
+        let root = cache.chain_root(&ctx(), None);
+        let mut kept = 0;
+        for index in 0..20 {
+            let key = cache.chain_extend(&root, &stage(&format!("(lag k={})", index + 1)));
+            cache.insert(
+                key,
+                FittedOp::Sigmoid { append: false },
+                Arc::new(vec![vec![index as f64; 8]]),
+            );
+            assert!(
+                cache.stats().2 <= 400,
+                "resident bytes exceed the cap at insert {index}"
+            );
+            if cache.get(&key).is_some() {
+                kept += 1;
+            }
+        }
+        // The first entries fit and stay retrievable; the rest are dropped, never half-kept.
+        assert!((1..20).contains(&kept), "{kept}");
+        // Replacing an entry with an equal one keeps the accounting exact.
+        let key = cache.chain_extend(&root, &stage("(lag k=1)"));
+        let before = cache.stats().2;
+        cache.insert(
+            key,
+            FittedOp::Sigmoid { append: false },
+            Arc::new(vec![vec![0.0; 8]]),
+        );
+        assert_eq!(cache.stats().2, before);
     }
 }

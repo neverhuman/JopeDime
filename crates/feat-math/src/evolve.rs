@@ -302,7 +302,7 @@ const LEXICASE_REUSE_BLOCKER: &str =
 // B11 ridge scoring: begin
 /// How the surrogate search scores its candidates (B11).
 ///
-/// [`RidgeScoring::Legacy`], the default, fits every new candidate's surrogate on every fold, as
+/// [`RidgeScoring::Refit`], the default, fits every new candidate's surrogate on every fold, as
 /// the search always has. [`RidgeScoring::Certified`] returns the same fold scores (and lexicase
 /// cases) bit for bit with less work:
 ///
@@ -317,11 +317,12 @@ const LEXICASE_REUSE_BLOCKER: &str =
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum RidgeScoring {
     #[default]
-    Legacy,
+    Refit,
     Certified,
 }
 
-/// The byte budget of the certified scoring's stage cache.
+/// The byte budget of the certified scoring's stage cache. The cache never holds more: an entry
+/// that would pass it is dropped and recomputed on a later miss, with identical bits.
 pub const CERTIFIED_STAGE_CACHE_BYTES: usize = 1 << 30;
 
 impl RidgeScoring {
@@ -329,12 +330,12 @@ impl RidgeScoring {
     /// except [`evolve_lite_race_with_exact_initial_population`], which returns it.
     pub fn validate(&self, fitness: FitnessMode, policy: FaultPolicy) -> Result<(), String> {
         match self {
-            Self::Legacy => Ok(()),
+            Self::Refit => Ok(()),
             Self::Certified if fitness != FitnessMode::Surrogate => {
                 Err("ridge scoring: certified scoring applies to the surrogate search".to_string())
             }
             Self::Certified if !matches!(policy, FaultPolicy::Legacy) => {
-                Err("ridge scoring: certified scoring needs FaultPolicy::Legacy".to_string())
+                Err("ridge scoring: certified scoring needs the default fault policy".to_string())
             }
             Self::Certified => Ok(()),
         }
@@ -1253,7 +1254,7 @@ pub struct EvolveConfig {
     /// How the next generation's parents are drawn. `Tournament3` by default, which draws exactly
     /// as the search always has; see [`ParentSelection`].
     pub selection: ParentSelection,
-    /// How the surrogate search scores candidates. `Legacy` by default; `Certified` gives the
+    /// How the surrogate search scores candidates. `Refit` by default; `Certified` gives the
     /// same scores with less work; see [`RidgeScoring`].
     pub ridge_scoring: RidgeScoring,
 }
@@ -1275,7 +1276,7 @@ impl Default for EvolveConfig {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
-            ridge_scoring: RidgeScoring::Legacy,
+            ridge_scoring: RidgeScoring::Refit,
         }
     }
 }
@@ -1337,7 +1338,7 @@ pub trait Observer: Sync {
     /// its last parent. Never fired under `Tournament3`. Default no-op.
     fn on_selection(&self, _receipt: &SelectionReceipt) {}
     /// Fired after each generation scored by [`RidgeScoring::Certified`], with the run's counters
-    /// so far. Never fired under `Legacy`. Default no-op.
+    /// so far. Never fired under `Refit`. Default no-op.
     fn on_scoring(&self, _receipt: &ScoringReceipt) {}
 }
 
@@ -5996,7 +5997,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
-            ridge_scoring: RidgeScoring::Legacy,
+            ridge_scoring: RidgeScoring::Refit,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -6044,7 +6045,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
-            ridge_scoring: RidgeScoring::Legacy,
+            ridge_scoring: RidgeScoring::Refit,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -6104,7 +6105,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
-            ridge_scoring: RidgeScoring::Legacy,
+            ridge_scoring: RidgeScoring::Refit,
         };
         let obs = CodeObs {
             code_evals: AtomicUsize::new(0),
@@ -6186,7 +6187,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
-            ridge_scoring: RidgeScoring::Legacy,
+            ridge_scoring: RidgeScoring::Refit,
         }
     }
 
@@ -7838,7 +7839,7 @@ mod ridge_scoring_tests {
             sampling: CaseSampling::All,
         });
         for selection in [ParentSelection::Tournament3, lexicase] {
-            let (legacy, legacy_log) = run(RidgeScoring::Legacy, selection);
+            let (legacy, legacy_log) = run(RidgeScoring::Refit, selection);
             let (certified, certified_log) = run(RidgeScoring::Certified, selection);
             assert_eq!(dump(&legacy), dump(&certified), "{selection:?}");
             // Lexicase cases from the memo are the legacy residuals, so selection is unchanged.
@@ -7868,6 +7869,59 @@ mod ridge_scoring_tests {
     }
 
     #[test]
+    fn a_different_genome_with_the_same_surrogate_reuses_its_scores_and_cases() {
+        let (x, y) = fixture(5, 120);
+        let k = 3;
+        let assign: Vec<usize> = (0..y.len()).map(|i| i % k).collect();
+        let parse = |text: &str| match GenomeIr::parse(text).unwrap() {
+            GenomeIr::Pipeline(genome) => genome,
+            other => panic!("{other:?}"),
+        };
+        // Different heads, so different genome keys, but one ridge surrogate.
+        let a = parse("(pipe X (standardize) (poly_interact append=true) (gbm))");
+        let b = parse("(pipe X (standardize) (poly_interact append=true) (elasticnet))");
+        assert_ne!(a.to_string(), b.to_string());
+        assert_eq!(
+            search_surrogate(&a).to_string(),
+            search_surrogate(&b).to_string()
+        );
+        let rows = lexicase_case_rows(y.len(), 7);
+        let mut scoring = CertifiedScoring::new();
+        let mut cases = HashMap::new();
+        let first = scoring.score_unseen(
+            vec![(a.to_string(), a.clone())],
+            &x,
+            &y,
+            &assign,
+            k,
+            &r2,
+            Some(&rows),
+            &mut cases,
+        );
+        let second = scoring.score_unseen(
+            vec![(b.to_string(), b.clone())],
+            &x,
+            &y,
+            &assign,
+            k,
+            &r2,
+            Some(&rows),
+            &mut cases,
+        );
+        assert_eq!(
+            (scoring.candidates, scoring.reuses, scoring.memo.len()),
+            (2, 1, 1)
+        );
+        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+        let (legacy_scores, legacy_cases) =
+            score_genome_cases(&b, &x, &y, &assign, k, &r2, &rows).unwrap();
+        assert_eq!(bits(second[0].2.as_ref().unwrap()), bits(&legacy_scores));
+        assert_eq!(bits(first[0].2.as_ref().unwrap()), bits(&legacy_scores));
+        assert_eq!(bits(&cases[&b.to_string()]), bits(&legacy_cases));
+        assert_eq!(bits(&cases[&a.to_string()]), bits(&legacy_cases));
+    }
+
+    #[test]
     fn certified_scoring_is_the_same_on_one_thread_and_on_four() {
         let pool = |threads| {
             rayon::ThreadPoolBuilder::new()
@@ -7879,7 +7933,7 @@ mod ridge_scoring_tests {
         let (one, one_log) = pool(1).install(certified);
         let (four, four_log) = pool(4).install(certified);
         let (legacy, _) =
-            pool(4).install(|| run(RidgeScoring::Legacy, ParentSelection::Tournament3));
+            pool(4).install(|| run(RidgeScoring::Refit, ParentSelection::Tournament3));
         assert_eq!(dump(&one), dump(&four));
         assert_eq!(dump(&four), dump(&legacy));
         // The memo counters follow the candidate stream alone. The stage-cache counters are
@@ -7908,8 +7962,8 @@ mod ridge_scoring_tests {
         assert!(certified
             .validate(FitnessMode::Surrogate, FaultPolicy::RejectHard)
             .unwrap_err()
-            .contains("FaultPolicy::Legacy"));
-        assert!(RidgeScoring::Legacy
+            .contains("default fault policy"));
+        assert!(RidgeScoring::Refit
             .validate(FitnessMode::LiteRace, FaultPolicy::RejectHard)
             .is_ok());
         let (x, y) = fixture(4, 60);
