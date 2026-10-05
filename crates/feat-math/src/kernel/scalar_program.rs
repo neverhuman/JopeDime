@@ -1,11 +1,15 @@
 //! Bounded scalar ingress for versioned functions. Decoding performs no
-//! evaluation; standalone execution is explicit. Models, export and shipping
-//! generation remain held. MathExpr and its exact codec remain v1.
+//! evaluation; standalone execution and train-only models are explicit.
+//! MathExpr and its exact codec remain v1.
 use super::codec::{Reader, Writer};
 use super::inverse_links::InverseLink;
 use super::numerical_policy::NumericalPolicy;
 use super::wire_v2::{VersionError, VersionResult, MAGIC_V2, READER_VERSION};
 use crate::math_expr::{BinOp, Expr, Func, MathExpr, UnOp, Var};
+
+// B05–B07: explicit native model admission, with no v1 coercion.
+mod model;
+pub use model::{ScalarCarrier, ScalarModel, MODEL_PROFILE, MODEL_SCHEMA};
 
 const SCALAR_VARIANT: u8 = 1;
 const INVERSE_LINK_FEATURE: u64 = 2;
@@ -147,6 +151,18 @@ impl ScalarExpressionProgram {
 
     pub fn numerical_policy(&self) -> NumericalPolicy {
         self.numerical_policy
+    }
+
+    /// The canonical scalar feature mask, shared by program and model metadata.
+    pub fn required_features(&self) -> VersionResult<u64> {
+        let mut budget = NodeBudget::default();
+        encode_node(&self.root, &mut Writer::default(), 1, &mut budget)?;
+        Ok(budget.required_features
+            | if self.numerical_policy == NumericalPolicy::StableV2 {
+                NUMERICAL_POLICY_FEATURE
+            } else {
+                0
+            })
     }
 
     /// Select a contract explicitly, without running an evaluator or admitting a model.
