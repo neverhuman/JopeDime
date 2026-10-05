@@ -38,8 +38,9 @@ pub enum Refusal {
     Shape(&'static str),
     NonFinite(&'static str),
     /// A pivot before its square root fell below `lambda / 2`; in exact arithmetic every pivot is
-    /// at least `lambda`. This also covers the legacy `s <= 1e-12` replacement branch, because
-    /// `lambda >= 1e-3`.
+    /// at least `lambda`. Every design's penalty is at least `2e-12`, so this also covers the
+    /// legacy `s <= 1e-12` replacement branch: no pivot the legacy solve would replace is ever
+    /// accepted.
     UnsafePivot {
         index: usize,
         pivot: f64,
@@ -69,23 +70,36 @@ pub struct Design {
 }
 
 impl Design {
-    /// The design [`fit`] solves for `x, y` at `lambda_frac`.
-    pub fn legacy(x: &Rows, y: &[f64], lambda_frac: f64) -> Design {
+    /// The design [`RidgeModel::fit`] solves for `x, y` at `lambda_frac`, or a refusal when a
+    /// standardized value or a label is not finite.
+    pub fn from_rows(x: &Rows, y: &[f64], lambda_frac: f64) -> Result<Design, Refusal> {
         let n = x.len().min(y.len());
+        if n == 0 {
+            return Err(Refusal::Shape("ridge design needs at least one row"));
+        }
         let p = x[0].len();
         let (means, scales) = std_fit(x);
-        let y_mean = y[..n].iter().sum::<f64>() / n.max(1) as f64;
-        Design {
+        let y_mean = y[..n].iter().sum::<f64>() / n as f64;
+        let design = Design {
             n,
             p,
             z: standardized(x, n, p, &means, &scales),
             centered: y[..n].iter().map(|value| value - y_mean).collect(),
             lambda: (lambda_frac * n as f64).max(1e-3),
+        };
+        if !design
+            .z
+            .iter()
+            .chain(&design.centered)
+            .all(|value| value.is_finite())
+        {
+            return Err(Refusal::NonFinite("ridge design and labels must be finite"));
         }
+        Ok(design)
     }
 
     /// A design from column-major standardized columns `z` (`n` rows, `p` columns), labels that
-    /// are centered here at their mean, and an absolute penalty `lambda > 0`.
+    /// are centered here at their mean, and an absolute penalty `lambda ≥ 2e-12`.
     pub fn from_columns(
         z: Vec<f64>,
         n: usize,
@@ -98,9 +112,11 @@ impl Design {
                 "ridge design needs n > 0, n x p columns and n labels",
             ));
         }
-        if !(lambda.is_finite() && lambda > 0.0) {
+        // At least 2e-12, so a pivot under the legacy 1e-12 replacement threshold is always under
+        // lambda / 2 and refuses.
+        if !(lambda.is_finite() && lambda >= 2e-12) {
             return Err(Refusal::NonFinite(
-                "ridge penalty must be finite and positive",
+                "ridge penalty must be finite and at least 2e-12",
             ));
         }
         if !z.iter().chain(y).all(|value| value.is_finite()) {
@@ -304,8 +320,13 @@ pub struct LeaveOneOut {
 }
 
 /// [`LeaveOneOut`] by the Sherman-Morrison identity, refusing any row whose `1 - h_ii` is below
-/// [`LEVERAGE_FLOOR`].
+/// [`LEVERAGE_FLOOR`]. `factor` must be `design`'s own; one of another width or penalty refuses.
 pub fn leave_one_out(design: &Design, factor: &Factor) -> Result<LeaveOneOut, Refusal> {
+    if factor.p != design.p || factor.lambda.to_bits() != design.lambda.to_bits() {
+        return Err(Refusal::Shape(
+            "leave-one-out needs the design's own factor",
+        ));
+    }
     let w = factor.coefficients();
     let (n, p) = (design.n, design.p);
     let mut residuals = Vec::with_capacity(n);
@@ -533,7 +554,7 @@ mod tests {
         for (seed, n, p) in [(21, 7, 5), (22, 64, 17), (23, 300, 48), (24, 64, 131)] {
             let (x, y) = design(seed, n, p);
             let legacy = RidgeModel::fit(&x, &y, 0.02);
-            let d = Design::legacy(&x, &y, 0.02);
+            let d = Design::from_rows(&x, &y, 0.02).unwrap();
             let full = Factor::new(&d).unwrap();
             assert_eq!(bits(&full.coefficients()), bits(&legacy.w[1..]));
             for p_a in [0, 1, p / 2, p - 1, p] {
@@ -569,21 +590,27 @@ mod tests {
             let d = Design::from_columns(z, n, p, &y, lambda).unwrap();
             let full = Factor::new(&d).unwrap();
             let lead = Factor::new(&d.leading(p_a)).unwrap();
-            let decrease = lead.objective(&d) - full.objective(&d);
             let gain = full.schur_gain(p_a);
             assert!(gain >= 0.0);
+            // Both objectives from explicit coefficients and residuals, independently of the
+            // forward vector the gain is read from.
+            let explicit = |factor: &Factor| {
+                let w = factor.coefficients();
+                let mut value = lambda * dot(&w, &w);
+                for r in 0..n {
+                    let fitted: f64 = (0..w.len()).map(|j| d.z[j * n + r] * w[j]).sum();
+                    value += (d.centered[r] - fitted).powi(2);
+                }
+                value
+            };
+            let (lead_value, full_value) = (explicit(&lead), explicit(&full));
+            let decrease = lead_value - full_value;
             assert!(
-                (decrease - gain).abs() <= 1e-10 * lead.objective(&d),
+                (decrease - gain).abs() <= 1e-10 * lead_value,
                 "seed {seed}: {decrease} vs {gain}"
             );
-            // The objective from explicit coefficients agrees with the forward-vector form.
-            let w = full.coefficients();
-            let mut explicit = lambda * dot(&w, &w);
-            for r in 0..n {
-                let fitted: f64 = (0..p).map(|j| d.z[j * n + r] * w[j]).sum();
-                explicit += (d.centered[r] - fitted).powi(2);
-            }
-            assert!((explicit - full.objective(&d)).abs() <= 1e-10 * explicit);
+            assert!((full_value - full.objective(&d)).abs() <= 1e-10 * full_value);
+            assert!((lead_value - lead.objective(&d)).abs() <= 1e-10 * lead_value);
         }
         // An all-zero appended block gains exactly nothing.
         let (mut z, y) = columns(35, 40, 3);
@@ -613,7 +640,7 @@ mod tests {
         }
         // The legacy surrogate design, with its clamped heavy-tailed columns, agrees as well.
         let (x, y) = design(45, 60, 12);
-        let d = Design::legacy(&x, &y, 0.02);
+        let d = Design::from_rows(&x, &y, 0.02).unwrap();
         let loo = leave_one_out(&d, &Factor::new(&d).unwrap()).unwrap();
         let reference = brute_force_leave_one_out(&d).unwrap();
         let scale = reference.iter().fold(0.0f64, |m, e| m.max(e.abs()));
@@ -669,14 +696,213 @@ mod tests {
             Factor::extend(&wide, &d.leading(2)),
             Err(Refusal::Shape(_))
         ));
+        // Leave-one-out needs the design's own factor, not a narrower one or another penalty's.
+        assert!(matches!(
+            leave_one_out(&d, &Factor::new(&d.leading(2)).unwrap()),
+            Err(Refusal::Shape(_))
+        ));
+        assert!(matches!(
+            leave_one_out(&d, &Factor::new(&other).unwrap()),
+            Err(Refusal::Shape(_))
+        ));
+        // A penalty under 2e-12 could accept a pivot the legacy solve replaces, so it refuses.
+        assert!(matches!(
+            Design::from_columns(vec![1.0, 2.0], 2, 1, &[1.0, 2.0], 1e-12),
+            Err(Refusal::NonFinite(_))
+        ));
+        // The legacy design refuses a non-finite label and an empty table.
+        let (x, mut y) = design(53, 6, 3);
+        y[2] = f64::INFINITY;
+        assert!(matches!(
+            Design::from_rows(&x, &y, 0.02),
+            Err(Refusal::NonFinite(_))
+        ));
+        assert!(matches!(
+            Design::from_rows(&x, &[], 0.02),
+            Err(Refusal::Shape(_))
+        ));
     }
 
     #[test]
-    fn degenerate_pivots_take_the_legacy_branch() {
-        // A zero-variance design scales by 1e-9, and with the lambda floor every pivot is tiny.
+    fn zero_variance_and_overflowing_columns_match_the_legacy_fit() {
+        // Constant, 1e300 and signed-zero columns standardize to (±)0. The penalty floor keeps
+        // every pivot at lambda or more, so `cholesky_solve`'s 1e-12 replacement branch (shared
+        // code on both sides) is not reached here; `Factor` refuses any pivot that would reach it.
         let x: Rows = (0..5).map(|_| vec![2.0, 2.0, 2.0]).collect();
         assert_identical(&x, &[1.0, 2.0, 3.0, 4.0, 5.0], 1e-12);
         let x: Rows = (0..9).map(|r| vec![f64::from(r), 1e300, -0.0]).collect();
         assert_identical(&x, &[0.5; 9], 0.02);
+    }
+}
+
+/// B11 timing benches, both `#[ignore]`d. They are part of this module's unit tests, not a
+/// separate benchmark target, and stay out of `tests/bench.rs`, which `legacy_v2_freeze` pins byte
+/// for byte. Run: `cargo test --release -p feat-math --lib kernel::ridge_fast::bench -- --ignored
+/// --nocapture`.
+#[cfg(test)]
+mod bench {
+
+    use crate::dsl::{ParamValue, Stage};
+    use crate::evolve::{
+        evolve, random_canonical_pipeline, EvolveConfig, GenStats, Observer, RidgeScoring, Scored,
+        HEAD_OPS,
+    };
+    use crate::heads::RidgeModel;
+    use crate::ops::{apply_op_train, fit_op};
+    use crate::transpile::Emitted;
+    use crate::{GenomeIr, Pcg32, Rows};
+    use sha2::{Digest, Sha256};
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::Instant;
+
+    /// The pinned 5000-row B11 fixture: twelve gaussian columns, two heavy-tailed columns that
+    /// activate the ridge clamp, one integer column and one near-constant column.
+    fn ridge_fixture() -> (Rows, Vec<f64>) {
+        let mut rng = Pcg32::new(0xB11, 11);
+        let x: Rows = (0..5000)
+            .map(|_| {
+                let mut row: Vec<f64> = (0..12).map(|_| rng.gaussian()).collect();
+                row.push((2.0 * rng.gaussian()).exp());
+                row.push((2.0 * rng.gaussian()).exp());
+                row.push(f64::from(rng.next_u32() % 7));
+                row.push(1.0 + 1e-9 * rng.gaussian());
+                row
+            })
+            .collect();
+        let y = x
+            .iter()
+            .map(|r| {
+                1.5 * r[0] - 0.8 * r[1] * r[1]
+                    + 0.6 * (2.0 * r[2]).sin()
+                    + 0.4 * r[3] * r[4]
+                    + 0.1 * rng.gaussian()
+            })
+            .collect();
+        (x, y)
+    }
+
+    /// Where a surrogate fold fit spends its time. Mirrors the search surrogate on random generated
+    /// genomes: transforms fitted and applied on a two-thirds training split, then the ridge head on
+    /// the final frame.
+    #[test]
+    #[ignore]
+    fn ridge_share_of_surrogate_fits() {
+        let (x, y) = ridge_fixture();
+        let train: Rows = x[..3333].to_vec();
+        let target = &y[..3333];
+        let (mut transforms, mut ridge, mut widths) = (0.0f64, 0.0f64, Vec::new());
+        for seed in 0..120u64 {
+            let GenomeIr::Pipeline(mut genome) =
+                GenomeIr::parse(&random_canonical_pipeline(seed, 6)).unwrap()
+            else {
+                continue;
+            };
+            // The search surrogate: knobs capped as the search caps them, the head a plain ridge.
+            for stage in &mut genome.stages {
+                for (key, cap) in [("degree", 4i64), ("n", 64)] {
+                    if let Some(value) = stage.params.get_mut(key) {
+                        if value.as_u64().is_some_and(|v| v as i64 > cap) {
+                            *value = ParamValue::Int(cap);
+                        }
+                    }
+                }
+            }
+            if genome
+                .stages
+                .last()
+                .is_some_and(|last| HEAD_OPS.contains(&last.op.as_str()))
+            {
+                genome.stages.pop();
+            }
+            let stages: Vec<Stage> = genome.stages;
+            let started = Instant::now();
+            let mut frame = train.clone();
+            crate::sanitize(&mut frame);
+            let mut ok = true;
+            for stage in &stages {
+                match fit_op(stage, &frame, target)
+                    .ok()
+                    .and_then(|op| apply_op_train(&op, &frame).ok())
+                {
+                    Some(next) => frame = next,
+                    None => {
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+            if !ok {
+                continue;
+            }
+            transforms += started.elapsed().as_secs_f64();
+            let started = Instant::now();
+            std::hint::black_box(RidgeModel::fit(&frame, target, 0.02));
+            ridge += started.elapsed().as_secs_f64();
+            widths.push(frame[0].len());
+        }
+        widths.sort_unstable();
+        println!(
+            "B11_SHARE genomes={} transforms_s={transforms:.3} ridge_s={ridge:.3} ridge_share={:.3} \
+             width_median={} width_max={}",
+            widths.len(),
+            ridge / (ridge + transforms),
+            widths[widths.len() / 2],
+            widths[widths.len() - 1]
+        );
+    }
+
+    /// Surrogate-search throughput on the pinned fixture. Prints wall time, evaluations per second
+    /// and a digest of the ranked result, so that two builds can be compared for speed and for bit
+    /// identity.
+    #[test]
+    #[ignore]
+    fn ridge_fast_v1_throughput() {
+        struct Evals(AtomicU64);
+        impl Observer for Evals {
+            fn on_generation(&self, stats: &GenStats) {
+                self.0.store(stats.evals, Ordering::Relaxed);
+            }
+            fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _stats: &GenStats) {}
+        }
+
+        let (x, y) = ridge_fixture();
+        let metric = |truth: &[f64], predicted: &[f64]| crate::metrics::r2(truth, predicted);
+        // Three pairs, the order alternating per pair, so drifting host load hits both arms alike.
+        for run in 0..6 {
+            let scoring = if (run % 2 == 0) == (run / 2 % 2 == 0) {
+                RidgeScoring::Refit
+            } else {
+                RidgeScoring::Certified
+            };
+            let cfg = EvolveConfig {
+                pop: 64,
+                gens: 8,
+                folds: 3,
+                seed: 0x1EA7_BEEF,
+                max_transforms: 6,
+                ridge_scoring: scoring,
+                ..EvolveConfig::default()
+            };
+            let obs = Evals(AtomicU64::new(0));
+            let started = Instant::now();
+            let ranked = evolve(&x, &y, &metric, &cfg, &obs);
+            let secs = started.elapsed().as_secs_f64();
+            let mut digest = Sha256::new();
+            for scored in &ranked {
+                digest.update(scored.dsl.as_bytes());
+                digest.update(scored.cv_mean.to_bits().to_le_bytes());
+                for fold in &scored.fold_scores {
+                    digest.update(fold.to_bits().to_le_bytes());
+                }
+            }
+            let evals = obs.0.load(Ordering::Relaxed);
+            println!(
+                "B11_E2E run={run} scoring={scoring:?} secs={secs:.3} evals={evals} \
+                 evals_per_sec={:.2} ranked={} digest={:x}",
+                evals as f64 / secs,
+                ranked.len(),
+                digest.finalize()
+            );
+        }
     }
 }

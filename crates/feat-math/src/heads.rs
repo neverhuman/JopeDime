@@ -453,8 +453,9 @@ impl RidgeModel {
         let y_mean = y[..n].iter().sum::<f64>() / n.max(1) as f64;
         // Gram + rhs on standardized (clamped ±20) features, centered target. B11: each entry is
         // the same running sum as the former one-row-at-a-time loop (0.0, then its terms in
-        // ascending row order), accumulated in cache-sized row panels and register tiles, so the
-        // fit is unchanged bit for bit (certified in kernel::ridge_fast).
+        // ascending row order), accumulated in cache-sized row panels and register tiles, so every
+        // non-NaN result is unchanged bit for bit (certified in kernel::ridge_fast; Rust leaves
+        // the payload of a NaN result unspecified in either build).
         let mut z = Vec::with_capacity(n * p);
         for row in &x[..n] {
             for j in 0..p {

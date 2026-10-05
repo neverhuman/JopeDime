@@ -8,7 +8,9 @@ wire, program or model ID changes, and the final fit head and output codec are u
 
 `RidgeModel::fit` keeps the legacy result bit for bit and computes it faster. Every output scalar
 keeps the legacy sequence of IEEE-754 binary64 operations on the same operand bits, so loop order,
-blocking, packing and caching cannot change it:
+blocking, packing and caching cannot change it. The one exception is a NaN result's payload, which
+Rust leaves unspecified in either build. NaN positions, signed zeros and every finite bit are
+kept:
 
 - **Column moments.** One row-major pass of per-column accumulators replaces one strided pass per
   column. Each column still sums its rows in ascending order from `0.0`.
@@ -23,11 +25,11 @@ Rust neither fuses multiply-adds nor reassociates by default, and the kernel rel
 verbatim copy of the previous loop is the test oracle. The oracle's bits are compared on designs
 covering constant, heavy-tailed (the ±20 clamp is active), near-duplicate, integer-valued and
 signed-zero columns, at widths that are and are not multiples of the tile, at the penalty floor
-and with degenerate pivots.
+and with zero-variance and overflowing columns.
 
 ## Certified scoring in the surrogate search
 
-`EvolveConfig::ridge_scoring` is `RidgeScoring::Legacy` by default, which leaves the search
+`EvolveConfig::ridge_scoring` is `RidgeScoring::Refit` by default, which leaves the search
 unchanged. `RidgeScoring::Certified` returns the same fold scores, and with lexicase the same
 cases, bit for bit, with less work:
 
@@ -37,7 +39,13 @@ cases, bit for bit, with less work:
   the fold scores, plus the residuals on the run's fixed lexicase case rows.
 - **Stage cache.** Each fold fit goes through `model::fit_with_stage_cache`, keyed by the fold, the
   fold count and the chain of canonical stage texts. A hit returns the output of the identical
-  computation, so shared transform prefixes are fitted once per fold.
+  computation, so shared transform prefixes are fitted once per fold. The cache never holds more
+  than its 1 GiB budget, not even within a generation: an entry that would pass the budget is
+  dropped, and a later miss recomputes the identical block. This insert-time bound is a change to
+  the shared `StageCache`. Its other users see at most fewer hits, never other values.
+- **Text keys.** The memo and the stage cache key on canonical text. A float within 1e-12 of an
+  integer prints as that integer, so two such surrogates would share one entry. The legacy genome
+  memo already merges such genomes, and a random draw lands there with probability about 1e-12.
 - **Order and threads.** Distinct surrogates are scored once each, in candidate order. The result
   is the same on one thread and on four. `Observer::on_scoring` reports `candidates` and
   `surrogate_reuses`, which follow the candidate stream alone. It also reports the stage-cache
@@ -59,10 +67,12 @@ cases, bit for bit, with less work:
   `h_ii = ‖L⁻¹z_i‖²`. The rows, standardization, label mean and absolute penalty stay frozen. It is
   tested against `n` brute-force refits to 1e-10 relative.
 - **Refusals.**
-  - Any pivot below `λ/2` refuses (exact arithmetic gives at least `λ`, and this also covers the
-    legacy `1e-12` branch), and the caller refits with the legacy authority.
+  - Any pivot below `λ/2` refuses, and the caller refits with the legacy authority. Exact
+    arithmetic gives at least `λ`, and since every design's penalty is at least `2e-12`, this also
+    covers the legacy `1e-12` replacement branch.
   - So does any leave-one-out denominator below `1e-4`.
-  - So do non-finite or misshapen designs.
+  - So do non-finite labels or columns, misshapen designs, and a factor that is not the design's
+    own.
 
 ## Evaluator identity
 
@@ -74,3 +84,5 @@ stream changes.
 
 `/home/ubuntu/jope-evidence/kernel2/bt/B11_RIDGE_FAST/`: kernel benchmarks (`kernel-benchmark-*.log`)
 and the pinned 5 000-row end-to-end throughput runs (`e2e-*/`).
+The two timing benches are `#[ignore]`d unit tests in `kernel::ridge_fast::bench`:
+`cargo test --release -p feat-math --lib kernel::ridge_fast::bench -- --ignored --nocapture`.
