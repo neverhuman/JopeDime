@@ -139,3 +139,29 @@ ASan/UBSan and C++20 train/restore matrices remain required. Earlier33d debug16,
 PR2199/30 and audit passed, but its release failure blocks it: those receipts are
 retained as superseded evidence. Active correction evidence is
 `/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/correction-03-extrema`.
+
+
+## Correction-04: runtime power operands
+
+Independent review 5414110872 on `f4f11e7829ed33cab6adcf373446da564beaf77e`
+reproduced LLVM constant-base power lowering despite an opaque exponent.
+`8^c0` and `1024^c0` changed prediction words, fitted coefficients, training
+MSE and complete persisted state in optimized Rust. The expanded regression
+fails on that source; its command and failure remain immutable.
+
+Only the private v2 scalar library now hides **both** operands at the actual
+power call: Rust uses `black_box` for base and exponent, C++ uses volatile
+operands. Frozen emitters, evaluator, codec and identity inputs are unchanged.
+Both stored-winner and independently trained/restored routes retain all prior
+30 signed-zero corpora and add 14 constant/nested-base and fractional-training
+corpora. Together 44 corpora per route exercise 19,220 held-out rows per route
+across widths 1/2/512: 115,320 exact backend prediction-word comparisons,
+plus coefficients, MSE, state and refusal checks. This is a same-host strict
+compiler parity contract; no cross-platform libm guarantee is claimed.
+
+Current default/release focused17, recipe ASan/UBSan6 and C++20 six-test
+matrices, PR/compat/lint/required ratchets, protected inputs and lane audit
+are tracked in `B09_LINEAR_SCALING/correction-04-power`. Final qualification,
+exact-head hosted CI and fresh independent native approval remain required;
+old source-bound passing gates do not certify this correction. Full B09
+shipping search/EEC/utility/serving and VarPro stay outside this library slice.

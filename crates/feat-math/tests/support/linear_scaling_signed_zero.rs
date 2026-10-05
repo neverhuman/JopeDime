@@ -79,6 +79,100 @@ pub fn cases() -> Vec<Case> {
             });
         }
     }
+    // Constant bases can trigger exp2 lowering even when the exponent is opaque.
+    // Both widths reuse the same analytical line; every backend must retain raw
+    // runtime-pow words through training, persistence and restored prediction.
+    for (source, base) in [
+        ("0.5^c0", 0.5_f64),
+        ("2.0^c0", 2.0),
+        ("4.0^c0", 4.0),
+        ("8.0^c0", 8.0),
+        ("1024.0^c0", 1024.0),
+        ("(8.0^1.0)^c0", 8.0),
+    ] {
+        for width in [1, 512] {
+            let train = [0.0, 1.0, 2.0]
+                .into_iter()
+                .map(|x| {
+                    let mut row = vec![0.0; width];
+                    row[0] = x;
+                    row
+                })
+                .collect();
+            let mut exponents = vec![
+                -7.75,
+                -5.13,
+                f64::from_bits(0xc00921f9f01b866e),
+                f64::from_bits(0xc005ae147ae147ae),
+                -1.23,
+                -0.75,
+                -0.1,
+                -0.0,
+                0.0,
+                0.1,
+                0.3,
+                0.7,
+                1.1,
+                1.2345,
+                2.3,
+                3.7,
+                5.31,
+                7.99,
+            ];
+            exponents.extend((0..=256).map(|i| -8.0 + f64::from(i) / 16.0));
+            let test = exponents
+                .into_iter()
+                .map(|x| {
+                    let mut row = vec![0.0; width];
+                    row[0] = x;
+                    row
+                })
+                .collect();
+            cases.push(Case {
+                source,
+                train,
+                labels: vec![1.0, base, base * base],
+                test,
+            });
+        }
+    }
+    // The independent reviewer also found changed fit coefficients and state
+    // when every training exponent is fractional, not just prediction drift.
+    for width in [1, 512] {
+        let train = [-2.1, -1.3, 0.7, 1.3, 2.1]
+            .into_iter()
+            .map(|x| {
+                let mut row = vec![0.0; width];
+                row[0] = x;
+                row
+            })
+            .collect();
+        let test = [
+            -5.13,
+            f64::from_bits(0xc00921f9f01b866e),
+            -2.1,
+            -1.3,
+            -0.0,
+            0.0,
+            0.7,
+            1.3,
+            2.1,
+            3.7,
+        ]
+        .into_iter()
+        .map(|x| {
+            let mut row = vec![0.0; width];
+            row[0] = x;
+            row
+        })
+        .collect();
+        cases.push(Case {
+            source: "8.0^c0",
+            train,
+            labels: vec![-1.0, 3.0, 1.0, 2.0, 8.0],
+            test,
+        });
+    }
     cases
 }
 
