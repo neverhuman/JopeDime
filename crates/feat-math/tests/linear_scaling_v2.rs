@@ -265,7 +265,11 @@ fn exported_predictions(dir: &Path, winner: &LinearScaledWinner, rows: &[Vec<f64
 
 #[test]
 fn stored_clip_bound_ties_preserve_optimized_three_language_bits() {
-    let scratch = tempfile::tempdir_in(std::env::var_os("TMPDIR").unwrap()).unwrap();
+    let root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    std::fs::create_dir_all(&root).unwrap();
+    let scratch = tempfile::tempdir_in(root).unwrap();
     for (index, case) in signed_zero::stored_clip_cases().into_iter().enumerate() {
         let expression = MathExpr::parse(case.source).unwrap();
         assert!(feat_math::kernel::linear_scaling::emit_training_recipe(
