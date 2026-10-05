@@ -1,4 +1,4 @@
-//! Causal difference kernels and helper twins; complete recipe admission is held.
+//! Causal difference kernels, native routing, ordered recipes and fitted continuation.
 use feat_math::kernel::finite_difference::{
     emit_helpers, DifferenceConfig, DifferenceLanguage, DifferenceState, BOUNDARY_HISTORY,
 };
@@ -445,3 +445,7 @@ int main(int argc,char** argv){if(argc!=2)return 2;std::ifstream input(argv[1]);
 // B08 ordered-state program/model/fit continuation.
 #[path = "finite_difference/routing.rs"]
 mod routing;
+
+// B08 ordered recipes and fitted C++ continuation.
+#[path = "finite_difference/recipes.rs"]
+mod recipes;
