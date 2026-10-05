@@ -4,7 +4,7 @@ use feat_math::kernel::timescale_nabla::{
     Config, TimeGradientModel, TimeGradientProgram, TimeGradientState, BOUNDARY_HISTORY,
     TIME_GAP_REJECTED,
 };
-use feat_math::kernel::wire_v2::VersionError;
+use feat_math::kernel::wire_v2::{VersionError, VersionedModel};
 use feat_math::GenomeIr;
 fn input() -> OrderedInputIdentity {
     OrderedInputIdentity::new("g", "t")
@@ -97,6 +97,18 @@ fn gap_refusal_is_atomic_and_preserves_typed_fault() {
         .unwrap();
     assert_eq!(output.values, vec![8.]);
     s.finish().unwrap();
+
+    let mut overflow = state(1, 0.125, 1, 2);
+    let group = GroupKey::categorical("overflow-gap").unwrap();
+    overflow.push(group.clone(), -f64::MAX, &[1.]).unwrap();
+    let before = overflow.to_bytes().unwrap();
+    assert!((-f64::MAX).is_finite() && f64::MAX.is_finite());
+    assert!((f64::MAX - (-f64::MAX)).is_infinite());
+    let error = overflow.push(group.clone(), f64::MAX, &[2.]).unwrap_err();
+    assert_eq!(error.faults, TIME_GAP_REJECTED);
+    assert_eq!(overflow.to_bytes().unwrap(), before);
+    overflow.push(group, -f64::MAX / 2., &[2.]).unwrap();
+    overflow.finish().unwrap();
 }
 #[test]
 fn exact_minimum_gap_codec_raw_nonfinite_and_versions() {
@@ -213,6 +225,25 @@ fn late_tiny_gap_model_batch_rolls_back() {
     let e = model.predict(&[rows[4].clone(), late]).unwrap_err();
     assert_eq!(e.faults, TIME_GAP_REJECTED);
     assert_eq!(model.to_json().unwrap(), before);
+    let mut overflow = vec![rows[4].clone(), rows[5].clone()];
+    for row in &mut overflow {
+        row.group = GroupKey::categorical("overflow-gap").unwrap();
+    }
+    overflow[0].timestamp = -f64::MAX;
+    overflow[1].timestamp = f64::MAX;
+    let error = model.predict(&overflow).unwrap_err();
+    assert_eq!(error.faults, TIME_GAP_REJECTED);
+    assert_eq!(model.to_json().unwrap(), before);
+    let mut routed = VersionedModel::from_json(&before).unwrap();
+    assert!(matches!(
+        routed.predict_ordered(&overflow).unwrap_err(),
+        VersionError::StageRejected {
+            faults: TIME_GAP_REJECTED,
+            ..
+        }
+    ));
+    assert_eq!(routed.to_json().unwrap(), before);
+    routed.predict_ordered(&rows[4..]).unwrap();
     model.predict(&rows[4..]).unwrap();
     model.finish().unwrap();
 }
