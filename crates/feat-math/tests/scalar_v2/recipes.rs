@@ -184,6 +184,60 @@ fn cases() -> Vec<RecipeCase> {
             vec![vec![-0.0; 2], vec![0.0; 2]],
         ));
     }
+    cases.extend(signed_zero_label_cases());
+    cases
+}
+
+fn signed_zero_label_cases() -> Vec<RecipeCase> {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../fixtures/scalar_v2/ridge_signed_zero_labels.v1.json"
+    ))
+    .unwrap();
+    assert_eq!(fixture["schema"], "scalar_v2.ridge_signed_zero_labels.v1");
+    let floats = |values: &Value| {
+        values
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| f64::from_bits(v.as_u64().unwrap()))
+            .collect::<Vec<_>>()
+    };
+    let rows = |values: &Value| {
+        values
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(&floats)
+            .collect::<Vec<_>>()
+    };
+    let training = rows(&fixture["training_bits"]);
+    let probes = rows(&fixture["probe_bits"]);
+    assert!(training
+        .iter()
+        .flatten()
+        .all(|v| v.is_finite() && *v != 0.0));
+    let mut cases = Vec::new();
+    for labels in fixture["cases"].as_array().unwrap() {
+        let y = floats(&labels["labels_bits"]);
+        assert!(y.iter().all(|v| *v == 0.0));
+        for policy in [NumericalPolicy::LegacyV1, NumericalPolicy::StableV2] {
+            for (carrier, variable) in [
+                (ScalarCarrier::Row, Var::Col(0)),
+                (ScalarCarrier::Row, Var::Col(2)),
+                (ScalarCarrier::Elementwise, Var::X),
+            ] {
+                let p = ScalarExpressionProgram::new(ScalarNode::Var(variable))
+                    .unwrap()
+                    .with_numerical_policy(policy);
+                let model = p.fit_training(&training, &y, carrier, 0.02).unwrap();
+                let state: Value = serde_json::from_str(&model.to_json().unwrap()).unwrap();
+                let weights = state["ridge_bits"][2].as_array().unwrap();
+                assert_eq!(weights[0], labels["intercept_bits"], "{}", labels["name"]);
+                assert!(weights[1..].iter().all(|v| v.as_u64() == Some(0)));
+                cases.push((p, carrier, training.clone(), y.clone(), probes.clone()));
+            }
+        }
+    }
     cases
 }
 
