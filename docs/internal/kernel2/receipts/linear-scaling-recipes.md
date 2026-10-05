@@ -2,7 +2,9 @@
 
 Qualified local continuation now included in PR #178 on
 `kernel2/bt09-linear-scaling`, rebased onto remote main
-`6df43201750b50ffcee908333e2f90dee8672829` after #176.
+`4183d24ae5832c114d0194d4a6a7128647027782` after #187.
+The rebase preserves merged ordered-fit/model and row-vector dispatch arms;
+the three calibration/export corrections remain confined to the opt-in library.
 Original dependency `e5266782121dc0cf131aa9e7ff4ee6a496e7d4a5` and local
 follow-up `fbba3ec6247167465edd924d2aa7c0e748ccab6e` remain preserved with
 their dated local proof. The owner lifted the publication hold after the Team
