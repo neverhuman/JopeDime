@@ -431,3 +431,6 @@ pub use producer::{ScalarProducerKind, ScalarProducerProfile};
 
 // B05–B07: explicit Experimental typed generation, never a legacy default.
 pub use producer::{scalar_producer_profiles, ScalarCandidate};
+
+// B05–B07: explicit typed scalar EEC outcomes.
+pub use producer::ScalarEdit;

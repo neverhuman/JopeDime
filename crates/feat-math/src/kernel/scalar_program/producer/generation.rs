@@ -136,3 +136,7 @@ impl ScalarCandidate {
         self.proposal_rejected
     }
 }
+
+#[path = "generation_eec.rs"]
+mod eec;
+pub use eec::ScalarEdit;
