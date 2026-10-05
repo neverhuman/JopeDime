@@ -15,3 +15,5 @@ Acceptance: `cargo nextest run --locked -P pr -p feat-math --test realized_path_
 Prediction admits the binary continuation and containing model-envelope budgets before committing state. Resource refusal preserves the checkpoint and permits a valid continuation equal to replay. Shipping regression must execute the public router, three recipes and fitted C++ against oversized binary and JSON-expanded checkpoint cases.
 
 Recipe and fitted state replacement also checks the containing model budget before committing restored history. A valid binary checkpoint that exceeds the model JSON budget is refused atomically, preserving valid continuation and replay.
+
+The independent reference lane certifies the pi-scaled bipower component within 2 ULP (observed maximum 1); energy and signed semivariances are exact on the dyadic fixture. The derived jump subtraction reaches 3 ULP near cancellation and retains its documented 4-ULP composite check. This does not relax same-host emitted output/fault/checkpoint bit parity. Exhausted-fold refusal checks precede timestamp checks consistently in native code and all exported paths.

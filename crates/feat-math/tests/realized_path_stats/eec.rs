@@ -1,4 +1,4 @@
-//! GP-created and edited wire-75 candidates retain working export closure.
+//! GP-created and edited wire-64 candidates retain working export closure.
 use feat_math::kernel::ordered_axis::{FoldBoundary, OrderedInputIdentity, TaskMode};
 use feat_math::kernel::realized_path_stats::{
     Edit, ExperimentalProfile, PathState, PathStatsLanguage, PathStatsSearch,

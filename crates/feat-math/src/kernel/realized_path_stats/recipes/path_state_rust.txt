@@ -18,8 +18,8 @@ impl PathState {
         ordered_write_text(&mut bytes,&format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(&self.cut),self.train_end,self.total_rows));bytes
     }
     fn push(&mut self,group:OrderedGroup,time:f64,row:&[f64])->Result<(Vec<f64>,Vec<u32>),&'static str> {
-        if row.len()!=1{return Err("shape");}if !time.is_finite(){return Err("domain");}let group=ordered_group(group)?;
-        let previous=self.groups.get(&group).copied();if previous.map_or(false,|(t,_,_)|time<t){return Err("domain");}if self.ordinal>=self.total_rows{return Err("bounds");}
+        if row.len()!=1{return Err("shape");}let group=ordered_group(group)?;if self.ordinal>=self.total_rows{return Err("bounds");}if !time.is_finite(){return Err("domain");}
+        let previous=self.groups.get(&group).copied();if previous.map_or(false,|(t,_,_)|time<t){return Err("domain");}
         let mut history=self.history.get(&group).cloned().unwrap_or_default();history.push(row[0]);if history.len()>self.window{history.remove(0);}
         let mut flags=if history.len()<self.window{@BOUNDARYFAULT@}else{0};let mut values=vec![0.0;5];let mut prior=None;let mut increment:Option<f64>=None;let mut products=0.0;
         for raw in &history {let value=if raw.is_finite(){*raw}else{flags|=@INPUTFAULT@;0.0};if let Some(last)=prior{let delta:f64=value-last;if delta.abs()>1e6{flags|=@CLAMPFAULT@;}let delta=delta.clamp(-1e6,1e6);let square=delta*delta;values[0]+=square;if let Some(prev)=increment{products+=prev.abs()*delta.abs();}if delta>0.0{values[3]+=square;}if delta<0.0{values[4]+=square;}increment=Some(delta);}prior=Some(value);}
