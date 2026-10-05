@@ -8,15 +8,19 @@
 //! It runs on the Jacobi-scaled problem, whose scale is MINPACK's running maximum of `diag(JᵀJ)`
 //! with a relative floor, so its damped steps are invariant to rescaling a parameter. The step
 //! stopping test (MNT 3.15b) is taken on the raw parameters and is not. The damping is bounded to
-//! `[mu_min, mu_max]`, the iterations to `max_iterations` and the work to the caller's evaluation
-//! budget. The damped system is solved by Cholesky with explicit pivot and reciprocal-condition
-//! checks. A failed solve raises the damping and charges no evaluation.
+//! `[mu_min, mu_max]`: Nielsen's update after an accepted step is clamped to both bounds, and a
+//! trial that is not accepted, or a failed solve, that would raise it past `mu_max` stops the run.
+//! A raise starts from at least the smallest normal number, so a zero damping still rises. The
+//! iterations are bounded by `max_iterations` and the work by the caller's evaluation budget. The
+//! damped system is solved by Cholesky with explicit pivot and reciprocal-condition checks. A
+//! failed solve raises the damping and charges no evaluation.
 //!
 //! In the expression adapter every residual comes from the native protected evaluator
 //! (`CompiledMathExpr::eval_row_traced`), and a trial with any Domain or Hard fault is refused, as
 //! in the coordinate search. The Jacobian comes from forward-mode dual numbers ([`dual`]), whose
 //! values must equal the native ones bit for bit. The winner replaces the start only when a fresh
-//! native re-score is strictly better than the start's.
+//! native re-score is strictly better than the start's. Every native pass is charged: the first
+//! Jacobian reuses the start's admitted values, and the re-score's fresh admission is its one pass.
 
 use super::*;
 use crate::kernel::expression_search::GuardedRefinementBudget;
@@ -26,6 +30,33 @@ use dual::{Program, MAX_PARAMS};
 
 type Matrix = [[f64; MAX_PARAMS]; MAX_PARAMS];
 type Vector = [f64; MAX_PARAMS];
+
+/// Native and dual passes per thread, so a test can hold the work done to the evaluations charged.
+#[cfg(test)]
+mod passes {
+    use std::cell::Cell;
+
+    thread_local! {
+        static NATIVE: Cell<usize> = const { Cell::new(0) };
+        static DUAL: Cell<usize> = const { Cell::new(0) };
+    }
+
+    pub(super) fn native() {
+        NATIVE.with(|count| count.set(count.get() + 1));
+    }
+
+    pub(super) fn dual() {
+        DUAL.with(|count| count.set(count.get() + 1));
+    }
+
+    /// The `(native, dual)` passes since the last call.
+    pub(super) fn take() -> (usize, usize) {
+        (
+            NATIVE.with(|count| count.replace(0)),
+            DUAL.with(|count| count.replace(0)),
+        )
+    }
+}
 
 /// How the damping is scaled per parameter.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -95,7 +126,8 @@ enum Status {
     Step,
     IterationLimit,
     BudgetExhausted,
-    /// The damping exceeded `mu_max`.
+    /// A trial that was not accepted (refused, or with no decrease) or a failed solve raised the
+    /// damping past `mu_max`.
     DampingLimit,
     /// A Jacobian or normal-equation entry was not finite, or a dual value disagreed with the
     /// native one.
@@ -290,7 +322,9 @@ fn minimize(
                 accepted: false,
                 solved: false,
             });
-            mu *= nu;
+            // From at least the smallest normal number, so a zero damping (mu_min = 0) rises and
+            // 0 * inf never makes a NaN damping once nu overflows.
+            mu = (mu * nu).max(f64::MIN_POSITIVE);
             nu *= 2.0;
             if mu > options.mu_max {
                 return run.stop(Status::DampingLimit);
@@ -330,7 +364,9 @@ fn minimize(
             solved: true,
         });
         let Some(trial) = trial.filter(|_| accepted) else {
-            mu *= nu;
+            // From at least the smallest normal number, so a zero damping (mu_min = 0) rises and
+            // 0 * inf never makes a NaN damping once nu overflows.
+            mu = (mu * nu).max(f64::MIN_POSITIVE);
             nu *= 2.0;
             if mu > options.mu_max {
                 return run.stop(Status::DampingLimit);
@@ -359,7 +395,10 @@ fn minimize(
         if system.gradient_max() <= tolerance {
             return run.stop(Status::Gradient);
         }
-        mu = (mu * (1.0f64 / 3.0).max(1.0 - (2.0 * rho - 1.0).powi(3))).max(options.mu_min);
+        // Nielsen's factor exceeds 1 for a gain ratio below 1/2, so the update is clamped to both
+        // bounds, not just the floor.
+        mu = (mu * (1.0f64 / 3.0).max(1.0 - (2.0 * rho - 1.0).powi(3)))
+            .clamp(options.mu_min, options.mu_max);
         nu = 2.0;
     }
     run.stop(Status::IterationLimit)
@@ -672,6 +711,8 @@ impl Problem for ExprProblem<'_, '_> {
         let trial = self.trial_at(theta)?;
         let program = Program::lower(&trial.expression.root, sites).ok()?;
         debug_assert_eq!(program.params(), p);
+        #[cfg(test)]
+        passes::dual();
         let mut normal = Normal::zero();
         let (mut nonsmooth, mut saturated) = (0usize, 0usize);
         for (i, row) in rows.iter().enumerate() {
@@ -731,6 +772,8 @@ impl Problem for ExprProblem<'_, '_> {
 /// The native values on every row, or `None` when one raises a refused fault.
 fn native_values(expression: &MathExpr, rows: &[Vec<f64>], rejected: FaultSet) -> Option<Vec<f64>> {
     let compiled = expression.compile().ok()?;
+    #[cfg(test)]
+    passes::native();
     rows.iter()
         .map(|row| {
             let (value, faults) = compiled.eval_row_traced(row);
@@ -783,7 +826,11 @@ impl MathExpr {
         {
             bail!("constant fitting needs finite aligned training targets and a budget");
         }
-        if !(options.mu_min >= 0.0 && options.mu_min <= options.mu_max && options.tau > 0.0) {
+        if !(options.mu_min >= 0.0
+            && options.mu_min <= options.mu_max
+            && options.tau > 0.0
+            && options.tau.is_finite())
+        {
             bail!("invalid damping bounds");
         }
         let start = admission.finish(self.root.clone())?;
@@ -853,6 +900,13 @@ impl MathExpr {
         } else {
             norm(&residuals)
         };
+        // The first Jacobian reuses the start's admitted expression and native values, so the
+        // initial evaluation is the only native pass at the start.
+        problem.last = Some(Trial {
+            sites: theta[..p].iter().map(|v| v.to_bits()).collect(),
+            expression: start.clone(),
+            values,
+        });
         let limits = Limits {
             // One evaluation stays reserved for the winner's native re-score.
             max_evaluations: budget.max_evaluations - 1,
@@ -908,13 +962,12 @@ impl MathExpr {
         if rescore && !(budget.may_start)() {
             result.status = Status::Stopped;
         } else if rescore {
-            // The mandatory native re-score: a fresh admission, compile and evaluation.
+            // The mandatory native re-score: a fresh admission, compile and evaluation, whose
+            // values give the score. That admission is the re-score's one native pass.
             result.refinement.evaluations += 1;
-            let winner = problem.admit(&run.theta).map(|trial| trial.expression);
-            let rescored = winner.and_then(|expression| {
-                let values = native_values(&expression, rows, rejected)?;
-                let (score, scale) = native_score(objective, &values, targets).ok()?;
-                Some((expression, score, scale))
+            let rescored = problem.admit(&run.theta).and_then(|trial| {
+                let (score, scale) = native_score(objective, &trial.values, targets).ok()?;
+                Some((trial.expression, score, scale))
             });
             match rescored {
                 Some((expression, score, scale)) => {
@@ -1520,6 +1573,248 @@ mod tests {
         assert_eq!(result.status, Status::InitialRefused);
         assert_eq!(result.refinement.evaluations, 1);
         assert_eq!(result.refinement.rejected_trials, 1);
+    }
+
+    /// Independent review of #195, R1: the first Jacobian re-admitted and re-evaluated the start,
+    /// and the re-score evaluated twice, so native passes went uncharged. The work done is now
+    /// held to the charges: each native pass is the initial value, a trial or the re-score, and
+    /// each dual pass a Jacobian at its cost.
+    #[test]
+    fn every_native_and_dual_pass_is_charged() {
+        let check =
+            |source: &str, rows: &[Vec<f64>], targets: &[f64], options: &Options, budget: usize| {
+                passes::take();
+                let result = lm(
+                    source,
+                    &Admission::Structure,
+                    rows,
+                    targets,
+                    Objective::Raw,
+                    options,
+                    budget,
+                );
+                let (native, dual) = passes::take();
+                let run = result.run.as_ref().unwrap();
+                let cost = match options.jacobian_cost {
+                    JacobianCost::Sites => sites(&MathExpr::parse(source).unwrap()).len(),
+                    JacobianCost::One => 1,
+                };
+                let rescored = usize::from(result.rescore.is_some());
+                assert_eq!(
+                    result.refinement.evaluations,
+                    run.evaluations + rescored,
+                    "{source} {budget}"
+                );
+                assert_eq!(dual, run.jacobians, "{source} {budget}");
+                // Every trial on these fixtures is admitted, so each one is a native pass.
+                assert_eq!(native, 1 + run.trials + rescored, "{source} {budget}");
+                assert_eq!(
+                    result.refinement.evaluations,
+                    native + cost * dual,
+                    "{source} {budget}"
+                );
+                (native, dual, result)
+            };
+        // The review's case: one trial, one Jacobian and the re-score in a budget of 4.
+        let (native, dual, result) = check("0.45^c0", &[vec![2.0]], &[1.0], &Options::default(), 4);
+        assert_eq!((native, dual), (3, 1));
+        assert_eq!(result.refinement.evaluations, 4);
+        assert!(result.changed);
+        let (rows, targets) = exp_data();
+        let unit = Options {
+            jacobian_cost: JacobianCost::One,
+            ..Options::default()
+        };
+        for options in [&Options::default(), &unit] {
+            for budget in [1usize, 2, 3, 4, 7, 12, 40, 400] {
+                check("1.0*exp(0.5*c0)", &rows, &targets, options, budget);
+            }
+        }
+    }
+
+    /// Independent review of #195, R2: a gain ratio in (0, 1/2) makes Nielsen's factor exceed 1,
+    /// and the accepted-step update applied only the floor, so the next solve ran above `mu_max`.
+    #[test]
+    fn an_accepted_low_gain_step_keeps_the_damping_within_its_bounds() {
+        let capped = Options {
+            mu_max: 1e-3,
+            ..Options::default()
+        };
+        let result = lm(
+            "0.45^c0",
+            &Admission::Structure,
+            &[vec![2.0]],
+            &[1.0],
+            Objective::Raw,
+            &capped,
+            40,
+        );
+        let run = result.run.as_ref().unwrap();
+        assert!(
+            run.trace
+                .iter()
+                .all(|i| i.mu >= capped.mu_min && i.mu <= capped.mu_max),
+            "{:?}",
+            run.trace
+        );
+        // The first step is accepted with a gain ratio below 1/2. Unclamped, the next damping
+        // would be 1.797e-3.
+        assert!(run.trace[0].accepted, "{:?}", run.trace);
+        assert_eq!(
+            run.trace[1].mu.to_bits(),
+            capped.mu_max.to_bits(),
+            "{:?}",
+            run.trace
+        );
+        // Both bounds: with the floor at 5e-4 the next accepted update (about 3.3e-4 unclamped)
+        // lands on the floor.
+        let both = Options {
+            mu_min: 5e-4,
+            mu_max: 1e-3,
+            ..Options::default()
+        };
+        let result = lm(
+            "0.45^c0",
+            &Admission::Structure,
+            &[vec![2.0]],
+            &[1.0],
+            Objective::Raw,
+            &both,
+            40,
+        );
+        let trace = &result.run.as_ref().unwrap().trace;
+        assert_eq!(trace[1].mu.to_bits(), both.mu_max.to_bits(), "{trace:?}");
+        assert_eq!(trace[2].mu.to_bits(), both.mu_min.to_bits(), "{trace:?}");
+    }
+
+    /// No pass runs without its own yes: nothing before the first guard question, nothing after
+    /// a refusal, and at most one native or dual pass after each yes. The guard reads the pass
+    /// counters before it answers, at every refusal point of two fixtures.
+    #[test]
+    fn no_pass_runs_without_its_own_yes() {
+        fn check(source: &str, admission: &Admission<'_>, rows: &[Vec<f64>], targets: &[f64]) {
+            let start = MathExpr::parse(source).unwrap();
+            let run = |refuse_at: usize| {
+                passes::take();
+                let mut segments: Vec<(usize, usize)> = Vec::new();
+                let mut answers: Vec<bool> = Vec::new();
+                let mut guard = || {
+                    segments.push(passes::take());
+                    let yes = answers.len() + 1 < refuse_at;
+                    answers.push(yes);
+                    yes
+                };
+                start
+                    .optimize_constants_lm(
+                        admission,
+                        rows,
+                        targets,
+                        Objective::Raw,
+                        &Options::default(),
+                        GuardedRefinementBudget {
+                            max_evaluations: 400,
+                            may_start: &mut guard,
+                        },
+                    )
+                    .unwrap();
+                segments.push(passes::take());
+                (segments, answers)
+            };
+            let (_, full) = run(usize::MAX);
+            for refuse_at in 1..=full.len() + 1 {
+                let (segments, answers) = run(refuse_at);
+                assert_eq!(segments[0], (0, 0), "{source} {refuse_at}");
+                for (work, yes) in segments[1..].iter().zip(&answers) {
+                    assert!(
+                        work.0 + work.1 <= usize::from(*yes),
+                        "{source} {refuse_at}: {segments:?} {answers:?}"
+                    );
+                }
+            }
+        }
+        let (rows, targets) = exp_data();
+        check("1.0*exp(0.5*c0)", &Admission::Structure, &rows, &targets);
+        // The protected-fault fixture: trials refused for a Domain fault still run their pass.
+        let rows: Vec<Vec<f64>> = (1..=10).map(|i| vec![f64::from(i)]).collect();
+        let targets: Vec<f64> = rows.iter().map(|r| 0.01 * r[0]).collect();
+        let profile = baseline();
+        let search = Search::new(&profile, ExpressionScope::search_profile(1, false)).unwrap();
+        check("sqrt(1.0)*c0", &Admission::Profile(search), &rows, &targets);
+    }
+
+    #[test]
+    fn invalid_damping_options_are_refused() {
+        let (rows, targets) = exp_data();
+        for options in [
+            Options {
+                tau: f64::INFINITY,
+                ..Options::default()
+            },
+            Options {
+                tau: 0.0,
+                ..Options::default()
+            },
+            Options {
+                tau: f64::NAN,
+                ..Options::default()
+            },
+            Options {
+                mu_min: -1e-9,
+                ..Options::default()
+            },
+            Options {
+                mu_min: 1.0,
+                mu_max: 0.5,
+                ..Options::default()
+            },
+            Options {
+                mu_max: f64::NAN,
+                ..Options::default()
+            },
+        ] {
+            let mut guard = always();
+            let refused = MathExpr::parse("1.0*exp(0.5*c0)")
+                .unwrap()
+                .optimize_constants_lm(
+                    &Admission::Structure,
+                    &rows,
+                    &targets,
+                    Objective::Raw,
+                    &options,
+                    GuardedRefinementBudget {
+                        max_evaluations: 50,
+                        may_start: &mut guard,
+                    },
+                );
+            assert!(refused.is_err(), "{options:?}");
+        }
+    }
+
+    /// With `mu_min = 0` the damping can start at an exact 0: here the scaled curvature underflows
+    /// (1e-163 squares to 0) while the gradient does not. A raise from 0 used to stay 0, and once
+    /// `nu` overflowed it gave a NaN damping. Now every damping is finite and the run ends on its
+    /// own test, not the iteration limit.
+    #[test]
+    fn a_zero_damping_still_rises() {
+        let zero_floor = Options {
+            mu_min: 0.0,
+            max_iterations: 1100,
+            ..Options::default()
+        };
+        let result = lm(
+            "c1+(1.0*c0)",
+            &Admission::Structure,
+            &[vec![1e-163, 1e11]],
+            &[1e-150],
+            Objective::Raw,
+            &zero_floor,
+            100,
+        );
+        let trace = &result.run.as_ref().unwrap().trace;
+        assert_eq!(trace[0].mu, 0.0, "{trace:?}");
+        assert!(trace.iter().all(|i| i.mu.is_finite()), "{trace:?}");
+        assert!(trace[1].mu > 0.0, "{trace:?}");
+        assert_ne!(result.status, Status::IterationLimit, "{trace:?}");
     }
 
     #[test]

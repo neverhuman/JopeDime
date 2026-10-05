@@ -14,7 +14,11 @@
 //!   `exp`, `sigmoid`, the `^` exponent and the output clamp), the tangent is the mean of the tied
 //!   operands' tangents.
 //! - **Closed forms.** `asinh` and `erf` use closed-form slopes, which hold at 0 too, where
-//!   differentiating their sign-times-magnitude code would give 0.
+//!   differentiating their sign-times-magnitude code would give 0. Where `e^(-v²)` underflows to 0
+//!   (`|v|` above about 27.3) the `erf` slope is an exact 0.
+//! - **Large arguments.** Where `v²` overflows (`|v|` above about 1.34e154), `atan` divides by `v`
+//!   twice, the same slope without the square. Where `q b'` overflows in `/`, the lane is retaken
+//!   as `a'/b - q (b'/b)`.
 //! - **Infinite one-sided slopes.** `sqrt` at 0 and `0 ^ e` with `0 < e < 1` have tangent 0.
 //! - **Steps.** `step`, `sign`, `floor` and `round` have tangent 0.
 //! - **Non-finite operands.** Any node other than a selector with a non-finite operand has tangent
@@ -23,8 +27,11 @@
 //! A row reports `nonsmooth` when a tie, an infinite one-sided slope, a non-finite operand or an
 //! overflowing `^` slope was differentiated. A term whose coefficient is an exact zero is skipped,
 //! so a zero coefficient never meets an infinite lane. In `^`, a saturated exponent's term is an
-//! exact zero even where `v ln a` overflows. A base slope `e a^(e-1)` that overflows is taken lane
-//! by lane in the ratio form `(e v) (a' / a)`, and a lane that is still not finite is 0.
+//! exact zero even where `v ln a` overflows. A base slope `e a^(e-1)` that overflows, or underflows
+//! while `e v` does not, is taken lane by lane in the ratio form `(e v) (a' / a)`. Every lane of a
+//! `^` tangent that is still not finite (a base or exponent term, including one whose incoming
+//! lane was already not finite) is 0 and marks the row nonsmooth. Other rules pass an overflowing
+//! lane on, and the normal equations then refuse the Jacobian.
 
 use super::*;
 use crate::math_expr::fault::Collect;
@@ -339,7 +346,17 @@ fn binary_tangent(p: usize, op: BinOp, a: &Dual, b: &Dual, v: f64, nonsmooth: &m
         // The protected branch is a constant 0. Otherwise (a' - q b') / b with q = a / b, which,
         // unlike (a' b - a b') / b², cannot overflow through b².
         BinOp::Div if b.v.abs() < 1e-12 => ZERO,
-        BinOp::Div => divide(p, &comb(p, 1.0, &a.d, -v, &b.d), b.v),
+        BinOp::Div => {
+            let mut out = divide(p, &comb(p, 1.0, &a.d, -v, &b.d), b.v);
+            // With a large b, q b' can overflow where the slope itself is moderate; a'/b - q (b'/b)
+            // is the same slope without that product. A lane still not finite is passed on.
+            for (k, lane) in out.iter_mut().enumerate().take(p) {
+                if !lane.is_finite() {
+                    *lane = a.d[k] / b.v - v * (b.d[k] / b.v);
+                }
+            }
+            out
+        }
         BinOp::Pow => pow_tangent(p, a, b, v, nonsmooth),
     }
 }
@@ -352,7 +369,8 @@ fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> La
         *nonsmooth = true;
     }
     // e * a^(e - 1) keeps a tiny base's slope where v / a would lose it to underflow (e > 1). For
-    // a tiny base and e < 1 it overflows instead, and `base_lanes` takes the ratio form.
+    // a tiny base and e < 1 it overflows instead, and for a large base and e < 0 it can underflow
+    // while v is normal; `base_lanes` takes the ratio form in both cases.
     let base_slope = |a: f64| if e == 0.0 { 0.0 } else { e * a.powf(e - 1.0) };
     let (by_base, by_exponent) = if a.v > 0.0 {
         (base_slope(a.v), v * a.v.ln())
@@ -388,37 +406,50 @@ fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> La
     } else {
         exponent_factor * by_exponent
     };
-    let by_exponent = if by_exponent.is_finite() {
-        by_exponent
+    let by_exponent = finite_or_zero(by_exponent, nonsmooth);
+    // Each term is checked: a finite slope times a large lane can still overflow. A site lies in
+    // the base or the exponent, never both, so a lane's sum has one nonzero term and is checked
+    // only defensively.
+    let mut out = base_lanes(p, by_base, e * v, a, nonsmooth);
+    if by_exponent != 0.0 {
+        for (lane, d) in out.iter_mut().zip(&b.d).take(p) {
+            let exponent_term = finite_or_zero(by_exponent * d, nonsmooth);
+            *lane = finite_or_zero(*lane + exponent_term, nonsmooth);
+        }
+    }
+    out
+}
+
+/// `value`, or 0 with the row marked nonsmooth when it is not finite.
+fn finite_or_zero(value: f64, nonsmooth: &mut bool) -> f64 {
+    if value.is_finite() {
+        value
     } else {
         *nonsmooth = true;
         0.0
-    };
-    comb(
-        p,
-        1.0,
-        &base_lanes(p, by_base, e * v, a, nonsmooth),
-        by_exponent,
-        &b.d,
-    )
+    }
 }
 
-/// `by_base * a'` lane by lane. When `by_base` overflows, each lane is the ratio form
-/// `ev * (a'_k / a)` of the same slope, with `ev = e * v`: a lane whose `a'_k` is 0 stays 0, and a
-/// lane that is still not finite is 0 and marks the row nonsmooth.
+/// `by_base * a'` lane by lane. When `by_base` overflows, or underflows below the smallest normal
+/// number while `ev = e * v` is finite and nonzero, each lane is the ratio form `ev * (a'_k / a)`
+/// of the same slope: a lane whose `a'_k` is 0 stays 0. A lane that is not finite in either form is
+/// 0 and marks the row nonsmooth.
 fn base_lanes(p: usize, by_base: f64, ev: f64, a: &Dual, nonsmooth: &mut bool) -> Lanes {
-    if by_base.is_finite() {
-        return scale(p, by_base, &a.d);
-    }
     let mut out = ZERO;
+    // A large base with e < 0 can underflow e a^(e-1) to 0 while v = a^e is normal. The explicit
+    // zero slopes all have ev = 0 (e = 0, or a zero base with e > 0) or a non-finite ev.
+    let underflowed = by_base.abs() < f64::MIN_POSITIVE && ev != 0.0 && ev.is_finite();
+    if by_base.is_finite() && !underflowed {
+        if by_base != 0.0 {
+            for (lane, d) in out.iter_mut().zip(&a.d).take(p) {
+                *lane = finite_or_zero(by_base * d, nonsmooth);
+            }
+        }
+        return out;
+    }
     for (lane, d) in out.iter_mut().zip(&a.d).take(p) {
         if *d != 0.0 {
-            let ratio = ev * (d / a.v);
-            if ratio.is_finite() {
-                *lane = ratio;
-            } else {
-                *nonsmooth = true;
-            }
+            *lane = finite_or_zero(ev * (d / a.v), nonsmooth);
         }
     }
     out
@@ -464,8 +495,13 @@ fn call_tangent(p: usize, func: Func, operands: &[&Dual], v: f64, nonsmooth: &mu
         Func::Exp => clamped(p, a.v, -30.0, 30.0, &scale(p, v, &a.d), nonsmooth),
         Func::Log if a.v > 1e-300 => divide(p, &a.d, a.v),
         Func::Log => ZERO,
+        // The evaluator's asinh squares its argument too, so where v² overflows its value is not
+        // finite and this slope is never used.
         Func::Asinh => divide(p, &a.d, (a.v * a.v + 1.0).sqrt()),
-        Func::Atan => divide(p, &a.d, 1.0 + a.v * a.v),
+        // Past |v| ≈ 1.34e154 v² overflows while atan stays finite: a' / (1 + v²) is then taken
+        // as (a' / v) / v, so the slope does not silently become 0.
+        Func::Atan if (a.v * a.v).is_finite() => divide(p, &a.d, 1.0 + a.v * a.v),
+        Func::Atan => divide(p, &divide(p, &a.d, a.v), a.v),
         Func::Erf => scale(p, erf_slope(a.v), &a.d),
         Func::Step | Func::Sign | Func::Floor | Func::Round => ZERO,
         Func::Min | Func::Max | Func::Clip => unreachable!("selectors return above"),
@@ -486,7 +522,12 @@ fn erf_slope(v: f64) -> f64 {
     let slope = 0.254829592
         + t * (2.0 * -0.284496736
             + t * (3.0 * 1.421413741 + t * (4.0 * -1.453152027 + t * (5.0 * 1.061405429))));
-    (-(u * u)).exp() * (0.3275911 * t * t * slope + 2.0 * u * poly)
+    let tail = (-(u * u)).exp();
+    if tail == 0.0 {
+        // The value is flat to the last bit here, and 2 u P(t) can overflow: an exact 0, not 0 · ∞.
+        return 0.0;
+    }
+    tail * (0.3275911 * t * t * slope + 2.0 * u * poly)
 }
 
 #[cfg(test)]
@@ -798,6 +839,107 @@ mod tests {
         assert_eq!(tiny.tangent[0], -0.03 * v);
         assert_eq!(tiny.tangent[1], v * 1e-300f64.ln());
         assert!(!tiny.nonsmooth);
+    }
+
+    /// Independent review of #195, R3: a finite base slope times a large lane, and an exponent
+    /// term times a large lane, overflowed past the `^` rule into the normal equations. Both rows
+    /// have finite native values and no faults.
+    #[test]
+    fn power_terms_that_overflow_after_their_slopes_are_zero() {
+        // Each case with the lane its overflow zeroes.
+        for (source, row, zeroed) in [
+            ("log((1.0*c0-c1+1e-300)^(-0.02))", vec![1e308, 1e308], 0),
+            ("0.001*log(c2^(1.0*c0-c1))", vec![1e308, 1e308, 1e200], 1),
+        ] {
+            let (expression, sites) = sites_of(source);
+            let program = Program::lower(&expression.root, &sites).unwrap();
+            let dual = program.row(&theta_of(&expression, &sites), &row);
+            let (value, faults) = native(&expression, &row);
+            assert_eq!(dual.value.to_bits(), value.to_bits(), "{source}");
+            assert!(
+                value.is_finite() && faults.is_empty(),
+                "{source}: {value} {faults:?}"
+            );
+            assert!(
+                dual.tangent.iter().all(|lane| lane.is_finite()),
+                "{source}: {:?}",
+                dual.tangent
+            );
+            assert_eq!(dual.tangent[zeroed].to_bits(), 0.0f64.to_bits(), "{source}");
+            assert!(dual.nonsmooth, "{source}");
+        }
+    }
+
+    /// The mirror of R3: for a large base and e < 0, e a^(e-1) underflows to 0 while v = a^e is a
+    /// normal number, which left a silent zero lane on a smooth row. The ratio form gives the slope.
+    #[test]
+    fn power_slopes_that_underflow_take_the_ratio_form() {
+        // d/dθ log((θ c0)^e) = e / θ = e at θ = 1.
+        for (source, row, slope) in [
+            ("log((1.0*c0)^(-1.0))", 1e170, -1.0),
+            ("log((1.0*c0)^(-7.9))", 1e37, -7.9),
+        ] {
+            let (expression, sites) = sites_of(source);
+            let program = Program::lower(&expression.root, &sites).unwrap();
+            let dual = program.row(&theta_of(&expression, &sites), &[row]);
+            let (value, faults) = native(&expression, &[row]);
+            assert_eq!(dual.value.to_bits(), value.to_bits(), "{source}");
+            assert!(
+                value.is_finite() && faults.is_empty(),
+                "{source}: {value} {faults:?}"
+            );
+            assert_eq!(dual.tangent[0], slope, "{source}: {:?}", dual.tangent);
+            assert!(!dual.nonsmooth, "{source}");
+        }
+    }
+
+    /// Independent review of #195, R4: past `|v|` of about 27.3 `e^(-v²)` is 0 while `2 v P(t)`
+    /// can overflow. The slope is an exact 0, not NaN, and the row stays smooth.
+    #[test]
+    fn erf_tails_have_an_exact_zero_slope() {
+        let (expression, sites) = sites_of("erf(1.0*c0)");
+        let program = Program::lower(&expression.root, &sites).unwrap();
+        for x in [1e308, -1e308, 1e200, 40.0, -40.0] {
+            let dual = program.row(&[1.0], &[x]);
+            let (value, faults) = native(&expression, &[x]);
+            assert_eq!(dual.value.to_bits(), value.to_bits(), "{x}");
+            assert_eq!(value.abs(), 1.0, "{x}");
+            assert!(faults.is_empty(), "{x}: {faults:?}");
+            assert_eq!(dual.tangent[0].to_bits(), 0.0f64.to_bits(), "{x}");
+            assert!(!dual.nonsmooth, "{x}");
+        }
+        // Before the tail the closed form still gives a positive, finite slope.
+        let near = program.row(&[1.0], &[5.0]);
+        assert!(near.tangent[0] > 0.0 && near.tangent[0].is_finite());
+    }
+
+    /// The same class as R3/R4 in other rules: an intermediate that overflows while the native
+    /// value and the slope are finite. `atan` squares its argument, and `/` forms q b'. Each
+    /// case's slope is checked against its closed form.
+    #[test]
+    fn large_arguments_keep_finite_slopes() {
+        for (source, row, expected) in [
+            // d/dθ atan(θ c0) = c0 / (1 + (θ c0)²) = 1 / 2e154 at θ c0 = 2e154.
+            ("atan(1.0*c0)", vec![2e154], 1.0 / 2e154),
+            // d/dθ c0 / (θ c1) = -c0 / (θ² c1) = -1e20 at θ = 1e-10, c0 = c1 = 1e300.
+            ("c0/(1e-10*c1)", vec![1e300, 1e300], -1e20),
+        ] {
+            let (expression, sites) = sites_of(source);
+            let program = Program::lower(&expression.root, &sites).unwrap();
+            let dual = program.row(&theta_of(&expression, &sites), &row);
+            let (value, faults) = native(&expression, &row);
+            assert_eq!(dual.value.to_bits(), value.to_bits(), "{source}");
+            assert!(
+                value.is_finite() && faults.is_empty(),
+                "{source}: {value} {faults:?}"
+            );
+            let slope = dual.tangent[0];
+            assert!(
+                (slope - expected).abs() <= 1e-15 * expected.abs(),
+                "{source}: {slope} against {expected}"
+            );
+            assert!(!dual.nonsmooth, "{source}");
+        }
     }
 
     #[test]
