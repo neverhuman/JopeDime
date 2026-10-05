@@ -41,6 +41,7 @@ class TimeGradientModel:
         next_state = TimeGradientState.from_bytes(data, self.task, self.state.input, fold['cut_id'], fold['train_end'], fold['total_rows'])
         if struct.pack('<d', next_state.minimum_gap) != struct.pack('<d', self.state.minimum_gap) or next_state.width != self.state.width or next_state.ordinal < fold['train_end']:
             raise OrderedError('domain')
+        _time_gradient_checkpoint(next_state, self.predictor)
         self.state = next_state
 
     def finish(self):
