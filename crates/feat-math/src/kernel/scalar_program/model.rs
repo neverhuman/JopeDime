@@ -1,4 +1,5 @@
 //! Train-only scalar features and the existing ridge head. No v1 coercion.
+use super::producer::ScalarProducerProfile;
 use super::{ScalarExpressionProgram, ScalarNode};
 use crate::heads::RidgeModel;
 use crate::kernel::codec::MAX_BYTES;
@@ -40,6 +41,14 @@ pub struct ScalarModel {
     input_width: usize,
     lambda: f64,
     ridge: RidgeModel,
+    producer: Option<ScalarProducerProfile>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProducerWire {
+    declaration: String,
+    sha256: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -59,6 +68,8 @@ struct ModelWire {
     input_width: usize,
     lambda_bits: u64,
     ridge_bits: [Vec<u64>; 3],
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    producer: Option<ProducerWire>,
 }
 
 impl ScalarExpressionProgram {
@@ -93,6 +104,7 @@ impl ScalarExpressionProgram {
             input_width,
             lambda,
             ridge: RidgeModel::fit(&features, labels, lambda),
+            producer: None,
         };
         model.validate()?;
         Ok(model)
@@ -104,6 +116,9 @@ impl ScalarModel {
         &self.ridge
     }
 
+    pub fn producer_profile(&self) -> Option<&ScalarProducerProfile> {
+        self.producer.as_ref()
+    }
     pub fn program(&self) -> &ScalarExpressionProgram {
         &self.program
     }
@@ -129,6 +144,11 @@ impl ScalarModel {
 
     pub(super) fn validate(&self) -> Result<()> {
         validate_config(&self.program, self.carrier, self.input_width, self.lambda)?;
+        if let Some(producer) = &self.producer {
+            producer
+                .validate_program(&self.program, self.carrier, self.input_width)
+                .map_err(|error| Error::Domain(format!("scalar producer: {error}")))?;
+        }
         let width = self.carrier.output_width(self.input_width);
         // Prevent even forged finite weights overflowing the bounded-score dot
         // product. Include its intercept and a factor-of-two safety margin.
@@ -162,8 +182,8 @@ impl ScalarModel {
         let bits = |values: &[f64]| values.iter().map(|v| v.to_bits()).collect();
         let wire = ModelWire {
             schema: MODEL_SCHEMA.into(),
-            format_version: 2,
-            min_reader_version: 2,
+            format_version: if self.producer.is_some() { 3 } else { 2 },
+            min_reader_version: if self.producer.is_some() { 3 } else { 2 },
             required_features: self.program.required_features()?,
             numerical_policy: self.program.numerical_policy().name().into(),
             profile: MODEL_PROFILE.into(),
@@ -179,6 +199,10 @@ impl ScalarModel {
                 bits(&self.ridge.scales),
                 bits(&self.ridge.w),
             ],
+            producer: self.producer.as_ref().map(|profile| ProducerWire {
+                declaration: profile.canonical_json(),
+                sha256: profile.sha256(),
+            }),
         };
         let text =
             serde_json::to_string(&wire).map_err(|e| VersionError::Malformed(e.to_string()))?;
@@ -195,7 +219,10 @@ impl ScalarModel {
         let value: serde_json::Value =
             serde_json::from_str(text).map_err(|e| VersionError::Malformed(e.to_string()))?;
         for name in ["format_version", "min_reader_version"] {
-            if value.get(name).is_some_and(|v| v.as_u64() != Some(2)) {
+            if value
+                .get(name)
+                .is_some_and(|v| !matches!(v.as_u64(), Some(2 | 3)))
+            {
                 return Err(VersionError::UnsupportedVersion(format!(
                     "scalar model {name}"
                 )));
@@ -220,6 +247,41 @@ impl ScalarModel {
                 "scalar model header".into(),
             ));
         }
+        let format = value
+            .get("format_version")
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| VersionError::Malformed("scalar model format_version".into()))?;
+        if value
+            .get("min_reader_version")
+            .and_then(serde_json::Value::as_u64)
+            != Some(format)
+        {
+            return Err(VersionError::UnsupportedVersion(
+                "scalar model reader pair".into(),
+            ));
+        }
+        // Validate the producer identity before interpreting model/program state.
+        // Unbound format-2 writes and reads retain their original envelope.
+        let producer = match (format, value.get("producer")) {
+            (2, None) => None,
+            (3, Some(value)) if value.is_object() => {
+                let wire: ProducerWire = serde_json::from_value(value.clone())
+                    .map_err(|e| VersionError::Malformed(e.to_string()))?;
+                let producer = ScalarProducerProfile::from_canonical(&wire.declaration)
+                    .map_err(VersionError::UnsupportedVersion)?;
+                if producer.sha256() != wire.sha256 {
+                    return Err(VersionError::UnsupportedVersion(
+                        "scalar producer hash".into(),
+                    ));
+                }
+                Some(producer)
+            }
+            _ => {
+                return Err(VersionError::UnsupportedVersion(
+                    "scalar producer envelope".into(),
+                ))
+            }
+        };
         let wire: ModelWire =
             serde_json::from_value(value).map_err(|e| VersionError::Malformed(e.to_string()))?;
         let program = ScalarExpressionProgram::from_bytes(&wire.program)?;
@@ -238,6 +300,7 @@ impl ScalarModel {
         let floats = |values: &[u64]| values.iter().map(|&v| f64::from_bits(v)).collect();
         let model = Self {
             program,
+            producer,
             carrier: wire.carrier,
             input_width: wire.input_width,
             lambda: f64::from_bits(wire.lambda_bits),
