@@ -7,9 +7,10 @@
 //! Squares Problems* (2nd ed., IMM DTU, 2004): Levenberg–Marquardt with Nielsen's damping update.
 //! It runs on the Jacobi-scaled problem, whose scale is MINPACK's running maximum of `diag(JᵀJ)`
 //! with a relative floor. Its damped steps are invariant to rescaling a parameter while the floor
-//! leaves that parameter's scale alone; where the floor raises it, it bounds the parameter's raw
-//! step instead, and rescaling changes the step. The step stopping test (MNT 3.15b) is taken on
-//! the raw parameters and is not invariant either.
+//! raises no parameter's scale, before or after the rescaling. Where it raises one, it bounds that
+//! parameter's raw step instead, and through the coupling of the parameters a rescaling can change
+//! every step, including the rescaled parameter's own. The step stopping test (MNT 3.15b) is taken
+//! on the raw parameters and is not invariant either.
 //!
 //! The damping is bounded to `[mu_min, mu_max]`: Nielsen's update after an accepted step is
 //! clamped to both bounds, and a trial that is not accepted, or a failed solve, that would raise
@@ -1362,6 +1363,27 @@ mod tests {
         );
     }
 
+    /// Independent review of #195, R6: at c0 = 20 `tanh` has rounded to 1, so `1 - tanh²` gave a
+    /// silent 0 lane and the run stopped on the gradient test with no trial, keeping a score of 4.
+    /// With the slope from the argument (about 3.4e-16) the fit reaches the target.
+    #[test]
+    fn a_saturated_tanh_slope_still_moves_the_fit() {
+        let result = lm(
+            "tanh(1.0*c0)",
+            &Admission::Structure,
+            &[vec![20.0]],
+            &[-1.0],
+            Objective::Raw,
+            &Options::default(),
+            40,
+        );
+        let run = result.run.as_ref().unwrap();
+        assert_ne!(result.status, Status::Gradient, "{run:?}");
+        assert!(run.accepted > 0, "{run:?}");
+        assert!(result.changed, "{:?}", result.status);
+        assert!(result.refinement.score < 4.0, "{}", result.refinement.score);
+    }
+
     #[test]
     fn a_non_finite_jacobian_returns_the_start() {
         // The value stays below 1e10 while ∂/∂(first site) is about 1e310.
@@ -2080,6 +2102,42 @@ mod tests {
         let floored = first_step(1e-6);
         assert!((floored[0] + 1.0 / 1.1).abs() <= 1e-12, "{floored:?}");
         assert!((floored[1] - free).abs() <= 1e-14, "{floored:?}");
+    }
+
+    /// Independent review of #195, N1 follow-up: with coupled parameters the floor matters for the
+    /// whole problem, not only for the rescaled parameter. A = [[1, 0.5], [0.5, 1]], g = (1, 1):
+    /// expressing θ0 in units 1e3 times larger leaves every scale above the floor and keeps the
+    /// first physical step; 1e6 times larger lifts θ0's curvature to 1e12, the floor raises θ1's
+    /// scale from 1 to 100, and θ0's own step changes although its floor is inactive.
+    #[test]
+    fn a_coupled_problem_keeps_its_step_only_while_no_scale_is_floored() {
+        // J = [[u, 0.5], [0, √0.75]] gives JᵀJ = A at u = 1; c makes g = Jᵀc = (1, 1) at 0.
+        let root = 0.75f64.sqrt();
+        let c = [1.0, 0.5 / root];
+        let first_step = |u: f64| {
+            let mut problem = Closed {
+                residuals: move |t: &[f64]| vec![u * t[0] + 0.5 * t[1] + c[0], root * t[1] + c[1]],
+                jacobian: move |_: &[f64]| vec![vec![u, 0.5], vec![0.0, root]],
+                scale: 1.0,
+            };
+            let one = Options {
+                max_iterations: 1,
+                ..Options::default()
+            };
+            let run = solve_closed(&mut problem, vec![0.0, 0.0], &one);
+            assert!(run.trace[0].accepted, "{run:?}");
+            [u * run.theta[0], run.theta[1]]
+        };
+        let unit = first_step(1.0);
+        let inactive = first_step(1e3);
+        for (a, b) in inactive.iter().zip(unit) {
+            assert!((a - b).abs() <= 1e-12 * b.abs(), "{inactive:?} vs {unit:?}");
+        }
+        let floored = first_step(1e6);
+        assert!(
+            (floored[0] - unit[0]).abs() > 1e-3,
+            "{floored:?} vs {unit:?}"
+        );
     }
 
     /// The log relative error -log10(|q - c| / |c|) (NIST StRD).

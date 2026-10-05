@@ -13,17 +13,22 @@
 //! - **Ties.** At an exact tie of selectable operands (`min`, `max`, `clip`, and the clamps inside
 //!   `exp`, `sigmoid`, the `^` exponent and the output clamp), the tangent is the mean of the tied
 //!   operands' tangents.
-//! - **Closed forms.** `asinh` and `erf` use closed-form slopes, which hold at 0 too, where
-//!   differentiating their sign-times-magnitude code would give 0. Where `e^(-v²)` underflows to 0
-//!   (`|v|` above about 27.3) the `erf` slope is an exact 0.
-//! - **Large arguments.** Where `v²` overflows (`|v|` above about 1.34e154), `atan` divides by `v`
-//!   twice, the same slope without the square. Where `q b'` overflows in `/`, the lane is retaken
-//!   as `a'/b - q (b'/b)`.
-//! - **Small numerators.** Where `q b'` and `a'` both lie below the smallest normal number, `/`
-//!   forms `a' - q b'` at 2^600 times its size (an exact scaling) and scales the quotient back,
-//!   so underflow in `q b'` does not lose a slope that the division by a small `b` brings back
-//!   into range. A slope that is itself below the normal range keeps only a subnormal's bits, in
-//!   this rule as in every other.
+//! - **Closed forms.** `asinh`, `erf`, `tanh` and `sigmoid` take their slopes from the argument,
+//!   not from the rounded value. `asinh` and `erf` use closed forms, which hold at 0 too, where
+//!   differentiating their sign-times-magnitude code would give 0. `tanh` uses `4 e / (1 + e)²`
+//!   with `e = e^(-2|v|)` and `sigmoid` uses `e / (1 + e)²` with `e = e^(-|v|)`; unlike
+//!   `1 - tanh²` and `σ (1 - σ)`, they do not cancel once the value rounds to ±1.
+//! - **Range.** No rule loses a slope that is in range at its node to an intermediate that is not.
+//!   - `/` takes `a'/b - a b'/b²`. Its second term is formed on the operands' mantissas and
+//!     exponents separately and joined once, so neither `q = a / b`, `q b'` nor `b²` can under- or
+//!     overflow on the way.
+//!   - Where a `^` coefficient (`e a^(e-1)` or `v ln a`) or the `erf` or `tanh` coefficient leaves
+//!     the normal range, each lane is formed in the log domain, accurate to about 1e-12 relative.
+//!     The `^` base term first tries the ratio form `(e v) (a' / a)`, while `v` is normal.
+//!   - Where `v²` overflows (`|v|` above about 1.34e154), `atan` divides by `v` twice.
+//!
+//!   A slope that is itself outside the normal range at its node is lost: below it, the lane keeps
+//!   only a subnormal's bits, or is 0; above it, see the last paragraph.
 //! - **Infinite one-sided slopes.** `sqrt` at 0 and `0 ^ e` with `0 < e < 1` have tangent 0.
 //! - **Steps.** `step`, `sign`, `floor` and `round` have tangent 0.
 //! - **Non-finite operands.** Any node other than a selector with a non-finite operand has tangent
@@ -32,11 +37,10 @@
 //! A row reports `nonsmooth` when a tie, an infinite one-sided slope, a non-finite operand or an
 //! overflowing `^` slope was differentiated. A term whose coefficient is an exact zero is skipped,
 //! so a zero coefficient never meets an infinite lane. In `^`, a saturated exponent's term is an
-//! exact zero even where `v ln a` overflows. A base slope `e a^(e-1)` that overflows, or underflows
-//! while `e v` does not, is taken lane by lane in the ratio form `(e v) (a' / a)`. Every lane of a
-//! `^` tangent that is still not finite (a base or exponent term, including one whose incoming
-//! lane was already not finite) is 0 and marks the row nonsmooth. Other rules pass an overflowing
-//! lane on, and the normal equations then refuse the Jacobian.
+//! exact zero even where `v ln a` overflows. Every lane of a `^` tangent that is still not finite
+//! (a base or exponent term, including one whose incoming lane was already not finite) is 0 and
+//! marks the row nonsmooth. Other rules pass an overflowing lane on, and the normal equations then
+//! refuse the Jacobian.
 
 use super::*;
 use crate::math_expr::fault::Collect;
@@ -52,6 +56,58 @@ const ZERO: Lanes = [0.0; MAX_PARAMS];
 /// 2^600 and 2^-600. Multiplying by either is exact while the product stays a normal number.
 const SCALE_UP: f64 = f64::from_bits((1023 + 600) << 52);
 const SCALE_DOWN: f64 = f64::from_bits((1023 - 600) << 52);
+
+/// `x = m · 2^e` with `1 ≤ |m| < 2` for a finite nonzero `x`, subnormals included. Zero and
+/// non-finite `x` come back as `(x, 0)`.
+fn split(x: f64) -> (f64, i32) {
+    if x == 0.0 || !x.is_finite() {
+        return (x, 0);
+    }
+    // A subnormal is first scaled into the normal range, exactly.
+    let (x, shift) = if x.abs() < f64::MIN_POSITIVE {
+        (x * SCALE_UP, -600)
+    } else {
+        (x, 0)
+    };
+    let bits = x.to_bits();
+    let exponent = ((bits >> 52) & 0x7ff) as i32 - 1023;
+    let mantissa = f64::from_bits((bits & !(0x7ff_u64 << 52)) | (1023_u64 << 52));
+    (mantissa, exponent + shift)
+}
+
+/// `m · 2^e`, rounded once: the steps before the last are exact power-of-two scalings that keep
+/// the value normal, so only the last can round (to a subnormal) or overflow.
+fn join(m: f64, e: i32) -> f64 {
+    if m == 0.0 || !m.is_finite() {
+        return m;
+    }
+    let (mut x, mut e) = (m, e);
+    while e > 600 {
+        x *= SCALE_UP;
+        e -= 600;
+    }
+    while e < -600 {
+        x *= SCALE_DOWN;
+        e += 600;
+    }
+    x * f64::from_bits(((e + 1023) as u64) << 52)
+}
+
+/// `±exp(log_c) · d` for a slope coefficient `±exp(log_c)` outside the normal range, formed in the
+/// log domain so a large or small lane still gets its product. An underflow is an exact +0.
+fn log_lane(negative: bool, log_c: f64, d: f64) -> f64 {
+    if d == 0.0 || log_c == f64::NEG_INFINITY {
+        return 0.0;
+    }
+    let r = (log_c + d.abs().ln()).exp();
+    if r == 0.0 {
+        0.0
+    } else if negative != (d < 0.0) {
+        -r
+    } else {
+        r
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 enum Op {
@@ -352,29 +408,25 @@ fn binary_tangent(p: usize, op: BinOp, a: &Dual, b: &Dual, v: f64, nonsmooth: &m
         BinOp::Add => comb(p, 1.0, &a.d, 1.0, &b.d),
         BinOp::Sub => comb(p, 1.0, &a.d, -1.0, &b.d),
         BinOp::Mul => comb(p, b.v, &a.d, a.v, &b.d),
-        // The protected branch is a constant 0. Otherwise (a' - q b') / b with q = a / b, which,
-        // unlike (a' b - a b') / b², cannot overflow through b².
+        // The protected branch is a constant 0. Otherwise the slope is a'/b - a b'/b². Its second
+        // term is formed on the mantissas and exponents of a, b' and b separately and joined
+        // once, so no intermediate (q = a/b, q b', b²) under- or overflows: a lane is lost only
+        // where it is itself out of range. A site lies in a or in b, so one term is zero; a term
+        // with an exact zero factor is skipped, and an incoming lane that is not finite is passed
+        // on.
         BinOp::Div if b.v.abs() < 1e-12 => ZERO,
         BinOp::Div => {
-            let mut out = divide(p, &comb(p, 1.0, &a.d, -v, &b.d), b.v);
+            let mut out = ZERO;
+            let ((ma, ea), (mb, eb)) = (split(a.v), split(b.v));
             for (k, lane) in out.iter_mut().enumerate().take(p) {
-                if !lane.is_finite() {
-                    // With a large b, q b' can overflow where the slope itself is moderate;
-                    // a'/b - q (b'/b) is the same slope without that product. A lane still not
-                    // finite is passed on.
-                    *lane = a.d[k] / b.v - v * (b.d[k] / b.v);
-                } else if v != 0.0
-                    && b.d[k] != 0.0
-                    && (v * b.d[k]).abs() < f64::MIN_POSITIVE
-                    && a.d[k].abs() < f64::MIN_POSITIVE
-                {
-                    // Below the smallest normal number q b' keeps fewer bits, or none, and a
-                    // small b would scale the loss up. Power-of-two scaling is exact, so the
-                    // numerator is formed in the normal range, and only the final scaling back
-                    // can round to a subnormal. (A site lies in a or in b, so a' is 0 here; the
-                    // bound on it keeps a' 2^600 finite regardless.)
-                    *lane = (a.d[k] * SCALE_UP - v * (b.d[k] * SCALE_UP)) / b.v * SCALE_DOWN;
-                }
+                let direct = if a.d[k] == 0.0 { 0.0 } else { a.d[k] / b.v };
+                let through_b = if b.d[k] == 0.0 || a.v == 0.0 {
+                    0.0
+                } else {
+                    let (md, ed) = split(b.d[k]);
+                    join(ma * md / (mb * mb), ea + ed - 2 * eb)
+                };
+                *lane = direct - through_b;
             }
             out
         }
@@ -389,9 +441,8 @@ fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> La
     if exponent_factor == 0.5 {
         *nonsmooth = true;
     }
-    // e * a^(e - 1) keeps a tiny base's slope where v / a would lose it to underflow (e > 1). For
-    // a tiny base and e < 1 it overflows instead, and for a large base and e < 0 it can underflow
-    // while v is normal; `base_lanes` takes the ratio form in both cases.
+    // e * a^(e - 1) keeps a tiny base's slope where v / a would lose it to underflow (e > 1). Where
+    // it leaves the normal range anyway, `base_lanes` takes another form.
     let base_slope = |a: f64| if e == 0.0 { 0.0 } else { e * a.powf(e - 1.0) };
     let (by_base, by_exponent) = if a.v > 0.0 {
         (base_slope(a.v), v * a.v.ln())
@@ -420,21 +471,34 @@ fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> La
         // NaN, with POW_NONFINITE.
         (0.0, 0.0)
     };
-    // A saturated exponent is a constant, so its term is an exact zero even where v ln a
-    // overflows.
-    let by_exponent = if exponent_factor == 0.0 {
-        0.0
-    } else {
-        exponent_factor * by_exponent
-    };
-    let by_exponent = finite_or_zero(by_exponent, nonsmooth);
+    // The base slope was computed, not set: a nonzero base (a negative one only at an integral
+    // exponent) and e != 0. Only a computed slope can leave the normal range by rounding.
+    let computed = e != 0.0 && (a.v > 0.0 || (a.v < 0.0 && e == e.trunc()));
     // Each term is checked: a finite slope times a large lane can still overflow. A site lies in
     // the base or the exponent, never both, so a lane's sum has one nonzero term and is checked
     // only defensively.
-    let mut out = base_lanes(p, by_base, e * v, a, nonsmooth);
-    if by_exponent != 0.0 {
+    let mut out = base_lanes(p, by_base, e, v, a, computed, nonsmooth);
+    // A saturated exponent is a constant, so its term is an exact zero even where v ln a
+    // overflows; so is a base of exactly 1, where ln a = 0.
+    if exponent_factor != 0.0 && a.v > 0.0 && a.v != 1.0 {
+        let by_exponent = exponent_factor * by_exponent;
+        // v ln a is used directly while it and v are normal numbers. Otherwise (v under- or
+        // overflowed, or is subnormal) each lane is formed in the log domain.
+        let direct = by_exponent.is_finite()
+            && by_exponent.abs() >= f64::MIN_POSITIVE
+            && v >= f64::MIN_POSITIVE;
+        let ln_a = a.v.ln();
+        let log_c = exponent_factor.ln() + e * ln_a + ln_a.abs().ln();
         for (lane, d) in out.iter_mut().zip(&b.d).take(p) {
-            let exponent_term = finite_or_zero(by_exponent * d, nonsmooth);
+            if *d == 0.0 {
+                continue;
+            }
+            let term = if direct {
+                by_exponent * d
+            } else {
+                log_lane(ln_a < 0.0, log_c, *d)
+            };
+            let exponent_term = finite_or_zero(term, nonsmooth);
             *lane = finite_or_zero(*lane + exponent_term, nonsmooth);
         }
     }
@@ -451,16 +515,23 @@ fn finite_or_zero(value: f64, nonsmooth: &mut bool) -> f64 {
     }
 }
 
-/// `by_base * a'` lane by lane. When `by_base` overflows, or underflows below the smallest normal
-/// number while `ev = e * v` is finite and nonzero, each lane is the ratio form `ev * (a'_k / a)`
-/// of the same slope: a lane whose `a'_k` is 0 stays 0. A lane that is not finite in either form is
-/// 0 and marks the row nonsmooth.
-fn base_lanes(p: usize, by_base: f64, ev: f64, a: &Dual, nonsmooth: &mut bool) -> Lanes {
+/// `e a^(e-1) a'` lane by lane. An explicit slope (`computed` false: a zero base, or e = 0), or a
+/// computed `by_base` that is a finite normal number, is used directly. A computed one outside
+/// that range is taken in the ratio form `(e v) (a'_k / a)` while `v` is normal and `e v` finite
+/// (a large base with e < 0 underflows `e a^(e-1)` while `v` is normal), and in the log domain
+/// otherwise (both underflow for a tiny base and e > 1). A lane whose `a'_k` is 0 stays 0. A lane
+/// that is not finite is 0 and marks the row nonsmooth.
+fn base_lanes(
+    p: usize,
+    by_base: f64,
+    e: f64,
+    v: f64,
+    a: &Dual,
+    computed: bool,
+    nonsmooth: &mut bool,
+) -> Lanes {
     let mut out = ZERO;
-    // A large base with e < 0 can underflow e a^(e-1) to 0 while v = a^e is normal. The explicit
-    // zero slopes all have ev = 0 (e = 0, or a zero base with e > 0) or a non-finite ev.
-    let underflowed = by_base.abs() < f64::MIN_POSITIVE && ev != 0.0 && ev.is_finite();
-    if by_base.is_finite() && !underflowed {
+    if !computed || (by_base.is_finite() && by_base.abs() >= f64::MIN_POSITIVE) {
         if by_base != 0.0 {
             for (lane, d) in out.iter_mut().zip(&a.d).take(p) {
                 *lane = finite_or_zero(by_base * d, nonsmooth);
@@ -468,9 +539,19 @@ fn base_lanes(p: usize, by_base: f64, ev: f64, a: &Dual, nonsmooth: &mut bool) -
         }
         return out;
     }
+    let ev = e * v;
+    let ratio = v.abs() >= f64::MIN_POSITIVE && ev.is_finite();
+    // e a^(e-1) is negative when e is, flipped for a negative base at an odd integral e - 1.
+    let negative = (e < 0.0) != (a.v < 0.0 && (e - 1.0) % 2.0 != 0.0);
+    let log_c = e.abs().ln() + (e - 1.0) * a.v.abs().ln();
     for (lane, d) in out.iter_mut().zip(&a.d).take(p) {
         if *d != 0.0 {
-            *lane = finite_or_zero(ev * (d / a.v), nonsmooth);
+            let term = if ratio {
+                ev * (d / a.v)
+            } else {
+                log_lane(negative, log_c, *d)
+            };
+            *lane = finite_or_zero(term, nonsmooth);
         }
     }
     out
@@ -505,13 +586,15 @@ fn call_tangent(p: usize, func: Func, operands: &[&Dual], v: f64, nonsmooth: &mu
         Func::Log1p => ZERO,
         Func::Sin => scale(p, a.v.cos(), &a.d),
         Func::Cos => scale(p, -a.v.sin(), &a.d),
-        Func::Tanh => scale(p, 1.0 - v * v, &a.d),
+        Func::Tanh => sech_squared_lanes(p, a.v, &a.d),
         Func::Sigmoid => {
             let factor = clamp_factor(a.v, -30.0, 30.0);
             if factor == 0.5 {
                 *nonsmooth = true;
             }
-            scale(p, factor * v * (1.0 - v), &a.d)
+            // σ (1 - σ) from the argument: within the clamp it is at least e^-30 / 4.
+            let e = (-a.v.abs()).exp();
+            scale(p, factor * (e / ((1.0 + e) * (1.0 + e))), &a.d)
         }
         Func::Exp => clamped(p, a.v, -30.0, 30.0, &scale(p, v, &a.d), nonsmooth),
         Func::Log if a.v > 1e-300 => divide(p, &a.d, a.v),
@@ -523,19 +606,52 @@ fn call_tangent(p: usize, func: Func, operands: &[&Dual], v: f64, nonsmooth: &mu
         // as (a' / v) / v, so the slope does not silently become 0.
         Func::Atan if (a.v * a.v).is_finite() => divide(p, &a.d, 1.0 + a.v * a.v),
         Func::Atan => divide(p, &divide(p, &a.d, a.v), a.v),
-        Func::Erf => scale(p, erf_slope(a.v), &a.d),
+        Func::Erf => erf_lanes(p, a.v, &a.d),
         Func::Step | Func::Sign | Func::Floor | Func::Round => ZERO,
         Func::Min | Func::Max | Func::Clip => unreachable!("selectors return above"),
     }
+}
+
+/// `c a'` lane by lane for a positive slope coefficient `c = exp(log_c)`: directly while `c` is a
+/// normal number, and in the log domain otherwise.
+fn tail_lanes(p: usize, c: f64, log_c: f64, d: &Lanes) -> Lanes {
+    if c >= f64::MIN_POSITIVE {
+        return scale(p, c, d);
+    }
+    let mut out = ZERO;
+    for (lane, d) in out.iter_mut().zip(d).take(p) {
+        *lane = log_lane(false, log_c, *d);
+    }
+    out
+}
+
+/// `sech²(x) a'` lane by lane, from the argument: `4 e / (1 + e)²` with `e = e^(-2|x|)`. Unlike
+/// `1 - tanh²`, it does not cancel to 0 once `tanh` rounds to ±1 (`|x|` above about 19.1).
+fn sech_squared_lanes(p: usize, x: f64, d: &Lanes) -> Lanes {
+    let e = (-2.0 * x.abs()).exp();
+    let c = 4.0 * e / ((1.0 + e) * (1.0 + e));
+    tail_lanes(p, c, 4f64.ln() - 2.0 * x.abs() - 2.0 * e.ln_1p(), d)
 }
 
 /// The derivative of the evaluator's `erf` (Abramowitz and Stegun 7.1.26, the same constants),
 /// valid at 0: with `u = |v|`, `t = 1 / (1 + p u)`, `P(t) = a1 t + … + a5 t⁵` and `E = e^(-u²)`,
 /// the value is `sign(v) (1 - P(t) E)`, whose slope is `E (p t² P'(t) + 2 u P(t))` on both sides.
 /// The coefficients sum to `1 - 1e-9`, so the value itself steps by about `2e-9` across 0; this
-/// slope ignores that step and does not mark the row nonsmooth for it.
-fn erf_slope(v: f64) -> f64 {
+/// slope ignores that step and does not mark the row nonsmooth for it. Where `E` leaves the normal
+/// range (`u` above about 26.5) the lanes are formed in the log domain; where `u²` overflows the
+/// slope is an exact 0.
+fn erf_lanes(p: usize, v: f64, d: &Lanes) -> Lanes {
     let u = v.abs();
+    if !(u * u).is_finite() {
+        return ZERO;
+    }
+    let bracket = erf_bracket(u);
+    let tail = (-(u * u)).exp();
+    tail_lanes(p, tail * bracket, bracket.ln() - u * u, d)
+}
+
+/// `p t² P'(t) + 2 u P(t)` of [`erf_lanes`], positive for `u ≥ 0`.
+fn erf_bracket(u: f64) -> f64 {
     let t = 1.0 / (1.0 + 0.3275911 * u);
     let poly = t
         * (0.254829592
@@ -543,12 +659,7 @@ fn erf_slope(v: f64) -> f64 {
     let slope = 0.254829592
         + t * (2.0 * -0.284496736
             + t * (3.0 * 1.421413741 + t * (4.0 * -1.453152027 + t * (5.0 * 1.061405429))));
-    let tail = (-(u * u)).exp();
-    if tail == 0.0 {
-        // The value is flat to the last bit here, and 2 u P(t) can overflow: an exact 0, not 0 · ∞.
-        return 0.0;
-    }
-    tail * (0.3275911 * t * t * slope + 2.0 * u * poly)
+    0.3275911 * t * t * slope + 2.0 * u * poly
 }
 
 #[cfg(test)]
@@ -996,6 +1107,90 @@ mod tests {
             );
             assert!(!dual.nonsmooth, "{row:?}");
         }
+    }
+
+    /// The slope of a one-site row, checked against the native value bit for bit and for no
+    /// fault, and against `expected` to `tolerance` relative, on a smooth row.
+    fn check_slope(source: &str, row: &[f64], expected: f64, tolerance: f64) {
+        let (expression, sites) = sites_of(source);
+        let program = Program::lower(&expression.root, &sites).unwrap();
+        let dual = program.row(&theta_of(&expression, &sites), row);
+        let (value, faults) = native(&expression, row);
+        assert_eq!(dual.value.to_bits(), value.to_bits(), "{source}");
+        assert!(
+            value.is_finite() && faults.is_empty(),
+            "{source}: {value} {faults:?}"
+        );
+        let slope = dual.tangent[0];
+        assert!(
+            (slope - expected).abs() <= tolerance * expected.abs(),
+            "{source}: {slope} against {expected}"
+        );
+        assert!(!dual.nonsmooth, "{source}");
+    }
+
+    /// Independent review of #195, R7: `q = a / b` can itself underflow to 0 while the slope at
+    /// the division, `-a b' / b²`, is normal. Each expected slope is formed in an order whose
+    /// intermediates are normal.
+    #[test]
+    fn division_quotients_that_underflow_keep_their_slope() {
+        let a = f64::from_bits(1);
+        let b = 1e-300 * 1e308;
+        let slope = -(a * 1e308) / (b * b);
+        check_slope("c0/(1e-300*c1)", &[a, 1e308], slope, 1e-14);
+        check_slope(
+            "(c0/(1e-300*c1))*c2",
+            &[a, 1e308, 1e30],
+            slope * 1e30,
+            1e-14,
+        );
+    }
+
+    /// Independent review of #195, R8: for a tiny base and e > 1 both `e a^(e-1)` and `v = a^e`
+    /// underflow, while the slope at the power, `e a^(e-1) a'`, is normal; and for a tiny base and
+    /// a large exponent lane, `v ln a` is subnormal while `v ln a b'` is normal.
+    #[test]
+    fn power_coefficients_that_underflow_keep_their_slope() {
+        // a = 1e-200 and a' = 1e110: 3 a² a' = 3e-290.
+        let a = 1e-310 * 1e110;
+        let slope = 3.0 * (a * 1e100) * (a * 1e100) * 1e110 * 1e-200;
+        check_slope("(1e-310*c0)^3.0", &[1e110], slope, 1e-12);
+        // A non-integral exponent: a = 1e-150, 3.5 a^2.5 a' = 3.5e-265.
+        let a = 1e-260f64 * 1e110;
+        let slope = 3.5 * (a * 1e100).powf(2.5) * 1e110 * 1e-250;
+        check_slope("(1e-260*c0)^3.5", &[1e110], slope, 1e-12);
+        // The exponent term: a = 1e-40 and e = 7.9, so v = 1e-316 is subnormal, and
+        // d/dθ a^(θ c1) = v ln(a) c1 = -7.3e-15.
+        let (a, e) = (1e-40f64, 1e-299 * 7.9e299);
+        let half = a.powf(e / 2.0);
+        let slope = half * (half * (a.ln() * 7.9e299));
+        check_slope("c0^(1e-299*c1)", &[a, 7.9e299], slope, 1e-12);
+    }
+
+    /// Independent review of #195, R6: `1 - tanh²` cancels to 0 once `tanh` rounds to 1, and the
+    /// coefficients of `tanh`, `erf` and `sigmoid` can leave the normal range while a large lane
+    /// brings their product back into it.
+    #[test]
+    fn saturating_functions_keep_their_slope() {
+        // 20 sech²(20), to 100 digits 3.398683404233271e-16.
+        check_slope("tanh(1.0*c0)", &[20.0], 3.398683404233271e-16, 1e-14);
+        // sech²(x) = 4 e^-2x / (1 + e^-2x)² at x = 400 is about 1e-347; times a' = 1e301.
+        let x = 4e-299f64 * 1e301;
+        let slope = 4.0 * ((-x).exp() * 1e301) * (-x).exp();
+        check_slope("tanh(4e-299*c0)", &[1e301], slope, 1e-12);
+        // erf'(30) is about 1e-391: E = e^-900 is split in two halves.
+        let u = 3e-300f64 * 1e301;
+        let half = (-(u * u) / 2.0).exp();
+        let slope = erf_bracket(u) * (half * 1e301) * half;
+        check_slope("erf(3e-300*c0)", &[1e301], slope, 1e-12);
+        // σ (1 - σ) at 29 from the argument; 1 - σ would keep only about 12 bits here.
+        let e = (-29f64).exp();
+        check_slope(
+            "sigmoid(1.0*c0)",
+            &[29.0],
+            29.0 * e / ((1.0 + e) * (1.0 + e)),
+            1e-14,
+        );
     }
 
     #[test]
