@@ -24,11 +24,11 @@ class BudgetTests(unittest.TestCase):
             "worker_sha256": "b" * 64,
             "input_manifest_sha256": "c" * 64,
         }
-        self.ledger = s1.Ledger(self.path, self.plan)
+        self.ledger = s1.Ledger(self.path, self.plan, initialize=True)
 
-    def reserve(self, identity=1, ordinal=0):
+    def reserve(self, identity=1, ordinal=0, program="d" * 64):
         return self.ledger.reserve(
-            f"{identity:064x}", self.plan["contexts"][0], ordinal, "d" * 64, now=NOW
+            f"{identity:064x}", self.plan["contexts"][0], ordinal, program, now=NOW
         )
 
     def test_fixed_equal_ignores_outer_test_for_every_stage(self):
@@ -56,7 +56,7 @@ class BudgetTests(unittest.TestCase):
             (2, 96, "evolution", 1),
             (3, 1247, "evolution", 18),
         ):
-            result = self.reserve(identity, ordinal)
+            result = self.reserve(identity, ordinal, program=f"{identity:064x}")
             self.assertEqual(
                 (result["phase"], result["generation"]), (phase, generation)
             )
@@ -111,6 +111,32 @@ class BudgetTests(unittest.TestCase):
                 s1.Ledger(self.path, self.plan | {field: "e" * 64})
         with self.assertRaises(ValueError):
             s1.Ledger(self.path, self.plan | {"contexts": self.plan["contexts"][:-1]})
+
+    def test_program_retry_cap_survives_restart(self):
+        self.reserve(1, 0)
+        self.ledger.finish(f"{1:064x}", "failed")
+        self.reserve(2, 1)
+        self.ledger.finish(f"{2:064x}", "unknown")
+        restarted = s1.Ledger(self.path, self.plan)
+        with self.assertRaisesRegex(ValueError, "two-attempt"):
+            restarted.reserve(
+                f"{3:064x}", self.plan["contexts"][0], 2, "d" * 64, now=NOW
+            )
+        self.assertTrue(self.reserve(3, 2, program="e" * 64)["new_reservation"])
+
+    def test_missing_ledger_is_not_an_implicit_cold_start(self):
+        self.reserve()
+        saved = self.path.read_bytes()
+        self.path.unlink()
+        with self.assertRaisesRegex(ValueError, "missing original ledger"):
+            s1.Ledger(self.path, self.plan)
+        with self.assertRaises(FileExistsError):
+            s1.Ledger(self.path, self.plan, initialize=True)
+        self.assertFalse(self.path.exists())
+        self.path.write_bytes(saved)
+        self.assertEqual(
+            s1.Ledger(self.path, self.plan).status()["charged_attempts"], 1
+        )
 
     def test_original_deadline_and_terminal_identity(self):
         for now in (

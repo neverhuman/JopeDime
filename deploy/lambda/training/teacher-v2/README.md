@@ -24,6 +24,11 @@ workspaces through the existing Lambda lane, and the mutation qualifier.
 
 `s1_budget.py --plan PLAN --plan-sha256 SHA --ledger LEDGER [--request REQUEST]`
 checks pinned plan bytes and reserves a slot or reports current accounting.
+Add `--initialize` exactly once when creating a new admitted ledger. Resume
+requires both the original SQLite file and its `.initialization.json` marker;
+missing or torn state must be restored from custody rather than initialized again.
+Keep both files together when preserving a checkpoint. Each context/program has
+at most two charged attempts, including failures and unknown dispatches.
 Plan fields are `contexts` (all 4,873 full SHA256 identities), `engine_sha256`,
 `worker_sha256` and `input_manifest_sha256`. Reservation fields are `attempt_id`,
 `context`, `ordinal` and `program`. Each context has ordinals 0..1247. Trusted

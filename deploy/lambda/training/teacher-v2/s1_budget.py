@@ -4,6 +4,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import sqlite3
 from contextlib import contextmanager
@@ -16,6 +17,7 @@ CONTEXTS = 4873
 PER_CONTEXT = INITIALIZATION + GENERATIONS * PER_GENERATION
 TOTAL = CONTEXTS * PER_CONTEXT
 EVALUATION_TIMEOUT_SECONDS = 90
+MAX_PROGRAM_ATTEMPTS = 2
 DEADLINE = dt.datetime(2026, 10, 10, tzinfo=dt.timezone.utc)
 PROTOCOL = "jope.s1-fixed-equal/v1"
 
@@ -42,7 +44,7 @@ class Ledger:
     single-use dispatch claim before launching any evaluation.
     """
 
-    def __init__(self, path, plan):
+    def __init__(self, path, plan, *, initialize=False):
         if set(plan) != {
             "contexts",
             "engine_sha256",
@@ -68,19 +70,48 @@ class Ledger:
                 "per_generation": PER_GENERATION,
                 "total": TOTAL,
                 "evaluation_timeout_seconds": EVALUATION_TIMEOUT_SECONDS,
+                "max_program_attempts": MAX_PROGRAM_ATTEMPTS,
                 "deadline": DEADLINE.isoformat(),
             },
             sort_keys=True,
         )
         self.plan_sha256 = hashlib.sha256(self.policy.encode()).hexdigest()
+        self.marker = self.path.with_name(self.path.name + ".initialization.json")
+        if initialize:
+            # A surviving marker also prevents accidental reset after DB loss.
+            with self.marker.open("x") as marker:
+                marker.write(self.plan_sha256 + "\n")
+                marker.flush()
+                os.fsync(marker.fileno())
+            descriptor = os.open(
+                self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600
+            )
+            os.close(descriptor)
+            directory = os.open(self.path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        if (
+            self.path.is_symlink()
+            or self.marker.is_symlink()
+            or not self.path.is_file()
+            or not self.marker.is_file()
+        ):
+            raise ValueError(
+                "missing original ledger/initialization marker; restore custody, never reset"
+            )
+        if self.marker.read_text() != self.plan_sha256 + "\n":
+            raise ValueError("initialization marker differs from frozen plan")
         with self.connect() as db:
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS policy (id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL)"
-            )
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS attempts (attempt_id TEXT PRIMARY KEY, context TEXT NOT NULL, ordinal INTEGER NOT NULL, program TEXT NOT NULL, dispatched INTEGER NOT NULL DEFAULT 0, outcome TEXT, UNIQUE(context, ordinal))"
-            )
-            db.execute("INSERT OR IGNORE INTO policy VALUES (1,?)", (self.policy,))
+            if initialize:
+                db.execute(
+                    "CREATE TABLE IF NOT EXISTS policy (id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL)"
+                )
+                db.execute(
+                    "CREATE TABLE IF NOT EXISTS attempts (attempt_id TEXT PRIMARY KEY, context TEXT NOT NULL, ordinal INTEGER NOT NULL, program TEXT NOT NULL, dispatched INTEGER NOT NULL DEFAULT 0, outcome TEXT, UNIQUE(context, ordinal))"
+                )
+                db.execute("INSERT INTO policy VALUES (1,?)", (self.policy,))
             if (
                 db.execute("SELECT value FROM policy WHERE id=1").fetchone()[0]
                 != self.policy
@@ -89,7 +120,9 @@ class Ledger:
 
     @contextmanager
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=10)
+        db = sqlite3.connect(
+            self.path.resolve().as_uri() + "?mode=rw", uri=True, timeout=10
+        )
         try:
             db.execute("PRAGMA synchronous=FULL")
             with db:
@@ -128,6 +161,14 @@ class Ledger:
                     )
                 new = False
             else:
+                if (
+                    db.execute(
+                        "SELECT count(*) FROM attempts WHERE context=? AND program=?",
+                        (context, program),
+                    ).fetchone()[0]
+                    >= MAX_PROGRAM_ATTEMPTS
+                ):
+                    raise ValueError("two-attempt context/program cap exhausted")
                 if db.execute(
                     "SELECT 1 FROM attempts WHERE context=? AND ordinal=?",
                     (context, ordinal),
@@ -229,6 +270,11 @@ def main():
     parser.add_argument("--plan-sha256", required=True)
     parser.add_argument("--ledger", type=Path, required=True)
     parser.add_argument(
+        "--initialize",
+        action="store_true",
+        help="Explicit first creation only; never a recovery mode",
+    )
+    parser.add_argument(
         "--request",
         type=Path,
         help="Frozen reservation with attempt_id, context, ordinal, program",
@@ -238,7 +284,7 @@ def main():
         raw = args.plan.read_bytes()
         if hashlib.sha256(raw).hexdigest() != sha(args.plan_sha256):
             raise ValueError("plan bytes differ from trusted pin")
-        ledger = Ledger(args.ledger, json.loads(raw))
+        ledger = Ledger(args.ledger, json.loads(raw), initialize=args.initialize)
         result = (
             ledger.reserve(**json.loads(args.request.read_bytes()))
             if args.request

@@ -88,12 +88,12 @@ fn parse_data(raw: &[u8]) -> Result<Data, Error> {
     let mut pos = 17 + nt;
     let mut rows = Vec::with_capacity(nt + nq);
     let mut ys = Vec::with_capacity(nt + nq);
-    for _ in 0..nt + nq {
+    for row_index in 0..nt + nq {
         let mut row = Vec::with_capacity(p);
         for j in 0..=p {
             let v = f64::from_le_bytes(raw[pos..pos + 8].try_into()?);
             pos += 8;
-            if !v.is_finite() {
+            if row_index < nt && !v.is_finite() {
                 return Err("nonfinite JTT1 value".into());
             }
             if j < p {
@@ -269,6 +269,35 @@ fn one_fit(
     }))
 }
 
+fn write_result(output: &Path, value: &Value) -> Result<(), Error> {
+    let temporary = output.with_extension("pending");
+    let mut file = File::create(&temporary)?;
+    serde_json::to_writer(&mut file, value)?;
+    file.flush()?;
+    file.sync_all()?;
+    fs::rename(&temporary, output)?;
+    File::open(output.parent().ok_or("output parent missing")?)?.sync_all()?;
+    Ok(())
+}
+
+fn retained_cv_result(
+    output: &Path,
+    child_success: bool,
+    timed_out: bool,
+) -> Result<Option<Value>, Error> {
+    if !output.exists() {
+        return Ok(None);
+    }
+    let mut record: Value = serde_json::from_slice(&fs::read(output)?)?;
+    if record["schema"] != "jope.s1-evaluation/v1" || record["status"] != "completed" {
+        return Err("invalid CV commitment".into());
+    }
+    if !child_success {
+        record["official_test"] = json!({"status":if timed_out {"timeout"} else {"failed"},"error":"diagnostic child terminated; CV commitment retained"});
+    }
+    Ok(Some(record))
+}
+
 fn evaluate(data_path: &Path, candidate_path: &Path, output: &Path) -> Result<(), Error> {
     let d = parse_data(&fs::read(data_path)?)?;
     let c: Candidate = serde_json::from_slice(&fs::read(candidate_path)?)?;
@@ -295,7 +324,12 @@ fn evaluate(data_path: &Path, candidate_path: &Path, output: &Path) -> Result<()
         let vy: Vec<f64> = va.iter().map(|i| d.train_y[*i]).collect();
         cv.push(one_fit(&g, &x, &y, &vx, &vy, "inner_cv", fold)?);
     }
-    let official_test = one_fit(
+    let mut out = json!({"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","program":c,"status":"completed","inner_cv":cv,
+        "official_test":{"status":"pending"},"started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"memory":memory()});
+    // Commit CV atomically before any optional test work, so errors and timeout
+    // during that work cannot censor CV-valid candidates.
+    write_result(output, &out)?;
+    out["official_test"] = match one_fit(
         &g,
         &d.train_x,
         &d.train_y,
@@ -303,14 +337,16 @@ fn evaluate(data_path: &Path, candidate_path: &Path, output: &Path) -> Result<()
         &d.test_y,
         "official_test",
         0,
-    )?;
-    let out = json!({"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","program":c,"status":"completed","inner_cv":cv,"official_test":official_test,
-        "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"memory":memory()});
-    let mut f = File::create(output)?;
-    serde_json::to_writer(&mut f, &out)?;
-    f.flush()?;
-    f.sync_all()?;
-    Ok(())
+    ) {
+        Ok(mut value) => {
+            value["status"] = json!("completed");
+            value
+        }
+        Err(error) => json!({"status":"failed","error":error.to_string()}),
+    };
+    out["finished_utc_us"] = json!(now_us());
+    out["wall_us"] = json!(tick.elapsed().as_micros());
+    write_result(output, &out)
 }
 
 fn run_child(c: &Candidate, data_path: &Path, dir: &Path, timeout_ms: u64) -> Result<Value, Error> {
@@ -340,8 +376,8 @@ fn run_child(c: &Candidate, data_path: &Path, dir: &Path, timeout_ms: u64) -> Re
         }
         std::thread::sleep(Duration::from_millis(5));
     };
-    if status.success() && op.exists() {
-        return Ok(serde_json::from_slice(&fs::read(op)?)?);
+    if let Some(record) = retained_cv_result(&op, status.success(), timed_out)? {
+        return Ok(record);
     }
     Ok(
         json!({"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","program":c,"status":if timed_out{"timeout"}else{"failed"},
@@ -371,16 +407,18 @@ fn allowed(url: &str, kind: &str) -> bool {
         && url[BASE.len()..].starts_with(kind)
 }
 
-async fn invoke(event: LambdaEvent<Request>) -> Result<Value, Error> {
-    let r = event.payload;
-    let start = now_us();
-    let tick = Instant::now();
+fn validate_request(r: &Request) -> Result<(), Error> {
     if r.schema != "jope.s1-request/v1"
         || r.input_semantics != "unscaled_fit_rows_v1"
+        || r.attempt_id.is_empty()
+        || r.attempt_id.len() > 128
+        || r.attempt_id
+            .bytes()
+            .any(|b| !b.is_ascii_alphanumeric() && !b"_.-".contains(&b))
         || !is_hash(&r.context_sha256)
         || !is_hash(&r.input_sha256)
         || r.input_bytes > 256 * 1024 * 1024
-        || !(100..=120000).contains(&r.candidate_timeout_ms)
+        || !(100..=90000).contains(&r.candidate_timeout_ms)
     {
         return Err("invalid request".into());
     }
@@ -389,9 +427,17 @@ async fn invoke(event: LambdaEvent<Request>) -> Result<Value, Error> {
         return Err("URL outside teacher prefix".into());
     }
     let expected = format!("{}attempts/{}.json.gz", BASE, r.attempt_id);
-    if !r.output_url.starts_with(&expected) {
+    if r.output_url.split('?').next() != Some(expected.as_str()) {
         return Err("output capability differs from attempt".into());
     }
+    Ok(())
+}
+
+async fn invoke(event: LambdaEvent<Request>) -> Result<Value, Error> {
+    let r = event.payload;
+    let start = now_us();
+    let tick = Instant::now();
+    validate_request(&r)?;
     let dir = PathBuf::from(format!("/tmp/jope-teacher-{}", r.attempt_id));
     fs::create_dir(&dir)?;
     println!(
@@ -597,6 +643,53 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
     }
     #[test]
+    fn outer_diagnostic_failure_preserves_completed_cv() {
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../../../../target/s1-fixtures")
+            .join(format!("diagnostic-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let candidate = Candidate {
+            dsl: STD_RIDGE.into(),
+            program_sha256: hash(STD_RIDGE.as_bytes()),
+            birth_seq: 0,
+            parents: vec![],
+            operator: "fixture".into(),
+        };
+        let mut bytes = fixture();
+        let target = 17 + 70 + 8 * 3 * 70 + 8 * 2;
+        bytes[target..target + 8].copy_from_slice(&f64::NAN.to_le_bytes());
+        let data = dir.join("data.jtt1");
+        let cp = dir.join("candidate.json");
+        let output = dir.join("record.json");
+        fs::write(&data, &bytes).unwrap();
+        fs::write(&cp, serde_json::to_vec(&candidate).unwrap()).unwrap();
+        evaluate(&data, &cp, &output).unwrap();
+        let actual: Value = serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
+        assert_eq!(actual["status"], "completed");
+        assert_eq!(actual["inner_cv"].as_array().unwrap().len(), 7);
+        assert_eq!(actual["official_test"]["status"], "failed");
+        let original = dir.join("original.jtt1");
+        fs::write(&original, fixture()).unwrap();
+        let reference = dir.join("reference.json");
+        evaluate(&original, &cp, &reference).unwrap();
+        let reference: Value = serde_json::from_slice(&fs::read(&reference).unwrap()).unwrap();
+        for (a, b) in actual["inner_cv"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip(reference["inner_cv"].as_array().unwrap())
+        {
+            assert_eq!(a["model_sha256"], b["model_sha256"]);
+            assert_eq!(a["scaler_sha256"], b["scaler_sha256"]);
+            assert_eq!(a["metrics"], b["metrics"]);
+        }
+        let timed_out = retained_cv_result(&output, false, true).unwrap().unwrap();
+        assert_eq!(timed_out["inner_cv"], actual["inner_cv"]);
+        assert_eq!(timed_out["official_test"]["status"], "timeout");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
     fn scaler_is_train_rows_only_and_constant_columns_divide_by_one() {
         let x: Rows = vec![vec![1.0, 5.0], vec![3.0, 5.0]];
         let s = fit_scaler(&x, &[0.0, 2.0]).unwrap();
@@ -607,6 +700,39 @@ mod tests {
         assert_eq!(scale_rows(&vec![vec![5.0, 9.0]], &s), vec![vec![2.0, 4.0]]);
         // scored rows may leave [0, 1]
     }
+    #[test]
+    fn request_timeout_matches_the_ninety_second_reservation() {
+        let mut r = Request {
+            schema: "jope.s1-request/v1".into(),
+            input_semantics: "unscaled_fit_rows_v1".into(),
+            attempt_id: "fixture".into(),
+            context_sha256: "a".repeat(64),
+            input_sha256: "b".repeat(64),
+            input_bytes: 100,
+            input_url: format!("{}objects/inputs/sha256/data", BASE),
+            output_url: format!("{}attempts/fixture.json.gz?signature=fixture", BASE),
+            candidate_timeout_ms: 90000,
+            candidate: Candidate {
+                dsl: STD_RIDGE.into(),
+                program_sha256: hash(STD_RIDGE.as_bytes()),
+                birth_seq: 0,
+                parents: vec![],
+                operator: "fixture".into(),
+            },
+        };
+        validate_request(&r).unwrap();
+        r.candidate_timeout_ms = 90001;
+        assert!(validate_request(&r).is_err());
+        r.candidate_timeout_ms = 120000;
+        assert!(validate_request(&r).is_err());
+        r.candidate_timeout_ms = 90000;
+        r.attempt_id = "../escape".into();
+        assert!(validate_request(&r).is_err());
+        r.attempt_id = "fixture".into();
+        r.output_url = format!("{}attempts/fixture.json.gz-extra", BASE);
+        assert!(validate_request(&r).is_err());
+    }
+
     #[test]
     fn url_scope() {
         assert!(allowed(
