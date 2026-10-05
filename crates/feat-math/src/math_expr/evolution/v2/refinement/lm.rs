@@ -6,7 +6,8 @@
 //! The optimizer is Algorithm 3.16 of Madsen, Nielsen and Tingleff, *Methods for Non-Linear Least
 //! Squares Problems* (2nd ed., IMM DTU, 2004): Levenberg–Marquardt with Nielsen's damping update.
 //! It runs on the Jacobi-scaled problem, whose scale is MINPACK's running maximum of `diag(JᵀJ)`
-//! with a relative floor, so it is invariant to rescaling a parameter. The damping is bounded to
+//! with a relative floor, so its damped steps are invariant to rescaling a parameter. The step
+//! stopping test (MNT 3.15b) is taken on the raw parameters and is not. The damping is bounded to
 //! `[mu_min, mu_max]`, the iterations to `max_iterations` and the work to the caller's evaluation
 //! budget. The damped system is solved by Cholesky with explicit pivot and reciprocal-condition
 //! checks. A failed solve raises the damping and charges no evaluation.
@@ -53,7 +54,8 @@ struct Options {
     tau: f64,
     /// Stop when every scaled gradient entry is at most this times the residual scale.
     gradient_tolerance: f64,
-    /// Stop when `‖h‖ ≤ step_tolerance (‖θ‖ + step_tolerance)` (MNT 3.15b).
+    /// Stop when `‖h‖ ≤ step_tolerance (‖θ‖ + step_tolerance)` (MNT 3.15b), on the raw parameters,
+    /// so unlike the steps themselves this test depends on how a parameter is scaled.
     step_tolerance: f64,
     mu_min: f64,
     mu_max: f64,
@@ -216,8 +218,19 @@ fn half_sum_squares(values: &[f64]) -> f64 {
     0.5 * values.iter().map(|v| v * v).sum::<f64>()
 }
 
+/// The Euclidean norm, scaled by the largest magnitude so that no square overflows: entries above
+/// `sqrt(f64::MAX) ≈ 1.34e154` give their true norm, not infinity.
 fn norm(values: &[f64]) -> f64 {
-    values.iter().map(|v| v * v).sum::<f64>().sqrt()
+    let largest = values.iter().fold(0.0f64, |m, v| m.max(v.abs()));
+    if largest == 0.0 || !largest.is_finite() {
+        return largest;
+    }
+    largest
+        * values
+            .iter()
+            .map(|v| (v / largest) * (v / largest))
+            .sum::<f64>()
+            .sqrt()
 }
 
 /// Levenberg–Marquardt from `theta`, whose `residuals` the caller has evaluated (one evaluation).
@@ -545,7 +558,10 @@ struct LmRefinement {
     run: Option<Outcome>,
     /// The winner's native re-score, when one ran.
     rescore: Option<f64>,
+    /// Row evaluations, over every Jacobian, whose tangent was nonsmooth. A row counts once per
+    /// Jacobian, so this counts evaluations, not distinct rows.
     nonsmooth_rows: usize,
+    /// Row evaluations, over every Jacobian, that raised a Saturation fault; counted the same way.
     saturated_rows: usize,
 }
 
@@ -884,7 +900,14 @@ impl MathExpr {
             nonsmooth_rows: problem.nonsmooth_rows,
             saturated_rows: problem.saturated_rows,
         };
-        if run.accepted > 0 && run.evaluations < budget.max_evaluations && (budget.may_start)() {
+        // A guard that refused during the run is never asked again. One that refuses only the
+        // re-score stops the refinement, and the start stays.
+        let rescore = run.accepted > 0
+            && run.evaluations < budget.max_evaluations
+            && run.status != Status::Stopped;
+        if rescore && !(budget.may_start)() {
+            result.status = Status::Stopped;
+        } else if rescore {
             // The mandatory native re-score: a fresh admission, compile and evaluation.
             result.refinement.evaluations += 1;
             let winner = problem.admit(&run.theta).map(|trial| trial.expression);
@@ -1131,6 +1154,15 @@ mod tests {
         let first_accept = run.trace.iter().position(|i| i.accepted).unwrap();
         assert_eq!(first_accept, 4, "{:?}", run.trace);
         assert!(run.trace[..4].iter().all(|i| i.trial.is_none()));
+        // The scaled curvature of the one site is 1 up to rounding, so these are μ0 = τ and
+        // Nielsen's μ ← μν, ν ← 2ν after each refusal.
+        for (iteration, expected) in run.trace.iter().zip([1e-3, 2e-3, 8e-3, 6.4e-2, 1.024]) {
+            assert!(
+                (iteration.mu - expected).abs() <= 1e-12 * expected,
+                "{:?}",
+                run.trace
+            );
+        }
         // Accepted objectives never increase.
         let accepted: Vec<f64> = run
             .trace
@@ -1168,8 +1200,11 @@ mod tests {
         );
         let fitted = sites(&result.refinement.expression);
         assert!((fitted[0] * fitted[1] - 6.0).abs() <= 6e-10, "{fitted:?}");
+        // With no damping floor and a first damping 1e-20 of the curvature, the singular system
+        // is tried all but undamped: the solve refuses, the damping rises, and the fit still lands.
         let zero_floor = Options {
             mu_min: 0.0,
+            tau: 1e-20,
             ..Options::default()
         };
         let run = || {
@@ -1184,11 +1219,20 @@ mod tests {
             )
         };
         let first = run();
+        let outcome = first.run.as_ref().unwrap();
+        assert!(outcome.solve_failures >= 1, "{outcome:?}");
+        assert!(
+            !matches!(
+                first.status,
+                Status::DampingLimit | Status::NonFiniteJacobian
+            ),
+            "{:?}",
+            first.status
+        );
+        let fitted = sites(&first.refinement.expression);
+        assert!((fitted[0] * fitted[1] - 6.0).abs() <= 6e-10, "{fitted:?}");
         let second = run();
         assert_eq!(trace_bits(&first), trace_bits(&second));
-        assert!(sites(&first.refinement.expression)
-            .iter()
-            .all(|v| v.is_finite()));
     }
 
     #[test]
@@ -1379,6 +1423,47 @@ mod tests {
     }
 
     #[test]
+    fn a_guard_that_refuses_partway_is_never_asked_again() {
+        let (rows, targets) = exp_data();
+        let start = MathExpr::parse("1.0*exp(0.5*c0)").unwrap();
+        let refine = |allowed: usize| {
+            let starts = Cell::new(0usize);
+            let mut guard = || {
+                starts.set(starts.get() + 1);
+                starts.get() <= allowed
+            };
+            let result = start
+                .optimize_constants_lm(
+                    &Admission::Structure,
+                    &rows,
+                    &targets,
+                    Objective::Raw,
+                    &Options::default(),
+                    GuardedRefinementBudget {
+                        max_evaluations: 400,
+                        may_start: &mut guard,
+                    },
+                )
+                .unwrap();
+            (result, starts.get())
+        };
+        let (full, total) = refine(usize::MAX);
+        assert!(full.changed && full.rescore.is_some(), "{full:?}");
+        // Every refusal point, the last of which is the re-score itself.
+        for allowed in 1..total {
+            let (result, starts) = refine(allowed);
+            assert_eq!(starts, allowed + 1, "refused at question {}", allowed + 1);
+            assert_eq!(result.status, Status::Stopped, "{allowed}");
+            assert!(!result.changed, "{allowed}");
+            assert_eq!(result.rescore, None, "{allowed}");
+            assert_eq!(
+                result.refinement.expression.to_source().unwrap(),
+                start.to_source().unwrap()
+            );
+        }
+    }
+
+    #[test]
     fn a_unit_jacobian_charge_and_counted_kinks_and_saturation() {
         let (rows, targets) = exp_data();
         let unit = Options {
@@ -1485,8 +1570,13 @@ mod tests {
         hold_y: Vec<f64>,
     }
 
+    /// Held-out isolation comes from the signature: `optimize_constants_lm` takes the training
+    /// rows and targets and nothing else, so no test can make a caller's held-out half reach it.
+    /// This pins what can be tested. Two cuts with the same training half fit identically whatever
+    /// their held-out halves hold. Held-out rows handed over by mistake, with non-finite labels,
+    /// are refused rather than fitted.
     #[test]
-    fn a_poisoned_holdout_cannot_change_the_fit_or_its_counts() {
+    fn the_fit_sees_only_its_training_rows_and_refuses_non_finite_targets() {
         let (rows, targets) = exp_data();
         let clean = Cut {
             train_x: rows[..24].to_vec(),
