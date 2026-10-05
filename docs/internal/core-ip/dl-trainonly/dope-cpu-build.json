@@ -23,6 +23,18 @@
   "memory_limit_bytes": 17179869184,
   "network": "offline",
   "nice": 10,
+  "provenance": {
+    "build_time_status": "provisional/pre-grant",
+    "correction_recorded_at": "2026-10-05T19:37:22.619958+00:00",
+    "reason": "That statement preceded the owner typed L6 grant; the retained binary and build-time evidence remain unchanged.",
+    "subsequent_authorization": {
+      "effect": "Authorized subsequent use; no retroactive build-time authority or encoder/runtime qualification",
+      "owner_receipt_sha256": "2ca6a40c3128c07024c835d3a0b5cbf325e4df810242d13307db3a7451c136ff",
+      "scope": "L6(c)",
+      "typed_at": "2026-10-05T18:34:23Z"
+    },
+    "supersedes_statement": "2026-10-05T17:37Z Latest OWNER explicitly authorizes CPU Dope release build"
+  },
   "qualification": "CPU compilation and help only; no encoder or training execution",
   "recorded_at": "2026-10-05T17:43:07.280286+00:00",
   "schema": "jope.dl-dope-cpu-build/v1",

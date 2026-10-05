@@ -9,10 +9,11 @@ import stat
 from pathlib import Path
 
 PREFIX = "experiments/gp-policy-dl/v2-trainonly/"
+RESEARCH_PREFIX = "experiments/gp-policy-dl/v2-trainonly-research/"
 BUCKET = "veox-jopedime-learning-use2"
 COMPONENTS = ("hyperion", "foundation", "target", "context2048", "tabpfn35", "dope")
 CONTEXTS = 4873
-SCHEMA = "jope.dl-expected-outputs/v1"
+SCHEMA = "jope.dl-expected-outputs/v2"
 
 
 def digest(raw):
@@ -121,7 +122,8 @@ def generate(contexts, pins, *, source_sha256, bindings=None, expected_count=CON
                 else {},
             }
             output_id = digest(canonical(identity))
-            base = f"{PREFIX}{component}/{output_id}"
+            prefix = RESEARCH_PREFIX if component == "tabpfn35" else PREFIX
+            base = f"{prefix}{component}/{output_id}"
             rows.append(
                 identity
                 | {
@@ -129,7 +131,7 @@ def generate(contexts, pins, *, source_sha256, bindings=None, expected_count=CON
                     "state": "bound" if binding else "draft_unbound",
                     "object_key": base + ".bin" if binding else None,
                     "receipt_key": base + ".receipt.json" if binding else None,
-                    "key_template": f"{PREFIX}{component}/{{bound_output_id}}.bin",
+                    "key_template": f"{prefix}{component}/{{bound_output_id}}.bin",
                     "research_only": component == "tabpfn35",
                     "production_loader_allowed": component != "tabpfn35",
                 }
@@ -138,6 +140,7 @@ def generate(contexts, pins, *, source_sha256, bindings=None, expected_count=CON
         "schema": SCHEMA,
         "bucket": BUCKET,
         "prefix": PREFIX,
+        "research_prefix": RESEARCH_PREFIX,
         "publication_precondition": {
             "if_none_match": "*",
             "unconditional_fallback": False,
@@ -179,6 +182,7 @@ def check(manifest, completions, root):
         manifest["schema"] != SCHEMA
         or manifest["bucket"] != BUCKET
         or manifest["prefix"] != PREFIX
+        or manifest["research_prefix"] != RESEARCH_PREFIX
     ):
         raise ValueError("unexpected manifest identity")
     if manifest["publication_precondition"] != {
@@ -220,6 +224,10 @@ def check(manifest, completions, root):
         if outcome not in counts:
             raise ValueError("invalid completion outcome")
         if outcome != "complete":
+            if set(event) != {"output_id", "outcome"}:
+                raise ValueError(
+                    "non-complete event requires only output_id and outcome"
+                )
             counts[outcome] += 1
             continue
         try:
