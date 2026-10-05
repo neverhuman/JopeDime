@@ -10,8 +10,10 @@
 //!   objective decrease an appended column block buys.
 //! - [`leave_one_out`]: PRESS at a frozen penalty by the Sherman-Morrison identity, checked
 //!   against brute-force refits.
-//! - [`Refusal`]: every unsafe pivot or leverage refuses, so the caller refits with the legacy
-//!   authority.
+//! - [`Refusal`]: a pivot below `λ/2` (impossible in exact arithmetic), any non-finite pivot,
+//!   factor entry or forward value, and any leverage past the floor refuses, so the caller refits
+//!   with the legacy authority. Pairing a factor with its own design is the caller's guarantee;
+//!   only another width or penalty can be detected and refused.
 //!
 //! No fused multiply-add and no reassociation is used; Rust does neither by default.
 use crate::heads::std_fit;
@@ -37,10 +39,10 @@ fn standardized(x: &Rows, n: usize, p: usize, means: &[f64], scales: &[f64]) -> 
 pub enum Refusal {
     Shape(&'static str),
     NonFinite(&'static str),
-    /// A pivot before its square root fell below `lambda / 2`; in exact arithmetic every pivot is
-    /// at least `lambda`. Every design's penalty is at least `2e-12`, so this also covers the
-    /// legacy `s <= 1e-12` replacement branch: no pivot the legacy solve would replace is ever
-    /// accepted.
+    /// A pivot before its square root was not finite or fell below `lambda / 2`; in exact
+    /// arithmetic every pivot is at least `lambda`. Every design's penalty is at least `2e-12`, so
+    /// this also covers the legacy `s <= 1e-12` replacement branch: no pivot the legacy solve
+    /// would replace is ever accepted.
     UnsafePivot {
         index: usize,
         pivot: f64,
@@ -78,6 +80,13 @@ impl Design {
             return Err(Refusal::Shape("ridge design needs at least one row"));
         }
         let p = x[0].len();
+        // std_fit reads every row's first p values, as RidgeModel::fit does: a shorter row is
+        // refused here instead of panicking there.
+        if x.iter().any(|row| row.len() < p) {
+            return Err(Refusal::Shape(
+                "every ridge design row needs the first row's columns",
+            ));
+        }
         let (means, scales) = std_fit(x);
         let y_mean = y[..n].iter().sum::<f64>() / n as f64;
         let design = Design {
@@ -107,7 +116,7 @@ impl Design {
         y: &[f64],
         lambda: f64,
     ) -> Result<Design, Refusal> {
-        if n == 0 || z.len() != n * p || y.len() != n {
+        if n == 0 || n.checked_mul(p) != Some(z.len()) || y.len() != n {
             return Err(Refusal::Shape(
                 "ridge design needs n > 0, n x p columns and n labels",
             ));
@@ -123,11 +132,15 @@ impl Design {
             return Err(Refusal::NonFinite("ridge design and labels must be finite"));
         }
         let mean = y.iter().sum::<f64>() / n as f64;
+        let centered: Vec<f64> = y.iter().map(|value| value - mean).collect();
+        if !centered.iter().all(|value| value.is_finite()) {
+            return Err(Refusal::NonFinite("ridge labels overflow when centered"));
+        }
         Ok(Design {
             n,
             p,
             z,
-            centered: y.iter().map(|value| value - mean).collect(),
+            centered,
             lambda,
         })
     }
@@ -237,7 +250,9 @@ impl Factor {
                     s -= l[i * p + k] * l[j * p + k];
                 }
                 if i == j {
-                    if s.is_nan() || s < design.lambda / 2.0 {
+                    // An overflowed Gram entry gives a +inf pivot, which would zero every
+                    // leverage; it refuses like any pivot exact arithmetic cannot produce.
+                    if !s.is_finite() || s < design.lambda / 2.0 {
                         return Err(Refusal::UnsafePivot {
                             index: i,
                             pivot: s,
@@ -247,6 +262,9 @@ impl Factor {
                     l[i * p + i] = s.sqrt();
                 } else {
                     l[i * p + j] = s / l[j * p + j];
+                    if !l[i * p + j].is_finite() {
+                        return Err(Refusal::NonFinite("ridge factor entry overflowed"));
+                    }
                 }
             }
             let mut s = dot(zi, &design.centered);
@@ -254,6 +272,9 @@ impl Factor {
                 s -= l[i * p + k] * f[k];
             }
             f[i] = s / l[i * p + i];
+            if !f[i].is_finite() {
+                return Err(Refusal::NonFinite("ridge forward vector overflowed"));
+            }
         }
         Ok(Factor {
             p,
@@ -320,11 +341,12 @@ pub struct LeaveOneOut {
 }
 
 /// [`LeaveOneOut`] by the Sherman-Morrison identity, refusing any row whose `1 - h_ii` is below
-/// [`LEVERAGE_FLOOR`]. `factor` must be `design`'s own; one of another width or penalty refuses.
+/// [`LEVERAGE_FLOOR`]. `factor` must be `design`'s own, which the caller guarantees as for
+/// [`Factor::extend`]; only a factor of another width or penalty can be detected and refused.
 pub fn leave_one_out(design: &Design, factor: &Factor) -> Result<LeaveOneOut, Refusal> {
     if factor.p != design.p || factor.lambda.to_bits() != design.lambda.to_bits() {
         return Err(Refusal::Shape(
-            "leave-one-out needs the design's own factor",
+            "leave-one-out needs a factor of the design's width and penalty",
         ));
     }
     let w = factor.coefficients();
@@ -390,6 +412,15 @@ mod tests {
 
     fn bits(values: &[f64]) -> Vec<u64> {
         values.iter().map(|v| v.to_bits()).collect()
+    }
+
+    /// Bits, with every NaN mapped to one value: NaN positions are kept, while a NaN result's sign
+    /// and payload, which Rust leaves unspecified, are not compared.
+    fn canonical(values: &[f64]) -> Vec<u64> {
+        values
+            .iter()
+            .map(|v| if v.is_nan() { u64::MAX } else { v.to_bits() })
+            .collect()
     }
 
     /// The oracle: `RidgeModel::fit` and `std_fit` as they stood before B11 (main e043aebfd),
@@ -721,10 +752,97 @@ mod tests {
             Design::from_rows(&x, &[], 0.02),
             Err(Refusal::Shape(_))
         ));
+        // Finite columns whose Gram entry overflows: the +inf pivot refuses instead of zeroing
+        // every leverage.
+        let d = Design::from_columns(vec![1e160, 1e160], 2, 1, &[1.0, 2.0], 1.0).unwrap();
+        assert!(matches!(
+            Factor::new(&d),
+            Err(Refusal::UnsafePivot { index: 0, .. })
+        ));
+        // A finite pivot whose right-hand side overflows refuses too.
+        let d = Design::from_columns(vec![1.0, -1.0], 2, 1, &[1e308, -1e308], 1.0).unwrap();
+        assert!(matches!(Factor::new(&d), Err(Refusal::NonFinite(_))));
+        // Labels whose centering overflows refuse at construction.
+        assert!(matches!(
+            Design::from_columns(vec![1.0, 2.0], 2, 1, &[f64::MAX, f64::MAX], 1.0),
+            Err(Refusal::NonFinite(_))
+        ));
+        // A ragged table refuses instead of panicking, and n x p cannot overflow past the check.
+        let ragged: Rows = vec![vec![1.0, 2.0], vec![3.0]];
+        assert!(matches!(
+            Design::from_rows(&ragged, &[1.0, 2.0], 0.02),
+            Err(Refusal::Shape(_))
+        ));
+        assert!(matches!(
+            Design::from_columns(Vec::new(), usize::MAX, 2, &[], 1.0),
+            Err(Refusal::Shape(_))
+        ));
     }
 
     #[test]
-    fn zero_variance_and_overflowing_columns_match_the_legacy_fit() {
+    fn overflowing_and_non_finite_inputs_keep_the_legacy_bits_and_nan_positions() {
+        let base = |r: usize| -> Vec<f64> { (0..4).map(|j| ((r * 3 + j) % 5) as f64).collect() };
+        let labels: Vec<f64> = (0..9).map(|r| r as f64 * 0.7 - 2.0).collect();
+        let table = || -> Rows { (0..9).map(base).collect() };
+        let mut cases: Vec<(Rows, Vec<f64>)> = Vec::new();
+        // A column whose sum overflows, and one whose squared deviations overflow.
+        let mut x = table();
+        x.iter_mut().for_each(|row| row[1] = f64::MAX);
+        cases.push((x, labels.clone()));
+        let mut x = table();
+        for (r, row) in x.iter_mut().enumerate() {
+            row[2] = if r % 2 == 0 { f64::MAX } else { -f64::MAX };
+        }
+        cases.push((x, labels.clone()));
+        // A single +inf and a NaN cell.
+        let mut x = table();
+        x[8][0] = f64::INFINITY;
+        cases.push((x, labels.clone()));
+        let mut x = table();
+        x[4][3] = f64::NAN;
+        cases.push((x, labels.clone()));
+        // Non-finite labels.
+        let mut y = labels.clone();
+        y[3] = f64::NEG_INFINITY;
+        cases.push((table(), y));
+        let mut y = labels.clone();
+        y[5] = f64::NAN;
+        cases.push((table(), y));
+        for (index, (x, y)) in cases.iter().enumerate() {
+            let legacy = legacy_fit(x, y, 0.02);
+            let fast = RidgeModel::fit(x, y, 0.02);
+            // Each case really leaves the finite range, so it cannot pass as a finite one.
+            assert!(
+                legacy
+                    .means
+                    .iter()
+                    .chain(&legacy.scales)
+                    .chain(&legacy.w)
+                    .any(|v| !v.is_finite()),
+                "case {index} stays finite"
+            );
+            assert_eq!(
+                canonical(&fast.means),
+                canonical(&legacy.means),
+                "case {index}"
+            );
+            assert_eq!(
+                canonical(&fast.scales),
+                canonical(&legacy.scales),
+                "case {index}"
+            );
+            assert_eq!(canonical(&fast.w), canonical(&legacy.w), "case {index}");
+            let probe: Rows = x.iter().rev().take(4).cloned().collect();
+            assert_eq!(
+                canonical(&fast.predict(&probe)),
+                canonical(&legacy.predict(&probe)),
+                "case {index}"
+            );
+        }
+    }
+
+    #[test]
+    fn zero_variance_and_huge_constant_columns_match_the_legacy_fit() {
         // Constant, 1e300 and signed-zero columns standardize to (±)0. The penalty floor keeps
         // every pivot at lambda or more, so `cholesky_solve`'s 1e-12 replacement branch (shared
         // code on both sides) is not reached here; `Factor` refuses any pivot that would reach it.
