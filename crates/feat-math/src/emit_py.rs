@@ -16,7 +16,7 @@ pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
     assert!(
         !scalar_emit::raw_input(plan)
             || opts.math_kernel == crate::transpile::MathKernel::PlatformLibm,
-        "scalar-v2 old operations require PlatformLibm"
+        "scalar-v2 retained operations require PlatformLibm"
     );
     // Sections are separated by two blank lines (PEP 8 top-level spacing); one
     // pre-reserved buffer avoids the per-section reallocation of the old path.

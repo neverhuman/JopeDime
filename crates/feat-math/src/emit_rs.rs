@@ -17,7 +17,7 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
     assert!(
         !scalar_emit::raw_input(plan)
             || opts.math_kernel == crate::transpile::MathKernel::PlatformLibm,
-        "scalar-v2 old operations require PlatformLibm"
+        "scalar-v2 retained operations require PlatformLibm"
     );
     // One blank line between top-level items; single pre-reserved buffer.
     let mut out = Arena::new("\n\n", 24 * 1024);
