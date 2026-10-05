@@ -1,15 +1,21 @@
 name: Runner provenance
 description: >-
-  Prove the self-hosted runner is executing the files this commit carries, rather than assuming
+  Prove the self-hosted runner is executing reviewed merged runner files, rather than assuming
   it. Used by every workflow that runs on the self-hosted lane. Requires the repository to be
-  checked out already, because it recomputes digests from the checkout.
+  checked out already (fetch-depth: 0 on pull_request so the base rev is readable).
 
   What this binds, precisely, so it is not read as more than it is:
     - the host files listed in JOPE_RUNNER_DEPLOYED (scripts, units, the drop-in)
-    - the image's entrypoint, hashed from inside the container against the committed one
+    - the image's entrypoint, hashed from inside the container against the bound one
     - the image identity, against the one provision.sh recorded
   What it does NOT bind: the rest of the image's contents. A rebuilt image carrying the same tag
   is caught by the id comparison only until provision.sh is next run.
+
+  Bind rule:
+    - pull_request: host digest must equal the digest of deploy/runner from the PR base ref
+      (merged main). Hosts still run only reviewed merged code; runner-change PRs can go green
+      on current hosts, then deploy after merge.
+    - push / workflow_dispatch / other: host digest must equal the checkout under test.
 
 runs:
   using: composite
@@ -18,49 +24,13 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        # The file list is parsed out of the committed common.sh rather than repeated here, so
-        # this step cannot drift from what run.sh actually hashes.
-        mapfile -t deployed < <(sed -n '/^JOPE_RUNNER_DEPLOYED=(/,/^)/p' deploy/runner/common.sh \
-          | grep -oE '/(opt/jope-runner|etc/systemd/system|etc/tmpfiles.d)/[^ ]+')
-        [ "${#deployed[@]}" -ge 10 ] || { echo "parsed only ${#deployed[@]} deployed files from common.sh" >&2; exit 1; }
-        files=()
-        for d in "${deployed[@]}"; do
-          rel=${d#/opt/jope-runner/}
-          rel=${rel#/etc/systemd/system/}
-          rel=${rel#/etc/tmpfiles.d/}
-          files+=("deploy/runner/$rel")
-        done
-        committed=$(cat "${files[@]}" | sha256sum | cut -d' ' -f1)
-
-        echo "host:           ${JOPE_RUNNER_HOST:-?}   (${#files[@]} deployed files covered)"
-        echo "deployed sha:   ${JOPE_RUNNER_SCRIPTS_SHA256:-unset}"
-        echo "committed sha:  $committed"
-        echo "image running:  ${JOPE_RUNNER_IMAGE_ID:-unset}"
-        echo "image recorded: ${JOPE_RUNNER_IMAGE_ID_RECORDED:-unset}"
-
-        if [ -z "${JOPE_RUNNER_SCRIPTS_SHA256:-}" ]; then
-          echo "the runner injected no provenance: re-run deploy/runner/provision.sh on the host" >&2
-          exit 1
+        # BASE_SHA is set by ci.yml for pull_request. Fall back to the event payload so
+        # workflow authors cannot accidentally drop the env and silently exact-match the head.
+        if [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ] && [ -z "${BASE_SHA:-}" ] && [ -n "${GITHUB_EVENT_PATH:-}" ]; then
+          BASE_SHA=$(python3 -c 'import json,os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["pull_request"]["base"]["sha"])')
+          export BASE_SHA
         fi
-        if [ "$JOPE_RUNNER_SCRIPTS_SHA256" != "$committed" ]; then
-          echo "the runner host is executing different files than this commit carries." >&2
-          echo "deploy deploy/runner/ to the host (provision.sh) and re-run this lane." >&2
-          exit 1
-        fi
-        # The entrypoint lives in the image, not on the host, so bind it from in here.
-        ep=$(sha256sum /usr/local/bin/jope-runner-entrypoint | cut -d' ' -f1)
-        committed_ep=$(sha256sum deploy/runner/entrypoint.sh | cut -d' ' -f1)
-        echo "entrypoint:     image=$ep committed=$committed_ep"
-        if [ "$ep" != "$committed_ep" ]; then
-          echo "the image's entrypoint is not the one in this commit: rebuild the runner image." >&2
-          exit 1
-        fi
-        # A rebuilt or retagged image that provision.sh has not seen is a silent change of the
-        # thing every other assertion in this workflow is made against.
-        if [ "${JOPE_RUNNER_IMAGE_ID:-x}" != "${JOPE_RUNNER_IMAGE_ID_RECORDED:-y}" ]; then
-          echo "the running image is not the one provision.sh recorded: re-run provision.sh" >&2
-          exit 1
-        fi
+        python3 deploy/runner/provenance_bind.py verify
     - name: Immutable admission policy and actual cgroup limits
       shell: bash
       run: python3 deploy/runner/verify-container.py

@@ -58,10 +58,13 @@ any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2; k
 disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
 operational delivery. `--skip-image` requires an existing correctly built image.
 
-The provenance action compares all `JOPE_RUNNER_DEPLOYED` bytes with the source commit, checks
-the image entrypoint and provisioned image identity, and verifies the immutable policy and
-actual cgroup memory/CPU/swap values. It also compares the two mounted hook files with source.
-It does not hash every image file. Never weaken provenance to make an old deployment pass.
+The provenance action binds host runner files to reviewed merged code. On `pull_request`
+events it compares the host digest (and mounted admission hooks / image entrypoint) to the
+digest computed from the PR **base** ref, not the PR head — so runner-change PRs can go green
+on current hosts, merge, then deploy in a short post-merge freeze. Push / workflow_dispatch /
+main runs still require an exact match to the commit under test. It also checks the provisioned
+image identity and verifies immutable policy plus actual cgroup memory/CPU/swap values. It does
+not hash every image file. Never weaken provenance to make an unreviewed deployment pass.
 
 Idle listeners are not stopped by a service-start deadline: that deadline previously cut into
 accepted jobs. Each JIT listener still executes only one job. Workflows own execution timeouts;
