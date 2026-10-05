@@ -436,6 +436,13 @@
         "export"
       ]
     },
+    "target:feat-math/test/conversion_expression_matrix": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/conversion_wire_matrix": {
       "role": "regression",
       "subsystems": [
