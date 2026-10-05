@@ -62,10 +62,12 @@ struct OrderedReader {
     void finish() const {if(at!=bytes.size()) throw OrderedError("syntax");}
 };
 struct OrderedJson {
+    OrderedJson();
     unsigned kind=4;std::uint64_t word=0;std::string text;
     std::vector<OrderedJson> values;std::vector<std::pair<std::string,OrderedJson>> fields;
     bool operator==(const OrderedJson& other) const {return kind==other.kind && word==other.word && text==other.text;}
 };
+inline OrderedJson::OrderedJson() = default;
 struct OrderedJsonReader {
     const std::string& bytes;std::size_t at=0;const std::vector<std::string>* names;
     char peek() const {return at==bytes.size()?0:bytes[at];}

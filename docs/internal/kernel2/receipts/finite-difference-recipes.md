@@ -5,7 +5,9 @@ This is the second focused PR of the B08 held remainder, after native routing
 `VersionedProgram::emit_ordered_recipe`, plus caller-owned fitted C++17 through
 `VersionedModel::emit_ordered_fitted_cpp17`. The admitted downstream shape is
 the same plain numeric Ridge shape as the native fitter. Stored unsupported
-shapes still decode losslessly and receive an explicit export refusal.
+shapes still decode losslessly and receive an explicit export refusal. Fixed
+metadata must also fit a minimum native model and fitted codec before export
+admission; the emitted training APIs enforce the final model size.
 
 The recipes call the existing emitters and the unchanged integer-stencil
 helpers. They fit exactly the declared training prefix, admit only finite

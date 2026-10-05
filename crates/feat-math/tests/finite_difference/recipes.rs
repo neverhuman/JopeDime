@@ -322,6 +322,31 @@ fn opaque_shapes_stay_parseable_but_never_gain_recipe_support_or_fallback() {
             assert!(routed.emit_ordered_recipe(lang).is_err());
         }
     }
+    // Parsing remains available even when fixed metadata alone cannot fit a
+    // native model. Export admission must refuse all routes before emission.
+    let large = DifferenceProgram::new(
+        DifferenceConfig::new(2, 59, 1, 1.).unwrap(),
+        1,
+        OrderedInputIdentity::new("g".repeat(3_000_000), "t"),
+        GenomeIr::parse("(pipe X (ridge lambda_frac=0.01))").unwrap(),
+    )
+    .unwrap();
+    let bytes = large.to_bytes().unwrap();
+    let restored = VersionedProgram::from_bytes(&bytes).unwrap();
+    assert_eq!(restored.to_bytes().unwrap(), bytes);
+    assert!(large.validate_recipe_closure().is_err());
+    let report = export_report(&restored);
+    assert!(matches!(report.rust_recipe, Route::Unsupported(_)));
+    assert!(matches!(report.python_recipe, Route::Unsupported(_)));
+    assert!(matches!(report.cpp17_recipe, Route::Unsupported(_)));
+    assert!(matches!(report.cpp17_fitted, Route::Unsupported(_)));
+    for language in [
+        DifferenceLanguage::Rust,
+        DifferenceLanguage::Python,
+        DifferenceLanguage::Cpp17,
+    ] {
+        assert!(restored.emit_ordered_recipe(language).is_err());
+    }
     let legacy = VersionedProgram::LegacyV1(Program::LegacyV1(
         GenomeIr::parse("(pipe X (ridge lambda_frac=0.01))").unwrap(),
     ));
