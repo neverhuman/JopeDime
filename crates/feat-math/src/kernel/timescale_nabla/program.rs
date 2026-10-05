@@ -1,4 +1,4 @@
-//! Prepared wire60 program envelope; registration and execution proof pending.
+//! Canonical wire-75 program envelope and reader-first ingress.
 use super::Config;
 use crate::kernel::codec::{identity, Reader, Writer};
 use crate::kernel::ordered_axis::OrderedInputIdentity;
@@ -73,7 +73,8 @@ impl TimeGradientProgram {
                 "time-gradient program envelope/features/wire".into(),
             ));
         }
-        let width = reader.length()?;
+        let width = usize::try_from(reader.word()?)
+            .map_err(|_| VersionError::Malformed("time-gradient width".into()))?;
         if width == 0 || width > crate::MAX_WIDTH {
             return Err(VersionError::Malformed("time-gradient width".into()));
         }
