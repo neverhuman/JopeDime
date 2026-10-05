@@ -102,3 +102,13 @@ unchanged Clippy floor; the prior failed-main proof is preserved. Final
 correction after-gates and fresh hosted CI/review remain pending. Lane D
 advisory R3 nested-Step repro is preserved and covered in both export routes.
 Lane A completes #178 then #177 and hands off idle; B10/B11 belong to Lane D.
+
+
+Unmerged correction-02 shares the private signed-zero/power adapters with the
+training recipe. Stored winners retain exact coefficients/state and never refit
+at prediction; the new composition regression covers 30 trees/15,900 rows and
+all three emitted library entry points. Independent R4–R6 are pending fresh
+exact-head qualification and native review, not yet claimed resolved. See
+[training recipe correction](linear-scaling-recipes.md) and external
+`B09_LINEAR_SCALING/correction-02-signed-zero` evidence. Legacy emitter bytes,
+raw evaluator/codec and historical identities remain unchanged.

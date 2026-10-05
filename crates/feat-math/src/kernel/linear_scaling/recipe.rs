@@ -36,7 +36,9 @@ pub fn emit_training_recipe(
     let opts = EmitOptions::default();
     let raw = emit(&genome, &opts).map_err(|e| Error::Unsupported(e.to_string()))?;
     let raw_rust = super::emit::rust_scalar_library(&raw.rust)?;
+    let raw_python = super::emit::python_scalar_library(&raw.python);
     let cpp = super::super::expression_recipe::emit_cpp17(&genome, &opts)?;
+    let raw_cpp = super::emit::cpp_scalar_library(&cpp.source);
     let bytes = template
         .to_bytes()
         .map_err(|e| Error::Unsupported(e.to_string()))?;
@@ -58,14 +60,10 @@ pub fn emit_training_recipe(
     );
     let python = format!(
         "{}\n{}",
-        raw.python,
+        raw_python,
         render(include_str!("recipe_python.txt"))
     );
-    let cpp17 = format!(
-        "{}\n{}",
-        cpp.source,
-        render(include_str!("recipe_cpp17.txt"))
-    );
+    let cpp17 = format!("{}\n{}", raw_cpp, render(include_str!("recipe_cpp17.txt")));
     for source in [&rust, &python, &cpp17] {
         let hits = lint_shipped_text(source);
         if !hits.is_empty() {

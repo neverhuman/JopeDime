@@ -8,6 +8,9 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+#[path = "support/linear_scaling_signed_zero.rs"]
+mod signed_zero;
+
 #[test]
 fn training_affine_fit_is_exact_and_replays_with_stored_coefficients() {
     let expression = MathExpr::parse("c0").unwrap();
@@ -202,26 +205,9 @@ fn exported_predictions(dir: &Path, winner: &LinearScaledWinner, rows: &[Vec<f64
     assert_eq!(artifact.profile, feat_math::kernel::linear_scaling::PROFILE);
     assert_eq!(artifact.winner_identity, winner.identity().unwrap());
     let width = rows[0].len();
-    let mut rs_rows = String::from("vec![");
-    let mut py_rows = String::from("[");
-    let mut cpp_rows = String::from("{");
-    for row in rows {
-        rs_rows.push_str("vec![");
-        py_rows.push('[');
-        cpp_rows.push('{');
-        for value in row {
-            let bits = value.to_bits();
-            write!(rs_rows, "f64::from_bits(0x{bits:016x}),").unwrap();
-            write!(py_rows, "unpack('>d',bytes.fromhex('{bits:016x}'))[0],").unwrap();
-            write!(cpp_rows, "from_bits(0x{bits:016x}ULL),").unwrap();
-        }
-        rs_rows.push_str("],");
-        py_rows.push_str("],");
-        cpp_rows.push_str("},");
-    }
-    rs_rows.push(']');
-    py_rows.push(']');
-    cpp_rows.push('}');
+    let rs_rows = signed_zero::table(rows, 0);
+    let py_rows = signed_zero::table(rows, 1);
+    let cpp_rows = signed_zero::table(rows, 2);
     let source = dir.join("model.rs");
     let library = dir.join("libscaled.rlib");
     let driver = dir.join("driver.rs");
@@ -248,7 +234,7 @@ fn exported_predictions(dir: &Path, winner: &LinearScaledWinner, rows: &[Vec<f64
         .env("LC_ALL", "C"));
     let cpp = dir.join("model.cpp");
     let executable = dir.join("cpp-bin");
-    fs::write(&cpp,format!("{}\n#include <cstdio>\nstatic double from_bits(std::uint64_t b) {{ double v; std::memcpy(&v,&b,8); return v; }}\nint main() {{ const std::vector<std::vector<double>> rows={cpp_rows}; for(double v:scaled_predict(rows)){{std::uint64_t b;std::memcpy(&b,&v,8);std::printf(\"%016llx\\n\",static_cast<unsigned long long>(b));}} bool refused=false;try{{scaled_predict({{{{}}}});}}catch(const std::invalid_argument&){{refused=true;}}if(!refused)return 3; refused=false;try{{scaled_predict({{std::vector<double>({width},std::numeric_limits<double>::quiet_NaN())}});}}catch(const std::invalid_argument&){{refused=true;}}return refused?0:4; }}",artifact.cpp17)).unwrap();
+    fs::write(&cpp,format!("{}\n#include <cstdio>\n#include <string>\nstatic double from_bits(std::uint64_t b) {{ double v; std::memcpy(&v,&b,8); return v; }}\nint main() {{ const std::vector<std::vector<double>> rows={cpp_rows}; for(double v:scaled_predict(rows)){{std::uint64_t b;std::memcpy(&b,&v,8);std::printf(\"%016llx\\n\",static_cast<unsigned long long>(b));}} bool refused=false;try{{scaled_predict({{{{}}}});}}catch(const std::invalid_argument&){{refused=true;}}if(!refused)return 3; refused=false;try{{scaled_predict({{std::vector<double>({width},std::numeric_limits<double>::quiet_NaN())}});}}catch(const std::invalid_argument&){{refused=true;}}return refused?0:4; }}",artifact.cpp17)).unwrap();
     run(Command::new("g++")
         .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
         .arg(&cpp)
@@ -346,5 +332,41 @@ fn extreme_finite_winner_has_the_same_exported_predictions() {
     }
     for actual in exported_predictions(scratch.path(), &fit.winner, &inputs) {
         assert_eq!(actual, expected);
+    }
+}
+
+#[test]
+fn stored_winner_compositions_preserve_signed_zero_prediction_bits() {
+    let root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    fs::create_dir_all(&root).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("scaled-zero-winner-")
+        .tempdir_in(root)
+        .unwrap();
+    for (index, case) in signed_zero::cases().into_iter().enumerate() {
+        let expression = MathExpr::parse(case.source).unwrap();
+        let fit = LinearScaledWinner::fit_training(&expression, &case.train, &case.labels).unwrap();
+        let bytes = fit.winner.to_bytes().unwrap();
+        let winner = LinearScaledWinner::from_bytes(&bytes).unwrap();
+        let mut expected = String::new();
+        for value in winner.predict(&case.test).unwrap() {
+            writeln!(expected, "{:016x}", value.to_bits()).unwrap();
+        }
+        for (backend, actual) in
+            exported_predictions(&scratch.path().join(index.to_string()), &winner, &case.test)
+                .into_iter()
+                .enumerate()
+        {
+            assert_eq!(
+                actual,
+                expected,
+                "{} width {} backend {backend}",
+                case.source,
+                case.train[0].len()
+            );
+        }
+        assert_eq!(winner.to_bytes().unwrap(), bytes);
     }
 }

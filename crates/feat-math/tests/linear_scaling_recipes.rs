@@ -6,6 +6,10 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+#[path = "support/linear_scaling_signed_zero.rs"]
+mod signed_zero;
+use signed_zero::{encoded, table};
+
 #[test]
 fn training_recipe_admission_preserves_hard_error_refusals() {
     for (source, width) in [
@@ -100,36 +104,6 @@ fn run(command: &mut Command) -> String {
         String::from_utf8_lossy(&output.stderr)
     );
     String::from_utf8(output.stdout).unwrap()
-}
-
-fn encoded(values: &[f64], backend: usize) -> String {
-    let mut out = String::new();
-    for value in values {
-        let bits = value.to_bits();
-        match backend {
-            0 => write!(out, "f64::from_bits(0x{bits:016x}),").unwrap(),
-            1 => write!(out, "unpack('>d',bytes.fromhex('{bits:016x}'))[0],").unwrap(),
-            _ => write!(out, "from_bits(0x{bits:016x}ULL),").unwrap(),
-        }
-    }
-    match backend {
-        0 => format!("vec![{out}]"),
-        1 => format!("[{out}]"),
-        _ => format!("{{{out}}}"),
-    }
-}
-
-fn table(rows: &[Vec<f64>], backend: usize) -> String {
-    let out = rows
-        .iter()
-        .map(|row| encoded(row, backend))
-        .collect::<Vec<_>>()
-        .join(",");
-    match backend {
-        0 => format!("vec![{out}]"),
-        1 => format!("[{out}]"),
-        _ => format!("{{{out}}}"),
-    }
 }
 
 fn execute_recipe(
@@ -229,6 +203,7 @@ for bad in bad_states:
     let cpp = dir.join("driver.cpp");
     fs::write(&cpp,format!(r#"{}
 #include <cstdio>
+#include <string>
 static double from_bits(std::uint64_t b) {{ double v; std::memcpy(&v,&b,8); return v; }}
 static void print_bits(double v) {{ std::uint64_t b; std::memcpy(&b,&v,8); std::printf("%016llx\n",static_cast<unsigned long long>(b)); }}
 template<class F> static void refuses(F function) {{ bool refused=false; try {{function();}} catch(const std::invalid_argument&) {{refused=true;}} if(!refused) throw std::runtime_error("invalid data admitted"); }}
@@ -383,5 +358,57 @@ fn independently_trained_recipes_match_winner_envelopes_loss_and_prediction_bits
             assert_eq!(actual, expected, "case {i} {source} backend {backend}");
         }
         assert_eq!(bytes, fit.winner.to_bytes().unwrap());
+    }
+}
+
+#[test]
+fn trained_recipe_compositions_preserve_signed_zero_state_and_prediction_bits() {
+    let root = std::env::var_os("TMPDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR")));
+    fs::create_dir_all(&root).unwrap();
+    let scratch = tempfile::Builder::new()
+        .prefix("scaled-zero-recipe-")
+        .tempdir_in(root)
+        .unwrap();
+    for (index, case) in signed_zero::cases().into_iter().enumerate() {
+        let expression = MathExpr::parse(case.source).unwrap();
+        let fit = LinearScaledWinner::fit_training(&expression, &case.train, &case.labels).unwrap();
+        let bytes = fit.winner.to_bytes().unwrap();
+        let mut expected = String::new();
+        for value in fit
+            .winner
+            .coefficients()
+            .into_iter()
+            .chain([fit.training_mse])
+        {
+            writeln!(expected, "{:016x}", value.to_bits()).unwrap();
+        }
+        for b in &bytes {
+            write!(expected, "{b:02x}").unwrap();
+        }
+        expected.push('\n');
+        for value in fit.winner.predict(&case.test).unwrap() {
+            writeln!(expected, "{:016x}", value.to_bits()).unwrap();
+        }
+        for (backend, actual) in execute_recipe(
+            &scratch.path().join(index.to_string()),
+            case.source,
+            &case.train,
+            &case.labels,
+            &case.test,
+        )
+        .into_iter()
+        .enumerate()
+        {
+            assert_eq!(
+                actual,
+                expected,
+                "{} width {} backend {backend}",
+                case.source,
+                case.train[0].len()
+            );
+        }
+        assert_eq!(fit.winner.to_bytes().unwrap(), bytes);
     }
 }
