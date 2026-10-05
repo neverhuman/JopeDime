@@ -7906,6 +7906,22 @@
       ],
       "dispositions": [],
       "scope": "B09 opt-in training-library recipes: explicit train-fold fitting, exact persisted variant2 coefficient/expression words, native/Rust/Python/C++17 fit/MSE/state/inference bit parity, signed-zero and runtime-power composition families, unrepresentable nonzero-slope refusal, strict input/malformed-state and Clip recipe admission refusal. No standalone CSV wrapper, arbitrary winner loader, shipping search/CLI integration, VarPro or Baseline utility promotion."
+    },
+    "target:feat-math/test/conversion_calibration_winner": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/conversion_calibration_winner.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Persisted B09 calibration-winner byte/text round-trip; read-only boundary fixtures; separately compiled Rust O0/O3 and C++17 O2/O3 outputs versus evaluator bits and typed refusals. No runtime or frozen fixture changes; depends on B09 admission."
     }
   }
 }
