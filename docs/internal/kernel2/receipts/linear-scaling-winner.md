@@ -1,7 +1,7 @@
 # Opt-in scalar calibration and persisted winner
 
 Status: first scalar library slice; full B09 search/serving admission remains held.
-Current combined base: `6df43201750b50ffcee908333e2f90dee8672829` (#181 fixture repair; #179 retention and #176 included).
+Current combined base: `4183d24ae5832c114d0194d4a6a7128647027782` (#187 fixture repair; merged B08 routing, B12 and B13 retained).
 Initial standalone proof base: `b036848460f3a2887fcdc6120db97152a3c01490`.
 Profile: `feat-math.scalar-linear-scaling.v2`.
 
