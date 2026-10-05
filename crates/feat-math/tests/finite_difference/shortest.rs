@@ -8,7 +8,7 @@ use feat_math::ops::{apply_op, FittedOp};
 
 #[test]
 fn shortest_existing_lag_roll_have_a_different_axis_and_cannot_replace_wire59() {
-    let last = vec![vec![3.]];
+    let last = [vec![3.]];
     for (name, op) in [
         (
             "lag",
