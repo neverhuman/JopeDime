@@ -82,6 +82,20 @@ fn cases() -> Vec<RecipeCase> {
                 probe.clone(),
             ));
         }
+        for variable in [Var::RowMin, Var::RowMax, Var::RowStd] {
+            cases.push((
+                ScalarExpressionProgram::new(ScalarNode::Call(
+                    ScalarFunction::from_versioned_id(2, 21).unwrap(),
+                    vec![ScalarNode::Var(variable)],
+                ))
+                .unwrap()
+                .with_numerical_policy(policy),
+                ScalarCarrier::Row,
+                training.clone(),
+                y.clone(),
+                probe.clone(),
+            ));
+        }
         // Old protected operators nested below new calls must preserve their faults.
         let function = |id, argument| {
             ScalarNode::Call(
