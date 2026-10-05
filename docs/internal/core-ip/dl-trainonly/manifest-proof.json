@@ -12,7 +12,7 @@
     "execution_admitted": false,
     "expected": 29238,
     "invalid": [],
-    "manifest_sha256": "64132b9681c9fcb09973c95008550a2a85c6cbcfaed7293562635a9da02c2006",
+    "manifest_sha256": "b935f8f083ab5bb1406c93c4823be5d08185b95fcd64ec3e57f16a1e146c299b",
     "missing": 29238,
     "schema": "jope.dl-output-completeness/v1"
   },
@@ -23,19 +23,23 @@
   "execution_admitted": false,
   "generation_exit_status": 0,
   "generator": {
-    "sha256": "aaa1aaea2d569cd7e2fb334fd4541a25d357a1ba437cc9515b454ec6d2761045"
+    "sha256": "926cd863716a5986e73f0aba5343aff2a315aa745d90ab066fd68b96c4d8b59a"
+  },
+  "historical_v1_proof": {
+    "disposition": "retained in Git and custody; superseded after research namespace separation",
+    "source": "b0c11613bd317053e900bcc8b37407f0f8b6a395"
   },
   "manifest": {
-    "bytes": 25655376,
+    "bytes": 25699301,
     "contexts": 4873,
     "encoder_outputs": 29238,
-    "manifest_content_sha256": "64132b9681c9fcb09973c95008550a2a85c6cbcfaed7293562635a9da02c2006",
-    "manifest_file_sha256": "03a5a4cd066c0a6d4a8d36b2c98e15be846d72dcb10bc29dd31ba82e4339eab0",
-    "sha256": "03a5a4cd066c0a6d4a8d36b2c98e15be846d72dcb10bc29dd31ba82e4339eab0"
+    "manifest_content_sha256": "b935f8f083ab5bb1406c93c4823be5d08185b95fcd64ec3e57f16a1e146c299b",
+    "manifest_file_sha256": "a6c63c43e7845b784a13b5fa4578e1f47478aa66987a45d3b762859cf8dedf1b",
+    "sha256": "a6c63c43e7845b784a13b5fa4578e1f47478aa66987a45d3b762859cf8dedf1b"
   },
   "repeat_generation_exit_status": 2,
-  "schema": "jope.dl-manifest-generation-proof/v1",
-  "scope": "real source identity inventory; new output manifest unbound, no encoding or remote publication",
+  "schema": "jope.dl-manifest-generation-proof/v2",
+  "scope": "real source identity inventory; draft unbound, no encoding or remote publication",
   "source_receipts": {
     "bytes": 6480176,
     "datasets": 1006,

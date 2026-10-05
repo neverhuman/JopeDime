@@ -23,11 +23,21 @@ planned total is 57,600 seconds (16 GPU-hours), the hard maximum 86,400 seconds
 (24 GPU-hours), and the original deadline is `2026-10-10T00:00:00Z`.
 Each host has one GPU, so a job's GPU seconds also bound its wall duration.
 
-A job JSON contains exactly `job_id`, `host`, and positive integer
-`gpu_seconds`. The requesting code must obtain a worst-case bound, including
+A job JSON contains exactly `job_id`, `host`, positive integer
+`gpu_seconds`, and a nonempty list `output_ids` of full manifest expectation
+SHA256 identities. A batched job charges an attempt for every listed output. The requesting code must obtain a worst-case bound, including
 startup, encoding/training, warmup, qualification and cleanup. All GPU work
 shares the same ledger. Concurrent reservation is atomic; a changed retry is
-refused. Repeated unchanged delivery is idempotent. Failed and cancelled jobs
+refused. Repeated unchanged reservation delivery is idempotent and returns
+`new_reservation=false`; it cannot authorize another execution. Terminal IDs
+are refused. A retry uses a new job ID and new GPU charge. Each output is limited
+to two reserved attempts across every host and restart, including failures and
+unknown outcomes; a batch refuses atomically if any output is exhausted.
+`Budget.claim_dispatch` atomically consumes the job once before execution.
+Duplicate or ambiguous dispatch claims refuse without granting another launch.
+A supervisor must use this claim rather than interpreting `budget_reserved` as
+launch permission. The version-2 policy refuses old ledgers instead of silently
+renewing them. Failed and cancelled jobs
 retain their reserved charge; restarting never resets it. Actual overruns are
 retained by `Budget.finish` and stop new reservations. Retain unknown attempts
 and reconcile them before new work. The future runtime supervisor must enforce
@@ -57,8 +67,12 @@ The generator reads the hash-pinned source-receipt JSONL produced by Claude,
 requires exactly 4,873 unique dataset/fold contexts, and emits **29,238** encoder
 expectations (24,365 GPU and 4,873 CPU Dope outputs). A0 is additional CPU
 metafeature evidence, not one of the six encoders, and is excluded here.
-The prefix is fixed to
+The main prefix is fixed to
 `s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/`.
+TabPFN3.5 output and receipt keys use the separate
+`s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly-research/`
+prefix, so readers confined to the admitted main prefix cannot ingest them.
+The research prefix requires its own explicit publisher scope before any write.
 Each manifest requires create-only `If-None-Match: *`, with no unconditional
 fallback. The local output also uses exclusive creation and refuses existing
 files and symlinks. There is no storage client in these tools.

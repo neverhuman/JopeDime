@@ -33,7 +33,12 @@ class BudgetTests(Scratch):
         self.budget = gate.Budget(self.path)
 
     def job(self, identity="a", host="xbabe2", hours=1):
-        return {"job_id": identity, "host": host, "gpu_seconds": hours * 3600}
+        return {
+            "job_id": identity,
+            "host": host,
+            "gpu_seconds": hours * 3600,
+            "output_ids": [out.digest(identity.encode())],
+        }
 
     def reserve(self, job, **kw):
         return self.budget.reserve(job, now=NOW, **kw)
@@ -75,9 +80,91 @@ class BudgetTests(Scratch):
         self.reserve(request)
         self.budget.finish("a", 1, "cancelled")
         self.budget = gate.Budget(self.path)
-        self.assertEqual(self.reserve(request)["charged_gpu_seconds"], 16 * 3600)
+        with self.assertRaisesRegex(gate.Refusal, "terminal job"):
+            self.reserve(request)
         with self.assertRaises(gate.Refusal):
             self.reserve(self.job("b"))
+
+    def test_terminal_replay_refused_for_every_outcome(self):
+        for outcome in ("complete", "failed", "cancelled", "unknown"):
+            request = self.job(outcome)
+            self.reserve(request)
+            self.budget.finish(outcome, 1, outcome)
+            with self.assertRaisesRegex(gate.Refusal, "terminal job"):
+                self.reserve(request)
+
+    def test_duplicate_delivery_and_dispatch_are_separate(self):
+        request = self.job()
+        self.assertTrue(self.reserve(request)["new_reservation"])
+        repeated = self.reserve(request)
+        self.assertFalse(repeated["new_reservation"])
+        self.assertEqual(repeated["charged_gpu_seconds"], 3600)
+        result = self.budget.claim_dispatch(request, now=NOW)
+        self.assertTrue(result["dispatch_claimed"])
+        self.assertFalse(result["execution_admitted"])
+        with self.assertRaisesRegex(gate.Refusal, "already claimed"):
+            gate.Budget(self.path).claim_dispatch(request, now=NOW)
+
+    def test_two_attempts_include_failed_and_unknown_restarts(self):
+        original = self.job()
+        self.reserve(original)
+        self.budget.finish("a", 1, "failed")
+        retry = original | {"job_id": "retry"}
+        result = gate.Budget(self.path).reserve(retry, now=NOW)
+        self.assertEqual(result["charged_gpu_seconds"], 7200)
+        self.budget.finish("retry", 0, "unknown")
+        with self.assertRaisesRegex(gate.Refusal, "two-attempt"):
+            gate.Budget(self.path).reserve(original | {"job_id": "third"}, now=NOW)
+
+    def test_concurrent_output_attempt_cap(self):
+        original = self.job()
+        self.reserve(original)
+
+        def attempt(identity):
+            try:
+                gate.Budget(self.path).reserve(original | {"job_id": identity}, now=NOW)
+                return True
+            except gate.Refusal:
+                return False
+
+        with concurrent.futures.ThreadPoolExecutor(2) as pool:
+            self.assertEqual(sorted(pool.map(attempt, ("b", "c"))), [False, True])
+
+    def test_batched_attempt_reservation_rolls_back(self):
+        original = self.job()
+        self.reserve(original)
+        self.reserve(original | {"job_id": "second"})
+        fresh = self.job("fresh")
+        with self.assertRaises(gate.Refusal):
+            self.reserve(
+                fresh | {"output_ids": fresh["output_ids"] + original["output_ids"]}
+            )
+        with self.budget.connect() as db:
+            self.assertEqual(
+                db.execute(
+                    "SELECT count(*) FROM attempts WHERE output_id=?",
+                    (fresh["output_ids"][0],),
+                ).fetchone()[0],
+                0,
+            )
+        self.assertTrue(self.reserve(fresh)["new_reservation"])
+
+    def test_output_identity_and_dispatch_scope(self):
+        original = self.job()
+        for ids in ([], ["short"], [original["output_ids"][0]] * 2, "not-list", [None]):
+            with self.assertRaises(gate.Refusal):
+                self.reserve(original | {"output_ids": ids})
+        with self.assertRaises(gate.Refusal):
+            self.budget.claim_dispatch(original, now=NOW)
+        self.reserve(original)
+        with self.assertRaises(gate.Refusal):
+            self.reserve(original | {"output_ids": ["f" * 64]})
+        for request, now in (
+            (original | {"host": "xbabe3"}, NOW),
+            (original, gate.DEADLINE),
+        ):
+            with self.assertRaises(gate.Refusal):
+                self.budget.claim_dispatch(request, now=now)
 
     def test_changed_retry_and_terminal_refused(self):
         self.reserve(self.job())
@@ -282,6 +369,30 @@ class OutputTests(Scratch):
         self.assertTrue(result["complete"])
         self.assertEqual(result["counts"]["complete"], 6)
         self.assertFalse(result["execution_admitted"])
+
+    def test_research_prefix_is_separate_and_rebinding_refused(self):
+        manifest = self.manifest()
+        row = next(r for r in manifest["outputs"] if r["component"] == "tabpfn35")
+        self.assertTrue(row["object_key"].startswith(out.RESEARCH_PREFIX))
+        self.assertFalse(row["object_key"].startswith(out.PREFIX))
+        row["object_key"] = row["object_key"].replace(out.RESEARCH_PREFIX, out.PREFIX)
+        with self.assertRaises(ValueError):
+            out.check(manifest, [], self.root)
+
+    def test_noncomplete_extra_fields_refused(self):
+        manifest = self.manifest()
+        with self.assertRaises(ValueError):
+            out.check(
+                manifest,
+                [
+                    {
+                        "output_id": manifest["outputs"][0]["output_id"],
+                        "outcome": "unknown",
+                        "ignored_object": "extra",
+                    }
+                ],
+                self.root,
+            )
 
     def test_unbound_draft_cannot_complete(self):
         manifest = self.manifest(False)

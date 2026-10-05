@@ -1,54 +1,71 @@
 {
-  "c6_route": "ii: immutable inner-view JTT1, no evaluator change",
-  "complete_coverage_attempts": 21326832,
-  "coverage_feasible_under_literal_ceiling": false,
+  "budget_policy": "fixed_equal",
+  "c6_route": "i: evaluator change, patch 0001",
+  "complete_coverage_attempt_ceiling": 6081504,
+  "contexts": 4873,
+  "evolution_attempt_ceiling": 5613696,
+  "evolution_slots_per_generation": 64,
   "execution_admitted": false,
-  "gp_runtime_owner_for_new_gateway": null,
+  "failure_accounting": "Every reserved/dispatched attempt, including failures, cancellations, lost results and retries, consumes one slot inside the total. Duplicate delivery does not execute again.",
+  "generations": 18,
+  "gp_runtime_owner_for_new_gateway": "Codex root / jopedime_codex_cleanup",
+  "historical_row_selection": "All 4,873 contexts carry historical t1_split exposure; report coreset/kmeans strata, do not claim fully train-only contexts.",
   "individual_timeout_seconds": 90,
-  "literal_requested_ceiling": 21300000,
-  "mean_attempt_seconds_limit_at_80_percent": {
-    "320": 4.407743259758411,
-    "640": 8.815486519516822
+  "initialization_attempt_ceiling": 467808,
+  "initialization_slots_per_context": 96,
+  "measured_throughput_receipt": {
+    "bytes": 1306,
+    "contexts_sampled": 60,
+    "local_observations": {
+      "max": 101.43,
+      "mean": 2.327,
+      "n": 18404,
+      "p50": 0.652,
+      "p90": 5.391,
+      "p99": 21.364
+    },
+    "scope": "Historical sampled local evaluations; 2.327 s mean (2.33 s rounded). Not qualification of the changed S1 evaluator, new topology or admission.",
+    "sha256": "f1aa72f062aea8ec1f23c71630cd0c69644f66001b871b86858826e6b078fe4b",
+    "source": "Claude RUN/tmp/teststeer/throughput.json"
   },
-  "measured_throughput_receipt": null,
   "original_deadline": "2026-10-10T00:00:00Z",
-  "planning_anchor": "2026-10-05T18:00:00Z",
-  "planning_window_seconds": 367200,
-  "pool_origin": "historical test-primary selection; rescoring does not remove pool selection bias",
-  "program_records": 7108944,
-  "reference_slots": 640,
-  "retry_allowance_at_complete_coverage_ceiling": 0,
-  "scenarios": [
+  "owner_grant": {
+    "confirm": "cb6243ace3a5 + S1-BUDGET-18",
+    "receipt_sha256": "2ca6a40c3128c07024c835d3a0b5cbf325e4df810242d13307db3a7451c136ff",
+    "typed_at": "2026-10-05T18:34:23Z"
+  },
+  "per_context_attempt_ceiling": 1248,
+  "planning_scenarios": [
     {
-      "mean_attempt_seconds": 1,
-      "wall_hours_at_640_slots": 9.2564375,
-      "wall_hours_at_640_slots_80_percent": 11.570546875
+      "allocated": false,
+      "mean_attempt_seconds": 2.327,
+      "reference_slots": 24,
+      "wall_hours_at_80_percent": 204.74044861111108
     },
     {
-      "mean_attempt_seconds": 5,
-      "wall_hours_at_640_slots": 46.2821875,
-      "wall_hours_at_640_slots_80_percent": 57.852734375
+      "allocated": false,
+      "mean_attempt_seconds": 2.327,
+      "reference_slots": 320,
+      "wall_hours_at_80_percent": 15.355533645833333
     },
     {
-      "mean_attempt_seconds": 10,
-      "wall_hours_at_640_slots": 92.564375,
-      "wall_hours_at_640_slots_80_percent": 115.70546875
-    },
-    {
-      "mean_attempt_seconds": 20,
-      "wall_hours_at_640_slots": 185.12875,
-      "wall_hours_at_640_slots_80_percent": 231.4109375
-    },
-    {
-      "mean_attempt_seconds": 90,
-      "wall_hours_at_640_slots": 833.079375,
-      "wall_hours_at_640_slots_80_percent": 1041.34921875
+      "allocated": false,
+      "mean_attempt_seconds": 2.327,
+      "reference_slots": 640,
+      "wall_hours_at_80_percent": 7.6777668229166665
     }
   ],
-  "schema": "jope.dl-teacher-throughput-draft/v1",
-  "selection": "two inner-validation fits only; separate outer diagnostic",
-  "shortfall_attempts": 26832,
+  "retry_allowance_above_ceiling": 0,
+  "schema": "jope.dl-teacher-s1-budget/v2",
+  "selection": "Complete inner-CV scores and OOF residuals only; official test diagnostics never steer selection, semantics, continuation or admission.",
   "slots_are_allocated": false,
-  "teacher_scope_decision": "S1/S2/S3 unassigned",
-  "views_per_record": 3
+  "superseded_proposal": {
+    "attempts": 21326832,
+    "disposition": "Superseded by typed S1 grant; retained as historical arithmetic only.",
+    "literal_ceiling": 21300000,
+    "program_records": 7108944,
+    "route": "ii: three-view rescoring",
+    "shortfall": 26832
+  },
+  "teacher_scope_decision": "S1: new inner-CV-only search"
 }

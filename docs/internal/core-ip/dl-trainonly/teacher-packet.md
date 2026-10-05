@@ -1,98 +1,79 @@
-# C6 teacher re-evaluation packet — code and planning only
+# S1 teacher search packet — owner grant and receiving requirements
 
-This packet proposes **C6 route (ii): immutable inner-view JTT1 inputs using the
-existing evaluator**, without an evaluator change. Its evaluator binary pin is
-`7ae59dca572a034740b1428aba3a0c5b4c7f12ebec86ba2b8fc286e88546e826`.
-That is the retained runtime identity, not a fresh execution qualification.
-There is no teacher execution grant, allocation, GPU job, or S3 publication in
-this packet. The original campaign, its stopped window, and its records stay intact.
+Jepson's typed `CONFIRM cb6243ace3a5 + S1-BUDGET-18` on October 5 at
+18:34Z selects **S1: new GP search with inner-CV-only selection**, using
+**C6 route (i)**, the per-fit evaluator change in Claude's patch 0001.
+The owner receipt is
+`2ca6a40c3128c07024c835d3a0b5cbf325e4df810242d13307db3a7451c136ff`.
+Codex root (`jopedime_codex_cleanup`) owns the teacher-engine landing: patches
+0001/0002 and the channel-4 fixed-equal policy go into one separate reviewed
+core PR off current main. Claude's `442374.JopeDime_DLTrain`, session
+`df8edf60-e484-4e31-87b0-1ecf13ef4cb3`, retains DL preparation and pilot ownership.
 
-For every program/context, construct two disjoint inner views from outer-train
-rows. Each inner view fits preprocessing on its own inner-train rows and uses
-inner-validation rows as the evaluator's test input. The evaluator's `test`
-field is therefore an **inner-validation score**, not an outer score. Rank and
-select teachers using the declared reduction of these complete inner results.
-Run a third fit on all outer-train rows for a separate outer diagnostic. Keep its
-predictions and labels in scorer custody; release only after committing the
-round. Do not let outer scores reach selection, admission, retries, or training.
-Freeze fold memberships, original program, explicit adaptation, evaluator,
-preprocessing recipe/state, input bytes, and objective in each request identity.
+This grant supersedes the earlier proposed three-view rescoring route (ii)
+and the pre-grant refusal of 18 generations. Historical test-selected programs,
+the old fixed-20 protocol, measurements and exhausted windows retain their
+identities. Rescoring alone cannot remove test-selected ancestry. This source
+packet and its budget reservations do not establish runtime G22 qualification.
 
-The existing 7,108,944 program records came from test-primary search
-(`TEST-STEER-01`, Claude's dated source finding). Re-evaluation can repair score
-labels and preprocessing scope; it cannot remove selection bias from the pool's
-composition. The historical champions are not an unbiased baseline. Route (ii)
-is a transport proposal compatible with the re-score variants S2/S3; it does not
-choose between S1, S2, and S3 or authorize the new search required by S1. A family
-holdout does not erase this provenance. The historical exposure and pool-origin
-inventory remains a receiving prerequisite.
+## Fixed budget and accounting
 
-## Attempt and throughput budget
+The [budget](teacher-budget.json) specifies 4,873 contexts, 96 initialization/G0
+slots each and **18 equal generations of 64 slots** each:
 
-The accompanying [machine-readable budget](teacher-budget.json) fixes the
-arithmetic. A literal ceiling of 21,300,000 attempted evaluations is **26,832
-short** of three evaluations for each of 7,108,944 records (21,326,832).
-The planner must refuse full coverage under that ceiling; it cannot silently
-truncate the pool, omit folds, or reuse incompatible scores. If “21.3M” was a
-rounded description of the complete maximum, the eventual frozen grant must
-spell out 21,326,832 or a larger explicit attempt ceiling. This draft records the
-shortfall; no requested work is waiting on that clarification.
+| Accounting category | Attempt ceiling |
+| --- | ---: |
+| Initialization/G0 | 467,808 |
+| Evolution | 5,613,696 |
+| Total | **6,081,504** |
+| Per context | **1,248** |
+| Extra retries beyond total | **0** |
 
-Every dispatched evaluation consumes an attempt, including failures, OOM,
-cancellation, lost results, and retries. The complete three-view maximum leaves
-**zero retry allowance** when capped at exactly 21,326,832. Reserve capacity
-transactionally before dispatch. Use a run-scoped idempotency key containing
-program, view, input, evaluator, and attempt. Repeated delivery of the same
-committed attempt must not run twice. An ambiguous dispatched attempt remains
-charged and unresolved; recovery retains the original deadline and maximum.
-The receiving ledger stores measured fold results separately from proposal
-reward, and never admits an incomplete/nonfinite program as a teacher.
+Failures, timeouts, OOM, cancelled dispatches, lost/unknown results and retries
+consume slots inside this ceiling. Record attempts, completions and failures
+separately. A failed slot cannot become an uncharged replacement evaluation.
+Reserve transactionally before dispatch; duplicate delivery consumes no second
+execution. Recovery retains the original `2026-10-10T00:00Z` deadline and all
+charges. Incomplete or nonfinite results cannot become teachers. Operational
+failure may leave a context incomplete, which must remain visible; it cannot
+silently buy extra evaluations or shorten other contexts based on their test
+scores. Every admitted context receives the same fixed policy, with no
+outer-test-based continuation, stage allocation or early stopping.
 
-Planning window: **2026-10-05T18:00Z to 2026-10-10T00:00Z**, 102 hours.
-This is a calculation anchor, not a start or renewed allowance. The available
-window decreases before admission. The existing 640 physical intake slots are
-an arithmetic reference; they are not a grant for new teacher work and the
-existing intake gateway remains untouched.
+## Fitting and selection
 
-| Mean complete attempt wall time | 640 slots, 100% useful time | 640 slots, 80% useful time |
-| --- | ---: | ---: |
-| 1 s | 9.26 h | 11.57 h |
-| 5 s | 46.28 h | 57.85 h |
-| 10 s | 92.56 h | 115.71 h |
-| 20 s | 185.13 h | 231.41 h |
-| 90 s timeout bound | 833.08 h | 1,041.35 h |
+The new worker consumes decoded unscaled JTT1 values and fits preprocessing on
+each model's fitting rows. Inner validation and official-test rows cannot affect
+that fit. The S1 engine ranks, selects parents/survivors/champions and constructs
+semantic novelty from inner-CV scores and out-of-fold residuals only. Official
+outer-test RMSE/predictions remain separately stored diagnostics. Mutation tests
+must kill every test-dependent selection and continuation path, and an
+inner-CV positive control must still alter the winner.
 
-At 640 slots and 80% useful time, the 102-hour window requires an average
-attempt duration at most **8.815 seconds** for complete three-view coverage.
-At 320 slots it requires at most **4.408 seconds**. These are planning thresholds,
-not measured throughput. Staging, queueing, fitting, validation, result durability,
-network stalls, and retries all consume useful time. A 90-second individual
-candidate timeout does not establish campaign feasibility.
+All 4,873 existing contexts carry historical `t1_split` row-selection exposure;
+coreset and kmeans strata remain recorded. Cleaning fitted transforms does not
+make these contexts fully train-only or erase historical model exposure.
+Report results by their actual scope. New outer splits require a separate owner
+decision; they are not supplied by this grant.
 
-Before runtime admission, the GP owner must bind a representative measured
-throughput receipt to the exact evaluator and input recipe, then cost full
-coverage plus explicit retry allowance and safety margin. Lower-stage CPU pilot
-receipts using three reference programs are not that throughput proof. No pilot
-is duplicated here. A native evaluator modification would be C6 route (i), a
-separate reviewed core PR and a new binary pin; this packet does not make it.
+## Throughput and runtime qualification
 
-## Receiving and ownership requirements
+Claude's retained `RUN/tmp/teststeer/throughput.json` samples 60 historical
+contexts and 18,404 local observations: mean **2.327 seconds (2.33 rounded)**,
+p90 5.391 seconds, p99 21.364 seconds. Its pinned digest and bytes are in the
+budget. This is a historical observation, not qualification of the changed
+S1 evaluator or a distributed allocation. The budget provides arithmetic at
+24/320/640 reference slots, all explicitly unallocated. The actual remaining
+window, existing CPU reservations, staging, queueing, result durability,
+cancellation and failures must be costed before runtime admission. A 90-second
+candidate timeout alone does not prove feasibility.
 
-- A new teacher-scoped repository gateway, outside existing ports 7410–7478,
-  must consume frozen requests and the durable attempt ledger. The existing 7477
-  intake gateway's program/scoring scopes are not broadened.
-- All required participants, original resource window, CPU reservations, input
-  closures, storage destinations and grants must be admitted before dispatch.
-  No xbabe3 pool control or intake changes are part of this packet.
-- Fit workers receive training-only inputs. The scorer owns outer labels,
-  prediction/failure commitments and result-release authority.
-- The live GP runtime owner for the new teacher gateway is **not assigned by
-  this draft**. Existing intake operations are Codex/root's separate scope;
-  `442374.JopeDime_DLTrain` / session
-  `df8edf60-e484-4e31-87b0-1ecf13ef4cb3` owns the CPU pilot and DL preparation.
-- C6 transport tests, genuine scope/grant decisions, source/family exposure,
-  original program ancestry, measured throughput, reservation recovery and
-  independent receiving qualification remain required before G22.
-
-A budget reservation, pin, source receipt, CPU build, or this draft cannot supply
-G22, training admission, serving promotion, or a positive learning claim.
+The GP owner must qualify the merged evaluator/engine, immutable train-only
+request inputs, equal-budget coordinator and durable attempt ledger through
+positive and adversarial receiving paths. Freeze source/binary identities,
+fold memberships, program/adaptation ancestry, objective, participants,
+resources, destination and original deadline before dispatch. A teacher-scoped
+gateway must not broaden existing intake ports 7410–7478 or their scopes.
+No xbabe3 pool controls are authorized here. Fit workers and outer scorers keep
+separate input and result-release authority. Actual optimizer updates, serving
+promotion and transfer benefit retain their own evidence gates.
