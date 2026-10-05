@@ -22,7 +22,8 @@ jobs:
   cpu:
     if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, linux, x64, jope-full-cpu]
-    timeout-minutes: 120
+    # 11 bounded families total 122.75min including kill grace; retain >=5min for uploads.
+    timeout-minutes: 130
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

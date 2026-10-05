@@ -3,6 +3,8 @@ import copy
 import importlib.util
 import json
 import os
+import re
+import tomllib
 from pathlib import Path
 import sys
 import subprocess
@@ -171,7 +173,19 @@ sys.exit(int(a.status))
             self.assertEqual(['timeout','--signal=TERM','--kill-after=15s'],command[:3])
             self.assertEqual(['bash','deploy/ci/full-lane.sh',name],command[4:])
             total += int(command[3][:-1]) + 15
-        self.assertLessEqual(total,115*60)
+        workflow = (ROOT/'.github/workflows/full-main.yml').read_text()
+        job_minutes = int(re.search(r'^    timeout-minutes: (\d+)$', workflow, re.M)[1])
+        self.assertLessEqual(total, (job_minutes - 5) * 60)
+
+    def test_scratch_family_covers_main_test_deadline_and_collection(self):
+        mapping = json.loads((ROOT/'deploy/ci/coverage.json').read_text())
+        config = tomllib.loads((ROOT/'.config/nextest.toml').read_text())
+        timeout = config['profile']['main']['slow-timeout']
+        test_seconds = int(timeout['period'].removesuffix('s')) * timeout['terminate-after']
+        family_seconds = int(mapping['lanes']['full-scratch']['command'][3].removesuffix('s'))
+        # Collection/build consumed 252s before the golden started in run37287624697.
+        # The family must leave the existing per-test deadline intact, plus 300s setup.
+        self.assertGreaterEqual(family_seconds, test_seconds + 300)
 
 
 if __name__ == '__main__':
