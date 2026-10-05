@@ -1,7 +1,8 @@
 //! Protected-semantics e-graph simplification (B20).
 //!
-//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]` until B19 merges and the
-//! search move is wired. Nothing outside its tests calls it.
+//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]`, following the Lane D
+//! kickoff, and nothing outside its tests calls it. The search move is wired once B19 merges;
+//! OWNER_DIRECTIVES allows no wiring before B11 and B16 merge.
 //!
 //! A small in-crate e-graph: union-find, a hashcons keyed by literal bits (so `0.0` and `-0.0`
 //! are different nodes), and a rebuild back to congruence after every write phase (Willsey et
@@ -17,12 +18,17 @@
 //! - Inside the domain, NaN bits cannot reach an output, because every operation's non-NaN
 //!   result ignores them and `safe` maps a non-finite root to 0.0.
 //!
-//! Extraction picks the smallest equivalent tree (nodes, then depth, then its printed form), so
-//! the result never depends on e-class numbering. Limits are counts only (e-nodes and
+//! Extraction gives every class a tree with the fewest nodes the class represents and, among
+//! those, the least depth. It picks in increasing order of that node count, so every child class
+//! is settled before its parent, and a remaining tie goes to the smallest `Debug` form (then
+//! literal bits) among the class's own nodes, each built over its children's picks. That last
+//! tie-break is local: it need not find the smallest `Debug` form of all equally small trees.
+//! Nothing in extraction depends on e-class numbering. Limits are counts only (e-nodes and
 //! iterations), checked before every application, so the bound is hard. When saturation
 //! completes the result does not depend on rule order either; when a limit stops it, the partial
 //! write phase can. A tree is replaced only when the result is strictly smaller, or as small and
-//! shallower.
+//! shallower. An input that fails the structure check (the node and depth limits, and every
+//! call's arity, which serde decoding does not check) is returned unchanged.
 //!
 //! The rules (proof notes per rule in the tests):
 //! - R1 `x*1`, `1*x` → `x`; R2 `x/1` → `x`;
@@ -41,8 +47,11 @@
 //! Excluded, each pinned by a counterexample test: `x + 0.0`, `x - (-0.0)`, `x*0`, `x - x`, `x/x`,
 //! reassociation, distribution, `a - b` → `-(b - a)`, operand commutation (on an error row it
 //! changes which operand's faults are raised before the Hard one), `(-a)/b` ↔ `-(a/b)` (the
-//! protected branch returns +0.0 for both), `x^2` ↔ `x*x` (`powf` precision is unspecified), and
-//! any folding of libm-backed functions.
+//! protected branch returns +0.0 for both), `x^2` ↔ `x*x` (at overflow `pow` raises
+//! POW_NONFINITE and `*` does not; `powf` precision is unspecified too), `exp(log(x))` → `x` (the
+//! protected `log` of a negative raises LOG_DOMAIN), and `x/c` for `|c| = 2^-40`. Folding a
+//! libm-backed function is excluded too, because libm results are not portable; that one is
+//! pinned only as never applied.
 
 use super::*;
 use std::collections::{BTreeMap, BTreeSet};
@@ -51,7 +60,7 @@ type Id = usize;
 
 /// The most saturation rounds.
 const MAX_ITERATIONS: usize = 8;
-/// The hard e-node cap: eight times the input's nodes, at most 512.
+/// The hard e-node cap: eight times the input's nodes, at least 16 and at most 512.
 const NODE_CAP_PER_INPUT_NODE: usize = 8;
 const NODE_CAP_MAX: usize = 512;
 
@@ -98,11 +107,14 @@ enum Term {
 /// Why saturation stopped.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Saturation {
-    /// A round added nothing.
+    /// A round changed nothing: it created no e-node and merged no classes.
     Saturated,
     IterationLimit,
-    /// The next application would have passed the e-node cap.
+    /// The next application might pass the e-node cap: `term_size` is an upper bound, and the
+    /// hashcons keeps stale keys until the rebuild.
     NodeLimit,
+    /// The input fails the structure check, so saturation never started.
+    Malformed,
 }
 
 /// The rules, in their fixed application order.
@@ -203,14 +215,15 @@ impl EGraph {
         true
     }
 
-    /// Restores congruence: re-canonicalizes every node and merges classes that now hold the
-    /// same node, until nothing changes.
+    /// The live classes: every id that is its own root.
     fn roots(&self) -> Vec<Id> {
         (0..self.classes.len())
             .filter(|&id| self.find(id) == id)
             .collect()
     }
 
+    /// Restores congruence: re-canonicalizes every node and merges classes that now hold the
+    /// same node, until nothing changes.
     fn rebuild(&mut self) {
         loop {
             let mut memo: BTreeMap<Node, Id> = BTreeMap::new();
@@ -300,7 +313,7 @@ impl EGraph {
     fn holds_abs(&self, id: Id) -> bool {
         self.classes[self.find(id)]
             .iter()
-            .any(|n| matches!(n, Node::Call(Func::Abs, _)))
+            .any(|n| matches!(n, Node::Call(Func::Abs, args) if args.len() == 1))
     }
 }
 
@@ -318,7 +331,8 @@ fn exact_reciprocal(c: f64) -> Option<f64> {
     (mantissa == 0 && (-39..=1023).contains(&k) && k != 0).then(|| 1.0 / c)
 }
 
-/// The right-hand sides `rule` gives for `node`.
+/// The right-hand sides `rule` gives for `node`. An `abs` of any other arity than one matches
+/// nothing.
 fn matches(eg: &EGraph, rule: Rule, node: &Node) -> Vec<Term> {
     let lit = |id: Id| eg.literal(id);
     match (rule, node) {
@@ -345,12 +359,12 @@ fn matches(eg: &EGraph, rule: Rule, node: &Node) -> Vec<Term> {
         }
         (Rule::SubZero, Node::Bin(SUB, x, y)) if is(lit(*y), 0.0) => vec![Term::Class(*x)],
         (Rule::NegNeg, Node::Neg(x)) => eg.negations(*x).into_iter().map(Term::Class).collect(),
-        (Rule::AbsNeg, Node::Call(Func::Abs, args)) => eg
+        (Rule::AbsNeg, Node::Call(Func::Abs, args)) if args.len() == 1 => eg
             .negations(args[0])
             .into_iter()
             .map(|a| Term::Call(Func::Abs, vec![Term::Class(a)]))
             .collect(),
-        (Rule::AbsAbs, Node::Call(Func::Abs, args)) if eg.holds_abs(args[0]) => {
+        (Rule::AbsAbs, Node::Call(Func::Abs, args)) if args.len() == 1 && eg.holds_abs(args[0]) => {
             vec![Term::Class(args[0])]
         }
         (Rule::SubToAddNeg, Node::Bin(SUB, x, y)) => vec![Term::Bin(
@@ -437,7 +451,7 @@ fn matches(eg: &EGraph, rule: Rule, node: &Node) -> Vec<Term> {
             }
             _ => Vec::new(),
         },
-        (Rule::Fold, Node::Call(Func::Abs, args)) => match lit(args[0]) {
+        (Rule::Fold, Node::Call(Func::Abs, args)) if args.len() == 1 => match lit(args[0]) {
             Some(a) => vec![Term::Literal(a.abs())],
             None => Vec::new(),
         },
@@ -454,6 +468,8 @@ struct Simplified {
     iterations: usize,
     enodes: usize,
     applications: usize,
+    /// The most e-nodes the hashcons held at any point, the input's own included.
+    peak: usize,
 }
 
 /// The saturation limits: rounds, and the hard e-node cap.
@@ -464,7 +480,8 @@ struct Limits {
 }
 
 impl Limits {
-    /// The production limits for an input of `nodes` nodes.
+    /// The production limits for an input of `nodes` nodes: eight e-nodes per input node, at
+    /// least 16 (so a tiny input still has room for a few rewrites) and at most 512.
     fn for_input(nodes: usize) -> Self {
         Self {
             iterations: MAX_ITERATIONS,
@@ -473,14 +490,25 @@ impl Limits {
     }
 }
 
-/// `expression` simplified under the exact rules, applied in `order`, within `limits`.
-fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simplified {
+/// An e-graph after saturation, rebuilt, with how saturation went.
+struct Run {
+    eg: EGraph,
+    root: Id,
+    stop: Saturation,
+    iterations: usize,
+    applications: usize,
+    peak: usize,
+}
+
+/// `expression` saturated under the exact rules, applied in `order`, within `limits`.
+fn saturate(expression: &MathExpr, order: &[Rule], limits: Limits) -> Run {
     let mut eg = EGraph::default();
     let root = add_expr(&mut eg, &expression.root);
     let cap = limits.enodes;
     let mut stop = Saturation::IterationLimit;
     let mut applications = 0usize;
     let mut iterations = 0usize;
+    let mut peak = eg.enodes();
     'rounds: for _ in 0..limits.iterations {
         iterations += 1;
         // Read phase: every match, in rule order, then class id, then node order.
@@ -495,30 +523,59 @@ fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simpl
                 }
             }
         }
-        // Write phase, checking the cap before every application.
-        let (before_nodes, before_classes) = (eg.enodes(), live_classes(&eg));
+        // Write phase, checking the cap before every application. The round changed the graph
+        // if an application created an e-node (every new e-node opens a class) or merged two
+        // classes; a round that did neither leaves the graph, and so every later round, as is.
+        let mut changed = false;
         for (id, rhs) in pending {
             if eg.enodes() + term_size(&rhs) > cap {
                 stop = Saturation::NodeLimit;
                 eg.rebuild();
                 break 'rounds;
             }
+            let classes = eg.parent.len();
             let new = eg.insert(&rhs);
-            eg.union(id, new);
+            let merged = eg.union(id, new);
+            changed |= merged || eg.parent.len() > classes;
+            peak = peak.max(eg.enodes());
             applications += 1;
         }
         eg.rebuild();
-        if eg.enodes() == before_nodes && live_classes(&eg) == before_classes {
+        if !changed {
             stop = Saturation::Saturated;
             break;
         }
     }
-    let enodes = eg.enodes();
-    let best = extract(&eg);
+    Run {
+        eg,
+        root,
+        stop,
+        iterations,
+        applications,
+        peak,
+    }
+}
+
+/// `expression` simplified under the exact rules, applied in `order`, within `limits`. An input
+/// that fails the structure check is returned unchanged, before any rule sees it.
+fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simplified {
+    if MathExpr::from_ast(expression.root.clone()).is_err() {
+        return Simplified {
+            expression: expression.clone(),
+            changed: false,
+            stop: Saturation::Malformed,
+            iterations: 0,
+            enodes: 0,
+            applications: 0,
+            peak: 0,
+        };
+    }
+    let run = saturate(expression, order, limits);
+    let best = extract(&run.eg);
     let original = (count_nodes(&expression.root), depth(&expression.root));
     let candidate = best
-        .get(&eg.find(root))
-        .and_then(|(_, _, _, tree)| MathExpr::from_ast(tree.clone()).ok());
+        .get(&run.eg.find(run.root))
+        .and_then(|tree| MathExpr::from_ast(tree.clone()).ok());
     let (expression, changed) = match candidate {
         Some(tree) => {
             let size = (count_nodes(&tree.root), depth(&tree.root));
@@ -533,10 +590,11 @@ fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simpl
     Simplified {
         expression,
         changed,
-        stop,
-        iterations,
-        enodes,
-        applications,
+        stop: run.stop,
+        iterations: run.iterations,
+        enodes: run.eg.enodes(),
+        applications: run.applications,
+        peak: run.peak,
     }
 }
 
@@ -546,10 +604,6 @@ fn simplify(expression: &MathExpr) -> Simplified {
         &RULES,
         Limits::for_input(count_nodes(&expression.root)),
     )
-}
-
-fn live_classes(eg: &EGraph) -> usize {
-    eg.roots().len()
 }
 
 /// An upper bound on the e-nodes a right-hand side can add.
@@ -582,38 +636,82 @@ fn add_expr(eg: &mut EGraph, expr: &Expr) -> Id {
     }
 }
 
-type Best = BTreeMap<Id, (usize, usize, String, Expr)>;
+type Best = BTreeMap<Id, Expr>;
 
-/// The smallest tree of every class (nodes, then depth, then its printed form), by a fixed-point
-/// pass over the classes.
+/// Extraction's order on trees: nodes, then depth, then the `Debug` form, then the literals'
+/// bits in order (`Debug` prints every NaN alike), so equal ranks mean equal trees.
+fn rank(tree: &Expr) -> (usize, usize, String, Vec<u64>) {
+    fn literals(tree: &Expr, out: &mut Vec<u64>) {
+        match tree {
+            Expr::Const(v) => out.push(v.to_bits()),
+            Expr::Var(_) => {}
+            Expr::Unary(_, a) => literals(a, out),
+            Expr::Binary(_, a, b) => {
+                literals(a, out);
+                literals(b, out);
+            }
+            Expr::Call(_, args) => args.iter().for_each(|a| literals(a, out)),
+        }
+    }
+    let mut bits = Vec::new();
+    literals(tree, &mut bits);
+    (count_nodes(tree), depth(tree), format!("{tree:?}"), bits)
+}
+
+/// Every class's pick (see the module doc), in two phases. First the fewest nodes of any tree in
+/// each class, a monotone fixed point whose result does not depend on the visiting order. Then,
+/// in increasing order of that count, so that every child class is picked before its parent, the
+/// lowest-ranked tree among the class's nodes that reach its count, each built over its
+/// children's picks.
 fn extract(eg: &EGraph) -> Best {
-    let mut best: Best = BTreeMap::new();
     let roots = eg.roots();
+    let mut fewest: BTreeMap<Id, usize> = BTreeMap::new();
     loop {
         let mut changed = false;
         for &id in &roots {
             for node in &eg.classes[id] {
-                let Some(tree) = build(eg, &best, node) else {
+                let Some(n) = node_count(eg, &fewest, node) else {
                     continue;
                 };
-                let key = (count_nodes(&tree), depth(&tree), format!("{tree:?}"));
-                let better = best
-                    .get(&id)
-                    .is_none_or(|(n, d, s, _)| (key.0, key.1, &key.2) < (*n, *d, s));
-                if better {
-                    best.insert(id, (key.0, key.1, key.2, tree));
+                if fewest.get(&id).is_none_or(|&m| n < m) {
+                    fewest.insert(id, n);
                     changed = true;
                 }
             }
         }
         if !changed {
-            return best;
+            break;
         }
     }
+    let mut order: Vec<(usize, Id)> = fewest.iter().map(|(&id, &n)| (n, id)).collect();
+    order.sort_unstable();
+    let mut best: Best = BTreeMap::new();
+    for (n, id) in order {
+        let pick = eg.classes[id]
+            .iter()
+            .filter(|node| node_count(eg, &fewest, node) == Some(n))
+            .filter_map(|node| build(eg, &best, node))
+            .min_by_key(rank);
+        if let Some(tree) = pick {
+            best.insert(id, tree);
+        }
+    }
+    best
+}
+
+/// The nodes of the smallest tree rooted at `node`, given each child class's fewest.
+fn node_count(eg: &EGraph, fewest: &BTreeMap<Id, usize>, node: &Node) -> Option<usize> {
+    let child = |id: &Id| fewest.get(&eg.find(*id)).copied();
+    Some(match node {
+        Node::Const(_) | Node::Var(_) => 1,
+        Node::Neg(a) => 1 + child(a)?,
+        Node::Bin(_, a, b) => 1 + child(a)? + child(b)?,
+        Node::Call(_, args) => 1 + args.iter().map(child).sum::<Option<usize>>()?,
+    })
 }
 
 fn build(eg: &EGraph, best: &Best, node: &Node) -> Option<Expr> {
-    let child = |id: &Id| best.get(&eg.find(*id)).map(|(_, _, _, tree)| tree.clone());
+    let child = |id: &Id| best.get(&eg.find(*id)).cloned();
     Some(match node {
         Node::Const(bits) => Expr::Const(f64::from_bits(*bits)),
         Node::Var(v) => Expr::Var(*v),
@@ -883,6 +981,26 @@ mod tests {
         }
     }
 
+    /// Lane D pre-review of B20: three exclusions had no counterexample, and the 2^-40 divisor
+    /// above is a power, so no rule could fold it into a division by a literal anyway.
+    #[test]
+    fn the_remaining_exclusions_have_counterexamples() {
+        let differs = |a: &str, b: &str, row: &[f64]| {
+            let (va, fa) = MathExpr::parse(a).unwrap().eval_row_traced(row);
+            let (vb, fb) = MathExpr::parse(b).unwrap().eval_row_traced(row);
+            (va.to_bits(), fa) != (vb.to_bits(), fb)
+        };
+        // x^2 versus x*x: at overflow pow raises POW_NONFINITE, which * does not.
+        assert!(differs("(c0^2.0)", "(c0*c0)", &[1e200]));
+        // exp(log(x)) versus x: the protected log of a negative raises LOG_DOMAIN.
+        assert!(differs("exp(log(c0))", "c0", &[-1.0]));
+        // x / 2^-40 versus x * 2^40: the divisor is under the protected division's threshold.
+        assert_eq!(format!("{:?}", 2f64.powi(-40)), "9.094947017729282e-13");
+        let literal = "(c0/9.094947017729282e-13)";
+        assert!(differs(literal, "(c0*1099511627776.0)", &[3.0]));
+        assert_eq!(source(literal), printed(literal));
+    }
+
     /// Random trees biased toward the rules' patterns, every one simplified exactly.
     fn random_tree(rng: &mut Pcg32, depth: usize) -> Expr {
         let leaf = |rng: &mut Pcg32| -> Expr {
@@ -1132,5 +1250,300 @@ mod tests {
             checked > 200 && changed > 30,
             "{checked} checked, {changed} changed"
         );
+    }
+
+    #[test]
+    fn malformed_calls_are_returned_unchanged() {
+        // serde decoding builds these: every row is a compile failure, which no rule may turn into
+        // a value, and no rule may index a missing argument.
+        let col = |i| Expr::Var(Var::Col(i));
+        let neg = |e| Expr::Unary(UnOp::Neg, Box::new(e));
+        for root in [
+            Expr::Call(Func::Abs, vec![]),
+            Expr::Call(Func::Abs, vec![neg(col(0)), col(1)]),
+            Expr::Call(Func::Abs, vec![Expr::Call(Func::Abs, vec![col(0)]), col(1)]),
+            Expr::Call(Func::Abs, vec![literal(-2.5), col(1)]),
+            Expr::Binary(
+                BinOp::Mul,
+                Box::new(Expr::Call(Func::Abs, vec![])),
+                Box::new(Expr::Const(1.0)),
+            ),
+        ] {
+            let original = MathExpr { root };
+            assert!(original.compile().is_err());
+            let result = simplify(&original);
+            assert_eq!(
+                (result.changed, result.stop, result.iterations),
+                (false, Saturation::Malformed, 0)
+            );
+            assert_eq!(result.expression, original);
+        }
+        // The abs arms refuse a wrong arity on their own, under every rule.
+        let mut eg = EGraph::default();
+        let c0 = eg.add(Node::Var(Var::Col(0)));
+        let c1 = eg.add(Node::Var(Var::Col(1)));
+        let negated = eg.add(Node::Neg(c0));
+        let absolute = eg.add(Node::Call(Func::Abs, vec![c0]));
+        let constant = eg.insert(&Term::Literal(-2.5));
+        for args in [
+            vec![],
+            vec![negated, c1],
+            vec![absolute, c1],
+            vec![constant, c1],
+        ] {
+            let node = Node::Call(Func::Abs, args);
+            eg.add(node.clone());
+            for rule in RULES {
+                assert!(matches(&eg, rule, &node).is_empty(), "{rule:?} on {node:?}");
+            }
+        }
+    }
+
+    /// The raw evaluation of `tree` on `row`, before the root's `safe`: the value's bits with
+    /// every NaN collapsed to one (`None` for an error), and the faults.
+    fn raw(tree: &Expr, row: &[f64]) -> (Option<u64>, FaultSet) {
+        let mut sink = crate::math_expr::fault::Collect::default();
+        let value = compute_expr_with(tree, &EvalContext { x: None, row }, &mut sink);
+        let bits = value.ok().map(|v| {
+            if v.is_nan() {
+                f64::NAN.to_bits()
+            } else {
+                v.to_bits()
+            }
+        });
+        (bits, sink.0)
+    }
+
+    /// Every node of every class, built over its children's picks, evaluates on `rows` exactly
+    /// like the class's own pick, so every union is exact, not only the one extraction shows. The
+    /// pick also ranks no higher than any of them.
+    fn assert_every_union_exact(run: &Run, rows: &[Vec<f64>]) {
+        let best = extract(&run.eg);
+        for id in run.eg.roots() {
+            let pick = &best[&id];
+            let expected: Vec<_> = rows.iter().map(|row| raw(pick, row)).collect();
+            for node in &run.eg.classes[id] {
+                let tree = build(&run.eg, &best, node).expect("every class has a pick");
+                assert!(rank(pick) <= rank(&tree), "{pick:?} over {tree:?}");
+                for (row, expected) in rows.iter().zip(&expected) {
+                    assert_eq!(
+                        &raw(&tree, row),
+                        expected,
+                        "{tree:?} vs {pick:?} on {row:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_union_is_exact_not_only_the_extracted_root() {
+        // The two random-tree tests' own trees: the wide ones on the documented domain.
+        let quiet: Vec<Vec<f64>> = rows()
+            .into_iter()
+            .filter(|row| !row.iter().copied().any(is_signaling))
+            .collect();
+        let all = rows();
+        for (stream, wide) in [(2, false), (3, true)] {
+            let mut rng = Pcg32::new(0xB20, stream);
+            let mut checked = 0usize;
+            for _ in 0..300 {
+                let tree = if wide {
+                    random_tree_wide(&mut rng, 4)
+                } else {
+                    random_tree(&mut rng, 4)
+                };
+                let Ok(original) = MathExpr::from_ast(tree) else {
+                    continue;
+                };
+                let limits = Limits::for_input(count_nodes(&original.root));
+                let run = saturate(&original, &RULES, limits);
+                assert_every_union_exact(&run, if wide { &quiet } else { &all });
+                checked += 1;
+            }
+            assert!(checked > 200, "{checked} checked");
+        }
+    }
+
+    #[test]
+    fn the_enode_cap_holds_at_every_application() {
+        let original =
+            MathExpr::parse("((((-(c0))*(-(c1)))*1.0)-(-((c2/(-1.0)))))+((-(-(c0)))/0.5)").unwrap();
+        let capped = simplify_with(
+            &original,
+            &RULES,
+            Limits {
+                iterations: MAX_ITERATIONS,
+                enodes: 29,
+            },
+        );
+        assert_eq!(capped.stop, Saturation::NodeLimit, "{capped:?}");
+        assert!(capped.peak <= 29, "{capped:?}");
+        // Every cap from the input's own 16 e-nodes up.
+        for cap in 16..=48 {
+            let limits = Limits {
+                iterations: MAX_ITERATIONS,
+                enodes: cap,
+            };
+            let result = simplify_with(&original, &RULES, limits);
+            assert!(result.peak <= cap, "{result:?}");
+            assert_exact(&original, &result.expression);
+        }
+        // Random trees, under the production limits and under caps a few e-nodes over the input.
+        let mut rng = Pcg32::new(0xB20, 2);
+        let mut stopped = 0usize;
+        for _ in 0..300 {
+            let Ok(original) = MathExpr::from_ast(random_tree(&mut rng, 4)) else {
+                continue;
+            };
+            let nodes = count_nodes(&original.root);
+            let tight = |extra| Limits {
+                iterations: MAX_ITERATIONS,
+                enodes: nodes + extra,
+            };
+            for limits in [Limits::for_input(nodes), tight(3), tight(6)] {
+                let result = simplify_with(&original, &RULES, limits);
+                assert!(result.peak <= limits.enodes, "{result:?}");
+                assert_exact(&original, &result.expression);
+                stopped += usize::from(result.stop == Saturation::NodeLimit);
+            }
+        }
+        assert!(stopped > 50, "{stopped} stopped at the cap");
+    }
+
+    /// `eg` with its live classes renumbered: the `i`-th live class becomes `ids[i]`.
+    fn relabel(eg: &EGraph, ids: &[Id]) -> (EGraph, BTreeMap<Id, Id>) {
+        let roots = eg.roots();
+        let map: BTreeMap<Id, Id> = roots.iter().copied().zip(ids.iter().copied()).collect();
+        let to = |id: &Id| map[&eg.find(*id)];
+        let mut out = EGraph {
+            parent: (0..roots.len()).collect(),
+            classes: vec![BTreeSet::new(); roots.len()],
+            memo: BTreeMap::new(),
+        };
+        for id in &roots {
+            for node in &eg.classes[*id] {
+                let node = match node {
+                    Node::Neg(a) => Node::Neg(to(a)),
+                    Node::Bin(t, a, b) => Node::Bin(*t, to(a), to(b)),
+                    Node::Call(f, args) => Node::Call(*f, args.iter().map(to).collect()),
+                    leaf => leaf.clone(),
+                };
+                out.memo.insert(node.clone(), to(id));
+                out.classes[to(id)].insert(node);
+            }
+        }
+        (out, map)
+    }
+
+    /// Over `relabellings` random renumberings of `original`'s saturated graph, extraction picks
+    /// the same tree for every class as on the real numbering.
+    fn assert_numbering_free(original: &MathExpr, relabellings: usize, rng: &mut Pcg32) {
+        let limits = Limits::for_input(count_nodes(&original.root));
+        let run = saturate(original, &RULES, limits);
+        let best = extract(&run.eg);
+        let mut ids: Vec<Id> = (0..run.eg.roots().len()).collect();
+        for _ in 0..relabellings {
+            for i in (1..ids.len()).rev() {
+                ids.swap(i, rng.next_u32() as usize % (i + 1));
+            }
+            let (relabelled, map) = relabel(&run.eg, &ids);
+            let other = extract(&relabelled);
+            for (id, new) in &map {
+                assert_eq!(rank(&best[id]), rank(&other[new]), "{original:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn extraction_does_not_depend_on_class_numbering() {
+        // In this input's root class, ((0.75*(-(c2+8.0)))+...) has the smaller Debug form, but
+        // the product's class picks its shallower (-0.75)*(c2+8.0), whatever the numbering. An
+        // in-place fixed point kept the root's stale pick on about 1 renumbering in 150.
+        let pinned = "((-(-0.75))*(-(c2+8.0)))+sin(sin(sin(sin(c0))))";
+        assert_eq!(
+            source(pinned),
+            printed("(((-0.75)*(c2+8.0))+sin(sin(sin(sin(c0)))))")
+        );
+        let mut rng = Pcg32::new(0xB20, 4);
+        assert_numbering_free(&MathExpr::parse(pinned).unwrap(), 1024, &mut rng);
+        let mut checked = 0usize;
+        while checked < 100 {
+            if let Ok(input) = MathExpr::from_ast(random_tree_wide(&mut rng, 4)) {
+                assert_numbering_free(&input, 32, &mut rng);
+                checked += 1;
+            }
+        }
+    }
+
+    #[test]
+    fn replacement_and_depth_tie_break_are_pinned() {
+        for (input, expected) in [
+            // x*2 and x + x tie on nodes and depth, so the input stays.
+            ("(c0*2.0)", "(c0*2.0)"),
+            // As small and shallower: 13 nodes at depth 6 become 13 nodes at depth 5.
+            (
+                "max((-(c0*sin(sin(c1)))),((-c0)*sin(sin(c1))))",
+                "max(((-c0)*sin(sin(c1))),((-c0)*sin(sin(c1))))",
+            ),
+            // Depth, not the Debug form, settles (-0.75)*(c2+8.0) against 0.75*(-(c2+8.0)).
+            ("((-(-0.75))*(-(c2+8.0)))", "((-0.75)*(c2+8.0))"),
+        ] {
+            let original = MathExpr::parse(input).unwrap();
+            assert_eq!(source(input), printed(expected), "{input}");
+            assert_exact(&original, &simplify(&original).expression);
+        }
+    }
+
+    #[test]
+    fn rebuild_merges_congruent_classes() {
+        // c0*1.0 joins c0, so abs((c0*1.0)) and abs(c0) become congruent and share one class.
+        let original = MathExpr::parse("(abs((c0*1.0))-abs(c0))").unwrap();
+        let limits = Limits::for_input(count_nodes(&original.root));
+        let run = saturate(&original, &RULES, limits);
+        assert_eq!(run.stop, Saturation::Saturated);
+        let holding = run
+            .eg
+            .roots()
+            .into_iter()
+            .filter(|&id| run.eg.holds_abs(id))
+            .count();
+        assert_eq!(holding, 1);
+    }
+
+    #[test]
+    fn saturated_means_the_last_round_changed_nothing() {
+        // Its second round adds two e-nodes and merges two classes, and the rebuild collapses two
+        // nodes, so the e-node and class counts come back as they were: comparing counts called it
+        // saturated after round 2. Round 3 still changes the graph; round 4 changes nothing.
+        let pinned = MathExpr::parse("(-(-(((-2.0)-(-1.0))*1.0)))").unwrap();
+        let mut inputs = vec![pinned];
+        let mut rng = Pcg32::new(0xB20, 5);
+        while inputs.len() < 200 {
+            if let Ok(input) = MathExpr::from_ast(random_tree_wide(&mut rng, 4)) {
+                inputs.push(input);
+            }
+        }
+        for (i, original) in inputs.iter().enumerate() {
+            let limits = Limits::for_input(count_nodes(&original.root));
+            let run = saturate(original, &RULES, limits);
+            if i == 0 {
+                assert_eq!((run.stop, run.iterations), (Saturation::Saturated, 4));
+            }
+            if run.stop != Saturation::Saturated {
+                continue;
+            }
+            // One round fewer already reached the same graph.
+            let fewer = Limits {
+                iterations: run.iterations - 1,
+                ..limits
+            };
+            let before = saturate(original, &RULES, fewer);
+            assert_eq!(
+                (&before.eg.parent, &before.eg.memo),
+                (&run.eg.parent, &run.eg.memo),
+                "{original:?}"
+            );
+        }
     }
 }

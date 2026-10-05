@@ -9,7 +9,7 @@ mod refinement;
 // B19 Remez compression: test-only, no caller until its move is wired (Lane D kickoff).
 #[cfg(test)]
 mod simplify;
-// B20 protected-semantics e-graph: staged with no caller until B19 merges (OWNER v1.3).
+// B20 e-graph simplification: test-only, no caller until its move is wired (Lane D kickoff).
 #[cfg(test)]
 mod egraph;
 
