@@ -491,7 +491,8 @@ fn prediction_checkpoint_budget_refuses_atomically_in_all_routes() {
     assert!(oversized_json.len() > 16 * 1024 * 1024);
     assert!(matches!(
         TimeGradientModel::from_json(&oversized_json),
-        Err(feat_math::kernel::wire_v2::VersionError::Resource(_))
+        Err(feat_math::kernel::wire_v2::VersionError::Malformed(message))
+            if message == "time-gradient model bytes"
     ));
     for bytes in [9 * 1024 * 1024, 3 * 1024 * 1024] {
         let oversized = OrderedRow {
