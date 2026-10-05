@@ -16,6 +16,10 @@ mod model;
 mod model_validation;
 mod program;
 mod recipe;
+
+// B08: opt-in bounded Experimental search; the legacy profile remains frozen.
+mod profile;
+pub use profile::{DifferenceSearch, Edit, ExperimentalProfile, PROFILE as EXPERIMENTAL_PROFILE};
 mod state_codec;
 pub use emit::{emit_helpers, DifferenceLanguage};
 pub use model::{DifferenceModel, DifferencePrediction};

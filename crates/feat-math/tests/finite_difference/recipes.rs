@@ -10,7 +10,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-fn rows() -> Vec<OrderedRow> {
+pub(super) fn rows() -> Vec<OrderedRow> {
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
         "../fixtures/math_boundary/v2/finite_difference.json"
     ))
@@ -54,7 +54,7 @@ fn state(model: &DifferenceModel) -> Vec<u8> {
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
-fn reference(mut model: DifferenceModel, rows: &[OrderedRow]) -> String {
+pub(super) fn reference(mut model: DifferenceModel, rows: &[OrderedRow]) -> String {
     let initial = state(&model);
     let prediction = model.predict_with_faults(&rows[4..]).unwrap();
     let text = format!(
@@ -82,7 +82,7 @@ fn checked(command: &mut Command) -> String {
     );
     String::from_utf8(output.stdout).unwrap()
 }
-fn rust_driver(rows: &[OrderedRow], labels: &[f64], incompatible: &[Vec<u8>]) -> String {
+pub(super) fn rust_driver(rows: &[OrderedRow], labels: &[f64], incompatible: &[Vec<u8>]) -> String {
     let labels = labels
         .iter()
         .map(|v| format!("f64::from_bits({})", v.to_bits()))
@@ -139,7 +139,11 @@ fn main() {{
 "#
     )
 }
-fn python_driver(rows: &[OrderedRow], labels: &[f64], incompatible: &[Vec<u8>]) -> String {
+pub(super) fn python_driver(
+    rows: &[OrderedRow],
+    labels: &[f64],
+    incompatible: &[Vec<u8>],
+) -> String {
     let labels = labels
         .iter()
         .map(|v| format!("word({})", v.to_bits()))
@@ -200,7 +204,7 @@ refused(lambda:fit_ordered(rows[:4],[word(0x7fefffffffffffff)]*4,'forecasting','
 "#
     )
 }
-fn cpp_driver(
+pub(super) fn cpp_driver(
     rows: &[OrderedRow],
     labels: &[f64],
     incompatible: &[Vec<u8>],
@@ -287,7 +291,7 @@ int main() {{
 "#
     )
 }
-fn execute(dir: &Path, name: &str, source: &str, lang: DifferenceLanguage) -> String {
+pub(super) fn execute(dir: &Path, name: &str, source: &str, lang: DifferenceLanguage) -> String {
     let extension = match lang {
         DifferenceLanguage::Rust => "rs",
         DifferenceLanguage::Python => "py",
