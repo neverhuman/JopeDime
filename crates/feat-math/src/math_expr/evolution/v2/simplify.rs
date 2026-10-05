@@ -2,11 +2,13 @@
 //! its observed training range, lowered to ordinary AST nodes. A rational denominator comes only
 //! with a pole-free certificate.
 //!
-//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]` until B18 merges and the
-//! search move is wired. Nothing outside its tests calls it. A compressed subtree is a proposal
-//! ([`propose`]): the native protected re-score of the whole program decides acceptance, never the
-//! approximation error alone. Deferred to the wiring PR: that acceptance gate, the profile move and
-//! its receipt, the old-tree-unchanged, all-language emission and ablation tests.
+//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]`, following the Lane D
+//! kickoff, and nothing outside its tests calls it. The search move is wired once B17 and B18
+//! merge; OWNER_DIRECTIVES allows no wiring before B11 and B16 merge. A compressed subtree is a
+//! proposal ([`propose`]): the native protected re-score of the whole program decides acceptance,
+//! never the approximation error alone. Deferred to the wiring PR: that acceptance gate (with the
+//! whole program re-validated under its scope), the profile move and its receipt, the
+//! old-tree-unchanged, all-language emission and ablation tests.
 //!
 //! Algorithm: the second Remez exchange on the sample abscissae (Pachón and Trefethen, BIT 49,
 //! 2009), in the Chebyshev basis on `t = (2v - (a + b)) / (b - a)`.
@@ -15,9 +17,14 @@
 //!   with partial pivoting.
 //! - The new reference is the alternating run maxima with `|e| ≥ |h|`: same-sign neighbours are
 //!   merged, and the `n + 2` consecutive points containing the global maximum are kept.
-//! - It stops when `max|e| - |h| ≤ 1e-12 max|e|` (the de la Vallée Poussin bracket, `Converged`),
-//!   when the bracket is within the rounding level `64 ε max|f|` of the errors themselves
-//!   (`NoiseLimited`), or at the iteration cap, and keeps the best fit seen.
+//! - The bracket is `[levelled, max|e|]`, with `levelled` the smaller of `|h|` and the smallest
+//!   `|e|` on the reference (de la Vallée Poussin), so it never inverts. Rounding can still put
+//!   `|h|` above `max|e|`; both stop tests bound that excess too.
+//! - It stops when the bracket is within `1e-12 max|e|` (`Converged`). It stops `NoiseLimited`
+//!   only when the bracket is within the rounding level `64 ε max|f|`, `|h|` is at least half of
+//!   `max|e|`, the fit is the best seen, and the exchange can no longer raise `|h|`: `|h|` did not
+//!   rise over the previous step, or the exchange finds no new reference or returns this one.
+//!   Otherwise a run ends `Degenerate`, `Stalled` or at the iteration cap, with the best fit seen.
 //! - Every tie goes to the lowest index and every sum runs in index order, so a fit is
 //!   bit-reproducible and independent of sample order and duplicates.
 
@@ -31,14 +38,17 @@ const MAX_DEGREE: usize = 12;
 const MAX_ITERATIONS: usize = 32;
 /// The relative width of the certified bracket at which the exchange stops.
 const TOLERANCE: f64 = 1e-12;
+/// The deepest subdivision [`certify`] accepts.
+const MAX_CERTIFY_DEPTH: usize = 64;
 
 /// Why a fit stopped.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Stop {
-    /// `max|e| - |h| ≤ TOLERANCE max|e|`.
+    /// `max|e| - levelled ≤ TOLERANCE max|e|` and `|h| - max|e| ≤ TOLERANCE max|e|`.
     Converged,
-    /// `max|e| - |h|` is within `64 ε max|f|`, the rounding level of the errors, but above
-    /// `TOLERANCE max|e|`: the arithmetic cannot certify a tighter bracket.
+    /// Both bracket measures are within `64 ε max|f|`, the rounding level of the errors, but not
+    /// within `TOLERANCE max|e|`; `|h| ≥ max|e| / 2`; the fit is the best seen; and the exchange
+    /// can no longer raise `|h|`.
     NoiseLimited,
     /// The samples lie on a polynomial of the degree, to a few ulps.
     ExactFit,
@@ -58,11 +68,15 @@ struct Minimax {
     hi: f64,
     /// Chebyshev coefficients in `t`.
     chebyshev: Vec<f64>,
-    /// `|h|` on the final reference: a lower bound of the discrete minimax error.
+    /// The smaller of `|h|` and the smallest `|e|` on the final reference: a lower bound of the
+    /// discrete minimax error, never above `max_error`.
     levelled: f64,
     /// The largest error over the samples: an upper bound.
     max_error: f64,
+    /// The exchange step that produced this fit.
     iterations: usize,
+    /// The exchange steps run, at most `MAX_ITERATIONS`.
+    steps: usize,
     stop: Stop,
     /// The final reference, as indices into the sorted unique samples.
     reference: Vec<usize>,
@@ -175,14 +189,21 @@ fn solve(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
     x.iter().all(|v| v.is_finite()).then_some(x)
 }
 
-/// The sorted unique samples, or why the fit cannot start. This guard is the only refusal of a
-/// non-finite target: the exchange never sees a NaN error off the reference.
+/// The sorted unique samples, or why the fit cannot start. A non-finite sample is refused, and so
+/// is one above `MAX_ABS`, the evaluator's output range and the only range [`samples`] produces:
+/// near `f64::MAX` the map to `t` and the Clenshaw sums overflow.
 fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
     if samples
         .iter()
         .any(|(v, f)| !v.is_finite() || !f.is_finite())
     {
         return Err("a sample is not finite");
+    }
+    if samples
+        .iter()
+        .any(|(v, f)| v.abs() > MAX_ABS || f.abs() > MAX_ABS)
+    {
+        return Err("a sample is outside the evaluator's range");
     }
     let mut sorted = samples.to_vec();
     sorted.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)));
@@ -239,7 +260,13 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
             .expect("a nonempty range");
         reference.push(nearest);
     }
+    /// The best fit so far, stopped for `stop` after `steps` steps.
+    fn ending(best: Option<Minimax>, stop: Stop, steps: usize) -> Option<Minimax> {
+        best.map(|b| Minimax { stop, steps, ..b })
+    }
+    let noise = 64.0 * f64::EPSILON * f_max;
     let mut best: Option<Minimax> = None;
+    let mut previous_h: Option<f64> = None;
     for iteration in 1..=MAX_ITERATIONS {
         let rows: Vec<Vec<f64>> = reference
             .iter()
@@ -252,17 +279,17 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
             .collect();
         let rhs: Vec<f64> = reference.iter().map(|&r| f[r]).collect();
         let Some(x) = solve(rows, rhs) else {
-            return best
-                .map(|b| Minimax {
-                    stop: Stop::Degenerate,
-                    ..b
-                })
-                .ok_or("singular first reference");
+            return ending(best, Stop::Degenerate, iteration).ok_or("singular first reference");
         };
-        let (chebyshev, h) = (x[..=n].to_vec(), x[n + 1]);
+        let (chebyshev, h) = (x[..=n].to_vec(), x[n + 1].abs());
         let errors: Vec<f64> = (0..count)
             .map(|i| f[i] - clenshaw(&chebyshev, t[i]))
             .collect();
+        // Overflow in the polynomial leaves no usable error, and a NaN would slip past the
+        // maximum below.
+        if errors.iter().any(|e| !e.is_finite()) {
+            return ending(best, Stop::Degenerate, iteration).ok_or("an error is not finite");
+        }
         let (mut global, mut max_error) = (0usize, 0.0f64);
         for (i, e) in errors.iter().enumerate() {
             if e.abs() > max_error {
@@ -270,13 +297,18 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
                 global = i;
             }
         }
+        let smallest = reference
+            .iter()
+            .map(|&r| errors[r].abs())
+            .fold(f64::INFINITY, f64::min);
         let fit = Minimax {
             lo,
             hi,
             chebyshev,
-            levelled: h.abs(),
+            levelled: h.min(smallest),
             max_error,
             iterations: iteration,
+            steps: iteration,
             stop: Stop::IterationLimit,
             reference: reference.clone(),
         };
@@ -290,39 +322,43 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
                 ..fit
             });
         }
-        if max_error - h.abs() <= TOLERANCE * max_error {
+        // The bracket width, and how far rounding put |h| above max|e| (an inverted bracket).
+        let (width, excess) = (max_error - fit.levelled, h - max_error);
+        if width <= TOLERANCE * max_error && excess <= TOLERANCE * max_error {
             return Ok(Minimax {
                 stop: Stop::Converged,
                 ..fit
             });
         }
-        // The bracket cannot close below the rounding noise of the errors themselves.
-        if max_error - h.abs() <= 64.0 * f64::EPSILON * f_max {
+        // Within the rounding level of the errors themselves the bracket cannot be certified any
+        // tighter, but a fit whose |h| is still rising, or is far below max|e|, is not done.
+        let noisy = width <= noise && excess <= noise && h >= max_error / 2.0 && improved;
+        if noisy && previous_h.is_some_and(|p| h <= p) {
             return Ok(Minimax {
                 stop: Stop::NoiseLimited,
                 ..fit
             });
         }
-        let next = exchange(&errors, h.abs(), global, n + 2)
+        let next = exchange(&errors, h, global, n + 2)
             .or_else(|| single_exchange(&errors, &reference, global));
-        let Some(next) = next else {
+        // An exchange that finds no new reference, or returns this one, cannot raise |h| either:
+        // inside the rounding level that is the noise limit, outside it a degenerate or stalled run.
+        if noisy && next.as_ref().is_none_or(|next| *next == reference) {
             return Ok(Minimax {
-                stop: Stop::Degenerate,
-                ..best.expect("set above")
-            });
-        };
-        if next == reference {
-            return Ok(Minimax {
-                stop: Stop::Stalled,
-                ..best.expect("set above")
+                stop: Stop::NoiseLimited,
+                ..fit
             });
         }
+        let Some(next) = next else {
+            return Ok(ending(best, Stop::Degenerate, iteration).expect("set above"));
+        };
+        if next == reference {
+            return Ok(ending(best, Stop::Stalled, iteration).expect("set above"));
+        }
+        previous_h = Some(h);
         reference = next;
     }
-    Ok(Minimax {
-        stop: Stop::IterationLimit,
-        ..best.expect("at least one step ran")
-    })
+    Ok(ending(best, Stop::IterationLimit, MAX_ITERATIONS).expect("at least one step ran"))
 }
 
 /// The next reference: the maximum of each run of same-sign errors, those with `|e| ≥ |h|`,
@@ -480,10 +516,12 @@ struct Proposal {
     nodes: usize,
 }
 
-/// The lowered form of `fit` over the leaf `x`, when it is worth proposing in place of `subtree`.
-/// It must have fewer nodes than `subtree`, fit `node_budget` and the expression limits, and stay,
-/// in its own evaluation order, within the fit's bound on `samples`:
-/// `max_error (1 + 1e-6) + 64 ε max|f|`. Otherwise `None`.
+/// The lowered form of `fit` over the variable leaf `x`, when it is worth proposing in place of
+/// `subtree`. It must have fewer nodes than `subtree`, fit `node_budget` and the expression limits
+/// (64 nodes, depth 16) on its own, and stay, in its own evaluation order, within the fit's bound
+/// on `samples`: `max_error (1 + 1e-6) + 64 ε max|f|`. Otherwise `None`. The lowered tree is
+/// usually deeper than the subtree it replaces (depth `2n + 1`), so the caller must re-validate
+/// the whole program under its scope; the wiring PR does that before any native re-score.
 fn propose(
     fit: &Minimax,
     samples: &[(f64, f64)],
@@ -491,6 +529,11 @@ fn propose(
     subtree: &Expr,
     node_budget: usize,
 ) -> Option<Proposal> {
+    // The error below is measured at the sampled abscissae, which is the tree's value only when x
+    // is the sampled variable itself.
+    if !matches!(x, Expr::Var(_)) {
+        return None;
+    }
     let coefficients = fit.monomial();
     let tree = lower(&coefficients, x)?;
     let nodes = count_nodes(&tree);
@@ -615,10 +658,20 @@ enum Certificate {
 /// Whether the polynomial `q` (ascending powers of `v`) stays at least `threshold` plus its
 /// floating-point evaluation error away from zero on `[lo, hi]`. The proof is the Bernstein
 /// enclosure (Garloff 1993) in outward-rounded interval arithmetic, subdividing at the midpoint
-/// up to `max_depth`. Protected division returns 0 below |Q| = 1e-12, so a rational proposal
-/// needs `threshold ≥ 1e-12`.
+/// up to `max_depth`. Protected division returns 0 below |Q| = 1e-12, so a `threshold` below
+/// 1e-12 is refused. So is a degree above `MAX_DEGREE` (the binomial ratios are exact well past
+/// it) and a `max_depth` above `MAX_CERTIFY_DEPTH`, which bounds the work.
 fn certify(q: &[f64], lo: f64, hi: f64, threshold: f64, max_depth: usize) -> Certificate {
-    if q.is_empty() || lo.is_nan() || hi.is_nan() || lo >= hi || q.iter().any(|c| !c.is_finite()) {
+    if q.is_empty()
+        || q.len() > MAX_DEGREE + 1
+        || threshold.is_nan()
+        || threshold < 1e-12
+        || max_depth > MAX_CERTIFY_DEPTH
+        || lo.is_nan()
+        || hi.is_nan()
+        || lo >= hi
+        || q.iter().any(|c| !c.is_finite())
+    {
         return Certificate::Refused;
     }
     let m = q.len() - 1;
@@ -1143,5 +1196,167 @@ mod tests {
         let plain = minimax(&grid(-1.0, 1.0, 4001, f64::exp), 2).unwrap();
         assert_eq!(plain.stop, Stop::Converged, "{plain:?}");
         assert!(plain.max_error - plain.levelled <= TOLERANCE * plain.max_error);
+    }
+
+    /// Lane D pre-review of B19: a noise-floor stop came while the exchange could still raise |h|.
+    /// On 1e3 + cos(0.7x)x at degree 9 it stopped at step 5 with max|e| = 1.88e-11, where step 8
+    /// reaches 7.73e-12; on 1e6 + cos(0.7x)x at degree 7 it stopped at step 1 with |h| ≈ 1e-17
+    /// against max|e| = 1.09e-8, where step 5 reaches 5.59e-9.
+    #[test]
+    fn a_noise_floor_stop_waits_until_the_exchange_cannot_raise_h() {
+        let fit = minimax(&grid(-1.0, 1.0, 2001, |x| 1e3 + (0.7 * x).cos() * x), 9).unwrap();
+        assert!(fit.max_error <= 1.05 * 7.731e-12, "{fit:?}");
+        let fit = minimax(&grid(-1.0, 1.0, 2001, |x| 1e6 + (0.7 * x).cos() * x), 7).unwrap();
+        assert!(fit.levelled >= fit.max_error / 2.0, "{fit:?}");
+        assert!(fit.max_error <= 1.05 * 5.588e-9, "{fit:?}");
+    }
+
+    /// Lane D pre-review of B19: rounding can put |h| above max|e|, and such inverted brackets were
+    /// reported as Converged (1e10 + tanh(5x) by 3.7e-7, 7.7e5 times the tolerance). `levelled` now
+    /// never exceeds `max_error`, and an |h| above it by more than the tolerance is not Converged.
+    #[test]
+    fn no_reported_bracket_inverts_and_an_inverted_one_is_not_converged() {
+        for (samples, n) in [
+            (grid(-1.0, 1.0, 2001, |x| 1e10 + (5.0 * x).tanh()), 2),
+            (grid(-1.0, 1.0, 501, |x| 10.0 + (2.0 + x).ln()), 8),
+            (
+                grid(-1.0, 1.0, 1001, |x| 3.0 + ((2.0 * x).sin() + 0.3 * x)),
+                10,
+            ),
+        ] {
+            let fit = minimax(&samples, n).unwrap();
+            assert_ne!(fit.stop, Stop::Converged, "n={n}: {fit:?}");
+            assert!(fit.levelled <= fit.max_error, "n={n}: {fit:?}");
+        }
+        let functions: [fn(f64) -> f64; 3] = [f64::exp, f64::sin, |x| (5.0 * x).tanh()];
+        for f in functions {
+            for offset in [0.0, 10.0, 1e3, 1e6, 1e10] {
+                let samples = grid(-1.0, 1.0, 501, |x| offset + f(x));
+                for n in 1..=10 {
+                    let fit = minimax(&samples, n).unwrap();
+                    assert!(fit.levelled <= fit.max_error, "{offset} n={n}: {fit:?}");
+                    if fit.stop == Stop::Converged {
+                        assert!(fit.max_error - fit.levelled <= TOLERANCE * fit.max_error);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Lane D pre-review of B19: near `f64::MAX` the map to t and the Clenshaw sums overflowed, and
+    /// an infinite max|e| passed the Converged test. A sample outside the evaluator's range is
+    /// refused by name; the range itself is accepted.
+    #[test]
+    fn samples_outside_the_evaluator_range_are_refused() {
+        let refused = "a sample is outside the evaluator's range";
+        let wide =
+            |amplitude: f64, k: f64| grid(-1.0, 1.0, 101, move |x| amplitude * (k * x).sin());
+        assert_eq!(minimax(&wide(1e308, 3.0), 3).unwrap_err(), refused);
+        assert_eq!(minimax(&wide(5e307, 6.0), 6).unwrap_err(), refused);
+        let near: Vec<(f64, f64)> = (0..10)
+            .map(|i| (1e308 + f64::from(i) * 7e306, f64::from(i)))
+            .collect();
+        assert_eq!(minimax(&near, 1).unwrap_err(), refused);
+        let edge = minimax(&grid(-MAX_ABS, MAX_ABS, 101, |x| 0.5 * x), 1).unwrap();
+        assert_eq!(edge.stop, Stop::ExactFit);
+    }
+
+    /// Lane D pre-review of B19: only the expression limits stop a degree-8 lowering (depth 17 or
+    /// 18) from being proposed, and no test pinned that boundary. And `x` must be the sampled
+    /// variable: the error is measured at the sampled abscissae.
+    #[test]
+    fn the_depth_limit_and_the_leaf_bound_what_is_proposed() {
+        let f = |x: f64| (0.37 * x).sin() + (x / 50.0).cos();
+        let leaf = Expr::Var(Var::Col(0));
+        let big = (0..20).fold(leaf.clone(), |acc, _| {
+            Expr::Binary(BinOp::Add, Box::new(acc), Box::new(leaf.clone()))
+        });
+        let samples = grid(-1.0, 1.0, 2001, f);
+        let seven = propose(&minimax(&samples, 7).unwrap(), &samples, &leaf, &big, 64).unwrap();
+        assert!(depth(&seven.tree) <= 16, "{seven:?}");
+        assert!(propose(&minimax(&samples, 8).unwrap(), &samples, &leaf, &big, 64).is_none());
+        let cubic = minimax(&samples, 3).unwrap();
+        assert!(propose(&cubic, &samples, &leaf, &big, 64).is_some());
+        let square = Expr::Binary(BinOp::Mul, Box::new(leaf.clone()), Box::new(leaf));
+        assert!(propose(&cubic, &samples, &square, &big, 64).is_none());
+    }
+
+    /// Lane D pre-review of B19: the certificate's soundness margins had no test that fails when
+    /// they are removed (the evaluation-error term, and the outward rounding of mul, half and the
+    /// upper side of add), and its threshold, degree and depth were trusted.
+    #[test]
+    fn the_certificate_keeps_its_margins_and_refuses_inputs_it_cannot_bound() {
+        // 1e6 + v² on [-1, 1]: the margin includes 2 γ_4 (1e6 + 1) ≈ 8.9e-10.
+        match certify(&[1e6, 0.0, 1.0], -1.0, 1.0, 1e-12, 4) {
+            Certificate::Positive { margin, .. } => assert!(margin > 1e-12 + 8e-10, "{margin}"),
+            other => panic!("{other:?}"),
+        }
+        // A margin of the threshold alone would certify 1.1e-12 + 1000 v on [0, 1]; the Horner
+        // term lifts it to 1.44e-12.
+        assert_eq!(
+            certify(&[1.1e-12, 1000.0], 0.0, 1.0, 1e-12, 8),
+            Certificate::Refused
+        );
+        assert!(matches!(
+            certify(&[1.5e-12, 1000.0], 0.0, 1.0, 1e-12, 8),
+            Certificate::Positive { .. }
+        ));
+        // Each operation encloses a result that rounding would otherwise lose.
+        let product = Interval::point(0.1).mul(Interval::point(0.2));
+        assert!(
+            product.lo < 0.1 * 0.2 && 0.1 * 0.2 < product.hi,
+            "{product:?}"
+        );
+        let half = Interval::point(5e-324).half();
+        assert!(half.lo <= 0.0 && half.hi >= 5e-324, "{half:?}");
+        assert!(Interval::point(0.1).add(Interval::point(0.2)).hi > 0.30000000000000004);
+        let sum = Interval::point(1.0).add(Interval::point(1e-20));
+        assert!(sum.hi > 1.0, "{sum:?}");
+        let difference = Interval::point(1.0).sub(Interval::point(1e-20));
+        assert!(difference.lo < 1.0, "{difference:?}");
+        // v - 0.5 has a root in [0, 1], and -0.5 is negative: a threshold below 1e-12 is refused
+        // instead of certifying either.
+        assert_eq!(
+            certify(&[-0.5, 1.0], 0.0, 1.0, -1.0, 4),
+            Certificate::Refused
+        );
+        assert_eq!(certify(&[-0.5], 0.0, 1.0, 0.0, 4), Certificate::Refused);
+        let positive = [1.0, 0.0, 0.5];
+        assert_eq!(
+            certify(&positive, 0.0, 1.0, f64::NAN, 4),
+            Certificate::Refused
+        );
+        let deep = MAX_CERTIFY_DEPTH + 1;
+        assert_eq!(
+            certify(&positive, 0.0, 1.0, 1e-12, deep),
+            Certificate::Refused
+        );
+        assert!(matches!(
+            certify(&positive, 0.0, 1.0, 1e-12, MAX_CERTIFY_DEPTH),
+            Certificate::Positive { .. }
+        ));
+        let ones = [1.0; MAX_DEGREE + 2];
+        assert_eq!(certify(&ones, 0.0, 1.0, 1e-12, 4), Certificate::Refused);
+        assert!(matches!(
+            certify(&ones[..=MAX_DEGREE], 0.0, 1.0, 1e-12, 4),
+            Certificate::Positive { .. }
+        ));
+    }
+
+    /// Lane D pre-review of B19: `iterations` is the step of the retained fit, so a capped run
+    /// reported 2 after 32 solves; `steps` counts the solves.
+    #[test]
+    fn steps_count_the_exchange_beside_the_retained_step() {
+        let geometric = |points: usize| -> Vec<(f64, f64)> {
+            (0..points)
+                .map(|i| (f64::from(1u32 << i), if i % 3 == 0 { 1.0 } else { -1.0 }))
+                .collect()
+        };
+        let capped = minimax(&geometric(15), 11).unwrap();
+        assert_eq!((capped.iterations, capped.steps), (2, MAX_ITERATIONS));
+        let stalled = minimax(&geometric(8), 6).unwrap();
+        assert_eq!((stalled.iterations, stalled.steps), (1, 1));
+        let singular = minimax(&geometric(27), 3).unwrap();
+        assert_eq!((singular.iterations, singular.steps), (1, 2));
     }
 }
