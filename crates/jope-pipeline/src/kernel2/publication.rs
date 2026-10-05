@@ -12,9 +12,10 @@ use super::{
     receipt::{self, Receipt, Search},
     records::Measurement,
     search::CutSearch,
-    TrainingRefinement,
+    Kernel2Observation, TrainingRefinement,
 };
 use crate::{receipt::Seeding, sha256_hex};
+use feat_math::kernel::pareto::Archive;
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -78,6 +79,9 @@ pub fn publish(
     };
     let observations_sha256 = write("observations.json", &serde_json::to_value(&measurements)?)?;
     let refinements_sha256 = write("refinements.json", &serde_json::to_value(&refinements)?)?;
+    // laneD:B18-pareto-archive begin
+    let engine_selection = super::archive::publish(searched, root)?;
+    // laneD:B18-pareto-archive end
     let record = Search {
         engine: receipt::ENGINE.into(),
         profile_id: searched.profile_id.into(),
@@ -109,7 +113,7 @@ pub fn publish(
         best: Measurement::record(&searched.best)?,
         observations_sha256,
         refinements_sha256,
-        engine_selection: searched.engine.clone(),
+        engine_selection,
     };
     let digest = write("search.json", &serde_json::to_value(&record)?)?;
     Ok((record, digest))
@@ -218,6 +222,9 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
     )?;
     check_refinements(s, &records, &refinements)?;
     check_seeding(s, &records)?;
+    // laneD:B18-pareto-archive begin
+    check_archive(root, s, &observations)?;
+    // laneD:B18-pareto-archive end
     let manifest: serde_json::Value = serde_json::from_slice(&read_file(
         root,
         Path::new("emit/manifest.json"),
@@ -424,6 +431,37 @@ fn check_trace(s: &Search, refinement: &TrainingRefinement, parent: &str) -> Res
     Ok(())
 }
 // laneD:B17-lm-refinement end
+
+// laneD:B18-pareto-archive begin
+/// The archive is published exactly when it was selected, reads under the archive reader's own
+/// refusals, and is byte for byte the archive rebuilt from the re-derived observations.
+fn check_archive(root: &Path, s: &Search, observations: &[Kernel2Observation]) -> Result<()> {
+    let path = Path::new(super::archive::PATH);
+    let Some(record) = s.engine_selection.as_ref().and_then(|e| e.archive.as_ref()) else {
+        ensure!(
+            std::fs::symlink_metadata(root.join(path)).is_err(),
+            "an archive is published without its selection"
+        );
+        return Ok(());
+    };
+    let digest = record
+        .sha256
+        .as_deref()
+        .context("the archive record has no digest")?;
+    let bytes = read_file(root, path, digest)?;
+    let text = std::str::from_utf8(&bytes).context("the archive is not UTF-8")?;
+    let published = Archive::from_json(text).map_err(anyhow::Error::msg)?;
+    ensure!(
+        published.cost_version() == record.cost_version,
+        "the archive's cost version disagrees with its record"
+    );
+    ensure!(
+        super::archive::build(observations)?.to_json().as_bytes() == bytes.as_slice(),
+        "the archive does not re-derive from the observations"
+    );
+    Ok(())
+}
+// laneD:B18-pareto-archive end
 
 fn check_seeding(s: &Search, measurements: &[Measurement]) -> Result<()> {
     let seeding = &s.seeding;

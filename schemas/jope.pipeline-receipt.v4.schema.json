@@ -1,5 +1,31 @@
 {
   "$defs": {
+    "ArchiveRecord": {
+      "additionalProperties": false,
+      "description": "The loss × cost front a run publishes.",
+      "properties": {
+        "cost_version": {
+          "description": "The cost version of every member's complexity.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The method id, `feat-math.front-loss-cost.v1`.",
+          "type": "string"
+        },
+        "sha256": {
+          "description": "The sha256 of `search/cut-0/archive.json`. Publication adds it, so a receipt's record\nalways has one; the selection's own record, before anything is published, has none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "cost_version"
+      ],
+      "type": "object"
+    },
     "Artifact": {
       "additionalProperties": false,
       "description": "One emitted source file.",
@@ -114,6 +140,16 @@
       "additionalProperties": false,
       "description": "The opt-in engine methods a run selected. Absent from a receipt for the default selection.",
       "properties": {
+        "archive": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArchiveRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "refine": {
           "anyOf": [
             {

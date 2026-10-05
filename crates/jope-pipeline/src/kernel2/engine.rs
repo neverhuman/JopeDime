@@ -7,6 +7,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::search::Refinement;
+// laneD:B18-pareto-archive begin
+use super::archive::COST_VERSION as ARCHIVE_COST_VERSION;
+// laneD:B18-pareto-archive end
 
 // laneD:B17-lm-refinement begin
 /// The damped least-squares constant refinement's stable method id.
@@ -36,6 +39,10 @@ pub enum RefineMethod {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EngineSelection {
     pub refine: RefineMethod,
+    // laneD:B18-pareto-archive begin
+    /// The loss × cost front of the run's measured programs; none by default.
+    pub archive: Option<ArchivePolicy>,
+    // laneD:B18-pareto-archive end
 }
 
 impl EngineSelection {
@@ -80,9 +87,10 @@ impl EngineSelection {
                 tau: options.tau,
             }),
         };
-        refine.map(|refine| EngineRecord {
-            refine: Some(refine),
-        })
+        // laneD:B18-pareto-archive begin
+        let archive = self.archive.map(ArchiveRecord::selected);
+        (refine.is_some() || archive.is_some()).then_some(EngineRecord { refine, archive })
+        // laneD:B18-pareto-archive end
     }
 }
 
@@ -92,6 +100,10 @@ impl EngineSelection {
 pub struct EngineRecord {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub refine: Option<RefineRecord>,
+    // laneD:B18-pareto-archive begin
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub archive: Option<ArchiveRecord>,
+    // laneD:B18-pareto-archive end
 }
 
 /// The constant refinement method, when it is not the coordinate search.
@@ -122,9 +134,24 @@ impl EngineRecord {
                 jacobian,
             });
         }
+        // laneD:B18-pareto-archive begin
+        if let Some(archive) = &self.archive {
+            ensure!(
+                archive.id == FRONT_LOSS_COST && archive.cost_version == ARCHIVE_COST_VERSION,
+                "unknown archive method or cost version"
+            );
+            selection.archive = Some(ArchivePolicy::ArchiveOnly);
+        }
+        // The archive's digest is evidence, not selection: the selection writes its record back
+        // without one, and publication adds it.
+        let mut canonical = self.clone();
+        if let Some(archive) = &mut canonical.archive {
+            archive.sha256 = None;
+        }
+        // laneD:B18-pareto-archive end
         selection.check_options()?;
         ensure!(
-            selection.record().as_ref() == Some(self),
+            selection.record().as_ref() == Some(&canonical),
             "engine record is not canonical"
         );
         Ok(selection)
@@ -136,3 +163,43 @@ impl EngineRecord {
     }
 }
 // laneD:B17-lm-refinement end
+
+// laneD:B18-pareto-archive begin
+/// The loss × cost front's stable method id.
+pub const FRONT_LOSS_COST: &str = "feat-math.front-loss-cost.v1";
+
+/// What a run does with the loss × cost front of its measured programs.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ArchivePolicy {
+    /// Publish the front as `search/cut-0/archive.json`, as evidence only: ranking, parents and
+    /// the selected program never read it, so every measurement and refinement is unchanged.
+    ArchiveOnly,
+}
+
+/// The loss × cost front a run publishes.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ArchiveRecord {
+    /// The method id, `feat-math.front-loss-cost.v1`.
+    pub id: String,
+    /// The cost version of every member's complexity.
+    pub cost_version: String,
+    /// The sha256 of `search/cut-0/archive.json`. Publication adds it, so a receipt's record
+    /// always has one; the selection's own record, before anything is published, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sha256: Option<String>,
+}
+
+impl ArchiveRecord {
+    /// The record a selection writes, before publication adds the digest.
+    fn selected(policy: ArchivePolicy) -> Self {
+        match policy {
+            ArchivePolicy::ArchiveOnly => Self {
+                id: FRONT_LOSS_COST.into(),
+                cost_version: ARCHIVE_COST_VERSION.into(),
+                sha256: None,
+            },
+        }
+    }
+}
+// laneD:B18-pareto-archive end

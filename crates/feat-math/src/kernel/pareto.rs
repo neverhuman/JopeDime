@@ -1,7 +1,9 @@
 //! A versioned loss × complexity Pareto archive (B18).
 //!
-//! Staged: `kernel/mod.rs` declares this module only under `#[cfg(test)]` until B17 merges and
-//! the search adapter is wired. Nothing outside its tests calls it.
+//! The kernel2 profile route of jope-pipeline builds this archive, opt-in, from a run's measured
+//! programs under [`PIPELINE_COST_VERSION`] and publishes it as evidence only: the run's selection,
+//! ranking and parents never read it. Survival selection ([`select_survivors`]) has no caller
+//! yet.
 //!
 //! Every objective is minimized: the training-fold loss, an integer complexity that the caller
 //! supplies under a recorded cost version, and, only when asked for, an age. The archive is the
@@ -24,7 +26,8 @@
 //!   is computed on unique objective vectors (Fortin and Parizeau, GECCO 2013), so duplicates
 //!   share one distance. The last front is cut round-robin over unique vectors.
 //! - The archive serializes losses as their bits, so a round trip is exact. A reader refuses a
-//!   different schema or cost version, a NaN, and any member the others dominate.
+//!   different schema, a cost version outside [`COST_VERSIONS`], a NaN, and any member the others
+//!   dominate.
 
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -35,6 +38,15 @@ pub const ARCHIVE_SCHEMA: &str = "feat-math.pareto-archive.v1";
 /// The cost version every member's complexity was measured under. An archive never mixes
 /// versions.
 pub const COST_VERSION: &str = "feat-math.cost.expression-nodes.v1";
+
+/// The cost version of a whole pipeline program: its stages, the terminal head included, plus the
+/// expression nodes (every literal, variable, operator and call) of each `map` or `derive` stage's
+/// `expr`. Like [`COST_VERSION`], it names the caller's measure; an archive records the version it
+/// was built under ([`Archive::with_cost_version`]).
+pub const PIPELINE_COST_VERSION: &str = "feat-math.cost.pipeline-nodes.v1";
+
+/// Every cost version an archive may record. [`Archive::default`] uses [`COST_VERSION`].
+pub const COST_VERSIONS: [&str; 2] = [COST_VERSION, PIPELINE_COST_VERSION];
 
 /// A scored candidate, as the search hands it over.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -176,6 +188,22 @@ impl Default for Archive {
 }
 
 impl Archive {
+    /// An empty archive under `cost_version`, one of [`COST_VERSIONS`].
+    pub fn with_cost_version(cost_version: &str) -> Result<Self, String> {
+        if !COST_VERSIONS.contains(&cost_version) {
+            return Err(format!("unknown cost version {cost_version:?}"));
+        }
+        Ok(Self {
+            cost_version: cost_version.to_string(),
+            ..Self::default()
+        })
+    }
+
+    /// The cost version every member's complexity was measured under.
+    pub fn cost_version(&self) -> &str {
+        &self.cost_version
+    }
+
     pub fn members(&self) -> &[Member] {
         &self.members
     }
@@ -205,8 +233,8 @@ impl Archive {
         serde_json::to_string(self).expect("an archive always serializes")
     }
 
-    /// The archive back, refusing another schema or cost version, a NaN or `-0.0` loss, a member
-    /// out of front order, or one that another member dominates.
+    /// The archive back, refusing another schema, a cost version outside [`COST_VERSIONS`], a NaN
+    /// or `-0.0` loss, a member out of front order, or one that another member dominates.
     pub fn from_json(text: &str) -> Result<Self, String> {
         let archive: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
         if archive.schema != ARCHIVE_SCHEMA {
@@ -215,9 +243,9 @@ impl Archive {
                 archive.schema
             ));
         }
-        if archive.cost_version != COST_VERSION {
+        if !COST_VERSIONS.contains(&archive.cost_version.as_str()) {
             return Err(format!(
-                "cost version {:?} is not {COST_VERSION}",
+                "cost version {:?} is not one of {COST_VERSIONS:?}",
                 archive.cost_version
             ));
         }
@@ -810,5 +838,51 @@ mod tests {
             select_survivors(&[untracked, newborn, other], 2, true),
             vec![other, newborn]
         );
+    }
+
+    #[test]
+    fn the_pipeline_cost_version_round_trips_and_only_known_versions_are_read() {
+        // The default archive keeps the expression-node version.
+        assert_eq!(Archive::default().cost_version(), COST_VERSION);
+        assert_eq!(
+            Archive::with_cost_version(COST_VERSION).unwrap(),
+            Archive::default()
+        );
+        let candidates = [
+            candidate(0.5, 9, 1),
+            candidate(2.0, 4, 2),
+            candidate(3.0, 6, 3),
+        ];
+        let mut archive = Archive::with_cost_version(PIPELINE_COST_VERSION).unwrap();
+        assert_eq!(archive.cost_version(), PIPELINE_COST_VERSION);
+        archive.update(&candidates);
+        // The version labels the caller's measure: the same entries make the same members.
+        let mut default = Archive::default();
+        default.update(&candidates);
+        assert_eq!(archive.members(), default.members());
+        assert_eq!(summary(archive.members()), vec![(4, 2.0), (9, 0.5)]);
+        let json = archive.to_json();
+        assert!(json.contains(PIPELINE_COST_VERSION) && !json.contains(COST_VERSION));
+        let back = Archive::from_json(&json).unwrap();
+        assert_eq!(back, archive);
+        assert_eq!(back.to_json(), json);
+        assert_eq!(back.cost_version(), PIPELINE_COST_VERSION);
+        // Relabelling reads as the other version, a different archive; unknown versions are
+        // refused by both the constructor and the reader.
+        let relabelled =
+            Archive::from_json(&json.replace(PIPELINE_COST_VERSION, COST_VERSION)).unwrap();
+        assert_eq!(relabelled, default);
+        assert_ne!(relabelled, archive);
+        for unknown in [
+            "feat-math.cost.pipeline-nodes.v2",
+            "feat-math.cost.stages.v1",
+            "",
+        ] {
+            assert!(Archive::with_cost_version(unknown).is_err(), "{unknown}");
+            assert!(
+                Archive::from_json(&json.replace(PIPELINE_COST_VERSION, unknown)).is_err(),
+                "{unknown}"
+            );
+        }
     }
 }

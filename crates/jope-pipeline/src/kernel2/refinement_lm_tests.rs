@@ -32,6 +32,7 @@ fn sine_data() -> Cut {
 fn lm_selection() -> EngineSelection {
     EngineSelection {
         refine: RefineMethod::Lm(LmOptions::default()),
+        archive: None,
     }
 }
 
@@ -620,7 +621,8 @@ fn the_selection_needs_an_allowance_it_can_run_and_records_canonically() {
             refine: RefineMethod::Lm(LmOptions {
                 tau: f64::NAN,
                 ..LmOptions::default()
-            })
+            }),
+            archive: None,
         })
         .is_err());
     // Round trip, and refusal of anything the selection would not write back.
@@ -630,6 +632,7 @@ fn the_selection_needs_an_allowance_it_can_run_and_records_canonically() {
                 jacobian,
                 ..LmOptions::default()
             }),
+            archive: None,
         };
         let record = selection.record().unwrap();
         assert_eq!(record.selection().unwrap(), selection);
@@ -744,6 +747,7 @@ fn lm_one() -> Kernel2Evaluator {
                 jacobian: LmJacobianCharge::One,
                 ..LmOptions::default()
             }),
+            archive: None,
         })
         .unwrap()
 }
