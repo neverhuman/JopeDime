@@ -3,7 +3,7 @@ use feat_math::kernel::scalar_program::{
     ScalarCarrier, ScalarExpressionProgram, ScalarModel, ScalarNode, ScalarProducerKind,
     ScalarProducerProfile,
 };
-use feat_math::kernel::wire_v2::VersionError;
+use feat_math::kernel::wire_v2::{VersionError, VersionedModel};
 use feat_math::math_expr::{BinOp, Var};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -96,6 +96,7 @@ fn bound_models_replay_exact_state_and_do_not_fit_on_prediction() {
         let restored = ScalarModel::from_json(&candidate.to_string());
         if record["producer_admissible"] == false {
             assert!(restored.is_err());
+            assert!(VersionedModel::from_json(&candidate.to_string()).is_err());
             continue;
         }
         let restored = restored.unwrap();
@@ -109,6 +110,14 @@ fn bound_models_replay_exact_state_and_do_not_fit_on_prediction() {
             state
         );
         let native = ScalarModel::from_json(record["model_json"].as_str().unwrap()).unwrap();
+        // The generic route must recognize the scalar schema before applying
+        // other families' format-2 header checks to this format-3 envelope.
+        let generic = VersionedModel::from_json(&state).unwrap();
+        assert!(matches!(generic, VersionedModel::ScalarV2(_)));
+        assert_eq!(
+            generic.predict_scalar(&rows).unwrap(),
+            native.predict(&rows).unwrap()
+        );
         assert_eq!(
             restored.predict(&rows).unwrap(),
             native.predict(&rows).unwrap()
@@ -122,6 +131,11 @@ fn bound_models_replay_exact_state_and_do_not_fit_on_prediction() {
             restored.predict(&poison).unwrap(),
             native.predict(&poison).unwrap()
         );
+        assert_eq!(
+            generic.predict_scalar(&poison).unwrap(),
+            native.predict(&poison).unwrap()
+        );
+        assert_eq!(generic.predict_scalar(&vec![]).unwrap(), (vec![], vec![]));
         assert_eq!(restored.to_json().unwrap(), state);
         assert_eq!(restored.predict(&vec![]).unwrap(), (vec![], vec![]));
         // Generation/edit switches retain already typed program admission.
@@ -170,6 +184,13 @@ fn future_producer_identity_refuses_before_model_payload() {
                 Err(VersionError::UnsupportedVersion(_))
             ),
             "{key}"
+        );
+        assert!(
+            matches!(
+                VersionedModel::from_json(&model.to_string()),
+                Err(VersionError::UnsupportedVersion(_))
+            ),
+            "generic {key}"
         );
     }
     for (key, value) in [
