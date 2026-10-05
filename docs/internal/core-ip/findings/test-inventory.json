@@ -2166,6 +2166,13 @@
         "fitting",
         "export"
       ]
+    },
+    "target:feat-math/test/ridge_press_oracle": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
     }
   },
   "baseline_triage": [
