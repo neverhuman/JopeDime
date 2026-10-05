@@ -581,6 +581,7 @@ fn lm_seeded(output: &Path, evaluations: usize) -> run::Options {
     .with_engine(super::EngineSelection {
         refine: super::RefineMethod::Lm(feat_math::kernel::expression_search::LmOptions::default()),
         archive: None,
+        simplify: false,
     })
     .unwrap()
 }

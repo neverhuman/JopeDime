@@ -150,6 +150,16 @@
             }
           ]
         },
+        "moves": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MovesRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "refine": {
           "anyOf": [
             {
@@ -265,6 +275,30 @@
         "saturation_fault_rate",
         "constant_output",
         "faulted_cells"
+      ],
+      "type": "object"
+    },
+    "MovesRecord": {
+      "additionalProperties": false,
+      "description": "The deterministic end-of-round moves a run selected.",
+      "properties": {
+        "ids": {
+          "description": "The selected moves' method ids, in the order each round runs them.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "sha256": {
+          "description": "The sha256 of `search/cut-0/moves.json`. Publication adds it, so a receipt's record always\nhas one; the selection's own record, before anything is published, has none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "ids"
       ],
       "type": "object"
     },

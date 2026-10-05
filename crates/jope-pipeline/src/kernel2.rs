@@ -27,11 +27,18 @@ pub use refinement::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, 
 pub mod archive;
 pub use engine::{ArchivePolicy, ArchiveRecord, FRONT_LOSS_COST};
 // laneD:B18-pareto-archive end
+// laneD:B20-rewrite-simplify begin
+pub use engine::{MovesRecord, REWRITE_SATURATE};
+// laneD:B20-rewrite-simplify end
 
 /// A structural or traced Hard refusal, with no candidate score.
 pub const INADMISSIBLE: &str = "inadmissible";
 /// A child produced by training-only constant refinement.
 pub const REFINE: &str = "refine";
+// laneD:B20-rewrite-simplify begin
+/// A child produced by the exact rewrite pass from a ranked parent's expressions.
+pub const SIMPLIFY: &str = "simplify";
+// laneD:B20-rewrite-simplify end
 
 /// Kernel2 evidence adds fields without extending legacy observation JSON.
 #[derive(Clone, Debug, PartialEq, Serialize)]

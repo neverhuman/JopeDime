@@ -46,6 +46,10 @@ pub struct EngineSelection {
     /// without it. A caller that runs cuts itself builds the front with `archive::build`.
     pub archive: Option<ArchivePolicy>,
     // laneD:B18-pareto-archive end
+    // laneD:B20-rewrite-simplify begin
+    /// The exact rewrite pass after each search round; off by default.
+    pub simplify: bool,
+    // laneD:B20-rewrite-simplify end
 }
 
 impl EngineSelection {
@@ -73,6 +77,13 @@ impl EngineSelection {
                  (literal sites plus five under the default charge) uses the coordinate search"
             );
         }
+        // laneD:B20-rewrite-simplify begin
+        ensure!(
+            !self.simplify || refinement.top_k > 0,
+            "--rewrite-simplify requires --refine-top-k of at least 1: it sets how many ranked \
+             programs each round's rewrite pass reads"
+        );
+        // laneD:B20-rewrite-simplify end
         Ok(())
     }
 
@@ -92,8 +103,18 @@ impl EngineSelection {
         };
         // laneD:B18-pareto-archive begin
         let archive = self.archive.map(ArchiveRecord::selected);
-        (refine.is_some() || archive.is_some()).then_some(EngineRecord { refine, archive })
         // laneD:B18-pareto-archive end
+        // laneD:B20-rewrite-simplify begin
+        let moves = self.simplify.then(|| MovesRecord {
+            ids: vec![REWRITE_SATURATE.into()],
+            sha256: None,
+        });
+        (refine.is_some() || archive.is_some() || moves.is_some()).then_some(EngineRecord {
+            refine,
+            archive,
+            moves,
+        })
+        // laneD:B20-rewrite-simplify end
     }
 }
 
@@ -107,6 +128,10 @@ pub struct EngineRecord {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub archive: Option<ArchiveRecord>,
     // laneD:B18-pareto-archive end
+    // laneD:B20-rewrite-simplify begin
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub moves: Option<MovesRecord>,
+    // laneD:B20-rewrite-simplify end
 }
 
 /// The constant refinement method, when it is not the coordinate search.
@@ -152,6 +177,17 @@ impl EngineRecord {
             archive.sha256 = None;
         }
         // laneD:B18-pareto-archive end
+        // laneD:B20-rewrite-simplify begin
+        if let Some(moves) = &mut canonical.moves {
+            ensure!(
+                !moves.ids.is_empty() && moves.ids.iter().all(|id| id == REWRITE_SATURATE),
+                "unknown or empty move selection"
+            );
+            selection.simplify = true;
+            // As with the archive, the digest is evidence that publication adds.
+            moves.sha256 = None;
+        }
+        // laneD:B20-rewrite-simplify end
         selection.check_options()?;
         ensure!(
             selection.record().as_ref() == Some(&canonical),
@@ -207,3 +243,21 @@ impl ArchiveRecord {
     }
 }
 // laneD:B18-pareto-archive end
+
+// laneD:B20-rewrite-simplify begin
+/// The exact rewrite pass's stable method id: e-graph saturation under rules that keep every
+/// value bit for bit, then the profile's admission.
+pub const REWRITE_SATURATE: &str = "feat-math.rewrite-saturate.v1";
+
+/// The deterministic end-of-round moves a run selected.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct MovesRecord {
+    /// The selected moves' method ids, in the order each round runs them.
+    pub ids: Vec<String>,
+    /// The sha256 of `search/cut-0/moves.json`. Publication adds it, so a receipt's record always
+    /// has one; the selection's own record, before anything is published, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sha256: Option<String>,
+}
+// laneD:B20-rewrite-simplify end
