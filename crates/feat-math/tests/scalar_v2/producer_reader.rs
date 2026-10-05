@@ -6,6 +6,18 @@ use feat_math::kernel::scalar_program::{
 use feat_math::kernel::wire_v2::VersionError;
 use feat_math::math_expr::{BinOp, Var};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+
+// Preserve declaration order and change only the field under test.
+fn forge_canonical_field(text: &str, key: &str, value: &Value) -> String {
+    let declaration: Value = serde_json::from_str(text).unwrap();
+    let original = declaration.get(key).unwrap();
+    let key = serde_json::to_string(key).unwrap();
+    let original = format!("{key}:{}", serde_json::to_string(original).unwrap());
+    let replacement = format!("{key}:{}", serde_json::to_string(value).unwrap());
+    assert_eq!(text.matches(&original).count(), 1);
+    text.replacen(&original, &replacement, 1)
+}
 
 fn pins() -> Value {
     serde_json::from_str(include_str!(
@@ -131,18 +143,25 @@ fn future_producer_identity_refuses_before_model_payload() {
     let profile =
         ScalarProducerProfile::new(ScalarProducerKind::All, ScalarCarrier::Row, 2).unwrap();
     let original = bound(record, &profile);
-    for key in [
-        "revision",
-        "opt_in_numerator",
-        "birth_stream",
-        "function_catalog",
-        "reduction_catalog",
+    let declaration = profile.canonical_json();
+    assert_eq!(
+        forge_canonical_field(&declaration, "revision", &json!(1)),
+        declaration
+    );
+    // Well-typed changes with a matching hash must refuse because the identity
+    // is unsupported, before the missing model payload is interpreted.
+    for (key, value) in [
+        ("revision", json!(2)),
+        ("opt_in_numerator", json!(2)),
+        ("birth_stream", json!(17u64)),
+        ("function_catalog", json!([999])),
+        ("reduction_catalog", json!(["unknown"])),
     ] {
         let mut model = original.clone();
-        let mut declaration: Value =
-            serde_json::from_str(model["producer"]["declaration"].as_str().unwrap()).unwrap();
-        declaration[key] = json!(999);
-        model["producer"]["declaration"] = serde_json::to_string(&declaration).unwrap().into();
+        let forged = forge_canonical_field(&declaration, key, &value);
+        assert_ne!(forged, declaration);
+        model["producer"]["sha256"] = format!("{:x}", Sha256::digest(forged.as_bytes())).into();
+        model["producer"]["declaration"] = forged.into();
         model.as_object_mut().unwrap().remove("program");
         model.as_object_mut().unwrap().remove("ridge_bits");
         assert!(
