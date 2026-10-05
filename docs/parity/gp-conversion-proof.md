@@ -61,16 +61,22 @@ executed direct-wire programs, with C++17 refusal where declared.
 ## Parameterized default training recipes
 
 `seeded_stage_parameter_recipes_match_three_languages_and_evaluator_bits` in
-`conversion_wire_matrix.rs` extends the default recipe proof with eight parameterized
-pipelines across two bounded seeds. It varies quantile bin counts, Chebyshev degree,
-step thresholds, pair-product column budgets, append/composition behavior, Ridge penalty fraction,
-and ElasticNet alpha, mixing ratio and sweep count. Each tree passes canonical and
-typed-codec round-trips before fitting on 64 training rows and predicting 16 held-out rows.
-The 16 samples match all 256 evaluator prediction bits in each generated Rust, Python
-and default C++17 recipe. Inputs include signed zero, a subnormal and exact step-threshold
-values. C++ uses g++ C++17 O2 with contraction and fast math disabled. This bounded
-parameter corpus adds no operator admission, runtime change, tolerance or allowlist entry;
-it does not establish every parameter combination or the remaining ordered-state routes.
+`conversion_wire_matrix.rs` exercises eight parameterized default pipelines on seeds 53
+and 59. Eight single-key mutations per seed check consumed quantile `bins`, Chebyshev
+`degree`, step `t`, pair-product `topk`, Ridge `lambda_frac`, and ElasticNet `alpha`,
+`l1_ratio` and `sweeps`. Each mutation must change native held-out prediction words on
+that same seed and fold; canonical acceptance and cross-language parity alone do not
+prove parameter consumption.
+
+All 32 original/mutated fits pass canonical and typed-codec fixed points, fit the same
+64 training rows and predict 16 held-out rows. A shared training-row constant and CSV
+row-count assertions bind the native, generated CSV and C++ numeric-ABI folds. The
+512 native prediction words match actual optimized Rust, Python and strict C++17
+recipe outputs bit for bit (1,536 backend comparisons), with 16 parameter-sensitivity
+assertions. Signed zero, the smallest subnormal and exact step thresholds remain in
+the inputs. C++ uses g++ C++17 O2 with contraction and fast math disabled. This test
+changes no operator admission, runtime, expected/golden file, tolerance or allowlist;
+it does not prove every parameter combination or remaining ordered-state route.
 
 ## Opt-in C++17 expression training recipes
 

@@ -13,6 +13,8 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+const TRAINING_ROWS: usize = 64;
+
 const HISTORICAL: &str = include_str!(
     "fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json"
 );
@@ -158,7 +160,7 @@ fn toy_data_seed(seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
 
 fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
     let mut train = String::new();
-    for (row, target) in x[..64].iter().zip(&y[..64]) {
+    for (row, target) in x[..TRAINING_ROWS].iter().zip(&y[..TRAINING_ROWS]) {
         for value in row {
             train.push_str(&format!("{value:?},"));
         }
@@ -166,7 +168,7 @@ fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
     }
     fs::write(dir.join("train.csv"), train).unwrap();
     let mut test = String::new();
-    for row in &x[64..] {
+    for row in &x[TRAINING_ROWS..] {
         test.push_str(
             &row.iter()
                 .map(|value| format!("{value:?}"))
@@ -176,6 +178,20 @@ fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
         test.push('\n');
     }
     fs::write(dir.join("test.csv"), test).unwrap();
+    assert_eq!(
+        fs::read_to_string(dir.join("train.csv"))
+            .unwrap()
+            .lines()
+            .count(),
+        TRAINING_ROWS
+    );
+    assert_eq!(
+        fs::read_to_string(dir.join("test.csv"))
+            .unwrap()
+            .lines()
+            .count(),
+        x.len() - TRAINING_ROWS
+    );
 }
 
 fn require_success(what: &str, command: &mut Command) {
@@ -253,6 +269,7 @@ fn run_cpp_recipe(
 ) -> Vec<u64> {
     assert_eq!(x.len(), 80);
     assert_eq!(y.len(), 80);
+    assert_eq!(TRAINING_ROWS, 64, "C++ numeric ABI training rows");
     assert!(x.iter().all(|row| row.len() == 5));
     fs::create_dir_all(dir).unwrap();
     source.push_str("\n#include <cstdio>\nint main() {\n");
@@ -261,12 +278,20 @@ fn run_cpp_recipe(
     for (label, values) in [
         (
             "train",
-            x[..64].iter().flatten().copied().collect::<Vec<_>>(),
+            x[..TRAINING_ROWS]
+                .iter()
+                .flatten()
+                .copied()
+                .collect::<Vec<_>>(),
         ),
-        ("targets", y[..64].to_vec()),
+        ("targets", y[..TRAINING_ROWS].to_vec()),
         (
             "test",
-            x[64..].iter().flatten().copied().collect::<Vec<_>>(),
+            x[TRAINING_ROWS..]
+                .iter()
+                .flatten()
+                .copied()
+                .collect::<Vec<_>>(),
         ),
     ] {
         write!(source, "const std::uint64_t {label}_bits[] = {{").unwrap();
@@ -340,11 +365,16 @@ fn every_direct_wire_witness_evaluates_to_its_frozen_model_bits() {
             .split_whitespace()
             .map(|word| u64::from_str_radix(word, 16).unwrap())
             .collect();
-        let actual: Vec<u64> = fit_predict(&genome, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
-            .unwrap_or_else(|error| panic!("{name}: evaluator: {error:#}"))
-            .into_iter()
-            .map(f64::to_bits)
-            .collect();
+        let actual: Vec<u64> = fit_predict(
+            &genome,
+            &x[..TRAINING_ROWS].to_vec(),
+            &y[..TRAINING_ROWS],
+            &x[TRAINING_ROWS..].to_vec(),
+        )
+        .unwrap_or_else(|error| panic!("{name}: evaluator: {error:#}"))
+        .into_iter()
+        .map(f64::to_bits)
+        .collect();
         assert_eq!(actual, expected, "{name}: frozen evaluator bits");
     }
 }
@@ -531,12 +561,16 @@ fn seeded_composed_expression_recipes_match_rust_python_and_evaluator_bits() {
         for (index, source) in programs.into_iter().enumerate() {
             let name = format!("seed-{seed}-program-{index}");
             let genome = round_trip(source);
-            let expected: Vec<u64> =
-                fit_predict(&genome, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
-                    .unwrap()
-                    .into_iter()
-                    .map(f64::to_bits)
-                    .collect();
+            let expected: Vec<u64> = fit_predict(
+                &genome,
+                &x[..TRAINING_ROWS].to_vec(),
+                &y[..TRAINING_ROWS],
+                &x[TRAINING_ROWS..].to_vec(),
+            )
+            .unwrap()
+            .into_iter()
+            .map(f64::to_bits)
+            .collect();
             let dir = scratch.path().join(&name);
             let (python, rust) = run_emitted_pair(&name, &genome, &dir, &x, &y);
             assert_eq!(python, expected, "{name}: Python bits");
@@ -561,44 +595,91 @@ fn seeded_stage_parameter_recipes_match_three_languages_and_evaluator_bits() {
         "(pipe X (pair_prod topk=2) (ridge lambda_frac=0.04))",
         "(pipe X (pair_prod topk=4 append=true) (quantile_bins bins=3) (elasticnet alpha=0.03 l1_ratio=0.5 sweeps=19))",
     ];
+    let mutations = [
+        ("quantile_bins.bins", 0, "bins=2", "bins=3"),
+        ("ridge.lambda_frac", 0, "lambda_frac=0.1", "lambda_frac=0.2"),
+        ("cheb.degree", 2, "degree=1", "degree=2"),
+        ("step.t", 4, "t=-0.5", "t=-0.25"),
+        ("pair_prod.topk", 6, "topk=2", "topk=3"),
+        ("elasticnet.alpha", 1, "alpha=0.02", "alpha=0.04"),
+        ("elasticnet.l1_ratio", 1, "l1_ratio=0.25", "l1_ratio=0.6"),
+        ("elasticnet.sweeps", 1, "sweeps=17", "sweeps=3"),
+    ];
     let scratch = tempfile::tempdir().unwrap();
     let mut cases = 0;
+    let mut sensitivities = 0;
     for seed in [53, 59] {
         let (mut x, y) = toy_data_seed(seed);
         // Fixed boundary features supplement each seed. Targets remain finite;
-        // held-out rows never enter either the runtime fit or emitted recipe fit.
+        // the same training split feeds native fit, CSV recipes and the C++ ABI.
         x[0][0] = -0.0;
         x[1][1] = f64::from_bits(1);
         x[64][0] = -0.0;
         x[65][1] = f64::from_bits(1);
         x[66][2] = -0.5;
         x[67][2] = 0.75;
-        for (index, source) in programs.into_iter().enumerate() {
-            let name = format!("parameters-seed-{seed}-program-{index}");
+        let check = |name: &str, source: &str| {
             let genome = round_trip(source);
             assert!(supports(&genome).is_ok(), "{name}: paired admission");
             assert!(
                 supports_cpp17(&genome).is_ok(),
                 "{name}: default C++17 admission"
             );
-            let expected: Vec<u64> =
-                fit_predict(&genome, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
-                    .unwrap()
-                    .into_iter()
-                    .map(f64::to_bits)
-                    .collect();
+            let expected: Vec<u64> = fit_predict(
+                &genome,
+                &x[..TRAINING_ROWS].to_vec(),
+                &y[..TRAINING_ROWS],
+                &x[TRAINING_ROWS..].to_vec(),
+            )
+            .unwrap()
+            .into_iter()
+            .map(f64::to_bits)
+            .collect();
             assert_eq!(expected.len(), 16, "{name}: evaluator output count");
-            let dir = scratch.path().join(&name);
-            let (python, rust) = run_emitted_pair(&name, &genome, &dir, &x, &y);
+            let dir = scratch.path().join(name);
+            let (python, rust) = run_emitted_pair(name, &genome, &dir, &x, &y);
             assert_eq!(python, expected, "{name}: Python parameter recipe bits");
             assert_eq!(rust, expected, "{name}: Rust parameter recipe bits");
             let source = emit_cpp17(&genome, &EmitOptions::default()).unwrap();
-            let cpp = run_cpp_recipe(&name, source, &dir, &x, &y);
+            let cpp = run_cpp_recipe(name, source, &dir, &x, &y);
             assert_eq!(cpp, expected, "{name}: C++17 parameter recipe bits");
+            expected
+        };
+        let originals: Vec<_> = programs
+            .iter()
+            .enumerate()
+            .map(|(index, source)| {
+                check(&format!("parameters-seed-{seed}-program-{index}"), source)
+            })
+            .collect();
+        cases += originals.len();
+        for (parameter, index, from, to) in mutations {
+            assert_eq!(
+                programs[index].matches(from).count(),
+                1,
+                "{parameter}: one consumed key"
+            );
+            let changed = programs[index].replacen(from, to, 1);
+            let words = check(
+                &format!("parameters-seed-{seed}-changed-{parameter}"),
+                &changed,
+            );
+            assert_ne!(
+                words, originals[index],
+                "seed{seed}/{parameter}: parameter must affect native held-out predictions"
+            );
+            sensitivities += 1;
             cases += 1;
         }
     }
-    assert_eq!(cases, 16, "eight parameterized programs across two seeds");
+    assert_eq!(
+        cases, 32,
+        "eight originals and eight mutations across two seeds"
+    );
+    assert_eq!(
+        sensitivities, 16,
+        "each consumed key changes each seed's predictions"
+    );
 }
 
 #[test]
@@ -674,12 +755,16 @@ fn symbolic_and_portfolio_forms_execute_or_keep_their_structured_refusal() {
             "compact_portfolio" => assert!(!cpp.unwrap_err().is_empty()),
             _ => unreachable!(),
         }
-        let expected: Vec<u64> =
-            fit_predict(&parsed, &x[..64].to_vec(), &y[..64], &x[64..].to_vec())
-                .unwrap_or_else(|error| panic!("{name}: evaluator: {error:#}"))
-                .into_iter()
-                .map(f64::to_bits)
-                .collect();
+        let expected: Vec<u64> = fit_predict(
+            &parsed,
+            &x[..TRAINING_ROWS].to_vec(),
+            &y[..TRAINING_ROWS],
+            &x[TRAINING_ROWS..].to_vec(),
+        )
+        .unwrap_or_else(|error| panic!("{name}: evaluator: {error:#}"))
+        .into_iter()
+        .map(f64::to_bits)
+        .collect();
         let (python, rust) = run_emitted_pair(name, &parsed, &scratch.path().join(name), &x, &y);
         assert_eq!(python, expected, "{name}: Python recipe bits");
         assert_eq!(rust, expected, "{name}: Rust recipe bits");
