@@ -3,17 +3,17 @@
   "decision": "OWNER_DIRECTIVES v1.4 assigns B05\u2013B07 held scalar recipes/fitted export to Lane B; sanctioned announced identity-only transition; old behavioral/source-byte goldens fixed",
   "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md \u00a74 B05\u2013B07 and compat_freeze identity-only contract",
   "pr_reference": "[kernel2] Emit complete scalar-v2 recipes and fitted C++",
-  "source_commit": "c2411ecd1adf0a7e9577594d176cd8c404db32cd",
+  "source_commit": "d8b2c5df639171fc44f4e3baf56f5addebb80c03",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "6e46cf982f45f0806449948e24fa99964d15094dceaeb8be36350b61feb2231b",
-      "after": "944e6a0d808b538a4709b1933acae919702f9eb2882cc4d02b7487414e2f05ac"
+      "after": "cca9823cde19e1861c9389d4b1433b882efac24c2dff2b8682dbc2876774f523"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "99d00026e76de11ff56a9722389666b1c349ba15ae665e88214e20ecdf405248",
-      "after": "6046b142610e52581e686064f3b7815fdc9577f77f65e53c80630abb5f416449"
+      "after": "3a2d67899dffe26f478565d1a5cdee16a56622156b6b33cc29d3c2cd11fcea14"
     }
   ]
 }
