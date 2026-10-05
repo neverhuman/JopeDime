@@ -299,6 +299,49 @@ const LEXICASE_REUSE_BLOCKER: &str =
     "exact rung-0 reuse is off under lexicase selection: a reused score has no per-row residuals";
 // B10 lexicase: end
 
+// B11 ridge scoring: begin
+/// How the surrogate search scores its candidates (B11).
+///
+/// [`RidgeScoring::Legacy`], the default, fits every new candidate's surrogate on every fold, as
+/// the search always has. [`RidgeScoring::Certified`] returns the same fold scores (and lexicase
+/// cases) bit for bit with less work:
+///
+/// - a candidate whose ridge surrogate (the program the search actually fits) was already scored
+///   in the run reuses that score, because the surrogate fixes everything the score depends on;
+/// - transform prefixes that surrogates share on a fold are fitted once, through
+///   [`model::fit_with_stage_cache`], whose hits return the output of the identical computation.
+///
+/// The ridge fit is the certified `RidgeModel::fit` in both modes. Certified scoring applies to
+/// the surrogate search and needs [`FaultPolicy::Legacy`] ([`RidgeScoring::validate`]).
+/// [`Observer::on_scoring`] receives its counters after each generation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum RidgeScoring {
+    #[default]
+    Legacy,
+    Certified,
+}
+
+/// The byte budget of the certified scoring's stage cache.
+pub const CERTIFIED_STAGE_CACHE_BYTES: usize = 1 << 30;
+
+impl RidgeScoring {
+    /// The reason the scoring cannot run in this search, if it cannot. The search panics with it,
+    /// except [`evolve_lite_race_with_exact_initial_population`], which returns it.
+    pub fn validate(&self, fitness: FitnessMode, policy: FaultPolicy) -> Result<(), String> {
+        match self {
+            Self::Legacy => Ok(()),
+            Self::Certified if fitness != FitnessMode::Surrogate => {
+                Err("ridge scoring: certified scoring applies to the surrogate search".to_string())
+            }
+            Self::Certified if !matches!(policy, FaultPolicy::Legacy) => {
+                Err("ridge scoring: certified scoring needs FaultPolicy::Legacy".to_string())
+            }
+            Self::Certified => Ok(()),
+        }
+    }
+}
+// B11 ridge scoring: end
+
 #[cfg(test)]
 mod gpu_screen_tests {
     use super::*;
@@ -1210,6 +1253,9 @@ pub struct EvolveConfig {
     /// How the next generation's parents are drawn. `Tournament3` by default, which draws exactly
     /// as the search always has; see [`ParentSelection`].
     pub selection: ParentSelection,
+    /// How the surrogate search scores candidates. `Legacy` by default; `Certified` gives the
+    /// same scores with less work; see [`RidgeScoring`].
+    pub ridge_scoring: RidgeScoring,
 }
 
 impl Default for EvolveConfig {
@@ -1229,6 +1275,7 @@ impl Default for EvolveConfig {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
+            ridge_scoring: RidgeScoring::Legacy,
         }
     }
 }
@@ -1289,6 +1336,24 @@ pub trait Observer: Sync {
     /// Fired once per generation whose parents [`ParentSelection::EpsilonLexicase`] draws, after
     /// its last parent. Never fired under `Tournament3`. Default no-op.
     fn on_selection(&self, _receipt: &SelectionReceipt) {}
+    /// Fired after each generation scored by [`RidgeScoring::Certified`], with the run's counters
+    /// so far. Never fired under `Legacy`. Default no-op.
+    fn on_scoring(&self, _receipt: &ScoringReceipt) {}
+}
+
+/// The certified scoring's counters so far, as [`Observer::on_scoring`] reports them (B11).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ScoringReceipt {
+    pub generation: usize,
+    /// New candidates scored since the run started.
+    pub candidates: u64,
+    /// Of those, candidates whose ridge surrogate was already scored, so no fold was fitted.
+    pub surrogate_reuses: u64,
+    /// Transform stages served by the stage cache, and fitted, over every fold fit. These are
+    /// instrumentation and depend on thread scheduling (two threads building the same prefix both
+    /// miss); the counts above and every score do not.
+    pub stage_hits: u64,
+    pub stage_misses: u64,
 }
 
 /// One generation's lexicase parent selection, as [`Observer::on_selection`] reports it.
@@ -2057,6 +2122,155 @@ fn score_unseen_with_cases(
 }
 // B10 lexicase: end
 
+// B11 ridge scoring: begin
+/// The certified scorer of one surrogate search: the surrogate memo and the fold-scoped stage
+/// cache ([`RidgeScoring::Certified`]). Every score it returns is [`score_genome`]'s, bit for bit.
+struct CertifiedScoring {
+    cache: crate::stage_cache::StageCache,
+    /// Surrogate text to its fold scores and, when lexicase cases are kept, its residuals on the
+    /// run's case rows (fixed for the run).
+    memo: HashMap<String, ScoredCases>,
+    candidates: u64,
+    reuses: u64,
+}
+
+impl CertifiedScoring {
+    fn new() -> Self {
+        Self {
+            cache: crate::stage_cache::StageCache::new(CERTIFIED_STAGE_CACHE_BYTES),
+            memo: HashMap::new(),
+            candidates: 0,
+            reuses: 0,
+        }
+    }
+
+    /// Scores `unseen` as the legacy scorer does, keeping each candidate's lexicase cases on
+    /// `case_rows` when given. Each distinct surrogate not yet in the memo is scored once, in
+    /// parallel.
+    #[allow(clippy::too_many_arguments)]
+    fn score_unseen(
+        &mut self,
+        unseen: Vec<(String, DslExpr)>,
+        x: &Rows,
+        y: &[f64],
+        assign: &[usize],
+        k: usize,
+        metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+        case_rows: Option<&[usize]>,
+        cases: &mut HashMap<String, Vec<f64>>,
+    ) -> Vec<(String, DslExpr, Option<Vec<f64>>)> {
+        let surrogates: Vec<DslExpr> = unseen.iter().map(|(_, g)| search_surrogate(g)).collect();
+        let texts: Vec<String> = surrogates.iter().map(DslExpr::to_string).collect();
+        let mut queued = std::collections::HashSet::new();
+        let todo: Vec<(String, DslExpr)> = surrogates
+            .into_iter()
+            .zip(&texts)
+            .filter(|(_, text)| !self.memo.contains_key(*text) && queued.insert((*text).clone()))
+            .map(|(surrogate, text)| (text.clone(), surrogate))
+            .collect();
+        let cache = &self.cache;
+        let scored: Vec<(String, ScoredCases)> = todo
+            .into_par_iter()
+            .map(|(text, surrogate)| {
+                let genome = GenomeIr::Pipeline(surrogate);
+                let scored =
+                    score_surrogate_cached(&genome, x, y, assign, k, metric, cache, case_rows);
+                (text, scored)
+            })
+            .collect();
+        let computed = scored.len() as u64;
+        self.memo.extend(scored);
+        self.candidates += unseen.len() as u64;
+        self.reuses += unseen.len() as u64 - computed;
+        unseen
+            .into_iter()
+            .zip(texts)
+            .map(|((key, g), text)| {
+                let entry = &self.memo[&text];
+                if let (Some(_), Some((_, residuals))) = (case_rows, entry) {
+                    cases.insert(key.clone(), residuals.clone());
+                }
+                let scores = entry.as_ref().map(|(scores, _)| scores.clone());
+                (key, g, scores)
+            })
+            .collect()
+    }
+
+    fn receipt(&self, generation: usize) -> ScoringReceipt {
+        let (stage_hits, stage_misses, _) = self.cache.stats();
+        ScoringReceipt {
+            generation,
+            candidates: self.candidates,
+            surrogate_reuses: self.reuses,
+            stage_hits,
+            stage_misses,
+        }
+    }
+}
+
+/// [`score_genome_predictions`] for an already built surrogate, each fold fitted through the
+/// stage cache: the same folds, the same fits (bit-identical, [`model::fit_with_stage_cache`]),
+/// predictions and metric calls. With `case_rows`, also the residuals `y - prediction` on those
+/// rows, in that order, as [`score_genome_cases`] computes them; otherwise an empty vector.
+#[allow(clippy::too_many_arguments)]
+fn score_surrogate_cached(
+    surrogate: &GenomeIr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    cache: &crate::stage_cache::StageCache,
+    case_rows: Option<&[usize]>,
+) -> ScoredCases {
+    let keep = case_rows.is_some();
+    let mut fold_scores = Vec::with_capacity(k);
+    let mut predictions = if keep {
+        vec![f64::NAN; y.len()]
+    } else {
+        Vec::new()
+    };
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut held_out = Vec::new();
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+                held_out.push(i);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return None;
+        }
+        let ctx = crate::stage_cache::StageCacheCtx {
+            context_tag: "evolve-surrogate".to_string(),
+            folds: k,
+            fold,
+        };
+        let m = model::fit_with_stage_cache(surrogate, &xtr, &ytr, cache, &ctx).ok()?;
+        let pred = m.predict(&xte).ok()?;
+        let s = metric(&yte, &pred);
+        if !s.is_finite() {
+            return None;
+        }
+        fold_scores.push(s);
+        if keep {
+            for (&row, &value) in held_out.iter().zip(&pred) {
+                predictions[row] = value;
+            }
+        }
+    }
+    let residuals = case_rows.map_or_else(Vec::new, |rows| {
+        rows.iter().map(|&row| y[row] - predictions[row]).collect()
+    });
+    Some((fold_scores, residuals))
+}
+// B11 ridge scoring: end
+
 // ---------------------------------------------------------------------------
 // Fault policy (kernel2 WP-1.5): the scorers and bookkeeping of the non-legacy policies. Under
 // `FaultPolicy::Legacy` none of this runs.
@@ -2365,6 +2579,12 @@ fn evolve_surrogate(
     };
     let mut cases: HashMap<String, Vec<f64>> = HashMap::new();
     // B10 lexicase: end
+    // B11 ridge scoring: begin
+    if let Err(reason) = cfg.ridge_scoring.validate(cfg.fitness, cfg.fault_policy) {
+        panic!("{reason}");
+    }
+    let mut certified = (cfg.ridge_scoring == RidgeScoring::Certified).then(CertifiedScoring::new);
+    // B11 ridge scoring: end
 
     // Seeds: champion + external seeds + starters + random fill.
     let target_pop = cfg.pop.max(1);
@@ -2438,6 +2658,19 @@ fn evolve_surrogate(
             .filter(|(key, _)| !memo.contains_key(key))
             .collect();
         let fresh: Vec<(String, DslExpr, Option<Vec<f64>>)> = match admission.as_mut() {
+            // B11 ridge scoring: the same scores (and cases) from the memo and the stage cache.
+            None if certified.is_some() => {
+                let Some(scoring) = certified.as_mut() else {
+                    unreachable!("certified scoring is set")
+                };
+                scoring.cache.begin_generation(gen as u64);
+                let rows = lexicase.map(|_| case_rows.as_slice());
+                let fresh =
+                    scoring.score_unseen(unseen, x, y, &assign, k, metric, rows, &mut cases);
+                scoring.cache.sweep();
+                obs.on_scoring(&scoring.receipt(gen));
+                fresh
+            }
             // B10 lexicase: the same scores, keeping each candidate's residual cases.
             None if lexicase.is_some() => {
                 score_unseen_with_cases(unseen, x, y, &assign, k, metric, &case_rows, &mut cases)
@@ -4943,6 +5176,9 @@ pub fn evolve_lite_race_with_exact_initial_population(
     cfg.fault_policy.validate()?;
     // B10 lexicase: the selection's refusal is returned here, as the fault policy's is.
     cfg.selection.validate(cfg.fault_policy)?;
+    // B11 ridge scoring: certified scoring applies to the surrogate search only.
+    cfg.ridge_scoring
+        .validate(FitnessMode::LiteRace, cfg.fault_policy)?;
     if cfg.pop == 0 {
         return Err("exact initial population requires cfg.pop greater than zero".to_string());
     }
@@ -5068,6 +5304,13 @@ fn evolve_lite_race_impl<'backend>(
     }
     let lexicase = cfg.selection.lexicase();
     // B10 lexicase: end
+    // B11 ridge scoring: certified scoring applies to the surrogate search only.
+    if let Err(reason) = cfg
+        .ridge_scoring
+        .validate(FitnessMode::LiteRace, cfg.fault_policy)
+    {
+        panic!("{reason}");
+    }
     let t0 = Instant::now();
     let mut rng = Pcg32::new(cfg.seed, 0x5EED);
     let n = x.len().min(y.len());
@@ -5753,6 +5996,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
+            ridge_scoring: RidgeScoring::Legacy,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -5800,6 +6044,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
+            ridge_scoring: RidgeScoring::Legacy,
         };
         let obs = CountObs {
             gens: AtomicUsize::new(0),
@@ -5859,6 +6104,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
+            ridge_scoring: RidgeScoring::Legacy,
         };
         let obs = CodeObs {
             code_evals: AtomicUsize::new(0),
@@ -5940,6 +6186,7 @@ mod tests {
             expansion_vocab: false,
             fault_policy: FaultPolicy::Legacy,
             selection: ParentSelection::Tournament3,
+            ridge_scoring: RidgeScoring::Legacy,
         }
     }
 
@@ -7517,3 +7764,164 @@ mod lexicase_selection_tests {
     }
 }
 // B10 lexicase: end
+
+// B11 ridge scoring: begin
+#[cfg(test)]
+mod ridge_scoring_tests {
+    use super::*;
+    use crate::kernel::lexicase::{CaseSampling, EpsilonRule};
+    use std::sync::Mutex;
+
+    #[derive(Default)]
+    struct Log {
+        scoring: Mutex<Vec<ScoringReceipt>>,
+        selection: Mutex<Vec<SelectionReceipt>>,
+    }
+
+    impl Observer for Log {
+        fn on_generation(&self, _stats: &GenStats) {}
+        fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _stats: &GenStats) {}
+        fn on_selection(&self, receipt: &SelectionReceipt) {
+            self.selection.lock().unwrap().push(receipt.clone());
+        }
+        fn on_scoring(&self, receipt: &ScoringReceipt) {
+            self.scoring.lock().unwrap().push(receipt.clone());
+        }
+    }
+
+    fn fixture(seed: u64, n: usize) -> (Rows, Vec<f64>) {
+        let mut rng = Pcg32::new(seed, 21);
+        let x: Rows = (0..n)
+            .map(|_| (0..4).map(|_| rng.gaussian()).collect())
+            .collect();
+        let y = x
+            .iter()
+            .map(|r| 2.0 * r[0] - r[1] * r[1] + (2.0 * r[2]).sin() + 0.1 * rng.gaussian())
+            .collect();
+        (x, y)
+    }
+
+    fn r2(truth: &[f64], predicted: &[f64]) -> f64 {
+        crate::metrics::r2(truth, predicted)
+    }
+
+    fn dump(ranked: &[Scored]) -> Vec<(String, u64, Vec<u64>)> {
+        ranked
+            .iter()
+            .map(|s| {
+                let folds = s.fold_scores.iter().map(|v| v.to_bits()).collect();
+                (s.dsl.clone(), s.cv_mean.to_bits(), folds)
+            })
+            .collect()
+    }
+
+    fn run(scoring: RidgeScoring, selection: ParentSelection) -> (Vec<Scored>, Log) {
+        let (x, y) = fixture(3, 180);
+        let cfg = EvolveConfig {
+            pop: 16,
+            gens: 4,
+            seed: 0xB11,
+            max_transforms: 4,
+            selection,
+            ridge_scoring: scoring,
+            ..EvolveConfig::default()
+        };
+        let log = Log::default();
+        let ranked = evolve(&x, &y, &r2, &cfg, &log);
+        (ranked, log)
+    }
+
+    #[test]
+    fn certified_scoring_is_the_legacy_search_bit_for_bit() {
+        let lexicase = ParentSelection::EpsilonLexicase(LexicaseConfig {
+            epsilon: EpsilonRule::MedianAbsoluteDeviation,
+            sampling: CaseSampling::All,
+        });
+        for selection in [ParentSelection::Tournament3, lexicase] {
+            let (legacy, legacy_log) = run(RidgeScoring::Legacy, selection);
+            let (certified, certified_log) = run(RidgeScoring::Certified, selection);
+            assert_eq!(dump(&legacy), dump(&certified), "{selection:?}");
+            // Lexicase cases from the memo are the legacy residuals, so selection is unchanged.
+            assert_eq!(
+                *legacy_log.selection.lock().unwrap(),
+                *certified_log.selection.lock().unwrap()
+            );
+            assert!(legacy_log.scoring.lock().unwrap().is_empty());
+        }
+    }
+
+    #[test]
+    fn certified_scoring_reports_reuse_and_stage_cache_counters() {
+        let (_, log) = run(RidgeScoring::Certified, ParentSelection::Tournament3);
+        let receipts = log.scoring.into_inner().unwrap();
+        assert_eq!(receipts.len(), 4);
+        for (generation, pair) in receipts.windows(2).enumerate() {
+            assert_eq!(pair[0].generation, generation);
+            assert!(pair[1].candidates >= pair[0].candidates);
+            assert!(pair[1].surrogate_reuses >= pair[0].surrogate_reuses);
+        }
+        let last = receipts.last().unwrap();
+        assert!(last.surrogate_reuses <= last.candidates);
+        // Head-only variation and shared prefixes are common in a short search.
+        assert!(last.surrogate_reuses > 0, "{last:?}");
+        assert!(last.stage_hits > 0, "{last:?}");
+    }
+
+    #[test]
+    fn certified_scoring_is_the_same_on_one_thread_and_on_four() {
+        let pool = |threads| {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(threads)
+                .build()
+                .unwrap()
+        };
+        let certified = || run(RidgeScoring::Certified, ParentSelection::Tournament3);
+        let (one, one_log) = pool(1).install(certified);
+        let (four, four_log) = pool(4).install(certified);
+        let (legacy, _) =
+            pool(4).install(|| run(RidgeScoring::Legacy, ParentSelection::Tournament3));
+        assert_eq!(dump(&one), dump(&four));
+        assert_eq!(dump(&four), dump(&legacy));
+        // The memo counters follow the candidate stream alone. The stage-cache counters are
+        // instrumentation: two threads building the same prefix both count a miss.
+        let memo = |log: Log| {
+            log.scoring
+                .into_inner()
+                .unwrap()
+                .iter()
+                .map(|r| (r.generation, r.candidates, r.surrogate_reuses))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(memo(one_log), memo(four_log));
+    }
+
+    #[test]
+    fn certified_scoring_refuses_the_race_and_strict_policies() {
+        let certified = RidgeScoring::Certified;
+        assert!(certified
+            .validate(FitnessMode::Surrogate, FaultPolicy::Legacy)
+            .is_ok());
+        assert!(certified
+            .validate(FitnessMode::LiteRace, FaultPolicy::Legacy)
+            .unwrap_err()
+            .contains("surrogate search"));
+        assert!(certified
+            .validate(FitnessMode::Surrogate, FaultPolicy::RejectHard)
+            .unwrap_err()
+            .contains("FaultPolicy::Legacy"));
+        assert!(RidgeScoring::Legacy
+            .validate(FitnessMode::LiteRace, FaultPolicy::RejectHard)
+            .is_ok());
+        let (x, y) = fixture(4, 60);
+        let cfg = EvolveConfig {
+            pop: 4,
+            fitness: FitnessMode::LiteRace,
+            ridge_scoring: certified,
+            ..EvolveConfig::default()
+        };
+        let refused =
+            evolve_lite_race_with_exact_initial_population(&x, &y, &r2, &cfg, &Log::default(), &[]);
+        assert!(refused.unwrap_err().contains("surrogate search"));
+    }
+}
+// B11 ridge scoring: end

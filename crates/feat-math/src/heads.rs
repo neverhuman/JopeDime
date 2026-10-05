@@ -451,23 +451,18 @@ impl RidgeModel {
         let (means, scales) = std_fit(x);
         let lambda = (lambda_frac * n as f64).max(1e-3);
         let y_mean = y[..n].iter().sum::<f64>() / n.max(1) as f64;
-        // Gram + rhs on standardized (clamped ±20) features, centered target.
-        let mut ata = vec![0.0f64; p * p];
-        let mut atb = vec![0.0f64; p];
-        let mut xs_row = vec![0.0f64; p];
-        for r in 0..n {
+        // Gram + rhs on standardized (clamped ±20) features, centered target. B11: each entry is
+        // the same running sum as the former one-row-at-a-time loop (0.0, then its terms in
+        // ascending row order), accumulated in cache-sized row panels and register tiles, so the
+        // fit is unchanged bit for bit (certified in kernel::ridge_fast).
+        let mut z = Vec::with_capacity(n * p);
+        for row in &x[..n] {
             for j in 0..p {
-                xs_row[j] = ((x[r][j] - means[j]) / scales[j]).clamp(-20.0, 20.0);
-            }
-            let yr = y[r] - y_mean;
-            for i in 0..p {
-                let xi = xs_row[i];
-                atb[i] += xi * yr;
-                for j in i..p {
-                    ata[i * p + j] += xi * xs_row[j];
-                }
+                z.push(((row[j] - means[j]) / scales[j]).clamp(-20.0, 20.0));
             }
         }
+        let centered: Vec<f64> = y[..n].iter().map(|value| value - y_mean).collect();
+        let (mut ata, mut atb) = ridge_normal_equations(&z, &centered, n, p);
         for i in 0..p {
             ata[i * p + i] += lambda;
             for j in 0..i {
@@ -508,22 +503,92 @@ impl RidgeModel {
 pub fn std_fit(x: &Rows) -> (Vec<f64>, Vec<f64>) {
     let n = x.len().max(1) as f64;
     let p = x[0].len();
-    let mut means = vec![0.0; p];
-    let mut scales = vec![1.0; p];
-    for j in 0..p {
-        let mut s = 0.0;
-        for r in x {
-            s += r[j];
+    // B11: one row-major pass of per-column accumulators. Each column still sums its rows in
+    // ascending order from 0.0, so the moments are the former per-column passes bit for bit.
+    let mut sums = vec![0.0f64; p];
+    for r in x {
+        for (sum, &value) in sums.iter_mut().zip(&r[..p]) {
+            *sum += value;
         }
-        means[j] = s / n;
-        let mut v = 0.0;
-        for r in x {
-            let d = r[j] - means[j];
-            v += d * d;
-        }
-        scales[j] = (v / n).sqrt().max(1e-9);
     }
+    let means: Vec<f64> = sums.iter().map(|sum| sum / n).collect();
+    let mut squares = vec![0.0f64; p];
+    for r in x {
+        for ((square, &value), &mean) in squares.iter_mut().zip(&r[..p]).zip(&means) {
+            let d = value - mean;
+            *square += d * d;
+        }
+    }
+    let scales = squares.iter().map(|v| (v / n).sqrt().max(1e-9)).collect();
     (means, scales)
+}
+
+/// B11: rows of the standardized design per panel; a packed panel stays in cache while its tiles
+/// run.
+const RIDGE_PANEL: usize = 128;
+/// B11: Gram rows and columns per register tile.
+const RIDGE_TILE: usize = 4;
+
+/// `ZᵀZ` (row-major `p x p`; the upper triangle is the Gram, entries below the diagonal are
+/// scratch) and `Zᵀyc` from the row-major standardized design `z` of `n` rows. Every upper entry
+/// and every right-hand-side entry is a running sum that starts at `0.0` and adds its terms in
+/// ascending row order, exactly as a one-row-at-a-time rank-one update does.
+pub(crate) fn ridge_normal_equations(
+    z: &[f64],
+    centered: &[f64],
+    n: usize,
+    p: usize,
+) -> (Vec<f64>, Vec<f64>) {
+    let mut ata = vec![0.0f64; p * p];
+    let mut atb = vec![0.0f64; p];
+    let blocks = p.div_ceil(RIDGE_TILE);
+    // One panel, packed column block by column block: block `b` holds the panel's rows
+    // contiguously, `RIDGE_TILE` lanes per row. Lanes past column `p` are never written, so they
+    // stay zero.
+    let mut packed = vec![0.0f64; blocks * RIDGE_PANEL * RIDGE_TILE];
+    for start in (0..n).step_by(RIDGE_PANEL) {
+        let rows = (start + RIDGE_PANEL).min(n) - start;
+        for r in 0..rows {
+            let row = &z[(start + r) * p..(start + r + 1) * p];
+            let yr = centered[start + r];
+            for (sum, &value) in atb.iter_mut().zip(row) {
+                *sum += value * yr;
+            }
+            for (b, lanes) in row.chunks(RIDGE_TILE).enumerate() {
+                packed[(b * RIDGE_PANEL + r) * RIDGE_TILE..][..lanes.len()].copy_from_slice(lanes);
+            }
+        }
+        for bi in 0..blocks {
+            let a = &packed[bi * RIDGE_PANEL * RIDGE_TILE..][..rows * RIDGE_TILE];
+            for bj in bi..blocks {
+                let b = &packed[bj * RIDGE_PANEL * RIDGE_TILE..][..rows * RIDGE_TILE];
+                accumulate_ridge_tile(a, b, &mut ata, p, bi * RIDGE_TILE, bj * RIDGE_TILE);
+            }
+        }
+    }
+    (ata, atb)
+}
+
+/// Adds a packed panel's terms to the Gram tile at `(i0, j0)`, each entry onto its own running
+/// sum, one term per row in ascending order. Lanes past column `p` accumulate zeros and are not
+/// stored.
+fn accumulate_ridge_tile(a: &[f64], b: &[f64], ata: &mut [f64], p: usize, i0: usize, j0: usize) {
+    let (height, width) = (RIDGE_TILE.min(p - i0), RIDGE_TILE.min(p - j0));
+    let mut acc = [[0.0f64; RIDGE_TILE]; RIDGE_TILE];
+    for (ii, sums) in acc.iter_mut().enumerate().take(height) {
+        sums[..width].copy_from_slice(&ata[(i0 + ii) * p + j0..][..width]);
+    }
+    for (zi, zj) in a.chunks_exact(RIDGE_TILE).zip(b.chunks_exact(RIDGE_TILE)) {
+        let zj: [f64; RIDGE_TILE] = zj.try_into().expect("a whole tile row");
+        for (sums, &x) in acc.iter_mut().zip(zi) {
+            for (sum, y) in sums.iter_mut().zip(zj) {
+                *sum += x * y;
+            }
+        }
+    }
+    for (ii, sums) in acc.iter().enumerate().take(height) {
+        ata[(i0 + ii) * p + j0..][..width].copy_from_slice(&sums[..width]);
+    }
 }
 
 /// In-place Cholesky solve of the SPD system A w = b (A carries λ ≥ 1e-3 on the
