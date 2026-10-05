@@ -1,21 +1,24 @@
 # Search ablation protocol
 
 Internal protocol for kernel2 work item WP-0.4. It says how to compare two configurations of the
-shipping search at an equal evaluation budget, what each reported number means, how the
+search at an equal evaluation budget, what each reported number means, how the
 promotion gates are evaluated, and which data the comparison may never touch. The harness is
 `jope-bench ablation` (`crates/jope-bench/src/ablation.rs`).
 
 ## What is compared
 
-A *profile* is a named configuration of the shipping in-process search,
-`jope_pipeline::search::run_cuts_with`, the search `jope pipeline run` uses. Profile A is the
-reference and profile B the candidate. Both run on the same datasets, the same cuts, the same
-seeds and the same evaluation budget. Profile B is always executed, never copied from profile A,
-so an A=A comparison runs every search twice.
+A *profile* is a named configuration of an in-process search that `jope pipeline run` runs:
+the shipping search `jope_pipeline::search::run_cuts_with`, or the opt-in kernel2 route
+`jope_pipeline::kernel2::search::run_cut`. Profile A is the reference and profile B the
+candidate. Both run on the same datasets, the same cuts, the same seeds and the same evaluation
+budget. Profile B is always executed, never copied from profile A, so an A=A comparison runs
+every search twice.
 
 | Profile | What it runs |
 |---|---|
 | `legacy` | The shipping search unchanged: `SearchOptions::new(budget, seed)`, one worker, one island, candidates from the v1 canonical-pipeline wrappers of `feat_math::evolve` (12 candidates per round, the best 4 carried with their scores, at most 4 transforms). |
+| `kernel2-baseline` | The kernel2 route as `jope pipeline run --search-profile kernel2-baseline` runs it: `run_cut` with the shipped revision-3 profile on one cut, one thread, one island, fault policy `reject-hard` (the route's default) and the comparison's refinement allowance (`--refine-top-k`, `--refine-trials`). |
+| `kernel2-experimental` | The same route with the shipped `kernel2-experimental` profile. |
 
 Later kernel2 work adds profiles as new `Profile` variants. The plan's name for the current
 search, `legacy-v2`, is this `legacy` profile: the shipping search calls the v1 wrappers, not the
@@ -54,6 +57,55 @@ already used by `deploy/ci/check.sh`, `emitters.sh` and `e2e-smoke.sh`. Record t
 `body.datasets` (id, dataset hash, `train.csv` sha256, rows, features, partition sha256) with any
 result.
 
+## Paired kernel2 ablation
+
+A kernel2 comparison, two kernel2 configurations or a kernel2 profile against `legacy`, runs both
+arms on the same datasets, fold seed, seeds and `--evaluations`, on one cut (the route searches
+one cut, as `jope pipeline run` does), with one thread, one island and the route's default fault
+policy, and with one explicit refinement allowance for every kernel2 search:
+
+```sh
+cargo run --release -p jope-bench -- ablation \
+  --profile-a kernel2-baseline --profile-b kernel2-baseline \
+  --refine-top-k 1 --refine-trials 4 \
+  --datasets datasets/test --seeds 1,2,3,4,5 --evaluations 64 --cuts 1 \
+  --jobs 8 --out <evidence dir>/ablation.json
+```
+
+`--refine-top-k` (0 to 4) and `--refine-trials` (at most `--evaluations`) are required when either
+profile is a kernel2 profile and refused otherwise, and `--cuts` other than 1 is refused, as
+`jope pipeline run` refuses them. Refinement trials are charged to the same per-cut budget as
+measurements. Each kernel2 profile record (`body.protocol.profile_a.kernel2`) states the shipped
+profile's revision and sha256, the fault policy, the allowance and the selection rule. A kernel2
+search that the seconds bound ended, or whose active time overran it, is refused as a legacy one
+is. With `--scratch`, each kernel2 search also keeps the route's own evidence
+(`search/cut-0/{search,observations,refinements}.json`).
+
+**A kernel2 comparison is not accuracy evidence unless it is reported as paired wins, ties and
+losses beside both medians.** The harness writes them to `body.paired` (definitions
+`kernel2-ablation-paired.v1`). Runs pair by (dataset, seed) on `body.runs[].metrics.M1`. B wins
+a pair when its M1 RMSE is lower, loses when it is higher, and ties only when the two are
+bit-equal. For the comparison overall and for each dataset, `body.paired` gives:
+- W/T/L;
+- the median M1 RMSE of A and of B;
+- the median and mean paired difference (B minus A);
+- the pair with the largest gain, and the mean difference without it;
+- a two-sided exact sign test of wins against losses, ties left out (1 when every pair ties);
+- how many pairs keep the same M1 program (`program_sha256`).
+
+Every report of the result (PR body, commit message, receipt, ledger) quotes:
+- the overall and per-dataset W/T/L with both medians;
+- the sign test;
+- the same-winner count;
+- each slot's wall seconds from `timing.paired` (and `timing.runs[].search_seconds` per run).
+
+An equal evaluation budget is not equal compute: a refinement trial and a measurement take
+different time. No median is reported without its W/T/L. G-A's per-dataset means against
+σ_seed stay in `body.gates`; they do not replace the paired counts. Results on synthetic or
+fixture data are labelled as such and qualify nothing. With A=A every pair ties and the body
+replays byte for byte. A legacy-only comparison has neither `body.paired` nor `timing.paired`,
+and its document is unchanged.
+
 ## Data that may never be used
 
 - **Outer test folds.** The harness reads `train.csv` only, through `jope_bench::load`, which
@@ -89,11 +141,12 @@ One `jope.bench-ablation/v1` JSON document:
 |---|---|
 | `body.protocol` | Definitions version, both profiles, seeds, budget, cuts, folds and fold seed |
 | `body.datasets` | One record per dataset |
-| `body.runs` | One record per (profile slot, dataset, seed): the metrics and each cut's accounting (generations, evaluations, stop reasons) |
+| `body.runs` | One record per (profile slot, dataset, seed): the metrics and each cut's accounting (generations, evaluations, stop reasons). A kernel2 cut also has `kernel2`: measurements, objective and rejected refinement trials, and arm draws; its one phase's stop reason is `exploration_stopped_by`, and `comparison_stopped_by` is `not_requested` |
 | `body.aggregates` | Per profile: per-dataset means over seeds with the seed standard deviation of M1, and the mean over datasets |
 | `body.gates` | G-A to G-E, each with a status, whether every clause could be evaluated, and its clauses |
 | `body.verdict` | `no difference` when every profile-B run record equals its profile-A record, otherwise `difference` |
-| `timing` | Wall seconds, per-run M10, mean M10 per profile and G-D's wall-time clause |
+| `body.paired` | Kernel2 comparisons only: the paired comparison of M1, overall and per dataset (see "Paired kernel2 ablation") |
+| `timing` | Wall seconds, per-run M10, mean M10 per profile and G-D's wall-time clause; for a kernel2 comparison also `paired`: each slot's total and median search seconds and the B/A ratio |
 | `provenance` | Tool version, jobs, dataset paths, time |
 
 ## Metrics
@@ -116,6 +169,11 @@ evaluation order; the cross-cut comparison re-measurements are left out.
 | M9 | Share of new tokens among the best programs: `null` until a profile adds tokens |
 | M10 | Wall seconds per evaluation of the search. In `timing`, never in the body |
 | M11 | Measured exploration candidates derived from parents (the search's `mutate` and `crossover` origins), per exploration evaluation. A cut never fits a program twice, so every one is unique |
+
+A kernel2 run fills the same fields. Its ranking is the route's own: the fault-aware validation
+score, with each program once. So M1 is the program the route publishes, measured on the one cut.
+The route has no comparison phase, so M3, M6 and M11 count every measurement of the cut,
+refinement children included. M11's derived origins stay `mutate` and `crossover`.
 
 ## Gates
 
@@ -158,9 +216,27 @@ when it is not set; never under the system temporary directory.
     --run-ignored only \
     -E 'test(=ablation::tests::ablation_heavy_a_equals_a_on_every_d5_regression_dataset)'
   ```
+- `ablation::tests::ablation_kernel2_a_equals_a_replays_byte_for_byte` (PR tier, seconds):
+  kernel2-baseline A=A on the same two datasets with seed 6 at 16 evaluations, with
+  `--refine-top-k 1 --refine-trials 2`, twice with different job counts. The bodies are
+  byte-identical. M1 is the route's own winner. The budget accounting adds up, and the paired
+  comparison is all ties with p = 1. Seed 5 is left out because it draws 1000-round boosted-tree
+  heads, which take 13 to 20 seconds a search in a debug build.
+- `ablation::tests::ablation_legacy_document_is_unchanged_by_the_kernel2_arms`: the legacy
+  profile record and cut record bytes, and the key sets of a legacy-only run's body, runs and
+  timing, are what they were before the kernel2 arms.
+- `ablation::tests::ablation_kernel2_refuses_what_the_pipeline_refuses`: the refusals listed
+  above, from the library and from the command line.
+- `ablation::tests::ablation_paired_summary_arithmetic` and
+  `ablation::tests::ablation_sign_test_matches_the_exact_binomial_tail`: the paired arithmetic on
+  a synthetic input, including ties, an all-tie input and the bit-equality rule, and the sign
+  test against the exact binomial tail.
+- `ablation::tests::ablation_kernel2_text_passes_the_shipped_text_lint`: the new option names,
+  help, ids and document keys pass `lint_shipped_text`.
 
 ## Adding a profile
 
-Append a variant to `Profile` with its id, its record and its call into the search. Never change
-what `legacy` runs: it is the reference every later comparison is made against. Record the
-profile's id and its definition's sha256 in any receipt that uses it.
+Append a variant to `Profile` with its id and its record, and route it in `run_one`. A kernel2
+configuration adds a variant that `kernel2_options` builds. Never change what `legacy` runs: it
+is the reference every later comparison is made against. Record the profile's id and its
+definition's sha256 in any receipt that uses it.
