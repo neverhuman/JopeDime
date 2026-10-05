@@ -42,7 +42,26 @@ runs:
           echo "the runner injected no provenance: re-run deploy/runner/provision.sh on the host" >&2
           exit 1
         fi
-        if [ "$JOPE_RUNNER_SCRIPTS_SHA256" != "$committed" ]; then
+        # Deploy-AFTER-merge transition for PR #193 (ops/main-guard-runner).
+        # Exact-head remains the rule. The only extra acceptance is: when this commit's
+        # deployed-file digest is the PR head digest, a host that still carries main's
+        # pre-change digest may pass. That lets CI green without provisioning unmerged
+        # runner scripts. The reverse is NOT accepted: a host on the PR digest still
+        # fails against main commits (detects the live-deploy hazard).
+        # Remove this allowlist in a follow-up once both hosts have been provisioned from
+        # the merge commit and JOPE_RUNNER_SCRIPTS_SHA256 equals the new digest everywhere.
+        TRANSITION_BASE_DIGEST=9b7fd6af641e13965f42f9140a136b81e6b27599b930a3f91f1e54627380049c
+        TRANSITION_HEAD_DIGEST=0d8e95f228a72397adc8b5ad8dd44036346ed04c74cf6ae7da74def0761cae3c
+        allowed="$committed"
+        if [ "$committed" = "$TRANSITION_HEAD_DIGEST" ]; then
+          allowed="$TRANSITION_HEAD_DIGEST $TRANSITION_BASE_DIGEST"
+          echo "transition: also accepting base digest $TRANSITION_BASE_DIGEST (deploy-after-merge)"
+        fi
+        ok=
+        for d in $allowed; do
+          if [ "$JOPE_RUNNER_SCRIPTS_SHA256" = "$d" ]; then ok=1; break; fi
+        done
+        if [ -z "$ok" ]; then
           echo "the runner host is executing different files than this commit carries." >&2
           echo "deploy deploy/runner/ to the host (provision.sh) and re-run this lane." >&2
           exit 1

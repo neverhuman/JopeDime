@@ -13,10 +13,13 @@ Branch protection remains procedural until the API readback establishes enforcem
 | xbabe2 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full |
 | xbabe2 | guard / jope-main-guard | 8 GiB, 16 CPUs, no swap | main-guard |
 
-The guard slot executes only main-guard (owner-approved 2026-10-04), so the post-merge guard
-verdict no longer queues behind a full-main run. Its admission hook rejects every other workflow,
-and it does not take the exclusive CPU lock. No other JopeDime runner role is admitted on
-xbabe2. `common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
+The guard slot executes only main-guard (owner-approved 2026-10-04, OWNER_DIRECTIVES D3.5), so
+the post-merge guard verdict no longer queues behind a full-main run. Its admission hook rejects
+every other workflow, and it does not take the exclusive CPU lock — so a ≤16-CPU/8 GiB guard
+container can run during an ASM exclusive allocation on xbabe2 (owner acknowledgement required).
+With `jope-main-guard` as the only label, a down guard slot leaves every main-guard verdict queued
+until GitHub's timeout (no fallback to `jope-full-cpu`). No other JopeDime runner role is admitted
+on xbabe2. `common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
 GPU and kernel roles. Their live qualification and persistent runner migration remain deferred.
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
 
@@ -57,9 +60,21 @@ From the reviewed checkout, `sudo deploy/runner/provision.sh --skip-sdk` builds 
 creates the role-specific volumes, installs host files/units and writes
 `/var/lib/jope-runner/image.json`. It enables no listener. Initial SDK provisioning follows its
 pinned receipt; the CPU delivery reuses the existing SDK read-only. Re-run provisioning after
-any image rebuild. Start only ci/ci2 timers on xbabe1 and only full and guard on xbabe2; keep
-retired timers disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
+any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2 until a reviewed
+merge that adds the guard lane; enable `jope-runner@guard.timer` only after that merge is on
+main and both hosts have been re-provisioned from the merge commit. Keep retired timers disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
 operational delivery. `--skip-image` requires an existing correctly built image.
+
+## Deploy-after-merge for runner-script digests (PR #193)
+
+Changing any `JOPE_RUNNER_DEPLOYED` file changes the provenance digest. Do **not** provision
+hosts from an unmerged head: that breaks every other open PR's exact-head CI (and main's) for
+as long as the host carries the unmerged digest. Owner path: merge first, then provision both
+xbabe1 and xbabe2 from the merge commit (`provision.sh --skip-sdk --skip-image`), then enable
+`jope-runner@guard.timer` on xbabe2 only. Until that post-merge provision, PR CI may accept the
+previous main digest as a one-way transition (see `.github/actions/runner-provenance`); main
+commits still require an exact match, so a host left on the unmerged digest fails main CI on
+purpose. Remove the transition allowlist after both hosts match the new digest.
 
 The provenance action compares all `JOPE_RUNNER_DEPLOYED` bytes with the source commit, checks
 the image entrypoint and provisioned image identity, and verifies the immutable policy and
