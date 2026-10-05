@@ -22,6 +22,8 @@ def verify(policy, memory, cpu, swap, devices):
         domain, gib = "pr", 16
     elif role == ("xbabe2", "full"):
         domain, gib = "main", 48
+    elif role == ("xbabe2", "guard"):
+        domain, gib = "main", 8
     else:
         raise ValueError("unapproved host/lane")
     if policy != dict(

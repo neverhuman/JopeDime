@@ -28,7 +28,7 @@ for tool in docker jq curl unzip sha256sum systemctl; do
 done
 case $JOPE_RUNNER_HOST in
   xbabe1) lanes=(ci ci2) ;;
-  xbabe2) lanes=(full) ;;
+  xbabe2) lanes=(full guard) ;;
   *) echo "unapproved CPU runner host" >&2; exit 2 ;;
 esac
 JOPE_VOLUMES=(jope-sdk)
@@ -120,4 +120,4 @@ jq -n --arg image "$JOPE_RUNNER_IMAGE" --arg image_id "$image_id" --arg scripts_
 chmod 0640 "$JOPE_RUNNER_STATE/image.json"
 echo "recorded $JOPE_RUNNER_STATE/image.json: image_id=$image_id scripts_sha256=$scripts_sha"
 
-echo "installed units: jope-runner@{ci,ci2,full}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"
+echo "installed units: jope-runner@{ci,ci2,full,guard}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"

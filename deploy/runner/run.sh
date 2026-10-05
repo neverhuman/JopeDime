@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/runner/run.sh <ci|ci2|full> — start ONE ephemeral runner job container (called by
+# deploy/runner/run.sh <ci|ci2|full|guard> — start ONE ephemeral runner job container (called by
 # jope-runner@<lane>.service, as root, on the timer's cadence).
 #
 #   1. disk guard (refuse under 50 GB free);
@@ -17,7 +17,7 @@ set -euo pipefail
 # shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-lane=${1:?usage: run.sh <ci|ci2|full>}
+lane=${1:?usage: run.sh <ci|ci2|full|guard>}
 jope_runner_role "$JOPE_RUNNER_HOST" "$lane"
 labels=$(jope_runner_labels "$lane")
 # Refuse unrecorded systemd overrides, including the historical per-instance budget.
