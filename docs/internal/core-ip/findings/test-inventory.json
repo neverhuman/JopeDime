@@ -141,6 +141,10 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "python:deploy/dl-trainonly/test_contracts.py": {
+      "role": "infrastructure",
+      "reason": "CPU-only offline GPU budget and output custody control conformance; no regression learning or live hardware/storage qualification"
+    },
     "python:python/src/jope/research/test_exact_accept.py": {
       "role": "research",
       "reason": "research script test outside the maintained product surface"
