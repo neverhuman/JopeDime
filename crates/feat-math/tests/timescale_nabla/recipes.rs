@@ -511,7 +511,7 @@ fn prediction_checkpoint_budget_refuses_atomically_in_all_routes() {
                 "initial=model.state_bytes()",
                 r#"
 for size in [9*1024*1024,3*1024*1024]:
- try: model.predict([OrderedRow('q'*size,0.5,[1.,2.])])
+ try: model.predict([OrderedRow((1,'q'*size),0.5,[1.,2.])])
  except OrderedError as error: assert str(error)=='resource' and error.faults==0
  else: raise AssertionError('oversized continuation accepted')
  assert model.state_bytes()==initial
