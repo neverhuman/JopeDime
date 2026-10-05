@@ -19,13 +19,13 @@ pub(crate) fn io_source(language: ScalarLanguage, existing: &str) -> Result<Stri
         ScalarLanguage::Cpp17 => &[], // Existing C ABI already passes raw cells and explicit dimensions.
     };
     let mut source = existing.to_owned();
-    for &(old, new) in replacements {
-        if source.matches(old).count() != 1 {
+    for &(from, to) in replacements {
+        if source.matches(from).count() != 1 {
             return Err(Error::Unsupported(
                 "scalar recipe IO template boundary".into(),
             ));
         }
-        source = source.replacen(old, new, 1);
+        source = source.replacen(from, to, 1);
     }
     Ok(source)
 }

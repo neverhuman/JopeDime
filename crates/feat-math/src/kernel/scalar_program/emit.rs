@@ -310,7 +310,8 @@ pub(crate) fn emit_value_function(
                 ScalarLanguage::Cpp17 => format!("    const auto value{index}={call};faults|=value{index}.second;registers[{index}]=value{index}.first;\n"),
             });
         } else {
-            let value = legacy_value(instruction, language).expect("admitted legacy instruction");
+            let value =
+                legacy_value(instruction, language).expect("admitted version-one instruction");
             let end = if language == ScalarLanguage::Python {
                 "\n"
             } else {

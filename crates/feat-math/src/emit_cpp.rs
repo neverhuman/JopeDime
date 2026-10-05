@@ -81,7 +81,9 @@ fn emit_cpp_inner(
     }
 
     if scalar_emit::raw_input(plan) && opts.math_kernel == MathKernel::Portable {
-        return Err(vec!["scalar-v2 old operations require PlatformLibm".into()]);
+        return Err(vec![
+            "scalar-v2 retained operations require PlatformLibm".into()
+        ]);
     }
     let mut sections: Vec<String> = Vec::new();
     sections.push(PREAMBLE.to_string());
