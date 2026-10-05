@@ -20,9 +20,11 @@
 //! - **Non-finite operands.** Any node other than a selector with a non-finite operand has tangent
 //!   0.
 //!
-//! A row reports `nonsmooth` when a tie, an infinite one-sided slope or a non-finite operand was
-//! differentiated. A term whose coefficient is an exact zero is skipped, so `0 * inf` never makes a
-//! NaN lane.
+//! A row reports `nonsmooth` when a tie, an infinite one-sided slope, a non-finite operand or an
+//! overflowing `^` slope was differentiated. A term whose coefficient is an exact zero is skipped,
+//! so a zero coefficient never meets an infinite lane. In `^`, a saturated exponent's term is an
+//! exact zero even where `v ln a` overflows. A base slope `e a^(e-1)` that overflows is taken lane
+//! by lane in the ratio form `(e v) (a' / a)`, and a lane that is still not finite is 0.
 
 use super::*;
 use crate::math_expr::fault::Collect;
@@ -349,7 +351,8 @@ fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> La
     if exponent_factor == 0.5 {
         *nonsmooth = true;
     }
-    // e * a^(e - 1), never e * v / a, which underflows for tiny a.
+    // e * a^(e - 1) keeps a tiny base's slope where v / a would lose it to underflow (e > 1). For
+    // a tiny base and e < 1 it overflows instead, and `base_lanes` takes the ratio form.
     let base_slope = |a: f64| if e == 0.0 { 0.0 } else { e * a.powf(e - 1.0) };
     let (by_base, by_exponent) = if a.v > 0.0 {
         (base_slope(a.v), v * a.v.ln())
@@ -378,7 +381,47 @@ fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> La
         // NaN, with POW_NONFINITE.
         (0.0, 0.0)
     };
-    comb(p, by_base, &a.d, exponent_factor * by_exponent, &b.d)
+    // A saturated exponent is a constant, so its term is an exact zero even where v ln a
+    // overflows.
+    let by_exponent = if exponent_factor == 0.0 {
+        0.0
+    } else {
+        exponent_factor * by_exponent
+    };
+    let by_exponent = if by_exponent.is_finite() {
+        by_exponent
+    } else {
+        *nonsmooth = true;
+        0.0
+    };
+    comb(
+        p,
+        1.0,
+        &base_lanes(p, by_base, e * v, a, nonsmooth),
+        by_exponent,
+        &b.d,
+    )
+}
+
+/// `by_base * a'` lane by lane. When `by_base` overflows, each lane is the ratio form
+/// `ev * (a'_k / a)` of the same slope, with `ev = e * v`: a lane whose `a'_k` is 0 stays 0, and a
+/// lane that is still not finite is 0 and marks the row nonsmooth.
+fn base_lanes(p: usize, by_base: f64, ev: f64, a: &Dual, nonsmooth: &mut bool) -> Lanes {
+    if by_base.is_finite() {
+        return scale(p, by_base, &a.d);
+    }
+    let mut out = ZERO;
+    for (lane, d) in out.iter_mut().zip(&a.d).take(p) {
+        if *d != 0.0 {
+            let ratio = ev * (d / a.v);
+            if ratio.is_finite() {
+                *lane = ratio;
+            } else {
+                *nonsmooth = true;
+            }
+        }
+    }
+    out
 }
 
 fn call_tangent(p: usize, func: Func, operands: &[&Dual], v: f64, nonsmooth: &mut bool) -> Lanes {
@@ -432,6 +475,8 @@ fn call_tangent(p: usize, func: Func, operands: &[&Dual], v: f64, nonsmooth: &mu
 /// The derivative of the evaluator's `erf` (Abramowitz and Stegun 7.1.26, the same constants),
 /// valid at 0: with `u = |v|`, `t = 1 / (1 + p u)`, `P(t) = a1 t + … + a5 t⁵` and `E = e^(-u²)`,
 /// the value is `sign(v) (1 - P(t) E)`, whose slope is `E (p t² P'(t) + 2 u P(t))` on both sides.
+/// The coefficients sum to `1 - 1e-9`, so the value itself steps by about `2e-9` across 0; this
+/// slope ignores that step and does not mark the row nonsmooth for it.
 fn erf_slope(v: f64) -> f64 {
     let u = v.abs();
     let t = 1.0 / (1.0 + 0.3275911 * u);
@@ -657,7 +702,7 @@ mod tests {
             let program = Program::lower(&expression.root, &sites).unwrap();
             program.row(&theta_of(&expression, &sites), &[0.0, 3.0])
         };
-        // erf'(0) = p P'(1), 6.4e-6 from 2/sqrt(pi); asinh'(0) = 1.
+        // erf'(0) = p P'(1), 7.19e-6 above 2/sqrt(pi); asinh'(0) = 1.
         let erf = at_zero("erf(0.0*c1+0.0)");
         assert!(
             (erf.tangent[1] - 1.128_386_358).abs() < 1e-9,
@@ -719,6 +764,40 @@ mod tests {
                 dual.tangent
             );
         }
+    }
+
+    #[test]
+    fn overflowing_pow_slopes_leave_finite_lanes() {
+        let at = |source: &str, row: &[f64]| {
+            let (expression, sites) = sites_of(source);
+            let program = Program::lower(&expression.root, &sites).unwrap();
+            let dual = program.row(&theta_of(&expression, &sites), row);
+            assert_eq!(
+                dual.value.to_bits(),
+                native(&expression, row).0.to_bits(),
+                "{source}"
+            );
+            dual
+        };
+        // A saturated exponent (9 > 8) is a constant, so its lane is exactly 0, although
+        // v ln a = 6.6e307 * 88.6 overflows; 0 * inf made a NaN lane before.
+        let saturated = at("log(c0^9.0)", &[3e38]);
+        assert_eq!(saturated.tangent[0], 0.0);
+        assert!(!saturated.nonsmooth);
+        // Inside the clamp v ln a overflows (v = 1.3e308), although log(c0^e) has the finite slope
+        // ln c0 = 89.8 that forward mode cannot carry through v: the lane is 0 and the row is
+        // nonsmooth, never inf.
+        let overflowed = at("log(c0^7.9)", &[1e39]);
+        assert_eq!(overflowed.tangent[0], 0.0);
+        assert!(overflowed.nonsmooth);
+        // A tiny base with e < 1: e a^(e-1) overflows to -inf, and the ratio form gives the exact
+        // slope e v (a'/a); the base's zero lane for the exponent no longer turns NaN.
+        let tiny = at("(1.0*c0)^(-0.03)", &[1e-300]);
+        let v = tiny.value;
+        assert!(v > 1e8 && v < 1e10, "{v}");
+        assert_eq!(tiny.tangent[0], -0.03 * v);
+        assert_eq!(tiny.tangent[1], v * 1e-300f64.ln());
+        assert!(!tiny.nonsmooth);
     }
 
     #[test]
