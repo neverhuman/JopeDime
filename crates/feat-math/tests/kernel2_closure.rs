@@ -1081,3 +1081,6 @@ mod scalar_eec_v2;
 
 #[path = "scalar_v2/producer_utility.rs"]
 mod scalar_utility_v2;
+
+#[path = "scalar_v2/producer_ip.rs"]
+mod scalar_artifact_ip_v2;
