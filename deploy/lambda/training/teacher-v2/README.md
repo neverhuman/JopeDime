@@ -25,6 +25,15 @@ mutant files live under the reused target; tracked sources and historical copies
 are untouched. Hosted hygiene runs the budget tests, both standalone Rust
 workspaces through the existing Lambda lane, and the mutation qualifier.
 
+Seen and resume files use the same terminal-history validator. It checks the
+schema, context, selection protocol, program, island and progress fields before
+admitting a record; completed records also require valid finite CV products.
+An import refuses repeated terminal program results, including failed and timeout
+results. Replay commits the complete staged engine only after reselection succeeds,
+so a refused import preserves populations, counters, seen state and the RNG.
+The initial seen cache does not count as completed work. This structural import
+does not qualify exact interrupted sampler or optimizer continuation.
+
 `s1_budget.py --plan PLAN --plan-sha256 SHA --ledger LEDGER [--request REQUEST]`
 checks pinned plan bytes and reserves a slot or reports current accounting.
 Add `--initialize` exactly once when creating a new admitted ledger. Resume
@@ -36,7 +45,8 @@ Plan fields are `contexts` (all 4,873 full SHA256 identities), `engine_sha256`,
 `worker_sha256` and `input_manifest_sha256`. Reservation fields are `attempt_id`,
 `context`, `ordinal` and `program`. Each context has ordinals 0..1247. Trusted
 producer authentication, staged rights exclusions, actual worker dispatch,
-resource yielding and shutdown/recovery need runtime qualification before G22.
+resource yielding and shutdown/recovery need runtime qualification before any
+actual S1 evaluation.
 The tools do not launch training, GPU jobs, Lambda, or S3 writes.
 
 ## Historical operation instructions

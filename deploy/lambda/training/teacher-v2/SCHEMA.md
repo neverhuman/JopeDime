@@ -42,6 +42,19 @@ state, old test-derived fitness or signatures can influence future proposals. Th
 trusted controller must also bind actual input/source bytes; this tag by itself
 is not provenance authentication.
 
+Seen and replay inputs must contain complete terminal records with schema
+`jope.island-scored-evaluation/s1-v1`, status `completed`, `failed` or `timeout`,
+a typed program, an in-range island and nonoverflowing birth/draw counters.
+Completed records require the finite CV fitness and semantic products, roots and
+matching origin island emitted by live admission. Unknown or missing status,
+incomplete fields and duplicate terminal program results refuse. Validation and
+reselection complete before the staged import replaces existing state, including
+its RNG and counters. Failures and timeouts restore progress/exclusion state but
+do not increment measured completions. The initial seen cache is separate from
+the set of terminal results already applied to this engine. Attempt-level retries
+and failures remain in the separate budget ledger; history import cannot issue
+extra work allowance or establish exact sampler/optimizer resume.
+
 `s1_budget.py` carries channel 4 into tracked code: all contexts continue through
 18 fixed equal generations without consulting HWM/test fields. A frozen plan
 pins all 4,873 context dispositions, worker, engine and input manifest. Slots
