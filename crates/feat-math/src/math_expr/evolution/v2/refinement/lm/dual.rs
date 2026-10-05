@@ -19,6 +19,11 @@
 //! - **Large arguments.** Where `v²` overflows (`|v|` above about 1.34e154), `atan` divides by `v`
 //!   twice, the same slope without the square. Where `q b'` overflows in `/`, the lane is retaken
 //!   as `a'/b - q (b'/b)`.
+//! - **Small numerators.** Where `q b'` and `a'` both lie below the smallest normal number, `/`
+//!   forms `a' - q b'` at 2^600 times its size (an exact scaling) and scales the quotient back,
+//!   so underflow in `q b'` does not lose a slope that the division by a small `b` brings back
+//!   into range. A slope that is itself below the normal range keeps only a subnormal's bits, in
+//!   this rule as in every other.
 //! - **Infinite one-sided slopes.** `sqrt` at 0 and `0 ^ e` with `0 < e < 1` have tangent 0.
 //! - **Steps.** `step`, `sign`, `floor` and `round` have tangent 0.
 //! - **Non-finite operands.** Any node other than a selector with a non-finite operand has tangent
@@ -43,6 +48,10 @@ pub(super) const MAX_PARAMS: usize = 16;
 pub(super) type Lanes = [f64; MAX_PARAMS];
 
 const ZERO: Lanes = [0.0; MAX_PARAMS];
+
+/// 2^600 and 2^-600. Multiplying by either is exact while the product stays a normal number.
+const SCALE_UP: f64 = f64::from_bits((1023 + 600) << 52);
+const SCALE_DOWN: f64 = f64::from_bits((1023 - 600) << 52);
 
 #[derive(Clone, Copy, Debug)]
 enum Op {
@@ -348,11 +357,23 @@ fn binary_tangent(p: usize, op: BinOp, a: &Dual, b: &Dual, v: f64, nonsmooth: &m
         BinOp::Div if b.v.abs() < 1e-12 => ZERO,
         BinOp::Div => {
             let mut out = divide(p, &comb(p, 1.0, &a.d, -v, &b.d), b.v);
-            // With a large b, q b' can overflow where the slope itself is moderate; a'/b - q (b'/b)
-            // is the same slope without that product. A lane still not finite is passed on.
             for (k, lane) in out.iter_mut().enumerate().take(p) {
                 if !lane.is_finite() {
+                    // With a large b, q b' can overflow where the slope itself is moderate;
+                    // a'/b - q (b'/b) is the same slope without that product. A lane still not
+                    // finite is passed on.
                     *lane = a.d[k] / b.v - v * (b.d[k] / b.v);
+                } else if v != 0.0
+                    && b.d[k] != 0.0
+                    && (v * b.d[k]).abs() < f64::MIN_POSITIVE
+                    && a.d[k].abs() < f64::MIN_POSITIVE
+                {
+                    // Below the smallest normal number q b' keeps fewer bits, or none, and a
+                    // small b would scale the loss up. Power-of-two scaling is exact, so the
+                    // numerator is formed in the normal range, and only the final scaling back
+                    // can round to a subnormal. (A site lies in a or in b, so a' is 0 here; the
+                    // bound on it keeps a' 2^600 finite regardless.)
+                    *lane = (a.d[k] * SCALE_UP - v * (b.d[k] * SCALE_UP)) / b.v * SCALE_DOWN;
                 }
             }
             out
@@ -939,6 +960,41 @@ mod tests {
                 "{source}: {slope} against {expected}"
             );
             assert!(!dual.nonsmooth, "{source}");
+        }
+    }
+
+    /// Independent review of #195, R5: in `(c0/(θ c1)) c2` at θ = 1e13 with c1 = 1e-24, b = 1e-11
+    /// and b' = 1e-24, so q b' fell below the smallest normal number before the division by b
+    /// scaled it back up. On the reviewer's row it rounded to 0, a silent zero lane on a smooth
+    /// row; on the second it kept about 18 bits (a relative error of 1.3e-6). The slope is
+    /// -value/θ.
+    #[test]
+    fn division_numerators_that_underflow_keep_their_slope() {
+        assert_eq!(SCALE_UP, 2f64.powi(600));
+        assert_eq!(SCALE_UP * SCALE_DOWN, 1.0);
+        let (expression, sites) = sites_of("(c0/(1e13*c1))*c2");
+        let program = Program::lower(&expression.root, &sites).unwrap();
+        let theta = theta_of(&expression, &sites);
+        // Each row with the relative tolerance its intermediate slope -q/θ allows: on the first
+        // row that slope is about -1e-313, a subnormal with about 34 bits.
+        for (row, tolerance) in [
+            ([1e-311, 1e-24, 1e308], 1e-9),
+            ([1e-305, 1e-24, 1e300], 1e-14),
+        ] {
+            let dual = program.row(&theta, &row);
+            let (value, faults) = native(&expression, &row);
+            assert_eq!(dual.value.to_bits(), value.to_bits(), "{row:?}");
+            assert!(
+                value.is_finite() && faults.is_empty(),
+                "{row:?}: {value} {faults:?}"
+            );
+            let expected = -value / theta[0];
+            let slope = dual.tangent[0];
+            assert!(
+                (slope - expected).abs() <= tolerance * expected.abs(),
+                "{row:?}: {slope} against {expected}"
+            );
+            assert!(!dual.nonsmooth, "{row:?}");
         }
     }
 
