@@ -83,8 +83,28 @@ pub(super) fn admit_source(source: &str) -> Result<()> {
 impl ScalarModel {
     pub fn emit_recipe(&self, language: ScalarLanguage) -> Result<String> {
         self.validate()?;
-        self.program()
-            .emit_recipe(language, self.carrier(), self.input_width(), self.lambda())
+        let source = self.program().emit_recipe(
+            language,
+            self.carrier(),
+            self.input_width(),
+            self.lambda(),
+        )?;
+        match self.producer_profile() {
+            None => Ok(source),
+            Some(producer) => {
+                let marker = if language == ScalarLanguage::Python {
+                    "#"
+                } else {
+                    "//"
+                };
+                let source = format!(
+                    "{marker} scalar producer-profile format=3 min-reader=3 sha256={}\n{source}",
+                    producer.sha256()
+                );
+                admit_source(&source)?;
+                Ok(source)
+            }
+        }
     }
 }
 
