@@ -60,12 +60,11 @@ impl DifferenceProgram {
     /// The generation profile admits only whole shapes covered by the recipes.
     /// Decoding remains wider so unsupported stored programs can still round-trip.
     pub fn validate_recipe_closure(&self) -> VersionResult<()> {
-        validate_fit_closure(self.downstream())?;
-        Ok(())
+        self.model_size_base().map(|_| ())
     }
 
     pub fn emit_recipe(&self, language: DifferenceLanguage) -> VersionResult<DifferenceRecipe> {
-        self.validate_recipe_closure()?;
+        let model_base_bytes = self.model_size_base()?;
         let opts = EmitOptions::default();
         let input = serde_json::to_string(self.input_identity())
             .map_err(|e| Error::Syntax(e.to_string()))?;
@@ -108,7 +107,7 @@ impl DifferenceProgram {
             ),
         };
         let model = model
-            .replace("@MODEL_BASE_BYTES@", &self.model_size_base()?.to_string())
+            .replace("@MODEL_BASE_BYTES@", &model_base_bytes.to_string())
             .replace("@ORDER@", &self.config.order.to_string())
             .replace("@STEP@", &step)
             .replace("@WIDTH@", &self.width.to_string())
@@ -127,6 +126,7 @@ impl DifferenceProgram {
     // All variable-size fields are counted by the generated train API. Use
     // the native envelope for the fixed portion, including profile/bindings.
     fn model_size_base(&self) -> VersionResult<usize> {
+        validate_fit_closure(self.downstream())?;
         let model = self.fit_training(
             &[OrderedRow {
                 group: GroupKey::NumericBits(0),
@@ -138,6 +138,9 @@ impl DifferenceProgram {
             FoldBoundary::new("c", 1, 1)?,
         )?;
         let json = model.to_json()?;
+        // Fixed metadata must also fit the fitted codec before a whole shape
+        // gains export support. A source digest always has 64 ASCII bytes.
+        fitted_codec(&json, &self.identity()?, &"0".repeat(64))?;
         let value: serde_json::Value =
             serde_json::from_str(&json).map_err(|e| Error::Syntax(e.to_string()))?;
         let head = &value["predictor"]["predictor"]
@@ -193,16 +196,7 @@ impl DifferenceModel {
         );
         check_artifact(&source)?;
         let source_sha256 = hash(&source);
-        let codec = serde_json::json!({
-            "schema":FITTED_SCHEMA,"format_version":2,"min_reader_version":2,
-            "required_features":super::program::REQUIRED_FEATURE,
-            "profile":FITTED_PROFILE,"source_sha256":source_sha256,
-            "program_identity":self.program.identity()?,"model_json":model_json
-        })
-        .to_string();
-        if codec.len() > crate::kernel::codec::MAX_BYTES {
-            return Err(Error::Resource("ordered fitted codec bytes".into()).into());
-        }
+        let codec = fitted_codec(&model_json, &self.program.identity()?, &source_sha256)?;
         Ok(DifferenceFittedCpp {
             profile: FITTED_PROFILE,
             source,
@@ -210,6 +204,24 @@ impl DifferenceModel {
             codec,
         })
     }
+}
+
+fn fitted_codec(
+    model_json: &str,
+    program_identity: &str,
+    source_sha256: &str,
+) -> VersionResult<String> {
+    let codec = serde_json::json!({
+        "schema":FITTED_SCHEMA,"format_version":2,"min_reader_version":2,
+        "required_features":super::program::REQUIRED_FEATURE,
+        "profile":FITTED_PROFILE,"source_sha256":source_sha256,
+        "program_identity":program_identity,"model_json":model_json
+    })
+    .to_string();
+    if codec.len() > crate::kernel::codec::MAX_BYTES {
+        return Err(Error::Resource("ordered fitted codec bytes".into()).into());
+    }
+    Ok(codec)
 }
 
 fn check_artifact(source: &str) -> Result<()> {
