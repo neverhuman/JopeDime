@@ -4,7 +4,7 @@ use feat_math::kernel::finite_difference::{
     OrderedRow,
 };
 use feat_math::kernel::ordered_axis::{FoldBoundary, GroupKey, OrderedInputIdentity, TaskMode};
-use feat_math::kernel::wire_v2::{export_report, VersionedModel, VersionedProgram};
+use feat_math::kernel::wire_v2::{export_report, VersionError, VersionedModel, VersionedProgram};
 use feat_math::{kernel::Program, GenomeIr};
 use std::fs;
 use std::path::Path;
@@ -346,6 +346,23 @@ fn fitted_codec_binds_source_profile_program_and_native_continuation() {
     assert_eq!(replay.source, artifact.source);
     assert_eq!(replay.codec, artifact.codec);
     let value: serde_json::Value = serde_json::from_str(&artifact.codec).unwrap();
+    for (field, replacement) in [
+        ("schema", serde_json::json!("unknown")),
+        ("format_version", serde_json::json!(3)),
+        ("min_reader_version", serde_json::json!(3)),
+        ("required_features", serde_json::json!(64 | 128)),
+        ("profile", serde_json::json!("unknown")),
+    ] {
+        let mut unsupported = value.clone();
+        unsupported[field] = replacement;
+        assert!(
+            matches!(
+                DifferenceFittedCpp::from_codec_json(&unsupported.to_string()),
+                Err(VersionError::UnsupportedVersion(_))
+            ),
+            "unsupported {field} must refuse before checkpoint admission"
+        );
+    }
     for (field, replacement) in [
         ("schema", serde_json::json!("unknown")),
         ("min_reader_version", serde_json::json!(3)),
