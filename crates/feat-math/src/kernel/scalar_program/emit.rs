@@ -71,6 +71,12 @@ fn legacy_value(instruction: Instruction, language: ScalarLanguage) -> Option<St
     // fmin/fmax constant folding can choose the other signed zero. This local
     // scalar-v2 comparison preserves that observed contract and v1 source.
     if language == ScalarLanguage::Cpp17 {
+        if let Instruction::Binary(BinOp::Pow, a, b) = instruction {
+            // Clang also propagates constant register values into pow. Volatile
+            // operand loads retain the native runtime kernel without changing
+            // the frozen legacy helper or its exponent clamp.
+            return Some(format!("([](double a,double b){{volatile double base=a;volatile double exponent=b;return m_pow(base,m_clamp(exponent,-8.0,8.0));}})(registers[{a}],registers[{b}])"));
+        }
         if let Instruction::Variable(var @ (Var::RowMin | Var::RowMax)) = instruction {
             return Some(format!(
                 "scalar_row_extrema_v2(raw, {})",

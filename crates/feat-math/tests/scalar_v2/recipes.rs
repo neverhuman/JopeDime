@@ -244,6 +244,26 @@ fn pow_literal_base_cases() -> Vec<RecipeCase> {
         }
     }
     assert_eq!(cases.len(), 16);
+    // Retain the direct reproducing cases first, then make the same literal
+    // Pow operands observable beneath new inverse-link/exponential calls.
+    for (program, carrier, training, labels, probe) in cases.clone() {
+        for id in [19, 21] {
+            let nested = ScalarNode::Call(
+                ScalarFunction::from_versioned_id(2, id).unwrap(),
+                vec![program.ast().clone()],
+            );
+            cases.push((
+                ScalarExpressionProgram::new(nested)
+                    .unwrap()
+                    .with_numerical_policy(program.numerical_policy()),
+                carrier,
+                training.clone(),
+                labels.clone(),
+                probe.clone(),
+            ));
+        }
+    }
+    assert_eq!(cases.len(), 48);
     cases
 }
 
