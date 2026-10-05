@@ -1,0 +1,219 @@
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum OrderedGroup { Numeric(u64), Text(String) }
+
+fn ordered_group(group: OrderedGroup) -> Result<OrderedGroup, &'static str> {
+    match group {
+        OrderedGroup::Numeric(bits) => {
+            let value=f64::from_bits(bits);
+            if !value.is_finite() {return Err("domain");}
+            Ok(OrderedGroup::Numeric(if value==0.0 {0} else {bits}))
+        }
+        OrderedGroup::Text(value) if !value.trim().is_empty() => Ok(OrderedGroup::Text(value)),
+        _ => Err("domain"),
+    }
+}
+
+fn ordered_json_string(value: &str) -> String {
+    let mut out=String::from("\"");
+    for ch in value.chars() {
+        match ch {
+            '"'=>out.push_str("\\\""),'\\'=>out.push_str("\\\\"),
+            '\u{8}'=>out.push_str("\\b"),'\t'=>out.push_str("\\t"),'\n'=>out.push_str("\\n"),
+            '\u{c}'=>out.push_str("\\f"),'\r'=>out.push_str("\\r"),
+            ch if (ch as u32)<32=>out.push_str(&format!("\\u{:04x}",ch as u32)),
+            ch=>out.push(ch),
+        }
+    }
+    out.push('"');out
+}
+fn ordered_write_word(bytes:&mut Vec<u8>,value:u64) {bytes.extend_from_slice(&value.to_le_bytes());}
+fn ordered_write_text(bytes:&mut Vec<u8>,value:&str) {ordered_write_word(bytes,value.len() as u64);bytes.extend_from_slice(value.as_bytes());}
+fn ordered_write_group(bytes:&mut Vec<u8>,group:&OrderedGroup) {
+    match group {OrderedGroup::Numeric(bits)=>{bytes.push(0);ordered_write_word(bytes,*bits);},OrderedGroup::Text(value)=>{bytes.push(1);ordered_write_text(bytes,value);}}
+}
+
+struct OrderedReader<'a> {bytes:&'a [u8],at:usize}
+impl<'a> OrderedReader<'a> {
+    fn new(bytes:&'a [u8])->Result<Self,&'static str> {if bytes.len()>16*1024*1024 {Err("resource")} else {Ok(Self {bytes,at:0})}}
+    fn take(&mut self,n:usize)->Result<&'a [u8],&'static str> {
+        if n>self.bytes.len()-self.at {return Err("syntax");}
+        let out=&self.bytes[self.at..self.at+n];self.at+=n;Ok(out)
+    }
+    fn word(&mut self)->Result<u64,&'static str> {let bytes=self.take(8)?;let mut word=[0u8;8];word.copy_from_slice(bytes);Ok(u64::from_le_bytes(word))}
+    fn usize(&mut self)->Result<usize,&'static str> {let n=self.word()?;if n>usize::MAX as u64 {Err("bounds")} else {Ok(n as usize)}}
+    fn count(&mut self)->Result<usize,&'static str> {let n=self.usize()?;if n>self.bytes.len()-self.at {Err("bounds")} else {Ok(n)}}
+    fn text(&mut self)->Result<String,&'static str> {let n=self.count()?;String::from_utf8(self.take(n)?.to_vec()).map_err(|_|"syntax")}
+    fn group(&mut self)->Result<OrderedGroup,&'static str> {
+        let group=match self.take(1)?[0] {0=>OrderedGroup::Numeric(self.word()?),1=>OrderedGroup::Text(self.text()?),_=>return Err("unsupported")};
+        if ordered_group(group.clone())?!=group {return Err("domain");}Ok(group)
+    }
+    fn finish(self)->Result<(),&'static str> {if self.at==self.bytes.len() {Ok(())} else {Err("syntax")}}
+}
+
+#[derive(Clone, PartialEq)]
+enum OrderedJson { Text(String), Word(u64), Array(Vec<OrderedJson>), Object(Vec<(String,OrderedJson)>), Null, Other }
+struct OrderedJsonReader<'a> {bytes:&'a [u8],at:usize,names:&'a [&'a str]}
+impl<'a> OrderedJsonReader<'a> {
+    fn peek(&self)->Option<u8> {self.bytes.get(self.at).copied()}
+    fn space(&mut self) {while matches!(self.peek(),Some(b' '|b'\n'|b'\r'|b'\t')) {self.at+=1;}}
+    fn token(&mut self,b:u8)->Result<(),&'static str> {self.space();if self.peek()!=Some(b) {return Err("syntax");}self.at+=1;Ok(())}
+    fn hex(&mut self)->Result<u32,&'static str> {let mut n=0;for _ in 0..4 {let b=self.peek().ok_or("syntax")?;self.at+=1;n=n*16+match b {b'0'..=b'9'=>u32::from(b-b'0'),b'a'..=b'f'=>u32::from(b-b'a'+10),b'A'..=b'F'=>u32::from(b-b'A'+10),_=>return Err("syntax")};}Ok(n)}
+    fn text(&mut self)->Result<String,&'static str> {
+        self.token(b'"')?;let mut bytes=Vec::new();
+        loop {let b=self.peek().ok_or("syntax")?;self.at+=1;match b {
+            b'"'=>return String::from_utf8(bytes).map_err(|_|"syntax"),
+            b'\\'=>{let e=self.peek().ok_or("syntax")?;self.at+=1;match e {
+                b'"'|b'\\'|b'/'=>bytes.push(e),b'b'=>bytes.push(8),b'f'=>bytes.push(12),b'n'=>bytes.push(10),b'r'=>bytes.push(13),b't'=>bytes.push(9),
+                b'u'=>{let mut n=self.hex()?;if (0xd800..=0xdbff).contains(&n) {if self.peek()!=Some(b'\\') || self.bytes.get(self.at+1)!=Some(&b'u') {return Err("syntax");}self.at+=2;let low=self.hex()?;if !(0xdc00..=0xdfff).contains(&low) {return Err("syntax");}n=0x10000+(n-0xd800)*1024+(low-0xdc00);}
+                    let ch=char::from_u32(n).ok_or("syntax")?;let mut word=[0;4];bytes.extend_from_slice(ch.encode_utf8(&mut word).as_bytes());},
+                _=>return Err("syntax"),
+            }},
+            0..=31=>return Err("syntax"),_=>bytes.push(b),
+        }}
+    }
+    fn skip_text(&mut self)->Result<(),&'static str> {
+        self.token(b'"')?;
+        loop {let b=self.peek().ok_or("syntax")?;self.at+=1;match b {
+            b'"'=>return Ok(()),0..=31=>return Err("syntax"),
+            b'\\'=>{let e=self.peek().ok_or("syntax")?;self.at+=1;match e {b'"'|b'\\'|b'/'|b'b'|b'f'|b'n'|b'r'|b't'=>(),b'u'=>{self.hex()?;},_=>return Err("syntax")}},_=>(),
+        }}
+    }
+    // Struct deserialization ignores unknown JSON values without a recursive
+    // descent limit. Keep that path iterative and bounded by the input bytes.
+    fn ignore(&mut self)->Result<(),&'static str> {
+        let mut states=vec![0u8];
+        while let Some(state)=states.pop() {self.space();match state {
+            0=>match self.peek().ok_or("syntax")? {b'"'=>self.skip_text()?,b'['=>{self.at+=1;states.push(1);},b'{'=>{self.at+=1;states.push(4);},_=>{self.value(0)?;}},
+            1=>{if self.peek()==Some(b']') {self.at+=1;} else {states.extend_from_slice(&[2,0]);}},
+            2=>{if self.peek()==Some(b']') {self.at+=1;} else {self.token(b',')?;states.extend_from_slice(&[2,0]);}},
+            4=>{if self.peek()==Some(b'}') {self.at+=1;} else {self.skip_text()?;self.token(b':')?;states.extend_from_slice(&[5,0]);}},
+            5=>{if self.peek()==Some(b'}') {self.at+=1;} else {self.token(b',')?;self.skip_text()?;self.token(b':')?;states.extend_from_slice(&[5,0]);}},
+            _=>return Err("syntax"),
+        }}Ok(())
+    }
+    fn value(&mut self,depth:usize)->Result<OrderedJson,&'static str> {
+        if depth>=128 {return Err("syntax");}self.space();
+        match self.peek().ok_or("syntax")? {
+            b'"'=>Ok(OrderedJson::Text(self.text()?)),
+            b'{'|b'['=>{let object=self.peek()==Some(b'{');self.at+=1;self.space();let close=if object {b'}'} else {b']'};let mut fields=Vec::new();let mut values=Vec::new();
+                if self.peek()!=Some(close) {loop {if object {let key=self.text()?;self.token(b':')?;let value=if depth==0 && !self.names.contains(&key.as_str()) {self.ignore()?;OrderedJson::Other} else {self.value(depth+1)?};fields.push((key,value));} else {values.push(self.value(depth+1)?);}self.space();if self.peek()==Some(close) {break;}self.token(b',')?;}}
+                self.token(close)?;Ok(if object {OrderedJson::Object(fields)} else {OrderedJson::Array(values)})},
+            b't'|b'f'|b'n'=>{let null=self.peek()==Some(b'n');let token=match self.peek().unwrap() {b't'=>b"true".as_slice(),b'f'=>b"false".as_slice(),_=>b"null".as_slice()};if self.bytes.get(self.at..self.at+token.len())!=Some(token) {return Err("syntax");}self.at+=token.len();Ok(if null {OrderedJson::Null} else {OrderedJson::Other})},
+            b'-'|b'0'..=b'9'=>{let start=self.at;if self.peek()==Some(b'-') {self.at+=1;}
+                match self.peek() {Some(b'0')=>self.at+=1,Some(b'1'..=b'9')=>{while matches!(self.peek(),Some(b'0'..=b'9')) {self.at+=1;}},_=>return Err("syntax")}
+                if self.peek()==Some(b'.') {self.at+=1;let begin=self.at;while matches!(self.peek(),Some(b'0'..=b'9')) {self.at+=1;}if begin==self.at {return Err("syntax");}}
+                if matches!(self.peek(),Some(b'e'|b'E')) {self.at+=1;if matches!(self.peek(),Some(b'+'|b'-')) {self.at+=1;}let begin=self.at;while matches!(self.peek(),Some(b'0'..=b'9')) {self.at+=1;}if begin==self.at {return Err("syntax");}}
+                let text=std::str::from_utf8(&self.bytes[start..self.at]).map_err(|_|"syntax")?;Ok(text.parse::<u64>().map_or(OrderedJson::Other,OrderedJson::Word))},
+            _=>Err("syntax"),
+        }
+    }
+}
+fn ordered_metadata(text:&str,kind:usize)->Result<Vec<OrderedJson>,&'static str> {
+    let names:&[&str]=match kind {0=>&["version","axis","causality","fit_scope"],1=>&["version","group_key_column","timestamp_column","tie_policy"],_=>&["cut_id","train_end","total_rows"]};
+    let mut reader=OrderedJsonReader {bytes:text.as_bytes(),at:0,names};let value=reader.value(0)?;reader.space();if reader.at!=text.len() {return Err("syntax");}
+    let mut values=match value {
+        OrderedJson::Array(values) if values.len()==names.len()=>values,
+        OrderedJson::Object(fields)=>{let mut values=Vec::new();for name in names {let mut selected=fields.iter().filter(|(key,_)|key==name);let value=selected.next().ok_or("syntax")?.1.clone();if selected.next().is_some() {return Err("syntax");}values.push(value);}values},
+        _=>return Err("syntax"),
+    };
+    for (name,value) in names.iter().zip(&mut values) {
+        if matches!(*name,"axis"|"causality"|"fit_scope"|"tie_policy") {
+            if let OrderedJson::Object(fields)=value {if fields.len()==1 && fields[0].1==OrderedJson::Null {*value=OrderedJson::Text(fields[0].0.clone());}}
+        }
+    }
+    for (name,value) in names.iter().zip(&values) {
+        if matches!(*name,"version"|"train_end"|"total_rows") {match value {OrderedJson::Word(n) if *name!="version" || *n<=65535=>(),_=>return Err("syntax")}}
+        else if !matches!(value,OrderedJson::Text(_)) {return Err("syntax");}
+        let choices:&[&str]=match *name {"axis"=>&["feature_within_row","sample_time","iid_row"],"causality"=>&["causal","offline"],"fit_scope"=>&["train_fold","stateless"],"tie_policy"=>&["stable_input_order"],_=>&[]};
+        if !choices.is_empty() && !matches!(value,OrderedJson::Text(s) if choices.contains(&s.as_str())) {return Err("syntax");}
+    }
+    Ok(values)
+}
+
+#[derive(Clone)]
+pub struct DifferenceState {
+    order:u8,step:f64,width:usize,input:String,cut:String,train_end:usize,total_rows:usize,ordinal:usize,
+    groups:std::collections::BTreeMap<OrderedGroup,(f64,usize,usize)>,
+    history:std::collections::BTreeMap<OrderedGroup,Vec<Vec<f64>>>,
+}
+
+impl DifferenceState {
+    // input is the validated, canonical input-identity JSON bound by the emitter.
+    fn new(order:u8,step:f64,width:usize,task:u8,input:&str,cut:&str,train_end:usize,total_rows:usize)->Result<Self,&'static str> {
+        if task!=1 && task!=2 {return Err("unsupported");}
+        if !(1..=4).contains(&order) || !step.is_finite() || step<=0.0 {return Err("domain");}
+        if width==0 || width>512 {return Err("shape");}
+        if cut.trim().is_empty() || train_end==0 || train_end>total_rows {return Err("bounds");}
+        Ok(Self {order,step,width,input:input.into(),cut:cut.into(),train_end,total_rows,ordinal:0,groups:std::collections::BTreeMap::new(),history:std::collections::BTreeMap::new()})
+    }
+    fn metadata(&self)->Vec<u8> {
+        let mut bytes=Vec::new();
+        ordered_write_text(&mut bytes,"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}");
+        ordered_write_text(&mut bytes,&self.input);
+        ordered_write_text(&mut bytes,&format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(&self.cut),self.train_end,self.total_rows));
+        bytes
+    }
+    fn push(&mut self,group:OrderedGroup,time:f64,row:&[f64])->Result<(Vec<f64>,Vec<u32>),&'static str> {
+        if row.len()!=self.width {return Err("shape");}
+        let group=ordered_group(group)?;
+        if self.ordinal>=self.total_rows {return Err("bounds");}
+        if !time.is_finite() {return Err("domain");}
+        let previous=self.groups.get(&group).copied();
+        if previous.map_or(false,|p|time<p.0) {return Err("domain");}
+        let mut window=self.history.get(&group).cloned().unwrap_or_default();window.push(row.to_vec());
+        let result=finite_difference_v2(2,59,self.order,self.step,&window)?;
+        let (_,prior,train)=previous.unwrap_or((0.0,0,0));
+        self.groups.insert(group.clone(),(time,prior+1,train+usize::from(self.ordinal<self.train_end)));
+        if window.len()>usize::from(self.order) {window.remove(0);}
+        self.history.insert(group,window);self.ordinal+=1;Ok(result)
+    }
+    fn to_bytes(&self)->Result<Vec<u8>,&'static str> {
+        let mut cursor=b"FMKCUR\0\x01".to_vec();cursor.extend_from_slice(&self.metadata());
+        ordered_write_word(&mut cursor,self.ordinal as u64);ordered_write_word(&mut cursor,self.groups.len() as u64);
+        for (group,(time,prior,train)) in &self.groups {
+            ordered_write_group(&mut cursor,group);ordered_write_word(&mut cursor,time.to_bits());ordered_write_word(&mut cursor,*prior as u64);ordered_write_word(&mut cursor,*train as u64);
+        }
+        let mut bytes=b"FMKDIFF\x02".to_vec();bytes.push(self.order);
+        ordered_write_word(&mut bytes,self.step.to_bits());ordered_write_word(&mut bytes,self.width as u64);ordered_write_word(&mut bytes,cursor.len() as u64);bytes.extend_from_slice(&cursor);ordered_write_word(&mut bytes,self.history.len() as u64);
+        for (group,rows) in &self.history {
+            ordered_write_group(&mut bytes,group);ordered_write_word(&mut bytes,rows.len() as u64);
+            for row in rows {for value in row {ordered_write_word(&mut bytes,value.to_bits());}}
+        }
+        if bytes.len()>16*1024*1024 {Err("resource")} else {Ok(bytes)}
+    }
+    fn from_bytes(bytes:&[u8],task:u8,input:&str,cut:&str,train_end:usize,total_rows:usize)->Result<Self,&'static str> {
+        let mut reader=OrderedReader::new(bytes)?;
+        if reader.take(8)?!=b"FMKDIFF\x02" {return Err("unsupported");}
+        let order=reader.take(1)?[0];let step=f64::from_bits(reader.word()?);let width=reader.usize()?;
+        let mut state=Self::new(order,step,width,task,input,cut,train_end,total_rows)?;
+        let n=reader.count()?;let mut cursor=OrderedReader::new(reader.take(n)?)?;
+        if cursor.take(8)?!=b"FMKCUR\0\x01" {return Err("unsupported");}
+        let metadata=[cursor.text()?,cursor.text()?,cursor.text()?];
+        let fold=format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(cut),train_end,total_rows);
+        let expected=[String::from("{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}"),input.into(),fold];
+        let parsed=(0..3).map(|i|ordered_metadata(&metadata[i],i)).collect::<Result<Vec<_>,_>>()?;
+        let identities=(0..3).map(|i|ordered_metadata(&expected[i],i)).collect::<Result<Vec<_>,_>>()?;
+        if parsed!=identities {return Err("domain");}
+        state.ordinal=cursor.usize()?;if state.ordinal>total_rows {return Err("bounds");}
+        let count=cursor.count()?;if count>state.ordinal {return Err("bounds");}
+        let mut previous=None;let mut rows=0usize;let mut training=0usize;
+        for _ in 0..count {
+            let group=cursor.group()?;let time=f64::from_bits(cursor.word()?);let prior=cursor.usize()?;let train=cursor.usize()?;
+            if previous.as_ref().map_or(false,|p|p>=&group) || !time.is_finite() || prior==0 || prior>state.ordinal || train>prior {return Err("domain");}
+            rows=rows.checked_add(prior).ok_or("bounds")?;training=training.checked_add(train).ok_or("bounds")?;
+            previous=Some(group.clone());state.groups.insert(group,(time,prior,train));
+        }
+        cursor.finish()?;
+        if rows!=state.ordinal || training!=state.ordinal.min(train_end) {return Err("domain");}
+        if metadata!=expected {return Err("syntax");}
+        if reader.count()?!=count {return Err("domain");}
+        for (group,(_,prior,_)) in &state.groups {
+            if reader.group()?!=*group {return Err("domain");}
+            let n=reader.count()?;if n!=(*prior).min(usize::from(order)) {return Err("domain");}
+            let mut history=Vec::new();for _ in 0..n {let mut row=Vec::new();for _ in 0..width {row.push(f64::from_bits(reader.word()?));}history.push(row);}
+            state.history.insert(group.clone(),history);
+        }
+        reader.finish()?;if state.to_bytes()?!=bytes {return Err("syntax");}Ok(state)
+    }
+    fn finish(&self)->Result<(),&'static str> {if self.ordinal==self.total_rows {Ok(())} else {Err("bounds")}}
+}

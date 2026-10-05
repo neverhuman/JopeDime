@@ -9,7 +9,10 @@ use super::codec::{Reader, Writer, MAX_BYTES};
 use super::export::{self, ExportReport, FittedBasis, Route};
 use super::scalar_program::ScalarExpressionProgram;
 // B08 ordered-state routing.
-use super::finite_difference::{DifferenceModel, DifferenceProgram, OrderedRow};
+use super::finite_difference::{
+    DifferenceFittedCpp, DifferenceLanguage, DifferenceModel, DifferenceProgram, DifferenceRecipe,
+    OrderedRow,
+};
 use super::ordered_axis::{FoldBoundary, TaskMode};
 use super::Program;
 use crate::{GenomeIr, Model};
@@ -291,6 +294,19 @@ pub enum VersionedProgram {
 }
 
 impl VersionedProgram {
+    /// Ordered recipes carry their explicit input identity and continuation API.
+    pub fn emit_ordered_recipe(
+        &self,
+        language: DifferenceLanguage,
+    ) -> VersionResult<DifferenceRecipe> {
+        match self {
+            Self::DifferenceV2(program) => program.emit_recipe(language),
+            _ => Err(VersionError::UnsupportedVersion(
+                "program has no ordered recipe route".into(),
+            )),
+        }
+    }
+
     pub fn from_bytes(bytes: &[u8]) -> VersionResult<Self> {
         if bytes.len() < MAGIC_V2.len() || &bytes[..MAGIC_PREFIX.len()] != MAGIC_PREFIX {
             return Err(VersionError::Malformed("program magic".into()));
@@ -452,16 +468,20 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
                 ]),
             }
         }
-        VersionedProgram::DifferenceV2(_) => {
-            let refusal =
-                Route::Unsupported(vec!["difference ordered export pending recipe proof".into()]);
+        VersionedProgram::DifferenceV2(program) => {
+            let support = match program.validate_recipe_closure() {
+                Ok(()) => Route::Ok,
+                Err(error) => Route::Unsupported(vec![error.to_string()]),
+            };
             ExportReport {
-                rust_recipe: refusal.clone(),
-                python_recipe: refusal.clone(),
-                cpp17_recipe: refusal.clone(),
-                cpp17_fitted: refusal.clone(),
+                rust_recipe: support.clone(),
+                python_recipe: support.clone(),
+                cpp17_recipe: support.clone(),
+                cpp17_fitted: support,
                 cpp17_fitted_basis: FittedBasis::Declared,
-                javascript: refusal,
+                javascript: Route::Unsupported(vec![
+                    "difference ordered JavaScript route unavailable".into(),
+                ]),
             }
         }
         VersionedProgram::ScalarV2(_) => {
@@ -581,6 +601,16 @@ pub enum VersionedModel {
 }
 
 impl VersionedModel {
+    /// Fitted ordered export starts each caller from the captured continuation.
+    pub fn emit_ordered_fitted_cpp17(&self) -> VersionResult<DifferenceFittedCpp> {
+        match self {
+            Self::DifferenceV2(model) => model.emit_fitted_cpp17(),
+            _ => Err(VersionError::UnsupportedVersion(
+                "model has no ordered fitted export route".into(),
+            )),
+        }
+    }
+
     /// This is the ingress for tagged model/bundle JSON. The old direct serde
     /// Model loader remains byte-for-byte unchanged for legacy callers.
     pub fn from_json(json: &str) -> VersionResult<Self> {
