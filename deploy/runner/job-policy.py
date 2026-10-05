@@ -19,6 +19,9 @@ def authorize(policy, env):
             raise ValueError("trusted storage requires main")
         allowed = {f"{repo}/.github/workflows/full-main.yml@refs/heads/main": {"push", "workflow_dispatch"},
                    f"{repo}/.github/workflows/main-guard.yml@refs/heads/main": {"push"}}
+        if policy.get("lane") == "guard":
+            # The guard slot exists only so main-guard never queues behind full-main.
+            allowed = {f"{repo}/.github/workflows/main-guard.yml@refs/heads/main": {"push"}}
         if event not in allowed.get(workflow, set()):
             raise ValueError("workflow/event is not admitted to trusted storage")
     elif policy["domain"] == "pr":

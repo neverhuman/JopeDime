@@ -7,3 +7,4 @@ self-hosted-runner:
     - jope-ci
     - xbabe1-ci
     - jope-full-cpu
+    - jope-main-guard

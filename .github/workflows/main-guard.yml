@@ -14,7 +14,9 @@ permissions:
 
 jobs:
   guard:
-    runs-on: [self-hosted, linux, x64, jope-full-cpu]
+    # Its own xbabe2 slot (deploy/runner/common.sh, lane guard), so the guard verdict never
+    # waits behind a full-main-cpu run on jope-full-cpu.
+    runs-on: [self-hosted, linux, x64, jope-main-guard]
     timeout-minutes: 5
     steps:
       # This workflow stands in for branch protection until the org is on the Team plan, and it

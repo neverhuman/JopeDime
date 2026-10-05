@@ -11,8 +11,11 @@ Branch protection remains procedural until the API readback establishes enforcem
 | --- | --- | --- | --- |
 | xbabe1 | ci, ci2 / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci, pr-ci2 |
 | xbabe2 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full |
+| xbabe2 | guard / jope-main-guard | 8 GiB, 16 CPUs, no swap | main-guard |
 
-The full slot also executes main-guard, serially. No other JopeDime runner role is admitted on
+The guard slot executes only main-guard (owner-approved 2026-10-04), so the post-merge guard
+verdict no longer queues behind a full-main run. Its admission hook rejects every other workflow,
+and it does not take the exclusive CPU lock. No other JopeDime runner role is admitted on
 xbabe2. `common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
 GPU and kernel roles. Their live qualification and persistent runner migration remain deferred.
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
@@ -54,8 +57,8 @@ From the reviewed checkout, `sudo deploy/runner/provision.sh --skip-sdk` builds 
 creates the role-specific volumes, installs host files/units and writes
 `/var/lib/jope-runner/image.json`. It enables no listener. Initial SDK provisioning follows its
 pinned receipt; the CPU delivery reuses the existing SDK read-only. Re-run provisioning after
-any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2; keep retired timers
-disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
+any image rebuild. Start only ci/ci2 timers on xbabe1 and only full and guard on xbabe2; keep
+retired timers disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
 operational delivery. `--skip-image` requires an existing correctly built image.
 
 The provenance action compares all `JOPE_RUNNER_DEPLOYED` bytes with the source commit, checks
@@ -128,8 +131,8 @@ selected events; full runner logs and process arguments can contain registration
 The probe has no token permissions, checkout or user payload, and a two-minute timeout.
 Cancel the probe after both denials are retained if GitHub still waits on the terminated
 Workers. Listener admission consumes a slot briefly; this remains a possible denial-of-service
-vector. Main-guard can queue behind a full run. PR caches remain shared across PRs within each
-fast slot; cross-PR isolation and enforced main protection are not claimed here.
+vector. Main-guard has its own slot and no longer queues behind a full run. PR caches remain
+shared across PRs within each fast slot; cross-PR isolation and enforced main protection are not claimed here.
 
 ## Repository transfer observation — 2026-09-25 UTC
 

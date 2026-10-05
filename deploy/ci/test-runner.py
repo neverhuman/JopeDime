@@ -42,6 +42,15 @@ class RunnerTests(unittest.TestCase):
     def test_trusted_events(self):
         for workflow, event in [('full-main', 'push'), ('full-main', 'workflow_dispatch'), ('main-guard', 'push')]:
             policy.authorize({'domain':'main'}, self.env(workflow, event))
+            policy.authorize({'domain':'main', 'lane':'full'}, self.env(workflow, event))
+
+    def test_guard_slot_admits_only_main_guard(self):
+        policy.authorize({'domain':'main', 'lane':'guard'}, self.env('main-guard', 'push'))
+        for env in [self.env('full-main', 'push'), self.env('full-main', 'workflow_dispatch'),
+                    self.env('main-guard', 'workflow_dispatch'), self.env('main-guard', 'pull_request'),
+                    self.env('main-guard', ref='refs/heads/attack'), self.env('ci', 'pull_request')]:
+            with self.assertRaises(ValueError):
+                policy.authorize({'domain':'main', 'lane':'guard'}, env)
 
     def test_untrusted_jobs_cannot_enter_main_storage(self):
         for env in [self.env(event='pull_request'), self.env(ref='refs/heads/attack'), self.env(workflow='ci'), self.env(workflow='release')]:
@@ -60,7 +69,7 @@ class RunnerTests(unittest.TestCase):
             policy.authorize({'domain':'pr'}, self.env())
 
     def test_approved_resources_and_capability_absence(self):
-        for host, lane, domain, gib in [('xbabe1','ci','pr',16), ('xbabe1','ci2','pr',16), ('xbabe2','full','main',48)]:
+        for host, lane, domain, gib in [('xbabe1','ci','pr',16), ('xbabe1','ci2','pr',16), ('xbabe2','full','main',48), ('xbabe2','guard','main',8)]:
             p = dict(host=host,lane=lane,domain=domain,memory=f'{gib}g',cpus=16,volume_prefix=f'jope-{domain}-{lane}')
             container.verify(p, str(gib*1024**3), '1600000 100000', '0', [])
             for memory, cpu, swap, devices in [('max','1600000 100000','0',[]), (str(gib*1024**3),'2800000 100000','0',[]), (str(gib*1024**3),'1600000 100000','1',[]), (str(gib*1024**3),'1600000 100000','0',['/dev/nvidia0'])]:
@@ -68,19 +77,21 @@ class RunnerTests(unittest.TestCase):
                     container.verify(p,memory,cpu,swap,devices)
 
     def test_host_roles_and_environment_cannot_raise_budget(self):
-        for host, lane, expected in [('xbabe1','ci','16g 16 pr'),('xbabe1','ci2','16g 16 pr'),('xbabe2','full','48g 16 main')]:
+        for host, lane, expected in [('xbabe1','ci','16g 16 pr'),('xbabe1','ci2','16g 16 pr'),('xbabe2','full','48g 16 main'),('xbabe2','guard','8g 16 main')]:
             script = 'JOPE_RUNNER_CPUS=28; JOPE_RUNNER_MEMORY=24g; source deploy/runner/common.sh; jope_runner_role "$1" "$2"; echo "$JOPE_RUNNER_MEMORY $JOPE_RUNNER_CPUS $JOPE_RUNNER_DOMAIN"'
             result = subprocess.run(['bash','-ec',script,'test',host,lane],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(0,result.returncode)
             self.assertEqual(expected,result.stdout.strip())
-        for host, lane in [('xbabe2','ci'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3')]:
+        for host, lane in [('xbabe2','ci'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3'),('xbabe1','guard')]:
             result = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
             self.assertEqual(2,result.returncode)
 
     def test_orphans_and_legacy_roles_refuse_start(self):
         cases = [('xbabe1','ci','abc ci',2), ('xbabe1','ci','abc ci2',0),
                  ('xbabe2','full','abc full',2), ('xbabe2','full','abc ci',2),
-                 ('xbabe1','ci','abc ',2), ('xbabe2','full','',0)]
+                 ('xbabe1','ci','abc ',2), ('xbabe2','full','',0),
+                 ('xbabe2','guard','abc full',0), ('xbabe2','full','abc guard',0),
+                 ('xbabe2','guard','abc guard',2), ('xbabe1','ci','abc guard',2)]
         script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=$1; existing_fixture=$3; docker() { printf "%s\\n" "$existing_fixture"; }; jope_runner_check_existing "$2"'
         for host,lane,existing,code in cases:
             with self.subTest(host=host,lane=lane,existing=existing):
@@ -88,6 +99,15 @@ class RunnerTests(unittest.TestCase):
                 self.assertEqual(code,result.returncode,result.stderr)
         result=subprocess.run(['bash','-c','source deploy/runner/common.sh; docker() { return 23; }; jope_runner_check_existing full'],cwd=ROOT,capture_output=True)
         self.assertEqual(23,result.returncode)
+
+    def test_guard_slot_labels_and_no_exclusive_cpu_lock(self):
+        script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=xbabe2; jope_runner_labels guard; jope_runner_labels full; jope_runner_exclusive_cpu guard && echo unlocked'
+        result = subprocess.run(['bash','-c',script],cwd=ROOT,capture_output=True,text=True)
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual(['xbabe2-guard,jope-main-guard','xbabe2-full,jope-full-cpu','unlocked'],result.stdout.split())
+        workflow = (ROOT/'.github/workflows/main-guard.yml').read_text()
+        self.assertIn('runs-on: [self-hosted, linux, x64, jope-main-guard]', workflow)
+        self.assertNotIn('jope-full-cpu]', workflow)
 
 
     def test_orphan_asm_cgroup_blocks_exclusive_cpu_reuse(self):

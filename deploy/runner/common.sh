@@ -59,6 +59,8 @@ jope_runner_role() { # <host> <lane>; callers use actual hostname, never a job v
   case "$1/$2" in
     xbabe1/ci|xbabe1/ci2) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g ;;
     xbabe2/full) JOPE_RUNNER_DOMAIN=main; JOPE_RUNNER_MEMORY=48g ;;
+    # main-guard only: its own slot so it never queues behind a full-main run.
+    xbabe2/guard) JOPE_RUNNER_DOMAIN=main; JOPE_RUNNER_MEMORY=8g ;;
     *) echo "unapproved runner host/lane: $1/$2" >&2; return 2 ;;
   esac
 }
@@ -68,6 +70,7 @@ jope_runner_labels() {
   case $1 in
     ci|ci2) echo "$JOPE_RUNNER_HOST-$1,jope-ci" ;;
     full) echo "$JOPE_RUNNER_HOST-full,jope-full-cpu" ;;
+    guard) echo "$JOPE_RUNNER_HOST-guard,jope-main-guard" ;;
   esac
 }
 
@@ -79,7 +82,7 @@ jope_runner_check_existing() { # requested lane; docker failure is never an empt
   while read -r id running; do
     [[ -n $id ]] || continue
     case "$JOPE_RUNNER_HOST/$running" in
-      xbabe1/ci|xbabe1/ci2|xbabe2/full) ;;
+      xbabe1/ci|xbabe1/ci2|xbabe2/full|xbabe2/guard) ;;
       *) echo "unapproved existing JopeDime container: $id lane=$running" >&2; return 2 ;;
     esac
     [[ $running != "$1" ]] || { echo "existing container owns lane $1: $id" >&2; return 2; }
@@ -104,6 +107,8 @@ jope_runner_check_asm_groups() {
   done
 }
 
+# Only the full lane takes the exclusive CPU allocation. The guard lane runs three `gh api`
+# calls and a checkout; holding the lock would serialize it behind full-main again.
 jope_runner_exclusive_cpu() {
   [[ $JOPE_RUNNER_HOST == xbabe2 && $1 == full ]] || return 0
   [[ -f /run/lock/jope-exclusive-cpu.lock ]] || {
