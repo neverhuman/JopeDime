@@ -65,3 +65,5 @@ pub mod cumulative_integration;
 
 // B15: opt-in causal irregular-grid backward difference.
 pub mod timescale_nabla;
+
+pub mod realized_path_stats;

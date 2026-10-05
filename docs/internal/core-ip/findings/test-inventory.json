@@ -2222,6 +2222,14 @@
         "training"
       ],
       "reason": "S1 two-fold G0 preparation and production executable conformance, including forbidden outer-target perturbation and admitted input controls."
+    },
+    "target:feat-math/test/realized_path_stats_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
     }
   },
   "baseline_triage": [

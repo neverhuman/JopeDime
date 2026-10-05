@@ -1,0 +1,128 @@
+class PathState:
+    def __init__(self, window, task, input_identity, cut, train_end, total_rows):
+        if task not in ('ordered', 'forecasting'):
+            raise OrderedError('unsupported')
+        if not isinstance(window,int) or isinstance(window,bool) or not 2<=window<=129:
+            raise OrderedError('shape')
+        if input_identity.get('version') != 1 or input_identity.get('tie_policy') != 'stable_input_order':
+            raise OrderedError('unsupported')
+        group, time = input_identity.get('group_key_column'), input_identity.get('timestamp_column')
+        if not isinstance(group, str) or not isinstance(time, str) or _ordered_blank(group) or _ordered_blank(time) or group == time:
+            raise OrderedError('shape')
+        if not isinstance(cut, str) or _ordered_blank(cut) or not isinstance(train_end, int) or isinstance(train_end, bool) or not isinstance(total_rows, int) or isinstance(total_rows, bool) or not 0 < train_end <= total_rows < 1 << 64:
+            raise OrderedError('bounds')
+        for value in (group, time, cut):
+            _ordered_utf8(value)
+        self.window = window
+        self.input = {'version': 1, 'group_key_column': group, 'timestamp_column': time, 'tie_policy': 'stable_input_order'}
+        self.fold = {'cut_id': cut, 'train_end': train_end, 'total_rows': total_rows}
+        self.ordinal, self.groups, self.history = 0, {}, {}
+
+    def _metadata_values(self):
+        stage = {'version': 1, 'axis': 'sample_time', 'causality': 'causal', 'fit_scope': 'stateless'}
+        return stage, self.input, self.fold
+
+    def _metadata(self):
+        return b''.join(_text(_json(v)) for v in self._metadata_values())
+
+    def push(self, group, timestamp, row):
+        if len(row)!=1:
+            raise OrderedError('shape')
+        timestamp=_ordered_float(timestamp)
+        if not math.isfinite(timestamp):
+            raise OrderedError('domain')
+        group=_group(group)
+        previous=self.groups.get(group)
+        if previous is not None and timestamp<previous[0]:
+            raise OrderedError('domain')
+        if self.ordinal>=self.fold['total_rows']:
+            raise OrderedError('bounds')
+        history=(self.history.get(group,[])+[_ordered_float(row[0])])[-self.window:]
+        flags=@BOUNDARYFAULT@ if len(history)<self.window else 0
+        values,prior,increment,products=[0.0]*5,None,None,0.0
+        for raw in history:
+            value=raw if math.isfinite(raw) else 0.0
+            if not math.isfinite(raw): flags|=@INPUTFAULT@
+            if prior is not None:
+                delta=value-prior
+                if abs(delta)>1e6: flags|=@CLAMPFAULT@
+                delta=max(-1e6,min(1e6,delta))
+                square=delta*delta
+                values[0]+=square
+                if increment is not None: products+=abs(increment)*abs(delta)
+                if delta>0.0: values[3]+=square
+                if delta<0.0: values[4]+=square
+                increment=delta
+            prior=value
+        values[1]=products*struct.unpack('<d',struct.pack('<Q',0x3ff921fb54442d18))[0]
+        values[2]=max(values[0]-values[1],0.0)
+        count,trained=(0,0) if previous is None else previous[1:]
+        self.groups[group]=timestamp,count+1,trained+int(self.ordinal<self.fold['train_end'])
+        self.history[group]=history
+        self.ordinal+=1
+        return values,[flags]*5
+
+    def to_bytes(self):
+        cursor = b'FMKCUR\x00\x01' + self._metadata() + _word(self.ordinal) + _word(len(self.groups))
+        for group, (time, count, trained) in sorted(self.groups.items()):
+            cursor += _write_group(group) + struct.pack('<d', time) + _word(count) + _word(trained)
+        data = b'FMKPTH\x00\x02' + _word(self.window)
+        data += _word(len(cursor)) + cursor + _word(len(self.groups))
+        for group, (time, _, _) in sorted(self.groups.items()):
+            prior = self.history[group]
+            data += _write_group(group) + _word(len(self.history[group]))
+            data += b''.join(struct.pack('<d', value) for value in prior)
+        if len(data) > 16 * 1024 * 1024:
+            raise OrderedError('resource')
+        return data
+
+    @classmethod
+    def from_bytes(cls, data, task, input_identity, cut, train_end, total_rows):
+        reader = _OrderedReader(data)
+        if reader.take(8) != b'FMKPTH\x00\x02':
+            raise OrderedError('unsupported')
+        window = reader.word()
+        state = cls(window, task, input_identity, cut, train_end, total_rows)
+        cursor = _OrderedReader(reader.take(reader.count()))
+        if cursor.take(8) != b'FMKCUR\x00\x01':
+            raise OrderedError('unsupported')
+        metadata = [cursor.text() for _ in range(3)]
+        if [_ordered_metadata(v, i) for i, v in enumerate(metadata)] != list(state._metadata_values()):
+            raise OrderedError('domain')
+        state.ordinal = cursor.word()
+        if state.ordinal > total_rows:
+            raise OrderedError('bounds')
+        count = cursor.count()
+        if count > state.ordinal:
+            raise OrderedError('bounds')
+        previous = None
+        for _ in range(count):
+            group = cursor.group()
+            time = struct.unpack('<d', cursor.take(8))[0]
+            prior, train = cursor.word(), cursor.word()
+            if (previous is not None and previous >= group) or not math.isfinite(time) or not 0 < prior <= state.ordinal or train > prior:
+                raise OrderedError('domain')
+            state.groups[group], previous = (time, prior, train), group
+        cursor.finish()
+        if sum(v[1] for v in state.groups.values()) != state.ordinal or sum(v[2] for v in state.groups.values()) != min(state.ordinal, train_end):
+            raise OrderedError('domain')
+        if metadata != [_json(v) for v in state._metadata_values()]:
+            raise OrderedError('syntax')
+        if reader.count() != count:
+            raise OrderedError('domain')
+        for group, (time, prior, _) in sorted(state.groups.items()):
+            if reader.group() != group:
+                raise OrderedError('domain')
+            length=reader.word()
+            if length!=min(prior,window):
+                raise OrderedError('domain')
+            raw = [struct.unpack('<d', reader.take(8))[0] for _ in range(length)]
+            state.history[group] = raw
+        reader.finish()
+        if state.to_bytes() != data:
+            raise OrderedError('syntax')
+        return state
+
+    def finish(self):
+        if self.ordinal != self.fold['total_rows']:
+            raise OrderedError('bounds')

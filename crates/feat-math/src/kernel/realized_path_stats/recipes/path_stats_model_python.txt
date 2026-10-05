@@ -1,0 +1,69 @@
+def _path_checkpoint(state, predictor):
+    snapshot = state.to_bytes()
+    means, scales, weights = predictor.head
+    array_size = lambda values: 2 + max(0, len(values) - 1) + sum(len(str(v)) for v in values)
+    word_array_size = lambda values: 2 + max(0, len(values) - 1) + sum(13 + len(str(struct.unpack('<Q', struct.pack('<d', v))[0])) for v in values)
+    size = @MODEL_BASE_BYTES@ + len(_json(state.fold).encode('utf-8')) + array_size(snapshot) + sum(word_array_size(v) for v in (means, scales, weights))
+    if size > 16 * 1024 * 1024:
+        raise OrderedError('resource')
+
+import copy
+
+class OrderedRow:
+    def __init__(self, group, timestamp, values):
+        self.group, self.timestamp, self.values = group, timestamp, values
+
+class PathStatsModel:
+    def __init__(self, state, predictor, task):
+        self.state, self.predictor, self.task = state, predictor, task
+
+    def predict(self, rows):
+        if not rows:
+            return [], []
+        next_state = copy.deepcopy(self.state)
+        transformed, faults = [], []
+        for row in rows:
+            values, bits = next_state.push(row.group, row.timestamp, row.values)
+            transformed.append(values)
+            faults.append(bits)
+        values = [value if math.isfinite(value) else 0.0 for value in self.predictor.predict(transformed)]
+        if len(values) != len(rows):
+            raise OrderedError('shape')
+        _path_checkpoint(next_state,self.predictor)
+        self.state = next_state
+        return values, faults
+
+    def state_bytes(self):
+        return self.state.to_bytes()
+
+    def replace_state(self, data):
+        fold = self.state.fold
+        next_state = PathState.from_bytes(data, self.task, self.state.input, fold['cut_id'], fold['train_end'], fold['total_rows'])
+        if next_state.window != self.state.window or next_state.ordinal < fold['train_end']:
+            raise OrderedError('domain')
+        _path_checkpoint(next_state,self.predictor)
+        self.state = next_state
+
+    def finish(self):
+        self.state.finish()
+
+def fit_ordered(rows, labels, task, cut, train_end, total_rows):
+    try:
+        labels = [float(value) for value in labels]
+    except (TypeError, ValueError, OverflowError):
+        raise OrderedError('shape')
+    if len(rows) != train_end or len(labels) != train_end or any(not math.isfinite(value) for value in labels):
+        raise OrderedError('shape')
+    state = PathState(@WINDOW@, task, @INPUT@, cut, train_end, total_rows)
+    transformed = [state.push(row.group, row.timestamp, row.values)[0] for row in rows]
+    predictor = Model().fit(transformed, labels)
+    means, scales, weights = predictor.head
+    if all(struct.pack('<d', value) == struct.pack('<d', -0.0) for value in labels):
+        weights[0] = -0.0
+    if len(means) != 5 or len(scales) != 5 or len(weights) != 6 or any(not math.isfinite(v) for v in means + weights) or any(not math.isfinite(v) or v <= 0.0 for v in scales):
+        raise OrderedError('domain')
+    try:
+        _path_checkpoint(state,predictor)
+    except OrderedError:
+        raise OrderedError('domain')
+    return PathStatsModel(state, predictor, task)
