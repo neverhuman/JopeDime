@@ -4,7 +4,9 @@ This is the second focused PR of the B08 held remainder, after native routing
 #182. Wire 59 now has Rust, Python and C++17 train-and-predict recipes through
 `VersionedProgram::emit_ordered_recipe`, plus caller-owned fitted C++17 through
 `VersionedModel::emit_ordered_fitted_cpp17`. The admitted downstream shape is
-the same plain numeric Ridge shape as the native fitter. Stored unsupported
+the same plain numeric Ridge shape as the native fitter. Ordered recipe
+wrappers preserve the native intercept sign when all training labels are
+negative zero; shared legacy emitters and the native fitter keep their bytes. Stored unsupported
 shapes still decode losslessly and receive an explicit export refusal. Fixed
 metadata must also fit a minimum native model and fitted codec before export
 admission; the emitted training APIs enforce the final model size.
@@ -38,11 +40,16 @@ NEXTEST_TEST_THREADS=16 just test-pr
 ```
 
 The compiled fixture proof covers orders 1–4 through all three recipes and
-fitted C++17, using the existing v2 raw boundary fixture. It compares exact
+fitted C++17, using the existing v2 raw boundary fixture. Additional compiled cases cover
+mixed numeric/categorical groups (including signed-zero canonicalization)
+and negative-zero labels. It compares exact
 prediction words, fault sets and continuation bytes with native execution.
 The input identity includes quotes, backslashes, a tab and U+2028. Negative
 checks cover prefix-length/label overflow, premature finish, empty batches,
-late invalid rows, truncated replacement state and independent fitted callers.
+late invalid rows, backwards/nonfinite timestamps, well-formed replacement
+state with a different order/step/width or an unfinished training prefix,
+truncated replacement state, restoration after progress and independent fitted
+callers.
 Codec tests bind the feature/profile/source/program/checkpoint fields and
 reject tampering. Compiler and sanitizer portability qualification, full card
 after-suite and hosted exact-head evidence are recorded separately; a missing
