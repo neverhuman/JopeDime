@@ -90,28 +90,13 @@ pub(super) fn rust_scalar_library(source: &str) -> Result<String> {
             &format!("fn {name}(row: &[f64]) -> f64 {{\n    let mut total = -0.0;"),
         );
     }
-    // A constant exponent must use the same runtime pow as the evaluator,
-    // rather than an optimizer's separately rounded reciprocal rewrite.
-    let mut end = library.len();
-    while let Some(start) = library[..end].rfind(".powf(") {
-        let argument = start + ".powf(".len();
-        let mut depth = 1;
-        let close = library[argument..]
-            .char_indices()
-            .find_map(|(i, c)| {
-                if c == '(' {
-                    depth += 1;
-                }
-                if c == ')' {
-                    depth -= 1;
-                }
-                (depth == 0).then_some(argument + i)
-            })
-            .ok_or_else(|| super::Error::Unsupported("linear-scaling power binding".into()))?;
-        library.insert(close, ')');
-        library.insert_str(argument, "std::hint::black_box(");
-        end = start;
-    }
+    // Both operands must remain runtime values: LLVM can turn a constant base
+    // into exp2, or a constant exponent into a separately rounded reciprocal.
+    // This private v2 method pins the native evaluator's runtime pow call.
+    library = library.replace(".powf(", ".scalar_pow(");
+    library.push_str(
+        "\ntrait ScalarPow { fn scalar_pow(self,right:f64)->f64; }\nimpl ScalarPow for f64 { fn scalar_pow(self,right:f64)->f64 { std::hint::black_box(self).powf(std::hint::black_box(right)) } }\n"
+    );
     Ok(library)
 }
 
@@ -158,6 +143,6 @@ pub(super) fn cpp_scalar_library(source: &str) -> String {
         )
         .replace(
             "return std::pow(left,right);",
-            "volatile double exponent=right;return std::pow(left,exponent);",
+            "volatile double base=left,exponent=right;return std::pow(base,exponent);",
         )
 }
