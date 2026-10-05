@@ -42,6 +42,11 @@ pub(super) fn run(cut: &Cut, options: &Options) -> Result<CutSearch> {
         let before = state.budget.used();
         measure_generation(&mut state, cut, options, started, deadline)?;
         refine_generation(&mut state, cut, options, started, deadline)?;
+        // laneD:B20-rewrite-simplify begin
+        if moves::selected(options) {
+            moves::finish_round(&mut state, cut, options, started, deadline)?;
+        }
+        // laneD:B20-rewrite-simplify end
         cancelled(options)?;
         if state.budget.remaining() == 0 {
             break STOPPED_BY_EVALUATIONS;

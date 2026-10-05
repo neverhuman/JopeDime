@@ -206,6 +206,18 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
         })
         .transpose()?;
     // laneD:B18-pareto-archive end
+    // laneD:B20-rewrite-simplify begin
+    let moves_sha256 = s
+        .engine_selection
+        .as_ref()
+        .and_then(|e| e.moves.as_ref())
+        .map(|m| {
+            m.sha256
+                .as_ref()
+                .context("published move records need their digest")
+        })
+        .transpose()?;
+    // laneD:B20-rewrite-simplify end
     for digest in [
         &receipt.search_sha256,
         &s.observations_sha256,
@@ -214,6 +226,7 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
     ]
     .into_iter()
     .chain(archive_sha256)
+    .chain(moves_sha256)
     {
         ensure!(
             digest.len() == 64
