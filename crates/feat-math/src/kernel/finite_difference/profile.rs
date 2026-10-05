@@ -146,13 +146,23 @@ impl DifferenceSearch {
                 self.input.clone(),
                 genome.clone(),
             ),
-            (VersionedProgram::DifferenceV2(program), Edit::Change) => (
-                program.config().order() % 4 + 1,
-                program.config().step(),
-                program.width(),
-                program.input_identity().clone(),
-                program.downstream().clone(),
-            ),
+            (VersionedProgram::DifferenceV2(program), Edit::Change) => {
+                if !STEPS
+                    .iter()
+                    .any(|step| step.to_bits() == program.config().step().to_bits())
+                {
+                    return Err(Error::Unsupported(
+                        "difference Change step outside Experimental menu".into(),
+                    ));
+                }
+                (
+                    program.config().order() % 4 + 1,
+                    program.config().step(),
+                    program.width(),
+                    program.input_identity().clone(),
+                    program.downstream().clone(),
+                )
+            }
             _ => return Err(Error::Unsupported("difference GP arm unavailable".into())),
         };
         let program = DifferenceProgram::new(

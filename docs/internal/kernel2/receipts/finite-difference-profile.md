@@ -22,7 +22,9 @@ A prior miss returns the same plain child. Grow inserts the stage, Change
 changes its order while preserving step/input/downstream identity, and Drop
 returns the candidate's own downstream child. Disabling the profile prevents
 creation/modification and still allows removal and lossless reading of stored
-programs, including unsupported opaque children. Created and edited candidates
+programs, including unsupported opaque children. Change refuses an imported step
+outside the five-step Experimental menu; reading and Drop retain those programs
+and their actual child. Created and edited candidates
 round-trip through versioned bytes and lossless canonical text.
 
 EEC executes seeded Grow and Change candidates through Rust, Python, C++17
