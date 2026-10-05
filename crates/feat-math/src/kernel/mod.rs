@@ -16,6 +16,7 @@ pub mod ordered_axis;
 pub mod pipeline;
 pub mod profile;
 mod program;
+pub mod ridge_fast;
 pub mod scalar_execution;
 pub mod scalar_program;
 pub mod scope;
