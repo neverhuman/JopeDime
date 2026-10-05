@@ -139,7 +139,7 @@ fn check_removed(node: &VersionedProgram, dir: &std::path::Path) {
     };
     let train = vec![vec![0., 1.], vec![1., 2.], vec![2., 4.], vec![3., 8.]];
     let labels = [0.25, 0.5, 1., 2.];
-    let test = vec![vec![4., 16.], vec![5., 32.]];
+    let test = [vec![4., 16.], vec![5., 32.]];
     let native = feat_math::fit_legacy_numeric_bound(genome, &train, &labels).unwrap();
     let table = RawTable {
         headers: native
