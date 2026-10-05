@@ -1066,3 +1066,7 @@ mod scalar_export_v2;
 // B05–B07: strict canonical producer declarations before generation.
 #[path = "producer_profile_v2/mod.rs"]
 mod producer_profile_v2;
+
+// B05–B07: strict producer-bound model reader and frozen format-2 replay.
+#[path = "scalar_v2/producer_reader.rs"]
+mod producer_reader_v2;
