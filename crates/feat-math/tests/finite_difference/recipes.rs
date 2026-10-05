@@ -12,7 +12,7 @@ use std::process::Command;
 
 fn rows() -> Vec<OrderedRow> {
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "fixtures/math_boundary/v2/finite_difference.json"
+        "../fixtures/math_boundary/v2/finite_difference.json"
     ))
     .unwrap();
     let float = |v: &serde_json::Value| {

@@ -26,7 +26,7 @@ Legacy emitter identities, recipes and model formats are unchanged.
 Acceptance commands:
 
 ```sh
-cargo test -p feat-math --test finite_difference_recipe_v2
+cargo test -p feat-math --test finite_difference_v2 recipes::
 cargo test -p feat-math --test finite_difference_v2
 cargo clippy -p feat-math --all-targets -- -D warnings
 NEXTEST_TEST_THREADS=16 just test-pr
