@@ -211,6 +211,57 @@ class ProvenanceBindTests(unittest.TestCase):
         result = bind.verify_scripts_and_image(self.repo, env)
         self.assertEqual(result["bind_rev"], self.base_sha)
 
+    def _shallow_clone(self) -> Path:
+        """A clean depth-1 clone of the PR head, as actions/checkout leaves a cold workspace."""
+        git(self.repo, "config", "uploadpack.allowReachableSHA1InWant", "true")
+        clone = Path(self.tmp.name) / "shallow-checkout"
+        subprocess.check_call(
+            ["git", "clone", "-q", "--depth=1", f"file://{self.repo}", str(clone)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.assertEqual(git(clone, "rev-parse", "HEAD"), self.head_sha)
+        self.assertFalse(bind.has_commit(clone, self.base_sha))
+        return clone
+
+    def test_shallow_checkout_fetches_base_then_binds_to_it(self):
+        clone = self._shallow_clone()
+        # The cold-workspace failure the explicit fetch exists for.
+        with self.assertRaises(subprocess.CalledProcessError):
+            bind.scripts_digest(clone, self.base_sha)
+        env = self._env("pull_request", self.base_digest, "base", BASE_SHA=self.base_sha)
+        self.assertEqual(bind.ensure_bind_rev(clone, env), self.base_sha)
+        self.assertTrue(bind.has_commit(clone, self.base_sha))
+        result = bind.verify_scripts_and_image(clone, env)
+        self.assertEqual(result["expected_scripts_sha256"], self.base_digest)
+        head_env = self._env("pull_request", self.head_digest, "head", BASE_SHA=self.base_sha)
+        with self.assertRaisesRegex(ValueError, "different files"):
+            bind.verify_scripts_and_image(clone, head_env)
+
+    def test_shallow_checkout_push_fetches_nothing(self):
+        clone = self._shallow_clone()
+        self.assertIsNone(bind.ensure_bind_rev(clone, {"GITHUB_EVENT_NAME": "push"}))
+        self.assertFalse(bind.has_commit(clone, self.base_sha))
+
+    def test_unfetchable_base_fails_closed(self):
+        clone = self._shallow_clone()
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": "0" * 40}
+        with self.assertRaises((subprocess.CalledProcessError, ValueError)):
+            bind.ensure_bind_rev(clone, env)
+
+    def test_fetch_token_goes_through_git_config_env_not_argv(self):
+        env = bind.fetch_env(
+            self.repo,
+            {"JOPE_PROVENANCE_FETCH_TOKEN": "tok", "GITHUB_SERVER_URL": "https://github.com"},
+        )
+        n = int(env["GIT_CONFIG_COUNT"]) - 1
+        self.assertEqual(env[f"GIT_CONFIG_KEY_{n}"], "http.https://github.com/.extraheader")
+        self.assertEqual(
+            env[f"GIT_CONFIG_VALUE_{n}"], "AUTHORIZATION: basic eC1hY2Nlc3MtdG9rZW46dG9r"
+        )
+        no_token = bind.fetch_env(self.repo, {})
+        self.assertNotIn("http.https://github.com/.extraheader", no_token.values())
+
     def test_parse_matches_repo_common_sh(self):
         common = (ROOT / "deploy/runner/common.sh").read_text()
         paths = bind.parse_deployed_relpaths(common)

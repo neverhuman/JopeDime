@@ -2,7 +2,9 @@ name: Runner provenance
 description: >-
   Prove the self-hosted runner is executing reviewed merged runner files, rather than assuming
   it. Used by every workflow that runs on the self-hosted lane. Requires the repository to be
-  checked out already (fetch-depth: 0 on pull_request so the base rev is readable).
+  checked out already. Any checkout depth works: on pull_request the first step fetches exactly
+  the PR base commit (--depth=1) when the checkout does not already hold it, so a clean shallow
+  workspace binds the same way as a reused full-history one.
 
   What this binds, precisely, so it is not read as more than it is:
     - the host files listed in JOPE_RUNNER_DEPLOYED (scripts, units, the drop-in)
@@ -20,6 +22,14 @@ description: >-
 runs:
   using: composite
   steps:
+    - name: PR base commit readable (explicit base fetch on a shallow checkout)
+      shell: bash
+      env:
+        # Read-only job token, only for this one fetch; passed to git through GIT_CONFIG_*.
+        JOPE_PROVENANCE_FETCH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        python3 deploy/runner/provenance_bind.py ensure-base
     - name: Deployed scripts, image entrypoint and image identity
       shell: bash
       run: |

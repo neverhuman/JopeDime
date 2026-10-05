@@ -73,6 +73,7 @@
         "python3 deploy/ci/test-aggregate.py",
         "python3 deploy/ci/test-status.py",
         "python3 deploy/ci/test-runner.py",
+        "python3 deploy/ci/test-provenance.py",
         "python3 deploy/ci/test-full-main.py",
         "python3 deploy/ci/test-training-proof.py",
         "python3 deploy/ci/test-install-private.py",
@@ -7045,6 +7046,16 @@
       ],
       "dispositions": [],
       "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
+    },
+    "python:deploy/ci/test-provenance.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of runner provenance binding: PR base-ref digest on pull_request, exact match otherwise, fail-closed base handling and explicit base fetch on a shallow checkout."
     },
     "python:deploy/ci/test-full-main.py": {
       "discovery": {
