@@ -1,7 +1,7 @@
 //! Ordered recipe and fitted continuation through the public v2 export routes.
 use feat_math::kernel::finite_difference::{
     DifferenceConfig, DifferenceFittedCpp, DifferenceLanguage, DifferenceModel, DifferenceProgram,
-    OrderedRow,
+    DifferenceState, OrderedRow,
 };
 use feat_math::kernel::ordered_axis::{FoldBoundary, GroupKey, OrderedInputIdentity, TaskMode};
 use feat_math::kernel::wire_v2::{export_report, VersionError, VersionedModel, VersionedProgram};
@@ -82,23 +82,54 @@ fn checked(command: &mut Command) -> String {
     );
     String::from_utf8(output.stdout).unwrap()
 }
-fn rust_driver(rows: &[OrderedRow]) -> String {
-    let rows=rows.iter().map(|row| {
-        let GroupKey::Categorical(group)=&row.group else {unreachable!()};
-        format!("OrderedRow{{group:OrderedGroup::Text({group:?}.into()),timestamp:f64::from_bits({}),values:vec![{}]}}",
-            row.timestamp.to_bits(),row.values.iter().map(|v|format!("f64::from_bits({})",v.to_bits())).collect::<Vec<_>>().join(","))
-    }).collect::<Vec<_>>().join(",");
+fn rust_driver(rows: &[OrderedRow], labels: &[f64], incompatible: &[Vec<u8>]) -> String {
+    let labels = labels
+        .iter()
+        .map(|v| format!("f64::from_bits({})", v.to_bits()))
+        .collect::<Vec<_>>()
+        .join(",");
+    let incompatible = format!(
+        "vec![{}]",
+        incompatible
+            .iter()
+            .map(|bytes| format!("vec!{bytes:?}"))
+            .collect::<Vec<_>>()
+            .join(",")
+    );
+    let rows = rows
+        .iter()
+        .map(|row| {
+            let group = match &row.group {
+                GroupKey::Categorical(text) => format!("OrderedGroup::Text({text:?}.into())"),
+                GroupKey::NumericBits(bits) => format!("OrderedGroup::Numeric({bits})"),
+            };
+            format!(
+                "OrderedRow{{group:{group},timestamp:f64::from_bits({}),values:vec![{}]}}",
+                row.timestamp.to_bits(),
+                row.values
+                    .iter()
+                    .map(|v| format!("f64::from_bits({})", v.to_bits()))
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
     format!(
         r#"
 fn output_hex(b:&[u8])->String {{b.iter().map(|v|format!("{{v:02x}}")).collect()}}
 fn main() {{
- let rows=vec![{rows}];let labels=[0.25,0.5,1.0,2.0];
+ let rows=vec![{rows}];let labels=[{labels}];
  let mut model=fit_ordered(&rows[..4],&labels,2,"recipe-cut",4,8).unwrap();
  let initial=model.state_bytes().unwrap();assert!(model.finish().is_err());
  let empty=model.predict(&[]).unwrap();assert!(empty.0.is_empty() && empty.1.is_empty());assert_eq!(initial,model.state_bytes().unwrap());
  let mut bad=rows[4..6].to_vec();bad[1].values.clear();assert!(model.predict(&bad).is_err());assert_eq!(initial,model.state_bytes().unwrap());
  let mut truncated=initial.clone();truncated.pop();assert!(model.replace_state(&truncated).is_err());assert_eq!(initial,model.state_bytes().unwrap());
- model.replace_state(&initial).unwrap();
+ for bytes in {incompatible} {{assert!(model.replace_state(&bytes).is_err());assert_eq!(initial,model.state_bytes().unwrap());}}
+ let mut backwards=vec![rows[4].clone(),rows[0].clone()];backwards[1].timestamp=-f64::MAX;assert!(model.predict(&backwards).is_err());assert_eq!(initial,model.state_bytes().unwrap());
+ backwards[1].timestamp=f64::NAN;assert!(model.predict(&backwards).is_err());assert_eq!(initial,model.state_bytes().unwrap());
+ model.predict(&rows[4..5]).unwrap();assert_ne!(initial,model.state_bytes().unwrap());
+ model.replace_state(&initial).unwrap();assert_eq!(initial,model.state_bytes().unwrap());
  println!("initial:{{}}",output_hex(&initial));let (values,faults)=model.predict(&rows[4..]).unwrap();
  println!("values:{{}}",values.iter().map(|v|format!("{{:016x}}",v.to_bits())).collect::<Vec<_>>().join(","));
  println!("faults:{{faults:?}}");println!("final:{{}}",output_hex(&model.state_bytes().unwrap()));model.finish().unwrap();
@@ -108,16 +139,25 @@ fn main() {{
 "#
     )
 }
-fn python_driver(rows: &[OrderedRow]) -> String {
+fn python_driver(rows: &[OrderedRow], labels: &[f64], incompatible: &[Vec<u8>]) -> String {
+    let labels = labels
+        .iter()
+        .map(|v| format!("word({})", v.to_bits()))
+        .collect::<Vec<_>>()
+        .join(",");
+    let incompatible = format!("{incompatible:?}");
     let rows = rows
         .iter()
         .map(|row| {
-            let GroupKey::Categorical(group) = &row.group else {
-                unreachable!()
+            let group = match &row.group {
+                GroupKey::Categorical(text) => {
+                    format!("(1,{})", serde_json::to_string(text).unwrap())
+                }
+                GroupKey::NumericBits(bits) => format!("(0,{bits})"),
             };
             format!(
-                "OrderedRow((1,{}),word({}),[{}])",
-                serde_json::to_string(group).unwrap(),
+                "OrderedRow({},word({}),[{}])",
+                group,
                 row.timestamp.to_bits(),
                 row.values
                     .iter()
@@ -132,7 +172,7 @@ fn python_driver(rows: &[OrderedRow]) -> String {
         r#"
 def word(bits): return struct.unpack('<d',struct.pack('<Q',bits))[0]
 rows=[{rows}]
-model=fit_ordered(rows[:4],[0.25,0.5,1.,2.],'forecasting','recipe-cut',4,8)
+model=fit_ordered(rows[:4],[{labels}],'forecasting','recipe-cut',4,8)
 initial=model.state_bytes()
 def refused(action):
  try: action()
@@ -143,7 +183,14 @@ assert model.predict([])==([],[]) and model.state_bytes()==initial
 bad=[rows[4],OrderedRow(rows[5].group,rows[5].timestamp,[])]
 refused(lambda:model.predict(bad));assert model.state_bytes()==initial
 refused(lambda:model.replace_state(initial[:-1]));assert model.state_bytes()==initial
-model.replace_state(initial)
+for data in {incompatible}:
+ refused(lambda:model.replace_state(bytes(data)));assert model.state_bytes()==initial
+backwards=[rows[4],OrderedRow(rows[0].group,-word(0x7fefffffffffffff),rows[0].values)]
+refused(lambda:model.predict(backwards));assert model.state_bytes()==initial
+backwards[1]=OrderedRow(rows[0].group,float('nan'),rows[0].values)
+refused(lambda:model.predict(backwards));assert model.state_bytes()==initial
+model.predict(rows[4:5]);assert model.state_bytes()!=initial
+model.replace_state(initial);assert model.state_bytes()==initial
 print('initial:'+initial.hex())
 values,faults=model.predict(rows[4:])
 print('values:'+','.join(format(struct.unpack('<Q',struct.pack('<d',v))[0],'016x') for v in values))
@@ -153,16 +200,46 @@ refused(lambda:fit_ordered(rows[:4],[word(0x7fefffffffffffff)]*4,'forecasting','
 "#
     )
 }
-fn cpp_driver(rows: &[OrderedRow], fitted: bool) -> String {
+fn cpp_driver(
+    rows: &[OrderedRow],
+    labels: &[f64],
+    incompatible: &[Vec<u8>],
+    fitted: bool,
+) -> String {
+    let labels = labels
+        .iter()
+        .map(|v| format!("ordered_float({}ULL)", v.to_bits()))
+        .collect::<Vec<_>>()
+        .join(",");
+    let incompatible = incompatible
+        .iter()
+        .map(|bytes| {
+            format!(
+                "{{{}}}",
+                bytes
+                    .iter()
+                    .map(|b| b.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
     let rows = rows
         .iter()
         .map(|row| {
-            let GroupKey::Categorical(group) = &row.group else {
-                unreachable!()
+            let group = match &row.group {
+                GroupKey::Categorical(text) => format!(
+                    "OrderedGroup::categorical({})",
+                    serde_json::to_string(text).unwrap()
+                ),
+                GroupKey::NumericBits(bits) => {
+                    format!("OrderedGroup::numeric(ordered_float({bits}ULL))")
+                }
             };
             format!(
-                "{{OrderedGroup::categorical({}),ordered_float({}ULL),{{{}}}}}",
-                serde_json::to_string(group).unwrap(),
+                "{{{},ordered_float({}ULL),{{{}}}}}",
+                group,
                 row.timestamp.to_bits(),
                 row.values
                     .iter()
@@ -174,9 +251,9 @@ fn cpp_driver(rows: &[OrderedRow], fitted: bool) -> String {
         .collect::<Vec<_>>()
         .join(",");
     let factory = if fitted {
-        "make_difference_model()"
+        "make_difference_model()".to_string()
     } else {
-        "fit_ordered(std::vector<OrderedRow>(rows.begin(),rows.begin()+4),{0.25,0.5,1.,2.},2,\"recipe-cut\",4,8)"
+        format!("fit_ordered(std::vector<OrderedRow>(rows.begin(),rows.begin()+4),{{{labels}}},2,\"recipe-cut\",4,8)")
     };
     let fit_checks = if fitted {
         ""
@@ -198,7 +275,10 @@ int main() {{
  auto empty=model.predict({{}});if(!empty.first.empty()||!empty.second.empty()||model.state_bytes()!=initial)return 3;
  std::vector<OrderedRow> bad={{rows[4],rows[5]}};bad[1].values.clear();refused=false;try{{model.predict(bad);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 4;
  auto truncated=initial;truncated.pop_back();refused=false;try{{model.replace_state(truncated);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 5;
- model.replace_state(initial);const auto continuation=std::vector<OrderedRow>(rows.begin()+4,rows.end());const auto result=model.predict(continuation);if(other.state_bytes()!=initial)return 6;
+ const std::vector<OrderedBytes> incompatible={{{incompatible}}};for(const auto& bytes:incompatible){{refused=false;try{{model.replace_state(bytes);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 11;}}
+ std::vector<OrderedRow> backwards={{rows[4],rows[0]}};backwards[1].timestamp=-std::numeric_limits<double>::max();refused=false;try{{model.predict(backwards);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 12;
+ backwards[1].timestamp=std::numeric_limits<double>::quiet_NaN();refused=false;try{{model.predict(backwards);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 13;
+ model.predict({{rows[4]}});if(model.state_bytes()==initial)return 14;model.replace_state(initial);if(model.state_bytes()!=initial)return 15;const auto continuation=std::vector<OrderedRow>(rows.begin()+4,rows.end());const auto result=model.predict(continuation);if(other.state_bytes()!=initial)return 6;
  const auto replay=other.predict(continuation);if(result.first.size()!=replay.first.size()||result.second!=replay.second)return 7;for(std::size_t i=0;i<result.first.size();i++)if(ordered_bits(result.first[i])!=ordered_bits(replay.first[i]))return 10;
  std::cout<<"initial:"<<output_hex(initial)<<'\n'<<"values:";for(std::size_t i=0;i<result.first.size();i++){{if(i)std::cout<<',';std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<ordered_bits(result.first[i]);}}
  std::cout<<std::dec<<"\nfaults:[";for(std::size_t i=0;i<result.second.size();i++){{if(i)std::cout<<", ";std::cout<<'[';for(std::size_t j=0;j<result.second[i].size();j++){{if(j)std::cout<<", ";std::cout<<result.second[i][j];}}std::cout<<']';}}
@@ -248,53 +328,132 @@ fn execute(dir: &Path, name: &str, source: &str, lang: DifferenceLanguage) -> St
 #[test]
 fn four_orders_train_and_continue_through_all_three_public_recipes_and_fitted_cpp() {
     use feat_math::kernel::export::Route;
-    let rows = rows();
+    let original = rows();
+    let mut mixed = original.clone();
+    for (i, row) in mixed.iter_mut().enumerate() {
+        row.timestamp = i as f64;
+        row.group = match i {
+            0 => GroupKey::NumericBits((-0.0f64).to_bits()),
+            1 => GroupKey::numeric(0.).unwrap(),
+            2 | 6 => GroupKey::numeric(-1.).unwrap(),
+            3 => GroupKey::numeric(1.).unwrap(),
+            4 => GroupKey::numeric(2.5).unwrap(),
+            _ => GroupKey::categorical("category").unwrap(),
+        };
+    }
+    let mut negative = original.clone();
+    for (i, row) in negative.iter_mut().enumerate() {
+        row.values = vec![if i < 4 { 0.0 } else { -(i as f64) }; 2];
+    }
     let dir = tempfile::tempdir().unwrap().keep(); // Preserve generated proof artifacts.
-    for order in 1..=4 {
-        let program = program(order);
-        let routed = VersionedProgram::from_bytes(&program.to_bytes().unwrap()).unwrap();
-        let report = export_report(&routed);
-        assert!(matches!(report.rust_recipe, Route::Ok));
-        assert!(matches!(report.python_recipe, Route::Ok));
-        assert!(matches!(report.cpp17_recipe, Route::Ok));
-        assert!(matches!(report.cpp17_fitted, Route::Ok));
-        let native = program
-            .fit_training(
-                &rows[..4],
-                &[0.25, 0.5, 1., 2.],
-                TaskMode::Forecasting,
-                FoldBoundary::new("recipe-cut", 4, 8).unwrap(),
-            )
-            .unwrap();
-        let tagged = VersionedModel::from_json(&native.to_json().unwrap()).unwrap();
-        let fitted = tagged.emit_ordered_fitted_cpp17().unwrap();
-        let expected = reference(native, &rows);
-        for (lang, driver, name) in [
-            (DifferenceLanguage::Rust, rust_driver(&rows), "rust"),
-            (DifferenceLanguage::Python, python_driver(&rows), "python"),
-            (DifferenceLanguage::Cpp17, cpp_driver(&rows, false), "cpp"),
-        ] {
-            let recipe = routed.emit_ordered_recipe(lang).unwrap();
-            assert_eq!(recipe.program_identity, program.identity().unwrap());
+    for (case, rows, labels) in [
+        ("boundary", original.clone(), vec![0.25, 0.5, 1., 2.]),
+        ("groups", mixed, vec![0.25, 0.5, 1., 2.]),
+        ("negative-zero", negative, vec![-0.0; 4]),
+    ] {
+        for order in 1..=4 {
+            if case != "boundary" && order != 1 {
+                continue;
+            }
+            let program = program(order);
+            let routed = VersionedProgram::from_bytes(&program.to_bytes().unwrap()).unwrap();
+            let report = export_report(&routed);
+            assert!(matches!(report.rust_recipe, Route::Ok));
+            assert!(matches!(report.python_recipe, Route::Ok));
+            assert!(matches!(report.cpp17_recipe, Route::Ok));
+            assert!(matches!(report.cpp17_fitted, Route::Ok));
+            let native = program
+                .fit_training(
+                    &rows[..4],
+                    &labels,
+                    TaskMode::Forecasting,
+                    FoldBoundary::new("recipe-cut", 4, 8).unwrap(),
+                )
+                .unwrap();
+            let mut incompatible = Vec::new();
+            for (other_order, step, width) in [
+                (if order == 4 { 1 } else { order + 1 }, 0.5, 2),
+                (order, 1., 2),
+                (order, 0.5, 1),
+            ] {
+                let p = DifferenceProgram::new(
+                    DifferenceConfig::new(2, 59, other_order, step).unwrap(),
+                    width,
+                    program.input_identity().clone(),
+                    program.downstream().clone(),
+                )
+                .unwrap();
+                let mut training = rows[..4].to_vec();
+                for row in &mut training {
+                    row.values.truncate(width);
+                }
+                incompatible.push(state(
+                    &p.fit_training(
+                        &training,
+                        &labels,
+                        TaskMode::Forecasting,
+                        FoldBoundary::new("recipe-cut", 4, 8).unwrap(),
+                    )
+                    .unwrap(),
+                ));
+            }
+            incompatible.push(
+                DifferenceState::new(
+                    program.config(),
+                    2,
+                    TaskMode::Forecasting,
+                    program.input_identity(),
+                    FoldBoundary::new("recipe-cut", 4, 8).unwrap(),
+                )
+                .unwrap()
+                .to_bytes()
+                .unwrap(),
+            );
+            let tagged = VersionedModel::from_json(&native.to_json().unwrap()).unwrap();
+            let fitted = tagged.emit_ordered_fitted_cpp17().unwrap();
+            let expected = reference(native, &rows);
+            if case == "negative-zero" {
+                assert!(expected.contains("8000000000000000"));
+            }
+            for (lang, driver, name) in [
+                (
+                    DifferenceLanguage::Rust,
+                    rust_driver(&rows, &labels, &incompatible),
+                    "rust",
+                ),
+                (
+                    DifferenceLanguage::Python,
+                    python_driver(&rows, &labels, &incompatible),
+                    "python",
+                ),
+                (
+                    DifferenceLanguage::Cpp17,
+                    cpp_driver(&rows, &labels, &incompatible, false),
+                    "cpp",
+                ),
+            ] {
+                let recipe = routed.emit_ordered_recipe(lang).unwrap();
+                assert_eq!(recipe.program_identity, program.identity().unwrap());
+                assert_eq!(
+                    execute(
+                        &dir,
+                        &format!("{case}-order{order}-{name}"),
+                        &(recipe.source + &driver),
+                        lang
+                    ),
+                    expected
+                );
+            }
             assert_eq!(
                 execute(
                     &dir,
-                    &format!("order{order}-{name}"),
-                    &(recipe.source + &driver),
-                    lang
+                    &format!("{case}-order{order}-fitted"),
+                    &(fitted.source + &cpp_driver(&rows, &labels, &incompatible, true)),
+                    DifferenceLanguage::Cpp17
                 ),
                 expected
             );
         }
-        assert_eq!(
-            execute(
-                &dir,
-                &format!("order{order}-fitted"),
-                &(fitted.source + &cpp_driver(&rows, true)),
-                DifferenceLanguage::Cpp17
-            ),
-            expected
-        );
     }
     eprintln!("ordered recipe proof artifacts: {}", dir.display());
 }
@@ -412,5 +571,8 @@ fn fitted_codec_binds_source_profile_program_and_native_continuation() {
         );
     }
     assert!(DifferenceFittedCpp::from_codec_json("{}").is_err());
-    assert!(DifferenceFittedCpp::from_codec_json(&" ".repeat(16 * 1024 * 1024 + 1)).is_err());
+    let oversized = format!("{}{}", artifact.codec, " ".repeat(16 * 1024 * 1024));
+    assert!(
+        matches!(DifferenceFittedCpp::from_codec_json(&oversized),Err(VersionError::Malformed(message)) if message.starts_with("Resource("))
+    );
 }

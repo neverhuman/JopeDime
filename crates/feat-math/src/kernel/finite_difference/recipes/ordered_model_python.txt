@@ -47,6 +47,8 @@ def fit_ordered(rows, labels, task, cut, train_end, total_rows):
     transformed = [state.push(row.group, row.timestamp, row.values)[0] for row in rows]
     predictor = Model().fit(transformed, labels)
     means, scales, weights = predictor.head
+    if all(struct.pack('<d', value) == struct.pack('<d', -0.0) for value in labels):
+        weights[0] = -0.0
     if len(means) != state.width or len(scales) != state.width or len(weights) != state.width + 1 or any(not math.isfinite(v) for v in means + weights) or any(not math.isfinite(v) or v <= 0.0 for v in scales):
         raise OrderedError('domain')
     try:

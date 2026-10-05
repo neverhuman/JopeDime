@@ -18,6 +18,7 @@ static DifferenceModel fit_ordered(const std::vector<OrderedRow>& rows,const std
     DifferenceState state(@ORDER@,@STEP@,@WIDTH@,task,@INPUT@,cut,train_end,total_rows);std::vector<std::vector<double>> transformed;
     for(const auto& row:rows) transformed.push_back(state.push(row.group,row.timestamp,row.values).first);
     auto predictor=Model::fit(transformed,labels);
+    if(std::all_of(labels.begin(),labels.end(),[](double v){return ordered_bits(v)==ordered_bits(-0.0);})) predictor.head.w[0]=-0.0;
     const auto& head=predictor.head;
     if(head.means.size()!=state.width || head.scales.size()!=state.width || head.w.size()!=state.width+1 || std::any_of(head.means.begin(),head.means.end(),[](double v){return !std::isfinite(v);}) || std::any_of(head.scales.begin(),head.scales.end(),[](double v){return !std::isfinite(v) || v<=0.0;}) || std::any_of(head.w.begin(),head.w.end(),[](double v){return !std::isfinite(v);})) throw OrderedError("domain");
     OrderedBytes bytes;try {bytes=state.to_bytes();} catch(const OrderedError&) {throw OrderedError("domain");}

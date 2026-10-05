@@ -269,7 +269,9 @@ fn cpp_string(value: &str) -> String {
 const RUST_FIT: &str = r#"
 pub struct Predictor(Model);
 pub fn fit(x:&[Vec<f64>],y:&[f64])->Result<Predictor,&'static str> {
-    let model=Model::fit(x,y);let h=&model.head;let width=x[0].len();
+    let mut model=Model::fit(x,y);
+    if y.iter().all(|v|v.to_bits()==(-0.0f64).to_bits()) {model.head.w[0]=-0.0;}
+    let h=&model.head;let width=x[0].len();
     if h.means.len()!=width || h.scales.len()!=width || h.w.len()!=width+1
         || h.means.iter().chain(h.w.iter()).any(|v|!v.is_finite())
         || h.scales.iter().any(|v|!v.is_finite() || *v<=0.0) {return Err("domain");}
