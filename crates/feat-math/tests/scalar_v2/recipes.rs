@@ -185,6 +185,65 @@ fn cases() -> Vec<RecipeCase> {
         ));
     }
     cases.extend(signed_zero_label_cases());
+    cases.extend(pow_literal_base_cases());
+    cases
+}
+
+fn pow_literal_base_cases() -> Vec<RecipeCase> {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../fixtures/scalar_v2/pow_literal_bases.v1.json"
+    ))
+    .unwrap();
+    assert_eq!(fixture["schema"], "scalar_v2.pow_literal_bases.v1");
+    let rows = |value: &Value| -> Vec<Vec<f64>> {
+        value
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|row| {
+                row.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| f64::from_bits(v.as_u64().unwrap()))
+                    .collect()
+            })
+            .collect()
+    };
+    let training = rows(&fixture["training_bits"]);
+    let probe = rows(&fixture["probe_bits"]);
+    let labels: Vec<_> = fixture["labels_bits"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| f64::from_bits(v.as_u64().unwrap()))
+        .collect();
+    let mut cases = vec![];
+    for policy in [NumericalPolicy::LegacyV1, NumericalPolicy::StableV2] {
+        for carrier in [ScalarCarrier::Row, ScalarCarrier::Elementwise] {
+            let argument = if carrier == ScalarCarrier::Row {
+                Var::Col(0)
+            } else {
+                Var::X
+            };
+            for base in fixture["base_bits"].as_array().unwrap() {
+                let root = ScalarNode::Binary(
+                    BinOp::Pow,
+                    Box::new(ScalarNode::Const(f64::from_bits(base.as_u64().unwrap()))),
+                    Box::new(ScalarNode::Var(argument)),
+                );
+                cases.push((
+                    ScalarExpressionProgram::new(root)
+                        .unwrap()
+                        .with_numerical_policy(policy),
+                    carrier,
+                    training.clone(),
+                    labels.clone(),
+                    probe.clone(),
+                ));
+            }
+        }
+    }
+    assert_eq!(cases.len(), 16);
     cases
 }
 

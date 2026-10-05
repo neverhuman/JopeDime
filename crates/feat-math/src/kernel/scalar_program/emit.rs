@@ -59,6 +59,14 @@ fn legacy_value(instruction: Instruction, language: ScalarLanguage) -> Option<St
             ScalarLanguage::Cpp17 => format!("f64_from_bits({}ULL)", value.to_bits()),
         });
     }
+    if language == ScalarLanguage::Rust {
+        if let Instruction::Binary(BinOp::Pow, a, b) = instruction {
+            // Native operands are runtime values. Hide both operands so LLVM
+            // cannot replace a literal power-of-two base with exp2, or fold a
+            // literal exponent into another kernel with different IEEE bits.
+            return Some(format!("std::hint::black_box(registers[{a}]).powf(std::hint::black_box(registers[{b}]).clamp(-8.0,8.0))"));
+        }
+    }
     // Native old min/max choose the second operand on equal values. Clang's
     // fmin/fmax constant folding can choose the other signed zero. This local
     // scalar-v2 comparison preserves that observed contract and v1 source.
