@@ -418,14 +418,66 @@ class OutputTests(Scratch):
         self.assertEqual(result["counts"]["complete"], 6)
         self.assertFalse(result["execution_admitted"])
 
-    def test_research_prefix_is_separate_and_rebinding_refused(self):
+    def test_research_prefix_is_owner_scoped_and_rebinding_refused(self):
         manifest = self.manifest()
+        self.assertEqual(out.RESEARCH_PREFIX, out.PREFIX + "research-only/")
         row = next(r for r in manifest["outputs"] if r["component"] == "tabpfn35")
-        self.assertTrue(row["object_key"].startswith(out.RESEARCH_PREFIX))
-        self.assertFalse(row["object_key"].startswith(out.PREFIX))
+        for product in manifest["outputs"]:
+            for field in ("object_key", "receipt_key", "key_template"):
+                self.assertTrue(product[field].startswith(out.PREFIX))
+                self.assertEqual(
+                    product[field].startswith(out.PREFIX + "research-only/"),
+                    product["component"] == "tabpfn35",
+                )
         row["object_key"] = row["object_key"].replace(out.RESEARCH_PREFIX, out.PREFIX)
         with self.assertRaises(ValueError):
             out.check(manifest, [], self.root)
+
+    def test_legacy_sibling_research_manifest_is_refused(self):
+        manifest = self.manifest()
+        manifest["research_prefix"] = "experiments/gp-policy-dl/v2-trainonly-research/"
+        with self.assertRaisesRegex(ValueError, "manifest identity"):
+            out.check(manifest, [], self.root)
+
+    def test_dope_pin_matches_owner_lane_binary(self):
+        path = (
+            Path(__file__).resolve().parents[2]
+            / "docs/internal/core-ip/dl-trainonly/encoder-pins.json"
+        )
+        release = json.loads(path.read_bytes())
+        # Independently frozen lane-build identity, not the pin's own sidecar.
+        expected = {
+            "sha256": "bc3c446098cd3a080fc4ce2e2ff7b2f10bf9549fb08f053d4ca14af263b2d926",
+            "bytes": 9337920,
+        }
+        self.assertEqual(release["encoders"]["dope"]["assets"]["binary"], expected)
+        current = out.generate(
+            [context()],
+            release,
+            source_sha256="e" * 64,
+            bindings=bindings(),
+            expected_count=1,
+        )
+        stale_pins = copy.deepcopy(release)
+        stale_pins["encoders"]["dope"]["assets"]["binary"] = {
+            "sha256": "c972c631c7c1053436ba31a088e223a9d394078bdb46148bdcc8f63e2487b5f8",
+            "bytes": 9530432,
+        }
+        stale = out.generate(
+            [context()],
+            stale_pins,
+            source_sha256="e" * 64,
+            bindings=bindings(),
+            expected_count=1,
+        )
+        ids = {r["component"]: r["output_id"] for r in current["outputs"]}
+        stale_ids = {r["component"]: r["output_id"] for r in stale["outputs"]}
+        self.assertNotEqual(ids["dope"], stale_ids["dope"])
+        for component in out.COMPONENTS:
+            if component != "dope":
+                self.assertEqual(ids[component], stale_ids[component])
+        with self.assertRaisesRegex(ValueError, "unexpected or duplicate completion"):
+            out.check(current, self.events(stale), self.root)
 
     def test_noncomplete_extra_fields_refused(self):
         manifest = self.manifest()

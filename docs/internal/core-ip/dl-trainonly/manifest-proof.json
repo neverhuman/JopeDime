@@ -12,30 +12,37 @@
     "execution_admitted": false,
     "expected": 29238,
     "invalid": [],
-    "manifest_sha256": "b935f8f083ab5bb1406c93c4823be5d08185b95fcd64ec3e57f16a1e146c299b",
+    "manifest_sha256": "eec931e77c501d397e26028b2d11c6817cc7395deb9efc82b3d0e8fdb14cc28d",
     "missing": 29238,
     "schema": "jope.dl-output-completeness/v1"
   },
   "encoder_pins": {
-    "bytes": 7123,
-    "sha256": "cad5f2426a1f32424ce0687af244f69acabf5cbcaa6f4cbc7915886495df4a49"
+    "bytes": 7396,
+    "sha256": "9f5199348b217d3adb3c343b91f30ec6ef6a763055fa21815d3a7c5ecb46428c"
   },
   "execution_admitted": false,
   "generation_exit_status": 0,
   "generator": {
-    "sha256": "926cd863716a5986e73f0aba5343aff2a315aa745d90ab066fd68b96c4d8b59a"
+    "bytes": 12977,
+    "sha256": "bd2c228f3996c83695a9ad277e6aedb6dc009e0cd7c7b7fb34e12e89180e7760"
   },
   "historical_v1_proof": {
     "disposition": "retained in Git and custody; superseded after research namespace separation",
     "source": "b0c11613bd317053e900bcc8b37407f0f8b6a395"
   },
   "manifest": {
-    "bytes": 25699301,
+    "bytes": 25723893,
     "contexts": 4873,
     "encoder_outputs": 29238,
-    "manifest_content_sha256": "b935f8f083ab5bb1406c93c4823be5d08185b95fcd64ec3e57f16a1e146c299b",
-    "manifest_file_sha256": "a6c63c43e7845b784a13b5fa4578e1f47478aa66987a45d3b762859cf8dedf1b",
-    "sha256": "a6c63c43e7845b784a13b5fa4578e1f47478aa66987a45d3b762859cf8dedf1b"
+    "manifest_content_sha256": "eec931e77c501d397e26028b2d11c6817cc7395deb9efc82b3d0e8fdb14cc28d",
+    "manifest_file_sha256": "a142d1081be917c55f2fdf8708dd200c765c33d70bb90c7bda92ed159a09dc73",
+    "sha256": "a142d1081be917c55f2fdf8708dd200c765c33d70bb90c7bda92ed159a09dc73"
+  },
+  "namespaces": {
+    "prefix": "experiments/gp-policy-dl/v2-trainonly/",
+    "production_expectations": 24365,
+    "research_only_expectations": 4873,
+    "research_prefix": "experiments/gp-policy-dl/v2-trainonly/research-only/"
   },
   "repeat_generation_exit_status": 2,
   "schema": "jope.dl-manifest-generation-proof/v2",
@@ -44,5 +51,9 @@
     "bytes": 6480176,
     "datasets": 1006,
     "sha256": "c2a4654898968866a5f0eb5647d8d8d02ec60c61f0e004b7b71e6f887439ec29"
+  },
+  "superseded_v2_proof": {
+    "disposition": "Historical sibling research namespace and provisional binary pin; retained in Git and custody",
+    "source_commit": "8d15e258bbc8e5d1219c86f4e336924cd6ab1d7a"
   }
 }

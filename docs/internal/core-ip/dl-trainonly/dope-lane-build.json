@@ -1,0 +1,93 @@
+{
+  "binary": {
+    "bytes": 9337920,
+    "sha256": "bc3c446098cd3a080fc4ce2e2ff7b2f10bf9549fb08f053d4ca14af263b2d926"
+  },
+  "cargo_lock": {
+    "bytes": 35812,
+    "sha256": "3eb1ed41110bfd4f8524e8a91c5d61021a43e7b3d540ef3e61801374a720b216"
+  },
+  "command": {
+    "evidence_scope": "Reproduction command derived from frozen source/toolchain and retained lane target; not asserted to be the original invocation, not executed by this verification",
+    "reproduction_argv": [
+      "cargo",
+      "+1.88.0",
+      "build",
+      "--manifest-path",
+      "/home/ubuntu/scratch/jopedime-dl-training-v1/build/dope-63696a5d/src/Cargo.toml",
+      "--target-dir",
+      "/home/ubuntu/scratch/jopedime-dl-training-v1/build/dope-target",
+      "--offline",
+      "--locked",
+      "--release",
+      "--no-default-features",
+      "--bin",
+      "dope-kernel"
+    ]
+  },
+  "execution_admitted": false,
+  "historical_pre_grant_build": {
+    "active_pin": false,
+    "receipt": "dope-cpu-build.json",
+    "sha256": "c972c631c7c1053436ba31a088e223a9d394078bdb46148bdcc8f63e2487b5f8"
+  },
+  "owner_authority": {
+    "owner_receipt_bytes": 4243,
+    "owner_receipt_sha256": "2ca6a40c3128c07024c835d3a0b5cbf325e4df810242d13307db3a7451c136ff",
+    "scope": "L6(c)",
+    "source": "Independently hash-verified original owner receipt; L6(c) names this lane build, L3/L6(b,e) require nested research-only outputs",
+    "typed_at": "2026-10-05T18:34:23Z"
+  },
+  "published_clean_v1_shard_receipts": [
+    {
+      "bytes": 645,
+      "done": 317,
+      "expected": 317,
+      "failed": 0,
+      "kernel_sha256": "bc3c446098cd3a080fc4ce2e2ff7b2f10bf9549fb08f053d4ca14af263b2d926",
+      "name": "dope-shard-0-of-3.receipt.json",
+      "sha256": "5755f10536836e169e26f5366438f260e1fd0dd7e7e16ce12b3b16498789ec2b"
+    },
+    {
+      "bytes": 645,
+      "done": 317,
+      "expected": 317,
+      "failed": 0,
+      "kernel_sha256": "bc3c446098cd3a080fc4ce2e2ff7b2f10bf9549fb08f053d4ca14af263b2d926",
+      "name": "dope-shard-1-of-3.receipt.json",
+      "sha256": "ebf9fcf6440d3161f9c604c94870a8410c642439fb85e4ca9927eb5086897029"
+    },
+    {
+      "bytes": 645,
+      "done": 316,
+      "expected": 316,
+      "failed": 0,
+      "kernel_sha256": "bc3c446098cd3a080fc4ce2e2ff7b2f10bf9549fb08f053d4ca14af263b2d926",
+      "name": "dope-shard-2-of-3.receipt.json",
+      "sha256": "162ac3cb99db6692865c03fb2975cb239d99dd3b748439ea3f8c00f1237a1f2a"
+    }
+  ],
+  "qualification": "Independent local byte and source checks only; published receipt binding verified locally, remote object restoration and v2 inference remain separate",
+  "retained_build": {
+    "binary_mtime_utc": "2026-10-05T19:42:29.595267+00:00",
+    "binary_path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/dope-target/release/dope-kernel",
+    "log": {
+      "bytes": 3090,
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/dope-build.log",
+      "sha256": "31ed713a6fe25b8ee9ae942f5bcb2fb5ec922885bc88624c96d08d6f76170f21",
+      "terminal": "Finished release profile [optimized] target(s) in 2m 56s"
+    },
+    "original_argv": "Not present in retained build log; requested from lane producer. No historical command inferred from the different root build.",
+    "source_directory": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/dope-63696a5d/src",
+    "target_directory": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/dope-target"
+  },
+  "schema": "jope.dl-dope-lane-build/v1",
+  "source_commit": "63696a5db246abf9c85343c12a5d8c5522fb864a",
+  "source_tree": "39f27dff6a081919433916310b5313c6628d5fd0",
+  "source_verification": {
+    "changed_files": [],
+    "matching_regular_files": 834,
+    "omitted_export_files": [],
+    "scope": "Existing lane export compared with frozen Git blobs; no source modification or build replay"
+  }
+}

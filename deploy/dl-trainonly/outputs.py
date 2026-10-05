@@ -9,7 +9,7 @@ import stat
 from pathlib import Path
 
 PREFIX = "experiments/gp-policy-dl/v2-trainonly/"
-RESEARCH_PREFIX = "experiments/gp-policy-dl/v2-trainonly-research/"
+RESEARCH_PREFIX = PREFIX + "research-only/"
 BUCKET = "veox-jopedime-learning-use2"
 COMPONENTS = ("hyperion", "foundation", "target", "context2048", "tabpfn35", "dope")
 CONTEXTS = 4873
