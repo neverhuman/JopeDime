@@ -27,10 +27,14 @@ after the retained CV gate. Failed-gate fitness keeps its declared CV penalty.
 CV-gated/CV-stable comparators, novelty, lexicase and semantic deduplication read
 only CV/OOF products. The semantic hash contains OOF predictions only; the
 64-value signature projects OOF residuals only; all 192 case indices are OOF.
-Official-test metrics and the status test leader are diagnostics, never inputs
-to selection or stopping. `selection_protocol=jope.s1-inner-cv-selection/v1`
-is required for semantic cache and scored resume records. Missing/legacy tags
-refuse before their old test-derived fitness or signatures can be used. The
+Official-test metrics and the status test leader are optional diagnostics, never
+inputs to selection or stopping. The worker atomically commits complete CV
+results before the official-test fit. Failed, interrupted or malformed test
+diagnostics retain that CV commitment; missing diagnostics cannot veto a CV
+candidate. Worker requests refuse child timeouts above 90,000 milliseconds. `selection_protocol=jope.s1-inner-cv-selection/v1`
+is required for semantic cache, seen-program history and every resume record,
+including failures. Missing/legacy tags or changed contexts refuse before seen
+state, old test-derived fitness or signatures can influence future proposals. The
 trusted controller must also bind actual input/source bytes; this tag by itself
 is not provenance authentication.
 
@@ -41,7 +45,12 @@ pins all 4,873 context dispositions, worker, engine and input manifest. Slots
 Reservations are atomic, persistent and never refunded; single-use dispatch
 claims refuse duplicate/unknown replay. Failed, cancelled, lost and retried
 attempts count inside the **6,081,504** ceiling. A retry needs a free slot; there
-is no extra allowance. The original deadline is October 10 at 00:00Z.
+is no extra allowance. Each context/program permits at most two charged attempts.
+First creation requires explicit `--initialize` and an exclusive durable marker.
+Resume never creates a missing database: loss of either file requires restoration
+of original custody, and a surviving marker refuses a new initialization. A torn
+initialization also remains refused. Preserve the database and marker together.
+The original deadline is October 10 at 00:00Z.
 The receiving supervisor must integrate reservation and dispatch claims before
 any real evaluation; the supplied CLI performs offline coordination only.
 

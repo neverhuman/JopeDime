@@ -2421,10 +2421,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/README.md",
-      "tree_sha256": "93952156af9231351237b417f94cd884b8443b3d0b8357a8704c5eb16cb63522",
+      "tree_sha256": "8a098336fe41ef582de45f344770073a94a2ae7f0c4b1476537ab8d0a8298c3a",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner typed S1 grant: inner-CV-only new search, per-fit scaling, 18 fixed equal generations; historical frozen digest retained."
+      "tree_change": "Owner S1 grant and independent PR204 corrections: explicit ledger custody/resume"
     },
     {
       "body": "teacher-v2",
@@ -2439,10 +2439,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/SCHEMA.md",
-      "tree_sha256": "1e30e0b232c8d87395c28a1910f08edc34f8a0a0ffab7a2c3866f6524da8609d",
+      "tree_sha256": "2e790ab8e318a58ccf67b0548216a04c588e57596379fdb163dd23162f4e4df4",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner typed S1 grant: inner-CV-only new search, per-fit scaling, 18 fixed equal generations; historical frozen digest retained."
+      "tree_change": "Owner S1 grant and independent PR204 corrections: CV commitment, timeout, history and ledger custody"
     },
     {
       "body": "teacher-v2",
@@ -2594,10 +2594,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
-      "tree_sha256": "682ecb7d6a7c00ec8c0e9dce6062193752fd4dd4eb5ddbeab5bbaf0aab7a5a3d",
+      "tree_sha256": "7c2d28ffa096828e96053225f525c9ed515fc10e13e7d7a17a492c4abedf398b",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner typed S1 grant: CV-only selection with invalid-inner-score refusals; frozen historical source digest retained"
+      "tree_change": "Owner S1 grant and independent PR204 corrections: optional diagnostics and strict resume/seen admission"
     },
     {
       "body": "teacher-v2",
@@ -2648,10 +2648,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
-      "tree_sha256": "fa6674b09afa6cd810b3625d28beb586c934ce41fc16d7833ba413298ca070a5",
+      "tree_sha256": "aec261748293f10bf600b89e8841f32811790504f4e07d7412b7129bbc9f895a",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner typed S1 grant: inner-CV-only new search, per-fit scaling, 18 fixed equal generations; historical frozen digest retained."
+      "tree_change": "Owner S1 grant and independent PR204 corrections: atomic CV before optional test diagnostics and90s requests"
     },
     {
       "body": "teacher-v2",
@@ -3094,10 +3094,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/s1_budget.py",
-      "tree_sha256": "6c7bbaccc635b6ecebe23580b4bf14065e575b58cef0c6caeacbf5d16bd42fb8",
+      "tree_sha256": "c20f1ae97a6142c7b74196a4cb47789bfe448ce04b6b1bfa3e9ca2358011e6d0",
       "custody_tarball": null,
       "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
-      "tree_change": "S1 admitted attempts must fit the original deadline including the90-second bound"
+      "tree_change": "Owner S1 grant and independent PR204 corrections: explicit initialization/no reset and two-attempt program cap"
     },
     {
       "body": "teacher-v2-s1",
@@ -3112,10 +3112,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/test_s1_budget.py",
-      "tree_sha256": "29d8f52ee84016878bd3f400e5cbbaf45e0a17da85d4d94938fe036b04ab229d",
+      "tree_sha256": "83068b6410122664942a9e77ec8980d21808ff29d74b919462a2234bbf6587f2",
       "custody_tarball": null,
       "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
-      "tree_change": "S1 near-deadline refusal receiving fixture"
+      "tree_change": "Owner S1 grant and independent PR204 regression tests: ledger loss and bounded retries"
     },
     {
       "body": "teacher-v2-s1",
@@ -3130,9 +3130,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/qualify_s1.py",
-      "tree_sha256": "4057fea675cd7308184573d8f100a7242c37a8a2a34515d82315c7133f18a6ba",
+      "tree_sha256": "c85510667500fb0ac65ee726ff45e5cbd52294d9962fcaaa334811b0ca6ae772",
       "custody_tarball": null,
-      "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution"
+      "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
+      "tree_change": "Owner S1 grant and independent PR204 executable mutants: diagnostic availability/history/timeout"
     }
   ],
   "excluded": [

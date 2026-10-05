@@ -50,8 +50,8 @@ struct SemanticRow {
     cv_mean_log_ratio: f64,
     cv_tail_log_ratio: f64,
     cv_log_ratio_sd: f64,
-    test_rmse: f64,
-    test_rmse_ratio: f64,
+    test_rmse: Option<f64>,
+    test_rmse_ratio: Option<f64>,
     complexity_open_parens: u64,
     billed_ms: Option<u64>,
     max_memory_used_mb: Option<u64>,
@@ -71,8 +71,8 @@ struct Individual {
     cv_mean_log_ratio: f64,
     cv_tail_log_ratio: f64,
     cv_log_ratio_sd: f64,
-    test_rmse: f64,
-    test_rmse_ratio: f64,
+    test_rmse: Option<f64>,
+    test_rmse_ratio: Option<f64>,
     complexity_open_parens: u64,
     billed_ms: Option<u64>,
     max_memory_used_mb: Option<u64>,
@@ -162,11 +162,9 @@ struct Island {
 struct SampleManifest {
     context_sha256: String,
     oof_rows: usize,
-    test_rows: usize,
     oof_case_indices: Vec<usize>,
     test_case_indices: Vec<usize>,
     oof_target_std: f64,
-    test_target_std: f64,
     projection_rows: usize,
     projection_cols: usize,
     projection_f32_sha256: String,
@@ -253,6 +251,15 @@ fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
+fn diagnostic_cmp(a: Option<f64>, b: Option<f64>) -> Ordering {
+    match (a, b) {
+        (Some(a), Some(b)) => a.total_cmp(&b),
+        (Some(_), None) => Ordering::Less,
+        (None, Some(_)) => Ordering::Greater,
+        (None, None) => Ordering::Equal,
+    }
+}
+
 fn cmp_f64(a: f64, b: f64) -> Ordering {
     a.total_cmp(&b)
 }
@@ -329,9 +336,7 @@ impl Engine {
         let mut seen = HashSet::new();
         for line in BufReader::new(File::open(seen_jsonl)?).lines() {
             let value: Value = serde_json::from_str(&line?)?;
-            if value.get("context_sha256").and_then(Value::as_str) != Some(&context) {
-                continue;
-            }
+            validate_history(&value, &context)?;
             if let Some(hash) = value
                 .get("program")
                 .and_then(|x| x.get("program_sha256"))
@@ -678,6 +683,7 @@ impl Engine {
     fn load_resume(&mut self, path: &Path) -> Result<()> {
         for line in BufReader::new(File::open(path)?).lines() {
             let value: Value = serde_json::from_str(&line?)?;
+            validate_history(&value, &self.context)?;
             let hash = value
                 .get("program")
                 .and_then(|x| x.get("program_sha256"))
@@ -751,8 +757,8 @@ impl Engine {
             cv_mean_log_ratio: value["cv_mean_log_ratio"].as_f64().unwrap(),
             cv_tail_log_ratio: value["cv_tail_log_ratio"].as_f64().unwrap(),
             cv_log_ratio_sd: value["cv_log_ratio_sd"].as_f64().unwrap(),
-            test_rmse: value["test_rmse"].as_f64().unwrap(),
-            test_rmse_ratio: value["test_rmse_ratio"].as_f64().unwrap(),
+            test_rmse: value["test_rmse"].as_f64(),
+            test_rmse_ratio: value["test_rmse_ratio"].as_f64(),
             complexity_open_parens: value["complexity_open_parens"].as_u64().unwrap(),
             billed_ms: value.get("billed_ms").and_then(Value::as_u64),
             max_memory_used_mb: value.get("max_memory_used_mb").and_then(Value::as_u64),
@@ -923,7 +929,9 @@ impl Engine {
         if output.len() != count {
             bail!("unique admitted proposal stream exhausted")
         }
-        Ok(json!({"schema":"jope.island-proposal-batch/v1","proposals":output}))
+        Ok(
+            json!({"schema":"jope.island-proposal-batch/s1-v1","selection_protocol":SELECTION_PROTOCOL,"context_sha256":self.context,"proposals":output}),
+        )
     }
 
     fn admit_dsl(&self, dsl: &str) -> bool {
@@ -1085,14 +1093,19 @@ impl Engine {
         logs.sort_by(|a, b| b.total_cmp(a));
         let tail = logs[..3].iter().sum::<f64>() / 3.0;
         let geo = mean.exp();
+        // Test diagnostics may be absent or failed. Neither their value nor their
+        // availability can censor an otherwise valid CV candidate.
         let test = &record["official_test"];
         let test_rmse = test["metrics"]["rmse"]
             .as_f64()
-            .ok_or_else(|| anyhow!("test rmse"))?;
+            .filter(|v| v.is_finite() && *v >= 0.0);
         let test_baseline = test["baseline_metrics"]["rmse"]
             .as_f64()
-            .ok_or_else(|| anyhow!("test baseline"))?;
-        let test_ratio = test_rmse / test_baseline;
+            .filter(|v| v.is_finite() && *v > 0.0);
+        let test_ratio = test_rmse
+            .zip(test_baseline)
+            .map(|(r, b)| r / b)
+            .filter(|v| v.is_finite());
         let gate = geo <= 0.90 && wins >= 5;
         let complexity = program.dsl.bytes().filter(|x| *x == b'(').count() as u64;
         let fitness = if gate {
@@ -1100,19 +1113,17 @@ impl Engine {
         } else {
             100.0 + mean + tail + sd
         };
-        let test_predictions = array_f64(&test["predictions"])?;
-        let test_targets = array_f64(&test["targets"])?;
+        let _test_predictions = array_f64(&test["predictions"]).unwrap_or_default();
         if oof_predictions.len() != self.sample.oof_rows
-            || test_predictions.len() != self.sample.test_rows
+            || oof_targets.len() != self.sample.oof_rows
         {
-            bail!("semantic result shape mismatch")
+            bail!("OOF result shape mismatch")
         }
         let mut residual = Vec::with_capacity(self.sample.projection_cols);
         for (prediction, target) in oof_predictions.iter().zip(&oof_targets) {
             residual.push(((prediction - target) / self.sample.oof_target_std) as f32);
         }
         // S1: test residuals never enter the signature, the cases or the semantic key (TEST-STEER-01).
-        let _ = (&test_targets, self.sample.test_target_std);
         if residual.len() != self.sample.projection_cols {
             bail!("S1: the projection must cover OOF residuals only")
         }
@@ -1351,7 +1362,7 @@ impl Engine {
         let best_test = self
             .active
             .iter()
-            .min_by(|a, b| cmp_f64(self.all[*a].test_rmse, self.all[*b].test_rmse))
+            .min_by(|a, b| diagnostic_cmp(self.all[*a].test_rmse, self.all[*b].test_rmse))
             .unwrap();
         let mut roots = root_counts.into_iter().collect::<Vec<_>>();
         roots.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
@@ -1415,6 +1426,13 @@ impl Engine {
             "proposal_draw":pending.proposal_draw,
         }))
     }
+}
+
+fn validate_history(value: &Value, context: &str) -> Result<()> {
+    if value["selection_protocol"] != SELECTION_PROTOCOL || value["context_sha256"] != context {
+        bail!("history is not the admitted S1 context/protocol")
+    }
+    Ok(())
 }
 
 fn validate_sample(sample: &SampleManifest) -> Result<()> {
@@ -1570,11 +1588,9 @@ mod tests {
             sample: SampleManifest {
                 context_sha256: "c".into(),
                 oof_rows: OOF,
-                test_rows: TEST,
                 oof_case_indices: (0..CASES).map(|i| (i * 7) % OOF).collect(),
                 test_case_indices: Vec::new(),
                 oof_target_std: 1.0,
-                test_target_std: 1.0,
                 projection_rows: SIGNATURE,
                 projection_cols: OOF,
                 projection_f32_sha256: String::new(),
@@ -1668,7 +1684,7 @@ mod tests {
             .map(|&(cv, id)| score(cv, 5000 + 3 * id, id))
             .collect();
         for (x, y) in a.iter().zip(&b) {
-            assert_ne!(x.test_rmse.to_bits(), y.test_rmse.to_bits());
+            assert_ne!(x.test_rmse.map(f64::to_bits), y.test_rmse.map(f64::to_bits));
             assert_eq!(selection_view(x), selection_view(y));
         }
         for policy in POLICIES {
@@ -1680,6 +1696,31 @@ mod tests {
                     .collect::<Vec<_>>()
             };
             assert_eq!(order(&a), order(&b), "{}", policy.name());
+        }
+    }
+
+    #[test]
+    fn missing_failed_or_malformed_test_diagnostics_cannot_censor_cv() {
+        let e = s1_engine();
+        let (r, p) = record(3, 9);
+        let expected = e.score_record(&r, p.clone(), String::new()).unwrap();
+        for diagnostic in [
+            Value::Null,
+            json!({"status":"failed"}),
+            json!({"status":"timeout"}),
+            json!({"metrics":{"rmse":null},"predictions":[],"targets":["invalid"]}),
+        ] {
+            let mut changed = r.clone();
+            changed["official_test"] = diagnostic;
+            let actual = e.score_record(&changed, p.clone(), String::new()).unwrap();
+            assert_eq!(selection_view(&expected), selection_view(&actual));
+            assert_eq!(actual.test_rmse, None);
+            for policy in POLICIES {
+                assert_eq!(
+                    Engine::policy_cmp(policy, &expected, &actual),
+                    Ordering::Equal
+                );
+            }
         }
     }
 
@@ -1749,6 +1790,20 @@ mod tests {
         );
         qualified["selection_protocol"] = json!("test-primary-v1");
         assert!(Individual::from_semantic(serde_json::from_value(qualified).unwrap()).is_err());
+    }
+
+    #[test]
+    fn legacy_failed_resume_cannot_change_seen_programs() {
+        let mut e = s1_engine();
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(format!("resume-{}.jsonl", std::process::id()));
+        fs::write(&path,serde_json::to_vec(&json!({"schema":"jope.island-scored-evaluation/v1","context_sha256":"c","status":"failed","program":{"program_sha256":"old-test-derived"}})).unwrap()).unwrap();
+        assert!(e.load_resume(&path).is_err());
+        assert!(e.seen.is_empty());
+        assert!(validate_history(&json!({"selection_protocol":SELECTION_PROTOCOL,"context_sha256":"c","status":"failed"}),"c").is_ok());
+        fs::remove_file(path).unwrap();
     }
 
     #[test]

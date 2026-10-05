@@ -19,27 +19,27 @@ MUTANTS = {
     "island-engine": {
         "fitness_test_ratio": (
             "0.80 * mean +",
-            "0.50 * test_ratio.max(1e-300).ln() + 0.30 * mean +",
+            "0.50 * test_ratio.unwrap_or(f64::INFINITY).max(1e-300).ln() + 0.30 * mean +",
             "selection_is_blind_to_the_official_test",
         ),
         "cvgated_test_rmse": (
             ".cmp(&a.cv_gate_passed)\n",
-            ".cmp(&a.cv_gate_passed)\n                .then_with(|| cmp_f64(a.test_rmse, b.test_rmse))\n",
+            ".cmp(&a.cv_gate_passed)\n                .then_with(|| cmp_f64(a.test_rmse.unwrap_or(f64::INFINITY), b.test_rmse.unwrap_or(f64::INFINITY)))\n",
             "selection_is_blind_to_the_official_test",
         ),
         "cvstable_test_tiebreak": (
             "Policy::CvStable => cmp_f64(a.cv_geomean_rmse_ratio, b.cv_geomean_rmse_ratio)\n                .then_with(|| cmp_f64(a.cv_log_ratio_sd, b.cv_log_ratio_sd))\n",
-            "Policy::CvStable => cmp_f64(a.cv_geomean_rmse_ratio, b.cv_geomean_rmse_ratio)\n                .then_with(|| cmp_f64(a.cv_log_ratio_sd, b.cv_log_ratio_sd))\n                .then_with(|| cmp_f64(a.test_rmse, b.test_rmse))\n",
+            "Policy::CvStable => cmp_f64(a.cv_geomean_rmse_ratio, b.cv_geomean_rmse_ratio)\n                .then_with(|| cmp_f64(a.cv_log_ratio_sd, b.cv_log_ratio_sd))\n                .then_with(|| cmp_f64(a.test_rmse.unwrap_or(f64::INFINITY), b.test_rmse.unwrap_or(f64::INFINITY)))\n",
             "selection_is_blind_to_the_official_test",
         ),
         "semantic_test_predictions": (
             "let prediction_values = oof_predictions;",
-            "let mut prediction_values = oof_predictions;\n        prediction_values.extend(test_predictions);",
+            "let mut prediction_values = oof_predictions;\n        prediction_values.extend(_test_predictions);",
             "selection_is_blind_to_the_official_test",
         ),
         "balanced_test_ratio": (
             "a.fitness\n            .total_cmp(&b.fitness)",
-            "(a.fitness + a.test_rmse_ratio)\n            .total_cmp(&(b.fitness + b.test_rmse_ratio))",
+            "(a.fitness + a.test_rmse_ratio.unwrap_or(f64::INFINITY))\n            .total_cmp(&(b.fitness + b.test_rmse_ratio.unwrap_or(f64::INFINITY)))",
             "selection_is_blind_to_the_official_test",
         ),
         "historical_semantic_cache": (
@@ -51,6 +51,16 @@ MUTANTS = {
             "|| !sample.test_case_indices.is_empty()",
             "|| false",
             "test_cases_and_test_wide_projections_are_refused",
+        ),
+        "diagnostic_availability_veto": (
+            "let gate = geo <= 0.90 && wins >= 5;",
+            'if test_rmse.is_none() { bail!("test diagnostic required") }\n        let gate = geo <= 0.90 && wins >= 5;',
+            "missing_failed_or_malformed_test_diagnostics_cannot_censor_cv",
+        ),
+        "legacy_failed_resume": (
+            "validate_history(&value, &self.context)?;",
+            "// legacy failed rows admitted",
+            "legacy_failed_resume_cannot_change_seen_programs",
         ),
     },
     "lambda-worker": {
@@ -68,6 +78,11 @@ MUTANTS = {
             "if h - l > 0.0 { h - l } else { 1.0 }",
             "if h - l > 0.0 { h - l } else { 1e-12 }",
             "scaler_is_train_rows_only_and_constant_columns_divide_by_one",
+        ),
+        "timeout_exceeds_reservation": (
+            "!(100..=90000).contains(&r.candidate_timeout_ms)",
+            "!(100..=120000).contains(&r.candidate_timeout_ms)",
+            "request_timeout_matches_the_ninety_second_reservation",
         ),
     },
 }
