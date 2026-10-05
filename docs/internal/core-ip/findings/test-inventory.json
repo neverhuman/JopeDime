@@ -2158,6 +2158,14 @@
         "fitting",
         "export"
       ]
+    },
+    "target:feat-math/test/cumulative_integration_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
     }
   },
   "baseline_triage": [
