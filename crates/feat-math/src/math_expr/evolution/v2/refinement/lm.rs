@@ -6,10 +6,14 @@
 //! The optimizer is Algorithm 3.16 of Madsen, Nielsen and Tingleff, *Methods for Non-Linear Least
 //! Squares Problems* (2nd ed., IMM DTU, 2004): Levenberg–Marquardt with Nielsen's damping update.
 //! It runs on the Jacobi-scaled problem, whose scale is MINPACK's running maximum of `diag(JᵀJ)`
-//! with a relative floor, so its damped steps are invariant to rescaling a parameter. The step
-//! stopping test (MNT 3.15b) is taken on the raw parameters and is not. The damping is bounded to
-//! `[mu_min, mu_max]`: Nielsen's update after an accepted step is clamped to both bounds, and a
-//! trial that is not accepted, or a failed solve, that would raise it past `mu_max` stops the run.
+//! with a relative floor. Its damped steps are invariant to rescaling a parameter while the floor
+//! leaves that parameter's scale alone; where the floor raises it, it bounds the parameter's raw
+//! step instead, and rescaling changes the step. The step stopping test (MNT 3.15b) is taken on
+//! the raw parameters and is not invariant either.
+//!
+//! The damping is bounded to `[mu_min, mu_max]`: Nielsen's update after an accepted step is
+//! clamped to both bounds, and a trial that is not accepted, or a failed solve, that would raise
+//! it past `mu_max` stops the run.
 //! A raise starts from at least the smallest normal number, so a zero damping still rises. The
 //! iterations are bounded by `max_iterations` and the work by the caller's evaluation budget. The
 //! damped system is solved by Cholesky with explicit pivot and reciprocal-condition checks. A
@@ -86,7 +90,7 @@ struct Options {
     /// Stop when every scaled gradient entry is at most this times the residual scale.
     gradient_tolerance: f64,
     /// Stop when `‖h‖ ≤ step_tolerance (‖θ‖ + step_tolerance)` (MNT 3.15b), on the raw parameters,
-    /// so unlike the steps themselves this test depends on how a parameter is scaled.
+    /// so this test depends on how a parameter is scaled even where the steps do not.
     step_tolerance: f64,
     mu_min: f64,
     mu_max: f64,
@@ -1333,6 +1337,31 @@ mod tests {
         assert_eq!(result.refinement.evaluations, 2);
     }
 
+    /// Independent review of #195, R5: the division's slope (about -1e-5) underflowed to a silent
+    /// 0 lane, so the run stopped on the gradient test after its first Jacobian, with no trial.
+    /// With the slope kept, the fit moves toward the zero target.
+    #[test]
+    fn a_division_slope_kept_from_underflow_moves_the_fit() {
+        let result = lm(
+            "(c0/(1e13*c1))*c2",
+            &Admission::Structure,
+            &[vec![1e-311, 1e-24, 1e308]],
+            &[0.0],
+            Objective::Raw,
+            &Options::default(),
+            40,
+        );
+        let run = result.run.as_ref().unwrap();
+        assert_ne!(result.status, Status::Gradient, "{run:?}");
+        assert!(run.accepted > 0, "{run:?}");
+        assert!(result.changed, "{:?}", result.status);
+        assert!(
+            result.refinement.score < 1e15,
+            "{}",
+            result.refinement.score
+        );
+    }
+
     #[test]
     fn a_non_finite_jacobian_returns_the_start() {
         // The value stays below 1e10 while ∂/∂(first site) is about 1e310.
@@ -2019,6 +2048,38 @@ mod tests {
             .map(|i| i.trial.unwrap())
             .collect();
         assert!(accepted.windows(2).all(|w| w[1] <= w[0]));
+    }
+
+    /// Independent review of #195, N1: the first damped step of `r = (θ0 + 1, θ1 + 1)` from 0, with
+    /// θ0 expressed as `u φ0` and the step read back in θ. At u = 1e-3 the floor leaves φ0's scale
+    /// alone and the step is u = 1's, -1/1.001. At u = 1e-6 φ0's curvature 1e-12 is floored to 1e-10
+    /// of the largest, which bounds the step to -1/1.1.
+    #[test]
+    fn rescaling_keeps_the_damped_step_until_the_floor_raises_the_scale() {
+        let first_step = |u: f64| {
+            let mut problem = Closed {
+                residuals: move |t: &[f64]| vec![u * t[0] + 1.0, t[1] + 1.0],
+                jacobian: move |_: &[f64]| vec![vec![u, 0.0], vec![0.0, 1.0]],
+                scale: 1.0,
+            };
+            let one = Options {
+                max_iterations: 1,
+                ..Options::default()
+            };
+            let run = solve_closed(&mut problem, vec![0.0, 0.0], &one);
+            assert!(run.trace[0].accepted, "{run:?}");
+            [u * run.theta[0], run.theta[1]]
+        };
+        let unit = first_step(1.0);
+        let free = -1.0 / (1.0 + Options::default().tau);
+        for step in [unit, first_step(1e-3)] {
+            for v in step {
+                assert!((v - free).abs() <= 1e-14, "{step:?}");
+            }
+        }
+        let floored = first_step(1e-6);
+        assert!((floored[0] + 1.0 / 1.1).abs() <= 1e-12, "{floored:?}");
+        assert!((floored[1] - free).abs() <= 1e-14, "{floored:?}");
     }
 
     /// The log relative error -log10(|q - c| / |c|) (NIST StRD).
