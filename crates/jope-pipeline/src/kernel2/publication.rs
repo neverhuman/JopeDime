@@ -487,9 +487,11 @@ fn check_moves(
     let Some(record) = s.engine_selection.as_ref().and_then(|e| e.moves.as_ref()) else {
         ensure!(
             std::fs::symlink_metadata(root.join(path)).is_err()
-                && measurements
-                    .iter()
-                    .all(|m| m.observation.origin != super::REWRITE),
+                && measurements.iter().all(|m| {
+                    // laneD:B19-minimax-linearize: the linearization pass's origin too.
+                    m.observation.origin != super::REWRITE
+                        && m.observation.origin != super::LINEARIZE
+                }),
             "move evidence is published without its selection"
         );
         return Ok(());

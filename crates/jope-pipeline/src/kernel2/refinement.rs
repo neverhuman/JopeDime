@@ -206,7 +206,14 @@ impl Kernel2Evaluator {
     }
 }
 
-fn training_prefix(pipe: &DslExpr, index: usize, rows: &Rows, targets: &[f64]) -> Result<Rows> {
+/// The training rows stage `index` reads: the earlier stages fitted and applied on the training
+/// rows alone, refused when any of them faults. The linearization pass samples on these too.
+pub(super) fn training_prefix(
+    pipe: &DslExpr,
+    index: usize,
+    rows: &Rows,
+    targets: &[f64],
+) -> Result<Rows> {
     let mut current = rows.clone();
     feat_math::sanitize(&mut current);
     let mut faults = FaultTotals::default();

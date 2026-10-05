@@ -111,6 +111,8 @@ impl Measurement {
             super::REFINE,
             // laneD:B20-rewrite-simplify
             super::REWRITE,
+            // laneD:B19-minimax-linearize
+            super::LINEARIZE,
         ]
         .into_iter()
         .find(|s| *s == r.origin)

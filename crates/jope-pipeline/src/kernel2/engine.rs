@@ -50,6 +50,11 @@ pub struct EngineSelection {
     /// The exact rewrite pass after each search round; off by default.
     pub simplify: bool,
     // laneD:B20-rewrite-simplify end
+    // laneD:B19-minimax-linearize begin
+    /// The bounded minimax linearization pass after each search round, after the rewrite pass
+    /// when both are selected; off by default.
+    pub linearize: bool,
+    // laneD:B19-minimax-linearize end
 }
 
 impl EngineSelection {
@@ -84,6 +89,13 @@ impl EngineSelection {
              programs each round's rewrite pass reads"
         );
         // laneD:B20-rewrite-simplify end
+        // laneD:B19-minimax-linearize begin
+        ensure!(
+            !self.linearize || refinement.top_k > 0,
+            "--linearize-subtrees requires --refine-top-k of at least 1: it sets how many ranked \
+             programs each round's linearization pass reads"
+        );
+        // laneD:B19-minimax-linearize end
         Ok(())
     }
 
@@ -105,8 +117,17 @@ impl EngineSelection {
         let archive = self.archive.map(ArchiveRecord::selected);
         // laneD:B18-pareto-archive end
         // laneD:B20-rewrite-simplify begin
-        let moves = self.simplify.then(|| MovesRecord {
-            ids: vec![REWRITE_SATURATE.into()],
+        // laneD:B19-minimax-linearize: the linearization pass runs after the rewrite pass.
+        let ids: Vec<String> = [
+            (self.simplify, REWRITE_SATURATE),
+            (self.linearize, MINIMAX_LINEARIZE),
+        ]
+        .into_iter()
+        .filter(|(selected, _)| *selected)
+        .map(|(_, id)| id.into())
+        .collect();
+        let moves = (!ids.is_empty()).then_some(MovesRecord {
+            ids,
             sha256: None,
             refused_by_pool: None,
             not_run: None,
@@ -182,10 +203,17 @@ impl EngineRecord {
         // laneD:B20-rewrite-simplify begin
         if let Some(moves) = &mut canonical.moves {
             ensure!(
-                !moves.ids.is_empty() && moves.ids.iter().all(|id| id == REWRITE_SATURATE),
+                !moves.ids.is_empty()
+                    && moves
+                        .ids
+                        .iter()
+                        .all(|id| id == REWRITE_SATURATE || id == MINIMAX_LINEARIZE),
                 "unknown or empty move selection"
             );
-            selection.simplify = true;
+            // The canonical check below refuses a repeated id or another order.
+            selection.simplify = moves.ids.iter().any(|id| id == REWRITE_SATURATE);
+            // laneD:B19-minimax-linearize
+            selection.linearize = moves.ids.iter().any(|id| id == MINIMAX_LINEARIZE);
             // As with the archive, the digest and the counts are evidence that publication adds.
             moves.sha256 = None;
             moves.refused_by_pool = None;
@@ -280,3 +308,10 @@ pub struct MovesRecord {
     pub not_run: Option<usize>,
 }
 // laneD:B20-rewrite-simplify end
+
+// laneD:B19-minimax-linearize begin
+/// The bounded minimax linearization pass's stable method id: a one-variable subtree is replaced
+/// by its degree-1 discrete minimax line on the training rows, when the line meets the fit's
+/// minimax bound there and the profile admits the result.
+pub const MINIMAX_LINEARIZE: &str = "feat-math.minimax-linearize.v1";
+// laneD:B19-minimax-linearize end
