@@ -19,6 +19,9 @@ use crate::{GenomeIr, Model};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+// B05–B07: explicit scalar recipe/fitted routes.
+mod scalar_export;
+
 const MAGIC_PREFIX: &[u8] = b"FMKPRG\0";
 pub(super) const MAGIC_V2: &[u8] = b"FMKPRG\0\x02";
 pub(super) const READER_VERSION: u8 = 2;
@@ -546,8 +549,9 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
             }
         }
         VersionedProgram::ScalarV2(_) => {
-            let refusal =
-                Route::Unsupported(vec!["version 2 scalar export is not admitted".into()]);
+            let refusal = Route::Unsupported(vec![
+                "scalar export requires carrier, width and lambda; use scalar_export_report".into(),
+            ]);
             ExportReport {
                 rust_recipe: refusal.clone(),
                 python_recipe: refusal.clone(),
