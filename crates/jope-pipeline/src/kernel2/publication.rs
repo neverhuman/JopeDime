@@ -109,6 +109,7 @@ pub fn publish(
         best: Measurement::record(&searched.best)?,
         observations_sha256,
         refinements_sha256,
+        engine_selection: searched.engine.clone(),
     };
     let digest = write("search.json", &serde_json::to_value(&record)?)?;
     Ok((record, digest))
@@ -327,6 +328,9 @@ fn check_refinements(
                 && s.refinement.top_k > 0,
             "invalid refinement allowance"
         );
+        // laneD:B17-lm-refinement begin
+        check_trace(s, refinement)?;
+        // laneD:B17-lm-refinement end
         trials = trials
             .checked_add(refinement.evaluations)
             .context("trial count overflow")?;
@@ -393,6 +397,31 @@ fn check_refinements(
     );
     Ok(())
 }
+
+// laneD:B17-lm-refinement begin
+/// A refinement carries a trace exactly when the damped least-squares method was selected and it
+/// spent a trial, and the trace's stages, each checked against its own counts, account for every
+/// charged trial and refusal.
+fn check_trace(s: &Search, refinement: &TrainingRefinement) -> Result<()> {
+    let selected = s
+        .engine_selection
+        .as_ref()
+        .and_then(super::EngineRecord::damped_ls);
+    let expected = selected.is_some() && refinement.evaluations > 0;
+    ensure!(
+        refinement.trace.is_some() == expected,
+        "refinement trace presence disagrees with the selected method"
+    );
+    if let (Some(trace), Some(selected)) = (&refinement.trace, selected) {
+        let (evaluations, rejected) = trace.charged(&selected.jacobian)?;
+        ensure!(
+            evaluations == refinement.evaluations && rejected == refinement.rejected_trials,
+            "refinement trace does not account for its trials"
+        );
+    }
+    Ok(())
+}
+// laneD:B17-lm-refinement end
 
 fn check_seeding(s: &Search, measurements: &[Measurement]) -> Result<()> {
     let seeding = &s.seeding;

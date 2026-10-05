@@ -29,6 +29,19 @@ impl Kernel2Evaluator {
         budget: &mut EvaluationBudget,
         may_start: &mut dyn FnMut() -> bool,
     ) -> Result<GuardedTrainingRefinement> {
+        // laneD:B17-lm-refinement begin
+        if let RefineMethod::Lm(options) = self.engine().refine {
+            let training = super::lm::Training { rows, targets };
+            return self.refine_training_lm_guarded(
+                options,
+                text,
+                training,
+                trial_limit,
+                budget,
+                may_start,
+            );
+        }
+        // laneD:B17-lm-refinement end
         ensure!(
             !rows.is_empty()
                 && rows.len() == targets.len()
@@ -47,6 +60,7 @@ impl Kernel2Evaluator {
                 rejected_trials: 0,
                 changed: false,
                 failure: None,
+                trace: None,
             },
             stopped: false,
         };
@@ -97,7 +111,7 @@ impl Kernel2Evaluator {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn refine_stage_guarded(
+    pub(super) fn refine_stage_guarded(
         &self,
         pipe: &mut DslExpr,
         index: usize,

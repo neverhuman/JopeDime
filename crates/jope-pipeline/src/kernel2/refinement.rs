@@ -19,6 +19,9 @@ pub struct TrainingRefinement {
     pub changed: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure: Option<String>,
+    /// Present only for the opt-in damped least-squares refinement, once it spent a trial.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trace: Option<RefinementTrace>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -59,6 +62,7 @@ impl Kernel2Evaluator {
             rejected_trials: 0,
             changed: false,
             failure: None,
+            trace: None,
         };
         let allowance = trial_limit.min(budget.remaining());
         for index in 0..pipe.stages.len() {
@@ -289,3 +293,9 @@ fn has_constant(root: &Expr) -> bool {
 
 mod guarded;
 pub use guarded::{GuardedGeneration, GuardedTrainingRefinement};
+// laneD:B17-lm-refinement begin
+mod lm;
+pub use lm::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
+#[cfg(test)]
+pub(crate) use lm::{ELEMENTWISE, FALLBACK_REASONS, SMALL_ALLOWANCE};
+// laneD:B17-lm-refinement end

@@ -110,6 +110,23 @@
       ],
       "type": "object"
     },
+    "EngineRecord": {
+      "additionalProperties": false,
+      "description": "The opt-in engine methods a run selected. Absent from a receipt for the default selection.",
+      "properties": {
+        "refine": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RefineRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
     "Exclusion": {
       "additionalProperties": false,
       "description": "A requested language the selected genome is not covered for.",
@@ -384,6 +401,30 @@
       ],
       "type": "object"
     },
+    "RefineRecord": {
+      "additionalProperties": false,
+      "description": "The constant refinement method, when it is not the coordinate search.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "jacobian": {
+          "description": "What one Jacobian is charged: `sites` (one evaluation per literal site) or `one`.",
+          "type": "string"
+        },
+        "tau": {
+          "description": "The initial damping relative to the largest scaled curvature.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "jacobian",
+        "tau"
+      ],
+      "type": "object"
+    },
     "Refinement": {
       "description": "Explicit training-refinement allowance; it shares the cut's total budget.",
       "properties": {
@@ -442,6 +483,17 @@
         },
         "engine": {
           "type": "string"
+        },
+        "engine_selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EngineRecord"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Opt-in engine methods. Absent for the default selection, so its receipts keep their bytes."
         },
         "evaluations": {
           "format": "uint",
