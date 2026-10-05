@@ -8793,6 +8793,22 @@
       ],
       "dispositions": [],
       "scope": "Concrete GP grammar constructions for regression, links, splines, finite decision trees/ensembles, kernels, transforms and reductions; real Python/Rust/strict C++17 compilation, exact evaluator words plus separate mathematical references. Explicit eager selection/protected arithmetic/resource boundaries; no universal grammar, fit or shared harness claim."
+    },
+    "target:feat-math/test/ridge_press_oracle": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/ridge_press_oracle.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Test-only B11 independent pivoted-elimination oracle: frozen-mean/absolute-penalty PRESS over81designs/1296deleted-row solves, duplicate columns and widths0-8, all405prefix Schur objectives and exact factor extensions; no product/default/fixture/identity edits or utility/throughput claim."
     }
   }
 }
