@@ -15,7 +15,10 @@ python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out /custody/s1-mutant
 ```
 
 The mutation qualifier compiles the real source with one dependency violation
-at a time and requires the intended assertion to fail. A compile error, stale
+at a time and executes the exact intended test. It requires an assertion failure
+or a declared receiving-path expectation, and rejects unrelated fixture panics
+and Python ERROR outcomes. Each output directory must be fresh, so failed runs
+cannot leave an earlier success receipt behind. A compile error, stale
 binary, zero-test result or unrelated failure cannot count as a killed mutant.
 It also checks channel-4 test-based and unbounded continuation mutations. Generated
 mutant files live under the reused target; tracked sources and historical copies

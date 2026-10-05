@@ -964,11 +964,24 @@ impl Engine {
         decoder.read_to_end(&mut raw)?;
         let pack: Value = serde_json::from_slice(&raw)?;
         let record = &pack["record"];
+        if pack["schema"] != "jope.s1-invocation/v1"
+            || record["schema"] != "jope.s1-evaluation/v1"
+            || record["input_semantics"] != "unscaled_fit_rows_v1"
+            || !matches!(
+                record["status"].as_str(),
+                Some("completed" | "failed" | "timeout")
+            )
+        {
+            bail!("legacy or invalid live evaluation cannot mint S1 history")
+        }
         if record["context_sha256"].as_str() != Some(&self.context) {
             bail!("accepted result context mismatch")
         }
         let program: Program = serde_json::from_value(record["program"].clone())?;
-        let pending = self.pending.remove(&program.program_sha256);
+        let pending = self.pending.get(&program.program_sha256).cloned();
+        if pending.is_none() {
+            bail!("unregistered or replayed evaluation")
+        }
         if let Some(pending) = &pending
             && pending.island_id != island_id
         {
@@ -976,6 +989,7 @@ impl Engine {
         }
         let status = record["status"].as_str().unwrap_or("missing");
         if status != "completed" {
+            self.pending.remove(&program.program_sha256);
             return Ok(json!({
                 "schema":"jope.island-scored-evaluation/s1-v1",
             "selection_protocol":SELECTION_PROTOCOL,
@@ -990,6 +1004,7 @@ impl Engine {
             }));
         }
         let mut individual = self.score_record(record, program, result_key)?;
+        self.pending.remove(&individual.program.program_sha256);
         individual.origin_island = Some(island_id);
         individual.born_completed = self.new_completed;
         let hash = individual.program.program_sha256.clone();
@@ -1048,7 +1063,10 @@ impl Engine {
         result_key: String,
     ) -> Result<Individual> {
         validate_sample(&self.sample)?;
-        if record["schema"] != "jope.s1-evaluation/v1" || record["status"] != "completed" {
+        if record["schema"] != "jope.s1-evaluation/v1"
+            || record["input_semantics"] != "unscaled_fit_rows_v1"
+            || record["status"] != "completed"
+        {
             bail!("S1 needs its versioned completed evaluation")
         }
         let folds = record["inner_cv"]
@@ -1605,6 +1623,36 @@ mod tests {
         }
     }
 
+    fn seeded_s1_engine() -> Engine {
+        let mut e = s1_engine();
+        for id in 1..=POPULATION as u64 {
+            let (mut row, program) = record(id, id + 100);
+            for fold in row["inner_cv"].as_array_mut().unwrap() {
+                fold["metrics"]["rmse"] = json!(0.05);
+                fold["baseline_metrics"]["rmse"] = json!(0.2);
+            }
+            let hash = program.program_sha256.clone();
+            let individual = e.score_record(&row, program, String::new()).unwrap();
+            e.all.insert(hash.clone(), individual);
+            e.seen.insert(hash);
+        }
+        e.islands = (0..ISLANDS)
+            .map(|island| {
+                let population = (0..ISLAND_SIZE)
+                    .map(|i| format!("{:064x}", 1 + island * ISLAND_SIZE + i))
+                    .collect::<Vec<_>>();
+                Island {
+                    policy: Policy::CvGated,
+                    archive: population.clone(),
+                    population,
+                    completed: 0,
+                }
+            })
+            .collect();
+        e.rebuild_active().unwrap();
+        e
+    }
+
     struct Lcg(u64);
     impl Lcg {
         fn f(&mut self) -> f64 {
@@ -1633,7 +1681,7 @@ mod tests {
         let mut q = Lcg(test_seed);
         let targets: Vec<f64> = (0..TEST).map(|_| q.f()).collect();
         let preds: Vec<f64> = targets.iter().map(|t| t + (q.f() - 0.5)).collect();
-        let rec = json!({"schema":"jope.s1-evaluation/v1","status":"completed","inner_cv": folds, "official_test": {"metrics": {"rmse": 0.01 + q.f()}, "baseline_metrics": {"rmse": 0.2 + q.f() * 0.1},
+        let rec = json!({"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","status":"completed","inner_cv": folds, "official_test": {"metrics": {"rmse": 0.01 + q.f()}, "baseline_metrics": {"rmse": 0.2 + q.f() * 0.1},
                          "predictions": preds, "targets": targets}});
         let dsl = format!("(pipe X (ridge lambda_frac={}))", program_id);
         (
@@ -1712,7 +1760,9 @@ mod tests {
         ] {
             let mut changed = r.clone();
             changed["official_test"] = diagnostic;
-            let actual = e.score_record(&changed, p.clone(), String::new()).unwrap();
+            let actual = e
+                .score_record(&changed, p.clone(), String::new())
+                .expect("S1_ASSERT_DIAGNOSTIC_ADMISSION");
             assert_eq!(selection_view(&expected), selection_view(&actual));
             assert_eq!(actual.test_rmse, None);
             for policy in POLICIES {
@@ -1794,15 +1844,89 @@ mod tests {
 
     #[test]
     fn legacy_failed_resume_cannot_change_seen_programs() {
-        let mut e = s1_engine();
+        let mut e = seeded_s1_engine();
+        let before = e.seen.clone();
         let dir =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
         fs::create_dir_all(&dir).unwrap();
         let path = dir.join(format!("resume-{}.jsonl", std::process::id()));
         fs::write(&path,serde_json::to_vec(&json!({"schema":"jope.island-scored-evaluation/v1","context_sha256":"c","status":"failed","program":{"program_sha256":"old-test-derived"}})).unwrap()).unwrap();
         assert!(e.load_resume(&path).is_err());
-        assert!(e.seen.is_empty());
+        assert_eq!(e.seen, before, "S1_ASSERT_LEGACY_SEEN_RETAINED");
         assert!(validate_history(&json!({"selection_protocol":SELECTION_PROTOCOL,"context_sha256":"c","status":"failed"}),"c").is_ok());
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn legacy_failed_live_admission_cannot_mint_s1_history() {
+        let mut e = seeded_s1_engine();
+        let (_, program) = record(999, 1001);
+        let hash = program.program_sha256.clone();
+        e.pending.insert(
+            hash.clone(),
+            Pending {
+                island_id: 0,
+                proposal_seq: 1,
+                proposal_draw: 2,
+            },
+        );
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(format!("live-{}.gz", std::process::id()));
+        let write_pack = |pack: Value| {
+            let mut encoder =
+                flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+            encoder
+                .write_all(&serde_json::to_vec(&pack).unwrap())
+                .unwrap();
+            fs::write(&path, encoder.finish().unwrap()).unwrap();
+        };
+        for (pack_schema, record_schema, semantics) in [
+            (
+                "jope.test-adaptive-invocation/v1",
+                "jope.test-adaptive-evaluation/v1",
+                "unscaled_fit_rows_v1",
+            ),
+            (
+                "jope.s1-invocation/v1",
+                "jope.test-adaptive-evaluation/v1",
+                "unscaled_fit_rows_v1",
+            ),
+            (
+                "jope.s1-invocation/v1",
+                "jope.s1-evaluation/v1",
+                "legacy-scaled",
+            ),
+        ] {
+            for status in ["failed", "timeout"] {
+                write_pack(
+                    json!({"schema":pack_schema,"record":{"schema":record_schema,"input_semantics":semantics,"context_sha256":"c","status":status,"program":program}}),
+                );
+                assert!(
+                    e.accept(0, &path, String::new()).is_err(),
+                    "S1_ASSERT_LEGACY_LIVE_ADMISSION"
+                );
+                assert!(e.pending.contains_key(&hash), "S1_ASSERT_PENDING_RETAINED");
+                assert!(!e.seen.contains(&hash));
+            }
+        }
+        write_pack(
+            json!({"schema":"jope.s1-invocation/v1","record":{"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","context_sha256":"c","status":"failed","program":program}}),
+        );
+        let row = e.accept(0, &path, String::new()).unwrap();
+        assert_eq!(row["selection_protocol"], SELECTION_PROTOCOL);
+        assert!(!e.pending.contains_key(&hash));
+        assert!(
+            e.accept(0, &path, String::new()).is_err(),
+            "S1_ASSERT_REPLAY_REFUSED"
+        );
+        let history = dir.join(format!("live-history-{}.jsonl", std::process::id()));
+        fs::write(&history, serde_json::to_vec(&row).unwrap()).unwrap();
+        let mut resumed = seeded_s1_engine();
+        resumed.load_resume(&history).unwrap();
+        assert!(resumed.seen.contains(&hash));
+        fs::remove_file(history).unwrap();
         fs::remove_file(path).unwrap();
     }
 

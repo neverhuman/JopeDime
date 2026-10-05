@@ -33,7 +33,11 @@ results before the official-test fit. Failed, interrupted or malformed test
 diagnostics retain that CV commitment; missing diagnostics cannot veto a CV
 candidate. Worker requests refuse child timeouts above 90,000 milliseconds. `selection_protocol=jope.s1-inner-cv-selection/v1`
 is required for semantic cache, seen-program history and every resume record,
-including failures. Missing/legacy tags or changed contexts refuse before seen
+including failures. Live admission also validates the invocation/evaluation
+schema, unscaled input semantics and supported terminal status before consuming
+pending work or issuing an S1 history tag. Only a registered pending proposal
+can consume a result; duplicate or unsolicited delivery refuses. A legacy failure cannot be relabelled
+as S1. Missing/legacy tags or changed contexts refuse before seen
 state, old test-derived fitness or signatures can influence future proposals. The
 trusted controller must also bind actual input/source bytes; this tag by itself
 is not provenance authentication.

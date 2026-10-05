@@ -37,7 +37,10 @@
     "Preserve original Lambda frozen snapshots; record new tree bytes separately.",
     "Atomically retain completed CV across optional official-test diagnostic errors/timeouts; missing test values cannot censor selection.",
     "Refuse child requests above90s and validate every seen/resume record before state mutation.",
-    "Require explicit exclusive initialization; missing ledger never creates fresh accounting, and each context/program has at most two charged attempts."
+    "Require explicit exclusive initialization; missing ledger never creates fresh accounting, and each context/program has at most two charged attempts.",
+    "Validate all live failed/completed packs before consuming pending state or minting S1 history; invalid completed scores retain pending state.",
+    "Use a populated resume fixture and execute one exact intended mutant test; reject unrelated panic/Python ERROR and stale artifacts or reused proof directories.",
+    "Require registered pending proposals for live results; duplicate delivery cannot mint another history row. Pre-fix replay reproducer retained."
   ],
   "receiving_owner": "Codex root / jopedime_codex_cleanup",
   "schema": "jope.s1-patch-adoption/v1"
