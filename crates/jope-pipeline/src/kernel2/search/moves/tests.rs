@@ -492,6 +492,7 @@ fn rewrite_runs_replay_every_file_with_a_frozen_clock_and_verify() {
                 refine: lm,
                 archive: Some(ArchivePolicy::ArchiveOnly),
                 simplify: true,
+                linearize: false,
             },
             Refinement {
                 top_k: 4,
@@ -844,6 +845,7 @@ fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
         refine: RefineMethod::Lm(LmOptions::default()),
         archive: Some(ArchivePolicy::ArchiveOnly),
         simplify: true,
+        linearize: false,
     };
     let record = all.record().unwrap();
     assert!(record.damped_ls().is_some() && record.archive.is_some() && record.moves.is_some());

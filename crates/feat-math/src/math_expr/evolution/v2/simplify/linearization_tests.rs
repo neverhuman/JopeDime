@@ -1,0 +1,395 @@
+//! The bounded minimax linearization, degree 1 only (laneD:B19-minimax-linearize).
+use super::*;
+use crate::kernel::profile::profile;
+use anyhow::Context;
+use std::collections::BTreeSet;
+
+fn baseline() -> SearchProfile {
+    profile("kernel2-baseline", 3).unwrap()
+}
+
+/// The kernel2 caps (15 nodes, depth 4) over two columns.
+fn scope() -> ExpressionScope {
+    ExpressionScope::search_profile(2, false)
+}
+
+/// `points` rows with `c0` evenly spaced over `[lo, hi]` and `c1` fixed.
+fn rows(lo: f64, hi: f64, points: usize) -> Vec<Vec<f64>> {
+    (0..points)
+        .map(|i| vec![lo + (hi - lo) * i as f64 / (points - 1) as f64, 0.25])
+        .collect()
+}
+
+fn linearize(source: &str, rows: &[Vec<f64>]) -> Vec<SubtreeLinearization> {
+    MathExpr::parse(source)
+        .unwrap()
+        .linearize_v2(&baseline(), scope(), rows)
+        .unwrap()
+}
+
+/// What a record keeps of the live measurements.
+fn evidence(l: &SubtreeLinearization) -> LinearizationEvidence {
+    LinearizationEvidence {
+        fit: l.fit,
+        lowered_error: l.lowered_error,
+        refusal: l.refusal.clone(),
+    }
+}
+
+fn recorded(
+    source: &str,
+    evidence: &[LinearizationEvidence],
+) -> anyhow::Result<Vec<SubtreeLinearization>> {
+    MathExpr::parse(source)
+        .unwrap()
+        .linearize_recorded_v2(&baseline(), scope(), &mut |i| {
+            evidence.get(i).cloned().context("missing")
+        })
+}
+
+/// A 6-node expression that is nearly linear on [-0.5, 1.5].
+const NEAR_LINEAR: &str = "sin((0.1*c0))*3.0";
+/// A 6-node one-variable subtree beside a second variable.
+const BESIDE: &str = "(sin(c0)+(c0*c0))+c1";
+
+/// The native line at `path` of an admitted expression stays within the record's own measured
+/// error of the subtree on every training row.
+fn assert_within_lowered_error(l: &SubtreeLinearization, training: &[Vec<f64>]) {
+    let admitted = l.expression.as_ref().unwrap();
+    let native = MathExpr::from_ast(at(&admitted.root, &l.path).clone()).unwrap();
+    let lowered = l.lowered_error.unwrap();
+    for row in training {
+        let (a, faults) = native.eval_row_traced(row);
+        let (b, _) = l.subtree.eval_row_traced(row);
+        assert!(faults.is_empty());
+        assert!((a - b).abs() <= lowered, "{row:?}");
+    }
+}
+
+#[test]
+fn a_near_linear_subtree_becomes_its_minimax_line_within_the_bound() {
+    let training = rows(-0.5, 1.5, 201);
+    let expression = MathExpr::parse(NEAR_LINEAR).unwrap();
+    // The root, and `sin(0.1*c0)`; `0.1*c0` is too small.
+    assert_eq!(
+        expression.linearizable_v2(&baseline(), scope()).unwrap(),
+        vec![vec![], vec![0]]
+    );
+    let out = linearize(NEAR_LINEAR, &training);
+    assert_eq!(
+        out.iter().map(|l| l.path.clone()).collect::<Vec<_>>(),
+        vec![vec![], vec![0]]
+    );
+    let line = &out[0];
+    assert_eq!(line.subtree, expression);
+    let fit = line.fit.unwrap();
+    assert!(fit.stop.closed(), "{fit:?}");
+    assert!((fit.lo, fit.hi) == (-0.5, 1.5), "{fit:?}");
+    // Degree 1: the slope of 3 sin(0.1 x) is about 0.3.
+    assert!((fit.coefficients[1] - 0.3).abs() < 1e-3, "{fit:?}");
+    let (lowered, bound) = (line.lowered_error.unwrap(), fit.bound());
+    assert!(lowered <= bound, "{lowered} > {bound}");
+    assert_eq!(
+        bound.to_bits(),
+        (fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * fit.max_abs).to_bits()
+    );
+    assert!(
+        fit.levelled <= fit.max_error && fit.max_error < 1e-3,
+        "{fit:?}"
+    );
+    assert_eq!((line.nodes, line.line_nodes), (6, Some(5)));
+    assert!(line.refusal.is_none());
+    // The admitted expression is the line itself: `x * a1 + a0`, ordinary nodes.
+    let admitted = line.expression.as_ref().unwrap();
+    assert_eq!((count_nodes(&admitted.root), depth(&admitted.root)), (5, 3));
+    assert_within_lowered_error(line, &training);
+    // The 4-node `sin(0.1*c0)` gets a 5-node line: not smaller.
+    let small = &out[1];
+    assert_eq!(small.refusal.as_deref(), Some(LINEARIZE_NOT_SMALLER));
+    assert!(small.fit.unwrap().stop.closed());
+    assert_eq!((small.line_nodes, small.lowered_error), (Some(5), None));
+    assert!(small.expression.is_none());
+    // Deterministic.
+    assert_eq!(linearize(NEAR_LINEAR, &training), out);
+    // Under a root reading two variables, the line is spliced in place of its subtree.
+    let beside = linearize(BESIDE, &training);
+    assert_eq!(beside.len(), 1);
+    assert_eq!(beside[0].path, vec![0]);
+    let admitted = beside[0].expression.as_ref().unwrap();
+    assert_eq!((count_nodes(&admitted.root), depth(&admitted.root)), (7, 4));
+    assert_eq!(at(&admitted.root, &[1]), &Expr::Var(Var::Col(1)));
+    assert_within_lowered_error(&beside[0], &training);
+}
+
+/// Exactly linear plus `1e-6 sin(c0)` on [1e6, 1e6 + 1]: the fit's error is about 1e-7, and the
+/// monomial line `2 x - 2000001` loses about 1e-10 to rounding at this offset, far over the
+/// bound's `1e-6` relative and `64 ε max|f|` (1.4e-14) allowances.
+const OFF_CENTRE: &str = "((c0*2.0)-2000001.0)+(sin(c0)*0.000001)";
+
+#[test]
+fn a_line_that_misses_the_minimax_bound_on_the_training_range_is_refused() {
+    let training = rows(1e6, 1e6 + 1.0, 201);
+    let out = linearize(OFF_CENTRE, &training);
+    assert_eq!(
+        out.iter().map(|l| l.path.clone()).collect::<Vec<_>>(),
+        vec![vec![], vec![0], vec![1]]
+    );
+    let root = &out[0];
+    let fit = root.fit.unwrap();
+    assert!(fit.stop.closed(), "{fit:?}");
+    let lowered = root.lowered_error.unwrap();
+    assert!(lowered > fit.bound(), "{lowered} <= {}", fit.bound());
+    assert_eq!(root.refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    assert_eq!(root.line_nodes, Some(5));
+    assert!(root.expression.is_none());
+    // The fit itself is fine: the refusal is the lowered line's own error.
+    assert!(fit.max_error < 1e-6, "{fit:?}");
+    // The exactly linear part is fitted to a few ulps, but its line is no smaller.
+    assert_eq!(out[1].fit.unwrap().stop, MinimaxStop::ExactFit);
+    assert_eq!(out[1].refusal.as_deref(), Some(LINEARIZE_NOT_SMALLER));
+    assert_eq!(out[2].refusal.as_deref(), Some(LINEARIZE_NOT_SMALLER));
+    // The same expression on a centred range offers the line.
+    let centred = linearize("((c0*2.0)-1.0)+(sin(c0)*0.000001)", &rows(-1.0, 1.0, 201));
+    assert!(centred[0].expression.is_some(), "{:?}", centred[0]);
+    assert!(centred[0].lowered_error.unwrap() <= centred[0].fit.unwrap().bound());
+}
+
+#[test]
+fn a_fit_whose_bracket_did_not_close_is_refused_before_any_line_is_built() {
+    assert_eq!(
+        MinimaxStop::ALL
+            .into_iter()
+            .filter(|s| s.closed())
+            .collect::<Vec<_>>(),
+        [
+            MinimaxStop::ExactFit,
+            MinimaxStop::Converged,
+            MinimaxStop::NoiseLimited
+        ]
+    );
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(NEAR_LINEAR, &training);
+    assert!(live[0].expression.is_some());
+    for stop in [
+        MinimaxStop::Stalled,
+        MinimaxStop::Degenerate,
+        MinimaxStop::IterationLimit,
+    ] {
+        let mut kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+        let fit = kept[0].fit.as_mut().unwrap();
+        fit.stop = stop;
+        fit.steps = MAX_ITERATIONS;
+        let out = recorded(NEAR_LINEAR, &kept).unwrap();
+        let open = &out[0];
+        assert_eq!(
+            open.refusal.as_deref(),
+            Some(format!("{LINEARIZE_OPEN_BRACKET}: {}", stop.as_str()).as_str())
+        );
+        assert_eq!(
+            (
+                open.line_nodes,
+                open.lowered_error,
+                open.expression.as_ref()
+            ),
+            (None, None, None)
+        );
+        assert_eq!(open.fit.unwrap().stop, stop);
+    }
+}
+
+#[test]
+fn the_recorded_path_re_derives_the_live_linearization() {
+    let cases = [
+        (NEAR_LINEAR, rows(-0.5, 1.5, 201)),
+        (BESIDE, rows(-0.5, 1.5, 201)),
+        (OFF_CENTRE, rows(1e6, 1e6 + 1.0, 201)),
+        // A domain fault on a training row, and a fit with too few distinct values.
+        ("(sqrt(c0)*2.0)+c1", rows(-1.0, 1.0, 21)),
+        (NEAR_LINEAR, rows(0.0, 1.0, 2)),
+        // A negative slope one level under the root: depth 5, refused by the profile.
+        ("((0.25-c0)*(c0+2.0))+c1", rows(0.0, 1.0, 101)),
+        ("(0.25-c0)*(c0+2.0)", rows(0.0, 1.0, 101)),
+    ];
+    let mut reasons = BTreeSet::new();
+    for (source, training) in &cases {
+        let live = linearize(source, training);
+        assert!(!live.is_empty(), "{source}");
+        let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+        assert_eq!(recorded(source, &kept).unwrap(), live, "{source}");
+        for l in &live {
+            let reason = l.refusal.as_deref().unwrap_or("offered");
+            reasons.insert(reason.split(':').next().unwrap().to_owned());
+        }
+        // Too few records, or a record without a fit and without a refusal, is refused.
+        assert!(recorded(source, &kept[..kept.len() - 1]).is_err());
+        let mut bare = kept.clone();
+        bare[0] = LinearizationEvidence {
+            fit: None,
+            lowered_error: None,
+            refusal: None,
+        };
+        assert!(recorded(source, &bare).is_err(), "{source}");
+    }
+    let expected: BTreeSet<String> = [
+        "offered",
+        LINEARIZE_UNSAMPLED,
+        LINEARIZE_FIT_REFUSED,
+        LINEARIZE_NOT_SMALLER,
+        LINEARIZE_MISSES_BOUND,
+        LINEARIZE_PROFILE_REFUSED,
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect();
+    assert_eq!(reasons, expected);
+    // The fault and the fit's own refusal, by name.
+    let faulted = linearize("(sqrt(c0)*2.0)+c1", &rows(-1.0, 1.0, 21));
+    assert_eq!(faulted[0].refusal.as_deref(), Some(LINEARIZE_UNSAMPLED));
+    assert!(faulted[0].fit.is_none());
+    let few = linearize(NEAR_LINEAR, &rows(0.0, 1.0, 2));
+    assert_eq!(
+        few[0].refusal.as_deref(),
+        Some("the fit refused its samples: fewer than degree + 2 distinct abscissae")
+    );
+    // The profile's own refusal, by its depth limit; at the root the same line is offered.
+    let deep = linearize("((0.25-c0)*(c0+2.0))+c1", &rows(0.0, 1.0, 101));
+    let refusal = deep[0].refusal.as_deref().unwrap();
+    assert!(refusal.starts_with(LINEARIZE_PROFILE_REFUSED), "{refusal}");
+    assert!(deep[0].fit.unwrap().coefficients[1] < 0.0);
+    assert_eq!(deep[0].line_nodes, Some(6));
+    let root = linearize("(0.25-c0)*(c0+2.0)", &rows(0.0, 1.0, 101));
+    assert!(root[0].expression.is_some(), "{:?}", root[0]);
+}
+
+#[test]
+fn recorded_numbers_drive_the_bound_and_must_agree_with_their_stop() {
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(NEAR_LINEAR, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    // A recorded error over the bound refuses the line, as the live check would.
+    let mut over = kept.clone();
+    let fit = over[0].fit.unwrap();
+    over[0].lowered_error = Some(fit.bound() * 2.0);
+    let out = recorded(NEAR_LINEAR, &over).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    assert!(out[0].expression.is_none());
+    // A missing measured error is the out-of-range refusal.
+    let mut missing = kept.clone();
+    missing[0].lowered_error = None;
+    let out = recorded(NEAR_LINEAR, &missing).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_OUT_OF_RANGE));
+    // Changed coefficients change the line, and so the admitted expression.
+    let mut moved = kept.clone();
+    moved[0].fit.as_mut().unwrap().coefficients[0] += 0.5;
+    let out = recorded(NEAR_LINEAR, &moved).unwrap();
+    assert_ne!(out[0].expression, live[0].expression);
+    // Non-finite coefficients are refused by name.
+    let mut nan = kept.clone();
+    nan[0].fit.as_mut().unwrap().coefficients = [f64::NAN; 2];
+    let out = recorded(NEAR_LINEAR, &nan).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_NON_FINITE));
+    // A fit that disagrees with its stop is refused outright.
+    let edits: [fn(&mut LinearFit); 7] = [
+        |f| f.levelled = f.max_error * 2.0,
+        |f| f.max_error = f64::INFINITY,
+        |f| f.hi = f.lo,
+        |f| f.iterations = 0,
+        |f| f.steps = MAX_ITERATIONS + 1,
+        |f| {
+            f.stop = MinimaxStop::ExactFit;
+            f.max_error = 1e-3;
+        },
+        |f| {
+            f.stop = MinimaxStop::Converged;
+            f.levelled = 0.0;
+        },
+    ];
+    for edit in edits {
+        let mut bad = kept.clone();
+        edit(bad[0].fit.as_mut().unwrap());
+        assert!(recorded(NEAR_LINEAR, &bad).is_err(), "{:?}", bad[0]);
+    }
+}
+
+#[test]
+fn assess_names_the_first_check_that_fails() {
+    let x = Expr::Var(Var::Col(0));
+    // A 9-node stand-in for the replaced subtree.
+    let big = (0..4).fold(x.clone(), |acc, _| {
+        Expr::Binary(BinOp::Add, Box::new(acc), Box::new(x.clone()))
+    });
+    let line = [0.5, 2.0];
+    let ok = |_: &[f64]| Some(1e-3);
+    let reason = |r: Result<Proposal, Refused>| r.map(|p| p.nodes).map_err(|r| r.reason);
+    assert_eq!(reason(assess(&line, 1e-3, 1.0, &x, &big, 15, ok)), Ok(5));
+    let square = Expr::Binary(BinOp::Mul, Box::new(x.clone()), Box::new(x.clone()));
+    assert_eq!(
+        reason(assess(&line, 1e-3, 1.0, &square, &big, 15, ok)),
+        Err(NOT_A_LEAF)
+    );
+    assert_eq!(
+        reason(assess(&[0.5, f64::NAN], 1e-3, 1.0, &x, &big, 15, ok)),
+        Err(LINEARIZE_NON_FINITE)
+    );
+    assert_eq!(
+        reason(assess(&line, 1e-3, 1.0, &x, &square, 15, ok)),
+        Err(LINEARIZE_NOT_SMALLER)
+    );
+    assert_eq!(
+        reason(assess(&line, 1e-3, 1.0, &x, &big, 4, ok)),
+        Err(LINEARIZE_OVER_BUDGET)
+    );
+    // Degree 8 lowers to depth 17, over the expression limits.
+    let nine = [0.5; 9];
+    let huge = (0..40).fold(x.clone(), |acc, _| {
+        Expr::Binary(BinOp::Add, Box::new(acc), Box::new(x.clone()))
+    });
+    assert_eq!(
+        reason(assess(&nine, 1e-3, 1.0, &x, &huge, 64, ok)),
+        Err(LINEARIZE_OVER_LIMITS)
+    );
+    assert_eq!(
+        reason(assess(&line, 1e-3, 1.0, &x, &big, 15, |_| None)),
+        Err(LINEARIZE_OUT_OF_RANGE)
+    );
+    // The bound is the allowance on max_error: equal passes, one ulp over fails.
+    let bound = allowance(1e-3, 1.0);
+    assert_eq!(
+        reason(assess(&line, 1e-3, 1.0, &x, &big, 15, |_| Some(bound))),
+        Ok(5)
+    );
+    let refused = assess(&line, 1e-3, 1.0, &x, &big, 15, |_| Some(bound.next_up())).unwrap_err();
+    assert_eq!(
+        refused,
+        Refused {
+            reason: LINEARIZE_MISSES_BOUND,
+            nodes: Some(5),
+            lowered_error: Some(bound.next_up()),
+        }
+    );
+}
+
+#[test]
+fn only_one_variable_subtrees_where_a_line_fits_are_considered() {
+    let paths = |source: &str| {
+        MathExpr::parse(source)
+            .unwrap()
+            .linearizable_v2(&baseline(), scope())
+            .unwrap()
+    };
+    // Two variables at the root, none considered below a depth a line cannot fit.
+    assert!(paths("(c0*c1)+(c0*c1)").is_empty());
+    // Three nodes or fewer: never smaller as a line.
+    assert!(paths("(c0*2.0)+c1").is_empty());
+    // The root and its children, in preorder; a grandchild only with three arguments.
+    assert_eq!(paths("((c0*c0)-(c0*0.3))+(c0*c0)"), vec![vec![], vec![0]]);
+    assert_eq!(
+        paths("(clip(c0,0.5,2.0)*3.0)+c1"),
+        vec![vec![0], vec![0, 0]]
+    );
+    // The input must pass the profile's own admission.
+    assert!(MathExpr::parse("-(c0)")
+        .unwrap()
+        .linearizable_v2(&baseline(), scope())
+        .is_err());
+}

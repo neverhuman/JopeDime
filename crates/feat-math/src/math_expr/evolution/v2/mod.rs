@@ -6,8 +6,7 @@ use crate::kernel::profile::{ExprPool, SearchProfile};
 mod grow;
 mod mutation;
 mod refinement;
-// B19 Remez compression: test-only, no caller until its move is wired (Lane D kickoff).
-#[cfg(test)]
+// B19 bounded minimax linearization (degree 1 only): opt-in through `linearize_v2` (simplify.rs).
 mod simplify;
 // B20 e-graph simplification: opt-in through `simplify_v2` (egraph.rs).
 mod egraph;
