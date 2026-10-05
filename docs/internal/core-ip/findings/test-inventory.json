@@ -2621,6 +2621,13 @@
     "python:deploy/dl-trainonly/test_offline_guard.py": {
       "role": "infrastructure",
       "reason": "Python audit-boundary controls for offline DL custody fixtures; no runtime adoption or OS/native-extension isolation claim."
+    },
+    "target:feat-math/test/ridge_press_oracle": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
     }
   },
   "baseline_triage": [
