@@ -2192,6 +2192,14 @@
         "fitting",
         "export"
       ]
+    },
+    "target:feat-math/test/conversion_calibration_winner": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
     }
   },
   "baseline_triage": [

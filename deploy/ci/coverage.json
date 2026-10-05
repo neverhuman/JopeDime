@@ -7933,6 +7933,22 @@
       ],
       "dispositions": [],
       "scope": "B15 opt-in causal irregular-grid backward difference: wire75, strictly increasing timestamps and explicit positive minimum gap, typed fault-preserving refusal without gap clipping, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, rational boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+    },
+    "target:feat-math/test/conversion_calibration_winner": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/conversion_calibration_winner.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Persisted B09 calibration-winner byte/text round-trip; read-only boundary fixtures; separately compiled Rust O0/O3 and C++17 O2/O3 outputs versus evaluator bits and typed refusals. No runtime or frozen fixture changes; depends on B09 admission."
     }
   }
 }
