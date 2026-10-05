@@ -264,6 +264,8 @@ pub(super) fn cpp_driver(
         r#"
  refused=false;try{fit_ordered(rows,std::vector<double>(8,0.),2,"recipe-cut",4,8);}catch(const OrderedError&){refused=true;}if(!refused)return 8;
  refused=false;try{fit_ordered(std::vector<OrderedRow>(rows.begin(),rows.begin()+4),std::vector<double>(4,std::numeric_limits<double>::max()),2,"recipe-cut",4,8);}catch(const OrderedError&){refused=true;}if(!refused)return 9;
+ auto tiny_prefix=std::vector<OrderedRow>(rows.begin(),rows.begin()+4);tiny_prefix[2].timestamp=tiny_prefix[0].timestamp+0.0625;
+ refused=false;try{fit_ordered(tiny_prefix,std::vector<double>(4,0.),2,"recipe-cut",4,8);}catch(const OrderedError& error){refused=true;if(error.faults!=262144u||std::string(error.what())!="domain")return 16;}if(!refused)return 17;
 "#
     };
     format!(
@@ -281,6 +283,7 @@ int main() {{
  const std::vector<OrderedBytes> incompatible={{{incompatible}}};for(const auto& bytes:incompatible){{refused=false;try{{model.replace_state(bytes);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 11;}}
  std::vector<OrderedRow> backwards={{rows[4],rows[0]}};backwards[1].timestamp=-std::numeric_limits<double>::max();refused=false;try{{model.predict(backwards);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 12;
  backwards[1].timestamp=std::numeric_limits<double>::quiet_NaN();refused=false;try{{model.predict(backwards);}}catch(const OrderedError&){{refused=true;}}if(!refused||model.state_bytes()!=initial)return 13;
+ std::vector<OrderedRow> tied={{rows[4],rows[4]}};refused=false;try{{model.predict(tied);}}catch(const OrderedError& error){{refused=true;if(error.faults!=262144u||std::string(error.what())!="domain")return 18;}}if(!refused||model.state_bytes()!=initial)return 19;
  model.predict({{rows[4]}});if(model.state_bytes()==initial)return 14;model.replace_state(initial);if(model.state_bytes()!=initial)return 15;const auto continuation=std::vector<OrderedRow>(rows.begin()+4,rows.end());const auto result=model.predict(continuation);if(other.state_bytes()!=initial)return 6;
  const auto replay=other.predict(continuation);if(result.first.size()!=replay.first.size()||result.second!=replay.second)return 7;for(std::size_t i=0;i<result.first.size();i++)if(ordered_bits(result.first[i])!=ordered_bits(replay.first[i]))return 10;
  std::cout<<"initial:"<<output_hex(initial)<<'\n'<<"values:";for(std::size_t i=0;i<result.first.size();i++){{if(i)std::cout<<',';std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<ordered_bits(result.first[i]);}}
