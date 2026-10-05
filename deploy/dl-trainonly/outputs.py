@@ -164,7 +164,7 @@ def blob(root, reference):
     name = sha(reference["sha256"])
     if type(reference["bytes"]) is not int or reference["bytes"] < 1:
         raise ValueError("invalid blob size")
-    fd = os.open(Path(root) / name, os.O_RDONLY | os.O_NOFOLLOW)
+    fd = os.open(Path(root) / name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(fd, "rb") as source:
         if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
             raise ValueError("blob must be a regular file")

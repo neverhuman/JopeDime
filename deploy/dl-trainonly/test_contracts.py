@@ -4,6 +4,9 @@ import concurrent.futures
 import copy
 import datetime as dt
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -331,6 +334,30 @@ class OutputTests(Scratch):
                 self.assertEqual(len(result["invalid"]), 1)
                 if path.is_symlink():
                     path.unlink()
+
+    def test_fifo_refused_without_blocking(self):
+        # The original open(O_RDONLY) blocked before reaching fstat. Bound the
+        # receiving-path replay so a regression fails without hanging the suite.
+        ref = {"sha256": "f" * 64, "bytes": 1}
+        os.mkfifo(self.root / ref["sha256"])
+        script = """import json, sys, outputs
+try:
+    outputs.blob(sys.argv[1], json.loads(sys.argv[2]))
+except ValueError as error:
+    assert str(error) == 'blob must be a regular file'
+    print('REFUSED_NONREGULAR')
+else:
+    raise AssertionError('FIFO accepted')
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script, str(self.root), json.dumps(ref)],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "REFUSED_NONREGULAR")
 
     def test_wrong_key_bucket_and_latest_version(self):
         for field, value in (
