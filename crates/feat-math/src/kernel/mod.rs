@@ -55,3 +55,6 @@ impl std::fmt::Display for Error {
 }
 impl std::error::Error for Error {}
 pub type Result<T> = std::result::Result<T, Error>;
+
+// B14: causal cumulative integration (v2 wire 60).
+pub mod cumulative_integration;

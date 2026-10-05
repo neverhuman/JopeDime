@@ -1,0 +1,852 @@
+{
+  "schema": "feat-math.ordered-boundary/v2",
+  "wire": 60,
+  "width": 2,
+  "train_end": 4,
+  "rows": [
+    {
+      "group": "a",
+      "time_bits": "0000000000000000",
+      "values_bits": [
+        "8000000000000000",
+        "0000000000000001"
+      ]
+    },
+    {
+      "group": "b",
+      "time_bits": "0000000000000000",
+      "values_bits": [
+        "7ff8000000000042",
+        "4059000000000000"
+      ]
+    },
+    {
+      "group": "a",
+      "time_bits": "3fe0000000000000",
+      "values_bits": [
+        "3ff0000000000000",
+        "3ff0000000000000"
+      ]
+    },
+    {
+      "group": "b",
+      "time_bits": "3fe0000000000000",
+      "values_bits": [
+        "4014000000000000",
+        "405a000000000000"
+      ]
+    },
+    {
+      "group": "a",
+      "time_bits": "3ff0000000000000",
+      "values_bits": [
+        "4010000000000000",
+        "4010000000000000"
+      ]
+    },
+    {
+      "group": "b",
+      "time_bits": "3ff8000000000000",
+      "values_bits": [
+        "4022000000000000",
+        "405b000000000000"
+      ]
+    },
+    {
+      "group": "a",
+      "time_bits": "4010000000000000",
+      "values_bits": [
+        "4020000000000000",
+        "7ff0000000000000"
+      ]
+    },
+    {
+      "group": "b",
+      "time_bits": "4022000000000000",
+      "values_bits": [
+        "4024000000000000",
+        "7fefffffffffffff"
+      ]
+    }
+  ],
+  "mode_ids": {
+    "rect": 0,
+    "trap": 1
+  },
+  "initial_bits": [
+    "8000000000000000",
+    "4008000000000000"
+  ],
+  "reference_cases": [
+    {
+      "mode": 0,
+      "left_bits": 1,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 1,
+      "reference_bits": 1,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 1,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4378005659076774048,
+      "reference_bits": 4378005659076774048,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 1,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 3,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 3,
+      "reference_bits": 3,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 3,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4385014469154155760,
+      "reference_bits": 4385014469154155760,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 3,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 7,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 7,
+      "reference_bits": 7,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 7,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4390770674006531864,
+      "reference_bits": 4390770674006531864,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 7,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9223372036854775809,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 9223372036854775809,
+      "reference_bits": 9223372036854775809,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9223372036854775809,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13601377695931549856,
+      "reference_bits": 13601377695931549856,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9223372036854775809,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9223372036854775811,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 9223372036854775811,
+      "reference_bits": 9223372036854775811,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9223372036854775811,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13608386506008931568,
+      "reference_bits": 13608386506008931568,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9223372036854775811,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 4503599627370497,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 4503599627370497,
+      "reference_bits": 4503599627370497,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 4503599627370497,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4612192839700039841,
+      "reference_bits": 4612192839700039841,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 4503599627370497,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9227875636482146305,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 9227875636482146305,
+      "reference_bits": 9227875636482146305,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9227875636482146305,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13835564876554815649,
+      "reference_bits": 13835564876554815649,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9227875636482146305,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 4607182418800017408,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 4607182418800017408,
+      "reference_bits": 4607182418800017408,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 4607182418800017408,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4786511204640096256,
+      "reference_bits": 4786511204640096256,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 4607182418800017408,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 1,
+      "reference_bits": 1,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 13830554455654793216,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 13830554455654793216,
+      "reference_bits": 13830554455654793216,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 13830554455654793216,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 14009883241494872064,
+      "reference_bits": 14009883241494872064,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 13830554455654793216,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 9223372036854775809,
+      "reference_bits": 9223372036854775809,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9218868437227405311,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 4786511204640096256,
+      "reference_bits": 4786511204640096256,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9218868437227405311,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4786511204640096256,
+      "reference_bits": 4786511204640096256,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 9218868437227405311,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 4382002437431492607,
+      "reference_bits": 4382002437431492607,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 18442240474082181119,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 14009883241494872064,
+      "reference_bits": 14009883241494872064,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 18442240474082181119,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 14009883241494872064,
+      "reference_bits": 14009883241494872064,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 0,
+      "left_bits": 18442240474082181119,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 13605374474286268415,
+      "reference_bits": 13605374474286268415,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 1,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 1,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4373502059449403552,
+      "reference_bits": 4373502059449403552,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 1,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 3,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 2,
+      "reference_bits": 2,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 3,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4380510869526785264,
+      "reference_bits": 4380510869526785264,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 3,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 7,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 4,
+      "reference_bits": 4,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 7,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4386267074379161368,
+      "reference_bits": 4386267074379161368,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 7,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775809,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775809,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13596874096304179360,
+      "reference_bits": 13596874096304179360,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775809,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775811,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 9223372036854775810,
+      "reference_bits": 9223372036854775810,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775811,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13603882906381561072,
+      "reference_bits": 13603882906381561072,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775811,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 4503599627370497,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 2251799813685248,
+      "reference_bits": 2251799813685248,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 4503599627370497,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4607689240072669345,
+      "reference_bits": 4607689240072669345,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 4503599627370497,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9227875636482146305,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 9225623836668461056,
+      "reference_bits": 9225623836668461056,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9227875636482146305,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13831061276927445153,
+      "reference_bits": 13831061276927445153,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9227875636482146305,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 4607182418800017408,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 4602678819172646912,
+      "reference_bits": 4602678819172646912,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 4607182418800017408,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4786511204640096256,
+      "reference_bits": 4786511204640096256,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 4607182418800017408,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 13830554455654793216,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 13826050856027422720,
+      "reference_bits": 13826050856027422720,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 13830554455654793216,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 14009883241494872064,
+      "reference_bits": 14009883241494872064,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 13830554455654793216,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 0,
+      "reference_bits": 9223372036854775808,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9218868437227405311,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 4786511204640096256,
+      "reference_bits": 4786511204640096256,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9218868437227405311,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4786511204640096256,
+      "reference_bits": 4786511204640096256,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9218868437227405311,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 4377498837804122111,
+      "reference_bits": 4377498837804122111,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 18442240474082181119,
+      "right_bits": 0,
+      "dt_bits": 4607182418800017408,
+      "actual_bits": 14009883241494872064,
+      "reference_bits": 14009883241494872064,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 18442240474082181119,
+      "right_bits": 0,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 14009883241494872064,
+      "reference_bits": 14009883241494872064,
+      "faults": 512,
+      "saturated": true,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 18442240474082181119,
+      "right_bits": 0,
+      "dt_bits": 1,
+      "actual_bits": 13600870874658897919,
+      "reference_bits": 13600870874658897919,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9214871658872686752,
+      "right_bits": 9214871658872686752,
+      "dt_bits": 2024022533073106,
+      "actual_bits": 4607182418800017407,
+      "reference_bits": 4607182418800017407,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9214871658872686752,
+      "right_bits": 18438243695727462560,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 0,
+      "reference_bits": 0,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 3,
+      "right_bits": 7,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 4388265463556520648,
+      "reference_bits": 4388265463556520648,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    },
+    {
+      "mode": 1,
+      "left_bits": 9223372036854775811,
+      "right_bits": 9223372036854775815,
+      "dt_bits": 9214871658872686752,
+      "actual_bits": 13611637500411296456,
+      "reference_bits": 13611637500411296456,
+      "faults": 0,
+      "saturated": false,
+      "within_two_ulp": true
+    }
+  ]
+}
