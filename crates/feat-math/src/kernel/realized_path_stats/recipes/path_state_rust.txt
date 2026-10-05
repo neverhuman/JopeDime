@@ -1,0 +1,57 @@
+#[derive(Clone)]
+pub struct PathState {
+    window:usize,input:String,cut:String,train_end:usize,total_rows:usize,ordinal:usize,
+    groups:std::collections::BTreeMap<OrderedGroup,(f64,usize,usize)>,
+    history:std::collections::BTreeMap<OrderedGroup,Vec<f64>>,
+}
+impl PathState {
+    fn new(window:usize,task:u8,input:&str,cut:&str,train_end:usize,total_rows:usize)->Result<Self,&'static str> {
+        if task!=1 && task!=2 {return Err("unsupported");}
+        if !(2..=129).contains(&window) {return Err("shape");}
+        if cut.trim().is_empty() || train_end==0 || train_end>total_rows {return Err("bounds");}
+        Ok(Self {window,input:input.into(),cut:cut.into(),train_end,total_rows,ordinal:0,groups:std::collections::BTreeMap::new(),history:std::collections::BTreeMap::new()})
+    }
+    fn metadata(&self)->Vec<u8> {
+        let mut bytes=Vec::new();
+        ordered_write_text(&mut bytes,"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}");
+        ordered_write_text(&mut bytes,&self.input);
+        ordered_write_text(&mut bytes,&format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(&self.cut),self.train_end,self.total_rows));bytes
+    }
+    fn push(&mut self,group:OrderedGroup,time:f64,row:&[f64])->Result<(Vec<f64>,Vec<u32>),&'static str> {
+        if row.len()!=1{return Err("shape");}if !time.is_finite(){return Err("domain");}let group=ordered_group(group)?;
+        let previous=self.groups.get(&group).copied();if previous.map_or(false,|(t,_,_)|time<t){return Err("domain");}if self.ordinal>=self.total_rows{return Err("bounds");}
+        let mut history=self.history.get(&group).cloned().unwrap_or_default();history.push(row[0]);if history.len()>self.window{history.remove(0);}
+        let mut flags=if history.len()<self.window{@BOUNDARYFAULT@}else{0};let mut values=vec![0.0;5];let mut prior=None;let mut increment:Option<f64>=None;let mut products=0.0;
+        for raw in &history {let value=if raw.is_finite(){*raw}else{flags|=@INPUTFAULT@;0.0};if let Some(last)=prior{let delta:f64=value-last;if delta.abs()>1e6{flags|=@CLAMPFAULT@;}let delta=delta.clamp(-1e6,1e6);let square=delta*delta;values[0]+=square;if let Some(prev)=increment{products+=prev.abs()*delta.abs();}if delta>0.0{values[3]+=square;}if delta<0.0{values[4]+=square;}increment=Some(delta);}prior=Some(value);}
+        values[1]=products*f64::from_bits(0x3ff921fb54442d18);values[2]=(values[0]-values[1]).max(0.0);
+        let(_,count,trained)=previous.unwrap_or((0.0,0,0));self.groups.insert(group.clone(),(time,count+1,trained+usize::from(self.ordinal<self.train_end)));self.history.insert(group,history);self.ordinal+=1;Ok((values,vec![flags;5]))
+    }
+    fn to_bytes(&self)->Result<Vec<u8>,&'static str> {
+        let mut cursor=b"FMKCUR\0\x01".to_vec();cursor.extend_from_slice(&self.metadata());ordered_write_word(&mut cursor,self.ordinal as u64);ordered_write_word(&mut cursor,self.groups.len() as u64);
+        for (group,(time,prior,train)) in &self.groups {ordered_write_group(&mut cursor,group);ordered_write_word(&mut cursor,time.to_bits());ordered_write_word(&mut cursor,*prior as u64);ordered_write_word(&mut cursor,*train as u64);}
+        let mut bytes=b"FMKPTH\0\x02".to_vec();ordered_write_word(&mut bytes,self.window as u64);
+        ordered_write_word(&mut bytes,cursor.len() as u64);bytes.extend_from_slice(&cursor);ordered_write_word(&mut bytes,self.groups.len() as u64);
+        for (group,(time,_,_)) in &self.groups {ordered_write_group(&mut bytes,group);let _=time;let prior=self.history.get(group).ok_or("domain")?;ordered_write_word(&mut bytes,prior.len() as u64);for value in prior.iter(){ordered_write_word(&mut bytes,value.to_bits());}}
+        if bytes.len()>16*1024*1024 {Err("resource")} else {Ok(bytes)}
+    }
+    fn from_bytes(bytes:&[u8],task:u8,input:&str,cut:&str,train_end:usize,total_rows:usize)->Result<Self,&'static str> {
+        let mut reader=OrderedReader::new(bytes)?;if reader.take(8)?!=b"FMKPTH\0\x02" {return Err("unsupported");}
+        let window=reader.usize()?;let mut state=Self::new(window,task,input,cut,train_end,total_rows)?;
+        let n=reader.count()?;let mut cursor=OrderedReader::new(reader.take(n)?)?;if cursor.take(8)?!=b"FMKCUR\0\x01" {return Err("unsupported");}
+        let metadata=[cursor.text()?,cursor.text()?,cursor.text()?];
+        let fold=format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(cut),train_end,total_rows);
+        let expected=[String::from("{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}"),input.into(),fold];
+        let parsed=(0..3).map(|i|ordered_metadata(&metadata[i],i)).collect::<Result<Vec<_>,_>>()?;let identities=(0..3).map(|i|ordered_metadata(&expected[i],i)).collect::<Result<Vec<_>,_>>()?;if parsed!=identities {return Err("domain");}
+        state.ordinal=cursor.usize()?;if state.ordinal>total_rows {return Err("bounds");}
+        let count=cursor.count()?;if count>state.ordinal {return Err("bounds");}let mut previous=None;let mut rows=0usize;let mut training=0usize;
+        for _ in 0..count {let group=cursor.group()?;let time=f64::from_bits(cursor.word()?);let prior=cursor.usize()?;let train=cursor.usize()?;
+            if previous.as_ref().map_or(false,|p|p>=&group) || !time.is_finite() || prior==0 || prior>state.ordinal || train>prior {return Err("domain");}
+            rows=rows.checked_add(prior).ok_or("bounds")?;training=training.checked_add(train).ok_or("bounds")?;previous=Some(group.clone());state.groups.insert(group,(time,prior,train));}
+        cursor.finish()?;if rows!=state.ordinal || training!=state.ordinal.min(train_end) {return Err("domain");}if metadata!=expected {return Err("syntax");}
+        if reader.count()?!=count {return Err("domain");}
+        for (group,(_,prior,_)) in &state.groups {if reader.group()?!=*group{return Err("domain");}let length=reader.usize()?;if length!=(*prior).min(window){return Err("domain");}
+            let raw=(0..length).map(|_|reader.word().map(f64::from_bits)).collect::<Result<Vec<_>,_>>()?;state.history.insert(group.clone(),raw);}
+        reader.finish()?;if state.to_bytes()?!=bytes {return Err("syntax");}Ok(state)
+    }
+    fn finish(&self)->Result<(),&'static str> {if self.ordinal==self.total_rows {Ok(())} else {Err("bounds")}}
+}

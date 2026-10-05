@@ -1,0 +1,19 @@
+struct OrderedRow {OrderedGroup group;double timestamp;std::vector<double> values;};
+static void path_fitted_checkpoint(const PathState& state) {
+ const auto snapshot=state.to_bytes();std::size_t array=2+(snapshot.empty()?0:snapshot.size()-1);for(auto byte:snapshot)array+=std::to_string(byte).size();
+ if(@CHECKPOINT_FIXED_BYTES@+array>16*1024*1024)throw OrderedError("resource");
+}
+struct PathStatsFittedModel {
+ PathState state;unsigned task;
+ std::pair<std::vector<double>,std::vector<std::vector<std::uint32_t>>> predict(const std::vector<OrderedRow>& rows) {
+  if(rows.empty())return {{},{}};auto next=state;std::vector<double> table;std::vector<std::vector<std::uint32_t>> faults;
+  for(const auto& row:rows){const auto result=next.push(row.group,row.timestamp,row.values);table.insert(table.end(),result.first.begin(),result.first.end());faults.push_back(result.second);}
+  std::vector<std::uint8_t> missing(table.size(),0);std::vector<double> output(rows.size());
+  const auto status=jope_fitted_predict(table.data(),table.size(),missing.data(),missing.size(),rows.size(),5,output.data(),output.size());if(status)throw OrderedError("downstream");
+  path_fitted_checkpoint(next);
+  state=std::move(next);return {output,faults};
+ }
+ OrderedBytes state_bytes()const{return state.to_bytes();}
+ void replace_state(const OrderedBytes& bytes){auto next=PathState::from_bytes(bytes,task,state.input,state.cut,state.train_end,state.total_rows);if(next.window!=state.window || next.ordinal<next.train_end)throw OrderedError("domain");path_fitted_checkpoint(next);state=std::move(next);}
+ void finish()const{state.finish();}
+};

@@ -1,0 +1,47 @@
+struct PathState {
+    std::size_t window;std::string input,cut;std::size_t train_end,total_rows,ordinal=0;
+    std::map<OrderedGroup,std::tuple<double,std::size_t,std::size_t>> groups;
+    std::map<OrderedGroup,std::vector<double>> history;
+    PathState(std::size_t window,unsigned task,const std::string& input,const std::string& cut,std::size_t train,std::size_t total):window(window),input(input),cut(cut),train_end(train),total_rows(total) {
+        if(task!=1 && task!=2) throw OrderedError("unsupported");
+        if(window<2 || window>129) throw OrderedError("shape");
+        if(ordered_blank(cut) || train==0 || train>total) throw OrderedError("bounds");
+    }
+    OrderedBytes metadata() const {
+        OrderedBytes out;ordered_text(out,"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}");ordered_text(out,input);
+        ordered_text(out,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train_end)+",\"total_rows\":"+std::to_string(total_rows)+"}");return out;
+    }
+    std::pair<std::vector<double>,std::vector<std::uint32_t>> push(OrderedGroup group,double time,const std::vector<double>& row) {
+        if(row.size()!=1)throw OrderedError("shape");if(!std::isfinite(time))throw OrderedError("domain");group=ordered_group(std::move(group));
+        const auto previous=groups.find(group);if(previous!=groups.end() && time<std::get<0>(previous->second))throw OrderedError("domain");if(ordinal>=total_rows)throw OrderedError("bounds");
+        auto saved=history.count(group)?history.at(group):std::vector<double>{};saved.push_back(row[0]);if(saved.size()>window)saved.erase(saved.begin());
+        std::uint32_t flags=saved.size()<window?@BOUNDARYFAULT@:0;std::vector<double> values(5,0.0);bool has_value=false,has_increment=false;double prior=0.0,increment=0.0,products=0.0;
+        for(double raw:saved){const double value=std::isfinite(raw)?raw:0.0;if(!std::isfinite(raw))flags|=@INPUTFAULT@;if(has_value){double delta=value-prior;if(std::abs(delta)>1e6)flags|=@CLAMPFAULT@;delta=std::clamp(delta,-1e6,1e6);const double square=delta*delta;values[0]+=square;if(has_increment)products+=std::abs(increment)*std::abs(delta);if(delta>0.0)values[3]+=square;if(delta<0.0)values[4]+=square;increment=delta;has_increment=true;}prior=value;has_value=true;}
+        values[1]=products*ordered_float(0x3ff921fb54442d18ULL);values[2]=std::max(values[0]-values[1],0.0);
+        const auto count=previous==groups.end()?0:std::get<1>(previous->second);const auto trained=previous==groups.end()?0:std::get<2>(previous->second);groups[group]=std::make_tuple(time,count+1,trained+std::size_t(ordinal<train_end));history[group]=std::move(saved);ordinal++;return {values,std::vector<std::uint32_t>(5,flags)};
+    }
+    OrderedBytes to_bytes() const {
+        OrderedBytes cursor={'F','M','K','C','U','R',0,1};const auto meta=metadata();cursor.insert(cursor.end(),meta.begin(),meta.end());ordered_word(cursor,ordinal);ordered_word(cursor,groups.size());
+        for(const auto& item:groups) {ordered_write_group(cursor,item.first);ordered_word(cursor,ordered_bits(std::get<0>(item.second)));ordered_word(cursor,std::get<1>(item.second));ordered_word(cursor,std::get<2>(item.second));}
+        OrderedBytes out={'F','M','K','P','T','H',0,2};ordered_word(out,window);ordered_word(out,cursor.size());out.insert(out.end(),cursor.begin(),cursor.end());ordered_word(out,groups.size());
+        for(const auto& item:groups) {ordered_write_group(out,item.first);const auto& saved=history.at(item.first);ordered_word(out,saved.size());for(double v:saved) ordered_word(out,ordered_bits(v));}
+        if(out.size()>16*1024*1024) throw OrderedError("resource");return out;
+    }
+    static PathState from_bytes(const OrderedBytes& bytes,unsigned task,const std::string& input,const std::string& cut,std::size_t train,std::size_t total) {
+        OrderedReader reader(bytes);if(reader.take(8)!=OrderedBytes({'F','M','K','P','T','H',0,2})) throw OrderedError("unsupported");
+        const auto window=reader.size();PathState state(window,task,input,cut,train,total);
+        const auto cursor_bytes=reader.take(reader.count());OrderedReader cursor(cursor_bytes);if(cursor.take(8)!=OrderedBytes({'F','M','K','C','U','R',0,1})) throw OrderedError("unsupported");
+        const std::vector<std::string> metadata={cursor.text(),cursor.text(),cursor.text()};const std::vector<std::string> expected={"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}",input,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train)+",\"total_rows\":"+std::to_string(total)+"}"};
+        std::vector<std::vector<OrderedJson>> parsed,identities;for(unsigned i=0;i<3;i++) {parsed.push_back(ordered_metadata(metadata[i],i));identities.push_back(ordered_metadata(expected[i],i));}if(parsed!=identities) throw OrderedError("domain");
+        state.ordinal=cursor.size();if(state.ordinal>total) throw OrderedError("bounds");const auto count=cursor.count();if(count>state.ordinal) throw OrderedError("bounds");std::size_t rows=0,training=0;
+        for(std::size_t i=0;i<count;i++) {const auto group=cursor.group();const auto time=ordered_float(cursor.word());const auto prior=cursor.size();const auto trained=cursor.size();
+            if((!state.groups.empty() && !(state.groups.rbegin()->first<group)) || !std::isfinite(time) || prior==0 || prior>state.ordinal || trained>prior) throw OrderedError("domain");
+            if(prior>std::numeric_limits<std::size_t>::max()-rows || trained>std::numeric_limits<std::size_t>::max()-training) throw OrderedError("bounds");rows+=prior;training+=trained;state.groups[group]=std::make_tuple(time,prior,trained);}
+        cursor.finish();if(rows!=state.ordinal || training!=std::min(state.ordinal,train)) throw OrderedError("domain");if(metadata!=expected) throw OrderedError("syntax");if(reader.count()!=count) throw OrderedError("domain");
+        for(const auto& item:state.groups) {if(!(reader.group()==item.first)) throw OrderedError("domain");const auto length=reader.size();if(length!=std::min(std::get<1>(item.second),window))throw OrderedError("domain");std::vector<double> raw;
+            for(std::size_t j=0;j<length;j++) raw.push_back(ordered_float(reader.word()));
+            state.history[item.first]=std::move(raw);}
+        reader.finish();if(state.to_bytes()!=bytes) throw OrderedError("syntax");return state;
+    }
+    void finish() const {if(ordinal!=total_rows) throw OrderedError("bounds");}
+};

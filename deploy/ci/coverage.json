@@ -7983,6 +7983,22 @@
       ],
       "dispositions": [],
       "scope": "Four stdlib conformance tests build all three real S1 executables via Cargo artifact messages, generate 96 fresh priors, execute two-fold fits, score/load G0, compare outer-target flips, and refuse incomplete/overwritten products; synthetic CPU only."
+    },
+    "target:feat-math/test/realized_path_stats_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/realized_path_stats_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     }
   }
 }

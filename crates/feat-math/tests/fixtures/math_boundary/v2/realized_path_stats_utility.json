@@ -1,0 +1,6212 @@
+[
+  {
+    "id": "smooth_energy",
+    "width": 1,
+    "output_width": 5,
+    "inner_train_end": 96,
+    "rows": [
+      {
+        "group": "A",
+        "timestamp_bits": 0,
+        "values_bits": [
+          4600336947366414254
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 0,
+        "values_bits": [
+          13826312276311269306
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          4602488475954859171
+        ],
+        "label_bits": 4579376511291502293
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          13823182992644185931
+        ],
+        "label_bits": 4585266458407722493
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4604012084936238567
+        ],
+        "label_bits": 4585841081109364656
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          13818237570026097041
+        ],
+        "label_bits": 4589621519011700744
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4605633775694773580
+        ],
+        "label_bits": 4589840354176204760
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          13792699883439707456
+        ],
+        "label_bits": 4591353223294589476
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4607216106586593693
+        ],
+        "label_bits": 4591131985468972393
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4592355747133196142
+        ],
+        "label_bits": 4589669973390759433
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4607919360425375210
+        ],
+        "label_bits": 4591076767878410604
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4594985071075646207
+        ],
+        "label_bits": 4585794840786302374
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4608431276202864655
+        ],
+        "label_bits": 4589671980602263814
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4594942708103483295
+        ],
+        "label_bits": 4579836863491979519
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4608695672563866357
+        ],
+        "label_bits": 4586033663946190273
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4592709353351804728
+        ],
+        "label_bits": 4572830361566548831
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4608696373416366146
+        ],
+        "label_bits": 4580374709179836539
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4584701252919448022
+        ],
+        "label_bits": 4576220196972895337
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4608459613688194828
+        ],
+        "label_bits": 4573810081481779178
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          13812136018088284934
+        ],
+        "label_bits": 4580587554050949195
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4608048817873376403
+        ],
+        "label_bits": 4577543073921416462
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          13817614482293752364
+        ],
+        "label_bits": 4581803772758262410
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4607552709538620143
+        ],
+        "label_bits": 4582349565511961308
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          13819532107903454496
+        ],
+        "label_bits": 4580769144731122323
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4606955426121947610
+        ],
+        "label_bits": 4584771721978816400
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          13820036120193180893
+        ],
+        "label_bits": 4576695392627430546
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4606189783719612734
+        ],
+        "label_bits": 4584563526269922412
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          13819030256549094749
+        ],
+        "label_bits": 4570927093006225560
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4605753086230963154
+        ],
+        "label_bits": 4581743420440473680
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          13816450738968644650
+        ],
+        "label_bits": 4572403772507937717
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4605699154675248780
+        ],
+        "label_bits": 4576694587494317290
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          13808194103626724122
+        ],
+        "label_bits": 4578026721220483426
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4605999252331356506
+        ],
+        "label_bits": 4570208863196840002
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4587869794385612518
+        ],
+        "label_bits": 4580992726197815744
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4606547967468090067
+        ],
+        "label_bits": 4572249887858103640
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4593273167013369415
+        ],
+        "label_bits": 4581090068184703105
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4607182840581371903
+        ],
+        "label_bits": 4576800635358745877
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4594452761982073072
+        ],
+        "label_bits": 4578337103904743645
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4607449721326260336
+        ],
+        "label_bits": 4578185076185738170
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4593464562194341810
+        ],
+        "label_bits": 4573217667550340978
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4607576477114893750
+        ],
+        "label_bits": 4576502367589473455
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4586101979805005594
+        ],
+        "label_bits": 4575700968182891769
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4607495405348276239
+        ],
+        "label_bits": 4571985629283449616
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          13814608270736876727
+        ],
+        "label_bits": 4582772175701362294
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4607164658566302227
+        ],
+        "label_bits": 4573825810943604202
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          13821756985397022422
+        ],
+        "label_bits": 4587817927236916038
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4606056486827920264
+        ],
+        "label_bits": 4581585733232359477
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          13825153223601286904
+        ],
+        "label_bits": 4590582512697563866
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4604582679919677324
+        ],
+        "label_bits": 4586936812368244149
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          13827256876288547235
+        ],
+        "label_bits": 4591751101587166258
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4602907441545487464
+        ],
+        "label_bits": 4590176966651641454
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          13828671266649239999
+        ],
+        "label_bits": 4591434642676186282
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4599785654576535364
+        ],
+        "label_bits": 4591578748531231726
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          13829691237933907657
+        ],
+        "label_bits": 4589797492648659489
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4595510580083135854
+        ],
+        "label_bits": 4591572393254942700
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          13830232293916318657
+        ],
+        "label_bits": 4586082454157549177
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4587981868753796564
+        ],
+        "label_bits": 4590148288241796226
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          13830293091193008966
+        ],
+        "label_bits": 4580406415536172044
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          13802541170335850848
+        ],
+        "label_bits": 4586813352633341909
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          13829954043983230739
+        ],
+        "label_bits": 4572496238399569459
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          13806356946297503134
+        ],
+        "label_bits": 4581309072228426532
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          13829361139337827515
+        ],
+        "label_bits": 4573331756258031577
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4578888151382555416
+        ],
+        "label_bits": 4573900688530011009
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          13828697935552786106
+        ],
+        "label_bits": 4577593470893637548
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4591023655501865607
+        ],
+        "label_bits": 4574998896232637688
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          13828150865991337722
+        ],
+        "label_bits": 4578903229201527287
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4595631183890385416
+        ],
+        "label_bits": 4580039604443193613
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          13827874186929645470
+        ],
+        "label_bits": 4576949345992616038
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4598454333839553700
+        ],
+        "label_bits": 4581802364391535614
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          13827960970026732447
+        ],
+        "label_bits": 4572098005042425842
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4599572369638605326
+        ],
+        "label_bits": 4581298427832075846
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          13828425436341446063
+        ],
+        "label_bits": 4570667579756733074
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4600020071438064822
+        ],
+        "label_bits": 4578004056326438923
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          13829199860475921054
+        ],
+        "label_bits": 4577001338783243623
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4599709181113165192
+        ],
+        "label_bits": 4572146403257950060
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          13830146617053826704
+        ],
+        "label_bits": 4581738791199717567
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4598716602958103242
+        ],
+        "label_bits": 4571205670773843600
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          13830818818349949185
+        ],
+        "label_bits": 4584088638280211998
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4596364898921132068
+        ],
+        "label_bits": 4576792405329706421
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          13831184993390483537
+        ],
+        "label_bits": 4583863410092765800
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4592801284380772624
+        ],
+        "label_bits": 4580563958596482210
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          13831364163569876816
+        ],
+        "label_bits": 4581135138421704443
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4586038459636336380
+        ],
+        "label_bits": 4581188807850049112
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          13831299308608203797
+        ],
+        "label_bits": 4575996461639544128
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4569459753444135152
+        ],
+        "label_bits": 4579315313974335254
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          13830972079211807199
+        ],
+        "label_bits": 4574800640657915024
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4579681574066639372
+        ],
+        "label_bits": 4574436370968684244
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          13830258838031907294
+        ],
+        "label_bits": 4581782085682402622
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4590604060153745858
+        ],
+        "label_bits": 4573710896678107837
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          13828777345126998333
+        ],
+        "label_bits": 4587092152263803226
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4596501365261675518
+        ],
+        "label_bits": 4581242484560578021
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          13827126888582624848
+        ],
+        "label_bits": 4590169069031718771
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4600275243998562342
+        ],
+        "label_bits": 4586764560378833175
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          13824976005086328466
+        ],
+        "label_bits": 4591345365201218754
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4603155142629089948
+        ],
+        "label_bits": 4590137820056462865
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          13822211797956176527
+        ],
+        "label_bits": 4591092579886138638
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4604839954087646009
+        ],
+        "label_bits": 4591602042245374643
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          13818869507867074680
+        ],
+        "label_bits": 4589564390697353440
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4606328772147568612
+        ],
+        "label_bits": 4591655473325007916
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          13816351438301711794
+        ],
+        "label_bits": 4585860203750599996
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4607318355439136255
+        ],
+        "label_bits": 4590279452641038338
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          13815638054263650209
+        ],
+        "label_bits": 4580297807258279288
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4607647863420860407
+        ],
+        "label_bits": 4587120012250207644
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          13817457510638161282
+        ],
+        "label_bits": 4572060413868784912
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4607733102922880632
+        ],
+        "label_bits": 4581803985378314484
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          13819452392948942023
+        ],
+        "label_bits": 4571405065878956340
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4607604823090653710
+        ],
+        "label_bits": 4574170235829614376
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          13821569702514488355
+        ],
+        "label_bits": 4575358636837195300
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4607329159422081902
+        ],
+        "label_bits": 4572317990078734574
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          13822346106860134168
+        ],
+        "label_bits": 4576024980491080940
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4606807322431760861
+        ],
+        "label_bits": 4576957197839107773
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          13822533402824711243
+        ],
+        "label_bits": 4572982812725760042
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4606210636218604868
+        ],
+        "label_bits": 4579019275107483178
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          13821962660210738960
+        ],
+        "label_bits": 4568993429879858086
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4605851032909423465
+        ],
+        "label_bits": 4577778331455947258
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          13819702115178120379
+        ],
+        "label_bits": 4574291918026219685
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4605838723256698907
+        ],
+        "label_bits": 4573549399287216592
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          13814556254116455640
+        ],
+        "label_bits": 4580917578297117234
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4606208116340840391
+        ],
+        "label_bits": 4569704247274885358
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4585307554932320872
+        ],
+        "label_bits": 4584941325763453098
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4606911011888517739
+        ],
+        "label_bits": 4575612309835187105
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4594894136537928958
+        ],
+        "label_bits": 4586334418197787817
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4607503736627586678
+        ],
+        "label_bits": 4580865454240750385
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4598307918881596104
+        ],
+        "label_bits": 4586040284782422823
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4607979167229071925
+        ],
+        "label_bits": 4583592822000663498
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4599296012827942081
+        ],
+        "label_bits": 4583693329685470654
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4608375793087619933
+        ],
+        "label_bits": 4584073099634259696
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4599276446600016934
+        ],
+        "label_bits": 4578474158066127283
+      }
+    ],
+    "cohort": "synthetic training only",
+    "label_definition": "independent Python ordered four-observation path component 0",
+    "label_window_observations": 4
+  },
+  {
+    "id": "bipower_trend",
+    "width": 1,
+    "output_width": 5,
+    "inner_train_end": 96,
+    "rows": [
+      {
+        "group": "A",
+        "timestamp_bits": 0,
+        "values_bits": [
+          4594212051873190379
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 0,
+        "values_bits": [
+          13830051377441854262
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          4599486627266767284
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          13827761307117659612
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4602923748006286007
+        ],
+        "label_bits": 4588618872956165573
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          13824799060369932983
+        ],
+        "label_bits": 4592129021948575890
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4604938241610377030
+        ],
+        "label_bits": 4593869647631379516
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          13818708944406313686
+        ],
+        "label_bits": 4596706629128619909
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4602780475497712243
+        ],
+        "label_bits": 4594787352217238726
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          13824703118966759913
+        ],
+        "label_bits": 4596701068638267932
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4605043772046717704
+        ],
+        "label_bits": 4595606953836580847
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          13819079128344523821
+        ],
+        "label_bits": 4596397277232148833
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4607275858883098572
+        ],
+        "label_bits": 4596246315721325094
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4587007994935256120
+        ],
+        "label_bits": 4595828862193155669
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4608446448745121550
+        ],
+        "label_bits": 4596637523335897604
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4598322982621214102
+        ],
+        "label_bits": 4595056986843783218
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4607291733458515904
+        ],
+        "label_bits": 4596737579806006384
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4589600247919834660
+        ],
+        "label_bits": 4594160657413644027
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4608407709261591917
+        ],
+        "label_bits": 4596535325849514795
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4597658260871439845
+        ],
+        "label_bits": 4592777556996822473
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4609464120973539928
+        ],
+        "label_bits": 4596053251920418731
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4600514874590130114
+        ],
+        "label_bits": 4590982267237092293
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4610443281061256824
+        ],
+        "label_bits": 4595343852575447609
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4602696882729215884
+        ],
+        "label_bits": 4589386816474159160
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4609554991503358764
+        ],
+        "label_bits": 4594481226724001712
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4600877006016773183
+        ],
+        "label_bits": 4586968918710094300
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4610343577523126070
+        ],
+        "label_bits": 4593427455367870302
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4602407818570506679
+        ],
+        "label_bits": 4584944183229136357
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4611028878103630107
+        ],
+        "label_bits": 4591589436707096003
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4603190750926423938
+        ],
+        "label_bits": 4582347980394613809
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4611612751099656870
+        ],
+        "label_bits": 4589913227244804471
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4603762011767995382
+        ],
+        "label_bits": 4580486670002562964
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4611123105925431017
+        ],
+        "label_bits": 4587817603118634229
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4603221107405671001
+        ],
+        "label_bits": 4578730388965776692
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4611530685757009940
+        ],
+        "label_bits": 4585579128119650245
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4603779068813843993
+        ],
+        "label_bits": 4577970883882657447
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4611779351652558922
+        ],
+        "label_bits": 4583223640188788881
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4604400602445945766
+        ],
+        "label_bits": 4578392712830348715
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4611927530149918489
+        ],
+        "label_bits": 4581031234892396570
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4605128875308389348
+        ],
+        "label_bits": 4580076290967804264
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4611791001501413104
+        ],
+        "label_bits": 4579291294298733334
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4604256317866649431
+        ],
+        "label_bits": 4581729494337932017
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4611927665080246504
+        ],
+        "label_bits": 4578098393862274441
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4605303106170404197
+        ],
+        "label_bits": 4584300677593234926
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4612076241262186196
+        ],
+        "label_bits": 4578111669910135879
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4606544895365495983
+        ],
+        "label_bits": 4586336506094603061
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4612247880316441140
+        ],
+        "label_bits": 4579333681818070098
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4607587302064186115
+        ],
+        "label_bits": 4588802697308183611
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4612043242777801167
+        ],
+        "label_bits": 4581070417331741106
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4606339717873387837
+        ],
+        "label_bits": 4590508453989560576
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4612289076474789513
+        ],
+        "label_bits": 4583285270956563440
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4607684326109379771
+        ],
+        "label_bits": 4592258077378645449
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4612582134317367091
+        ],
+        "label_bits": 4585623115327398900
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4608693933240627938
+        ],
+        "label_bits": 4593897442575175493
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4612925957128782450
+        ],
+        "label_bits": 4587875582753310278
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4609774667264024188
+        ],
+        "label_bits": 4594813468638860851
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4612530502174554639
+        ],
+        "label_bits": 4589948712326308182
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4608641774869867436
+        ],
+        "label_bits": 4595628870136912241
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4612975737124661875
+        ],
+        "label_bits": 4591629817964340988
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4609805110077531570
+        ],
+        "label_bits": 4596261755962356159
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4613466278150219264
+        ],
+        "label_bits": 4593470063700303053
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4610975569203398308
+        ],
+        "label_bits": 4596644810297126070
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4613995265186208010
+        ],
+        "label_bits": 4594501901532608668
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4611907738291327426
+        ],
+        "label_bits": 4596735902945669023
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4613436717048911338
+        ],
+        "label_bits": 4595361967654310455
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4611014960764763590
+        ],
+        "label_bits": 4596524872714385188
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4614014384477662406
+        ],
+        "label_bits": 4596066966028864784
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4611877669138778308
+        ],
+        "label_bits": 4596035177638567405
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4614599722428276466
+        ],
+        "label_bits": 4596543168289556199
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4612365989815436776
+        ],
+        "label_bits": 4595320093327502005
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4615180878146176428
+        ],
+        "label_bits": 4596738683471465041
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4612808708500614066
+        ],
+        "label_bits": 4594454193147461796
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4614615537149039076
+        ],
+        "label_bits": 4596631764778675836
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4612415933202693774
+        ],
+        "label_bits": 4593371873796139517
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4615154263854584631
+        ],
+        "label_bits": 4596234335233006511
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4612757054096445490
+        ],
+        "label_bits": 4591536868181215227
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4615656978398193183
+        ],
+        "label_bits": 4595590051664519101
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4613047530062468265
+        ],
+        "label_bits": 4589867121345577229
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4616116179569614428
+        ],
+        "label_bits": 4594767280946587368
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4613291037904245326
+        ],
+        "label_bits": 4587742413478720895
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4615705701252720463
+        ],
+        "label_bits": 4593848340593727968
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4613088347703168303
+        ],
+        "label_bits": 4585522197438460290
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4616064813329557838
+        ],
+        "label_bits": 4592162497381845041
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4613258520498344981
+        ],
+        "label_bits": 4583144052147638543
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4616281119576059566
+        ],
+        "label_bits": 4590422366032354879
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4613406188723465864
+        ],
+        "label_bits": 4580980788933147453
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4616410753298363463
+        ],
+        "label_bits": 4588658586615726641
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4613542550467292349
+        ],
+        "label_bits": 4579237067652028222
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4616302729503040095
+        ],
+        "label_bits": 4586224405757067780
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4613405701635174293
+        ],
+        "label_bits": 4578081989317064267
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4616392941740562092
+        ],
+        "label_bits": 4584139215777143090
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4613554805471588553
+        ],
+        "label_bits": 4578129917954978628
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4616470078874516837
+        ],
+        "label_bits": 4581623106244270569
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4613727286791418963
+        ],
+        "label_bits": 4579390092072766194
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4616539565988363655
+        ],
+        "label_bits": 4579953095642333000
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4613933036846957370
+        ],
+        "label_bits": 4581122240801181442
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4616471900905949992
+        ],
+        "label_bits": 4578340984087873728
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4613685878974908728
+        ],
+        "label_bits": 4583366541374974239
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4616543667906917369
+        ],
+        "label_bits": 4577981028541500666
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4613980402910102501
+        ],
+        "label_bits": 4585680990927967511
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4616625244739819501
+        ],
+        "label_bits": 4578804400953031071
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4614325756516682272
+        ],
+        "label_bits": 4587951717537062837
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4616721822661558964
+        ],
+        "label_bits": 4580562084869095523
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4614722726345912339
+        ],
+        "label_bits": 4589995220066625170
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4616605842459575459
+        ],
+        "label_bits": 4582471665205312545
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4614276072225204855
+        ],
+        "label_bits": 4591682640952221940
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4616744604269241834
+        ],
+        "label_bits": 4585035086494085774
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4614767861973204470
+        ],
+        "label_bits": 4593525685473266989
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4616908327170314181
+        ],
+        "label_bits": 4587091843445935893
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4615297861516750337
+        ],
+        "label_bits": 4594528826842169019
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4617097876015472963
+        ],
+        "label_bits": 4589463903872060309
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4615857132620770899
+        ],
+        "label_bits": 4595385486547622336
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4616882996553967654
+        ],
+        "label_bits": 4591072155481842058
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4615279069842769435
+        ],
+        "label_bits": 4596084683820273590
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4617121377211189302
+        ],
+        "label_bits": 4592874875253852981
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4615864454703218407
+        ],
+        "label_bits": 4596553182897437999
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4617380191901087310
+        ],
+        "label_bits": 4594209280419146599
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4616317462237843036
+        ],
+        "label_bits": 4596739887032302038
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4617655297257131806
+        ],
+        "label_bits": 4595101201506814450
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4616599813286724499
+        ],
+        "label_bits": 4596624022661984259
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4617368902585405496
+        ],
+        "label_bits": 4595864282053700416
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4616330920008707042
+        ],
+        "label_bits": 4596218507942865289
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4617660990645589298
+        ],
+        "label_bits": 4596420160417978805
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4616581681338213740
+        ],
+        "label_bits": 4595567855395091377
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4617952876312120828
+        ],
+        "label_bits": 4596708905034553653
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4616810591500702655
+        ],
+        "label_bits": 4594741013703722798
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4618238674462399307
+        ],
+        "label_bits": 4596698543865290683
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4617015082117668599
+        ],
+        "label_bits": 4593820526453968965
+      }
+    ],
+    "cohort": "synthetic training only",
+    "label_definition": "independent Python ordered four-observation path component 1",
+    "label_window_observations": 4
+  },
+  {
+    "id": "jump_excess",
+    "width": 1,
+    "output_width": 5,
+    "inner_train_end": 96,
+    "rows": [
+      {
+        "group": "A",
+        "timestamp_bits": 0,
+        "values_bits": [
+          4610785298501913805
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 0,
+        "values_bits": [
+          13827852295878370918
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          4610872337457999479
+        ],
+        "label_bits": 4555525755303661024
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          13827678217966199569
+        ],
+        "label_bits": 4555525755303661103
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4611005479589102531
+        ],
+        "label_bits": 4555092446561526068
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          13827411933703993466
+        ],
+        "label_bits": 4555092446561525994
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4611122106070562009
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          13827178680741074511
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4611167365645808479
+        ],
+        "label_bits": 4540177492465883200
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          13827088161590581571
+        ],
+        "label_bits": 4540177492465883040
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4611119972029403155
+        ],
+        "label_bits": 4554306818920722788
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          13827182948823392218
+        ],
+        "label_bits": 4554306818920722704
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4611002215179687145
+        ],
+        "label_bits": 4554115679185575978
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          13827418462522824237
+        ],
+        "label_bits": 4554115679185575976
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4610869477983083422
+        ],
+        "label_bits": 4536628725590272896
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          13827683936916031684
+        ],
+        "label_bits": 4536628725590274432
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4610784188817230626
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          13827854515247737277
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4610786460509509305
+        ],
+        "label_bits": 4554830344180387234
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          13827849971863179919
+        ],
+        "label_bits": 4554830344180387276
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4610875224647544625
+        ],
+        "label_bits": 4559750062283854819
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          13827672443587109278
+        ],
+        "label_bits": 4559750062283854896
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4611008734070240660
+        ],
+        "label_bits": 4554799256513743284
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          13827405424741717209
+        ],
+        "label_bits": 4554799256513743208
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4611124197209961188
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4605827850085722919
+        ],
+        "label_bits": 4612092468286915545
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4614782807539202418
+        ],
+        "label_bits": 4612113712293258719
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4605914075561669184
+        ],
+        "label_bits": 4612043075604519664
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4614758050410153347
+        ],
+        "label_bits": 4612056361272165751
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4605815047045472902
+        ],
+        "label_bits": 4612198283653355465
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4614698623447701230
+        ],
+        "label_bits": 4612191449989278305
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4605577339195664433
+        ],
+        "label_bits": 4553946503597420456
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4614632476080859200
+        ],
+        "label_bits": 4529584281090857984
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4605312749728296311
+        ],
+        "label_bits": 4529584281090866176
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4614590718449834181
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4605145719204196236
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4614592989820978224
+        ],
+        "label_bits": 4554589397782339620
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4605154804688772406
+        ],
+        "label_bits": 4554589397782339876
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4614638221932951131
+        ],
+        "label_bits": 4559477374484575951
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4605335733136664036
+        ],
+        "label_bits": 4559477374484576113
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4614705141416720799
+        ],
+        "label_bits": 4554504702185860920
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4605603411071742709
+        ],
+        "label_bits": 4554504702185861066
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4614762274993424575
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4605831945378557815
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4614782751849201912
+        ],
+        "label_bits": 4544261193365279760
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4605913852801667162
+        ],
+        "label_bits": 4544261193365279920
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4614756941398821030
+        ],
+        "label_bits": 4554754101653299316
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4605810611000143634
+        ],
+        "label_bits": 4554754101653299546
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4614696982700395470
+        ],
+        "label_bits": 4553799483464917016
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4605570776206441394
+        ],
+        "label_bits": 4553799483464917018
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4614631075266675280
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4612409007685836524
+        ],
+        "label_bits": 4612108506852063897
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4617099196520980776
+        ],
+        "label_bits": 4612094446581036363
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4612368148812732368
+        ],
+        "label_bits": 4612013760478805493
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4617100899647965909
+        ],
+        "label_bits": 4612087586034541200
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4612371555066702635
+        ],
+        "label_bits": 4612153346380019290
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4617123934331255052
+        ],
+        "label_bits": 4612241780799477577
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4612417624433280921
+        ],
+        "label_bits": 4559211599896465886
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4617157466999370466
+        ],
+        "label_bits": 4554209116668455108
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4612484689769511749
+        ],
+        "label_bits": 4554209116668454868
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4617185726714535079
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4612541209199840975
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4617195422491136744
+        ],
+        "label_bits": 4545340787733274304
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4612560600753044304
+        ],
+        "label_bits": 4545340787733275024
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4617181994253939009
+        ],
+        "label_bits": 4555009738850444960
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4612533744278648833
+        ],
+        "label_bits": 4555009738850445380
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4617151757512717963
+        ],
+        "label_bits": 4553674785042694766
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4612473270796206741
+        ],
+        "label_bits": 4553674785042694516
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4617118933079331978
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4612407621929434772
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4617098958797698403
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4612367673366167622
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4617101228884576268
+        ],
+        "label_bits": 4554172038580299198
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4612372213539923352
+        ],
+        "label_bits": 4554172038580298950
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4617124675682635827
+        ],
+        "label_bits": 4558953039065135760
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4612419107136042470
+        ],
+        "label_bits": 4558953039065135760
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4617158271796383344
+        ],
+        "label_bits": 4553912834218199516
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4615796806856570342
+        ],
+        "label_bits": 4612139315141445231
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4618847121656647280
+        ],
+        "label_bits": 4612091433978236173
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4615852696160942861
+        ],
+        "label_bits": 4612009155596738196
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4618856272040701849
+        ],
+        "label_bits": 4612049683961074660
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4615870996929051998
+        ],
+        "label_bits": 4612118104716354315
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4618842324588025169
+        ],
+        "label_bits": 4612205986392477594
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4615843102023698637
+        ],
+        "label_bits": 4555286329165987776
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4618811839003546042
+        ],
+        "label_bits": 4553572549343345726
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4615782130854740383
+        ],
+        "label_bits": 4553572549343345502
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4618779153133995399
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4615716759115639098
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4618759639654553708
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4615677732156755716
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4618762476059508923
+        ],
+        "label_bits": 4553996097738194076
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4615683404966666146
+        ],
+        "label_bits": 4553996097738193822
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4618786328343290556
+        ],
+        "label_bits": 4558701984378671036
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4615731109534229412
+        ],
+        "label_bits": 4558701984378671036
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4618819978404133891
+        ],
+        "label_bits": 4553616189879880788
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4615798409655916081
+        ],
+        "label_bits": 4553616189879880572
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4618847600092627602
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4615853653032903503
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4618856202497072309
+        ],
+        "label_bits": 4547546627278801744
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4615870857841792917
+        ],
+        "label_bits": 4547546627278801072
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4618841739772241389
+        ],
+        "label_bits": 4555583559823576192
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4615841932392131076
+        ],
+        "label_bits": 4555583559823576303
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4618811013963609133
+        ],
+        "label_bits": 4553492891977962804
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4617704625083708674
+        ],
+        "label_bits": 4612180970257484693
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4620499863823873069
+        ],
+        "label_bits": 4612104985046553097
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4617672087019178835
+        ],
+        "label_bits": 4612029734614781378
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4620480816663615314
+        ],
+        "label_bits": 4612016740257496336
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4617653039858921080
+        ],
+        "label_bits": 4612096432184005020
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4620484218584718953
+        ],
+        "label_bits": 4612159694960206064
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4617656441780024719
+        ],
+        "label_bits": 4553842256269248708
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4620508469610532462
+        ],
+        "label_bits": 4558458719736992047
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4617680692805838228
+        ],
+        "label_bits": 4558458719736992047
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4620542164104683016
+        ],
+        "label_bits": 4553319519107518796
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4617714387299988782
+        ],
+        "label_bits": 4553319519107518796
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4620569455020080615
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4617741678215386381
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4620577507012781453
+        ],
+        "label_bits": 4548653000836605296
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4617749730208087219
+        ],
+        "label_bits": 4548653000836605296
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4620562533104802468
+        ],
+        "label_bits": 4555901094706165090
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4617734756300108234
+        ],
+        "label_bits": 4555901094706165090
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4620531575759039944
+        ],
+        "label_bits": 4553435903025405088
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4617703798954345710
+        ],
+        "label_bits": 4553435903025405088
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4620499194698927866
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4617671417894233632
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4620480619243004966
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4617652842438310732
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4620484585718441289
+        ],
+        "label_bits": 4553710688141856706
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4617656808913747055
+        ],
+        "label_bits": 4553710688141856706
+      }
+    ],
+    "cohort": "synthetic training only",
+    "label_definition": "independent Python ordered four-observation path component 2",
+    "label_window_observations": 4
+  },
+  {
+    "id": "positive_moves",
+    "width": 1,
+    "output_width": 5,
+    "inner_train_end": 96,
+    "rows": [
+      {
+        "group": "A",
+        "timestamp_bits": 0,
+        "values_bits": [
+          4600517091351509074
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 0,
+        "values_bits": [
+          13825635622927296287
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          4603039164797820774
+        ],
+        "label_bits": 4583036509436755758
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          13820736771127608088
+        ],
+        "label_bits": 4589128102759181790
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4605031418138615190
+        ],
+        "label_bits": 4590034487987158013
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4576030443810466976
+        ],
+        "label_bits": 4593160172357400086
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4607228932397762364
+        ],
+        "label_bits": 4594089336677090252
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4596166240927598768
+        ],
+        "label_bits": 4594659397589271530
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4608297573352196286
+        ],
+        "label_bits": 4595195513619161011
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4599164948750855370
+        ],
+        "label_bits": 4592046585249884364
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4609146141591116037
+        ],
+        "label_bits": 4594711988776998807
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4599676520610016821
+        ],
+        "label_bits": 4587017149251468730
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4609659728027684509
+        ],
+        "label_bits": 4592216895125607732
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4598924207861590892
+        ],
+        "label_bits": 4578682911417854197
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4609802256277265203
+        ],
+        "label_bits": 4587295759974904683
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4596673196316502542
+        ],
+        "label_bits": 4560577348539947993
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4609624972667525945
+        ],
+        "label_bits": 4579227812476808681
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4593452639671576841
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4609254386220672083
+        ],
+        "label_bits": 4562261760392496856
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4589829264301435452
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4608862496743440623
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4591013960825589115
+        ],
+        "label_bits": 4553621878091197552
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4608626317375943518
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4595878079616030210
+        ],
+        "label_bits": 4576859789099407416
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4608686217331296828
+        ],
+        "label_bits": 4550658566457470308
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4600188929758771476
+        ],
+        "label_bits": 4586028262035968266
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4609112888207527697
+        ],
+        "label_bits": 4576429715405980443
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4603509812086041151
+        ],
+        "label_bits": 4591406283608666159
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4609890707831054075
+        ],
+        "label_bits": 4585778651915520592
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4605761584168787153
+        ],
+        "label_bits": 4594443799436253969
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4610921416689700116
+        ],
+        "label_bits": 4591234852522757454
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4607505633284002802
+        ],
+        "label_bits": 4595231424871060847
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4611866630095954134
+        ],
+        "label_bits": 4594381354440918980
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4608288549954672260
+        ],
+        "label_bits": 4594406447917349909
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4612387022178721594
+        ],
+        "label_bits": 4595230858574597444
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4608721292474301095
+        ],
+        "label_bits": 4591303090005957460
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4612784821764813422
+        ],
+        "label_bits": 4594468121663611761
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4608786809803462903
+        ],
+        "label_bits": 4585877259003595502
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4613008807029475990
+        ],
+        "label_bits": 4591474572455527834
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4608554471579548499
+        ],
+        "label_bits": 4576598044896849577
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4613048660616626076
+        ],
+        "label_bits": 4586129443052390754
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4608163743062903855
+        ],
+        "label_bits": 4551940073176218160
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4612937397666444890
+        ],
+        "label_bits": 4577037791839739096
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4607791364179813889
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4612743596221042658
+        ],
+        "label_bits": 4554413855974284443
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4607609756558711659
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4612555258460104171
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4607746446809915350
+        ],
+        "label_bits": 4561635824990973475
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4612459100771049610
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4608254055142253709
+        ],
+        "label_bits": 4579007973796651168
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4612520146410195766
+        ],
+        "label_bits": 4559917814720032056
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4609097912023961614
+        ],
+        "label_bits": 4587184144332169196
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4612766423301366723
+        ],
+        "label_bits": 4578472652744124550
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4610164217112072326
+        ],
+        "label_bits": 4592149161301269953
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4613182368104542912
+        ],
+        "label_bits": 4586907820978653245
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4611286820374509658
+        ],
+        "label_bits": 4594691316000348714
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4613712488803322274
+        ],
+        "label_bits": 4591978610332216871
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4611986170658054181
+        ],
+        "label_bits": 4595200972031696134
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4614274423878800241
+        ],
+        "label_bits": 4594637842671281946
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4612349156992916511
+        ],
+        "label_bits": 4594117447252918613
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4614778324798549794
+        ],
+        "label_bits": 4595212714786598504
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4612532349332291468
+        ],
+        "label_bits": 4590562917735003158
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4615148000456558989
+        ],
+        "label_bits": 4594186919422215605
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4612535030293910879
+        ],
+        "label_bits": 4584859660044211421
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4615338847552518473
+        ],
+        "label_bits": 4590732439185807265
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4612398963011124254
+        ],
+        "label_bits": 4574282188088292004
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4615348347277509400
+        ],
+        "label_bits": 4585082692328491751
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4612198562835865352
+        ],
+        "label_bits": 4519300759043720163
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4615216658076093800
+        ],
+        "label_bits": 4574952085062496126
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4612023384855177041
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4615017164987566030
+        ],
+        "label_bits": 4535874162391499137
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4611957048509032787
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4614839209630363668
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4612057559069404055
+        ],
+        "label_bits": 4566740449770290096
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4614767065056370123
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4612343657011183457
+        ],
+        "label_bits": 4580884224170013306
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4614860103412691995
+        ],
+        "label_bits": 4565515532498734476
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4612790407735966950
+        ],
+        "label_bits": 4588446903686212732
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4615138823640002645
+        ],
+        "label_bits": 4580565144769465350
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4613335069537885651
+        ],
+        "label_bits": 4592879640752850824
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4615580027369041088
+        ],
+        "label_bits": 4588147373436591651
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4613891858877956868
+        ],
+        "label_bits": 4594896821246150324
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4616122278292203683
+        ],
+        "label_bits": 4592713189557920791
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4614372138191704905
+        ],
+        "label_bits": 4595117672204078708
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4616434989143844538
+        ],
+        "label_bits": 4594853443954865222
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4614705275346824290
+        ],
+        "label_bits": 4593798364061535323
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4616677474744128262
+        ],
+        "label_bits": 4595141471937573424
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4614855265805377090
+        ],
+        "label_bits": 4589839242599347592
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4616847536827269712
+        ],
+        "label_bits": 4593874207491793674
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4614829205725905352
+        ],
+        "label_bits": 4583244538950480284
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4616926350982669452
+        ],
+        "label_bits": 4590003839500686664
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4614675621994050117
+        ],
+        "label_bits": 4571765279029679913
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4616916566565358280
+        ],
+        "label_bits": 4583645491456292249
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4614473052182723553
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4616841683211931227
+        ],
+        "label_bits": 4572299504100443992
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4614311561968716404
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4616740520570423880
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4614271549591247368
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4616658082706284164
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4614404825389999810
+        ],
+        "label_bits": 4570223844394523971
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4616634967102907983
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4614722419055991802
+        ],
+        "label_bits": 4582400452460655139
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4616697810682001580
+        ],
+        "label_bits": 4569330185450732859
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4615191983967151101
+        ],
+        "label_bits": 4589483596917713121
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4616853021222716339
+        ],
+        "label_bits": 4582032694544387321
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4615745409457420870
+        ],
+        "label_bits": 4593583674844623348
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4617085269391537982
+        ],
+        "label_bits": 4589324378163403429
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4616242233823132107
+        ],
+        "label_bits": 4595055971324047560
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4617361096259994644
+        ],
+        "label_bits": 4593424559104373580
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4616471507189904208
+        ],
+        "label_bits": 4594983310520821028
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4617636787337591378
+        ],
+        "label_bits": 4595023609898043547
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4616622575000840814
+        ],
+        "label_bits": 4593239754909126786
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4617868660090077868
+        ],
+        "label_bits": 4595018657739883514
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4616681082848768739
+        ],
+        "label_bits": 4589120586272743520
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4618023343937316225
+        ],
+        "label_bits": 4593401119776084698
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4616654458859023566
+        ],
+        "label_bits": 4581624564342172808
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4618085633494823686
+        ],
+        "label_bits": 4589301255148125812
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4616570165596901399
+        ],
+        "label_bits": 4568373129334463801
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4618062066922024251
+        ],
+        "label_bits": 4581979819748557112
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4616469237184551613
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4617979387269189942
+        ],
+        "label_bits": 4569204081356757757
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4616396622565271332
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4617878248920885688
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4616390607476172896
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4617803650225535888
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4616473804501699829
+        ],
+        "label_bits": 4572945312609619156
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4617794343841371682
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4616647831557285030
+        ],
+        "label_bits": 4584117150387857130
+      }
+    ],
+    "cohort": "synthetic training only",
+    "label_definition": "independent Python ordered four-observation path component 3",
+    "label_window_observations": 4
+  },
+  {
+    "id": "negative_moves",
+    "width": 1,
+    "output_width": 5,
+    "inner_train_end": 96,
+    "rows": [
+      {
+        "group": "A",
+        "timestamp_bits": 0,
+        "values_bits": [
+          4597094355634707496
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 0,
+        "values_bits": [
+          13827284391358118062
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          4596653492349719168
+        ],
+        "label_bits": 4549656079855030071
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          13826493496058482200
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4598212299965431080
+        ],
+        "label_bits": 4549656079855030071
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          13825409441902339227
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4599657470792355233
+        ],
+        "label_bits": 4549656079855030071
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          13824429789407445210
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4601271436326073267
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          13824398447154411722
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4602547785331564220
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          13825559493347670886
+        ],
+        "label_bits": 4571439180602632068
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4602857444253289996
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          13827005106936227050
+        ],
+        "label_bits": 4581969841051944688
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4602416468216336414
+        ],
+        "label_bits": 4563098448822260538
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          13828744991024138654
+        ],
+        "label_bits": 4588694512312105598
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4600552803076243725
+        ],
+        "label_bits": 4578005302424922406
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          13830705161882473606
+        ],
+        "label_bits": 4592589491141301726
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4596854998487164358
+        ],
+        "label_bits": 4585971612218075687
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          13831830869909545698
+        ],
+        "label_bits": 4594742171635698142
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          13796652054357413696
+        ],
+        "label_bits": 4590943907681192456
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          13832899972651654040
+        ],
+        "label_bits": 4595428167808172392
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          13821588342959976831
+        ],
+        "label_bits": 4594111882312764162
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          13833794978138654518
+        ],
+        "label_bits": 4594872317870884972
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          13826026179982374529
+        ],
+        "label_bits": 4595273931906543642
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          13834427252474909470
+        ],
+        "label_bits": 4592991222422315579
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          13828007445973495725
+        ],
+        "label_bits": 4595265854694791614
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          13834751711647969707
+        ],
+        "label_bits": 4589304546859438241
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          13829519458621623247
+        ],
+        "label_bits": 4594091397086991659
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          13834774294580286341
+        ],
+        "label_bits": 4582841584096852594
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          13830443368703019372
+        ],
+        "label_bits": 4590896297395265634
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          13834550978703198575
+        ],
+        "label_bits": 4572663131812020584
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          13830649963769937889
+        ],
+        "label_bits": 4585900333757270004
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          13834178501230033239
+        ],
+        "label_bits": 4538042539385653966
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          13830495133523578624
+        ],
+        "label_bits": 4577867370776861268
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          13833778324154817705
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          13829853290775418900
+        ],
+        "label_bits": 4562830713271535761
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          13833476500912031801
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          13829045775920374176
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          13833382781966746152
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          13828325882774016973
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          13833572422758141084
+        ],
+        "label_bits": 4565820005579956507
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          13827932381121680963
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          13834073709481750943
+        ],
+        "label_bits": 4579317814914958506
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          13828049938631771547
+        ],
+        "label_bits": 4550416526985958325
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          13834863270416241025
+        ],
+        "label_bits": 4586631438700947467
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          13828778510646946225
+        ],
+        "label_bits": 4574389778715194301
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          13835464002631819223
+        ],
+        "label_bits": 4591372294370675245
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          13830116771751005517
+        ],
+        "label_bits": 4583954867470628813
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          13836022329326272377
+        ],
+        "label_bits": 4594290544930180864
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          13831258395561247130
+        ],
+        "label_bits": 4589751787099120521
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          13836572955989008619
+        ],
+        "label_bits": 4595337445127986336
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          13832341590664670542
+        ],
+        "label_bits": 4593448767018675616
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          13837054472021060704
+        ],
+        "label_bits": 4595184726418190034
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          13833465371116404760
+        ],
+        "label_bits": 4595008185075868730
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          13837416922487872846
+        ],
+        "label_bits": 4593903203215279912
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          13834503181659137538
+        ],
+        "label_bits": 4595408796823220219
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          13837630088567045182
+        ],
+        "label_bits": 4590471939499843948
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          13835200386274180742
+        ],
+        "label_bits": 4594576588571472055
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          13837688496570605678
+        ],
+        "label_bits": 4585283027355888858
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          13835481296960063665
+        ],
+        "label_bits": 4592116287384725434
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          13837612325254520689
+        ],
+        "label_bits": 4576707368434970347
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          13835606647605801788
+        ],
+        "label_bits": 4587858233001166475
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          13837444061021312808
+        ],
+        "label_bits": 4559344696308402180
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          13835585520665157138
+        ],
+        "label_bits": 4581035950214001425
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          13837241455443895756
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          13835451278475562170
+        ],
+        "label_bits": 4569291769601334709
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          13837067952459886110
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          13835256033171969133
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          13836982172008909429
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          13835062008665117846
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          13837028193287874842
+        ],
+        "label_bits": 4556340710390382602
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          13834804397734814687
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          13837228248255833579
+        ],
+        "label_bits": 4575944379247600293
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          13834772395333166069
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          13837579036501032293
+        ],
+        "label_bits": 4584855869760128809
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          13835034980249595970
+        ],
+        "label_bits": 4569985225295043288
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          13838052272311734023
+        ],
+        "label_bits": 4590164398248780781
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          13835333201431837964
+        ],
+        "label_bits": 4581308891624978524
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          13838599373269247810
+        ],
+        "label_bits": 4593760428402728020
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          13835757616463364595
+        ],
+        "label_bits": 4588106205202129986
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          13839159513189702066
+        ],
+        "label_bits": 4595115464219733827
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          13836279272893783744
+        ],
+        "label_bits": 4592259285129713518
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          13839615679740859875
+        ],
+        "label_bits": 4595373697577843212
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          13836841562182162671
+        ],
+        "label_bits": 4594627992634712824
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          13839818447106389131
+        ],
+        "label_bits": 4594415452257468363
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          13837381140551900005
+        ],
+        "label_bits": 4595416813718561910
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          13839950205946635682
+        ],
+        "label_bits": 4591687357317254444
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          13837838428750894563
+        ],
+        "label_bits": 4594969079890181588
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          13840004046318326179
+        ],
+        "label_bits": 4587138212245233444
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          13838167487810328047
+        ],
+        "label_bits": 4593312254097380068
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          13839985973915309906
+        ],
+        "label_bits": 4580263625082359060
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          13838343633812537672
+        ],
+        "label_bits": 4589615763474537168
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          13839913914574629490
+        ],
+        "label_bits": 4567419282859102728
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          13838367529456587274
+        ],
+        "label_bits": 4583608381096086910
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          13839814742919272069
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          13838265074210361049
+        ],
+        "label_bits": 4573834670114817544
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          13839719827664888716
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          13838083111257388094
+        ],
+        "label_bits": 4547937594244447373
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          13839659831993109517
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          13837881662847827320
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          13839659630873016919
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          13837723981109055721
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          13839734187827205698
+        ],
+        "label_bits": 4571705666202806320
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          13837666063477124164
+        ],
+        "label_bits": 0
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          13839886074602902117
+        ],
+        "label_bits": 4582166550488296647
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          13837747370653908839
+        ],
+        "label_bits": 4563655362311613995
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          13840105044883375857
+        ],
+        "label_bits": 4588866540221207062
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          13837984285666106099
+        ],
+        "label_bits": 4578286286231363371
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          13840369732700539553
+        ],
+        "label_bits": 4592683731996099851
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          13838367398241687733
+        ],
+        "label_bits": 4586115590529504349
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          13840651194022658409
+        ],
+        "label_bits": 4594773580044069518
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          13838863064641106500
+        ],
+        "label_bits": 4591039255873431108
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          13840917704469419299
+        ],
+        "label_bits": 4595429548393985493
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          13839418984388198226
+        ],
+        "label_bits": 4594152528671962206
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          13841140017893004777
+        ],
+        "label_bits": 4594843027134021434
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          13839767262210288792
+        ],
+        "label_bits": 4595289492856916242
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          13841296214171426863
+        ],
+        "label_bits": 4592898096317014212
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          13840012212101611747
+        ],
+        "label_bits": 4595249109995585751
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          13841375332651875292
+        ],
+        "label_bits": 4589216456973234136
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          13840199497017206260
+        ],
+        "label_bits": 4594050110292368688
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          13841379188970490127
+        ],
+        "label_bits": 4582631200073087512
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          13840313003102924859
+        ],
+        "label_bits": 4590801220267884727
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          13841322074095503056
+        ],
+        "label_bits": 4572356742285801338
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          13840348845962047409
+        ],
+        "label_bits": 4585759213586913624
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          13841228385479860997
+        ],
+        "label_bits": 4533042564504193839
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          13840316014526489152
+        ],
+        "label_bits": 4577596637792578232
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          13841128582979574877
+        ],
+        "label_bits": 0
+      }
+    ],
+    "cohort": "synthetic training only",
+    "label_definition": "independent Python ordered four-observation path component 4",
+    "label_window_observations": 4
+  },
+  {
+    "id": "level_control",
+    "width": 1,
+    "output_width": 5,
+    "inner_train_end": 96,
+    "rows": [
+      {
+        "group": "A",
+        "timestamp_bits": 0,
+        "values_bits": [
+          4599796515411129794
+        ],
+        "label_bits": 4607002274814922588
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 0,
+        "values_bits": [
+          13826658285257184014
+        ],
+        "label_bits": 13829067154337893506
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          4601229307555956142
+        ],
+        "label_bits": 4607808742879883172
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4607182418800017408,
+        "values_bits": [
+          13824607723661688699
+        ],
+        "label_bits": 13826409163512636898
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          4602973746488694865
+        ],
+        "label_bits": 4608828426004276510
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4611686018427387904,
+        "values_bits": [
+          13821951230247765428
+        ],
+        "label_bits": 13821361711939956842
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          4604202045183112436
+        ],
+        "label_bits": 4610056724698694081
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4613937818241073152,
+        "values_bits": [
+          13817590948551576155
+        ],
+        "label_bits": 4581312071753698688
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          4605514727015459986
+        ],
+        "label_bits": 4611369406531041631
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4616189618054758400,
+        "values_bits": [
+          13808781412482964600
+        ],
+        "label_bits": 4597352382100027434
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4606774305047152111
+        ],
+        "label_bits": 4612157501495060830
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4617315517961601024,
+        "values_bits": [
+          4584103639290118180
+        ],
+        "label_bits": 4600131741705962296
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4607515289588393895
+        ],
+        "label_bits": 4612694429159869965
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4618441417868443648,
+        "values_bits": [
+          4587696332469861338
+        ],
+        "label_bits": 4600959817329267242
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4607904226326574029
+        ],
+        "label_bits": 4613083365898050099
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4619567317775286272,
+        "values_bits": [
+          4584962183399261156
+        ],
+        "label_bits": 4600276280061617196
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          4608108471934124912
+        ],
+        "label_bits": 4613287611505600982
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4620693217682128896,
+        "values_bits": [
+          13805227430533267760
+        ],
+        "label_bits": 4598301167936992013
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          4608114530092727767
+        ],
+        "label_bits": 4613293669664203837
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621256167635550208,
+        "values_bits": [
+          13815358372363801610
+        ],
+        "label_bits": 4591637869182821560
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          4607933764022521004
+        ],
+        "label_bits": 4613112903593997074
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4621819117588971520,
+        "values_bits": [
+          13819510177193689414
+        ],
+        "label_bits": 13814299659500075084
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          4607600711255868397
+        ],
+        "label_bits": 4612779850827344467
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622382067542392832,
+        "values_bits": [
+          13822130559887954207
+        ],
+        "label_bits": 13821813143450382091
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          4607154155999437539
+        ],
+        "label_bits": 4612347426971203544
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4622945017495814144,
+        "values_bits": [
+          13823431508899955595
+        ],
+        "label_bits": 13824415041474384867
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          4606218640212996291
+        ],
+        "label_bits": 4611879669077982920
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4623507967449235456,
+        "values_bits": [
+          13824233444438840481
+        ],
+        "label_bits": 13826018912552154639
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          4605345305898870140
+        ],
+        "label_bits": 4611199985414451785
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624070917402656768,
+        "values_bits": [
+          13824415364544505227
+        ],
+        "label_bits": 13826216804395453426
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          4604653722152635173
+        ],
+        "label_bits": 4610508401668216818
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4624633867356078080,
+        "values_bits": [
+          13823949912397762732
+        ],
+        "label_bits": 13825451848469999141
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          4604233977974026251
+        ],
+        "label_bits": 4610088657489607896
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625196817309499392,
+        "values_bits": [
+          13822907111995043912
+        ],
+        "label_bits": 13823366247664561501
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          4604134531615350764
+        ],
+        "label_bits": 4609989211130932409
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625478292286210048,
+        "values_bits": [
+          13821342355170299114
+        ],
+        "label_bits": 13819336014089597806
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          4604355752943557842
+        ],
+        "label_bits": 4610210432459139487
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4625759767262920704,
+        "values_bits": [
+          13818026922631992592
+        ],
+        "label_bits": 13795304998774011712
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          4604850031606587888
+        ],
+        "label_bits": 4610704711122169533
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626041242239631360,
+        "values_bits": [
+          13812636492323539105
+        ],
+        "label_bits": 4595376624590626245
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4605528434451588284
+        ],
+        "label_bits": 4611383113967169929
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626322717216342016,
+        "values_bits": [
+          4574291042005691248
+        ],
+        "label_bits": 4599314721341125774
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4606273008562952922
+        ],
+        "label_bits": 4611906853252961235
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626604192193052672,
+        "values_bits": [
+          4586886343711778152
+        ],
+        "label_bits": 4600757320139746445
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4606953061542080127
+        ],
+        "label_bits": 4612246879742524838
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4626885667169763328,
+        "values_bits": [
+          4587012256519283623
+        ],
+        "label_bits": 4600788798341622813
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4607312815275382943
+        ],
+        "label_bits": 4612491954846859013
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627167142146473984,
+        "values_bits": [
+          4572909139528855160
+        ],
+        "label_bits": 4599271536888724647
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          4607411589965463529
+        ],
+        "label_bits": 4612590729536939599
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627448617123184640,
+        "values_bits": [
+          13813657424671257924
+        ],
+        "label_bits": 4594355692242907426
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          4607331226599915982
+        ],
+        "label_bits": 4612510366171392052
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4627730092099895296,
+        "values_bits": [
+          13819594333901438248
+        ],
+        "label_bits": 13814636286331070420
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          4606941738565154268
+        ],
+        "label_bits": 4612241218254061908
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628011567076605952,
+        "values_bits": [
+          13823106452286462600
+        ],
+        "label_bits": 13823764928247398877
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          4606056070304337158
+        ],
+        "label_bits": 4611798384123653353
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628293042053316608,
+        "values_bits": [
+          13825797998947255090
+        ],
+        "label_bits": 13827599438798203288
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          4604899144641170032
+        ],
+        "label_bits": 4610753824156751677
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628574517030027264,
+        "values_bits": [
+          13827209757493748828
+        ],
+        "label_bits": 13830170098811023134
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          4603583222048660244
+        ],
+        "label_bits": 4609437901564241889
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4628855992006737920,
+        "values_bits": [
+          13828305004777679163
+        ],
+        "label_bits": 13831457524516838510
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          4601805281427986208
+        ],
+        "label_bits": 4608096729815898205
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629137466983448576,
+        "values_bits": [
+          13829106288933402707
+        ],
+        "label_bits": 13832258808672562054
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          4599347777837774736
+        ],
+        "label_bits": 4606553537241567530
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629418941960159232,
+        "values_bits": [
+          13829549012104781558
+        ],
+        "label_bits": 13832701531843940905
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          4596548959376014460
+        ],
+        "label_bits": 4604567848864438232
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629700416936869888,
+        "values_bits": [
+          13829616071925307047
+        ],
+        "label_bits": 13832768591664466394
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          4593893654248832435
+        ],
+        "label_bits": 4603240196300847219
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629841154425225216,
+        "values_bits": [
+          13829339658665914417
+        ],
+        "label_bits": 13832492178405073764
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          4591842259389320030
+        ],
+        "label_bits": 4602664858833828066
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4629981891913580544,
+        "values_bits": [
+          13828796399611418901
+        ],
+        "label_bits": 13831948919350578248
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          4592620176800224232
+        ],
+        "label_bits": 4602866318355963540
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630122629401935872,
+        "values_bits": [
+          13828096513881099216
+        ],
+        "label_bits": 13831249033620258563
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          4594872992459506811
+        ],
+        "label_bits": 4603729865406184407
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630263366890291200,
+        "values_bits": [
+          13827368451267638437
+        ],
+        "label_bits": 13830487486358802352
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          4597583076324913657
+        ],
+        "label_bits": 4605084907338887830
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630404104378646528,
+        "values_bits": [
+          13826741099516695966
+        ],
+        "label_bits": 13829232782856917410
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          4599489075399188703
+        ],
+        "label_bits": 4606694834802981496
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630544841867001856,
+        "values_bits": [
+          13826325973135866748
+        ],
+        "label_bits": 13828402530095258974
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          4601090909674697564
+        ],
+        "label_bits": 4607739543939253883
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630685579355357184,
+        "values_bits": [
+          13826201798828460689
+        ],
+        "label_bits": 13828154181480446856
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          4602431440558341821
+        ],
+        "label_bits": 4608409809381076011
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630826316843712512,
+        "values_bits": [
+          13826403587728774170
+        ],
+        "label_bits": 13828557759281073818
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          4602990378229808494
+        ],
+        "label_bits": 4608845057745390139
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4630967054332067840,
+        "values_bits": [
+          13826917676754166692
+        ],
+        "label_bits": 13829585937331858862
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          4603122774195438655
+        ],
+        "label_bits": 4608977453711020300
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631107791820423168,
+        "values_bits": [
+          13827683412863660441
+        ],
+        "label_bits": 13830835932602819788
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          4602930301595845716
+        ],
+        "label_bits": 4608784981111427361
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631248529308778496,
+        "values_bits": [
+          13828601254260754563
+        ],
+        "label_bits": 13831753773999913910
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          4602200766282639074
+        ],
+        "label_bits": 4608294472243224638
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631389266797133824,
+        "values_bits": [
+          13829546193384952812
+        ],
+        "label_bits": 13832698713124112159
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          4600767755371476426
+        ],
+        "label_bits": 4607577966787643314
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631530004285489152,
+        "values_bits": [
+          13830384685551703715
+        ],
+        "label_bits": 13833537205290863062
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          4599097608320415816
+        ],
+        "label_bits": 4606303367724208610
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631670741773844480,
+        "values_bits": [
+          13830773623784639797
+        ],
+        "label_bits": 13834145311653645725
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          4596718034935942408
+        ],
+        "label_bits": 4604652386644402206
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631811479262199808,
+        "values_bits": [
+          13830913768006622367
+        ],
+        "label_bits": 13834425600097610865
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          4593979789070826487
+        ],
+        "label_bits": 4603283263711844245
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4631952216750555136,
+        "values_bits": [
+          13830861225498210899
+        ],
+        "label_bits": 13834320515080787929
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          4590871114147216264
+        ],
+        "label_bits": 4602179286212776183
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632092954238910464,
+        "values_bits": [
+          13830611170291405554
+        ],
+        "label_bits": 13833820404667177239
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          4590199099472459849
+        ],
+        "label_bits": 4601843278875397976
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632233691727265792,
+        "values_bits": [
+          13829812595724545766
+        ],
+        "label_bits": 13832965115463705113
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          4592614634204048292
+        ],
+        "label_bits": 4602864932706919554
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632374429215621120,
+        "values_bits": [
+          13828686416366195928
+        ],
+        "label_bits": 13831838936105355275
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          4595870083839188380
+        ],
+        "label_bits": 4604228411096025192
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632515166703976448,
+        "values_bits": [
+          13827407049856896822
+        ],
+        "label_bits": 13830559569596056169
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          4599036283868263759
+        ],
+        "label_bits": 4606242043272056552
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632655904192331776,
+        "values_bits": [
+          13826110102709744290
+        ],
+        "label_bits": 13827970789243014058
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          4601507385165193850
+        ],
+        "label_bits": 4607947781684502026
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632796641680687104,
+        "values_bits": [
+          13823811514243656631
+        ],
+        "label_bits": 13825175052161786939
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          4603431980042622350
+        ],
+        "label_bits": 4609286659558203995
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4632937379169042432,
+        "values_bits": [
+          13821925222869721344
+        ],
+        "label_bits": 13821257682427780506
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          4604736180603024268
+        ],
+        "label_bits": 4610590860118605913
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633078116657397760,
+        "values_bits": [
+          13819811470314572144
+        ],
+        "label_bits": 13815504831983606004
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          4605873258105848774
+        ],
+        "label_bits": 4611706978024409161
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633218854145753088,
+        "values_bits": [
+          13818761570760466366
+        ],
+        "label_bits": 13810070410389054552
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          4606733718781361594
+        ],
+        "label_bits": 4612137208362165571
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633359591634108416,
+        "values_bits": [
+          13819117972312414610
+        ],
+        "label_bits": 13812730839974975868
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          4607213861175774906
+        ],
+        "label_bits": 4612393000747250976
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633500329122463744,
+        "values_bits": [
+          13820655636741128622
+        ],
+        "label_bits": 13817962577231256822
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          4607282326236732953
+        ],
+        "label_bits": 4612461465808209023
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633641066610819072,
+        "values_bits": [
+          13822269928678317526
+        ],
+        "label_bits": 13822091881031108729
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          4607168174412836603
+        ],
+        "label_bits": 4612354436177903076
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633781804099174400,
+        "values_bits": [
+          13823595515877011566
+        ],
+        "label_bits": 13824743055428496809
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          4606672521978814253
+        ],
+        "label_bits": 4612106609960891901
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4633922541587529728,
+        "values_bits": [
+          13824817947573157768
+        ],
+        "label_bits": 13826619387424105966
+      },
+      {
+        "group": "A",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          4606000522431611301
+        ],
+        "label_bits": 4611770610187290425
+      },
+      {
+        "group": "B",
+        "timestamp_bits": 4634063279075885056,
+        "values_bits": [
+          13825695449714377860
+        ],
+        "label_bits": 13827496889565326058
+      }
+    ],
+    "cohort": "synthetic training only",
+    "label_definition": "2*x+0.3",
+    "label_window_observations": 4
+  }
+]

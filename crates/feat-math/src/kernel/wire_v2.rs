@@ -300,6 +300,7 @@ pub enum VersionedProgram {
     DifferenceV2(DifferenceProgram),
     IntegrationV2(super::cumulative_integration::IntegrationProgram),
     TimeGradientV2(super::timescale_nabla::TimeGradientProgram),
+    PathStatsV2(super::realized_path_stats::PathStatsProgram),
 }
 
 impl VersionedProgram {
@@ -359,6 +360,18 @@ impl VersionedProgram {
         }
     }
 
+    pub fn emit_path_stats_recipe(
+        &self,
+        language: DifferenceLanguage,
+    ) -> VersionResult<super::realized_path_stats::PathStatsRecipe> {
+        match self {
+            Self::PathStatsV2(program) => program.emit_recipe(language),
+            _ => Err(VersionError::UnsupportedVersion(
+                "program has no path_stats recipe route".into(),
+            )),
+        }
+    }
+
     pub fn from_bytes(bytes: &[u8]) -> VersionResult<Self> {
         if bytes.len() < MAGIC_V2.len() || &bytes[..MAGIC_PREFIX.len()] != MAGIC_PREFIX {
             return Err(VersionError::Malformed("program magic".into()));
@@ -378,6 +391,9 @@ impl VersionedProgram {
                 )),
                 Some(6) => Ok(Self::TimeGradientV2(
                     super::timescale_nabla::TimeGradientProgram::from_bytes(bytes)?,
+                )),
+                Some(7) => Ok(Self::PathStatsV2(
+                    super::realized_path_stats::PathStatsProgram::from_bytes(bytes)?,
                 )),
                 Some(_) => Err(VersionError::UnsupportedVersion(
                     "program v2 variant".into(),
@@ -400,6 +416,7 @@ impl VersionedProgram {
             Self::DifferenceV2(program) => program.to_bytes(),
             Self::IntegrationV2(program) => program.to_bytes(),
             Self::TimeGradientV2(program) => program.to_bytes(),
+            Self::PathStatsV2(program) => program.to_bytes(),
         }
     }
 
@@ -419,6 +436,9 @@ impl VersionedProgram {
                 program.fit_training(rows, labels, task, fold)?,
             ))),
             Self::TimeGradientV2(program) => Ok(VersionedModel::TimeGradientV2(Box::new(
+                program.fit_training(rows, labels, task, fold)?,
+            ))),
+            Self::PathStatsV2(program) => Ok(VersionedModel::PathStatsV2(Box::new(
                 program.fit_training(rows, labels, task, fold)?,
             ))),
             _ => Err(VersionError::UnsupportedVersion(
@@ -445,6 +465,9 @@ impl VersionedProgram {
             Self::TimeGradientV2(_) => Err(VersionError::UnsupportedVersion(
                 "ordered input required for time_gradient execution".into(),
             )),
+            Self::PathStatsV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for path_stats execution".into(),
+            )),
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
             )),
@@ -463,7 +486,8 @@ impl VersionedProgram {
             | Self::DifferenceV2(_)
             | Self::IntegrationV2(_)
             | Self::LinearScaledV2(_)
-            | Self::TimeGradientV2(_) => Ok(format!(
+            | Self::TimeGradientV2(_)
+            | Self::PathStatsV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -512,7 +536,8 @@ impl VersionedProgram {
             | Self::DifferenceV2(_)
             | Self::IntegrationV2(_)
             | Self::LinearScaledV2(_)
-            | Self::TimeGradientV2(_)) => Ok(value),
+            | Self::TimeGradientV2(_)
+            | Self::PathStatsV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -596,6 +621,22 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
                 cpp17_fitted_basis: FittedBasis::Declared,
                 javascript: Route::Unsupported(vec![
                     "time_gradient ordered JavaScript route unavailable".into(),
+                ]),
+            }
+        }
+        VersionedProgram::PathStatsV2(program) => {
+            let support = match program.validate_recipe_closure() {
+                Ok(()) => Route::Ok,
+                Err(error) => Route::Unsupported(vec![error.to_string()]),
+            };
+            ExportReport {
+                rust_recipe: support.clone(),
+                python_recipe: support.clone(),
+                cpp17_recipe: support.clone(),
+                cpp17_fitted: support,
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: Route::Unsupported(vec![
+                    "path_stats ordered JavaScript route unavailable".into(),
                 ]),
             }
         }
@@ -730,6 +771,7 @@ pub enum VersionedModel {
     IntegrationV2(Box<super::cumulative_integration::IntegrationModel>),
     ScalarV2(Box<ScalarModel>),
     TimeGradientV2(Box<super::timescale_nabla::TimeGradientModel>),
+    PathStatsV2(Box<super::realized_path_stats::PathStatsModel>),
 }
 
 impl VersionedModel {
@@ -772,6 +814,17 @@ impl VersionedModel {
             Self::TimeGradientV2(model) => model.emit_fitted_cpp17(),
             _ => Err(VersionError::UnsupportedVersion(
                 "model has no time_gradient fitted export route".into(),
+            )),
+        }
+    }
+
+    pub fn emit_path_stats_fitted_cpp17(
+        &self,
+    ) -> VersionResult<super::realized_path_stats::PathStatsFittedCpp> {
+        match self {
+            Self::PathStatsV2(model) => model.emit_fitted_cpp17(),
+            _ => Err(VersionError::UnsupportedVersion(
+                "model has no path_stats fitted export route".into(),
             )),
         }
     }
@@ -821,6 +874,12 @@ impl VersionedModel {
                 .map(Box::new)
                 .map(Self::TimeGradientV2);
         }
+        if value.get("schema").and_then(Value::as_str) == Some("feat-math.causal-path-stats-model")
+        {
+            return super::realized_path_stats::PathStatsModel::from_json(json)
+                .map(Box::new)
+                .map(Self::PathStatsV2);
+        }
         let wire: ModelWireV2 = serde_json::from_value(value)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
         validate_model_wire(&wire)?;
@@ -832,6 +891,7 @@ impl VersionedModel {
             Self::DifferenceV2(model) => Ok(model.predict(rows)?),
             Self::IntegrationV2(model) => Ok(model.predict(rows)?),
             Self::TimeGradientV2(model) => Ok(model.predict(rows)?),
+            Self::PathStatsV2(model) => Ok(model.predict(rows)?),
             _ => Err(VersionError::UnsupportedVersion(
                 "model has no ordered prediction route".into(),
             )),
@@ -855,6 +915,9 @@ impl VersionedModel {
             )),
             Self::TimeGradientV2(_) => Err(VersionError::UnsupportedVersion(
                 "ordered input required for time_gradient prediction".into(),
+            )),
+            Self::PathStatsV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for path_stats prediction".into(),
             )),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 models are not executable".into(),
