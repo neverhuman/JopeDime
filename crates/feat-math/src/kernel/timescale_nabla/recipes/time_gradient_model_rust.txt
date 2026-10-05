@@ -29,6 +29,7 @@ impl TimeGradientModel {
     pub fn replace_state(&mut self,bytes:&[u8])->Result<(),&'static str> {
         let next=TimeGradientState::from_bytes(bytes,self.task,&self.state.input,&self.state.cut,self.state.train_end,self.state.total_rows)?;
         if next.minimum_gap.to_bits()!=self.state.minimum_gap.to_bits() || next.width!=self.state.width || next.ordinal<next.train_end {return Err("domain".into());}
+        time_gradient_checkpoint(&next,&self.predictor)?;
         self.state=next;Ok(())
     }
     pub fn finish(&self)->Result<(),&'static str> {self.state.finish()}

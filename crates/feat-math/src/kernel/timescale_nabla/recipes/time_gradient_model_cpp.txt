@@ -17,7 +17,7 @@ struct TimeGradientModel {
     OrderedBytes state_bytes() const {return state.to_bytes();}
     void replace_state(const OrderedBytes& bytes) {
         auto next=TimeGradientState::from_bytes(bytes,task,state.input,state.cut,state.train_end,state.total_rows);
-        if(ordered_bits(next.minimum_gap)!=ordered_bits(state.minimum_gap) || next.width!=state.width || next.ordinal<next.train_end) throw OrderedError("domain");state=std::move(next);
+        if(ordered_bits(next.minimum_gap)!=ordered_bits(state.minimum_gap) || next.width!=state.width || next.ordinal<next.train_end) throw OrderedError("domain");time_gradient_checkpoint(next,predictor);state=std::move(next);
     }
     void finish() const {state.finish();}
 };
