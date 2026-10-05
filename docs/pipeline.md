@@ -116,6 +116,30 @@ CPUs `sched_getaffinity` allows, `available_parallelism`, or `--cpu-ceiling <mil
 stops a run between evaluations: in-flight fits finish, nothing new starts, no receipt is
 written, and the process exits 143. A second signal exits at once.
 
+## Candidate generation for jain (`jope pipeline invent`)
+
+`jope pipeline invent --train <header.csv> --target <column> --work-dir <new-dir> --json` runs
+this search on a caller's own rows and prints one `jope.candidates.v1` document: the ranked
+programs measured on every requested cut, best first, at most `--top-k` (default 8, at most 64).
+jain-core's `Jope` invention engine launches it as a child process. jain-core re-fits and
+cross-validates every program itself, so only the canonical DSL and the measurements that ranked
+it here cross the boundary, not predictions.
+
+- **Input.** A header CSV in which every value is numeric and finite and one column is
+  `--target`. Missing values, text and categorical columns are refused; encode and impute before
+  calling. The task is regression. No catalog row, receipt or emitted source is involved.
+- **Search.** The same five-fold partition (keyed on the CSV's sha256 and `--seed`), budget,
+  islands and threads as `jope pipeline run`. `--cuts` defaults to 3. The per-cut evidence is
+  written under `--work-dir`, which must not already hold a search.
+- **Restriction.** A program is offered only when every stage op is executable in jain-math
+  `9fa594e` (`crates/jope-engine/assets/grammar/jain-math-executable-9fa594e2.json`). The search
+  grammar is wider (`ridge_gcv`, for one), so `ranked` counts every fully measured program and
+  `excluded_not_executable` counts those left out.
+- **Exit status.** 0 with at least one candidate; 3 with `ok: false` when nothing executable was
+  measured; 2 on refused input (under `--json`, stdout still carries
+  `{"schema": "jope.candidates.v1", "ok": false, "error": ...}`); 143 on SIGTERM. `--source-commit`
+  is reported as `git_sha`, and `git` is never spawned.
+
 ## Targeted search (`jope pipeline evolve`)
 
 ```sh
