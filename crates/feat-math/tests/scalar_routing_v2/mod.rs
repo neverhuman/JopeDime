@@ -1,8 +1,8 @@
 use feat_math::kernel::numerical_policy::NumericalPolicy;
 use feat_math::kernel::scalar_program::{
-    ScalarCarrier, ScalarExpressionProgram, ScalarFunction, ScalarNode,
+    ScalarCarrier, ScalarExpressionProgram, ScalarFunction, ScalarModel, ScalarNode,
 };
-use feat_math::kernel::wire_v2::VersionError;
+use feat_math::kernel::wire_v2::{ReservedProgram, VersionError, VersionedModel, VersionedProgram};
 use feat_math::math_expr::Var;
 use serde_json::{json, Value};
 
@@ -27,7 +27,29 @@ fn prediction_bits(pair: (Vec<f64>, Vec<u32>)) -> (Vec<u64>, Vec<u32>) {
     (pair.0.into_iter().map(f64::to_bits).collect(), pair.1)
 }
 
-use feat_math::kernel::wire_v2::{ReservedProgram, VersionedModel, VersionedProgram};
+fn assert_model_matches(
+    route: &VersionedModel,
+    direct: &ScalarModel,
+    x: &feat_math::Rows,
+) -> String {
+    let expected = prediction_bits(direct.predict(x).unwrap());
+    assert_eq!(prediction_bits(route.predict_scalar(x).unwrap()), expected);
+    let VersionedModel::ScalarV2(model) = route else {
+        panic!("wrong scalar route")
+    };
+    let state = model.to_json().unwrap();
+    assert_eq!(state, direct.to_json().unwrap());
+    let restored = VersionedModel::from_json(&state).unwrap();
+    assert_eq!(
+        prediction_bits(restored.predict_scalar(x).unwrap()),
+        expected
+    );
+    assert!(matches!(
+        restored.legacy_model(),
+        Err(VersionError::UnsupportedVersion(_))
+    ));
+    state
+}
 
 #[test]
 fn generic_scalar_route_preserves_model_bits_faults_and_explicit_versions() {
@@ -58,24 +80,8 @@ fn generic_scalar_route_preserves_model_bits_faults_and_explicit_versions() {
                 ));
                 let direct = program.fit_training(&x, &y, carrier, 0.02).unwrap();
                 let fitted = routed.fit_scalar(&x, &y, carrier, 0.02).unwrap();
-                assert_eq!(
-                    prediction_bits(fitted.predict_scalar(&x).unwrap()),
-                    prediction_bits(direct.predict(&x).unwrap())
-                );
-                let VersionedModel::ScalarV2(model) = fitted else {
-                    panic!("wrong route");
-                };
-                assert_eq!(model.to_json().unwrap(), direct.to_json().unwrap());
-                let state = model.to_json().unwrap();
+                let state = assert_model_matches(&fitted, &direct, &x);
                 let restored = VersionedModel::from_json(&state).unwrap();
-                assert_eq!(
-                    prediction_bits(restored.predict_scalar(&x).unwrap()),
-                    prediction_bits(direct.predict(&x).unwrap())
-                );
-                assert!(matches!(
-                    restored.legacy_model(),
-                    Err(VersionError::UnsupportedVersion(_))
-                ));
                 assert!(restored.predict_scalar(&vec![vec![0.0]]).is_err());
                 assert_eq!(restored.predict_scalar(&vec![]).unwrap(), (vec![], vec![]));
                 let mut future: Value = serde_json::from_str(&state).unwrap();
@@ -113,23 +119,10 @@ fn generic_stable_reductions_keep_raw_rows_faults_and_training_state() {
         let direct = program
             .fit_training(&x, &y, ScalarCarrier::Row, 0.02)
             .unwrap();
-        assert_eq!(
-            prediction_bits(fitted.predict_scalar(&x).unwrap()),
-            prediction_bits(direct.predict(&x).unwrap())
-        );
+        let state = assert_model_matches(&fitted, &direct, &x);
         let VersionedModel::ScalarV2(model) = fitted else {
             panic!("wrong stable reduction route")
         };
-        let state = model.to_json().unwrap();
-        assert_eq!(
-            prediction_bits(
-                VersionedModel::from_json(&state)
-                    .unwrap()
-                    .predict_scalar(&x)
-                    .unwrap()
-            ),
-            prediction_bits(direct.predict(&x).unwrap())
-        );
         let _ = model.predict(&vec![vec![1e200; 3]]).unwrap();
         assert_eq!(model.to_json().unwrap(), state);
     }
@@ -174,24 +167,7 @@ fn generic_scalar_signed_zero_fit_never_loses_intercept_or_prediction_bits() {
             let direct = p.fit_training(&x, &y, carrier, 0.02).unwrap();
             let route = VersionedProgram::from_bytes(&p.to_bytes().unwrap()).unwrap();
             let model = route.fit_scalar(&x, &y, carrier, 0.02).unwrap();
-            assert_eq!(
-                prediction_bits(model.predict_scalar(&x).unwrap()),
-                prediction_bits(direct.predict(&x).unwrap())
-            );
-            let VersionedModel::ScalarV2(model) = model else {
-                panic!("scalar route");
-            };
-            let state = model.to_json().unwrap();
-            assert_eq!(state, direct.to_json().unwrap());
-            assert_eq!(
-                prediction_bits(
-                    VersionedModel::from_json(&state)
-                        .unwrap()
-                        .predict_scalar(&x)
-                        .unwrap()
-                ),
-                prediction_bits(direct.predict(&x).unwrap())
-            );
+            assert_model_matches(&model, &direct, &x);
         }
     }
 }
