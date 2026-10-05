@@ -492,31 +492,37 @@ fn complete_scalar_recipes_match_native_features_faults_state_and_predictions() 
         "Python scalar recipe bits",
         &directory.join("python-observed.txt"),
     );
-    for (compiler, standard) in [("g++", "-std=c++17"), ("clang++", "-std=c++20")] {
-        let binary = directory.join(compiler);
-        let mut cmd = Command::new(compiler);
-        cmd.args([standard, "-O2", "-ffp-contract=off", "-fno-fast-math"]);
-        if let Ok(sanitizer) = std::env::var("JOPE_FITTED_CPP_SANITIZER") {
-            cmd.args([
-                "-O1",
-                "-fno-omit-frame-pointer",
-                "-fno-pie",
-                "-no-pie",
-                "-fno-sanitize-recover=all",
-            ])
-            .arg(format!("-fsanitize={sanitizer}"));
+    std::thread::scope(|scope| {
+        for (compiler, standard) in [("g++", "-std=c++17"), ("clang++", "-std=c++20")] {
+            let directory = &directory;
+            let reference = reference.as_str();
+            scope.spawn(move || {
+                let binary = directory.join(compiler);
+                let mut cmd = Command::new(compiler);
+                cmd.args([standard, "-O2", "-ffp-contract=off", "-fno-fast-math"]);
+                if let Ok(sanitizer) = std::env::var("JOPE_FITTED_CPP_SANITIZER") {
+                    cmd.args([
+                        "-O1",
+                        "-fno-omit-frame-pointer",
+                        "-fno-pie",
+                        "-no-pie",
+                        "-fno-sanitize-recover=all",
+                    ])
+                    .arg(format!("-fsanitize={sanitizer}"));
+                }
+                run(cmd
+                    .arg(directory.join("recipes.cpp"))
+                    .arg("-o")
+                    .arg(&binary));
+                assert_output(
+                    run(&mut Command::new(binary)),
+                    reference,
+                    &format!("{compiler} scalar recipe bits"),
+                    &directory.join(format!("{compiler}-observed.txt")),
+                );
+            });
         }
-        run(cmd
-            .arg(directory.join("recipes.cpp"))
-            .arg("-o")
-            .arg(&binary));
-        assert_output(
-            run(&mut Command::new(binary)),
-            &reference,
-            &format!("{compiler} scalar recipe bits"),
-            &directory.join(format!("{compiler}-observed.txt")),
-        );
-    }
+    });
 }
 
 #[test]
