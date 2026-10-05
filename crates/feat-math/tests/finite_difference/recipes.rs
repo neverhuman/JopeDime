@@ -38,7 +38,7 @@ fn program(order: u8) -> DifferenceProgram {
     DifferenceProgram::new(
         DifferenceConfig::new(2, 59, order, 0.5).unwrap(),
         2,
-        OrderedInputIdentity::new("group\"\\\t\u{2028}", "time"),
+        OrderedInputIdentity::new("generation\"\\\t\u{2028}", "time"),
         GenomeIr::parse("(pipe X (ridge lambda_frac=0.01))").unwrap(),
     )
     .unwrap()
@@ -247,11 +247,17 @@ fn execute(dir: &Path, name: &str, source: &str, lang: DifferenceLanguage) -> St
 
 #[test]
 fn four_orders_train_and_continue_through_all_three_public_recipes_and_fitted_cpp() {
+    use feat_math::kernel::export::Route;
     let rows = rows();
     let dir = tempfile::tempdir().unwrap().keep(); // Preserve generated proof artifacts.
     for order in 1..=4 {
         let program = program(order);
         let routed = VersionedProgram::from_bytes(&program.to_bytes().unwrap()).unwrap();
+        let report = export_report(&routed);
+        assert!(matches!(report.rust_recipe, Route::Ok));
+        assert!(matches!(report.python_recipe, Route::Ok));
+        assert!(matches!(report.cpp17_recipe, Route::Ok));
+        assert!(matches!(report.cpp17_fitted, Route::Ok));
         let native = program
             .fit_training(
                 &rows[..4],

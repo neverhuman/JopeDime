@@ -76,7 +76,10 @@ impl DifferenceProgram {
                     format!("mod downstream {{\n{}\n{RUST_FIT}\n}}\n", emitted.rust),
                     include_str!("recipes/ordered_state_rust.txt"),
                     include_str!("recipes/ordered_model_rust.txt"),
-                    format!("{input:?}"),
+                    format!(
+                        "std::str::from_utf8(&[{}]).map_err(|_|\"syntax\")?",
+                        byte_list(&input)
+                    ),
                     format!("f64::from_bits({})", self.config.step.to_bits()),
                 )
             }
@@ -91,7 +94,7 @@ impl DifferenceProgram {
                     source,
                     include_str!("recipes/ordered_state_python.txt"),
                     include_str!("recipes/ordered_model_python.txt"),
-                    format!("json.loads({})", serde_json::to_string(&input).unwrap()),
+                    format!("json.loads(bytes([{}]).decode('utf-8'))", byte_list(&input)),
                     format!(
                         "struct.unpack('<d',struct.pack('<Q',{}))[0]",
                         self.config.step.to_bits()
@@ -244,6 +247,14 @@ fn hash(source: &str) -> String {
 }
 
 // Byte constructors preserve UTF-8 and cannot close a source-code delimiter.
+fn byte_list(value: &str) -> String {
+    value
+        .bytes()
+        .map(|b| b.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
 fn cpp_string(value: &str) -> String {
     format!(
         "std::string({{{}}})",
