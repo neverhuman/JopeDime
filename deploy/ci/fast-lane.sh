@@ -28,6 +28,7 @@ python3 deploy/ci/test-results.py
 python3 deploy/ci/test-aggregate.py
 python3 deploy/ci/test-status.py
 python3 deploy/ci/test-runner.py
+python3 deploy/ci/test-provenance.py
 python3 deploy/ci/test-full-main.py
 python3 deploy/ci/test-training-proof.py
 python3 deploy/ci/test-install-private.py
