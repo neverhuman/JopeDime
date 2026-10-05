@@ -30,8 +30,8 @@ pub mod wire_v2;
 // B12: explicit FeatureWithinRow programs; legacy admission is unchanged.
 pub mod row_vector;
 pub mod savgol;
-// B18 Pareto archive: staged with no caller until B17 merges (OWNER v1.3).
-#[cfg(test)]
+// B18 Pareto archive: the kernel2 profile route publishes it, opt-in, as evidence only (Lane D
+// kickoff, wiring after B17).
 pub mod pareto;
 
 // B13: sparse Goertzel bank kernel (v2 wire 61).

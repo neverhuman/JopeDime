@@ -23,6 +23,10 @@ pub use engine::{
 };
 pub use refinement::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
 // laneD:B17-lm-refinement end
+// laneD:B18-pareto-archive begin
+pub mod archive;
+pub use engine::{ArchivePolicy, ArchiveRecord, FRONT_LOSS_COST};
+// laneD:B18-pareto-archive end
 
 /// A structural or traced Hard refusal, with no candidate score.
 pub const INADMISSIBLE: &str = "inadmissible";
@@ -168,6 +172,9 @@ mod refinement_guarded_tests;
 
 #[cfg(test)]
 mod refinement_lm_tests;
+
+#[cfg(test)]
+mod archive_tests;
 
 pub use refinement::{GuardedGeneration, GuardedTrainingRefinement};
 

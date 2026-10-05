@@ -194,12 +194,27 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
             && best.observation.generation < s.generations,
         "invalid selected measurement"
     );
+    // laneD:B18-pareto-archive begin
+    let archive_sha256 = s
+        .engine_selection
+        .as_ref()
+        .and_then(|e| e.archive.as_ref())
+        .map(|a| {
+            a.sha256
+                .as_ref()
+                .context("a published archive needs its digest")
+        })
+        .transpose()?;
+    // laneD:B18-pareto-archive end
     for digest in [
         &receipt.search_sha256,
         &s.observations_sha256,
         &s.refinements_sha256,
         &receipt.emit_manifest_sha256,
-    ] {
+    ]
+    .into_iter()
+    .chain(archive_sha256)
+    {
         ensure!(
             digest.len() == 64
                 && digest

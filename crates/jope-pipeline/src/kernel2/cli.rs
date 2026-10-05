@@ -5,7 +5,9 @@ use clap::Args;
 use feat_math::evolve::FaultPolicy;
 use std::{path::PathBuf, process::ExitCode};
 
-use super::{messages, receipt, run, search::Refinement, EngineSelection, RefineMethod};
+use super::{
+    messages, receipt, run, search::Refinement, ArchivePolicy, EngineSelection, RefineMethod,
+};
 use crate::{cli::SearchArgs, emit::Language};
 use feat_math::kernel::expression_search::LmOptions;
 
@@ -30,6 +32,11 @@ pub struct ProfileArgs {
     /// five; a map stage, or a derive stage with fewer trials left, uses the coordinate search.
     #[arg(long)]
     pub refine_method: Option<String>,
+    /// Publish the loss and cost front of the run's measured programs as
+    /// search/cut-0/archive.json (kernel2 only). It is evidence only: ranking, parents and the
+    /// selected program never read it, so every measurement and refinement is unchanged.
+    #[arg(long)]
+    pub pareto_archive: bool,
     /// Explicit nonnegative Domain penalty; required with penalize.
     #[arg(long)]
     pub lambda_domain: Option<f64>,
@@ -59,7 +66,8 @@ impl ProfileArgs {
                     && !penalty
                     && self.refine_top_k.is_none()
                     && self.refine_trials.is_none()
-                    && self.refine_method.is_none(),
+                    && self.refine_method.is_none()
+                    && !self.pareto_archive,
                 messages::PROFILE_OPTIONS_REFUSAL
             );
             return Ok(None);
@@ -118,7 +126,12 @@ impl ProfileArgs {
             "lm" => RefineMethod::Lm(LmOptions::default()),
             _ => anyhow::bail!("kernel2 --refine-method must be coordinate or lm"),
         };
-        Ok(EngineSelection { refine })
+        Ok(EngineSelection {
+            refine,
+            // laneD:B18-pareto-archive begin
+            archive: self.pareto_archive.then_some(ArchivePolicy::ArchiveOnly),
+            // laneD:B18-pareto-archive end
+        })
     }
     // laneD:B17-lm-refinement end
 }
