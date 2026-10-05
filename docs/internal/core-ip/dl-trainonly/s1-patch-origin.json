@@ -1,0 +1,41 @@
+{
+  "adoption": [
+    "0001: per-fit train-only minmax scaler and original-unit predictions",
+    "0002: inner-CV fitness/comparators; OOF-only semantic signatures and lexicase",
+    "0003: fixed_equal channel-4 continuation ported from ignored coordinator to tracked s1_budget.py, fixed18"
+  ],
+  "claims": {
+    "fixture_proof": "see qualify_s1.py and CPU tests; execution receipts retained outside Git",
+    "hosted_ci": "pending exact head",
+    "live_runtime_g22": "not qualified",
+    "serving_promotion": "not requested",
+    "source_implemented": true,
+    "training": "not executed"
+  },
+  "original_author": "Claude dltrain-impl-v1 / session df8edf60-e484-4e31-87b0-1ecf13ef4cb3",
+  "original_base": "e5caf0071384ad163d4654e8608307f2bc862c31",
+  "owner_grant_sha256": "2ca6a40c3128c07024c835d3a0b5cbf325e4df810242d13307db3a7451c136ff",
+  "patches": {
+    "0001-teacher-worker-train-only-per-fit-scaling.patch": {
+      "bytes": 7891,
+      "sha256": "305e5f92e8b1e15a2661ed667fa44c67f0efc10305965f7266e37e5f80db39b1"
+    },
+    "0002-teacher-island-engine-s1-selection-blind-to-test.patch": {
+      "bytes": 15303,
+      "sha256": "24d3f8ed308ebd1972b705c3818752843e9f92e255ad7f3ff4aff8d68182c719"
+    },
+    "0003-budget-fixed-equal-policy.patch": {
+      "bytes": 1679,
+      "sha256": "9958d39e26dd50ca9904bf3098a27568d58bdc5c9df5ee383101ebb46184a2f7"
+    }
+  },
+  "receiving_base": "ce9a65eac882bf9757e081c402edf78d23638fd0",
+  "receiving_changes": [
+    "New incompatible S1 record/selection protocols refuse legacy cached/resumed test-derived subjects.",
+    "Align population8x8 and migration3 with the research campaign; never require896 seeds outside96G0 allowance.",
+    "Persist all-attempt reservations and single-use dispatch claims under6,081,504 original ceiling/deadline.",
+    "Preserve original Lambda frozen snapshots; record new tree bytes separately."
+  ],
+  "receiving_owner": "Codex root / jopedime_codex_cleanup",
+  "schema": "jope.s1-patch-adoption/v1"
+}

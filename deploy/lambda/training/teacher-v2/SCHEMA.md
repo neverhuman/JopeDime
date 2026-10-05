@@ -1,3 +1,60 @@
+# S1 regression teacher protocol
+
+The current source implements the October 5 owner-granted S1 challenger.
+The historical record below describes the frozen September 29 binary, not the
+new source or a new qualified campaign. Original hashes and records remain in
+`deploy/lambda/SNAPSHOT.json`, Git and custody; changed tree hashes are recorded
+separately with the owner grant as their reason.
+
+S1 uses `jope.s1-request/v1`, `jope.s1-evaluation/v1`, and
+`jope.island-scored-evaluation/s1-v1`. Requests declare
+`input_semantics=unscaled_fit_rows_v1`; JTT1 values must come from the admitted
+unscaled input producer. The handler rejects the old request and storage prefix.
+Each fold fits min/max feature and target scaling on its own fitting rows.
+Scoring applies those constants and returns predictions in original target units.
+The official-test fit uses all outer-train rows. Preprocessing receipt hashes
+and model hashes remain separate; these score records are not exported models.
+
+The eight islands contain eight individuals each (64 total), matching the
+research campaign rather than the imported prototype's 896-member population.
+At most 96 G0 evaluations seed the population; if they cannot supply 64 eligible
+unique seeds, record an incomplete context rather than buying extra evaluations.
+Migration is every three 64-completion equivalents. These engine counters describe
+completed work; **the durable attempt ledger controls the resource ceiling**.
+
+Fitness is `0.80*mean(log(CV ratio)) + 0.10*tail + 0.10*sd + 0.0005*complexity`
+after the retained CV gate. Failed-gate fitness keeps its declared CV penalty.
+CV-gated/CV-stable comparators, novelty, lexicase and semantic deduplication read
+only CV/OOF products. The semantic hash contains OOF predictions only; the
+64-value signature projects OOF residuals only; all 192 case indices are OOF.
+Official-test metrics and the status test leader are diagnostics, never inputs
+to selection or stopping. `selection_protocol=jope.s1-inner-cv-selection/v1`
+is required for semantic cache and scored resume records. Missing/legacy tags
+refuse before their old test-derived fitness or signatures can be used. The
+trusted controller must also bind actual input/source bytes; this tag by itself
+is not provenance authentication.
+
+`s1_budget.py` carries channel 4 into tracked code: all contexts continue through
+18 fixed equal generations without consulting HWM/test fields. A frozen plan
+pins all 4,873 context dispositions, worker, engine and input manifest. Slots
+0..95 are G0; slots 96..1247 are eighteen blocks of 64 evolution attempts.
+Reservations are atomic, persistent and never refunded; single-use dispatch
+claims refuse duplicate/unknown replay. Failed, cancelled, lost and retried
+attempts count inside the **6,081,504** ceiling. A retry needs a free slot; there
+is no extra allowance. The original deadline is October 10 at 00:00Z.
+The receiving supervisor must integrate reservation and dispatch claims before
+any real evaluation; the supplied CLI performs offline coordination only.
+
+The owner typed receipt is
+`2ca6a40c3128c07024c835d3a0b5cbf325e4df810242d13307db3a7451c136ff`.
+This source change does not launch a campaign or qualify G22. Historical
+`t1_split`, coreset/kmeans exposure and rights-held contexts remain visible;
+no result becomes fully train-only through the new transforms. Deployment,
+GPU/S3 publication, teacher admission and optimizer learning require their
+separate receiving evidence.
+
+## Historical September 29 protocol — retained record
+
 # Semantic island campaign schema
 
 This directory is the complete source closure for `airfoil-r0f0-islands-v2-20260929-v1`.

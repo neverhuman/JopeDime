@@ -1,12 +1,12 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use base64::Engine as _;
 use flate2::read::GzDecoder;
-use rand::prelude::{IndexedRandom, SliceRandom};
 use rand::SeedableRng;
+use rand::prelude::{IndexedRandom, SliceRandom};
 use rand_chacha::ChaCha20Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
@@ -16,11 +16,13 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 const ISLANDS: usize = 8;
-const ISLAND_SIZE: usize = 112;
+// S1 uses the research campaign's 64-candidate population, within 96 G0 slots.
+const ISLAND_SIZE: usize = 8;
 const POPULATION: usize = ISLANDS * ISLAND_SIZE;
 const CASES: usize = 192;
 const SIGNATURE: usize = 64;
-const MIGRATION_INTERVAL: u64 = 5 * POPULATION as u64;
+const MIGRATION_INTERVAL: u64 = 3 * POPULATION as u64;
+const SELECTION_PROTOCOL: &str = "jope.s1-inner-cv-selection/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Program {
@@ -34,6 +36,7 @@ struct Program {
 
 #[derive(Clone, Debug, Deserialize)]
 struct SemanticRow {
+    selection_protocol: String,
     context_sha256: String,
     program_sha256: String,
     program: Program,
@@ -81,6 +84,9 @@ struct Individual {
 
 impl Individual {
     fn from_semantic(row: SemanticRow) -> Result<Self> {
+        if row.selection_protocol != SELECTION_PROTOCOL {
+            bail!("historical/test-derived semantic cache is not S1")
+        }
         if row.program_sha256 != row.program.program_sha256 {
             bail!("semantic row program mismatch")
         }
@@ -113,7 +119,7 @@ impl Individual {
 #[serde(rename_all = "snake_case")]
 enum Policy {
     Balanced,
-    TestGated,
+    CvGated,
     CvStable,
     EpsilonLexicase,
     NoveltyQuality,
@@ -124,7 +130,7 @@ impl Policy {
     fn name(self) -> &'static str {
         match self {
             Self::Balanced => "balanced",
-            Self::TestGated => "test_gated",
+            Self::CvGated => "cv_gated",
             Self::CvStable => "cv_stable",
             Self::EpsilonLexicase => "epsilon_lexicase",
             Self::NoveltyQuality => "novelty_quality",
@@ -136,7 +142,7 @@ impl Policy {
 const POLICIES: [Policy; ISLANDS] = [
     Policy::Balanced,
     Policy::Balanced,
-    Policy::TestGated,
+    Policy::CvGated,
     Policy::CvStable,
     Policy::EpsilonLexicase,
     Policy::EpsilonLexicase,
@@ -286,6 +292,7 @@ impl Engine {
         if sample.context_sha256 != context || sample.projection_rows != SIGNATURE {
             bail!("semantic sample/context mismatch")
         }
+        validate_sample(&sample)?;
         let projection_bytes = fs::read(projection_path)?;
         if sha256(&projection_bytes) != sample.projection_f32_sha256 {
             bail!("semantic projection hash mismatch")
@@ -297,6 +304,9 @@ impl Engine {
             .chunks_exact(4)
             .map(|x| f32::from_le_bytes(x.try_into().unwrap()))
             .collect::<Vec<_>>();
+        if projection.iter().any(|v| !v.is_finite()) {
+            bail!("nonfinite projection")
+        }
         let file = File::open(index)?;
         let decoder = GzDecoder::new(file);
         let mut all = HashMap::new();
@@ -418,7 +428,7 @@ impl Engine {
             let replace = representatives
                 .get(&individual.full_prediction_sha256)
                 .and_then(|old| self.all.get(old))
-                .map(|old| self.balanced_cmp(individual, old) == Ordering::Less)
+                .map(|old| Self::balanced_cmp(individual, old) == Ordering::Less)
                 .unwrap_or(true);
             if replace {
                 representatives.insert(individual.full_prediction_sha256.clone(), hash.clone());
@@ -449,23 +459,27 @@ impl Engine {
         Ok(())
     }
 
-    fn balanced_cmp(&self, a: &Individual, b: &Individual) -> Ordering {
+    fn balanced_cmp(a: &Individual, b: &Individual) -> Ordering {
         a.fitness
             .total_cmp(&b.fitness)
             .then_with(|| a.program.program_sha256.cmp(&b.program.program_sha256))
     }
 
-    fn policy_cmp(&self, policy: Policy, a: &Individual, b: &Individual) -> Ordering {
+    /// S1 (TEST-STEER-01): no arm reads test_rmse or test_rmse_ratio; those fields are reported, never selected on.
+    fn policy_cmp(policy: Policy, a: &Individual, b: &Individual) -> Ordering {
         match policy {
-            Policy::Balanced | Policy::EpsilonLexicase | Policy::NoveltyQuality | Policy::AgeRoot => {
-                self.balanced_cmp(a, b)
-            }
-            Policy::TestGated => cmp_f64(a.test_rmse, b.test_rmse)
+            Policy::Balanced
+            | Policy::EpsilonLexicase
+            | Policy::NoveltyQuality
+            | Policy::AgeRoot => Self::balanced_cmp(a, b),
+            Policy::CvGated => b
+                .cv_gate_passed
+                .cmp(&a.cv_gate_passed)
                 .then_with(|| cmp_f64(a.cv_geomean_rmse_ratio, b.cv_geomean_rmse_ratio))
+                .then_with(|| cmp_f64(a.cv_log_ratio_sd, b.cv_log_ratio_sd))
                 .then_with(|| a.program.program_sha256.cmp(&b.program.program_sha256)),
             Policy::CvStable => cmp_f64(a.cv_geomean_rmse_ratio, b.cv_geomean_rmse_ratio)
                 .then_with(|| cmp_f64(a.cv_log_ratio_sd, b.cv_log_ratio_sd))
-                .then_with(|| cmp_f64(a.test_rmse, b.test_rmse))
                 .then_with(|| a.program.program_sha256.cmp(&b.program.program_sha256)),
         }
     }
@@ -487,7 +501,7 @@ impl Engine {
             })
             .cloned()
             .collect::<Vec<_>>();
-        available.sort_by(|a, b| self.policy_cmp(policy, &self.all[a], &self.all[b]));
+        available.sort_by(|a, b| Self::policy_cmp(policy, &self.all[a], &self.all[b]));
         let mut selected = Vec::new();
         let mut root_counts = HashMap::<String, usize>::new();
         match policy {
@@ -495,7 +509,9 @@ impl Engine {
                 let pool = available.iter().take(4096).cloned().collect::<Vec<_>>();
                 let mut local = HashSet::new();
                 while selected.len() < count {
-                    let Some(hash) = self.lexicase_pick(&pool, &local) else { break };
+                    let Some(hash) = self.lexicase_pick(&pool, &local) else {
+                        break;
+                    };
                     if self.root_allowed(&self.all[&hash], &root_counts, 14) {
                         for root in &self.all[&hash].roots {
                             *root_counts.entry(root.clone()).or_default() += 1;
@@ -545,7 +561,7 @@ impl Engine {
                         .program
                         .birth_seq
                         .cmp(&self.all[b].program.birth_seq)
-                        .then_with(|| self.policy_cmp(policy, &self.all[a], &self.all[b]))
+                        .then_with(|| Self::policy_cmp(policy, &self.all[a], &self.all[b]))
                 });
                 self.scan_select(&available, &mut selected, &mut root_counts, count, 8);
             }
@@ -681,9 +697,12 @@ impl Engine {
                 as usize;
             let individual = self.individual_from_scored(&value)?;
             self.next_birth = self.next_birth.max(individual.program.birth_seq + 1);
-            self.proposal_seq = self
-                .proposal_seq
-                .max(value.get("proposal_seq").and_then(Value::as_u64).unwrap_or(0));
+            self.proposal_seq = self.proposal_seq.max(
+                value
+                    .get("proposal_seq")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0),
+            );
             self.next_draw = self.next_draw.max(
                 value
                     .get("proposal_draw")
@@ -705,6 +724,11 @@ impl Engine {
     }
 
     fn individual_from_scored(&self, value: &Value) -> Result<Individual> {
+        if value["selection_protocol"] != SELECTION_PROTOCOL
+            || value["schema"] != "jope.island-scored-evaluation/s1-v1"
+        {
+            bail!("historical/test-derived resume is not S1")
+        }
         let program: Program = serde_json::from_value(value["program"].clone())?;
         Ok(Individual {
             program,
@@ -712,8 +736,14 @@ impl Engine {
                 .as_str()
                 .ok_or_else(|| anyhow!("missing semantic hash"))?
                 .to_owned(),
-            signature: decode_f32(value["semantic_signature_f32_b64"].as_str().unwrap(), SIGNATURE)?,
-            cases: decode_f32(value["sampled_absolute_error_f32_b64"].as_str().unwrap(), CASES)?,
+            signature: decode_f32(
+                value["semantic_signature_f32_b64"].as_str().unwrap(),
+                SIGNATURE,
+            )?,
+            cases: decode_f32(
+                value["sampled_absolute_error_f32_b64"].as_str().unwrap(),
+                CASES,
+            )?,
             fitness: value["fitness"].as_f64().unwrap(),
             cv_gate_passed: value["cv_gate_passed"].as_bool().unwrap(),
             cv_fold_wins: value["cv_fold_wins"].as_u64().unwrap(),
@@ -729,7 +759,10 @@ impl Engine {
             result_key: value["result_key"].as_str().unwrap_or_default().to_owned(),
             roots: serde_json::from_value(value["roots"].clone())?,
             born_completed: value["born_completed"].as_u64().unwrap_or(0),
-            origin_island: value.get("origin_island").and_then(Value::as_u64).map(|x| x as usize),
+            origin_island: value
+                .get("origin_island")
+                .and_then(Value::as_u64)
+                .map(|x| x as usize),
         })
     }
 
@@ -742,7 +775,9 @@ impl Engine {
                 let mut out = Vec::new();
                 let mut excluded = HashSet::new();
                 while out.len() < 64 {
-                    let Some(hash) = self.lexicase_pick(&hashes, &excluded) else { break };
+                    let Some(hash) = self.lexicase_pick(&hashes, &excluded) else {
+                        break;
+                    };
                     excluded.insert(hash.clone());
                     out.push(hash);
                 }
@@ -756,7 +791,7 @@ impl Engine {
                     let na = self.novelty_in(a, &comparison_population);
                     let nb = self.novelty_in(b, &comparison_population);
                     nb.total_cmp(&na)
-                        .then_with(|| self.policy_cmp(policy, &self.all[a], &self.all[b]))
+                        .then_with(|| Self::policy_cmp(policy, &self.all[a], &self.all[b]))
                 });
                 hashes.truncate(64);
             }
@@ -765,7 +800,7 @@ impl Engine {
                 hashes.truncate(64);
             }
             _ => {
-                hashes.sort_by(|a, b| self.policy_cmp(policy, &self.all[a], &self.all[b]));
+                hashes.sort_by(|a, b| Self::policy_cmp(policy, &self.all[a], &self.all[b]));
                 let mut out = hashes.iter().take(32).cloned().collect::<Vec<_>>();
                 let mut tail = hashes.iter().skip(32).cloned().collect::<Vec<_>>();
                 tail.shuffle(&mut self.rng);
@@ -821,7 +856,11 @@ impl Engine {
                 .stdout(Stdio::piped())
                 .spawn()
                 .with_context(|| format!("spawn {}", self.proposal_binary.display()))?;
-            child.stdin.as_mut().unwrap().write_all(&serde_json::to_vec(&request)?)?;
+            child
+                .stdin
+                .as_mut()
+                .unwrap()
+                .write_all(&serde_json::to_vec(&request)?)?;
             let raw = child.wait_with_output()?;
             if !raw.status.success() {
                 bail!("proposal engine failed")
@@ -901,7 +940,12 @@ impl Engine {
         true
     }
 
-    fn accept(&mut self, island_id: usize, result_path: &Path, result_key: String) -> Result<Value> {
+    fn accept(
+        &mut self,
+        island_id: usize,
+        result_path: &Path,
+        result_key: String,
+    ) -> Result<Value> {
         if island_id >= ISLANDS {
             bail!("invalid island")
         }
@@ -925,7 +969,8 @@ impl Engine {
         let status = record["status"].as_str().unwrap_or("missing");
         if status != "completed" {
             return Ok(json!({
-                "schema":"jope.island-scored-evaluation/v1",
+                "schema":"jope.island-scored-evaluation/s1-v1",
+            "selection_protocol":SELECTION_PROTOCOL,
                 "status":status,
                 "context_sha256":self.context,
                 "program":program,
@@ -956,7 +1001,8 @@ impl Engine {
         let selected = self.active.contains(&hash);
         let individual = &self.all[&hash];
         Ok(json!({
-            "schema":"jope.island-scored-evaluation/v1",
+            "schema":"jope.island-scored-evaluation/s1-v1",
+            "selection_protocol":SELECTION_PROTOCOL,
             "status":"completed",
             "context_sha256":self.context,
             "program":individual.program,
@@ -987,7 +1033,16 @@ impl Engine {
         }))
     }
 
-    fn score_record(&self, record: &Value, program: Program, result_key: String) -> Result<Individual> {
+    fn score_record(
+        &self,
+        record: &Value,
+        program: Program,
+        result_key: String,
+    ) -> Result<Individual> {
+        validate_sample(&self.sample)?;
+        if record["schema"] != "jope.s1-evaluation/v1" || record["status"] != "completed" {
+            bail!("S1 needs its versioned completed evaluation")
+        }
         let folds = record["inner_cv"]
             .as_array()
             .ok_or_else(|| anyhow!("inner_cv missing"))?;
@@ -1000,11 +1055,21 @@ impl Engine {
         let mut oof_targets = Vec::new();
         let mut wins = 0_u64;
         for fold in folds {
-            let rmse = fold["metrics"]["rmse"].as_f64().ok_or_else(|| anyhow!("fold rmse"))?;
+            let rmse = fold["metrics"]["rmse"]
+                .as_f64()
+                .ok_or_else(|| anyhow!("fold rmse"))?;
             let baseline = fold["baseline_metrics"]["rmse"]
                 .as_f64()
                 .ok_or_else(|| anyhow!("fold baseline"))?;
             let ratio = rmse / baseline;
+            if !rmse.is_finite()
+                || rmse < 0.0
+                || !baseline.is_finite()
+                || baseline <= 0.0
+                || !ratio.is_finite()
+            {
+                bail!("invalid inner-CV loss/baseline")
+            }
             if ratio < 1.0 {
                 wins += 1;
             }
@@ -1014,13 +1079,16 @@ impl Engine {
             oof_targets.extend(array_f64(&fold["targets"])?);
         }
         let mean = logs.iter().sum::<f64>() / logs.len() as f64;
-        let variance = logs.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / logs.len() as f64;
+        let variance =
+            logs.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / logs.len() as f64;
         let sd = variance.sqrt();
         logs.sort_by(|a, b| b.total_cmp(a));
         let tail = logs[..3].iter().sum::<f64>() / 3.0;
         let geo = mean.exp();
         let test = &record["official_test"];
-        let test_rmse = test["metrics"]["rmse"].as_f64().ok_or_else(|| anyhow!("test rmse"))?;
+        let test_rmse = test["metrics"]["rmse"]
+            .as_f64()
+            .ok_or_else(|| anyhow!("test rmse"))?;
         let test_baseline = test["baseline_metrics"]["rmse"]
             .as_f64()
             .ok_or_else(|| anyhow!("test baseline"))?;
@@ -1028,25 +1096,25 @@ impl Engine {
         let gate = geo <= 0.90 && wins >= 5;
         let complexity = program.dsl.bytes().filter(|x| *x == b'(').count() as u64;
         let fitness = if gate {
-            0.50 * test_ratio.max(1e-300).ln()
-                + 0.30 * mean
-                + 0.10 * tail
-                + 0.10 * sd
-                + 0.0005 * complexity as f64
+            0.80 * mean + 0.10 * tail + 0.10 * sd + 0.0005 * complexity as f64
         } else {
             100.0 + mean + tail + sd
         };
         let test_predictions = array_f64(&test["predictions"])?;
         let test_targets = array_f64(&test["targets"])?;
-        if oof_predictions.len() != self.sample.oof_rows || test_predictions.len() != self.sample.test_rows {
+        if oof_predictions.len() != self.sample.oof_rows
+            || test_predictions.len() != self.sample.test_rows
+        {
             bail!("semantic result shape mismatch")
         }
         let mut residual = Vec::with_capacity(self.sample.projection_cols);
         for (prediction, target) in oof_predictions.iter().zip(&oof_targets) {
             residual.push(((prediction - target) / self.sample.oof_target_std) as f32);
         }
-        for (prediction, target) in test_predictions.iter().zip(&test_targets) {
-            residual.push(((prediction - target) / self.sample.test_target_std) as f32);
+        // S1: test residuals never enter the signature, the cases or the semantic key (TEST-STEER-01).
+        let _ = (&test_targets, self.sample.test_target_std);
+        if residual.len() != self.sample.projection_cols {
+            bail!("S1: the projection must cover OOF residuals only")
         }
         let mut signature = vec![0_f32; SIGNATURE];
         for (row, output) in signature.iter_mut().enumerate() {
@@ -1057,14 +1125,13 @@ impl Engine {
         for index in &self.sample.oof_case_indices {
             cases.push(residual[*index].abs());
         }
-        for index in &self.sample.test_case_indices {
-            cases.push(residual[self.sample.oof_rows + *index].abs());
+        if !self.sample.test_case_indices.is_empty() {
+            bail!("S1: test case indices are not admitted")
         }
         if cases.len() != CASES {
             bail!("semantic cases mismatch")
         }
-        let mut prediction_values = oof_predictions;
-        prediction_values.extend(test_predictions);
+        let prediction_values = oof_predictions;
         let roots = if program.parents.is_empty() {
             vec![program.program_sha256.clone()]
         } else {
@@ -1122,26 +1189,30 @@ impl Engine {
             .chain(self.islands[island_id].population.iter())
         {
             let individual = &self.all[hash];
-            if !individual.cv_gate_passed || other_active_semantics.contains(&individual.full_prediction_sha256) {
+            if !individual.cv_gate_passed
+                || other_active_semantics.contains(&individual.full_prediction_sha256)
+            {
                 continue;
             }
             let replace = best_by_semantic
                 .get(&individual.full_prediction_sha256)
-                .map(|old| self.policy_cmp(policy, individual, &self.all[old]) == Ordering::Less)
+                .map(|old| Self::policy_cmp(policy, individual, &self.all[old]) == Ordering::Less)
                 .unwrap_or(true);
             if replace {
                 best_by_semantic.insert(individual.full_prediction_sha256.clone(), hash.clone());
             }
         }
         let mut candidates = best_by_semantic.into_values().collect::<Vec<_>>();
-        candidates.sort_by(|a, b| self.policy_cmp(policy, &self.all[a], &self.all[b]));
+        candidates.sort_by(|a, b| Self::policy_cmp(policy, &self.all[a], &self.all[b]));
         let old = self.islands[island_id].population.clone();
         let mut selected = Vec::new();
         match policy {
             Policy::EpsilonLexicase => {
                 let mut excluded = HashSet::new();
                 while selected.len() < ISLAND_SIZE {
-                    let Some(hash) = self.lexicase_pick(&candidates, &excluded) else { break };
+                    let Some(hash) = self.lexicase_pick(&candidates, &excluded) else {
+                        break;
+                    };
                     excluded.insert(hash.clone());
                     selected.push(hash);
                 }
@@ -1173,7 +1244,7 @@ impl Engine {
                 candidates.sort_by(|a, b| {
                     std::cmp::Reverse(self.all[a].program.birth_seq)
                         .cmp(&std::cmp::Reverse(self.all[b].program.birth_seq))
-                        .then_with(|| self.policy_cmp(policy, &self.all[a], &self.all[b]))
+                        .then_with(|| Self::policy_cmp(policy, &self.all[a], &self.all[b]))
                 });
                 selected.extend(candidates.into_iter().take(ISLAND_SIZE));
             }
@@ -1187,7 +1258,9 @@ impl Engine {
                 let semantic = &self.all[&hash].full_prediction_sha256;
                 if !selected.contains(&hash)
                     && !other_active_semantics.contains(semantic)
-                    && !selected.iter().any(|x| self.all[x].full_prediction_sha256 == *semantic)
+                    && !selected
+                        .iter()
+                        .any(|x| self.all[x].full_prediction_sha256 == *semantic)
                 {
                     selected.push(hash);
                 }
@@ -1206,7 +1279,7 @@ impl Engine {
         for island_id in 0..ISLANDS {
             let mut population = self.islands[island_id].population.clone();
             let policy = self.islands[island_id].policy;
-            population.sort_by(|a, b| self.policy_cmp(policy, &self.all[a], &self.all[b]));
+            population.sort_by(|a, b| Self::policy_cmp(policy, &self.all[a], &self.all[b]));
             let mut chosen = population.iter().take(3).cloned().collect::<Vec<_>>();
             let mut novel = population.clone();
             novel.sort_by(|a, b| {
@@ -1229,7 +1302,9 @@ impl Engine {
             self.islands[island_id]
                 .population
                 .retain(|hash| !outgoing.contains(hash));
-            self.islands[island_id].population.extend(incoming.iter().cloned());
+            self.islands[island_id]
+                .population
+                .extend(incoming.iter().cloned());
             self.islands[island_id].archive.extend(incoming);
         }
         self.migration_epoch += 1;
@@ -1254,7 +1329,7 @@ impl Engine {
             let best = island
                 .population
                 .iter()
-                .min_by(|a, b| self.policy_cmp(island.policy, &self.all[*a], &self.all[*b]))
+                .min_by(|a, b| Self::policy_cmp(island.policy, &self.all[*a], &self.all[*b]))
                 .unwrap();
             policies.push(json!({
                 "island_id":island_id,
@@ -1271,7 +1346,7 @@ impl Engine {
         let balanced = self
             .active
             .iter()
-            .min_by(|a, b| self.balanced_cmp(&self.all[*a], &self.all[*b]))
+            .min_by(|a, b| Self::balanced_cmp(&self.all[*a], &self.all[*b]))
             .unwrap();
         let best_test = self
             .active
@@ -1281,7 +1356,10 @@ impl Engine {
         let mut roots = root_counts.into_iter().collect::<Vec<_>>();
         roots.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
         json!({
-            "schema":"jope.island-engine-status/v1",
+            "schema":"jope.island-engine-status/s1-v1",
+            "selection_protocol":SELECTION_PROTOCOL,
+            "budget_policy":"fixed_equal_18",
+            "test_fields":"diagnostic_only",
             "context_sha256":self.context,
             "population":self.active.len(),
             "unique_active_semantics":self.active_semantics.len(),
@@ -1314,7 +1392,8 @@ impl Engine {
             })
             .collect::<Vec<_>>();
         json!({
-            "schema":"jope.island-engine-snapshot/v1",
+            "schema":"jope.island-engine-snapshot/s1-v1",
+            "selection_protocol":SELECTION_PROTOCOL,
             "status":self.status(),
             "next_birth":self.next_birth,
             "next_draw":self.next_draw,
@@ -1336,6 +1415,24 @@ impl Engine {
             "proposal_draw":pending.proposal_draw,
         }))
     }
+}
+
+fn validate_sample(sample: &SampleManifest) -> Result<()> {
+    if sample.oof_rows == 0
+        || sample.projection_rows != SIGNATURE
+        || sample.projection_cols != sample.oof_rows
+        || !sample.test_case_indices.is_empty()
+        || sample.oof_case_indices.len() != CASES
+        || sample
+            .oof_case_indices
+            .iter()
+            .any(|i| *i >= sample.oof_rows)
+        || !sample.oof_target_std.is_finite()
+        || sample.oof_target_std <= 0.0
+    {
+        bail!("S1 requires OOF-only projection and case indices")
+    }
+    Ok(())
 }
 
 fn array_f64(value: &Value) -> Result<Vec<f64>> {
@@ -1379,7 +1476,10 @@ fn main() -> Result<()> {
         &sample,
         proposal,
     )?;
-    println!("{}", serde_json::to_string(&json!({"event":"ready","status":engine.status()}))?);
+    println!(
+        "{}",
+        serde_json::to_string(&json!({"event":"ready","status":engine.status()}))?
+    );
     io::stdout().flush()?;
     for line in io::stdin().lock().lines() {
         let line = line?;
@@ -1395,12 +1495,21 @@ fn main() -> Result<()> {
             "status" => Ok(engine.status()),
             "snapshot" => Ok(engine.snapshot()),
             "propose" => engine.propose(
-                command.island_id.ok_or_else(|| anyhow!("island_id required"))?,
+                command
+                    .island_id
+                    .ok_or_else(|| anyhow!("island_id required"))?,
                 command.count.ok_or_else(|| anyhow!("count required"))?,
             ),
             "accept" => engine.accept(
-                command.island_id.ok_or_else(|| anyhow!("island_id required"))?,
-                Path::new(command.result_path.as_deref().ok_or_else(|| anyhow!("result_path required"))?),
+                command
+                    .island_id
+                    .ok_or_else(|| anyhow!("island_id required"))?,
+                Path::new(
+                    command
+                        .result_path
+                        .as_deref()
+                        .ok_or_else(|| anyhow!("result_path required"))?,
+                ),
                 command.result_key.unwrap_or_default(),
             ),
             "abandon" => engine.abandon(
@@ -1417,8 +1526,14 @@ fn main() -> Result<()> {
             _ => Err(anyhow!("unknown command")),
         };
         match result {
-            Ok(value) => println!("{}", serde_json::to_string(&json!({"ok":true,"result":value}))?),
-            Err(error) => println!("{}", serde_json::to_string(&json!({"ok":false,"error":format!("{error:#}")}))?),
+            Ok(value) => println!(
+                "{}",
+                serde_json::to_string(&json!({"ok":true,"result":value}))?
+            ),
+            Err(error) => println!(
+                "{}",
+                serde_json::to_string(&json!({"ok":false,"error":format!("{error:#}")}))?
+            ),
         }
         io::stdout().flush()?;
     }
@@ -1428,6 +1543,220 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const OOF: usize = 210; // 7 folds x 30 rows
+    const TEST: usize = 40;
+
+    fn s1_engine() -> Engine {
+        let mut s = 0x2545F4914F6CDD1D_u64;
+        let projection = (0..SIGNATURE * OOF)
+            .map(|_| {
+                s ^= s << 13;
+                s ^= s >> 7;
+                s ^= s << 17;
+                (s % 2001) as f32 / 1000.0 - 1.0
+            })
+            .collect();
+        Engine {
+            context: "c".into(),
+            proposal_binary: PathBuf::new(),
+            all: HashMap::new(),
+            islands: Vec::new(),
+            seen: HashSet::new(),
+            active: HashSet::new(),
+            active_semantics: HashSet::new(),
+            pending: HashMap::new(),
+            projection,
+            sample: SampleManifest {
+                context_sha256: "c".into(),
+                oof_rows: OOF,
+                test_rows: TEST,
+                oof_case_indices: (0..CASES).map(|i| (i * 7) % OOF).collect(),
+                test_case_indices: Vec::new(),
+                oof_target_std: 1.0,
+                test_target_std: 1.0,
+                projection_rows: SIGNATURE,
+                projection_cols: OOF,
+                projection_f32_sha256: String::new(),
+            },
+            rng: ChaCha20Rng::seed_from_u64(1),
+            next_birth: 0,
+            next_draw: 0,
+            proposal_seq: 0,
+            new_completed: 0,
+            migration_epoch: 0,
+            number_re: Regex::new("x").unwrap(),
+        }
+    }
+
+    struct Lcg(u64);
+    impl Lcg {
+        fn f(&mut self) -> f64 {
+            self.0 = self
+                .0
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (self.0 >> 11) as f64 / (1u64 << 53) as f64
+        }
+    }
+
+    /// An evaluation record: seven inner folds (the CV part) and an official_test part drawn from `test_seed`.
+    fn record(cv_seed: u64, test_seed: u64) -> (Value, Program) {
+        record_as(cv_seed, test_seed, cv_seed)
+    }
+
+    /// `program_id` lets two programs share one CV part exactly, so CV ties exist and a test tie-break would show.
+    fn record_as(cv_seed: u64, test_seed: u64, program_id: u64) -> (Value, Program) {
+        let mut r = Lcg(cv_seed);
+        let scale = 0.5 + r.f();
+        let folds: Vec<Value> = (0..7).map(|_| {
+            let targets: Vec<f64> = (0..30).map(|_| r.f()).collect();
+            let preds: Vec<f64> = targets.iter().map(|t| t + (r.f() - 0.5) * scale * 0.2).collect();
+            json!({"metrics": {"rmse": 0.05 + r.f() * 0.1 * scale}, "baseline_metrics": {"rmse": 0.12 + r.f() * 0.02}, "predictions": preds, "targets": targets})
+        }).collect();
+        let mut q = Lcg(test_seed);
+        let targets: Vec<f64> = (0..TEST).map(|_| q.f()).collect();
+        let preds: Vec<f64> = targets.iter().map(|t| t + (q.f() - 0.5)).collect();
+        let rec = json!({"schema":"jope.s1-evaluation/v1","status":"completed","inner_cv": folds, "official_test": {"metrics": {"rmse": 0.01 + q.f()}, "baseline_metrics": {"rmse": 0.2 + q.f() * 0.1},
+                         "predictions": preds, "targets": targets}});
+        let dsl = format!("(pipe X (ridge lambda_frac={}))", program_id);
+        (
+            rec,
+            Program {
+                program_sha256: format!("{:064x}", program_id),
+                dsl,
+                birth_seq: program_id,
+                parents: Vec::new(),
+                operator: "test".into(),
+            },
+        )
+    }
+
+    fn selection_view(i: &Individual) -> (String, Vec<u32>, Vec<u32>, u64, bool, u64, u64, u64) {
+        (
+            i.full_prediction_sha256.clone(),
+            i.signature.iter().map(|v| v.to_bits()).collect(),
+            i.cases.iter().map(|v| v.to_bits()).collect(),
+            i.fitness.to_bits(),
+            i.cv_gate_passed,
+            i.cv_fold_wins,
+            i.cv_geomean_rmse_ratio.to_bits(),
+            i.cv_log_ratio_sd.to_bits(),
+        )
+    }
+
+    /// S1 (TEST-STEER-01): scoring the same CV part with unrelated official_test parts yields identical selection
+    /// inputs, and every policy orders a population identically.
+    #[test]
+    fn selection_is_blind_to_the_official_test() {
+        let e = s1_engine();
+        let score = |cv: u64, test: u64, id: u64| {
+            let (r, p) = record_as(cv, test, id);
+            e.score_record(&r, p, String::new()).unwrap()
+        };
+        // 60 distinct CV parts plus 20 programs that copy one of them exactly (CV ties)
+        let ids: Vec<(u64, u64)> = (1..=60)
+            .map(|i| (i, i))
+            .chain((1..=20).map(|i| (i, 100 + i)))
+            .collect();
+        let a: Vec<Individual> = ids
+            .iter()
+            .map(|&(cv, id)| score(cv, 1000 + id, id))
+            .collect();
+        let b: Vec<Individual> = ids
+            .iter()
+            .map(|&(cv, id)| score(cv, 5000 + 3 * id, id))
+            .collect();
+        for (x, y) in a.iter().zip(&b) {
+            assert_ne!(x.test_rmse.to_bits(), y.test_rmse.to_bits());
+            assert_eq!(selection_view(x), selection_view(y));
+        }
+        for policy in POLICIES {
+            let order = |v: &[Individual]| {
+                let mut v = v.to_vec();
+                v.sort_by(|p, q| Engine::policy_cmp(policy, p, q));
+                v.into_iter()
+                    .map(|i| i.program.program_sha256)
+                    .collect::<Vec<_>>()
+            };
+            assert_eq!(order(&a), order(&b), "{}", policy.name());
+        }
+    }
+
+    #[test]
+    fn selection_still_responds_to_the_cv_part() {
+        let e = s1_engine();
+        let (r, p) = record(3, 9);
+        let base = e.score_record(&r, p.clone(), String::new()).unwrap();
+        let mut worse = r.clone();
+        for f in worse["inner_cv"].as_array_mut().unwrap() {
+            let v = f["metrics"]["rmse"].as_f64().unwrap();
+            f["metrics"]["rmse"] = json!(v * 1.5);
+        }
+        let w = e.score_record(&worse, p, String::new()).unwrap();
+        assert!(w.cv_geomean_rmse_ratio > base.cv_geomean_rmse_ratio);
+        assert_ne!(w.fitness.to_bits(), base.fitness.to_bits());
+    }
+
+    #[test]
+    fn invalid_inner_scores_cannot_be_selected() {
+        let e = s1_engine();
+        let (r, p) = record(3, 9);
+        for (field, value) in [("rmse", -1.0), ("baseline", 0.0), ("baseline", -1.0)] {
+            let mut changed = r.clone();
+            if field == "rmse" {
+                changed["inner_cv"][0]["metrics"]["rmse"] = json!(value);
+            } else {
+                changed["inner_cv"][0]["baseline_metrics"]["rmse"] = json!(value);
+            }
+            assert!(e.score_record(&changed, p.clone(), String::new()).is_err());
+        }
+    }
+
+    #[test]
+    fn test_cases_and_test_wide_projections_are_refused() {
+        let mut e = s1_engine();
+        e.sample.test_case_indices = vec![0];
+        let (r, p) = record(2, 4);
+        assert!(e.score_record(&r, p.clone(), String::new()).is_err());
+        let mut e = s1_engine();
+        e.sample.projection_cols = OOF + TEST;
+        assert!(e.score_record(&r, p, String::new()).is_err());
+    }
+
+    #[test]
+    fn stale_resume_and_semantic_cache_are_refused() {
+        let e = s1_engine();
+        assert!(
+            e.individual_from_scored(&json!({"schema":"jope.island-scored-evaluation/v1"}))
+                .is_err()
+        );
+        let (record, p) = record(3, 9);
+        let individual = e.score_record(&record, p.clone(), String::new()).unwrap();
+        let row = json!({"context_sha256":"c", "program_sha256":p.program_sha256, "program":p,
+            "full_prediction_sha256":individual.full_prediction_sha256, "semantic_signature_f32_b64":encode_f32(&individual.signature),
+            "sampled_absolute_error_f32_b64":encode_f32(&individual.cases), "fitness":individual.fitness,
+            "cv_gate_passed":individual.cv_gate_passed, "cv_fold_wins":individual.cv_fold_wins,
+            "cv_geomean_rmse_ratio":individual.cv_geomean_rmse_ratio, "cv_mean_log_ratio":individual.cv_mean_log_ratio,
+            "cv_tail_log_ratio":individual.cv_tail_log_ratio, "cv_log_ratio_sd":individual.cv_log_ratio_sd,
+            "test_rmse":individual.test_rmse, "test_rmse_ratio":individual.test_rmse_ratio,
+            "complexity_open_parens":individual.complexity_open_parens, "result_key":""});
+        assert!(serde_json::from_value::<SemanticRow>(row.clone()).is_err());
+        let mut qualified = row;
+        qualified["selection_protocol"] = json!(SELECTION_PROTOCOL);
+        assert!(
+            Individual::from_semantic(serde_json::from_value(qualified.clone()).unwrap()).is_ok()
+        );
+        qualified["selection_protocol"] = json!("test-primary-v1");
+        assert!(Individual::from_semantic(serde_json::from_value(qualified).unwrap()).is_err());
+    }
+
+    #[test]
+    fn s1_population_and_generation_slots_match_the_owner_policy() {
+        assert_eq!(POPULATION, 64);
+        assert_eq!(ISLANDS * ISLAND_SIZE, 64);
+        assert_eq!(MIGRATION_INTERVAL, 192);
+    }
 
     #[test]
     fn f32_round_trip() {

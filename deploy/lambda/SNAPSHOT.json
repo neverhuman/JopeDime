@@ -2421,10 +2421,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/README.md",
-      "tree_sha256": "842115d99b94527eca550fbf0eee57a7c68efa0d03e480597ef9cbcda4edeb34",
+      "tree_sha256": "93952156af9231351237b417f94cd884b8443b3d0b8357a8704c5eb16cb63522",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "writes the xbabe2 home-directory prefix of 3 absolute paths as ~/ (the same host paths, home-relative); nothing else changes"
+      "tree_change": "Owner typed S1 grant: inner-CV-only new search, per-fit scaling, 18 fixed equal generations; historical frozen digest retained."
     },
     {
       "body": "teacher-v2",
@@ -2439,9 +2439,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/SCHEMA.md",
-      "tree_sha256": "92d46f2b9436cadce6859de43a3e3cfde0a48feec69440508abf26169ebb6e0f",
+      "tree_sha256": "1e30e0b232c8d87395c28a1910f08edc34f8a0a0ffab7a2c3866f6524da8609d",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "Owner typed S1 grant: inner-CV-only new search, per-fit scaling, 18 fixed equal generations; historical frozen digest retained."
     },
     {
       "body": "teacher-v2",
@@ -2593,9 +2594,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
-      "tree_sha256": "b0cd1711f64301ca182d45cf5e9b2345c4c84f9e6d5b5cd87ae5cf5b2e8dd887",
+      "tree_sha256": "682ecb7d6a7c00ec8c0e9dce6062193752fd4dd4eb5ddbeab5bbaf0aab7a5a3d",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "Owner typed S1 grant: CV-only selection with invalid-inner-score refusals; frozen historical source digest retained"
     },
     {
       "body": "teacher-v2",
@@ -2646,10 +2648,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
-      "tree_sha256": "93c8cce81c78a64538b8a2221ec470ab034cb50fed456dc289bcd4e6e905deaf",
+      "tree_sha256": "fa6674b09afa6cd810b3625d28beb586c934ce41fc16d7833ba413298ca070a5",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "B02 option (a): propagate typed Model::predict zero-width refusal; valid nonempty predictions unchanged"
+      "tree_change": "Owner typed S1 grant: inner-CV-only new search, per-fit scaling, 18 fixed equal generations; historical frozen digest retained."
     },
     {
       "body": "teacher-v2",
@@ -3078,6 +3080,59 @@
       "tree_sha256": null,
       "custody_tarball": "lambda-python-watch.tar",
       "reason": "the monitor's launcher is a Python script (#!/usr/bin/env python3); Python: the owner's no-Python rule (2026-09-26) keeps it out of the tree; preserved byte-exact in custody (docs/archive/lambda-python-manifest.json); a Rust port is a follow-up"
+    },
+    {
+      "body": "teacher-v2-s1",
+      "path": "s1_budget.py",
+      "source": "owner-granted S1 tracked implementation",
+      "sha256": "a6dabc2be0d27d2ba59212947120c94e4f058d877355c29bfab4ac2f22159582",
+      "bytes": 9419,
+      "mode": "100644",
+      "anchors": [
+        "owner-typed-confirm-20261005T183423Z",
+        "S1-BUDGET-18"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/s1_budget.py",
+      "tree_sha256": "6c7bbaccc635b6ecebe23580b4bf14065e575b58cef0c6caeacbf5d16bd42fb8",
+      "custody_tarball": null,
+      "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
+      "tree_change": "S1 admitted attempts must fit the original deadline including the90-second bound"
+    },
+    {
+      "body": "teacher-v2-s1",
+      "path": "test_s1_budget.py",
+      "source": "owner-granted S1 tracked implementation",
+      "sha256": "d964510849ff905ed7e97956725a79685ed02efd9c8f00b3614aa1e6b5ea9999",
+      "bytes": 5193,
+      "mode": "100644",
+      "anchors": [
+        "owner-typed-confirm-20261005T183423Z",
+        "S1-BUDGET-18"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/test_s1_budget.py",
+      "tree_sha256": "29d8f52ee84016878bd3f400e5cbbaf45e0a17da85d4d94938fe036b04ab229d",
+      "custody_tarball": null,
+      "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
+      "tree_change": "S1 near-deadline refusal receiving fixture"
+    },
+    {
+      "body": "teacher-v2-s1",
+      "path": "qualify_s1.py",
+      "source": "owner-granted S1 tracked implementation",
+      "sha256": "4057fea675cd7308184573d8f100a7242c37a8a2a34515d82315c7133f18a6ba",
+      "bytes": 10826,
+      "mode": "100644",
+      "anchors": [
+        "owner-typed-confirm-20261005T183423Z",
+        "S1-BUDGET-18"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/qualify_s1.py",
+      "tree_sha256": "4057fea675cd7308184573d8f100a7242c37a8a2a34515d82315c7133f18a6ba",
+      "custody_tarball": null,
+      "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution"
     }
   ],
   "excluded": [
