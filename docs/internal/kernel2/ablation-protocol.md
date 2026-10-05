@@ -83,14 +83,26 @@ is. With `--scratch`, each kernel2 search also keeps the route's own evidence
 (`search/cut-0/{search,observations,refinements}.json`). A scratch directory that already holds a
 kernel2 search of the same slot, dataset and seed (anything at its path, a symbolic link
 included) is refused before any partition is written or any search starts, so a rerun never
-replaces that evidence; choose a new `--scratch`.
+replaces that evidence; choose a new `--scratch`. **Each comparison with a kernel2 arm takes its
+own `--scratch`.** Every search of a dataset shares its partition,
+`prepared/<dataset hash>/prepared.json`, and a later comparison into the same scratch would
+rewrite it, so the `prepared_sha256` of an earlier document would no longer name the file. A
+comparison with a kernel2 profile therefore needs an unused scratch directory: absent (it is
+created) or an empty directory that is not a symbolic link. Anything else, also a scratch that
+holds only an earlier comparison with other seeds and the same fold seed, a stray file, a symbolic
+link, a regular file or a path that cannot be inspected, is refused before anything is written.
+`--scratch` given on the command line is created empty when it is absent, and a run without
+`--scratch` uses a fresh temporary directory. A legacy-only comparison makes no such check and
+writes `prepared.json` as it always has.
 
 **A kernel2 comparison is not accuracy evidence unless it is reported as paired wins, ties and
 losses beside both medians.** The harness writes them to `body.paired` (definitions
 `kernel2-ablation-paired.v1`). Runs pair one to one by (dataset, seed) on
 `body.runs[].metrics.M1`; two runs of one slot with the same dataset and seed, a run without its
-partner in the other slot, and a run on a dataset the comparison does not list are refused. B wins
-a pair when its M1 RMSE is lower, loses when it is higher, and ties only when the two are
+partner in the other slot, and a run on a dataset the comparison does not list are refused. So is
+an M1 RMSE that is not finite (NaN or an infinity, on either side), before any comparison, and a
+summary number that would leave the range of an f64; every number in `body.paired` is finite. B
+wins a pair when its M1 RMSE is lower, loses when it is higher, and ties only when the two are
 bit-equal. For the comparison overall and for each dataset, `body.paired` gives:
 - W/T/L;
 - the median M1 RMSE of A and of B;
@@ -238,6 +250,22 @@ when it is not set; never under the system temporary directory.
 - `ablation::tests::ablation_kernel2_refuses_a_scratch_that_holds_its_searches`: a rerun into the
   same scratch directory is refused, with every byte and modification time of the first run's
   entries unchanged and nothing added; so is a planned output that is a dangling symbolic link.
+- `ablation::tests::ablation_kernel2_refuses_a_used_scratch_with_a_new_fold_seed`: the review's
+  reproducer, a second comparison into the same scratch directory with search seed 7 and fold
+  seed 20260908, is refused with every entry unchanged, also with a legacy slot A, and the first
+  document's `prepared_sha256` still names `prepared.json`.
+- `ablation::tests::ablation_kernel2_refuses_a_used_scratch_with_the_same_fold_seed`: a new seed
+  with the same fold seed is refused too; each comparison with a kernel2 arm takes its own
+  `--scratch`.
+- `ablation::tests::ablation_kernel2_refuses_a_scratch_that_is_not_unused`: a scratch holding only
+  `prepared/`, one holding a stray file, a symbolic link to an empty directory and a regular file
+  are refused with nothing changed.
+- `ablation::tests::ablation_kernel2_admits_an_unused_scratch`: an existing empty directory, an
+  absent path and the directory `execute` creates for `--scratch` are admitted.
+- `ablation::tests::ablation_paired_refuses_a_nonfinite_m1`,
+  `ablation_paired_refuses_a_summary_that_is_not_finite` and
+  `review02_public_paired_refuses_nonfinite_m1`: equal NaNs, equal infinities, an infinity or NaN
+  against a finite value, and a summary that would overflow are refused.
 - `ablation::tests::ablation_paired_rejects_duplicate_a_and_unpaired_b`,
   `ablation_paired_rejects_unlisted_unpaired_a` and
   `ablation_paired_rejects_a_repeated_dataset_or_an_unknown_slot`: the pairing refuses anything
