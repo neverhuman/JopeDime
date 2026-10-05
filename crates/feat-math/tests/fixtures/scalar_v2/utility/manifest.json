@@ -1,0 +1,138 @@
+{
+  "schema": "feat-math.scalar-utility-common-cohort.v2",
+  "status": "PINNED INPUTS ONLY; no GP measurements or promotion qualification",
+  "source_sha": "6a885349f729f80c06e04474ad033c78ae2e8156",
+  "created_utc": "2026-10-05T07:52:38.636206+00:00",
+  "cards": [
+    "B05",
+    "B06",
+    "B07"
+  ],
+  "identical_cohort_every_card": true,
+  "datasets": [
+    {
+      "name": "pmlb-229-pwlinear",
+      "path": "pmlb-229-pwlinear.json",
+      "sha256": "e2aed073be05a717973b6dc2da8bffc0c5fcabb1a6abfa5981deb9e52827dbaf",
+      "source_train": "datasets/test/pmlb-229-pwlinear/train.csv",
+      "source_train_sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5",
+      "source_metadata_sha256": "7e833f4236a9e89a773c7409e51259e45684694e5763a832d943292ace3f9ea9",
+      "rows": 96,
+      "features": 10
+    },
+    {
+      "name": "pmlb-695-chatfield-4",
+      "path": "pmlb-695-chatfield-4.json",
+      "sha256": "54eee434346763981a927deba27bf4933ee8779b8ef3f62a3e0e71ee5d142d9f",
+      "source_train": "datasets/test/pmlb-695-chatfield-4/train.csv",
+      "source_train_sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d",
+      "source_metadata_sha256": "c9739f20d2fb60c198c8b1dab55d4385bc962a1d6ab0f1fe7d8ec35fb4f1916c",
+      "rows": 96,
+      "features": 12
+    },
+    {
+      "name": "pmlb-first-principles-supernovae-zg",
+      "path": "pmlb-first-principles-supernovae-zg.json",
+      "sha256": "332a8e18d39aa81fdabe863d8e91563d28eb49436034f85f3940a3655dbdef8a",
+      "source_train": "datasets/test/pmlb-first-principles-supernovae-zg/train.csv",
+      "source_train_sha256": "0a9dc81f52ea843bbfbbd2fabd9ff1e7c78e5d025ad21b4de4be9aa59d5497dd",
+      "source_metadata_sha256": "c4b84464835610862e7c4506455733d4a777a05b2ded493583c27c764004f1d0",
+      "rows": 96,
+      "features": 1
+    },
+    {
+      "name": "rdatasets-agridat-bancroft-peanut-uniformity",
+      "path": "rdatasets-agridat-bancroft-peanut-uniformity.json",
+      "sha256": "0ac263e5b9813a4d826e65b519d52a841d0d332c9c54ec8fd841e1be08860bf9",
+      "source_train": "datasets/test/rdatasets-agridat-bancroft-peanut-uniformity/train.csv",
+      "source_train_sha256": "24dda7eb3c3cfaf211d94f35b95806a5ef2d983f361575d912bb708ca83e58a1",
+      "source_metadata_sha256": "022487b747ffc250c47a02c8faaa72dc37a95baf6e7db9a9fe481af742c85804",
+      "rows": 96,
+      "features": 3
+    },
+    {
+      "name": "rdatasets-stevedata-chile88",
+      "path": "rdatasets-stevedata-chile88.json",
+      "sha256": "2cdba5404f8094cf693da69911410e5afcd3570b5a6b051f54e28efbf38bebea",
+      "source_train": "datasets/test/rdatasets-stevedata-chile88/train.csv",
+      "source_train_sha256": "2cc33f1cf38de2da3edfe69d8ffd4623d84039c22f20755b0dffe8411c698df3",
+      "source_metadata_sha256": "030448c75c5db64da92c91e7fefd7009ae5d4c3ea933d1e69b7377c35db2c834",
+      "rows": 96,
+      "features": 7
+    },
+    {
+      "name": "rdatasets-wooldridge-barium",
+      "path": "rdatasets-wooldridge-barium.json",
+      "sha256": "a6fb75830752c5914dd2c3559c9f1fdb7319a7d6ce0f3d814a86602a489bfe8a",
+      "source_train": "datasets/test/rdatasets-wooldridge-barium/train.csv",
+      "source_train_sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5",
+      "source_metadata_sha256": "7f9f941593e9738ded95cd2a5ce3f6226fd4129495d99fa2632f7de0f4b4511d",
+      "rows": 96,
+      "features": 30
+    },
+    {
+      "name": "golden-toy-107",
+      "path": "golden-toy-107.json",
+      "sha256": "7af83d7dfb16074bb1959a5d0911d2b8aa03f2f5b6d278d0de39eaa8adc90356",
+      "source_generator_sha256": "f5fa4f8f409ed84dc9dcbf7c20311825c233f5f8dc1a100eefdb627bf6641153",
+      "source_rng_sha256": "8b947b489096a4e761044078aea863040db94d06d80598e83fc385edce145852",
+      "rows": 96,
+      "features": 5,
+      "generator_seed": 107
+    },
+    {
+      "name": "golden-toy-911",
+      "path": "golden-toy-911.json",
+      "sha256": "48be842857256de2042391c8d55a8c7e9ff266adf7ab91cbadc4280df3f3bf95",
+      "source_generator_sha256": "f5fa4f8f409ed84dc9dcbf7c20311825c233f5f8dc1a100eefdb627bf6641153",
+      "source_rng_sha256": "8b947b489096a4e761044078aea863040db94d06d80598e83fc385edce145852",
+      "rows": 96,
+      "features": 5,
+      "generator_seed": 911
+    }
+  ],
+  "seeds": [
+    3,
+    17,
+    29,
+    101,
+    701
+  ],
+  "search_budget_candidates": 72,
+  "initial_population": 16,
+  "inner_folds": 3,
+  "lambda_choices": [
+    1e-05,
+    0.02,
+    0.2
+  ],
+  "caps": {
+    "nodes": 15,
+    "depth": 4
+  },
+  "carrier": "Row",
+  "primary_fault_policy": "Penalize{lambda_domain:0.05,lambda_saturation:0.0,tie_break:true}",
+  "informational_fault_policy": "Legacy",
+  "training_label_mutations": 0,
+  "outer_test_files_read": 0,
+  "sealed_files_read": 0,
+  "targeted_numerical_cohort": "../utility-gp-fixtures-01/manifest.json (separate diagnostics, not the common W17 cohort)",
+  "generator": {
+    "command": [
+      "rustc",
+      "--edition=2021",
+      "-O",
+      "/home/ubuntu/jope-evidence/kernel2/bt/B05_B07_FOLLOWUP/prep/utility-common-cohort-v2/golden-generator-source.rs",
+      "-o",
+      "/home/ubuntu/jope-evidence/kernel2/bt/B05_B07_FOLLOWUP/prep/utility-common-cohort-v2/golden-generator"
+    ],
+    "source_sha256": "87f565645533d77afe0478b1834f2466f05ae1b8159c9c5f11e7a8a84fe05d02",
+    "binary_sha256": "a55f027b2677c88aa0fc28e85c075b47b0c87ef51531df11e9052ec04d827b39",
+    "full_golden_source_sha256": "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
+    "stdout_sha256": "a447bbbff03a2ef3a7b3f020369054f22da3a0f93f3a59b1aa53ee87654e7cac",
+    "exit": 0
+  },
+  "expected_primary_searches": 240,
+  "expected_informational_searches": 240,
+  "wall_time_separate_from_replay_measurements": true
+}
