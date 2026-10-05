@@ -12,8 +12,11 @@ admission; the emitted training APIs enforce the final model size.
 The recipes call the existing emitters and the unchanged integer-stencil
 helpers. They fit exactly the declared training prefix, admit only finite
 labels, preserve group-local history across the cut, and carry the native
-ordered input identity. Each language reads and writes the native raw-word
-state codec, including signed zero and NaN payloads. Prediction commits a
+ordered input identity. Metadata enters generated source as encoded UTF-8
+bytes, preserving legal column names without making them emitted code tokens.
+The same emitted-text lint remains enforced. Each language reads and writes
+the native raw-word state codec, including signed zero and NaN payloads.
+Prediction commits a
 batch only after every row succeeds. Empty prediction batches preserve state;
 width, order, timestamp and malformed-state refusals preserve continuation.
 
