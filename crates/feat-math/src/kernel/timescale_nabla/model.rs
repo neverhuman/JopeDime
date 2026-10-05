@@ -121,7 +121,15 @@ impl TimeGradientModel {
             .predictor
             .predict_table(&table)
             .map_err(|e| Error::Domain(e.to_string()))?;
-        self.state = next;
+        // Check both the binary continuation and the containing model envelope
+        // before committing history; callers must be able to save and resume.
+        next.to_bytes()?;
+        let mut candidate = self.clone();
+        candidate.state = next;
+        candidate
+            .to_json()
+            .map_err(|e| Error::Resource(e.to_string()))?;
+        self.state = candidate.state;
         Ok(TimeGradientPrediction { values, faults })
     }
 

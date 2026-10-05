@@ -1,3 +1,12 @@
+def _time_gradient_checkpoint(state, predictor):
+    snapshot = state.to_bytes()
+    means, scales, weights = predictor.head
+    array_size = lambda values: 2 + max(0, len(values) - 1) + sum(len(str(v)) for v in values)
+    word_array_size = lambda values: 2 + max(0, len(values) - 1) + sum(13 + len(str(struct.unpack('<Q', struct.pack('<d', v))[0])) for v in values)
+    size = @MODEL_BASE_BYTES@ + len(_json(state.fold).encode('utf-8')) + array_size(snapshot) + sum(word_array_size(v) for v in (means, scales, weights))
+    if size > 16 * 1024 * 1024:
+        raise OrderedError('resource')
+
 import copy
 
 class OrderedRow:
@@ -20,6 +29,7 @@ class TimeGradientModel:
         values = [value if math.isfinite(value) else 0.0 for value in self.predictor.predict(transformed)]
         if len(values) != len(rows):
             raise OrderedError('shape')
+        _time_gradient_checkpoint(next_state, self.predictor)
         self.state = next_state
         return values, faults
 
@@ -52,12 +62,7 @@ def fit_ordered(rows, labels, task, cut, train_end, total_rows):
     if len(means) != state.width or len(scales) != state.width or len(weights) != state.width + 1 or any(not math.isfinite(v) for v in means + weights) or any(not math.isfinite(v) or v <= 0.0 for v in scales):
         raise OrderedError('domain')
     try:
-        snapshot = state.to_bytes()
+        _time_gradient_checkpoint(state, predictor)
     except OrderedError:
-        raise OrderedError('domain')
-    array_size = lambda values: 2 + max(0, len(values) - 1) + sum(len(str(v)) for v in values)
-    word_array_size = lambda values: 2 + max(0, len(values) - 1) + sum(13 + len(str(struct.unpack('<Q', struct.pack('<d', v))[0])) for v in values)
-    size = @MODEL_BASE_BYTES@ + len(_json(state.fold).encode('utf-8')) + array_size(snapshot) + sum(word_array_size(v) for v in (means, scales, weights))
-    if size > 16 * 1024 * 1024:
         raise OrderedError('domain')
     return TimeGradientModel(state, predictor, task)
