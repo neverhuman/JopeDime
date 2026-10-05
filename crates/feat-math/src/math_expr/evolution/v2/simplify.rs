@@ -3,9 +3,10 @@
 //! with a pole-free certificate.
 //!
 //! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]` until B18 merges and the
-//! search move is wired. Nothing outside its tests calls it. A compressed subtree is a proposal:
-//! the native protected re-score of the whole program decides acceptance, never the
-//! approximation error alone.
+//! search move is wired. Nothing outside its tests calls it. A compressed subtree is a proposal
+//! ([`propose`]): the native protected re-score of the whole program decides acceptance, never the
+//! approximation error alone. Deferred to the wiring PR: that acceptance gate, the profile move and
+//! its receipt, the old-tree-unchanged, all-language emission and ablation tests.
 //!
 //! Algorithm: the second Remez exchange on the sample abscissae (Pachón and Trefethen, BIT 49,
 //! 2009), in the Chebyshev basis on `t = (2v - (a + b)) / (b - a)`.
@@ -14,14 +15,17 @@
 //!   with partial pivoting.
 //! - The new reference is the alternating run maxima with `|e| ≥ |h|`: same-sign neighbours are
 //!   merged, and the `n + 2` consecutive points containing the global maximum are kept.
-//! - It stops when `max|e| - |h| ≤ 1e-12 max|e|` (the de la Vallée Poussin bracket), or at the
-//!   iteration cap, and keeps the best fit seen.
+//! - It stops when `max|e| - |h| ≤ 1e-12 max|e|` (the de la Vallée Poussin bracket, `Converged`),
+//!   when the bracket is within the rounding level `64 ε max|f|` of the errors themselves
+//!   (`NoiseLimited`), or at the iteration cap, and keeps the best fit seen.
 //! - Every tie goes to the lowest index and every sum runs in index order, so a fit is
 //!   bit-reproducible and independent of sample order and duplicates.
 
 use super::*;
 
-/// The largest degree fitted.
+/// The largest degree fitted. What can be proposed is bounded separately ([`propose`]): a Horner
+/// tree over a variable leaf has depth `2n + 1`, so under the expression depth limit of 16 the
+/// largest degree that lowers is 7.
 const MAX_DEGREE: usize = 12;
 /// The exchange stops after this many steps.
 const MAX_ITERATIONS: usize = 32;
@@ -33,6 +37,9 @@ const TOLERANCE: f64 = 1e-12;
 enum Stop {
     /// `max|e| - |h| ≤ TOLERANCE max|e|`.
     Converged,
+    /// `max|e| - |h|` is within `64 ε max|f|`, the rounding level of the errors, but above
+    /// `TOLERANCE max|e|`: the arithmetic cannot certify a tighter bracket.
+    NoiseLimited,
     /// The samples lie on a polynomial of the degree, to a few ulps.
     ExactFit,
     /// The exchange returned the same reference.
@@ -45,7 +52,8 @@ enum Stop {
 /// A discrete minimax fit.
 #[derive(Clone, Debug, PartialEq)]
 struct Minimax {
-    /// The fit interval: the smallest and largest sample abscissa.
+    /// The fit interval: the smallest and largest sample abscissa. The error is controlled only at
+    /// the samples.
     lo: f64,
     hi: f64,
     /// Chebyshev coefficients in `t`.
@@ -167,7 +175,8 @@ fn solve(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
     x.iter().all(|v| v.is_finite()).then_some(x)
 }
 
-/// The sorted unique samples, or why the fit cannot start.
+/// The sorted unique samples, or why the fit cannot start. This guard is the only refusal of a
+/// non-finite target: the exchange never sees a NaN error off the reference.
 fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
     if samples
         .iter()
@@ -180,9 +189,10 @@ fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
     let mut unique: Vec<(f64, f64)> = Vec::with_capacity(sorted.len());
     for (v, f) in sorted {
         match unique.last() {
-            // `==` so -0.0 and 0.0 are one abscissa.
+            // `==` so -0.0 and 0.0 are one abscissa, and ±0 targets are one target (an odd
+            // subtree gives f(-0.0) = -0.0). The sort keeps the first of a merged pair.
             Some(&(lv, lf)) if lv == v => {
-                if lf.to_bits() != f.to_bits() {
+                if lf != f {
                     return Err("one abscissa has two targets");
                 }
             }
@@ -280,11 +290,16 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
                 ..fit
             });
         }
-        // The bracket cannot close below the rounding noise of the errors themselves.
-        let noise = 64.0 * f64::EPSILON * f_max;
-        if max_error - h.abs() <= (TOLERANCE * max_error).max(noise) {
+        if max_error - h.abs() <= TOLERANCE * max_error {
             return Ok(Minimax {
                 stop: Stop::Converged,
+                ..fit
+            });
+        }
+        // The bracket cannot close below the rounding noise of the errors themselves.
+        if max_error - h.abs() <= 64.0 * f64::EPSILON * f_max {
+            return Ok(Minimax {
+                stop: Stop::NoiseLimited,
                 ..fit
             });
         }
@@ -422,6 +437,78 @@ fn lower(coefficients: &[f64], x: &Expr) -> Option<Expr> {
         };
     }
     Some(acc)
+}
+
+/// The lowered tree's value at `v`, in exactly the operation order [`lower`] builds: `x * acc`,
+/// then `+ a` or `- (-a)`, which the evaluator computes with the same bits.
+fn horner(coefficients: &[f64], v: f64) -> f64 {
+    let n = coefficients.len() - 1;
+    let mut acc = coefficients[n];
+    for &a in coefficients[..n].iter().rev() {
+        let product = v * acc;
+        acc = if a == 0.0 {
+            product
+        } else if a > 0.0 {
+            product + a
+        } else {
+            product - (-a)
+        };
+    }
+    acc
+}
+
+/// The largest `|p(v) - f|` of the lowered polynomial over `unique` samples, in its own Horner
+/// order, or `None` when a value leaves the finite range the output clamp keeps unchanged. The
+/// monomial conversion is ill-conditioned away from 0, so this can be far above the fit's
+/// Chebyshev `max_error`.
+fn lowered_error(coefficients: &[f64], unique: &[(f64, f64)]) -> Option<f64> {
+    if coefficients.is_empty() {
+        return None;
+    }
+    unique.iter().try_fold(0.0f64, |worst, &(v, f)| {
+        let value = horner(coefficients, v);
+        (value.is_finite() && value.abs() <= MAX_ABS).then(|| worst.max((value - f).abs()))
+    })
+}
+
+/// A compression worth proposing: the lowered tree, its own error on the samples and its size.
+#[derive(Clone, Debug, PartialEq)]
+struct Proposal {
+    tree: Expr,
+    /// What the proposal is held to: the lowered tree's error, never the fit's alone.
+    lowered_error: f64,
+    nodes: usize,
+}
+
+/// The lowered form of `fit` over the leaf `x`, when it is worth proposing in place of `subtree`.
+/// It must have fewer nodes than `subtree`, fit `node_budget` and the expression limits, and stay,
+/// in its own evaluation order, within the fit's bound on `samples`:
+/// `max_error (1 + 1e-6) + 64 ε max|f|`. Otherwise `None`.
+fn propose(
+    fit: &Minimax,
+    samples: &[(f64, f64)],
+    x: &Expr,
+    subtree: &Expr,
+    node_budget: usize,
+) -> Option<Proposal> {
+    let coefficients = fit.monomial();
+    let tree = lower(&coefficients, x)?;
+    let nodes = count_nodes(&tree);
+    if nodes > node_budget || nodes >= count_nodes(subtree) {
+        return None;
+    }
+    MathExpr::from_ast(tree.clone()).ok()?;
+    let unique = prepare(samples).ok()?;
+    let f_max = unique.iter().map(|(_, f)| f.abs()).fold(0.0f64, f64::max);
+    let lowered_error = lowered_error(&coefficients, &unique)?;
+    if lowered_error > fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * f_max {
+        return None;
+    }
+    Some(Proposal {
+        tree,
+        lowered_error,
+        nodes,
+    })
 }
 
 /// The one variable a subtree reads, and its `(v, f)` samples on the training rows. `None` when it
@@ -667,10 +754,16 @@ mod tests {
                 fit.max_error
             );
             assert!(
-                matches!(fit.stop, Stop::Converged | Stop::Stalled),
+                matches!(
+                    fit.stop,
+                    Stop::Converged | Stop::NoiseLimited | Stop::Stalled
+                ),
                 "n={n}: {:?}",
                 fit.stop
             );
+            if fit.stop == Stop::Converged {
+                assert!(fit.max_error - fit.levelled <= TOLERANCE * fit.max_error);
+            }
             assert!(fit.iterations <= 20, "n={n}: {} steps", fit.iterations);
         }
     }
@@ -788,7 +881,21 @@ mod tests {
             "fewer than degree + 2 distinct abscissae"
         );
         assert!(minimax(&[(1.0, 1.0), (1.0, 2.0), (2.0, 3.0), (3.0, 1.0)], 1).is_err());
-        assert!(minimax(&[(1.0, f64::NAN), (2.0, 1.0), (3.0, 1.0)], 1).is_err());
+        // A non-finite target is refused by name, also where it would sit off the reference: the
+        // exchange cannot see a NaN error, and an infinite one makes any fit look exact.
+        assert_eq!(
+            minimax(&[(1.0, f64::NAN), (2.0, 1.0), (3.0, 1.0)], 1).unwrap_err(),
+            "a sample is not finite"
+        );
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let mut interior = grid(0.0, 1.0, 50, f64::exp);
+            interior[25].1 = bad;
+            assert_eq!(
+                minimax(&interior, 2).unwrap_err(),
+                "a sample is not finite",
+                "{bad}"
+            );
+        }
         assert!(minimax(&grid(0.0, 1.0, 100, f64::exp), MAX_DEGREE + 1).is_err());
         let one_point: Vec<(f64, f64)> = (0..10).map(|_| (2.0, 1.0)).collect();
         assert!(minimax(&one_point, 1).is_err());
@@ -836,25 +943,39 @@ mod tests {
         let rows: Vec<Vec<f64>> = (0..201)
             .map(|i| vec![-1.0 + f64::from(i) / 100.0, 7.0])
             .collect();
-        let subtree = MathExpr::parse("exp(0.5*c0)+0.25").unwrap();
+        // 18 nodes, compressed to a cubic of at most 14.
+        let subtree =
+            MathExpr::parse("((exp(0.5*c0)+0.25)*(cos(0.3*c0)+1.5))+sin(0.2*c0)").unwrap();
+        assert_eq!(count_nodes(&subtree.root), 18);
         let (var, points) = samples(&subtree, &rows).unwrap();
         assert_eq!(var, Var::Col(0));
         let fit = minimax(&points, 3).unwrap();
-        let tree = lower(&fit.monomial(), &Expr::Var(var)).unwrap();
-        let compressed = MathExpr::from_ast(tree).unwrap();
-        // On the training range the lowered tree is within the minimax error, up to rounding.
+        let leaf = Expr::Var(var);
+        let proposal = propose(&fit, &points, &leaf, &subtree.root, 64).unwrap();
+        assert!(proposal.nodes <= 14, "{proposal:?}");
+        let compressed = MathExpr::from_ast(proposal.tree.clone()).unwrap();
+        // On the training range the native lowered tree is within its own measured error, which
+        // is within the fit's bound.
         for row in &rows {
-            let (a, _) = compressed.eval_row_traced(row);
+            let (a, faults) = compressed.eval_row_traced(row);
             let (b, _) = subtree.eval_row_traced(row);
-            assert!(
-                (a - b).abs() <= fit.max_error * (1.0 + 1e-6) + 1e-15,
-                "{row:?}"
-            );
+            assert!(faults.is_empty());
+            assert!((a - b).abs() <= proposal.lowered_error, "{row:?}");
         }
+        assert!(
+            proposal.lowered_error <= fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * 20.0
+        );
         // Outside it the polynomial drifts: only a native re-score on held-out rows can tell.
         let (a, _) = compressed.eval_row_traced(&[4.0, 7.0]);
         let (b, _) = subtree.eval_row_traced(&[4.0, 7.0]);
         assert!((a - b).abs() > 100.0 * fit.max_error, "{a} vs {b}");
+        // A subtree no smaller than the lowered tree is never proposed (the 6-node
+        // exp(0.5*c0)+0.25 against a cubic), and neither is a tree over the node budget.
+        let small = MathExpr::parse("exp(0.5*c0)+0.25").unwrap();
+        let (_, small_points) = samples(&small, &rows).unwrap();
+        let small_fit = minimax(&small_points, 3).unwrap();
+        assert!(propose(&small_fit, &small_points, &leaf, &small.root, 64).is_none());
+        assert!(propose(&fit, &points, &leaf, &subtree.root, 12).is_none());
         // Subtrees reading two variables, or faulting on a row, are not sampled.
         assert!(samples(&MathExpr::parse("c0*c1").unwrap(), &rows).is_none());
         assert!(samples(&MathExpr::parse("log(c0)").unwrap(), &rows).is_none());
@@ -909,5 +1030,118 @@ mod tests {
         let halves = de_casteljau_halves(&[Interval::point(1.0), Interval::point(3.0)]);
         assert!(halves.0[1].lo <= 2.0 && halves.0[1].hi >= 2.0);
         assert_eq!(halves.1[1], Interval::point(3.0));
+    }
+
+    #[test]
+    fn an_off_centre_lowering_is_held_to_its_own_error() {
+        let f = |x: f64| (0.37 * x).sin() + (x / 50.0).cos();
+        let leaf = Expr::Var(Var::Col(0));
+        // A 41-node stand-in for the replaced subtree, so that only the error gate can refuse.
+        let big = (0..20).fold(leaf.clone(), |acc, _| {
+            Expr::Binary(BinOp::Add, Box::new(acc), Box::new(leaf.clone()))
+        });
+        // Centred, the lowered tree keeps the fit's error.
+        let centred = grid(-1.0, 1.0, 2001, f);
+        let fit = minimax(&centred, 6).unwrap();
+        let error = lowered_error(&fit.monomial(), &prepare(&centred).unwrap()).unwrap();
+        assert!(
+            error <= fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * 2.0,
+            "{error} vs {}",
+            fit.max_error
+        );
+        assert!(propose(&fit, &centred, &leaf, &big, 64).is_some());
+        // Off centre the monomial conversion loses the fit, so nothing is proposed.
+        let shifted = grid(1000.0, 1001.0, 2001, f);
+        let fit = minimax(&shifted, 6).unwrap();
+        let error =
+            lowered_error(&fit.monomial(), &prepare(&shifted).unwrap()).unwrap_or(f64::INFINITY);
+        assert!(error > 1e3 * fit.max_error, "{error} vs {}", fit.max_error);
+        assert!(propose(&fit, &shifted, &leaf, &big, 64).is_none());
+    }
+
+    #[test]
+    fn signed_zero_abscissae_with_signed_zero_targets_are_one_sample() {
+        // Odd subtrees give f(-0.0) = -0.0 and f(0.0) = 0.0 (0.5*c0, sin(c0), c0^3).
+        let points0 = [
+            (-0.0, -0.0),
+            (0.0, 0.0),
+            (1.0, 1.0),
+            (2.0, 2.0),
+            (-1.0, -1.0),
+        ];
+        let fit = minimax(&points0, 1).unwrap();
+        assert_eq!(fit.stop, Stop::ExactFit);
+        assert_eq!(prepare(&points0).unwrap().len(), 4);
+        let mut reversed = points0.to_vec();
+        reversed.reverse();
+        let bits = |m: &Minimax| m.chebyshev.iter().map(|c| c.to_bits()).collect::<Vec<_>>();
+        assert_eq!(bits(&minimax(&reversed, 1).unwrap()), bits(&fit));
+        // Through the sampler: a column holding both zeros.
+        let rows: Vec<Vec<f64>> = [-1.0, -0.0, 0.0, 0.5, 1.0]
+            .iter()
+            .map(|&v| vec![v])
+            .collect();
+        let (_, points) = samples(&MathExpr::parse("0.5*c0").unwrap(), &rows).unwrap();
+        assert!(minimax(&points, 1).is_ok());
+        // A genuine conflict at zero is still refused.
+        assert!(minimax(&[(0.0, 1.0), (-0.0, -1.0), (1.0, 2.0), (2.0, 3.0)], 1).is_err());
+    }
+
+    #[test]
+    fn every_stop_path_is_reached_and_the_cap_returns_the_best_fit() {
+        // Abscissae 2^i with targets +1, -1, -1 repeating: exact data, badly conditioned in t.
+        let geometric = |points: usize| -> Vec<(f64, f64)> {
+            (0..points)
+                .map(|i| (f64::from(1u32 << i), if i % 3 == 0 { 1.0 } else { -1.0 }))
+                .collect()
+        };
+        // The exchange cycles between two references from step 3 on, with max errors above
+        // 1e15, so the cap must return step 2's fit, not the last one.
+        let capped = minimax(&geometric(15), 11).unwrap();
+        assert_eq!(
+            (capped.stop, capped.iterations),
+            (Stop::IterationLimit, 2),
+            "{capped:?}"
+        );
+        assert!(capped.max_error < 2.0, "{capped:?}");
+        assert!(capped.levelled <= capped.max_error);
+        // |x| at 15 points, degree 12: a two-step cycle a few 1e-12 above the bracket; the best
+        // fit is step 9's.
+        let abs = minimax(&grid(-1.0, 1.0, 15, f64::abs), 12).unwrap();
+        assert_eq!(
+            (abs.stop, abs.iterations),
+            (Stop::IterationLimit, 9),
+            "{abs:?}"
+        );
+        assert!(abs.levelled <= abs.max_error);
+        // The exchange returns the same reference.
+        let stalled = minimax(&geometric(8), 6).unwrap();
+        assert_eq!(stalled.stop, Stop::Stalled, "{stalled:?}");
+        assert!(stalled.levelled <= stalled.max_error);
+        // Fewer than n + 2 alternating extrema, with the global maximum already a reference
+        // point.
+        let no_exchange = minimax(&geometric(10), 8).unwrap();
+        assert_eq!(no_exchange.stop, Stop::Degenerate, "{no_exchange:?}");
+        // The second reference system is singular: the best (first) fit comes back.
+        let singular = minimax(&geometric(27), 3).unwrap();
+        assert_eq!(
+            (singular.stop, singular.iterations),
+            (Stop::Degenerate, 1),
+            "{singular:?}"
+        );
+    }
+
+    #[test]
+    fn an_offset_noise_floor_stop_is_not_reported_as_converged() {
+        // A constant offset lifts max|f|, and with it the rounding level of the errors, far above
+        // 1e-12 of the minimax error.
+        let offset = minimax(&grid(-1.0, 1.0, 4001, |x| 1e6 + x.exp()), 2).unwrap();
+        assert_eq!(offset.stop, Stop::NoiseLimited, "{offset:?}");
+        assert!(offset.max_error - offset.levelled > TOLERANCE * offset.max_error);
+        assert!(offset.max_error - offset.levelled <= 64.0 * f64::EPSILON * (1e6 + 1f64.exp()));
+        // Without the offset the same fit closes the documented bracket.
+        let plain = minimax(&grid(-1.0, 1.0, 4001, f64::exp), 2).unwrap();
+        assert_eq!(plain.stop, Stop::Converged, "{plain:?}");
+        assert!(plain.max_error - plain.levelled <= TOLERANCE * plain.max_error);
     }
 }
