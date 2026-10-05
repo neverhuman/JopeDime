@@ -32,7 +32,8 @@ impl TimeGradientState {
                 "time-gradient state codec version".into(),
             ));
         }
-        let width = reader.length()?;
+        let width = usize::try_from(reader.word()?)
+            .map_err(|_| Error::Shape("time-gradient width".into()))?;
         let minimum_gap = f64::from_bits(reader.word()?);
         let config = Config::new(2, 75, width, minimum_gap)?;
         let n = reader.length()?;
