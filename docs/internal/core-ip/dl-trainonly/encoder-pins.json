@@ -29,8 +29,12 @@
     "dope": {
       "assets": {
         "binary": {
-          "bytes": 9530432,
-          "sha256": "c972c631c7c1053436ba31a088e223a9d394078bdb46148bdcc8f63e2487b5f8"
+          "bytes": 9337920,
+          "sha256": "bc3c446098cd3a080fc4ce2e2ff7b2f10bf9549fb08f053d4ca14af263b2d926"
+        },
+        "lane_build_receipt": {
+          "bytes": 3819,
+          "sha256": "ed63b615b3dd532d6a7ff495f93c33998f0982aa78ae721183142954b6d4baf4"
         },
         "router-evidence.json": {
           "bytes": 530,
@@ -45,6 +49,7 @@
           "sha256": "29d495d114cf2c0cf63d1143b3e37574e8e248122674322b3a889a3fcd2f5c3f"
         }
       },
+      "build_receipt": "dope-lane-build.json",
       "dimension": 4168,
       "exposure_status": "holdout-family overlap inventory pending",
       "method": "attention-small",
@@ -53,7 +58,7 @@
       "router_training_lineages": 19,
       "runs_on": "cpu",
       "source_commit": "63696a5db246abf9c85343c12a5d8c5522fb864a",
-      "v2_qualification": "CPU build only; no encoding performed"
+      "v2_qualification": "Lane CPU binary and local published-shard receipt binding verified; v2 inference not independently qualified"
     },
     "foundation": {
       "assets": {

@@ -76,10 +76,11 @@ expectations (24,365 GPU and 4,873 CPU Dope outputs). A0 is additional CPU
 metafeature evidence, not one of the six encoders, and is excluded here.
 The main prefix is fixed to
 `s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/`.
-TabPFN3.5 output and receipt keys use the separate
-`s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly-research/`
-prefix, so readers confined to the admitted main prefix cannot ingest them.
-The research prefix requires its own explicit publisher scope before any write.
+TabPFN3.5 output and receipt keys use the owner-approved subprefix
+`s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/research-only/`.
+Production expectations never use `research-only/`; TabPFN remains denied to
+production loaders even though its storage keys are inside the admitted prefix.
+Sibling research prefixes and rebinding research products as production are refused.
 Each manifest requires create-only `If-None-Match: *`, with no unconditional
 fallback. The local output also uses exclusive creation and refuses existing
 files and symlinks. There is no storage client in these tools.
@@ -144,5 +145,8 @@ its trailing newline, used by `--manifest-sha256`) and canonical content digest
 authenticated production, array/ABI qualification and compute admission remain
 separate live gates.
 
-See the [C6 packet](../../docs/internal/core-ip/dl-trainonly/teacher-packet.md)
-and [Dope CPU build receipt](../../docs/internal/core-ip/dl-trainonly/dope-cpu-build.json).
+The active Dope pin binds the [lane build receipt](../../docs/internal/core-ip/dl-trainonly/dope-lane-build.json),
+whose binary digest also matches all three retained clean-v1 shard receipts.
+The [earlier CPU build receipt](../../docs/internal/core-ip/dl-trainonly/dope-cpu-build.json)
+remains historical and provisional at its build time; it is not the active pin.
+See the [C6 packet](../../docs/internal/core-ip/dl-trainonly/teacher-packet.md).
