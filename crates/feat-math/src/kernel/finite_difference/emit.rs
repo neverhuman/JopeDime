@@ -1,4 +1,4 @@
-//! Standalone helper twins. Full ordered recipes/state codecs remain held.
+//! Standalone arithmetic twins used by the ordered recipes and fitted export.
 use crate::math_expr::FaultSet;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

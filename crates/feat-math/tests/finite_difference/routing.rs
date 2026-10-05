@@ -152,13 +152,13 @@ fn generic_ordered_fit_and_model_ingress_preserve_native_replay_and_refuse_fallb
         routes.python_recipe,
         routes.cpp17_recipe,
         routes.cpp17_fitted,
-        routes.javascript,
     ] {
-        assert!(matches!(
-            route,
-            feat_math::kernel::export::Route::Unsupported(_)
-        ));
+        assert!(matches!(route, feat_math::kernel::export::Route::Ok));
     }
+    assert!(matches!(
+        routes.javascript,
+        feat_math::kernel::export::Route::Unsupported(_)
+    ));
     let rows = (0..8)
         .map(|i| {
             let time = f64::from(i / 2);

@@ -1,0 +1,189 @@
+#include <map>
+#include <string>
+#include <tuple>
+#include <limits>
+struct OrderedError : std::invalid_argument { explicit OrderedError(const char* kind):std::invalid_argument(kind){} };
+static std::uint64_t ordered_bits(double value) {std::uint64_t bits;std::memcpy(&bits,&value,8);return bits;}
+static double ordered_float(std::uint64_t bits) {double value;std::memcpy(&value,&bits,8);return value;}
+// Validate UTF-8 and Rust's Unicode White_Space rule without locale dependence.
+static bool ordered_blank(const std::string& value) {
+    bool blank=true;
+    for(std::size_t i=0;i<value.size();) {
+        const auto first=static_cast<unsigned char>(value[i++]);std::uint32_t code=first;unsigned remaining=0;
+        if(first>=0xc2 && first<=0xdf) {code=first&31;remaining=1;}
+        else if(first>=0xe0 && first<=0xef) {code=first&15;remaining=2;}
+        else if(first>=0xf0 && first<=0xf4) {code=first&7;remaining=3;}
+        else if(first>=0x80) throw OrderedError("syntax");
+        const unsigned count=remaining;
+        while(remaining--) {if(i==value.size()) throw OrderedError("syntax");const auto ch=static_cast<unsigned char>(value[i++]);if((ch&0xc0)!=0x80) throw OrderedError("syntax");code=(code<<6)|(ch&63);}
+        if((count==1 && code<0x80)||(count==2 && code<0x800)||(count==3 && code<0x10000)||code>0x10ffff||(code>=0xd800 && code<=0xdfff)) throw OrderedError("syntax");
+        const bool space=(code>=9 && code<=13)||code==32||code==0x85||code==0xa0||code==0x1680||(code>=0x2000 && code<=0x200a)||code==0x2028||code==0x2029||code==0x202f||code==0x205f||code==0x3000;
+        blank=blank && space;
+    }
+    return blank;
+}
+struct OrderedGroup {
+    unsigned tag;std::uint64_t bits;std::string text;
+    static OrderedGroup numeric(double value) {if(!std::isfinite(value)) throw OrderedError("domain");return {0,value==0.0?0:ordered_bits(value),{}};}
+    static OrderedGroup categorical(std::string value) {if(ordered_blank(value)) throw OrderedError("domain");return {1,0,std::move(value)};}
+    bool operator<(const OrderedGroup& other) const {return std::tie(tag,bits,text)<std::tie(other.tag,other.bits,other.text);}
+    bool operator==(const OrderedGroup& other) const {return tag==other.tag && bits==other.bits && text==other.text;}
+};
+static OrderedGroup ordered_group(OrderedGroup group) {
+    if(group.tag==0 && group.text.empty()) return OrderedGroup::numeric(ordered_float(group.bits));
+    if(group.tag==1 && group.bits==0) return OrderedGroup::categorical(std::move(group.text));
+    throw OrderedError("domain");
+}
+static std::string ordered_json_string(const std::string& value) {
+    ordered_blank(value);std::string out="\"";const char* hex="0123456789abcdef";
+    for(unsigned char ch:value) {
+        switch(ch) {
+            case '"':out+="\\\"";break;case '\\':out+="\\\\";break;
+            case 8:out+="\\b";break;case 9:out+="\\t";break;case 10:out+="\\n";break;
+            case 12:out+="\\f";break;case 13:out+="\\r";break;
+            default:if(ch<32) {out+="\\u00";out+=hex[ch>>4];out+=hex[ch&15];} else out+=char(ch);
+        }
+    }
+    return out+'"';
+}
+using OrderedBytes=std::vector<std::uint8_t>;
+static void ordered_word(OrderedBytes& out,std::uint64_t value) {for(unsigned i=0;i<8;i++) out.push_back(std::uint8_t(value>>(8*i)));}
+static void ordered_text(OrderedBytes& out,const std::string& value) {ordered_word(out,value.size());out.insert(out.end(),value.begin(),value.end());}
+static void ordered_write_group(OrderedBytes& out,const OrderedGroup& group) {out.push_back(std::uint8_t(group.tag));if(group.tag==0) ordered_word(out,group.bits);else ordered_text(out,group.text);}
+struct OrderedReader {
+    const OrderedBytes& bytes;std::size_t at=0;
+    explicit OrderedReader(const OrderedBytes& value):bytes(value) {if(bytes.size()>16*1024*1024) throw OrderedError("resource");}
+    OrderedBytes take(std::size_t n) {if(n>bytes.size()-at) throw OrderedError("syntax");auto out=OrderedBytes(bytes.begin()+at,bytes.begin()+at+n);at+=n;return out;}
+    std::uint64_t word() {const auto value=take(8);std::uint64_t out=0;for(unsigned i=0;i<8;i++) out|=std::uint64_t(value[i])<<(8*i);return out;}
+    std::size_t size() {const auto n=word();if(n>std::numeric_limits<std::size_t>::max()) throw OrderedError("bounds");return std::size_t(n);}
+    std::size_t count() {const auto n=size();if(n>bytes.size()-at) throw OrderedError("bounds");return n;}
+    std::string text() {const auto value=take(count());std::string out(value.begin(),value.end());ordered_blank(out);return out;}
+    OrderedGroup group() {const auto tag=take(1)[0];OrderedGroup out;if(tag==0) out={0,word(),{}};else if(tag==1) out={1,0,text()};else throw OrderedError("unsupported");if(!(ordered_group(out)==out)) throw OrderedError("domain");return out;}
+    void finish() const {if(at!=bytes.size()) throw OrderedError("syntax");}
+};
+struct OrderedJson {
+    unsigned kind=4;std::uint64_t word=0;std::string text;
+    std::vector<OrderedJson> values;std::vector<std::pair<std::string,OrderedJson>> fields;
+    bool operator==(const OrderedJson& other) const {return kind==other.kind && word==other.word && text==other.text;}
+};
+struct OrderedJsonReader {
+    const std::string& bytes;std::size_t at=0;const std::vector<std::string>* names;
+    char peek() const {return at==bytes.size()?0:bytes[at];}
+    void space() {while(peek()==' ' || peek()=='\n' || peek()=='\r' || peek()=='\t') at++;}
+    void token(char ch) {space();if(at==bytes.size() || peek()!=ch) throw OrderedError("syntax");at++;}
+    std::uint32_t hex() {std::uint32_t n=0;for(unsigned i=0;i<4;i++) {if(at==bytes.size()) throw OrderedError("syntax");const char b=bytes[at++];unsigned v;if(b>='0' && b<='9') v=b-'0';else if(b>='a' && b<='f') v=b-'a'+10;else if(b>='A' && b<='F') v=b-'A'+10;else throw OrderedError("syntax");n=n*16+v;}return n;}
+    std::string string() {
+        token('"');std::string out;
+        for(;;) {if(at==bytes.size()) throw OrderedError("syntax");const auto b=static_cast<unsigned char>(bytes[at++]);if(b=='"') {ordered_blank(out);return out;}if(b<32) throw OrderedError("syntax");
+            if(b!='\\') {out+=char(b);continue;}if(at==bytes.size()) throw OrderedError("syntax");const char e=bytes[at++];
+            switch(e) {
+                case '"':case '\\':case '/':out+=e;break;
+                case 'b':out+=char(8);break;case 'f':out+=char(12);break;case 'n':out+='\n';break;case 'r':out+='\r';break;case 't':out+='\t';break;
+                case 'u':{auto n=hex();if(n>=0xd800 && n<=0xdbff) {if(at+2>bytes.size() || bytes[at]!='\\' || bytes[at+1]!='u') throw OrderedError("syntax");at+=2;const auto low=hex();if(low<0xdc00 || low>0xdfff) throw OrderedError("syntax");n=0x10000+(n-0xd800)*1024+(low-0xdc00);}else if(n>=0xdc00 && n<=0xdfff) throw OrderedError("syntax");
+                    if(n<128) out+=char(n);else if(n<2048) {out+=char(0xc0|(n>>6));out+=char(0x80|(n&63));}else if(n<65536) {out+=char(0xe0|(n>>12));out+=char(0x80|((n>>6)&63));out+=char(0x80|(n&63));}else {out+=char(0xf0|(n>>18));out+=char(0x80|((n>>12)&63));out+=char(0x80|((n>>6)&63));out+=char(0x80|(n&63));}break;}
+                default:throw OrderedError("syntax");
+            }
+        }
+    }
+    void skip_string() {
+        token('"');for(;;) {if(at==bytes.size()) throw OrderedError("syntax");const auto b=static_cast<unsigned char>(bytes[at++]);if(b=='"') return;if(b<32) throw OrderedError("syntax");if(b=='\\') {if(at==bytes.size()) throw OrderedError("syntax");const char e=bytes[at++];if(e=='u') hex();else if(e!='"' && e!='\\' && e!='/' && e!='b' && e!='f' && e!='n' && e!='r' && e!='t') throw OrderedError("syntax");}}
+    }
+    void ignore() {
+        std::vector<unsigned> states={0};
+        while(!states.empty()) {const auto state=states.back();states.pop_back();space();
+            if(state==0) {if(peek()=='"') skip_string();else if(peek()=='[') {at++;states.push_back(1);}else if(peek()=='{') {at++;states.push_back(4);}else value(0);}
+            else if(state==1) {if(peek()==']') at++;else {states.push_back(2);states.push_back(0);}}
+            else if(state==2) {if(peek()==']') at++;else {token(',');states.push_back(2);states.push_back(0);}}
+            else if(state==4) {if(peek()=='}') at++;else {skip_string();token(':');states.push_back(5);states.push_back(0);}}
+            else if(state==5) {if(peek()=='}') at++;else {token(',');skip_string();token(':');states.push_back(5);states.push_back(0);}}
+            else throw OrderedError("syntax");
+        }
+    }
+    OrderedJson value(unsigned depth) {
+        if(depth>=128) throw OrderedError("syntax");space();if(at==bytes.size()) throw OrderedError("syntax");OrderedJson out;
+        if(peek()=='"') {out.kind=0;out.text=string();return out;}
+        if(peek()=='{' || peek()=='[') {const bool object=peek()=='{';at++;out.kind=object?3:2;const char close=object?'}':']';space();
+            if(peek()!=close) {for(;;) {if(object) {auto key=string();token(':');OrderedJson parsed;if(depth==0 && std::find(names->begin(),names->end(),key)==names->end()) ignore();else parsed=value(depth+1);out.fields.emplace_back(std::move(key),std::move(parsed));}else out.values.push_back(value(depth+1));space();if(peek()==close) break;token(',');}}
+            token(close);return out;}
+        if(peek()=='t' || peek()=='f' || peek()=='n') {const std::string literal=peek()=='t'?"true":peek()=='f'?"false":"null";if(bytes.compare(at,literal.size(),literal)!=0) throw OrderedError("syntax");at+=literal.size();if(literal=="null") out.kind=5;return out;}
+        if(peek()=='-' || (peek()>='0' && peek()<='9')) {const auto start=at;if(peek()=='-') at++;
+            if(peek()=='0') at++;else if(peek()>='1' && peek()<='9') {while(peek()>='0' && peek()<='9') at++;}else throw OrderedError("syntax");
+            if(peek()=='.') {at++;const auto begin=at;while(peek()>='0' && peek()<='9') at++;if(at==begin) throw OrderedError("syntax");}
+            if(peek()=='e' || peek()=='E') {at++;if(peek()=='+' || peek()=='-') at++;const auto begin=at;while(peek()>='0' && peek()<='9') at++;if(at==begin) throw OrderedError("syntax");}
+            bool word=true;std::uint64_t n=0;for(std::size_t i=start;i<at;i++) {const char b=bytes[i];if(b<'0' || b>'9' || n>(std::numeric_limits<std::uint64_t>::max()-std::uint64_t(b-'0'))/10) {word=false;break;}n=n*10+std::uint64_t(b-'0');}if(word) {out.kind=1;out.word=n;}return out;}
+        throw OrderedError("syntax");
+    }
+};
+static std::vector<OrderedJson> ordered_metadata(const std::string& text,unsigned kind) {
+    const std::vector<std::string> names=kind==0?std::vector<std::string>{"version","axis","causality","fit_scope"}:kind==1?std::vector<std::string>{"version","group_key_column","timestamp_column","tie_policy"}:std::vector<std::string>{"cut_id","train_end","total_rows"};
+    OrderedJsonReader reader{text,0,&names};auto value=reader.value(0);reader.space();if(reader.at!=text.size()) throw OrderedError("syntax");std::vector<OrderedJson> values;
+    if(value.kind==2 && value.values.size()==names.size()) values=std::move(value.values);
+    else if(value.kind==3) {for(const auto& name:names) {const OrderedJson* selected=nullptr;for(const auto& field:value.fields) if(field.first==name) {if(selected) throw OrderedError("syntax");selected=&field.second;}if(!selected) throw OrderedError("syntax");values.push_back(*selected);}}
+    else throw OrderedError("syntax");
+    for(std::size_t i=0;i<names.size();i++) {const auto& name=names[i];auto& v=values[i];
+        if((name=="axis" || name=="causality" || name=="fit_scope" || name=="tie_policy") && v.kind==3 && v.fields.size()==1 && v.fields[0].second.kind==5) {auto key=v.fields[0].first;v=OrderedJson{};v.kind=0;v.text=std::move(key);}
+        if(name=="version" || name=="train_end" || name=="total_rows") {if(v.kind!=1 || (name=="version" && v.word>65535)) throw OrderedError("syntax");}
+        else if(v.kind!=0) throw OrderedError("syntax");
+        std::vector<std::string> choices;if(name=="axis") choices={"feature_within_row","sample_time","iid_row"};else if(name=="causality") choices={"causal","offline"};else if(name=="fit_scope") choices={"train_fold","stateless"};else if(name=="tie_policy") choices={"stable_input_order"};
+        if(!choices.empty() && std::find(choices.begin(),choices.end(),v.text)==choices.end()) throw OrderedError("syntax");
+    }
+    return values;
+}
+struct DifferenceState {
+    unsigned order;double step;std::size_t width;std::string input,cut;std::size_t train_end,total_rows,ordinal=0;
+    std::map<OrderedGroup,std::tuple<double,std::size_t,std::size_t>> groups;
+    std::map<OrderedGroup,std::vector<std::vector<double>>> history;
+    // input is validated canonical input-identity JSON bound by the emitter.
+    DifferenceState(unsigned m,double h,std::size_t w,unsigned task,std::string identity,std::string cut_id,std::size_t train,std::size_t total):order(m),step(h),width(w),input(std::move(identity)),cut(std::move(cut_id)),train_end(train),total_rows(total) {
+        if(task!=1 && task!=2) throw OrderedError("unsupported");
+        if(order<1 || order>4 || !std::isfinite(step) || step<=0.0) throw OrderedError("domain");
+        if(width==0 || width>512) throw OrderedError("shape");
+        if(ordered_blank(cut) || train_end==0 || train_end>total_rows) throw OrderedError("bounds");
+    }
+    OrderedBytes metadata() const {
+        OrderedBytes out;
+        ordered_text(out,"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}");ordered_text(out,input);
+        ordered_text(out,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train_end)+",\"total_rows\":"+std::to_string(total_rows)+"}");return out;
+    }
+    std::pair<std::vector<double>,std::vector<std::uint32_t>> push(OrderedGroup group,double time,const std::vector<double>& row) {
+        if(row.size()!=width) throw OrderedError("shape");group=ordered_group(std::move(group));
+        if(ordinal>=total_rows) throw OrderedError("bounds");if(!std::isfinite(time)) throw OrderedError("domain");
+        const auto previous=groups.find(group);if(previous!=groups.end() && time<std::get<0>(previous->second)) throw OrderedError("domain");
+        std::vector<std::vector<double>> window;const auto saved=history.find(group);if(saved!=history.end()) window=saved->second;window.push_back(row);
+        const auto result=finite_difference_v2(2,59,order,step,window);
+        const auto prior=previous==groups.end()?0:std::get<1>(previous->second);const auto train=previous==groups.end()?0:std::get<2>(previous->second);
+        groups[group]=std::make_tuple(time,prior+1,train+std::size_t(ordinal<train_end));if(window.size()>order) window.erase(window.begin());history[group]=std::move(window);ordinal++;return result;
+    }
+    OrderedBytes to_bytes() const {
+        OrderedBytes cursor={'F','M','K','C','U','R',0,1};const auto meta=metadata();cursor.insert(cursor.end(),meta.begin(),meta.end());ordered_word(cursor,ordinal);ordered_word(cursor,groups.size());
+        for(const auto& item:groups) {ordered_write_group(cursor,item.first);ordered_word(cursor,ordered_bits(std::get<0>(item.second)));ordered_word(cursor,std::get<1>(item.second));ordered_word(cursor,std::get<2>(item.second));}
+        OrderedBytes out={'F','M','K','D','I','F','F',2,std::uint8_t(order)};ordered_word(out,ordered_bits(step));ordered_word(out,width);ordered_word(out,cursor.size());out.insert(out.end(),cursor.begin(),cursor.end());ordered_word(out,history.size());
+        for(const auto& item:history) {ordered_write_group(out,item.first);ordered_word(out,item.second.size());for(const auto& row:item.second) for(double value:row) ordered_word(out,ordered_bits(value));}
+        if(out.size()>16*1024*1024) throw OrderedError("resource");return out;
+    }
+    static DifferenceState from_bytes(const OrderedBytes& bytes,unsigned task,const std::string& input,const std::string& cut,std::size_t train,std::size_t total) {
+        OrderedReader reader(bytes);if(reader.take(8)!=OrderedBytes({'F','M','K','D','I','F','F',2})) throw OrderedError("unsupported");
+        const auto order=reader.take(1)[0];const auto step=ordered_float(reader.word());const auto width=reader.size();DifferenceState state(order,step,width,task,input,cut,train,total);
+        const auto cursor_bytes=reader.take(reader.count());OrderedReader cursor(cursor_bytes);if(cursor.take(8)!=OrderedBytes({'F','M','K','C','U','R',0,1})) throw OrderedError("unsupported");
+        const std::vector<std::string> metadata={cursor.text(),cursor.text(),cursor.text()};
+        const std::vector<std::string> expected={"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}",input,"{\"cut_id\":"+ordered_json_string(cut)+",\"train_end\":"+std::to_string(train)+",\"total_rows\":"+std::to_string(total)+"}"};
+        std::vector<std::vector<OrderedJson>> parsed,identities;for(unsigned i=0;i<3;i++) {parsed.push_back(ordered_metadata(metadata[i],i));identities.push_back(ordered_metadata(expected[i],i));}
+        if(parsed!=identities) throw OrderedError("domain");
+        state.ordinal=cursor.size();if(state.ordinal>total) throw OrderedError("bounds");
+        const auto count=cursor.count();if(count>state.ordinal) throw OrderedError("bounds");std::size_t rows=0,training=0;
+        for(std::size_t i=0;i<count;i++) {
+            const auto group=cursor.group();const auto time=ordered_float(cursor.word());const auto prior=cursor.size();const auto trained=cursor.size();
+            if((!state.groups.empty() && !(state.groups.rbegin()->first<group)) || !std::isfinite(time) || prior==0 || prior>state.ordinal || trained>prior) throw OrderedError("domain");
+            if(prior>std::numeric_limits<std::size_t>::max()-rows || trained>std::numeric_limits<std::size_t>::max()-training) throw OrderedError("bounds");rows+=prior;training+=trained;state.groups[group]=std::make_tuple(time,prior,trained);
+        }
+        cursor.finish();if(rows!=state.ordinal || training!=std::min(state.ordinal,train)) throw OrderedError("domain");
+        if(metadata!=expected) throw OrderedError("syntax");
+        if(reader.count()!=count) throw OrderedError("domain");
+        for(const auto& item:state.groups) {
+            if(!(reader.group()==item.first)) throw OrderedError("domain");const auto n=reader.count();if(n!=std::min(std::size_t(order),std::get<1>(item.second))) throw OrderedError("domain");
+            std::vector<std::vector<double>> window;for(std::size_t i=0;i<n;i++) {std::vector<double> row;for(std::size_t j=0;j<width;j++) row.push_back(ordered_float(reader.word()));window.push_back(std::move(row));}state.history[item.first]=std::move(window);
+        }
+        reader.finish();if(state.to_bytes()!=bytes) throw OrderedError("syntax");return state;
+    }
+    void finish() const {if(ordinal!=total_rows) throw OrderedError("bounds");}
+};

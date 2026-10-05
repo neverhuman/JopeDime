@@ -1,6 +1,7 @@
 //! Opt-in causal integer backward differences, version 2 / wire 59.
 //! Guarded kernels, bounded group history and explicit ordered program/model
-//! continuation. Recipe export and generation require separate admission.
+//! continuation, ordered training recipes and caller-owned fitted export.
+//! Generation requires separate admission.
 //! The legacy registry stays frozen.
 use super::ordered_axis::{
     Axis, CausalCursor, Causality, FitScope, FoldBoundary, GroupKey, OrderedInputIdentity,
@@ -14,10 +15,12 @@ mod emit;
 mod model;
 mod model_validation;
 mod program;
+mod recipe;
 mod state_codec;
 pub use emit::{emit_helpers, DifferenceLanguage};
 pub use model::{DifferenceModel, DifferencePrediction};
 pub use program::{DifferenceProgram, OrderedRow};
+pub use recipe::{DifferenceFittedCpp, DifferenceRecipe, FITTED_PROFILE, RECIPE_PROFILE};
 
 pub const KERNEL_ID: &str = "feat-math.causal-integer-difference.v2";
 /// Stage-local bit 17: insufficient history. This is NOT a scalar FaultSet
