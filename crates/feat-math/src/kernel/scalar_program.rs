@@ -428,3 +428,6 @@ fn import_node(node: &Expr, depth: usize, budget: &mut NodeBudget) -> VersionRes
 // B05–B07: canonical Experimental producer declarations, before generation.
 mod producer;
 pub use producer::{ScalarProducerKind, ScalarProducerProfile};
+
+// B05–B07: explicit Experimental typed generation, never a legacy default.
+pub use producer::{scalar_producer_profiles, ScalarCandidate};
