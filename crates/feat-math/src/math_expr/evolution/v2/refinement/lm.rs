@@ -1363,6 +1363,25 @@ mod tests {
         );
     }
 
+    /// Independent review of #195, R9: the `^` ratio form's `a'/a` overflowed for a base of 2^-1074,
+    /// so the lane was erased and the run stopped on the gradient test after its first Jacobian,
+    /// with no trial. With the slope kept (about 5.9e6 here) the run tries steps.
+    #[test]
+    fn a_power_slope_past_the_ratio_range_still_moves_the_fit() {
+        let result = lm(
+            "((1e-312*c0)^0.01)*c1",
+            &Admission::Structure,
+            &[vec![5e-12, 1e-300]],
+            &[1.0],
+            Objective::Raw,
+            &Options::default(),
+            40,
+        );
+        let run = result.run.as_ref().unwrap();
+        assert_ne!(result.status, Status::Gradient, "{run:?}");
+        assert!(run.trials > 0, "{run:?}");
+    }
+
     /// Independent review of #195, R6: at c0 = 20 `tanh` has rounded to 1, so `1 - tanh²` gave a
     /// silent 0 lane and the run stopped on the gradient test with no trial, keeping a score of 4.
     /// With the slope from the argument (about 3.4e-16) the fit reaches the target.
