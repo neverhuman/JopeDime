@@ -506,6 +506,23 @@ using Key = std::vector<KCell>;
 );
 
 impl FittedCppArtifact {
+    // B05–B07: reuse the existing fitted ridge lowerer for scalar-v2 features.
+    pub(crate) fn scalar_ridge_function(model: &crate::heads::RidgeModel) -> String {
+        let mut source = String::new();
+        emit_linear(
+            "scalar_head_v2",
+            &model.means,
+            &model.scales,
+            &model.w,
+            None,
+            -20.0,
+            20.0,
+            false,
+            &mut source,
+        );
+        source
+    }
+
     /// Share the frozen scalar lowering helpers with the opt-in training recipe.
     pub(crate) fn expression_helpers() -> &'static str {
         concat!(expression_common!(), expression_math!())

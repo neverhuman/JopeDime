@@ -1554,6 +1554,8 @@ mod tests {
         use crate::full_rust::{self, OperationKind, ParamDomain};
         use crate::spec::{self, Plan, PlannedHead, PlannedOp};
         let op_name = |op: &PlannedOp| match op {
+            // B05–B07: typed scalar recipe arm, outside v1 capability rows.
+            PlannedOp::ScalarV2 { .. } => "scalar_expression_v2",
             // B12: these plans are absent from the frozen legacy inventory.
             PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "feature_row_v2",
             PlannedOp::Standardize => "standardize",

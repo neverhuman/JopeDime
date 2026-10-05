@@ -100,6 +100,10 @@ impl ScalarExpressionProgram {
 }
 
 impl ScalarModel {
+    pub(super) fn ridge(&self) -> &RidgeModel {
+        &self.ridge
+    }
+
     pub fn program(&self) -> &ScalarExpressionProgram {
         &self.program
     }
@@ -123,7 +127,7 @@ impl ScalarModel {
         Ok((self.ridge.predict(&features), faults))
     }
 
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         validate_config(&self.program, self.carrier, self.input_width, self.lambda)?;
         let width = self.carrier.output_width(self.input_width);
         // Prevent even forged finite weights overflowing the bounded-score dot
@@ -163,7 +167,7 @@ impl ScalarModel {
             required_features: self.program.required_features()?,
             numerical_policy: self.program.numerical_policy().name().into(),
             profile: MODEL_PROFILE.into(),
-            grammar_sha256: format!("{:x}", Sha256::digest(CONTRACT.as_bytes())),
+            grammar_sha256: grammar_sha256(),
             emitter_feature_identity: EMITTER_IDENTITY.into(),
             output_schema: vec!["prediction:f64".into()],
             program: self.program.to_bytes()?,
@@ -223,7 +227,7 @@ impl ScalarModel {
             || wire.required_features != program.required_features()?
             || wire.numerical_policy != program.numerical_policy().name()
             || wire.profile != MODEL_PROFILE
-            || wire.grammar_sha256 != format!("{:x}", Sha256::digest(CONTRACT.as_bytes()))
+            || wire.grammar_sha256 != grammar_sha256()
             || wire.emitter_feature_identity != EMITTER_IDENTITY
             || wire.output_schema != ["prediction:f64"]
         {
@@ -252,7 +256,7 @@ impl ScalarModel {
     }
 }
 
-fn validate_config(
+pub(super) fn validate_config(
     program: &ScalarExpressionProgram,
     carrier: ScalarCarrier,
     width: usize,
@@ -321,4 +325,8 @@ fn transform(
         faults.push(fault.bits());
     }
     Ok((features, faults))
+}
+
+pub(super) fn grammar_sha256() -> String {
+    format!("{:x}", Sha256::digest(CONTRACT.as_bytes()))
 }

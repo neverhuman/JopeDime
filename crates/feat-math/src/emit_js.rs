@@ -86,6 +86,8 @@ fn op_supported(op: &PlannedOp) -> bool {
 
 fn op_label(op: &PlannedOp) -> &'static str {
     match op {
+        // B05–B07: JS remains outside the scalar-v2 backend slice.
+        PlannedOp::ScalarV2 { .. } => "scalar_expression_v2",
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => "feature_row_v2",
         PlannedOp::Standardize => "standardize",
         PlannedOp::RobustScale => "robust_scale",
