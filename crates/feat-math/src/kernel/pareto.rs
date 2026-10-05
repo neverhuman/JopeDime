@@ -68,19 +68,19 @@ pub struct Member {
 
 /// Why a candidate was refused.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Refusal {
+pub enum ArchiveRefusal {
     NanLoss,
     HardFault,
 }
 
 impl Member {
     /// The candidate as a member, or why it is refused.
-    pub fn admit(candidate: &Candidate) -> Result<Self, Refusal> {
+    pub fn admit(candidate: &Candidate) -> Result<Self, ArchiveRefusal> {
         if candidate.hard_fault {
-            return Err(Refusal::HardFault);
+            return Err(ArchiveRefusal::HardFault);
         }
         if candidate.loss.is_nan() {
-            return Err(Refusal::NanLoss);
+            return Err(ArchiveRefusal::NanLoss);
         }
         // -0.0 + 0.0 is +0.0, and every other value is unchanged.
         let loss = candidate.loss + 0.0;
@@ -191,8 +191,8 @@ impl Archive {
         for candidate in candidates {
             match Member::admit(candidate) {
                 Ok(member) => pool.push(member),
-                Err(Refusal::NanLoss) => receipt.nan_refused += 1,
-                Err(Refusal::HardFault) => receipt.hard_refused += 1,
+                Err(ArchiveRefusal::NanLoss) => receipt.nan_refused += 1,
+                Err(ArchiveRefusal::HardFault) => receipt.hard_refused += 1,
             }
         }
         self.members = front(&pool);
