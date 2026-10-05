@@ -191,3 +191,22 @@ impl ScalarProducerProfile {
 
 // B05–B07: strict typed admission for producer-bound model readers.
 mod admission;
+
+// B05–B07: explicit Experimental selectors; old shipped profiles stay intact.
+pub fn scalar_producer_profiles(
+    carrier: ScalarCarrier,
+    width: usize,
+) -> Result<Vec<ScalarProducerProfile>, String> {
+    [
+        ScalarProducerKind::InverseLinks,
+        ScalarProducerKind::StableExponentials,
+        ScalarProducerKind::NumericalPolicy,
+        ScalarProducerKind::All,
+    ]
+    .into_iter()
+    .map(|kind| ScalarProducerProfile::new(kind, carrier, width))
+    .collect()
+}
+
+mod generation;
+pub use generation::ScalarCandidate;
