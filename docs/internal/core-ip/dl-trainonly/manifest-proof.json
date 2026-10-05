@@ -1,0 +1,44 @@
+{
+  "completeness_exit_status": 1,
+  "empty_completeness": {
+    "complete": false,
+    "counts": {
+      "cancelled": 0,
+      "complete": 0,
+      "failed": 0,
+      "unknown": 0
+    },
+    "evidence_scope": "offline pinned custody; remote GET/authentication are separate qualification",
+    "execution_admitted": false,
+    "expected": 29238,
+    "invalid": [],
+    "manifest_sha256": "64132b9681c9fcb09973c95008550a2a85c6cbcfaed7293562635a9da02c2006",
+    "missing": 29238,
+    "schema": "jope.dl-output-completeness/v1"
+  },
+  "encoder_pins": {
+    "bytes": 7123,
+    "sha256": "cad5f2426a1f32424ce0687af244f69acabf5cbcaa6f4cbc7915886495df4a49"
+  },
+  "execution_admitted": false,
+  "generation_exit_status": 0,
+  "generator": {
+    "sha256": "346922aff7f8a25d9e50db63edeb1b993322f3072c558a2e622aa8076d993ab8"
+  },
+  "manifest": {
+    "bytes": 25655376,
+    "contexts": 4873,
+    "encoder_outputs": 29238,
+    "manifest_content_sha256": "64132b9681c9fcb09973c95008550a2a85c6cbcfaed7293562635a9da02c2006",
+    "manifest_file_sha256": "03a5a4cd066c0a6d4a8d36b2c98e15be846d72dcb10bc29dd31ba82e4339eab0",
+    "sha256": "03a5a4cd066c0a6d4a8d36b2c98e15be846d72dcb10bc29dd31ba82e4339eab0"
+  },
+  "repeat_generation_exit_status": 2,
+  "schema": "jope.dl-manifest-generation-proof/v1",
+  "scope": "real source identity inventory; new output manifest unbound, no encoding or remote publication",
+  "source_receipts": {
+    "bytes": 6480176,
+    "datasets": 1006,
+    "sha256": "c2a4654898968866a5f0eb5647d8d8d02ec60c61f0e004b7b71e6f887439ec29"
+  }
+}

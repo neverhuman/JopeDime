@@ -1,0 +1,181 @@
+{
+  "encoders": {
+    "context2048": {
+      "assembly": "Hyperion512 + frozen projected Foundation1024 + Target512; current historical worker does not clip; accepted policy ABI clips +-32 separately",
+      "assets": {
+        "context_transforms": {
+          "bucket": "veox-jopedime-models-use2",
+          "bytes": 8413808,
+          "key": "blobs/sha256/1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+          "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+          "version_id": "Lez5lBYO4WVZR2ex.gn4so1rLAo.Z4cw"
+        }
+      },
+      "depends_on": [
+        "hyperion",
+        "foundation",
+        "target"
+      ],
+      "dimension": 2048,
+      "exposure_status": "historical exposure not fully resolved",
+      "research_only": false,
+      "runs_on": "gpu",
+      "runtime_source": {
+        "bytes": 13410,
+        "sha256": "880bd9acd9c9fe5fe82e46f0cd14d079d448c0bb5cf96fbfbcd7cda8cf7e02eb"
+      },
+      "v2_qualification": "not executed"
+    },
+    "dope": {
+      "assets": {
+        "binary": {
+          "bytes": 9530432,
+          "sha256": "c972c631c7c1053436ba31a088e223a9d394078bdb46148bdcc8f63e2487b5f8"
+        },
+        "router-evidence.json": {
+          "bytes": 530,
+          "sha256": "7059ec3c2463b5cd2962107e4936b2bc0b281e90746aa083d97a5e6ad8fdd7f1"
+        },
+        "router.bundle.json": {
+          "bytes": 828848,
+          "sha256": "9c973d6b89a2ec5987b53b161532d16a79437e8dd94e9568722bdd5240d51dd7"
+        },
+        "training-report.json": {
+          "bytes": 350970,
+          "sha256": "29d495d114cf2c0cf63d1143b3e37574e8e248122674322b3a889a3fcd2f5c3f"
+        }
+      },
+      "dimension": 4168,
+      "exposure_status": "holdout-family overlap inventory pending",
+      "method": "attention-small",
+      "research_only": false,
+      "router_training_labels": 504,
+      "router_training_lineages": 19,
+      "runs_on": "cpu",
+      "source_commit": "63696a5db246abf9c85343c12a5d8c5522fb864a",
+      "v2_qualification": "CPU build only; no encoding performed"
+    },
+    "foundation": {
+      "assets": {
+        "starlight_config": {
+          "bytes": 765,
+          "sha256": "4acacec8c148702e07147452e3e13dad586bd40f90878a3bbac8355753978acb"
+        },
+        "starlight_core_regressor_identity": {
+          "bucket": "veox-jopedime-models-use2",
+          "bytes": 233183532,
+          "key": "blobs/sha256/f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+          "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+          "version_id": "wU5wqKRNL1IRgtBuS.9JnqnN9eVpHZHm"
+        }
+      },
+      "dimension": 2048,
+      "exposure_status": "historical exposure not fully resolved",
+      "provider": "Starlight TabPFNv3, raw target-conditioned 2048; projection separate",
+      "research_only": false,
+      "runs_on": "gpu",
+      "runtime_source": {
+        "bytes": 9818,
+        "sha256": "ff41938421be0ab2312db8bbfb6497c6dc7d0eb7164eb1cfea4af04cfd0965b5"
+      },
+      "v2_qualification": "not executed"
+    },
+    "hyperion": {
+      "assets": {
+        "hyperion_v5_arm_b_identity": {
+          "bucket": "veox-jopedime-models-use2",
+          "bytes": 6650692,
+          "key": "blobs/sha256/88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+          "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+          "version_id": "6_zLiTSpAypF_ed34kqL2d0992lurWxO"
+        },
+        "hyperion_v5_arm_b_runtime_manifest": {
+          "bucket": "veox-jopedime-models-use2",
+          "bytes": 264,
+          "key": "blobs/sha256/ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+          "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+          "version_id": "1r7KdftZTjVDNptA8YybsLIVBtHusjRC"
+        }
+      },
+      "dimension": 512,
+      "exposure_status": "historical exposure not fully resolved",
+      "lineage": "v5_armB",
+      "native_rng_equivalence_qualified": false,
+      "recipe": "gpu-v5-row-sweep-pcg-v1",
+      "research_only": false,
+      "runs_on": "gpu",
+      "runtime_source": {
+        "bytes": 9818,
+        "sha256": "ff41938421be0ab2312db8bbfb6497c6dc7d0eb7164eb1cfea4af04cfd0965b5"
+      },
+      "v2_qualification": "not executed"
+    },
+    "tabpfn35": {
+      "assets": {
+        "checkpoint": {
+          "bytes": 876027932,
+          "sha256": "ece4d67eadfea42eb0e610df5189bea60cb7f31073d81e9c7a019b76eacf0be3"
+        },
+        "encoder_source": {
+          "bytes": 3967,
+          "sha256": "eb3262e272ba58c681a5deceb024785e57c0acd5d6de00c98bf0807a4dbf7ab2"
+        },
+        "model_license": {
+          "bytes": 16905,
+          "sha256": "9570fdd687bb76ed45499412ad57d6ba949848e6d731f1242572bb57f2f73ae1"
+        }
+      },
+      "dimension": 2048,
+      "dimension_status": "historical saved-array audit; v2 ABI not yet executed",
+      "exposure_status": "unknown pretrained exposure",
+      "installed_runtime_receipt": {
+        "bytes": 440,
+        "sha256": "3d9a250a5652d62ca0730b69ac20c926ca2020c881de4a0cb8f5ea6ef90e3d0a"
+      },
+      "model_revision": "06bf2ba35c80a92a3b9abb436b99cf49e7a0365e",
+      "pooling": "normalized mean+std of normalized post-ICL output_norm row embeddings",
+      "production_loader_allowed": false,
+      "research_only": true,
+      "rights": "research evaluation only; competitive-model training not cleared",
+      "row_dimension": 1024,
+      "runs_on": "gpu",
+      "source_commit": "3402f75dc19a980db899c6a5c4018bd2718a6de6",
+      "source_receipt": {
+        "bytes": 49979,
+        "sha256": "6e89e0854eb37ad80cc0b4908adf509402db22d08d35bb1f7b09c16670268645"
+      },
+      "v2_qualification": "not executed"
+    },
+    "target": {
+      "assets": {
+        "target_encoder_fused_v1_identity": {
+          "bucket": "veox-jopedime-models-use2",
+          "bytes": 78615176,
+          "key": "blobs/sha256/be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+          "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+          "version_id": "XTTiITZb5MZVhsBmUVv1mEMyPQxfWjYe"
+        },
+        "target_encoder_fused_v1_metadata": {
+          "bucket": "veox-jopedime-models-use2",
+          "bytes": 40915,
+          "key": "blobs/sha256/3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+          "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+          "version_id": "q46RFzbRy2Jk7PKe27PCoS7bk0G5.KwJ"
+        }
+      },
+      "dimension": 512,
+      "exposure_status": "historical exposure not fully resolved",
+      "research_only": false,
+      "runs_on": "gpu",
+      "runtime_source": {
+        "bytes": 9818,
+        "sha256": "ff41938421be0ab2312db8bbfb6497c6dc7d0eb7164eb1cfea4af04cfd0965b5"
+      },
+      "structural_zero_dimensions": 376,
+      "v2_qualification": "not executed"
+    }
+  },
+  "execution_admitted": false,
+  "schema": "jope.dl-encoder-pins/v1",
+  "scope": "immutable asset identity; v2 input semantics and live qualification remain separate"
+}

@@ -1,0 +1,42 @@
+{
+  "binary": {
+    "bytes": 9530432,
+    "sha256": "c972c631c7c1053436ba31a088e223a9d394078bdb46148bdcc8f63e2487b5f8"
+  },
+  "cargo_lock": {
+    "bytes": 35812,
+    "sha256": "3eb1ed41110bfd4f8524e8a91c5d61021a43e7b3d540ef3e61801374a720b216"
+  },
+  "command": "cargo +1.88.0 build --manifest-path <frozen-export>/Cargo.toml --target-dir <checkout>/target --offline --locked --release --no-default-features --bin dope-kernel -j 4 --message-format=json",
+  "dope-embed-help.txt": {
+    "bytes": 1027,
+    "sha256": "fb2bc7ebcc543d59ff966bbf0c2f6c84fb269df7b265c0cf39c9512c46b70570"
+  },
+  "dope-help.txt": {
+    "bytes": 1510,
+    "sha256": "c8a03c90e8cb81f583762f5e7908bb31d95776a138e16d99eeb8119842b9567d"
+  },
+  "execution_admitted": false,
+  "exit_status": 0,
+  "features": [],
+  "jobs": 4,
+  "memory_limit_bytes": 17179869184,
+  "network": "offline",
+  "nice": 10,
+  "qualification": "CPU compilation and help only; no encoder or training execution",
+  "recorded_at": "2026-10-05T17:43:07.280286+00:00",
+  "schema": "jope.dl-dope-cpu-build/v1",
+  "source_archive_sha256": "c587a81cd2d9f128bf059b1589716bd37e6160781112441d04b7c5a8668e6db0",
+  "source_commit": "63696a5db246abf9c85343c12a5d8c5522fb864a",
+  "stderr": {
+    "bytes": 3090,
+    "sha256": "d088e915900e292ecfce76560234d72ec6317d2236723924ec91b881eb5582e5"
+  },
+  "stdout": {
+    "bytes": 121088,
+    "sha256": "f0fb285c23c708f26c53d558aaf1db71353629457d859056aa4ef6be55ebbce1"
+  },
+  "timeout_seconds": 900,
+  "toolchain": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+  "verified_source_files": 834
+}
