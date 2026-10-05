@@ -155,3 +155,6 @@ impl MathExpr {
 }
 
 mod guarded;
+// B17 bounded LM constant fitting: staged with no caller until B11 and B16 merge (OWNER v1.3).
+#[cfg(test)]
+mod lm;
