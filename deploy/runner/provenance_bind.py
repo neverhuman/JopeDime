@@ -8,6 +8,7 @@ and other non-PR runs still require an exact match to the checkout under test.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -48,6 +49,76 @@ def bind_rev_from_env(environ: Optional[Mapping[str, str]] = None) -> Optional[s
                 payload.get("pull_request", {}).get("base", {}).get("sha", "") or ""
             ).strip()
     return bind_rev(event, base)
+
+
+def has_commit(repo: Path, rev: str) -> bool:
+    """True when rev names a commit whose objects are present in repo."""
+    return (
+        subprocess.run(
+            ["git", "cat-file", "-e", f"{rev}^{{commit}}"],
+            cwd=repo,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode
+        == 0
+    )
+
+
+def fetch_env(repo: Path, environ: Mapping[str, str]) -> dict:
+    """Environment for the base fetch.
+
+    actions/checkout runs with persist-credentials: false, so the clone carries no auth. When
+    JOPE_PROVENANCE_FETCH_TOKEN is set, pass it as an http.<server>/.extraheader through
+    GIT_CONFIG_* (never argv, never .git/config). An extraheader already configured for the
+    server wins, so two Authorization headers are never sent.
+    """
+    env = dict(os.environ)
+    token = environ.get("JOPE_PROVENANCE_FETCH_TOKEN", "")
+    if not token:
+        return env
+    server = (environ.get("GITHUB_SERVER_URL") or "https://github.com").rstrip("/")
+    key = f"http.{server}/.extraheader"
+    existing = subprocess.run(
+        ["git", "config", "--get-all", key],
+        cwd=repo,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    ).stdout.strip()
+    if existing:
+        return env
+    basic = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+    n = int(env.get("GIT_CONFIG_COUNT", "0") or "0")
+    env[f"GIT_CONFIG_KEY_{n}"] = key
+    env[f"GIT_CONFIG_VALUE_{n}"] = f"AUTHORIZATION: basic {basic}"
+    env["GIT_CONFIG_COUNT"] = str(n + 1)
+    return env
+
+
+def ensure_bind_rev(
+    repo: Path, environ: Optional[Mapping[str, str]] = None, remote: str = "origin"
+) -> Optional[str]:
+    """Make the bind rev readable on a shallow (depth-1) checkout, then return it.
+
+    A pull_request checkout of refs/pull/N/merge at the default depth holds only the merge
+    commit, so `git show <BASE_SHA>:path` would fail on a cold workspace. Fetch exactly the
+    base commit (--depth=1) instead of the full history. Non-PR runs bind to the worktree and
+    fetch nothing. A base that is still unreadable after the fetch fails closed.
+    """
+    env = environ if environ is not None else os.environ
+    rev = bind_rev_from_env(env)
+    if rev is None or has_commit(repo, rev):
+        return rev
+    subprocess.run(
+        ["git", "fetch", "--no-tags", "--no-recurse-submodules", "--depth=1", remote, rev],
+        cwd=repo,
+        env=fetch_env(repo, env),
+        stdout=sys.stderr,
+        check=True,
+    )
+    if not has_commit(repo, rev):
+        raise ValueError(f"PR base commit {rev} is not readable after fetching it")
+    return rev
 
 
 def parse_deployed_relpaths(common_sh: str) -> list[str]:
@@ -207,13 +278,17 @@ def main(argv: list[str] | None = None) -> int:
             flush=True,
         )
         return 0
+    if args[0] == "ensure-base":
+        rev = ensure_bind_rev(repo)
+        print(f"bind rev:       {rev or 'WORKTREE'} (readable)", flush=True)
+        return 0
     if args[0] == "digest":
         rev = None
         if len(args) > 1 and args[1] != "WORKTREE":
             rev = args[1]
         print(scripts_digest(repo, rev))
         return 0
-    raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|digest [REV]]")
+    raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|ensure-base|digest [REV]]")
 
 
 if __name__ == "__main__":
