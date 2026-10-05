@@ -7,7 +7,7 @@
 
 use super::codec::{Reader, Writer, MAX_BYTES};
 use super::export::{self, ExportReport, FittedBasis, Route};
-use super::scalar_program::ScalarExpressionProgram;
+use super::scalar_program::{ScalarCarrier, ScalarExpressionProgram, ScalarModel};
 // B08 ordered-state routing.
 use super::finite_difference::{
     DifferenceFittedCpp, DifferenceLanguage, DifferenceModel, DifferenceProgram, DifferenceRecipe,
@@ -296,6 +296,24 @@ pub enum VersionedProgram {
 }
 
 impl VersionedProgram {
+    /// Explicit numeric-input scalar fitting, with no v1 coercion.
+    pub fn fit_scalar(
+        &self,
+        training: &crate::Rows,
+        labels: &[f64],
+        carrier: ScalarCarrier,
+        lambda: f64,
+    ) -> VersionResult<VersionedModel> {
+        match self {
+            Self::ScalarV2(program) => Ok(VersionedModel::ScalarV2(Box::new(
+                program.fit_training(training, labels, carrier, lambda)?,
+            ))),
+            _ => Err(VersionError::UnsupportedVersion(
+                "program has no scalar fit route".into(),
+            )),
+        }
+    }
+
     /// Ordered recipes carry their explicit input identity and continuation API.
     pub fn emit_ordered_recipe(
         &self,
@@ -642,9 +660,20 @@ pub enum VersionedModel {
     RowVectorV2(super::row_vector::Model),
     DifferenceV2(Box<DifferenceModel>),
     IntegrationV2(Box<super::cumulative_integration::IntegrationModel>),
+    ScalarV2(Box<ScalarModel>),
 }
 
 impl VersionedModel {
+    /// Scalar predictions retain per-row faults and do not update fit state.
+    pub fn predict_scalar(&self, rows: &crate::Rows) -> VersionResult<(Vec<f64>, Vec<u32>)> {
+        match self {
+            Self::ScalarV2(model) => Ok(model.predict(rows)?),
+            _ => Err(VersionError::UnsupportedVersion(
+                "model has no scalar prediction route".into(),
+            )),
+        }
+    }
+
     /// Fitted ordered export starts each caller from the captured continuation.
     pub fn emit_ordered_fitted_cpp17(&self) -> VersionResult<DifferenceFittedCpp> {
         match self {
@@ -675,6 +704,13 @@ impl VersionedModel {
         }
         let value: Value = serde_json::from_str(json)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
+        // B05–B07: scalar envelope reader runs before any legacy dispatch.
+        if value.get("schema").and_then(Value::as_str) == Some(super::scalar_program::MODEL_SCHEMA)
+        {
+            return ScalarModel::from_json(json)
+                .map(Box::new)
+                .map(Self::ScalarV2);
+        }
         // B12: tagged model ingress, with no v1 deserialization fallback.
         if value.get("schema").and_then(Value::as_str) == Some("feat-math.feature-row-model") {
             return super::row_vector::Model::from_json(json).map(Self::RowVectorV2);
@@ -717,6 +753,9 @@ impl VersionedModel {
     pub fn legacy_model(&self) -> VersionResult<&Model> {
         match self {
             Self::LegacyV1(model) => Ok(model),
+            Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
+                "v2 scalar model cannot decode as a v1 model".into(),
+            )),
             Self::RowVectorV2(_) => Err(VersionError::UnsupportedVersion(
                 "v2 row-vector model cannot decode as a v1 model".into(),
             )),

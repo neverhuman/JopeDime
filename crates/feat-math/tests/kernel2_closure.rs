@@ -1054,3 +1054,7 @@ mod scalar_model_v2;
 // B05–B07: compiled train/predict and immutable fitted artifacts.
 #[path = "scalar_v2/recipes.rs"]
 mod scalar_recipes_v2;
+
+// B05–B07: generic scalar model/fit routing closure.
+#[path = "scalar_routing_v2/mod.rs"]
+mod scalar_routing_v2;
