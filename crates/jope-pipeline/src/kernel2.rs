@@ -146,6 +146,8 @@ pub mod search;
 
 #[cfg(test)]
 mod cli_tests;
+#[cfg(test)]
+mod publication_tests;
 
 pub mod cli;
 pub mod publication;

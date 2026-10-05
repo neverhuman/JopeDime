@@ -37,6 +37,10 @@ pub fn publish(
         .iter()
         .map(Measurement::record)
         .collect::<Result<_>>()?;
+    // Two parents can refine to one program in a round, giving equal child
+    // measurements. Match by occurrence: the k-th child equal to a measurement
+    // takes the k-th equal observation, in the order the search recorded them.
+    let mut claimed = vec![false; searched.observations.len()];
     let refinements = searched
         .refinements
         .iter()
@@ -44,12 +48,15 @@ pub fn publish(
             let measurement = r
                 .measurement
                 .as_ref()
-                .map(|m| {
-                    searched
+                .map(|m| -> Result<usize> {
+                    let index = searched
                         .observations
                         .iter()
-                        .position(|o| o == m)
-                        .context("refined measurement missing from observations")
+                        .zip(&claimed)
+                        .position(|(o, &taken)| !taken && o == m)
+                        .context("refined measurement missing from observations")?;
+                    claimed[index] = true;
+                    Ok(index)
                 })
                 .transpose()?;
             let reason = (measurement.is_none() && r.refinement.failure.is_none())
@@ -345,8 +352,11 @@ fn check_refinements(
             let child = measurements
                 .get(index)
                 .context("refinement measurement index out of range")?;
+            // Publication assigns children by occurrence in the order the search
+            // measured them, so the recorded child indices strictly increase.
             ensure!(
-                measured.insert(index)
+                measured.last().is_none_or(|&last| index > last)
+                    && measured.insert(index)
                     && child.observation.origin == super::REFINE
                     && child.observation.genome == refinement.program
                     && refinement.evaluations > 0
