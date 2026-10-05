@@ -1,6 +1,21 @@
 use feat_math::kernel::scalar_program::{ScalarCarrier, ScalarProducerKind, ScalarProducerProfile};
 use serde_json::{json, Value};
 
+// Keep field order so each refusal checks the altered field, not map serialization.
+fn forge_canonical_field(text: &str, key: &str, value: &Value) -> String {
+    let declaration: Value = serde_json::from_str(text).unwrap();
+    let original = declaration.get(key);
+    let key = serde_json::to_string(key).unwrap();
+    let replacement = format!("{key}:{}", serde_json::to_string(value).unwrap());
+    if let Some(original) = original {
+        let original = format!("{key}:{}", serde_json::to_string(original).unwrap());
+        assert_eq!(text.matches(&original).count(), 1);
+        text.replacen(&original, &replacement, 1)
+    } else {
+        format!("{},{replacement}}}", text.strip_suffix('}').unwrap())
+    }
+}
+
 #[test]
 fn producer_controls_are_canonical_bound_and_component_isolated() {
     for kind in [
@@ -19,6 +34,10 @@ fn producer_controls_are_canonical_bound_and_component_isolated() {
                 profile.numerical_policy_disabled(),
             ] {
                 let declaration = profile.canonical_json();
+                assert_eq!(
+                    forge_canonical_field(&declaration, "class", &json!("experimental")),
+                    declaration
+                );
                 let restored = ScalarProducerProfile::from_canonical(&declaration).unwrap();
                 assert_eq!(restored.sha256(), profile.sha256());
                 assert_eq!(restored.carrier(), carrier);
@@ -29,7 +48,6 @@ fn producer_controls_are_canonical_bound_and_component_isolated() {
                     restored.base_profile().sha256(),
                     profile.base_profile().sha256()
                 );
-                let mut forged: Value = serde_json::from_str(&declaration).unwrap();
                 for (key, value) in [
                     ("schema", json!("unknown")),
                     ("revision", json!(2)),
@@ -50,16 +68,12 @@ fn producer_controls_are_canonical_bound_and_component_isolated() {
                     ("base_profile_sha256", json!("unknown")),
                     ("unknown", json!(true)),
                 ] {
-                    let before = forged.clone();
-                    forged[key] = value;
+                    let forged = forge_canonical_field(&declaration, key, &value);
+                    assert_ne!(forged, declaration);
                     assert!(
-                        ScalarProducerProfile::from_canonical(
-                            &serde_json::to_string(&forged).unwrap()
-                        )
-                        .is_err(),
+                        ScalarProducerProfile::from_canonical(&forged).is_err(),
                         "{key}"
                     );
-                    forged = before;
                 }
                 assert!(ScalarProducerProfile::from_canonical(&format!(" {declaration}")).is_err());
             }
@@ -117,13 +131,11 @@ fn producer_declarations_preserve_all_existing_profiles_and_width_limits() {
     );
     let p = ScalarProducerProfile::new(ScalarProducerKind::InverseLinks, ScalarCarrier::Row, 2)
         .unwrap();
-    let value: Value = serde_json::from_str(&p.canonical_json()).unwrap();
+    let declaration = p.canonical_json();
     for key in ["enable_stable_exponentials", "enable_numerical_policy"] {
-        let mut forged = value.clone();
-        forged[key] = json!(true);
+        let forged = forge_canonical_field(&declaration, key, &json!(true));
         assert!(
-            ScalarProducerProfile::from_canonical(&serde_json::to_string(&forged).unwrap())
-                .is_err(),
+            ScalarProducerProfile::from_canonical(&forged).is_err(),
             "{key}"
         );
     }
