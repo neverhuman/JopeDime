@@ -53,6 +53,30 @@ jope_runner_deployed_digest() {
   cat "${JOPE_RUNNER_DEPLOYED[@]}" | sha256sum | cut -d' ' -f1
 }
 
+# runc writes memory.swap.max=0 for --memory-swap == --memory, but registers the transient
+# docker-<id>.scope with MemorySwapMax=infinity (it omits the property when the v2 swap value
+# is 0). Any later systemd re-apply of that scope (daemon-reload, enable/disable, provision.sh)
+# then flips the live listener to swap=max and verify-container.py rejects its next job. Record
+# the cap in systemd itself so a re-apply keeps swap=0. Fails closed: a listener whose cap cannot
+# be recorded is killed before a job relies on it.
+jope_runner_pin_swap() { # <container name>
+  local name=${1:?container name required} id='' i
+  for ((i = 0; i < 120; i++)); do
+    id=$(docker inspect --format '{{if .State.Running}}{{.Id}}{{end}}' "$name" 2>/dev/null) || id=''
+    [[ -n $id ]] && break
+    sleep 0.5
+  done
+  [[ -n $id ]] || { echo "swap pin: container $name is not running" >&2; return 2; }
+  if systemctl set-property --runtime "docker-$id.scope" MemorySwapMax=0 &&
+     [[ $(systemctl show "docker-$id.scope" -p MemorySwapMax --value) == 0 ]]; then
+    echo "swap pin: docker-$id.scope MemorySwapMax=0"
+    return 0
+  fi
+  echo "swap pin: could not record MemorySwapMax=0 for $name; killing it" >&2
+  docker kill "$name" >/dev/null 2>&1 || true
+  return 2
+}
+
 # Fixed host allocation enforces exclusivity among this repository's runner jobs.
 # Historical GPU/kernel/ci3/ci4 lanes remain unavailable in this CPU foundation.
 jope_runner_role() { # <host> <lane>; callers use actual hostname, never a job variable

@@ -178,6 +178,59 @@ source deploy/runner/run.sh ci
                     self.assertEqual(expected, result.returncode, result.stderr)
 
 
+class SwapPinTests(unittest.TestCase):
+    """runc leaves docker-<id>.scope at MemorySwapMax=infinity; a daemon-reload then re-applies
+    swap=max to live listeners. The launcher must record MemorySwapMax=0 in systemd, or kill."""
+    script = r'''docker() {
+  echo "docker $*" >> "$fixture_log"
+  case $1 in inspect) printf '%s\n' "$fixture_id";; kill) return 0;; *) return 91;; esac
+}
+systemctl() {
+  echo "systemctl $*" >> "$fixture_log"
+  case $1 in set-property) return "$fixture_set_rc";; show) printf '%s\n' "$fixture_show";; *) return 91;; esac
+}
+sleep() { :; }
+source deploy/runner/common.sh
+jope_runner_pin_swap xbabe2-full-fixture
+'''
+
+    def run_pin(self, cid, set_rc, show):
+        import os
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='swap-pin-', dir=scratch) as name:
+            log = Path(name) / 'calls'
+            log.touch()
+            env = dict(os.environ, fixture_log=str(log), fixture_id=cid,
+                       fixture_set_rc=str(set_rc), fixture_show=show)
+            result = subprocess.run(['bash', '-ec', self.script], cwd=ROOT, env=env,
+                                    capture_output=True, text=True)
+            return result, log.read_text().splitlines()
+
+    def test_records_zero_swap_in_systemd(self):
+        result, calls = self.run_pin('c0ffee', 0, '0')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn('systemctl set-property --runtime docker-c0ffee.scope MemorySwapMax=0', calls)
+        self.assertFalse([c for c in calls if c.startswith('docker kill')])
+
+    def test_fails_closed_when_systemd_does_not_hold_zero(self):
+        for set_rc, show in [(1, '0'), (0, 'infinity'), (0, '')]:
+            with self.subTest(set_rc=set_rc, show=show):
+                result, calls = self.run_pin('c0ffee', set_rc, show)
+                self.assertEqual(2, result.returncode)
+                self.assertIn('docker kill xbabe2-full-fixture', calls)
+
+    def test_absent_container_never_touches_systemd(self):
+        result, calls = self.run_pin('', 0, '0')
+        self.assertEqual(2, result.returncode)
+        self.assertFalse([c for c in calls if c.startswith('systemctl')])
+
+    def test_launcher_pins_every_listener_without_holding_locks(self):
+        run = (ROOT / 'deploy/runner/run.sh').read_text()
+        pin = run.index('jope_runner_pin_swap "$name" 8<&- 9>&- &\n')
+        self.assertLess(pin, run.index('| exec docker "${docker_args[@]}"'))
+        self.assertIn('--memory-swap "$JOPE_RUNNER_MEMORY"', run)
+
 class EmitterEvidenceTests(unittest.TestCase):
     def test_actual_lane_routes_emitter_output_to_run_evidence(self):
         import os
