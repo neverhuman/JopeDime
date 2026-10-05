@@ -311,8 +311,10 @@ const LEXICASE_REUSE_BLOCKER: &str =
 /// - transform prefixes that surrogates share on a fold are fitted once, through
 ///   [`model::fit_with_stage_cache`], whose hits return the output of the identical computation.
 ///
-/// Both key on canonical text, which prints a float within 1e-12 of an integer as that integer, so
-/// two surrogates that differ only there share one score (probability about 1e-12 per draw).
+/// Both key on the exact bits of every parameter, never on canonical text, which prints a float
+/// within 1e-12 of an integer as that integer: surrogates that print alike but differ in any bit
+/// are scored apart, as `Refit` scores them. The search's own genome memo, which merges genomes
+/// whose whole canonical text matches, is unchanged and works the same in both modes.
 /// The ridge fit is the certified `RidgeModel::fit` in both modes. Certified scoring applies to
 /// the surrogate search and needs [`FaultPolicy::Legacy`] ([`RidgeScoring::validate`]).
 /// [`Observer::on_scoring`] receives its counters after each generation.
@@ -2129,11 +2131,13 @@ fn score_unseen_with_cases(
 // B11 ridge scoring: begin
 /// The certified scorer of one surrogate search: the surrogate memo and the fold-scoped stage
 /// cache ([`RidgeScoring::Certified`]). Every score it returns is [`score_genome`]'s, bit for bit.
+/// Its keys pin the surrogate and the stage chain, not the data: they are sound because one scorer
+/// serves one search run, whose rows, labels, folds and case rows are fixed.
 struct CertifiedScoring {
     cache: crate::stage_cache::StageCache,
-    /// Surrogate text to its fold scores and, when lexicase cases are kept, its residuals on the
-    /// run's case rows (fixed for the run).
-    memo: HashMap<String, ScoredCases>,
+    /// A surrogate's exact key ([`exact_surrogate_key`]) to its fold scores and, when lexicase
+    /// cases are kept, its residuals on the run's case rows (fixed for the run).
+    memo: HashMap<Vec<u8>, ScoredCases>,
     candidates: u64,
     reuses: u64,
 }
@@ -2164,22 +2168,22 @@ impl CertifiedScoring {
         cases: &mut HashMap<String, Vec<f64>>,
     ) -> Vec<(String, DslExpr, Option<Vec<f64>>)> {
         let surrogates: Vec<DslExpr> = unseen.iter().map(|(_, g)| search_surrogate(g)).collect();
-        let texts: Vec<String> = surrogates.iter().map(DslExpr::to_string).collect();
+        let exact: Vec<Vec<u8>> = surrogates.iter().map(exact_surrogate_key).collect();
         let mut queued = std::collections::HashSet::new();
-        let todo: Vec<(String, DslExpr)> = surrogates
+        let todo: Vec<(Vec<u8>, DslExpr)> = surrogates
             .into_iter()
-            .zip(&texts)
-            .filter(|(_, text)| !self.memo.contains_key(*text) && queued.insert((*text).clone()))
-            .map(|(surrogate, text)| (text.clone(), surrogate))
+            .zip(&exact)
+            .filter(|(_, id)| !self.memo.contains_key(*id) && queued.insert((*id).clone()))
+            .map(|(surrogate, id)| (id.clone(), surrogate))
             .collect();
         let cache = &self.cache;
-        let scored: Vec<(String, ScoredCases)> = todo
+        let scored: Vec<(Vec<u8>, ScoredCases)> = todo
             .into_par_iter()
-            .map(|(text, surrogate)| {
+            .map(|(id, surrogate)| {
                 let genome = GenomeIr::Pipeline(surrogate);
                 let scored =
                     score_surrogate_cached(&genome, x, y, assign, k, metric, cache, case_rows);
-                (text, scored)
+                (id, scored)
             })
             .collect();
         let computed = scored.len() as u64;
@@ -2188,9 +2192,9 @@ impl CertifiedScoring {
         self.reuses += unseen.len() as u64 - computed;
         unseen
             .into_iter()
-            .zip(texts)
-            .map(|((key, g), text)| {
-                let entry = &self.memo[&text];
+            .zip(exact)
+            .map(|((key, g), id)| {
+                let entry = &self.memo[&id];
                 if let (Some(_), Some((_, residuals))) = (case_rows, entry) {
                     cases.insert(key.clone(), residuals.clone());
                 }
@@ -2210,6 +2214,17 @@ impl CertifiedScoring {
             stage_misses,
         }
     }
+}
+
+/// The exact key of a surrogate: its stage count, then each stage's exact encoding (op and every
+/// parameter, floats as their IEEE-754 bits). Unlike canonical text, it separates surrogates that
+/// print alike but differ in any parameter bit.
+fn exact_surrogate_key(surrogate: &DslExpr) -> Vec<u8> {
+    let mut key = (surrogate.stages.len() as u64).to_le_bytes().to_vec();
+    for stage in &surrogate.stages {
+        crate::stage_cache::write_exact_stage(stage, &mut key);
+    }
+    key
 }
 
 /// [`score_genome_predictions`] for an already built surrogate, each fold fitted through the
@@ -7922,6 +7937,156 @@ mod ridge_scoring_tests {
         assert_eq!(bits(first[0].2.as_ref().unwrap()), bits(&legacy_scores));
         assert_eq!(bits(&cases[&b.to_string()]), bits(&legacy_cases));
         assert_eq!(bits(&cases[&a.to_string()]), bits(&legacy_cases));
+    }
+
+    #[test]
+    fn surrogates_that_print_alike_get_distinct_entries_and_their_own_scores() {
+        let (x, y) = fixture(5, 120);
+        let k = 3;
+        let assign: Vec<usize> = (0..y.len()).map(|i| i % k).collect();
+        let parse = |text: &str| match GenomeIr::parse(text).unwrap() {
+            GenomeIr::Pipeline(genome) => genome,
+            other => panic!("{other:?}"),
+        };
+        // Different heads, so the search's genome memo keeps them apart in both modes. Their
+        // surrogates differ only in gamma, 1.0 against 1.0 + 5e-13, which prints as 1.0: the same
+        // canonical text for two different computations.
+        let a = parse("(pipe X (standardize) (rff_cos gamma=1.0 n=8 seed=3 append=true) (gbm))");
+        let mut b =
+            parse("(pipe X (standardize) (rff_cos gamma=1.0 n=8 seed=3 append=true) (elasticnet))");
+        b.stages[1]
+            .params
+            .insert("gamma".to_string(), ParamValue::Float(1.0 + 5e-13));
+        assert_ne!(1.0f64.to_bits(), (1.0f64 + 5e-13).to_bits());
+        assert_ne!(a.to_string(), b.to_string());
+        let (sa, sb) = (search_surrogate(&a), search_surrogate(&b));
+        assert_eq!(sa.to_string(), sb.to_string());
+        assert_ne!(exact_surrogate_key(&sa), exact_surrogate_key(&sb));
+        let rows = lexicase_case_rows(y.len(), 7);
+        let mut scoring = CertifiedScoring::new();
+        let mut cases = HashMap::new();
+        let mut score = |g: &DslExpr| {
+            let scored = scoring.score_unseen(
+                vec![(g.to_string(), g.clone())],
+                &x,
+                &y,
+                &assign,
+                k,
+                &r2,
+                Some(&rows),
+                &mut cases,
+            );
+            let (_, misses, _) = scoring.cache.stats();
+            (scored[0].2.clone().unwrap(), misses)
+        };
+        let (first, misses_a) = score(&a);
+        let (second, misses_b) = score(&b);
+        // Two memo entries and no reuse; the shared standardize stage hits on every fold, while
+        // b's rff_cos block is computed afresh on every fold instead of reusing a's.
+        assert_eq!(
+            (scoring.candidates, scoring.reuses, scoring.memo.len()),
+            (2, 0, 2)
+        );
+        assert!(misses_b >= misses_a + k as u64, "{misses_a} -> {misses_b}");
+        // Each candidate gets exactly the score and cases Refit computes for it.
+        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+        for (genome, scores) in [(&a, &first), (&b, &second)] {
+            let (refit_scores, refit_cases) =
+                score_genome_cases(genome, &x, &y, &assign, k, &r2, &rows).unwrap();
+            assert_eq!(bits(scores), bits(&refit_scores));
+            assert_eq!(bits(&cases[&genome.to_string()]), bits(&refit_cases));
+        }
+    }
+
+    #[test]
+    fn print_alike_surrogates_that_run_different_programs_are_scored_apart_in_one_batch() {
+        let (x, y) = fixture(5, 120);
+        let k = 3;
+        let assign: Vec<usize> = (0..y.len()).map(|i| i % k).collect();
+        let parse = |text: &str| match GenomeIr::parse(text).unwrap() {
+            GenomeIr::Pipeline(genome) => genome,
+            other => panic!("{other:?}"),
+        };
+        // `k` = 2.0 and 2.0 - 5e-13 both print as 2.0, but `lag` truncates `k` to an integer, so
+        // the second surrogate runs lag 1, not lag 2: a different program with a different Refit
+        // score. A text key would hand it the first one's score.
+        let a = parse("(pipe X (lag k=2.0) (gbm))");
+        let mut b = parse("(pipe X (lag k=2.0) (elasticnet))");
+        b.stages[0]
+            .params
+            .insert("k".to_string(), ParamValue::Float(2.0 - 5e-13));
+        assert_eq!(
+            search_surrogate(&a).to_string(),
+            search_surrogate(&b).to_string()
+        );
+        let rows = lexicase_case_rows(y.len(), 7);
+        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+        let refit = |g: &DslExpr| score_genome_cases(g, &x, &y, &assign, k, &r2, &rows).unwrap();
+        let ((refit_a, _), (refit_b, _)) = (refit(&a), refit(&b));
+        assert_ne!(
+            bits(&refit_a),
+            bits(&refit_b),
+            "lag 2 and lag 1 must score apart"
+        );
+        let mut scoring = CertifiedScoring::new();
+        let mut cases = HashMap::new();
+        let scored = scoring.score_unseen(
+            vec![(a.to_string(), a.clone()), (b.to_string(), b.clone())],
+            &x,
+            &y,
+            &assign,
+            k,
+            &r2,
+            Some(&rows),
+            &mut cases,
+        );
+        assert_eq!(
+            (scoring.candidates, scoring.reuses, scoring.memo.len()),
+            (2, 0, 2)
+        );
+        assert_eq!(bits(scored[0].2.as_ref().unwrap()), bits(&refit_a));
+        assert_eq!(bits(scored[1].2.as_ref().unwrap()), bits(&refit_b));
+    }
+
+    #[test]
+    fn certified_search_scores_print_alike_seeds_as_refit_does() {
+        // The independent review's probe: both lag stages print as (lag k=2.0), but lag reads k by
+        // truncation, so the first seed lags by one column and the second by two. Their whole
+        // surrogates differ, so only the stage cache can confuse them; it keys on exact bits.
+        let seeds = [
+            "(pipe X (lag k=1.9999999999995) (standardize) (ridge))",
+            "(pipe X (lag k=2.0) (sigmoid) (ridge))",
+        ];
+        let (x, y) = fixture(3, 180);
+        let run = |scoring: RidgeScoring, threads: usize| {
+            let cfg = EvolveConfig {
+                pop: 3,
+                gens: 1,
+                seed: 0xB11,
+                max_transforms: 3,
+                seed_genomes: seeds.iter().map(|seed| seed.to_string()).collect(),
+                ridge_scoring: scoring,
+                ..EvolveConfig::default()
+            };
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(threads)
+                .build()
+                .unwrap();
+            dump(&pool.install(|| evolve(&x, &y, &r2, &cfg, &Log::default())))
+        };
+        let refit = run(RidgeScoring::Refit, 1);
+        // Both seeds are scored and ranked, each under its canonical text.
+        for seed in seeds {
+            let canonical = GenomeIr::parse(seed).unwrap().canonical();
+            assert!(
+                refit.iter().any(|(dsl, _, _)| *dsl == canonical),
+                "{canonical}"
+            );
+        }
+        assert_eq!(run(RidgeScoring::Certified, 1), refit);
+        for _ in 0..3 {
+            assert_eq!(run(RidgeScoring::Certified, 4), refit);
+        }
     }
 
     #[test]

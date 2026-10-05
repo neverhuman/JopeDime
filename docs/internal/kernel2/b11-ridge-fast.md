@@ -37,28 +37,46 @@ position.
 
 `EvolveConfig::ridge_scoring` is `RidgeScoring::Refit` by default, which leaves the search
 unchanged. `RidgeScoring::Certified` returns the same fold scores, and with lexicase the same
-cases, bit for bit, with less work (up to the text-key caveat below):
+cases, bit for bit, with less work:
 
 - **Surrogate memo.** The score depends only on the ridge surrogate the search fits
-  (`search_surrogate`), which drops the head and caps the knobs. Candidates whose surrogates print
-  the same text therefore reuse one score. Head-only mutations are the common case. The memo holds
+  (`search_surrogate`), which drops the head and caps the knobs. Candidates with exactly the same
+  surrogate therefore reuse one score. Head-only mutations are the common case. The memo holds
   the fold scores, plus the residuals on the run's fixed lexicase case rows.
 - **Stage cache.** Each fold fit goes through `model::fit_with_stage_cache`, keyed by the fold, the
-  fold count and the chain of canonical stage texts. A hit returns the output of the identical
+  fold count and the chain of exact stage encodings. A hit returns the output of the identical
   computation, so shared transform prefixes are fitted once per fold. The cache's counted bytes
   never pass its 1 GiB budget, not even within a generation. They are the f64 payload and the
   serialized fit, not allocation overhead. A full cache refuses new keys until a
   generation-boundary sweep drops the entries a whole generation passed without using, and a
   refused key is recomputed on its next miss, with identical bits.
-- **A change to the shared `StageCache`.** Before B11 it admitted any entry no larger than the
-  whole budget, could pass the budget within a generation, and evicted oldest-first at the next
-  sweep. Its other users still get the same values; only which entries stay resident, and so the
-  hit counts, can differ.
-- **Text keys.** The memo and the stage cache key on canonical text, and a float within 1e-12 of an
-  integer prints as that integer. Two surrogates that differ only there therefore share one score,
-  where `Refit` would fit each. The legacy genome memo merges such genomes only when their whole
-  text matches, so Certified merges more of them, for example two genomes with different heads. A
-  random draw lands within 1e-12 of an integer with probability about 1e-12.
+- **Exact keys.** The memo and the stage cache key on each stage's exact encoding: its op and every
+  parameter in key order, length-prefixed and type-tagged, with every float as its IEEE-754 bits.
+  They never key on canonical text, which prints a float within 1e-12 of an integer as that
+  integer, so two different computations can print alike. Surrogates that print alike but differ
+  in any bit are therefore scored apart, as `Refit` scores them. Regression tests pin this for
+  `gamma` = 1.0 against 1.0 + 5e-13, and for `lag k` = 2.0 against 2.0 - 5e-13, which `lag`
+  truncates to 2 and 1: two different programs that print alike. Further tests pin floats within
+  1e-12 of zero, two NaNs and strings that read as numbers or bools apart in the stage cache, a
+  cached fit of `symlog c` = 1.0 + 5e-13 equal to its plain fit, and, through the whole search on
+  one thread and on four, the independent review's two `lag` seeds that print alike scored as
+  `Refit` scores them. The memo keys on the encodings themselves; a stage-cache key is the
+  SHA-256 of its length-prefixed fields, so two different chains share one only through a
+  SHA-256 collision. Neither key holds the data: one scorer serves one search run, whose rows,
+  labels, folds and case rows are fixed. The search's own genome memo, which merges genomes whose
+  whole canonical text matches, is unchanged and acts identically in both modes, so it never
+  makes them differ.
+- **Changes to the shared `StageCache`.** Two. Its other users are the campaigns' `exact_cv`
+  command, which uses it unless `JOPE_STAGE_CACHE=0`, and the train-only study.
+  - Its keys are exact. Before B11 two stages that printed alike shared one entry, so the second
+    could receive the first's block instead of its own; now each gets its own computation. The
+    key's domain tag moved from `jope-stage-cache.v1` to `v2`. Keys live only in memory. The
+    other users evaluate only genomes parsed from canonical text that prints back to itself, so
+    exact keys group their stages exactly as text did: nothing they compute or count changes.
+  - Its budget holds at insert. Before B11 it admitted any entry no larger than the whole budget,
+    could pass the budget within a generation, and evicted oldest-first at the next sweep. Its
+    other users still get the same values; only which entries stay resident, and so the hit
+    counts, can differ.
 - **Order and threads.** Distinct surrogates are scored once each, in candidate order. The result
   is the same on one thread and on four. `Observer::on_scoring` reports `candidates` and
   `surrogate_reuses`, which follow the candidate stream alone. It also reports the stage-cache
@@ -99,9 +117,19 @@ serialized model or search stream changes.
 
 ## Evidence and benches
 
-Timing evidence is under `/home/ubuntu/jope-evidence/kernel2/bt/B11_RIDGE_FAST/`. Each session
-records the head it measured and the host load; the pull request lists every session. There are
-three `#[ignore]`d timing benches, all unit tests in `kernel/ridge_fast.rs`:
+This note quotes no speedup. Timing evidence is under
+`/home/ubuntu/jope-evidence/kernel2/bt/B11_RIDGE_FAST/`. Every session ran on xbabe2 (128 CPUs,
+shared with other lanes). The later sessions (`bench-final/session-*/`) ran through
+`bench-final/bench-final.sh`, which builds the head's unit tests and the parent's harness
+(`bench-final/parent_throughput.rs`) in release mode and runs the same tests with
+`--ignored --exact`. Each session's `provenance.txt`, like the earlier end-to-end sessions'
+(`prep/e2e-*/provenance.txt`), records the head and parent it measured, the binaries' hashes and
+the host load. Sessions started after `bench-final.sh` gained its host line also record the host
+at run time; the first `bench-final` session carries it only as an annotation added afterwards,
+and the `prep/` sessions not at all. Sessions before exact keys measured earlier heads of this
+card; the pull request lists every session with the head it measured. The benches assert nothing
+about speed. There are three `#[ignore]`d timing benches, all unit tests in
+`kernel/ridge_fast.rs`:
 
 - the fast fit against the verbatim legacy loop at four widths (`B11_KERNEL` lines):
   `cargo test --release -p feat-math --lib kernel::ridge_fast::tests::kernel_benchmark -- --ignored --nocapture`;
