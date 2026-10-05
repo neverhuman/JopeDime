@@ -2204,6 +2204,14 @@
         "fitting",
         "export"
       ]
+    },
+    "python:deploy/lambda/training/teacher-v2/test_s1_budget.py": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "training"
+      ],
+      "reason": "S1 fixed-budget continuation and durable attempt accounting, with failures and initialization inside the owner ceiling."
     }
   },
   "baseline_triage": [

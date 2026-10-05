@@ -93,7 +93,9 @@
         "bash deploy/ci/test-real-corpus-lane.sh",
         "bash deploy/release/test-release.sh",
         "bash deploy/ci/lambda.sh",
-        "bash deploy/ci/test-bump.sh"
+        "bash deploy/ci/test-bump.sh",
+        "python3 deploy/lambda/training/teacher-v2/test_s1_budget.py",
+        "python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out \"$JOPE_LANE_EVIDENCE/s1-mutants\""
       ]
     },
     "rust-check": {
@@ -7960,6 +7962,16 @@
       ],
       "dispositions": [],
       "scope": "Persisted B09 calibration-winner byte/text round-trip; read-only boundary fixtures; separately compiled Rust O0/O3 and C++17 O2/O3 outputs versus evaluator bits and typed refusals. No runtime or frozen fixture changes; depends on B09 admission."
+    },
+    "python:deploy/lambda/training/teacher-v2/test_s1_budget.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of fixed-equal S1 continuation, attempt reservation, failure accounting, deadline and recovery; synthetic only."
     }
   }
 }

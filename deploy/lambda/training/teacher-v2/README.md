@@ -1,3 +1,41 @@
+# S1 teacher engine and fixed-budget conformance
+
+Read [SCHEMA.md](SCHEMA.md) for the current S1 protocol and the retained historical
+record. The owner selected new search with inner-CV-only selection, 96 G0 slots
+and 18 equal generations of 64 attempts per context. Codex root owns the core
+landing; Claude dltrain-impl-v1 retains input preparation and its pilot.
+
+Run CPU conformance from the repository root, reusing its target:
+
+```sh
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.toml --target-dir target
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/island-engine/Cargo.toml --target-dir target
+python3 deploy/lambda/training/teacher-v2/test_s1_budget.py
+python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out /custody/s1-mutants
+```
+
+The mutation qualifier compiles the real source with one dependency violation
+at a time and requires the intended assertion to fail. A compile error, stale
+binary, zero-test result or unrelated failure cannot count as a killed mutant.
+It also checks channel-4 test-based and unbounded continuation mutations. Generated
+mutant files live under the reused target; tracked sources and historical copies
+are untouched. Hosted hygiene runs the budget tests, both standalone Rust
+workspaces through the existing Lambda lane, and the mutation qualifier.
+
+`s1_budget.py --plan PLAN --plan-sha256 SHA --ledger LEDGER [--request REQUEST]`
+checks pinned plan bytes and reserves a slot or reports current accounting.
+Plan fields are `contexts` (all 4,873 full SHA256 identities), `engine_sha256`,
+`worker_sha256` and `input_manifest_sha256`. Reservation fields are `attempt_id`,
+`context`, `ordinal` and `program`. Each context has ordinals 0..1247. Trusted
+producer authentication, staged rights exclusions, actual worker dispatch,
+resource yielding and shutdown/recovery need runtime qualification before G22.
+The tools do not launch training, GPU jobs, Lambda, or S3 writes.
+
+## Historical operation instructions
+
+The commands below describe the frozen September 29 campaign and its ignored
+orchestration copy. They do not dispatch or qualify S1.
+
 # Airfoil semantic-island Lambda campaign
 
 Read `SCHEMA.md` before operating this campaign. The safe sequence is:
