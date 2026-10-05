@@ -2421,10 +2421,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/README.md",
-      "tree_sha256": "8a098336fe41ef582de45f344770073a94a2ae7f0c4b1476537ab8d0a8298c3a",
+      "tree_sha256": "ce8b2322904bd9161d8d6fb50b50bc03ce591aeb94ae035f498dd8b7fff8c2c5",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner S1 grant and independent PR204 corrections: explicit ledger custody/resume"
+      "tree_change": "Owner S1 grant and PR204 review5420104980: strict assertion qualification and fresh receipt directories"
     },
     {
       "body": "teacher-v2",
@@ -2439,10 +2439,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/SCHEMA.md",
-      "tree_sha256": "2e790ab8e318a58ccf67b0548216a04c588e57596379fdb163dd23162f4e4df4",
+      "tree_sha256": "cfd0d1ed6bce8bdb0abf4f205b4cfe60ef0aa449af8ff8f9fb9e93d5c17a802c",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner S1 grant and independent PR204 corrections: CV commitment, timeout, history and ledger custody"
+      "tree_change": "Owner S1 grant and PR204 review5420104980: refuse legacy and duplicate live subjects before minting history"
     },
     {
       "body": "teacher-v2",
@@ -2594,10 +2594,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
-      "tree_sha256": "7c2d28ffa096828e96053225f525c9ed515fc10e13e7d7a17a492c4abedf398b",
+      "tree_sha256": "c44c01e74f6bbb9c0e36966b449fb5033066d88a872942429dd24161b9fb35c2",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner S1 grant and independent PR204 corrections: optional diagnostics and strict resume/seen admission"
+      "tree_change": "Owner S1 grant and PR204 review5420104980: all-status live admission, usable resume fixture and duplicate delivery refusal"
     },
     {
       "body": "teacher-v2",
@@ -3130,10 +3130,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/qualify_s1.py",
-      "tree_sha256": "c85510667500fb0ac65ee726ff45e5cbd52294d9962fcaaa334811b0ca6ae772",
+      "tree_sha256": "4e9a1dafdee0bf3bb3c7d0e5fca8cbb2208d74ce02b7e975b01aba87344cd316",
       "custody_tarball": null,
       "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
-      "tree_change": "Owner S1 grant and independent PR204 executable mutants: diagnostic availability/history/timeout"
+      "tree_change": "Owner S1 grant and PR204 review5420104980: exact assertion sites, fresh builds/receipts, legacy live and duplicate delivery mutants"
     }
   ],
   "excluded": [

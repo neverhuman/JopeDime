@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -57,6 +58,16 @@ MUTANTS = {
             'if test_rmse.is_none() { bail!("test diagnostic required") }\n        let gate = geo <= 0.90 && wins >= 5;',
             "missing_failed_or_malformed_test_diagnostics_cannot_censor_cv",
         ),
+        "duplicate_live_delivery": (
+            "if pending.is_none() {",
+            "if false {",
+            "legacy_failed_live_admission_cannot_mint_s1_history",
+        ),
+        "legacy_failed_live_admission": (
+            'if pack["schema"] != "jope.s1-invocation/v1"',
+            'if pack["schema"] != "jope.s1-invocation/v1"',
+            "legacy_failed_live_admission_cannot_mint_s1_history",
+        ),
         "legacy_failed_resume": (
             "validate_history(&value, &self.context)?;",
             "// legacy failed rows admitted",
@@ -88,11 +99,89 @@ MUTANTS = {
 }
 
 
+def intended_rust_failure(output, assertion, exit_code):
+    """A named failure alone does not prove the intended assertion was reached."""
+    section = re.search(
+        rf"---- tests::{re.escape(assertion)} stdout ----\n(.*?)\n\nfailures:",
+        output,
+        re.DOTALL,
+    )
+    if not section or exit_code == 0:
+        return False
+    panic = section.group(1)
+    markers = {
+        "missing_failed_or_malformed_test_diagnostics_cannot_censor_cv": [
+            "S1_ASSERT_DIAGNOSTIC_ADMISSION"
+        ],
+        "legacy_failed_live_admission_cannot_mint_s1_history": [
+            "S1_ASSERT_LEGACY_LIVE_ADMISSION",
+            "S1_ASSERT_REPLAY_REFUSED",
+        ],
+    }.get(assertion, [])
+    return (
+        "running 1 test\n" in output
+        and f"test tests::{assertion} ... FAILED" in output
+        and "test result: FAILED. 0 passed; 1 failed; 0 ignored;" in output
+        and (
+            re.search(r"assertion(?: .*?)? failed", panic) is not None
+            or any(marker in panic for marker in markers)
+        )
+    )
+
+
+def panic_is_in_intended_test(output, mutant, source, assertion):
+    declaration = re.search(rf"(?m)^    fn {re.escape(assertion)}\(", source)
+    if declaration is None:
+        return False
+    next_function = re.search(
+        r"(?m)^    (?:#\[test\]|fn )", source[declaration.end() :]
+    )
+    end = declaration.end() + next_function.start() if next_function else len(source)
+    first_line = source[: declaration.start()].count("\n") + 1
+    last_line = source[:end].count("\n") + 1
+    sites = re.findall(r"panicked at ([^\n]+):([0-9]+):[0-9]+:", output)
+    return (
+        len(sites) == 1
+        and Path(sites[0][0]).resolve() == mutant.resolve()
+        and first_line <= int(sites[0][1]) < last_line
+    )
+
+
+def intended_python_failure(output, exit_code):
+    return (
+        exit_code != 0
+        and "FAIL: test_fixed_equal_ignores_outer_test_for_every_stage" in output
+        and "AssertionError" in output
+        and "Ran 1 test" in output
+        and "FAILED (failures=1)" in output
+        and "ERROR:" not in output
+    )
+
+
+def check_failure_recognition():
+    # Reproduce the previous false kill: a FAILED label with an unrelated fixture panic.
+    name = "legacy_failed_resume_cannot_change_seen_programs"
+    template = f"running 1 test\ntest tests::{name} ... FAILED\n\nfailures:\n\n---- tests::{name} stdout ----\n\nthread 'x' panicked at fixture.rs:1187:34:\n{{panic}}\n\nfailures:\n    tests::{name}\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out\n"
+    assert not intended_rust_failure(
+        template.format(panic="index out of bounds: len is 0 but index is 0"), name, 101
+    )
+    assert intended_rust_failure(
+        template.format(panic="assertion failed: e.load_resume(&path).is_err()"),
+        name,
+        101,
+    )
+    assert not intended_python_failure(
+        "ERROR: test_fixed_equal_ignores_outer_test_for_every_stage\nAssertionError\nRan 1 test\nFAILED (errors=1)",
+        1,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    args.out.mkdir(parents=True, exist_ok=True)
+    args.out.mkdir(parents=True, exist_ok=False)
+    check_failure_recognition()
     target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target")).resolve()
     generated = target / "s1-mutants"
     generated.mkdir(parents=True, exist_ok=True)
@@ -140,13 +229,27 @@ os.execv(args[0],args)
         (args.out / f"{crate}-baseline.log").write_text(
             baseline.stdout + baseline.stderr
         )
-        if baseline.returncode != 0 or "test result: ok." not in baseline.stdout:
+        if (
+            baseline.returncode != 0
+            or "test result: ok." not in baseline.stdout
+            or re.search(r"running [1-9][0-9]* tests", baseline.stdout) is None
+        ):
             raise RuntimeError(f"{crate} baseline did not pass")
         for name, (old, new, assertion) in mutations.items():
             if text.count(old) != 1:
                 raise RuntimeError(f"mutant anchor changed: {name}")
             mutant = generated / f"{name}.rs"
             mutated = text.replace(old, new)
+            if name == "legacy_failed_live_admission":
+                start = mutated.index(
+                    '        if pack["schema"] != "jope.s1-invocation/v1"'
+                )
+                end = mutated.index('        if record["context_sha256"]', start)
+                mutated = (
+                    mutated[:start]
+                    + "        // mutant: legacy live records admitted\n"
+                    + mutated[end:]
+                )
             if name == "test_case_indices":
                 guard = 'bail!("S1: test case indices are not admitted")'
                 if mutated.count(guard) != 1:
@@ -184,33 +287,44 @@ os.execv(args[0],args)
                 for line in build.stdout.splitlines()
                 if line.startswith("{")
             ]
-            executables = [
-                a["executable"]
+            test_artifacts = [
+                a
                 for a in artifacts
                 if a.get("reason") == "compiler-artifact"
                 and a.get("executable")
                 and a.get("profile", {}).get("test")
                 and Path(a["target"]["src_path"]) == source
             ]
-            if len(executables) != 1:
-                raise RuntimeError(f"{name}: expected one compiled test executable")
+            if len(test_artifacts) != 1 or test_artifacts[0].get("fresh") is not False:
+                raise RuntimeError(
+                    f"{name}: expected one newly compiled test executable"
+                )
             run = subprocess.run(
-                [executables[0], "--test-threads=2"],
+                [
+                    test_artifacts[0]["executable"],
+                    "--exact",
+                    f"tests::{assertion}",
+                    "--test-threads=1",
+                ],
                 env=env,
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
             (args.out / f"{name}-test.log").write_text(run.stdout + run.stderr)
-            killed = (
-                run.returncode != 0
-                and f"test tests::{assertion} ... FAILED" in run.stdout
+            killed = intended_rust_failure(
+                run.stdout + run.stderr, assertion, run.returncode
+            ) and panic_is_in_intended_test(
+                run.stdout + run.stderr, mutant, mutated, assertion
             )
             results[name] = {
                 "compiled": True,
                 "test_exit": run.returncode,
                 "killed": killed,
                 "assertion": assertion,
+                "executed_tests": 1,
+                "panic_site_in_intended_test": killed,
+                "filter": "exact intended test; other tests excluded from this mutation experiment",
                 "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
                 "mutant_sha256": hashlib.sha256(mutant.read_bytes()).hexdigest(),
             }
@@ -244,9 +358,7 @@ os.execv(args[0],args)
             timeout=30,
         )
         (args.out / f"{name}-test.log").write_text(run.stdout + run.stderr)
-        killed = run.returncode != 0 and (
-            "FAIL:" in run.stderr or "ERROR:" in run.stderr
-        )
+        killed = intended_python_failure(run.stdout + run.stderr, run.returncode)
         results[name] = {
             "compiled": True,
             "test_exit": run.returncode,
@@ -255,7 +367,9 @@ os.execv(args[0],args)
         if not killed:
             raise RuntimeError(f"{name}: continuation mutant survived")
     proof = {
-        "schema": "jope.s1-mutant-proof/v1",
+        "schema": "jope.s1-mutant-proof/v2",
+        "failure_recognition_controls": 3,
+        "unrelated_panics_or_python_errors_counted_as_kills": 0,
         "results": results,
         "killed": len(results),
         "source_scope": "production scorer, comparator, semantic cache, evaluator and continuation; synthetic fixtures",
