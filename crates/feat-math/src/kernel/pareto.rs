@@ -12,9 +12,10 @@
 //! - A NaN loss and a Hard-faulted candidate are refused before any comparison and counted. `-0.0`
 //!   becomes `+0.0`. `+inf` is admitted and dominated by any finite loss at equal or lower
 //!   complexity.
-//! - Every sort uses the strict total order [`Member::order`]: loss (`total_cmp`), complexity, age,
-//!   faulted cells, then the identity key. No result depends on input order, and no comparator is
-//!   partial.
+//! - Every comparator is a strict total order, so no result depends on input order. Members with
+//!   an equal objective vector are settled the same way everywhere: fewer faulted cells, then the
+//!   identity key, then age. The front, survival ([`Member::order`]) and the archive reader all use
+//!   that tie order, so age never decides anything unless it is an objective.
 //! - The two-objective front is a sort-and-sweep, keeping a member iff its loss is strictly below
 //!   every simpler member's (SymbolicRegression.jl's `calculate_pareto_frontier`). It therefore
 //!   holds at most one member per complexity.
@@ -96,14 +97,15 @@ impl Member {
         f64::from_bits(self.loss)
     }
 
-    /// The strict total order behind every sort.
+    /// The strict total order behind survival selection: loss (`total_cmp`), complexity, then the
+    /// tie order of [`front`]: fewer faulted cells, the identity key, then age.
     pub fn order(&self, other: &Self) -> Ordering {
         self.loss()
             .total_cmp(&other.loss())
             .then(self.complexity.cmp(&other.complexity))
-            .then(self.age.cmp(&other.age))
             .then(self.faulted_cells.cmp(&other.faulted_cells))
             .then(self.key.cmp(&other.key))
+            .then(self.age.cmp(&other.age))
     }
 
     /// The objective vector: loss and complexity, and age when `with_age`. A missing age counts as
@@ -123,7 +125,7 @@ pub fn dominates(a: &[f64], b: &[f64]) -> bool {
 }
 
 /// The two-objective front of `members`, ordered by complexity, then (strictly decreasing) loss.
-/// Equal (loss, complexity) members are settled by faulted cells, then key.
+/// Equal (loss, complexity) members are settled by faulted cells, then key, then age.
 pub fn front(members: &[Member]) -> Vec<Member> {
     let mut sorted = members.to_vec();
     sorted.sort_by(|a, b| {
@@ -374,8 +376,11 @@ mod loss_bits {
 
     pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
         let text = String::deserialize(deserializer)?;
-        if text.len() != 16 {
-            return Err(serde::de::Error::custom("loss bits must be 16 hex digits"));
+        // Exactly the writer's form, so a read and a write give the same bytes.
+        if text.len() != 16 || !text.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')) {
+            return Err(serde::de::Error::custom(
+                "loss bits must be 16 lowercase hex digits",
+            ));
         }
         u64::from_str_radix(&text, 16).map_err(serde::de::Error::custom)
     }
@@ -391,8 +396,10 @@ mod key_hex {
 
     pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<[u8; 32], D::Error> {
         let text = String::deserialize(deserializer)?;
-        if text.len() != 64 || !text.bytes().all(|b| b.is_ascii_hexdigit()) {
-            return Err(serde::de::Error::custom("key must be 64 hex digits"));
+        if text.len() != 64 || !text.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')) {
+            return Err(serde::de::Error::custom(
+                "key must be 64 lowercase hex digits",
+            ));
         }
         let mut key = [0u8; 32];
         for (i, byte) in key.iter_mut().enumerate() {
@@ -588,12 +595,28 @@ mod tests {
         assert!(
             Archive::from_json(&json.replace(COST_VERSION, "feat-math.cost.stages.v1")).is_err()
         );
-        // A NaN and a -0.0 loss.
-        let first = format!("{:016x}", archive.members()[0].loss);
-        assert!(Archive::from_json(&json.replacen(&first, "7ff8000000000000", 1)).is_err());
-        assert!(Archive::from_json(&json.replacen(&first, "8000000000000000", 1)).is_err());
-        // A dominated member: the most complex member given the worst loss.
+        // A NaN or -0.0 loss. On the last member the front order still holds, and a lone member
+        // passes any front check, so only the reader's own guard can refuse these.
         let last = format!("{:016x}", archive.members().last().unwrap().loss);
+        let mut single = Archive::default();
+        single.update(&[candidate(std::f64::consts::PI, 0, 4)]);
+        let one = single.to_json();
+        let pi = format!("{:016x}", std::f64::consts::PI.to_bits());
+        for bad in ["7ff8000000000000", "fff8000000000000", "8000000000000000"] {
+            assert!(
+                Archive::from_json(&json.replacen(&last, bad, 1)).is_err(),
+                "{bad}"
+            );
+            assert!(
+                Archive::from_json(&one.replacen(&pi, bad, 1)).is_err(),
+                "{bad}"
+            );
+        }
+        // Another spelling of the same bits: upper case, or a sign in place of a leading zero.
+        assert!(last.starts_with('0') && last.bytes().any(|b| b.is_ascii_alphabetic()));
+        assert!(Archive::from_json(&json.replacen(&last, &last.to_uppercase(), 1)).is_err());
+        assert!(Archive::from_json(&json.replacen(&last, &format!("+{}", &last[1..]), 1)).is_err());
+        // A dominated member: the most complex member given the worst loss.
         assert!(Archive::from_json(&json.replacen(
             &last,
             &format!("{:016x}", 1e9f64.to_bits()),
@@ -612,6 +635,8 @@ mod tests {
             .collect();
         assert!(json.contains(&first_key));
         assert!(Archive::from_json(&json.replacen(&first_key, &first_key[2..], 1)).is_err());
+        let upper_key = format!("{}A", &first_key[..63]);
+        assert!(Archive::from_json(&json.replacen(&first_key, &upper_key, 1)).is_err());
     }
 
     #[test]
@@ -684,11 +709,59 @@ mod tests {
         // young copy of a dominated point enters the first front.
         let mut aged = members.clone();
         aged.push(member(9.5, 9, 0, 7));
-        let with_age = select_survivors(&aged, 7, true);
-        assert_eq!(with_age.len(), 7);
         let objectives: Vec<Vec<f64>> = aged.iter().map(|m| m.objectives(true)).collect();
         let rank = ranks(&objectives);
         assert_eq!(rank[6], 0, "the age-0 copy is non-dominated with age");
         assert!(rank[5] > 0);
+        // With age the first front {1, 2, 3, 4, 5, 7} is cut to five. The boundary vectors
+        // (1, 9, 1), (9, 1, 1) and (9.5, 9, 0) have infinite crowding, so the young copy 7
+        // survives.
+        let keys =
+            |survivors: Vec<Member>| -> Vec<u8> { survivors.iter().map(|m| m.key[31]).collect() };
+        assert_eq!(keys(select_survivors(&aged, 5, true)), vec![1, 5, 7, 2, 3]);
+        // Without age the first front {1, 2, 3, 4, 5} fills five exactly and 7 is cut: age stays
+        // out of the default path.
+        assert_eq!(keys(select_survivors(&aged, 5, false)), vec![1, 2, 3, 4, 5]);
+        for seed in 0..6 {
+            assert_eq!(
+                select_survivors(&shuffled(&aged, seed), 5, true),
+                select_survivors(&aged, 5, true)
+            );
+        }
+    }
+
+    #[test]
+    fn survivors_within_one_vector_prefer_fewer_faults_then_key_never_age() {
+        let member = |loss: f64, complexity: u32, age: Option<u32>, faults: u64, n: u8| {
+            Member::admit(&Candidate {
+                age,
+                faulted_cells: faults,
+                ..candidate(loss, complexity, n)
+            })
+            .unwrap()
+        };
+        let other = member(0.5, 9, Some(1), 0, 3);
+        // Without age, a young faulted member does not beat an old clean one, as in the front.
+        let faulted = member(1.0, 3, Some(1), 5, 1);
+        let clean = member(1.0, 3, Some(9), 0, 2);
+        assert_eq!(
+            select_survivors(&[faulted, clean, other], 2, false),
+            vec![other, clean]
+        );
+        assert_eq!(front(&[faulted, clean]), vec![clean]);
+        // Without age and with equal faults, the lower key wins, not the younger member.
+        let young = member(1.0, 3, Some(1), 0, 9);
+        let old = member(1.0, 3, Some(9), 0, 6);
+        assert_eq!(
+            select_survivors(&[young, old, other], 2, false),
+            vec![other, old]
+        );
+        // With age, a missing age and age 0 share a vector: faults decide, not the Option order.
+        let untracked = member(1.0, 3, None, 7, 4);
+        let newborn = member(1.0, 3, Some(0), 0, 5);
+        assert_eq!(
+            select_survivors(&[untracked, newborn, other], 2, true),
+            vec![other, newborn]
+        );
     }
 }
