@@ -42,6 +42,23 @@ fn maximum_width_checkpoint_and_gap_rejections_preserve_state() {
             child.clone(),
         )
         .unwrap();
+        let empty_fold = FoldBoundary::new("empty-wide", 1, 2).unwrap();
+        let empty = TimeGradientState::new(
+            Config::new(2, 75, width, 0.125).unwrap(),
+            TaskMode::Forecasting,
+            &input,
+            empty_fold.clone(),
+        )
+        .unwrap()
+        .to_bytes()
+        .unwrap();
+        assert_eq!(
+            TimeGradientState::from_bytes(&empty, TaskMode::Forecasting, &input, empty_fold)
+                .unwrap()
+                .to_bytes()
+                .unwrap(),
+            empty
+        );
         let bytes = p.to_bytes().unwrap();
         assert_eq!(
             TimeGradientProgram::from_bytes(&bytes)
