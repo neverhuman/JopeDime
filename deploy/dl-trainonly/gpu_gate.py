@@ -2,7 +2,9 @@
 
 import argparse
 import datetime as dt
+import hashlib
 import json
+import os
 import re
 import sqlite3
 from contextlib import contextmanager
@@ -12,7 +14,7 @@ HOSTS = frozenset({"xbabe1", "xbabe2", "xbabe3"})
 PLANNED_SECONDS = 16 * 3600
 HARD_SECONDS = 24 * 3600
 DEADLINE = dt.datetime(2026, 10, 10, tzinfo=dt.timezone.utc)
-PROTOCOL = "jope.dl-gpu-budget/v2"
+PROTOCOL = "jope.dl-gpu-budget/v3"
 MAX_OUTPUT_ATTEMPTS = 2
 
 
@@ -70,41 +72,71 @@ class Budget:
     An actual overrun is recorded and closes the ledger to new reservations.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, *, initialize=False):
         self.path = Path(path)
+        policy = json.dumps(
+            [
+                PROTOCOL,
+                sorted(HOSTS),
+                PLANNED_SECONDS,
+                HARD_SECONDS,
+                MAX_OUTPUT_ATTEMPTS,
+                DEADLINE.isoformat(),
+            ]
+        )
+        policy_sha256 = hashlib.sha256(policy.encode()).hexdigest()
+        self.marker = self.path.with_name(self.path.name + ".initialization.json")
+        if initialize:
+            # Marker survives lost/torn DB state; initialization is never recovery.
+            with self.marker.open("x") as marker:
+                marker.write(policy_sha256 + "\n")
+                marker.flush()
+                os.fsync(marker.fileno())
+            descriptor = os.open(
+                self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600
+            )
+            os.close(descriptor)
+            directory = os.open(self.path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        if (
+            self.path.is_symlink()
+            or self.marker.is_symlink()
+            or not self.path.is_file()
+            or not self.marker.is_file()
+        ):
+            raise Refusal(
+                "missing original ledger/initialization marker; restore custody, never reset"
+            )
+        if self.marker.read_text() != policy_sha256 + "\n":
+            raise Refusal("initialization marker differs from frozen policy")
         with self.connect() as db:
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS policy (id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL)"
-            )
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS jobs (job_id TEXT PRIMARY KEY, host TEXT NOT NULL, reserved INTEGER NOT NULL, actual INTEGER, outcome TEXT)"
-            )
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS attempts (job_id TEXT NOT NULL REFERENCES jobs(job_id), output_id TEXT NOT NULL, PRIMARY KEY(job_id, output_id))"
-            )
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS dispatches (job_id TEXT PRIMARY KEY REFERENCES jobs(job_id))"
-            )
-            policy = json.dumps(
-                [
-                    PROTOCOL,
-                    sorted(HOSTS),
-                    PLANNED_SECONDS,
-                    HARD_SECONDS,
-                    MAX_OUTPUT_ATTEMPTS,
-                    DEADLINE.isoformat(),
-                ]
-            )
-            db.execute("INSERT OR IGNORE INTO policy VALUES (1, ?)", (policy,))
-            if (
-                db.execute("SELECT value FROM policy WHERE id=1").fetchone()[0]
-                != policy
+            if initialize:
+                db.execute(
+                    "CREATE TABLE policy (id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL)"
+                )
+                db.execute(
+                    "CREATE TABLE jobs (job_id TEXT PRIMARY KEY, host TEXT NOT NULL, reserved INTEGER NOT NULL, actual INTEGER, outcome TEXT)"
+                )
+                db.execute(
+                    "CREATE TABLE attempts (job_id TEXT NOT NULL REFERENCES jobs(job_id), output_id TEXT NOT NULL, PRIMARY KEY(job_id, output_id))"
+                )
+                db.execute(
+                    "CREATE TABLE dispatches (job_id TEXT PRIMARY KEY REFERENCES jobs(job_id))"
+                )
+                db.execute("INSERT INTO policy VALUES (1, ?)", (policy,))
+            if db.execute("SELECT value FROM policy WHERE id=1").fetchone() != (
+                policy,
             ):
                 raise Refusal("persisted policy changed; cannot renew caps or deadline")
 
     @contextmanager
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=10)
+        db = sqlite3.connect(
+            self.path.resolve().as_uri() + "?mode=rw", uri=True, timeout=10
+        )
         try:
             db.execute("PRAGMA synchronous=FULL")
             db.execute("PRAGMA foreign_keys=ON")
@@ -261,11 +293,14 @@ def main():
         action="store_true",
         help="budget calculation only; not authorization",
     )
+    parser.add_argument(
+        "--initialize", action="store_true", help="first creation only; never recovery"
+    )
     args = parser.parse_args()
     try:
         print(
             json.dumps(
-                Budget(args.ledger).reserve(
+                Budget(args.ledger, initialize=args.initialize).reserve(
                     json.loads(args.job.read_bytes()), contingency=args.contingency
                 ),
                 sort_keys=True,

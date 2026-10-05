@@ -5,6 +5,7 @@ import copy
 import datetime as dt
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -30,7 +31,7 @@ class BudgetTests(Scratch):
     def setUp(self):
         super().setUp()
         self.path = self.root / "budget.sqlite"
-        self.budget = gate.Budget(self.path)
+        self.budget = gate.Budget(self.path, initialize=True)
 
     def job(self, identity="a", host="xbabe2", hours=1):
         return {
@@ -219,6 +220,53 @@ class BudgetTests(Scratch):
 
         with concurrent.futures.ThreadPoolExecutor(2) as pool:
             self.assertEqual(sorted(pool.map(attempt, ("a", "b"))), [False, True])
+
+    def test_missing_ledger_never_resets_charges(self):
+        self.reserve(self.job(hours=16))
+        saved = self.path.read_bytes()
+        self.path.unlink()
+        with self.assertRaisesRegex(gate.Refusal, "restore custody"):
+            gate.Budget(self.path)
+        self.assertFalse(self.path.exists())
+        with self.assertRaises(FileExistsError):
+            gate.Budget(self.path, initialize=True)
+        self.assertFalse(self.path.exists())
+        self.path.write_bytes(saved)
+        with self.assertRaises(gate.Refusal):
+            gate.Budget(self.path).reserve(self.job("b"), now=NOW)
+
+    def test_first_initialization_is_explicit_and_exclusive(self):
+        path = self.root / "another.sqlite"
+        with self.assertRaisesRegex(gate.Refusal, "restore custody"):
+            gate.Budget(path)
+        self.assertFalse(path.exists())
+        budget = gate.Budget(path, initialize=True)
+        budget.reserve(self.job(), now=NOW)
+        with self.assertRaises(FileExistsError):
+            gate.Budget(path, initialize=True)
+        self.assertEqual(
+            gate.Budget(path).reserve(self.job(), now=NOW)["charged_gpu_seconds"], 3600
+        )
+
+    def test_missing_after_open_never_recreates_database(self):
+        self.path.unlink()
+        with self.assertRaises(sqlite3.OperationalError):
+            self.reserve(self.job())
+        self.assertFalse(self.path.exists())
+
+    def test_missing_or_replaced_marker_refuses_resume(self):
+        marker = self.path.with_name(self.path.name + ".initialization.json")
+        saved = marker.read_bytes()
+        marker.unlink()
+        with self.assertRaisesRegex(gate.Refusal, "restore custody"):
+            gate.Budget(self.path)
+        marker.write_text("different plan\n")
+        with self.assertRaisesRegex(gate.Refusal, "marker differs"):
+            gate.Budget(self.path)
+        marker.write_bytes(saved)
+        self.assertTrue(
+            gate.Budget(self.path).reserve(self.job(), now=NOW)["new_reservation"]
+        )
 
     def test_changed_persisted_policy_refused(self):
         with self.budget.connect() as db:
