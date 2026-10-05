@@ -3,9 +3,9 @@
 //! Staged: `kernel/mod.rs` declares this module only under `#[cfg(test)]` until B17 merges and
 //! the search adapter is wired. Nothing outside its tests calls it.
 //!
-//! Every objective is minimized: the training-fold loss, an integer complexity measured under a
-//! recorded cost version, and, only when asked for, an age. The archive is the two-objective front
-//! (loss, complexity). Age enters only the opt-in survival selection
+//! Every objective is minimized: the training-fold loss, an integer complexity that the caller
+//! supplies under a recorded cost version, and, only when asked for, an age. The archive is the
+//! two-objective front (loss, complexity). Age enters only the opt-in survival selection
 //! ([`select_survivors`]), as in age-fitness Pareto optimization.
 //!
 //! Determinism rules:
@@ -15,7 +15,8 @@
 //! - Every comparator is a strict total order, so no result depends on input order. Members with
 //!   an equal objective vector are settled the same way everywhere: fewer faulted cells, then the
 //!   identity key, then age. The front, survival ([`Member::order`]) and the archive reader all use
-//!   that tie order, so age never decides anything unless it is an objective.
+//!   that tie order, so unless age is an objective it never outranks faulted cells or the key: it
+//!   only orders records of the same program.
 //! - The two-objective front is a sort-and-sweep, keeping a member iff its loss is strictly below
 //!   every simpler member's (SymbolicRegression.jl's `calculate_pareto_frontier`). It therefore
 //!   holds at most one member per complexity.
@@ -376,7 +377,7 @@ mod loss_bits {
 
     pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
         let text = String::deserialize(deserializer)?;
-        // Exactly the writer's form, so a read and a write give the same bytes.
+        // Exactly the writer's form: no other spelling of the same bits is read.
         if text.len() != 16 || !text.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')) {
             return Err(serde::de::Error::custom(
                 "loss bits must be 16 lowercase hex digits",
@@ -553,6 +554,29 @@ mod tests {
     }
 
     #[test]
+    fn a_finite_loss_dominates_infinity_at_equal_or_lower_complexity() {
+        for finite_complexity in [3, 1] {
+            let mut archive = Archive::default();
+            archive.update(&[
+                candidate(f64::INFINITY, 3, 1),
+                candidate(2.0, finite_complexity, 2),
+            ]);
+            assert_eq!(
+                summary(archive.members()),
+                vec![(finite_complexity, 2.0)],
+                "{finite_complexity}"
+            );
+        }
+        // Simpler than every finite loss, +inf stays on the front.
+        let mut archive = Archive::default();
+        archive.update(&[candidate(f64::INFINITY, 0, 1), candidate(2.0, 1, 2)]);
+        assert_eq!(
+            summary(archive.members()),
+            vec![(0, f64::INFINITY), (1, 2.0)]
+        );
+    }
+
+    #[test]
     fn equal_loss_and_complexity_prefer_fewer_faults_then_the_lower_key() {
         let mut archive = Archive::default();
         archive.update(&[
@@ -595,8 +619,9 @@ mod tests {
         assert!(
             Archive::from_json(&json.replace(COST_VERSION, "feat-math.cost.stages.v1")).is_err()
         );
-        // A NaN or -0.0 loss. On the last member the front order still holds, and a lone member
-        // passes any front check, so only the reader's own guard can refuse these.
+        // A NaN or -0.0 loss. A lone member passes any front check, and -0.0 on the last member
+        // keeps the front order, so only the reader's own guard refuses those; a NaN on the last
+        // member also breaks the front order.
         let last = format!("{:016x}", archive.members().last().unwrap().loss);
         let mut single = Archive::default();
         single.update(&[candidate(std::f64::consts::PI, 0, 4)]);
@@ -728,6 +753,28 @@ mod tests {
                 select_survivors(&aged, 5, true)
             );
         }
+    }
+
+    #[test]
+    fn the_last_front_is_cut_round_robin_over_unique_vectors() {
+        // One front of three unique vectors: boundary A = (1, 9) held by two members, the middle
+        // B = (5, 5) and boundary C = (9, 1) by one each.
+        let members = [
+            Member::admit(&candidate(1.0, 9, 1)).unwrap(),
+            Member::admit(&candidate(1.0, 9, 2)).unwrap(),
+            Member::admit(&candidate(5.0, 5, 3)).unwrap(),
+            Member::admit(&candidate(9.0, 1, 4)).unwrap(),
+        ];
+        let keys = |k: usize| -> Vec<u8> {
+            select_survivors(&members, k, false)
+                .iter()
+                .map(|m| m.key[31])
+                .collect()
+        };
+        // Each vector gives one member per round, the boundaries first: A's second member waits
+        // for B. Filling A before moving on would give [1, 2] and [1, 2, 4].
+        assert_eq!(keys(2), vec![1, 4]);
+        assert_eq!(keys(3), vec![1, 4, 3]);
     }
 
     #[test]
