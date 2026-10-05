@@ -70,6 +70,13 @@ that is not exactly 40 lowercase hex characters is refused before git runs, the 
 image identity and verifies immutable policy plus actual cgroup memory/CPU/swap values. It does
 not hash every image file. Never weaken provenance to make an unreviewed deployment pass.
 
+runc writes `memory.swap.max=0` but registers each `docker-<id>.scope` with
+`MemorySwapMax=infinity`, so any later `daemon-reload` (enable/disable, provision.sh) flipped live
+listeners to swap=max and failed their next job's swap check. The launcher now records
+`MemorySwapMax=0` on the scope with `systemctl set-property --runtime` and kills a listener
+whose cap systemd does not hold. Listeners started before this deployment still need the
+drain-and-restart procedure after a reload.
+
 Idle listeners are not stopped by a service-start deadline: that deadline previously cut into
 accepted jobs. Each JIT listener still executes only one job. Workflows own execution timeouts;
 full-main has120minutes, with110minutes of independent family limits plus kill grace and an

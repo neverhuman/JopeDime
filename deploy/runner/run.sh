@@ -99,4 +99,7 @@ docker_args=(
   -i
 )
 docker_args+=("$JOPE_RUNNER_IMAGE")
+# Record swap=0 in systemd once the scope exists (common.sh). Beside, not before, the docker
+# CLI so its signal forwarding is unchanged; lock fds 8/9 are closed so it never holds a lane.
+jope_runner_pin_swap "$name" 8<&- 9>&- &
 printf '%s' "$jit" | exec docker "${docker_args[@]}"
