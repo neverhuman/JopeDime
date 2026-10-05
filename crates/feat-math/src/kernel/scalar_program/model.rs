@@ -407,3 +407,6 @@ fn transform(
 pub(super) fn grammar_sha256() -> String {
     format!("{:x}", Sha256::digest(CONTRACT.as_bytes()))
 }
+
+// B05–B07: explicit admitted fits and bound artifact provenance.
+mod producer_binding;
