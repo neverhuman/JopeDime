@@ -242,7 +242,10 @@ fn late_tiny_gap_model_batch_rolls_back() {
             ..
         }
     ));
-    assert_eq!(routed.to_json().unwrap(), before);
+    let VersionedModel::TimeGradientV2(checkpoint) = &routed else {
+        panic!("time-gradient route must preserve its model variant");
+    };
+    assert_eq!(checkpoint.to_json().unwrap(), before);
     routed.predict_ordered(&rows[4..]).unwrap();
     model.predict(&rows[4..]).unwrap();
     model.finish().unwrap();
