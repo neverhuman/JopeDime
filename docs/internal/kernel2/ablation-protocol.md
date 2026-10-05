@@ -74,16 +74,22 @@ cargo run --release -p jope-bench -- ablation \
 
 `--refine-top-k` (0 to 4) and `--refine-trials` (at most `--evaluations`) are required when either
 profile is a kernel2 profile and refused otherwise, and `--cuts` other than 1 is refused, as
-`jope pipeline run` refuses them. Refinement trials are charged to the same per-cut budget as
-measurements. Each kernel2 profile record (`body.protocol.profile_a.kernel2`) states the shipped
+`jope pipeline run` refuses them. These refusals, and the checks of `--seeds`, `--evaluations`,
+`--cuts` and `--jobs`, are made before the scratch directory is created. Refinement trials are
+charged to the same per-cut budget as measurements. Each kernel2 profile record (`body.protocol.profile_a.kernel2`) states the shipped
 profile's revision and sha256, the fault policy, the allowance and the selection rule. A kernel2
 search that the seconds bound ended, or whose active time overran it, is refused as a legacy one
 is. With `--scratch`, each kernel2 search also keeps the route's own evidence
-(`search/cut-0/{search,observations,refinements}.json`).
+(`search/cut-0/{search,observations,refinements}.json`). A scratch directory that already holds a
+kernel2 search of the same slot, dataset and seed (anything at its path, a symbolic link
+included) is refused before any partition is written or any search starts, so a rerun never
+replaces that evidence; choose a new `--scratch`.
 
 **A kernel2 comparison is not accuracy evidence unless it is reported as paired wins, ties and
 losses beside both medians.** The harness writes them to `body.paired` (definitions
-`kernel2-ablation-paired.v1`). Runs pair by (dataset, seed) on `body.runs[].metrics.M1`. B wins
+`kernel2-ablation-paired.v1`). Runs pair one to one by (dataset, seed) on
+`body.runs[].metrics.M1`; two runs of one slot with the same dataset and seed, a run without its
+partner in the other slot, and a run on a dataset the comparison does not list are refused. B wins
 a pair when its M1 RMSE is lower, loses when it is higher, and ties only when the two are
 bit-equal. For the comparison overall and for each dataset, `body.paired` gives:
 - W/T/L;
@@ -227,6 +233,15 @@ when it is not set; never under the system temporary directory.
   timing, are what they were before the kernel2 arms.
 - `ablation::tests::ablation_kernel2_refuses_what_the_pipeline_refuses`: the refusals listed
   above, from the library and from the command line.
+- `ablation::tests::ablation_execute_refuses_before_creating_scratch`: through `execute`, each
+  refused combination of options leaves neither the `--scratch` directory nor `--out` behind.
+- `ablation::tests::ablation_kernel2_refuses_a_scratch_that_holds_its_searches`: a rerun into the
+  same scratch directory is refused, with every byte and modification time of the first run's
+  entries unchanged and nothing added; so is a planned output that is a dangling symbolic link.
+- `ablation::tests::ablation_paired_rejects_duplicate_a_and_unpaired_b`,
+  `ablation_paired_rejects_unlisted_unpaired_a` and
+  `ablation_paired_rejects_a_repeated_dataset_or_an_unknown_slot`: the pairing refuses anything
+  but one-to-one pairs on listed datasets.
 - `ablation::tests::ablation_paired_summary_arithmetic` and
   `ablation::tests::ablation_sign_test_matches_the_exact_binomial_tail`: the paired arithmetic on
   a synthetic input, including ties, an all-tie input and the bit-equality rule, and the sign

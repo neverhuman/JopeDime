@@ -326,13 +326,17 @@ struct Dataset {
     cuts: Vec<Cut>,
 }
 
+/// Load and partition every dataset, then write each partition under `scratch`. Every refusal,
+/// including a kernel2 search this comparison would repeat ([`check_unused`]), is made before
+/// anything is written: `prepare::build` is [`prepare::partition`] followed by
+/// [`prepare::Partition::write`], and the two halves run here with the refusals between them.
 fn load_datasets(config: &Config, scratch: &Path) -> Result<Vec<Dataset>> {
     let mut dirs = Vec::new();
     for path in &config.datasets {
         dirs.extend(discover(path)?);
     }
     let mut seen = BTreeSet::new();
-    let mut datasets = Vec::new();
+    let mut planned = Vec::new();
     for dir in dirs {
         let dataset = load_dataset(&dir)?;
         let task = dataset.bench_task()?;
@@ -361,28 +365,43 @@ fn load_datasets(config: &Config, scratch: &Path) -> Result<Vec<Dataset>> {
                 row
             })
             .collect();
-        let prepared = prepare::build(
-            &rows,
-            &hash,
-            config.fold_seed,
-            config.cuts,
-            &scratch.join("prepared").join(&hash),
-        )
-        .with_context(|| format!("{}: prepare cuts", dataset.row.id))?;
-        datasets.push(Dataset {
-            record: DatasetRecord {
-                id: dataset.row.id.clone(),
-                dataset_hash: hash,
-                train_sha256: dataset.train_sha256.clone(),
-                train_rows: dataset.x.len(),
-                features: dataset.x.first().map_or(0, Vec::len),
-                prepared_sha256: prepared.sha256,
-            },
-            path: dir,
-            cuts: prepared.cuts,
-        });
+        let partition = prepare::partition(&rows, &hash, config.fold_seed, config.cuts)
+            .with_context(|| format!("{}: prepare cuts", dataset.row.id))?;
+        let record = DatasetRecord {
+            id: dataset.row.id.clone(),
+            dataset_hash: hash,
+            train_sha256: dataset.train_sha256.clone(),
+            train_rows: dataset.x.len(),
+            features: dataset.x.first().map_or(0, Vec::len),
+            // Filled in from the bytes the partition writes, once every refusal is made.
+            prepared_sha256: String::new(),
+        };
+        planned.push((record, dir, partition));
     }
-    Ok(datasets)
+    for (slot, profile) in [("A", config.profile_a), ("B", config.profile_b)] {
+        if !profile.is_kernel2() {
+            continue;
+        }
+        for (record, _, _) in &planned {
+            for &seed in &config.seeds {
+                check_unused(&search_output(scratch, slot, &record.dataset_hash, seed))?;
+            }
+        }
+    }
+    planned
+        .into_iter()
+        .map(|(mut record, path, partition)| {
+            let prepared = partition
+                .write(&scratch.join("prepared").join(&record.dataset_hash))
+                .with_context(|| format!("{}: prepare cuts", record.id))?;
+            record.prepared_sha256 = prepared.sha256;
+            Ok(Dataset {
+                record,
+                path,
+                cuts: prepared.cuts,
+            })
+        })
+        .collect()
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -970,11 +989,7 @@ fn run_one(
     scratch: &Path,
 ) -> Result<(RunRecord, RunTiming)> {
     let hash = &dataset.record.dataset_hash;
-    let output = scratch
-        .join("search")
-        .join(spec.slot)
-        .join(hash)
-        .join(format!("seed-{}", spec.seed));
+    let output = search_output(scratch, spec.slot, hash, spec.seed);
     let label = || {
         format!(
             "profile {} ({}) on {} seed {}",
@@ -1030,6 +1045,30 @@ fn run_one(
     ))
 }
 
+/// Where the search of one (slot, dataset, seed) writes its evidence.
+fn search_output(scratch: &Path, slot: &str, dataset_hash: &str, seed: u64) -> PathBuf {
+    scratch
+        .join("search")
+        .join(slot)
+        .join(dataset_hash)
+        .join(format!("seed-{seed}"))
+}
+
+/// The refusal of a kernel2 search output that already exists.
+const SCRATCH_IN_USE: &str = "already holds a kernel2 search; choose a new --scratch";
+
+/// Refuse a kernel2 search's output directory when anything is already there, a symbolic link
+/// included. The route publishes `search/cut-0` with plain writes, so a second search into the
+/// same directory would replace the first one's evidence; the legacy search refuses its own
+/// published `search.json` the same way, and `jope pipeline run` refuses a used `--output`.
+fn check_unused(output: &Path) -> Result<()> {
+    match std::fs::symlink_metadata(output) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error).with_context(|| format!("inspect {}", output.display())),
+        Ok(_) => bail!("{}: {SCRATCH_IN_USE}", output.display()),
+    }
+}
+
 fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
     let metrics = metrics(searches)?;
     let cuts = searches
@@ -1054,7 +1093,8 @@ fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
 }
 
 /// One kernel2 search on the comparison's single cut, as `jope pipeline run` runs it: refused
-/// when the clock ended it, its evidence published under `output` (`search/cut-0`), and reduced.
+/// when `output` is already in use or the clock ended it, its evidence published under `output`
+/// (`search/cut-0`), and reduced.
 fn kernel2_search(
     profile: Profile,
     cuts: &[Cut],
@@ -1063,6 +1103,7 @@ fn kernel2_search(
     refinement: Option<Refinement>,
     output: &Path,
 ) -> Result<Searched> {
+    check_unused(output)?;
     let options = profile
         .kernel2_options(budget, rng_seed, refinement)?
         .with_context(|| format!("{} is not a kernel2 profile", profile.id()))?;
@@ -1913,8 +1954,36 @@ struct Pair<'a> {
 }
 
 /// The paired comparison of M1 over `runs` ([`PAIRED_RULE`]): overall, and per dataset in the
-/// order of `datasets` (dataset hashes). Every A run must pair with exactly one B run.
+/// order of `datasets` (dataset hashes). The pairing is one to one on (dataset, seed): a dataset
+/// listed twice, a slot other than A or B, a run on a dataset not listed, two runs of one slot
+/// with the same dataset and seed, and a run without its partner in the other slot are refused.
 pub fn paired(datasets: &[String], runs: &[RunRecord]) -> Result<Paired> {
+    let mut listed = BTreeSet::new();
+    for dataset in datasets {
+        ensure!(
+            listed.insert(dataset.as_str()),
+            "dataset {dataset} is listed twice"
+        );
+    }
+    let mut a_keys = BTreeSet::new();
+    let mut b_runs = BTreeMap::new();
+    for run in runs {
+        let (dataset, seed, slot) = (run.dataset.as_str(), run.seed, run.slot);
+        ensure!(
+            listed.contains(dataset),
+            "dataset {dataset} seed {seed}: the {slot} run is on a dataset the comparison does \
+             not list"
+        );
+        let first = match slot {
+            "A" => a_keys.insert((dataset, seed)),
+            "B" => b_runs.insert((dataset, seed), run).is_none(),
+            other => bail!("dataset {dataset} seed {seed}: run slot {other:?} is neither A nor B"),
+        };
+        ensure!(
+            first,
+            "dataset {dataset} seed {seed}: two {slot} runs; runs pair one to one"
+        );
+    }
     let mut all = Vec::new();
     let mut per_dataset = Vec::with_capacity(datasets.len());
     for dataset in datasets {
@@ -1923,15 +1992,14 @@ pub fn paired(datasets: &[String], runs: &[RunRecord]) -> Result<Paired> {
             .iter()
             .filter(|r| r.slot == "A" && &r.dataset == dataset)
         {
-            let mut b = runs
-                .iter()
-                .filter(|r| r.slot == "B" && r.dataset == a.dataset && r.seed == a.seed);
-            let (Some(b), None) = (b.next(), b.next()) else {
-                bail!(
-                    "dataset {dataset} seed {}: an A run needs exactly one B run",
-                    a.seed
-                );
-            };
+            let b = b_runs
+                .remove(&(a.dataset.as_str(), a.seed))
+                .with_context(|| {
+                    format!(
+                        "dataset {dataset} seed {}: an A run needs exactly one B run",
+                        a.seed
+                    )
+                })?;
             pairs.push(Pair {
                 dataset,
                 seed: a.seed,
@@ -1945,12 +2013,9 @@ pub fn paired(datasets: &[String], runs: &[RunRecord]) -> Result<Paired> {
         });
         all.extend(pairs);
     }
-    let b_runs = runs.iter().filter(|r| r.slot == "B").count();
-    ensure!(
-        b_runs == all.len(),
-        "{b_runs} B runs for {} pairs: every B run must pair with an A run",
-        all.len()
-    );
+    if let Some((dataset, seed)) = b_runs.keys().next() {
+        bail!("dataset {dataset} seed {seed}: a B run needs exactly one A run");
+    }
     Ok(Paired {
         definitions: PAIRED_DEFINITIONS,
         rule: PAIRED_RULE,
@@ -2143,7 +2208,8 @@ fn default_scratch_root(tmpdir: Option<std::ffi::OsString>) -> Result<PathBuf> {
 }
 
 /// The comparison `args` asks for. A refinement option given alone is refused here; every other
-/// refusal is [`Config`]'s, made when the comparison runs.
+/// refusal of the options is [`Config`]'s, which [`execute`] makes before it creates a scratch
+/// directory and [`run`] makes again.
 fn config(args: &AblationArgs) -> Result<Config> {
     let profile_a = Profile::parse(&args.profile_a)?;
     let profile_b = Profile::parse(&args.profile_b)?;
@@ -2193,9 +2259,11 @@ fn paired_line(label: &str, c: &PairedCounts) -> String {
     )
 }
 
-/// Run `jope-bench ablation`.
+/// Run `jope-bench ablation`. Every refusal of the options is made before the scratch directory
+/// is created.
 pub fn execute(args: &AblationArgs) -> Result<()> {
     let config = config(args)?;
+    config.check()?;
     let temporary;
     let scratch = match &args.scratch {
         Some(dir) => {
@@ -3207,6 +3275,7 @@ mod tests {
                 PAIRED_DEFINITIONS,
                 PAIRED_RULE,
                 REFINEMENT_REFUSAL,
+                SCRATCH_IN_USE,
             ]
             .map(str::to_owned),
         );
@@ -3269,5 +3338,348 @@ mod tests {
             let hits = feat_math::transpile::lint_shipped_text(text);
             assert!(hits.is_empty(), "{text:?}: {hits:?}");
         }
+    }
+
+    /// An entry of a directory tree: its kind, its modification time, and a file's bytes or a
+    /// link's target.
+    type Entry = (&'static str, std::time::SystemTime, Vec<u8>);
+
+    /// Every entry under `root`, symbolic links not followed.
+    fn tree(root: &Path) -> BTreeMap<PathBuf, Entry> {
+        let mut entries = BTreeMap::new();
+        let mut pending = vec![root.to_path_buf()];
+        while let Some(dir) = pending.pop() {
+            for entry in std::fs::read_dir(&dir).unwrap() {
+                let path = entry.unwrap().path();
+                let metadata = std::fs::symlink_metadata(&path).unwrap();
+                let kind = metadata.file_type();
+                let (name, content) = if kind.is_symlink() {
+                    let target = std::fs::read_link(&path).unwrap();
+                    ("link", target.into_os_string().into_encoded_bytes())
+                } else if kind.is_dir() {
+                    pending.push(path.clone());
+                    ("dir", Vec::new())
+                } else {
+                    ("file", std::fs::read(&path).unwrap())
+                };
+                let relative = path.strip_prefix(root).unwrap().to_path_buf();
+                entries.insert(relative, (name, metadata.modified().unwrap(), content));
+            }
+        }
+        entries
+    }
+
+    /// The entries whose kind, modification time or content differs between two [`tree`]s, or
+    /// that only one of them has.
+    fn changed_entries(
+        before: &BTreeMap<PathBuf, Entry>,
+        after: &BTreeMap<PathBuf, Entry>,
+    ) -> Vec<PathBuf> {
+        before
+            .keys()
+            .chain(after.keys().filter(|path| !before.contains_key(*path)))
+            .filter(|path| before.get(*path) != after.get(*path))
+            .cloned()
+            .collect()
+    }
+
+    /// A comparison into a scratch directory that already holds its kernel2 searches is refused
+    /// before anything is prepared or searched (review finding PR0-R1): every entry the first
+    /// run left keeps its bytes and modification time and nothing is added, also when the fold
+    /// seed, the jobs or the other slot's profile differ. A planned kernel2 output that is a
+    /// dangling symbolic link is refused the same way, with nothing written.
+    #[test]
+    fn ablation_kernel2_refuses_a_scratch_that_holds_its_searches() {
+        let config = Config {
+            datasets: vec![d5("pmlb-first-principles-supernovae-zg")],
+            evaluations: 1,
+            refinement: Some(Refinement {
+                top_k: 0,
+                trials_per_program: 0,
+            }),
+            jobs: 1,
+            ..kernel2_config()
+        };
+        let dir = scratch();
+        let first = run(&config, dir.path()).unwrap();
+        let hash = first.document.body.datasets[0].dataset_hash.clone();
+        let before = tree(dir.path());
+        for slot in ["A", "B"] {
+            let published = search_output(Path::new(""), slot, &hash, 6).join("search/cut-0");
+            for name in ["search.json", "observations.json", "refinements.json"] {
+                let path = published.join(name);
+                assert!(
+                    before.get(&path).is_some_and(|entry| entry.0 == "file"),
+                    "{}",
+                    path.display()
+                );
+            }
+        }
+        assert!(before.contains_key(&Path::new("prepared").join(&hash).join("prepared.json")));
+
+        for again in [
+            config.clone(),
+            Config {
+                fold_seed: config.fold_seed + 1,
+                ..config.clone()
+            },
+            Config {
+                jobs: 2,
+                ..config.clone()
+            },
+            Config {
+                profile_a: Profile::Legacy,
+                ..config.clone()
+            },
+            Config {
+                profile_b: Profile::Kernel2Experimental,
+                ..config.clone()
+            },
+        ] {
+            let error = format!("{:#}", run(&again, dir.path()).unwrap_err());
+            assert!(error.contains(SCRATCH_IN_USE), "{again:?}: {error}");
+            let changed = changed_entries(&before, &tree(dir.path()));
+            assert!(
+                changed.is_empty(),
+                "{again:?}: a refused rerun changed {changed:?}"
+            );
+        }
+
+        #[cfg(unix)]
+        {
+            let dir = scratch();
+            let output = search_output(dir.path(), "B", &hash, 6);
+            std::fs::create_dir_all(output.parent().unwrap()).unwrap();
+            std::os::unix::fs::symlink("missing", &output).unwrap();
+            let before = tree(dir.path());
+            let error = format!("{:#}", run(&config, dir.path()).unwrap_err());
+            assert!(error.contains(SCRATCH_IN_USE), "{error}");
+            let changed = changed_entries(&before, &tree(dir.path()));
+            assert!(changed.is_empty(), "a refused run changed {changed:?}");
+            assert!(std::fs::symlink_metadata(dir.path().join("prepared")).is_err());
+        }
+    }
+
+    /// A paired refusal: its message, which must pass the shipped-text lint.
+    fn paired_refusal(datasets: &[&str], runs: &[RunRecord]) -> String {
+        let datasets: Vec<String> = datasets.iter().map(|d| (*d).to_owned()).collect();
+        let error = match paired(&datasets, runs) {
+            Ok(summary) => panic!("refusal expected, received {summary:?}"),
+            Err(error) => format!("{error:#}"),
+        };
+        let hits = feat_math::transpile::lint_shipped_text(&error);
+        assert!(hits.is_empty(), "{error:?}: {hits:?}");
+        error
+    }
+
+    /// Review finding PR0-R2, `reject_duplicate_a_and_unpaired_b`: a repeated A run whose extra
+    /// pair is balanced by an unpaired B run is refused, not counted as two wins; so is the
+    /// mirror case on the B side.
+    #[test]
+    fn ablation_paired_rejects_duplicate_a_and_unpaired_b() {
+        let error = paired_refusal(
+            &["d0"],
+            &[
+                paired_run("A", "d0", 1, 1.0, "p"),
+                paired_run("A", "d0", 1, 1.0, "p"),
+                paired_run("B", "d0", 1, 0.5, "q"),
+                paired_run("B", "d0", 2, 99.0, "r"),
+            ],
+        );
+        assert!(error.contains("two A runs"), "{error}");
+        let error = paired_refusal(
+            &["d0"],
+            &[
+                paired_run("A", "d0", 1, 1.0, "p"),
+                paired_run("A", "d0", 2, 1.0, "p"),
+                paired_run("B", "d0", 1, 0.5, "q"),
+                paired_run("B", "d0", 1, 0.5, "q"),
+            ],
+        );
+        assert!(error.contains("two B runs"), "{error}");
+    }
+
+    /// Review finding PR0-R2, `reject_unlisted_unpaired_a`: an A run on a dataset the
+    /// comparison does not list is refused rather than left out; so is a B run there, paired or
+    /// not, and a B run on a listed dataset without its A run.
+    #[test]
+    fn ablation_paired_rejects_unlisted_unpaired_a() {
+        let pair = [
+            paired_run("A", "d0", 1, 1.0, "p"),
+            paired_run("B", "d0", 1, 0.5, "q"),
+        ];
+        for extra in [
+            vec![paired_run("A", "outside", 9, 2.0, "p")],
+            vec![paired_run("B", "outside", 9, 2.0, "p")],
+            vec![
+                paired_run("A", "outside", 9, 2.0, "p"),
+                paired_run("B", "outside", 9, 2.0, "p"),
+            ],
+        ] {
+            let runs: Vec<RunRecord> = pair.iter().cloned().chain(extra).collect();
+            let error = paired_refusal(&["d0"], &runs);
+            assert!(error.contains("does not list"), "{error}");
+        }
+        let mut runs = pair.to_vec();
+        runs.push(paired_run("B", "d0", 2, 0.5, "q"));
+        let error = paired_refusal(&["d0"], &runs);
+        assert!(error.contains("a B run needs exactly one A run"), "{error}");
+    }
+
+    /// The pairing refuses a run whose slot is neither A nor B, and a dataset listed twice.
+    #[test]
+    fn ablation_paired_rejects_a_repeated_dataset_or_an_unknown_slot() {
+        let pair = [
+            paired_run("A", "d0", 1, 1.0, "p"),
+            paired_run("B", "d0", 1, 0.5, "q"),
+        ];
+        let mut runs = pair.to_vec();
+        runs.push(paired_run("C", "d0", 1, 0.5, "q"));
+        let error = paired_refusal(&["d0"], &runs);
+        assert!(error.contains("neither A nor B"), "{error}");
+        let error = paired_refusal(&["d0", "d0"], &pair);
+        assert!(error.contains("listed twice"), "{error}");
+    }
+
+    /// `execute` makes every refusal of the options before it creates a scratch directory
+    /// (review finding PR0-R3): for each refused combination neither the `--scratch` path, nor
+    /// any of its parents under the test directory, nor `--out` exists afterwards.
+    #[test]
+    fn ablation_execute_refuses_before_creating_scratch() {
+        let root = scratch();
+        let base = AblationArgs {
+            profile_a: Profile::Kernel2Baseline.id().to_owned(),
+            profile_b: Profile::Kernel2Baseline.id().to_owned(),
+            refine_top_k: Some(1),
+            refine_trials: Some(1),
+            datasets: vec![d5("pmlb-first-principles-supernovae-zg")],
+            seeds: vec![6],
+            evaluations: 1,
+            cuts: 1,
+            fold_seed: jope_pipeline::DEFAULT_SEED,
+            jobs: 1,
+            out: PathBuf::new(),
+            scratch: None,
+        };
+        // The base passes every check, so each case that follows is refused for its one change.
+        config(&base).unwrap().check().unwrap();
+        let legacy = AblationArgs {
+            profile_a: Profile::Legacy.id().to_owned(),
+            profile_b: Profile::Legacy.id().to_owned(),
+            refine_top_k: None,
+            refine_trials: None,
+            ..base.clone()
+        };
+        config(&legacy).unwrap().check().unwrap();
+        let cases = [
+            // A kernel2 profile without the allowance.
+            (
+                AblationArgs {
+                    refine_top_k: None,
+                    refine_trials: None,
+                    ..base.clone()
+                },
+                "--refine-top-k",
+            ),
+            (
+                AblationArgs {
+                    profile_a: Profile::Legacy.id().to_owned(),
+                    refine_top_k: None,
+                    refine_trials: None,
+                    ..base.clone()
+                },
+                "--refine-trials",
+            ),
+            // The allowance with legacy only.
+            (
+                AblationArgs {
+                    refine_top_k: Some(0),
+                    refine_trials: Some(0),
+                    ..legacy.clone()
+                },
+                "legacy profile refuses",
+            ),
+            // More than one cut.
+            (
+                AblationArgs {
+                    cuts: 2,
+                    ..base.clone()
+                },
+                "--cuts 1",
+            ),
+            // More refined parents than the carried set.
+            (
+                AblationArgs {
+                    refine_top_k: Some(search::ELITES + 1),
+                    refine_trials: Some(0),
+                    ..base.clone()
+                },
+                "refinement allowance",
+            ),
+            // More trials than the cut's budget.
+            (
+                AblationArgs {
+                    refine_trials: Some(2),
+                    ..base.clone()
+                },
+                "refinement allowance",
+            ),
+            // A refinement option alone, refused by `config`.
+            (
+                AblationArgs {
+                    refine_trials: None,
+                    ..base.clone()
+                },
+                "--refine-trials",
+            ),
+            // The checks every profile makes.
+            (
+                AblationArgs {
+                    seeds: vec![6, 6],
+                    ..legacy.clone()
+                },
+                "a seed is listed twice",
+            ),
+            (
+                AblationArgs {
+                    evaluations: search::MAX_EVALUATIONS + 1,
+                    ..legacy.clone()
+                },
+                "budget evaluations must be",
+            ),
+            (
+                AblationArgs {
+                    cuts: prepare::FOLDS + 1,
+                    ..legacy.clone()
+                },
+                "--cuts must be",
+            ),
+            (
+                AblationArgs {
+                    jobs: 0,
+                    ..legacy.clone()
+                },
+                "--jobs must be at least 1",
+            ),
+        ];
+        for (index, (args, needle)) in cases.into_iter().enumerate() {
+            let case = root.path().join(format!("case-{index}"));
+            let args = AblationArgs {
+                scratch: Some(case.join("scratch/nested")),
+                out: case.join("out/ablation.json"),
+                ..args
+            };
+            let error = format!("{:#}", execute(&args).unwrap_err());
+            assert!(
+                error.contains(needle),
+                "case {index}: {needle:?} not in {error:?}"
+            );
+            assert!(
+                std::fs::symlink_metadata(&case).is_err(),
+                "case {index} ({error}) created {}",
+                case.display()
+            );
+        }
+        assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
     }
 }
