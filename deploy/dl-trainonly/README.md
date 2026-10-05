@@ -36,7 +36,7 @@ unknown outcomes; a batch refuses atomically if any output is exhausted.
 `Budget.claim_dispatch` atomically consumes the job once before execution.
 Duplicate or ambiguous dispatch claims refuse without granting another launch.
 A supervisor must use this claim rather than interpreting `budget_reserved` as
-launch permission. The version-2 policy refuses old ledgers instead of silently
+launch permission. The version-3 policy refuses old ledgers instead of silently
 renewing them. Failed and cancelled jobs
 retain their reserved charge; restarting never resets it. Actual overruns are
 retained by `Budget.finish` and stop new reservations. Retain unknown attempts
@@ -46,6 +46,13 @@ the reserved wall limit and record actual elapsed GPU seconds.
 ```sh
 python3 deploy/dl-trainonly/gpu_gate.py --ledger /custody/run/gpu.sqlite --job /custody/run/job.json
 ```
+
+First creation additionally requires `--initialize`; it exclusively creates the
+database and a durable adjacent `.initialization.json` marker. All subsequent
+opens are resume-only. Missing databases or markers, changed marker bytes and
+symlinks refuse. Torn initialization must be restored from custody; a surviving
+marker refuses reinitialization after database loss. Preserve both files together.
+Even an already-open planner cannot recreate a database that disappears.
 
 `--contingency` permits calculating reservations between 16 and 24 hours. It
 requires separate execution admission to spend that contingency; it is not an
