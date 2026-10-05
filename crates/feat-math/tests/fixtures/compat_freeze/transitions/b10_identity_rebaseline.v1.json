@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "OWNER_DIRECTIVES v1.3 moves B10 to Lane D and authorizes the card's shared-file integration (the opt-in parent-selection seam in evolve.rs); announced identity-only transition, with no v1 behavior/source-byte golden regeneration",
+  "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md §4 B10 and standing OWNER DIRECTIVE(c)",
+  "pr_reference": "[kernel2] Add opt-in epsilon-lexicase parent selection; mint evaluator identity",
+  "source_commit": "41747d5854247a74afb6a1e452d7e5bdfb804b7f",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "15ee100e676baf19bfc40ed4cf7871c6645bc51b1b5f6eebe729828c76605d32",
+      "after": "6e46cf982f45f0806449948e24fa99964d15094dceaeb8be36350b61feb2231b"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "4a38518ace2eeb5c1af177feca65818f6df57d022e06d13b5a834eeebadcba25",
+      "after": "99d00026e76de11ff56a9722389666b1c349ba15ae665e88214e20ecdf405248"
+    }
+  ]
+}
