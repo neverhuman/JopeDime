@@ -146,3 +146,15 @@ impl CausalCursor {
         self.next_ordinal
     }
 }
+
+impl CausalCursor {
+    pub(crate) fn progress_timestamps(&self) -> impl Iterator<Item = (&GroupKey, usize, f64)> {
+        self.groups.iter().map(|(g, p)| {
+            (
+                g,
+                p.prior_rows,
+                p.last_timestamp.expect("ordered group invariant"),
+            )
+        })
+    }
+}

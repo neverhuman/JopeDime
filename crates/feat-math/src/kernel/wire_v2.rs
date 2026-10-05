@@ -284,6 +284,7 @@ impl ReservedProgram {
 }
 
 #[derive(Clone, Debug)]
+// B14: explicit wire-60 ordered program routes.
 pub enum VersionedProgram {
     LegacyV1(Program),
     ReservedV2(ReservedProgram),
@@ -291,6 +292,7 @@ pub enum VersionedProgram {
     // B12: FeatureWithinRow execution is a separate v2 subtype.
     RowVectorV2(super::row_vector::Program),
     DifferenceV2(DifferenceProgram),
+    IntegrationV2(super::cumulative_integration::IntegrationProgram),
 }
 
 impl VersionedProgram {
@@ -303,6 +305,19 @@ impl VersionedProgram {
             Self::DifferenceV2(program) => program.emit_recipe(language),
             _ => Err(VersionError::UnsupportedVersion(
                 "program has no ordered recipe route".into(),
+            )),
+        }
+    }
+
+    /// B14 integration artifacts carry their own typed codec and continuation API.
+    pub fn emit_integral_recipe(
+        &self,
+        language: DifferenceLanguage,
+    ) -> VersionResult<super::cumulative_integration::IntegrationRecipe> {
+        match self {
+            Self::IntegrationV2(program) => program.emit_recipe(language),
+            _ => Err(VersionError::UnsupportedVersion(
+                "program has no integral recipe route".into(),
             )),
         }
     }
@@ -320,6 +335,9 @@ impl VersionedProgram {
                     bytes,
                 )?)),
                 Some(4) => Ok(Self::DifferenceV2(DifferenceProgram::from_bytes(bytes)?)),
+                Some(5) => Ok(Self::IntegrationV2(
+                    super::cumulative_integration::IntegrationProgram::from_bytes(bytes)?,
+                )),
                 Some(_) => Err(VersionError::UnsupportedVersion(
                     "program v2 variant".into(),
                 )),
@@ -338,6 +356,7 @@ impl VersionedProgram {
             Self::ScalarV2(program) => program.to_bytes(),
             Self::RowVectorV2(program) => program.to_bytes(),
             Self::DifferenceV2(program) => program.to_bytes(),
+            Self::IntegrationV2(program) => program.to_bytes(),
         }
     }
 
@@ -351,6 +370,9 @@ impl VersionedProgram {
     ) -> VersionResult<VersionedModel> {
         match self {
             Self::DifferenceV2(program) => Ok(VersionedModel::DifferenceV2(Box::new(
+                program.fit_training(rows, labels, task, fold)?,
+            ))),
+            Self::IntegrationV2(program) => Ok(VersionedModel::IntegrationV2(Box::new(
                 program.fit_training(rows, labels, task, fold)?,
             ))),
             _ => Err(VersionError::UnsupportedVersion(
@@ -371,6 +393,9 @@ impl VersionedProgram {
             Self::DifferenceV2(_) => Err(VersionError::UnsupportedVersion(
                 "ordered input required for difference execution".into(),
             )),
+            Self::IntegrationV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for integral execution".into(),
+            )),
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
             )),
@@ -383,7 +408,8 @@ impl VersionedProgram {
             Self::ReservedV2(_)
             | Self::ScalarV2(_)
             | Self::RowVectorV2(_)
-            | Self::DifferenceV2(_) => Ok(format!(
+            | Self::DifferenceV2(_)
+            | Self::IntegrationV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -429,7 +455,8 @@ impl VersionedProgram {
             value @ (Self::ReservedV2(_)
             | Self::ScalarV2(_)
             | Self::RowVectorV2(_)
-            | Self::DifferenceV2(_)) => Ok(value),
+            | Self::DifferenceV2(_)
+            | Self::IntegrationV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -481,6 +508,22 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
                 cpp17_fitted_basis: FittedBasis::Declared,
                 javascript: Route::Unsupported(vec![
                     "difference ordered JavaScript route unavailable".into(),
+                ]),
+            }
+        }
+        VersionedProgram::IntegrationV2(program) => {
+            let support = match program.validate_recipe_closure() {
+                Ok(()) => Route::Ok,
+                Err(error) => Route::Unsupported(vec![error.to_string()]),
+            };
+            ExportReport {
+                rust_recipe: support.clone(),
+                python_recipe: support.clone(),
+                cpp17_recipe: support.clone(),
+                cpp17_fitted: support,
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: Route::Unsupported(vec![
+                    "integral ordered JavaScript route unavailable".into(),
                 ]),
             }
         }
@@ -598,6 +641,7 @@ pub enum VersionedModel {
     ReservedV2(ReservedModel),
     RowVectorV2(super::row_vector::Model),
     DifferenceV2(Box<DifferenceModel>),
+    IntegrationV2(Box<super::cumulative_integration::IntegrationModel>),
 }
 
 impl VersionedModel {
@@ -607,6 +651,18 @@ impl VersionedModel {
             Self::DifferenceV2(model) => model.emit_fitted_cpp17(),
             _ => Err(VersionError::UnsupportedVersion(
                 "model has no ordered fitted export route".into(),
+            )),
+        }
+    }
+
+    /// B14 fitted integration export preserves its typed checkpoint codec.
+    pub fn emit_integral_fitted_cpp17(
+        &self,
+    ) -> VersionResult<super::cumulative_integration::IntegrationFittedCpp> {
+        match self {
+            Self::IntegrationV2(model) => model.emit_fitted_cpp17(),
+            _ => Err(VersionError::UnsupportedVersion(
+                "model has no integral fitted export route".into(),
             )),
         }
     }
@@ -637,6 +693,11 @@ impl VersionedModel {
                 .map(Box::new)
                 .map(Self::DifferenceV2);
         }
+        if value.get("schema").and_then(Value::as_str) == Some("feat-math.causal-integral-model") {
+            return super::cumulative_integration::IntegrationModel::from_json(json)
+                .map(Box::new)
+                .map(Self::IntegrationV2);
+        }
         let wire: ModelWireV2 = serde_json::from_value(value)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
         validate_model_wire(&wire)?;
@@ -646,6 +707,7 @@ impl VersionedModel {
     pub fn predict_ordered(&mut self, rows: &[OrderedRow]) -> VersionResult<Vec<f64>> {
         match self {
             Self::DifferenceV2(model) => Ok(model.predict(rows)?),
+            Self::IntegrationV2(model) => Ok(model.predict(rows)?),
             _ => Err(VersionError::UnsupportedVersion(
                 "model has no ordered prediction route".into(),
             )),
@@ -660,6 +722,9 @@ impl VersionedModel {
             )),
             Self::DifferenceV2(_) => Err(VersionError::UnsupportedVersion(
                 "ordered input required for difference prediction".into(),
+            )),
+            Self::IntegrationV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for integral prediction".into(),
             )),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 models are not executable".into(),
