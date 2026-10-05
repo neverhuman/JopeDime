@@ -395,7 +395,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     // B10: the same for the opt-in parent-selection seam in the search.
     let b10 = old_fixture("transitions/b10_identity_rebaseline.v1.json");
     assert_eq!(b10["fixtures"].as_array().unwrap().len(), 2);
-    let identity_chain = [transition, successor, b12, b13, b10];
+    // B11: the same for the bit-identical ridge fit and the certified scoring seam.
+    let b11 = old_fixture("transitions/b11_identity_rebaseline.v1.json");
+    assert_eq!(b11["fixtures"].as_array().unwrap().len(), 2);
+    let identity_chain = [transition, successor, b12, b13, b10, b11];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
     let mut old_fixtures = 0;

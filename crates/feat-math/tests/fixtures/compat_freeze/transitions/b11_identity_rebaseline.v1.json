@@ -3,17 +3,17 @@
   "decision": "OWNER_DIRECTIVES v1.3 assigns B11 to Lane D and authorizes the card's shared-file integration (the bit-identical ridge fit in heads.rs, the opt-in certified scoring seam in evolve.rs and the insert-time stage-cache budget); announced identity-only transition, with no v1 behavior/source-byte golden regeneration",
   "plan_reference": "JOPEDIME_BREAKTHROUGH_IMPLEMENTATION_PLAN.md §4 B11 and standing OWNER DIRECTIVE(c)",
   "pr_reference": "[kernel2] Add certified fast ridge scoring; mint evaluator identity",
-  "source_commit": "c45693caf7f3a11dace30e753563f7d58777570f",
+  "source_commit": "d7f80eb534f5dcf18ecae373dde56e7232f38f5e",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "6e46cf982f45f0806449948e24fa99964d15094dceaeb8be36350b61feb2231b",
-      "after": "71a3f054474b5af8277532449782ebebb0c9b601af6b2f7b46849452bf8ae767"
+      "after": "2afd5ccee772ad9a2031f63b21278dfc723c3f1fdd6babe8340c19397f3ace44"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "99d00026e76de11ff56a9722389666b1c349ba15ae665e88214e20ecdf405248",
-      "after": "2bbae84629f485490da9214584b5949115834ccfae0951a9f4e9ed5f7d63ac0c"
+      "after": "bd3082c6d174fff3bd70c091926180569e6abed1622697af353095bfe3e57cb5"
     }
   ]
 }
