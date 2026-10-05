@@ -294,7 +294,9 @@ async fn concurrent_runtime_terminalizes_failed_execution_before_failure_frame()
     assert!(recovery.quarantined.is_empty());
 }
 
-#[tokio::test(flavor = "current_thread")]
+// This fixture orders cancellation against durable I/O, not elapsed host time.
+// Keep signed deadlines and all cancellation/durability assertions intact.
+#[tokio::test(flavor = "current_thread", start_paused = true)]
 async fn concurrent_runtime_accepts_durable_cancellation_while_execution_runs() {
     let harness = runtime_harness(
         DockerMock {
