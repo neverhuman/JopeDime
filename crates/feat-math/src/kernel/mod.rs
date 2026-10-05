@@ -62,3 +62,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 // B14: causal cumulative integration (v2 wire 60).
 pub mod cumulative_integration;
+
+// B15: opt-in causal irregular-grid backward difference.
+pub mod timescale_nabla;
