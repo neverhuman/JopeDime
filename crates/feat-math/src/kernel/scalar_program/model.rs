@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 
 pub const MODEL_SCHEMA: &str = "feat-math.scalar-model";
 pub const MODEL_PROFILE: &str = "feat-math.scalar-ridge.experimental.v2";
-const CONTRACT: &str = "scalar-ridge-v2;func=0..22;policy=v1|v2;carrier=row|elementwise;nodes<=64;depth<=16;width=1..512;lambda=1e-5..2;head=legacy-ridge;score-clamp=20;prediction-clamp=60;fit=train-only;state=ieee754-bits";
+const CONTRACT: &str = "scalar-ridge-v2;func=0..22;policy=v1|v2;carrier=row|elementwise;nodes<=64;depth<=16;width=1..512;lambda=1e-5..2;head=ridge;score-clamp=20;prediction-clamp=60;fit=train-only;state=ieee754-bits";
 const EMITTER_IDENTITY: &str = "feat-math.scalar.ridge.v2";
 const MAX_INPUT_WIDTH: usize = 512;
 
