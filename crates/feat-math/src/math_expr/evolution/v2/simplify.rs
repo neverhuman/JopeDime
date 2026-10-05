@@ -1,14 +1,16 @@
-//! Bounded Remez compression (B19): the discrete minimax polynomial of a one-variable subtree on
-//! its observed training range, lowered to ordinary AST nodes. A rational denominator comes only
-//! with a pole-free certificate.
+//! The discrete minimax polynomial of a one-variable subtree on its observed training range,
+//! lowered to ordinary AST nodes, and the bounded minimax linearization built on it.
 //!
-//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]`, following the Lane D
-//! kickoff, and nothing outside its tests calls it. The search move is wired once B17 and B18
-//! merge; OWNER_DIRECTIVES allows no wiring before B11 and B16 merge. A compressed subtree is a
-//! proposal ([`propose`]): the native protected re-score of the whole program decides acceptance,
-//! never the approximation error alone. Deferred to the wiring PR: that acceptance gate (with the
-//! whole program re-validated under its scope), the profile move and its receipt, the
-//! old-tree-unchanged, all-language emission and ablation tests.
+//! The one caller outside the tests is [`MathExpr::linearize_v2`] (laneD:B19-minimax-linearize):
+//! a bounded minimax linearization, degree 1 only. Under the kernel2 caps (15 nodes, depth 4) a
+//! Horner tree of degree `n` has depth `2n + 1`, so no higher degree can be lowered into an
+//! admissible expression; this is not a general polynomial or rational compression. A line is
+//! only a proposal: it is offered when its fit's bracket closed, it is smaller than the subtree,
+//! its own error on the training samples meets the minimax bound ([`assess`]), and the profile
+//! admits the whole expression with it in place. The native protected re-score of the whole
+//! program then decides, never the approximation error. The fit of higher degrees, and the
+//! pole-free certificate a rational denominator would need (`certify`, test-only), have no
+//! caller outside the tests.
 //!
 //! Algorithm: the second Remez exchange on the sample abscissae (Pachón and Trefethen, BIT 49,
 //! 2009), in the Chebyshev basis on `t = (2v - (a + b)) / (b - a)`.
@@ -33,6 +35,12 @@
 //!   bit-reproducible and independent of sample order and duplicates.
 
 use super::*;
+use crate::kernel::expression_search::{
+    LinearFit, LinearizationEvidence, MinimaxStop, SubtreeLinearization, LINEARIZATION_DEGREE,
+    LINEARIZE_FIT_REFUSED, LINEARIZE_MISSES_BOUND, LINEARIZE_NON_FINITE, LINEARIZE_NOT_SMALLER,
+    LINEARIZE_OPEN_BRACKET, LINEARIZE_OUT_OF_RANGE, LINEARIZE_OVER_BUDGET, LINEARIZE_OVER_LIMITS,
+    LINEARIZE_PROFILE_REFUSED, LINEARIZE_UNSAMPLED,
+};
 
 /// The largest degree fitted. What can be proposed is bounded separately ([`propose`]): a Horner
 /// tree over a variable leaf has depth `2n + 1`, so under the expression depth limit of 16 the
@@ -43,6 +51,7 @@ const MAX_ITERATIONS: usize = 32;
 /// The relative width of the bracket at which the exchange stops `Converged`.
 const TOLERANCE: f64 = 1e-12;
 /// The deepest subdivision [`certify`] accepts.
+#[cfg(test)]
 const MAX_CERTIFY_DEPTH: usize = 64;
 
 /// Why a fit stopped.
@@ -61,6 +70,20 @@ enum Stop {
     IterationLimit,
     /// Fewer than `n + 2` alternating extrema, or a singular reference system.
     Degenerate,
+}
+
+impl Stop {
+    /// The public name of this stop, for records.
+    fn public(self) -> MinimaxStop {
+        match self {
+            Self::Converged => MinimaxStop::Converged,
+            Self::NoiseLimited => MinimaxStop::NoiseLimited,
+            Self::ExactFit => MinimaxStop::ExactFit,
+            Self::Stalled => MinimaxStop::Stalled,
+            Self::IterationLimit => MinimaxStop::IterationLimit,
+            Self::Degenerate => MinimaxStop::Degenerate,
+        }
+    }
 }
 
 /// A discrete minimax fit.
@@ -90,10 +113,12 @@ struct Minimax {
 }
 
 impl Minimax {
+    #[cfg(test)]
     fn t(&self, v: f64) -> f64 {
         (2.0 * v - (self.lo + self.hi)) / (self.hi - self.lo)
     }
 
+    #[cfg(test)]
     fn eval(&self, v: f64) -> f64 {
         clenshaw(&self.chebyshev, self.t(v))
     }
@@ -513,7 +538,7 @@ fn lowered_error(coefficients: &[f64], unique: &[(f64, f64)]) -> Option<f64> {
     })
 }
 
-/// A compression worth proposing: the lowered tree, its own error on the samples and its size.
+/// A lowering worth proposing: the lowered tree, its own error on the samples and its size.
 #[derive(Clone, Debug, PartialEq)]
 struct Proposal {
     tree: Expr,
@@ -527,7 +552,11 @@ struct Proposal {
 /// (64 nodes, depth 16) on its own, and stay, in its own evaluation order, within an allowance on
 /// `samples` of `max_error (1 + 1e-6) + 64 ε max|f|`. Otherwise `None`. The lowered tree is
 /// usually deeper than the subtree it replaces (depth `2n + 1`), so the caller must re-validate
-/// the whole program under its scope; the wiring PR does that before any native re-score.
+/// the whole program under its scope, as [`MathExpr::linearize_v2`] does.
+///
+/// Its checks are [`assess`]'s, which also names the first that fails; outside the tests the
+/// linearization calls `assess` directly.
+#[cfg(test)]
 fn propose(
     fit: &Minimax,
     samples: &[(f64, f64)],
@@ -535,50 +564,119 @@ fn propose(
     subtree: &Expr,
     node_budget: usize,
 ) -> Option<Proposal> {
-    // The error below is measured at the sampled abscissae, which is the tree's value only when x
-    // is the sampled variable itself.
-    if !matches!(x, Expr::Var(_)) {
-        return None;
-    }
-    let coefficients = fit.monomial();
-    let tree = lower(&coefficients, x)?;
-    let nodes = count_nodes(&tree);
-    if nodes > node_budget || nodes >= count_nodes(subtree) {
-        return None;
-    }
-    MathExpr::from_ast(tree.clone()).ok()?;
     let unique = prepare(samples).ok()?;
-    let f_max = unique.iter().map(|(_, f)| f.abs()).fold(0.0f64, f64::max);
-    let lowered_error = lowered_error(&coefficients, &unique)?;
-    if lowered_error > fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * f_max {
-        return None;
+    let f_max = largest(&unique);
+    assess(
+        &fit.monomial(),
+        fit.max_error,
+        f_max,
+        x,
+        subtree,
+        node_budget,
+        |coefficients| lowered_error(coefficients, &unique),
+    )
+    .ok()
+}
+
+/// The largest `|f|` over samples.
+fn largest(unique: &[(f64, f64)]) -> f64 {
+    unique.iter().map(|(_, f)| f.abs()).fold(0.0f64, f64::max)
+}
+
+/// The minimax bound a lowered tree is held to on its samples: the fit's own largest error, a
+/// relative `1e-6` over it, and the rounding level `64 ε max|f|`.
+fn allowance(max_error: f64, f_max: f64) -> f64 {
+    max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * f_max
+}
+
+/// `x` is not a variable leaf, so the samples do not give the lowered tree's values.
+const NOT_A_LEAF: &str = "the lowered variable is not a leaf";
+
+/// A refused lowering: the first check that failed, and what was measured before it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Refused {
+    reason: &'static str,
+    nodes: Option<usize>,
+    lowered_error: Option<f64>,
+}
+
+/// The checks of a proposal, in order, for the polynomial `coefficients` (ascending powers) of a
+/// fit whose largest error is `max_error`, on samples whose largest `|f|` is `f_max`. `measure`
+/// gives the lowered tree's own largest error over those samples, in its own evaluation order, or
+/// `None` when a value leaves the output range. The first check that fails is named:
+/// - `x` must be a variable leaf, because the error is measured at the sampled abscissae;
+/// - every coefficient must be finite, so the tree can be lowered;
+/// - the tree must have fewer nodes than `subtree`, and no more than `node_budget`;
+/// - it must fit the expression limits (64 nodes, depth 16) on its own;
+/// - its own error must stay in the output range and within [`allowance`]: the minimax bound.
+fn assess(
+    coefficients: &[f64],
+    max_error: f64,
+    f_max: f64,
+    x: &Expr,
+    subtree: &Expr,
+    node_budget: usize,
+    measure: impl FnOnce(&[f64]) -> Option<f64>,
+) -> Result<Proposal, Refused> {
+    let refused = |reason, nodes, lowered_error| Refused {
+        reason,
+        nodes,
+        lowered_error,
+    };
+    if !matches!(x, Expr::Var(_)) {
+        return Err(refused(NOT_A_LEAF, None, None));
     }
-    Some(Proposal {
+    let Some(tree) = lower(coefficients, x) else {
+        return Err(refused(LINEARIZE_NON_FINITE, None, None));
+    };
+    let nodes = count_nodes(&tree);
+    if nodes >= count_nodes(subtree) {
+        return Err(refused(LINEARIZE_NOT_SMALLER, Some(nodes), None));
+    }
+    if nodes > node_budget {
+        return Err(refused(LINEARIZE_OVER_BUDGET, Some(nodes), None));
+    }
+    if MathExpr::from_ast(tree.clone()).is_err() {
+        return Err(refused(LINEARIZE_OVER_LIMITS, Some(nodes), None));
+    }
+    let Some(lowered_error) = measure(coefficients) else {
+        return Err(refused(LINEARIZE_OUT_OF_RANGE, Some(nodes), None));
+    };
+    if lowered_error > allowance(max_error, f_max) {
+        return Err(refused(
+            LINEARIZE_MISSES_BOUND,
+            Some(nodes),
+            Some(lowered_error),
+        ));
+    }
+    Ok(Proposal {
         tree,
         lowered_error,
         nodes,
     })
 }
 
+/// Every variable `expr` reads, in first-read order.
+fn variables(expr: &Expr, out: &mut Vec<Var>) {
+    match expr {
+        Expr::Var(v) => {
+            if !out.contains(v) {
+                out.push(*v);
+            }
+        }
+        Expr::Const(_) => {}
+        Expr::Unary(_, a) => variables(a, out),
+        Expr::Binary(_, a, b) => {
+            variables(a, out);
+            variables(b, out);
+        }
+        Expr::Call(_, args) => args.iter().for_each(|a| variables(a, out)),
+    }
+}
+
 /// The one variable a subtree reads, and its `(v, f)` samples on the training rows. `None` when it
 /// reads no variable or more than one, or any row raises any fault or gives a non-finite value.
 fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec<(f64, f64)>)> {
-    fn variables(expr: &Expr, out: &mut Vec<Var>) {
-        match expr {
-            Expr::Var(v) => {
-                if !out.contains(v) {
-                    out.push(*v);
-                }
-            }
-            Expr::Const(_) => {}
-            Expr::Unary(_, a) => variables(a, out),
-            Expr::Binary(_, a, b) => {
-                variables(a, out);
-                variables(b, out);
-            }
-            Expr::Call(_, args) => args.iter().for_each(|a| variables(a, out)),
-        }
-    }
     let mut found = Vec::new();
     variables(&subtree.root, &mut found);
     let [var] = found[..] else {
@@ -598,15 +696,265 @@ fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec<(f64, f64)
 }
 
 // ---------------------------------------------------------------------------------------------
-// The pole-free certificate for a rational proposal's denominator.
+// Bounded minimax linearization (laneD:B19-minimax-linearize).
+
+/// The subtrees a line could replace, in preorder: each reads exactly one variable, has more
+/// nodes than the smallest line (`x * a`, three nodes at depth two), and sits where that line fits
+/// `max_depth`. Under the kernel2 depth limit of 4 these are the root and its children, and a
+/// grandchild only when it is a call of three arguments.
+fn linearizable(root: &Expr, max_depth: usize) -> Vec<Vec<usize>> {
+    paths(root)
+        .into_iter()
+        .filter(|path| {
+            let node = at(root, path);
+            let mut found = Vec::new();
+            variables(node, &mut found);
+            found.len() == 1 && count_nodes(node) > 3 && path.len() + 2 <= max_depth
+        })
+        .collect()
+}
+
+/// How a line's own largest error over the training samples is measured, from its coefficients.
+type Measure = Box<dyn FnOnce(&[f64]) -> Option<f64>>;
+
+/// Where a linearization's training measurements come from: the training rows themselves, or a
+/// record of what was measured on them, by subtree index.
+enum Source<'a> {
+    Rows(&'a [Vec<f64>]),
+    Recorded(&'a mut dyn FnMut(usize) -> Result<LinearizationEvidence>),
+}
+
+/// Whether a recorded fit agrees with its stop's own definition, as far as its recorded numbers
+/// show: finite, a bracket that does not invert, steps within the cap, and the stop's closing
+/// test (`ExactFit`, `Converged` and `NoiseLimited` are tested as [`minimax`] tests them).
+fn consistent(fit: &LinearFit) -> bool {
+    let finite = [fit.lo, fit.hi, fit.levelled, fit.max_error, fit.max_abs]
+        .iter()
+        .all(|v| v.is_finite());
+    let width = fit.max_error - fit.levelled;
+    let closing = match fit.stop {
+        MinimaxStop::ExactFit => fit.max_error <= 4.0 * f64::EPSILON * fit.max_abs,
+        MinimaxStop::Converged => width <= TOLERANCE * fit.max_error,
+        MinimaxStop::NoiseLimited => width <= 64.0 * f64::EPSILON * fit.max_abs,
+        MinimaxStop::Stalled | MinimaxStop::Degenerate | MinimaxStop::IterationLimit => true,
+    };
+    finite
+        && fit.lo < fit.hi
+        && 0.0 <= fit.levelled
+        && fit.levelled <= fit.max_error
+        && fit.max_abs >= 0.0
+        && 1 <= fit.iterations
+        && fit.iterations <= fit.steps
+        && fit.steps <= MAX_ITERATIONS
+        && closing
+}
+
+/// The bounded minimax linearization of `expression`'s one-variable subtrees; see
+/// [`MathExpr::linearize_v2`].
+fn linearize(
+    expression: &MathExpr,
+    profile: &SearchProfile,
+    scope: ExpressionScope,
+    mut source: Source<'_>,
+) -> Result<Vec<SubtreeLinearization>> {
+    let search = Search::new(profile, scope)?;
+    let input = search.finish(expression.root.clone())?;
+    let total = count_nodes(&input.root);
+    let mut out = Vec::new();
+    for (index, path) in linearizable(&input.root, search.scope.max_depth)
+        .into_iter()
+        .enumerate()
+    {
+        let node = at(&input.root, &path);
+        let nodes = count_nodes(node);
+        let mut found = Vec::new();
+        variables(node, &mut found);
+        let x = Expr::Var(found[0]);
+        let mut record = SubtreeLinearization {
+            path: path.clone(),
+            subtree: MathExpr::from_ast(node.clone())?,
+            nodes,
+            fit: None,
+            line_nodes: None,
+            lowered_error: None,
+            expression: None,
+            refusal: None,
+        };
+        // The fit, and how the line's own error over the samples is measured.
+        let (fit, measured): (LinearFit, Measure) = match &mut source {
+            Source::Rows(rows) => {
+                let Some((_, points)) = samples(&record.subtree, rows) else {
+                    record.refusal = Some(LINEARIZE_UNSAMPLED.into());
+                    out.push(record);
+                    continue;
+                };
+                let fit = match minimax(&points, LINEARIZATION_DEGREE) {
+                    Ok(fit) => fit,
+                    Err(reason) => {
+                        record.refusal = Some(format!("{LINEARIZE_FIT_REFUSED}: {reason}"));
+                        out.push(record);
+                        continue;
+                    }
+                };
+                let unique = prepare(&points).map_err(anyhow::Error::msg)?;
+                let line = fit.monomial();
+                let public = LinearFit {
+                    stop: fit.stop.public(),
+                    coefficients: [line[0], line[1]],
+                    lo: fit.lo,
+                    hi: fit.hi,
+                    levelled: fit.levelled,
+                    max_error: fit.max_error,
+                    max_abs: largest(&unique),
+                    iterations: fit.iterations,
+                    steps: fit.steps,
+                };
+                (
+                    public,
+                    Box::new(move |coefficients: &[f64]| lowered_error(coefficients, &unique)),
+                )
+            }
+            Source::Recorded(recorded) => {
+                let evidence = recorded(index)?;
+                let Some(fit) = evidence.fit else {
+                    anyhow::ensure!(
+                        evidence.lowered_error.is_none() && evidence.refusal.is_some(),
+                        "a linearization without a fit names no refusal"
+                    );
+                    record.refusal = evidence.refusal;
+                    out.push(record);
+                    continue;
+                };
+                anyhow::ensure!(consistent(&fit), "a recorded fit disagrees with its stop");
+                let lowered = evidence.lowered_error;
+                (fit, Box::new(move |_: &[f64]| lowered))
+            }
+        };
+        record.fit = Some(fit);
+        if !fit.stop.closed() {
+            record.refusal = Some(format!("{LINEARIZE_OPEN_BRACKET}: {}", fit.stop.as_str()));
+            out.push(record);
+            continue;
+        }
+        // The node limit the rest of the expression leaves the line.
+        let budget = search.scope.max_nodes - (total - nodes);
+        match assess(
+            &fit.coefficients,
+            fit.max_error,
+            fit.max_abs,
+            &x,
+            node,
+            budget,
+            measured,
+        ) {
+            Err(refused) => {
+                record.line_nodes = refused.nodes;
+                record.lowered_error = refused.lowered_error;
+                record.refusal = Some(refused.reason.into());
+            }
+            Ok(proposal) => {
+                record.line_nodes = Some(proposal.nodes);
+                record.lowered_error = Some(proposal.lowered_error);
+                let mut root = input.root.clone();
+                replace(&mut root, &path, proposal.tree);
+                match search.finish(root) {
+                    Ok(expression) => record.expression = Some(expression),
+                    Err(error) => {
+                        record.refusal = Some(format!("{LINEARIZE_PROFILE_REFUSED}: {error:#}"))
+                    }
+                }
+            }
+        }
+        out.push(record);
+    }
+    Ok(out)
+}
+
+impl LinearFit {
+    /// The minimax bound a line is held to on the training samples: `max_error (1 + 1e-6) + 64 ε
+    /// max_abs`. The line's own largest error over those samples, in its own evaluation order,
+    /// must not exceed it. Both are floating-point residuals, not certified bounds.
+    pub fn bound(&self) -> f64 {
+        allowance(self.max_error, self.max_abs)
+    }
+}
+
+impl MathExpr {
+    /// The paths of the subtrees [`MathExpr::linearize_v2`] considers, in its order, from the
+    /// expression's text alone: each reads exactly one variable, has more than three nodes, and
+    /// sits where a line of three nodes and depth two fits the scope's depth limit.
+    pub fn linearizable_v2(
+        &self,
+        profile: &SearchProfile,
+        scope: ExpressionScope,
+    ) -> Result<Vec<Vec<usize>>> {
+        let search = Search::new(profile, scope)?;
+        let input = search.finish(self.root.clone())?;
+        Ok(linearizable(&input.root, search.scope.max_depth))
+    }
+
+    /// A bounded minimax linearization, degree 1 only, of the expression's one-variable subtrees
+    /// on the given training rows. It draws no random number, and reads no row but `rows`.
+    ///
+    /// `self` must pass the same admission as every search edit (`Search::finish`: the pool, the
+    /// caps and the negation rule), or this is an error. For each subtree of
+    /// [`MathExpr::linearizable_v2`], in that order:
+    /// 1. it is sampled on `rows` as `(x, f(x))` pairs of its variable and its value; a row that
+    ///    faults, or gives a value that is not finite, refuses the subtree;
+    /// 2. the discrete minimax line on those samples is fitted; a fit that refuses its samples
+    ///    (fewer than three distinct values of the variable, or values outside the evaluator's
+    ///    range) refuses the subtree;
+    /// 3. a fit whose bracket did not close ([`MinimaxStop::closed`]) refuses it: its error need
+    ///    not be the minimax error;
+    /// 4. the line is lowered to ordinary nodes, `x * a1 + a0`, and refused unless it is smaller
+    ///    than the subtree, within the node limit the rest of the expression leaves it, and its
+    ///    own largest error over the samples, in its own evaluation order, is within
+    ///    [`LinearFit::bound`];
+    /// 5. the line replaces the subtree, and the profile must admit the whole expression.
+    ///
+    /// Every considered subtree is returned, with the expression or the refusal. The minimax
+    /// bound holds only on the training samples: off that range the line can be far from the
+    /// subtree, so the caller re-scores each expression natively on its own data, and that score
+    /// decides, never the line's error.
+    pub fn linearize_v2(
+        &self,
+        profile: &SearchProfile,
+        scope: ExpressionScope,
+        rows: &[Vec<f64>],
+    ) -> Result<Vec<SubtreeLinearization>> {
+        linearize(self, profile, scope, Source::Rows(rows))
+    }
+
+    /// What [`MathExpr::linearize_v2`] returns, re-derived from a record of what it measured on
+    /// the training rows: `recorded(i)` gives the `i`-th considered subtree's
+    /// [`LinearizationEvidence`]. The subtrees, the bracket rule, the lowered line and its size,
+    /// the bound, every refusal after the fit, and the admitted expression are recomputed. The
+    /// fit itself and the line's measured error are taken as recorded, checked only against the
+    /// fit's stop; without the rows they cannot be recomputed. A subtree with no recorded fit
+    /// keeps its recorded refusal.
+    pub fn linearize_recorded_v2(
+        &self,
+        profile: &SearchProfile,
+        scope: ExpressionScope,
+        recorded: &mut dyn FnMut(usize) -> Result<LinearizationEvidence>,
+    ) -> Result<Vec<SubtreeLinearization>> {
+        linearize(self, profile, scope, Source::Recorded(recorded))
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// The pole-free certificate for a rational proposal's denominator. No proposal uses a
+// denominator, so the certificate is compiled for its tests only.
 
 /// A closed interval of reals, widened outward by one ulp after every operation.
+#[cfg(test)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Interval {
     lo: f64,
     hi: f64,
 }
 
+#[cfg(test)]
 impl Interval {
     fn point(x: f64) -> Self {
         Self { lo: x, hi: x }
@@ -651,6 +999,7 @@ impl Interval {
 }
 
 /// The verdict of [`certify`].
+#[cfg(test)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Certificate {
     /// `Q ≥ margin` on the whole interval.
@@ -669,6 +1018,7 @@ enum Certificate {
 /// it), a `max_depth` above `MAX_CERTIFY_DEPTH`, which bounds the work, and an infinite end. So
 /// is a `q` whose Horner evaluation could overflow on `[lo, hi]`: the evaluation-error bound
 /// holds only when no intermediate does.
+#[cfg(test)]
 fn certify(q: &[f64], lo: f64, hi: f64, threshold: f64, max_depth: usize) -> Certificate {
     if q.is_empty()
         || q.len() > MAX_DEGREE + 1
@@ -765,11 +1115,13 @@ fn certify(q: &[f64], lo: f64, hi: f64, threshold: f64, max_depth: usize) -> Cer
     }
 }
 
+#[cfg(test)]
 fn binomial(n: usize, k: usize) -> f64 {
     (0..k).fold(1.0, |acc, i| acc * (n - i) as f64 / (i + 1) as f64)
 }
 
 /// The Bernstein coefficients of the two halves of the interval (de Casteljau at 1/2).
+#[cfg(test)]
 fn de_casteljau_halves(b: &[Interval]) -> (Vec<Interval>, Vec<Interval>) {
     let m = b.len();
     let mut work = b.to_vec();
@@ -786,6 +1138,9 @@ fn de_casteljau_halves(b: &[Interval]) -> (Vec<Interval>, Vec<Interval>) {
     }
     (left, right)
 }
+
+#[cfg(test)]
+mod linearization_tests;
 
 #[cfg(test)]
 mod tests {

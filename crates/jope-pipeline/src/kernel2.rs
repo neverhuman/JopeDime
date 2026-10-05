@@ -30,6 +30,9 @@ pub use engine::{ArchivePolicy, ArchiveRecord, FRONT_LOSS_COST};
 // laneD:B20-rewrite-simplify begin
 pub use engine::{MovesRecord, REWRITE_SATURATE};
 // laneD:B20-rewrite-simplify end
+// laneD:B19-minimax-linearize begin
+pub use engine::MINIMAX_LINEARIZE;
+// laneD:B19-minimax-linearize end
 
 /// A structural or traced Hard refusal, with no candidate score.
 pub const INADMISSIBLE: &str = "inadmissible";
@@ -40,6 +43,11 @@ pub const REFINE: &str = "refine";
 /// `simplify`, which `arm_counts` already names for the search's own simplification edit.
 pub const REWRITE: &str = "rewrite";
 // laneD:B20-rewrite-simplify end
+// laneD:B19-minimax-linearize begin
+/// A child produced by the bounded minimax linearization pass: a ranked parent with one
+/// one-variable subtree of a `derive` stage replaced by its degree-1 minimax line.
+pub const LINEARIZE: &str = "linearize";
+// laneD:B19-minimax-linearize end
 
 /// Kernel2 evidence adds fields without extending legacy observation JSON.
 #[derive(Clone, Debug, PartialEq, Serialize)]

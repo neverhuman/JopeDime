@@ -1,0 +1,1181 @@
+//! The bounded minimax linearization pass at the end of each search round
+//! (laneD:B19-minimax-linearize).
+use super::super::{Refinement, State};
+use super::*;
+use crate::{
+    cli::{Cli, Cmd},
+    clock::Clock,
+    emit::Language,
+    kernel2::{
+        archive, publication, receipt::Receipt, run, tests::evaluator, ArchivePolicy,
+        EngineSelection, Kernel2Observation, MovesRecord, RefineMethod,
+    },
+    run::{Policy, RunOptions},
+    search::{Budget, SearchOptions},
+};
+use clap::Parser;
+use feat_math::{
+    evolve::FaultPolicy,
+    kernel::expression_search::{
+        LmOptions, LINEARIZE_FIT_REFUSED, LINEARIZE_MISSES_BOUND, LINEARIZE_NON_FINITE,
+        LINEARIZE_NOT_SMALLER, LINEARIZE_OPEN_BRACKET, LINEARIZE_OUT_OF_RANGE,
+        LINEARIZE_OVER_BUDGET, LINEARIZE_OVER_LIMITS, LINEARIZE_PROFILE_REFUSED,
+        LINEARIZE_UNSAMPLED,
+    },
+    Rows,
+};
+use std::path::PathBuf;
+
+/// The cubic `0.5 x³`, 7 nodes; its one considered subtree is the root.
+const CUBE: &str = "(c0*c0)*(c0*0.5)";
+/// The same values spelled the other way round.
+const CUBE_SWAPPED: &str = "(c0*0.5)*(c0*c0)";
+/// `x³ + x² + 0.3 x`, 13 nodes: the root, the 5-node cube (no smaller as a line) and the 7-node
+/// quadratic part, whose line `0.3 x + 0.5` rises, so it fits the depth limit beside the cube.
+const CUBE_PLUS: &str = "((c0*c0)*c0)+((c0*c0)+(c0*0.3))";
+/// Exactly linear plus `1e-6 sin(c0)`: on [1e6, 1e6 + 1] its line loses about 1e-10 to rounding,
+/// over the minimax bound.
+const OFF_CENTRE: &str = "((c0*2.0)-2000001.0)+(sin(c0)*0.000001)";
+/// `x³ - 3x`, 9 nodes, which turns back up past `x = 1`.
+const TURN: &str = "((c0*c0)*c0)-(c0*3.0)";
+
+fn linearize() -> EngineSelection {
+    EngineSelection {
+        linearize: true,
+        ..EngineSelection::default()
+    }
+}
+
+/// `(pipe X (derive expr="<source>") (ridge))`, as the search prints it.
+fn program(source: &str) -> String {
+    let expression = MathExpr::parse(source).unwrap().to_source().unwrap();
+    GenomeIr::parse(&format!("(pipe X (derive expr=\"{expression}\") (ridge))"))
+        .unwrap()
+        .canonical()
+}
+
+/// A one-column cut: `points` training rows evenly over `[lo, hi]`, the held-out `hold` rows,
+/// and `y` as the target of both.
+fn cut(lo: f64, hi: f64, points: usize, hold: &[f64], y: fn(f64) -> f64) -> Cut {
+    let train_x: Rows = (0..points)
+        .map(|i| vec![lo + (hi - lo) * i as f64 / (points - 1) as f64])
+        .collect();
+    let hold_x: Rows = hold.iter().map(|&v| vec![v]).collect();
+    Cut {
+        index: 2,
+        train_y: train_x.iter().map(|r| y(r[0])).collect(),
+        hold_y: hold_x.iter().map(|r| y(r[0])).collect(),
+        hold_indices: (0..hold.len()).collect(),
+        train_x,
+        hold_x,
+    }
+}
+
+fn cube(v: f64) -> f64 {
+    v * v * v
+}
+
+/// Training and held-out rows over [-0.9, 1.1], the target `x³`. The range is not symmetric, so
+/// no line of an odd subtree has an intercept of exactly zero (a 3-node line).
+fn cubic_cut() -> Cut {
+    let hold: Vec<f64> = (0..41).map(|i| -0.9 + f64::from(i) / 20.0).collect();
+    cut(-0.9, 1.1, 201, &hold, cube)
+}
+
+/// Search options with the given selection, `top_k` parents per round and no refinement trials.
+fn options(top_k: usize, evaluations: usize, selection: EngineSelection) -> Options {
+    let mut search = SearchOptions::new(
+        Budget {
+            evaluations,
+            seconds: 120,
+        },
+        7,
+    );
+    search.clock = Clock::Frozen;
+    Options::new(
+        search,
+        "kernel2-baseline",
+        FaultPolicy::RejectHard,
+        Refinement {
+            top_k,
+            trials_per_program: 0,
+        },
+    )
+    .unwrap()
+    .with_engine(selection)
+    .unwrap()
+}
+
+/// A search state holding `genomes`, each measured on `cut` and charged.
+fn parents(cut: &Cut, options: &Options, genomes: &[String]) -> State {
+    let mut state = State::new(options.search.budget.evaluations);
+    for genome in genomes {
+        let o = options
+            .evaluator
+            .measure(
+                genome,
+                cut,
+                0,
+                "random",
+                options.search.clock,
+                &mut state.budget,
+            )
+            .unwrap();
+        assert!(o.observation.measured(), "{genome}: {:?}", o.observation);
+        state.seen.insert(o.observation.genome.clone());
+        state.observations.push(o);
+    }
+    state
+}
+
+fn records_of<'a>(state: &'a State, parent: &str) -> Vec<&'a MoveRecord> {
+    let sha = crate::sha256_hex(parent.as_bytes());
+    state
+        .moves
+        .iter()
+        .filter(|m| m.parent_sha256 == sha)
+        .collect()
+}
+
+fn line(m: &MoveRecord) -> &LinearizationRecord {
+    m.linearization.as_ref().unwrap()
+}
+
+fn child<'a>(state: &'a State, m: &MoveRecord) -> &'a Kernel2Observation {
+    &state.observations[m.measurement.unwrap()]
+}
+
+fn score(o: &Kernel2Observation) -> f64 {
+    o.selection_score.unwrap()
+}
+
+/// Where `o` ranks among the state's measurements, as the search ranks them.
+fn rank_of(state: &State, options: &Options, o: &Kernel2Observation) -> usize {
+    options
+        .evaluator
+        .rank(&state.observations)
+        .iter()
+        .position(|r| r.observation.genome == o.observation.genome)
+        .unwrap()
+}
+
+#[test]
+fn a_line_that_misses_the_minimax_bound_is_refused_with_its_reason_and_nothing_is_measured() {
+    let hold = [1e6 + 0.25, 1e6 + 0.5, 1e6 + 0.75];
+    let cut = cut(1e6, 1e6 + 1.0, 201, &hold, |v| 2.0 * v - 2_000_001.0);
+    let opt = options(4, 64, linearize());
+    let parent = program(OFF_CENTRE);
+    let mut state = parents(&cut, &opt, std::slice::from_ref(&parent));
+    let (used, measured) = (state.budget.used(), state.observations.len());
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    // The root, then its two children, each considered and refused.
+    assert_eq!(state.moves.len(), 3, "{:?}", state.moves);
+    let root = &state.moves[0];
+    let record = line(root);
+    assert_eq!((record.stage, record.path.as_slice()), (0, &[][..]));
+    assert_eq!(record.degree, 1);
+    let fit = record.fit.as_ref().unwrap();
+    assert!(
+        ["exact_fit", "converged", "noise_limited"].contains(&fit.stop.as_str()),
+        "{fit:?}"
+    );
+    let (lowered, bound) = (record.lowered_error.unwrap(), record.bound.unwrap());
+    assert!(lowered > bound, "{lowered} <= {bound}");
+    assert_eq!(
+        bound.to_bits(),
+        (fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * fit.max_abs).to_bits()
+    );
+    assert_eq!(record.refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    assert_eq!(root.outcome, REFUSED);
+    assert!(root.program.is_none() && root.reason.is_none() && root.measurement.is_none());
+    assert!(record.expression.is_none());
+    for m in &state.moves[1..] {
+        assert_eq!(m.outcome, REFUSED);
+        assert_eq!(line(m).refusal.as_deref(), Some(LINEARIZE_NOT_SMALLER));
+    }
+    // Nothing measured, nothing charged.
+    assert_eq!(
+        (state.budget.used(), state.observations.len()),
+        (used, measured)
+    );
+    // The same records re-derive from the parent and the recorded fits.
+    let recorded: Vec<LinearizationRecord> = state.moves.iter().map(|m| line(m).clone()).collect();
+    let again = linearize::rederive(&opt.evaluator, &parent, 1, &recorded).unwrap();
+    assert!(again
+        .iter()
+        .zip(&state.moves)
+        .all(|(p, m)| Some(&p.linearization) == m.linearization.as_ref() && !p.admitted));
+}
+
+#[test]
+fn near_linear_subtrees_are_linearized_measured_and_ranked_by_their_native_score() {
+    let cut = cubic_cut();
+    let opt = options(4, 64, linearize());
+    let (a, b) = (program(CUBE), program(CUBE_PLUS));
+    let mut state = parents(&cut, &opt, &[a.clone(), b.clone()]);
+    let before = state.budget.used();
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    let (from_a, from_b) = (records_of(&state, &a), records_of(&state, &b));
+    assert_eq!(from_a.len(), 1);
+    assert_eq!(
+        from_b
+            .iter()
+            .map(|m| line(m).path.clone())
+            .collect::<Vec<_>>(),
+        vec![vec![], vec![0], vec![1]]
+    );
+    assert_eq!(from_b[1].outcome, REFUSED);
+    assert_eq!(
+        line(from_b[1]).refusal.as_deref(),
+        Some(LINEARIZE_NOT_SMALLER)
+    );
+    let offered: Vec<&MoveRecord> = [from_a[0], from_b[0], from_b[2]].into();
+    for m in &offered {
+        let record = line(m);
+        assert_eq!(m.outcome, MEASURED, "{m:?}");
+        assert!(record.lowered_error.unwrap() <= record.bound.unwrap());
+        assert!(record.refusal.is_none() && m.reason.is_none());
+        let o = child(&state, m);
+        assert_eq!(o.observation.origin, crate::kernel2::LINEARIZE);
+        assert_eq!(Some(&o.observation.genome), m.program.as_ref());
+        assert!(o.observation.measured(), "{:?}", o.observation);
+        // The child's score is its own native measurement.
+        let native = opt.evaluator.evaluate(
+            &o.observation.genome,
+            &cut,
+            state.generation,
+            crate::kernel2::LINEARIZE,
+            Clock::Frozen,
+        );
+        assert_eq!(&native, o);
+        // The program is the parent with the stage's expression replaced, and that expression is
+        // the line in place of the subtree.
+        let GenomeIr::Pipeline(pipe) = GenomeIr::parse(m.program.as_ref().unwrap()).unwrap() else {
+            panic!("pipeline expected")
+        };
+        let Some(ParamValue::Str(source)) = pipe.stages[0].params.get("expr") else {
+            panic!("expression expected")
+        };
+        assert_eq!(Some(source), record.expression.as_ref());
+    }
+    // One evaluation per measured child; the shared identity holds.
+    assert_eq!(state.budget.used() - before, 3);
+    assert_eq!(state.budget.used(), state.observations.len());
+    // The cube's line is far closer to its subtree than the quadratic part's line, yet the
+    // program keeping the cube (x³ plus a line) ranks above the program that is a line: the
+    // measured score decides, never the line's error.
+    let (line_a, line_b) = (line(from_a[0]), line(from_b[2]));
+    assert!(line_a.lowered_error.unwrap() < line_b.lowered_error.unwrap());
+    let (child_a, child_b) = (child(&state, from_a[0]), child(&state, from_b[2]));
+    assert!(score(child_b) > score(child_a), "{child_a:?} {child_b:?}");
+    assert!(rank_of(&state, &opt, child_b) < rank_of(&state, &opt, child_a));
+    // Linearizing the quadratic part also beats its own parent; the exact cube stays first.
+    let parent_b = &state.observations[1];
+    assert!(score(child_b) > score(parent_b));
+    assert_eq!(rank_of(&state, &opt, &state.observations[0]), 0);
+}
+
+#[test]
+fn a_line_offered_on_the_training_range_can_be_worse_off_it_and_the_native_score_decides() {
+    // `x³ - 3x`: on the training range its line falls steeply; on the held-out rows, in [1.2, 2],
+    // the curve turns back up through the training targets' own range while the line keeps
+    // falling.
+    let hold = [1.2, 1.4, 1.6, 1.8, 2.0];
+    let cut = cut(-1.0, 1.05, 201, &hold, |v| v * v * v - 3.0 * v);
+    let opt = options(4, 64, linearize());
+    let parent = program(TURN);
+    let mut state = parents(&cut, &opt, std::slice::from_ref(&parent));
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    let m = state
+        .moves
+        .iter()
+        .find(|m| line(m).path.is_empty())
+        .unwrap();
+    let record = line(m);
+    // Offered: within the minimax bound on the training range.
+    assert_eq!(m.outcome, MEASURED);
+    let lowered = record.lowered_error.unwrap();
+    assert!(lowered <= record.bound.unwrap());
+    // Off that range the line drifts from the subtree far past its error on it.
+    let subtree = MathExpr::parse(&record.subtree).unwrap();
+    let admitted = MathExpr::parse(record.expression.as_ref().unwrap()).unwrap();
+    let (s2, _) = subtree.eval_row_traced(&[2.0]);
+    let (l2, _) = admitted.eval_row_traced(&[2.0]);
+    assert!((s2 - l2).abs() > 2.0 * lowered, "{s2} vs {l2}, {lowered}");
+    // The parent fits the held-out rows; the child does not, and ranks under it.
+    let parent_o = &state.observations[0];
+    let child_o = child(&state, m);
+    assert!(child_o.observation.measured());
+    let (parent_hold, child_hold) = (
+        parent_o.observation.hold_r2.unwrap(),
+        child_o.observation.hold_r2.unwrap(),
+    );
+    let both = format!("{parent_o:?}\n{child_o:?}");
+    assert!(parent_hold > 0.9, "{both}");
+    assert!(child_hold < parent_hold - 0.5, "{both}");
+    assert!(score(child_o) < score(parent_o), "{both}");
+    assert!(rank_of(&state, &opt, parent_o) < rank_of(&state, &opt, child_o));
+}
+
+#[test]
+fn proposals_are_identical_with_a_poisoned_holdout() {
+    let clean = cubic_cut();
+    let opt = options(4, 64, linearize());
+    let mut poisoned = clean.clone();
+    poisoned.hold_x = vec![vec![-1e100], vec![1e100]];
+    poisoned.hold_y = vec![f64::NAN, f64::INFINITY];
+    poisoned.hold_indices = vec![0, 1];
+    // The parents are fixed: measured on the clean rows.
+    let genomes = [program(CUBE), program(CUBE_PLUS)];
+    let fixed = parents(&clean, &opt, &genomes);
+    let run = |c: &Cut| {
+        let mut state = State::new(opt.search.budget.evaluations);
+        state.budget = fixed.budget.clone();
+        state.observations = fixed.observations.clone();
+        state.seen = fixed.seen.clone();
+        linearize_round(&mut state, c, &opt, &mut || true).unwrap();
+        state
+    };
+    let (a, b) = (run(&clean), run(&poisoned));
+    assert_eq!(a.moves, b.moves);
+    assert_eq!(a.budget.used(), b.budget.used());
+    // The poison reached the children's measurements, not the proposals.
+    let children = |s: &State| -> Vec<bool> {
+        s.moves
+            .iter()
+            .filter_map(|m| m.measurement)
+            .map(|i| s.observations[i].observation.measured())
+            .collect()
+    };
+    assert_eq!(children(&a), vec![true; 3]);
+    assert_eq!(children(&b), vec![false; 3]);
+    // A proposal reads the parent's text and the training rows and labels only.
+    for genome in &genomes {
+        let x = linearize::propose(&opt.evaluator, genome, &clean, 1).unwrap();
+        let y = linearize::propose(&opt.evaluator, genome, &poisoned, 1).unwrap();
+        assert_eq!(x.len(), y.len());
+        for (x, y) in x.iter().zip(&y) {
+            assert_eq!(
+                (&x.linearization, &x.program, &x.reason, x.admitted),
+                (&y.linearization, &y.program, &y.reason, y.admitted)
+            );
+        }
+    }
+}
+
+#[test]
+fn the_allowance_the_start_guard_top_k_and_deduplication_bound_the_pass() {
+    let cut = cubic_cut();
+    let genomes = [program(CUBE), program(CUBE_SWAPPED), program(CUBE_PLUS)];
+    // The swapped cube has the same values, so the same line and the same child: measured once.
+    let opt = options(4, 64, linearize());
+    let mut state = parents(&cut, &opt, &genomes);
+    let before = state.budget.used();
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    let outcomes: Vec<&str> = state.moves.iter().map(|m| m.outcome.as_str()).collect();
+    assert_eq!(
+        outcomes.iter().filter(|o| **o == DUPLICATE).count(),
+        1,
+        "{outcomes:?}"
+    );
+    let duplicate = state.moves.iter().find(|m| m.outcome == DUPLICATE).unwrap();
+    assert!(duplicate.measurement.is_none());
+    assert!(state
+        .moves
+        .iter()
+        .any(|m| m.outcome == MEASURED && m.program == duplicate.program));
+    let measured = outcomes.iter().filter(|o| **o == MEASURED).count();
+    assert_eq!(measured, 3);
+    assert_eq!(state.budget.used() - before, measured);
+    assert_eq!(state.budget.used(), state.observations.len());
+    let distinct: BTreeSet<&str> = state
+        .observations
+        .iter()
+        .map(|o| o.observation.genome.as_str())
+        .collect();
+    assert_eq!(distinct.len(), state.observations.len());
+    // One evaluation left for a parent with two offers: the first is measured, the second
+    // records the spent allowance, and the pass ends.
+    let plus = [program(CUBE_PLUS)];
+    let opt = options(4, plus.len() + 1, linearize());
+    let mut state = parents(&cut, &opt, &plus);
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    let outcomes: Vec<&str> = state.moves.iter().map(|m| m.outcome.as_str()).collect();
+    assert_eq!(outcomes, [MEASURED, REFUSED, NO_ALLOWANCE]);
+    assert!(state.moves[2].program.is_some() && state.moves[2].measurement.is_none());
+    assert_eq!(state.budget.remaining(), 0);
+    assert_eq!(state.budget.used(), state.observations.len());
+    // None left: no proposal at all.
+    let opt = options(4, plus.len(), linearize());
+    let mut state = parents(&cut, &opt, &plus);
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    assert!(state.moves.is_empty());
+    // The guard refuses the first parent: nothing is recorded or spent.
+    let opt = options(4, 64, linearize());
+    let mut state = parents(&cut, &opt, &plus);
+    let used = state.budget.used();
+    linearize_round(&mut state, &cut, &opt, &mut || false).unwrap();
+    assert!(state.moves.is_empty());
+    assert_eq!(state.budget.used(), used);
+    // The guard admits the parent and refuses its first measurement: every offer of that parent
+    // is recorded unstarted, and the pass ends.
+    let mut state = parents(&cut, &opt, &plus);
+    let mut calls = 0;
+    linearize_round(&mut state, &cut, &opt, &mut || {
+        calls += 1;
+        calls == 1
+    })
+    .unwrap();
+    let outcomes: Vec<&str> = state.moves.iter().map(|m| m.outcome.as_str()).collect();
+    assert_eq!(outcomes, [NOT_STARTED, REFUSED, NOT_STARTED]);
+    assert_eq!(calls, 2);
+    assert_eq!(state.budget.used(), used);
+    // Only `top_k` parents are read: the exact cube ranks first.
+    let opt = options(1, 64, linearize());
+    let mut state = parents(&cut, &opt, &[program(CUBE_PLUS), program(CUBE)]);
+    linearize_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    let read: BTreeSet<&str> = state
+        .moves
+        .iter()
+        .map(|m| m.parent_sha256.as_str())
+        .collect();
+    assert_eq!(
+        read,
+        BTreeSet::from([crate::sha256_hex(program(CUBE).as_bytes()).as_str()])
+    );
+}
+
+// Runs through the published route.
+
+/// The `cli_tests` seed program, which the rewrite pass reduces to `c0`.
+const ONE_TIMES: &str = "(pipe X (derive expr=\"1*c0\") (ridge))";
+/// A seed whose 6-node expression is a curve the linearization pass can replace by its line. It
+/// reads `c1`, which takes three values on this dataset; `c0` takes two, too few for a line's
+/// minimax fit.
+const SINE: &str = "(sin((0.5*c1))*3.0)";
+
+/// The files every run publishes.
+const SIDECARS: [&str; 7] = [
+    "receipt.json",
+    "prepared/prepared.json",
+    "search/cut-0/search.json",
+    "search/cut-0/observations.json",
+    "search/cut-0/refinements.json",
+    "emit/model.rs",
+    "emit/manifest.json",
+];
+
+fn dataset() -> String {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../datasets/test/pmlb-229-pwlinear")
+        .display()
+        .to_string()
+}
+
+/// The `cli_tests` run (pmlb-229-pwlinear, rng seed 7, a frozen clock, Rust only, `seeds` as the
+/// seeds file beside the output) in `dir/run`. The default selection is left unapplied, as the
+/// CLI does.
+fn run_options(
+    dir: &Path,
+    seeds: &[String],
+    evaluations: usize,
+    refinement: Refinement,
+    engine: EngineSelection,
+) -> run::Options {
+    std::fs::create_dir_all(dir).unwrap();
+    let mut base = RunOptions::new(dataset(), dir.join("run"));
+    base.budget = Budget {
+        evaluations,
+        seconds: 300,
+    };
+    base.policy = Policy::Skip;
+    base.languages = vec![Language::Rust];
+    base.rng_seed = 7;
+    base.clock = Clock::Frozen;
+    base.source_commit = Some("a".repeat(40));
+    let path = dir.join("seeds.json");
+    let file = crate::seeds::SeedsFile::new(
+        None,
+        seeds
+            .iter()
+            .map(|genome| crate::seeds::SeedGenome {
+                genome: genome.clone(),
+                program_sha256: crate::sha256_hex(genome.as_bytes()),
+                bank_entry_sha256: None,
+                receipt_sha256: None,
+            })
+            .collect(),
+    );
+    std::fs::write(&path, serde_json::to_vec(&file).unwrap()).unwrap();
+    base.seed_genomes = Some(path);
+    let options = run::Options::new(
+        base,
+        "kernel2-baseline",
+        FaultPolicy::RejectHard,
+        refinement,
+    )
+    .unwrap();
+    if engine == EngineSelection::default() {
+        options
+    } else {
+        options.with_engine(engine).unwrap()
+    }
+}
+
+fn four_parents() -> Refinement {
+    Refinement {
+        top_k: 4,
+        trials_per_program: 4,
+    }
+}
+
+fn read(opt: &run::Options, relative: &str) -> Vec<u8> {
+    std::fs::read(opt.run.output.join(relative)).unwrap()
+}
+
+fn published_moves(opt: &run::Options) -> Vec<MoveRecord> {
+    serde_json::from_slice(&read(opt, PATH)).unwrap()
+}
+
+fn published_measurements(opt: &run::Options) -> Vec<Measurement> {
+    serde_json::from_slice(&read(opt, "search/cut-0/observations.json")).unwrap()
+}
+
+fn lint(text: &str) {
+    let hits = feat_math::transpile::lint_shipped_text(text);
+    assert!(hits.is_empty(), "{text}: {hits:?}");
+}
+
+/// The linearization run: both seeds, four parents per round, 40 evaluations.
+fn linearized_run(dir: &Path) -> run::Options {
+    run_options(
+        dir,
+        &[ONE_TIMES.into(), program(SINE)],
+        40,
+        four_parents(),
+        linearize(),
+    )
+}
+
+#[test]
+fn linearization_runs_replay_every_file_with_a_frozen_clock_and_verify() {
+    let temp = tempfile::tempdir().unwrap();
+    let lm = RefineMethod::Lm(LmOptions::default());
+    // As in the rewrite pass's replay, the damped least-squares run reads one parent per round
+    // with a larger allowance (publication indexes each refinement child by the first equal
+    // observation, which two parents refining to one program in a round breaks).
+    for (label, engine, refinement, evaluations, ids) in [
+        (
+            "linearize",
+            linearize(),
+            four_parents(),
+            40,
+            vec![MINIMAX_LINEARIZE],
+        ),
+        (
+            "rewrite-linearize",
+            EngineSelection {
+                simplify: true,
+                linearize: true,
+                ..EngineSelection::default()
+            },
+            four_parents(),
+            40,
+            vec![REWRITE_SATURATE, MINIMAX_LINEARIZE],
+        ),
+        (
+            "all",
+            EngineSelection {
+                refine: lm,
+                archive: Some(ArchivePolicy::ArchiveOnly),
+                simplify: true,
+                linearize: true,
+            },
+            Refinement {
+                top_k: 1,
+                trials_per_program: 12,
+            },
+            60,
+            vec![REWRITE_SATURATE, MINIMAX_LINEARIZE],
+        ),
+    ] {
+        let make = |name: &str| {
+            run_options(
+                &temp.path().join(format!("{label}-{name}")),
+                &[ONE_TIMES.into(), program(SINE)],
+                evaluations,
+                refinement,
+                engine.clone(),
+            )
+        };
+        let (a, b) = (make("a"), make("b"));
+        let receipt = run::run(&a).unwrap();
+        assert_eq!(receipt, run::run(&b).unwrap(), "{label}");
+        for relative in SIDECARS.into_iter().chain([PATH]) {
+            assert_eq!(read(&a, relative), read(&b, relative), "{label} {relative}");
+        }
+        if engine.archive.is_some() {
+            assert_eq!(read(&a, archive::PATH), read(&b, archive::PATH), "{label}");
+        }
+        assert_eq!(
+            publication::verify_run(&a.run.output.join("receipt.json")).unwrap(),
+            receipt,
+            "{label}"
+        );
+        // The pass measured lines, and each measured line is accounted for by one record.
+        let moves = published_moves(&a);
+        let measurements = published_measurements(&a);
+        let linearized = |m: &&MoveRecord| m.id == MINIMAX_LINEARIZE && m.outcome == MEASURED;
+        assert!(
+            moves.iter().any(|m| linearized(&m)),
+            "{label}: {:#?}",
+            moves
+                .iter()
+                .map(|m| (
+                    m.id.as_str(),
+                    m.round,
+                    m.outcome.as_str(),
+                    &m.reason,
+                    &m.linearization
+                ))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            moves.iter().filter(linearized).count(),
+            measurements
+                .iter()
+                .filter(|m| m.observation.origin == crate::kernel2::LINEARIZE)
+                .count()
+        );
+        for m in moves.iter().filter(|m| m.id == MINIMAX_LINEARIZE) {
+            let record = line(m);
+            assert_eq!(record.degree, 1);
+            if record.expression.is_some() {
+                assert!(record.lowered_error.unwrap() <= record.bound.unwrap());
+            }
+        }
+        let s = &receipt.search;
+        assert_eq!(
+            s.completed_evaluations,
+            s.candidate_measurements + s.objective_trials
+        );
+        let record = s.engine_selection.as_ref().unwrap().moves.as_ref().unwrap();
+        assert_eq!(record.ids, ids, "{label}");
+        assert_eq!(
+            record.sha256.as_deref(),
+            Some(crate::sha256_hex(&read(&a, PATH)).as_str())
+        );
+        lint(&String::from_utf8(read(&a, PATH)).unwrap());
+        lint(&serde_json::to_string(record).unwrap());
+    }
+}
+
+/// The seeded `cli_tests` run's search sidecars (prepared, search, observations, refinements),
+/// pinned by `default_runs_keep_the_pre_wiring_search_sidecars` at the commit before the first
+/// engine method was wired, and repeated here for this flag.
+const SEEDED_PINS: [&str; 4] = [
+    "8b8dccfe93aff8fe789ebc37dd125145a28b9d9d702b42dea2fa737575008059",
+    "b2444c5c34dee80c91aa52d19a4a34aeaa358bf68dd3919723f52463fb2c5420",
+    "ad1e6ab3e218f237120668e39321daf2a60cc43b5a503011f1a05ecbbb907767",
+    "a6e3af0c1a0b0e85bfe64e3d8bd5c869e6a58b890403ba3438efba144e12a4d7",
+];
+
+#[test]
+fn with_the_linearization_flag_off_nothing_is_selected_called_or_written() {
+    let temp = tempfile::tempdir().unwrap();
+    let (_, profile) = flags(&[
+        "--search-profile",
+        "kernel2-baseline",
+        "--refine-top-k",
+        "1",
+        "--refine-trials",
+        "4",
+    ]);
+    assert!(!profile.linearize_subtrees);
+    assert!(!EngineSelection::default().linearize);
+    assert_eq!(EngineSelection::default().record(), None);
+    // The seeded `cli_tests` run, without the flag, keeps its pinned bytes and writes nothing new.
+    let seeded = run_options(
+        &temp.path().join("seeded"),
+        &[ONE_TIMES.into()],
+        28,
+        Refinement {
+            top_k: 1,
+            trials_per_program: 4,
+        },
+        EngineSelection::default(),
+    );
+    let receipt = run::run(&seeded).unwrap();
+    for (relative, pin) in [
+        "prepared/prepared.json",
+        "search/cut-0/search.json",
+        "search/cut-0/observations.json",
+        "search/cut-0/refinements.json",
+    ]
+    .into_iter()
+    .zip(SEEDED_PINS)
+    {
+        assert_eq!(
+            crate::sha256_hex(&read(&seeded, relative)),
+            pin,
+            "{relative}"
+        );
+    }
+    assert!(receipt.search.engine_selection.is_none());
+    // The linearization run's seeds, without the flag.
+    let plain = run_options(
+        &temp.path().join("plain"),
+        &[ONE_TIMES.into(), program(SINE)],
+        40,
+        four_parents(),
+        EngineSelection::default(),
+    );
+    run::run(&plain).unwrap();
+    for opt in [&seeded, &plain] {
+        assert!(!opt.run.output.join(PATH).exists());
+        for relative in ["receipt.json", "search/cut-0/search.json"] {
+            let text = String::from_utf8(read(opt, relative)).unwrap();
+            assert!(!text.contains("moves") && !text.contains("linearize"));
+        }
+        assert!(published_measurements(opt)
+            .iter()
+            .all(|m| m.observation.origin != crate::kernel2::LINEARIZE));
+        publication::verify_run(&opt.run.output.join("receipt.json")).unwrap();
+    }
+    // With the flag on, every measurement before the first linearized program is the same as
+    // off: the pass consumes no random stream, and nothing runs before it.
+    let on = linearized_run(&temp.path().join("on"));
+    run::run(&on).unwrap();
+    let (off, with) = (published_measurements(&plain), published_measurements(&on));
+    let first = with
+        .iter()
+        .position(|m| m.observation.origin == crate::kernel2::LINEARIZE)
+        .unwrap();
+    assert!(first > 0);
+    assert_eq!(off[..first], with[..first]);
+    assert_eq!(
+        read(&plain, "prepared/prepared.json"),
+        read(&on, "prepared/prepared.json")
+    );
+}
+
+/// The run's CLI flags, parsed as `jope pipeline run` parses them.
+fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::ProfileArgs) {
+    let mut argv = vec![
+        "jope-pipeline",
+        "run",
+        "--dataset",
+        "unresolved",
+        "--output",
+        "unused",
+    ];
+    argv.extend_from_slice(extra);
+    let Cmd::Run {
+        search, profile, ..
+    } = Cli::try_parse_from(argv).unwrap().cmd
+    else {
+        panic!("run expected");
+    };
+    (search, profile)
+}
+
+/// Rewrites a run's move records (when given) and its selection record, rehashing search.json
+/// and the receipt, so that only the move checks can refuse the change.
+fn rewrite(
+    output: &Path,
+    receipt: &Receipt,
+    moves: Option<&[u8]>,
+    engine: Option<EngineRecord>,
+) -> PathBuf {
+    if let Some(bytes) = moves {
+        std::fs::write(output.join(PATH), bytes).unwrap();
+    }
+    let mut edited = receipt.clone();
+    edited.search.engine_selection = engine;
+    let summary = serde_json::to_vec_pretty(&edited.search).unwrap();
+    std::fs::write(output.join("search/cut-0/search.json"), &summary).unwrap();
+    edited.search_sha256 = crate::sha256_hex(&summary);
+    let path = output.join("receipt.json");
+    std::fs::write(&path, serde_json::to_vec(&edited).unwrap()).unwrap();
+    path
+}
+
+fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
+    let mut engine = engine.clone();
+    engine.moves.as_mut().unwrap().sha256 = Some(crate::sha256_hex(bytes));
+    engine
+}
+
+/// One named edit of the records at `measured` (an offered, measured line) and `refused` (a
+/// refused line); `other` is another measured program's sha256.
+fn tamper(moves: &mut Vec<MoveRecord>, measured: usize, refused: usize, label: &str, other: &str) {
+    fn fit(m: &mut MoveRecord) -> &mut FitRecord {
+        m.linearization.as_mut().unwrap().fit.as_mut().unwrap()
+    }
+    match label {
+        "record removed" => {
+            moves.remove(measured);
+            return;
+        }
+        "refused record removed" => {
+            moves.remove(refused);
+            return;
+        }
+        "refused offered" => {
+            moves[refused].linearization.as_mut().unwrap().refusal = None;
+            return;
+        }
+        "refused outcome" => {
+            moves[refused].outcome = UNCHANGED.into();
+            return;
+        }
+        "refused reason" => {
+            moves[refused].linearization.as_mut().unwrap().refusal =
+                Some(LINEARIZE_UNSAMPLED.into());
+            return;
+        }
+        _ => {}
+    }
+    let m = &mut moves[measured];
+    match label {
+        "child program" => m.program = Some(ONE_TIMES.into()),
+        "stage expression" => m.linearization.as_mut().unwrap().expression = Some("c0".into()),
+        "path" => m.linearization.as_mut().unwrap().path = vec![0],
+        "stage" => m.linearization.as_mut().unwrap().stage += 1,
+        "subtree" => m.linearization.as_mut().unwrap().subtree = "(c0*3.0)".into(),
+        "nodes" => m.linearization.as_mut().unwrap().nodes += 1,
+        "degree" => m.linearization.as_mut().unwrap().degree = 2,
+        "line nodes" => m.linearization.as_mut().unwrap().line_nodes = Some(3),
+        "bound" => {
+            let record = m.linearization.as_mut().unwrap();
+            record.bound = record.bound.map(|b| b * 2.0);
+        }
+        "lowered error over the bound" => {
+            let record = m.linearization.as_mut().unwrap();
+            record.lowered_error = record.bound.map(|b| b * 2.0);
+        }
+        "refusal added" => {
+            m.linearization.as_mut().unwrap().refusal = Some(LINEARIZE_MISSES_BOUND.into())
+        }
+        "fit removed" => m.linearization.as_mut().unwrap().fit = None,
+        "fit stop opened" => fit(m).stop = "stalled".into(),
+        "fit stop unknown" => fit(m).stop = "bisection".into(),
+        "fit slope" => {
+            let c = fit(m).coefficients.as_mut().unwrap();
+            c[1] *= 1.5;
+        }
+        "fit intercept" => {
+            let c = fit(m).coefficients.as_mut().unwrap();
+            c[0] += 0.25;
+        }
+        "fit max error" => fit(m).max_error *= 2.0,
+        "fit inverted bracket" => {
+            let f = fit(m);
+            f.levelled = f.max_error * 2.0;
+        }
+        "fit steps over the cap" => fit(m).steps = 33,
+        "linearization removed" => m.linearization = None,
+        "rewrites added" => m.rewrites = moves_rewrite(),
+        "outcome" => {
+            m.outcome = DUPLICATE.into();
+            m.measurement = None;
+        }
+        "measured line claimed unfunded" => {
+            m.outcome = NO_ALLOWANCE.into();
+            m.measurement = None;
+        }
+        "measurement index" => m.measurement = Some(0),
+        "round" => m.round += 1,
+        "parent" => m.parent_sha256 = other.into(),
+        "method id" => m.id = "feat-math.minimax-linearize.v2".into(),
+        "rewrite id" => m.id = REWRITE_SATURATE.into(),
+        _ => unreachable!("{label}"),
+    }
+}
+
+/// A stage rewrite record, to attach where none belongs.
+fn moves_rewrite() -> Vec<StageRewrite> {
+    vec![StageRewrite {
+        stage: 0,
+        stop: "saturated".into(),
+        iterations: 1,
+        enodes: 1,
+        applications: 0,
+        peak: 1,
+        expression: None,
+        refusal: None,
+    }]
+}
+
+#[test]
+fn verify_refuses_every_tampered_linearization_record_digest_or_selection() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = linearized_run(temp.path());
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    let originals: Vec<(PathBuf, Vec<u8>)> = ["receipt.json", "search/cut-0/search.json", PATH]
+        .iter()
+        .map(|r| (output.join(r), std::fs::read(output.join(r)).unwrap()))
+        .collect();
+    let restore = || {
+        for (file, bytes) in &originals {
+            std::fs::write(file, bytes).unwrap();
+        }
+    };
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let moves = published_moves(&opt);
+    // The rewrite itself keeps a valid run.
+    rewrite(
+        output,
+        &receipt,
+        Some(originals[2].1.as_slice()),
+        Some(engine.clone()),
+    );
+    publication::verify_run(&path).unwrap();
+    restore();
+
+    let measured = moves
+        .iter()
+        .position(|m| m.id == MINIMAX_LINEARIZE && m.outcome == MEASURED)
+        .unwrap();
+    let refused = moves
+        .iter()
+        .position(|m| {
+            m.id == MINIMAX_LINEARIZE
+                && m.outcome == REFUSED
+                && line(m).fit.is_some()
+                && line(m).refusal.is_some()
+        })
+        .unwrap();
+    // The bootstrap program: measured, with no derive stage to linearize.
+    let other = crate::sha256_hex(crate::search::BOOTSTRAP_GENOME.as_bytes());
+    assert!(published_measurements(&opt)
+        .iter()
+        .any(|m| m.observation.program_sha256 == other
+            && m.observation.status == crate::search::MEASURED));
+    let mut errors = Vec::new();
+    for label in [
+        "child program",
+        "stage expression",
+        "path",
+        "stage",
+        "subtree",
+        "nodes",
+        "degree",
+        "line nodes",
+        "bound",
+        "lowered error over the bound",
+        "refusal added",
+        "fit removed",
+        "fit stop opened",
+        "fit stop unknown",
+        "fit slope",
+        "fit intercept",
+        "fit max error",
+        "fit inverted bracket",
+        "fit steps over the cap",
+        "linearization removed",
+        "rewrites added",
+        "outcome",
+        "measured line claimed unfunded",
+        "measurement index",
+        "round",
+        "parent",
+        "record removed",
+        "method id",
+        "rewrite id",
+        "refused offered",
+        "refused outcome",
+        "refused reason",
+        "refused record removed",
+    ] {
+        let mut edited = moves.clone();
+        tamper(&mut edited, measured, refused, label, &other);
+        assert_ne!(edited, moves, "{label}: the edit was not applied");
+        let bytes = serde_json::to_vec_pretty(&edited).unwrap();
+        let path = rewrite(
+            output,
+            &receipt,
+            Some(bytes.as_slice()),
+            Some(digested(&engine, &bytes)),
+        );
+        let error = publication::verify_run(&path).map(|_| ()).expect_err(label);
+        errors.push(format!("{label}: {error:#}"));
+        restore();
+    }
+    // Record edits, the file unchanged.
+    let mut records: Vec<(&str, Option<EngineRecord>)> = Vec::new();
+    let mut record = engine.clone();
+    record.moves.as_mut().unwrap().sha256 = Some("0".repeat(64));
+    records.push(("digest", Some(record)));
+    let mut record = engine.clone();
+    record.moves.as_mut().unwrap().ids = vec!["feat-math.minimax-linearize.v2".into()];
+    records.push(("record id", Some(record)));
+    let mut record = engine.clone();
+    record.moves.as_mut().unwrap().ids = vec![REWRITE_SATURATE.into()];
+    records.push(("the other pass's id", Some(record)));
+    let mut record = engine.clone();
+    record
+        .moves
+        .as_mut()
+        .unwrap()
+        .ids
+        .push(MINIMAX_LINEARIZE.into());
+    records.push(("repeated id", Some(record)));
+    let mut record = engine.clone();
+    record.moves.as_mut().unwrap().ids = vec![MINIMAX_LINEARIZE.into(), REWRITE_SATURATE.into()];
+    records.push(("both ids, reversed", Some(record)));
+    records.push(("record dropped, file kept", None));
+    for (label, record) in records {
+        assert_ne!(record.as_ref(), Some(&engine), "{label}");
+        let path = rewrite(output, &receipt, None, record);
+        let error = publication::verify_run(&path).map(|_| ()).expect_err(label);
+        errors.push(format!("{label}: {error:#}"));
+        restore();
+    }
+    publication::verify_run(&path).unwrap();
+    // The refusals pass the shipped-text lint, with the run's random temporary path left out.
+    let root = output.display().to_string();
+    for error in errors {
+        lint(&error.replace(&root, "<run>"));
+    }
+}
+
+#[test]
+fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
+    let record = linearize().record().unwrap();
+    assert_eq!(
+        serde_json::to_value(&record).unwrap(),
+        serde_json::json!({"moves": {"ids": [MINIMAX_LINEARIZE]}})
+    );
+    assert_eq!(record.selection().unwrap(), linearize());
+    let both = EngineSelection {
+        simplify: true,
+        linearize: true,
+        ..EngineSelection::default()
+    };
+    assert_eq!(
+        serde_json::to_value(both.record().unwrap()).unwrap(),
+        serde_json::json!({"moves": {"ids": [REWRITE_SATURATE, MINIMAX_LINEARIZE]}})
+    );
+    assert_eq!(both.record().unwrap().selection().unwrap(), both);
+    let all = EngineSelection {
+        refine: RefineMethod::Lm(LmOptions::default()),
+        archive: Some(ArchivePolicy::ArchiveOnly),
+        simplify: true,
+        linearize: true,
+    };
+    assert_eq!(all.record().unwrap().selection().unwrap(), all);
+    for bad in [
+        serde_json::json!({"moves": {"ids": [MINIMAX_LINEARIZE, REWRITE_SATURATE]}}),
+        serde_json::json!({"moves": {"ids": [MINIMAX_LINEARIZE, MINIMAX_LINEARIZE]}}),
+        serde_json::json!({"moves": {"ids": ["feat-math.minimax-linearize.v2"]}}),
+    ] {
+        let parsed: EngineRecord = serde_json::from_value(bad.clone()).unwrap();
+        assert!(parsed.selection().is_err(), "{bad}");
+    }
+    assert!(serde_json::from_value::<MovesRecord>(
+        serde_json::json!({"ids": [MINIMAX_LINEARIZE], "degree": 2})
+    )
+    .is_err());
+    // The pass reads `--refine-top-k` parents, so it needs at least one.
+    let none = Refinement {
+        top_k: 0,
+        trials_per_program: 4,
+    };
+    assert!(linearize().validate(none).is_err());
+    assert!(linearize().validate(four_parents()).is_ok());
+    let e = evaluator().with_engine(linearize()).unwrap();
+    assert_eq!(e.engine(), &linearize());
+    assert_eq!(e.engine_record(), linearize().record());
+    // The CLI: kernel2 only, and refused without a parent.
+    let temp = tempfile::tempdir().unwrap();
+    let source = "a".repeat(40);
+    let parse = |top_k: &str| {
+        let (mut search, profile) = flags(&[
+            "--search-profile",
+            "kernel2-baseline",
+            "--refine-top-k",
+            top_k,
+            "--refine-trials",
+            "4",
+            "--linearize-subtrees",
+            "--source-commit",
+            source.as_str(),
+        ]);
+        assert!(profile.linearize_subtrees && !profile.rewrite_simplify);
+        search.dataset = dataset();
+        (search, profile)
+    };
+    let (search, profile) = parse("1");
+    assert!(profile
+        .options(&search, temp.path().join("one"), false)
+        .unwrap()
+        .is_some());
+    let (search, profile) = parse("0");
+    let error = profile
+        .options(&search, temp.path().join("zero"), false)
+        .unwrap_err();
+    assert!(format!("{error:#}").contains("--refine-top-k"), "{error:#}");
+    lint(&format!("{error:#}"));
+    let (mut legacy_search, legacy) = flags(&["--linearize-subtrees"]);
+    legacy_search.dataset = dataset();
+    let output = temp.path().join("refused");
+    let error = legacy
+        .options(&legacy_search, output.clone(), false)
+        .unwrap_err();
+    assert!(
+        format!("{error:#}").contains("legacy search refuses kernel2"),
+        "{error:#}"
+    );
+    assert!(!output.exists());
+    // Shipped text: the id, the path, the outcomes, the origin, every refusal, the flag's help
+    // and the internal note. None calls the move a compression.
+    for text in [
+        MINIMAX_LINEARIZE,
+        PATH,
+        REFUSED,
+        DUPLICATE,
+        NOT_STARTED,
+        NO_ALLOWANCE,
+        MEASURED,
+        crate::kernel2::LINEARIZE,
+        PREFIX_FAULTS,
+        LINEARIZE_UNSAMPLED,
+        LINEARIZE_FIT_REFUSED,
+        LINEARIZE_OPEN_BRACKET,
+        LINEARIZE_NON_FINITE,
+        LINEARIZE_NOT_SMALLER,
+        LINEARIZE_OVER_BUDGET,
+        LINEARIZE_OVER_LIMITS,
+        LINEARIZE_OUT_OF_RANGE,
+        LINEARIZE_MISSES_BOUND,
+        LINEARIZE_PROFILE_REFUSED,
+    ] {
+        lint(text);
+        assert!(!text.to_lowercase().contains("compress"), "{text}");
+        assert!(!text.to_lowercase().contains("remez"), "{text}");
+    }
+    let note = include_str!("../../../../../../docs/internal/kernel2/b19-minimax-linearization.md");
+    lint(note);
+    assert!(note.contains("bounded minimax linearization"));
+    use clap::CommandFactory;
+    let mut command = Cli::command();
+    command.build();
+    let run = command.find_subcommand_mut("run").unwrap();
+    let flag = run
+        .get_arguments()
+        .find(|a| a.get_id() == "linearize_subtrees")
+        .unwrap();
+    let help = flag.get_help().unwrap().to_string();
+    assert!(
+        help.contains("bounded minimax linearization") && help.contains("moves.json"),
+        "{help}"
+    );
+    assert!(!help.to_lowercase().contains("compress") && !help.to_lowercase().contains("remez"));
+    lint(&help);
+    if let Some(long) = flag.get_long_help() {
+        lint(&long.to_string());
+    }
+}

@@ -44,6 +44,17 @@ pub struct ProfileArgs {
     /// the profile refuses is discarded. Every proposal is written to search/cut-0/moves.json.
     #[arg(long)]
     pub rewrite_simplify: bool,
+    /// After each search round, offer a bounded minimax linearization, degree 1 only, of the
+    /// one-variable subtrees in the derive stages of the --refine-top-k best measured programs
+    /// (kernel2 only; needs --refine-top-k 1 or more). Each subtree near the root of its
+    /// expression that reads one variable is sampled on the stage's training input and fitted by
+    /// its discrete minimax line. The line replaces it only when the fit's bracket closed, the
+    /// line is smaller, its own error on those rows meets the fit's minimax bound, and the profile
+    /// admits the result. Each such program is measured as a new program, one evaluation each,
+    /// and ranks by its measured score, never by the line's error. Every proposal and refusal is
+    /// written to search/cut-0/moves.json.
+    #[arg(long)]
+    pub linearize_subtrees: bool,
     /// Explicit nonnegative Domain penalty; required with penalize.
     #[arg(long)]
     pub lambda_domain: Option<f64>,
@@ -75,7 +86,8 @@ impl ProfileArgs {
                     && self.refine_trials.is_none()
                     && self.refine_method.is_none()
                     && !self.pareto_archive
-                    && !self.rewrite_simplify,
+                    && !self.rewrite_simplify
+                    && !self.linearize_subtrees,
                 messages::PROFILE_OPTIONS_REFUSAL
             );
             return Ok(None);
@@ -142,6 +154,9 @@ impl ProfileArgs {
             // laneD:B20-rewrite-simplify begin
             simplify: self.rewrite_simplify,
             // laneD:B20-rewrite-simplify end
+            // laneD:B19-minimax-linearize begin
+            linearize: self.linearize_subtrees,
+            // laneD:B19-minimax-linearize end
         })
     }
     // laneD:B17-lm-refinement end

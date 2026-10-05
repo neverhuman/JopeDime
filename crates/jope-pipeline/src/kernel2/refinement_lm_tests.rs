@@ -34,6 +34,7 @@ fn lm_selection() -> EngineSelection {
         refine: RefineMethod::Lm(LmOptions::default()),
         archive: None,
         simplify: false,
+        linearize: false,
     }
 }
 
@@ -625,6 +626,7 @@ fn the_selection_needs_an_allowance_it_can_run_and_records_canonically() {
             }),
             archive: None,
             simplify: false,
+            linearize: false,
         })
         .is_err());
     // Round trip, and refusal of anything the selection would not write back.
@@ -636,6 +638,7 @@ fn the_selection_needs_an_allowance_it_can_run_and_records_canonically() {
             }),
             archive: None,
             simplify: false,
+            linearize: false,
         };
         let record = selection.record().unwrap();
         assert_eq!(record.selection().unwrap(), selection);
@@ -752,6 +755,7 @@ fn lm_one() -> Kernel2Evaluator {
             }),
             archive: None,
             simplify: false,
+            linearize: false,
         })
         .unwrap()
 }

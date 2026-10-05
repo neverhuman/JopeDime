@@ -64,6 +64,7 @@ fn selection(refine: RefineMethod, archive: bool) -> EngineSelection {
         refine,
         archive: archive.then_some(ArchivePolicy::ArchiveOnly),
         simplify: false,
+        linearize: false,
     }
 }
 
@@ -912,6 +913,7 @@ fn the_selection_record_round_trips_and_unknown_records_are_refused() {
         }),
         archive: Some(ArchivePolicy::ArchiveOnly),
         simplify: false,
+        linearize: false,
     };
     assert!(evaluator().with_engine(invalid).is_err());
     let e: Kernel2Evaluator = evaluator().with_engine(archived.clone()).unwrap();
