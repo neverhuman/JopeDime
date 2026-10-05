@@ -1070,3 +1070,7 @@ mod producer_reader_v2;
 // B05–B07: generic admitted fit and artifact provenance closure.
 #[path = "scalar_v2/producer_binding.rs"]
 mod producer_binding_v2;
+
+// B05–B07: typed opt-in births and component-disabled old-stream replay.
+#[path = "scalar_v2/producer_growth.rs"]
+mod producer_growth_v2;
