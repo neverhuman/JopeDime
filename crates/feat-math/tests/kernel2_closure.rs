@@ -1058,3 +1058,7 @@ mod scalar_recipes_v2;
 // B05–B07: generic scalar model/fit routing closure.
 #[path = "scalar_routing_v2/mod.rs"]
 mod scalar_routing_v2;
+
+// B05–B07: strict canonical producer declarations before generation.
+#[path = "producer_profile_v2/mod.rs"]
+mod producer_profile_v2;
