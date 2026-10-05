@@ -80,6 +80,41 @@ fn bounded_profile_generation_codec_and_gp_arms() {
             .unwrap(),
         bytes
     );
+    // Reader/removal support is wider than the admitted Experimental edit menu.
+    for step in [3.0, f64::MIN_POSITIVE, f64::MAX] {
+        let child = feat_math::GenomeIr::parse("(pipe X (ridge lambda_frac=0.1))").unwrap();
+        let imported = VersionedProgram::DifferenceV2(
+            feat_math::kernel::finite_difference::DifferenceProgram::new(
+                feat_math::kernel::finite_difference::DifferenceConfig::new(2, 59, 4, step)
+                    .unwrap(),
+                1,
+                OrderedInputIdentity::new("other_group", "other_time"),
+                child.clone(),
+            )
+            .unwrap(),
+        );
+        let bytes = imported.to_bytes().unwrap();
+        let stored = VersionedProgram::from_bytes(&bytes).unwrap();
+        assert_eq!(stored.to_bytes().unwrap(), bytes);
+        assert!(search.edit(&stored, 7, Edit::Change, p).is_err());
+        let removed = search
+            .edit(
+                &stored,
+                7,
+                Edit::Drop,
+                ExperimentalProfile {
+                    difference: false,
+                    prior: p.prior,
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            removed.to_bytes().unwrap(),
+            VersionedProgram::LegacyV1(feat_math::kernel::Program::LegacyV1(child))
+                .to_bytes()
+                .unwrap()
+        );
+    }
     let change = search.edit(&grow, 7, Edit::Change, p).unwrap();
     let disabled = ExperimentalProfile {
         difference: false,
