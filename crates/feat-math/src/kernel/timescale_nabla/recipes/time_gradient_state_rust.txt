@@ -1,0 +1,69 @@
+#[derive(Debug)]
+pub struct TimeGradientRejection {pub kind:&'static str,pub faults:u32}
+impl From<&'static str> for TimeGradientRejection {fn from(kind:&'static str)->Self{Self{kind,faults:0}}}
+#[derive(Clone)]
+pub struct TimeGradientState {
+    minimum_gap:f64,width:usize,input:String,cut:String,train_end:usize,total_rows:usize,ordinal:usize,
+    groups:std::collections::BTreeMap<OrderedGroup,(f64,usize,usize)>,
+    history:std::collections::BTreeMap<OrderedGroup,Vec<f64>>,
+}
+impl TimeGradientState {
+    fn new(minimum_gap:f64,width:usize,task:u8,input:&str,cut:&str,train_end:usize,total_rows:usize)->Result<Self,&'static str> {
+        if task!=1 && task!=2 {return Err("unsupported");}
+        if !minimum_gap.is_finite() || minimum_gap<=0.0 {return Err("domain");}
+        if width==0 || width>512 {return Err("shape");}
+        if cut.trim().is_empty() || train_end==0 || train_end>total_rows {return Err("bounds");}
+        Ok(Self {minimum_gap,width,input:input.into(),cut:cut.into(),train_end,total_rows,ordinal:0,groups:std::collections::BTreeMap::new(),history:std::collections::BTreeMap::new()})
+    }
+    fn metadata(&self)->Vec<u8> {
+        let mut bytes=Vec::new();
+        ordered_write_text(&mut bytes,"{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}");
+        ordered_write_text(&mut bytes,&self.input);
+        ordered_write_text(&mut bytes,&format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(&self.cut),self.train_end,self.total_rows));bytes
+    }
+    fn push(&mut self,group:OrderedGroup,time:f64,row:&[f64])->Result<(Vec<f64>,Vec<u32>),TimeGradientRejection> {
+        if row.len()!=self.width {return Err("shape".into());}
+        if !time.is_finite() {return Err(TimeGradientRejection{kind:"domain",faults:@GAPFAULT@});}
+        let group=ordered_group(group)?;
+        let previous=self.groups.get(&group).copied();
+        if let Some((last,_,_))=previous {let gap=time-last;if !gap.is_finite() || gap<self.minimum_gap {return Err(TimeGradientRejection{kind:"domain",faults:@GAPFAULT@});}}
+        if self.ordinal>=self.total_rows {return Err("bounds".into());}
+        let mut values=vec![0.0;self.width];let mut faults=vec![0;self.width];
+        if let Some((last,_,_))=previous {
+            let gap=time-last;let prior=self.history.get(&group).ok_or("domain")?;
+            for col in 0..self.width {let left=if prior[col].is_finite(){prior[col]}else{faults[col]|=@INPUTFAULT@;0.0};let right=if row[col].is_finite(){row[col]}else{faults[col]|=@INPUTFAULT@;0.0};let delta=right-left;let value=if delta.is_finite(){delta/gap}else{right/gap-left/gap};
+                if !value.is_finite(){faults[col]|=@SANITIZEDFAULT@;}else{if value.abs()>1e12{faults[col]|=@CLAMPFAULT@;}values[col]=value.clamp(-1e12,1e12);}}
+        }else{for col in 0..self.width{faults[col]=@BOUNDARYFAULT@;if !row[col].is_finite(){faults[col]|=@INPUTFAULT@;}}}
+        let (_,prior,trained)=previous.unwrap_or((0.0,0,0));self.groups.insert(group.clone(),(time,prior+1,trained+usize::from(self.ordinal<self.train_end)));self.history.insert(group,row.to_vec());self.ordinal+=1;Ok((values,faults))
+    }
+    fn to_bytes(&self)->Result<Vec<u8>,&'static str> {
+        let mut cursor=b"FMKCUR\0\x01".to_vec();cursor.extend_from_slice(&self.metadata());ordered_write_word(&mut cursor,self.ordinal as u64);ordered_write_word(&mut cursor,self.groups.len() as u64);
+        for (group,(time,prior,train)) in &self.groups {ordered_write_group(&mut cursor,group);ordered_write_word(&mut cursor,time.to_bits());ordered_write_word(&mut cursor,*prior as u64);ordered_write_word(&mut cursor,*train as u64);}
+        let mut bytes=b"FMKTGR\0\x02".to_vec();ordered_write_word(&mut bytes,self.width as u64);ordered_write_word(&mut bytes,self.minimum_gap.to_bits());
+        ordered_write_word(&mut bytes,cursor.len() as u64);bytes.extend_from_slice(&cursor);ordered_write_word(&mut bytes,self.groups.len() as u64);
+        for (group,(time,_,_)) in &self.groups {ordered_write_group(&mut bytes,group);ordered_write_word(&mut bytes,time.to_bits());let prior=self.history.get(group).ok_or("domain")?;for value in prior.iter(){ordered_write_word(&mut bytes,value.to_bits());}}
+        if bytes.len()>16*1024*1024 {Err("resource")} else {Ok(bytes)}
+    }
+    fn from_bytes(bytes:&[u8],task:u8,input:&str,cut:&str,train_end:usize,total_rows:usize)->Result<Self,&'static str> {
+        let mut reader=OrderedReader::new(bytes)?;if reader.take(8)?!=b"FMKTGR\0\x02" {return Err("unsupported");}
+        let width=reader.usize()?;if width==0 || width>512 {return Err("shape");}
+        let minimum_gap=f64::from_bits(reader.word()?);
+        let mut state=Self::new(minimum_gap,width,task,input,cut,train_end,total_rows)?;
+        let n=reader.count()?;let mut cursor=OrderedReader::new(reader.take(n)?)?;if cursor.take(8)?!=b"FMKCUR\0\x01" {return Err("unsupported");}
+        let metadata=[cursor.text()?,cursor.text()?,cursor.text()?];
+        let fold=format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(cut),train_end,total_rows);
+        let expected=[String::from("{\"version\":1,\"axis\":\"sample_time\",\"causality\":\"causal\",\"fit_scope\":\"stateless\"}"),input.into(),fold];
+        let parsed=(0..3).map(|i|ordered_metadata(&metadata[i],i)).collect::<Result<Vec<_>,_>>()?;let identities=(0..3).map(|i|ordered_metadata(&expected[i],i)).collect::<Result<Vec<_>,_>>()?;if parsed!=identities {return Err("domain");}
+        state.ordinal=cursor.usize()?;if state.ordinal>total_rows {return Err("bounds");}
+        let count=cursor.count()?;if count>state.ordinal {return Err("bounds");}let mut previous=None;let mut rows=0usize;let mut training=0usize;
+        for _ in 0..count {let group=cursor.group()?;let time=f64::from_bits(cursor.word()?);let prior=cursor.usize()?;let train=cursor.usize()?;
+            if previous.as_ref().map_or(false,|p|p>=&group) || !time.is_finite() || prior==0 || prior>state.ordinal || train>prior {return Err("domain");}
+            rows=rows.checked_add(prior).ok_or("bounds")?;training=training.checked_add(train).ok_or("bounds")?;previous=Some(group.clone());state.groups.insert(group,(time,prior,train));}
+        cursor.finish()?;if rows!=state.ordinal || training!=state.ordinal.min(train_end) {return Err("domain");}if metadata!=expected {return Err("syntax");}
+        if reader.count()?!=count {return Err("domain");}
+        for (group,(time,_,_)) in &state.groups {if reader.group()?!=*group || reader.word()?!=time.to_bits() {return Err("domain");}
+            let raw=(0..width).map(|_|reader.word().map(f64::from_bits)).collect::<Result<Vec<_>,_>>()?;state.history.insert(group.clone(),raw);}
+        reader.finish()?;if state.to_bytes()?!=bytes {return Err("syntax");}Ok(state)
+    }
+    fn finish(&self)->Result<(),&'static str> {if self.ordinal==self.total_rows {Ok(())} else {Err("bounds")}}
+}

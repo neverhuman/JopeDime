@@ -7906,6 +7906,22 @@
       ],
       "dispositions": [],
       "scope": "B09 opt-in training-library recipes: explicit train-fold fitting, exact persisted variant2 coefficient/expression words, native/Rust/Python/C++17 fit/MSE/state/inference bit parity, signed-zero and runtime-power composition families, unrepresentable nonzero-slope refusal, strict input/malformed-state and Clip recipe admission refusal. No standalone CSV wrapper, arbitrary winner loader, shipping search/CLI integration, VarPro or Baseline utility promotion."
+    },
+    "target:feat-math/test/timescale_nabla_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/timescale_nabla_v2.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "B15 opt-in causal irregular-grid backward difference: wire75, strictly increasing timestamps and explicit positive minimum gap, typed fault-preserving refusal without gap clipping, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, rational boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     }
   }
 }

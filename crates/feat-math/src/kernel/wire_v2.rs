@@ -179,6 +179,7 @@ pub fn manifest_rows() -> Vec<ReservationRow> {
 pub enum VersionError {
     UnsupportedVersion(String),
     Malformed(String),
+    StageRejected { kind: super::Error, faults: u32 },
 }
 
 impl std::fmt::Display for VersionError {
@@ -298,6 +299,7 @@ pub enum VersionedProgram {
     RowVectorV2(super::row_vector::Program),
     DifferenceV2(DifferenceProgram),
     IntegrationV2(super::cumulative_integration::IntegrationProgram),
+    TimeGradientV2(super::timescale_nabla::TimeGradientProgram),
 }
 
 impl VersionedProgram {
@@ -345,6 +347,18 @@ impl VersionedProgram {
         }
     }
 
+    pub fn emit_time_gradient_recipe(
+        &self,
+        language: DifferenceLanguage,
+    ) -> VersionResult<super::timescale_nabla::TimeGradientRecipe> {
+        match self {
+            Self::TimeGradientV2(program) => program.emit_recipe(language),
+            _ => Err(VersionError::UnsupportedVersion(
+                "program has no time_gradient recipe route".into(),
+            )),
+        }
+    }
+
     pub fn from_bytes(bytes: &[u8]) -> VersionResult<Self> {
         if bytes.len() < MAGIC_V2.len() || &bytes[..MAGIC_PREFIX.len()] != MAGIC_PREFIX {
             return Err(VersionError::Malformed("program magic".into()));
@@ -361,6 +375,9 @@ impl VersionedProgram {
                 Some(4) => Ok(Self::DifferenceV2(DifferenceProgram::from_bytes(bytes)?)),
                 Some(5) => Ok(Self::IntegrationV2(
                     super::cumulative_integration::IntegrationProgram::from_bytes(bytes)?,
+                )),
+                Some(6) => Ok(Self::TimeGradientV2(
+                    super::timescale_nabla::TimeGradientProgram::from_bytes(bytes)?,
                 )),
                 Some(_) => Err(VersionError::UnsupportedVersion(
                     "program v2 variant".into(),
@@ -382,6 +399,7 @@ impl VersionedProgram {
             Self::RowVectorV2(program) => program.to_bytes(),
             Self::DifferenceV2(program) => program.to_bytes(),
             Self::IntegrationV2(program) => program.to_bytes(),
+            Self::TimeGradientV2(program) => program.to_bytes(),
         }
     }
 
@@ -398,6 +416,9 @@ impl VersionedProgram {
                 program.fit_training(rows, labels, task, fold)?,
             ))),
             Self::IntegrationV2(program) => Ok(VersionedModel::IntegrationV2(Box::new(
+                program.fit_training(rows, labels, task, fold)?,
+            ))),
+            Self::TimeGradientV2(program) => Ok(VersionedModel::TimeGradientV2(Box::new(
                 program.fit_training(rows, labels, task, fold)?,
             ))),
             _ => Err(VersionError::UnsupportedVersion(
@@ -421,6 +442,9 @@ impl VersionedProgram {
             Self::IntegrationV2(_) => Err(VersionError::UnsupportedVersion(
                 "ordered input required for integral execution".into(),
             )),
+            Self::TimeGradientV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for time_gradient execution".into(),
+            )),
             Self::ScalarV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 scalar execution is not admitted".into(),
             )),
@@ -438,7 +462,8 @@ impl VersionedProgram {
             | Self::RowVectorV2(_)
             | Self::DifferenceV2(_)
             | Self::IntegrationV2(_)
-            | Self::LinearScaledV2(_) => Ok(format!(
+            | Self::LinearScaledV2(_)
+            | Self::TimeGradientV2(_) => Ok(format!(
                 "(program codec=2 hex=\"{}\")",
                 self.to_bytes()?
                     .iter()
@@ -486,7 +511,8 @@ impl VersionedProgram {
             | Self::RowVectorV2(_)
             | Self::DifferenceV2(_)
             | Self::IntegrationV2(_)
-            | Self::LinearScaledV2(_)) => Ok(value),
+            | Self::LinearScaledV2(_)
+            | Self::TimeGradientV2(_)) => Ok(value),
             Self::LegacyV1(_) => Err(VersionError::UnsupportedVersion(
                 "program text codec/body mismatch".into(),
             )),
@@ -554,6 +580,22 @@ pub fn export_report(program: &VersionedProgram) -> ExportReport {
                 cpp17_fitted_basis: FittedBasis::Declared,
                 javascript: Route::Unsupported(vec![
                     "integral ordered JavaScript route unavailable".into(),
+                ]),
+            }
+        }
+        VersionedProgram::TimeGradientV2(program) => {
+            let support = match program.validate_recipe_closure() {
+                Ok(()) => Route::Ok,
+                Err(error) => Route::Unsupported(vec![error.to_string()]),
+            };
+            ExportReport {
+                rust_recipe: support.clone(),
+                python_recipe: support.clone(),
+                cpp17_recipe: support.clone(),
+                cpp17_fitted: support,
+                cpp17_fitted_basis: FittedBasis::Declared,
+                javascript: Route::Unsupported(vec![
+                    "time_gradient ordered JavaScript route unavailable".into(),
                 ]),
             }
         }
@@ -687,6 +729,7 @@ pub enum VersionedModel {
     DifferenceV2(Box<DifferenceModel>),
     IntegrationV2(Box<super::cumulative_integration::IntegrationModel>),
     ScalarV2(Box<ScalarModel>),
+    TimeGradientV2(Box<super::timescale_nabla::TimeGradientModel>),
 }
 
 impl VersionedModel {
@@ -718,6 +761,17 @@ impl VersionedModel {
             Self::IntegrationV2(model) => model.emit_fitted_cpp17(),
             _ => Err(VersionError::UnsupportedVersion(
                 "model has no integral fitted export route".into(),
+            )),
+        }
+    }
+
+    pub fn emit_time_gradient_fitted_cpp17(
+        &self,
+    ) -> VersionResult<super::timescale_nabla::TimeGradientFittedCpp> {
+        match self {
+            Self::TimeGradientV2(model) => model.emit_fitted_cpp17(),
+            _ => Err(VersionError::UnsupportedVersion(
+                "model has no time_gradient fitted export route".into(),
             )),
         }
     }
@@ -760,6 +814,13 @@ impl VersionedModel {
                 .map(Box::new)
                 .map(Self::IntegrationV2);
         }
+        if value.get("schema").and_then(Value::as_str)
+            == Some("feat-math.causal-time-gradient-model")
+        {
+            return super::timescale_nabla::TimeGradientModel::from_json(json)
+                .map(Box::new)
+                .map(Self::TimeGradientV2);
+        }
         let wire: ModelWireV2 = serde_json::from_value(value)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
         validate_model_wire(&wire)?;
@@ -770,6 +831,7 @@ impl VersionedModel {
         match self {
             Self::DifferenceV2(model) => Ok(model.predict(rows)?),
             Self::IntegrationV2(model) => Ok(model.predict(rows)?),
+            Self::TimeGradientV2(model) => Ok(model.predict(rows)?),
             _ => Err(VersionError::UnsupportedVersion(
                 "model has no ordered prediction route".into(),
             )),
@@ -790,6 +852,9 @@ impl VersionedModel {
             )),
             Self::IntegrationV2(_) => Err(VersionError::UnsupportedVersion(
                 "ordered input required for integral prediction".into(),
+            )),
+            Self::TimeGradientV2(_) => Err(VersionError::UnsupportedVersion(
+                "ordered input required for time_gradient prediction".into(),
             )),
             Self::ReservedV2(_) => Err(VersionError::UnsupportedVersion(
                 "version 2 models are not executable".into(),
