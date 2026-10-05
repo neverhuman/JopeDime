@@ -424,3 +424,7 @@ fn import_node(node: &Expr, depth: usize, budget: &mut NodeBudget) -> VersionRes
         }
     })
 }
+
+// B05–B07: canonical Experimental producer declarations, before generation.
+mod producer;
+pub use producer::{ScalarProducerKind, ScalarProducerProfile};

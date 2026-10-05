@@ -1062,3 +1062,7 @@ mod scalar_routing_v2;
 // B05–B07: generic scalar artifact export keeps native source/codec identities.
 #[path = "scalar_export_v2/mod.rs"]
 mod scalar_export_v2;
+
+// B05–B07: strict canonical producer declarations before generation.
+#[path = "producer_profile_v2/mod.rs"]
+mod producer_profile_v2;
