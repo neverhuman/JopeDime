@@ -112,3 +112,13 @@ exact-head qualification and native review, not yet claimed resolved. See
 [training recipe correction](linear-scaling-recipes.md) and external
 `B09_LINEAR_SCALING/correction-02-signed-zero` evidence. Legacy emitter bytes,
 raw evaluator/codec and historical identities remain unchanged.
+
+
+Correction-03 explicitly freezes row-extrema zero ties for this unmerged v2
+profile. Fit and prediction use the same private mixed-zero binding; neither
+mutates the original tree or serialized winner. All other protected arithmetic,
+hard-error fallback and old callers remain on the unchanged evaluator. The
+analytical width1..512 regression passes in optimized builds after reproducing
+the defect on the prior source. Final default/release focused17, PR/compat/lint,
+affected recipe matrices, audit and fresh exact-head hosted/native review are
+tracked under `B09_LINEAR_SCALING/correction-03-extrema`; no merged/full B09 claim.

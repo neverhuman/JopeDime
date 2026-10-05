@@ -118,3 +118,24 @@ also run ASan/UBSan and C++20. The completed full card run remains bound to
 these corrected helpers. Current main's shared baseline is reused. Qualification,
 actual exits, named test/skip inventories and exact-head CI/review are recorded
 under `/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/correction-02-signed-zero`.
+
+
+Correction-03 found that the frozen Rust row-extrema fold itself has different
+signed-zero ties in default and optimized builds (release analytical repro fails
+at width4). The unmerged v2 scalar profile now freezes right-operand row-extrema
+ties in both fitting and prediction. Only mixed-sign-zero rows whose min/max is
+zero need a private binding of row_min/row_max to finite constant words before
+executing the unchanged bounded tree. Ordinary rows borrow the compiled tree.
+The original expression, serialized state and evaluator identity inputs stay
+unchanged; legacy callers keep their old evaluator. There is no new historical
+transition or change to old operator IDs. The private exported helpers freeze the
+same order, independently of optimization.
+
+A third new regression analytically checks 7 versus10 after reciprocal/finite
+guards for row_min/row_max, every width1..512, both zero orders/signs, fitting,
+prediction and byte-stable state. Total new nonignored tests are now17 (11 winner,
+6 recipes). Full focused tests must pass in both default and release builds;
+ASan/UBSan and C++20 train/restore matrices remain required. Earlier33d debug16,
+PR2199/30 and audit passed, but its release failure blocks it: those receipts are
+retained as superseded evidence. Active correction evidence is
+`/home/ubuntu/jope-evidence/kernel2/bt/B09_LINEAR_SCALING/correction-03-extrema`.

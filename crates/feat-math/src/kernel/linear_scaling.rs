@@ -11,6 +11,7 @@ use crate::{GenomeIr, MAX_WIDTH};
 
 mod calibration;
 mod emit;
+mod evaluation;
 mod fit;
 mod recipe;
 pub use emit::ScaledArtifacts;
@@ -53,15 +54,12 @@ impl LinearScaledWinner {
 
     pub fn predict(&self, rows: &[Vec<f64>]) -> Result<Vec<f64>> {
         check_rows(rows, self.input_width)?;
-        let compiled = self
-            .expression
-            .compile()
-            .map_err(|e| Error::Domain(e.to_string()))?;
+        let evaluator = evaluation::Evaluator::new(&self.expression)?;
         rows.iter()
             .map(|row| {
-                // Preserve the base expression's legacy protected value,
-                // including its hard-error zero fallback, before calibration.
-                let (value, _) = compiled.eval_row_traced(row);
+                // Bind this version's zero ties, then retain the protected
+                // arithmetic and hard-error zero fallback before calibration.
+                let (value, _) = evaluator.for_row(row)?.eval_row_traced(row);
                 let scaled = self.slope * value + self.intercept;
                 if scaled.is_finite() {
                     Ok(scaled)
