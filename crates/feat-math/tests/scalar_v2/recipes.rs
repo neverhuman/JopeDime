@@ -360,8 +360,19 @@ fn complete_scalar_recipes_match_native_features_faults_state_and_predictions() 
     );
     for (compiler, standard) in [("g++", "-std=c++17"), ("clang++", "-std=c++20")] {
         let binary = directory.join(compiler);
-        run(Command::new(compiler)
-            .args([standard, "-O2", "-ffp-contract=off", "-fno-fast-math"])
+        let mut cmd = Command::new(compiler);
+        cmd.args([standard, "-O2", "-ffp-contract=off", "-fno-fast-math"]);
+        if let Ok(sanitizer) = std::env::var("JOPE_FITTED_CPP_SANITIZER") {
+            cmd.args([
+                "-O1",
+                "-fno-omit-frame-pointer",
+                "-fno-pie",
+                "-no-pie",
+                "-fno-sanitize-recover=all",
+            ])
+            .arg(format!("-fsanitize={sanitizer}"));
+        }
+        run(cmd
             .arg(directory.join("recipes.cpp"))
             .arg("-o")
             .arg(&binary));
