@@ -117,6 +117,75 @@ fn maximum_width_checkpoint_and_gap_rejections_preserve_state() {
                     .source,
                 fitted.source
             );
+            if width == 512 {
+                use feat_math::kernel::timescale_nabla::TimeGradientLanguage;
+                let mut native = model.clone();
+                let prediction = native.predict_with_faults(&rows[1..]).unwrap();
+                assert_eq!(prediction.faults, vec![vec![0; 512]]);
+                let value: serde_json::Value =
+                    serde_json::from_str(&native.to_json().unwrap()).unwrap();
+                let saved = value["state"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| format!("{:02x}", v.as_u64().unwrap()))
+                    .collect::<String>();
+                let expected_text = format!("{:016x}\n{}\n", prediction.values[0].to_bits(), saved);
+                let dir = tempfile::tempdir().unwrap().keep();
+                for lang in [
+                    TimeGradientLanguage::Rust,
+                    TimeGradientLanguage::Python,
+                    TimeGradientLanguage::Cpp17,
+                ] {
+                    let driver = match lang {
+                        TimeGradientLanguage::Rust => {
+                            r#"
+fn main(){let rows=[OrderedRow{group:OrderedGroup::Numeric(0),timestamp:0.,values:vec![2.;512]},OrderedRow{group:OrderedGroup::Numeric(0),timestamp:0.5,values:vec![5.;512]}];let mut model=fit_ordered(&rows[..1],&[1.],2,"wide",1,2).unwrap();let (values,faults)=model.predict(&rows[1..]).unwrap();assert_eq!(faults,vec![vec![0;512]]);println!("{:016x}",values[0].to_bits());println!("{}",model.state_bytes().unwrap().iter().map(|v|format!("{v:02x}")).collect::<String>());model.finish().unwrap();}
+"#
+                        }
+                        TimeGradientLanguage::Python => {
+                            r#"
+rows=[OrderedRow((0,0),0.,[2.]*512),OrderedRow((0,0),0.5,[5.]*512)]
+model=fit_ordered(rows[:1],[1.],'forecasting','wide',1,2)
+values,faults=model.predict(rows[1:]);assert faults==[[0]*512]
+print(format(struct.unpack('<Q',struct.pack('<d',values[0]))[0],'016x'));print(model.state_bytes().hex());model.finish()
+"#
+                        }
+                        TimeGradientLanguage::Cpp17 => {
+                            r#"
+#include <iostream>
+#include <iomanip>
+int main(){const std::vector<OrderedRow> rows={{OrderedGroup::numeric(0.),0.,std::vector<double>(512,2.)},{OrderedGroup::numeric(0.),0.5,std::vector<double>(512,5.)}};auto model=fit_ordered({rows[0]},{1.},2,"wide",1,2);const auto result=model.predict({rows[1]});if(result.second!=std::vector<std::vector<std::uint32_t>>{std::vector<std::uint32_t>(512,0)})return 1;std::cout<<std::hex<<std::setfill('0')<<std::setw(16)<<ordered_bits(result.first[0])<<'\n';for(auto b:model.state_bytes())std::cout<<std::setw(2)<<unsigned(b);std::cout<<'\n';model.finish();}
+"#
+                        }
+                    };
+                    let source = p.emit_recipe(lang).unwrap().source;
+                    assert_eq!(
+                        super::recipes::execute(
+                            &dir,
+                            &format!("width512-{lang:?}"),
+                            &(source + driver),
+                            lang
+                        ),
+                        expected_text
+                    );
+                    if lang == TimeGradientLanguage::Cpp17 {
+                        let driver = driver.replace(
+                            "fit_ordered({rows[0]},{1.},2,\"wide\",1,2)",
+                            "make_time_gradient_model()",
+                        );
+                        assert_eq!(
+                            super::recipes::execute(
+                                &dir,
+                                "width512-fitted",
+                                &(fitted.source.clone() + &driver),
+                                lang
+                            ),
+                            expected_text
+                        );
+                    }
+                }
+            }
             let expected = model.clone().predict(&rows[1..]).unwrap();
             assert_eq!(
                 public
