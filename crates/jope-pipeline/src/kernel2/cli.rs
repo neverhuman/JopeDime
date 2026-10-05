@@ -5,8 +5,9 @@ use clap::Args;
 use feat_math::evolve::FaultPolicy;
 use std::{path::PathBuf, process::ExitCode};
 
-use super::{messages, receipt, run, search::Refinement};
+use super::{messages, receipt, run, search::Refinement, EngineSelection, RefineMethod};
 use crate::{cli::SearchArgs, emit::Language};
+use feat_math::kernel::expression_search::LmOptions;
 
 #[derive(Args, Clone, Debug)]
 pub struct ProfileArgs {
@@ -22,6 +23,11 @@ pub struct ProfileArgs {
     /// Objective trials per parent, within the total evaluation budget; required for kernel2.
     #[arg(long)]
     pub refine_trials: Option<usize>,
+    /// Constant refinement for kernel2: coordinate (default) or lm, a damped least-squares fit of
+    /// a derive stage's constants on its training rows, kept only when the whole pipeline's
+    /// training loss falls. lm needs --refine-top-k 1 or more and --refine-trials 3 or more.
+    #[arg(long)]
+    pub refine_method: Option<String>,
     /// Explicit nonnegative Domain penalty; required with penalize.
     #[arg(long)]
     pub lambda_domain: Option<f64>,
@@ -50,7 +56,8 @@ impl ProfileArgs {
                     .is_none_or(|p| p == messages::DEFAULT_SEARCH_PROFILE)
                     && !penalty
                     && self.refine_top_k.is_none()
-                    && self.refine_trials.is_none(),
+                    && self.refine_trials.is_none()
+                    && self.refine_method.is_none(),
                 messages::PROFILE_OPTIONS_REFUSAL
             );
             return Ok(None);
@@ -88,17 +95,30 @@ impl ProfileArgs {
                 .refine_trials
                 .context("kernel2 requires an explicit --refine-trials")?,
         };
+        let engine = self.engine()?;
         let mut run = search.options(output, signals)?;
         if search.emit.is_none() {
             run.languages = Language::parse_list("rust,python,cpp17,cpp20,js,cpp17-fitted")?;
         }
-        Ok(Some(run::Options::new(
-            run,
-            &self.search_profile,
-            policy,
-            refinement,
-        )?))
+        let options = run::Options::new(run, &self.search_profile, policy, refinement)?;
+        // The default selection keeps the existing single preflight.
+        if engine == EngineSelection::default() {
+            return Ok(Some(options));
+        }
+        Ok(Some(options.with_engine(engine)?))
     }
+
+    // laneD:B17-lm-refinement begin
+    /// The opt-in engine methods these flags select; none by default.
+    fn engine(&self) -> Result<EngineSelection> {
+        let refine = match self.refine_method.as_deref().unwrap_or("coordinate") {
+            "coordinate" => RefineMethod::Coordinate,
+            "lm" => RefineMethod::Lm(LmOptions::default()),
+            _ => anyhow::bail!("kernel2 --refine-method must be coordinate or lm"),
+        };
+        Ok(EngineSelection { refine })
+    }
+    // laneD:B17-lm-refinement end
 }
 
 pub(crate) fn print_run(options: &run::Options, json: bool) -> Result<ExitCode> {

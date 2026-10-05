@@ -8,7 +8,7 @@ use std::{collections::BTreeMap, path::Path};
 use super::{
     records::Measurement,
     search::{PolicyRecord, Refinement},
-    Kernel2Evaluator,
+    EngineRecord, Kernel2Evaluator,
 };
 use crate::{receipt as receipt_v3, search};
 
@@ -47,6 +47,9 @@ pub struct Search {
     pub best: Measurement,
     pub observations_sha256: String,
     pub refinements_sha256: String,
+    /// Opt-in engine methods. Absent for the default selection, so its receipts keep their bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine_selection: Option<EngineRecord>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -178,6 +181,11 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
             "seconds stop before the bound"
         );
     }
+    // laneD:B17-lm-refinement begin
+    if let Some(engine) = &s.engine_selection {
+        engine.selection()?.validate(s.refinement)?;
+    }
+    // laneD:B17-lm-refinement end
     let evaluator = s.evaluator()?;
     let best = s.best.derive(evaluator.fault_policy())?;
     ensure!(
