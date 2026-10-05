@@ -198,10 +198,20 @@ impl TimeGradientModel {
         let source = format!(
             "{downstream}\n{}\n{}\n{factory}",
             super::emit::emit_state(TimeGradientLanguage::Cpp17),
-            include_str!("recipes/time_gradient_fitted_cpp.txt").replace(
-                "jope_fitted_predict",
-                "jope_time_gradient_downstream_predict"
-            )
+            include_str!("recipes/time_gradient_fitted_cpp.txt")
+                .replace(
+                    "jope_fitted_predict",
+                    "jope_time_gradient_downstream_predict"
+                )
+                .replace(
+                    "@CHECKPOINT_FIXED_BYTES@",
+                    &(model_json.len()
+                        - serde_json::to_value(&self.state.to_bytes()?)
+                            .map_err(|e| Error::Syntax(e.to_string()))?
+                            .to_string()
+                            .len())
+                    .to_string()
+                )
         );
         check_artifact(&source)?;
         let source_sha256 = hash(&source);

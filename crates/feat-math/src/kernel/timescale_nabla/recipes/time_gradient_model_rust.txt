@@ -1,3 +1,12 @@
+fn time_gradient_checkpoint(state:&TimeGradientState,predictor:&downstream::Predictor)->Result<(),&'static str> {
+    let bytes=state.to_bytes()?;
+    let array=2+bytes.len().saturating_sub(1)+bytes.iter().map(|v|v.to_string().len()).sum::<usize>();
+    let word_array=|values:&[f64]|2+values.len().saturating_sub(1)+values.iter().map(|v|13+v.to_bits().to_string().len()).sum::<usize>();
+    let (means,scales,w)=predictor.parameters();
+    let fold=format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(cut),train_end,total_rows);
+    if @MODEL_BASE_BYTES@+fold.len()+array+word_array(means)+word_array(scales)+word_array(w)>16*1024*1024 {return Err("resource");}
+    Ok(())
+}
 #[derive(Clone)]
 pub struct OrderedRow {pub group:OrderedGroup,pub timestamp:f64,pub values:Vec<f64>}
 pub struct TimeGradientModel {state:TimeGradientState,predictor:downstream::Predictor,task:u8}
@@ -6,12 +15,7 @@ fn fit_ordered(rows:&[OrderedRow],labels:&[f64],task:u8,cut:&str,train_end:usize
     let mut state=TimeGradientState::new(@MINIMUM_GAP@,@WIDTH@,task,@INPUT@,cut,train_end,total_rows)?;
     let mut transformed=Vec::new();for row in rows {transformed.push(state.push(row.group.clone(),row.timestamp,&row.values)?.0);}
     let predictor=downstream::fit(&transformed,labels)?;
-    let bytes=state.to_bytes().map_err(|_|"domain")?;
-    let array=2+bytes.len().saturating_sub(1)+bytes.iter().map(|v|v.to_string().len()).sum::<usize>();
-    let word_array=|values:&[f64]|2+values.len().saturating_sub(1)+values.iter().map(|v|13+v.to_bits().to_string().len()).sum::<usize>();
-    let (means,scales,w)=predictor.parameters();
-    let fold=format!("{{\"cut_id\":{},\"train_end\":{},\"total_rows\":{}}}",ordered_json_string(cut),train_end,total_rows);
-    if @MODEL_BASE_BYTES@+fold.len()+array+word_array(means)+word_array(scales)+word_array(w)>16*1024*1024 {return Err("domain".into());}
+    time_gradient_checkpoint(&state,&predictor).map_err(|_|"domain")?;
     Ok(TimeGradientModel {state,predictor,task})
 }
 impl TimeGradientModel {
@@ -19,7 +23,7 @@ impl TimeGradientModel {
         if rows.is_empty() {return Ok((Vec::new(),Vec::new()));}
         let mut next=self.state.clone();let mut transformed=Vec::new();let mut faults=Vec::new();
         for row in rows {let (values,bits)=next.push(row.group.clone(),row.timestamp,&row.values)?;transformed.push(values);faults.push(bits);}
-        let values=self.predictor.predict(&transformed).into_iter().map(|v|if v.is_finite() {v} else {0.0}).collect::<Vec<_>>();if values.len()!=rows.len() {return Err("shape".into());}self.state=next;Ok((values,faults))
+        let values=self.predictor.predict(&transformed).into_iter().map(|v|if v.is_finite() {v} else {0.0}).collect::<Vec<_>>();if values.len()!=rows.len() {return Err("shape".into());}time_gradient_checkpoint(&next,&self.predictor)?;self.state=next;Ok((values,faults))
     }
     pub fn state_bytes(&self)->Result<Vec<u8>,&'static str> {self.state.to_bytes()}
     pub fn replace_state(&mut self,bytes:&[u8])->Result<(),&'static str> {
