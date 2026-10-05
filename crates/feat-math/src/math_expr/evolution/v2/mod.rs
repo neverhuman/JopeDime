@@ -6,6 +6,9 @@ use crate::kernel::profile::{ExprPool, SearchProfile};
 mod grow;
 mod mutation;
 mod refinement;
+// B19 bounded Remez compression: staged with no caller until B18 merges (OWNER v1.3).
+#[cfg(test)]
+mod simplify;
 
 #[derive(Clone, Copy)]
 enum Operator {
