@@ -209,3 +209,6 @@ impl Search<'_> {
         }
     }
 }
+
+// B05–B07: typed scalar consumers, without changing existing EEC draws.
+mod scalar;
