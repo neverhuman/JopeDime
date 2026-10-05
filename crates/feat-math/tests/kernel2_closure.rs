@@ -1050,3 +1050,7 @@ mod goertzel_v2;
 // B05–B07: scalar models under the existing registered closure target.
 #[path = "scalar_v2/model.rs"]
 mod scalar_model_v2;
+
+// B05–B07: compiled train/predict and immutable fitted artifacts.
+#[path = "scalar_v2/recipes.rs"]
+mod scalar_recipes_v2;

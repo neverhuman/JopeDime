@@ -13,6 +13,8 @@
 
 use crate::mathexpr::fmt_f64;
 use crate::spec::{helper_set, Helper, Plan, PlannedHead, PlannedOp, PlannedStage};
+// B05–B07: explicit scalar-v2 recipe assembly.
+use crate::kernel::scalar_program::emit::{self as scalar_emit, ScalarLanguage};
 use crate::transpile::{EmitOptions, MathKernel};
 
 /// Emit a standalone C++ program for `plan`, or list the elements this rung does
@@ -63,7 +65,9 @@ fn emit_cpp_inner(
             && !(expressions
                 && matches!(
                     stage.op,
-                    PlannedOp::MapExpr { .. } | PlannedOp::DeriveExpr { .. }
+                    PlannedOp::MapExpr { .. }
+                        | PlannedOp::DeriveExpr { .. }
+                        | PlannedOp::ScalarV2 { .. }
                 ))
         {
             unsupported.push(format!("transform {}", op_label(&stage.op)));
@@ -76,6 +80,9 @@ fn emit_cpp_inner(
         return Err(unsupported);
     }
 
+    if scalar_emit::raw_input(plan) && opts.math_kernel == MathKernel::Portable {
+        return Err(vec!["scalar-v2 old operations require PlatformLibm".into()]);
+    }
     let mut sections: Vec<String> = Vec::new();
     sections.push(PREAMBLE.to_string());
     if expressions {
@@ -97,10 +104,33 @@ fn emit_cpp_inner(
             sections.push(body.to_string());
         }
     }
+    let scalar_programs = scalar_emit::programs(plan);
+    if !scalar_programs.is_empty() {
+        sections.push(
+            scalar_emit::emit_v2_helpers(&scalar_programs, ScalarLanguage::Cpp17)
+                .map_err(|e| vec![e.to_string()])?,
+        );
+    }
     let mut seen: Vec<&'static str> = Vec::new();
     for (index, stage) in stages.iter().enumerate() {
         if expressions {
             match &stage.op {
+                PlannedOp::ScalarV2 {
+                    program,
+                    carrier,
+                    width,
+                } => {
+                    sections.push(
+                        scalar_emit::emit_stage(
+                            program,
+                            *carrier,
+                            *width,
+                            index + 1,
+                            ScalarLanguage::Cpp17,
+                        )
+                        .map_err(|e| vec![e.to_string()])?,
+                    );
+                }
                 PlannedOp::MapExpr { expr, .. } | PlannedOp::DeriveExpr { expr, .. } => {
                     sections.push(expression_stage_cpp(
                         index + 1,
@@ -427,6 +457,9 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
         let n = i + 1;
         let append = if stage.append { "true" } else { "false" };
         let (fit_call, apply_template) = match &stage.op {
+            PlannedOp::ScalarV2 { .. } if expressions => {
+                (None, format!("scalar_stage{n}_apply(x, {{append}})"))
+            }
             PlannedOp::MapExpr { .. } | PlannedOp::DeriveExpr { .. } if expressions => {
                 (None, format!("expression_stage{n}(x, {{append}})"))
             }
@@ -463,6 +496,15 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
     out.push_str(
         "    std::vector<double> predict(const std::vector<std::vector<double>>& x_in) const;\n",
     );
+    // B05–B07: public prediction faults on the typed one-stage recipe.
+    if stages.len() == 1
+        && matches!(
+            stages.first().map(|s| &s.op),
+            Some(PlannedOp::ScalarV2 { .. })
+        )
+    {
+        out.push_str("    std::pair<std::vector<double>,std::vector<std::uint32_t>> predict_with_faults(const std::vector<std::vector<double>>& rows) const {auto features=scalar_stage1_values(rows);return {predict(rows),std::move(features.second)};}\n");
+    }
     out.push_str("};\n\n");
 
     out.push_str(
@@ -476,6 +518,13 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
     if expressions {
         out.push_str("    const std::size_t input_width = expression_width(x_in);\n");
     }
+    let raw_scalar = matches!(
+        stages.first().map(|s| &s.op),
+        Some(PlannedOp::ScalarV2 { .. })
+    );
+    if raw_scalar {
+        out.push_str("    if(x_in.empty()||y.size()!=x_in.size())throw std::invalid_argument(\"scalar training shape\");for(double v:y)if(!std::isfinite(v)||std::abs(v)>1e12)throw std::invalid_argument(\"scalar training labels\");\n");
+    }
     // B12: preserve the explicit v2 fit contract across native recipes.
     if stages
         .iter()
@@ -483,12 +532,20 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
     {
         out.push_str("    if(x_in.empty() || y.size()!=x_in.size())throw std::invalid_argument(\"row-vector training shape\");for(double v:y)if(!std::isfinite(v)||std::abs(v)>1e12)throw std::invalid_argument(\"row-vector training labels\");\n");
     }
-    out.push_str("    std::vector<std::vector<double>> x = sanitize(x_in);\n");
+    out.push_str(if raw_scalar {
+        "    std::vector<std::vector<double>> x = x_in;\n"
+    } else {
+        "    std::vector<std::vector<double>> x = sanitize(x_in);\n"
+    });
     for line in &fit_body {
         out.push_str(line);
         out.push('\n');
     }
     out.push_str(&format!("    {head_ty} head = {head_fit};\n"));
+    if raw_scalar && matches!(head, PlannedHead::Ridge { .. }) {
+        out.push_str("    if(std::all_of(y.begin(),y.end(),[](double v){return v==0.0&&std::signbit(v);}))head.w[0]=-0.0;\n");
+    }
+
     out.push_str("    Model m;\n");
     if expressions {
         out.push_str("    m.input_width = input_width;\n");
@@ -507,7 +564,11 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
     if expressions {
         out.push_str("    if (!x_in.empty() && expression_width(x_in) != input_width) throw std::invalid_argument(\"prediction width\");\n");
     }
-    out.push_str("    std::vector<std::vector<double>> x = sanitize(x_in);\n");
+    out.push_str(if raw_scalar {
+        "    std::vector<std::vector<double>> x = x_in;\n"
+    } else {
+        "    std::vector<std::vector<double>> x = sanitize(x_in);\n"
+    });
     for line in &predict_body {
         out.push_str(line);
         out.push('\n');

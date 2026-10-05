@@ -3,6 +3,8 @@
 //! crates) and mirrors the Python artifact line for line in structure.
 
 use crate::mathexpr::fmt_f64;
+// B05–B07: scalar-v2 recipe assembly.
+use crate::kernel::scalar_program::emit::{self as scalar_emit, ScalarLanguage};
 use crate::spec::{
     doc_paragraphs, head_fn_name, helper_set, op_fn_name, op_struct_name, target_fn_name,
     target_struct_name, wrap, Arena, Helper, Plan, PlannedHead, PlannedOp, PlannedStage,
@@ -11,6 +13,12 @@ use crate::spec::{
 use crate::transpile::EmitOptions;
 
 pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
+    // B05–B07: retain the explicit old-operation numerical contract.
+    assert!(
+        !scalar_emit::raw_input(plan)
+            || opts.math_kernel == crate::transpile::MathKernel::PlatformLibm,
+        "scalar-v2 old operations require PlatformLibm"
+    );
     // One blank line between top-level items; single pre-reserved buffer.
     let mut out = Arena::new("\n\n", 24 * 1024);
     out.push(&module_doc(plan, opts));
@@ -19,7 +27,9 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
         Plan::Pipeline { stages, .. } => stages.iter().any(|s| {
             matches!(
                 s.op,
-                PlannedOp::MapExpr { .. } | PlannedOp::DeriveExpr { .. }
+                PlannedOp::MapExpr { .. }
+                    | PlannedOp::DeriveExpr { .. }
+                    | PlannedOp::ScalarV2 { .. }
             )
         }),
     };
@@ -38,6 +48,13 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
             out.push(src);
         }
     }
+    let scalar_programs = scalar_emit::programs(plan);
+    if !scalar_programs.is_empty() {
+        out.push(
+            &scalar_emit::emit_v2_helpers(&scalar_programs, ScalarLanguage::Rust)
+                .expect("admitted scalar helpers"),
+        );
+    }
     match plan {
         Plan::Pipeline {
             target,
@@ -50,6 +67,22 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
             let mut seen: Vec<&'static str> = Vec::new();
             for (i, stage) in stages.iter().enumerate() {
                 match &stage.op {
+                    PlannedOp::ScalarV2 {
+                        program,
+                        carrier,
+                        width,
+                    } => {
+                        out.push(
+                            &scalar_emit::emit_stage(
+                                program,
+                                *carrier,
+                                *width,
+                                i + 1,
+                                ScalarLanguage::Rust,
+                            )
+                            .expect("admitted scalar stage"),
+                        );
+                    }
                     // Formula stages carry their own expression: one snippet
                     // per stage, named by position (never deduped).
                     PlannedOp::MapExpr { source, expr } => {
@@ -96,7 +129,14 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
             out.push(&model_symbolic(*affine, opts.fast_runtime));
         }
     }
-    out.push(IO_BLOCK);
+    if scalar_emit::raw_input(plan) {
+        out.push(
+            &crate::kernel::scalar_program::io::io_source(ScalarLanguage::Rust, IO_BLOCK)
+                .expect("scalar IO template"),
+        );
+    } else {
+        out.push(IO_BLOCK);
+    }
     out.finish()
 }
 
@@ -1162,6 +1202,7 @@ fn doc_comment(text: &str) -> String {
 fn op_src(op: &PlannedOp) -> String {
     let doc = doc_comment(&format!("This transform {}", crate::spec::op_doc(op)));
     let body: &str = match op {
+        PlannedOp::ScalarV2 { .. } => "",
         // B13: the goertzel_bank helper, only for a bank-bearing program.
         PlannedOp::RowVectorV2 {
             state: crate::kernel::row_vector::FittedStage::Goertzel(_),
@@ -5193,6 +5234,7 @@ fn rs_kernel_terms(spec: &crate::gpr::KernelSpec) -> String {
 /// `n` is the 1-based stage index (used by the per-stage formula functions).
 fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
     match op {
+        PlannedOp::ScalarV2 { .. } => (None, format!("scalar_stage{n}_apply(&x, {{append}})")),
         PlannedOp::RowVectorInputV2 { width } => (
             None,
             format!("row_vector_v2_input(&x, {width}, {{append}})"),
@@ -5509,6 +5551,13 @@ fn model_pipeline(
     lines.push("impl Model {".to_string());
     lines.push("    /// Fit every stage in order on the training rows.".to_string());
     lines.push("    fn fit(x: &[Vec<f64>], y: &[f64]) -> Model {".to_string());
+    let raw_scalar = matches!(
+        stages.first().map(|s| &s.op),
+        Some(PlannedOp::ScalarV2 { .. })
+    );
+    if raw_scalar {
+        lines.push("        assert!(!x.is_empty() && y.len() == x.len() && y.iter().all(|v| v.is_finite() && v.abs() <= 1e12), \"scalar training labels\");".to_string());
+    }
     // B12: preserve the explicit v2 fit contract across native recipes.
     if stages
         .iter()
@@ -5529,7 +5578,14 @@ fn model_pipeline(
         lines.push("            std::process::exit(2);".to_string());
         lines.push("        }".to_string());
     }
-    lines.push("        let x = sanitize(x);".to_string());
+    lines.push(
+        if raw_scalar {
+            "        let x = x.to_vec();"
+        } else {
+            "        let x = sanitize(x);"
+        }
+        .to_string(),
+    );
     let mut field_names: Vec<String> = Vec::new();
     if let Some(target) = target {
         // The transform is fitted on the raw train target FIRST; every stage
@@ -5557,6 +5613,10 @@ fn model_pipeline(
         lines.push(format!("        let x = {apply};"));
     }
     lines.push(format!("        let head = {head_fit};"));
+    if raw_scalar && matches!(head, PlannedHead::Ridge { .. }) {
+        lines.push("        let mut head = head; if y.iter().all(|v| v.to_bits() == (-0.0f64).to_bits()) {head.w[0]=-0.0;}".to_string());
+    }
+
     let mut init = field_names.join(", ");
     if !init.is_empty() {
         init.push_str(", ");
@@ -5578,7 +5638,14 @@ fn model_pipeline(
         lines.push("            std::process::exit(2);".to_string());
         lines.push("        }".to_string());
     }
-    lines.push("        let x = sanitize(x);".to_string());
+    lines.push(
+        if raw_scalar {
+            "        let x = x.to_vec();"
+        } else {
+            "        let x = sanitize(x);"
+        }
+        .to_string(),
+    );
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;
         let (_, apply_call) = op_calls(&stage.op, n);
@@ -5625,6 +5692,10 @@ fn model_pipeline(
     if fast {
         lines.push(String::new());
         lines.extend(rs_fast_predict_wrapper());
+    }
+    // B05–B07: public prediction faults on the typed one-stage recipe.
+    if raw_scalar && stages.len() == 1 && target.is_none() {
+        lines.push("    fn predict_with_faults(&self, x: &[Vec<f64>]) -> (Vec<f64>,Vec<u32>) {let (_,faults)=scalar_stage1_values(x);(self.predict(x),faults)}".to_string());
     }
     lines.push(String::new());
     lines.extend(rs_score_method());

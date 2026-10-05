@@ -11,6 +11,13 @@ use crate::math_expr::{BinOp, Expr, Func, MathExpr, UnOp, Var};
 mod model;
 pub use model::{ScalarCarrier, ScalarModel, MODEL_PROFILE, MODEL_SCHEMA};
 
+// B05–B07: recipes retain native policy/fault semantics.
+pub(crate) mod emit;
+mod fitted;
+pub(crate) mod io;
+mod recipe;
+pub use emit::ScalarLanguage;
+
 const SCALAR_VARIANT: u8 = 1;
 const INVERSE_LINK_FEATURE: u64 = 2;
 const STABLE_EXPONENTIAL_FEATURE: u64 = 4;

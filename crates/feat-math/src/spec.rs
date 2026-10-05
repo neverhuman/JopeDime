@@ -183,6 +183,12 @@ pub enum PlannedOp {
     RowVectorInputV2 {
         width: usize,
     },
+    // B05–B07: explicit scalar-v2 raw-input stage, replacing the feature frame.
+    ScalarV2 {
+        program: crate::kernel::scalar_program::ScalarExpressionProgram,
+        carrier: crate::kernel::scalar_program::ScalarCarrier,
+        width: usize,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -830,6 +836,8 @@ fn plan_head_stage(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedH
 /// Stable per-kind key: also the base of the emitted function names.
 pub fn op_fn_name(op: &PlannedOp) -> &'static str {
     match op {
+        // B05–B07: scalar-v2 named registration.
+        PlannedOp::ScalarV2 { .. } => "scalar_expression_v2",
         // B13: a goertzel_bank stage keys its own helper; B12 keys stay unchanged.
         PlannedOp::RowVectorV2 {
             state: crate::kernel::row_vector::FittedStage::Goertzel(_),
@@ -878,6 +886,8 @@ pub fn op_fn_name(op: &PlannedOp) -> &'static str {
 /// Rust fitted-state struct name (None for stateless transforms).
 pub fn op_struct_name(op: &PlannedOp) -> Option<&'static str> {
     match op {
+        // B05–B07: scalar-v2 named registration.
+        PlannedOp::ScalarV2 { .. } => None,
         // B12: version-two FeatureWithinRow stage.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => None,
         PlannedOp::Standardize => Some("StandardScaler"),
@@ -923,6 +933,8 @@ pub fn op_struct_name(op: &PlannedOp) -> Option<&'static str> {
 /// One-sentence math description with a literature anchor, used in docs.
 pub fn op_doc(op: &PlannedOp) -> String {
     match op {
+        // B05–B07: scalar-v2 named registration.
+        PlannedOp::ScalarV2 { .. } => "evaluates the bounded scalar-v2 program in row or elementwise scope, retaining its numerical policy and per-row faults.".into(),
         // B13: version-two sparse Fourier power bank.
         PlannedOp::RowVectorV2 {
             state: crate::kernel::row_vector::FittedStage::Goertzel(_),
@@ -1126,6 +1138,8 @@ pub fn op_doc(op: &PlannedOp) -> String {
 /// Short phrase for titles.
 pub fn op_short(op: &PlannedOp) -> &'static str {
     match op {
+        // B05–B07: scalar-v2 named registration.
+        PlannedOp::ScalarV2 { .. } => "scalar expression",
         // B13: version-two sparse Fourier power bank.
         PlannedOp::RowVectorV2 {
             state: crate::kernel::row_vector::FittedStage::Goertzel(_),
@@ -1578,6 +1592,8 @@ fn add_helper(set: &mut BTreeSet<Helper>, h: Helper) {
 
 fn op_helpers(op: &PlannedOp) -> &'static [Helper] {
     match op {
+        // B05–B07: scalar-v2 named registration.
+        PlannedOp::ScalarV2 { .. } => &[],
         // B12: version-two FeatureWithinRow stage.
         PlannedOp::RowVectorV2 { .. } | PlannedOp::RowVectorInputV2 { .. } => &[],
         PlannedOp::Standardize => &[Helper::StdFit, Helper::Clamp],
@@ -1797,6 +1813,14 @@ pub fn helper_set(plan: &Plan) -> BTreeSet<Helper> {
                     add_helper(&mut set, *h);
                 }
                 match &stage.op {
+                    PlannedOp::ScalarV2 { program, .. } => {
+                        add_helper(&mut set, Helper::Clamp);
+                        expr_helpers(
+                            &crate::kernel::scalar_program::emit::old_helper_features(program)
+                                .expect("admitted scalar program"),
+                            &mut set,
+                        );
+                    }
                     PlannedOp::MapExpr { expr, .. } => {
                         // x is defined for map, so the whole expression runs.
                         add_helper(&mut set, Helper::Clamp);

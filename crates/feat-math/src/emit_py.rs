@@ -3,6 +3,8 @@
 //! arithmetic for PCG32, guarded libm wrappers where CPython raises).
 
 use crate::mathexpr::fmt_f64;
+// B05–B07: scalar-v2 recipe assembly.
+use crate::kernel::scalar_program::emit::{self as scalar_emit, ScalarLanguage};
 use crate::spec::{
     doc_paragraphs, head_fn_name, helper_set, op_fn_name, target_fn_name, wrap, Arena, Helper,
     Plan, PlannedHead, PlannedOp, PlannedStage, PlannedTarget, TargetKind,
@@ -10,6 +12,12 @@ use crate::spec::{
 use crate::transpile::EmitOptions;
 
 pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
+    // B05–B07: retain the explicit old-operation numerical contract.
+    assert!(
+        !scalar_emit::raw_input(plan)
+            || opts.math_kernel == crate::transpile::MathKernel::PlatformLibm,
+        "scalar-v2 old operations require PlatformLibm"
+    );
     // Sections are separated by two blank lines (PEP 8 top-level spacing); one
     // pre-reserved buffer avoids the per-section reallocation of the old path.
     let mut out = Arena::new("\n\n\n", 24 * 1024);
@@ -26,6 +34,13 @@ pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
             out.push(src);
         }
     }
+    let scalar_programs = scalar_emit::programs(plan);
+    if !scalar_programs.is_empty() {
+        out.push(
+            &scalar_emit::emit_v2_helpers(&scalar_programs, ScalarLanguage::Python)
+                .expect("admitted scalar helpers"),
+        );
+    }
     match plan {
         Plan::Pipeline {
             target,
@@ -38,6 +53,22 @@ pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
             let mut seen: Vec<&'static str> = Vec::new();
             for (i, stage) in stages.iter().enumerate() {
                 match &stage.op {
+                    PlannedOp::ScalarV2 {
+                        program,
+                        carrier,
+                        width,
+                    } => {
+                        out.push(
+                            &scalar_emit::emit_stage(
+                                program,
+                                *carrier,
+                                *width,
+                                i + 1,
+                                ScalarLanguage::Python,
+                            )
+                            .expect("admitted scalar stage"),
+                        );
+                    }
                     // Formula stages carry their own expression: one snippet
                     // per stage, named by position (never deduped).
                     PlannedOp::MapExpr { source, expr } => {
@@ -83,7 +114,14 @@ pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
             out.push(&model_class_symbolic(*affine));
         }
     }
-    out.push(IO_BLOCK);
+    if scalar_emit::raw_input(plan) {
+        out.push(
+            &crate::kernel::scalar_program::io::io_source(ScalarLanguage::Python, IO_BLOCK)
+                .expect("scalar IO template"),
+        );
+    } else {
+        out.push(IO_BLOCK);
+    }
     out.finish()
 }
 
@@ -963,6 +1001,7 @@ fn op_src(op: &PlannedOp) -> String {
     }
     docstring.push_str("    \"\"\"");
     let body: &str = match op {
+        PlannedOp::ScalarV2 { .. } => "",
         // B13: the goertzel_bank helper, only for a bank-bearing program.
         PlannedOp::RowVectorV2 {
             state: crate::kernel::row_vector::FittedStage::Goertzel(_),
@@ -3800,6 +3839,7 @@ fn py_kernel_terms(spec: &crate::gpr::KernelSpec) -> String {
 /// per-stage formula functions).
 fn op_calls(op: &PlannedOp, n: usize) -> (Option<String>, String) {
     match op {
+        PlannedOp::ScalarV2 { .. } => (None, format!("scalar_stage{n}_apply(x, {{append}})")),
         PlannedOp::RowVectorInputV2 { width } => {
             (None, format!("row_vector_v2_input(x, {width}, {{append}})"))
         }
@@ -4089,6 +4129,13 @@ fn model_class_pipeline(
     lines.push(String::new());
     lines.push("    def fit(self, x_rows: list, y: list) -> \"Model\":".to_string());
     lines.push("        \"\"\"Fit every stage in order on the training rows.\"\"\"".to_string());
+    let raw_scalar = matches!(
+        stages.first().map(|s| &s.op),
+        Some(PlannedOp::ScalarV2 { .. })
+    );
+    if raw_scalar {
+        lines.push("        if not x_rows or len(y) != len(x_rows) or any(not math.isfinite(v) or abs(v)>1e12 for v in y): raise ValueError(\"scalar training labels\")".to_string());
+    }
     // B12: preserve the explicit v2 fit contract across native recipes.
     if stages
         .iter()
@@ -4108,7 +4155,14 @@ fn model_class_pipeline(
                 .to_string(),
         );
     }
-    lines.push("        x = _sanitize(x_rows)".to_string());
+    lines.push(
+        if raw_scalar {
+            "        x = x_rows"
+        } else {
+            "        x = _sanitize(x_rows)"
+        }
+        .to_string(),
+    );
     if let Some(target) = target {
         // The transform is fitted on the raw train target FIRST; every stage
         // and the head see only the transformed target.
@@ -4132,6 +4186,13 @@ fn model_class_pipeline(
     }
     let (head_fit, _) = head_calls(head);
     lines.push(format!("        self.head = {head_fit}"));
+    if raw_scalar && matches!(head, PlannedHead::Ridge { .. }) {
+        lines.push(
+            "        if all(v==0.0 and math.copysign(1.0,v)<0.0 for v in y): self.head[2][0]=-0.0"
+                .to_string(),
+        );
+    }
+
     lines.push("        return self".to_string());
     lines.push(String::new());
     lines.push("    def predict(self, x_rows: list) -> list:".to_string());
@@ -4144,7 +4205,14 @@ fn model_class_pipeline(
                 .to_string(),
         );
     }
-    lines.push("        x = _sanitize(x_rows)".to_string());
+    lines.push(
+        if raw_scalar {
+            "        x = x_rows"
+        } else {
+            "        x = _sanitize(x_rows)"
+        }
+        .to_string(),
+    );
     for (i, stage) in stages.iter().enumerate() {
         let n = i + 1;
         let (_, apply_call) = op_calls(&stage.op, n);
@@ -4171,6 +4239,13 @@ fn model_class_pipeline(
                 ));
             }
         }
+    }
+    // B05–B07: public prediction faults on the typed one-stage recipe.
+    if raw_scalar && stages.len() == 1 && target.is_none() {
+        lines.push(String::new());
+        lines.push("    def predict_with_faults(self,x_rows):".to_string());
+        lines.push("        _,faults=scalar_stage1_values(x_rows)".to_string());
+        lines.push("        return (self.predict(x_rows),faults)".to_string());
     }
     lines.push(String::new());
     lines.extend(py_score_method());
