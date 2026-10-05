@@ -115,7 +115,8 @@ impl StageCache {
 
     /// Keeps the entry when its bytes fit under the cap with everything already resident; an
     /// entry that does not fit is dropped, and a later miss recomputes the identical block. The
-    /// resident total therefore never passes the cap, between sweeps included.
+    /// resident total therefore never passes the cap, between sweeps included. The bytes counted
+    /// are the f64 payload and the serialized fit, not allocation overhead.
     pub fn insert(&self, key: ChainKey, fitted: FittedOp, block: Arc<Rows>) {
         let block_bytes = block.iter().map(|row| row.len() * 8).sum::<usize>();
         let fitted_bytes = serde_json::to_vec(&fitted).map_or(1024, |bytes| bytes.len());
@@ -145,8 +146,11 @@ impl StageCache {
     }
 
     /// Generation-boundary maintenance: drop entries not used in the current
-    /// or previous generation, then evict oldest-first (ties broken by key,
-    /// so eviction order is deterministic) until under the byte cap.
+    /// or previous generation. The byte cap needs no eviction here: [`insert`]
+    /// admits an entry only while it fits, so a full cache refuses new keys
+    /// until resident ones go stale and a sweep returns their bytes.
+    ///
+    /// [`insert`]: StageCache::insert
     pub fn sweep(&self) {
         let generation = self.generation.load(Ordering::Relaxed);
         let keep_from = generation.saturating_sub(1);
@@ -159,28 +163,6 @@ impl StageCache {
                 }
                 keep
             });
-        }
-        if self.bytes.load(Ordering::Relaxed) <= self.byte_cap {
-            return;
-        }
-        let mut candidates: Vec<(u64, [u8; 32], usize)> = Vec::new();
-        for shard in &self.shards {
-            let shard = shard.lock().expect("stage cache shard");
-            for (key, entry) in shard.iter() {
-                candidates.push((entry.last_used.load(Ordering::Relaxed), *key, entry.bytes));
-            }
-        }
-        candidates.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
-        for (_, key, bytes) in candidates {
-            if self.bytes.load(Ordering::Relaxed) <= self.byte_cap {
-                break;
-            }
-            let mut shard = self.shards[key[0] as usize % SHARDS]
-                .lock()
-                .expect("stage cache shard");
-            if shard.remove(&key).is_some() {
-                self.bytes.fetch_sub(bytes, Ordering::Relaxed);
-            }
         }
     }
 
@@ -254,22 +236,36 @@ mod tests {
     }
 
     #[test]
-    fn eviction_under_pressure_is_deterministic_and_total() {
-        // Cap fits roughly two entries; inserting five forces evictions.
+    fn admission_under_pressure_is_deterministic_and_a_sweep_frees_budget() {
+        // Each entry holds 64 block bytes and a 28-byte fit, so a 400-byte cap admits four.
         let cache = StageCache::new(400);
         cache.begin_generation(0);
         let root = cache.chain_root(&ctx(), None);
-        let mut keys = Vec::new();
-        for index in 0..5 {
-            let key = cache.chain_extend(&root, &stage(&format!("(lag k={})", index + 1)));
-            let block = Arc::new(vec![vec![index as f64; 8]]);
-            cache.insert(key, FittedOp::Sigmoid { append: false }, block);
-            keys.push(key);
+        let keys: Vec<ChainKey> = (0..5)
+            .map(|index| cache.chain_extend(&root, &stage(&format!("(lag k={})", index + 1))))
+            .collect();
+        for (index, key) in keys.iter().enumerate() {
+            cache.insert(
+                *key,
+                FittedOp::Sigmoid { append: false },
+                Arc::new(vec![vec![index as f64; 8]]),
+            );
         }
+        let resident: Vec<bool> = keys.iter().map(|key| cache.get(key).is_some()).collect();
+        assert_eq!(resident, vec![true, true, true, true, false]);
+        assert_eq!(cache.stats().2, 4 * 92);
+        // Two generations on, the unused entries are stale: the sweep returns their bytes and
+        // the refused key now fits.
+        cache.begin_generation(2);
         cache.sweep();
-        let resident = keys.iter().filter(|key| cache.get(key).is_some()).count();
-        assert!(resident < 5, "eviction must have removed entries");
-        assert!(cache.stats().2 <= 400, "resident bytes exceed the cap");
+        assert_eq!(cache.stats().2, 0);
+        cache.insert(
+            keys[4],
+            FittedOp::Sigmoid { append: false },
+            Arc::new(vec![vec![4.0; 8]]),
+        );
+        assert!(cache.get(&keys[4]).is_some());
+        assert_eq!(cache.stats().2, 92);
     }
 
     #[test]
@@ -295,14 +291,29 @@ mod tests {
         }
         // The first entries fit and stay retrievable; the rest are dropped, never half-kept.
         assert!((1..20).contains(&kept), "{kept}");
-        // Replacing an entry with an equal one keeps the accounting exact.
-        let key = cache.chain_extend(&root, &stage("(lag k=1)"));
-        let before = cache.stats().2;
-        cache.insert(
+        // Replacing an entry with an equal one keeps the accounting exact. The cache has room
+        // for the second reservation, so the replacement really runs.
+        let roomy = StageCache::new(1_000);
+        roomy.begin_generation(0);
+        let key = roomy.chain_extend(&roomy.chain_root(&ctx(), None), &stage("(lag k=1)"));
+        roomy.insert(
             key,
             FittedOp::Sigmoid { append: false },
             Arc::new(vec![vec![0.0; 8]]),
         );
-        assert_eq!(cache.stats().2, before);
+        let one = roomy.stats().2;
+        assert_eq!(one, 92);
+        let replacement = Arc::new(vec![vec![0.0; 8]]);
+        roomy.insert(
+            key,
+            FittedOp::Sigmoid { append: false },
+            Arc::clone(&replacement),
+        );
+        let (_, cached) = roomy.get(&key).expect("replacement resident");
+        assert!(
+            Arc::ptr_eq(&cached, &replacement),
+            "the replacement is stored"
+        );
+        assert_eq!(roomy.stats().2, one, "a replacement does not double-count");
     }
 }

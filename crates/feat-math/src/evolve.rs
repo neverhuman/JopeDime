@@ -311,6 +311,8 @@ const LEXICASE_REUSE_BLOCKER: &str =
 /// - transform prefixes that surrogates share on a fold are fitted once, through
 ///   [`model::fit_with_stage_cache`], whose hits return the output of the identical computation.
 ///
+/// Both key on canonical text, which prints a float within 1e-12 of an integer as that integer, so
+/// two surrogates that differ only there share one score (probability about 1e-12 per draw).
 /// The ridge fit is the certified `RidgeModel::fit` in both modes. Certified scoring applies to
 /// the surrogate search and needs [`FaultPolicy::Legacy`] ([`RidgeScoring::validate`]).
 /// [`Observer::on_scoring`] receives its counters after each generation.
@@ -321,8 +323,9 @@ pub enum RidgeScoring {
     Certified,
 }
 
-/// The byte budget of the certified scoring's stage cache. The cache never holds more: an entry
-/// that would pass it is dropped and recomputed on a later miss, with identical bits.
+/// The byte budget of the certified scoring's stage cache. The bytes the cache counts (payload, not
+/// allocation overhead) never pass it: an entry that would pass it is refused and recomputed on a
+/// later miss, with identical bits.
 pub const CERTIFIED_STAGE_CACHE_BYTES: usize = 1 << 30;
 
 impl RidgeScoring {
@@ -7976,6 +7979,34 @@ mod ridge_scoring_tests {
         let refused =
             evolve_lite_race_with_exact_initial_population(&x, &y, &r2, &cfg, &Log::default(), &[]);
         assert!(refused.unwrap_err().contains("surrogate search"));
+    }
+
+    #[test]
+    #[should_panic(expected = "certified scoring needs the default fault policy")]
+    fn the_surrogate_search_panics_on_certified_scoring_under_a_strict_policy() {
+        let (x, y) = fixture(4, 60);
+        let cfg = EvolveConfig {
+            pop: 4,
+            gens: 1,
+            fault_policy: FaultPolicy::RejectHard,
+            ridge_scoring: RidgeScoring::Certified,
+            ..EvolveConfig::default()
+        };
+        evolve(&x, &y, &r2, &cfg, &Log::default());
+    }
+
+    #[test]
+    #[should_panic(expected = "certified scoring applies to the surrogate search")]
+    fn the_race_panics_on_certified_scoring() {
+        let (x, y) = fixture(4, 60);
+        let cfg = EvolveConfig {
+            pop: 4,
+            gens: 1,
+            fitness: FitnessMode::LiteRace,
+            ridge_scoring: RidgeScoring::Certified,
+            ..EvolveConfig::default()
+        };
+        evolve(&x, &y, &r2, &cfg, &Log::default());
     }
 }
 // B11 ridge scoring: end
