@@ -210,3 +210,6 @@ pub fn scalar_producer_profiles(
 
 mod generation;
 pub use generation::ScalarCandidate;
+
+// B05–B07: typed EEC outcomes from the existing mutation consumer.
+pub use generation::ScalarEdit;
