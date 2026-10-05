@@ -1078,3 +1078,6 @@ mod producer_growth_v2;
 // B05–B07: actual typed EEC events and frozen old mutation replay.
 #[path = "scalar_v2/producer_eec.rs"]
 mod scalar_eec_v2;
+
+#[path = "scalar_v2/producer_utility.rs"]
+mod scalar_utility_v2;
