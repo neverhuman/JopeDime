@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.lineage-sources.v1",
-  "generated_at_sha": "5bcb402a54f1b2d313c89073e50fb2448fc7f5f2",
+  "generated_at_sha": "b10eea6dcf9213e014a4a79564710f24448c7d4f",
   "note": "Source files that jope-engine hashes into identities, read from the include_str!/include_bytes! lists in the named code: the teaching-store semantic_dependencies_sha256 (teaching_store.rs), the corpus scan_policy (corpus.rs) and the eval-registry query execution identity (eval_registry/query.rs execution_query_key; verify_artifacts refuses receipts whose recorded source hashes differ). Each identity also hashes the running executable (/proc/self/exe), so any change linked into that binary, every feat-math change included, mints new identities even when no listed source changes; this fixture makes the listed sources visible. A change here is announced in the PR body and rebaselined with JOPE_COMPAT_FREEZE_REGENERATE=identity in the same change.",
   "lineages": [
     {
@@ -9,7 +9,7 @@
       "sources": [
         {
           "path": "crates/jope-engine/src/corpus.rs",
-          "sha256": "130bd66848d21ff67dbdceff6fc1393e58d171908e183aba1a3d343f7c9fa377"
+          "sha256": "4ab715255a66a506e2ef099e1e5a0145c0142c7bff115b1bddb05911eea2f226"
         },
         {
           "path": "crates/jope-engine/src/grammar.rs",
@@ -67,7 +67,7 @@
       "sources": [
         {
           "path": "crates/jope-engine/src/corpus.rs",
-          "sha256": "130bd66848d21ff67dbdceff6fc1393e58d171908e183aba1a3d343f7c9fa377"
+          "sha256": "4ab715255a66a506e2ef099e1e5a0145c0142c7bff115b1bddb05911eea2f226"
         },
         {
           "path": "crates/jope-engine/src/grammar.rs",

@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for owner-assigned corpus mapping bounds correction. Checking count/addressable mapping limits and division-first record indices changes the corpus.rs source hash used by teaching-store semantic dependencies and corpus scan policy. Evaluator, behavioral and historical-v1 frozen fixtures and all earlier transition ledgers remain byte-identical.",
+  "plan_reference": "Owner major-release queue item 9: Jankurai audit findings JANK-20261006-252/253",
+  "pr_reference": "fix/corpus-record-bounds",
+  "source_commit": "b10eea6dcf9213e014a4a79564710f24448c7d4f",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "75ae2ce55e1e7159b090f9f3a6e0bde43278a1d48e5c76838df3de5ceb05690b",
+      "after": "e26ba1c8132c7ec85c2db99b48c5b912489a52f5ada2d53db0ffd7df19b5d747"
+    }
+  ]
+}
