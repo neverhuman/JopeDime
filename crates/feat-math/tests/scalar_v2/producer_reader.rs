@@ -269,3 +269,63 @@ fn producer_scope_caps_catalog_and_noncanonical_nodes_refuse() {
     no_policy["numerical_policy"] = "v2".into();
     assert!(ScalarModel::from_json(&no_policy.to_string()).is_err());
 }
+
+#[test]
+fn native_identities_refuse_before_bad_payload_in_bound_and_unbound_models() {
+    let pins = pins();
+    let record = &pins["records"][2];
+    let profile =
+        ScalarProducerProfile::new(ScalarProducerKind::All, ScalarCarrier::Row, 2).unwrap();
+    let native: Value = serde_json::from_str(record["model_json"].as_str().unwrap()).unwrap();
+    for original in [native, bound(record, &profile)] {
+        assert!(ScalarModel::from_json(&original.to_string()).is_ok());
+        assert!(VersionedModel::from_json(&original.to_string()).is_ok());
+        for payload in 0..3 {
+            let mut invalid = original.clone();
+            match payload {
+                0 => {
+                    invalid.as_object_mut().unwrap().remove("program");
+                    invalid.as_object_mut().unwrap().remove("ridge_bits");
+                }
+                1 => invalid["program"] = json!([255]),
+                _ => invalid["program"] = json!("unknown-payload"),
+            }
+            // The supported-header control must reach the malformed payload.
+            assert!(matches!(
+                ScalarModel::from_json(&invalid.to_string()),
+                Err(VersionError::Malformed(_))
+            ));
+            assert!(matches!(
+                VersionedModel::from_json(&invalid.to_string()),
+                Err(VersionError::Malformed(_))
+            ));
+            for (name, unsupported) in [
+                ("profile", json!("future-scalar-profile")),
+                (
+                    "grammar_sha256",
+                    json!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+                ),
+                ("emitter_feature_identity", json!("future-scalar-emitter")),
+                ("output_schema", json!(["prediction:future"])),
+            ] {
+                let mut forged = invalid.clone();
+                assert_ne!(forged[name], unsupported);
+                forged[name] = unsupported;
+                assert!(
+                    matches!(
+                        ScalarModel::from_json(&forged.to_string()),
+                        Err(VersionError::UnsupportedVersion(_))
+                    ),
+                    "direct {name} payload {payload}"
+                );
+                assert!(
+                    matches!(
+                        VersionedModel::from_json(&forged.to_string()),
+                        Err(VersionError::UnsupportedVersion(_))
+                    ),
+                    "generic {name} payload {payload}"
+                );
+            }
+        }
+    }
+}
