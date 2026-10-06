@@ -1004,7 +1004,8 @@ fn refresh(root: &Path) -> Result<ReportingStatus> {
         .and_then(Value::as_object)
         .into_iter()
         .flatten()
-        .filter_map(|(name, value)| (value.as_bool() != Some(true)).then(|| name.clone()))
+        .filter(|(_, value)| value.as_bool() != Some(true))
+        .map(|(name, _)| name.clone())
         .collect::<Vec<_>>();
     status["release_gate"] = json!({
         "healthy": release_ready,

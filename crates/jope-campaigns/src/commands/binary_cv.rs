@@ -196,8 +196,8 @@ impl<'a> BinaryFoldCache<'a> {
         let mut valid_x: Vec<Vec<f64>> = Vec::new();
         let mut valid_y = Vec::new();
         let mut validation_rows = Vec::new();
-        for row in 0..n {
-            if assignments[row] == fold {
+        for (row, &assigned_fold) in assignments[..n].iter().enumerate() {
+            if assigned_fold == fold {
                 valid_x.push(self.train.x[row].clone());
                 valid_y.push(self.train.y[row]);
                 validation_rows.push(row);
@@ -696,7 +696,7 @@ fn binary_head_stage(rng: &mut DeterministicRng) -> String {
     match head {
         "logit_ridge" => {
             let l2 = ["0.005", "0.02", "0.1", "0.5"][(rng.next_u64() as usize) % 4];
-            if rng.next_u64() % 2 == 0 {
+            if rng.next_u64().is_multiple_of(2) {
                 format!("(logit_ridge class_weight=balanced l2={l2})")
             } else {
                 format!("(logit_ridge l2={l2})")
@@ -805,7 +805,7 @@ fn refill_binary_population(
                 );
             }
             let mut rng = DeterministicRng::new(offspring_seed(seed, generation, slot, retry));
-            let crossover = rng.next_u64() % 4 == 0;
+            let crossover = rng.next_u64().is_multiple_of(4);
             let winner = |rng: &mut DeterministicRng| {
                 let mut best = (rng.next_u64() as usize) % PARENT_POOL;
                 for _ in 1..TOURNAMENT {
@@ -1741,7 +1741,7 @@ pub(crate) mod tests {
             .iter()
             .map(|s| if *s > threshold { 1.0 } else { 0.0 })
             .collect::<Vec<_>>();
-        (regression_data(x, y))
+        regression_data(x, y)
     }
 
     fn fixture_degenerate() -> RegressionData {

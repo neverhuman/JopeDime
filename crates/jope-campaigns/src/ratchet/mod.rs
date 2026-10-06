@@ -425,10 +425,10 @@ impl DatasetLearningStateV2 {
                 bail!("latest exact Track-1 anchor is not selection-clean");
             }
         }
-        if self.confirmed_cv_champion.is_none() || self.latest_exact_track_1_frontier.is_none() {
-            if !self.struggle.confirmation_required {
-                bail!("state with a missing known-best anchor is not restricted to confirmation");
-            }
+        if (self.confirmed_cv_champion.is_none() || self.latest_exact_track_1_frontier.is_none())
+            && !self.struggle.confirmation_required
+        {
+            bail!("state with a missing known-best anchor is not restricted to confirmation");
         }
         Ok(())
     }

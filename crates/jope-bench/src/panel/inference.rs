@@ -331,7 +331,7 @@ pub fn export_inference(
     backend: Backend,
 ) -> Result<ExportOutcome> {
     artifact.validate()?;
-    if let Some(reason) = fitted_portable_unsupported(&artifact.model)? {
+    if let Some(reason) = fitted_portable_unsupported(artifact.model)? {
         return Ok(ExportOutcome::Unsupported {
             backend,
             reason: UnsupportedReason::FittedState(reason),
@@ -344,8 +344,8 @@ pub fn export_inference(
         });
     }
     let extra = match backend {
-        Backend::JavaScript => fitted_javascript_unsupported(&artifact.model)?,
-        Backend::Cpp17 | Backend::Cpp20 => fitted_public_cpp_unsupported(&artifact.model)?,
+        Backend::JavaScript => fitted_javascript_unsupported(artifact.model)?,
+        Backend::Cpp17 | Backend::Cpp20 => fitted_public_cpp_unsupported(artifact.model)?,
         _ => None,
     };
     if let Some(reason) = extra {
@@ -386,7 +386,7 @@ pub fn export_inference(
     let metadata = serde_json::to_string(&bundle.manifest)?;
     for text in bundle.files.values().chain(std::iter::once(&metadata)) {
         ensure!(
-            lint_fitted_public_text(&artifact.model, &artifact.classes, text).is_empty(),
+            lint_fitted_public_text(artifact.model, &artifact.classes, text).is_empty(),
             "public fitted artifact violates text policy"
         );
     }
@@ -417,7 +417,7 @@ fn emit_files(
     let mut files = BTreeMap::new();
     match backend {
         Backend::Python | Backend::Rust | Backend::JavaScript => {
-            let emitted = emit_fitted_portable(&artifact.model)?;
+            let emitted = emit_fitted_portable(artifact.model)?;
             if artifact.task != Task::Regression {
                 ensure!(
                     emitted.class_codes == (0..artifact.classes.len() as i64).collect::<Vec<_>>(),
@@ -462,7 +462,7 @@ fn emit_files(
             }
         }
         Backend::Cpp17 | Backend::Cpp20 => {
-            let emitted = emit_fitted_public_cpp17(&artifact.model)?;
+            let emitted = emit_fitted_public_cpp17(artifact.model)?;
             files.insert("model.cpp".into(), emitted.source);
             files.insert("codec.json".into(), emitted.codec.clone());
             files.insert(

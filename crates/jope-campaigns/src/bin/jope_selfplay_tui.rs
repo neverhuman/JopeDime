@@ -1294,6 +1294,8 @@ impl IntervalGate {
 }
 
 /// Collector-thread-owned cache for sources too expensive for the 250ms loop.
+type FunnelHistory = VecDeque<(u128, Vec<(String, u64, u64)>)>;
+
 struct SlowState {
     gate_progress: IntervalGate,
     gate_metrics: IntervalGate,
@@ -1339,7 +1341,7 @@ struct SlowState {
     claims_backoff: Duration,
     gate_funnel: IntervalGate,
     funnel: UnlockFunnel,
-    funnel_history: VecDeque<(u128, Vec<(String, u64, u64)>)>,
+    funnel_history: FunnelHistory,
     feed_fetched_at_ms: u128,
     newest_receipt_at_ms: u128,
     source_states: Vec<SourceState>,
@@ -2262,7 +2264,7 @@ fn scan_receipts(root: &Path, state: &mut SlowState) {
         }
     }
     let limit = if first_pass {
-        fresh.sort_by(|left, right| right.2.cmp(&left.2));
+        fresh.sort_by_key(|row| std::cmp::Reverse(row.2));
         state.receipts_prefilled = true;
         RECEIPT_PREFILL_MAX_DIRS
     } else {
@@ -2776,11 +2778,7 @@ fn funnel_rows_from_driver(value: &Value) -> Vec<FunnelRow> {
 }
 
 /// Climb indicator: compare against the oldest sample inside the last hour.
-fn apply_funnel_deltas(
-    rows: &mut [FunnelRow],
-    history: &mut VecDeque<(u128, Vec<(String, u64, u64)>)>,
-    now: u128,
-) {
+fn apply_funnel_deltas(rows: &mut [FunnelRow], history: &mut FunnelHistory, now: u128) {
     let sample = rows
         .iter()
         .map(|row| (row.task.clone(), row.active, row.in_play))
@@ -3047,13 +3045,16 @@ fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
         .as_ref()
         .and_then(|value| u64_at(value, &["foreign_cancellations"]))
         .unwrap_or(0);
-    let campaign_foreign_cancellations = dashboard
+    let campaign_foreign_cancellations = if dashboard
         .campaign
         .blockers
         .iter()
         .any(|blocker| blocker.contains("repeated foreign campaign cancellations"))
-        .then_some(2)
-        .unwrap_or(0);
+    {
+        2
+    } else {
+        0
+    };
     dashboard.foreign_cancellations =
         proposer_foreign_cancellations.max(campaign_foreign_cancellations);
     dashboard.learning = parse_learning(raw, scq);
@@ -3234,7 +3235,7 @@ fn infrastructure_attempt_number(job_identity: &str) -> u64 {
         .unwrap_or(1)
 }
 
-fn enrich_gpu_admission(gpus: &mut Vec<GpuRow>, value: Option<&Value>) {
+fn enrich_gpu_admission(gpus: &mut [GpuRow], value: Option<&Value>) {
     let Some(states) = value
         .and_then(|value| value.get("states"))
         .and_then(Value::as_object)
@@ -6365,7 +6366,7 @@ fn thousands(value: u64) -> String {
     let digits = value.to_string();
     let mut out = String::with_capacity(digits.len() + digits.len() / 3);
     for (index, ch) in digits.chars().enumerate() {
-        if index > 0 && (digits.len() - index) % 3 == 0 {
+        if index > 0 && (digits.len() - index).is_multiple_of(3) {
             out.push(',');
         }
         out.push(ch);

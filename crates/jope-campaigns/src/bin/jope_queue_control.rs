@@ -982,18 +982,15 @@ fn join_job(
         job_id,
         project,
         state,
-        epoch: manifest
-            .as_ref()
-            .map(|value| manifest_epoch(value))
-            .unwrap_or_else(|| {
-                if should_validate {
-                    "invalid-manifest".to_owned()
-                } else if wave_hint.is_some() {
-                    "manifest-wave-unchecked".to_owned()
-                } else {
-                    LEGACY_EPOCH.to_owned()
-                }
-            }),
+        epoch: manifest.as_ref().map(manifest_epoch).unwrap_or_else(|| {
+            if should_validate {
+                "invalid-manifest".to_owned()
+            } else if wave_hint.is_some() {
+                "manifest-wave-unchecked".to_owned()
+            } else {
+                LEGACY_EPOCH.to_owned()
+            }
+        }),
         strict_wave: manifest.as_ref().and_then(strict_wave).or(wave_hint),
         generation: manifest.as_ref().and_then(generation).or(generation_hint),
         checkpoint_sha256: manifest.as_ref().and_then(manifest_checkpoint_binding),
@@ -2009,14 +2006,15 @@ fn build_missing_receipt_recovery_plan(
     )?;
     let mut blockers = BTreeMap::<String, (String, String, Vec<RegistryPairIdentity>, bool)>::new();
     for identity in &desired {
-        let row: Option<(
+        type PairRecoveryRow = (
             String,
             Option<String>,
             Option<String>,
             Option<String>,
             Option<String>,
             Option<String>,
-        )> = lookup
+        );
+        let row: Option<PairRecoveryRow> = lookup
             .query_row(
                 params![
                     identity.task,
@@ -2611,7 +2609,7 @@ fn build_wave_blocker_plan(
         }
         current_manifest_hashes.insert(expected_hash.to_owned());
     }
-    if desired.len() % 256 != 0 || !matches!(desired.len() / 256, 128 | 192 | 256) {
+    if !desired.len().is_multiple_of(256) || !matches!(desired.len() / 256, 128 | 192 | 256) {
         bail!(
             "current wave desired pair count {} is not a legal micro-wave total",
             desired.len()

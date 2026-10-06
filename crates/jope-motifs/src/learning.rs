@@ -142,7 +142,7 @@ fn burn_receipt(state: &State, sha256: &str) -> Option<BurnReceipt> {
     let bytes = state.read_blob(sha256).ok().flatten()?;
     let receipt: LabelBurn = serde_json::from_slice(&bytes).ok()?;
     let digests = is_hex64(&receipt.panel_sha256) && is_hex64(&receipt.development_sha256);
-    digests.then(|| BurnReceipt {
+    digests.then_some(BurnReceipt {
         schema: receipt.schema,
         dataset_sha256: receipt.dataset_sha256,
         cut_sha256: receipt.cut_id,
@@ -263,8 +263,7 @@ mod tests {
         assert!(state.qualified_read().is_err());
         let error = StateTeaching::new(state.as_ref())
             .qualified()
-            .err()
-            .expect("refused");
+            .expect_err("refused");
         assert_eq!(code_of(&error), Some("state_unavailable"));
         assert_eq!(snapshot(directory.path()), before);
     }

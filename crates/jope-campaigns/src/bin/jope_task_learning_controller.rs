@@ -3978,8 +3978,10 @@ mod tests {
         let original_corpus = intent.trainer.corpus_identity_sha256.clone();
         let original_seed = intent.trainer.seed;
         let original_recipe = intent.trainer.recipe.clone();
-        let mut state = ControllerState::default();
-        state.intent = Some(intent.clone());
+        let mut state = ControllerState {
+            intent: Some(intent.clone()),
+            ..ControllerState::default()
+        };
         let disposition =
             recover_trainer_intent(&args, &mut state, &intent, "vanished", 60_001).unwrap();
         assert_eq!(disposition.action, "trainer_infrastructure_retry_audited");

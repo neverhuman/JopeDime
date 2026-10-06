@@ -679,7 +679,7 @@ mod tests {
                     assert_eq!(&expanded.canonical, host);
                     assert_eq!(expanded.recipe_sha256, occurrence.recipe_sha256);
                     assert!(!expanded.canonical.contains(NAME_PREFIX));
-                    assert_eq!(expanded.used, [motif.id.clone()]);
+                    assert_eq!(expanded.used, std::slice::from_ref(&motif.id));
                 }
                 checked += 1;
             }

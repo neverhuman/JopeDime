@@ -259,8 +259,8 @@ fn main() -> Result<()> {
         .metrics
         .as_ref()
         .map(|path| -> Result<ExternalMetrics> {
-            Ok(serde_json::from_value(read_json(path)?)
-                .with_context(|| format!("parse external metrics {}", path.display()))?)
+            serde_json::from_value(read_json(path)?)
+                .with_context(|| format!("parse external metrics {}", path.display()))
         })
         .transpose()?
         .unwrap_or_default();
@@ -471,9 +471,9 @@ fn validate_metrics(metrics: &ExternalMetrics) -> Result<()> {
     Ok(())
 }
 
-fn parse_scq_nodes(
-    value: &Value,
-) -> Result<(Vec<NodeTelemetry>, BTreeMap<String, Vec<String>>, bool)> {
+type ScqNodes = (Vec<NodeTelemetry>, BTreeMap<String, Vec<String>>, bool);
+
+fn parse_scq_nodes(value: &Value) -> Result<ScqNodes> {
     let rows = value
         .get("Nodes")
         .and_then(|row| row.get("nodes"))
@@ -913,7 +913,7 @@ cpu_job_slot_multiplier = 2.0
         let mut state = RampState::baseline(20, baseline).unwrap();
         state = ramp_decision(&state, &[], 0).unwrap();
         state = ramp_decision(&state, &[], RAMP_MID_DURATION_MS).unwrap();
-        let samples = vec![
+        let samples = [
             sample(0, 0.25, 0.5),
             sample(60_000, 0.25, 0.5),
             sample(120_000, 0.25, 0.5),

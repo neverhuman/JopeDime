@@ -216,6 +216,7 @@ fn lock_exclusive(root: &Path) -> Result<File> {
     fs::create_dir_all(path.parent().context("lock path has no parent")?)?;
     let file = OpenOptions::new()
         .create(true)
+        .truncate(false)
         .write(true)
         .mode(0o644)
         .open(&path)?;
@@ -522,6 +523,7 @@ fn coverage(manifest: &Value) -> Value {
 ///      tournament pins ITS watermark and will re-read that snapshot);
 ///   3. it is among the newest `keep` by mtime;
 ///   4. it is younger than `min_age_hours`.
+///
 /// Anything without a `corpus-manifest.json` is left alone as well: that is
 /// either a live `.tmp-<pid>` build or a quarantined partial, and neither is
 /// this function's business.
@@ -538,7 +540,7 @@ fn prune_snapshots(args: &Args) -> Value {
             value
                 .get("manifest")
                 .and_then(Value::as_str)
-                .map(|text| PathBuf::from(text))
+                .map(PathBuf::from)
         })
         .and_then(|path| path.parent().map(Path::to_path_buf));
 
@@ -605,7 +607,7 @@ fn prune_snapshots(args: &Args) -> Value {
         let bytes = directory_bytes(&path);
         snapshots.push((path, modified, bytes));
     }
-    snapshots.sort_by(|a, b| b.1.cmp(&a.1));
+    snapshots.sort_by_key(|row| std::cmp::Reverse(row.1));
     let keep_after = Duration::from_secs(args.keep_snapshots_min_age_hours * 3600);
     let mut removed = Vec::new();
     let mut freed: u64 = 0;
@@ -858,6 +860,7 @@ fn mark_degraded(report: &mut Value) {
 ///      pointer is a pin wherever it appears, exactly like snapshot pins);
 ///   3. the newest `keep` by mtime;
 ///   4. younger than `min_age_hours`.
+///
 /// Dot-prefixed `.…tmp-<pid>` dirs are crashed pack builds (the pack path
 /// renames on success); they are removed once older than `min_age_hours`.
 fn prune_packed(args: &Args) -> Value {
@@ -924,7 +927,7 @@ fn prune_packed(args: &Args) -> Value {
         let bytes = directory_bytes(&path);
         dirs.push((path, modified, bytes, orphan_tmp));
     }
-    dirs.sort_by(|a, b| b.1.cmp(&a.1));
+    dirs.sort_by_key(|row| std::cmp::Reverse(row.1));
     let mut removed = Vec::new();
     let mut freed: u64 = 0;
     let mut rank = 0usize;
@@ -1130,7 +1133,7 @@ mod tests {
         assert!(verify_published(dir.path(), &manifest, 1_805_437).is_err());
     }
 
-    /// Coverage is summed off the real manifest shape, per-split.
+    // Coverage is summed off the real manifest shape, per-split.
     // -----------------------------------------------------------------------
     // Snapshot retention
     // -----------------------------------------------------------------------
@@ -1339,7 +1342,7 @@ mod tests {
         let made = snapshot_dirs(dir.path(), &["snapshot-000090066", "snapshot-000255045"]);
         write_pointer(dir.path(), &made[1]);
         // Both are ~400 hours old in the fixture; a 1000-hour floor keeps them.
-        let report = prune_snapshots(&retention_args(dir.path(), 0_usize.max(0), 1000));
+        let report = prune_snapshots(&retention_args(dir.path(), 0, 1000));
         assert_eq!(report["pruned"], json!(0));
         assert!(made[0].is_dir());
     }

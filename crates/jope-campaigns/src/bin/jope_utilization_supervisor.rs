@@ -402,7 +402,7 @@ fn survey_work(args: &Args) -> WorkOnDisk {
             waves.push((number, entry.path()));
         }
     }
-    waves.sort_by(|a, b| b.0.cmp(&a.0));
+    waves.sort_by_key(|row| std::cmp::Reverse(row.0));
     if let Some((number, path)) = waves.first() {
         work.newest_wave = Some(format!("strict-wave-{number:06}"));
         if let Ok(modified) = path
@@ -1170,6 +1170,7 @@ fn run_repair(args: &Args, repair: &Repair) -> (bool, String) {
 ///     from any terminal on the box, not just the one showing the TUI.
 ///   - `logger` -> journald, greppable after the fact.
 ///   - the TUI's alert panel, fed from ops/utilization-alarms.v1.json.
+///
 /// Every notification runs under `timeout` so no delivery channel can stall a
 /// cycle. A supervisor blocked inside its own alarm is indistinguishable from
 /// the daemon it was watching.

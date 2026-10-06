@@ -975,10 +975,10 @@ fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
     let gate = coverage_gate(Path::new(&plan.comparator_root))?;
     if plan.schema != PLAN_SCHEMA
         || plan.run_id != RUN_ID
-        || plan.test_adaptive != true
+        || !plan.test_adaptive
         || plan.selection_bias != "test-selected"
-        || plan.benchmark_valid != false
-        || plan.official_combined_rank_eligible != false
+        || plan.benchmark_valid
+        || plan.official_combined_rank_eligible
         || plan.config != Config::fixed()
         || plan.datasets.len() != 272
         || plan.seeds.len() != POPULATION
@@ -2912,7 +2912,7 @@ mod tests {
 
     #[test]
     fn ranking_uses_macro_f1_accuracy_complexity_then_hash() {
-        let mut values = vec![
+        let mut values = [
             score(0.8, 0.9, 4, "c"),
             score(0.8, 0.9, 3, "b"),
             score(0.8, 0.8, 1, "a"),

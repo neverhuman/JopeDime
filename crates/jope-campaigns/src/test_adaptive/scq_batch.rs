@@ -124,11 +124,12 @@ impl NodeLease {
         if !NODES.contains(&node) {
             bail!("refuse SCQ lease for unknown node {node}");
         }
-        fs::create_dir_all(&lock_dir)?;
+        fs::create_dir_all(lock_dir)?;
         loop {
             for slot in 0..NODE_LEASE_SLOTS {
                 let file = OpenOptions::new()
                     .create(true)
+                    .truncate(false)
                     .read(true)
                     .write(true)
                     .open(lock_dir.join(format!("{node}.slot-{slot}.lock")))?;
@@ -1122,7 +1123,7 @@ fn run_batch_flavored(
     ];
     let rendered_args = args
         .iter()
-        .map(|arg| serde_json::to_string(arg))
+        .map(serde_json::to_string)
         .collect::<Result<Vec<_>, _>>()?
         .join(", ");
     let spec = format!(
@@ -1393,6 +1394,13 @@ pub(super) fn evaluate_batches(
         .collect()
 }
 
+type AggressiveLane<'a> = (
+    &'a CampaignIdentity,
+    usize,
+    &'a [(usize, Member)],
+    &'a RegressionData,
+);
+
 /// Evaluate fresh members from up to 42 independent 36-slot dataset generations
 /// as one wave. Full generations contribute twelve requests to each node; cached
 /// generations may contribute fewer. A fixed pool of 120 pinned workers drains
@@ -1402,12 +1410,7 @@ pub(super) fn evaluate_aggressive_wave(
     registry: &Path,
     release_binary_sha256: &str,
     scq_binary_sha256: &str,
-    lanes: &[(
-        &CampaignIdentity,
-        usize,
-        &[(usize, Member)],
-        &RegressionData,
-    )],
+    lanes: &[AggressiveLane<'_>],
 ) -> Result<Vec<Vec<CachedEvaluation>>> {
     if lanes.is_empty() || lanes.len() > AGGRESSIVE_DATASET_LANES {
         bail!("aggressive wave must contain 1..={AGGRESSIVE_DATASET_LANES} datasets");

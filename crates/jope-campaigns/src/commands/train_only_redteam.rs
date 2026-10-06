@@ -1224,7 +1224,7 @@ fn parse_proposal_bundle(
     let file = File::open(path)?;
     let mut exact: HashMap<String, HashMap<u64, usize>> = HashMap::new();
     let mut jittered: HashMap<String, HashMap<u64, usize>> = HashMap::new();
-    for (_row_index, line) in BufReader::new(file).lines().enumerate() {
+    for line in BufReader::new(file).lines() {
         let line = line?;
         if line.trim().is_empty() {
             continue;
