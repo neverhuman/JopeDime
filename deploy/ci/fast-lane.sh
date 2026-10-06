@@ -146,7 +146,7 @@ uv --version | grep -qF 'uv 0.11.28' || { uv --version >&2; echo 'expected the i
     # Sync the locked environment (CPU torch)
 (
 cd python
-uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry
+uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry --extra dl-custody
 )
     # Ruff lint and format
 (

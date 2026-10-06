@@ -32,6 +32,7 @@ fi
 rm -f "$rustls_err"
 step "DL train-only budget and output contracts (CPU only)"; if ! python3 deploy/dl-trainonly/test_contracts.py; then fail=1; fi
 step "DL lane pinned source custody (stdlib, no staged imports)"; if ! python3 deploy/dl-trainonly/test_verify_lane.py; then fail=1; fi
+step "DL offline Python audit refusals (stdlib, no traffic or jobs)"; if ! python3 deploy/dl-trainonly/test_offline_guard.py; then fail=1; fi
 step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < <(git ls-files '*.sh'); if command -v shellcheck >/dev/null; then git ls-files 'deploy/ci/*.sh' 'deploy/release/*.sh' 'xtools/**/*.sh' | xargs -r shellcheck -S warning; fi
 step "workflow validation"; if ! bash deploy/ci/actionlint-workflows.sh; then fail=1; fi
 step "gitleaks"; if command -v gitleaks >/dev/null; then bash deploy/ci/secret-scan.sh ; else echo "gitleaks not installed (skipped locally; CI installs it)"; fi

@@ -97,7 +97,8 @@
         "python3 deploy/lambda/training/teacher-v2/test_s1_budget.py",
         "python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out \"$JOPE_LANE_EVIDENCE/s1-mutants\"",
         "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py",
-        "python3 deploy/dl-trainonly/test_verify_lane.py"
+        "python3 deploy/dl-trainonly/test_verify_lane.py",
+        "python3 deploy/dl-trainonly/test_offline_guard.py"
       ]
     },
     "rust-check": {
@@ -8582,6 +8583,16 @@
       ],
       "dispositions": [],
       "scope": "Direct15-case stdlib source-custody fixture execution: trusted producer/predecessor pins, exact restoration, byte edits, self-sidecar replacement, missing/unlisted objects, symlink escapes and malformed identity refusals; imports no staged code."
+    },
+    "python:deploy/dl-trainonly/test_offline_guard.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Eight stdlib Python audit-guard controls: all socket audit events, direct subprocess/spawn/fork/exec refusal before operation, credential-path reads and the exact read-only library-cache exception. No numerical work or network traffic; Python audit scope only, not OS/native-extension isolation."
     }
   }
 }

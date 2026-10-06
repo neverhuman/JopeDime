@@ -211,9 +211,9 @@ name = "boto3"
 version = "1.43.97"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "botocore", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
-    { name = "jmespath", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
-    { name = "s3transfer", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
+    { name = "botocore" },
+    { name = "jmespath" },
+    { name = "s3transfer" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/39/bd/928bf084b0441b2efbac3e02299892dfb07899cd3617af6ebdc13be2cfb9/boto3-1.43.97.tar.gz", hash = "sha256:ffe9a93a6b4b2c1b59f4f5e07c18d2acfe8f68c320a1a12251d4ea8570b9bdfe", size = 112655, upload-time = "2026-09-17T19:28:52.805Z" }
 wheels = [
@@ -225,9 +225,9 @@ name = "botocore"
 version = "1.43.97"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jmespath", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
-    { name = "python-dateutil", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
-    { name = "urllib3", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
+    { name = "jmespath" },
+    { name = "python-dateutil" },
+    { name = "urllib3" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f9/c7/aff84828bc3cd05328c65650320be27bb13e63f37917f1aba3f6309498c8/botocore-1.43.97.tar.gz", hash = "sha256:7c0e18686367e98de49826d8ac9ae951ce0915c172969a5d96b768c9afa9e979", size = 16120115, upload-time = "2026-09-17T19:28:48.141Z" }
 wheels = [
@@ -1127,6 +1127,9 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+dl-custody = [
+    { name = "boto3" },
+]
 foundry = [
     { name = "catboost" },
     { name = "lightgbm" },
@@ -1144,6 +1147,7 @@ research = [
 [package.metadata]
 requires-dist = [
     { name = "autogluon-tabular", marker = "python_full_version < '3.13' and extra == 'research'", specifier = ">=1.1" },
+    { name = "boto3", marker = "extra == 'dl-custody'", specifier = "==1.43.97" },
     { name = "catboost", marker = "extra == 'foundry'", specifier = ">=1.2.8" },
     { name = "joblib", specifier = ">=1.4" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.23" },
@@ -1172,7 +1176,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'cu130'", specifier = ">=2.4", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "jope", extra = "cu130" } },
     { name = "xgboost", marker = "extra == 'foundry'", specifier = ">=2.0" },
 ]
-provides-extras = ["benchmark", "dev", "foundry", "research", "cpu", "cu130"]
+provides-extras = ["benchmark", "dl-custody", "dev", "foundry", "research", "cpu", "cu130"]
 
 [[package]]
 name = "jsonschema"
@@ -2958,7 +2962,7 @@ name = "s3transfer"
 version = "0.19.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "botocore", marker = "python_full_version < '3.14' or (python_full_version == '3.14.*' and extra == 'extra-4-jope-cpu') or (python_full_version == '3.14.*' and extra != 'extra-4-jope-cu130') or (python_full_version >= '3.15' and extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
+    { name = "botocore" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/43/35e4d8aa320bffe8287fe8f65f578fa2d2db0a64212f0e710dce58267854/s3transfer-0.19.2.tar.gz", hash = "sha256:ba0309fd86be3c27dbf78cdd813c13c5e1df16e5874b99d2535ebbdfb9892993", size = 165592, upload-time = "2026-07-22T19:30:44.432Z" }
 wheels = [
