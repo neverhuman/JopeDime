@@ -52,6 +52,7 @@ class G0Tests(unittest.TestCase):
         cls.target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
         cls.binaries = {}
         for crate in ("lambda-worker", "island-engine", "proposal-engine"):
+            workspace = "s1-proposal" if crate == "proposal-engine" else crate
             command = [
                 "cargo",
                 "build",
@@ -60,7 +61,7 @@ class G0Tests(unittest.TestCase):
                 str(
                     ROOT
                     / "deploy/lambda/training/teacher-v2/rust"
-                    / crate
+                    / workspace
                     / "Cargo.toml"
                 ),
                 "--target-dir",

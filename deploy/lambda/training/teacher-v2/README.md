@@ -10,7 +10,7 @@ Run CPU conformance from the repository root, reusing its target:
 ```sh
 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.toml --target-dir target
 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/island-engine/Cargo.toml --target-dir target
-CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml --target-dir target
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/s1-proposal/Cargo.toml --target-dir target
 python3 deploy/lambda/training/teacher-v2/test_s1_budget.py
 python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py
 python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out /custody/s1-mutants
