@@ -122,15 +122,17 @@
       "rustc",
       "--edition=2021",
       "-O",
-      "/home/ubuntu/jope-evidence/kernel2/bt/B05_B07_FOLLOWUP/prep/utility-common-cohort-v2/golden-generator-source.rs",
+      "golden-generator-source.rs",
       "-o",
-      "/home/ubuntu/jope-evidence/kernel2/bt/B05_B07_FOLLOWUP/prep/utility-common-cohort-v2/golden-generator"
+      "golden-generator"
     ],
     "source_sha256": "87f565645533d77afe0478b1834f2466f05ae1b8159c9c5f11e7a8a84fe05d02",
     "binary_sha256": "a55f027b2677c88aa0fc28e85c075b47b0c87ef51531df11e9052ec04d827b39",
     "full_golden_source_sha256": "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
     "stdout_sha256": "a447bbbff03a2ef3a7b3f020369054f22da3a0f93f3a59b1aa53ee87654e7cac",
-    "exit": 0
+    "exit": 0,
+    "command_path_basis": "Paths normalized relative to evidence_directory; the original executed absolute command remains in the retained preparation receipt.",
+    "evidence_directory": "kernel2/bt/B05_B07_FOLLOWUP/prep/utility-common-cohort-v2"
   },
   "expected_primary_searches": 240,
   "expected_informational_searches": 240,
