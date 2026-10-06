@@ -72,7 +72,10 @@ faulted cells, which a program with a loss lower by at most the tie tolerance do
 - `archive.json` exists exactly when the record does, and matches the record's digest;
 - it reads under the archive reader's own refusals (schema, cost version, NaN or `-0.0` loss,
   front order, a dominated member) with the record's cost version;
-- it is byte for byte the archive rebuilt from the re-derived observations.
+- it is byte for byte the archive rebuilt from the re-derived observations. The published
+  observations are untrusted, so the rebuild parses each program within the B17 trace check's
+  bounds (`parse_untrusted_pipeline`): the pipeline form only, and an expression source holding
+  more than 256 of the bytes `( + - * / ^` is refused before the expression parser sees it.
 
 Tests rehash `search.json` and the receipt after editing a member's loss, key or cost, the cost
 version, the member set, the record's id, version and digest, and the record's or the file's

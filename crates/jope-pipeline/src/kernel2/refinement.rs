@@ -302,3 +302,5 @@ pub(crate) use lm::{
 };
 pub use lm::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
 // laneD:B17-lm-refinement end
+// laneD:B18-pareto-archive: the archive check parses its untrusted observations within the same bounds.
+pub(crate) use lm::parse_untrusted_pipeline;
