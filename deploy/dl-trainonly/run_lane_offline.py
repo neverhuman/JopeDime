@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import resource
+import socket
 import sys
 import time
 import unittest
@@ -28,6 +29,26 @@ def case_ids(suite):
             yield from case_ids(test)
         else:
             yield test.id()
+
+
+def make_audit(forbidden, probes, home):
+    secret_roots = tuple(Path(home) / name for name in (".aws", ".ssh", ".config/gh", ".config/jopedime/secrets", ".claude"))
+
+    def audit(event, values):
+        if event == "open" and isinstance(values[0], (str, bytes)):
+            path = Path(os.fsdecode(values[0])).resolve()
+            if any(path == prefix or path.is_relative_to(prefix) for prefix in secret_roots):
+                forbidden.append("credential-file read")
+                raise RuntimeError("offline fixtures forbid credential-file reads")
+        if event in ("subprocess.Popen", "os.posix_spawn") and values[0] == "/sbin/ldconfig" and values[1] == ["/sbin/ldconfig", "-p"]:
+            probes.append({"event": event, "executable": values[0], "argv": values[1]})
+            return
+        if (event.startswith("socket.") or event.startswith("os.spawn")
+                or event in ("subprocess.Popen", "os.system", "os.posix_spawn", "os.fork", "os.forkpty", "os.exec")):
+            forbidden.append(event)
+            raise RuntimeError("offline fixtures forbid " + event)
+
+    return audit
 
 
 def main():
@@ -55,22 +76,10 @@ def main():
     memory = min(limit, old_hard) if old_hard != resource.RLIM_INFINITY else limit
     resource.setrlimit(resource.RLIMIT_AS, (memory, old_hard))
     forbidden, probes = [], []
-    secret_roots = tuple(Path.home() / name for name in (".aws", ".ssh", ".config/gh", ".config/jopedime/secrets", ".claude"))
-
-    def audit(event, values):
-        if event == "open" and isinstance(values[0], (str, bytes)):
-            path = Path(os.fsdecode(values[0])).resolve()
-            if any(path == prefix or path.is_relative_to(prefix) for prefix in secret_roots):
-                forbidden.append("credential-file read")
-                raise RuntimeError("offline fixtures forbid credential-file reads")
-        if event == "subprocess.Popen" and values[0] == "/sbin/ldconfig" and values[1] == ["/sbin/ldconfig", "-p"]:
-            probes.append({"executable": values[0], "argv": values[1]})
-            return
-        if event in ("socket.connect", "socket.getaddrinfo", "subprocess.Popen", "os.system"):
-            forbidden.append(event)
-            raise RuntimeError("offline fixtures forbid " + event)
-
-    sys.addaudithook(audit)
+    sys.addaudithook(make_audit(forbidden, probes, Path.home()))
+    # urllib3 otherwise probes IPv6 by creating a socket during boto3 import.
+    # Offline fixtures have no network capability; keep every socket event denied.
+    socket.has_ipv6 = False
     custody = Path(__file__).with_name("lane")
     before = verify(custody)
     root = custody / "src/dl_training_v1"
@@ -92,6 +101,7 @@ def main():
               "failed": len(result.failures) + len(result.errors), "skipped": len(result.skipped),
               "expected_failures": len(result.expectedFailures), "unexpected_successes": len(result.unexpectedSuccesses),
               "forbidden_attempts": forbidden, "library_cache_probes": probes,
+              "offline_network": {"ipv6_capability_probe": "disabled; every socket audit event refused"},
               "resource_limits": {"affinity_cpus": cpus, "address_space_bytes": memory, "threads": 1},
               "log_sha256": hashlib.sha256((out / "unittest.log").read_bytes()).hexdigest(),
               "scope": "audited synthetic offline CPU fixtures; no live corpus, pilot, training, GPU, Lambda, S3 or runtime adoption"}

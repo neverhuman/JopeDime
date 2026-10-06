@@ -15,11 +15,12 @@ Run the stdlib custody verifier and refusal fixtures from the repository root:
 ```sh
 python3 deploy/dl-trainonly/verify_lane.py
 python3 deploy/dl-trainonly/test_verify_lane.py
+python3 deploy/dl-trainonly/test_offline_guard.py
 ```
 
 The verifier uses committed expected manifest pins, checks every payload and filename, rejects extra files and symlinks, reconstructs the predecessor closure, and parses Python syntax without importing the staged code. These are source custody checks, not executed-family coverage or producer authentication for operational consumers.
 
-The Python CI lane additionally runs exactly 11 audited offline unittest modules (329 cases) through `run_lane_offline.py`. It uses the existing locked Python environment, hides GPUs, removes ambient credential configuration, refuses credential-file reads and network connections, and permits only an exact read-only `/sbin/ldconfig -p` library-cache probe if the CPU dependency loader needs it. All other subprocesses fail. Synthetic fake S3 clients and scratch ledgers are fixture data. No live object or campaign ledger is accessed. Four CPUs, a 16 GiB address-space ceiling and a 900-second process timeout bound this check. Its separate receipt records actual case IDs, counts, dependency versions, forbidden attempts, source hashes before/after and the log digest; it is not folded into the existing pytest count.
+The Python CI lane additionally runs exactly 11 audited offline unittest modules (329 cases) through `run_lane_offline.py`. It uses the existing locked Python environment, hides GPUs, removes ambient credential configuration, refuses Python credential-file reads, every Python socket audit event (including socket creation and UDP sends), and direct Python subprocess/spawn/fork/exec launches. It permits only an exact read-only `/sbin/ldconfig -p` library-cache probe through Popen or posix_spawn if the CPU dependency loader needs it. Eight independent guard fixtures exercise these boundaries before any network traffic or child launch. The offline fixture process disables urllib3's import-time IPv6 capability probe; socket creation remains refused, including IPv6. These Python audit controls are not OS sandboxing or native-extension isolation. Synthetic fake S3 clients and scratch ledgers are fixture data. No live object or campaign ledger is accessed. Four CPUs, a 16 GiB address-space ceiling and a 900-second process timeout bound this check. Its separate receipt records actual case IDs, counts, dependency versions, forbidden attempts, source hashes before/after and the log digest; it is not folded into the existing pytest count.
 
 ```sh
 cd python
@@ -28,4 +29,4 @@ uv run --no-sync python ../deploy/dl-trainonly/run_lane_offline.py --output /dur
 
 The output directory must not exist. Other newly discovered lane families have explicit deferred dispositions pending dependency/side-effect audit, bounded host fixtures or separate qualification. Their static presence is not a pass. Every pre-existing CI mapping and test remains intact.
 
-Local evidence is retained in `/home/ubuntu/jope-evidence/s1-twofold-bootstrap-20261006/`; the original 191-member predecessor archive has SHA256 `24c5404bf0b0ec4f8d40e96008dcb1db40bc36c5954be86aa6e96a8d91899528`. The initial offline harness's library-probe refusal and subsequent bounded replay are separate retained outcomes. `just required` has an unchanged-main Clippy baseline; this import does not claim a passing complete CPU diagnostic.
+Local evidence is retained in `/home/ubuntu/jope-evidence/s1-twofold-bootstrap-20261006/`; the original 191-member predecessor archive has SHA256 `24c5404bf0b0ec4f8d40e96008dcb1db40bc36c5954be86aa6e96a8d91899528`. The initial offline harness's library-probe refusal, missing CI dependency and refused urllib3 IPv6 import probe are separate retained outcomes. `just required` has an unchanged-main Clippy baseline; this import does not claim a passing complete CPU diagnostic.
