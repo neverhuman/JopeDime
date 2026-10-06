@@ -405,6 +405,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let manifest_cmp = old_fixture("transitions/manifest_cmp_owned_identity_rebaseline.v1.json");
     assert_eq!(manifest_cmp["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(manifest_cmp["fixtures"][0]["path"], changed_fixtures[1]);
+    // Synthetic arbitration clock: source identity moves; runtime behavior stays pinned.
+    let authority_clock =
+        old_fixture("transitions/authority_synthetic_clock_identity_rebaseline.v1.json");
+    assert_eq!(authority_clock["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(authority_clock["fixtures"][0]["path"], changed_fixtures[1]);
     let identity_chain = [
         transition,
         successor,
@@ -414,6 +419,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         b11,
         scalar_recipes,
         manifest_cmp,
+        authority_clock,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

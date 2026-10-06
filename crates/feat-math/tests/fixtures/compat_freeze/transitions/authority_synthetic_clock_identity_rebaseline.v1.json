@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Owner 2026-10-06T06:52Z assigned deterministic synthetic start arbitration fix; announce the cfg(test) authority source identity change only, with runtime deadlines and all behavioral pins unchanged.",
+  "plan_reference": "MAIN CI authorization flake: 104 requests authorize exactly one synthetic start",
+  "pr_reference": "Make synthetic authority race deterministic under neural load",
+  "source_commit": "27c37d27675b104e9f7bce5ada63ad68df6bbeaa",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "e4172a36869e5f74f6f57e5aa9055349fa960ae96d0540d6d4ea19eae1833613",
+      "after": "6c384ab631f5d7169bb421d56f20f97c31ccffe0d83335dbdc0cd5af7188e2e3"
+    }
+  ]
+}
