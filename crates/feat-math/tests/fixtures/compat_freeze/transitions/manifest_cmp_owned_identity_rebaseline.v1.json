@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Owner ENG:watcher 2026-10-06T00:36Z approved manifest.rs cmp_owned and announced identity-only lineage hash transition; no behavior change; JSON string-vs-number refusals preserved",
+  "plan_reference": "Required-floor triage / owner-approved narrow manifest lineage transition",
+  "pr_reference": "Avoid owned JSON value in bound manifest hash comparison",
+  "source_commit": "1b6c3b278c957776d70ad8325d18705c512c9187",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "9ebf0cbcf1120b73e80131328c32c730dc2f245b78521203d079b8c0e6db6831",
+      "after": "e4172a36869e5f74f6f57e5aa9055349fa960ae96d0540d6d4ea19eae1833613"
+    }
+  ]
+}
