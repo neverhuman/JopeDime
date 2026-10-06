@@ -66,7 +66,10 @@ main runs still require an exact match to the commit under test. On a shallow ch
 action first fetches exactly the PR base commit (`provenance_bind.py ensure-base`, depth 1,
 read-only job token), so no job depends on a reused workspace already holding it. A `BASE_SHA`
 that is not exactly 40 lowercase hex characters is refused before git runs, the fetch is bounded
-(120 s, `JOPE_PROVENANCE_FETCH_TIMEOUT`), and a base that stays unreadable fails closed. It also checks the provisioned
+(120 s; `JOPE_PROVENANCE_FETCH_TIMEOUT` may set it up to 600 s, and a larger value fails
+closed), and a base that stays unreadable fails closed. A `.git/shallow.lock` left by a killed
+fetch in a reused workspace is removed only when no process holds it; a held lock fails closed.
+`provenance_bind.py digest REV` accepts only `WORKTREE`, a 40-hex id or a plain ref name. It also checks the provisioned
 image identity and verifies immutable policy plus actual cgroup memory/CPU/swap values. It does
 not hash every image file. Never weaken provenance to make an unreviewed deployment pass.
 

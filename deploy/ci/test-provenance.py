@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -325,6 +327,108 @@ class ProvenanceBindTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 with self.assertRaisesRegex(ValueError, "JOPE_PROVENANCE_FETCH_TIMEOUT"):
                     bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": raw})
+
+    def test_fetch_timeout_upper_cap_fails_closed(self):
+        cap = bind.FETCH_TIMEOUT_MAX_SECONDS
+        self.assertEqual(
+            bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": str(cap)}), float(cap)
+        )
+        for raw in (str(cap + 1), "600.5", "1e9"):
+            with self.subTest(raw=raw):
+                with self.assertRaisesRegex(ValueError, "exceeds the 600s cap"):
+                    bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": raw})
+
+    def test_stale_shallow_lock_is_removed_then_fetch_succeeds(self):
+        clone = self._shallow_clone()
+        lock = clone / ".git" / "shallow.lock"
+        lock.write_text("")
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha}
+        self.assertEqual(bind.ensure_bind_rev(clone, env), self.base_sha)
+        self.assertFalse(lock.exists())
+        self.assertTrue(bind.has_commit(clone, self.base_sha))
+
+    def test_held_shallow_lock_fails_closed(self):
+        clone = self._shallow_clone()
+        lock = clone / ".git" / "shallow.lock"
+        lock.write_text("")
+        holder = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                "import sys,time; f=open(sys.argv[1]); print('held', flush=True); time.sleep(60)",
+                str(lock),
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            self.assertEqual(holder.stdout.readline().strip(), "held")
+            env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha}
+            with self.assertRaisesRegex(ValueError, f"held by {holder.pid} "):
+                bind.ensure_bind_rev(clone, env)
+            # Refused before fetching: the lock is untouched and the base is still absent.
+            self.assertTrue(lock.exists())
+            self.assertFalse(bind.has_commit(clone, self.base_sha))
+        finally:
+            holder.kill()
+            holder.wait()
+
+    def test_uninspectable_proc_fails_closed(self):
+        clone = self._shallow_clone()
+        (clone / ".git" / "shallow.lock").write_text("")
+        missing = Path(self.tmp.name) / "no-proc"
+        with self.assertRaisesRegex(ValueError, "cannot inspect processes"):
+            bind.clear_stale_shallow_lock(clone, proc_root=missing)
+
+    def test_no_lock_is_a_no_op(self):
+        clone = self._shallow_clone()
+        self.assertFalse(bind.clear_stale_shallow_lock(clone))
+
+    def test_digest_rev_validation(self):
+        sha = self.base_sha
+        self.assertIsNone(bind.validate_digest_rev("WORKTREE"))
+        for good in (sha, "main", "HEAD", "origin/main", "refs/heads/ops/x-1.2"):
+            with self.subTest(good=good):
+                self.assertEqual(bind.validate_digest_rev(good), good)
+        bad = [
+            "",
+            "-n",
+            "--output=/tmp/x",
+            "HEAD~1",
+            "HEAD^",
+            "main:deploy",
+            "main@{1}",
+            "a..b",
+            "a//b",
+            "main.lock",
+            "main/",
+            "has space",
+            "-" + sha,
+            sha + "\n",
+            "x" * 201,
+        ]
+        for value in bad:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "digest REV"):
+                    bind.validate_digest_rev(value)
+
+    def test_digest_cli_rejects_bad_rev_and_extra_args(self):
+        script = ROOT / "deploy/runner/provenance_bind.py"
+        env = dict(os.environ, GITHUB_WORKSPACE=str(self.repo))
+        ok = subprocess.run(
+            [sys.executable, str(script), "digest", self.base_sha],
+            env=env, capture_output=True, text=True,
+        )
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertEqual(ok.stdout.strip(), self.base_digest)
+        for argv in (["digest", "--output=x"], ["digest", "HEAD~1"], ["digest", "main", "extra"]):
+            with self.subTest(argv=argv):
+                bad = subprocess.run(
+                    [sys.executable, str(script), *argv],
+                    env=env, capture_output=True, text=True,
+                )
+                self.assertEqual(bad.returncode, 1)
+                self.assertEqual(bad.stdout, "")
 
     def test_parse_matches_repo_common_sh(self):
         common = (ROOT / "deploy/runner/common.sh").read_text()

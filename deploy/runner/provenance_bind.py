@@ -27,8 +27,13 @@ HOOK_NAMES = ("job-started.sh", "job-policy.py")
 # Anything else (a branch, HEAD, an abbreviation, an option such as --upload-pack=...) is refused
 # before it reaches git.
 BASE_SHA_RE = re.compile(r"[0-9a-f]{40}")
-# Upper bound on the explicit base fetch; JOPE_PROVENANCE_FETCH_TIMEOUT (seconds) overrides it.
+# Upper bound on the explicit base fetch; JOPE_PROVENANCE_FETCH_TIMEOUT (seconds) overrides it,
+# up to FETCH_TIMEOUT_MAX_SECONDS. A larger override fails closed rather than being clamped.
 FETCH_TIMEOUT_SECONDS = 120
+FETCH_TIMEOUT_MAX_SECONDS = 600
+# `digest REV` takes WORKTREE, a full 40-hex commit id, or a plain ref name. No revision syntax
+# (~ ^ : @{ ..), no leading '-' (option injection), no whitespace.
+DIGEST_REF_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}")
 
 
 def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
@@ -115,7 +120,85 @@ def fetch_timeout(environ: Mapping[str, str]) -> float:
         raise ValueError(f"JOPE_PROVENANCE_FETCH_TIMEOUT is not a number: {raw!r}") from None
     if not value > 0 or value == float("inf"):
         raise ValueError(f"JOPE_PROVENANCE_FETCH_TIMEOUT must be positive and finite: {raw!r}")
+    if value > FETCH_TIMEOUT_MAX_SECONDS:
+        raise ValueError(
+            f"JOPE_PROVENANCE_FETCH_TIMEOUT {raw!r} exceeds the {FETCH_TIMEOUT_MAX_SECONDS}s cap"
+        )
     return value
+
+
+def git_dir(repo: Path) -> Path:
+    out = subprocess.check_output(
+        ["git", "rev-parse", "--absolute-git-dir"], cwd=repo, stderr=subprocess.PIPE, text=True
+    )
+    return Path(out.strip())
+
+
+def lock_holders(lock: Path, proc_root: Path = Path("/proc")) -> list[str]:
+    """Processes that may hold `lock`: any pid with an open fd on it, and any git process
+    whose fds cannot be inspected. Raises when /proc itself is unreadable (fail closed)."""
+    target = os.path.realpath(lock)
+    holders: list[str] = []
+    try:
+        pids = [entry for entry in os.listdir(proc_root) if entry.isdigit()]
+    except OSError as exc:
+        raise ValueError(f"cannot inspect processes for {lock}: {exc}") from exc
+    for pid in pids:
+        if int(pid) == os.getpid():
+            continue
+        try:
+            comm = (proc_root / pid / "comm").read_text().strip()
+        except OSError:
+            continue  # exited
+        try:
+            fds = os.listdir(proc_root / pid / "fd")
+        except FileNotFoundError:
+            continue
+        except OSError:
+            if comm.startswith("git"):
+                holders.append(f"{pid} ({comm}, fds unreadable)")
+            continue
+        for fd in fds:
+            try:
+                if os.readlink(proc_root / pid / "fd" / fd) == target:
+                    holders.append(f"{pid} ({comm})")
+                    break
+            except OSError:
+                continue
+    return holders
+
+
+def clear_stale_shallow_lock(repo: Path, proc_root: Path = Path("/proc")) -> bool:
+    """Remove a `.git/shallow.lock` left by a killed fetch in a reused workspace.
+
+    Only when no process holds it; a held lock (or one whose holders cannot be ruled out)
+    fails closed. Returns True when a stale lock was removed.
+    """
+    lock = git_dir(repo) / "shallow.lock"
+    if not lock.exists():
+        return False
+    holders = lock_holders(lock, proc_root)
+    if holders:
+        raise ValueError(f"{lock} is held by {', '.join(holders)}; refusing to fetch")
+    lock.unlink()
+    print(f"removed stale {lock} (no process held it)", file=sys.stderr, flush=True)
+    return True
+
+
+def validate_digest_rev(arg: str) -> Optional[str]:
+    """`digest` argument: WORKTREE means the checkout; otherwise a 40-hex id or a plain ref."""
+    if arg == "WORKTREE":
+        return None
+    if BASE_SHA_RE.fullmatch(arg):
+        return arg
+    if (
+        DIGEST_REF_RE.fullmatch(arg)
+        and ".." not in arg
+        and "//" not in arg
+        and not arg.endswith((".", "/", ".lock"))
+    ):
+        return arg
+    raise ValueError(f"digest REV must be WORKTREE, a 40-hex commit id or a plain ref: {arg!r}")
 
 
 def ensure_bind_rev(
@@ -126,7 +209,8 @@ def ensure_bind_rev(
     A pull_request checkout of refs/pull/N/merge at the default depth holds only the merge
     commit, so `git show <BASE_SHA>:path` would fail on a cold workspace. Fetch exactly the
     base commit (--depth=1) instead of the full history. Non-PR runs bind to the worktree and
-    fetch nothing. A malformed BASE_SHA is refused before git runs; a fetch that fails, exceeds
+    fetch nothing. A malformed BASE_SHA is refused before git runs; a stale shallow.lock from a
+    killed fetch is removed only when no process holds it; a fetch that fails, exceeds
     fetch_timeout(), or still leaves the base unreadable fails closed.
     """
     env = environ if environ is not None else os.environ
@@ -134,6 +218,7 @@ def ensure_bind_rev(
     if rev is None or has_commit(repo, rev):
         return rev
     timeout = fetch_timeout(env)
+    clear_stale_shallow_lock(repo)
     git_env = fetch_env(repo, env)
     # Never wait on a credential prompt; a missing credential fails the fetch instead.
     git_env["GIT_TERMINAL_PROMPT"] = "0"
@@ -322,9 +407,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"bind rev:       {rev or 'WORKTREE'} (readable)", flush=True)
         return 0
     if args[0] == "digest":
-        rev = None
-        if len(args) > 1 and args[1] != "WORKTREE":
-            rev = args[1]
+        if len(args) > 2:
+            raise ValueError("digest takes at most one REV")
+        rev = validate_digest_rev(args[1]) if len(args) > 1 else None
         print(scripts_digest(repo, rev))
         return 0
     raise SystemExit(f"usage: {Path(sys.argv[0]).name} [verify|ensure-base|digest [REV]]")
