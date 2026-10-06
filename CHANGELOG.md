@@ -60,6 +60,9 @@ merged; B19 wiring is tracked separately. -->
   bytes and receipt digests. Rebuild the archive from bounded, re-derived observations when
   verifying evidence. The archive leaves ranking, parent selection and the selected program
   unchanged; default sidecar bytes remain pinned (#230).
+- Offer deterministic protected-semantics expression rewrites for ranked parents with opt-in
+  `--rewrite-simplify`. Admit and measure each new rewritten program within the shared evaluation
+  allowance; publish the proposal records for receipt replay and retain profile refusals (#232).
 - Route profile-aware pipelines through bounded search and refinement, caller-controlled trial
   limits, fitted C++ export and manifest-bound recipe artifacts. Refined children publish under
   their own observations (#155-#165, #208).
