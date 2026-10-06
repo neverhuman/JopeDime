@@ -607,3 +607,105 @@ pub fn search(
         deterministic,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use feat_math::kernel::scalar_program::{ScalarCarrier, ScalarFunction};
+
+    #[test]
+    fn fault_penalties_never_replace_raw_cv_fold_scores() {
+        let program = ScalarExpressionProgram::new(ScalarNode::Call(
+            ScalarFunction::Log1mexp,
+            vec![ScalarNode::Var(Var::Col(0))],
+        ))
+        .unwrap();
+        let rows: Rows = (0..64)
+            .map(|index| {
+                vec![match index % 4 {
+                    0 => -0.25,
+                    1 => 1.25,
+                    _ => (index + 1) as f64 / 65.0,
+                }]
+            })
+            .collect();
+        let labels: Vec<_> = (0..64)
+            .map(|index| index as f64 * 0.5 + (index % 3) as f64)
+            .collect();
+        let key = training_fold_key(&rows, &labels);
+        for policy in [
+            FaultPolicy::Penalize {
+                lambda_domain: 0.05,
+                lambda_saturation: 0.0,
+                tie_break: true,
+            },
+            FaultPolicy::Legacy,
+        ] {
+            let evaluation = evaluate_folds(
+                &program,
+                &key,
+                &rows,
+                &labels,
+                policy,
+                &mut WorkCounts::default(),
+                |tx, ty, lambda| {
+                    program
+                        .fit_training(tx, ty, ScalarCarrier::Row, lambda)
+                        .map_err(|error| error.to_string())
+                },
+            )
+            .unwrap();
+            assert!(evaluation.faults.domain_cells > 0);
+            let mut raw = Vec::new();
+            for fold in 0..3 {
+                let mut tx = Vec::new();
+                let mut ty = Vec::new();
+                let mut vx = Vec::new();
+                let mut vy = Vec::new();
+                for (index, (row, &label)) in rows.iter().zip(&labels).enumerate() {
+                    if fold_of(&key, index, 3) == fold {
+                        vx.push(row.clone());
+                        vy.push(label);
+                    } else {
+                        tx.push(row.clone());
+                        ty.push(label);
+                    }
+                }
+                let model = program
+                    .fit_training(&tx, &ty, ScalarCarrier::Row, evaluation.lambda)
+                    .unwrap();
+                raw.push(metrics::r2(&vy, &model.predict(&vx).unwrap().0));
+            }
+            assert_eq!(
+                evaluation
+                    .fold_scores
+                    .iter()
+                    .map(|v| v.to_bits())
+                    .collect::<Vec<_>>(),
+                raw.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                "raw predictive CV scores must survive the separate selection penalty"
+            );
+            let objectives: Vec<_> = raw
+                .iter()
+                .map(|&score| match policy {
+                    FaultPolicy::Penalize {
+                        lambda_domain,
+                        lambda_saturation,
+                        ..
+                    } => evaluation
+                        .faults
+                        .penalize(score, lambda_domain, lambda_saturation)
+                        .unwrap(),
+                    _ => score,
+                })
+                .collect();
+            let mean = |values: &[f64]| values.iter().sum::<f64>() / values.len() as f64;
+            assert_eq!(evaluation.score.to_bits(), mean(&objectives).to_bits());
+            if matches!(policy, FaultPolicy::Penalize { .. }) {
+                assert!(evaluation.score < mean(&raw));
+            } else {
+                assert_eq!(evaluation.score.to_bits(), mean(&raw).to_bits());
+            }
+        }
+    }
+}
