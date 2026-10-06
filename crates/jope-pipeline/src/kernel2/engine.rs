@@ -40,7 +40,10 @@ pub enum RefineMethod {
 pub struct EngineSelection {
     pub refine: RefineMethod,
     // laneD:B18-pareto-archive begin
-    /// The loss × cost front of the run's measured programs; none by default.
+    /// The loss × cost front of the run's measured programs; none by default. Only publication
+    /// builds it (`run::run`, through `publication::publish`): `search::run_cut` records the
+    /// selection in its result's `engine` and builds nothing, and its search is the same with or
+    /// without it. A caller that runs cuts itself builds the front with `archive::build`.
     pub archive: Option<ArchivePolicy>,
     // laneD:B18-pareto-archive end
 }
@@ -173,6 +176,7 @@ pub const FRONT_LOSS_COST: &str = "feat-math.front-loss-cost.v1";
 pub enum ArchivePolicy {
     /// Publish the front as `search/cut-0/archive.json`, as evidence only: ranking, parents and
     /// the selected program never read it, so every measurement and refinement is unchanged.
+    /// Publication writes it; `search::run_cut` alone writes and builds nothing.
     ArchiveOnly,
 }
 

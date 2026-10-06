@@ -1,14 +1,16 @@
-//! A versioned loss × complexity Pareto archive (B18).
+//! A versioned loss × complexity Pareto archive.
 //!
 //! The kernel2 profile route of jope-pipeline builds this archive, opt-in, from a run's measured
 //! programs under [`PIPELINE_COST_VERSION`] and publishes it as evidence only: the run's selection,
 //! ranking and parents never read it. Survival selection ([`select_survivors`]) has no caller
 //! yet.
 //!
-//! Every objective is minimized: the training-fold loss, an integer complexity that the caller
-//! supplies under a recorded cost version, and, only when asked for, an age. The archive is the
-//! two-objective front (loss, complexity). Age enters only the opt-in survival selection
-//! ([`select_survivors`]), as in age-fitness Pareto optimization.
+//! Every objective is minimized: a loss the caller supplies, an integer complexity that the caller
+//! supplies under the archive's recorded cost version, and, only when asked for, an age. The
+//! kernel2 route's loss is the negated selection score: the held-out R² on a validation fold of the
+//! training rows, after the configured fault penalty (under `Penalize`, the penalized score). The
+//! archive is the two-objective front (loss, complexity). Age enters only the
+//! opt-in survival selection ([`select_survivors`]), as in age-fitness Pareto optimization.
 //!
 //! Determinism rules:
 //! - A NaN loss and a Hard-faulted candidate are refused before any comparison and counted. `-0.0`
@@ -27,7 +29,10 @@
 //!   share one distance. The last front is cut round-robin over unique vectors.
 //! - The archive serializes losses as their bits, so a round trip is exact. A reader refuses a
 //!   different schema, a cost version outside [`COST_VERSIONS`], a NaN, and any member the others
-//!   dominate.
+//!   dominate. It accepts either known cost version, so a caller that expects one compares
+//!   [`Archive::cost_version`].
+
+// B18 core; the kernel2 caller is laneD:B18-pareto-archive.
 
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -35,8 +40,9 @@ use std::cmp::Ordering;
 /// The serialized archive's schema.
 pub const ARCHIVE_SCHEMA: &str = "feat-math.pareto-archive.v1";
 
-/// The cost version every member's complexity was measured under. An archive never mixes
-/// versions.
+/// The expression-node cost version: a complexity that counts one expression's nodes. It is the
+/// version of [`Archive::default`]; [`PIPELINE_COST_VERSION`] is the other. Each archive records
+/// the one version all its members' complexities were measured under, and never mixes versions.
 pub const COST_VERSION: &str = "feat-math.cost.expression-nodes.v1";
 
 /// The cost version of a whole pipeline program: its stages, the terminal head included, plus the
@@ -51,9 +57,9 @@ pub const COST_VERSIONS: [&str; 2] = [COST_VERSION, PIPELINE_COST_VERSION];
 /// A scored candidate, as the search hands it over.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Candidate {
-    /// The training-fold loss; lower is better.
+    /// The caller's loss; lower is better. The kernel2 route supplies the negated selection score.
     pub loss: f64,
-    /// The complexity under [`COST_VERSION`].
+    /// The complexity under the archive's cost version ([`Archive::cost_version`]).
     pub complexity: u32,
     /// The age in generations, when the search tracks it.
     pub age: Option<u32>,
@@ -234,7 +240,9 @@ impl Archive {
     }
 
     /// The archive back, refusing another schema, a cost version outside [`COST_VERSIONS`], a NaN
-    /// or `-0.0` loss, a member out of front order, or one that another member dominates.
+    /// or `-0.0` loss, a member out of front order, or one that another member dominates. Any
+    /// version in [`COST_VERSIONS`] is accepted: a caller that expects one version must compare
+    /// [`Archive::cost_version`] itself.
     pub fn from_json(text: &str) -> Result<Self, String> {
         let archive: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
         if archive.schema != ARCHIVE_SCHEMA {
