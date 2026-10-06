@@ -63,5 +63,5 @@ pub fn scalar_policy_v2_capability() -> ElementCap {
 /// Decision and receipt identities for explicit Experimental scalar producers.
 /// This document does not alter the frozen manifest or authorize Baseline selection.
 pub fn scalar_capability_decisions_json() -> &'static str {
-    include_str!("scalar_v2/decisions.json")
+    include_str!("scalar/decisions.json")
 }
