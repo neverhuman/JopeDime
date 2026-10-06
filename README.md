@@ -18,6 +18,8 @@ What changed in 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current directio
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
+Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this repository.
+
 ## At a glance
 
 | What | 0.2.0 |
