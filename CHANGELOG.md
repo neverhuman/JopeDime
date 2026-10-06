@@ -12,17 +12,19 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at ab5ca51cd. Rebase onto final main and finalize the date before
-publication. GP red-team/determinism (#223), B17-B20 wiring (#227), the maintained Tanh mutation
-gate, jankurai triage and final-main qualification remain publication prerequisites. -->
+<!-- Local release preparation at 0ac905432, including merged #221/#223/#225/#226/#228.
+Rebase onto final main and finalize the date before publication. GP-language coverage, B17-B20
+wiring (#227 and successors), the maintained Tanh mutation gate, jankurai triage and final-main
+qualification remain publication prerequisites. -->
 
 ### feat-math and emitters
 
 - Freeze historical values, emitted bytes, serialized models, evaluator lineage and generator
   streams; extend boundary and GP conversion witnesses before changing the kernel (#126, #138,
   #143, #144, #151, #152, #177).
-- Add runtime/emitted parity and equal-budget search ablation, including kernel2 profile searches
-  in the ablation harness (#127, #221).
+- Add runtime/emitted parity and equal-budget search ablation (#127). The ablation harness now
+  runs Baseline and Experimental kernel2 searches with explicit bounded refinement controls and
+  paired per-dataset results (#221).
 - Report scalar and stage fault classes, check scopes and fitted widths, and apply opt-in search
   fault policies. Checked prediction rejects width mismatches before stage execution (#128,
   #130-#133).
@@ -57,11 +59,12 @@ gate, jankurai triage and final-main qualification remain publication prerequisi
 
 - Preserve tree/wire/genome round trips and parameterized recipe conversion bits before emitted
   comparisons; compile numerical ABI boundary witnesses (#143-#145, #151, #152, #177, #207).
-- Release qualification includes the maintained scalar GP determinism and differential-compile
-  gate (#223): repeated and cross-process byte checks, Python/Rust/C++17 execution, strict g++
-  and clang compilation, native feature/fault comparisons and signed-zero regressions. Lane A's
-  C++17 warning reproduction is credited in that gate's record. Its bounded comparison contract
-  and toolchain/platform limits are documented in `docs/parity/gp-emitter-determinism.md`.
+- Repair generated C++17 recipes for `-Wall -Werror` and Rust Min/Max and Clip signed-zero tie
+  selection. Add the maintained scalar GP determinism and differential-compile gate: repeated
+  and cross-process byte checks, Python/Rust/C++17 execution, strict g++ and clang compilation,
+  native feature/fault comparisons and signed-zero regressions (#223). Lane A's C++17 warning
+  reproduction is credited in that gate's record. Its bounded comparison contract and
+  toolchain/platform limits are documented in `docs/parity/gp-emitter-determinism.md`.
 
 ### Engine and S1
 
@@ -70,7 +73,9 @@ gate, jankurai triage and final-main qualification remain publication prerequisi
 - Synchronize fit fixture identity with served readiness and make synthetic authority races
   deterministic under neural load (#215, #217).
 - Add train-only GPU budgets, output evidence and encoder pins; reject out-of-range CPU affinity
-  indices and device-copy/scalar-representation bounds (#199, #222, #226).
+  indices (#199, #222).
+- Refuse oversized GPU copies before CUDA dispatch in release builds, retain empty-copy no-ops,
+  restrict transfers to sealed scalar representations and make allocation fields private (#226).
 
 ### DL lane
 
@@ -82,7 +87,8 @@ gate, jankurai triage and final-main qualification remain publication prerequisi
 ### CI, build and release
 
 - Import frozen standalone teacher-v2 search/worker workspaces and their Python custody record
-  (#129). Historical Lambda locks and snapshot pins remain at their recorded versions.
+  (#129). Refresh only the `feat-math` version entry in affected Lambda working locks for 1.0.0,
+  recording their current tree hashes while retaining the original frozen snapshot hashes.
 - Bind runner provenance to the PR base, pin swap limits in systemd, validate base/digest SHAs,
   and bound shallow-lock recovery and fetches; document post-merge swap-pin deployment (#205,
   #206, #210, #211, #213).
@@ -90,7 +96,12 @@ gate, jankurai triage and final-main qualification remain publication prerequisi
 - Repair inherited Clippy findings in receiving libraries, alongside earlier behavior-preserving
   lint fixes (#209, #219).
 - Stabilize executor preparation, daemon polling, lost-ACK and durable execution fixtures while
-  preserving work limits and retained deadlines (#175, #181, #187, #194, #225).
+  preserving work limits and retained deadlines (#175, #181, #187, #194).
+- Stabilize durable recovery and cancellation fixtures without extending signed work limits;
+  permit synthetic teaching tests to select a validated persistent fixture directory (#225).
+- Bind SmartCluster participant tests to their own duplicated control descriptors and verify
+  inherited regular-file lock refusal without releasing or changing the parent's lock (#228).
+  Production authentication and runner behavior retain their existing contracts.
 - Set CI evidence retention to seven days and align product workspace and Python metadata at
   1.0.0; vendored SmartCluster versions and frozen source/history pins remain unchanged (#179).
 
@@ -107,6 +118,8 @@ gate, jankurai triage and final-main qualification remain publication prerequisi
 - Rust callers of `Model::predict`, `FittedHead::predict`, `PortfolioModel::predict`,
   `apply_op_train` and `apply_op` must handle `Result<_, WidthMismatch>` instead of the former
   bare `Vec<f64>` or `Rows` return. Propagate or handle the width error explicitly (#146).
+- GPU callers use the `DeviceBuffer` pointer accessor rather than public allocation fields;
+  transfers accept the sealed supported scalar types (#226).
 - Profile-aware searches and scalar-v2 programs/models require their explicit versioned
   envelopes and selected capability manifests. Legacy parsing and profiles keep their documented
   historical route; newly implemented kernels are admitted per profile.

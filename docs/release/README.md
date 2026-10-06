@@ -154,12 +154,13 @@ The release PR must first merge to `main`. It carries `docs/release/signing.pub`
   `release.sh` compares `jope-cli` and every product crate with the tag through `cargo metadata`;
 - for 1.0.0, aligns `python/pyproject.toml` and the editable `jope` entry in `python/uv.lock` with
   the workspace version, and runs `deploy/ci/version-consistency.sh v1.0.0`. No Python wheel ships;
-- for 1.0.0, preserves the historical compatibility manifests, Lambda locks and
-  `deploy/lambda/SNAPSHOT.json`, kernel2 proof receipts and train-only source custody pins.
-  `just bump` currently synchronizes Lambda locks and their snapshot records, so use the bounded
-  manifest/root-lock update above for this release. The Lambda `--locked` verification currently
-  rejects the preserved 0.2.0 path-package locks against the 1.0.0 root; resolve that release
-  blocker through a reviewed change before publication, preserving the frozen history and checks;
+- for 1.0.0, preserves historical compatibility manifests, original frozen Lambda snapshot
+  hashes, kernel2 proof receipts and train-only source custody pins. Refresh only root-package
+  version entries in the Lambda working locks; verify that no dependency or other package moves.
+  Record those deliberate lock changes with `deploy/ci/lambda-workspaces.sh snapshot-refresh`,
+  which updates only the current tree hash and explanation while preserving the original frozen
+  hash. Run `deploy/ci/lambda-workspaces.sh verify` to check every workspace with `--locked`
+  and validate the snapshot records. `sync-locks` performs this bounded Lambda update;
 - updates the `jope X.Y.Z` lines in `README.md`;
 - commits `CHANGELOG.md`, generated with git-cliff 2.14.1 from `cliff.toml` and curated by PR.
 
