@@ -13,6 +13,7 @@ import socket
 import sys
 import time
 import unittest
+from unittest import mock
 
 from verify_lane import verify
 
@@ -21,6 +22,14 @@ MODULES = (
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
     "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_v2_rowsel_build",
 )
+PRIVATE_INPUT_ROOTS = (
+    Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
+    Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1"),
+)
+HOST_CASES = {
+    "tests.test_v2_rowsel_build.Scope.test_real_scope_is_the_admitted_class": "requires pinned private incoming-scope metadata and qualified host custody",
+    "tests.test_v2_rowsel_build.FrozenScope.test_real_frozen_scope": "requires pinned private frozen-scope/rights metadata and qualified host custody",
+}
 
 
 def case_ids(suite):
@@ -36,10 +45,18 @@ def make_audit(forbidden, probes, home):
 
     def audit(event, values):
         if event == "open" and isinstance(values[0], (str, bytes)):
-            path = Path(os.fsdecode(values[0])).resolve()
-            if any(path == prefix or path.is_relative_to(prefix) for prefix in secret_roots):
-                forbidden.append("credential-file read")
-                raise RuntimeError("offline fixtures forbid credential-file reads")
+            lexical = Path(os.path.abspath(os.fsdecode(values[0])))
+
+            def check(path):
+                if any(path == prefix or path.is_relative_to(prefix) for prefix in secret_roots):
+                    forbidden.append("credential-file read")
+                    raise RuntimeError("offline fixtures forbid credential-file reads")
+                if any(path == prefix or path.is_relative_to(prefix) for prefix in PRIVATE_INPUT_ROOTS):
+                    forbidden.append("private-lane input read")
+                    raise RuntimeError("offline fixtures forbid private-lane input reads")
+
+            check(lexical)
+            check(lexical.resolve())
         if event in ("subprocess.Popen", "os.posix_spawn") and values[0] == "/sbin/ldconfig" and values[1] == ["/sbin/ldconfig", "-p"]:
             probes.append({"event": event, "executable": values[0], "argv": values[1]})
             return
@@ -49,6 +66,36 @@ def make_audit(forbidden, probes, home):
             raise RuntimeError("offline fixtures forbid " + event)
 
     return audit
+
+
+def offline_suite(loader, modules, unavailable):
+    # Preserved host-test decorators query Path.exists at import. Offline
+    # discovery declares those inputs unavailable without touching host paths.
+    exists = Path.exists
+
+    def offline_exists(path):
+        absolute = Path(os.path.abspath(os.fspath(path)))
+        if any(absolute == prefix or absolute.is_relative_to(prefix) for prefix in PRIVATE_INPUT_ROOTS):
+            unavailable.append(str(absolute))
+            return False
+        return exists(path)
+
+    with mock.patch.object(Path, "exists", offline_exists):
+        suite = loader.loadTestsFromNames(modules)
+
+    def cases(nested):
+        for test in nested:
+            if isinstance(test, unittest.TestSuite):
+                yield from cases(test)
+            else:
+                yield test
+
+    tests = list(cases(suite))
+    names = [test.id() for test in tests]
+    if len(names) != len(set(names)) or not set(HOST_CASES) <= set(names):
+        raise ValueError("offline collection lacks unique declared host cases")
+    selected = unittest.TestSuite(test for test in tests if test.id() not in HOST_CASES)
+    return selected, names
 
 
 def main():
@@ -86,18 +133,22 @@ def main():
     os.chdir(root)
     sys.path.insert(0, str(root))
     versions = {name: importlib.metadata.version(name) for name in ("numpy", "boto3", "botocore")}
-    suite = unittest.defaultTestLoader.loadTestsFromNames(MODULES)
+    unavailable = []
+    suite, collected_names = offline_suite(unittest.defaultTestLoader, MODULES, unavailable)
     names = list(case_ids(suite))
     start = datetime.datetime.now(datetime.timezone.utc).isoformat()
     tick = time.monotonic()
     with (out / "unittest.log").open("x") as log, contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
     after = verify(custody)
-    report = {"schema": "jope.dl-offline-fixtures/v1", "start_utc": start,
+    report = {"schema": "jope.dl-offline-fixtures/v2", "start_utc": start,
               "end_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "seconds": time.monotonic() - tick,
               "argv": sys.argv, "python": sys.executable, "cwd": str(root), "dependencies": versions,
               "handoff_sha256": before["handoff_sha256"], "source_unchanged": before == after,
-              "modules": list(MODULES), "case_ids": names, "collected": len(names), "executed": result.testsRun,
+              "modules": list(MODULES), "case_ids": names, "collection_case_ids": collected_names,
+              "collected": len(collected_names), "executed": result.testsRun,
+              "excluded": len(HOST_CASES), "excluded_cases": HOST_CASES,
+              "unavailable_host_input_probes": sorted(set(unavailable)),
               "failed": len(result.failures) + len(result.errors), "skipped": len(result.skipped),
               "expected_failures": len(result.expectedFailures), "unexpected_successes": len(result.unexpectedSuccesses),
               "forbidden_attempts": forbidden, "library_cache_probes": probes,
@@ -108,8 +159,9 @@ def main():
     with (out / "receipt.json").open("x") as stream:
         json.dump(report, stream, indent=2)
         stream.write("\n")
-    print(json.dumps({key: report[key] for key in ("collected", "executed", "failed", "skipped", "seconds", "handoff_sha256", "source_unchanged")}))
-    return not (result.wasSuccessful() and not forbidden and before == after and len(names) == result.testsRun == 329
+    print(json.dumps({key: report[key] for key in ("collected", "executed", "excluded", "failed", "skipped", "seconds", "handoff_sha256", "source_unchanged")}))
+    return not (result.wasSuccessful() and not forbidden and before == after and len(collected_names) == 329
+                and len(names) == result.testsRun == 327 and set(collected_names) - set(names) == set(HOST_CASES)
                 and not result.skipped and not result.expectedFailures and not result.unexpectedSuccesses)
 
 
