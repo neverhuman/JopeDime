@@ -4,7 +4,8 @@ description: >-
   it. Used by every workflow that runs on the self-hosted lane. Requires the repository to be
   checked out already. Any checkout depth works: on pull_request the first step fetches exactly
   the PR base commit (--depth=1) when the checkout does not already hold it, so a clean shallow
-  workspace binds the same way as a reused full-history one.
+  workspace binds the same way as a reused full-history one. BASE_SHA must be exactly 40
+  lowercase hex characters and the fetch is time-bounded; both fail closed.
 
   What this binds, precisely, so it is not read as more than it is:
     - the host files listed in JOPE_RUNNER_DEPLOYED (scripts, units, the drop-in)

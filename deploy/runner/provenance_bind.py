@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -22,6 +23,12 @@ DEPLOYED_PATH_RE = re.compile(
     r"/(?:opt/jope-runner|etc/systemd/system|etc/tmpfiles\.d)/[^ \n]+"
 )
 HOOK_NAMES = ("job-started.sh", "job-policy.py")
+# A PR base is a full commit id: exactly 40 lowercase hex characters (SHA-1, as GitHub sends it).
+# Anything else (a branch, HEAD, an abbreviation, an option such as --upload-pack=...) is refused
+# before it reaches git.
+BASE_SHA_RE = re.compile(r"[0-9a-f]{40}")
+# Upper bound on the explicit base fetch; JOPE_PROVENANCE_FETCH_TIMEOUT (seconds) overrides it.
+FETCH_TIMEOUT_SECONDS = 120
 
 
 def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
@@ -30,9 +37,13 @@ def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
     None means the current worktree (exact match to the commit under test).
     """
     if event_name == "pull_request":
-        sha = (base_sha or "").strip()
-        if not sha:
+        sha = base_sha or ""
+        if not sha.strip():
             raise ValueError("pull_request provenance requires BASE_SHA (PR base commit)")
+        if not BASE_SHA_RE.fullmatch(sha):
+            raise ValueError(
+                f"BASE_SHA must be exactly 40 lowercase hex characters, got {sha!r}"
+            )
         return sha
     return None
 
@@ -40,14 +51,12 @@ def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
 def bind_rev_from_env(environ: Optional[Mapping[str, str]] = None) -> Optional[str]:
     env = environ if environ is not None else os.environ
     event = env.get("GITHUB_EVENT_NAME", "")
-    base = env.get("BASE_SHA", "").strip()
-    if not base:
+    base = env.get("BASE_SHA", "")
+    if not base.strip():
         event_path = env.get("GITHUB_EVENT_PATH", "")
         if event_path and Path(event_path).is_file():
             payload = json.loads(Path(event_path).read_text())
-            base = (
-                payload.get("pull_request", {}).get("base", {}).get("sha", "") or ""
-            ).strip()
+            base = payload.get("pull_request", {}).get("base", {}).get("sha", "") or ""
     return bind_rev(event, base)
 
 
@@ -95,6 +104,20 @@ def fetch_env(repo: Path, environ: Mapping[str, str]) -> dict:
     return env
 
 
+def fetch_timeout(environ: Mapping[str, str]) -> float:
+    """Seconds the base fetch may take. A malformed or non-positive override fails closed."""
+    raw = environ.get("JOPE_PROVENANCE_FETCH_TIMEOUT", "")
+    if not raw:
+        return float(FETCH_TIMEOUT_SECONDS)
+    try:
+        value = float(raw)
+    except ValueError:
+        raise ValueError(f"JOPE_PROVENANCE_FETCH_TIMEOUT is not a number: {raw!r}") from None
+    if not value > 0 or value == float("inf"):
+        raise ValueError(f"JOPE_PROVENANCE_FETCH_TIMEOUT must be positive and finite: {raw!r}")
+    return value
+
+
 def ensure_bind_rev(
     repo: Path, environ: Optional[Mapping[str, str]] = None, remote: str = "origin"
 ) -> Optional[str]:
@@ -103,19 +126,35 @@ def ensure_bind_rev(
     A pull_request checkout of refs/pull/N/merge at the default depth holds only the merge
     commit, so `git show <BASE_SHA>:path` would fail on a cold workspace. Fetch exactly the
     base commit (--depth=1) instead of the full history. Non-PR runs bind to the worktree and
-    fetch nothing. A base that is still unreadable after the fetch fails closed.
+    fetch nothing. A malformed BASE_SHA is refused before git runs; a fetch that fails, exceeds
+    fetch_timeout(), or still leaves the base unreadable fails closed.
     """
     env = environ if environ is not None else os.environ
     rev = bind_rev_from_env(env)
     if rev is None or has_commit(repo, rev):
         return rev
-    subprocess.run(
-        ["git", "fetch", "--no-tags", "--no-recurse-submodules", "--depth=1", remote, rev],
-        cwd=repo,
-        env=fetch_env(repo, env),
-        stdout=sys.stderr,
-        check=True,
+    timeout = fetch_timeout(env)
+    git_env = fetch_env(repo, env)
+    # Never wait on a credential prompt; a missing credential fails the fetch instead.
+    git_env["GIT_TERMINAL_PROMPT"] = "0"
+    argv = ["git", "fetch", "--no-tags", "--no-recurse-submodules", "--depth=1", remote, rev]
+    # Own process group, so a timeout also kills git's transport helpers, not just git.
+    proc = subprocess.Popen(
+        argv, cwd=repo, env=git_env, stdout=sys.stderr, start_new_session=True
     )
+    try:
+        returncode = proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        proc.wait()
+        raise ValueError(
+            f"fetching PR base commit {rev} timed out after {timeout:g}s"
+        ) from None
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode, argv)
     if not has_commit(repo, rev):
         raise ValueError(f"PR base commit {rev} is not readable after fetching it")
     return rev

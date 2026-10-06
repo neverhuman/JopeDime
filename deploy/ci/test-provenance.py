@@ -7,8 +7,10 @@ import importlib.util
 import json
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -261,6 +263,68 @@ class ProvenanceBindTests(unittest.TestCase):
         )
         no_token = bind.fetch_env(self.repo, {})
         self.assertNotIn("http.https://github.com/.extraheader", no_token.values())
+
+    def test_base_sha_must_be_40_lowercase_hex(self):
+        sha = self.base_sha
+        bad = [
+            "HEAD",
+            "main",
+            "refs/heads/main",
+            sha.upper(),
+            sha[:7],
+            sha[:39],
+            sha + "0",
+            sha[:39] + "g",
+            " " + sha,
+            sha + "\n",
+            "--upload-pack=touch${IFS}pwned" + "0" * 10,
+            "0" * 64,
+        ]
+        for value in bad:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "40 lowercase hex"):
+                    bind.bind_rev("pull_request", value)
+        self.assertEqual(bind.bind_rev("pull_request", sha), sha)
+
+    def test_malformed_base_sha_is_refused_before_any_fetch(self):
+        clone = self._shallow_clone()
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha[:12]}
+        with mock.patch.object(bind.subprocess, "Popen") as popen:
+            with self.assertRaisesRegex(ValueError, "40 lowercase hex"):
+                bind.ensure_bind_rev(clone, env)
+            popen.assert_not_called()
+
+    def test_malformed_event_payload_base_fails_closed(self):
+        event = Path(self.tmp.name) / "event.json"
+        event.write_text(json.dumps({"pull_request": {"base": {"sha": "main"}}}))
+        env = {"GITHUB_EVENT_NAME": "pull_request", "GITHUB_EVENT_PATH": str(event)}
+        with self.assertRaisesRegex(ValueError, "40 lowercase hex"):
+            bind.bind_rev_from_env(env)
+
+    def test_base_fetch_times_out_and_fails_closed(self):
+        clone = self._shallow_clone()
+        hang = Path(self.tmp.name) / "hang-upload-pack"
+        hang.write_text("#!/bin/sh\nexec sleep 60\n")
+        hang.chmod(0o755)
+        git(clone, "config", "remote.origin.uploadpack", str(hang))
+        env = {
+            "GITHUB_EVENT_NAME": "pull_request",
+            "BASE_SHA": self.base_sha,
+            "JOPE_PROVENANCE_FETCH_TIMEOUT": "1",
+        }
+        started = time.monotonic()
+        with self.assertRaisesRegex(ValueError, "timed out after 1s"):
+            bind.ensure_bind_rev(clone, env)
+        self.assertLess(time.monotonic() - started, 30)
+        self.assertFalse(bind.has_commit(clone, self.base_sha))
+
+    def test_fetch_timeout_default_and_bad_overrides(self):
+        self.assertEqual(bind.fetch_timeout({}), float(bind.FETCH_TIMEOUT_SECONDS))
+        self.assertEqual(bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": "30"}), 30.0)
+        for raw in ("0", "-5", "abc", "nan", "inf"):
+            with self.subTest(raw=raw):
+                with self.assertRaisesRegex(ValueError, "JOPE_PROVENANCE_FETCH_TIMEOUT"):
+                    bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": raw})
 
     def test_parse_matches_repo_common_sh(self):
         common = (ROOT / "deploy/runner/common.sh").read_text()
