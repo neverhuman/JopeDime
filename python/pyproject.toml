@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jope"
-version = "0.1.0"
+version = "1.0.0"
 description = "JopeDime Python: dataset encoders, the policy transformer trainer, self-play services and research drivers"
 readme = "README.md"
 license = "Apache-2.0"

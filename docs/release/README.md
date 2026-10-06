@@ -147,7 +147,19 @@ This must fail with `invalid signature`.
 
 The release PR must first merge to `main`. It carries `docs/release/signing.pub` and:
 
-- bumps the release version: the `[workspace.package]` version in `Cargo.toml` and the explicit versions of `jope-engine` and `jope-campaigns`, then regenerates `Cargo.lock` with `cargo update --workspace --offline`. `release.sh` compares `jope-cli` and every product crate with the tag through `cargo metadata`; the vendored smartcluster crates keep their own versions. The Lambda workspaces under `deploy/lambda/` have locks of their own that pin the root crates they take by path, and each such lock and its `deploy/lambda/SNAPSHOT.json` record move with the version. `just bump X.Y.Z` does all of this (`deploy/release/bump.sh`), checks the result as `release.sh` and the hygiene lane do, and lists the lines of `README.md` and this file that still name the old version. It needs a git checkout and runs cargo `--offline`, so each Lambda workspace's dependencies must already be in the cargo cache (`cargo fetch --locked --manifest-path <workspace>/Cargo.toml`; `deploy/ci/lambda.sh` also fills it); it refuses with that command when they are not. `python/pyproject.toml` is not part of a release while no wheel ships;
+- bumps the `[workspace.package]` version in `Cargo.toml` and the explicit versions in
+  `crates/jope-engine/Cargo.toml` and `crates/jope-campaigns/Cargo.toml`, then updates the root
+  `Cargo.lock` with `cargo update --workspace --offline`. Verify that only product workspace
+  version entries changed; external dependencies and vendored SmartCluster versions stay fixed.
+  `release.sh` compares `jope-cli` and every product crate with the tag through `cargo metadata`;
+- for 1.0.0, aligns `python/pyproject.toml` and the editable `jope` entry in `python/uv.lock` with
+  the workspace version, and runs `deploy/ci/version-consistency.sh v1.0.0`. No Python wheel ships;
+- for 1.0.0, preserves the historical compatibility manifests, Lambda locks and
+  `deploy/lambda/SNAPSHOT.json`, kernel2 proof receipts and train-only source custody pins.
+  `just bump` currently synchronizes Lambda locks and their snapshot records, so use the bounded
+  manifest/root-lock update above for this release. The Lambda `--locked` verification currently
+  rejects the preserved 0.2.0 path-package locks against the 1.0.0 root; resolve that release
+  blocker through a reviewed change before publication, preserving the frozen history and checks;
 - updates the `jope X.Y.Z` lines in `README.md`;
 - commits `CHANGELOG.md`, generated with git-cliff 2.14.1 from `cliff.toml` and curated by PR.
 

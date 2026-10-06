@@ -1,5 +1,7 @@
 # JopeDime
 
+[![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+
 Standalone JOPE-Dime: a typed program-synthesis engine for tabular models,
 encoders (Hyperion and companions), and emitters that lower a program to Python,
 Rust, C++17, and JavaScript. C++20 CI compiles the C++17 artifact; it is not a
@@ -14,13 +16,32 @@ SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. 
 encodings→program neural policy will ship because the product needs a router; it is
 **not** a held-out SOTA claim.
 
-What changed in 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
+What changed in 1.0.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
 Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this repository.
 
-## At a glance
+## 1.0.0 — GP language
+
+Versioned GP trees describe scalar expressions and admitted row and ordered-axis kernels.
+Internal emitters generate Python, Rust and C++17 source directly from those trees, without
+an LLM. The `cpp20` target compiles the same C++17 source as C++20. Export support and search
+admission depend on the selected capability manifest and profile; experimental kernels retain
+their documented bounds.
+
+The [GP language coverage record](docs/parity/gp-language-tricks.md) describes tree representation
+and differential compilation. The [emitter determinism record](docs/parity/gp-emitter-determinism.md)
+describes repeated and cross-process emission, compiler checks, protected-domain behavior and
+the documented numerical comparison contract.
+
+Build the released version from its signed tag with `git checkout v1.0.0` followed by
+`cargo build --locked`. Publication follows the reviewed release and its qualification gates.
+
+## v0.2.0 reference inventory
+
+The following inventory records v0.2.0. Its counts describe that release; the linked receipts
+and commands identify their sources.
 
 | What | 0.2.0 |
 | --- | --- |
@@ -196,7 +217,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.2.0
+# jope 1.0.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -238,7 +259,7 @@ annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release hol
 SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
 by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
 [`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
-source of v0.2.0; the release exists only once `release.sh --publish` has run.
+source of v1.0.0; the release exists only once `release.sh --publish` has run.
 
 To verify one, take `signing.pub` from the tag and check its fingerprint as
 [docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
