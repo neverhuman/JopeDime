@@ -1,4 +1,4 @@
-//! Forward-mode dual numbers over the protected scalar evaluator (B17).
+//! Forward-mode dual numbers over the protected scalar evaluator.
 //!
 //! [`Program::lower`] lowers an expression to postorder, as `CompiledMathExpr` lowers it, with
 //! the literal sites (the refinement's `literal_paths`) replaced by parameters. [`Program::row`]
@@ -46,6 +46,8 @@
 //! (a base or exponent term, including one whose incoming lane was already not finite) is 0 and
 //! marks the row nonsmooth. Other rules pass an overflowing lane on, and the normal equations then
 //! refuse the Jacobian.
+
+// B17 core.
 
 use super::*;
 use crate::math_expr::fault::Collect;
