@@ -1286,6 +1286,7 @@ pub fn row_vector_v2_capability(wire: u16) -> Option<ElementCap> {
 
 // B05–B07: additive Experimental lifecycle; legacy manifest stays frozen.
 mod scalar_v2;
+pub use scalar_v2::scalar_capability_decisions_json;
 pub use scalar_v2::{scalar_function_v2_capability, scalar_policy_v2_capability};
 
 #[cfg(test)]

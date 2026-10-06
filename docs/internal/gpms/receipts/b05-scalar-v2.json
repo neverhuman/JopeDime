@@ -1,0 +1,1384 @@
+{
+  "schema": "gpms.ladder_receipt.v1",
+  "rung": "B05-scalar-v2",
+  "tokens": [
+    "EXPR_FUNC=probit#19",
+    "EXPR_FUNC=logit#20"
+  ],
+  "base_sha": "d8c6aa033e475d176bc296abe0bfcf5fc7e9ec54",
+  "measurement_source_sha": "c89194ef384def6e0be3aacc08a4c495047d3760",
+  "source_status": "PRIVATE_MEASUREMENT_NATIVE_COMPILED_SANITIZER_QUALIFIED_FINAL_AFTER_PUBLICATION_PENDING",
+  "grammar": {
+    "A": [
+      {
+        "profile_sha256": "f0d09e26426f1ecce2ba175e310ec88d9e13c6b685c67e8643aebd172516e3c9",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":10,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 10,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "55e7ec1a20df17e0c03ba83d8ceb6d0502b2bdea564d95faf2b1ea15b210cb9b",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":12,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 12,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "b731abeecb2791f065729eae2759fded4c4723cb5ec0bf46b055fb15df124054",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":1,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 1,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "ac7d476ee959218ef3302bc89944a5e3080ff19295c29d44b3b6a48015d45de1",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":3,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 3,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "c3dc938c551d245f5b38f4dba9221eb54ca0ea3cf5fb975d3eb057cdfb552773",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":7,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 7,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "d73afc6cc6f92573cdfa3baab55d04a44eac3ad142b33126cc2dfd5823cc0b5d",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":30,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 30,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "7e66331ac5b255b3aa56f2e71f738e48456634214e32b2418083ace4ee7ebdfb",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":5,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":false,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 5,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      }
+    ],
+    "B": [
+      {
+        "profile_sha256": "693c34285dc088ae86a080bc24e12e0c8e9a21bfbbb4f2aa5bc436eb7b80b41a",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":10,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 10,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "b1824485d5c4231177fcfb972137eeae30d132cc4b29b34115d1241551d7cec5",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":12,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 12,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "fa5ea83a0a28c585426f30357ce442571e39648e4f3d791cb93119531efa4918",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":1,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 1,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "39cdcef8ca7ab18a49d54a49802fc6c790ae1e212bafdf4587f89da8643d4ba9",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":3,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 3,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "3e3a5e40ddcebddf206f58e27dda2b5babf776265b87425d774090c21706f906",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":7,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 7,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "2c7d5d6f9fd587cd88165b7c8da83d9d3114f9be137dc275047d59a2fb917ecf",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":30,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 30,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      },
+      {
+        "profile_sha256": "9642370c874a730cc93b5ea490e5c4ed20e590dbe0d751beceff3afebe4eee8b",
+        "canonical_profile": "{\"schema\":\"feat-math.scalar-search-profile.v1\",\"revision\":1,\"class\":\"experimental\",\"kind\":\"inverse_links\",\"base_profile\":\"{\\\"id\\\":\\\"kernel2-baseline\\\",\\\"revision\\\":3,\\\"stages\\\":[\\\"standardize\\\",\\\"robust_scale\\\",\\\"rank\\\",\\\"blom\\\",\\\"quantile_bins\\\",\\\"bin_onehot\\\",\\\"hinge\\\",\\\"winsor_clip\\\",\\\"cheb\\\",\\\"poly_interact\\\",\\\"rff_cos\\\",\\\"rff_sin\\\",\\\"rand_proj\\\",\\\"oblique_hinge\\\",\\\"row_stats\\\",\\\"pair_prod\\\",\\\"target_bin_encode\\\",\\\"sigmoid\\\"],\\\"heads\\\":[\\\"histgbm\\\",\\\"histgbm\\\",\\\"ridge\\\",\\\"ridge_gcv\\\",\\\"elasticnet\\\",\\\"histgbm2\\\",\\\"histgbm2\\\",\\\"gpr\\\",\\\"ksmooth\\\"],\\\"domains\\\":{\\\"bin_onehot\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"blom\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"cheb\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"degree\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"elasticnet\\\":{\\\"alpha\\\":{\\\"float_range\\\":{\\\"lo\\\":0.0001,\\\"hi\\\":0.05}},\\\"l1_ratio\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":0.9}}},\\\"gpr\\\":{\\\"kernel\\\":{\\\"text_choice\\\":[\\\"omit\\\",\\\"omit\\\",{\\\"value\\\":\\\"linear\\\"},{\\\"value\\\":\\\"rq\\\"},{\\\"value\\\":\\\"periodic\\\"},{\\\"value\\\":\\\"rbf+linear\\\"},{\\\"value\\\":\\\"rq+linear\\\"},{\\\"value\\\":\\\"rbf*periodic\\\"},{\\\"value\\\":\\\"periodic+linear\\\"}]},\\\"m\\\":{\\\"int_choice\\\":[300,400,500]},\\\"steps\\\":{\\\"int_choice\\\":[30,40,60]}},\\\"hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"knots\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":8}}},\\\"histgbm\\\":{\\\"depth\\\":{\\\"int_range\\\":{\\\"lo\\\":2,\\\"hi\\\":6}},\\\"lr\\\":{\\\"float_range\\\":{\\\"lo\\\":0.03,\\\"hi\\\":0.25}},\\\"rounds\\\":{\\\"int_range\\\":{\\\"lo\\\":40,\\\"hi\\\":300}}},\\\"histgbm2\\\":{\\\"bags\\\":{\\\"int_choice\\\":[3,5]},\\\"col_subsample\\\":{\\\"float_choice\\\":[0.6,0.8,1.0]},\\\"leaves\\\":{\\\"int_choice\\\":[15,31,63,127,255]},\\\"lr\\\":{\\\"float_choice\\\":[0.01,0.03,0.05,0.08]},\\\"min_leaf\\\":{\\\"int_choice\\\":[1,3,5,10,20]},\\\"rounds\\\":{\\\"int_choice\\\":[500,1000]},\\\"row_subsample\\\":{\\\"float_choice\\\":[0.6,0.7,0.85,1.0]},\\\"val_pct\\\":{\\\"int_choice\\\":[15,20]},\\\"val_shuffle\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"ksmooth\\\":{\\\"gamma\\\":{\\\"float_choice\\\":[0.5,1.0,2.0,4.0]},\\\"k\\\":{\\\"int_choice\\\":[8,16,32,64,128]}},\\\"oblique_hinge\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"pair_prod\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"topk\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"poly_interact\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"quantile_bins\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":32}}},\\\"rand_proj\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"k\\\":{\\\"int_range\\\":{\\\"lo\\\":8,\\\"hi\\\":64}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rank\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"rff_cos\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"rff_sin\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"gamma\\\":{\\\"float_range\\\":{\\\"lo\\\":0.1,\\\"hi\\\":2.0}},\\\"n\\\":{\\\"int_range\\\":{\\\"lo\\\":16,\\\"hi\\\":96}},\\\"seed\\\":{\\\"int_range\\\":{\\\"lo\\\":1,\\\"hi\\\":9999}}},\\\"ridge\\\":{},\\\"ridge_gcv\\\":{},\\\"robust_scale\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"row_stats\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"sigmoid\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"standardize\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}}},\\\"target_bin_encode\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"bins\\\":{\\\"int_range\\\":{\\\"lo\\\":4,\\\"hi\\\":16}}},\\\"winsor_clip\\\":{\\\"append\\\":{\\\"flag\\\":{\\\"true_numerator\\\":1,\\\"denominator\\\":2}},\\\"q\\\":{\\\"float_range\\\":{\\\"lo\\\":0.01,\\\"hi\\\":0.2}}}},\\\"redraw_domains\\\":{},\\\"max_transforms\\\":{\\\"limit\\\":{\\\"fixed\\\":4},\\\"counts\\\":\\\"every_stage_before_head\\\"},\\\"expr_stages\\\":{\\\"carriers\\\":[\\\"map\\\",\\\"derive\\\"],\\\"max_expr_stages\\\":3},\\\"expr\\\":{\\\"functions\\\":[\\\"abs\\\",\\\"sqrt\\\",\\\"log1p\\\",\\\"sin\\\",\\\"cos\\\",\\\"tanh\\\",\\\"sigmoid\\\",\\\"min\\\",\\\"max\\\",\\\"step\\\",\\\"clip\\\"],\\\"binops\\\":[\\\"+\\\",\\\"-\\\",\\\"*\\\",\\\"/\\\"],\\\"variables\\\":[\\\"x\\\",\\\"row_mean\\\",\\\"row_std\\\",\\\"row_min\\\",\\\"row_max\\\",\\\"row_l2\\\"],\\\"weight_each\\\":1,\\\"column_upper_exclusive\\\":8,\\\"columns_bounded_by_lower_width\\\":true,\\\"birth_constants\\\":[-2.0,-1.0,-0.5,-0.25,-0.1,0.0,0.05,0.1,0.25,0.5,1.0,2.0,3.0,5.0,10.0,20.0],\\\"continuous_after_birth\\\":true,\\\"negation\\\":\\\"constants_only\\\",\\\"max_nodes\\\":15,\\\"max_depth\\\":4},\\\"expression_edits\\\":[{\\\"arm\\\":\\\"point\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"subtree\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"hoist\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"shrink\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"constant_jitter\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"wrap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"insert_binary\\\",\\\"weight\\\":1}],\\\"pipeline_operators\\\":{\\\"expression_edits\\\":[{\\\"arm\\\":\\\"expr_grow\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_edit\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_drop\\\",\\\"weight\\\":1}],\\\"splices\\\":[{\\\"arm\\\":\\\"stage_cross\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"expr_cross\\\",\\\"weight\\\":1}],\\\"birth_expression_numerator\\\":1,\\\"birth_expression_denominator\\\":3},\\\"edits\\\":{\\\"drawn\\\":[{\\\"arm\\\":\\\"parameter_jitter\\\",\\\"weight\\\":2},{\\\"arm\\\":\\\"insert\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"delete\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"adjacent_swap\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"head_replacement\\\",\\\"weight\\\":1},{\\\"arm\\\":\\\"simplify\\\",\\\"weight\\\":1}],\\\"explicit_arm\\\":false,\\\"jitter\\\":\\\"v2\\\",\\\"transform_share_numerator\\\":7,\\\"transform_share_denominator\\\":10,\\\"drawn_simplify_fallback\\\":\\\"parameter_jitter\\\"},\\\"splice\\\":{\\\"kind\\\":\\\"one_point_stages\\\",\\\"truncate_to_limit\\\":true,\\\"head_ratio_numerator\\\":1,\\\"head_ratio_denominator\\\":2}}\",\"base_profile_sha256\":\"4363da5c02aa0537f73322d89d4a6ce59b45e1c47b28a7f09b0e9bcb48ebe425\",\"carrier\":\"row\",\"input_width\":5,\"max_nodes\":15,\"max_depth\":4,\"enable_functions\":true,\"enable_inverse_links\":true,\"enable_stable_exponentials\":false,\"enable_numerical_policy\":false,\"function_catalog\":[19,20],\"reduction_catalog\":[],\"policy_birth_choices\":[],\"admission_contract\":\"existing-rev3-projection;typed-catalog;cap15/4;variable-leaf;canonical-literals;binary-text-fixed-point\",\"opt_in_numerator\":1,\"opt_in_denominator\":4,\"birth_stream\":8314596455191507572,\"site_stream\":120351231145522,\"opt_in_edit_stream\":8314596455241509236,\"rejection\":\"retain_parent_without_redraw\"}",
+        "carrier": "row",
+        "input_width": 5,
+        "scalar_model_grammar_sha256": "8105766917c97b307549c702f0053c46039e2f4f9ab7d56316ae9b50ad74da92"
+      }
+    ]
+  },
+  "policy": "Penalize{0.05,0.0,true}",
+  "legacy_policy_informational": true,
+  "datasets": [
+    {
+      "id": "pmlb-229-pwlinear",
+      "sha256": "e2aed073be05a717973b6dc2da8bffc0c5fcabb1a6abfa5981deb9e52827dbaf",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "6e741290c8e355799bd126aac221b2741000e3170deaff9dfdfe30c70d435844",
+      "training_rows_bits_sha256": "027b8b19fc2790f482e7fe52849aa600f7fd064b960574c8bfcfd13b69b4037f",
+      "training_labels_bits_sha256": "e45727c10eb6d8e1f098649818524444e074d2d14449eb0d741117ddf6e6a629"
+    },
+    {
+      "id": "pmlb-695-chatfield-4",
+      "sha256": "54eee434346763981a927deba27bf4933ee8779b8ef3f62a3e0e71ee5d142d9f",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "d61a12e0b68ba553f8e7e34259963d7d07c67b7e3b8663258f4fef708b8930f4",
+      "training_rows_bits_sha256": "bc7eca0ec255ae4b30ce78a4deb02cf03682992b403467ab3d296642a91da72f",
+      "training_labels_bits_sha256": "585a33c79d2b7e26cc77c594862667e4385399f833cde0551f7983ace8a473f2"
+    },
+    {
+      "id": "pmlb-first-principles-supernovae-zg",
+      "sha256": "332a8e18d39aa81fdabe863d8e91563d28eb49436034f85f3940a3655dbdef8a",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "9b9e4f88b878567288441614432584a9e19826b1d32cf2284884313748750d18",
+      "training_rows_bits_sha256": "b9181a0632bcc6fa799ba297310319d5e167740e51f7b088e862d159d05dfaba",
+      "training_labels_bits_sha256": "748584f887304a61d74b59bd37e7d7c92ceb689b7c66cc6cdb91f208ff3acbf5"
+    },
+    {
+      "id": "rdatasets-agridat-bancroft-peanut-uniformity",
+      "sha256": "0ac263e5b9813a4d826e65b519d52a841d0d332c9c54ec8fd841e1be08860bf9",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "3cb15ef8efad898e5d984f640584f7624e10edc4923a246b55e0eaf6ee215eff",
+      "training_rows_bits_sha256": "609f26916d29fa817625d654b1c45bd594b9e1de1b6b14466be2041a3ab2510d",
+      "training_labels_bits_sha256": "6c814028914b81d515cf817c1ea9e814319ac11e947724779968a4d13e731969"
+    },
+    {
+      "id": "rdatasets-stevedata-chile88",
+      "sha256": "2cdba5404f8094cf693da69911410e5afcd3570b5a6b051f54e28efbf38bebea",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "4947ac277dfa51d65781d70ca7bba2c8ab2474d3fd81bae7ebe1f312a4743173",
+      "training_rows_bits_sha256": "ddbfa17ae310945510e7d9ca0fe61e8278162f6dbf8c48a612a382ffdd89757c",
+      "training_labels_bits_sha256": "e69fcc91369a605e8000ca8ce0547eff86a3e25f556fe5765ffe26e4ba881748"
+    },
+    {
+      "id": "rdatasets-wooldridge-barium",
+      "sha256": "a6fb75830752c5914dd2c3559c9f1fdb7319a7d6ce0f3d814a86602a489bfe8a",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "6db5165f87328f2244558c8880d42bbccc7ac82a334051f4fad6001a64622155",
+      "training_rows_bits_sha256": "4ae5fe5e0571af6d5665f758f1664fb521d57383f0167f8e01742ffaed5a30e2",
+      "training_labels_bits_sha256": "7729c027d403e656f7e4c2b5d114ae0012691669efdd4974d80f4b7d90dd5d53"
+    },
+    {
+      "id": "golden-toy-107",
+      "sha256": "7af83d7dfb16074bb1959a5d0911d2b8aa03f2f5b6d278d0de39eaa8adc90356",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "fa7d6835b2a3c226b18b1e6388f1305ea3386fea9bb28c2b98ea9e43e6abfb07",
+      "training_rows_bits_sha256": "4bf854e703320da2fd92ae0ea10958bce6ee69fbbd21b91f46f6af07e90231bd",
+      "training_labels_bits_sha256": "97aff0f84931a43c1dc541d88ccdf446e547bd26106d9dbf33a24e7bf64f236a"
+    },
+    {
+      "id": "golden-toy-911",
+      "sha256": "48be842857256de2042391c8d55a8c7e9ff266adf7ab91cbadc4280df3f3bf95",
+      "cut_id": "first64-training-only/report-next32-training-internal",
+      "training_only_fold_key": "0874a15833626e54fb5a2668ef616e080190691cbcb1b586ead4fcefcaf2437c",
+      "training_rows_bits_sha256": "64c049e241cc44e18d2cb048bccad77a0c006391451a7754cf3fe86112d9fc77",
+      "training_labels_bits_sha256": "249761feb37ffd2f1121724f4ae2ec9130d21c9e13b21410dcd9e068aa7d51e2"
+    }
+  ],
+  "cohort_sha256": "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77",
+  "seeds": [
+    3,
+    17,
+    29,
+    101,
+    701
+  ],
+  "budget_evals": 72,
+  "caps": {
+    "max_nodes": 15,
+    "max_depth": 4
+  },
+  "quality_definition": "M1/M2/M3 use raw inner-fold R2 of objective-selected winner/elites; fault penalties affect selection only",
+  "metrics": {
+    "M3_complete": true,
+    "M3_ten_percent_faster": false,
+    "card": "B05",
+    "datasets": [
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007361972041666667,
+          "M1_best_cv_mean": 0.7485641884848422,
+          "M1_seed_sd": 0.044354106353643924,
+          "M2_top10_cv_mean": 0.7236905605930157,
+          "M3_literal_evaluations": [
+            4,
+            41,
+            25,
+            30,
+            62
+          ],
+          "M4_domain_rate": 0.061016949152542375,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.016666666666666666,
+          "M7_elite_mean_depth": 2.8,
+          "M7_elite_mean_nodes": 5.12,
+          "M8_best_artifact_bytes": 59384.0,
+          "M8_best_tokens": {
+            "Cpp17": 5246.2,
+            "Python": 2445.8,
+            "Rust": 3286.6
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007213410122222222,
+          "M1_best_cv_mean": 0.7665781825400525,
+          "M1_seed_sd": 0.05669411570641364,
+          "M2_top10_cv_mean": 0.7174074771729899,
+          "M3_literal_evaluations": [
+            4,
+            32,
+            56,
+            31,
+            62
+          ],
+          "M4_domain_rate": 0.0652494221879815,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.044444444444444446,
+          "M7_elite_mean_depth": 2.48,
+          "M7_elite_mean_nodes": 3.56,
+          "M8_best_artifact_bytes": 59255.8,
+          "M8_best_tokens": {
+            "Cpp17": 5241.8,
+            "Python": 2423.6,
+            "Rust": 3273.0
+          },
+          "M9_new_token_elite_share": 0.02,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": 0.018013994055210314,
+        "dataset": "golden-toy-107",
+        "sigma_seed_A": 0.044354106353643924
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.0073008444277777775,
+          "M1_best_cv_mean": 0.6989309291671697,
+          "M1_seed_sd": 0.07590348524950437,
+          "M2_top10_cv_mean": 0.6891622167245008,
+          "M3_literal_evaluations": [
+            43,
+            32,
+            25,
+            56,
+            3
+          ],
+          "M4_domain_rate": 0.06112769645608629,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.025,
+          "M7_elite_mean_depth": 2.58,
+          "M7_elite_mean_nodes": 4.38,
+          "M8_best_artifact_bytes": 58587.0,
+          "M8_best_tokens": {
+            "Cpp17": 5171.6,
+            "Python": 2396.2,
+            "Rust": 3213.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007260460208333333,
+          "M1_best_cv_mean": 0.7601900155989187,
+          "M1_seed_sd": 0.09231435030755751,
+          "M2_top10_cv_mean": 0.7169348947854746,
+          "M3_literal_evaluations": [
+            43,
+            32,
+            56,
+            31,
+            3
+          ],
+          "M4_domain_rate": 0.0581134437596302,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.044444444444444446,
+          "M7_elite_mean_depth": 2.32,
+          "M7_elite_mean_nodes": 3.48,
+          "M8_best_artifact_bytes": 58122.8,
+          "M8_best_tokens": {
+            "Cpp17": 5157.4,
+            "Python": 2345.2,
+            "Rust": 3175.2
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": 0.061259086431749044,
+        "dataset": "golden-toy-911",
+        "sigma_seed_A": 0.07590348524950437
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007193745330555555,
+          "M1_best_cv_mean": 0.3458678659883322,
+          "M1_seed_sd": 0.09560651706709183,
+          "M2_top10_cv_mean": 0.32888023147085144,
+          "M3_literal_evaluations": [
+            43,
+            1,
+            71,
+            51,
+            23
+          ],
+          "M4_domain_rate": 0.10010593220338983,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.019444444444444445,
+          "M7_elite_mean_depth": 2.98,
+          "M7_elite_mean_nodes": 4.54,
+          "M8_best_artifact_bytes": 58365.0,
+          "M8_best_tokens": {
+            "Cpp17": 5165.8,
+            "Python": 2372.4,
+            "Rust": 3185.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007779155988888889,
+          "M1_best_cv_mean": 0.39045429523397945,
+          "M1_seed_sd": 0.1120680398755841,
+          "M2_top10_cv_mean": 0.3485809379010495,
+          "M3_literal_evaluations": [
+            43,
+            1,
+            56,
+            27,
+            61
+          ],
+          "M4_domain_rate": 0.09122207241910632,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.06666666666666667,
+          "M7_elite_mean_depth": 3.44,
+          "M7_elite_mean_nodes": 5.98,
+          "M8_best_artifact_bytes": 60104.6,
+          "M8_best_tokens": {
+            "Cpp17": 5281.8,
+            "Python": 2474.4,
+            "Rust": 3317.0
+          },
+          "M9_new_token_elite_share": 0.3,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": 0.04458642924564726,
+        "dataset": "pmlb-229-pwlinear",
+        "sigma_seed_A": 0.09560651706709183
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007487359852777778,
+          "M1_best_cv_mean": 0.7102689046530448,
+          "M1_seed_sd": 0.01968758378457978,
+          "M2_top10_cv_mean": 0.7020484349970253,
+          "M3_literal_evaluations": [
+            38,
+            30,
+            2,
+            33,
+            29
+          ],
+          "M4_domain_rate": 0.033802003081664096,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.041666666666666664,
+          "M7_elite_mean_depth": 3.38,
+          "M7_elite_mean_nodes": 5.36,
+          "M8_best_artifact_bytes": 60546.4,
+          "M8_best_tokens": {
+            "Cpp17": 5326.2,
+            "Python": 2512.2,
+            "Rust": 3348.4
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.0072528607499999995,
+          "M1_best_cv_mean": 0.7022474835142102,
+          "M1_seed_sd": 0.0157579937008209,
+          "M2_top10_cv_mean": 0.684987203750344,
+          "M3_literal_evaluations": [
+            38,
+            34,
+            2,
+            33,
+            29
+          ],
+          "M4_domain_rate": 0.04043239599383667,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.06944444444444445,
+          "M7_elite_mean_depth": 2.98,
+          "M7_elite_mean_nodes": 4.86,
+          "M8_best_artifact_bytes": 60549.6,
+          "M8_best_tokens": {
+            "Cpp17": 5307.6,
+            "Python": 2504.0,
+            "Rust": 3365.4
+          },
+          "M9_new_token_elite_share": 0.06,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.008021421138834639,
+        "dataset": "pmlb-695-chatfield-4",
+        "sigma_seed_A": 0.01968758378457978
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.006992788227777777,
+          "M1_best_cv_mean": 0.5746427243958264,
+          "M1_seed_sd": 0.0025790534086181436,
+          "M2_top10_cv_mean": 0.572938308914407,
+          "M3_literal_evaluations": [
+            3,
+            1,
+            1,
+            2,
+            3
+          ],
+          "M4_domain_rate": 0.168923343605547,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.025,
+          "M7_elite_mean_depth": 2.8,
+          "M7_elite_mean_nodes": 3.38,
+          "M8_best_artifact_bytes": 58846.4,
+          "M8_best_tokens": {
+            "Cpp17": 5177.6,
+            "Python": 2413.2,
+            "Rust": 3214.6
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007406328069444444,
+          "M1_best_cv_mean": 0.5722388773410748,
+          "M1_seed_sd": 0.005320043619530845,
+          "M2_top10_cv_mean": 0.5692179973492133,
+          "M3_literal_evaluations": [
+            3,
+            1,
+            2,
+            2,
+            3
+          ],
+          "M4_domain_rate": 0.1442074345146379,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.06388888888888888,
+          "M7_elite_mean_depth": 3.72,
+          "M7_elite_mean_nodes": 6.02,
+          "M8_best_artifact_bytes": 60289.4,
+          "M8_best_tokens": {
+            "Cpp17": 5290.4,
+            "Python": 2519.0,
+            "Rust": 3308.0
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0024038470547516066,
+        "dataset": "pmlb-first-principles-supernovae-zg",
+        "sigma_seed_A": 0.0025790534086181436
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007437267950000001,
+          "M1_best_cv_mean": 0.14520542352639468,
+          "M1_seed_sd": 0.049265840728862094,
+          "M2_top10_cv_mean": 0.1352763001764184,
+          "M3_literal_evaluations": [
+            6,
+            13,
+            2,
+            63,
+            39
+          ],
+          "M4_domain_rate": 0.054227657935285056,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.05,
+          "M7_elite_mean_depth": 3.76,
+          "M7_elite_mean_nodes": 5.84,
+          "M8_best_artifact_bytes": 61005.4,
+          "M8_best_tokens": {
+            "Cpp17": 5353.4,
+            "Python": 2547.6,
+            "Rust": 3400.4
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007421337444444444,
+          "M1_best_cv_mean": 0.14485736950807837,
+          "M1_seed_sd": 0.05104319995076266,
+          "M2_top10_cv_mean": 0.14440372054366418,
+          "M3_literal_evaluations": [
+            6,
+            13,
+            2,
+            20,
+            29
+          ],
+          "M4_domain_rate": 0.06770993836671803,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.075,
+          "M7_elite_mean_depth": 3.6,
+          "M7_elite_mean_nodes": 5.3,
+          "M8_best_artifact_bytes": 60375.0,
+          "M8_best_tokens": {
+            "Cpp17": 5289.8,
+            "Python": 2511.4,
+            "Rust": 3360.4
+          },
+          "M9_new_token_elite_share": 0.12,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0003480540183163072,
+        "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+        "sigma_seed_A": 0.049265840728862094
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.008107789686111111,
+          "M1_best_cv_mean": 0.32699252181665045,
+          "M1_seed_sd": 0.07651896379734356,
+          "M2_top10_cv_mean": 0.24607671037420964,
+          "M3_literal_evaluations": [
+            6,
+            9,
+            63,
+            12,
+            56
+          ],
+          "M4_domain_rate": 0.042252503852080125,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.03333333333333333,
+          "M7_elite_mean_depth": 2.58,
+          "M7_elite_mean_nodes": 3.72,
+          "M8_best_artifact_bytes": 58803.6,
+          "M8_best_tokens": {
+            "Cpp17": 5169.2,
+            "Python": 2420.8,
+            "Rust": 3218.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007892546125,
+          "M1_best_cv_mean": 0.3258702476142915,
+          "M1_seed_sd": 0.07574958899185318,
+          "M2_top10_cv_mean": 0.24607671037420964,
+          "M3_literal_evaluations": [
+            6,
+            9,
+            63,
+            12,
+            56
+          ],
+          "M4_domain_rate": 0.04121244221879815,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.05,
+          "M7_elite_mean_depth": 2.5,
+          "M7_elite_mean_nodes": 3.64,
+          "M8_best_artifact_bytes": 58766.8,
+          "M8_best_tokens": {
+            "Cpp17": 5166.6,
+            "Python": 2418.4,
+            "Rust": 3215.6
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0011222742023589416,
+        "dataset": "rdatasets-stevedata-chile88",
+        "sigma_seed_A": 0.07651896379734356
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.00933122126111111,
+          "M1_best_cv_mean": 0.3278161859857057,
+          "M1_seed_sd": 0.010457862486681728,
+          "M2_top10_cv_mean": 0.3254834186492176,
+          "M3_literal_evaluations": [
+            41,
+            34,
+            33,
+            31,
+            1
+          ],
+          "M4_domain_rate": 0.11481124807395994,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.027777777777777776,
+          "M7_elite_mean_depth": 3.0,
+          "M7_elite_mean_nodes": 5.62,
+          "M8_best_artifact_bytes": 60515.8,
+          "M8_best_tokens": {
+            "Cpp17": 5287.8,
+            "Python": 2528.4,
+            "Rust": 3381.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.008757682422222222,
+          "M1_best_cv_mean": 0.32785945007298506,
+          "M1_seed_sd": 0.010497809285617228,
+          "M2_top10_cv_mean": 0.325548577503053,
+          "M3_literal_evaluations": [
+            41,
+            34,
+            33,
+            31,
+            1
+          ],
+          "M4_domain_rate": 0.11973709553158705,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.058333333333333334,
+          "M7_elite_mean_depth": 2.88,
+          "M7_elite_mean_nodes": 5.42,
+          "M8_best_artifact_bytes": 61767.4,
+          "M8_best_tokens": {
+            "Cpp17": 5378.0,
+            "Python": 2582.6,
+            "Rust": 3464.2
+          },
+          "M9_new_token_elite_share": 0.18,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": 4.3264087279337726e-05,
+        "dataset": "rdatasets-wooldridge-barium",
+        "sigma_seed_A": 0.010457862486681728
+      }
+    ],
+    "decided_by": "owner decision pending; defaults unchanged",
+    "decision": "keep-experimental",
+    "gates": {
+      "G-A": false,
+      "G-B": "pending compiled L1\u2013L4 and fitted proof",
+      "G-C": false,
+      "G-D": false,
+      "G-E": true
+    },
+    "noninferior_on_every_dataset": false,
+    "strict_dataset_improvements": 0
+  },
+  "legacy_metrics": {
+    "M3_complete": true,
+    "M3_ten_percent_faster": false,
+    "card": "B05",
+    "datasets": [
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007397001019444445,
+          "M1_best_cv_mean": 0.7272491933937266,
+          "M1_seed_sd": 0.023879815026941094,
+          "M2_top10_cv_mean": 0.7251400407582519,
+          "M3_literal_evaluations": [
+            4,
+            41,
+            25,
+            30,
+            3
+          ],
+          "M4_domain_rate": 0.05525327426810478,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.005555555555555556,
+          "M7_elite_mean_depth": 2.32,
+          "M7_elite_mean_nodes": 4.34,
+          "M8_best_artifact_bytes": 59280.0,
+          "M8_best_tokens": {
+            "Cpp17": 5237.0,
+            "Python": 2438.2,
+            "Rust": 3277.4
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.0074956341527777776,
+          "M1_best_cv_mean": 0.745263187448937,
+          "M1_seed_sd": 0.05269821684049909,
+          "M2_top10_cv_mean": 0.7145770173842155,
+          "M3_literal_evaluations": [
+            4,
+            32,
+            56,
+            31,
+            3
+          ],
+          "M4_domain_rate": 0.06572611710323575,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.03333333333333333,
+          "M7_elite_mean_depth": 2.16,
+          "M7_elite_mean_nodes": 3.04,
+          "M8_best_artifact_bytes": 59151.8,
+          "M8_best_tokens": {
+            "Cpp17": 5232.6,
+            "Python": 2416.0,
+            "Rust": 3263.8
+          },
+          "M9_new_token_elite_share": 0.02,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": 0.018013994055210425,
+        "dataset": "golden-toy-107",
+        "sigma_seed_A": 0.023879815026941094
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007483953458333334,
+          "M1_best_cv_mean": 0.6989309291671697,
+          "M1_seed_sd": 0.07590348524950437,
+          "M2_top10_cv_mean": 0.6891622167245008,
+          "M3_literal_evaluations": [
+            43,
+            32,
+            25,
+            56,
+            3
+          ],
+          "M4_domain_rate": 0.08341679506933744,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.027777777777777776,
+          "M7_elite_mean_depth": 2.58,
+          "M7_elite_mean_nodes": 4.38,
+          "M8_best_artifact_bytes": 58587.0,
+          "M8_best_tokens": {
+            "Cpp17": 5171.6,
+            "Python": 2396.2,
+            "Rust": 3213.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007426549061111111,
+          "M1_best_cv_mean": 0.7601900155989187,
+          "M1_seed_sd": 0.09231435030755751,
+          "M2_top10_cv_mean": 0.7169348947854746,
+          "M3_literal_evaluations": [
+            43,
+            32,
+            56,
+            31,
+            3
+          ],
+          "M4_domain_rate": 0.07225539291217258,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.044444444444444446,
+          "M7_elite_mean_depth": 2.32,
+          "M7_elite_mean_nodes": 3.48,
+          "M8_best_artifact_bytes": 58122.8,
+          "M8_best_tokens": {
+            "Cpp17": 5157.4,
+            "Python": 2345.2,
+            "Rust": 3175.2
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": 0.061259086431749044,
+        "dataset": "golden-toy-911",
+        "sigma_seed_A": 0.07590348524950437
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.0069776717749999995,
+          "M1_best_cv_mean": 0.3407057393112024,
+          "M1_seed_sd": 0.09920753705762428,
+          "M2_top10_cv_mean": 0.3240118467730283,
+          "M3_literal_evaluations": [
+            43,
+            1,
+            71,
+            10,
+            23
+          ],
+          "M4_domain_rate": 0.11210997688751927,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.013888888888888888,
+          "M7_elite_mean_depth": 2.94,
+          "M7_elite_mean_nodes": 4.64,
+          "M8_best_artifact_bytes": 58317.2,
+          "M8_best_tokens": {
+            "Cpp17": 5157.0,
+            "Python": 2371.0,
+            "Rust": 3194.6
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007354714341666667,
+          "M1_best_cv_mean": 0.3219009757028656,
+          "M1_seed_sd": 0.10034029574181341,
+          "M2_top10_cv_mean": 0.3173586998556297,
+          "M3_literal_evaluations": [
+            43,
+            1,
+            10,
+            10,
+            61
+          ],
+          "M4_domain_rate": 0.1181770030816641,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.04722222222222222,
+          "M7_elite_mean_depth": 3.32,
+          "M7_elite_mean_nodes": 5.58,
+          "M8_best_artifact_bytes": 58821.6,
+          "M8_best_tokens": {
+            "Cpp17": 5193.6,
+            "Python": 2413.0,
+            "Rust": 3235.0
+          },
+          "M9_new_token_elite_share": 0.22,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.018804763608336827,
+        "dataset": "pmlb-229-pwlinear",
+        "sigma_seed_A": 0.09920753705762428
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.0073753927611111105,
+          "M1_best_cv_mean": 0.7102689046530448,
+          "M1_seed_sd": 0.01968758378457978,
+          "M2_top10_cv_mean": 0.7020484349970253,
+          "M3_literal_evaluations": [
+            38,
+            30,
+            2,
+            33,
+            29
+          ],
+          "M4_domain_rate": 0.033802003081664096,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.041666666666666664,
+          "M7_elite_mean_depth": 3.38,
+          "M7_elite_mean_nodes": 5.36,
+          "M8_best_artifact_bytes": 60546.4,
+          "M8_best_tokens": {
+            "Cpp17": 5326.2,
+            "Python": 2512.2,
+            "Rust": 3348.4
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.0072595464527777775,
+          "M1_best_cv_mean": 0.7022474835142102,
+          "M1_seed_sd": 0.0157579937008209,
+          "M2_top10_cv_mean": 0.684987203750344,
+          "M3_literal_evaluations": [
+            38,
+            34,
+            2,
+            33,
+            29
+          ],
+          "M4_domain_rate": 0.04043239599383667,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.06944444444444445,
+          "M7_elite_mean_depth": 2.98,
+          "M7_elite_mean_nodes": 4.86,
+          "M8_best_artifact_bytes": 60549.6,
+          "M8_best_tokens": {
+            "Cpp17": 5307.6,
+            "Python": 2504.0,
+            "Rust": 3365.4
+          },
+          "M9_new_token_elite_share": 0.06,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.008021421138834639,
+        "dataset": "pmlb-695-chatfield-4",
+        "sigma_seed_A": 0.01968758378457978
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007027818700000001,
+          "M1_best_cv_mean": 0.5746427243958264,
+          "M1_seed_sd": 0.0025790534086181436,
+          "M2_top10_cv_mean": 0.572938308914407,
+          "M3_literal_evaluations": [
+            3,
+            1,
+            1,
+            2,
+            3
+          ],
+          "M4_domain_rate": 0.168923343605547,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.025,
+          "M7_elite_mean_depth": 2.8,
+          "M7_elite_mean_nodes": 3.38,
+          "M8_best_artifact_bytes": 58846.4,
+          "M8_best_tokens": {
+            "Cpp17": 5177.6,
+            "Python": 2413.2,
+            "Rust": 3214.6
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007453236025,
+          "M1_best_cv_mean": 0.5722388773410748,
+          "M1_seed_sd": 0.005320043619530845,
+          "M2_top10_cv_mean": 0.5692179973492133,
+          "M3_literal_evaluations": [
+            3,
+            1,
+            2,
+            2,
+            3
+          ],
+          "M4_domain_rate": 0.1469375963020031,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.06388888888888888,
+          "M7_elite_mean_depth": 3.72,
+          "M7_elite_mean_nodes": 6.02,
+          "M8_best_artifact_bytes": 60289.4,
+          "M8_best_tokens": {
+            "Cpp17": 5290.4,
+            "Python": 2519.0,
+            "Rust": 3308.0
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0024038470547516066,
+        "dataset": "pmlb-first-principles-supernovae-zg",
+        "sigma_seed_A": 0.0025790534086181436
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.00745460745,
+          "M1_best_cv_mean": 0.14520542352639468,
+          "M1_seed_sd": 0.049265840728862094,
+          "M2_top10_cv_mean": 0.1352763001764184,
+          "M3_literal_evaluations": [
+            6,
+            13,
+            2,
+            63,
+            39
+          ],
+          "M4_domain_rate": 0.05726117103235747,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.05555555555555555,
+          "M7_elite_mean_depth": 3.76,
+          "M7_elite_mean_nodes": 5.84,
+          "M8_best_artifact_bytes": 61005.4,
+          "M8_best_tokens": {
+            "Cpp17": 5353.4,
+            "Python": 2547.6,
+            "Rust": 3400.4
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007523387875,
+          "M1_best_cv_mean": 0.14485736950807837,
+          "M1_seed_sd": 0.05104319995076266,
+          "M2_top10_cv_mean": 0.14440372054366418,
+          "M3_literal_evaluations": [
+            6,
+            13,
+            2,
+            20,
+            29
+          ],
+          "M4_domain_rate": 0.07074345146379045,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.08055555555555556,
+          "M7_elite_mean_depth": 3.6,
+          "M7_elite_mean_nodes": 5.3,
+          "M8_best_artifact_bytes": 60375.0,
+          "M8_best_tokens": {
+            "Cpp17": 5289.8,
+            "Python": 2511.4,
+            "Rust": 3360.4
+          },
+          "M9_new_token_elite_share": 0.12,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0003480540183163072,
+        "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+        "sigma_seed_A": 0.049265840728862094
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.00688798636111111,
+          "M1_best_cv_mean": 0.32699252181665045,
+          "M1_seed_sd": 0.07651896379734356,
+          "M2_top10_cv_mean": 0.24607671037420964,
+          "M3_literal_evaluations": [
+            6,
+            9,
+            63,
+            12,
+            56
+          ],
+          "M4_domain_rate": 0.042252503852080125,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.030555555555555555,
+          "M7_elite_mean_depth": 2.58,
+          "M7_elite_mean_nodes": 3.72,
+          "M8_best_artifact_bytes": 58803.6,
+          "M8_best_tokens": {
+            "Cpp17": 5169.2,
+            "Python": 2420.8,
+            "Rust": 3218.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.006898746966666666,
+          "M1_best_cv_mean": 0.3258702476142915,
+          "M1_seed_sd": 0.07574958899185318,
+          "M2_top10_cv_mean": 0.24607671037420964,
+          "M3_literal_evaluations": [
+            6,
+            9,
+            63,
+            12,
+            56
+          ],
+          "M4_domain_rate": 0.04402927580893683,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.05277777777777778,
+          "M7_elite_mean_depth": 2.5,
+          "M7_elite_mean_nodes": 3.64,
+          "M8_best_artifact_bytes": 58766.8,
+          "M8_best_tokens": {
+            "Cpp17": 5166.6,
+            "Python": 2418.4,
+            "Rust": 3215.6
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0011222742023589416,
+        "dataset": "rdatasets-stevedata-chile88",
+        "sigma_seed_A": 0.07651896379734356
+      },
+      {
+        "A": {
+          "M10_wall_seconds_per_attempt": 0.007634172052777777,
+          "M1_best_cv_mean": 0.3278161859857057,
+          "M1_seed_sd": 0.010457862486681728,
+          "M2_top10_cv_mean": 0.3254834186492176,
+          "M3_literal_evaluations": [
+            41,
+            34,
+            33,
+            31,
+            1
+          ],
+          "M4_domain_rate": 0.12534187211093992,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.027777777777777776,
+          "M7_elite_mean_depth": 3.0,
+          "M7_elite_mean_nodes": 5.58,
+          "M8_best_artifact_bytes": 60515.8,
+          "M8_best_tokens": {
+            "Cpp17": 5287.8,
+            "Python": 2528.4,
+            "Rust": 3381.8
+          },
+          "M9_new_token_elite_share": 0.0,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "B": {
+          "M10_wall_seconds_per_attempt": 0.007670496949999999,
+          "M1_best_cv_mean": 0.32745465311362293,
+          "M1_seed_sd": 0.010153982743023864,
+          "M2_top10_cv_mean": 0.32514378054369086,
+          "M3_literal_evaluations": [
+            41,
+            34,
+            33,
+            31,
+            1
+          ],
+          "M4_domain_rate": 0.14176617873651773,
+          "M5_hard_reject_rate": 0.0,
+          "M6_invalid_offspring_rate": 0.05555555555555555,
+          "M7_elite_mean_depth": 2.64,
+          "M7_elite_mean_nodes": 4.92,
+          "M8_best_artifact_bytes": 61496.8,
+          "M8_best_tokens": {
+            "Cpp17": 5363.8,
+            "Python": 2564.2,
+            "Rust": 3442.0
+          },
+          "M9_new_token_elite_share": 0.2,
+          "actual_evaluated_cells": 415360.0,
+          "attempts": 360.0,
+          "cell_accounting_complete": true
+        },
+        "M1_delta": -0.0003615328720827926,
+        "dataset": "rdatasets-wooldridge-barium",
+        "sigma_seed_A": 0.010457862486681728
+      }
+    ],
+    "decided_by": "owner decision pending; defaults unchanged",
+    "decision": "keep-experimental",
+    "gates": {
+      "G-A": false,
+      "G-B": "pending compiled L1\u2013L4 and fitted proof",
+      "G-C": false,
+      "G-D": true,
+      "G-E": true
+    },
+    "noninferior_on_every_dataset": false,
+    "strict_dataset_improvements": 0
+  },
+  "gates": {
+    "G-A": "fail",
+    "G-B": "pass",
+    "G-C": "fail",
+    "G-D": "fail",
+    "G-E": "pass"
+  },
+  "decline_reasons": [
+    {
+      "gate": "G-A",
+      "reason": "Raw predictive-quality gate failed at unchanged thresholds.",
+      "noninferior_on_every_dataset": false,
+      "noninferiority_failures": [
+        {
+          "dataset": "pmlb-695-chatfield-4",
+          "M1_delta": -0.008021421138834639,
+          "minimum_noninferior_delta": -0.004921895946144945
+        },
+        {
+          "dataset": "pmlb-first-principles-supernovae-zg",
+          "M1_delta": -0.0024038470547516066,
+          "minimum_noninferior_delta": -0.0006447633521545359
+        }
+      ],
+      "strict_dataset_improvements": 0,
+      "minimum_strict_dataset_improvements": 2,
+      "M3_complete": true,
+      "M3_ten_percent_faster": false
+    },
+    {
+      "gate": "G-C",
+      "reason": "Actual fault, hard-reject or invalid-offspring excess failed an unchanged soundness limit.",
+      "failures": [
+        {
+          "dataset": "golden-toy-107",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.02777777777777778,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "golden-toy-911",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.019444444444444445,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "pmlb-229-pwlinear",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.04722222222222222,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "pmlb-695-chatfield-4",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.027777777777777783,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "pmlb-first-principles-supernovae-zg",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.03888888888888888,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.024999999999999994,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "rdatasets-stevedata-chile88",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.01666666666666667,
+          "maximum_allowed": 0.01
+        },
+        {
+          "dataset": "rdatasets-wooldridge-barium",
+          "metric": "M6_invalid_offspring_rate",
+          "difference": 0.030555555555555558,
+          "maximum_allowed": 0.01
+        }
+      ]
+    },
+    {
+      "gate": "G-D",
+      "reason": "Actual average bloat, artifact or timing cost exceeded an unchanged promotion limit.",
+      "failures": [
+        {
+          "metric": "M7_elite_mean_nodes",
+          "mean_A": 4.745,
+          "mean_B": 4.7825,
+          "maximum_allowed_B": 4.745
+        },
+        {
+          "metric": "M7_elite_mean_depth",
+          "mean_A": 2.985,
+          "mean_B": 2.99,
+          "maximum_allowed_B": 2.985
+        }
+      ]
+    }
+  ],
+  "decision": "keep-experimental",
+  "decided_by": "<pending>",
+  "promotion_authorized": false,
+  "compiled_parity": "PASS",
+  "sanitizer_qualification": "PASS",
+  "final_card_after_suite": "PENDING_NOT_PASS",
+  "final_exact_head_ci_review_merge": "PENDING_NOT_PASS",
+  "native_evidence": {
+    "primary_source": "producer-utility-01/corrected-integration-01/primary",
+    "legacy_source": "producer-utility-01/corrected-integration-01/legacy",
+    "primary_metrics_sha256": "9eac923d885496b2322e945e00f3fc081923cc4b6c8804f5c3e6decb3a1de1c8",
+    "legacy_metrics_sha256": "a64c151d9af782cd9830b25a55defc788ed6529e697f38f618f75ec84a7a7898",
+    "all_searches": 480,
+    "all_attempts": 34560,
+    "all_fits": 311520,
+    "all_actual_evaluated_cells": 39874560,
+    "unknown_internal_passes": 0,
+    "manual_controls_separate": 604,
+    "manual_control_fits_separate": 6040,
+    "selection_state_artifact_bytes_preserved_against_old_source": true
+  },
+  "correction_evidence": "producer-utility-01/raw-quality-correction-01/native-failure-and-correction-binding.json",
+  "generated_at": "2026-10-06T04:02:04.245668+00:00",
+  "compiled_evidence": {
+    "source_sha": "c89194ef384def6e0be3aacc08a4c495047d3760",
+    "proof_binary_sha256": "c3404bbb005952b541aee37e149c2cd0ed1ee9517f9ea3d943a8cb9c1e1f997c",
+    "actual_exit": 0,
+    "total_cases": 602,
+    "primary_winners": 240,
+    "manual_controls": 302,
+    "actual_gp_eec_phases": 60,
+    "actual_gp_triads": 20,
+    "source_identities": 1806,
+    "artifact_hashes": 344,
+    "normal_compilers": [
+      "Rust",
+      "Python",
+      "g++17",
+      "clang++20"
+    ],
+    "fitted_compilers": [
+      "g++17",
+      "clang++20"
+    ],
+    "comparison": "exact F/Q/S/P complete, exact P/Q fitted",
+    "normal_command_path": "compiled-proof-source-01/corrected-integration-01/command.json",
+    "normal_command_sha256": "adc97d3fb2e3a0955a8f57034d7be9e7c1a9c430dff0b8134f0ed628cb60b472",
+    "verification_path": "compiled-proof-source-01/corrected-integration-01/artifact-verification.json",
+    "verification_sha256": "5ef45f40ba58e0b46b738fe5c6430122356cacef2a68c7fc6c0f0ac7c9a9712f",
+    "sanitizer_path": "compiled-proof-source-01/corrected-integration-01/sanitizer-full-01",
+    "sanitizer_status": "PASS",
+    "runtime_identity": {
+      "record_path": "producer-utility-01/corrected-integration-01/immutable-artifacts.json",
+      "record_sha256": "e81f10c7d6f11b9c7cf0d821898c657092ba79ae73862a5275162895d8254bb3",
+      "compiler_interpreter_identities_at_capture": {
+        "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.1\nLLVM version: 22.1.6",
+        "python": "Python 3.12.3",
+        "gcc": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+        "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+        "glibc": "glibc 2.39"
+      },
+      "qualification_domain": "same x86_64 Linux host and recorded libm; PlatformLibm capabilities do not gain a portable twin claim"
+    },
+    "sanitizer_commands": 152,
+    "sanitizer_compiles": 76,
+    "sanitizer_runs": 76,
+    "sanitizer_unique_cases": 602,
+    "sanitizer_case_compiler_comparisons": 2408,
+    "sanitizer_command_sha256": "f812eae026c0c96f2d5b2e8f0daf23d32d2a787a753f5caca001a8f26ac594bd",
+    "sanitizer_verification_path": "compiled-proof-source-01/corrected-integration-01/sanitizer-full-01/artifact-verification.json",
+    "sanitizer_verification_sha256": "f4ecd82308270538e4f5dfd0fa25b163d0daab24bd220bff1476c71270cff74c"
+  },
+  "metrics_scope": "metrics and legacy_metrics preserve verbatim native-only stage output, including its then-pending G-B. Top-level gates join the separately hash-bound complete/fitted compiled and sanitizer proofs; no quality, soundness or cost result is changed."
+}
