@@ -106,10 +106,15 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
     let rows = vec![vec![1.5, 3., 2.], vec![1.5, 2., 3.]];
     let labels = [0., 1.];
     let scratch = tempfile::tempdir().unwrap();
-    let dir = scratch.path();
-    fs::write(dir.join("train.csv"), "1.5,3,2,0\n1.5,2,3,1\n").unwrap();
-    fs::write(dir.join("test.csv"), "1.5,3,2\n1.5,2,3\n").unwrap();
+    let root = std::env::var_os("JOPE_GP_REDTEAM_EVIDENCE")
+        .map(|path| std::path::PathBuf::from(path).join("expression-conversion"))
+        .unwrap_or_else(|| scratch.path().to_owned());
+    fs::create_dir_all(&root).unwrap();
     for (index, (source, expected)) in WITNESSES.iter().enumerate() {
+        let dir = root.join(format!("case_{index}"));
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("train.csv"), "1.5,3,2,0\n1.5,2,3,1\n").unwrap();
+        fs::write(dir.join("test.csv"), "1.5,3,2\n1.5,2,3\n").unwrap();
         let expected = expected.map(f64::to_bits).to_vec();
         let expression = MathExpr::parse(source).unwrap();
         let canonical = expression.to_source().unwrap();
@@ -155,6 +160,7 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
         )
         .unwrap();
         for compiler in ["g++", "clang++"] {
+            let binary = dir.join(format!("case_{compiler}"));
             run(Command::new(compiler)
                 .args([
                     "-std=c++17",
@@ -167,13 +173,14 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
                 .arg(&cpp)
                 .arg("-o")
                 .arg(&binary));
-            let output = dir.join("cpp.out");
+            let output = dir.join(format!("{compiler}.out"));
             run(Command::new(&binary)
                 .arg(dir.join("train.csv"))
                 .arg(dir.join("test.csv"))
                 .arg(&output));
             assert_eq!(bits(&output), expected, "{source}: {compiler} C++17 recipe");
         }
+        println!("converted {source}: {expected:?}, all four emitted execution lanes matched");
     }
     // Negative controls: a conversion that reassociates or moves negation cannot pass.
     for (a, b) in [(0, 1), (2, 3), (4, 5), (6, 7)] {
