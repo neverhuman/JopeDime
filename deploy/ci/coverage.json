@@ -264,7 +264,7 @@
         "collection/execution/deselection counts",
         "pytest results",
         "Ruff exit",
-        "DL offline subreceipt: 508 collected identities, 472 synthetic executions, 36 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
+        "DL offline subreceipt: 515 collected identities, 477 synthetic executions, 38 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -996,7 +996,7 @@
     },
     "dl-lane-host-private-inputs": {
       "status": "deferred",
-      "reason": "Twenty-four preserved split-v2, split-v2-groups and split-defaults cases read pinned private xbabe2 lane inputs: the NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay, the registry port gsk.py, scale-check sources and earlier builder bytes (ed00684a, c0b989b6, fcfe3828, 28be7f98; the same bytes are retained in lane/historical/). Offline discovery does not stat/read that custody and excludes only these named identities. The preserved cases are not rewritten and no substitute inputs are created.",
+      "reason": "Twenty-six preserved split-v2, split-v2-groups and split-defaults cases read pinned private xbabe2 lane inputs: the NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay, the registry port gsk.py, scale-check sources and earlier builder bytes (ed00684a, c0b989b6, fcfe3828, 28be7f98; the same bytes are retained in lane/historical/). Offline discovery does not stat/read that custody and excludes only these named identities. The preserved cases are not rewritten and no substitute inputs are created.",
       "cases": {
         "tests.test_v2_rowsel_build_split_v2.CodeCustody.test_summary_completes_when_recorded_bytes_are_in_custody": "summary reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
         "tests.test_v2_rowsel_build_split_v2.CodeCustody.test_summary_fails_when_a_recorded_hash_cannot_be_produced": "summary reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
@@ -1015,6 +1015,8 @@
         "tests.test_v2_rowsel_build_split_v2g.Supplement.test_supplement_plan_build_and_summary": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
         "tests.test_v2_rowsel_build_split_v2g.V2.test_the_v2_route_builds_the_bytes_c0b989b6_built": "loads the private-lane code-custody builder c0b989b6 (same bytes retained as lane/historical/v2_rowsel_build.py.c0b989b6...); requires qualified host custody",
         "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_tied_column_never_reaches_the_union_find": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ties_are_checked_before_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
         "tests.test_split_defaults.BeforeAfter.test_v2": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
         "tests.test_split_defaults.BeforeAfter.test_v2g": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
         "tests.test_split_defaults.PortCheck.test_the_registry_replay_lineage_equals_fcfe3828s": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
@@ -1025,7 +1027,7 @@
       },
       "dependencies": [
         "source-bound retained owner-decision, registry-port, scale-check and builder input closure",
-        "bounded host-qualification receipt with exact twenty-four-case inventory"
+        "bounded host-qualification receipt with exact twenty-six-case inventory"
       ],
       "owner_phase": "DL lane qualified host inputs for the re-split builders; source custody alone is insufficient"
     },
@@ -8122,7 +8124,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_nonnumeric.py": {
       "discovery": {
@@ -8132,7 +8134,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_calibration.py": {
       "discovery": {
@@ -8182,7 +8184,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_raw_split_v2.py": {
       "discovery": {
@@ -8192,7 +8194,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_split_v2_groups.py": {
       "discovery": {
@@ -8202,7 +8204,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py": {
       "discovery": {
@@ -8212,7 +8214,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_split_defaults.py": {
       "discovery": {
@@ -8224,7 +8226,7 @@
       "dispositions": [
         "dl-lane-host-private-inputs"
       ],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1prep.py": {
       "discovery": {
@@ -8234,7 +8236,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1raw.py": {
       "discovery": {
@@ -8244,7 +8246,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_trainonly.py": {
       "discovery": {
@@ -8254,7 +8256,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2.py": {
       "discovery": {
@@ -8264,7 +8266,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2g.py": {
       "discovery": {
@@ -8274,7 +8276,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py": {
       "discovery": {
@@ -8286,7 +8288,7 @@
       "dispositions": [
         "dl-lane-subprocess-fixtures"
       ],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py": {
       "discovery": {
@@ -8296,7 +8298,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build.py": {
       "discovery": {
@@ -8308,7 +8310,7 @@
       "dispositions": [
         "dl-lane-host-metadata"
       ],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2.py": {
       "discovery": {
@@ -8320,7 +8322,7 @@
       "dispositions": [
         "dl-lane-host-private-inputs"
       ],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2g.py": {
       "discovery": {
@@ -8332,7 +8334,7 @@
       "dispositions": [
         "dl-lane-host-private-inputs"
       ],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw.py": {
       "discovery": {
@@ -8342,7 +8344,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
       "discovery": {
@@ -8352,7 +8354,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 508 total identities, 472 synthetic cases executed, 36 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
       "discovery": {

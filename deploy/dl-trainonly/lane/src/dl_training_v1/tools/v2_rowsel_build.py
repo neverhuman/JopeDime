@@ -1378,7 +1378,10 @@ def load_gsk():
 def registry_group_evidence(h: str, U: rowsel.Universe, split_body: bytes, train_body: bytes, test_body: bytes, candidates: list) -> dict:
     """Which candidate group columns reproduce EVERY repeat/fold of the registry split object (registry split port, as
     the census ran it: its own line split and field parser, base seed = the split's first fold seed), and whether all
-    reproducing candidates give the identical v2g component structure on this universe."""
+    reproducing candidates give the identical v2g component structure on this universe.
+    Order (PR #218 finding 8, red-team 6016730510): rowsel_split_v2_groups.target_tied_group runs FIRST for every
+    candidate. A tied column gets only its tie reason and the registry-port fields; no union-find (component_partition /
+    components) runs on its group values and no component count or structure hash is computed or stored for it."""
     gsk = load_gsk()
     split = json.loads(split_body)
     if split["source"]["dataset_hash"] != h or (split["source"]["train_sha256"], split["source"]["test_sha256"]) != (sha(train_body), sha(test_body)):
@@ -1398,38 +1401,47 @@ def registry_group_evidence(h: str, U: rowsel.Universe, split_body: bytes, train
             continue
         k, got, _ = gsk.generate_folds(keys, base_seed, groups=[r[int(c)] for r in rows])
         gv = t1_group_values(np.column_stack([U.X, U.y]), int(c))
-        comps = rowsel_split_v2_groups.component_partition(pos, fb, gv)
-        per[str(c)] = {"reproduces_registry": k == int(split["effective_folds"]) and got == want, "effective_folds": k,
-                       "field_bytes_equals_value_grouping": group_partition([r[int(c)] for r in rows]) == group_partition(gv),
-                       "missing_cells": sum(1 for x in gv if x == MISSING_GROUP), "distinct_values": len(set(gv)),
-                       "target_tie": rowsel_split_v2_groups.target_tied_group(gv, U.y),
-                       "v2g_components": len(comps), "component_structure_sha256": sha(json.dumps(comps).encode())}
+        tie = rowsel_split_v2_groups.target_tied_group(gv, U.y)        # FIRST: before any union-find on these values
+        row = {"reproduces_registry": k == int(split["effective_folds"]) and got == want, "effective_folds": k,
+               "missing_cells": sum(1 for x in gv if x == MISSING_GROUP), "distinct_values": len(set(gv)), "target_tie": tie}
+        if tie:
+            row.update(field_bytes_equals_value_grouping=None, v2g_components=None, component_structure_sha256=None,
+                       not_computed=TIE_NOT_COMPUTED)
+        else:
+            comps = rowsel_split_v2_groups.component_partition(pos, fb, gv)
+            row.update(field_bytes_equals_value_grouping=group_partition([r[int(c)] for r in rows]) == group_partition(gv),
+                       v2g_components=len(comps), component_structure_sha256=sha(json.dumps(comps).encode()))
+        per[str(c)] = row
     repro = [int(c) for c in candidates if per[str(c)].get("reproduces_registry")]
+    unstructured = [c for c in repro if per[str(c)].get("component_structure_sha256") is None]
     structures = {per[str(c)]["component_structure_sha256"] for c in repro}
     return {"candidates": [int(c) for c in candidates], "per_candidate": per, "reproducing": repro,
-            "identical_components_across_reproducing": len(structures) == 1, "base_seed": base_seed,
+            "identical_components_across_reproducing": None if unstructured else len(structures) == 1,
+            **({"components_not_computed_for": unstructured} if unstructured else {}), "base_seed": base_seed,
             "port": {"path": str(GSK), "sha256": GSK_SHA256}, "registry_folds_compared": len(want)}
 
 
+TIE_NOT_COMPUTED = "target_tied_group refused before partition"
 GROUP_SOURCE_A = ("registry annotation not available in local pinned objects (the split objects pin only the train/test "
                   "blobs and the T1 meta; no annotations reference); nothing fetched")
 
 
 def group_disposition(ev: dict, names: list) -> dict:
-    """Build only with exactly one group structure: some column reproduces the registry split, every reproducing column
+    """Build only with exactly one group structure: some column reproduces the registry split, no reproducing column is
+    tied to the target (checked FIRST; such a column never had a structure computed), every reproducing column
     gives the identical v2g component structure (then the lowest index is the spec), its value grouping is the
     registry's field-bytes grouping, and it has at least 2 components. With c < OUTER_FOLDS components the 5-fold split
     leaves folds c.. empty (empty_folds_allowed); the entry pins them. Otherwise not built, with the reason."""
     if not ev["reproducing"]:
         return {"disposition": "not_built", "reason": "no_group_column_reproduces_registry"}
-    if not ev["identical_components_across_reproducing"]:
+    ties = {str(c): ev["per_candidate"][str(c)].get("target_tie") for c in ev["reproducing"]}
+    if any(ties.values()):                     # FIRST (finding 8): any reproducing column copying/determining/binning y
+        return {"disposition": "not_built", "reason": "group_column_tied_to_target",
+                "detail": {c: t for c, t in ties.items() if t}}
+    if ev["identical_components_across_reproducing"] is not True:       # None (no structure) is never identical
         return {"disposition": "not_built", "reason": "ambiguous_group_columns_with_different_components"}
     if not all(ev["per_candidate"][str(c)]["field_bytes_equals_value_grouping"] for c in ev["reproducing"]):
         return {"disposition": "not_built", "reason": "group_value_grouping_differs_from_registry_field_grouping"}
-    ties = {str(c): ev["per_candidate"][str(c)].get("target_tie") for c in ev["reproducing"]}
-    if any(ties.values()):                                              # any reproducing column copying/determining y
-        return {"disposition": "not_built", "reason": "group_column_tied_to_target",
-                "detail": {c: t for c, t in ties.items() if t}}
     c = min(ev["reproducing"])
     k = ev["per_candidate"][str(c)]["v2g_components"]
     if k < 2:

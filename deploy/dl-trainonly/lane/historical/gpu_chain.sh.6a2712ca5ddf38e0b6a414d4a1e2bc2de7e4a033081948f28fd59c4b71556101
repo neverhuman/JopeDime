@@ -1,0 +1,17 @@
+#!/bin/bash
+# GPU preflight (coordinator gap 3): CUDA RNG carry-over through stop -> resume -> identity segment transition.
+# A: uninterrupted N steps. B: same plan, stop at K (STOP file), tranche 1 == tranche 0 contexts, resume with a
+# Transition, continue to N. Each step is a fresh process. Fake persisted store (no S3). Synthetic data.
+set -eu
+RID=$1; P7=/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/P7/runs
+PY="/home/ubuntu/.venvs/jope-dltrain-v1/bin/python -m dltrain.policylm_main"
+SPEC='{"seed_tag":"gpu-chain","n_train_families":16,"n_dev_families":2}'
+A=$P7/$RID-A; B=$P7/$RID-B; F=$P7/$RID-B/fake
+$PY tranche --run-dir $A --index 0 --n-contexts 120 --run-id $RID --size S --width 640 --steps 60 --commit-every 10 \
+  --publish-every 20 --device cuda --spec-json "$SPEC" --eval-every-steps 1000000
+mkdir -p $B/tranches; cp $A/run-plan.json $A/data-spec.json $A/config.json $B/; cp $A/tranches/T0.json $B/tranches/
+$PY run --run-dir $A --launch a1 --gate on --store none --unit "$UNIT"
+$PY run --run-dir $B --launch a1 --gate on --store fake:$F --stop-at-step 25 --unit "$UNIT"
+$PY tranche --run-dir $B --index 1 --n-contexts 120 --store fake:$F --width 640 --device cuda --spec-json "$SPEC"
+$PY run --run-dir $B --segment 1 --transition --resume --launch a2 --gate on --store fake:$F --unit "$UNIT"
+echo CHAIN-DONE

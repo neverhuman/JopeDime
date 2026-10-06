@@ -545,6 +545,111 @@ class V2(Base):
                          rb.split_v2_t1(H, p.positions, p.values, p.specs))
 
 
+class _PortStub:
+    """A deterministic in-test stand-in for the registry split port (rb.load_gsk), so the evidence ORDER can be checked
+    without the private port or any private input: lines split on newlines, fields on commas, the duplicate key is the
+    joined fields, and the 'registry split' is one fold made of the rows whose group field hashes to an even first byte
+    (so a candidate reproduces the stub registry exactly when its fields induce the same rows)."""
+
+    @staticmethod
+    def csv_lines(body):
+        parts = body.split(b"\n")
+        return parts[:-1] if parts and parts[-1] == b"" else parts
+
+    @staticmethod
+    def csv_fields(line):
+        return line.split(b",")
+
+    @staticmethod
+    def dup_key(fields):
+        return b"|".join(fields)
+
+    @staticmethod
+    def generate_folds(keys, base_seed, groups=None):
+        groups = groups if groups is not None else keys
+        idx = [i for i, x in enumerate(groups) if hashlib.sha256(bytes(x)).digest()[0] % 2 == 0]
+        return 2, [{"repeat": 0, "fold": 0, "seed": int(base_seed), "test_indices": idx}], None
+
+
+class EvidenceOrderNoPort(unittest.TestCase):
+    """PR #218 finding 8 order proof that CI can run (red-team 6016730510): registry_group_evidence with a STUB port
+    (no private port, no private input, nothing under RUN read). MUST FAIL on 8b056648, where component_partition ran
+    on a tied column's group values before target_tied_group and its structure hash was stored."""
+    TIED = 3                                                                # x3 := floor(4y)/4: bins the target
+
+    def setUp(self):
+        m = M.copy(); m[:, self.TIED] = np.floor(m[:, 5] * 4) / 4
+        self.m = tb._r9(m)
+        ls = tb.lines_of(self.m)
+        self.tr, self.te = b"\n".join(ls[:tb.NTR]) + b"\n", b"\n".join(ls[tb.NTR:]) + b"\n"
+        self.U = rowsel.universe_from_t1(H, self.tr, self.te, 6)
+        rows = [_PortStub.csv_fields(l) for b in (self.tr, self.te) for l in _PortStub.csv_lines(b)]
+        k, folds, _ = _PortStub.generate_folds(None, 20260930, groups=[r[self.TIED] for r in rows])
+        self.split_body = json.dumps({"source": {"dataset_hash": H, "train_sha256": hashlib.sha256(self.tr).hexdigest(),
+                                                 "test_sha256": hashlib.sha256(self.te).hexdigest()},
+                                      "effective_folds": k, "folds": folds}).encode()
+        self.tied_gv = rb.t1_group_values(np.column_stack([self.U.X, self.U.y]), self.TIED)
+
+    def evidence(self, cands):
+        calls = []
+        real_cp, real_c = g.component_partition, g.components
+
+        def spy_cp(positions, feature_bytes, group_values=None):
+            calls.append(None if group_values is None else list(group_values))
+            return real_cp(positions, feature_bytes, group_values)
+
+        def spy_c(positions, feature_bytes, group_values=None):
+            calls.append(None if group_values is None else list(group_values))
+            return real_c(positions, feature_bytes, group_values)
+        with mock.patch.object(rb, "load_gsk", lambda: _PortStub), \
+                mock.patch.object(rb.rowsel_split_v2_groups, "component_partition", spy_cp), \
+                mock.patch.object(rb.rowsel_split_v2_groups, "components", spy_c):
+            ev = rb.registry_group_evidence(H, self.U, self.split_body, self.tr, self.te, cands)
+        return ev, calls
+
+    def test_the_stub_fixture_is_a_tied_reproducing_column(self):
+        self.assertEqual(g.target_tied_group(self.tied_gv, self.m[:, 5]), "group_is_binned_target")
+        self.assertIsNone(g.target_tied_group(rb.t1_group_values(np.column_stack([self.U.X, self.U.y]), GCOL), self.m[:, 5]))
+        ev, _ = self.evidence([self.TIED, GCOL])
+        self.assertEqual(ev["reproducing"], [self.TIED])
+
+    def test_a_tied_column_never_reaches_the_union_find(self):
+        ev, calls = self.evidence([self.TIED, GCOL])
+        self.assertEqual(sum(1 for gv in calls if gv == self.tied_gv), 0)        # never on the tied column's values
+        self.assertTrue(any(gv is not None and gv != self.tied_gv for gv in calls))      # the untied candidate did run
+        c = ev["per_candidate"][str(self.TIED)]
+        self.assertEqual((c["target_tie"], c["v2g_components"], c["component_structure_sha256"],
+                          c["field_bytes_equals_value_grouping"], c["not_computed"]),
+                         ("group_is_binned_target", None, None, None, rb.TIE_NOT_COMPUTED))
+        self.assertIsNotNone(ev["per_candidate"][str(GCOL)]["component_structure_sha256"])
+
+    def test_identical_components_is_null_without_a_structure(self):
+        ev, _ = self.evidence([self.TIED, GCOL])
+        self.assertIsNone(ev["identical_components_across_reproducing"])
+        self.assertEqual(ev["components_not_computed_for"], [self.TIED])
+
+    def test_disposition_and_the_stored_plan_entry(self):
+        ev, _ = self.evidence([self.TIED, GCOL])
+        d = rb.group_disposition(ev, tb.COLS)
+        self.assertEqual((d["disposition"], d["reason"], d["detail"]), ("not_built", "group_column_tied_to_target",
+                                                                        {str(self.TIED): "group_is_binned_target"}))
+        stored = json.loads(json.dumps({"group_evidence": ev} | d))         # what plan_v2g stores for the dataset
+        c = stored["group_evidence"]["per_candidate"][str(self.TIED)]
+        self.assertEqual((c["component_structure_sha256"], c["v2g_components"]), (None, None))
+        self.assertNotIn("group_column", stored)
+        self.assertNotIn("empty_folds", stored)
+
+    def test_ties_are_checked_before_structure(self):
+        ev = {"reproducing": [self.TIED, GCOL], "identical_components_across_reproducing": None,
+              "per_candidate": {str(self.TIED): {"target_tie": "group_is_binned_target", "component_structure_sha256": None,
+                                                 "field_bytes_equals_value_grouping": None, "v2g_components": None},
+                                str(GCOL): {"target_tie": None, "component_structure_sha256": "a" * 64,
+                                            "field_bytes_equals_value_grouping": True, "v2g_components": 10}}}
+        self.assertEqual(rb.group_disposition(ev, tb.COLS)["reason"], "group_column_tied_to_target")
+        ev["per_candidate"][str(self.TIED)]["target_tie"] = None
+        self.assertEqual(rb.group_disposition(ev, tb.COLS)["reason"], "ambiguous_group_columns_with_different_components")
+
+
 class Evidence(unittest.TestCase):
     """rb.registry_group_evidence against registry split objects made with the registry port itself."""
 
@@ -625,6 +730,57 @@ class Evidence(unittest.TestCase):
                                                                         {"3": "group_bytes_equal_target_bytes"}))
         ok = self.evidence(tb.lines_of(M), GCOL, [GCOL])
         self.assertIsNone(ok["per_candidate"][str(GCOL)]["target_tie"])
+
+    def test_a_tied_column_never_reaches_the_union_find(self):
+        """MUST FAIL on 8b056648 (red-team 6016730510): a reproducing candidate whose values bin the target (x3 :=
+        floor(4y)/4) is refused by target_tied_group BEFORE any partition: component_partition / components never run on
+        its group values, and neither the evidence nor the plan entry holds a component count or structure hash for it."""
+        m = M.copy(); m[:, 3] = np.floor(m[:, 5] * 4) / 4
+        m = tb._r9(m)
+        tied_gv = rb.t1_group_values(np.column_stack([rowsel.universe_from_t1(H, *self.bodies(tb.lines_of(m)), 6).X, m[:, 5]]), 3)
+        self.assertEqual(g.target_tied_group(tied_gv, m[:, 5]), "group_is_binned_target")
+        calls = []
+        real_cp, real_c = g.component_partition, g.components
+
+        def spy_cp(positions, feature_bytes, group_values=None):
+            calls.append(("component_partition", None if group_values is None else list(group_values)))
+            return real_cp(positions, feature_bytes, group_values)
+
+        def spy_c(positions, feature_bytes, group_values=None):
+            calls.append(("components", None if group_values is None else list(group_values)))
+            return real_c(positions, feature_bytes, group_values)
+        with mock.patch.object(rb.rowsel_split_v2_groups, "component_partition", spy_cp), \
+                mock.patch.object(rb.rowsel_split_v2_groups, "components", spy_c):
+            ev = self.evidence(tb.lines_of(m), 3, [3, GCOL])
+        self.assertEqual(ev["reproducing"], [3])
+        self.assertEqual([k for k, gv in calls if gv == tied_gv], [])          # never on the tied column's values
+        self.assertTrue(any(gv is not None and gv != tied_gv for _, gv in calls))      # the untied candidate did run
+        c3 = ev["per_candidate"]["3"]
+        self.assertEqual((c3["target_tie"], c3["v2g_components"], c3["component_structure_sha256"],
+                          c3["field_bytes_equals_value_grouping"], c3["not_computed"]),
+                         ("group_is_binned_target", None, None, None, rb.TIE_NOT_COMPUTED))
+        self.assertIsNone(ev["identical_components_across_reproducing"])
+        self.assertEqual(ev["components_not_computed_for"], [3])
+        d = rb.group_disposition(ev, tb.COLS)
+        self.assertEqual((d["disposition"], d["reason"], d["detail"]), ("not_built", "group_column_tied_to_target",
+                                                                        {"3": "group_is_binned_target"}))
+        entry = {"group_evidence": ev} | d                                   # what plan_v2g stores for the dataset
+        stored = json.loads(json.dumps(entry))
+        self.assertIsNone(stored["group_evidence"]["per_candidate"]["3"]["component_structure_sha256"])
+        self.assertNotIn("group_column", stored)
+        ok = stored["group_evidence"]["per_candidate"][str(GCOL)]
+        self.assertIsNotNone(ok["component_structure_sha256"])               # an untied candidate keeps its evidence
+
+    def test_ties_are_checked_before_structure(self):
+        """A tied reproducing column refuses as tied, never as ambiguous (no structure exists to compare)."""
+        ev = {"reproducing": [3, GCOL], "identical_components_across_reproducing": None,
+              "per_candidate": {"3": {"target_tie": "group_is_binned_target", "component_structure_sha256": None,
+                                      "field_bytes_equals_value_grouping": None, "v2g_components": None},
+                                str(GCOL): {"target_tie": None, "component_structure_sha256": "a" * 64,
+                                            "field_bytes_equals_value_grouping": True, "v2g_components": 10}}}
+        self.assertEqual(rb.group_disposition(ev, tb.COLS)["reason"], "group_column_tied_to_target")
+        ev["per_candidate"]["3"]["target_tie"] = None
+        self.assertEqual(rb.group_disposition(ev, tb.COLS)["reason"], "ambiguous_group_columns_with_different_components")
 
     def test_group_values_are_canonical_float64_values(self):
         gv = rb.t1_group_values(np.array([[-0.0, 1.0], [0.0, 1.0], [0.5, 1.0], [np.nan, 1.0], [np.nan, 2.0]]), 0)
