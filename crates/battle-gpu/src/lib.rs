@@ -231,9 +231,15 @@ fn validate_shape(index: usize, problem: &GpuRidgeScoreProblem) -> Result<(), St
             "problem {index}: empty ridge problem (p={p}, n={train_n})"
         ));
     }
-    if train_x_cols.len() != p * train_n
+    let train_len = p
+        .checked_mul(*train_n)
+        .ok_or_else(|| format!("problem {index}: ridge dimensions overflow"))?;
+    let valid_len = p
+        .checked_mul(*valid_n)
+        .ok_or_else(|| format!("problem {index}: ridge dimensions overflow"))?;
+    if train_x_cols.len() != train_len
         || train_y.len() != *train_n
-        || valid_x_rows.len() != p * valid_n
+        || valid_x_rows.len() != valid_len
         || valid_y.len() != *valid_n
     {
         return Err(format!("problem {index}: inconsistent buffer shapes"));
@@ -741,5 +747,62 @@ mod tests {
             batch.timings.predict_score_seconds
         );
         assert!(batch.scores.iter().all(|score| score.is_finite()));
+    }
+}
+
+#[cfg(test)]
+mod shape_bounds_tests {
+    use super::*;
+
+    fn problem() -> GpuRidgeScoreProblem {
+        GpuRidgeScoreProblem {
+            train_x_cols: vec![0.0; 2],
+            train_y: vec![0.0],
+            train_n: 1,
+            valid_x_rows: vec![0.0; 2],
+            valid_y: vec![0.0],
+            valid_n: 1,
+            p: 2,
+            lambda_frac: 0.02,
+        }
+    }
+
+    #[test]
+    fn valid_shapes_and_empty_validation_remain_admitted() {
+        let mut problem = problem();
+        assert!(validate_shape(0, &problem).is_ok());
+        problem.valid_n = 0;
+        problem.valid_x_rows.clear();
+        problem.valid_y.clear();
+        assert!(validate_shape(0, &problem).is_ok());
+    }
+
+    #[test]
+    fn wrapped_training_dimensions_are_refused_without_panicking() {
+        let mut problem = problem();
+        problem.p = 1usize << (usize::BITS - 1);
+        problem.train_n = 2;
+        problem.train_x_cols.clear();
+        problem.train_y = vec![0.0; 2];
+        problem.valid_n = 0;
+        problem.valid_x_rows.clear();
+        problem.valid_y.clear();
+        let result = std::panic::catch_unwind(|| validate_shape(0, &problem));
+        assert!(result.is_ok(), "malformed dimensions must return an error");
+        assert!(
+            result.unwrap().is_err(),
+            "wrapped zero-size matrix is invalid"
+        );
+    }
+
+    #[test]
+    fn overflowing_validation_dimensions_return_error_without_panicking() {
+        let mut problem = problem();
+        problem.valid_n = 1usize << (usize::BITS - 1);
+        problem.valid_x_rows.clear();
+        problem.valid_y.clear();
+        let result = std::panic::catch_unwind(|| validate_shape(0, &problem));
+        assert!(result.is_ok(), "malformed dimensions must return an error");
+        assert!(result.unwrap().is_err());
     }
 }
