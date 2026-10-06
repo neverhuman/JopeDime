@@ -1092,7 +1092,7 @@ fn check_unused(output: &Path) -> Result<()> {
 /// The refusal of a scratch directory that a comparison with a kernel2 profile cannot use
 /// ([`check_scratch_kind`], [`check_scratch_unused`]).
 const SCRATCH_NOT_UNUSED: &str =
-    "already holds ablation output; a comparison with a kernel2 profile needs an unused --scratch";
+    "already holds ablation output; a kernel2 comparison needs an absent or empty --scratch";
 
 /// Refuse, for a comparison with a kernel2 profile, a scratch path that exists but is not a
 /// directory, a symbolic link included, also when the path ends in `/` (which would make
@@ -2527,7 +2527,7 @@ fn replace_document(out: &Path, document: &Document) -> Result<String> {
         Some(parent) if !parent.as_os_str().is_empty() => parent,
         _ => Path::new("."),
     };
-    let (mut temporary, mut file) = loop {
+    let (mut staged, mut file) = loop {
         let count = TEMPORARY_DOCUMENTS.fetch_add(1, Ordering::Relaxed);
         let mut temporary_name = std::ffi::OsString::from(".");
         temporary_name.push(name);
@@ -2554,11 +2554,11 @@ fn replace_document(out: &Path, document: &Document) -> Result<String> {
     file.write_all(text.as_bytes())
         .and_then(|()| file.flush())
         .and_then(|()| file.sync_all())
-        .with_context(|| format!("write {}", temporary.path.display()))?;
+        .with_context(|| format!("write {}", staged.path.display()))?;
     drop(file);
-    std::fs::rename(&temporary.path, out)
-        .with_context(|| format!("rename {} to {}", temporary.path.display(), out.display()))?;
-    temporary.renamed = true;
+    std::fs::rename(&staged.path, out)
+        .with_context(|| format!("rename {} to {}", staged.path.display(), out.display()))?;
+    staged.renamed = true;
     std::fs::File::open(directory)
         .and_then(|handle| handle.sync_all())
         .with_context(|| {
