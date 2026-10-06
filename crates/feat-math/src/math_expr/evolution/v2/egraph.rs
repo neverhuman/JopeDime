@@ -1759,4 +1759,48 @@ mod tests {
             assert_eq!(source(input), printed(expected), "{input}");
         }
     }
+
+    /// Portable expression shape excludes every libm-backed literal call, including Tanh.
+    /// Constant arithmetic may fold the argument; it must never fold the enclosing call.
+    #[test]
+    fn all_libm_calls_preserve_literal_shape_including_tanh() {
+        let functions = [
+            Func::Sqrt,
+            Func::Log1p,
+            Func::Sin,
+            Func::Cos,
+            Func::Tanh,
+            Func::Sigmoid,
+            Func::Exp,
+            Func::Log,
+            Func::Asinh,
+            Func::Atan,
+            Func::Erf,
+        ];
+        for function in functions {
+            for argument in [0.0, -0.0, 0.5, -0.5, 6.0] {
+                for arithmetic in [false, true] {
+                    let child = if arithmetic {
+                        Expr::Binary(
+                            BinOp::Mul,
+                            Box::new(Expr::Const(argument)),
+                            Box::new(Expr::Const(1.0)),
+                        )
+                    } else {
+                        Expr::Const(argument)
+                    };
+                    let input = MathExpr::from_ast(Expr::Call(function, vec![child])).unwrap();
+                    let expected =
+                        MathExpr::from_ast(Expr::Call(function, vec![Expr::Const(argument)]))
+                            .unwrap();
+                    let result = simplify(&input);
+                    assert_eq!(result.stop, Saturation::Saturated, "{input:?}");
+                    assert_eq!(result.expression.as_ref(), &expected, "{input:?}");
+                    assert_exact(&input, &result.expression);
+                    let run = saturate(&input, &RULES, Limits::for_input(count_nodes(&input.root)));
+                    assert!(run.eg.literal(run.root).is_none(), "{input:?}");
+                }
+            }
+        }
+    }
 }
