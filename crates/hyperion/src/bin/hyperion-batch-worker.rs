@@ -156,9 +156,11 @@ fn encode(
     let encoded = run_composite_sweep(
         model,
         &grid,
-        settings.pad_u8,
-        settings.quant_scale,
-        settings.max_patch,
+        hyperion::hyperion_v7::sweep::PatchInput {
+            pad_u8: settings.pad_u8,
+            quant_scale: settings.quant_scale,
+            max_patch: settings.max_patch,
+        },
         &plan,
         &NullSink,
         |_| {},

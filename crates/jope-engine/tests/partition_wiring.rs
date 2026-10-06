@@ -475,10 +475,12 @@ fn a_three_rank_original_continues_with_its_own_partition() {
         &policy,
         &"e".repeat(64),
         &"c".repeat(64),
-        3,
-        256,
-        2048,
-        1000
+        jope_parallel::checkpoint_recovery::TrainingTopology {
+            world: 3,
+            micro: 256,
+            global: 2048
+        },
+        1000,
     )
     .is_err());
     for other in [
@@ -509,10 +511,12 @@ fn a_three_rank_original_continues_with_its_own_partition() {
             &policy,
             &"e".repeat(64),
             &"c".repeat(64),
-            8,
-            256,
-            2048,
-            1000
+            jope_parallel::checkpoint_recovery::TrainingTopology {
+                world: 8,
+                micro: 256,
+                global: 2048
+            },
+            1000,
         )
         .unwrap(),
         continue_with(dir.path(), &policy, &v1).unwrap()

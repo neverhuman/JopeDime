@@ -1216,17 +1216,28 @@ pub struct RollbackNodeProbeV2 {
     pub raw_output: RawEvidenceRefV2,
 }
 
+struct RollbackBundleEvidence<'a> {
+    bundle_sha256: &'a str,
+    manifest_file_sha256: &'a str,
+    manifest_canonical_sha256: &'a str,
+    files: &'a [RollbackBundleFileV2],
+    artifacts: &'a [RollbackSystemdArtifactV2],
+}
+
 impl RollbackNodeProbeV2 {
     fn validate(
         &self,
         root: &Path,
         challenge: &RollbackChallengeV1,
-        bundle_sha256: &str,
-        manifest_file_sha256: &str,
-        manifest_canonical_sha256: &str,
-        files: &[RollbackBundleFileV2],
-        artifacts: &[RollbackSystemdArtifactV2],
+        bundle: RollbackBundleEvidence<'_>,
     ) -> Result<()> {
+        let RollbackBundleEvidence {
+            bundle_sha256,
+            manifest_file_sha256,
+            manifest_canonical_sha256,
+            files,
+            artifacts,
+        } = bundle;
         ensure!(
             self.schema == ROLLBACK_NODE_PROBE_SCHEMA,
             "invalid rollback node-probe schema"
@@ -1499,11 +1510,13 @@ impl RollbackCapsuleV2 {
             receipt.validate(
                 evidence_root,
                 &challenge,
-                &self.runtime_bundle_sha256,
-                &self.runtime_bundle_manifest_file_sha256,
-                &self.runtime_bundle_manifest_canonical_json_sha256,
-                &self.files,
-                &self.systemd_closure,
+                RollbackBundleEvidence {
+                    bundle_sha256: &self.runtime_bundle_sha256,
+                    manifest_file_sha256: &self.runtime_bundle_manifest_file_sha256,
+                    manifest_canonical_sha256: &self.runtime_bundle_manifest_canonical_json_sha256,
+                    files: &self.files,
+                    artifacts: &self.systemd_closure,
+                },
             )?;
             ensure!(
                 nodes.insert(receipt.node),

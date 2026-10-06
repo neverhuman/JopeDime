@@ -1,17 +1,29 @@
-fn emit_hyperion(
-    sink: &dyn Sink,
-    t0: Instant,
-    event: &str,
+/// Metadata emitted for one Hyperion progress event.
+struct HyperionEvent<'a> {
     rows: usize,
     cols: usize,
     output_dim: usize,
     engine: HyperionEngine,
-    device: Option<&str>,
-    status: Option<&str>,
-    message: Option<&str>,
+    device: Option<&'a str>,
+    status: Option<&'a str>,
+    message: Option<&'a str>,
     done_frac: Option<f64>,
     preview: Option<HyperionPreview>,
-) {
+}
+
+fn emit_hyperion(sink: &dyn Sink, t0: Instant, event: &str, metadata: HyperionEvent<'_>) {
+    let HyperionEvent {
+        rows,
+        cols,
+        output_dim,
+        engine,
+        device,
+        status,
+        message,
+        done_frac,
+        preview,
+    } = metadata;
+
     let mut e = Event::new(0, event, t0.elapsed().as_secs_f64());
     e.rows = Some(rows as u64);
     e.cols = Some(cols as u64);
@@ -502,39 +514,45 @@ fn load_weight_projection(
 /// available and the host load guard allows it, then keep CPU as the retry path.
 #[cfg(feature = "hyperion-cpu")]
 pub(crate) fn hyperion_device_candidates() -> Vec<candle_core::Device> {
-    let mut devices = Vec::new();
     #[cfg(feature = "hyperion-cuda")]
     {
-        if !hyperion_cuda_allowed_by_load() {
-            eprintln!(
-                "[hyperion] {}",
-                battle_gpu::queue::gpu_cpu_handoff_reason(
-                    "Hyperion CUDA device selection",
-                    "host load guard exceeded JAIN_HYPERION_CUDA_MAX_LOAD_RATIO"
-                )
-            );
-        } else {
-            match candle_core::Device::cuda_if_available(0) {
-                Ok(device) if device.is_cuda() => devices.push(device),
-                Ok(_) => eprintln!(
+        let mut devices = Vec::new();
+        {
+            if !hyperion_cuda_allowed_by_load() {
+                eprintln!(
                     "[hyperion] {}",
                     battle_gpu::queue::gpu_cpu_handoff_reason(
                         "Hyperion CUDA device selection",
-                        "CUDA device 0 is not available"
+                        "host load guard exceeded JAIN_HYPERION_CUDA_MAX_LOAD_RATIO"
                     )
-                ),
-                Err(err) => eprintln!(
-                    "[hyperion] {}",
-                    battle_gpu::queue::gpu_cpu_handoff_reason(
-                        "Hyperion CUDA device selection",
-                        format!("{err}")
-                    )
-                ),
+                );
+            } else {
+                match candle_core::Device::cuda_if_available(0) {
+                    Ok(device) if device.is_cuda() => devices.push(device),
+                    Ok(_) => eprintln!(
+                        "[hyperion] {}",
+                        battle_gpu::queue::gpu_cpu_handoff_reason(
+                            "Hyperion CUDA device selection",
+                            "CUDA device 0 is not available"
+                        )
+                    ),
+                    Err(err) => eprintln!(
+                        "[hyperion] {}",
+                        battle_gpu::queue::gpu_cpu_handoff_reason(
+                            "Hyperion CUDA device selection",
+                            format!("{err}")
+                        )
+                    ),
+                }
             }
         }
+        devices.push(candle_core::Device::Cpu);
+        devices
     }
-    devices.push(candle_core::Device::Cpu);
-    devices
+    #[cfg(not(feature = "hyperion-cuda"))]
+    {
+        vec![candle_core::Device::Cpu]
+    }
 }
 
 /// Compute device for Hyperion tensor loads: prefer an allowed CUDA GPU, and use the CPU when no

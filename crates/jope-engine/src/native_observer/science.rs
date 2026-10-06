@@ -493,17 +493,29 @@ fn decision_rows(
     rows.comparisons = comparison_rows(&comparison, result.generation, &decision.comparison, at)?;
     Ok(rows)
 }
+/// Repository, graph-state and worker locations for a recorded run.
+#[derive(Clone, Copy)]
+struct GraphLocation<'a> {
+    pub root: &'a Path,
+    pub state: &'a Path,
+    pub worker: &'a Path,
+}
+
 async fn graph_run(
     id: &str,
-    root: &Path,
-    state: &Path,
-    worker: &Path,
+    location: GraphLocation<'_>,
     loop_state: &Path,
     config: &Artifact,
     client: &Client,
     tenant: TenantId,
     project: ProjectId,
 ) -> Result<Rows> {
+    let GraphLocation {
+        root,
+        state,
+        worker,
+    } = location;
+
     let cv = checked(Some(root), config, 16 * 1024 * 1024)?;
     let config: crate::native_loop::Config = serde_json::from_value(cv)?;
     let graph = Graph::read_only(root, state, worker, tenant, project)?;
@@ -863,9 +875,11 @@ impl Reader {
                                         config: a,
                                     } => rt.block_on(graph_run(
                                         id,
-                                        root,
-                                        graph_state,
-                                        worker_state,
+                                        crate::native_observer::science::GraphLocation {
+                                            root,
+                                            state: graph_state,
+                                            worker: worker_state,
+                                        },
                                         loop_state,
                                         a,
                                         &Client::new(&config.socket),

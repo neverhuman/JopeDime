@@ -146,10 +146,12 @@ pub(super) fn attach_completion(root: &Path, directory: &Path, index: usize, row
         &authority_root,
         &witness,
         row["genome"].as_str().unwrap(),
-        vec![vec![1.]],
-        vec![2.],
-        preprocessing,
-        feature_view,
+        crate::eval_registry::FitInputs {
+            x: vec![vec![1.]],
+            y: vec![2.],
+            preprocessing,
+            feature_view,
+        },
         0,
     )
     .unwrap();
@@ -350,12 +352,14 @@ fn native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes
     }
     store::publish_admitted(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &f.observations(),
-        &output,
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &f.observations(),
+            output: &output,
+            store: &cache,
+            qualification: true,
+        },
         &expected,
         |_, _, _| Ok(()),
     )
@@ -435,12 +439,14 @@ fn native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes
     f.strict_receipt(&added, &rows[0]);
     store::publish_admitted(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &[f.observations()[0].clone(), added.clone()],
-        &f.root().join("strict-next"),
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &[f.observations()[0].clone(), added.clone()],
+            output: &f.root().join("strict-next"),
+            store: &cache,
+            qualification: true,
+        },
         &expected,
         |_, _, _| Ok(()),
     )
@@ -473,12 +479,14 @@ fn native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes
     f.strict_receipt(&failure, &rows[0]);
     store::publish_admitted(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &[f.observations()[0].clone(), added.clone(), failure.clone()],
-        &f.root().join("strict-failure"),
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &[f.observations()[0].clone(), added.clone(), failure.clone()],
+            output: &f.root().join("strict-failure"),
+            store: &cache,
+            qualification: true,
+        },
         &expected,
         |_, _, _| Ok(()),
     )
@@ -507,17 +515,19 @@ fn native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes
     write_json(&mismatch.with_file_name("search.json"), &receipt).unwrap();
     store::publish_admitted(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &[
-            f.observations()[0].clone(),
-            added.clone(),
-            failure.clone(),
-            mismatch.clone(),
-        ],
-        &f.root().join("strict-mismatched-receipt"),
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &[
+                f.observations()[0].clone(),
+                added.clone(),
+                failure.clone(),
+                mismatch.clone(),
+            ],
+            output: &f.root().join("strict-mismatched-receipt"),
+            store: &cache,
+            qualification: true,
+        },
         &expected,
         |_, _, _| Ok(()),
     )
@@ -546,12 +556,14 @@ fn native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes
     f.strict_receipt(&new, &rows[0]);
     store::publish_admitted(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &[f.observations()[0].clone(), added, failure, mismatch, new],
-        &f.root().join("strict-failure-first"),
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &[f.observations()[0].clone(), added, failure, mismatch, new],
+            output: &f.root().join("strict-failure-first"),
+            store: &cache,
+            qualification: true,
+        },
         &expected,
         |_, _, _| Ok(()),
     )
@@ -597,12 +609,14 @@ fn native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes
     sources.push(reuse);
     store::publish_admitted(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &sources,
-        &f.root().join("strict-reuse"),
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &sources,
+            output: &f.root().join("strict-reuse"),
+            store: &cache,
+            qualification: true,
+        },
         &expected,
         |_, _, _| Ok(()),
     )

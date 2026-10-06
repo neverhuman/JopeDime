@@ -203,10 +203,19 @@ pub fn serve(
         workers,
         event_witness_config,
         event_witness_config_sha256,
-        funding_config,
-        None,
+        crate::fit_boundary::FitPolicies {
+            funding_config,
+            native_fit_policy: None,
+        },
     )
 }
+/// Optional funding and native-fit policy bindings for the evaluator service.
+#[derive(Clone, Copy)]
+pub struct FitPolicies<'a> {
+    pub funding_config: Option<&'a Path>,
+    pub native_fit_policy: Option<&'a Path>,
+}
+
 pub fn serve_with_native_policy(
     authority: PathBuf,
     witness: PathBuf,
@@ -214,9 +223,13 @@ pub fn serve_with_native_policy(
     workers: usize,
     event_witness_config: &Path,
     event_witness_config_sha256: &str,
-    funding_config: Option<&Path>,
-    native_fit_policy: Option<&Path>,
+    options: FitPolicies<'_>,
 ) -> Result<()> {
+    let FitPolicies {
+        funding_config,
+        native_fit_policy,
+    } = options;
+
     if let Ok(value) = std::env::var("SCQ_CONTROL_FD") {
         let fd: i32 = value.parse()?;
         let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };

@@ -50,9 +50,11 @@ fn run(
     let out = run_composite_sweep(
         &FakePatchModel,
         xu8,
-        128,
-        3.0,
-        24,
+        crate::hyperion_v7::sweep::PatchInput {
+            pad_u8: 128,
+            quant_scale: 3.0,
+            max_patch: 24,
+        },
         plan,
         &NullSink,
         |report| {
@@ -318,9 +320,11 @@ fn sweep_zero_uses_identity_permutation() {
     run_composite_sweep(
         &FakePatchModel,
         &xu8,
-        128,
-        3.0,
-        24,
+        crate::hyperion_v7::sweep::PatchInput {
+            pad_u8: 128,
+            quant_scale: 3.0,
+            max_patch: 24,
+        },
         &plan,
         &NullSink,
         |report| {
@@ -375,9 +379,11 @@ fn invalid_plan_errors() {
         run_composite_sweep(
             &FakePatchModel,
             &xu8,
-            128,
-            3.0,
-            24,
+            crate::hyperion_v7::sweep::PatchInput {
+                pad_u8: 128,
+                quant_scale: 3.0,
+                max_patch: 24,
+            },
             &plan,
             &NullSink,
             |_| {},
@@ -434,11 +440,13 @@ fn frames_identity_vs_binned_and_caps() {
     assert!(f2.cells.len() <= FRAME_MAX_CELLS);
 }
 
+type EmbeddingCall = (usize, usize, Vec<f32>, Vec<f32>);
+
 /// Synthetic only: records exact arguments while deliberately forbidding the
 /// confidence path in the embedding-only model.
 #[derive(Default)]
 struct EmbeddingTrace {
-    calls: std::sync::Mutex<Vec<(usize, usize, Vec<f32>, Vec<f32>)>>,
+    calls: std::sync::Mutex<Vec<EmbeddingCall>>,
     forbid_confidence: bool,
 }
 impl PatchModel for EmbeddingTrace {
@@ -483,8 +491,18 @@ fn embedding_only_matches_full_scatter_and_exact_patch_order() -> Result<()> {
                 forbid_confidence: true,
                 ..Default::default()
             };
-            let full =
-                run_composite_sweep(&full_model, &input, 128, 3., 24, &plan, &NullSink, |_| {})?;
+            let full = run_composite_sweep(
+                &full_model,
+                &input,
+                crate::hyperion_v7::sweep::PatchInput {
+                    pad_u8: 128,
+                    quant_scale: 3.,
+                    max_patch: 24,
+                },
+                &plan,
+                &NullSink,
+                |_| {},
+            )?;
             let emb = run_composite_embedding_sweep(
                 &embedding_model,
                 &input,
@@ -543,9 +561,11 @@ fn embedding_only_preserves_cooperative_stopping() -> Result<()> {
         let full = run_composite_sweep(
             &full_model,
             &input,
-            128,
-            3.,
-            24,
+            crate::hyperion_v7::sweep::PatchInput {
+                pad_u8: 128,
+                quant_scale: 3.,
+                max_patch: 24,
+            },
             &plan,
             &Stop { cancel },
             |_| {},

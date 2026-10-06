@@ -1092,8 +1092,10 @@ fn main() -> Result<()> {
             workers,
             &event_witness_config,
             &event_witness_config_sha256,
-            funding_config.as_deref(),
-            native_fit_policy.as_deref(),
+            jope_parallel::fit_boundary::FitPolicies {
+                funding_config: funding_config.as_deref(),
+                native_fit_policy: native_fit_policy.as_deref(),
+            },
         )?,
         Cmd::FundingRequest { config } => {
             use std::io::Read;
@@ -1584,13 +1586,15 @@ fn main() -> Result<()> {
             &cli.root,
             &corpus,
             &output,
-            world,
-            microbatch,
-            steps,
-            checkpoint_steps,
-            resume,
-            fail_rank,
-            initialize.as_deref(),
+            jope_parallel::controller::TrainingOptions {
+                world,
+                micro: microbatch,
+                steps,
+                checkpoint_steps,
+                resume,
+                fail_rank,
+                initialize: initialize.as_deref(),
+            },
             replay_policy.as_deref(),
         )?,
         #[cfg(feature = "neural")]
@@ -1670,9 +1674,11 @@ fn main() -> Result<()> {
             &corpus,
             &checkpoint,
             &output,
-            cuts,
-            cut_start,
-            shuffled,
+            jope_parallel::controller::ProposalOptions {
+                cuts,
+                cut_start,
+                shuffled,
+            },
             generation_manifest.as_deref(),
         )?,
         #[cfg(feature = "neural")]
@@ -1741,12 +1747,14 @@ fn main() -> Result<()> {
                     );
                     jope_parallel::teaching_store::publish_admitted(
                         &cli.root,
-                        &contexts,
-                        &vocabulary,
-                        &observations,
-                        &output,
-                        &store,
-                        qualification,
+                        jope_parallel::teaching_store::PublishRequest {
+                            contexts_path: &contexts,
+                            vocabulary: &vocabulary,
+                            sources: &observations,
+                            output: &output,
+                            store: &store,
+                            qualification,
+                        },
                         &admission,
                         |operation, done, total| {
                             heartbeat
@@ -1757,12 +1765,14 @@ fn main() -> Result<()> {
                 } else {
                     jope_parallel::teaching_store::publish(
                         &cli.root,
-                        &contexts,
-                        &vocabulary,
-                        &observations,
-                        &output,
-                        &store,
-                        qualification,
+                        jope_parallel::teaching_store::PublishRequest {
+                            contexts_path: &contexts,
+                            vocabulary: &vocabulary,
+                            sources: &observations,
+                            output: &output,
+                            store: &store,
+                            qualification,
+                        },
                         &label_policy,
                         |operation, done, total| {
                             heartbeat
@@ -1778,9 +1788,11 @@ fn main() -> Result<()> {
                 );
                 jope_parallel::corpus_publication::build(
                     &cli.root,
-                    &contexts,
-                    &vocabulary,
-                    &observations,
+                    jope_parallel::corpus_publication::PublicationSources {
+                        contexts: &contexts,
+                        vocab: &vocabulary,
+                        observations: &observations,
+                    },
                     &output,
                     qualification,
                     scan_cache.as_deref(),
@@ -1864,11 +1876,13 @@ fn main() -> Result<()> {
             &prepared,
             cut,
             &output,
-            80,
-            600,
-            false,
-            None,
-            None,
+            jope_parallel::gp::SearchOptions {
+                evaluations: 80,
+                seconds: 600,
+                qualification: false,
+                seeds: None,
+                vocabulary: None,
+            },
             jope_parallel::manifest::SEED,
         )?,
         Cmd::Search {
@@ -1886,11 +1900,13 @@ fn main() -> Result<()> {
             &prepared,
             cut,
             &output,
-            evaluations,
-            seconds,
-            qualification,
-            seeds.as_deref(),
-            vocabulary.as_deref(),
+            jope_parallel::gp::SearchOptions {
+                evaluations,
+                seconds,
+                qualification,
+                seeds: seeds.as_deref(),
+                vocabulary: vocabulary.as_deref(),
+            },
             rng_seed,
         )?,
         Cmd::GpService {

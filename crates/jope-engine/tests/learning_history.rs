@@ -226,11 +226,13 @@ fn compact_overview_uses_latest_validation_timestamp_across_overlapping_runs() {
                 f,
                 2,
                 &Hardware::default(),
-                &Value::Null,
-                &Value::Null,
-                &json!({}),
-                "",
-                &history,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &Value::Null,
+                    neural: &Value::Null,
+                    run: &json!({}),
+                    events: "",
+                    history: &history,
+                },
             )
         })
         .unwrap();
@@ -253,7 +255,7 @@ fn partial_append_and_corrupt_complete_records_are_visible_without_repair_writes
     let mut stream = fs::OpenOptions::new().append(true).open(&file).unwrap();
     writeln!(stream, "broken complete record").unwrap();
     let second = row(path, 2, 101).to_string();
-    stream.write_all(second[..20].as_bytes()).unwrap();
+    stream.write_all(&second.as_bytes()[..20]).unwrap();
     let original = fs::read(&file).unwrap();
     let mut cache = Cache::default();
     let first = cache.refresh(root);
@@ -261,7 +263,7 @@ fn partial_append_and_corrupt_complete_records_are_visible_without_repair_writes
     assert_eq!(first.runs[0].malformed, 1);
     assert!(first.runs[0].pending_line);
     assert_eq!(fs::read(&file).unwrap(), original);
-    stream.write_all(second[20..].as_bytes()).unwrap();
+    stream.write_all(&second.as_bytes()[20..]).unwrap();
     stream.write_all(b"\n").unwrap();
     let second = cache.refresh(root);
     assert_eq!(second.runs[0].points.len(), 2);
@@ -371,11 +373,13 @@ fn navigation_reaches_both_ends_and_all_view_sizes_remain_usable() {
                     f,
                     2,
                     &Hardware::default(),
-                    &Value::Null,
-                    &Value::Null,
-                    &json!({}),
-                    "",
-                    &history,
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &Value::Null,
+                        neural: &Value::Null,
+                        run: &json!({}),
+                        events: "",
+                        history: &history,
+                    },
                 )
             })
             .unwrap();
@@ -465,11 +469,13 @@ fn selected_run_keeps_the_three_global_history_charts() {
                 f,
                 2,
                 &Hardware::default(),
-                &Value::Null,
-                &Value::Null,
-                &json!({}),
-                "",
-                &history,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &Value::Null,
+                    neural: &Value::Null,
+                    run: &json!({}),
+                    events: "",
+                    history: &history,
+                },
             )
         })
         .unwrap();

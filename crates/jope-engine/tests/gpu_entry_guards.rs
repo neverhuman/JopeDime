@@ -48,9 +48,20 @@ fn entry_guard_child() {
         "training-probe-controller" => {
             jope_parallel::controller::training_probe(absent, absent, 256, 2048, 8, 60)
         }
-        "train-controller" => {
-            jope_parallel::controller::train(root, absent, absent, 8, 256, 1, 1, false, None, None)
-        }
+        "train-controller" => jope_parallel::controller::train(
+            root,
+            absent,
+            absent,
+            jope_parallel::controller::TrainingOptions {
+                world: 8,
+                micro: 256,
+                steps: 1,
+                checkpoint_steps: 1,
+                resume: false,
+                fail_rank: None,
+                initialize: None,
+            },
+        ),
         "proposal-controller" => {
             jope_parallel::controller::propose(root, absent, absent, absent, 2, 0, false)
         }

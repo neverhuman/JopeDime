@@ -318,10 +318,12 @@ impl Loop {
                 &assessment,
                 &request.run,
                 prior_generation,
-                &committed_checkpoint,
-                &controller.config.accepted_checkpoint,
-                &train_ref,
-                &comparison,
+                crate::native_loop::ParentEvidence {
+                    cp: &committed_checkpoint,
+                    previous: &controller.config.accepted_checkpoint,
+                    train: &train_ref,
+                    comparison: &comparison,
+                },
             )?;
             ensure!(
                 decision.accepted,

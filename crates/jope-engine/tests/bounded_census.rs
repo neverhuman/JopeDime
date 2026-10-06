@@ -469,7 +469,8 @@ fn unverifiable_identity_inputs_refuse_the_collection() {
     let spec = install(&root);
     let never = FakeNvidia::default();
     let host = with_commands(&never);
-    let cases: Vec<(&str, Box<dyn Fn(&mut CollectSpec)>)> = vec![
+    type SpecMutation<'a> = (&'a str, Box<dyn Fn(&mut CollectSpec)>);
+    let cases: Vec<SpecMutation<'_>> = vec![
         (
             "not assigned to a local interface",
             Box::new(|s| s.address = "192.0.2.1".into()),

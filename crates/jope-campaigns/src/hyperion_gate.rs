@@ -2531,10 +2531,12 @@ pub fn build_registry_cache(
                 &source,
                 fold,
                 &cv5_plan,
-                &cv5_sha256,
-                &cache_root,
-                &registry_sha256,
-                dataset,
+                crate::hyperion_gate::FoldEncodingScope {
+                    plan_sha256: &cv5_sha256,
+                    encoding_root: &cache_root,
+                    registry_sha256: &registry_sha256,
+                    dataset,
+                },
                 Instant::now(),
             )?;
             cv5.push(CacheCoverageEntryV2 {
@@ -2551,10 +2553,12 @@ pub fn build_registry_cache(
                 &source,
                 fold,
                 &cv7_plan,
-                &cv7_sha256,
-                &cache_root,
-                &registry_sha256,
-                dataset,
+                crate::hyperion_gate::FoldEncodingScope {
+                    plan_sha256: &cv7_sha256,
+                    encoding_root: &cache_root,
+                    registry_sha256: &registry_sha256,
+                    dataset,
+                },
                 Instant::now(),
             )?;
             cv7.push(CacheCoverageEntryV2 {
@@ -3668,17 +3672,30 @@ fn cache_key(
     Ok(key)
 }
 
+/// Immutable output and dataset identities for a fold encoding.
+#[derive(Clone, Copy)]
+struct FoldEncodingScope<'a> {
+    pub plan_sha256: &'a str,
+    pub encoding_root: &'a Path,
+    pub registry_sha256: &'a str,
+    pub dataset: &'a TrainOnlyDatasetV1,
+}
+
 fn encode_fold(
     encoder: &HyperionEncoderIdentityV1,
     source: &RegressionTable,
     fold: &GroupedFoldV1,
     plan: &GroupedFoldPlanV1,
-    plan_sha256: &str,
-    encoding_root: &Path,
-    registry_sha256: &str,
-    dataset: &TrainOnlyDatasetV1,
+    scope: FoldEncodingScope<'_>,
     gate_started: Instant,
 ) -> Result<FoldEncoding, String> {
+    let FoldEncodingScope {
+        plan_sha256,
+        encoding_root,
+        registry_sha256,
+        dataset,
+    } = scope;
+
     let stage = match plan.stage {
         GateStageV1::Cv5Screen => "cv5",
         GateStageV1::Cv7Confirmation => "cv7",

@@ -332,29 +332,38 @@ impl Operation {
 
 /// Opaque process-local proof; only verified native allocation dispatch constructs it.
 pub struct VerifiedTask {
+    #[cfg(feature = "neural")]
     attempt: FencedAttempt,
+    #[cfg(feature = "neural")]
     manifest: TaskManifest,
+    #[cfg(feature = "neural")]
     root: PathBuf,
     operation: Operation,
     stop: Arc<AtomicBool>,
+    #[cfg(feature = "neural")]
     recovering: bool,
 }
 impl VerifiedTask {
+    #[cfg(feature = "neural")]
     pub(crate) fn attempt(&self) -> FencedAttempt {
         self.attempt
     }
+    #[cfg(feature = "neural")]
     pub(crate) fn manifest(&self) -> &TaskManifest {
         &self.manifest
     }
+    #[cfg(feature = "neural")]
     pub(crate) fn root(&self) -> &Path {
         &self.root
     }
     pub(crate) fn operation(&self) -> &Operation {
         &self.operation
     }
+    #[cfg(feature = "neural")]
     pub(crate) fn stop(&self) -> &AtomicBool {
         &self.stop
     }
+    #[cfg(feature = "neural")]
     pub(crate) fn recovering(&self) -> bool {
         self.recovering
     }
@@ -1138,11 +1147,15 @@ fn execute(
         task.checkpoint_allowance_ms.unwrap_or(1000),
     );
     let verified = VerifiedTask {
+        #[cfg(feature = "neural")]
         attempt: allocation.attempt,
+        #[cfg(feature = "neural")]
         manifest: task.clone(),
+        #[cfg(feature = "neural")]
         root: allocation.policy.root.clone(),
         operation: input.operation.clone(),
         stop,
+        #[cfg(feature = "neural")]
         recovering,
     };
     let _scratch = ScratchGuard::start(allocation, &task, &directory)?;
@@ -1436,11 +1449,13 @@ fn run_operation(policy: &WorkerPolicy, task: &VerifiedTask, receipt: &Path) -> 
                 &resolve(&policy.root, prepared)?,
                 *cut,
                 &resolve(&policy.root, output)?,
-                *evaluations,
-                *seconds,
-                *qualification,
-                seeds.as_deref(),
-                vocabulary.as_deref(),
+                crate::gp::SearchOptions {
+                    evaluations: *evaluations,
+                    seconds: *seconds,
+                    qualification: *qualification,
+                    seeds: seeds.as_deref(),
+                    vocabulary: vocabulary.as_deref(),
+                },
                 *rng_seed,
             )?;
             write_json(
@@ -1461,9 +1476,11 @@ fn run_operation(policy: &WorkerPolicy, task: &VerifiedTask, receipt: &Path) -> 
                 .collect::<Result<Vec<_>>>()?;
             crate::corpus_publication::build(
                 &policy.root,
-                &resolve(&policy.root, contexts)?,
-                &resolve(&policy.root, vocabulary)?,
-                &observations,
+                crate::corpus_publication::PublicationSources {
+                    contexts: &resolve(&policy.root, contexts)?,
+                    vocab: &resolve(&policy.root, vocabulary)?,
+                    observations: &observations,
+                },
                 &resolve(&policy.root, output)?,
                 *qualification,
                 None,

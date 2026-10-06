@@ -2572,16 +2572,30 @@ fn compact_wrap(lines: Vec<Line<'static>>, width: u16) -> Vec<Line<'static>> {
     }
     output
 }
+/// Observed search, training and run evidence rendered together.
+#[derive(Clone, Copy)]
+pub struct DashboardData<'a> {
+    pub gp: &'a Value,
+    pub neural: &'a Value,
+    pub run: &'a Value,
+    pub events: &'a str,
+    pub history: &'a History,
+}
+
 fn compact_lines(
     view: usize,
     h: &Hardware,
-    gp: &Value,
-    neural: &Value,
-    run: &Value,
-    events: &str,
-    history: &History,
+    data: DashboardData<'_>,
     width: u16,
 ) -> Vec<Line<'static>> {
+    let DashboardData {
+        gp,
+        neural,
+        run,
+        events,
+        history,
+    } = data;
+
     let policy = if run["policy"].is_object() {
         &run["policy"]
     } else {
@@ -2755,16 +2769,15 @@ fn compact_lines(
     );
     compact_wrap(lines, width)
 }
-fn render_compact(
-    f: &mut Frame,
-    view: usize,
-    h: &Hardware,
-    gp: &Value,
-    neural: &Value,
-    run: &Value,
-    events: &str,
-    history: &History,
-) {
+fn render_compact(f: &mut Frame, view: usize, h: &Hardware, data: DashboardData<'_>) {
+    let DashboardData {
+        gp,
+        neural,
+        run,
+        events,
+        history,
+    } = data;
+
     let areas = Layout::vertical([
         Constraint::Length(1),
         Constraint::Length(1),
@@ -2788,7 +2801,18 @@ fn render_compact(
         Paragraph::new("1 Overview 2 HW 3 DL 4 GP 5 Events"),
         areas[1],
     );
-    let lines = compact_lines(view, h, gp, neural, run, events, history, areas[2].width);
+    let lines = compact_lines(
+        view,
+        h,
+        crate::dashboard::DashboardData {
+            gp,
+            neural,
+            run,
+            events,
+            history,
+        },
+        areas[2].width,
+    );
     let maximum = lines
         .len()
         .saturating_sub(areas[2].height as usize)
@@ -2806,16 +2830,15 @@ fn render_compact(
     );
 }
 
-pub fn render(
-    f: &mut Frame,
-    view: usize,
-    h: &Hardware,
-    gp: &Value,
-    neural: &Value,
-    run: &Value,
-    events: &str,
-    history: &History,
-) {
+pub fn render(f: &mut Frame, view: usize, h: &Hardware, data: DashboardData<'_>) {
+    let DashboardData {
+        gp,
+        neural,
+        run,
+        events,
+        history,
+    } = data;
+
     let observed_gp = crate::telemetry::observed_status(gp, now());
     let gp = &observed_gp;
     f.render_widget(
@@ -2833,7 +2856,18 @@ pub fn render(
         return;
     }
     if compact_layout(f.area()) {
-        render_compact(f, view, h, gp, neural, run, events, history);
+        render_compact(
+            f,
+            view,
+            h,
+            crate::dashboard::DashboardData {
+                gp,
+                neural,
+                run,
+                events,
+                history,
+            },
+        );
         return;
     }
     let areas = Layout::vertical([
@@ -3441,17 +3475,40 @@ pub fn run_with_manifest(root: &Path, experiment_manifest: Option<&Path>) -> Res
             campaign_updated = Instant::now();
         }
         let events = tail(&root.join("runs/events.log"), 64 * 1024);
-        terminal.draw(|f| render(f, view, &h, &gp, &neural, &run, &events, &history))?;
+        terminal.draw(|f| {
+            render(
+                f,
+                view,
+                &h,
+                crate::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &neural,
+                    run: &run,
+                    events: &events,
+                    history: &history,
+                },
+            )
+        })?;
         if event::poll(Duration::from_millis(250))? {
             if let Event::Key(key) = event::read()? {
                 let size = terminal.size()?;
                 if compact_layout(Rect::new(0, 0, size.width, size.height)) {
                     let visible = size.height.saturating_sub(3) as usize;
-                    let maximum =
-                        compact_lines(view, &h, &gp, &neural, &run, &events, &history, size.width)
-                            .len()
-                            .saturating_sub(visible)
-                            .min(u16::MAX as usize) as u16;
+                    let maximum = compact_lines(
+                        view,
+                        &h,
+                        crate::dashboard::DashboardData {
+                            gp: &gp,
+                            neural: &neural,
+                            run: &run,
+                            events: &events,
+                            history: &history,
+                        },
+                        size.width,
+                    )
+                    .len()
+                    .saturating_sub(visible)
+                    .min(u16::MAX as usize) as u16;
                     let current = history.compact_offsets[view].min(maximum);
                     let selected = match key.code {
                         KeyCode::Down => Some(current.saturating_add(1)),

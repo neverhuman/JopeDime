@@ -89,6 +89,14 @@ pub fn continuation_replay(root: &Path, policy: &Value) -> Result<Option<Value>>
     Ok(Some(replay))
 }
 
+/// Requested rank, microbatch and global-batch partition.
+#[derive(Clone, Copy)]
+pub struct TrainingTopology {
+    pub world: usize,
+    pub micro: usize,
+    pub global: usize,
+}
+
 /// Recover a completed parent's observed topology; authorize no execution and
 /// never rewrite that historical checkpoint as an exact-resume checkpoint.
 pub fn verify_continuation(
@@ -96,11 +104,15 @@ pub fn verify_continuation(
     policy: &Value,
     corpus_sha: &str,
     vocabulary_sha: &str,
-    world: usize,
-    micro: usize,
-    global: usize,
+    options: TrainingTopology,
     new_steps: usize,
 ) -> Result<Value> {
+    let TrainingTopology {
+        world,
+        micro,
+        global,
+    } = options;
+
     verify_continuation_partition(
         root,
         policy,
@@ -491,9 +503,11 @@ mod tests {
             p,
             &"e".repeat(64),
             &"c".repeat(64),
-            8,
-            256,
-            2048,
+            crate::checkpoint_recovery::TrainingTopology {
+                world: 8,
+                micro: 256,
+                global: 2048,
+            },
             1000,
         )
     }

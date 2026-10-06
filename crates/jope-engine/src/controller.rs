@@ -147,8 +147,25 @@ pub fn propose(
     shuffled: bool,
 ) -> Result<()> {
     propose_with_generation(
-        root, corpus, checkpoint, output, cuts, cut_start, shuffled, None,
+        root,
+        corpus,
+        checkpoint,
+        output,
+        crate::controller::ProposalOptions {
+            cuts,
+            cut_start,
+            shuffled,
+        },
+        None,
     )
+}
+
+/// Cut selection and context-shuffle mode for a proposal run.
+#[derive(Clone, Copy)]
+pub struct ProposalOptions {
+    pub cuts: usize,
+    pub cut_start: usize,
+    pub shuffled: bool,
 }
 
 pub fn propose_with_generation(
@@ -156,11 +173,15 @@ pub fn propose_with_generation(
     corpus: &Path,
     checkpoint: &Path,
     output: &Path,
-    cuts: usize,
-    cut_start: usize,
-    shuffled: bool,
+    options: ProposalOptions,
     generation: Option<&Path>,
 ) -> Result<()> {
+    let ProposalOptions {
+        cuts,
+        cut_start,
+        shuffled,
+    } = options;
+
     crate::task_contract::require_original_gpu_grant("proposal-controller")?;
     crate::campaign::check_deadline()?;
     let task_deadline = crate::task_contract::gpu_task_deadline_ms()?;
@@ -368,63 +389,37 @@ pub(crate) fn training_executable(root: &Path) -> Result<PathBuf> {
     Ok(std::env::current_exe()?)
 }
 
+/// Topology, update window and initialization for a training request.
+#[derive(Clone, Copy)]
+pub struct TrainingOptions<'a> {
+    pub world: usize,
+    pub micro: usize,
+    pub steps: usize,
+    pub checkpoint_steps: usize,
+    pub resume: bool,
+    pub fail_rank: Option<usize>,
+    pub initialize: Option<&'a Path>,
+}
+
 /// Own all GPU ranks under a lease shared with encoding services. A failed rank
 /// restarts the whole communicator from the last atomically published checkpoint.
 pub fn train(
     root: &Path,
     corpus: &Path,
     output: &Path,
-    world: usize,
-    micro: usize,
-    steps: usize,
-    checkpoint_steps: usize,
-    resume: bool,
-    fail_rank: Option<usize>,
-    initialize: Option<&Path>,
+    options: TrainingOptions<'_>,
 ) -> Result<()> {
-    train_controlled(
-        root,
-        corpus,
-        output,
-        world,
-        micro,
-        steps,
-        checkpoint_steps,
-        resume,
-        fail_rank,
-        initialize,
-        None,
-        None,
-    )
+    train_controlled(root, corpus, output, options, None, None)
 }
 
 pub fn train_with_policy(
     root: &Path,
     corpus: &Path,
     output: &Path,
-    world: usize,
-    micro: usize,
-    steps: usize,
-    checkpoint_steps: usize,
-    resume: bool,
-    fail_rank: Option<usize>,
-    initialize: Option<&Path>,
+    options: TrainingOptions<'_>,
     policy: Option<&Path>,
 ) -> Result<()> {
-    train_controlled(
-        root,
-        corpus,
-        output,
-        world,
-        micro,
-        steps,
-        checkpoint_steps,
-        resume,
-        fail_rank,
-        initialize,
-        None,
-        policy,
-    )
+    train_controlled(root, corpus, output, options, None, policy)
 }
 
 /// A run owns one requested increment. Reopening it resumes that same window;
@@ -480,16 +475,20 @@ pub(crate) fn train_controlled(
     root: &Path,
     corpus: &Path,
     output: &Path,
-    world: usize,
-    micro: usize,
-    steps: usize,
-    checkpoint_steps: usize,
-    resume: bool,
-    fail_rank: Option<usize>,
-    initialize: Option<&Path>,
+    options: TrainingOptions<'_>,
     stop: Option<&AtomicBool>,
     policy: Option<&Path>,
 ) -> Result<()> {
+    let TrainingOptions {
+        world,
+        micro,
+        steps,
+        checkpoint_steps,
+        resume,
+        fail_rank,
+        initialize,
+    } = options;
+
     // Input validation below is read-only: it creates no GPU context, lease,
     // lock, output directory or receipt. It precedes the dispatch hold so an
     // invalid request is refused for its own reason, and the hold still
@@ -530,9 +529,11 @@ pub(crate) fn train_controlled(
                 index["vocabulary_sha256"]
                     .as_str()
                     .context("continuation vocabulary absent")?,
-                world,
-                micro,
-                2048,
+                crate::checkpoint_recovery::TrainingTopology {
+                    world,
+                    micro,
+                    global: 2048,
+                },
                 steps,
             )?;
             if !resume {
@@ -1339,9 +1340,9 @@ mod lifetime_tests {
         let mut command = Command::new("sleep");
         command.arg("60");
         bind_parent_death(&mut command);
-        let child = command.spawn().unwrap();
+        let mut child = command.spawn().unwrap();
         fs::write(path, child.id().to_string()).unwrap();
-        std::thread::sleep(Duration::from_secs(60));
+        child.wait().unwrap();
     }
     #[test]
     fn sigkill_of_controller_reaps_its_rank_clients() {

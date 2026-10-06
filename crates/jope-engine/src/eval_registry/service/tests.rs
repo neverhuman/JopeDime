@@ -59,10 +59,12 @@ impl Fixture {
             &root,
             &witness,
             "(sym raw \"col(0)\")",
-            i.x,
-            i.y,
-            i.preprocessing,
-            i.feature_view,
+            crate::eval_registry::FitInputs {
+                x: i.x,
+                y: i.y,
+                preprocessing: i.preprocessing,
+                feature_view: i.feature_view,
+            },
             0,
         )
         .unwrap();

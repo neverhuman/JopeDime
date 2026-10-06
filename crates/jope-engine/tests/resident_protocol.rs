@@ -1,11 +1,6 @@
 //! Synthetic process/socket tests; these do not initialize CUDA or qualify NCCL.
-use jope_parallel::checkpoint_recovery;
-use jope_parallel::corpus_projection;
 use jope_parallel::manifest;
-use jope_parallel::sealed_storage;
-use jope_parallel::task_contract;
-#[path = "../src/resident_protocol.rs"]
-mod protocol;
+use jope_parallel::resident_protocol as protocol;
 use manifest::{read_json, write_json};
 use protocol::*;
 use serde_json::{json, Value};

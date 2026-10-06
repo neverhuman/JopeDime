@@ -69,16 +69,28 @@ fn retire_partial(path: &Path, reason: &str) -> Result<()> {
     Ok(())
 }
 
+/// Context, vocabulary and observation inputs for atomic corpus publication.
+#[derive(Clone, Copy)]
+pub struct PublicationSources<'a> {
+    pub contexts: &'a Path,
+    pub vocab: &'a Path,
+    pub observations: &'a [PathBuf],
+}
+
 pub fn build(
     root: &Path,
-    contexts: &Path,
-    vocab: &Path,
-    observations: &[PathBuf],
+    sources: PublicationSources<'_>,
     output: &Path,
     qualification: bool,
     cache: Option<&Path>,
     heartbeat: Option<&StageHeartbeat>,
 ) -> Result<()> {
+    let PublicationSources {
+        contexts,
+        vocab,
+        observations,
+    } = sources;
+
     crate::campaign::check_deadline()?;
     let contexts_sha = file_hash(contexts)?;
     let vocab_sha = file_hash(vocab)?;
@@ -131,9 +143,11 @@ pub fn build(
         let result = if let Some(cache) = cache {
             corpus::build_observed_cached(
                 root,
-                contexts,
-                vocab,
-                observations,
+                crate::corpus::CorpusSources {
+                    contexts_path: contexts,
+                    vocab_path: vocab,
+                    observations,
+                },
                 &staging,
                 qualification,
                 cache,

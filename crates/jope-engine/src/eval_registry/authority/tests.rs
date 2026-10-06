@@ -24,10 +24,12 @@ fn fit() -> VerifiedFit {
     });
     VerifiedFit::from_verified_runtime(
         "(pipe X (ridge))",
-        vec![vec![1.], vec![2.]],
-        vec![2., 3.],
-        b"preprocess".to_vec(),
-        b"raw".to_vec(),
+        crate::eval_registry::FitInputs {
+            x: vec![vec![1.], vec![2.]],
+            y: vec![2., 3.],
+            preprocessing: b"preprocess".to_vec(),
+            feature_view: b"raw".to_vec(),
+        },
         42,
         executable.clone(),
         runtime.clone(),
@@ -161,10 +163,12 @@ fn identities_preserve_math_and_separate_query_provenance() {
     let f = fit();
     let g = VerifiedFit::from_verified_runtime(
         " (pipe X (ridge)) ",
-        vec![vec![1.], vec![2.]],
-        vec![2., 3.],
-        b"preprocess".to_vec(),
-        b"raw".to_vec(),
+        crate::eval_registry::FitInputs {
+            x: vec![vec![1.], vec![2.]],
+            y: vec![2., 3.],
+            preprocessing: b"preprocess".to_vec(),
+            feature_view: b"raw".to_vec(),
+        },
         42,
         f.identity.executable_sha256.clone(),
         f.identity.runtime_sha256.clone(),
@@ -194,10 +198,12 @@ fn fit_program(p: &str) -> VerifiedFit {
     let f = fit();
     VerifiedFit::from_verified_runtime(
         p,
-        f.x,
-        f.y,
-        f.preprocessing,
-        f.feature_view,
+        crate::eval_registry::FitInputs {
+            x: f.x,
+            y: f.y,
+            preprocessing: f.preprocessing,
+            feature_view: f.feature_view,
+        },
         42,
         f.identity.executable_sha256,
         f.identity.runtime_sha256,
@@ -609,10 +615,12 @@ fn original_success_retains_model_zero_quality_and_adopts_once() {
             &f,
             observed,
             ExecutionOutcome::Success,
-            b"original output",
-            Some(b"original model"),
-            None,
-            Some(b"{\"rmse\":0.0}"),
+            crate::eval_registry::CompletionArtifacts {
+                output: b"original output",
+                model: Some(b"original model"),
+                predictions: Some(b"original predictions"),
+                metrics: Some(b"{\"rmse\":0.0}"),
+            },
         )
         .unwrap();
     assert_eq!(
@@ -620,6 +628,29 @@ fn original_success_retains_model_zero_quality_and_adopts_once() {
         ExecutionOutcome::Success
     );
     assert_eq!(a.model_for_completion(&sha).unwrap(), b"original model");
+    let receipt = a.verify_committed_completion(&sha).unwrap();
+    for (digest, expected) in [
+        (
+            receipt.output_sha256.as_str(),
+            b"original output".as_slice(),
+        ),
+        (
+            receipt.model_sha256.as_deref().unwrap(),
+            b"original model".as_slice(),
+        ),
+        (
+            receipt.predictions_sha256.as_deref().unwrap(),
+            b"original predictions".as_slice(),
+        ),
+        (
+            receipt.metrics_sha256.as_deref().unwrap(),
+            b"{\"rmse\":0.0}".as_slice(),
+        ),
+    ] {
+        assert_eq!(a.read_blob(digest).unwrap(), expected);
+        assert_eq!(hash(expected), digest);
+    }
+
     a.commit_original_completion(&f, &start, &sha).unwrap();
     assert_eq!(state(a.claim(&f, &request()).unwrap()), "completed");
     let model = a.completion(&sha).unwrap().model_sha256.unwrap();
@@ -638,10 +669,12 @@ fn failed_exit_signal_and_timeout_cannot_be_cleared_by_result_files() {
                 &f,
                 observed,
                 ExecutionOutcome::Success,
-                b"valid-looking result",
-                Some(b"model"),
-                Some(b"predictions"),
-                Some(b"{\"rmse\":0}"),
+                crate::eval_registry::CompletionArtifacts {
+                    output: b"valid-looking result",
+                    model: Some(b"model"),
+                    predictions: Some(b"predictions"),
+                    metrics: Some(b"{\"rmse\":0}"),
+                },
             )
             .unwrap();
         let receipt = a.completion(&sha).unwrap();
@@ -673,10 +706,12 @@ fn preparation_delay_does_not_spend_execution_deadline() {
             &f,
             observed,
             ExecutionOutcome::Success,
-            b"valid-looking result",
-            Some(b"model"),
-            Some(b"predictions"),
-            Some(b"{\"rmse\":0}"),
+            crate::eval_registry::CompletionArtifacts {
+                output: b"valid-looking result",
+                model: Some(b"model"),
+                predictions: Some(b"predictions"),
+                metrics: Some(b"{\"rmse\":0}"),
+            },
         )
         .unwrap();
     let receipt = a.completion(&sha).unwrap();
@@ -759,10 +794,12 @@ fn new_binary_or_runtime_is_not_numerical_novelty() {
     ] {
         let alias = VerifiedFit::from_verified_runtime(
             &fit.identity.canonical_program,
-            fit.x.clone(),
-            fit.y.clone(),
-            fit.preprocessing.clone(),
-            fit.feature_view.clone(),
+            crate::eval_registry::FitInputs {
+                x: fit.x.clone(),
+                y: fit.y.clone(),
+                preprocessing: fit.preprocessing.clone(),
+                feature_view: fit.feature_view.clone(),
+            },
             fit.identity.fit_seed,
             exe,
             runtime,
@@ -1560,10 +1597,12 @@ fn recovery_inspection_exposes_index_corruption_and_missing_original_model() {
             &fit,
             observed,
             ExecutionOutcome::Success,
-            b"original synthetic output",
-            Some(b"original synthetic model"),
-            None,
-            None,
+            crate::eval_registry::CompletionArtifacts {
+                output: b"original synthetic output",
+                model: Some(b"original synthetic model"),
+                predictions: None,
+                metrics: None,
+            },
         )
         .unwrap();
     let model = authority

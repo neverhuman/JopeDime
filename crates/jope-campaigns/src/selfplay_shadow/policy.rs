@@ -389,16 +389,27 @@ fn receipt_for(key: EvaluationKeyV2, decision: &CacheDecision) -> EvaluationCach
     }
 }
 
+/// Evaluator and protocol identities shared by proposal-pool admission.
+#[derive(Clone, Copy)]
+struct EvaluationIdentity<'a> {
+    pub evaluator: &'a Sha256Digest,
+    pub protocol: &'a Sha256Digest,
+}
+
 fn filter_pool(
     candidates: Vec<PolicyCandidate>,
     required_origin: Origin,
     context: &DatasetContext,
     parent: &Sha256Digest,
-    evaluator: &Sha256Digest,
-    protocol: &Sha256Digest,
+    identity: EvaluationIdentity<'_>,
     index: &EvaluationIndex,
     receipts: &mut Vec<EvaluationCacheReceiptV2>,
 ) -> Result<Vec<EligibleCandidate>> {
+    let EvaluationIdentity {
+        evaluator,
+        protocol,
+    } = identity;
+
     let mut output = Vec::new();
     let mut semantics = BTreeSet::new();
     for candidate in candidates {
@@ -452,8 +463,10 @@ pub fn build_context_lane(
         Origin::DlDirect,
         &context,
         accepted_parent,
-        evaluator_sha256,
-        protocol_sha256,
+        crate::selfplay_shadow::policy::EvaluationIdentity {
+            evaluator: evaluator_sha256,
+            protocol: protocol_sha256,
+        },
         index,
         &mut receipts,
     )?;
@@ -462,8 +475,10 @@ pub fn build_context_lane(
         Origin::GpComparator,
         &context,
         accepted_parent,
-        evaluator_sha256,
-        protocol_sha256,
+        crate::selfplay_shadow::policy::EvaluationIdentity {
+            evaluator: evaluator_sha256,
+            protocol: protocol_sha256,
+        },
         index,
         &mut receipts,
     )?;
@@ -472,8 +487,10 @@ pub fn build_context_lane(
         Origin::GpExploration,
         &context,
         accepted_parent,
-        evaluator_sha256,
-        protocol_sha256,
+        crate::selfplay_shadow::policy::EvaluationIdentity {
+            evaluator: evaluator_sha256,
+            protocol: protocol_sha256,
+        },
         index,
         &mut receipts,
     )?;

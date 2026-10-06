@@ -1535,11 +1535,13 @@ pub fn search(
         prepared,
         cut,
         output,
-        evaluations,
-        seconds,
-        qualification,
-        None,
-        None,
+        crate::gp::SearchOptions {
+            evaluations,
+            seconds,
+            qualification,
+            seeds: None,
+            vocabulary: None,
+        },
     )
 }
 /// A comparison search may write only below its explicitly bound experiment.
@@ -1581,53 +1583,34 @@ pub fn verify_experiment_output(output: &Path, experiment: &Path) -> Result<()> 
     Ok(())
 }
 
+/// Work limits, qualification mode and optional proposal inputs for a search.
+#[derive(Clone, Copy)]
+pub struct SearchOptions<'a> {
+    pub evaluations: usize,
+    pub seconds: u64,
+    pub qualification: bool,
+    pub seeds: Option<&'a Path>,
+    pub vocabulary: Option<&'a Path>,
+}
+
 pub fn search_seeded(
     prepared: &Path,
     cut: usize,
     output: &Path,
-    evaluations: usize,
-    seconds: u64,
-    qualification: bool,
-    seeds: Option<&Path>,
-    vocabulary: Option<&Path>,
+    options: SearchOptions<'_>,
 ) -> Result<()> {
-    search_seeded_with_rng(
-        prepared,
-        cut,
-        output,
-        evaluations,
-        seconds,
-        qualification,
-        seeds,
-        vocabulary,
-        SEED,
-    )
+    search_seeded_with_rng(prepared, cut, output, options, SEED)
 }
 
 pub fn search_seeded_with_rng(
     prepared: &Path,
     cut: usize,
     output: &Path,
-    evaluations: usize,
-    seconds: u64,
-    qualification: bool,
-    seeds: Option<&Path>,
-    vocabulary: Option<&Path>,
+    options: SearchOptions<'_>,
     rng_seed: u64,
 ) -> Result<()> {
     let artifact_root = crate::prepare::workspace_root(prepared)?;
-    search_seeded_with_rng_in_root(
-        &artifact_root,
-        prepared,
-        cut,
-        output,
-        evaluations,
-        seconds,
-        qualification,
-        seeds,
-        vocabulary,
-        rng_seed,
-    )
+    search_seeded_with_rng_in_root(&artifact_root, prepared, cut, output, options, rng_seed)
 }
 
 /// Resolve the declared custody root before accepting any search or creating
@@ -1638,11 +1621,7 @@ pub fn search_seeded_with_rng_in_root(
     prepared: &Path,
     cut: usize,
     output: &Path,
-    evaluations: usize,
-    seconds: u64,
-    qualification: bool,
-    seeds: Option<&Path>,
-    vocabulary: Option<&Path>,
+    options: SearchOptions<'_>,
     rng_seed: u64,
 ) -> Result<()> {
     search_inner(
@@ -1650,11 +1629,7 @@ pub fn search_seeded_with_rng_in_root(
         prepared,
         cut,
         output,
-        evaluations,
-        seconds,
-        qualification,
-        seeds,
-        vocabulary,
+        options,
         rng_seed,
         None,
     )
@@ -1674,11 +1649,13 @@ pub(crate) fn search_native_genome(
         &resolve(root, &candidate.context.prepared)?,
         candidate.context.cut,
         &resolve(root, &task.output)?,
-        task.evaluations,
-        task.seconds,
-        task.qualification,
-        None,
-        Some(&resolve(root, &task.vocabulary.path)?),
+        crate::gp::SearchOptions {
+            evaluations: task.evaluations,
+            seconds: task.seconds,
+            qualification: task.qualification,
+            seeds: None,
+            vocabulary: Some(&resolve(root, &task.vocabulary.path)?),
+        },
         task.rng_seed,
         Some((reference, task, candidate, parent_row)),
     )
@@ -1731,11 +1708,7 @@ fn search_inner(
     prepared: &Path,
     cut: usize,
     output: &Path,
-    evaluations: usize,
-    seconds: u64,
-    qualification: bool,
-    seeds: Option<&Path>,
-    vocabulary: Option<&Path>,
+    options: SearchOptions<'_>,
     rng_seed: u64,
     native: Option<(
         &crate::native_graph::Artifact,
@@ -1744,6 +1717,14 @@ fn search_inner(
         Option<&serde_json::Value>,
     )>,
 ) -> Result<()> {
+    let SearchOptions {
+        evaluations,
+        seconds,
+        qualification,
+        seeds,
+        vocabulary,
+    } = options;
+
     let lifecycle_start = Instant::now();
     let completion_root = artifact_root
         .canonicalize()

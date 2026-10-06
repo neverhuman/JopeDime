@@ -72,10 +72,12 @@ impl ServiceInputs {
     ) -> Result<VerifiedFit> {
         VerifiedFit::from_verified_runtime(
             &self.program,
-            self.x.clone(),
-            self.y.clone(),
-            self.preprocessing.clone(),
-            self.feature_view.clone(),
+            crate::eval_registry::FitInputs {
+                x: self.x.clone(),
+                y: self.y.clone(),
+                preprocessing: self.preprocessing.clone(),
+                feature_view: self.feature_view.clone(),
+            },
             config.fit_seed,
             executable.into(),
             runtime.into(),
@@ -1109,10 +1111,12 @@ fn supervise(
     let actual = VerifiedFit::for_executor_process(
         process.pid,
         &inputs.program,
-        inputs.x.clone(),
-        inputs.y.clone(),
-        inputs.preprocessing.clone(),
-        inputs.feature_view.clone(),
+        crate::eval_registry::FitInputs {
+            x: inputs.x.clone(),
+            y: inputs.y.clone(),
+            preprocessing: inputs.preprocessing.clone(),
+            feature_view: inputs.feature_view.clone(),
+        },
         state.config.fit_seed,
         &state.config.contract,
     )?;
@@ -1215,10 +1219,12 @@ fn supervise(
         &actual,
         observed,
         outcome,
-        &bytes,
-        model.as_deref(),
-        None,
-        None,
+        crate::eval_registry::CompletionArtifacts {
+            output: &bytes,
+            model: model.as_deref(),
+            predictions: None,
+            metrics: None,
+        },
     )?;
     {
         lock(&state.authority)?.commit_original_completion(&actual, &start, &sha)?;
@@ -1948,7 +1954,7 @@ fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
     let deadline = Instant::now() + timeout;
     loop {
         wait_fd(stream.as_raw_fd(), libc::POLLOUT, deadline)?;
-        let mut byte = [b'F'];
+        let mut byte = *b"F";
         let mut iov = libc::iovec {
             iov_base: byte.as_mut_ptr().cast(),
             iov_len: 1,
@@ -2022,7 +2028,7 @@ fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
                 if (*c).cmsg_level == libc::SOL_SOCKET && (*c).cmsg_type == libc::SCM_RIGHTS {
                     let base = libc::CMSG_LEN(0) as usize;
                     let bytes = (*c).cmsg_len.saturating_sub(base);
-                    valid &= bytes % std::mem::size_of::<i32>() == 0;
+                    valid &= bytes.is_multiple_of(std::mem::size_of::<i32>());
                     for i in 0..bytes / std::mem::size_of::<i32>() {
                         received.push(OwnedFd::from_raw_fd(std::ptr::read_unaligned(
                             libc::CMSG_DATA(c).cast::<i32>().add(i),

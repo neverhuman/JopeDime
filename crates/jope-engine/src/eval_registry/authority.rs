@@ -237,6 +237,24 @@ pub(super) fn process_runtime_digest(pid: u32, contract: &NumericalContract) -> 
     )?))
 }
 
+/// Ordered fitting arrays and their preprocessing/view bytes. Runtime identity
+/// and numerical admission are still verified by VerifiedFit constructors.
+pub struct FitInputs {
+    pub x: Vec<Vec<f64>>,
+    pub y: Vec<f64>,
+    pub preprocessing: Vec<u8>,
+    pub feature_view: Vec<u8>,
+}
+
+/// Exact output payloads retained for an observed execution completion.
+#[derive(Clone, Copy)]
+pub struct CompletionArtifacts<'a> {
+    pub output: &'a [u8],
+    pub model: Option<&'a [u8]>,
+    pub predictions: Option<&'a [u8]>,
+    pub metrics: Option<&'a [u8]>,
+}
+
 impl VerifiedFit {
     /// Called by the actual executor after loading its libraries and fixing its
     /// numerical environment, before requesting any numerical start permission.
@@ -252,10 +270,12 @@ impl VerifiedFit {
         Self::for_executor_process(
             std::process::id(),
             program,
-            x,
-            y,
-            preprocessing,
-            feature_view,
+            crate::eval_registry::FitInputs {
+                x,
+                y,
+                preprocessing,
+                feature_view,
+            },
             fit_seed,
             contract,
         )
@@ -266,13 +286,17 @@ impl VerifiedFit {
     pub fn for_executor_process(
         pid: u32,
         program: &str,
-        x: Vec<Vec<f64>>,
-        y: Vec<f64>,
-        preprocessing: Vec<u8>,
-        feature_view: Vec<u8>,
+        inputs: FitInputs,
         fit_seed: u64,
         contract: &NumericalContract,
     ) -> Result<Self> {
+        let FitInputs {
+            x,
+            y,
+            preprocessing,
+            feature_view,
+        } = inputs;
+
         let before = ProcessIdentity::read(pid)?;
         let executable = hash(&fs::read(format!("/proc/{pid}/exe"))?);
         let runtime = process_runtime_digest(pid, contract)?;
@@ -282,10 +306,12 @@ impl VerifiedFit {
         );
         Self::from_verified_runtime(
             program,
-            x,
-            y,
-            preprocessing,
-            feature_view,
+            crate::eval_registry::FitInputs {
+                x,
+                y,
+                preprocessing,
+                feature_view,
+            },
             fit_seed,
             executable,
             runtime,
@@ -295,15 +321,19 @@ impl VerifiedFit {
 
     pub(super) fn from_verified_runtime(
         program: &str,
-        x: Vec<Vec<f64>>,
-        y: Vec<f64>,
-        preprocessing: Vec<u8>,
-        feature_view: Vec<u8>,
+        inputs: FitInputs,
         fit_seed: u64,
         executable: String,
         runtime: String,
         contract: &NumericalContract,
     ) -> Result<Self> {
+        let FitInputs {
+            x,
+            y,
+            preprocessing,
+            feature_view,
+        } = inputs;
+
         contract.validate()?;
         ensure!(
             !x.is_empty() && x.len() == y.len() && !x[0].is_empty(),
@@ -3934,21 +3964,27 @@ impl Authority {
         fit: &VerifiedFit,
         observed: ObservedCompletion,
         requested_outcome: ExecutionOutcome,
-        output: &[u8],
-        model: Option<&[u8]>,
-        predictions: Option<&[u8]>,
-        metrics: Option<&[u8]>,
+        artifacts: CompletionArtifacts<'_>,
     ) -> Result<String> {
+        let CompletionArtifacts {
+            output,
+            model,
+            predictions,
+            metrics,
+        } = artifacts;
+
         let (start, sha) = prepare_observed_completion(
             &self.root,
             &self.manifest.instance,
             fit,
             observed,
             requested_outcome,
-            output,
-            model,
-            predictions,
-            metrics,
+            crate::eval_registry::CompletionArtifacts {
+                output,
+                model,
+                predictions,
+                metrics,
+            },
         )?;
         self.commit_original_completion(fit, &start, &sha)?;
         Ok(sha)
@@ -4017,11 +4053,15 @@ pub(super) fn prepare_observed_completion(
     fit: &VerifiedFit,
     observed: ObservedCompletion,
     requested_outcome: ExecutionOutcome,
-    output: &[u8],
-    model: Option<&[u8]>,
-    predictions: Option<&[u8]>,
-    metrics: Option<&[u8]>,
+    artifacts: CompletionArtifacts<'_>,
 ) -> Result<(StartToken, String)> {
+    let CompletionArtifacts {
+        output,
+        model,
+        predictions,
+        metrics,
+    } = artifacts;
+
     ensure!(
         observed.start.fit_key == fit.key,
         "original attempt identity mismatch"
@@ -4103,12 +4143,16 @@ pub(crate) fn synthetic_completion_for_test(
     root: &Path,
     witness: &Path,
     program: &str,
-    x: Vec<Vec<f64>>,
-    y: Vec<f64>,
-    preprocessing: Vec<u8>,
-    feature_view: Vec<u8>,
+    inputs: FitInputs,
     fit_seed: u64,
 ) -> Result<(String, String)> {
+    let FitInputs {
+        x,
+        y,
+        preprocessing,
+        feature_view,
+    } = inputs;
+
     let contract = synthetic_contract_for_test();
     static VERIFIED_RUNTIME: std::sync::OnceLock<(String, String)> = std::sync::OnceLock::new();
     let runtime = if let Some(runtime) = VERIFIED_RUNTIME.get() {
@@ -4123,10 +4167,12 @@ pub(crate) fn synthetic_completion_for_test(
     };
     let fit = VerifiedFit::from_verified_runtime(
         program,
-        x,
-        y,
-        preprocessing,
-        feature_view,
+        crate::eval_registry::FitInputs {
+            x,
+            y,
+            preprocessing,
+            feature_view,
+        },
         fit_seed,
         runtime.0,
         runtime.1,
@@ -4192,10 +4238,12 @@ pub(crate) fn synthetic_completion_for_test(
         &fit,
         observation,
         ExecutionOutcome::Success,
-        b"synthetic fixture outcome",
-        Some(b"synthetic retained model"),
-        None,
-        None,
+        crate::eval_registry::CompletionArtifacts {
+            output: b"synthetic fixture outcome",
+            model: Some(b"synthetic retained model"),
+            predictions: None,
+            metrics: None,
+        },
     )?;
     Ok((sha, authority.instance().into()))
 }
