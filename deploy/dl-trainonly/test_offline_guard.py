@@ -8,7 +8,7 @@ import unittest
 
 from unittest import mock
 
-from run_lane_offline import HOST_CASES, PRIVATE_INPUT_ROOTS, case_ids, make_audit, offline_suite
+from run_lane_offline import HOST_CASES, PRIVATE_INPUT_ROOTS, case_ids, make_audit, offline_suite, private_inputs_unavailable
 
 
 class AuditGuard(unittest.TestCase):
@@ -105,6 +105,37 @@ class AuditGuard(unittest.TestCase):
         self.audit("os.listdir", ("/fixture",))
         self.assertEqual(self.denied, [])
         self.assertEqual(self.probes, [])
+
+    def test_private_existence_unavailable_during_execution_and_restored(self):
+        exists, stat = Path.exists, Path.stat
+        unavailable, attempted = [], []
+        private_paths = [root / "fixture-not-statted/context.json" for root in PRIVATE_INPUT_ROOTS]
+
+        def checked_stat(path, *args, **kwargs):
+            if path in private_paths:
+                attempted.append(str(path))
+                raise PermissionError("host private path is inaccessible")
+            return stat(path, *args, **kwargs)
+
+        class Fixture(unittest.TestCase):
+            def runTest(inner):
+                for path in private_paths:
+                    inner.assertFalse(path.exists())
+                inner.assertTrue(Path("/dev/null").exists())
+
+        with mock.patch.object(Path, "stat", checked_stat):
+            with private_inputs_unavailable(unavailable):
+                result = unittest.TestResult()
+                Fixture().run(result)
+            self.assertEqual(result.testsRun, 1)
+            self.assertEqual(result.errors, [])
+            self.assertEqual(result.failures, [])
+            self.assertEqual(attempted, [])
+            self.assertEqual(unavailable, [str(path) for path in private_paths])
+            self.assertIs(Path.exists, exists)
+            with self.assertRaises(PermissionError):
+                private_paths[0].exists()
+        self.assertEqual(attempted, [str(private_paths[0])])
 
     def child(self, body):
         script = "import os, socket, subprocess, sys\nfrom pathlib import Path\nfrom run_lane_offline import make_audit\n"
