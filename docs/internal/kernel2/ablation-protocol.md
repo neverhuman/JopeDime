@@ -116,12 +116,21 @@ written; at most the comparison's own lock file is created in the scratch and re
   missing, checks `--out` again, and only then writes the document. The write is rename-based:
   - the bytes go to a new temporary file in `--out`'s directory (`.<name>.tmp-<pid>-<n>`, created
     only if nothing is at that path), which is flushed and synced;
-  - that file is then renamed over `--out`;
+  - that file is then renamed over `--out`, and `--out`'s directory is synced after the rename,
+    so on success the rename has been written as far as the filesystem honours a directory sync
+    (no power-loss test was made). A failure to sync the directory fails the command with the
+    document already at `--out`;
   - an existing `--out` is replaced, never truncated, so another hard link to it (for example
     into a kernel2 scratch) keeps its bytes, and a hard-linked `--out` is admitted;
-  - on an error only the temporary file is removed.
+  - the replacement is a new file: it has the default mode (from the umask) and owner of a new
+    file, not the old file's permissions, owner, ACLs or extended attributes, and a read-only
+    `--out` is replaced when its directory is writable;
+  - on an error before the rename only the temporary file is removed (a failure to remove it
+    leaves it behind).
 
   It refuses (`--out refused (<reason>)`):
+  - a `--out` whose file name is `.ablation-lock` or `.ablation-kernel2`, for every comparison:
+    those names are reserved, since a document there would itself lock or mark its directory;
   - a `--out` that is a symbolic link, or exists and is not a regular file;
   - one that, with its symbolic links and `..` resolved, lies in a directory that holds
     `.ablation-kernel2` or `.ablation-lock`, checked from the directory that would hold the
@@ -129,8 +138,10 @@ written; at most the comparison's own lock file is created in the scratch and re
   - one whose path has a `..` after a directory that does not exist yet;
   - for a comparison with a kernel2 profile, one inside its own scratch.
 
-  A legacy-only comparison writes any other `--out` as before, one inside its own legacy scratch
-  included.
+  A legacy-only comparison writes any other `--out`, one inside its own legacy scratch included,
+  with the same document bytes as before. "As before" here and in the limits means the same
+  document bytes and scratch layout, not the same file: a replaced `--out` is a new file, with
+  the mode, owner and sync described above.
 - *Limits.*
   - Writers outside the harness are not prevented. Neither is a program that calls the library's
     `write_document` itself, which writes in place; only `jope-bench ablation` checks `--out` and
@@ -140,9 +151,12 @@ written; at most the comparison's own lock file is created in the scratch and re
   - A crash can leave `.ablation-lock` behind. Remove it by hand, and only when no comparison is
     running.
   - A legacy-only comparison on a scratch that only legacy-only comparisons used behaves as
-    before. It writes no marker, and a later legacy-only comparison into the same scratch is
-    still admitted and rewrites `prepared.json`, so a legacy-only document's `prepared_sha256`
-    is not protected. The scratch holds the same entries afterwards, since the lock file is gone.
+    before (same document bytes and scratch entries). It writes no marker, and a later
+    legacy-only comparison into the same scratch is still admitted and rewrites
+    `prepared.json`, so a legacy-only document's `prepared_sha256` is not protected. The
+    scratch holds the same entries afterwards, since the lock file is gone.
+  - Of the harness's own writes, only the document is followed by a directory sync. No
+    crash-durability claim is made for the lock file, the marker or the scratch's evidence.
 
 **A kernel2 comparison is not accuracy evidence unless it is reported as paired wins, ties and
 losses beside both medians.** The harness writes them to `body.paired` (definitions
@@ -158,7 +172,13 @@ bit-equal. For the comparison overall and for each dataset, `body.paired` gives:
 - the median and mean paired difference (B minus A);
 - the pair with the largest gain, and the mean difference without it;
 - a two-sided exact sign test of wins against losses, ties left out (1 when every pair ties);
-- how many pairs keep the same M1 program (`program_sha256`).
+- how many pairs keep the same M1 program (`program_sha256`), whatever their scores: a tie with
+  different programs does not count, a win or loss with the same program does.
+
+The sign test is exact as a test; its p is an f64. A unanimous split of n pairs gives exactly
+2^(1-n) down to the smallest positive f64, 2^-1074 at n = 1075; from n = 1076 on the exact value
+is at most half of that and the p is 0. A p under 2^-1022 is subnormal and carries fewer
+significant bits.
 
 Every report of the result (PR body, commit message, receipt, ledger) quotes:
 - the overall and per-dataset W/T/L with both medians;
@@ -339,7 +359,13 @@ when it is not set; never under the system temporary directory.
   under `.ablation-lock`, and a `--out` that is a symbolic link or a directory are refused before
   anything is created.
 - `ablation::tests::ablation_execute_writes_a_legacy_out_as_before`: a legacy-only `--out` in an
-  ordinary directory, or inside its own legacy scratch, is written as before.
+  ordinary directory, or inside its own legacy scratch, is written with the same document bytes
+  as before.
+- `ablation::tests::ablation_execute_refuses_a_reserved_out_name`: a `--out` named
+  `.ablation-lock` or `.ablation-kernel2` is refused before anything is created, for a
+  legacy-only comparison inside its own legacy scratch (absent or empty) or in an ordinary
+  directory (also with a trailing `/`), and for a kernel2 comparison; `.ablation-lock.json` is
+  admitted.
 - `ablation::tests::ablation_execute_replaces_an_out_hard_linked_to_kernel2_evidence` and
   `ablation_execute_replaces_an_out_hard_linked_to_an_ordinary_file`: a `--out` that is a hard
   link to a kernel2 scratch's `prepared.json` or `search.json`, or to an ordinary file, receives
@@ -349,6 +375,10 @@ when it is not set; never under the system temporary directory.
   `ablation_document_replacement_removes_its_temporary_file_on_failure`: an existing `--out` is
   replaced by exactly one document; the rename-based write produces `write_document`'s bytes for a
   legacy and a kernel2 document; and a failing rename leaves no temporary file.
+- `ablation::tests::ablation_document_replacement_syncs_its_directory_and_keeps_the_bytes`: with
+  the directory sync after the rename, the document still has `write_document`'s bytes, in a new
+  nested directory and over its own earlier document, with nothing else left in the directory;
+  a replaced read-only `--out` gets the mode of a new file. Durability itself is not tested.
 - `ablation::tests::ablation_paired_refuses_a_nonfinite_m1`,
   `ablation_paired_refuses_a_summary_that_is_not_finite` and
   `review02_public_paired_refuses_nonfinite_m1`: equal NaNs, equal infinities, an infinity or NaN
@@ -361,8 +391,16 @@ when it is not set; never under the system temporary directory.
   `ablation::tests::ablation_sign_test_matches_the_exact_binomial_tail`: the paired arithmetic on
   a synthetic input, including ties, an all-tie input and the bit-equality rule, and the sign
   test against the exact binomial tail.
+- `ablation::tests::review05_same_winner_means_program_identity_including_score_ties`: a tie with
+  different programs is not the same winner and a win with the same program is (in the fixture
+  above every tie also shares its program, so it cannot tell the two rules apart).
+- `ablation::tests::ablation_sign_test_is_exact_down_to_the_smallest_positive_f64`: a unanimous
+  split of 1074, 1075 and 1076 pairs gives 2^-1073, 2^-1074 and 0 bit for bit, and every split up
+  to 120 pairs matches an independent integer oracle.
 - `ablation::tests::ablation_kernel2_text_passes_the_shipped_text_lint`: the new option names,
-  help, ids and document keys pass `lint_shipped_text`.
+  help, ids and document keys pass `lint_shipped_text`. Only that new text is checked. Text that
+  predates the kernel2 arms (some of the command's help and the legacy record's keys) is not, and
+  not all of it passes.
 
 ## Adding a profile
 
