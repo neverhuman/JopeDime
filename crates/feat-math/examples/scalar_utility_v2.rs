@@ -58,8 +58,8 @@ fn bits(values: &Value) -> Result<Vec<f64>, String> {
 }
 
 fn cohort_manifest(bytes: &[u8]) -> Result<Value, Box<dyn std::error::Error>> {
-    let manifest: Value = serde_json::from_slice(&bytes)?;
-    if hash(&bytes) != "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
+    let manifest: Value = serde_json::from_slice(bytes)?;
+    if hash(bytes) != "74b05d8be0caa6a595815f9c89deb6be5ab716b1dedcd8a8669c7c7577296840"
         || manifest["schema"] != "feat-math.scalar-utility-common-cohort.v2"
     {
         return Err("unknown common utility cohort".into());
@@ -130,7 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if input["sha256"] != input_hash {
             return Err("utility input hash mismatch".into());
         }
-        let data: Value = serde_json::from_slice(&bytes)?;
+        let data: Value = serde_json::from_slice(bytes)?;
         if data["schema"] != "feat-math.scalar-utility-common-input.v2"
             || data["labels_unchanged"] != true
             || data["worker_train_count"] != 64
