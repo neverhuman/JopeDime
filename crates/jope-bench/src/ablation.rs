@@ -2402,20 +2402,32 @@ fn paired_counts(pairs: &[Pair<'_>]) -> Result<PairedCounts> {
     Ok(counts)
 }
 
+/// The most untied pairs [`sign_test`] takes, `2^20`. A comparison has one pair per dataset and
+/// seed, far fewer; the bound keeps the rounding's exponent arithmetic exact in i64.
+pub const MAX_SIGN_TEST_PAIRS: u64 = 1 << 20;
+
 /// The two-sided exact sign test of `wins` against `losses` (ties already left out): the
 /// probability, for a fair coin over `n = wins + losses` tosses, of a split at least as uneven as
 /// the one observed, capped at 1. It is 1 when there is no untied pair.
 ///
 /// The probability is `S / 2^(n-1)` with `S` the sum of `C(n, k)` over `k` up to the smaller
 /// count. `S` is computed exactly in integers, and the probability is rounded once to the nearest
-/// f64, ties to even ([`round_scaled`]). So the result is the correctly rounded exact probability
-/// for every split, and it replays bit for bit on any host. A value under `2^-1022` is subnormal
-/// and carries fewer significant bits; the result is 0 only where the exact value is at most half
-/// of the smallest positive f64, `2^-1074` (a unanimous split of more than 1075 pairs, for
-/// example). The time grows with the smaller count times `n`; a comparison has at most one pair
-/// per dataset and seed.
+/// f64, ties to even ([`round_scaled`]). So, for every split of at most [`MAX_SIGN_TEST_PAIRS`]
+/// untied pairs, the result is the correctly rounded exact probability, and it replays bit for
+/// bit on any host. A value under `2^-1022` is subnormal and carries fewer significant bits; the
+/// result is 0 only where the exact value is at most half of the smallest positive f64,
+/// `2^-1074` (a unanimous split of more than 1075 pairs, for example). The time grows with the
+/// smaller count times `n`.
+///
+/// Outside that domain, more than [`MAX_SIGN_TEST_PAIRS`] pairs or a `wins + losses` that does not
+/// fit in a u64, the result is NaN, which the paired summary refuses as not finite.
 pub fn sign_test(wins: u64, losses: u64) -> f64 {
-    let n = wins + losses;
+    let Some(n) = wins
+        .checked_add(losses)
+        .filter(|&n| n <= MAX_SIGN_TEST_PAIRS)
+    else {
+        return f64::NAN;
+    };
     let tail = wins.min(losses);
     // An even split, or one short of it for an odd n, is at least half the mass on each side.
     if n == 0 || 2 * tail + 1 >= n {
@@ -2461,8 +2473,9 @@ pub fn sign_test(wins: u64, losses: u64) -> f64 {
     round_scaled(&sum, n)
 }
 
-/// `s / 2^(n-1)`, for an integer `s >= 0` (little-endian 64-bit limbs) and `n >= 1`, rounded
-/// once to the nearest f64 with ties to even, and capped at 1. The rounding keeps 53 significant
+/// `s / 2^(n-1)`, for an integer `s >= 0` (little-endian 64-bit limbs) and `1 <= n <=`
+/// [`MAX_SIGN_TEST_PAIRS`] (so `n` and the bit length of `s`, at most `n + 1`, fit in an i64),
+/// rounded once to the nearest f64 with ties to even, and capped at 1. The rounding keeps 53 significant
 /// bits in the normal range and whole multiples of `2^-1074` below it, so subnormal results are
 /// rounded once too, never twice.
 fn round_scaled(s: &[u64], n: u64) -> f64 {
@@ -5572,5 +5585,49 @@ mod tests {
                 "{wins} wins, {losses} losses"
             );
         }
+    }
+
+    /// Review 07, PR0-R10: the sign test's count domain. Up to `MAX_SIGN_TEST_PAIRS` untied pairs
+    /// it is the correctly rounded exact tail, right up to the bound. Above it, or when
+    /// `wins + losses` does not fit in a u64, it is NaN, which `paired_counts` refuses as not
+    /// finite. Every case here costs at most a few binomial steps.
+    #[test]
+    fn review07_sign_test_bounds_its_count_domain() {
+        let max = MAX_SIGN_TEST_PAIRS;
+        assert_eq!(max, 1 << 20);
+        // At the bound: 2^(1-max) and a 3-against-(max-3) tail are far below 2^-1075, so 0, and
+        // an even split is 1.
+        for (wins, losses, expected) in [
+            (max, 0, 0.0),
+            (0, max, 0.0),
+            (max - 3, 3, 0.0),
+            (3, max - 3, 0.0),
+            (max / 2, max / 2, 1.0),
+        ] {
+            assert_eq!(
+                sign_test(wins, losses).to_bits(),
+                f64::to_bits(expected),
+                "{wins} wins, {losses} losses"
+            );
+        }
+        // Above the bound, and sums that do not fit in a u64.
+        for (wins, losses) in [
+            (max + 1, 0),
+            (0, max + 1),
+            (max, 1),
+            (max / 2 + 1, max / 2),
+            (u64::MAX, 0),
+            (0, u64::MAX),
+            (u64::MAX, 1),
+            (u64::MAX, u64::MAX),
+            (u64::MAX / 2 + 1, u64::MAX / 2 + 1),
+        ] {
+            assert!(
+                sign_test(wins, losses).is_nan(),
+                "{wins} wins, {losses} losses"
+            );
+        }
+        // The paired summary refuses a p that is not finite, as it refuses any such number.
+        assert!(finite("paired sign test p", f64::NAN).is_err());
     }
 }
