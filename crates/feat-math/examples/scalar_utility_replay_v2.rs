@@ -163,6 +163,14 @@ fn replay_eec_event(
     (profile, phases)
 }
 
+fn cohort_manifest(raw: &[u8]) -> Value {
+    assert_eq!(
+        hash(raw),
+        "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
+    );
+    serde_json::from_slice(raw).unwrap()
+}
+
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     assert_eq!(
@@ -176,11 +184,7 @@ fn main() {
     let source = args[5].as_str();
     assert_eq!(source.len(), 40);
     let raw = fs::read(&manifest).unwrap();
-    assert_eq!(
-        hash(&raw),
-        "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
-    );
-    let manifest: Value = serde_json::from_slice(&raw).unwrap();
+    let manifest = cohort_manifest(&raw);
     let mut cases = vec![];
     let mut identities = vec![];
     for data in manifest["datasets"].as_array().unwrap() {
@@ -388,6 +392,16 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn committed_cohort_is_admitted_by_entrypoint_guard() {
+        let bytes = include_bytes!("../tests/fixtures/scalar_v2/utility/manifest.json");
+        let admitted = cohort_manifest(bytes);
+        assert_eq!(admitted["datasets"].as_array().unwrap().len(), 8);
+        let mut changed = bytes.to_vec();
+        changed.push(b'\n');
+        assert!(std::panic::catch_unwind(|| cohort_manifest(&changed)).is_err());
+    }
 
     fn events() -> Value {
         serde_json::from_str(include_str!(
