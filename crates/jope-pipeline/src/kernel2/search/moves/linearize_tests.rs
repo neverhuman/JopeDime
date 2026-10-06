@@ -482,8 +482,20 @@ fn run_options(
     refinement: Refinement,
     engine: EngineSelection,
 ) -> run::Options {
+    run_options_on(dataset(), dir, seeds, evaluations, refinement, engine)
+}
+
+/// [`run_options`] on another dataset.
+fn run_options_on(
+    dataset: String,
+    dir: &Path,
+    seeds: &[String],
+    evaluations: usize,
+    refinement: Refinement,
+    engine: EngineSelection,
+) -> run::Options {
     std::fs::create_dir_all(dir).unwrap();
-    let mut base = RunOptions::new(dataset(), dir.join("run"));
+    let mut base = RunOptions::new(dataset, dir.join("run"));
     base.budget = Budget {
         evaluations,
         seconds: 300,
@@ -1296,6 +1308,23 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
         "a recorded fit disagrees with its stop",
     ));
     restore();
+    // A measured line's error made negative (B19 wiring review 01,
+    // B19-R01-NEGATIVE-LOWERED-ERROR): within any bound, yet no largest absolute residual. JSON
+    // carries no NaN or infinity; negative zero is the one other sign it can carry.
+    for (label, error) in [
+        ("a negative line error", -1.0),
+        ("a negative zero line error", -0.0),
+    ] {
+        let path = published_edit(output, &receipt, &engine, &moves, |m| {
+            fit_of(&mut m[measured]).lowered_error = Some(error);
+        });
+        errors.push(refused_with(
+            &path,
+            label,
+            "a recorded line error is not a finite nonnegative residual",
+        ));
+        restore();
+    }
 
     // A refused line's fit hidden behind the faulting-input refusal, while the stage's other
     // subtrees keep their own records.
@@ -1396,6 +1425,15 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
     });
     publication::verify_run(&path).unwrap();
     restore();
+    // A third (review 01): an offered line's error edited to zero, under its fit's bracket, keeps
+    // the decision and is accepted; only a negative or nonfinite one is refused.
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        let record = fit_of(&mut m[measured]);
+        assert!(record.fit.as_ref().unwrap().levelled > 0.0);
+        record.lowered_error = Some(0.0);
+    });
+    publication::verify_run(&path).unwrap();
+    restore();
     publication::verify_run(&output.join("receipt.json")).unwrap();
     let root = output.display().to_string();
     for error in errors {
@@ -1435,4 +1473,106 @@ fn linearization_parents_are_bounded_before_they_are_parsed() {
     assert!(!linearize::offers(&opt.evaluator, &closed_form).unwrap());
     let error = linearize::propose(&opt.evaluator, &closed_form, &cut, width).unwrap_err();
     assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+}
+
+// Fix round r01 (B19 wiring review 01): repeated refused subtrees through publication.
+
+/// A one-feature dataset in `dir` whose feature cycles through `-1e-310`, `0` and `1e-310` (75
+/// training and 15 test rows, the target cycling through 0 to 6), with the pmlb-229-pwlinear
+/// fixture's metadata rewritten for it. Every line fitted on these subnormal values has a slope
+/// past the finite range. The review's fixture.
+fn subnormal_dataset(dir: &Path) -> String {
+    let csv = |rows: std::ops::Range<usize>| -> String {
+        rows.map(|i| format!("{},{}\n", ["-1e-310", "0", "1e-310"][i % 3], i % 7))
+            .collect()
+    };
+    let (train, test) = (csv(0..75), csv(75..90));
+    std::fs::create_dir_all(dir).unwrap();
+    std::fs::write(dir.join("train.csv"), &train).unwrap();
+    std::fs::write(dir.join("test.csv"), &test).unwrap();
+    let scaffold = std::fs::read(Path::new(&dataset()).join("metadata.json")).unwrap();
+    let mut meta: serde_json::Value = serde_json::from_slice(&scaffold).unwrap();
+    let hash = crate::sha256_hex(format!("{train}{test}").as_bytes());
+    meta["id"] = hash[..16].into();
+    meta["dataset_hash"] = hash[..16].into();
+    meta["canonical_sha256"] = hash.into();
+    meta["display_name"] = "subnormal linearization fixture".into();
+    meta["shape"] = serde_json::json!({
+        "rows": 90, "features": 1, "categorical_features": 0, "columns": 2
+    });
+    for (name, bytes, rows) in [("train", &train, 75), ("test", &test, 15)] {
+        meta["files"][name] = serde_json::json!({
+            "sha256": crate::sha256_hex(bytes.as_bytes()),
+            "bytes": bytes.len(),
+            "rows": rows,
+            "columns": 2,
+            "has_header": false,
+        });
+    }
+    meta["split"] = serde_json::json!({
+        "method": "deterministic test fixture", "seed": 0, "train_rows": 75, "test_rows": 15
+    });
+    meta["provenance"]["dataset_id"] = "subnormal-linearization".into();
+    meta["provenance"]["citation"] =
+        "synthetic test fixture; metadata scaffold from the PMLB fixture, not PMLB data".into();
+    meta["collections"] = serde_json::json!([]);
+    meta["ingest"] = serde_json::Value::Null;
+    std::fs::write(
+        dir.join("metadata.json"),
+        serde_json::to_vec_pretty(&meta).unwrap(),
+    )
+    .unwrap();
+    dir.display().to_string()
+}
+
+/// A fit refused for a coefficient past the finite range is published without its coefficients
+/// and read back as NaN (B19 wiring review 01, B19-R01-NAN-REFUSAL-ROUNDTRIP). The two equal
+/// children of `(sin(c0)+c0)*(sin(c0)+c0)` on the subnormal dataset are each refused so, and the
+/// untouched run verifies: a repeated subtree's records compare bit for bit. A finite pair given
+/// to one of them is still refused.
+#[test]
+fn repeated_subtrees_refused_for_their_coefficients_publish_and_verify() {
+    let temp = tempfile::tempdir().unwrap();
+    let data = subnormal_dataset(&temp.path().join("dataset"));
+    let opt = run_options_on(
+        data,
+        temp.path(),
+        &[program("(sin(c0)+c0)*(sin(c0)+c0)")],
+        40,
+        four_parents(),
+        linearize(),
+    );
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    assert_eq!(publication::verify_run(&path).unwrap(), receipt);
+    let moves = published_moves(&opt);
+    // The children at paths [0] and [1] of one parent's stage, each refused for its coefficients.
+    let twin = |at: &[usize]| {
+        moves
+            .iter()
+            .position(|m| m.id == MINIMAX_LINEARIZE && line(m).path == at)
+            .unwrap()
+    };
+    let (left, right) = (twin(&[0]), twin(&[1]));
+    assert_eq!(right, left + 1);
+    for m in [&moves[left], &moves[right]] {
+        let record = line(m);
+        assert_eq!(record.subtree, "(sin(c0)+c0)");
+        assert_eq!(record.refusal.as_deref(), Some(LINEARIZE_NON_FINITE));
+        assert_eq!(m.outcome, REFUSED);
+        assert!(record.fit.as_ref().unwrap().coefficients.is_none());
+    }
+    // A finite pair for one of the two: the twins record other samples.
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let edited = published_edit(output, &receipt, &engine, &moves, |m| {
+        let record = m[right].linearization.as_mut().unwrap();
+        record.fit.as_mut().unwrap().coefficients = Some([0.0, 1.0]);
+    });
+    let error = refused_with(
+        &edited,
+        "a finite pair for one twin",
+        "a repeated subtree records other samples",
+    );
+    lint(&error.replace(&output.display().to_string(), "<run>"));
 }

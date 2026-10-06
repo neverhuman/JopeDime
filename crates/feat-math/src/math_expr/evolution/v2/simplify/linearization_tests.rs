@@ -539,3 +539,82 @@ fn the_public_entries_check_a_decoded_tree_before_copying_it() {
         .linearizable_v2(&baseline(), scope())
         .is_ok());
 }
+
+/// A line's measured error is its largest absolute residual over the samples, so a recorded one
+/// is finite and not negative (B19 wiring review 01, B19-R01-NEGATIVE-LOWERED-ERROR): a negative
+/// error would pass any bound, and a NaN one would compare under none.
+#[test]
+fn a_recorded_line_error_must_be_a_finite_nonnegative_residual() {
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(NEAR_LINEAR, &training);
+    assert!(live[0].expression.is_some());
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(NEAR_LINEAR, &kept).unwrap(), live);
+    for error in [
+        -1.0,
+        -f64::MIN_POSITIVE,
+        -0.0,
+        f64::NAN,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+    ] {
+        let mut bad = kept.clone();
+        bad[0].lowered_error = Some(error);
+        let refusal = recorded(NEAR_LINEAR, &bad).unwrap_err();
+        assert!(
+            format!("{refusal:#}").contains("not a finite nonnegative residual"),
+            "{error}: {refusal:#}"
+        );
+    }
+    // A zero error is one a line can reach: the line is offered.
+    let mut exact = kept.clone();
+    exact[0].lowered_error = Some(0.0);
+    assert!(recorded(NEAR_LINEAR, &exact).unwrap()[0]
+        .expression
+        .is_some());
+}
+
+/// A fit refused for a coefficient past the finite range is published without its coefficients
+/// and read back as NaN, which never equals itself (B19 wiring review 01,
+/// B19-R01-NAN-REFUSAL-ROUNDTRIP). The records of a repeated subtree compare bit for bit, so two
+/// such read-backs agree, while any other number in one of them is still refused.
+#[test]
+fn repeated_subtrees_compare_their_records_bit_for_bit() {
+    // Subnormal abscissae: each line's slope leaves the finite range.
+    let training = rows(-1e-310, 1e-310, 3);
+    let live = linearize(REPEATED, &training);
+    assert_eq!(live.len(), 3);
+    assert_eq!(live[1].subtree, live[2].subtree);
+    for l in &live {
+        assert_eq!(l.refusal.as_deref(), Some(LINEARIZE_NON_FINITE), "{l:?}");
+    }
+    // As the published record reads it back: an absent pair is NaN.
+    let read_back: Vec<LinearizationEvidence> = live
+        .iter()
+        .map(|l| {
+            let mut kept = evidence(l);
+            let fit = kept.fit.as_mut().unwrap();
+            if fit.coefficients.iter().any(|c| !c.is_finite()) {
+                fit.coefficients = [f64::NAN; 2];
+            }
+            kept
+        })
+        .collect();
+    let out = recorded(REPEATED, &read_back).unwrap();
+    for (out, live) in out.iter().zip(&live) {
+        assert_eq!(
+            (&out.refusal, out.expression.is_none()),
+            (&live.refusal, true)
+        );
+    }
+    let repeated = "a repeated subtree records other samples";
+    let differs = |edit: fn(&mut LinearizationEvidence)| {
+        let mut bad = read_back.clone();
+        edit(&mut bad[2]);
+        let error = recorded(REPEATED, &bad).unwrap_err();
+        assert!(format!("{error:#}").contains(repeated), "{error:#}");
+    };
+    differs(|e| e.fit.as_mut().unwrap().coefficients = [0.0, 1.0]);
+    differs(|e| e.fit.as_mut().unwrap().coefficients[0] = -f64::NAN);
+    differs(|e| e.fit.as_mut().unwrap().max_abs *= 2.0);
+}
