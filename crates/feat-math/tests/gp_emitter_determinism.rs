@@ -103,6 +103,17 @@ fn corpus() -> Vec<ScalarExpressionProgram> {
             nodes.push(function(id, ScalarNode::Const(zero)));
         }
     }
+    // Clip's bound sorting calls the same kernels; retain both zero orders.
+    for (a, b) in [(0.0, -0.0), (-0.0, 0.0)] {
+        nodes.push(ScalarNode::Call(
+            ScalarFunction::from_versioned_id(2, 9).unwrap(),
+            vec![
+                ScalarNode::Var(Var::Col(0)),
+                ScalarNode::Const(a),
+                ScalarNode::Const(b),
+            ],
+        ));
+    }
     nodes
         .into_iter()
         .enumerate()
@@ -178,7 +189,7 @@ fn evidence_directory(label: &str) -> std::path::PathBuf {
 
 #[test]
 fn repeated_emission() {
-    assert_eq!(corpus().len(), 82);
+    assert_eq!(corpus().len(), 84);
     let directory = evidence_directory("processes-");
     for child in ["first", "second"] {
         let output = run(Command::new(std::env::current_exe().unwrap())
@@ -292,7 +303,7 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
         let test_rows = matrix(&rows, language);
         let training = matrix(&train, language);
         let y = matrix(std::slice::from_ref(&labels), language);
-        let observed = match language {
+        let observations = match language {
             ScalarLanguage::Rust => {
                 fs::write(directory.join("model.rs"), &source).unwrap();
                 let driver = format!("\n#[test] fn gp_probe(){{let rows={test_rows};let train={training};let y={y};let model=Model::fit(&train,&y[0]);let (f,q)=scalar_stage1_values(&rows);for v in f.into_iter().flatten().chain(model.predict(&rows)){{println!(\"V {{:016x}}\",v.to_bits());}}for v in q{{println!(\"Q {{}}\",v);}}}}\n");
@@ -302,11 +313,14 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
                     .arg(directory.join("probe.rs"))
                     .arg("-o")
                     .arg(directory.join("rust-probe")));
-                run(Command::new(directory.join("rust-probe")).args([
-                    "--exact",
-                    "gp_probe",
-                    "--nocapture",
-                ]))
+                vec![(
+                    "Rust",
+                    run(Command::new(directory.join("rust-probe")).args([
+                        "--exact",
+                        "gp_probe",
+                        "--nocapture",
+                    ])),
+                )]
             }
             ScalarLanguage::Python => {
                 fs::write(directory.join("model.py"), source).unwrap();
@@ -315,49 +329,60 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
                     .arg(directory.join("model.py")));
                 let driver = format!("import model as m\nimport struct\nrows={test_rows}\nmodel=m.Model().fit({training}, {y}[0])\nf,q=m.scalar_stage1_values(rows)\nfor v in [v for row in f for v in row]+model.predict(rows): print('V %016x'%struct.unpack('<Q',struct.pack('<d',v))[0])\nfor v in q: print('Q %d'%v)\n");
                 fs::write(directory.join("probe.py"), driver).unwrap();
-                run(Command::new("python3").arg(directory.join("probe.py")))
+                vec![(
+                    "Python",
+                    run(Command::new("python3").arg(directory.join("probe.py"))),
+                )]
             }
             ScalarLanguage::Cpp17 => {
                 fs::write(directory.join("model.cpp"), source).unwrap();
                 let driver = format!("#include \"model.cpp\"\n#include <cstdio>\nint main(){{const auto rows={test_rows};const auto y={y};const auto model=Model::fit({training},y[0]);const auto f=scalar_stage1_values(rows);auto print=[](double v){{std::uint64_t bits;std::memcpy(&bits,&v,8);std::printf(\"V %016llx\\n\",static_cast<unsigned long long>(bits));}};for(const auto& row:f.first)for(double v:row)print(v);for(double v:model.predict(rows))print(v);for(auto v:f.second)std::printf(\"Q %u\\n\",v);}}\n");
                 fs::write(directory.join("probe.cpp"), driver).unwrap();
-                run(Command::new("g++")
-                    .args([
-                        "-std=c++17",
-                        "-Wall",
-                        "-Werror",
-                        "-O1",
-                        "-ffp-contract=off",
-                        "-fno-fast-math",
-                    ])
-                    .arg(directory.join("probe.cpp"))
-                    .arg("-o")
-                    .arg(directory.join("cpp-probe")));
-                run(&mut Command::new(directory.join("cpp-probe")))
+                ["g++", "clang++"]
+                    .into_iter()
+                    .map(|compiler| {
+                        let executable = directory.join(format!("{compiler}-probe"));
+                        run(Command::new(compiler)
+                            .args([
+                                "-std=c++17",
+                                "-Wall",
+                                "-Werror",
+                                "-O1",
+                                "-fno-fast-math",
+                                "-ffp-contract=off",
+                            ])
+                            .arg(directory.join("probe.cpp"))
+                            .arg("-o")
+                            .arg(&executable));
+                        (compiler, run(&mut Command::new(executable)))
+                    })
+                    .collect()
             }
         };
-        fs::write(directory.join(format!("{language:?}.out")), &observed).unwrap();
-        let values: Vec<_> = observed
-            .lines()
-            .filter_map(|line| line.strip_prefix("V "))
-            .map(|bits| f64::from_bits(u64::from_str_radix(bits, 16).unwrap()))
-            .collect();
-        let actual_faults: Vec<u32> = observed
-            .lines()
-            .filter_map(|line| line.strip_prefix("Q "))
-            .map(|v| v.parse().unwrap())
-            .collect();
-        assert_eq!(actual_faults, faults, "case {case} {language:?} faults");
-        assert_eq!(
-            values.len(),
-            expected.len(),
-            "case {case} {language:?} value count"
-        );
-        for (row, (actual, expected)) in values.into_iter().zip(&expected).enumerate() {
-            assert!(
-                agrees(actual, *expected),
-                "case {case} {language:?} value {row}: {actual:?} != {expected:?}"
+        for (implementation, observed) in observations {
+            fs::write(directory.join(format!("{implementation}.out")), &observed).unwrap();
+            let values: Vec<_> = observed
+                .lines()
+                .filter_map(|line| line.strip_prefix("V "))
+                .map(|bits| f64::from_bits(u64::from_str_radix(bits, 16).unwrap()))
+                .collect();
+            let actual_faults: Vec<u32> = observed
+                .lines()
+                .filter_map(|line| line.strip_prefix("Q "))
+                .map(|v| v.parse().unwrap())
+                .collect();
+            assert_eq!(actual_faults, faults, "case {case} {implementation} faults");
+            assert_eq!(
+                values.len(),
+                expected.len(),
+                "case {case} {implementation} value count"
             );
+            for (row, (actual, expected)) in values.into_iter().zip(&expected).enumerate() {
+                assert!(
+                    agrees(actual, *expected),
+                    "case {case} {implementation} value {row}: {actual:?} != {expected:?}"
+                );
+            }
         }
     }
 }
@@ -386,4 +411,35 @@ fn comparison_rejects_signed_zero_nonfinite_and_material_changes() {
     assert!(!agrees(f64::INFINITY, f64::NEG_INFINITY));
     assert!(!agrees(1.0, 1.001));
     assert!(agrees(1.0, f64::from_bits(1.0_f64.to_bits() + 1)));
+}
+
+// Lane A's strict conversion repro: the opt-in Symbolic route does not call
+// max_num. Keep the historical/default emitter separate and byte-frozen.
+#[test]
+fn symbolic_cpp17_compiles_with_both_warning_strict_compilers() {
+    use feat_math::{kernel::expression_recipe::emit_cpp17, transpile::EmitOptions, GenomeIr};
+    let genome = GenomeIr::parse("(sym raw \"c0-(c1-c2)\")").unwrap();
+    let options = EmitOptions::default();
+    let source = emit_cpp17(&genome, &options).unwrap().source;
+    assert_eq!(source, emit_cpp17(&genome, &options).unwrap().source);
+    let directory = evidence_directory("symbolic-");
+    fs::write(directory.join("model.cpp"), source).unwrap();
+    fs::write(directory.join("probe.cpp"),
+        "#include \"model.cpp\"\nint main(){const std::vector<std::vector<double>> x={{0.25,0.75,1.5}};const auto m=Model::fit(x,{1.0});const auto p=m.predict(x);return p.size()==1 && p[0]==1.0 ? 0 : 1;}\n").unwrap();
+    for compiler in ["g++", "clang++"] {
+        let executable = directory.join(format!("{compiler}-probe"));
+        run(Command::new(compiler)
+            .args([
+                "-std=c++17",
+                "-Wall",
+                "-Werror",
+                "-O1",
+                "-ffp-contract=off",
+                "-fno-fast-math",
+            ])
+            .arg(directory.join("probe.cpp"))
+            .arg("-o")
+            .arg(&executable));
+        run(&mut Command::new(&executable));
+    }
 }
