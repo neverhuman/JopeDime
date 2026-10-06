@@ -24,7 +24,7 @@ const SIGNATURE: usize = 64;
 const MIGRATION_INTERVAL: u64 = 3 * POPULATION as u64;
 const SELECTION_PROTOCOL: &str = "jope.s1-inner-cv-selection/v1";
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 struct Program {
     dsl: String,
     program_sha256: String,
@@ -32,6 +32,18 @@ struct Program {
     #[serde(default)]
     parents: Vec<String>,
     operator: String,
+}
+
+fn validate_program(program: &Program) -> Result<()> {
+    if program.dsl.is_empty()
+        || program.dsl.len() > 32768
+        || program.operator.is_empty()
+        || program.program_sha256 != sha256(program.dsl.as_bytes())
+        || program.birth_seq.checked_add(1).is_none()
+    {
+        bail!("invalid or mismatched program identity")
+    }
+    Ok(())
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -90,7 +102,8 @@ impl Individual {
         if row.program_sha256 != row.program.program_sha256 {
             bail!("semantic row program mismatch")
         }
-        Ok(Self {
+        validate_program(&row.program)?;
+        let individual = Self {
             program: row.program,
             full_prediction_sha256: row.full_prediction_sha256,
             signature: decode_f32(&row.semantic_signature_f32_b64, SIGNATURE)?,
@@ -111,7 +124,30 @@ impl Individual {
             roots: Vec::new(),
             born_completed: 0,
             origin_island: None,
-        })
+        };
+        individual.validate_selection()?;
+        Ok(individual)
+    }
+
+    fn validate_selection(&self) -> Result<()> {
+        if self
+            .signature
+            .iter()
+            .chain(&self.cases)
+            .any(|x| !x.is_finite())
+            || [
+                self.fitness,
+                self.cv_geomean_rmse_ratio,
+                self.cv_mean_log_ratio,
+                self.cv_tail_log_ratio,
+                self.cv_log_ratio_sd,
+            ]
+            .iter()
+            .any(|x| !x.is_finite())
+        {
+            bail!("nonfinite selection state")
+        }
+        Ok(())
     }
 }
 
@@ -172,6 +208,7 @@ struct SampleManifest {
 
 #[derive(Clone, Debug)]
 struct Pending {
+    program: Program,
     island_id: usize,
     proposal_seq: u64,
     proposal_draw: u64,
@@ -363,7 +400,9 @@ impl Engine {
             projection,
             sample,
             rng: ChaCha20Rng::seed_from_u64(seed),
-            next_birth: max_birth + 1,
+            next_birth: max_birth
+                .checked_add(1)
+                .ok_or_else(|| anyhow!("birth counter exhausted"))?,
             next_draw: 0,
             proposal_seq: 0,
             new_completed: 0,
@@ -764,6 +803,13 @@ impl Engine {
         if island_id >= ISLANDS || count == 0 || count > ISLAND_SIZE {
             bail!("invalid proposal request")
         }
+        let allowance = u64::try_from(count)?;
+        self.next_birth
+            .checked_add(allowance)
+            .ok_or_else(|| anyhow!("birth counter exhausted"))?;
+        self.proposal_seq
+            .checked_add(allowance)
+            .ok_or_else(|| anyhow!("proposal counter exhausted"))?;
         let parent_hashes = self.parent_pool(island_id);
         if parent_hashes.len() < 2 {
             bail!("parent pool too small")
@@ -802,7 +848,9 @@ impl Engine {
             }
             let batch: ProposalBatch = serde_json::from_slice(&raw.stdout)?;
             if let Some(max_draw) = batch.proposals.iter().map(|x| x.draw).max() {
-                self.next_draw = max_draw + 1;
+                self.next_draw = max_draw
+                    .checked_add(1)
+                    .ok_or_else(|| anyhow!("draw counter exhausted"))?;
             }
             for proposal in batch.proposals {
                 if output.len() == count {
@@ -833,12 +881,14 @@ impl Engine {
                     parents: parent_programs,
                     operator: proposal.operator,
                 };
+                validate_program(&program)?;
                 self.next_birth += 1;
                 self.proposal_seq += 1;
                 self.seen.insert(program.program_sha256.clone());
                 self.pending.insert(
                     program.program_sha256.clone(),
                     Pending {
+                        program: program.clone(),
                         island_id,
                         proposal_seq: self.proposal_seq,
                         proposal_draw: proposal.draw,
@@ -907,14 +957,15 @@ impl Engine {
             bail!("accepted result context mismatch")
         }
         let program: Program = serde_json::from_value(record["program"].clone())?;
+        validate_program(&program)?;
         let pending = self.pending.get(&program.program_sha256).cloned();
         if pending.is_none() {
             bail!("unregistered or replayed evaluation")
         }
         if let Some(pending) = &pending
-            && pending.island_id != island_id
+            && (pending.island_id != island_id || pending.program != program)
         {
-            bail!("pending island mismatch")
+            bail!("pending island/program mismatch")
         }
         let status = record["status"].as_str().unwrap_or("missing");
         if status != "completed" {
@@ -995,6 +1046,7 @@ impl Engine {
         result_key: String,
     ) -> Result<Individual> {
         validate_sample(&self.sample)?;
+        validate_program(&program)?;
         if record["schema"] != "jope.s1-evaluation/v1"
             || record["input_semantics"] != "unscaled_fit_rows_v1"
             || record["status"] != "completed"
@@ -1071,7 +1123,11 @@ impl Engine {
         }
         let mut residual = Vec::with_capacity(self.sample.projection_cols);
         for (prediction, target) in oof_predictions.iter().zip(&oof_targets) {
-            residual.push(((prediction - target) / self.sample.oof_target_std) as f32);
+            let value = ((prediction - target) / self.sample.oof_target_std) as f32;
+            if !value.is_finite() {
+                bail!("nonfinite normalized OOF residual")
+            }
+            residual.push(value);
         }
         // S1: test residuals never enter the signature, the cases or the semantic key (TEST-STEER-01).
         if residual.len() != self.sample.projection_cols {
@@ -1109,7 +1165,7 @@ impl Engine {
             roots.sort();
             roots
         };
-        Ok(Individual {
+        let individual = Individual {
             program,
             full_prediction_sha256: f64_hash(&prediction_values),
             signature,
@@ -1130,7 +1186,9 @@ impl Engine {
             roots,
             born_completed: self.new_completed,
             origin_island: None,
-        })
+        };
+        individual.validate_selection()?;
+        Ok(individual)
     }
 
     fn reselect(&mut self, island_id: usize) -> Result<()> {
@@ -1398,17 +1456,7 @@ fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
         bail!("history is not the admitted S1 context/protocol")
     }
     let program: Program = serde_json::from_value(value["program"].clone())?;
-    if program.dsl.is_empty()
-        || program.operator.is_empty()
-        || program.program_sha256.len() != 64
-        || !program
-            .program_sha256
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-        || program.birth_seq.checked_add(1).is_none()
-    {
-        bail!("invalid history program")
-    }
+    validate_program(&program)?;
     let island_id = usize::try_from(
         value["island_id"]
             .as_u64()
@@ -1419,6 +1467,7 @@ fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
     }
     let proposal_seq = value["proposal_seq"]
         .as_u64()
+        .filter(|seq| seq.checked_add(1).is_some())
         .ok_or_else(|| anyhow!("history missing proposal_seq"))?;
     let next_draw = value["proposal_draw"]
         .as_u64()
@@ -1432,23 +1481,6 @@ fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
             scored[field] = value[field].as_f64().map_or(Value::Null, |x| json!(x));
         }
         let mut individual = Individual::from_semantic(serde_json::from_value(scored)?)?;
-        if individual
-            .signature
-            .iter()
-            .chain(&individual.cases)
-            .any(|x| !x.is_finite())
-            || [
-                individual.fitness,
-                individual.cv_geomean_rmse_ratio,
-                individual.cv_mean_log_ratio,
-                individual.cv_tail_log_ratio,
-                individual.cv_log_ratio_sd,
-            ]
-            .iter()
-            .any(|x| !x.is_finite())
-        {
-            bail!("nonfinite scored history")
-        }
         individual.roots = serde_json::from_value(value["roots"].clone())?;
         individual.born_completed = value["born_completed"]
             .as_u64()
@@ -1671,7 +1703,11 @@ mod tests {
         e.islands = (0..ISLANDS)
             .map(|island| {
                 let population = (0..ISLAND_SIZE)
-                    .map(|i| format!("{:064x}", 1 + island * ISLAND_SIZE + i))
+                    .map(|i| {
+                        record(1 + (island * ISLAND_SIZE + i) as u64, 0)
+                            .1
+                            .program_sha256
+                    })
                     .collect::<Vec<_>>();
                 Island {
                     policy: Policy::CvGated,
@@ -1719,7 +1755,7 @@ mod tests {
         (
             rec,
             Program {
-                program_sha256: format!("{:064x}", program_id),
+                program_sha256: sha256(dsl.as_bytes()),
                 dsl,
                 birth_seq: program_id,
                 parents: Vec::new(),
@@ -1906,6 +1942,7 @@ mod tests {
         e.pending.insert(
             hash.clone(),
             Pending {
+                program: program.clone(),
                 island_id: 0,
                 proposal_seq: 1,
                 proposal_draw: 2,
@@ -1987,6 +2024,7 @@ mod tests {
         e.pending.insert(
             program.program_sha256.clone(),
             Pending {
+                program: program.clone(),
                 island_id: 0,
                 proposal_seq: 1,
                 proposal_draw: 2,
@@ -2165,6 +2203,161 @@ mod tests {
         assert!(e.load_resume(&path).is_err());
         assert_eq!(replay_state(&e), before, "S1_ASSERT_SELECTION_ROLLBACK");
         fs::remove_file(path).unwrap();
+    }
+
+    fn history_path(name: &str) -> PathBuf {
+        let dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../../../target/s1-history");
+        fs::create_dir_all(&dir).unwrap();
+        dir.join(format!("edge-{name}-{}.jsonl", std::process::id()))
+    }
+
+    fn pending_pack(e: &mut Engine, mut row: Value, program: Program, name: &str) -> PathBuf {
+        row["context_sha256"] = json!(e.context);
+        row["program"] = json!(program);
+        e.pending.insert(
+            program.program_sha256.clone(),
+            Pending {
+                program: program.clone(),
+                island_id: 0,
+                proposal_seq: 1,
+                proposal_draw: 2,
+            },
+        );
+        let path = history_path(name);
+        let mut compressed = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+        compressed
+            .write_all(
+                &serde_json::to_vec(&json!({"schema":"jope.s1-invocation/v1", "record":row}))
+                    .unwrap(),
+            )
+            .unwrap();
+        fs::write(&path, compressed.finish().unwrap()).unwrap();
+        path
+    }
+
+    #[test]
+    fn edge_program_body_is_bound_at_every_receiving_boundary() {
+        for (i, status) in ["completed", "failed", "timeout"].iter().enumerate() {
+            let good = issued_history(status, 8000 + i as u64);
+            let mut bad = good.clone();
+            bad["program"]["dsl"] = json!("(pipe X (standardize) (ridge))");
+            let path = history_path(&format!("hash-{status}"));
+            fs::write(&path, format!("{}\n", bad)).unwrap();
+            let mut e = seeded_s1_engine();
+            let before = replay_state(&e);
+            assert!(
+                read_history(&path, "c").is_err(),
+                "S1_ASSERT_PROGRAM_BINDING"
+            );
+            assert!(e.load_resume(&path).is_err(), "S1_ASSERT_PROGRAM_BINDING");
+            assert_eq!(replay_state(&e), before);
+            fs::remove_file(path).unwrap();
+            let (mut row, mut program) = record(9000 + i as u64, 0);
+            row["status"] = json!(status);
+            program.dsl = "(pipe X (standardize) (ridge))".into();
+            let path = pending_pack(&mut e, row, program.clone(), &format!("live-hash-{status}"));
+            assert!(
+                e.accept(0, &path, String::new()).is_err(),
+                "S1_ASSERT_PROGRAM_BINDING"
+            );
+            assert!(e.pending.contains_key(&program.program_sha256));
+            assert_eq!(replay_state(&e), before);
+            fs::remove_file(path).unwrap();
+        }
+        for field in ["birth", "parents", "operator"] {
+            let mut e = seeded_s1_engine();
+            let (mut row, program) = record(9050, 0);
+            row["status"] = json!("failed");
+            let mut changed = program.clone();
+            match field {
+                "birth" => changed.birth_seq += 1,
+                "parents" => changed.parents.push("foreign-parent".into()),
+                _ => changed.operator = "foreign-operator".into(),
+            }
+            let path = pending_pack(&mut e, row, changed, &format!("pending-{field}"));
+            e.pending.get_mut(&program.program_sha256).unwrap().program = program.clone();
+            let before = replay_state(&e);
+            assert!(
+                e.accept(0, &path, String::new()).is_err(),
+                "S1_ASSERT_ISSUED_PROGRAM"
+            );
+            assert!(e.pending.contains_key(&program.program_sha256));
+            assert_eq!(replay_state(&e), before);
+            fs::remove_file(path).unwrap();
+        }
+        let mut good = issued_history("completed", 9100);
+        good["program_sha256"] = good["program"]["program_sha256"].clone();
+        assert!(Individual::from_semantic(serde_json::from_value(good.clone()).unwrap()).is_ok());
+        good["program"]["dsl"] = json!("(pipe X (ridge))");
+        assert!(
+            Individual::from_semantic(serde_json::from_value(good).unwrap()).is_err(),
+            "S1_ASSERT_PROGRAM_BINDING"
+        );
+    }
+
+    #[test]
+    fn edge_finite_cv_overflow_refuses_before_live_mutation() {
+        for mode in ["conversion", "projection", "division"] {
+            let mut e = seeded_s1_engine();
+            let (mut row, program) = record(9200, 0);
+            if mode == "projection" {
+                e.projection.fill(f32::MAX);
+                for fold in row["inner_cv"].as_array_mut().unwrap() {
+                    fold["predictions"] = json!(vec![2.0; 30]);
+                    fold["targets"] = json!(vec![0.0; 30]);
+                }
+            } else if mode == "division" {
+                e.sample.oof_target_std = 1e-300;
+            } else {
+                e.sample.oof_target_std = 0.5;
+                for fold in row["inner_cv"].as_array_mut().unwrap() {
+                    fold["predictions"] = json!(vec![1e40; 30]);
+                    fold["metrics"]["rmse"] = json!(1e39);
+                }
+            }
+            let path = pending_pack(&mut e, row, program.clone(), &format!("overflow-{mode}"));
+            let before = replay_state(&e);
+            assert!(
+                e.accept(0, &path, String::new()).is_err(),
+                "S1_ASSERT_FINITE_SEMANTICS"
+            );
+            assert!(e.pending.contains_key(&program.program_sha256));
+            assert_eq!(replay_state(&e), before);
+            fs::remove_file(path).unwrap();
+        }
+        let mut good = issued_history("completed", 9300);
+        good["program_sha256"] = good["program"]["program_sha256"].clone();
+        good["semantic_signature_f32_b64"] = json!(encode_f32(&vec![f32::INFINITY; SIGNATURE]));
+        assert!(
+            Individual::from_semantic(serde_json::from_value(good).unwrap()).is_err(),
+            "S1_ASSERT_FINITE_SEMANTICS"
+        );
+    }
+
+    #[test]
+    fn edge_exhausted_counters_refuse_before_progress_changes() {
+        let good = issued_history("failed", 9400);
+        let mut bad = good.clone();
+        bad["proposal_seq"] = json!(u64::MAX);
+        let path = history_path("sequence-max");
+        fs::write(&path, format!("{}\n", bad)).unwrap();
+        let mut e = seeded_s1_engine();
+        let before = replay_state(&e);
+        assert!(e.load_resume(&path).is_err(), "S1_ASSERT_COUNTER_CAPACITY");
+        assert_eq!(replay_state(&e), before);
+        fs::remove_file(path).unwrap();
+        for counter in ["proposal_seq", "next_birth"] {
+            let mut e = seeded_s1_engine();
+            if counter == "proposal_seq" {
+                e.proposal_seq = u64::MAX;
+            } else {
+                e.next_birth = u64::MAX;
+            }
+            let before = replay_state(&e);
+            assert!(e.propose(0, 1).is_err(), "S1_ASSERT_COUNTER_CAPACITY");
+            assert_eq!(replay_state(&e), before);
+        }
     }
 
     #[test]
