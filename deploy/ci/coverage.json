@@ -7972,6 +7972,22 @@
       ],
       "dispositions": [],
       "scope": "Direct stdlib unittest execution of fixed-equal S1 continuation, attempt reservation, failure accounting, deadline and recovery; synthetic only."
+    },
+    "target:feat-math/example/scalar_utility_v2": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/examples/scalar_utility_v2.rs",
+        "test": false,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default-feature all-target compilation under rust-check. Local example tests and bounded native or compiled card measurements have separate receipts; compilation does not claim hosted runtime execution or utility qualification."
     }
   }
 }
