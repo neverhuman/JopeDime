@@ -12,7 +12,7 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at e8ccd65ac, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234.
+<!-- Local release preparation at 5ef2e10c8, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236.
 Rebase onto final main and finalize the date before publication. GP-language #231 includes the
 maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
 binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
@@ -105,6 +105,10 @@ merged; B19 wiring is tracked separately. -->
 - Require published JTT1 payloads to omit outer-test blocks and keep outer-test labels in local
   JTS1 scorer artifacts. Refuse unstripped payloads before publication and quarantine old keys
   without deleting objects (#224).
+- Add metadata-only S1 GP HWM publication with pinned family, cut and program lineage,
+  rights-specific manifests, create-only writes, exact-version readbacks and resumable delivery.
+  Omit outer-test data and scores; refuse output traversal before client or state creation.
+  Local and fake-store qualification remains distinct from live S3 persistence (#236).
 
 ### CI, build and release
 
