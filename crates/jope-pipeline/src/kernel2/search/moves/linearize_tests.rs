@@ -561,9 +561,10 @@ fn linearized_run(dir: &Path) -> run::Options {
 fn linearization_runs_replay_every_file_with_a_frozen_clock_and_verify() {
     let temp = tempfile::tempdir().unwrap();
     let lm = RefineMethod::Lm(LmOptions::default());
-    // As in the rewrite pass's replay, the damped least-squares run reads one parent per round
-    // with a larger allowance (publication indexes each refinement child by the first equal
-    // observation, which two parents refining to one program in a round breaks).
+    // Every run reads four parents per round, as in the rewrite pass's replay since #208
+    // (52d0f6432) fixed publication's refinement child index. The damped least-squares run gets a
+    // larger allowance, since each refinement spends up to 12 trials, to leave the passes
+    // measurements.
     for (label, engine, refinement, evaluations, ids) in [
         (
             "linearize",
@@ -592,10 +593,10 @@ fn linearization_runs_replay_every_file_with_a_frozen_clock_and_verify() {
                 linearize: true,
             },
             Refinement {
-                top_k: 1,
+                top_k: 4,
                 trials_per_program: 12,
             },
-            60,
+            120,
             vec![REWRITE_SATURATE, MINIMAX_LINEARIZE],
         ),
     ] {
@@ -1400,4 +1401,38 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
     for error in errors {
         lint(&error.replace(&root, "<run>"));
     }
+}
+
+/// `check` reads the linearization pass's parents back from evidence, which is untrusted, so
+/// `offers` and `assemble` (behind `propose` and `rederive`) parse them within
+/// `parse_untrusted_pipeline`'s bounds (B17 review 02's class): the pipeline form only, and each
+/// expression's nesting bytes counted before it is parsed. Unary plus never reaches the parsed
+/// tree, so a parent at the limit offers what its plain form offers; one byte more offers nothing,
+/// and `propose` refuses it unparsed.
+#[test]
+fn linearization_parents_are_bounded_before_they_are_parsed() {
+    use crate::kernel2::refinement::MAX_PARENT_EXPRESSION_NESTING;
+    let cut = cubic_cut();
+    let opt = options(4, 64, linearize());
+    let width = cut.train_x[0].len();
+    // Built directly: `program` would print the padding away.
+    let parent = |source: &str| format!("(pipe X (derive expr=\"{source}\") (ridge))");
+    let held = CUBE
+        .bytes()
+        .filter(|b| matches!(b, b'(' | b'+' | b'-' | b'*' | b'/' | b'^'))
+        .count();
+    let room = MAX_PARENT_EXPRESSION_NESTING - held;
+    let plus = |n: usize| parent(&format!("{}{CUBE}", "+".repeat(n)));
+    assert!(linearize::offers(&opt.evaluator, &parent(CUBE)).unwrap());
+    assert!(linearize::offers(&opt.evaluator, &plus(room)).unwrap());
+    assert!(!linearize::offers(&opt.evaluator, &plus(room + 1)).unwrap());
+    let error = linearize::propose(&opt.evaluator, &plus(room + 1), &cut, width).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("nests too deeply"),
+        "{error:#}"
+    );
+    let closed_form = format!("(sym raw \"{}c0\")", "+".repeat(room + 1));
+    assert!(!linearize::offers(&opt.evaluator, &closed_form).unwrap());
+    let error = linearize::propose(&opt.evaluator, &closed_form, &cut, width).unwrap_err();
+    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
 }

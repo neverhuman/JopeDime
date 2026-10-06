@@ -20,7 +20,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 use crate::{
-    kernel2::{refinement::training_prefix, Kernel2Evaluator},
+    kernel2::{
+        refinement::{parse_untrusted_pipeline, training_prefix},
+        Kernel2Evaluator,
+    },
     prepare::Cut,
 };
 
@@ -206,9 +209,11 @@ fn derive_expression(pipe: &DslExpr, index: usize) -> Result<Option<MathExpr>> {
     Ok(Some(MathExpr::parse(source)?))
 }
 
-/// Whether `parent` has a subtree the pass would consider, from its text alone.
+/// Whether `parent` has a subtree the pass would consider, from its text alone. `check` reads the
+/// parents back from evidence, which is untrusted, so the text is parsed within
+/// [`parse_untrusted_pipeline`]'s bounds, and a program over them offers nothing.
 pub(crate) fn offers(evaluator: &Kernel2Evaluator, parent: &str) -> Result<bool> {
-    let Ok(GenomeIr::Pipeline(pipe)) = GenomeIr::parse(parent) else {
+    let Ok(pipe) = parse_untrusted_pipeline(parent) else {
         return Ok(false);
     };
     let scope = scope(evaluator)?;
@@ -227,7 +232,8 @@ pub(crate) fn offers(evaluator: &Kernel2Evaluator, parent: &str) -> Result<bool>
 
 /// Every considered subtree of every `derive` stage of `parent`, in stage order and then the
 /// order `linearize` gives, each assembled into a program and checked by the pipeline admission
-/// every measured program passes when its line was offered.
+/// every measured program passes when its line was offered. `rederive` calls it on parents read
+/// back from evidence, so `parent` is parsed within [`parse_untrusted_pipeline`]'s bounds first.
 fn assemble(
     evaluator: &Kernel2Evaluator,
     parent: &str,
@@ -239,9 +245,8 @@ fn assemble(
         ExpressionScope,
     ) -> Result<Vec<SubtreeLinearization>>,
 ) -> Result<Vec<LinearProposal>> {
-    let GenomeIr::Pipeline(pipe) = GenomeIr::parse(parent)? else {
-        bail!("the linearization pass needs a pipeline program");
-    };
+    let pipe = parse_untrusted_pipeline(parent)
+        .context("the linearization pass needs a pipeline program")?;
     let profile = evaluator.profile();
     let scope = scope(evaluator)?;
     let mut out = Vec::new();
