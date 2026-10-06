@@ -700,6 +700,8 @@ fn projected_gp_candidates_are_exactly_representable_unique_and_durable() {
     let (temp, p) = fixture();
     let output = temp.path().join("projected-search");
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
+    // Require the complete observation budget within the original safety deadline.
+    // Completed observations include refusals; they are not successful fitted measurements.
     let result = Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
         .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
         .arg("--root")
@@ -732,6 +734,9 @@ fn projected_gp_candidates_are_exactly_representable_unique_and_durable() {
     let observations: Vec<serde_json::Value> =
         read_json(&output.join("observations.json")).unwrap();
     assert_eq!(observations.len(), 100);
+    let summary: serde_json::Value = read_json(&output.join("search.json")).unwrap();
+    assert_eq!(summary["completed_evaluations"], 100);
+    assert_eq!(summary["stop_reason"], "evaluation_budget");
     let vocab: jope_parallel::grammar::Vocab = read_json(&vocabulary).unwrap();
     let mut programs = std::collections::BTreeSet::new();
     for (index, observation) in observations.iter().enumerate() {
