@@ -11,7 +11,7 @@
     "applies_to": [
       "the DL research pipeline under deploy/dl-trainonly and its S3 prefix s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/",
       "Hyperion v6 fine-tuning (v5 armB fine-tuned on all data; v5 is not retrained)",
-      "train-only encodings, GP teacher (S1) inputs and high-water marks, and the DL policy training run"
+      "train-only encodings, teacher (S1) inputs and high-water marks, and the DL policy training run"
     ],
     "lifted_exclusions": [
       "licence/rights-based dataset exclusions in the DL pipeline, including the 36 rights_held datasets (Chicago, NYC, Austin, SF portals; 180 epoch-0 contexts)",

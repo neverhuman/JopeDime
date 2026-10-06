@@ -125,7 +125,7 @@ found with LLMs, the use is research only, and the corpus will later be filled w
   datasets (Chicago, NYC, Austin, SF portals; 180 epoch-0 contexts) and the RIGHTS-RESEARCH
   "lift measurement only" limit on Rdatasets/UCI/CDC. Licence status `unknown` or `restricted` is
   not a reason to exclude a dataset from DL research training, Hyperion v6 fine-tuning, train-only
-  encodings, GP teacher inputs or high-water marks.
+  encodings, teacher inputs or high-water marks.
 - Unchanged: the **leak rule** — no target or label information from test rows may reach any
   encoder, selector, scaler or teacher (label-free pretraining exposure is allowed). Holdout,
   `sealed_excluded` and leakage denylists (holdout-denylist v1/v2, superseded splits) are not
