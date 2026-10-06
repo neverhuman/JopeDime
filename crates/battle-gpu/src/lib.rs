@@ -3,7 +3,7 @@
 //!
 //! Contract:
 //! - `gpu_ridge_score_batch` is order-preserving and TOTAL over well-formed
-//!   problems: GPU-ineligible ones (p > MAX_RIDGE_P) are scored on the CPU
+//!   problems: GPU-ineligible widths or row counts are scored on the CPU
 //!   with the exact reference math, malformed shapes return `Err` (the seam
 //!   then falls back to its exact CPU path), and nothing here ever panics on
 //!   driver failure.
@@ -215,6 +215,45 @@ fn cpu_reference_score(problem: &GpuRidgeScoreProblem) -> f64 {
     feat_math::metrics::r2(&problem.valid_y, &model.predict(&validation))
 }
 
+fn validate_dimensions(
+    index: usize,
+    p: usize,
+    train_n: usize,
+    valid_n: usize,
+) -> Result<(usize, usize), String> {
+    if p == 0 || train_n == 0 {
+        return Err(format!(
+            "problem {index}: empty ridge problem (p={p}, n={train_n})"
+        ));
+    }
+    let train_len = p
+        .checked_mul(train_n)
+        .ok_or_else(|| format!("problem {index}: ridge dimensions overflow"))?;
+    let valid_len = p
+        .checked_mul(valid_n)
+        .ok_or_else(|| format!("problem {index}: ridge dimensions overflow"))?;
+    let gram_len = p
+        .checked_mul(p)
+        .ok_or_else(|| format!("problem {index}: ridge Gram dimensions overflow"))?;
+    // CPU fallback widens both designs to f64 and allocates the Gram and row headers.
+    for len in [train_len, valid_len, gram_len] {
+        std::alloc::Layout::array::<f64>(len)
+            .map_err(|_| format!("problem {index}: ridge allocation layout overflow"))?;
+    }
+    for len in [train_n, valid_n] {
+        std::alloc::Layout::array::<Vec<f64>>(len)
+            .map_err(|_| format!("problem {index}: ridge row layout overflow"))?;
+    }
+    Ok((train_len, valid_len))
+}
+
+fn gpu_dimensions_fit(p: usize, train_n: usize, valid_n: usize) -> bool {
+    p <= MAX_RIDGE_P
+        && i32::try_from(p).is_ok()
+        && i32::try_from(train_n).is_ok()
+        && i32::try_from(valid_n).is_ok()
+}
+
 fn validate_shape(index: usize, problem: &GpuRidgeScoreProblem) -> Result<(), String> {
     let GpuRidgeScoreProblem {
         train_x_cols,
@@ -226,17 +265,7 @@ fn validate_shape(index: usize, problem: &GpuRidgeScoreProblem) -> Result<(), St
         p,
         ..
     } = problem;
-    if *p == 0 || *train_n == 0 {
-        return Err(format!(
-            "problem {index}: empty ridge problem (p={p}, n={train_n})"
-        ));
-    }
-    let train_len = p
-        .checked_mul(*train_n)
-        .ok_or_else(|| format!("problem {index}: ridge dimensions overflow"))?;
-    let valid_len = p
-        .checked_mul(*valid_n)
-        .ok_or_else(|| format!("problem {index}: ridge dimensions overflow"))?;
+    let (train_len, valid_len) = validate_dimensions(index, *p, *train_n, *valid_n)?;
     if train_x_cols.len() != train_len
         || train_y.len() != *train_n
         || valid_x_rows.len() != valid_len
@@ -337,19 +366,28 @@ fn logical_h2d(problem: &GpuRidgeScoreProblem) -> u64 {
 pub fn gpu_ridge_score_batch(
     problems: Vec<GpuRidgeScoreProblem>,
 ) -> Result<GpuRidgeScoreBatch, String> {
-    for (index, problem) in problems.iter().enumerate() {
-        validate_shape(index, problem)?;
-    }
+    let gpu_routes = problems
+        .iter()
+        .enumerate()
+        .map(|(index, problem)| {
+            validate_shape(index, problem)?;
+            Ok(gpu_dimensions_fit(
+                problem.p,
+                problem.train_n,
+                problem.valid_n,
+            ))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
     let gpu = backend()?;
     let mut scores = vec![0.0f64; problems.len()];
     let mut fold_bytes = vec![GpuRidgeScoreFoldBytes::default(); problems.len()];
     let mut timings = GpuRidgeScoreTimings::default();
 
-    // Split: GPU-eligible vs CPU-routed (p too wide for the on-device solver).
+    // Eligibility was checked before backend setup; CUDA dimensions must fit signed int.
     let pack_start = Instant::now();
     let mut gpu_idx: Vec<usize> = Vec::with_capacity(problems.len());
     for (index, problem) in problems.iter().enumerate() {
-        if problem.p <= MAX_RIDGE_P {
+        if gpu_routes[index] {
             gpu_idx.push(index);
         } else {
             scores[index] = cpu_reference_score(problem);
@@ -417,8 +455,9 @@ fn run_wave(
 ) -> Result<Vec<f64>, String> {
     let api = &gpu.api;
     let pack_start = Instant::now();
+    let problems = c_int::try_from(wave.len())
+        .map_err(|_| "battle-gpu wave count exceeds CUDA int".to_string())?;
     let packed = pack(wave);
-    let problems = wave.len() as c_int;
     timings.pack_seconds += pack_start.elapsed().as_secs_f64();
 
     let h2d_start = Instant::now();
@@ -804,5 +843,49 @@ mod shape_bounds_tests {
         let result = std::panic::catch_unwind(|| validate_shape(0, &problem));
         assert!(result.is_ok(), "malformed dimensions must return an error");
         assert!(result.unwrap().is_err());
+    }
+
+    #[test]
+    fn cuda_row_count_boundaries_route_without_narrowing() {
+        let max = i32::MAX as usize;
+        assert!(gpu_dimensions_fit(1, max, max));
+        assert!(gpu_dimensions_fit(MAX_RIDGE_P, 1, 0));
+        assert!(!gpu_dimensions_fit(1, max + 1, 1));
+        assert!(!gpu_dimensions_fit(1, 1, max + 1));
+        assert!(!gpu_dimensions_fit(MAX_RIDGE_P + 1, 1, 1));
+        #[cfg(target_pointer_width = "64")]
+        assert!(validate_dimensions(0, 1, max + 1, max + 1).is_ok());
+    }
+
+    #[test]
+    fn cpu_gram_product_overflow_is_refused_without_allocating() {
+        let p = 1usize << (usize::BITS / 2);
+        assert!(p.checked_mul(1).is_some());
+        assert!(p.checked_mul(p).is_none());
+        assert!(validate_dimensions(0, p, 1, 0).is_err());
+    }
+
+    #[test]
+    fn cpu_gram_byte_layout_overflow_is_refused_without_allocating() {
+        let p = 1usize << ((usize::BITS - 4).div_ceil(2));
+        assert!(p.checked_mul(p).is_some());
+        assert!(std::alloc::Layout::array::<f64>(p * p).is_err());
+        assert!(validate_dimensions(0, p, 1, 0).is_err());
+        assert_eq!(
+            validate_dimensions(0, MAX_RIDGE_P + 1, 2, 0),
+            Ok(((MAX_RIDGE_P + 1) * 2, 0))
+        );
+    }
+
+    #[test]
+    fn cpu_widened_design_and_row_layouts_are_checked() {
+        let max_f64 = isize::MAX as usize / std::mem::size_of::<f64>();
+        let n = max_f64 / 4 + 1;
+        assert!(std::alloc::Layout::array::<Vec<f64>>(n).is_ok());
+        assert!(validate_dimensions(0, 4, n, 0).is_err());
+        assert!(validate_dimensions(0, 4, 1, n).is_err());
+        let max_rows = isize::MAX as usize / std::mem::size_of::<Vec<f64>>();
+        assert!(validate_dimensions(0, 1, max_rows + 1, 0).is_err());
+        assert!(validate_dimensions(0, 1, 1, max_rows + 1).is_err());
     }
 }
