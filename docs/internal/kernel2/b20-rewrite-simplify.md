@@ -110,7 +110,10 @@ and ranks by its text, as any tie does.
   can be deleted, and records that measure nothing appended for the next ranked parents,
   undetected;
 - every record re-derives from its parent's published program alone: the stage entries, the
-  program and the reason are recomputed and compared;
+  program and the reason are recomputed and compared. The published parents are untrusted, so
+  each is parsed within the B17 trace check's bounds (`parse_untrusted_pipeline`): the pipeline
+  form only, and an expression source holding more than 256 of the bytes `( + - * / ^` is
+  refused before the expression parser sees it;
 - each outcome re-derives from the published measurements: a measured record's index is the next
   measurement, a `rewrite` measurement of its program in its round that no earlier measurement
   has; a duplicate names an earlier measurement; an unstarted record needs a seconds stop; and
@@ -176,9 +179,11 @@ jope-pipeline lib, `kernel2::search::moves::tests`:
   recorded as refused with the stop `not_run`, and the pass goes on to the next parent;
 - the allowance, the start guard and `top_k` bound the pass;
 - proposals are identical with a poisoned holdout, on fixed parents;
-- frozen-clock replay of the receipt and every file with the flag, alone (four parents per
-  round) and with the damped least-squares refinement (one parent per round) and the front, with
-  `verify_run` accepting each run and every measured rewrite scoring as its parent;
+- frozen-clock replay of the receipt and every file with the flag, alone and with the damped
+  least-squares refinement and the front, four parents per round in both, with `verify_run`
+  accepting each run and every measured rewrite scoring as its parent;
+- parents over the parsing bound are not readable and are refused unparsed; parents at it are
+  read and rewritten as their plain form;
 - tamper refusals, each by the check named for it where it is new (set and order, exactness, the
   pool refusal count), the record, the flag, and the shipped-text lint (of this note too);
 - with the flag off: the seeded pins, no file and no record.

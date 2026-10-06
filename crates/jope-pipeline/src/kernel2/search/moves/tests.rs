@@ -479,10 +479,10 @@ fn check_exact(opt: &run::Options) -> usize {
 fn rewrite_runs_replay_every_file_with_a_frozen_clock_and_verify() {
     let temp = tempfile::tempdir().unwrap();
     let lm = RefineMethod::Lm(LmOptions::default());
-    // The damped least-squares run refines one parent per round. With four parents and 80 or more
-    // evaluations, two parents refine to one program in one round on this fixture, and
-    // `verify_run` refuses that run with the pass off too, under either refinement method:
-    // publication indexes each refinement child by the first equal observation. It gets a larger
+    // Both runs refine four parents per round. Before #208 (52d0f6432) the damped least-squares run
+    // took one: with four parents, two refined to one program in one round on this fixture, and
+    // `verify_run` refused that run, the pass on or off, because publication indexed each
+    // refinement child by the first equal observation. The damped least-squares run gets a larger
     // allowance, since each refinement spends up to 12 trials, to leave the pass measurements.
     for (label, engine, refinement, evaluations) in [
         ("coordinate", simplify(), four_parents(), 40),
@@ -494,10 +494,10 @@ fn rewrite_runs_replay_every_file_with_a_frozen_clock_and_verify() {
                 simplify: true,
             },
             Refinement {
-                top_k: 1,
+                top_k: 4,
                 trials_per_program: 12,
             },
-            60,
+            120,
         ),
     ] {
         let make = |name: &str| {
@@ -1754,4 +1754,45 @@ fn verify_refuses_a_move_record_past_the_runs_last_round() {
     lint(&format!("{error:#}").replace(&output.display().to_string(), "<run>"));
     restore(&saved);
     publication::verify_run(&output.join("receipt.json")).unwrap();
+}
+
+/// [`check`] reads the pass's parents back from evidence, which is untrusted, so
+/// `has_expression_stage` and `propose` parse them within `parse_untrusted_pipeline`'s bounds (the
+/// class of B17's review 02): the pipeline form only, and each expression's nesting bytes counted
+/// before it is parsed. Unary plus and redundant parentheses never reach the parsed tree, so a
+/// parent at the limit is read and rewritten as its plain form is; one byte more is not readable,
+/// and `propose` refuses it unparsed.
+#[test]
+fn rewrite_parents_are_bounded_before_they_are_parsed() {
+    use crate::kernel2::refinement::MAX_PARENT_EXPRESSION_NESTING;
+    let opt = options(4, 64, FaultPolicy::RejectHard);
+    let body = "1*c0";
+    // `*`.
+    let room = MAX_PARENT_EXPRESSION_NESTING - 1;
+    let parent = |source: String| ONE_TIMES.replace(body, &source);
+    let plus = |n: usize| parent(format!("{}{body}", "+".repeat(n)));
+    let grouped = |n: usize| parent(format!("{}{body}{}", "(".repeat(n), ")".repeat(n)));
+    let plain = propose(&opt.evaluator, ONE_TIMES, 1).unwrap();
+    assert!(plain.admitted);
+    for program in [plus(room), grouped(room)] {
+        assert!(has_expression_stage(&program), "{program}");
+        let padded = propose(&opt.evaluator, &program, 1).unwrap();
+        assert_eq!(
+            (&padded.program, padded.admitted),
+            (&plain.program, plain.admitted),
+            "{program}"
+        );
+    }
+    for program in [plus(room + 1), grouped(room + 1)] {
+        assert!(!has_expression_stage(&program), "{program}");
+        let error = propose(&opt.evaluator, &program, 1).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("nests too deeply"),
+            "{program}: {error:#}"
+        );
+    }
+    let closed_form = format!("(sym raw \"{}c0\")", "+".repeat(room + 1));
+    assert!(!has_expression_stage(&closed_form));
+    let error = propose(&opt.evaluator, &closed_form, 1).unwrap_err();
+    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
 }
