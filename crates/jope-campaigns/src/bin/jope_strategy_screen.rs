@@ -1207,7 +1207,7 @@ fn run_strategy(
 fn final_cv(
     config: &Config,
     train_path: &str,
-    x: &Rows,
+    _x: &Rows,
     y: &[f64],
     top: &mut [TopGene],
 ) -> Result<usize, String> {
