@@ -196,6 +196,18 @@ impl Record {
         r
     }
 }
+fn record_byte_len(count: usize) -> Result<usize> {
+    ensure!(count > 0, "record artifact dimensions changed");
+    let bytes = count
+        .checked_mul(RECORD_BYTES)
+        .context("record count exceeds addressable byte capacity")?;
+    ensure!(
+        bytes <= isize::MAX as usize,
+        "record count exceeds addressable byte capacity"
+    );
+    Ok(bytes)
+}
+
 /// Read-only memory mapping of the immutable training artifact.
 pub struct Records {
     ptr: *mut libc::c_void,
@@ -214,7 +226,8 @@ impl Records {
             io::{Read, Write},
             os::fd::{AsRawFd, FromRawFd},
         };
-        if let Some(file) = crate::sealed_storage::shared(path, expected, count * RECORD_BYTES)? {
+        let bytes = record_byte_len(count)?;
+        if let Some(file) = crate::sealed_storage::shared(path, expected, bytes)? {
             return Self::from_file(file, count);
         }
         let fd = unsafe {
@@ -250,11 +263,10 @@ impl Records {
     }
     fn from_file(file: fs::File, count: usize) -> Result<Self> {
         use std::os::fd::AsRawFd;
-        let len = file.metadata()?.len() as usize;
-        ensure!(
-            count > 0 && len == count * RECORD_BYTES,
-            "record artifact dimensions changed"
-        );
+        let expected = record_byte_len(count)?;
+        let len = usize::try_from(file.metadata()?.len())
+            .context("record artifact exceeds addressable byte capacity")?;
+        ensure!(len == expected, "record artifact dimensions changed");
         let ptr = unsafe {
             libc::mmap(
                 std::ptr::null_mut(),
@@ -269,7 +281,9 @@ impl Records {
         Ok(Self { ptr, len })
     }
     pub fn get(&self, i: usize) -> Record {
-        assert!((i + 1) * RECORD_BYTES <= self.len);
+        assert!(i < self.len / RECORD_BYTES, "record index out of bounds");
+        // SAFETY: construction caps the mapping at isize::MAX bytes. This division-based
+        // bound keeps the offset multiplication and complete record within that live mapping.
         Record::parse(unsafe {
             std::slice::from_raw_parts((self.ptr as *const u8).add(i * RECORD_BYTES), RECORD_BYTES)
         })
@@ -1066,4 +1080,70 @@ fn build_impl(
         }),
     )?;
     Ok(cache_stats)
+}
+
+#[cfg(test)]
+mod record_bounds_tests {
+    use super::*;
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+
+    fn record(value: f32) -> Record {
+        Record {
+            tokens: [0; SEQUENCE],
+            legal: [0; SEQUENCE],
+            length: 1,
+            context: 0,
+            value,
+            percentile: 0.5,
+            runtime: 1.0,
+        }
+    }
+
+    #[test]
+    fn mapped_records_preserve_first_and_last_record_values() {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(&record(0.125).bytes()).unwrap();
+        file.write_all(&record(0.75).bytes()).unwrap();
+        let records = Records::open(file.path(), 2).unwrap();
+        assert_eq!(records.get(0).value.to_bits(), 0.125f32.to_bits());
+        assert_eq!(records.get(1).value.to_bits(), 0.75f32.to_bits());
+        assert!(catch_unwind(AssertUnwindSafe(|| records.get(2))).is_err());
+    }
+
+    #[test]
+    fn wrapped_record_index_is_refused_before_mapping_access() {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(&record(0.125).bytes()).unwrap();
+        let records = Records::open(file.path(), 1).unwrap();
+        // RECORD_BYTES is divisible by four. The old release guard wrapped this
+        // index to byte offset zero; a regression safely reads record zero, then fails.
+        let wrapped = 1usize << (usize::BITS - 2);
+        assert!(catch_unwind(AssertUnwindSafe(|| records.get(wrapped))).is_err());
+    }
+
+    #[test]
+    fn impossible_record_counts_return_errors_without_panicking() {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(&record(0.125).bytes()).unwrap();
+        let wrapped_count = (1usize << (usize::BITS - 2)) + 1;
+        for count in [
+            wrapped_count,
+            0,
+            isize::MAX as usize / RECORD_BYTES + 1,
+            usize::MAX / RECORD_BYTES + 1,
+            usize::MAX,
+        ] {
+            assert!(Records::open(file.path(), count).is_err());
+            let error = Records::open_verified(file.path(), count, "not-used")
+                .err()
+                .expect("invalid dimensions must fail before content verification");
+            let message = error.to_string();
+            assert!(if count == 0 {
+                message.contains("record artifact dimensions changed")
+            } else {
+                message.contains("record count exceeds addressable byte capacity")
+            });
+        }
+        assert!(Records::open(file.path(), 2).is_err());
+    }
 }
