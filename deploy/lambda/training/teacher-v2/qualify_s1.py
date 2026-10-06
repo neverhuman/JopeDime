@@ -18,6 +18,16 @@ HERE = Path(__file__).resolve().parent
 
 MUTANTS = {
     "island-engine": {
+        "two_fold_one_win": (
+            "geo <= 0.90 && wins == 2",
+            "geo <= 0.90 && wins >= 1",
+            "s1_two_fold_gate_requires_both_wins_and_refuses_wrong_count",
+        ),
+        "missing_resume_skipped": (
+            "if !path.is_file() {",
+            "if false {",
+            "explicitly_missing_resume_fails_before_seed_inputs_are_read",
+        ),
         "fitness_test_ratio": (
             "0.80 * mean +",
             "0.50 * test_ratio.unwrap_or(f64::INFINITY).max(1e-300).ln() + 0.30 * mean +",
@@ -44,7 +54,7 @@ MUTANTS = {
             "selection_is_blind_to_the_official_test",
         ),
         "historical_semantic_cache": (
-            "if row.selection_protocol != SELECTION_PROTOCOL {",
+            "if row.selection_protocol != protocol {",
             "if false {",
             "stale_resume_and_semantic_cache_are_refused",
         ),
@@ -54,8 +64,8 @@ MUTANTS = {
             "test_cases_and_test_wide_projections_are_refused",
         ),
         "diagnostic_availability_veto": (
-            "let gate = geo <= 0.90 && wins >= 5;",
-            'if test_rmse.is_none() { bail!("test diagnostic required") }\n        let gate = geo <= 0.90 && wins >= 5;',
+            'let _test_predictions = array_f64(&test["predictions"]).unwrap_or_default();',
+            'if test_rmse.is_none() { bail!("test diagnostic required") }\n        let _test_predictions = array_f64(&test["predictions"]).unwrap_or_default();',
             "missing_failed_or_malformed_test_diagnostics_cannot_censor_cv",
         ),
         "duplicate_live_delivery": (
@@ -69,7 +79,7 @@ MUTANTS = {
             "legacy_failed_live_admission_cannot_mint_s1_history",
         ),
         "legacy_failed_resume": (
-            'if value["selection_protocol"] != SELECTION_PROTOCOL\n',
+            'if value["selection_protocol"] != protocol\n',
             "if false\n",
             "legacy_failed_resume_cannot_change_seen_programs",
         ),
@@ -100,6 +110,16 @@ MUTANTS = {
         ),
     },
     "lambda-worker": {
+        "s1_terminated_cv_diagnostics": (
+            "if !s1_two_fold {",
+            "if true {",
+            "s1_two_fold_evaluation_fits_and_scores_only_training_rows",
+        ),
+        "s1_fold_count": (
+            "if raw[16] != 2\n",
+            "if false\n",
+            "s1_two_fold_view_refuses_other_counts_and_does_not_decode_test_cells",
+        ),
         "scaler_scored_rows": (
             "let s = fit_scaler(x, y)?;",
             "let mut xa = x.clone(); xa.extend(vx.iter().cloned());\n    let mut ya = y.to_vec(); ya.extend_from_slice(vy);\n    let s = fit_scaler(&xa, &ya)?;",
@@ -135,6 +155,12 @@ def intended_rust_failure(output, assertion, exit_code):
         return False
     panic = section.group(1)
     markers = {
+        "s1_two_fold_gate_requires_both_wins_and_refuses_wrong_count": [
+            "S1_ASSERT_TWO_WINS",
+        ],
+        "s1_two_fold_evaluation_fits_and_scores_only_training_rows": [
+            "S1_ASSERT_TERMINATED_CV", "S1_ASSERT_TEST_UNREAD",
+        ],
         "missing_failed_or_malformed_test_diagnostics_cannot_censor_cv": [
             "S1_ASSERT_DIAGNOSTIC_ADMISSION"
         ],
@@ -156,6 +182,9 @@ def intended_rust_failure(output, assertion, exit_code):
         ],
         "edge_exhausted_counters_refuse_before_progress_changes": [
             "S1_ASSERT_COUNTER_CAPACITY",
+        ],
+        "explicitly_missing_resume_fails_before_seed_inputs_are_read": [
+            "S1_ASSERT_REQUIRED_RESUME",
         ],
     }.get(assertion, [])
     return (

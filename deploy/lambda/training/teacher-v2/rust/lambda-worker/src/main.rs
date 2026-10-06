@@ -10,6 +10,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+const S1_TWO_FOLD: &str = "jope.s1-two-fold/v1";
+
 const BASE: &str = "https://veox-jopedime-learning-use2.s3.us-east-2.amazonaws.com/experiments/gp-policy-dl/v2-trainonly/";
 
 fn hash(b: &[u8]) -> String {
@@ -298,8 +300,34 @@ fn retained_cv_result(
     Ok(Some(record))
 }
 
+fn retained_result(
+    output: &Path,
+    child_success: bool,
+    timed_out: bool,
+    s1_two_fold: bool,
+) -> Result<Option<Value>, Error> {
+    if !s1_two_fold {
+        return retained_cv_result(output, child_success, timed_out);
+    }
+    // A committed S1 CV result survives child termination without test products.
+    let Some(record) = retained_cv_result(output, true, false)? else {
+        return Ok(None);
+    };
+    if record["fold_protocol"] != S1_TWO_FOLD
+        || record["inner_cv_folds"] != 2
+        || record["inner_cv"].as_array().map(Vec::len) != Some(2)
+        || record.get("official_test").is_some()
+    {
+        return Err("invalid two-fold CV commitment".into());
+    }
+    Ok(Some(record))
+}
+
 fn evaluate(data_path: &Path, candidate_path: &Path, output: &Path) -> Result<(), Error> {
     let d = parse_data(&fs::read(data_path)?)?;
+    if d.k != 7 {
+        return Err("teacher-v2 mode requires exactly seven folds".into());
+    }
     let c: Candidate = serde_json::from_slice(&fs::read(candidate_path)?)?;
     let g = genome(&c)?;
     let start = now_us();
@@ -349,7 +377,13 @@ fn evaluate(data_path: &Path, candidate_path: &Path, output: &Path) -> Result<()
     write_result(output, &out)
 }
 
-fn run_child(c: &Candidate, data_path: &Path, dir: &Path, timeout_ms: u64) -> Result<Value, Error> {
+fn run_child(
+    c: &Candidate,
+    data_path: &Path,
+    dir: &Path,
+    timeout_ms: u64,
+    s1_two_fold: bool,
+) -> Result<Value, Error> {
     let cp = dir.join("candidate.json");
     let op = dir.join("evaluation.json");
     let ep = dir.join("stderr.log");
@@ -357,7 +391,7 @@ fn run_child(c: &Candidate, data_path: &Path, dir: &Path, timeout_ms: u64) -> Re
     let start = now_us();
     let tick = Instant::now();
     let mut child = Command::new(std::env::current_exe()?)
-        .arg("--fit")
+        .arg(if s1_two_fold { "--fit-s1" } else { "--fit" })
         .arg(data_path)
         .arg(&cp)
         .arg(&op)
@@ -376,18 +410,23 @@ fn run_child(c: &Candidate, data_path: &Path, dir: &Path, timeout_ms: u64) -> Re
         }
         std::thread::sleep(Duration::from_millis(5));
     };
-    if let Some(record) = retained_cv_result(&op, status.success(), timed_out)? {
+    if let Some(record) = retained_result(&op, status.success(), timed_out, s1_two_fold)? {
         return Ok(record);
     }
-    Ok(
-        json!({"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","program":c,"status":if timed_out{"timeout"}else{"failed"},
-        "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"stderr":fs::read_to_string(ep).unwrap_or_default().chars().take(4096).collect::<String>(),"memory":memory()}),
-    )
+    let mut failure = json!({"schema":"jope.s1-evaluation/v1","input_semantics":"unscaled_fit_rows_v1","program":c,"status":if timed_out{"timeout"}else{"failed"},
+        "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"stderr":fs::read_to_string(ep).unwrap_or_default().chars().take(4096).collect::<String>(),"memory":memory()});
+    if s1_two_fold {
+        failure["fold_protocol"] = json!(S1_TWO_FOLD);
+        failure["inner_cv_folds"] = json!(2);
+    }
+    Ok(failure)
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Request {
+    #[serde(default)]
+    fold_protocol: Option<String>,
     schema: String,
     input_semantics: String,
     attempt_id: String,
@@ -408,6 +447,9 @@ fn allowed(url: &str, kind: &str) -> bool {
 }
 
 fn validate_request(r: &Request) -> Result<(), Error> {
+    if r.fold_protocol.as_deref().is_some_and(|p| p != S1_TWO_FOLD) {
+        return Err("unsupported fold protocol".into());
+    }
     if r.schema != "jope.s1-request/v1"
         || r.input_semantics != "unscaled_fit_rows_v1"
         || r.attempt_id.is_empty()
@@ -464,7 +506,13 @@ async fn invoke(event: LambdaEvent<Request>) -> Result<Value, Error> {
     let dp = dir.join("data.bin");
     fs::write(&dp, &raw)?;
     drop(raw);
-    let mut record = run_child(&r.candidate, &dp, &dir, r.candidate_timeout_ms)?;
+    let mut record = run_child(
+        &r.candidate,
+        &dp,
+        &dir,
+        r.candidate_timeout_ms,
+        r.fold_protocol.as_deref() == Some(S1_TWO_FOLD),
+    )?;
     record["context_sha256"] = json!(r.context_sha256);
     let pack = json!({"schema":"jope.s1-invocation/v1","attempt_id":r.attempt_id,"aws_request_id":event.context.request_id,
         "started_utc_us":start,"finished_utc_us":now_us(),"wall_us":tick.elapsed().as_micros(),"memory":memory(),"record":record});
@@ -501,9 +549,100 @@ trait ReadAll: Read {
 }
 impl<T: Read> ReadAll for T {}
 
+/// S1 view: outer-test cells have no representation and are never decoded.
+struct S1Data {
+    x: Rows,
+    y: Vec<f64>,
+    folds: Vec<u8>,
+}
+fn parse_s1_data(raw: &[u8]) -> Result<S1Data, Error> {
+    if raw.len() < 17 || &raw[..4] != b"JTT1" {
+        return Err("invalid JTT1 header".into());
+    }
+    let nt = u32::from_le_bytes(raw[4..8].try_into()?) as usize;
+    let nq = u32::from_le_bytes(raw[8..12].try_into()?) as usize;
+    let p = u32::from_le_bytes(raw[12..16].try_into()?) as usize;
+    if raw[16] != 2
+        || nt < 50
+        || nq < 10
+        || p == 0
+        || p > 512
+        || (nt + nq).saturating_mul(p) > 16_000_000
+    {
+        return Err("S1 requires exactly two inner folds and an admitted shape".into());
+    }
+    let expected = 17usize
+        .checked_add(nt)
+        .and_then(|n| n.checked_add((nt + nq).checked_mul((p + 1) * 8)?))
+        .ok_or("shape overflow")?;
+    if raw.len() != expected {
+        return Err("JTT1 byte count mismatch".into());
+    }
+    let folds = raw[17..17 + nt].to_vec();
+    if folds.iter().any(|f| *f >= 2)
+        || (0..2).any(|j| folds.iter().filter(|f| **f == j).count() < 2)
+    {
+        return Err("S1 header/fold membership mismatch".into());
+    }
+    let mut pos = 17 + nt;
+    let mut x = Vec::with_capacity(nt);
+    let mut y = Vec::with_capacity(nt);
+    for _ in 0..nt {
+        let mut row = Vec::with_capacity(p);
+        for j in 0..=p {
+            let v = f64::from_le_bytes(raw[pos..pos + 8].try_into()?);
+            pos += 8;
+            if !v.is_finite() {
+                return Err("nonfinite S1 training value".into());
+            }
+            if j == p {
+                y.push(v);
+            } else {
+                row.push(v);
+            }
+        }
+        x.push(row);
+    }
+    Ok(S1Data { x, y, folds })
+}
+fn evaluate_s1(data_path: &Path, candidate_path: &Path, output: &Path) -> Result<(), Error> {
+    let d = parse_s1_data(&fs::read(data_path)?)?;
+    let c: Candidate = serde_json::from_slice(&fs::read(candidate_path)?)?;
+    let g = genome(&c)?;
+    let mut cv = Vec::with_capacity(2);
+    for fold in 0..2 {
+        let tr: Vec<usize> = d
+            .folds
+            .iter()
+            .enumerate()
+            .filter_map(|(i, f)| (*f != fold).then_some(i))
+            .collect();
+        let va: Vec<usize> = d
+            .folds
+            .iter()
+            .enumerate()
+            .filter_map(|(i, f)| (*f == fold).then_some(i))
+            .collect();
+        let x = tr.iter().map(|i| d.x[*i].clone()).collect();
+        let y: Vec<f64> = tr.iter().map(|i| d.y[*i]).collect();
+        let vx = va.iter().map(|i| d.x[*i].clone()).collect();
+        let vy: Vec<f64> = va.iter().map(|i| d.y[*i]).collect();
+        cv.push(one_fit(&g, &x, &y, &vx, &vy, "inner_cv", fold as usize)?);
+    }
+    write_result(
+        output,
+        &json!({"schema":"jope.s1-evaluation/v1", "fold_protocol":S1_TWO_FOLD,
+        "inner_cv_folds":2, "input_semantics":"unscaled_fit_rows_v1", "program":c,
+        "status":"completed", "inner_cv":cv}),
+    )
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Error> {
     let a: Vec<String> = std::env::args().collect();
+    if a.get(1).map(String::as_str) == Some("--fit-s1") {
+        return evaluate_s1(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]));
+    }
     if a.get(1).map(String::as_str) == Some("--fit") {
         return evaluate(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]));
     }
@@ -703,6 +842,7 @@ mod tests {
     #[test]
     fn request_timeout_matches_the_ninety_second_reservation() {
         let mut r = Request {
+            fold_protocol: None,
             schema: "jope.s1-request/v1".into(),
             input_semantics: "unscaled_fit_rows_v1".into(),
             attempt_id: "fixture".into(),
@@ -740,5 +880,102 @@ mod tests {
             "objects/inputs/sha256/"
         ));
         assert!(!allowed("https://example.com/x", "objects/inputs/sha256/"));
+    }
+    fn two_fold_fixture() -> Vec<u8> {
+        let mut b = fixture();
+        b[16] = 2;
+        for i in 0..70 {
+            b[17 + i] = (i % 2) as u8;
+        }
+        b
+    }
+    #[test]
+    fn s1_two_fold_view_refuses_other_counts_and_does_not_decode_test_cells() {
+        let b = two_fold_fixture();
+        assert!(
+            parse_data(&b).is_err(),
+            "original seven-fold receiver reproduces the S1 blocker"
+        );
+        let a = parse_s1_data(&b).unwrap();
+        let mut changed = b.clone();
+        changed[17 + 70 + 70 * 3 * 8..].fill(0xff); // every test cell, including targets, is now nonfinite
+        let t = parse_s1_data(&changed).unwrap();
+        assert_eq!((a.x, a.y, a.folds), (t.x, t.y, t.folds));
+        for count in [1, 3, 7] {
+            let mut bad = b.clone();
+            bad[16] = count;
+            assert!(parse_s1_data(&bad).is_err());
+        }
+        let mut bad = b.clone();
+        bad[17] = 2;
+        assert!(parse_s1_data(&bad).is_err());
+        assert!(parse_s1_data(&b[..b.len() - 1]).is_err());
+        let mut bad = b;
+        bad[17 + 70..17 + 70 + 8].copy_from_slice(&f64::NAN.to_le_bytes());
+        assert!(parse_s1_data(&bad).is_err());
+    }
+    #[test]
+    fn s1_two_fold_evaluation_fits_and_scores_only_training_rows() {
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../../../../target/s1-fixtures")
+            .join(format!("twofold-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let candidate = Candidate {
+            dsl: STD_RIDGE.into(),
+            program_sha256: hash(STD_RIDGE.as_bytes()),
+            birth_seq: 0,
+            parents: vec![],
+            operator: "fixture".into(),
+        };
+        let cp = dir.join("candidate.json");
+        fs::write(&cp, serde_json::to_vec(&candidate).unwrap()).unwrap();
+        let run = |b: &[u8], tag: &str| -> Value {
+            let data = dir.join(format!("{tag}.jtt1"));
+            let output = dir.join(format!("{tag}.json"));
+            fs::write(&data, b).unwrap();
+            evaluate_s1(&data, &cp, &output).unwrap();
+            serde_json::from_slice(&fs::read(output).unwrap()).unwrap()
+        };
+        let b = two_fold_fixture();
+        let a = run(&b, "original");
+        for timed_out in [false, true] {
+            assert_eq!(
+                a,
+                retained_result(&dir.join("original.json"), false, timed_out, true)
+                    .unwrap()
+                    .unwrap(),
+                "S1_ASSERT_TERMINATED_CV"
+            );
+        }
+        let mut t = b.clone();
+        t[17 + 70 + 70 * 3 * 8..].fill(0xff);
+        let z = run(&t, "test-poison");
+        assert!(a.get("official_test").is_none());
+        assert_eq!(a["inner_cv_folds"], 2);
+        for j in 0..2 {
+            for key in [
+                "model_sha256",
+                "scaler_sha256",
+                "predictions",
+                "targets",
+                "metrics",
+            ] {
+                assert_eq!(
+                    a["inner_cv"][j][key], z["inner_cv"][j][key],
+                    "S1_ASSERT_TEST_UNREAD"
+                );
+            }
+        }
+        // Authorized train-target change exercises the actual dependency.
+        let mut t = b;
+        for i in 0..70 {
+            let off = 17 + 70 + i * 3 * 8 + 2 * 8;
+            t[off..off + 8].copy_from_slice(&(i as f64 * i as f64 + 9.0).to_le_bytes());
+        }
+        let z = run(&t, "train-change");
+        assert_ne!(
+            a["inner_cv"][0]["model_sha256"],
+            z["inner_cv"][0]["model_sha256"]
+        );
     }
 }

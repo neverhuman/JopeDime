@@ -65,6 +65,14 @@
       "anchors": [
         "watch-tarball"
       ]
+    },
+    "teacher-v2-s1-twofold": {
+      "source": "additive repository implementation under the October 6 S1-FOLDS-RULING",
+      "tree": "deploy/lambda/training/teacher-v2",
+      "anchors": [
+        "owner-s1-folds-ruling-20261006T024000Z"
+      ],
+      "note": "Explicit two-fold protocol and fresh G0 preparation/scoring; proposal Cargo.toml adds a normal CI-built workspace. The original Cargo.toml.v2 and frozen teacher-v2 body remain historical. No campaign or publication executed."
     }
   },
   "not_imported": [
@@ -154,7 +162,7 @@
       ]
     },
     "teacher-v2-freeze": {
-      "kind": "fallback freeze evidence, since no stopped-state handoff was posted: the import's step 20 re-verified the snapshot locally and on its archive mirror; the three snapshots' fresh hashes of the live source are equal (source-after.sha256 28826359…, the 08:21Z one without its .env line) and their six listings are byte-identical (5b47ea32…); newest source mtime 07:31:56Z, newest build output 07:33:36Z; no process with cwd/exe in the directory at 12:44Z",
+      "kind": "fallback freeze evidence, since no stopped-state handoff was posted: the import's step 20 re-verified the snapshot locally and on its archive mirror; the three snapshots' fresh hashes of the live source are equal (source-after.sha256 28826359\u2026, the 08:21Z one without its .env line) and their six listings are byte-identical (5b47ea32\u2026); newest source mtime 07:31:56Z, newest build output 07:33:36Z; no process with cwd/exe in the directory at 12:44Z",
       "path": "~/jope-evidence/teacher-v2-import/20-freeze/FREEZE-CHECK.json",
       "sha256": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
       "files": 24,
@@ -175,6 +183,12 @@
         "files": 24
       },
       "note": "the run records source_manifest_sha256 over the four keys schema, evaluation_context_sha256, files and binaries, and publishes the body with that fifth key added; record both values and the VersionId from Codex's handoff, and they confirm this body's files and binaries only if they equal the recomputed ones"
+    },
+    "owner-s1-folds-ruling-20261006T024000Z": {
+      "kind": "relayed owner source assignment, not runtime qualification",
+      "receipt": "docs/internal/core-ip/dl-trainonly/s1-twofold-ruling.json",
+      "ruling_utc": "2026-10-06T02:40:00Z",
+      "receipt_sha256": "0564355f4a67d518bac286efbda12fe38bf473f082a2f77cb62722d771bb7f1e"
     }
   },
   "custody": {
@@ -2421,10 +2435,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/README.md",
-      "tree_sha256": "da0b930b9542f6967b3a6bbc3bd2cf0ac6f4d76ae9264dfbee24a986e33ef5d3",
+      "tree_sha256": "c79d454bf6a15ed1fc90631f6f7f5cbad1da5b3bacdd0ca02f965abecf148536",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold, two wins, train-only products, required resume, proposal CI and create-only G0; frozen source identity retained"
     },
     {
       "body": "teacher-v2",
@@ -2439,10 +2453,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/SCHEMA.md",
-      "tree_sha256": "ec4b8062bbc62b56c226ac9e1789b89b27a11042ba8840e63bbf0c47a66827d4",
+      "tree_sha256": "9433696952a6dabdc0ee40a020a8e3900242c87411c09cf8c8e5cf941f196f71",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold, two wins, train-only products, required resume, proposal CI and create-only G0; frozen source identity retained"
     },
     {
       "body": "teacher-v2",
@@ -2594,10 +2608,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
-      "tree_sha256": "cb232bd500cd2c5209b6d3119815c79bca8a345142163bbb48222bb30e3417e7",
+      "tree_sha256": "dc0d55edb64318739a2bdc4d733b2bb01bb96ba9594911145414ddc647e3ecd0",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold, two wins, train-only products, required resume, proposal CI and create-only G0; frozen source identity retained"
     },
     {
       "body": "teacher-v2",
@@ -2648,10 +2662,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
-      "tree_sha256": "aec261748293f10bf600b89e8841f32811790504f4e07d7412b7129bbc9f895a",
+      "tree_sha256": "e369e13bfb498dee924cd0afca23a82fb43c6997864e37fdc28063f092cc1fb1",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "Owner S1 grant and independent PR204 corrections: atomic CV before optional test diagnostics and90s requests"
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold and source-only G0; retain committed CV after termination without test diagnostics; frozen source identity retained"
     },
     {
       "body": "teacher-v2",
@@ -2683,10 +2697,11 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.lock",
-      "tree_sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "tree_sha256": "e764410f551a73cfa1adc0b90eef91064d59bbef0ce15bb6becb63512e97fb02",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "note": "byte-identical to the frozen bytes of deploy/lambda/regression/rust/Cargo.lock (that record's sha256); not a workspace lock here (its manifest is renamed), so sync-locks leaves its feat-math 0.1.0 entry as frozen, like csv/versions/rust-single-v2/rust/Cargo.lock"
+      "note": "byte-identical to the frozen bytes of deploy/lambda/regression/rust/Cargo.lock (that record's sha256); not a workspace lock here (its manifest is renamed), so sync-locks leaves its feat-math 0.1.0 entry as frozen, like csv/versions/rust-single-v2/rust/Cargo.lock",
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold, two wins, train-only products, required resume, proposal CI and create-only G0; frozen source identity retained"
     },
     {
       "body": "teacher-v2",
@@ -2703,7 +2718,7 @@
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml.v2",
       "tree_sha256": "5986b2932034ee8b000e8365d014c0dd0e6ef35918077f79a02ee18523109c12",
       "custody_tarball": null,
-      "reason": "declares package jope-regression-lambda, which deploy/lambda/regression/rust/Cargo.toml also declares; repo-layout's dup-package rule has no allowlist. It is the regression worker's frozen manifest with the feat-math path six levels deep for this body. The proposal binary in the snapshot's target/ (regression-bootstrap, sha256 d8bdbe7d…, anchor teacher-v2-custody-snapshot) is this package's bin; that the campaign ran that binary is unconfirmed until Codex publishes the run's source manifest (anchor teacher-v2-source-manifest). Not built here; rename it back to Cargo.toml (and run lambda-workspaces.sh sync-locks) to build it"
+      "reason": "declares package jope-regression-lambda, which deploy/lambda/regression/rust/Cargo.toml also declares; repo-layout's dup-package rule has no allowlist. It is the regression worker's frozen manifest with the feat-math path six levels deep for this body. The proposal binary in the snapshot's target/ (regression-bootstrap, sha256 d8bdbe7d\u2026, anchor teacher-v2-custody-snapshot) is this package's bin; that the campaign ran that binary is unconfirmed until Codex publishes the run's source manifest (anchor teacher-v2-source-manifest). Not built here; rename it back to Cargo.toml (and run lambda-workspaces.sh sync-locks) to build it"
     },
     {
       "body": "teacher-v2",
@@ -2718,10 +2733,11 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/src/main.rs",
-      "tree_sha256": "ac6ec57d7eaa185ec2cd4707799bcbc2cf5df7fdaae5df64c9273fa5e4d93828",
+      "tree_sha256": "713e822611787ef51b703b31ce361657b86783768bde4359454bf83d9c3365a9",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "note": "byte-identical to deploy/lambda/regression/rust/src/main.rs (the same frozen sha256); the proposal binary in the snapshot's target/ (regression-bootstrap) is built from this source, and that the campaign ran it is unconfirmed until Codex publishes the run's source manifest"
+      "note": "byte-identical to deploy/lambda/regression/rust/src/main.rs (the same frozen sha256); the proposal binary in the snapshot's target/ (regression-bootstrap) is built from this source, and that the campaign ran it is unconfirmed until Codex publishes the run's source manifest",
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold, two wins, train-only products, required resume, proposal CI and create-only G0; frozen source identity retained"
     },
     {
       "body": "teacher-v2",
@@ -3130,10 +3146,74 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/qualify_s1.py",
-      "tree_sha256": "0ae491c078a10d124bddd285006b6acefbafab4b836d96fb24300a1c42eeba86",
+      "tree_sha256": "a69ddd123fee0a5a7ad61e027b9247cadc742589fcf80d5d776fc7751956a807",
       "custody_tarball": null,
       "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
-      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
+      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold and source-only G0; retain committed CV after termination without test diagnostics; frozen source identity retained"
+    },
+    {
+      "body": "teacher-v2-s1-twofold",
+      "path": "materialize_g0.py",
+      "source": "owner-assigned additive source, not an imported historical artifact",
+      "sha256": "b4dc0a0521aa343473dab3b8f3107bb816c2b2ae67b6684eb51cb17c54338906",
+      "bytes": 8057,
+      "mode": "100644",
+      "anchors": [
+        "owner-s1-folds-ruling-20261006T024000Z"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/materialize_g0.py",
+      "tree_sha256": "b4dc0a0521aa343473dab3b8f3107bb816c2b2ae67b6684eb51cb17c54338906",
+      "custody_tarball": null,
+      "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission"
+    },
+    {
+      "body": "teacher-v2-s1-twofold",
+      "path": "test_materialize_g0.py",
+      "source": "owner-assigned additive source, not an imported historical artifact",
+      "sha256": "f86792f0b941a4d4e7375d67ed9c9e72f58a74218edfbcd1d4e66050fb9c2a23",
+      "bytes": 9686,
+      "mode": "100644",
+      "anchors": [
+        "owner-s1-folds-ruling-20261006T024000Z"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/test_materialize_g0.py",
+      "tree_sha256": "f86792f0b941a4d4e7375d67ed9c9e72f58a74218edfbcd1d4e66050fb9c2a23",
+      "custody_tarball": null,
+      "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission"
+    },
+    {
+      "body": "teacher-v2-s1-twofold",
+      "path": "rust/island-engine/src/g0.rs",
+      "source": "owner-assigned additive source, not an imported historical artifact",
+      "sha256": "efa43580ee91b498946f4e2882c00f80f66683dbac582bc60ff4be6b3cb74f39",
+      "bytes": 10142,
+      "mode": "100644",
+      "anchors": [
+        "owner-s1-folds-ruling-20261006T024000Z"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/g0.rs",
+      "tree_sha256": "efa43580ee91b498946f4e2882c00f80f66683dbac582bc60ff4be6b3cb74f39",
+      "custody_tarball": null,
+      "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission"
+    },
+    {
+      "body": "teacher-v2-s1-twofold",
+      "path": "rust/proposal-engine/Cargo.toml",
+      "source": "owner-assigned additive source, not an imported historical artifact",
+      "sha256": "7301e04b39c2ff08d2add5ed6557cfadda81b414ff11fa60f54392b6a3d1ceb2",
+      "bytes": 628,
+      "mode": "100644",
+      "anchors": [
+        "owner-s1-folds-ruling-20261006T024000Z"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml",
+      "tree_sha256": "7301e04b39c2ff08d2add5ed6557cfadda81b414ff11fa60f54392b6a3d1ceb2",
+      "custody_tarball": null,
+      "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission"
     }
   ],
   "excluded": [

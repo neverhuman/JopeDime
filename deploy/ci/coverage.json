@@ -95,7 +95,8 @@
         "bash deploy/ci/lambda.sh",
         "bash deploy/ci/test-bump.sh",
         "python3 deploy/lambda/training/teacher-v2/test_s1_budget.py",
-        "python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out \"$JOPE_LANE_EVIDENCE/s1-mutants\""
+        "python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out \"$JOPE_LANE_EVIDENCE/s1-mutants\"",
+        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py"
       ]
     },
     "rust-check": {
@@ -7972,6 +7973,16 @@
       ],
       "dispositions": [],
       "scope": "Direct stdlib unittest execution of fixed-equal S1 continuation, attempt reservation, failure accounting, deadline and recovery; synthetic only."
+    },
+    "python:deploy/lambda/training/teacher-v2/test_materialize_g0.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Four stdlib conformance tests build all three real S1 executables via Cargo artifact messages, generate 96 fresh priors, execute two-fold fits, score/load G0, compare outer-target flips, and refuse incomplete/overwritten products; synthetic CPU only."
     }
   }
 }

@@ -1,0 +1,39 @@
+{
+  "schema": "jope.s1-source-ruling/v1",
+  "source": "OWNER ENG:watcher relay in DEEP_LEARNING_AGENT_CHAT.md and user message",
+  "ruling_utc": "2026-10-06T02:40:00Z",
+  "authority_kind": "relayed owner source assignment; not a new typed training grant",
+  "baseline": "a0c2f0163ca027cbc45b7c499e7219ef5bce0cce",
+  "protocol": "jope.s1-two-fold/v1",
+  "scope": [
+    "explicit two-fold worker and selector; legacy seven-fold numerical path retained",
+    "two-of-two wins and mean ratio <=0.90",
+    "missing requested resume refuses",
+    "proposal predict Result propagation and CI build/test",
+    "96 fresh-prior G0 preparation, scoring and seen outputs"
+  ],
+  "slots": {
+    "initialization": 96,
+    "generations": 18,
+    "attempts_per_generation": 64,
+    "per_context": 1248,
+    "original_total_ceiling": 6081504
+  },
+  "materializer_history": {
+    "retained_prior_spec": "not found in the DL handoff",
+    "handoff_manifest_sha256": "4b8c54da7e4b11cc2f30b02aa88f159d5240134bf4962e670d2bfcddbcd699ad",
+    "construction": "new context_seeded_rademacher_v1; historical parity unqualified"
+  },
+  "qualified_scope": "source and synthetic CPU fixtures only; run receipts retained separately",
+  "remaining": [
+    "exact-head hosted CI and independent native review",
+    "owner sweeper merge",
+    "DL owner fixed three-context pilot with target flip, leaking selector mutant and attempt accounting",
+    "controller adoption of production v3 minus denylist v2 and separate research ledger",
+    "raw split deviation owner ruling and replacement input qualification",
+    "G0 cache import does not consume manifest dependency hashes; producer/dependency authentication remains unqualified"
+  ],
+  "runtime_admitted": false,
+  "ledger_initialized": false,
+  "root_may_merge": false
+}

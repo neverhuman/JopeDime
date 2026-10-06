@@ -12,7 +12,7 @@ S1 uses `jope.s1-request/v1`, `jope.s1-evaluation/v1`, and
 unscaled input producer. The handler rejects the old request and storage prefix.
 Each fold fits min/max feature and target scaling on its own fitting rows.
 Scoring applies those constants and returns predictions in original target units.
-The official-test fit uses all outer-train rows. Preprocessing receipt hashes
+The legacy seven-fold mode's official-test fit uses all outer-train rows. Preprocessing receipt hashes
 and model hashes remain separate; these score records are not exported models.
 
 The eight islands contain eight individuals each (64 total), matching the
@@ -86,6 +86,43 @@ This source change does not launch a campaign or qualify G22. Historical
 no result becomes fully train-only through the new transforms. Deployment,
 GPU/S3 publication, teacher admission and optimizer learning require their
 separate receiving evidence.
+
+## October 6 two-fold S1 protocol
+
+The relayed owner S1-FOLDS-RULING at 2026-10-06T02:40:00Z supersedes the
+seven-fold assumption for the S1 lane. The explicit request `fold_protocol`,
+engine selection protocol and sample binding are `jope.s1-two-fold/v1`.
+The old seven-fold protocol above remains available without the new mode flags;
+its arithmetic, five-of-seven gate and fixtures are retained.
+
+S1 JTT1 headers must declare exactly two folds, with train membership only in
+0 and 1 and at least two rows in each. The S1 worker's product has no outer-test
+feature or target representation. It checks envelope byte length but decodes
+only the fitting block; arbitrary outer-test cell bytes cannot change its fits.
+It emits exactly two inner-CV products and no `official_test` field.
+The scorer checks fold indices, row counts and the SHA256 of fold-ordered training
+targets against the frozen sample. Records carrying official-test products refuse.
+
+The S1 gate is geometric-mean RMSE ratio <=0.90 **and two of two fold wins**.
+The tail term is the worst of the two log ratios; the mean, population standard
+deviation, coefficients and complexity term retain the original calculation.
+All 192 case indices and the 64-wide projected signature use OOF rows only.
+Two-fold caches and history must have a compatible gate and no test diagnostics.
+Requesting a missing resume file fails before reading seed products.
+
+G0 preparation uses 96 distinct context-seeded prior proposals without historical
+parents or seen pools. `jope.s1-g0-sample/v1` binds training bytes, fold sizes,
+fold-ordered targets and `context_seeded_rademacher_v1` projection bytes.
+The scorer validates exactly 96 terminal records before writing a create-only
+index/seen/manifest set. Completed records use the production scorer; failed and
+timeout records remain in seen history. Readiness requires 64 unique eligible
+OOF prediction hashes. These artifacts do not certify durable attempt accounting,
+producer authentication or exact interrupted continuation.
+
+The unchanged offline budget contract still requires 4,873 contexts and 1,248
+slots each. Integrating the owner's smaller production v3-minus-denylist context
+plan, separate research ledger and one-time post-pilot initialization remains a
+controller requirement; this change does not initialize or qualify that ledger.
 
 ## Historical September 29 protocol — retained record
 

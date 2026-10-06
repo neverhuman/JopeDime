@@ -10,7 +10,9 @@ Run CPU conformance from the repository root, reusing its target:
 ```sh
 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.toml --target-dir target
 CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/island-engine/Cargo.toml --target-dir target
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --offline --locked --manifest-path deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml --target-dir target
 python3 deploy/lambda/training/teacher-v2/test_s1_budget.py
+python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py
 python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out /custody/s1-mutants
 ```
 
@@ -22,8 +24,54 @@ cannot leave an earlier success receipt behind. A compile error, stale
 binary, zero-test result or unrelated failure cannot count as a killed mutant.
 It also checks channel-4 test-based and unbounded continuation mutations. Generated
 mutant files live under the reused target; tracked sources and historical copies
-are untouched. Hosted hygiene runs the budget tests, both standalone Rust
-workspaces through the existing Lambda lane, and the mutation qualifier.
+are untouched. Hosted hygiene runs the budget and G0 tests, all three standalone
+Rust workspaces through the existing Lambda lane, and the mutation qualifier.
+
+## Two-fold S1 and G0 preparation
+
+The October 6 S1-FOLDS-RULING selects explicit `jope.s1-two-fold/v1`.
+Send `fold_protocol=jope.s1-two-fold/v1` in a worker request, use `--fit-s1`
+for a local evaluation, and start the engine with `--s1-two-fold`.
+The worker decodes only outer-training rows and emits two inner-CV folds without
+official-test products. The engine requires both folds to beat their training-only
+baselines and a geometric-mean RMSE ratio at most 0.90. Without these explicit
+options the existing seven-fold path retains its five-of-seven gate. A requested
+resume file must exist; it never silently starts a fresh search.
+
+Prepare G0 using a pinned proposal executable built from its Cargo artifact:
+
+```sh
+python3 deploy/lambda/training/teacher-v2/materialize_g0.py \
+  --context CONTEXT_SHA256 --input ADMITTED_TWO_FOLD.jtt1 \
+  --proposal PROPOSAL_BINARY --proposal-sha256 PROPOSAL_SHA256 --out NEW_PREPARED_DIR
+```
+
+This emits 96 fresh context-seeded prior programs, a training-only sample manifest,
+64-by-OOF-row projection and dependency manifest. Existing output directories
+refuse. Proposal regeneration is bounded separately and consumes no fitting slots.
+The admitted supervisor must reserve and charge all G0 fits, including failures and
+retries, before dispatch; this preparation command does not dispatch them.
+
+After receiving exactly 96 terminal evaluation records in seed order, score them:
+
+```sh
+ISLAND_BINARY --score-g0 --context CONTEXT_SHA256 \
+  --sample NEW_PREPARED_DIR/sample.json --projection NEW_PREPARED_DIR/projection.f32 \
+  --seeds NEW_PREPARED_DIR/seeds.json --evaluations TERMINAL_RECORDS.json --out NEW_SCORED_DIR
+```
+
+The production two-fold scorer emits a gzipped completed seed index, all-terminal
+seen list and a manifest. Fewer than 64 unique eligible OOF prediction hashes marks
+the context incomplete and the engine refuses initialization. No extra fits are
+authorized. Both manifests explicitly leave attempt-accounting verification false;
+their existence does not qualify dispatch, storage publication or exact resume.
+The synthetic integration test executes 96 candidates through the real worker,
+scores and loads the engine, and repeats with changed outer-test targets to require
+byte-identical G0 files. Preparation has a test-dependent identity mutant control.
+
+The DL handoff reports no retained September 29 materializer specification. The
+new `context_seeded_rademacher_v1` construction is versioned explicitly and is
+qualified by these fixtures, without claiming historical byte reproduction.
 
 Seen and resume files use the same terminal-history validator. It checks the
 schema, context, selection protocol, program, island and progress fields before
