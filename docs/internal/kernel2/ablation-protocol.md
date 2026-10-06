@@ -181,7 +181,9 @@ p replays bit for bit on any host, subnormal values included. A unanimous split 
 exactly 2^(1-n) down to the smallest positive f64, 2^-1074 at n = 1075; the p is 0 only where the
 exact value is at most half of that (from n = 1076 on for a unanimous split). A p under 2^-1022
 is subnormal and carries fewer significant bits. The time grows with the smaller count times the
-number of pairs, which is at most one per dataset and seed.
+number of pairs, which is at most one per dataset and seed. The sign test takes at most 2^20
+untied pairs (`MAX_SIGN_TEST_PAIRS`); above that, its p is NaN and the paired summary refuses the
+comparison, as it refuses any number that is not finite.
 
 Every report of the result (PR body, commit message, receipt, ledger) quotes:
 - the overall and per-dataset W/T/L with both medians;
@@ -404,6 +406,8 @@ when it is not set; never under the system temporary directory.
   correctly rounded exact probability, bit for bit, for every split up to 120 pairs and for every
   split with at most 12 on the smaller side up to 1200 pairs, against an oracle computed apart
   from the implementation, including the subnormal cases review 06 found rounded to 0.
+- `ablation::tests::review07_sign_test_bounds_its_count_domain`: the sign test is exact right up
+  to 2^20 untied pairs, and NaN above that or when wins plus losses does not fit in a u64.
 - `ablation::tests::ablation_kernel2_text_passes_the_shipped_text_lint`: the new option names,
   help, ids and document keys pass `lint_shipped_text`. Only that new text is checked. Text that
   predates the kernel2 arms (some of the command's help and the legacy record's keys) is not, and
