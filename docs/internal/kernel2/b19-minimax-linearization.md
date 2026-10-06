@@ -148,7 +148,10 @@ the subtree's range, which would be a separate, versioned rule.)
   considered subtrees and their order, every stage, path, subtree and node count, the degree, the
   bound, the bracket rule, the line and its nodes from the recorded coefficients, every refusal
   after the fit, the admitted expression, the program and the pipeline admission's reason are
-  recomputed and compared;
+  recomputed and compared. The published parents are untrusted, so each is parsed within the B17
+  trace check's bounds (`parse_untrusted_pipeline`: the pipeline form only, and an expression
+  source holding more than 256 of the bytes `( + - * / ^` refused before the expression parser
+  sees it), and the public linearization entries check a tree's structure before they copy it;
 - the recorded evidence agrees with itself, checked per stage expression: each fit is consistent
   with its stop and within the evaluator's range (`|lo|`, `|hi|` and `max|f|` at most 1e12, the
   only range the sampling produces); a faulting training input refuses every subtree of its stage
@@ -194,8 +197,9 @@ A line in place of a curve usually loses accuracy unless the program's later sta
 simpler feature, and each measurement the pass spends is one the search does not spend elsewhere.
 The tests show a line that ranks above its parent and a line that is worse off the training
 range; neither is evidence of lift. An equal-budget ablation (on against off, paired wins, ties
-and losses overall and per dataset, beside both medians) waits for kernel2 arms in the ablation
-harness (`ablation-protocol.md`).
+and losses overall and per dataset, beside both medians) has not been run: the ablation harness
+has the `kernel2-baseline` and `kernel2-experimental` profiles (PR-0, #221;
+`ablation-protocol.md`) but no arm that selects this pass.
 
 ## Held follow-up: degree above 1
 
@@ -235,7 +239,11 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
 - the allowance, the start guard, `top_k` and deduplication bound the pass, and the budget
   identity holds;
 - frozen-clock replay of the receipt and every file with the flag alone, with the rewrite pass,
-  and with the damped least-squares refinement, the front and the rewrite pass, each verified;
+  and with the damped least-squares refinement, the front and the rewrite pass, four parents per
+  round in each, each verified;
+- parents over the parsing bound offer nothing and are refused unparsed, and parents at it offer
+  what their plain form offers; the public linearization entries refuse a decoded tree outside
+  the structure limits before they copy it (feat-math);
 - tamper refusals, the selection record, the flag, and the shipped-text lint (of this note too);
   among them a fit inflated past the evaluator's range, a fit hidden behind a faulting-input
   refusal beside sibling fits, a parent's group deleted, swapped with the next one, or repeated

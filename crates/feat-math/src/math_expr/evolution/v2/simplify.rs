@@ -834,14 +834,24 @@ impl Shared {
     }
 }
 
+/// Why a public linearization entry refuses a tree outside the structure limits, before any copy
+/// of it.
+const STRUCTURE_REFUSAL: &str =
+    "the linearization refuses a tree outside the structure limits before it is copied";
+
 /// The bounded minimax linearization of `expression`'s one-variable subtrees; see
-/// [`MathExpr::linearize_v2`].
+/// [`MathExpr::linearize_v2`]. `expression` may be any tree, one decoded from JSON included, and
+/// the copy and the admission's normalization both recurse, so its borrowed structure check
+/// (`from_ast`'s limits, walked with an explicit stack) comes first.
 fn linearize(
     expression: &MathExpr,
     profile: &SearchProfile,
     scope: ExpressionScope,
     mut source: Source<'_>,
 ) -> Result<Vec<SubtreeLinearization>> {
+    expression
+        .check_structure(MAX_NODES, MAX_DEPTH)
+        .map_err(|error| error.context(STRUCTURE_REFUSAL))?;
     let search = Search::new(profile, scope)?;
     let input = search.finish(expression.root.clone())?;
     let total = count_nodes(&input.root);
@@ -971,12 +981,15 @@ impl LinearFit {
 impl MathExpr {
     /// The paths of the subtrees [`MathExpr::linearize_v2`] considers, in its order, from the
     /// expression's text alone: each reads exactly one variable, has more than three nodes, and
-    /// sits where a line of three nodes and depth two fits the scope's depth limit.
+    /// sits where a line of three nodes and depth two fits the scope's depth limit. A tree outside
+    /// the structure limits is refused before anything copies or walks it.
     pub fn linearizable_v2(
         &self,
         profile: &SearchProfile,
         scope: ExpressionScope,
     ) -> Result<Vec<Vec<usize>>> {
+        self.check_structure(MAX_NODES, MAX_DEPTH)
+            .map_err(|error| error.context(STRUCTURE_REFUSAL))?;
         let search = Search::new(profile, scope)?;
         let input = search.finish(self.root.clone())?;
         Ok(linearizable(&input.root, search.scope.max_depth))
