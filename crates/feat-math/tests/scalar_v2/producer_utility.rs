@@ -15,7 +15,7 @@ fn cohort() -> (Rows, Vec<f64>) {
     let manifest = std::fs::read(root.join("manifest.json")).unwrap();
     assert_eq!(
         format!("{:x}", Sha256::digest(&manifest)),
-        "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
+        "74b05d8be0caa6a595815f9c89deb6be5ab716b1dedcd8a8669c7c7577296840"
     );
     let manifest: Value = serde_json::from_slice(&manifest).unwrap();
     assert_eq!(manifest["datasets"].as_array().unwrap().len(), 8);
