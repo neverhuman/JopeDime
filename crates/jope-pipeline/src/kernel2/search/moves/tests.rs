@@ -1089,6 +1089,10 @@ fn the_pool_refusal_count_of_fixed_parents_is_pinned() {
     // The count is what publication writes and `verify_run` counts again.
     let ids = [REWRITE_SATURATE.to_owned()];
     assert_eq!(pool_count(&ids, &state.moves), Some(4));
+    assert_eq!(
+        pool_count(&[MINIMAX_LINEARIZE.to_owned()], &state.moves),
+        None
+    );
     // A stage the rewrite cannot read is refused, not counted.
     let unreadable = propose(
         &opt.evaluator,
@@ -1292,6 +1296,7 @@ fn verify_refuses_records_off_the_ranked_parents_and_inexact_children() {
             reason: None,
             measurement: None,
             rewrites: Vec::new(),
+            linearization: None,
         },
     );
     let bytes = serde_json::to_vec_pretty(&edited).unwrap();
@@ -1431,6 +1436,7 @@ fn an_unstarted_record_ends_its_pass() {
             reason: None,
             measurement: None,
             rewrites: proposal.rewrites,
+            linearization: None,
         }
     };
     let engine = receipt.search.engine_selection.clone().unwrap();
@@ -1563,6 +1569,7 @@ fn under_an_evaluations_stop_the_last_round_stops_where_the_allowance_ran_out() 
         reason: proposal.reason,
         measurement: None,
         rewrites: proposal.rewrites,
+        linearization: None,
     });
     let path = publish_recounted(output, &receipt, &engine, &appended);
     errors.push(refusal_of(

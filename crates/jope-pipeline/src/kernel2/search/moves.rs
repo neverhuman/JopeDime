@@ -6,14 +6,13 @@
 //! origin. Proposal work is not charged. Every proposal is recorded in [`PATH`]. With no move
 //! selected the search never calls this module and nothing is written.
 //!
-//! The first move is the exact rewrite pass ([`REWRITE_SATURATE`], origin [`REWRITE`]): every
+//! The first pass is the exact rewrite pass ([`REWRITE_SATURATE`], origin [`REWRITE`]): every
 //! `map` or `derive` stage's expression of each of the round's top `refinement.top_k` ranked
 //! parents with such a stage is simplified by `MathExpr::simplify_v2`, from the expression text
 //! alone. A smaller tree the profile refuses is discarded and its reason recorded, and so is a
 //! stage whose expression cannot be rewritten at all ([`NOT_RUN`]); the pass goes on either way.
-//! A later move adds its pass to [`finish_round`] and its id to the selection record.
 //!
-//! The second move, run after the first when both are selected, is the bounded minimax
+//! The second pass, run after the first when both are selected, is the bounded minimax
 //! linearization pass ([`MINIMAX_LINEARIZE`], origin [`LINEARIZE`]). For each of the round's top
 //! `refinement.top_k` ranked parents with a `derive` stage that has a subtree it can consider,
 //! `MathExpr::linearize_v2` fits each one-variable subtree near the root of each `derive` stage's
@@ -21,8 +20,7 @@
 //! offers the line in its place when the line is smaller, meets the fit's minimax bound on those
 //! rows, and the profile admits the result. Each offer is one child program, measured once; the
 //! measured score ranks it, never the line's error. Every considered subtree is recorded, offered
-//! or refused, with its fit, bound and reason. [`check`] re-derives every record from its parent
-//! and the record's own fit, since the training rows are not published.
+//! or refused, with its fit, bound and reason.
 //!
 //! [`check`] re-derives the records against the published measurements. For each round and pass
 //! it ranks the measurements made before the pass, as the pass ranked them, and requires the
@@ -30,9 +28,12 @@
 //! ended in that round on its evaluations or seconds bound (exactly where the allowance ran out
 //! under an evaluations stop; under a seconds stop, where the start guard refused, which is not
 //! published). A rewrite record re-derives from its parent's text alone, and a measured rewritten
-//! program must score bit for bit as its parent.
+//! program must score bit for bit as its parent. A linearization record re-derives from its
+//! parent's text and the fit it records: the training rows are not published, so the fit, its
+//! range and the line's measured error are checked for consistency with each other and with the
+//! other records of the same stage expression, never measured again.
 
-// laneD:B20-rewrite-simplify (the module).
+// laneD:B20-rewrite-simplify (the module); laneD:B19-minimax-linearize (the second pass).
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use feat_math::{
@@ -284,17 +285,12 @@ fn linearize_round(
     may_start: &mut dyn FnMut() -> bool,
 ) -> Result<()> {
     let width = cut.train_x.first().map_or(0, Vec::len);
-    let mut unique = BTreeSet::new();
-    let mut parents: Vec<(String, String)> = Vec::new();
-    for o in options.evaluator.rank(&state.observations) {
-        if parents.len() == options.refinement.top_k {
-            break;
-        }
-        let genome = &o.observation.genome;
-        if unique.insert(genome.clone()) && linearize::offers(&options.evaluator, genome)? {
-            parents.push((genome.clone(), o.observation.program_sha256.clone()));
-        }
-    }
+    let parents = owned(ranked_parents(
+        &options.evaluator,
+        &state.observations,
+        MINIMAX_LINEARIZE,
+        options.refinement.top_k,
+    )?);
     let mut ended: Option<&'static str> = None;
     for (parent, parent_sha256) in parents {
         if state.budget.remaining() == 0 || !may_start() {
@@ -575,19 +571,20 @@ fn not_run_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
 ///
 /// For each round and each selected pass, in the order the search runs them, it ranks the
 /// measurements made before the pass as the pass ranked them and takes the parents the pass read
-/// (`ranked_parents`). The records must follow those parents in order, one record each: all of
-/// them, or a prefix when the pass stopped on the allowance or the start guard, which only the
-/// run's last round can do, in a run that stopped on its evaluations or seconds bound. Under an
-/// evaluations stop that prefix is exact: in the last round a parent's records start only while a
-/// measurement of the run is still to come, and a pass stops short only once every measurement is
-/// made. Under a seconds stop it is not: where the start guard refused is not published, so the
-/// last round's trailing records that measure nothing could be removed, or such records appended
-/// for the next ranked parents, without this check seeing it. Each record's proposal re-derives
-/// from its parent alone, and its outcome from the measurements: a measured child is the next
-/// measurement, of its pass's origin and round, and one whose program no earlier measurement has;
-/// a measured rewritten program scores bit for bit as its parent. Every [`REWRITE`] measurement is
-/// accounted for by exactly one record, and the selection record's pool refusal and not-run
-/// counts are counted again from the records.
+/// (`ranked_parents`). The records must follow those parents in order, one record (rewrite) or
+/// one record per considered subtree (linearization) each: all of them, or a prefix when the pass
+/// stopped on the allowance or the start guard, which only the run's last round can do, in a run
+/// that stopped on its evaluations or seconds bound. Under an evaluations stop that prefix is
+/// exact: in the last round a parent's records start only while a measurement of the run is still
+/// to come, and a pass stops short only once every measurement is made. Under a seconds stop it
+/// is not: where the start guard refused is not published, so the last round's trailing records
+/// that measure nothing could be removed, or such records appended for the next ranked parents,
+/// without this check seeing it. Each record's proposal re-derives from its parent alone (and,
+/// for a linearization record, the fit it records), and its outcome from the measurements: a
+/// measured child is the next measurement, of its pass's origin and round, and one whose program
+/// no earlier measurement has; a measured rewritten program scores bit for bit as its parent.
+/// Every [`REWRITE`] and [`LINEARIZE`] measurement is accounted for by exactly one record, and
+/// the selection record's pool refusal and not-run counts are counted again from the records.
 pub(crate) fn check(
     moves: &[MoveRecord],
     s: &Search,
@@ -844,7 +841,8 @@ impl Accounted<'_> {
                 ensure!(
                     admitted
                         && m.measurement.is_none()
-                        && s.stopped_by == crate::search::STOPPED_BY_EVALUATIONS,
+                        && !known
+                        && s.stopped_by == STOPPED_BY_EVALUATIONS,
                     "a move with no allowance lacks an evaluations stop"
                 );
                 self.ended = true;
