@@ -112,8 +112,16 @@ written; at most the comparison's own lock file is created in the scratch and re
   comparison, legacy-only included, refuses a marked scratch as its `--scratch` before it writes
   any evidence (`holds a kernel2 comparison's evidence; use a new --scratch`).
 - *`--out` admission.* `jope-bench ablation` checks `--out` before it creates the scratch or
-  computes anything, and again immediately before it writes the document, which happens after
-  the reservation is released. It refuses (`--out refused (<reason>)`):
+  computes anything. After the reservation is released, it creates `--out`'s directory if it is
+  missing, checks `--out` again, and only then writes the document. The write is rename-based:
+  - the bytes go to a new temporary file in `--out`'s directory (`.<name>.tmp-<pid>-<n>`, created
+    only if nothing is at that path), which is flushed and synced;
+  - that file is then renamed over `--out`;
+  - an existing `--out` is replaced, never truncated, so another hard link to it (for example
+    into a kernel2 scratch) keeps its bytes, and a hard-linked `--out` is admitted;
+  - on an error only the temporary file is removed.
+
+  It refuses (`--out refused (<reason>)`):
   - a `--out` that is a symbolic link, or exists and is not a regular file;
   - one that, with its symbolic links and `..` resolved, lies in a directory that holds
     `.ablation-kernel2` or `.ablation-lock`, checked from the directory that would hold the
@@ -124,10 +132,11 @@ written; at most the comparison's own lock file is created in the scratch and re
   A legacy-only comparison writes any other `--out` as before, one inside its own legacy scratch
   included.
 - *Limits.*
-  - Writers outside the harness are not prevented, and neither is a program that calls the
-    library's `write_document` itself; only `jope-bench ablation` checks `--out`.
-  - The checks and the writes are separate steps. A change made to the destination between the
-    second `--out` check and the document write is not prevented.
+  - Writers outside the harness are not prevented. Neither is a program that calls the library's
+    `write_document` itself, which writes in place; only `jope-bench ablation` checks `--out` and
+    writes by rename.
+  - The checks and the rename are separate steps. A change made to `--out`'s directory between
+    the second `--out` check and the rename is not prevented.
   - A crash can leave `.ablation-lock` behind. Remove it by hand, and only when no comparison is
     running.
   - A legacy-only comparison on a scratch that only legacy-only comparisons used behaves as
@@ -331,6 +340,15 @@ when it is not set; never under the system temporary directory.
   anything is created.
 - `ablation::tests::ablation_execute_writes_a_legacy_out_as_before`: a legacy-only `--out` in an
   ordinary directory, or inside its own legacy scratch, is written as before.
+- `ablation::tests::ablation_execute_replaces_an_out_hard_linked_to_kernel2_evidence` and
+  `ablation_execute_replaces_an_out_hard_linked_to_an_ordinary_file`: a `--out` that is a hard
+  link to a kernel2 scratch's `prepared.json` or `search.json`, or to an ordinary file, receives
+  the document as a new inode; the other link keeps its bytes and no temporary file is left.
+- `ablation::tests::ablation_execute_overwrites_an_existing_legacy_out`,
+  `ablation_document_replacement_writes_the_same_bytes` and
+  `ablation_document_replacement_removes_its_temporary_file_on_failure`: an existing `--out` is
+  replaced by exactly one document; the rename-based write produces `write_document`'s bytes for a
+  legacy and a kernel2 document; and a failing rename leaves no temporary file.
 - `ablation::tests::ablation_paired_refuses_a_nonfinite_m1`,
   `ablation_paired_refuses_a_summary_that_is_not_finite` and
   `review02_public_paired_refuses_nonfinite_m1`: equal NaNs, equal infinities, an infinity or NaN
