@@ -37,6 +37,13 @@ pub struct ProfileArgs {
     /// selected program never read it, so every measurement and refinement is unchanged.
     #[arg(long)]
     pub pareto_archive: bool,
+    /// After each search round, simplify the expressions of the --refine-top-k best measured
+    /// programs with exact rewrites (kernel2 only; needs --refine-top-k 1 or more). Each smaller
+    /// program the profile admits is measured as a new program, one evaluation each; the rewrites
+    /// keep every value bit for bit, so it scores exactly as its original. A smaller expression
+    /// the profile refuses is discarded. Every proposal is written to search/cut-0/moves.json.
+    #[arg(long)]
+    pub rewrite_simplify: bool,
     /// Explicit nonnegative Domain penalty; required with penalize.
     #[arg(long)]
     pub lambda_domain: Option<f64>,
@@ -67,7 +74,8 @@ impl ProfileArgs {
                     && self.refine_top_k.is_none()
                     && self.refine_trials.is_none()
                     && self.refine_method.is_none()
-                    && !self.pareto_archive,
+                    && !self.pareto_archive
+                    && !self.rewrite_simplify,
                 messages::PROFILE_OPTIONS_REFUSAL
             );
             return Ok(None);
@@ -131,6 +139,9 @@ impl ProfileArgs {
             // laneD:B18-pareto-archive begin
             archive: self.pareto_archive.then_some(ArchivePolicy::ArchiveOnly),
             // laneD:B18-pareto-archive end
+            // laneD:B20-rewrite-simplify begin
+            simplify: self.rewrite_simplify,
+            // laneD:B20-rewrite-simplify end
         })
     }
     // laneD:B17-lm-refinement end

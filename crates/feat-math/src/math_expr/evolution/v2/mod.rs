@@ -9,8 +9,7 @@ mod refinement;
 // B19 Remez compression: test-only, no caller until its move is wired (Lane D kickoff).
 #[cfg(test)]
 mod simplify;
-// B20 e-graph simplification: test-only, no caller until its move is wired (Lane D kickoff).
-#[cfg(test)]
+// B20 e-graph simplification: opt-in through `simplify_v2` (egraph.rs).
 mod egraph;
 
 #[derive(Clone, Copy)]

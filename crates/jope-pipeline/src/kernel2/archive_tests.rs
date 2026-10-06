@@ -63,6 +63,7 @@ fn selection(refine: RefineMethod, archive: bool) -> EngineSelection {
     EngineSelection {
         refine,
         archive: archive.then_some(ArchivePolicy::ArchiveOnly),
+        simplify: false,
     }
 }
 
@@ -910,6 +911,7 @@ fn the_selection_record_round_trips_and_unknown_records_are_refused() {
             ..LmOptions::default()
         }),
         archive: Some(ArchivePolicy::ArchiveOnly),
+        simplify: false,
     };
     assert!(evaluator().with_engine(invalid).is_err());
     let e: Kernel2Evaluator = evaluator().with_engine(archived.clone()).unwrap();
@@ -1133,7 +1135,9 @@ fn the_key_is_the_codec_bytes_so_expression_spellings_are_distinct_keys() {
 fn the_legacy_dispatcher_refuses_each_kernel2_flag_before_writing() {
     // `ProfileArgs::options` writes nothing either way, so the flag tests' `!output.exists()`
     // after it cannot fail. The CLI's own dispatcher writes a run when it accepts one.
-    legacy_dispatch_refuses_before_writing("--pareto-archive");
+    for flag in ["--pareto-archive", "--rewrite-simplify"] {
+        legacy_dispatch_refuses_before_writing(flag);
+    }
 }
 
 /// The legacy profile refuses `flag` in the CLI's own dispatcher (`crate::cli::run`) before it

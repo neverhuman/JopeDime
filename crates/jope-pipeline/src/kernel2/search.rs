@@ -16,6 +16,9 @@ use crate::{
 };
 
 mod generation;
+// laneD:B20-rewrite-simplify begin
+pub mod moves;
+// laneD:B20-rewrite-simplify end
 mod offspring;
 #[cfg(test)]
 mod tests;
@@ -111,6 +114,9 @@ pub struct CutSearch {
     pub observations: Vec<Kernel2Observation>,
     pub refinements: Vec<RefinedChild>,
     pub best: Kernel2Observation,
+    /// Every proposal of the selected end-of-round moves; empty without one.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub moves: Vec<moves::MoveRecord>,
 }
 
 /// Validated policy parameters needed to replay kernel2 ranking.
@@ -151,6 +157,7 @@ struct State {
     arms: BTreeMap<&'static str, usize>,
     generation: usize,
     barren: usize,
+    moves: Vec<moves::MoveRecord>,
 }
 
 impl State {
@@ -163,6 +170,7 @@ impl State {
             arms: BTreeMap::new(),
             generation: 0,
             barren: 0,
+            moves: Vec::new(),
         }
     }
     fn result(
@@ -216,6 +224,7 @@ impl State {
             observations: self.observations,
             refinements: self.refinements,
             best,
+            moves: self.moves,
         })
     }
 }

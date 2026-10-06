@@ -9,6 +9,11 @@ use crate::{
 use feat_math::kernel::search::{admit_child, random_program};
 use std::time::Duration;
 
+/// The rounds in a row that spend no evaluation after which the search stops ([`run`]). Every
+/// other round spends at least one, so a run has at most this many rounds per completed
+/// evaluation, plus this many.
+pub(crate) const BARREN_ROUND_LIMIT: usize = 8;
+
 pub(super) fn check(cut: &Cut, options: &Options) -> Result<()> {
     options.check()?;
     let width = super::super::rectangular_width(&cut.train_x)?;
@@ -42,6 +47,11 @@ pub(super) fn run(cut: &Cut, options: &Options) -> Result<CutSearch> {
         let before = state.budget.used();
         measure_generation(&mut state, cut, options, started, deadline)?;
         refine_generation(&mut state, cut, options, started, deadline)?;
+        // laneD:B20-rewrite-simplify begin
+        if moves::selected(options) {
+            moves::finish_round(&mut state, cut, options, started, deadline)?;
+        }
+        // laneD:B20-rewrite-simplify end
         cancelled(options)?;
         if state.budget.remaining() == 0 {
             break STOPPED_BY_EVALUATIONS;
@@ -54,7 +64,7 @@ pub(super) fn run(cut: &Cut, options: &Options) -> Result<CutSearch> {
         } else {
             0
         };
-        if state.barren >= 8 {
+        if state.barren >= BARREN_ROUND_LIMIT {
             break STOPPED_BY_EXHAUSTED;
         }
         state.generation += 1;
