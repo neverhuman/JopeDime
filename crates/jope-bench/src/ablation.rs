@@ -1278,7 +1278,8 @@ fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
 
 /// Decide whether the document may be written to `out`, for every comparison: [`execute`] asks
 /// before the comparison creates its scratch or computes anything, and again immediately before
-/// it writes the document. Refused, with [`OUT_REFUSED`] and the reason:
+/// it creates the temporary file of the document ([`replace_document`]). Refused, with
+/// [`OUT_REFUSED`] and the reason:
 /// - `out` is a symbolic link, or exists and is not a regular file, or cannot be inspected;
 /// - `out`, resolved by [`resolve_destination`] (symbolic links and `..` included), lies in a
 ///   directory that holds [`KERNEL2_MARKER`] or [`LOCK_FILE`], checked from the directory that
@@ -1288,8 +1289,9 @@ fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
 ///   same way, which the scratch's marker does not cover before the comparison creates it.
 ///
 /// A legacy-only comparison whose `out` is elsewhere, its own scratch included, is admitted as
-/// before. The check and the write are separate steps; a writer that changes the destination
-/// between them is not prevented.
+/// before. A hard link at `out` is admitted: [`replace_document`] renames a new file over it, so
+/// the inode it shares is not written. The check and the rename are separate steps; a change to
+/// `out`'s directory between them is not prevented.
 fn check_out(out: &Path, scratch: Option<&Path>, kernel2: bool) -> Result<()> {
     let refused = |reason: &str| {
         format!(
@@ -2437,17 +2439,101 @@ fn paired_timing(runs: &[RunTiming]) -> PairedTiming {
     }
 }
 
-/// Write the document as pretty JSON plus a newline; returns the file's sha256.
+/// Write the document as pretty JSON plus a newline; returns the file's sha256. An existing file
+/// at `path` is truncated and rewritten in place; [`execute`] writes through
+/// [`replace_document`] instead, which writes the same bytes without truncating anything.
 pub fn write_document(path: &Path, document: &Document) -> Result<String> {
+    create_document_parent(path)?;
+    let text = document_text(document)?;
+    std::fs::write(path, &text).with_context(|| format!("write {}", path.display()))?;
+    Ok(sha256_hex(text.as_bytes()))
+}
+
+/// The bytes of a written document: pretty JSON plus a newline.
+fn document_text(document: &Document) -> Result<String> {
+    let mut text = serde_json::to_string_pretty(document)?;
+    text.push('\n');
+    Ok(text)
+}
+
+/// Create the directory that will hold the document at `path`, when it has one.
+fn create_document_parent(path: &Path) -> Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent)
                 .with_context(|| format!("create {}", parent.display()))?;
         }
     }
-    let mut text = serde_json::to_string_pretty(document)?;
-    text.push('\n');
-    std::fs::write(path, &text).with_context(|| format!("write {}", path.display()))?;
+    Ok(())
+}
+
+/// Temporary files [`replace_document`] has named in this process, for unique names.
+static TEMPORARY_DOCUMENTS: AtomicUsize = AtomicUsize::new(0);
+
+/// A temporary document file, removed, and nothing else, when dropped before it was renamed into
+/// place, also while unwinding.
+struct TemporaryDocument {
+    path: PathBuf,
+    renamed: bool,
+}
+
+impl Drop for TemporaryDocument {
+    fn drop(&mut self) {
+        if !self.renamed {
+            // Only the temporary file: a failure leaves it, named for the document it was for.
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+}
+
+/// Write the document to `out` without truncating any existing file, and return the file's
+/// sha256. The bytes are [`write_document`]'s. They go to a new temporary file in `out`'s
+/// directory, `.<out name>.tmp-<process id>-<n>`, created with `create_new` so nothing already
+/// there is opened; the file is flushed and synced, then renamed over `out`. An existing `out` is
+/// replaced, not written, so another hard link to its old inode keeps its bytes. On any error the
+/// temporary file, and nothing else, is removed. `out`'s directory must exist.
+fn replace_document(out: &Path, document: &Document) -> Result<String> {
+    use std::io::Write as _;
+    let text = document_text(document)?;
+    let name = out
+        .file_name()
+        .with_context(|| format!("{} names no file", out.display()))?;
+    let directory = match out.parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => parent,
+        _ => Path::new("."),
+    };
+    let (mut temporary, mut file) = loop {
+        let count = TEMPORARY_DOCUMENTS.fetch_add(1, Ordering::Relaxed);
+        let mut temporary_name = std::ffi::OsString::from(".");
+        temporary_name.push(name);
+        temporary_name.push(format!(".tmp-{}-{count}", std::process::id()));
+        let path = directory.join(temporary_name);
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(file) => {
+                break (
+                    TemporaryDocument {
+                        path,
+                        renamed: false,
+                    },
+                    file,
+                )
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error).with_context(|| format!("create {}", path.display())),
+        }
+    };
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.flush())
+        .and_then(|()| file.sync_all())
+        .with_context(|| format!("write {}", temporary.path.display()))?;
+    drop(file);
+    std::fs::rename(&temporary.path, out)
+        .with_context(|| format!("rename {} to {}", temporary.path.display(), out.display()))?;
+    temporary.renamed = true;
     Ok(sha256_hex(text.as_bytes()))
 }
 
@@ -2578,8 +2664,9 @@ fn paired_line(label: &str, c: &PairedCounts) -> String {
 /// unused `--scratch`: one created here, empty, or an existing empty directory; [`run`] refuses
 /// anything else before it writes ([`check_scratch_unused`]) and marks the scratch for good
 /// ([`mark_kernel2`]). The temporary scratch made without `--scratch` is always unused. After
-/// [`run`] returns, and so after its reservation is released, `--out` is checked again,
-/// immediately before the document is written.
+/// [`run`] returns, and so after its reservation is released, `--out`'s directory is created
+/// when missing, `--out` is checked again, and the document is written by [`replace_document`]:
+/// a new temporary file renamed over `--out`, so no existing file is truncated.
 pub fn execute(args: &AblationArgs) -> Result<()> {
     let config = config(args)?;
     config.check()?;
@@ -2601,8 +2688,9 @@ pub fn execute(args: &AblationArgs) -> Result<()> {
         }
     };
     let report = run(&config, &scratch)?;
+    create_document_parent(&args.out)?;
     check_out(&args.out, Some(&scratch), config.has_kernel2())?;
-    let file_sha256 = write_document(&args.out, &report.document)?;
+    let file_sha256 = replace_document(&args.out, &report.document)?;
     let body = &report.document.body;
     eprintln!(
         "ablation {} (A) vs {} (B): {} datasets x {} seeds, {} evaluations per cut: {}",
@@ -4996,5 +5084,162 @@ mod tests {
         execute(&legacy_out_args(own.clone(), inside.clone())).unwrap();
         assert!(inside.is_file());
         assert_eq!(names(&own), set(&["ablation.json", "prepared", "search"]));
+    }
+
+    // fix-05: the --out document is written by rename, never by truncating an existing file.
+
+    /// The names directly under `dir` that look like [`replace_document`]'s temporary files.
+    fn temporary_documents(dir: &Path) -> Vec<String> {
+        names(dir)
+            .into_iter()
+            .filter(|name| name.contains(".tmp-"))
+            .collect()
+    }
+
+    /// A `--out` that is a hard link to a kernel2 scratch's `prepared.json`, or to one of its
+    /// published searches, is admitted and replaced: the document lands at `--out` as a new
+    /// inode, the evidence keeps its bytes, modification time and its single link, the first
+    /// document's `prepared_sha256` still names `prepared.json`, and no temporary file is left.
+    #[cfg(unix)]
+    #[test]
+    fn ablation_execute_replaces_an_out_hard_linked_to_kernel2_evidence() {
+        use std::os::unix::fs::MetadataExt as _;
+        let root = scratch();
+        let first_dir = root.path().join("first");
+        let first = run(&shared_scratch_config(), &first_dir).unwrap();
+        let record = &first.document.body.datasets[0];
+        let prepared = first_dir
+            .join("prepared")
+            .join(&record.dataset_hash)
+            .join("prepared.json");
+        let search = search_output(&first_dir, "A", &record.dataset_hash, 6)
+            .join("search/cut-0/search.json");
+        for (name, evidence) in [
+            ("prepared-link.json", &prepared),
+            ("search-link.json", &search),
+        ] {
+            let out = root.path().join(name);
+            std::fs::hard_link(evidence, &out).unwrap();
+            let before = tree(&first_dir);
+            execute(&legacy_out_args(
+                root.path().join(format!("second-{name}")),
+                out.clone(),
+            ))
+            .unwrap();
+            let (out_meta, evidence_meta) = (
+                std::fs::metadata(&out).unwrap(),
+                std::fs::metadata(evidence).unwrap(),
+            );
+            assert_ne!(out_meta.ino(), evidence_meta.ino(), "{name}");
+            assert_eq!(evidence_meta.nlink(), 1, "{name}");
+            let changed = changed_entries(&before, &tree(&first_dir));
+            assert!(
+                changed.is_empty(),
+                "{name}: the evidence changed {changed:?}"
+            );
+            let written: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(&out).unwrap()).unwrap();
+            assert_eq!(written["schema"].as_str(), Some(SCHEMA), "{name}");
+        }
+        assert_eq!(
+            sha256_hex(&std::fs::read(&prepared).unwrap()),
+            record.prepared_sha256
+        );
+        assert!(temporary_documents(root.path()).is_empty());
+    }
+
+    /// A `--out` that is a hard link to an ordinary file outside any scratch is replaced: the
+    /// other link keeps its old bytes, the document lands at `--out` as a new inode, and no
+    /// temporary file is left.
+    #[cfg(unix)]
+    #[test]
+    fn ablation_execute_replaces_an_out_hard_linked_to_an_ordinary_file() {
+        use std::os::unix::fs::MetadataExt as _;
+        let root = scratch();
+        let other = root.path().join("other.txt");
+        std::fs::write(&other, b"kept\n").unwrap();
+        let out = root.path().join("ablation.json");
+        std::fs::hard_link(&other, &out).unwrap();
+        execute(&legacy_out_args(root.path().join("scratch"), out.clone())).unwrap();
+        assert_eq!(std::fs::read(&other).unwrap(), b"kept\n");
+        assert_ne!(
+            std::fs::metadata(&out).unwrap().ino(),
+            std::fs::metadata(&other).unwrap().ino()
+        );
+        let written: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&out).unwrap()).unwrap();
+        assert_eq!(written["schema"].as_str(), Some(SCHEMA));
+        assert!(temporary_documents(root.path()).is_empty());
+    }
+
+    /// A legacy-only `--out` that is an existing regular file, longer than the document, is
+    /// overwritten as before: the file then holds exactly one document (nothing of the old
+    /// bytes is left after it), with the body of the same comparison run through the library,
+    /// and no temporary file is left.
+    #[test]
+    fn ablation_execute_overwrites_an_existing_legacy_out() {
+        let root = scratch();
+        let out = root.path().join("ablation.json");
+        std::fs::write(&out, vec![b'x'; 1 << 20]).unwrap();
+        execute(&legacy_out_args(root.path().join("scratch"), out.clone())).unwrap();
+        let bytes = std::fs::read(&out).unwrap();
+        assert!(bytes.len() < 1 << 20 && bytes.ends_with(b"}\n"));
+        let written: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        let alone = scratch();
+        let report = run(&legacy_scratch_config(7, 20_260_908), alone.path()).unwrap();
+        assert_eq!(
+            written["body_sha256"].as_str(),
+            Some(report.document.body_sha256.as_str())
+        );
+        assert!(temporary_documents(root.path()).is_empty());
+    }
+
+    /// [`replace_document`] writes exactly [`write_document`]'s bytes, for a legacy and a kernel2
+    /// document, also over an existing longer file, and returns the same sha256.
+    #[test]
+    fn ablation_document_replacement_writes_the_same_bytes() {
+        let root = scratch();
+        for (name, config) in [
+            ("legacy", legacy_scratch_config(7, 20_260_908)),
+            ("kernel2", shared_scratch_config()),
+        ] {
+            let report = run(&config, &root.path().join(name)).unwrap();
+            let plain = root.path().join(format!("{name}-plain.json"));
+            let replaced = root.path().join(format!("{name}-replaced.json"));
+            std::fs::write(&replaced, vec![b'x'; 1 << 20]).unwrap();
+            let plain_sha256 = write_document(&plain, &report.document).unwrap();
+            let replaced_sha256 = replace_document(&replaced, &report.document).unwrap();
+            let bytes = std::fs::read(&replaced).unwrap();
+            assert_eq!(bytes, std::fs::read(&plain).unwrap(), "{name}");
+            assert_eq!(
+                (&replaced_sha256, &plain_sha256),
+                (&sha256_hex(&bytes), &sha256_hex(&bytes))
+            );
+        }
+        assert!(temporary_documents(root.path()).is_empty());
+    }
+
+    /// A write that fails after the temporary file was created and written (the rename onto a
+    /// directory fails) leaves no temporary file and changes nothing: the error names the rename.
+    #[test]
+    fn ablation_document_replacement_removes_its_temporary_file_on_failure() {
+        let root = scratch();
+        let report = run(
+            &legacy_scratch_config(6, 20_260_907),
+            &root.path().join("s"),
+        )
+        .unwrap();
+        let blocked = root.path().join("ablation.json");
+        std::fs::create_dir(&blocked).unwrap();
+        std::fs::write(blocked.join("kept"), b"kept\n").unwrap();
+        let before = tree(root.path());
+        let error = format!(
+            "{:#}",
+            replace_document(&blocked, &report.document).unwrap_err()
+        );
+        assert!(error.contains("rename "), "{error}");
+        let changed = changed_entries(&before, &tree(root.path()));
+        assert!(changed.is_empty(), "a failed write changed {changed:?}");
+        assert!(temporary_documents(root.path()).is_empty());
     }
 }
