@@ -23,7 +23,7 @@ MODULES = (
     "tests.test_v2_rowsel_build_split_v2g", "tests.test_v2_nonraw_split_v2", "tests.test_v2_nonraw_split_v2g",
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
     "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
-    "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "test_hwm_publish",
+    "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "test_hwm_publish", "test_gpu_manifest_cut",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -70,7 +70,7 @@ HOST_CASES = {
     "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 576
+EXPECTED_COLLECTED = 585
 
 
 def case_ids(suite):
@@ -178,7 +178,7 @@ def main():
     before = verify(custody)
     def adapter_pins():
         return {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                for name in ("hwm_publish.py", "test_hwm_publish.py", "run_lane_offline.py")}
+                for name in ("hwm_publish.py", "test_hwm_publish.py", "gpu_manifest_cut.py", "test_gpu_manifest_cut.py", "run_lane_offline.py")}
     adapter_before = adapter_pins()
     root = custody / "src/dl_training_v1"
     os.chdir(root)
