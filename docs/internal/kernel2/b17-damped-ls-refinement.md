@@ -163,7 +163,8 @@ This is wiring and verification. It makes no accuracy, R², held-out or quality 
 be made for it until the equal-budget paired ablation has run: kernel2 with and without the method
 on the same datasets, folds, cuts, seeds and evaluation budget, reported as paired W/T/L (wins, ties
 and losses) on M1, overall and per dataset, beside both medians, with wall seconds. The ablation
-harness has no kernel2 profile yet (`ablation-protocol.md`), so that comparison does not exist.
+harness has the `kernel2-baseline` and `kernel2-experimental` profiles (PR-0, #221;
+`ablation-protocol.md`) but no arm that selects this method, and the paired run has not been made.
 The tests fit known curves to show that the method runs, is accounted for and replays, not that it
 helps. Nor may anything cite the B10 parent-selection change as an accuracy improvement.
 

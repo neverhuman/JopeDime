@@ -1502,3 +1502,33 @@ fn the_default_route_keeps_the_pre_wiring_results() {
         );
     }
 }
+
+/// Review 01 of the wiring PR (B17-R01-COUNTER-OVERFLOW): a sidecar's surrogate counts are
+/// untrusted, so extreme `accepted` and `jacobians` values are refused as a disagreement, never by
+/// an overflow panic, whatever the build's overflow checks.
+#[test]
+fn extreme_surrogate_counts_are_refused_without_overflow() {
+    fn surrogate(t: &mut RefinementTrace) -> &mut SurrogateTrace {
+        match &mut t.stages[1] {
+            StageTrace::Surrogate { surrogate, .. } => surrogate,
+            _ => unreachable!(),
+        }
+    }
+    for (accepted, jacobians) in [
+        (usize::MAX, usize::MAX),
+        (usize::MAX - 1, usize::MAX),
+        (usize::MAX, usize::MAX - 1),
+        (0, usize::MAX),
+        (usize::MAX, 0),
+    ] {
+        let mut trace = synthetic_trace();
+        let s = surrogate(&mut trace);
+        s.accepted = accepted;
+        s.jacobians = jacobians;
+        let charged = trace.charged("sites");
+        assert!(
+            charged.is_err(),
+            "accepted {accepted}, jacobians {jacobians}: {charged:?}"
+        );
+    }
+}
