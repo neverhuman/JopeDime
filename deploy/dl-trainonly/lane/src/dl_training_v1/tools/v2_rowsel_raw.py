@@ -13,7 +13,8 @@ are written only when all 5 folds pass (files, context.json, then .done last); o
 dataset, the failure goes to the dataset record and the shard receipt, and the dataset keeps its epoch-0 contexts.
 A context with .done is never rewritten; its recorded identity must equal the recomputed one.
 
-Usage (inside the lane slice, RUN/tmp/p2fix3/py.sh):
+Usage (inside the lane slice, RUN/tmp/p2fix3/py.sh). --split-version defaults to rowsel-raw-split-v2 (target-free);
+rowsel-raw-split-v1 runs only when passed explicitly (v1 replay/verification; PR #218 finding 10):
   v2_rowsel_raw.py plan      [--out DIR] [--of 3]
   v2_rowsel_raw.py build     [--out DIR] --shard I --of N [--datasets h1,h2]
   v2_rowsel_raw.py summarize [--out DIR] --of N --tests-log LOG --mutants JSON [--pilot JSON] [--receipt PATH]
@@ -96,10 +97,19 @@ def code_shas():
     return {f: sha((root / f).read_bytes()) for f in CODE_FILES}
 
 
-def split_functions(e) -> tuple:
-    """(version, outer_split, split_report) of a plan entry. An entry without split_version is a v1 plan (verification);
-    an unknown version is refused."""
-    v = e.get("split_version", SPLIT_V1)
+def split_functions(e, split_version: str | None = None) -> tuple:
+    """(version, outer_split, split_report) of a plan entry. Nothing defaults to v1 (PR #218 finding 10; the owner's
+    standing ruling: defaults are target-free): an entry names its version, or (a v1 plan, byte-identical to the plans
+    built before versions were stamped) carries none and is read as v1 ONLY when the caller passes split_version=v1
+    explicitly. A version the caller passes must equal the entry's; an unknown version is refused."""
+    v = e.get("split_version")
+    if v is None:
+        if split_version != SPLIT_V1:
+            raise rowsel_raw.RowselRawError("split_version_not_given",
+                                            f"entry without split_version; the v1 replay must pass {SPLIT_V1!r} explicitly, got {split_version!r}")
+        v = SPLIT_V1
+    elif split_version is not None and split_version != v:
+        raise rowsel_raw.RowselRawError("split_version_mismatch", f"entry {v!r} != requested {split_version!r}")
     if v not in SPLIT_VERSIONS:
         raise rowsel_raw.RowselRawError("unknown_split_version", repr(v))
     return (v, *SPLIT_VERSIONS[v])
@@ -117,8 +127,17 @@ def stamp_split_version(doc: dict, version: str) -> dict:
     return doc
 
 
-def plan_split_version(pl: dict) -> str:
-    return pl.get("split_version", SPLIT_V1)
+def plan_split_version(pl: dict, declared: str | None = None) -> str:
+    """The plan's split version. A plan without the field (the v1 plans) is v1 only when `declared` is v1 explicitly;
+    otherwise it is refused (no silent v1 default). A declared version must equal the plan's."""
+    v = pl.get("split_version")
+    if v is None:
+        if declared != SPLIT_V1:
+            raise SystemExit(f"plan has no split_version; a v1 replay must pass --split-version {SPLIT_V1} explicitly (got {declared!r})")
+        return SPLIT_V1
+    if declared is not None and declared != v:
+        raise SystemExit(f"plan split version {v} != --split-version {declared}")
+    return v
 
 
 def default_out(route: str, version: str) -> Path:
@@ -344,12 +363,13 @@ def match_summary(st):
 
 
 def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_fn=None, log=print, loader=None, matcher=None,
-                post_gate=None):
+                post_gate=None, split_version=None):
     """Build one dataset. Returns its dataset record (also written to out_shard/_datasets/<h>.json). `loader` and
     `matcher` replace load_inputs/rematch for a scope without an L7a match record (tools/v2_rowsel_raw_coverage.py);
     e['context_extra'] (plan data, e.g. rights) is added to the dataset record and to every context.json. `post_gate`
     (inp, prep, folds, universe_ref, split_ref, results) -> dict runs after every fold passed and before anything is
-    written; its dict goes to the dataset record, and passed=False refuses the dataset like a failed fold."""
+    written; its dict goes to the dataset record, and passed=False refuses the dataset like a failed fold.
+    `split_version`: the version the caller requested; required (= v1) for an entry that names none (split_functions)."""
     h = e["dataset_hash"]
     t0, c0 = time.time(), cpu_s()
     rec = {"schema": DATASET_SCHEMA, "dataset_hash": h, "class": e["class"], "cohort": e["cohort"], "code_sha256": codes,
@@ -357,7 +377,7 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
     rec.update(e.get("context_extra") or {})
     contexts = []
     try:
-        split_version, split_fn, split_report_fn = split_functions(e)          # before any read
+        split_version, split_fn, split_report_fn = split_functions(e, split_version)   # before any read
         rec["split_version"] = split_version
         inp = (loader or load_inputs)(e, src, cache, inv, held)
         values, specs, rematch_rep = (matcher or rematch)(inp)
@@ -463,8 +483,7 @@ def build(a):
     pl, plan_sha = load_plan(out)
     if pl["of"] != a.of:
         raise SystemExit(f"plan is for --of {pl['of']}")
-    if plan_split_version(pl) != a.split_version:
-        raise SystemExit(f"plan split version {plan_split_version(pl)} != --split-version {a.split_version}")
+    plan_split_version(pl, a.split_version)
     out_shard = out / f"shard-{a.shard}"
     out_shard.mkdir(parents=True, exist_ok=True)
     codes = code_shas()
@@ -486,7 +505,7 @@ def build(a):
             counts["already_done"] += 1
             continue
         guard.wait()
-        rec = run_dataset(e, out_shard, codes, src, cache, inv, held, guard, **route_hooks(a, out, codes))
+        rec = run_dataset(e, out_shard, codes, src, cache, inv, held, guard, split_version=a.split_version, **route_hooks(a, out, codes))
         if rec["status"] == "done":
             done_now.append(h)
             counts["done"] += 1
@@ -521,7 +540,7 @@ def summarize(a):
     out = Path(a.out)
     pl, plan_sha = load_plan(out)
     codes = code_shas()
-    version = plan_split_version(pl)
+    version = plan_split_version(pl, a.split_version)
     per_class = {c: collections.Counter() for c in CLASSES}
     failures = collections.defaultdict(list)
     datasets, cpu_ds, ctx_dirs = [], 0.0, set()
@@ -852,7 +871,7 @@ def summarize_nonnumeric(a):
     out = Path(a.out)
     pl, plan_sha = load_plan(out)
     codes = code_shas()
-    version = plan_split_version(pl)
+    version = plan_split_version(pl, a.split_version)
     rows, cnt = [], collections.Counter()
     for e in pl["datasets"]:
         h, n0 = e["dataset_hash"], len(e["epoch0"])
@@ -948,7 +967,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=("plan", "build", "summarize"))
     ap.add_argument("--route", choices=("l7a", "nonnumeric"), default="l7a")
-    ap.add_argument("--split-version", choices=tuple(SPLIT_VERSIONS), default=SPLIT_V1)
+    ap.add_argument("--split-version", choices=tuple(SPLIT_VERSIONS), default=SPLIT_V2,
+                    help=f"default {SPLIT_V2} (target-free); {SPLIT_V1} only when passed explicitly (v1 replay/verification)")
     ap.add_argument("--out")
     ap.add_argument("--shard", type=int)
     ap.add_argument("--of", type=int, default=3)

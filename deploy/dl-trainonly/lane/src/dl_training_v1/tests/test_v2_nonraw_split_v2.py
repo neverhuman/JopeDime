@@ -16,6 +16,7 @@ Every invariance check is paired with a control that MUST FAIL it, so a check th
   Default     the registry path (default) is the original build, byte for byte (L7b and L7a)
   Epoch0      the epoch-0 universe check (one data object; every context's R u T is the whole table)
 """
+import argparse
 import gzip
 import hashlib
 import importlib.util
@@ -119,7 +120,7 @@ _CACHE = {}
 def computed(mode="L7b"):
     if mode not in _CACHE:
         inp = t1_inputs() if mode == "L7b" else l7a_inputs()
-        _CACHE[mode] = tool.compute_dataset(plan_entry(), inp, mode, set(), {"code": "x"})
+        _CACHE[mode] = tool.compute_dataset(plan_entry(), inp, mode, set(), {"code": "x"}, version=tool.SPLIT_V2)
     return _CACHE[mode]
 
 
@@ -406,7 +407,7 @@ class Dataset(unittest.TestCase):
         self.assertEqual(tool.group_annotation_fields(None), {"group_annotation_dropped": False, "registry_group_column": None})
         for mode, inp in (("L7b", t1_inputs()), ("L7a", l7a_inputs())):
             e = dict(plan_entry(), context_extra=dict(x, rights="licensed"))
-            res = tool.compute_dataset(e, inp, mode, set(), {"code": "x"})
+            res = tool.compute_dataset(e, inp, mode, set(), {"code": "x"}, version=tool.SPLIT_V2)
             for _, _, rec in res["results"]:
                 self.assertIs(rec["group_annotation_dropped"], True)
                 self.assertEqual(rec["registry_group_column"], x["registry_group_column"])
@@ -414,7 +415,7 @@ class Dataset(unittest.TestCase):
 
     def test_deterministic(self):
         a = computed("L7b")
-        b = tool.compute_dataset(plan_entry(), t1_inputs(), "L7b", set(), {"code": "x"})
+        b = tool.compute_dataset(plan_entry(), t1_inputs(), "L7b", set(), {"code": "x"}, version=tool.SPLIT_V2)
         self.assertEqual([(v, f) for v, f, _ in a["results"]], [(v, f) for v, f, _ in b["results"]])
 
     def test_outer_test_values_never_reach_the_train_side_end_to_end(self):
@@ -430,7 +431,7 @@ class Dataset(unittest.TestCase):
                 self.assertEqual(v2.duplicate_partition(np.arange(N), M2, specs), v2.duplicate_partition(np.arange(N), M, specs))
                 self.assertFalse(np.array_equal(M2[np.asarray(folds[f])], np.asarray(M)[np.asarray(folds[f])], equal_nan=True))
                 inp = t1_inputs(M2) if mode == "L7b" else l7a_inputs(M2)
-                got = tool.compute_dataset(plan_entry(), inp, mode, set(), {"code": "x"})
+                got = tool.compute_dataset(plan_entry(), inp, mode, set(), {"code": "x"}, version=tool.SPLIT_V2)
                 self.assertEqual(got["cut"]["cut_id"], base["cut"]["cut_id"])
                 want = train_side_of(base, f, mode, M, specs)
                 have = train_side_of(got, f, mode, M2, specs)
@@ -468,7 +469,7 @@ class Gates(unittest.TestCase):
 
     def _refused(self, mode, inp, reason="counterfactual_failed"):
         with self.assertRaises(tool.SplitV2Error) as cm:
-            tool.compute_dataset(plan_entry(), inp, mode, set(), {"code": "x"})
+            tool.compute_dataset(plan_entry(), inp, mode, set(), {"code": "x"}, version=tool.SPLIT_V2)
         self.assertEqual(cm.exception.reason, reason, cm.exception.detail[:300])
 
     def test_all_row_category_map_is_caught(self):
@@ -555,7 +556,7 @@ class Gates(unittest.TestCase):
     def test_view_id_collision_is_refused(self):
         vid = computed("L7b")["results"][3][0]
         with self.assertRaises(tool.SplitV2Error) as cm:
-            tool.compute_dataset(plan_entry(), t1_inputs(), "L7b", {vid}, {"code": "x"})
+            tool.compute_dataset(plan_entry(), t1_inputs(), "L7b", {vid}, {"code": "x"}, version=tool.SPLIT_V2)
         self.assertEqual(cm.exception.reason, "view_id_collision")
 
     def test_counterfactual_perturbations_change_test_rows_only(self):
@@ -569,6 +570,99 @@ class Gates(unittest.TestCase):
         self.assertEqual(sorted(res["results"][0][2]["counterfactual"]["cases"]), sorted(tool.T1_PERTURBATIONS))
 
 
+# ------------------------------------------------------------------------------------- stored refit report (PR #218 #7)
+
+def _folds_t1():
+    return v2.outer_split(H, np.arange(N), A, SPECS_T1, partition="t1")
+
+
+def _rt(folds, f):
+    T = list(folds[f])
+    return [p for p in range(N) if p not in set(T)], T
+
+
+def _report_test_side(rep):
+    """The test-side fields of a stored refit report (t1prep for L7b, t1raw for L7a)."""
+    out = {"categorical_test": {k: v["test"] for k, v in sorted(rep["categorical"].items())}}
+    if "possibly_imputed_cells" in rep:
+        out["possibly_imputed_test"] = rep["possibly_imputed_cells"]["test"]
+    if "imputation" in rep:
+        out["imputed_test"] = rep["imputation"]["imputed_cells"]["test"]
+        out["test_missing"] = {k: c["test_missing"] for k, c in sorted(rep["imputation"]["columns"].items())}
+    return out
+
+
+class StoredReport(unittest.TestCase):
+    """PR #218 finding 7: context.json stores the whole refit report (t1prep for L7b, t1raw for L7a), including the
+    test-side categorical missing/unseen counts and possibly_imputed_cells.test (t1raw: imputed_cells.test and per-column
+    test_missing). They are counts over outer-test FEATURE cells: the stored report is bit-identical when outer-test
+    TARGETS change, and a change of outer-test features that moves those counts leaves the scaler, the inner labels, the
+    encoder/teacher train rows and A0 bit-identical (the counts are inputs to none of them). Control: the same feature
+    change does move the test-side counts, so the target invariance is not vacuous."""
+
+    def _target_variants(self, M, T):
+        rng = np.random.default_rng(31)
+        Ta = np.asarray(T)
+        out = []
+        for kind in ("noise", "permute", "outlier", "constant"):
+            W = np.array(M, dtype=np.float64, copy=True)
+            if kind == "noise":
+                W[Ta, -1] = rng.normal(1e3, 50.0, size=Ta.size)
+            elif kind == "permute":
+                W[Ta, -1] = W[Ta[rng.permutation(Ta.size)], -1]
+            elif kind == "outlier":
+                W[Ta[0], -1] = -1e12
+            else:
+                W[Ta, -1] = 0.0
+            out.append((kind, W))
+        return out
+
+    def test_l7b_stored_report_is_invariant_under_outer_test_targets(self):
+        folds = _folds_t1()
+        for f in range(5):
+            R, T = _rt(folds, f)
+            want = tool.canon(tool.l7b_artifacts(A, META, R, T)["report"])
+            for kind, W in self._target_variants(A, T):
+                self.assertEqual(tool.canon(tool.l7b_artifacts(W, META, R, T)["report"]), want, (f, kind))
+
+    def test_l7a_stored_report_is_invariant_under_outer_test_targets(self):
+        folds = v2.outer_split(H, np.arange(N), VALUES, RAW_SPECS, partition="l7a")
+        for f in (0, 3):
+            R, T = _rt(folds, f)
+            want = tool.canon(l7a.l7a_artifacts(VALUES, RAW_SPECS, R, T)["report"])
+            for kind, W in self._target_variants(VALUES, T):
+                self.assertEqual(tool.canon(l7a.l7a_artifacts(W, RAW_SPECS, R, T)["report"]), want, (f, kind))
+
+    def test_the_record_written_to_context_json_is_invariant_under_outer_test_targets(self):
+        base_res = computed("L7b")
+        folds = _folds_t1()
+        f = 2
+        W = np.array(A, copy=True)
+        W[np.asarray(folds[f]), -1] = np.random.default_rng(7).normal(1e3, 50.0, size=len(folds[f]))
+        got = tool.compute_dataset(plan_entry(), t1_inputs(W), "L7b", set(), {"code": "x"}, version=tool.SPLIT_V2)
+        self.assertEqual(tool.canon(got["results"][f][2]["t1prep"]), tool.canon(base_res["results"][f][2]["t1prep"]))
+        self.assertEqual(got["results"][f][2]["counterfactual"]["train_side"], base_res["results"][f][2]["counterfactual"]["train_side"])
+
+    def test_test_side_counts_are_feature_counts_that_feed_nothing_on_the_train_side(self):
+        specs = t1prep.layout(META, A.shape[1])
+        cat = next(s for s in specs if s["kind"] == "categorical_codes")
+        num = next(s for s in specs if s["kind"] == "numeric" and s.get("impute_value") is not None)
+        miss = next(c for c, k in cat["inverse"].items() if k == t1prep.MISSING_KEY)
+        rare = next(c for c, k in cat["inverse"].items() if k == RARE)
+        folds = _folds_t1()
+        R, T = _rt(folds, 1)
+        Ta = np.asarray(T)
+        W = np.array(A, copy=True)
+        W[Ta[0::3], cat["index"]] = tool._code_value(cat, miss)                # test cells made missing
+        W[Ta[1::3], cat["index"]] = tool._code_value(cat, rare)                # a category no train row holds
+        W[Ta[2::3], num["index"]] = (float(num["impute_value"]) - num["lo"]) / (num["hi"] - num["lo"])   # = impute value
+        a0, a1 = tool.l7b_artifacts(A, META, R, T), tool.l7b_artifacts(W, META, R, T)
+        self.assertNotEqual(_report_test_side(a1["report"]), _report_test_side(a0["report"]))   # control: they move
+        self.assertEqual(tool.t1_train_side(a1), tool.t1_train_side(a0))                       # nothing on the train side
+        self.assertEqual(train_side(a1), train_side(a0))
+        self.assertEqual(a1["inner_loads"], a0["inner_loads"])
+
+
 # ------------------------------------------------------------------------------------- writes and resume
 
 def scratch():
@@ -579,7 +673,7 @@ class Writes(unittest.TestCase):
     def _run(self, out, inp=None, existing=()):
         e = dict(plan_entry(), context_extra=tool.group_annotation_fields(None))
         return tool.run_dataset_v2(e, out, "L7b", lambda e: inp or t1_inputs(), set(existing), {"code": "x"},
-                                   log=lambda s: None)
+                                   log=lambda s: None, version=tool.SPLIT_V2)
 
     def test_done_last_resume_and_no_rewrite(self):
         out = scratch()
@@ -660,17 +754,69 @@ class Default(unittest.TestCase):
     T = list(range(3, N, 5))
     R = [p for p in range(N) if p % 5 != 3]
 
-    def test_registry_is_the_default(self):
-        a = tool.arg_parser().parse_args(["--out", "x", "--shard", "0", "--of", "3"])
-        self.assertEqual(a.split_version, "registry-epoch0")
+    def test_there_is_no_default_split(self):
+        """PR #218 finding 10: without --split-version both tools refuse (argparse error, exit 2) before any build runs."""
+        base_args = ["--out", "x", "--shard", "0", "--of", "3"]
+        for mod, builders in ((tool, ("build_registry", "build_v2", "make_plan", "summarize_v2")),
+                              (l7a, ("build", "summarize"))):
+            patches = [mock.patch.object(mod, b) for b in builders]
+            mocks = [pt.start() for pt in patches]
+            try:
+                with mock.patch("sys.stderr"), self.assertRaises(SystemExit) as cm:
+                    mod.main(base_args)
+                self.assertEqual(cm.exception.code, 2)
+                for m in mocks:
+                    m.assert_not_called()
+            finally:
+                for pt in patches:
+                    pt.stop()
+        with mock.patch("sys.stderr"), self.assertRaises(SystemExit):
+            tool.arg_parser().parse_args(base_args)
+
+    def test_registry_runs_only_when_explicit(self):
+        args = ["--split-version", "registry-epoch0", "--out", "x", "--shard", "0", "--of", "3"]
+        self.assertEqual(tool.arg_parser().parse_args(args).split_version, "registry-epoch0")
         with mock.patch.object(tool, "build_registry", return_value=7) as reg, mock.patch.object(tool, "build_v2") as b2:
-            self.assertEqual(tool.main(["--out", "x", "--shard", "0", "--of", "3"]), 7)
+            self.assertEqual(tool.main(args), 7)
         reg.assert_called_once()
         b2.assert_not_called()
         with mock.patch.object(l7a, "build", return_value=5) as reg, mock.patch.object(l7a.local, "build_v2") as b2:
-            self.assertEqual(l7a.main(["--out", "x", "--shard", "0", "--of", "3"]), 5)
+            self.assertEqual(l7a.main(args), 5)
         reg.assert_called_once()
         b2.assert_not_called()
+        v2 = ["--split-version", "rowsel-raw-split-v2", "--out", "x", "--shard", "0", "--of", "3"]
+        with mock.patch.object(tool, "build_registry") as reg, mock.patch.object(tool, "build_v2", return_value=3) as b2:
+            self.assertEqual(tool.main(v2), 3)
+        reg.assert_not_called()
+        self.assertEqual(b2.call_args[0][0].split_version, "rowsel-raw-split-v2")
+
+    def test_functions_refuse_a_missing_split_version(self):
+        """Function level: no default and None refused, before anything is read or written."""
+        def refused(fn, *a, **kw):
+            with self.assertRaises(tool.SplitV2Error) as cm:
+                fn(*a, **kw)
+            self.assertEqual(cm.exception.reason, "split_version_required")
+        refused(tool.compute_dataset, plan_entry(), t1_inputs(), "L7b", set(), {"code": "x"})
+        refused(tool.compute_dataset, plan_entry(), t1_inputs(), "L7b", set(), {"code": "x"}, version=None)
+        refused(tool.compute_dataset, plan_entry(), t1_inputs(), "L7b", set(), {"code": "x"}, version="registry-epoch0")
+        out = scratch()
+        loader = mock.Mock(side_effect=AssertionError("loader must not run"))
+        refused(tool.run_dataset_v2, plan_entry(), out, "L7b", loader, set(), {"code": "x"}, log=lambda s: None)
+        loader.assert_not_called()
+        self.assertEqual(list(out.iterdir()), [])
+        refused(tool.code_shas_v2)
+        refused(tool.routes, None)
+        ns = argparse.Namespace(plan="clean-l7b", out=str(out / "p"), of=1, allow_other_out=True, shard=0, datasets=None)
+        with mock.patch.object(tool, "check_pins", side_effect=AssertionError("must refuse first")), \
+                mock.patch.object(tool, "load_plan", side_effect=AssertionError("must refuse first")):
+            refused(tool.make_plan, ns)
+            refused(tool.build_v2, ns)
+        self.assertFalse((out / "p").exists())
+        with self.assertRaises(TypeError):
+            l7a.code_shas_v2()                                           # no default at all
+        with self.assertRaises(l7a.local.SplitV2Error):
+            l7a.code_shas_v2(None)
+        self.assertEqual(tool.code_shas_v2(version=tool.SPLIT_V2), tool.code_shas_v2((), tool.SPLIT_V2))
 
     def test_l7b_default_build_is_byte_identical_to_the_original(self):
         out = scratch()

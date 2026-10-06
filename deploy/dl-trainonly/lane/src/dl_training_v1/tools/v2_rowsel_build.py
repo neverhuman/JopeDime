@@ -47,10 +47,14 @@ Outputs:
 
 No S3, no network, no GPU. Nothing is published.
 
-Usage (lane slice, through py.sh; --scope defaults to incoming-kmeans):
-  v2_rowsel_build.py --out DIR --shard I --of N [--scope S] [--datasets h1,h2]
-  v2_rowsel_build.py --out DIR --of N --overlay [--overlay-path P]
-  v2_rowsel_build.py --out DIR --of N --summarize [--scope S] --tests-log LOG --mutants JSON [--pilot-out DIR] [--receipt P]
+Usage (lane slice, through py.sh). --split-version is REQUIRED (PR #218 finding 10; no default): rowsel-raw-split-v2 or
+rowsel-split-v2-groups with --tree; 'registry' (the routes above) only as an explicit historical replay:
+  v2_rowsel_build.py --split-version registry --out DIR --shard I --of N [--scope S] [--datasets h1,h2]
+  v2_rowsel_build.py --split-version registry --out DIR --of N --overlay [--overlay-path P]
+  v2_rowsel_build.py --split-version registry --out DIR --of N --summarize [--scope S] --tests-log LOG --mutants JSON [--receipt P]
+  v2_rowsel_build.py --split-version rowsel-raw-split-v2|rowsel-split-v2-groups --tree T (--plan|--shard I|--summarize) --of N
+The 'port' check above (a v1 sampler fit on every row, i.e. every row's target; finding 3) runs only on the registry
+replay; v2/v2g builds record it as not run.
 """
 import argparse
 import collections
@@ -372,8 +376,21 @@ def v1_work_check(h: str, bodies: dict, manifest: dict, n: int, root=FROZEN_ROOT
             "result_json_sha256": sha_file(res_p)}
 
 
-def load_dataset(h: str, ctx_rows: list, src, cache, inv: dict, budget: int = rowsel.DEFAULT_BUDGET) -> dict:
-    """Every input of one dataset, each sha256-verified, plus the dataset-level lineage checks."""
+PORT_NOT_RUN = "not run: registry replay only (all-row targets; #218 finding 3)"
+
+
+def load_dataset(h: str, ctx_rows: list, src, cache, inv: dict, budget: int = rowsel.DEFAULT_BUDGET, *,
+                 v1_port_check: bool | None = None) -> dict:
+    """Every input of one dataset, each sha256-verified, plus the dataset-level lineage checks.
+
+    v1_port_check (required; None is refused): True ONLY for the explicit registry replay (--split-version registry).
+    It re-runs the v1 research sampler over EVERY universe row -- rowsel.sampler_select(U, U.positions) reads the
+    target of each row, outer-test rows of any fold included (PR #218 finding 3) -- to check that the port reproduces
+    the epoch-0 selection (lineage only: the boolean feeds no fold, view, file or gate). The v2/v2g builds pass False:
+    the port is not run and the lineage records port_reproduces_v1_selection = port_fit_cpu_s = None with the reason
+    PORT_NOT_RUN. Contexts already built by c0b989b6/6e1e166e/fcfe3828 keep the bit those versions computed."""
+    if v1_port_check is None:
+        raise ValueError("load_dataset: v1_port_check must be given (True only for the explicit registry replay)")
     t0 = cpu_s()
     refs = []
     for r in ctx_rows:
@@ -438,10 +455,14 @@ def load_dataset(h: str, ctx_rows: list, src, cache, inv: dict, budget: int = ro
                     == [int(i) for i in mfold[f]["test_indices"]])
     if not sel_ok or not all(remap.values()):
         raise RebuildError("membership_remap", f"selected_sha_ok={sel_ok} remap={remap}")
-    tp = time.process_time()
-    port = rowsel.sampler_select(U, U.positions.tolist(), budget, rowsel.v1_seed(h))
-    port_ok = rowsel.selected_source_indices_sha256(port.output_order) == manifest["selected_source_indices_sha256"]
-    port_s = time.process_time() - tp
+    port_ok = port_s = None
+    if v1_port_check:
+        # REGISTRY REPLAY ONLY: the v1 sampler fit over all universe rows (every row's target; finding 3). Reached only
+        # through build() of --split-version registry, which passes v1_port_check=True.
+        tp = time.process_time()
+        port = rowsel.sampler_select(U, U.positions.tolist(), budget, rowsel.v1_seed(h))
+        port_ok = rowsel.selected_source_indices_sha256(port.output_order) == manifest["selected_source_indices_sha256"]
+        port_s = round(time.process_time() - tp, 3)
     k = inv["meta_key"][h].rsplit("/", 1)[1]
     mb = (META_DIR / f"{k}.json").read_bytes()
     if sha(mb) != k:
@@ -456,8 +477,10 @@ def load_dataset(h: str, ctx_rows: list, src, cache, inv: dict, budget: int = ro
                "line_split_equals_materialize": True, "parent_fold_sizes": {str(f): len(v) for f, v in folds.items()},
                "membership_selected_sha256_matches_manifest": sel_ok,
                "membership_remap_matches_epoch0_folds": {str(f): ok for f, ok in remap.items()},
-               "port_reproduces_v1_selection": port_ok, "port_fit_cpu_s": round(port_s, 3),
+               "port_reproduces_v1_selection": port_ok, "port_fit_cpu_s": port_s,
                "t1_meta_sha256": k}
+    if not v1_port_check:
+        lineage["port_reproduces_v1_selection_not_run"] = PORT_NOT_RUN
     return {"h": h, "U": U, "folds": folds, "meta": meta, "meta_sha256": k, "cohort": cohort,
             "t1": {p: {"sha256": src_ref[p]["sha256"], "bytes": len(bodies[p]), "lines": n} for p, n
                    in (("train", n_tr), ("test", n_te))},
@@ -774,7 +797,8 @@ def build(a) -> int:
         if {it[0]["dataset_hash"] for it in scope} != keep:
             raise SystemExit(f"--datasets outside the admitted scope: {sorted(keep - {it[0]['dataset_hash'] for it in scope})}")
     refs = input_refs(scope_refs) | {"scope_counts": counts, "owner_line": SCOPES[a.scope]["owner_line"]}
-    rec = build_shard(Path(a.out), a.shard, a.of, scope, lambda h, rows: load_dataset(h, rows, src, cache, inv), codes, refs)
+    rec = build_shard(Path(a.out), a.shard, a.of, scope, lambda h, rows: load_dataset(h, rows, src, cache, inv, v1_port_check=True),
+                      codes, refs)
     print(json.dumps({k: rec[k] for k in ("shard", "expected", "built_now", "already_done", "done", "done_by_label",
                                           "failed_by_reason", "complete", "cpu_s", "elapsed_s")}))
     return 0 if rec["complete"] else 1
@@ -1007,8 +1031,9 @@ def summarize(a) -> int:
 #               registry fold f); written only when every fold passes (files and context.json first, .done last)
 #   cut         every context carries cut = {cut_id: 'trainonly-split-v2:' + split sha256 (= rowsel.split.sha256),
 #               schema, replaces_cut: the registry split object it replaces, comparable_with_replaced: false}
-# The registry route (default) is unchanged; the registry split is still loaded and lineage-verified here, because it is
-# the cut being replaced.
+# The registry route is a historical replay, run only when --split-version registry is passed explicitly (no default:
+# PR #218 finding 10); the registry split is still loaded and lineage-verified here, because it is the cut being
+# replaced. The v1-port lineage check (all-row targets) runs only on that replay (load_dataset v1_port_check).
 
 SPLIT_REGISTRY = "registry"
 SPLIT_V2 = rowsel_raw_split_v2.SPLIT_SCHEMA
@@ -1254,7 +1279,9 @@ PROFILE_V2 = {"version": SPLIT_V2, "split_fn": split_v2_t1, "sha_fn": split_v2_t
               "view_tag": VIEW_TAG_V2, "cut_fn": None, "group_column": None}
 
 
-MISSING_GROUP = b"\x00missing"
+MISSING_GROUP = b"\x00missing-cell"       # NOT 8 bytes: never read as a '<f8' group value (target_tied_group's affine test).
+                                         # Only its equality matters to the split: 6e1e166e/fcfe3828 used b"\x00missing"
+                                         # (8 bytes), which gives the identical partition, components and split.
 
 
 def t1_group_values(values, index: int) -> list:
@@ -1323,7 +1350,14 @@ def profile_v2g(index: int, name: str, replaced_v2split: dict, expected_empty_fo
                 "annotation_groups": len({x for x in gv if x is not None}),
                 "annotation_groups_straddling_folds": rowsel_split_v2_groups.straddling_groups(folds, prep.positions.tolist(), gv)}
 
-    return {"version": SPLIT_V2G, "split_fn": split_fn,
+    def target_tie(prep):
+        """Dataset-level admissibility (PR #218 finding 8): the group column must not copy or determine the target.
+        Reads y only to refuse the whole dataset; the split itself never receives y."""
+        if int(index) >= len(prep.specs) - 1:
+            raise RebuildError("group_column_is_not_a_feature", f"{index} of {len(prep.specs) - 1} features")
+        return rowsel_split_v2_groups.target_tied_group(t1_group_values(prep.values, index), prep.values[:, -1])
+
+    return {"version": SPLIT_V2G, "split_fn": split_fn, "target_tie_fn": target_tie,
             "sha_fn": lambda h, folds: rowsel_split_v2_groups.split_sha256(h, T1_PARTITION, spec, folds),
             "rule": rowsel_split_v2_groups.RULE, "view_tag": VIEW_TAG_V2G, "group_column": spec, "group_report": group_report,
             "group_value_check": lambda fn, prep, fold: group_value_check(fn, prep, index, fold),
@@ -1368,6 +1402,7 @@ def registry_group_evidence(h: str, U: rowsel.Universe, split_body: bytes, train
         per[str(c)] = {"reproduces_registry": k == int(split["effective_folds"]) and got == want, "effective_folds": k,
                        "field_bytes_equals_value_grouping": group_partition([r[int(c)] for r in rows]) == group_partition(gv),
                        "missing_cells": sum(1 for x in gv if x == MISSING_GROUP), "distinct_values": len(set(gv)),
+                       "target_tie": rowsel_split_v2_groups.target_tied_group(gv, U.y),
                        "v2g_components": len(comps), "component_structure_sha256": sha(json.dumps(comps).encode())}
     repro = [int(c) for c in candidates if per[str(c)].get("reproduces_registry")]
     structures = {per[str(c)]["component_structure_sha256"] for c in repro}
@@ -1391,6 +1426,10 @@ def group_disposition(ev: dict, names: list) -> dict:
         return {"disposition": "not_built", "reason": "ambiguous_group_columns_with_different_components"}
     if not all(ev["per_candidate"][str(c)]["field_bytes_equals_value_grouping"] for c in ev["reproducing"]):
         return {"disposition": "not_built", "reason": "group_value_grouping_differs_from_registry_field_grouping"}
+    ties = {str(c): ev["per_candidate"][str(c)].get("target_tie") for c in ev["reproducing"]}
+    if any(ties.values()):                                              # any reproducing column copying/determining y
+        return {"disposition": "not_built", "reason": "group_column_tied_to_target",
+                "detail": {c: t for c, t in ties.items() if t}}
     c = min(ev["reproducing"])
     k = ev["per_candidate"][str(c)]["v2g_components"]
     if k < 2:
@@ -1620,7 +1659,9 @@ def compose_context_v2(ds, f, label, acq_rec, view, cf, dcf, built, codes, refs,
         "counterfactual": cf, "downstream_counterfactual": dcf,
         "lineage": {k: ds["lineage"][k] for k in ("manifest_sha256", "membership_sha256", "data_sha256",
                                                   "membership_selected_sha256_matches_manifest", "port_reproduces_v1_selection")}
-                   | {"registry_remap_matches_epoch0_folds": all(ds["lineage"]["membership_remap_matches_epoch0_folds"].values())},
+                   | {"registry_remap_matches_epoch0_folds": all(ds["lineage"]["membership_remap_matches_epoch0_folds"].values())}
+                   | ({"port_reproduces_v1_selection_not_run": ds["lineage"]["port_reproduces_v1_selection_not_run"]}
+                      if "port_reproduces_v1_selection_not_run" in ds["lineage"] else {}),
     }
     ctx = {"schema": SCHEMA_V2, "view_id": vid, "dataset_hash": h, "fold": int(f), "repeat": 0, "cohort": extra.get("cohort"),
            "owner_line": refs.get("owner_line", OWNER_LINE), **refs.get("context_extra", {}),
@@ -1659,6 +1700,11 @@ def build_dataset_v2(ds, its, shard_dir: Path, codes, refs, *, budget=rowsel.DEF
     contexts = []
     try:
         prep = t1_prep(U)
+        if prof.get("target_tie_fn"):                                   # dataset-level refusal, before any split
+            tie = prof["target_tie_fn"](prep)
+            rec["group_target_tie"] = tie
+            if tie:
+                raise RebuildError("group_column_tied_to_target", tie)
         folds = split_fn(h, prep.positions, prep.values, prep.specs)
         rep = rowsel_raw.split_report(prep, folds)
         rep.update(schema=version, sha256=prof["sha_fn"](h, folds), domain=rowsel_raw_split_v2.SPLIT_DOMAIN,
@@ -1792,7 +1838,7 @@ def build_v2(a) -> int:
         if [(it[0]["view_id"], it[0]["context_sha256"]) for it in its] != [(c["view_id"], c["context_sha256"]) for c in e["epoch0"]]:
             raise SystemExit(f"{h}: epoch-0 contexts differ from the plan")
         try:
-            ds = load_dataset(h, [it[0] for it in its], src, cache, inv)
+            ds = load_dataset(h, [it[0] for it in its], src, cache, inv, v1_port_check=False)     # no all-row v1 port
             check_cap_label(ds, its[0][2])
         except Exception as err:
             rec = {"schema": DATASET_SCHEMA_V2, "dataset_hash": h, "split_version": version, "status": "failed",
@@ -2087,7 +2133,9 @@ def summarize_v2(a) -> int:
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", help="required for the registry route; a v2split tree defaults to TREES[tree]['out']")
-    ap.add_argument("--split-version", choices=SPLIT_VERSIONS, default=SPLIT_REGISTRY)
+    ap.add_argument("--split-version", choices=SPLIT_VERSIONS, required=True,
+                    help=f"required, no default (PR #218 finding 10): {SPLIT_V2} or {SPLIT_V2G}; '{SPLIT_REGISTRY}' only as the "
+                         "explicit historical replay")
     ap.add_argument("--tree", choices=sorted(TREES) + sorted(TREES_V2G),
                     help="v2split tree (--split-version rowsel-raw-split-v2) or v2gsplit tree (--split-version rowsel-split-v2-groups)")
     ap.add_argument("--plan", action="store_true", help="v2split: write the tree's pinned plan.json")

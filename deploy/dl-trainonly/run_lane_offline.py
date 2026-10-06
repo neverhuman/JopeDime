@@ -22,7 +22,8 @@ MODULES = (
     "tests.test_v2_rowsel_raw_helper", "tests.test_v2_rowsel_build", "tests.test_v2_rowsel_build_split_v2",
     "tests.test_v2_rowsel_build_split_v2g", "tests.test_v2_nonraw_split_v2", "tests.test_v2_nonraw_split_v2g",
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
-    "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io",
+    "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
+    "tests.test_jtt1",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -47,9 +48,27 @@ HOST_CASES = {
     "tests.test_v2_rowsel_build_split_v2g.Supplement.test_a_context_count_short_of_the_effective_folds_is_a_problem": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
     "tests.test_v2_rowsel_build_split_v2g.Supplement.test_supplement_plan_build_and_summary": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
     "tests.test_v2_rowsel_build_split_v2g.V2.test_the_v2_route_builds_the_bytes_c0b989b6_built": "loads the private-lane code-custody builder c0b989b6 (same bytes retained as lane/historical/v2_rowsel_build.py.c0b989b6...); requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_split_defaults.BeforeAfter.test_v2": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.BeforeAfter.test_v2g": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.PortCheck.test_the_registry_replay_lineage_equals_fcfe3828s": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.RawDefaults.test_the_explicit_v1_replay_builds_28be7f98s_bytes": "compares against the private code-custody builder bytes 28be7f98 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.RawDefaults.test_the_v2_path_builds_28be7f98s_bytes": "compares against the private code-custody builder bytes 28be7f98 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.V2Path.test_v2_build_never_fits_on_every_row": "the v2 build reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+    "tests.test_split_defaults.V2Path.test_v2g_build_never_fits_on_every_row": "the v2 build reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+    "tests.test_v2_provenance.Resolver.test_custody_file_must_hash_to_its_name": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_f1_unresolved_gpu_runner_fails": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_f2_every_row_of_a_published_doc_is_scanned": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_f3_missing_hashes_are_unresolved": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_full_sha_resolves_and_passes": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_non_hex_64_chars_is_not_a_sha": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_publish_refused_before_any_client_when_unresolved": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_short_prefix_never_binds": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_summary_classification": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 454
+EXPECTED_COLLECTED = 508
 
 
 def case_ids(suite):

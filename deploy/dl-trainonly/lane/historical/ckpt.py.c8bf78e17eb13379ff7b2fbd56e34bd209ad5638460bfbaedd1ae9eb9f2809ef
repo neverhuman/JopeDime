@@ -1,0 +1,1209 @@
+"""Checkpoint closure, strict loader, local commits, a file-backed versioned store and the publish/restore protocol.
+
+PLAN §6.6 (checkpoint closure, publish protocol steps 1-3, cadence, restore proofs), §6.8 (at-resume rules) and
+§5 P7 tests 4-6.
+
+- Closure files are safetensors (``metadata=None``) for tensors and canonical JSON for everything else. Nothing is
+  pickled and ``torch.load`` is never called.
+- A local commit is one immutable directory ``<commits_root>/<step:010d>/`` holding the closure files plus
+  ``commit.json``. It is built in a temporary sibling directory and renamed into place.
+- ``read_commit`` is strict. Every listed file must be present with equal sha256 and size, and no other file may be
+  present. Tensor files must be in canonical safetensors form, JSON files must be canonical, and the tensor inventories
+  and ``parameter_sha256`` are recomputed. Any failure raises ``CheckpointRefused``.
+- ``FileVersionedStore`` is a local stand-in with S3 conditional-write semantics: a create-only PUT answers 412 when
+  the key exists, an If-Match PUT answers 412 when the ETag is stale, and every version can be read back exactly.
+  It has no delete.
+- Publishing follows §6.6: dependencies, then the manifest (both create-only, with an exact-version readback), then the
+  resume pointer by compare-and-swap against the persisted expected state. A create-only key holding different
+  bytes is ``PoisonedKey``; an unresolvable pointer state is ``Conflict``. Both are terminal for a run.
+- ``resume_point`` applies the §6.8 at-resume rules (continue from the newest local commit when it is the pointer
+  target, publish it first when it is the target's child, restore the target when it has no local copy, otherwise
+  STOP), so a local commit is never discarded silently. The pointer's writer block carries ``event_seq``, the
+  writer's event high-water mark, and a resume continues above it (§6.6 Events).
+"""
+from __future__ import annotations
+
+import dataclasses
+import fcntl
+import hashlib
+import json
+import math
+import os
+import random
+import shutil
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Iterator, Mapping, Protocol
+
+import numpy as np
+import safetensors.torch
+import torch
+
+from dltrain import common
+from dltrain import model as pm
+
+SCHEMA_CHECKPOINT = "jope.dl-checkpoint/v1"
+SCHEMA_LOCAL_COMMIT = "jope.dl-local-commit/v1"
+SCHEMA_POINTER = "jope.dl-pointer/v1"
+SCHEMA_OPTIMIZER_META = "jope.dl-optimizer-meta/v1"
+SCHEMA_RNG_META = "jope.dl-rng-meta/v1"
+
+KINDS = {"models": ".safetensors", "optimizer": ".safetensors", "optimizer-meta": ".json", "rng": ".safetensors",
+         "rng-meta": ".json", "sampler": ".json", "journal": ".jsonl", "scaler": ".json"}
+REQUIRED_RESUMABLE = ("models", "optimizer", "optimizer-meta", "rng", "rng-meta", "sampler", "journal")
+
+COMMIT_FILE = "commit.json"
+POINTER_NAME = "resume"
+EXPECTED_POINTER_PATH = ("state", "expected-pointer.json")
+OPTIMIZER_SLOTS = ("exp_avg", "exp_avg_sq", "step")
+SCHEDULER_KEYS = ("last_epoch", "_step_count", "base_lrs", "_last_lr")
+GROUP_RESERVED = ("params", "param_names", "group_name")
+MT_N = 624  # MT19937 state words (Python's getstate adds the position as word 625)
+
+COMMIT_KEYS = frozenset({"schema", "run_id", "step", "resumable", "files", "tensor_inventory_sha256",
+                         "inventory_algorithm", "parameter_sha256", "identities", "parent", "last_event_seq",
+                         "expected_pointer", "wall_time_utc_us"})
+MANIFEST_KEYS = frozenset({"schema", "run_id", "step", "resumable", "parent", "files", "tensor_inventory_sha256",
+                           "inventory_algorithm", "parameter_sha256", "identities", "last_event_seq",
+                           "wall_time_utc_us"})
+POINTER_KEYS = frozenset({"schema", "run_id", "pointer_name", "target_manifest_sha256", "target_version_id", "seq",
+                          "prev_version_id", "writer", "utc_us"})
+PARENT_KEYS = frozenset({"commit_sha256", "manifest_sha256", "manifest_version_id"})
+S3REF_KEYS = frozenset({"bucket", "key", "version_id", "sha256", "bytes"})
+
+
+class CheckpointRefused(RuntimeError):
+    """A closure, commit or restore failed a strict check, so nothing is written, loaded or resumed from it."""
+
+
+class Conflict(RuntimeError):
+    """The resume pointer is not in the state this writer expects (§6.6 publish step 3). The run must STOP."""
+
+
+class PoisonedKey(RuntimeError):
+    """A create-only key holds bytes other than the ones being published (§6.6 publish step 1). The run must STOP."""
+
+
+class PreconditionFailed(Exception):
+    """HTTP 412 from a conditional PUT (If-None-Match '*' on an existing key, or a stale If-Match ETag)."""
+    status = 412
+
+
+class NoSuchKey(Exception):
+    """HTTP 404: the key, or the exact version asked for, does not exist."""
+    status = 404
+
+
+def _require(cond: bool, msg: str) -> None:
+    if not cond:
+        raise CheckpointRefused(msg)
+
+
+def _is_int(v: Any) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _is_number(v: Any) -> bool:
+    return (_is_int(v) or isinstance(v, float)) and math.isfinite(v)
+
+
+def _is_hex64(v: Any) -> bool:
+    return isinstance(v, str) and len(v) == 64 and all(c in "0123456789abcdef" for c in v)
+
+
+def _fsync_dir(directory: Path) -> None:
+    fd = os.open(str(directory), os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+# --------------------------------------------------------------------------------------------- versioned store
+@dataclass(frozen=True)
+class PutResult:
+    version_id: str
+    etag: str
+
+
+@dataclass(frozen=True)
+class GetResult:
+    body: bytes
+    version_id: str
+    etag: str
+
+
+class VersionedStore(Protocol):
+    """The subset of S3 the publish protocol uses (§6.6): conditional PUTs and exact-version GETs, no deletes."""
+    bucket: str
+
+    def put_create_only(self, key: str, body: bytes) -> PutResult: ...
+
+    def put_if_match(self, key: str, body: bytes, etag: str) -> PutResult: ...
+
+    def get(self, key: str, version_id: str | None = None) -> GetResult: ...
+
+
+class FileVersionedStore:
+    """File-backed fake of a versioned S3 bucket with conditional writes (the P7 fake-store restore proof, §6.6).
+
+    Layout: ``root/<sha256(key)>/{key.txt, log.jsonl, blobs/<version_id>}``. Every PUT runs under an exclusive
+    ``flock`` on ``root/.lock``. The blob is written atomically first, then one canonical log line
+    ``{seq, version_id, etag, sha256, bytes}`` is appended and fsynced, so a version exists only once its log line
+    does. ``version_id = sha256(f'{key}\\0{seq}\\0{body_sha256}')[:32]`` and ``etag = '"' + md5(body) + '"'``.
+    ``fault(op, key)`` runs after a successful write; raising from it simulates a lost response. There is no delete.
+    """
+
+    def __init__(self, root: Path, bucket: str = "fake-versioned", fault: Callable[[str, str], None] | None = None):
+        self.root = Path(root)
+        self.bucket = bucket
+        self.fault = fault
+        self.root.mkdir(parents=True, exist_ok=True)
+
+    def __repr__(self) -> str:
+        return f"FileVersionedStore({str(self.root)!r}, bucket={self.bucket!r})"
+
+    @contextmanager
+    def _locked(self, exclusive: bool) -> Iterator[None]:
+        fd = os.open(str(self.root / ".lock"), os.O_RDWR | os.O_CREAT, 0o644)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+            yield
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
+    def _key_dir(self, key: str) -> Path:
+        if not isinstance(key, str) or not key:
+            raise ValueError("a key is a non-empty string")
+        return self.root / hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _log(kdir: Path) -> list[dict]:
+        try:
+            data = (kdir / "log.jsonl").read_bytes()
+        except FileNotFoundError:
+            return []
+        complete = data[: data.rfind(b"\n") + 1]  # a torn tail from a crash mid-append is not a version
+        return [json.loads(line) for line in complete.splitlines()]
+
+    def _write_version(self, kdir: Path, key: str, body: bytes, seq: int) -> PutResult:
+        kdir.mkdir(parents=True, exist_ok=True)
+        key_file = kdir / "key.txt"
+        if key_file.exists():
+            if key_file.read_bytes() != key.encode("utf-8"):
+                raise RuntimeError(f"{kdir} belongs to another key")
+        else:
+            common.atomic_write(key_file, key.encode("utf-8"))
+        body_sha = common.sha256_bytes(body)
+        version_id = hashlib.sha256(f"{key}\0{seq}\0{body_sha}".encode("utf-8")).hexdigest()[:32]
+        etag = '"' + hashlib.md5(body, usedforsecurity=False).hexdigest() + '"'
+        common.atomic_write(kdir / "blobs" / version_id, body)
+        log_path = kdir / "log.jsonl"
+        if log_path.exists():
+            data = log_path.read_bytes()
+            keep = data.rfind(b"\n") + 1
+            if keep != len(data):
+                os.truncate(log_path, keep)
+        line = common.canonical({"seq": seq, "version_id": version_id, "etag": etag, "sha256": body_sha,
+                                 "bytes": len(body)}) + b"\n"
+        fd = os.open(str(log_path), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        try:
+            os.write(fd, line)
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        _fsync_dir(kdir)
+        return PutResult(version_id=version_id, etag=etag)
+
+    def _put(self, op: str, key: str, body: bytes, etag: str | None) -> PutResult:
+        if not isinstance(body, (bytes, bytearray)):
+            raise TypeError("body must be bytes")
+        body = bytes(body)
+        kdir = self._key_dir(key)
+        with self._locked(exclusive=True):
+            log = self._log(kdir)
+            if etag is None and log:
+                raise PreconditionFailed(f"412: {key} already exists (If-None-Match '*')")
+            if etag is not None:
+                if not log:
+                    raise NoSuchKey(f"404: {key}")
+                if log[-1]["etag"] != etag:
+                    raise PreconditionFailed(f"412: {key} ETag {log[-1]['etag']} != If-Match {etag}")
+            result = self._write_version(kdir, key, body, seq=(log[-1]["seq"] + 1) if log else 1)
+        if self.fault is not None:
+            self.fault(op, key)
+        return result
+
+    def put_create_only(self, key: str, body: bytes) -> PutResult:
+        return self._put("put_create_only", key, body, None)
+
+    def put_if_match(self, key: str, body: bytes, etag: str) -> PutResult:
+        if not isinstance(etag, str) or not etag:
+            raise ValueError("If-Match needs an ETag")
+        return self._put("put_if_match", key, body, etag)
+
+    def get(self, key: str, version_id: str | None = None) -> GetResult:
+        kdir = self._key_dir(key)
+        with self._locked(exclusive=False):
+            log = self._log(kdir)
+            if version_id is None:
+                if not log:
+                    raise NoSuchKey(f"404: {key}")
+                entry = log[-1]
+            else:
+                entry = next((e for e in log if e["version_id"] == version_id), None)
+                if entry is None:
+                    raise NoSuchKey(f"404: {key} has no version {version_id}")
+            body = (kdir / "blobs" / entry["version_id"]).read_bytes()
+        return GetResult(body=body, version_id=entry["version_id"], etag=entry["etag"])
+
+    def list_versions(self, key: str) -> list[dict]:
+        """The key's version log, oldest first (the analogue of ListObjectVersions); read-only."""
+        kdir = self._key_dir(key)
+        with self._locked(exclusive=False):
+            return self._log(kdir)
+
+
+# ------------------------------------------------------------------------------------------------ closure data
+@dataclass
+class ClosureData:
+    """One checkpoint closure in memory (§6.6). A part that is ``None`` is absent. A resumable closure has every
+    part in ``REQUIRED_RESUMABLE``; a non-resumable closure is weights-only (``models`` and nothing else)."""
+    run_id: str
+    step: int
+    resumable: bool
+    model_tensors: dict[str, torch.Tensor]
+    optimizer_tensors: dict[str, torch.Tensor] | None
+    optimizer_meta: dict | None
+    rng_tensors: dict[str, torch.Tensor] | None
+    rng_meta: dict | None
+    sampler_state: dict | None
+    journal_bytes: bytes | None
+    identities: dict
+    parent: dict | None
+    last_event_seq: int
+    expected_pointer: dict | None
+    scaler_state: dict | None = None
+
+    def parts(self) -> tuple[str, ...]:
+        present = {"models": self.model_tensors, "optimizer": self.optimizer_tensors,
+                   "optimizer-meta": self.optimizer_meta, "rng": self.rng_tensors, "rng-meta": self.rng_meta,
+                   "sampler": self.sampler_state, "journal": self.journal_bytes, "scaler": self.scaler_state}
+        return tuple(k for k in KINDS if present[k] is not None)
+
+    def weights_only(self) -> "ClosureData":
+        """A copy holding only the model tensors, never resumable (an export for evaluation)."""
+        return dataclasses.replace(self, resumable=False, optimizer_tensors=None, optimizer_meta=None,
+                                   rng_tensors=None, rng_meta=None, sampler_state=None, journal_bytes=None,
+                                   scaler_state=None)
+
+
+@dataclass(frozen=True)
+class LocalCommit:
+    dir: Path
+    step: int
+    commit_sha256: str
+    doc: dict
+
+
+def _json_copy(obj: Any, what: str) -> Any:
+    """A deep copy through canonical JSON; refuses NaN, Infinity and non-JSON values."""
+    try:
+        return json.loads(common.canonical(obj))
+    except (TypeError, ValueError) as err:
+        raise CheckpointRefused(f"{what} is not canonical-JSON serializable: {err}") from err
+
+
+def _parse_canonical(data: bytes, what: str) -> Any:
+    def refuse_constant(name: str) -> Any:
+        raise ValueError(f"non-finite constant {name}")
+    try:
+        obj = json.loads(data.decode("utf-8"), parse_constant=refuse_constant)
+        canonical = common.canonical(obj)
+    except (UnicodeDecodeError, ValueError, TypeError) as err:
+        raise CheckpointRefused(f"{what} is not valid JSON: {err}") from err
+    _require(canonical == data, f"{what} is not canonical JSON")
+    return obj
+
+
+def _file_name(kind: str) -> str:
+    return kind + KINDS[kind]
+
+
+def _plain(t: torch.Tensor) -> torch.Tensor:
+    return t.detach().to("cpu").clone(memory_format=torch.contiguous_format)
+
+
+def _st_bytes(tensors: Mapping[str, torch.Tensor]) -> bytes:
+    return safetensors.torch.save({k: v.contiguous() for k, v in tensors.items()}, metadata=None)
+
+
+def _st_load(data: bytes, what: str) -> dict[str, torch.Tensor]:
+    try:
+        loaded = safetensors.torch.load(data)
+    except Exception as err:  # noqa: BLE001 - any parse failure of untrusted bytes is a refusal
+        raise CheckpointRefused(f"{what} is not a readable safetensors file: {err}") from err
+    tensors = {k: v.clone() for k, v in loaded.items()}  # own the memory, never alias the input buffer
+    _require(_st_bytes(tensors) == data, f"{what} is not in canonical safetensors form (metadata=None)")
+    return tensors
+
+
+def _same_tensor(a: torch.Tensor, b: torch.Tensor) -> bool:
+    return (a.dtype == b.dtype and tuple(a.shape) == tuple(b.shape)
+            and _plain(a).numpy().tobytes() == _plain(b).numpy().tobytes())
+
+
+def _json_value(v: Any, what: str) -> Any:
+    if v is None or isinstance(v, (bool, str)) or _is_int(v):
+        return v
+    if isinstance(v, float):
+        _require(math.isfinite(v), f"{what} is not finite")
+        return float(v)
+    if isinstance(v, (list, tuple)):
+        return [_json_value(x, what) for x in v]
+    raise CheckpointRefused(f"{what} has type {type(v).__name__}, which the closure does not serialize")
+
+
+# --------------------------------------------------------------------------------------------- capture
+def _capture_model(model: torch.nn.Module) -> dict[str, torch.Tensor]:
+    try:
+        pm.assert_tied(model)
+    except AssertionError as err:
+        raise CheckpointRefused(f"model weights are not tied: {err}") from err
+    param_ids = {id(p) for p in model.parameters()}
+    buffers = sorted(k for k, v in model.state_dict(keep_vars=True).items() if id(v) not in param_ids)
+    _require(not buffers, f"model has persistent buffers outside the parameter closure: {buffers}")
+    out = {}
+    for name, p in model.named_parameters():  # remove_duplicate=True: the tied lm_head.weight is not listed
+        _require(p.dtype == torch.float32, f"parameter {name} is {p.dtype}; the closure stores F32 only")
+        out[name] = _plain(p)
+    return out
+
+
+def _capture_optimizer(model: torch.nn.Module, optimizer: torch.optim.Optimizer) -> tuple[dict, dict]:
+    names_by_id = {id(p): n for n, p in model.named_parameters()}
+    tensors: dict[str, torch.Tensor] = {}
+    groups, without, seen = [], [], set()
+    for g in optimizer.param_groups:
+        names = []
+        for p in g["params"]:
+            name = names_by_id.get(id(p))
+            _require(name is not None, "the optimizer holds a tensor that is not a named model parameter")
+            _require(name not in seen, f"parameter {name} is in more than one optimizer group")
+            seen.add(name)
+            names.append(name)
+        if "param_names" in g:
+            _require(list(g["param_names"]) == names, "a group's param_names disagree with its parameters")
+        hyper = {k: _json_value(v, f"optimizer hyperparameter {k}") for k, v in g.items() if k not in GROUP_RESERVED}
+        groups.append({"group_name": g.get("group_name"), "param_names": names, "hyper": hyper})
+        for name, p in zip(names, g["params"]):
+            state = optimizer.state.get(p)
+            if not state:
+                without.append(name)
+                continue
+            _require(set(state) == set(OPTIMIZER_SLOTS),
+                     f"optimizer state of {name} has {sorted(state)}; the closure stores exactly {OPTIMIZER_SLOTS}")
+            for slot in OPTIMIZER_SLOTS:
+                _require(isinstance(state[slot], torch.Tensor), f"optimizer state {name}.{slot} is not a tensor")
+                tensors[f"{name}.{slot}"] = _plain(state[slot])
+    missing = sorted(set(names_by_id.values()) - seen)
+    _require(not missing, f"parameters missing from the optimizer: {missing}")
+    meta = {"schema": SCHEMA_OPTIMIZER_META, "class": type(optimizer).__name__, "param_groups": groups,
+            "names_without_state": sorted(without), "scheduler": None}
+    return tensors, meta
+
+
+def _capture_scheduler(scheduler: Any) -> dict:
+    sd = scheduler.state_dict()
+    missing = [k for k in SCHEDULER_KEYS if k not in sd]
+    _require(not missing, f"scheduler state lacks {missing}")
+    return {k: _json_value(sd[k], f"scheduler {k}") for k in SCHEDULER_KEYS}
+
+
+CUDA_RNG_PREFIX = "torch_cuda_"
+
+
+def _cuda_rng_key(index: int) -> str:
+    return f"{CUDA_RNG_PREFIX}{index}"
+
+
+def _capture_rng() -> tuple[dict, dict]:
+    """The global torch CPU, Python and legacy numpy RNG states, plus one ``torch_cuda_<i>`` state per visible CUDA
+    device once CUDA is initialised (§6.6 'rng (torch CPU, plus CUDA per device)'); reading them consumes nothing."""
+    tensors = {"torch_cpu": torch.get_rng_state().clone()}
+    if torch.cuda.is_initialized():
+        for i in range(torch.cuda.device_count()):
+            tensors[_cuda_rng_key(i)] = torch.cuda.get_rng_state(i).clone()
+    version, internal, gauss_next = random.getstate()
+    np_state = np.random.get_state(legacy=True)
+    _require(isinstance(np_state, tuple) and np_state[0] == "MT19937", "numpy's global RNG is not legacy MT19937")
+    meta = {"schema": SCHEMA_RNG_META,
+            "python": {"version": int(version), "internal": [int(x) for x in internal],
+                       "gauss_next": None if gauss_next is None else float(gauss_next)},
+            "numpy": {"bit_generator": "MT19937", "key": [int(x) for x in np_state[1]], "pos": int(np_state[2]),
+                      "has_gauss": int(np_state[3]), "cached_gaussian": float(np_state[4])}}
+    return tensors, meta
+
+
+def capture_closure(*, run_id: str, step: int, model: torch.nn.Module, optimizer: torch.optim.Optimizer,
+                    scheduler: Any, sampler_state: dict, journal_bytes: bytes, identities: dict, parent: dict | None,
+                    last_event_seq: int, expected_pointer: "ExpectedPointer | dict | None") -> ClosureData:
+    """Detached copies of every resumable part (§6.6 closure). Global RNG states are read, never consumed."""
+    model_tensors = _capture_model(model)
+    optimizer_tensors, optimizer_meta = _capture_optimizer(model, optimizer)
+    optimizer_meta["scheduler"] = _capture_scheduler(scheduler)
+    rng_tensors, rng_meta = _capture_rng()
+    if isinstance(expected_pointer, ExpectedPointer):
+        expected_pointer = expected_pointer.to_json()
+    closure = ClosureData(
+        run_id=run_id, step=step, resumable=True, model_tensors=model_tensors, optimizer_tensors=optimizer_tensors,
+        optimizer_meta=optimizer_meta, rng_tensors=rng_tensors, rng_meta=rng_meta,
+        sampler_state=_json_copy(sampler_state, "sampler state"),
+        journal_bytes=bytes(journal_bytes) if isinstance(journal_bytes, (bytes, bytearray)) else journal_bytes,
+        identities=_json_copy(identities, "identities"), parent=_json_copy(parent, "parent"),
+        last_event_seq=last_event_seq, expected_pointer=_json_copy(expected_pointer, "expected pointer"))
+    _validate_closure(closure)
+    return closure
+
+
+# ------------------------------------------------------------------------------------------- validation
+def _check_model_tensors(tensors: Any) -> None:
+    _require(isinstance(tensors, dict) and len(tensors) > 0, "model tensors are missing")
+    for name, t in tensors.items():
+        _require(isinstance(name, str) and name and isinstance(t, torch.Tensor), f"model tensor {name!r} is invalid")
+        _require(t.dtype == torch.float32, f"model tensor {name} is {t.dtype}, not F32")
+
+
+def _check_optimizer(model_tensors: dict, tensors: Any, meta: Any) -> None:
+    _require(isinstance(tensors, dict), "optimizer tensors are missing")
+    _require(isinstance(meta, dict) and set(meta) == {"schema", "class", "param_groups", "names_without_state",
+                                                      "scheduler"}, "optimizer-meta keys are not the closure's")
+    _require(meta["schema"] == SCHEMA_OPTIMIZER_META, f"optimizer-meta schema is {meta['schema']!r}")
+    _require(isinstance(meta["class"], str) and meta["class"], "optimizer-meta class is missing")
+    groups = meta["param_groups"]
+    _require(isinstance(groups, list) and groups, "optimizer-meta has no param groups")
+    listed: list[str] = []
+    for g in groups:
+        _require(isinstance(g, dict) and set(g) == {"group_name", "param_names", "hyper"}, "invalid param group")
+        _require(g["group_name"] is None or isinstance(g["group_name"], str), "invalid group_name")
+        _require(isinstance(g["param_names"], list) and all(isinstance(n, str) for n in g["param_names"]),
+                 "invalid param_names")
+        _require(isinstance(g["hyper"], dict) and not set(g["hyper"]) & set(GROUP_RESERVED), "invalid hyper")
+        for k, v in g["hyper"].items():
+            _json_value(v, f"hyperparameter {k}")
+        listed.extend(g["param_names"])
+    _require(len(listed) == len(set(listed)) and set(listed) == set(model_tensors),
+             "optimizer groups must list every model parameter exactly once")
+    without = meta["names_without_state"]
+    _require(isinstance(without, list) and without == sorted(set(without)) and set(without) <= set(model_tensors),
+             "names_without_state must be a sorted unique list of model parameters")
+    stateful = [n for n in model_tensors if n not in set(without)]
+    expected = {f"{n}.{s}" for n in stateful for s in OPTIMIZER_SLOTS}
+    _require(set(tensors) == expected, "optimizer tensors do not match the stateful parameters: missing "
+             f"{sorted(expected - set(tensors))[:4]}, unexpected {sorted(set(tensors) - expected)[:4]}")
+    for n in stateful:
+        for slot in ("exp_avg", "exp_avg_sq"):
+            t = tensors[f"{n}.{slot}"]
+            _require(isinstance(t, torch.Tensor) and t.dtype == torch.float32
+                     and tuple(t.shape) == tuple(model_tensors[n].shape), f"optimizer tensor {n}.{slot} is invalid")
+        step = tensors[f"{n}.step"]
+        _require(isinstance(step, torch.Tensor) and step.dtype == torch.float32 and step.dim() == 0
+                 and math.isfinite(float(step)), f"optimizer tensor {n}.step must be a finite F32 scalar")
+    sched = meta["scheduler"]
+    _require(isinstance(sched, dict) and set(sched) == set(SCHEDULER_KEYS),
+             f"scheduler state must hold exactly {SCHEDULER_KEYS}")
+    _require(_is_int(sched["last_epoch"]) and _is_int(sched["_step_count"]), "scheduler counters must be integers")
+    for k in ("base_lrs", "_last_lr"):
+        _require(isinstance(sched[k], list) and len(sched[k]) == len(groups) and all(_is_number(x) for x in sched[k]),
+                 f"scheduler {k} must hold one finite number per group")
+
+
+def _check_rng(tensors: Any, meta: Any) -> None:
+    _require(isinstance(tensors, dict) and "torch_cpu" in tensors, "rng must hold torch_cpu")
+    n_cuda = len(tensors) - 1
+    _require(set(tensors) == {"torch_cpu"} | {_cuda_rng_key(i) for i in range(n_cuda)},
+             "rng must hold exactly torch_cpu plus torch_cuda_0..torch_cuda_<n-1>")
+    for name, t in tensors.items():
+        _require(isinstance(t, torch.Tensor) and t.dtype == torch.uint8 and t.dim() == 1 and t.numel() > 0,
+                 f"{name} RNG state must be a non-empty U8 vector")
+    _require(isinstance(meta, dict) and set(meta) == {"schema", "python", "numpy"}, "rng-meta keys are invalid")
+    _require(meta["schema"] == SCHEMA_RNG_META, f"rng-meta schema is {meta['schema']!r}")
+    py = meta["python"]
+    _require(isinstance(py, dict) and set(py) == {"version", "internal", "gauss_next"}, "python RNG state invalid")
+    words = py["internal"]
+    _require(py["version"] == 3 and isinstance(words, list) and len(words) == MT_N + 1
+             and all(_is_int(w) and 0 <= w < 2 ** 32 for w in words[:-1]) and _is_int(words[-1])
+             and 0 <= words[-1] <= MT_N, "python RNG internal state is invalid")
+    _require(py["gauss_next"] is None or _is_number(py["gauss_next"]), "python gauss_next is invalid")
+    npm = meta["numpy"]
+    _require(isinstance(npm, dict) and set(npm) == {"bit_generator", "key", "pos", "has_gauss", "cached_gaussian"},
+             "numpy RNG state invalid")
+    _require(npm["bit_generator"] == "MT19937" and isinstance(npm["key"], list) and len(npm["key"]) == MT_N
+             and all(_is_int(w) and 0 <= w < 2 ** 32 for w in npm["key"]), "numpy RNG key is invalid")
+    _require(_is_int(npm["pos"]) and 0 <= npm["pos"] <= MT_N and npm["has_gauss"] in (0, 1)
+             and not isinstance(npm["has_gauss"], bool) and _is_number(npm["cached_gaussian"]),
+             "numpy RNG position or gaussian cache is invalid")
+
+
+def _check_journal(data: Any, step: int) -> None:
+    """Canonical JSON object lines, one per completed optimizer step (§6.6: the consumption-journal prefix)."""
+    _require(isinstance(data, bytes), "journal must be bytes")
+    _require(data == b"" or data.endswith(b"\n"), "journal must end with a newline")
+    lines = data[:-1].split(b"\n") if data else []
+    _require(len(lines) == step, f"journal holds {len(lines)} records for step {step}")
+    for i, line in enumerate(lines):
+        _require(isinstance(_parse_canonical(line, f"journal line {i + 1}"), dict),
+                 f"journal line {i + 1} is not an object")
+
+
+def _check_parent(parent: Any) -> None:
+    if parent is None:
+        return
+    _require(isinstance(parent, dict) and set(parent) == PARENT_KEYS, f"parent must hold exactly {sorted(PARENT_KEYS)}")
+    _require(_is_hex64(parent["commit_sha256"]), "parent commit_sha256 must be a sha256")
+    _require(parent["manifest_sha256"] is None or _is_hex64(parent["manifest_sha256"]), "invalid parent manifest")
+    _require(parent["manifest_version_id"] is None or isinstance(parent["manifest_version_id"], str),
+             "invalid parent manifest_version_id")
+
+
+def _validate_closure(c: ClosureData) -> None:
+    _require(isinstance(c.run_id, str) and c.run_id, "run_id must be a non-empty string")
+    _require(_is_int(c.step) and c.step >= 0, "step must be an integer >= 0")
+    _require(isinstance(c.resumable, bool), "resumable must be a bool")
+    _require(_is_int(c.last_event_seq) and c.last_event_seq >= 0, "last_event_seq must be an integer >= 0")
+    _require(isinstance(c.identities, dict), "identities must be an object")
+    _check_parent(c.parent)
+    if c.expected_pointer is not None:
+        ExpectedPointer.from_json(c.expected_pointer)
+    parts = c.parts()
+    if c.resumable:
+        missing = [k for k in REQUIRED_RESUMABLE if k not in parts]
+        _require(not missing, f"a resumable closure needs {missing}")
+    else:
+        _require(parts == ("models",), f"a non-resumable closure is weights-only, but it holds {list(parts)}")
+    _check_model_tensors(c.model_tensors)
+    if c.resumable:
+        _check_optimizer(c.model_tensors, c.optimizer_tensors, c.optimizer_meta)
+        _check_rng(c.rng_tensors, c.rng_meta)
+        _require(isinstance(c.sampler_state, dict) and _is_int(c.sampler_state.get("cursor"))
+                 and c.sampler_state["cursor"] >= 0, "sampler state must hold an integer cursor >= 0")
+        _check_journal(c.journal_bytes, c.step)
+    _require(c.scaler_state is None or isinstance(c.scaler_state, dict), "scaler state must be an object")
+
+
+# ---------------------------------------------------------------------------------------- local commits
+def _closure_files(c: ClosureData) -> dict[str, bytes]:
+    files = {"models": _st_bytes(c.model_tensors)}
+    if c.optimizer_tensors is not None:
+        files["optimizer"] = _st_bytes(c.optimizer_tensors)
+    if c.optimizer_meta is not None:
+        files["optimizer-meta"] = common.canonical(c.optimizer_meta)
+    if c.rng_tensors is not None:
+        files["rng"] = _st_bytes(c.rng_tensors)
+    if c.rng_meta is not None:
+        files["rng-meta"] = common.canonical(c.rng_meta)
+    if c.sampler_state is not None:
+        files["sampler"] = common.canonical(c.sampler_state)
+    if c.journal_bytes is not None:
+        files["journal"] = bytes(c.journal_bytes)
+    if c.scaler_state is not None:
+        files["scaler"] = common.canonical(c.scaler_state)
+    return files
+
+
+def _inventories(c: ClosureData) -> dict:
+    return {"models": pm.tensor_inventory_sha256(c.model_tensors),
+            "optimizer": None if c.optimizer_tensors is None else pm.tensor_inventory_sha256(c.optimizer_tensors),
+            "rng": None if c.rng_tensors is None else pm.tensor_inventory_sha256(c.rng_tensors)}
+
+
+def _files_index(files: Mapping[str, bytes]) -> dict:
+    return {k: {"name": _file_name(k), "sha256": common.sha256_bytes(b), "bytes": len(b)}
+            for k, b in sorted(files.items())}
+
+
+def _write_new(path: Path, data: bytes) -> None:
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def _install(commits_root: Path, step: int, named: Mapping[str, bytes], commit_bytes: bytes) -> Path:
+    """Write every file into ``.tmp-<step>-<hex>/``, fsync, and rename it to ``<step:010d>/`` (never replaced)."""
+    commits_root.mkdir(parents=True, exist_ok=True)
+    final = commits_root / f"{step:010d}"
+    _require(not os.path.lexists(final), f"{final} already exists; local commits are immutable")
+    tmp = commits_root / f".tmp-{step}-{os.urandom(8).hex()}"
+    os.mkdir(tmp, 0o755)
+    try:
+        for name, data in sorted(named.items()):
+            _write_new(tmp / name, data)
+        _write_new(tmp / COMMIT_FILE, commit_bytes)
+        _fsync_dir(tmp)
+        _require(not os.path.lexists(final), f"{final} already exists; local commits are immutable")
+        os.rename(tmp, final)
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+    _fsync_dir(commits_root)
+    return final
+
+
+def write_commit(commits_root: Path, closure: ClosureData) -> LocalCommit:
+    """Validate the closure, then write it as the immutable local commit ``commits_root/<step:010d>/`` (§6.6)."""
+    _validate_closure(closure)
+    files = _closure_files(closure)
+    doc = {"schema": SCHEMA_LOCAL_COMMIT, "run_id": closure.run_id, "step": closure.step,
+           "resumable": closure.resumable, "files": _files_index(files),
+           "tensor_inventory_sha256": _inventories(closure), "inventory_algorithm": pm.INVENTORY_ALGORITHM,
+           "parameter_sha256": pm.parameter_sha256_tensors(closure.model_tensors),
+           "identities": closure.identities, "parent": closure.parent, "last_event_seq": closure.last_event_seq,
+           "expected_pointer": closure.expected_pointer, "wall_time_utc_us": common.utc_us()}
+    commit_bytes = common.canonical(doc)
+    final = _install(Path(commits_root), closure.step, {_file_name(k): b for k, b in files.items()}, commit_bytes)
+    return LocalCommit(dir=final, step=closure.step, commit_sha256=common.sha256_bytes(commit_bytes),
+                       doc=json.loads(commit_bytes))
+
+
+def save_local_commit(workdir: Path, **capture_kwargs: Any) -> LocalCommit:
+    """capture_closure(**capture_kwargs) written to ``workdir/commits/<step:010d>/``."""
+    return write_commit(Path(workdir) / "commits", capture_closure(**capture_kwargs))
+
+
+def _read_regular(path: Path) -> bytes:
+    _require(path.is_file() and not path.is_symlink(), f"{path} is missing or not a regular file")
+    return path.read_bytes()
+
+
+def _read_commit(commit_dir: Path) -> tuple[ClosureData, dict, str]:
+    _require(commit_dir.is_dir() and not commit_dir.is_symlink(), f"{commit_dir} is not a commit directory")
+    raw = _read_regular(commit_dir / COMMIT_FILE)
+    doc = _parse_canonical(raw, f"{commit_dir / COMMIT_FILE}")
+    _require(isinstance(doc, dict) and set(doc) == COMMIT_KEYS, "commit.json keys are not the local-commit schema's")
+    _require(doc["schema"] == SCHEMA_LOCAL_COMMIT, f"commit.json schema is {doc['schema']!r}")
+    files = doc["files"]
+    _require(isinstance(files, dict) and set(files) <= set(KINDS), "commit.json lists unknown file kinds")
+    for kind, entry in files.items():
+        _require(isinstance(entry, dict) and set(entry) == {"name", "sha256", "bytes"}
+                 and entry["name"] == _file_name(kind) and _is_hex64(entry["sha256"]) and _is_int(entry["bytes"]),
+                 f"commit.json entry for {kind} is invalid")
+    listed = {COMMIT_FILE} | {e["name"] for e in files.values()}
+    present = set(os.listdir(commit_dir))
+    _require(present == listed,
+             f"{commit_dir}: missing {sorted(listed - present)}, unlisted {sorted(present - listed)}")
+    data = {}
+    for kind, entry in files.items():
+        body = _read_regular(commit_dir / entry["name"])
+        _require(len(body) == entry["bytes"] and common.sha256_bytes(body) == entry["sha256"],
+                 f"{entry['name']} differs from commit.json (sha256 or size)")
+        data[kind] = body
+    _require("models" in data, "commit has no models file")
+
+    def json_part(kind: str) -> Any:
+        return _parse_canonical(data[kind], _file_name(kind)) if kind in data else None
+
+    def tensor_part(kind: str) -> dict | None:
+        return _st_load(data[kind], _file_name(kind)) if kind in data else None
+
+    closure = ClosureData(
+        run_id=doc["run_id"], step=doc["step"], resumable=doc["resumable"], model_tensors=tensor_part("models"),
+        optimizer_tensors=tensor_part("optimizer"), optimizer_meta=json_part("optimizer-meta"),
+        rng_tensors=tensor_part("rng"), rng_meta=json_part("rng-meta"), sampler_state=json_part("sampler"),
+        journal_bytes=data.get("journal"), identities=doc["identities"], parent=doc["parent"],
+        last_event_seq=doc["last_event_seq"], expected_pointer=doc["expected_pointer"],
+        scaler_state=json_part("scaler"))
+    _validate_closure(closure)
+    _require(doc["inventory_algorithm"] == pm.INVENTORY_ALGORITHM, "unknown tensor inventory algorithm")
+    _require(doc["tensor_inventory_sha256"] == _inventories(closure), "tensor inventories differ from commit.json")
+    _require(doc["parameter_sha256"] == pm.parameter_sha256_tensors(closure.model_tensors),
+             "parameter_sha256 differs from commit.json")
+    _require(_is_int(doc["wall_time_utc_us"]), "wall_time_utc_us must be an integer")
+    return closure, doc, common.sha256_bytes(raw)
+
+
+def read_commit(commit_dir: Path) -> ClosureData:
+    """Strictly read and verify a local commit; any discrepancy raises CheckpointRefused (§6.6)."""
+    return _read_commit(Path(commit_dir))[0]
+
+
+def open_commit(commit_dir: Path) -> tuple[LocalCommit, ClosureData]:
+    """read_commit plus the LocalCommit handle (doc and commit_sha256) needed to publish or parent it."""
+    closure, doc, sha = _read_commit(Path(commit_dir))
+    return LocalCommit(dir=Path(commit_dir), step=closure.step, commit_sha256=sha, doc=doc), closure
+
+
+# ---------------------------------------------------------------------------------------------- restore
+def _apply_model(closure: ClosureData, model: torch.nn.Module) -> None:
+    names = pm.parameter_names(model)
+    saved = set(closure.model_tensors)
+    _require(sorted(saved) == names, "closure parameter names differ from the model's: missing "
+             f"{sorted(set(names) - saved)[:4]}, extra {sorted(saved - set(names))[:4]}")
+    params = dict(model.named_parameters())
+    for name in names:
+        src, dst = closure.model_tensors[name], params[name]
+        _require(src.dtype == torch.float32 and dst.dtype == torch.float32, f"{name} is not F32")
+        _require(tuple(src.shape) == tuple(dst.shape), f"{name} has shape {tuple(src.shape)}, model {tuple(dst.shape)}")
+    with torch.no_grad():
+        for name in names:
+            params[name].copy_(closure.model_tensors[name])
+    try:
+        pm.assert_tied(model)
+    except AssertionError as err:
+        raise CheckpointRefused(f"weights are not tied after loading: {err}") from err
+    _require(pm.parameter_sha256(model) == pm.parameter_sha256_tensors(closure.model_tensors),
+             "parameter_sha256 after loading differs from the closure")
+
+
+def _optimizer_load_dict(closure: ClosureData, model: torch.nn.Module, optimizer: torch.optim.Optimizer) -> dict:
+    """Check the optimizer's class, group order, names and hyperparameter keys against the closure and build the
+    ``load_state_dict`` input: state by flat parameter index, groups = saved hyper + names + index lists."""
+    meta, tensors = closure.optimizer_meta, closure.optimizer_tensors
+    _require(type(optimizer).__name__ == meta["class"], f"optimizer is {type(optimizer).__name__}, closure "
+             f"{meta['class']}")
+    names_by_id = {id(p): n for n, p in model.named_parameters()}
+    current, saved = optimizer.param_groups, meta["param_groups"]
+    _require(len(current) == len(saved), f"optimizer has {len(current)} groups, closure {len(saved)}")
+    without = set(meta["names_without_state"])
+    state: dict[int, dict] = {}
+    groups, index = [], 0
+    for g, s in zip(current, saved):
+        names = [names_by_id.get(id(p)) for p in g["params"]]
+        _require(names == s["param_names"], f"group {s['group_name']!r} lists other parameters than the closure")
+        _require(g.get("group_name") == s["group_name"], f"group name {g.get('group_name')!r} != {s['group_name']!r}")
+        _require(set(g) - set(GROUP_RESERVED) == set(s["hyper"]), f"group {s['group_name']!r} hyperparameter keys "
+                 "differ from the closure")
+        indices = []
+        for name in names:
+            if name not in without:
+                state[index] = {slot: tensors[f"{name}.{slot}"].clone() for slot in OPTIMIZER_SLOTS}
+            indices.append(index)
+            index += 1
+        hyper = {k: tuple(v) if isinstance(g[k], tuple) and isinstance(v, list) else v for k, v in s["hyper"].items()}
+        group = dict(hyper, params=indices, param_names=list(names))
+        if s["group_name"] is not None:
+            group["group_name"] = s["group_name"]
+        groups.append(group)
+    return {"state": state, "param_groups": groups}
+
+
+def apply_closure(closure: ClosureData, *, model: torch.nn.Module, optimizer: torch.optim.Optimizer | None = None,
+                  scheduler: Any = None, require_resumable: bool = True) -> None:
+    """Load a verified closure into freshly built objects (§6.6 closure, §6.8 at resume).
+
+    With ``require_resumable`` (the trainer's resume) the closure must be resumable. The model parameters, the
+    optimizer (exact group and name layout, every moment and per-parameter step) and the scheduler (4 keys) are
+    loaded, re-captured and compared with the closure, and the torch, Python and numpy global RNGs are restored
+    last. Layout mismatches are refused before anything is changed. With ``require_resumable=False`` and no optimizer
+    or scheduler, only the parameters are loaded (a weights-only use) and no RNG is touched. Sampler state and
+    journal stay in the closure for the caller.
+    """
+    _validate_closure(closure)
+    if require_resumable:
+        _require(closure.resumable, "closure is weights-only (resumable=false) and cannot be resumed")
+    full = optimizer is not None or scheduler is not None
+    if full and (optimizer is None or scheduler is None):
+        raise ValueError("restore the optimizer and the scheduler together")
+    if require_resumable and not full:
+        raise ValueError("a resumable restore needs the optimizer and the scheduler")
+    _require(not full or closure.resumable, "a weights-only closure has no optimizer, scheduler or RNG state")
+    load = None
+    cuda_states = []
+    if full:
+        _require(closure.rng_tensors["torch_cpu"].numel() == torch.get_rng_state().numel(),
+                 "torch_cpu RNG state has the wrong size for this torch build")
+        cuda_states = [closure.rng_tensors[_cuda_rng_key(i)] for i in range(len(closure.rng_tensors) - 1)]
+        if cuda_states:
+            _require(torch.cuda.is_available() and torch.cuda.device_count() == len(cuda_states),
+                     f"closure holds {len(cuda_states)} CUDA RNG states; this process sees "
+                     f"{torch.cuda.device_count() if torch.cuda.is_available() else 0} CUDA devices")
+            for i, t in enumerate(cuda_states):
+                _require(t.numel() == torch.cuda.get_rng_state(i).numel(),
+                         f"{_cuda_rng_key(i)} RNG state has the wrong size for this torch build")
+        else:
+            _require(not torch.cuda.is_initialized(), "CUDA is initialized, but the closure holds no CUDA RNG state")
+        load = _optimizer_load_dict(closure, model, optimizer)
+    _apply_model(closure, model)
+    if load is None:
+        return
+    optimizer.load_state_dict(load)
+    scheduler.load_state_dict({**scheduler.state_dict(), **closure.optimizer_meta["scheduler"]})
+    tensors, meta = _capture_optimizer(model, optimizer)
+    meta["scheduler"] = _capture_scheduler(scheduler)
+    _require(common.canonical(meta) == common.canonical(closure.optimizer_meta),
+             "optimizer or scheduler state did not round-trip")
+    _require(set(tensors) == set(closure.optimizer_tensors)
+             and all(_same_tensor(tensors[k], closure.optimizer_tensors[k]) for k in tensors),
+             "optimizer tensors did not round-trip bitwise")
+    py, npm = closure.rng_meta["python"], closure.rng_meta["numpy"]
+    try:  # last, so nothing after the restore consumes the restored streams
+        torch.set_rng_state(closure.rng_tensors["torch_cpu"].clone())
+        for i, t in enumerate(cuda_states):
+            torch.cuda.set_rng_state(t.clone(), i)
+        random.setstate((py["version"], tuple(py["internal"]), py["gauss_next"]))
+        np.random.set_state((npm["bit_generator"], np.array(npm["key"], dtype=np.uint32), npm["pos"],
+                             npm["has_gauss"], float(npm["cached_gaussian"])))
+    except (RuntimeError, ValueError, TypeError) as err:
+        raise CheckpointRefused(f"RNG state could not be restored: {err}") from err
+
+
+# ------------------------------------------------------------------------------------------ publish keys
+def dep_key(prefix: str, kind: str, sha: str) -> str:
+    if kind not in KINDS:
+        raise ValueError(f"unknown closure kind {kind!r}")
+    return f"{prefix}objects/{kind}/sha256/{sha}{KINDS[kind]}"
+
+
+def manifest_key(prefix: str, run_id: str, sha: str) -> str:
+    return f"{prefix}campaigns/{run_id}/manifests/{sha}.json"
+
+
+def pointer_key(prefix: str, run_id: str) -> str:
+    return f"{prefix}campaigns/{run_id}/resume/HEAD.json"
+
+
+@dataclass(frozen=True)
+class ExpectedPointer:
+    """The pointer state this writer last wrote or verified (§6.6 publish step 3), persisted with each commit."""
+    version_id: str
+    etag: str
+    sha256: str
+    seq: int
+    manifest_sha256: str
+    manifest_version_id: str
+
+    def to_json(self) -> dict:
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def from_json(cls, d: Any) -> "ExpectedPointer":
+        fields = [f.name for f in dataclasses.fields(cls)]
+        _require(isinstance(d, dict) and set(d) == set(fields), f"expected pointer must hold exactly {fields}")
+        _require(all(isinstance(d[k], str) and d[k] for k in ("version_id", "etag", "manifest_version_id"))
+                 and _is_hex64(d["sha256"]) and _is_hex64(d["manifest_sha256"]) and _is_int(d["seq"]) and d["seq"] >= 1,
+                 "expected pointer values are invalid")
+        return cls(**{k: d[k] for k in fields})
+
+
+def load_expected(workdir: Path) -> ExpectedPointer | None:
+    path = Path(workdir).joinpath(*EXPECTED_POINTER_PATH)
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        return None
+    return ExpectedPointer.from_json(_parse_canonical(raw, str(path)))
+
+
+def save_expected(workdir: Path, e: ExpectedPointer) -> dict:
+    if not isinstance(e, ExpectedPointer):
+        raise TypeError("save_expected takes an ExpectedPointer")
+    return common.atomic_write(Path(workdir).joinpath(*EXPECTED_POINTER_PATH), common.canonical(e.to_json()))
+
+
+# ------------------------------------------------------------------------------------------- publishing
+def _s3ref(store: VersionedStore, key: str, version_id: str, body: bytes, new_bytes: int) -> dict:
+    return {"bucket": store.bucket, "key": key, "version_id": version_id, "sha256": common.sha256_bytes(body),
+            "bytes": len(body), "readback_verified": True, "new_bytes": new_bytes}
+
+
+def publish_dependency(store: VersionedStore, key: str, body: bytes) -> dict:
+    """Create-only PUT with an exact-version readback (§6.6 publish step 1, also used for manifests).
+
+    On a 412, a timeout or a transport error the key is re-read. Equal bytes are success (``new_bytes`` 0 after a
+    412, the body size after a lost response), different bytes are ``PoisonedKey``, and an absent key gets exactly
+    one more create-only PUT.
+    """
+    body = bytes(body)
+    last_error: BaseException | None = None
+    for _attempt in range(2):
+        try:
+            put = store.put_create_only(key, body)
+        except (PreconditionFailed, OSError) as err:  # OSError covers TimeoutError and connection resets
+            last_error = err
+            try:
+                current = store.get(key)
+            except NoSuchKey:
+                continue
+            if current.body != body:
+                raise PoisonedKey(f"{store.bucket}/{key} holds sha256 {common.sha256_bytes(current.body)}, "
+                                  f"not {common.sha256_bytes(body)}") from err
+            return _s3ref(store, key, current.version_id, body, 0 if isinstance(err, PreconditionFailed) else len(body))
+        readback = store.get(key, version_id=put.version_id)
+        if readback.version_id != put.version_id or readback.body != body:
+            raise PoisonedKey(f"readback of {store.bucket}/{key}@{put.version_id} differs from the bytes written")
+        return _s3ref(store, key, put.version_id, body, len(body))
+    assert last_error is not None
+    raise last_error
+
+
+def _pointer_doc(body: bytes, what: str) -> dict:
+    doc = _parse_canonical(body, what)
+    _require(isinstance(doc, dict) and set(doc) == POINTER_KEYS and doc["schema"] == SCHEMA_POINTER
+             and _is_hex64(doc["target_manifest_sha256"]) and _is_int(doc["seq"]) and doc["seq"] >= 1,
+             f"{what} is not a {SCHEMA_POINTER} document")
+    return doc
+
+
+def cas_pointer(store: VersionedStore, key: str, body: bytes, expected: ExpectedPointer | None, *,
+                parent_manifest_sha256: str | None) -> tuple[str, str, int]:
+    """Compare-and-swap of the resume pointer against the persisted expected state (§6.6 publish step 3).
+
+    GET once, then: absent with no expectation -> create-only PUT; the expected version and sha256, naming this
+    manifest's parent -> If-Match PUT; current bytes equal to ``body`` -> adopt them (a lost response); anything
+    else -> ``Conflict``. A failed PUT repeats the GET and case analysis once; a second failure is ``Conflict``.
+    Returns ``(version_id, etag, seq)``.
+    """
+    new = _pointer_doc(body, "new pointer body")
+    for attempt in range(2):
+        try:
+            current = store.get(key)
+        except NoSuchKey:
+            current = None
+        if current is None:
+            if expected is not None:
+                raise Conflict(f"pointer {key} is absent, but this writer expects version {expected.version_id}")
+            etag = None
+        elif current.body == body:
+            return current.version_id, current.etag, new["seq"]
+        else:
+            try:
+                cur = _pointer_doc(current.body, f"current pointer {key}")
+            except CheckpointRefused as err:
+                raise Conflict(str(err)) from err
+            if not (expected is not None and current.version_id == expected.version_id
+                    and common.sha256_bytes(current.body) == expected.sha256 and cur["run_id"] == new["run_id"]
+                    and cur["target_manifest_sha256"] == parent_manifest_sha256):
+                raise Conflict(f"pointer {key} is at version {current.version_id} -> {cur['target_manifest_sha256']} "
+                               f"(run {cur['run_id']}, seq {cur['seq']}); expected "
+                               f"{expected.version_id if expected else None} naming parent {parent_manifest_sha256}")
+            etag = current.etag
+        try:
+            put = store.put_create_only(key, body) if etag is None else store.put_if_match(key, body, etag)
+        except (PreconditionFailed, NoSuchKey, OSError) as err:
+            if attempt == 1:
+                raise Conflict(f"pointer {key} PUT unresolved after one repeat: {err!r}") from err
+            continue
+        return put.version_id, put.etag, new["seq"]
+    raise Conflict(f"pointer {key} unresolved")
+
+
+def publish_commit(store: VersionedStore, commit: LocalCommit, *, prefix: str, expected: ExpectedPointer | None,
+                   writer: dict) -> dict:
+    """Publish a local commit (§6.6): every file create-only (sorted kind order), then the manifest create-only,
+    then the resume pointer by CAS. The caller persists the returned ``pointer`` with ``save_expected``."""
+    raw = _read_regular(commit.dir / COMMIT_FILE)
+    _require(common.sha256_bytes(raw) == commit.commit_sha256, f"{commit.dir} commit.json changed since it was written")
+    doc = commit.doc
+    deps, new_bytes = {}, 0
+    for kind in sorted(doc["files"]):
+        entry = doc["files"][kind]
+        body = _read_regular(commit.dir / entry["name"])
+        _require(len(body) == entry["bytes"] and common.sha256_bytes(body) == entry["sha256"],
+                 f"{entry['name']} differs from commit.json")
+        deps[kind] = publish_dependency(store, dep_key(prefix, kind, entry["sha256"]), body)
+        new_bytes += deps[kind]["new_bytes"]
+    manifest = {"schema": SCHEMA_CHECKPOINT, "run_id": doc["run_id"], "step": doc["step"],
+                "resumable": doc["resumable"], "parent": doc["parent"],
+                "files": {k: {f: r[f] for f in sorted(S3REF_KEYS)} for k, r in deps.items()},
+                "tensor_inventory_sha256": doc["tensor_inventory_sha256"],
+                "inventory_algorithm": doc["inventory_algorithm"], "parameter_sha256": doc["parameter_sha256"],
+                "identities": doc["identities"], "last_event_seq": doc["last_event_seq"],
+                "wall_time_utc_us": doc["wall_time_utc_us"]}
+    manifest_body = common.canonical(manifest)
+    manifest_sha = common.sha256_bytes(manifest_body)
+    manifest_ref = publish_dependency(store, manifest_key(prefix, doc["run_id"], manifest_sha), manifest_body)
+    new_bytes += manifest_ref["new_bytes"]
+    pointer_body = common.canonical({
+        "schema": SCHEMA_POINTER, "run_id": doc["run_id"], "pointer_name": POINTER_NAME,
+        "target_manifest_sha256": manifest_sha, "target_version_id": manifest_ref["version_id"],
+        "seq": expected.seq + 1 if expected else 1, "prev_version_id": expected.version_id if expected else None,
+        "writer": writer, "utc_us": common.utc_us()})
+    parent = doc["parent"]
+    version_id, etag, seq = cas_pointer(store, pointer_key(prefix, doc["run_id"]), pointer_body, expected,
+                                        parent_manifest_sha256=parent["manifest_sha256"] if parent else None)
+    new_bytes += len(pointer_body)
+    pointer = ExpectedPointer(version_id=version_id, etag=etag, sha256=common.sha256_bytes(pointer_body), seq=seq,
+                              manifest_sha256=manifest_sha, manifest_version_id=manifest_ref["version_id"])
+    return {"manifest_ref": manifest_ref, "deps": deps, "pointer": pointer, "new_bytes": new_bytes}
+
+
+def _fetch_manifest(store: VersionedStore, prefix: str, run_id: str, manifest_sha: str, manifest_vid: str) -> dict:
+    """GET a checkpoint manifest by exact VersionId and verify its sha256 and shape."""
+    try:
+        got = store.get(manifest_key(prefix, run_id, manifest_sha), version_id=manifest_vid)
+    except NoSuchKey as err:
+        raise CheckpointRefused(f"manifest {manifest_sha}@{manifest_vid} is missing") from err
+    _require(got.version_id == manifest_vid and common.sha256_bytes(got.body) == manifest_sha,
+             "manifest bytes differ from the pointer's sha256")
+    manifest = _parse_canonical(got.body, "manifest")
+    _require(isinstance(manifest, dict) and set(manifest) == MANIFEST_KEYS and manifest["schema"] == SCHEMA_CHECKPOINT
+             and manifest["run_id"] == run_id and _is_int(manifest["step"]) and manifest["step"] >= 0
+             and isinstance(manifest["files"], dict), "manifest is not a checkpoint manifest of this run")
+    return manifest
+
+
+def _current_pointer(store: VersionedStore, prefix: str, run_id: str) -> tuple[GetResult, dict] | None:
+    """The resume pointer's current version and parsed body, or None when the key is absent."""
+    pkey = pointer_key(prefix, run_id)
+    try:
+        current = store.get(pkey)
+    except NoSuchKey:
+        return None
+    pdoc = _pointer_doc(current.body, f"pointer {pkey}")
+    _require(pdoc["run_id"] == run_id and pdoc["pointer_name"] == POINTER_NAME, f"pointer {pkey} names another run")
+    return current, pdoc
+
+
+def restore_closure(store: VersionedStore, *, prefix: str, run_id: str,
+                    dest_dir: Path) -> tuple[LocalCommit, ExpectedPointer]:
+    """Fetch the resume pointer's closure by exact VersionIds into an empty ``dest_dir`` (§6.8: the pointer target
+    has no local copy) and return the strictly re-read commit plus the pointer state to persist as expected."""
+    dest_dir = Path(dest_dir)
+    _require(not os.path.lexists(dest_dir) or (dest_dir.is_dir() and not dest_dir.is_symlink()
+                                               and not any(dest_dir.iterdir())), f"{dest_dir} is not empty")
+    found = _current_pointer(store, prefix, run_id)
+    if found is None:
+        raise CheckpointRefused(f"no resume pointer at {pointer_key(prefix, run_id)}")
+    current, pdoc = found
+    manifest_sha, manifest_vid = pdoc["target_manifest_sha256"], pdoc["target_version_id"]
+    manifest = _fetch_manifest(store, prefix, run_id, manifest_sha, manifest_vid)
+    files: dict[str, bytes] = {}
+    for kind, ref in sorted(manifest["files"].items()):
+        _require(kind in KINDS and isinstance(ref, dict) and set(ref) == S3REF_KEYS and ref["bucket"] == store.bucket
+                 and _is_hex64(ref["sha256"]) and ref["key"] == dep_key(prefix, kind, ref["sha256"]),
+                 f"manifest reference for {kind} is invalid")
+        try:
+            dep = store.get(ref["key"], version_id=ref["version_id"])
+        except NoSuchKey as err:
+            raise CheckpointRefused(f"{ref['key']}@{ref['version_id']} is missing") from err
+        _require(dep.version_id == ref["version_id"] and len(dep.body) == ref["bytes"]
+                 and common.sha256_bytes(dep.body) == ref["sha256"], f"{ref['key']} differs from the manifest")
+        files[kind] = dep.body
+    pointer = ExpectedPointer(version_id=current.version_id, etag=current.etag,
+                              sha256=common.sha256_bytes(current.body), seq=pdoc["seq"],
+                              manifest_sha256=manifest_sha, manifest_version_id=manifest_vid)
+    doc = {"schema": SCHEMA_LOCAL_COMMIT, "run_id": run_id, "step": manifest["step"],
+           "resumable": manifest["resumable"], "files": _files_index(files),
+           "tensor_inventory_sha256": manifest["tensor_inventory_sha256"],
+           "inventory_algorithm": manifest["inventory_algorithm"], "parameter_sha256": manifest["parameter_sha256"],
+           "identities": manifest["identities"], "parent": manifest["parent"],
+           "last_event_seq": manifest["last_event_seq"], "expected_pointer": pointer.to_json(),
+           "wall_time_utc_us": manifest["wall_time_utc_us"]}
+    commit_bytes = common.canonical(doc)
+    final = _install(dest_dir / "commits", manifest["step"], {_file_name(k): b for k, b in files.items()}, commit_bytes)
+    commit, _closure = open_commit(final)
+    return commit, pointer
+
+
+# ----------------------------------------------------------------------------------------- §6.8 at resume
+RESUME_RULES = ("target_is_newest_local", "published_newest_local_first", "restored_pointer_target")
+
+
+def pointer_event_seq(pointer_doc: Mapping) -> int:
+    """The writer block's ``event_seq``: every event seq the writer may have used (§6.6 Events); 0 when absent."""
+    writer = pointer_doc.get("writer")
+    value = writer.get("event_seq") if isinstance(writer, dict) else None
+    if value is None:
+        return 0
+    _require(_is_int(value) and value >= 0, f"pointer writer event_seq must be an integer >= 0, got {value!r}")
+    return value
+
+
+def newest_local_commit(commits_root: Path | None) -> LocalCommit | None:
+    """The highest-step local commit under ``commits_root``, strictly read, or None when there is none. Only
+    ``<step:010d>`` directories and ``.tmp-*`` leftovers of an interrupted install may be present."""
+    if commits_root is None or not os.path.lexists(commits_root):
+        return None
+    root = Path(commits_root)
+    _require(root.is_dir() and not root.is_symlink(), f"{root} is not a commits directory")
+    names = []
+    for name in os.listdir(root):
+        if name.startswith(".tmp-"):
+            continue
+        _require(len(name) == 10 and all(c in "0123456789" for c in name), f"{root}: unexpected entry {name!r}")
+        names.append(name)
+    if not names:
+        return None
+    commit, _closure = open_commit(root / max(names))
+    _require(commit.step == int(max(names)), f"{commit.dir} holds step {commit.step}")
+    return commit
+
+
+def _manifest_names_commit(manifest: Mapping, commit: LocalCommit, prefix: str) -> bool:
+    """True when ``manifest`` is the published form of ``commit``: equal closure fields and equal file bytes."""
+    doc, files = commit.doc, manifest["files"]
+    if any(manifest[k] != doc[k] for k in MANIFEST_KEYS - {"schema", "files"}) or set(files) != set(doc["files"]):
+        return False
+    return all(isinstance(ref, dict) and ref.get("sha256") == doc["files"][k]["sha256"]
+               and ref.get("bytes") == doc["files"][k]["bytes"]
+               and ref.get("key") == dep_key(prefix, k, doc["files"][k]["sha256"]) for k, ref in files.items())
+
+
+@dataclass(frozen=True)
+class ResumePoint:
+    """A §6.8 at-resume decision: the local commit to continue from, the verified pointer state to continue under
+    (persist it with ``save_expected``), the rule that applied (``RESUME_RULES``) and the highest event seq an
+    earlier launch may have used."""
+    commit: LocalCommit
+    pointer: ExpectedPointer
+    rule: str
+    event_seq: int
+
+
+def resume_point(store: VersionedStore, *, prefix: str, run_id: str, local_commits: Path | None, restore_dir: Path,
+                 writer: dict, event_seq_floor: int = 0) -> ResumePoint:
+    """Apply the §6.8 at-resume rules; a local commit is never discarded silently.
+
+    - The pointer target is the newest local commit (same closure fields and file bytes): continue from it.
+    - The newest local commit is newer, names the pointer target as its parent, and recorded the current pointer as
+      its expected state: publish it first (§6.6 order), then continue from it. With no pointer yet, a commit with no
+      published parent and no expectation is published create-only.
+    - The pointer target has no local copy and no local commit is newer: fetch its closure by exact VersionIds into
+      ``restore_dir``.
+    - Anything else raises CheckpointRefused (STOP) before anything is written.
+
+    ``event_seq_floor`` is the previous launch's event high-water mark when it is known locally. A publish-first
+    writes ``writer`` with ``event_seq`` raised to cover that floor, the commit's ``last_event_seq`` and the current
+    pointer's mark, so the resumed launch's events never reuse a seq.
+    """
+    _require(_is_int(event_seq_floor) and event_seq_floor >= 0, "event_seq_floor must be an integer >= 0")
+    newest = newest_local_commit(local_commits)
+    if newest is not None:
+        _require(newest.doc["run_id"] == run_id, f"local commit {newest.dir} belongs to run {newest.doc['run_id']!r}")
+    found = _current_pointer(store, prefix, run_id)
+    parent = newest.doc["parent"] if newest is not None else None
+    parent_manifest = parent["manifest_sha256"] if parent is not None else None
+    mark = max(event_seq_floor, newest.doc["last_event_seq"] if newest is not None else 0,
+               pointer_event_seq(found[1]) if found is not None else 0)
+
+    def publish_first(expected: ExpectedPointer | None) -> ResumePoint:
+        pub = publish_commit(store, newest, prefix=prefix, expected=expected, writer=dict(writer, event_seq=mark))
+        return ResumePoint(newest, pub["pointer"], "published_newest_local_first", mark)
+
+    if found is None:
+        _require(newest is not None and parent_manifest is None and newest.doc["expected_pointer"] is None,
+                 f"no resume pointer at {pointer_key(prefix, run_id)} and no unpublished first commit (§6.8 STOP)")
+        return publish_first(None)
+    current, pdoc = found
+    target_sha, target_vid = pdoc["target_manifest_sha256"], pdoc["target_version_id"]
+    manifest = _fetch_manifest(store, prefix, run_id, target_sha, target_vid)
+    state = ExpectedPointer(version_id=current.version_id, etag=current.etag, sha256=common.sha256_bytes(current.body),
+                            seq=pdoc["seq"], manifest_sha256=target_sha, manifest_version_id=target_vid)
+    if newest is not None and _manifest_names_commit(manifest, newest, prefix):
+        return ResumePoint(newest, state, "target_is_newest_local", max(event_seq_floor, pointer_event_seq(pdoc)))
+    if newest is not None and newest.step > manifest["step"] and parent_manifest == target_sha:
+        recorded = newest.doc["expected_pointer"]
+        _require(recorded is not None and recorded["version_id"] == state.version_id
+                 and recorded["sha256"] == state.sha256,
+                 f"local commit {newest.dir} expected pointer version "
+                 f"{recorded['version_id'] if recorded else None}, but the pointer is at {state.version_id} (§6.8 STOP)")
+        return publish_first(ExpectedPointer.from_json(recorded))
+    if newest is None or newest.step < manifest["step"]:
+        commit, pointer = restore_closure(store, prefix=prefix, run_id=run_id, dest_dir=restore_dir)
+        _require(pointer == state, f"pointer {pointer_key(prefix, run_id)} moved during the restore")
+        return ResumePoint(commit, pointer, "restored_pointer_target", max(event_seq_floor, pointer_event_seq(pdoc)))
+    raise CheckpointRefused(f"§6.8 STOP: the newest local commit {newest.dir} (step {newest.step}) is neither the "
+                            f"pointer target (step {manifest['step']}) nor its child")

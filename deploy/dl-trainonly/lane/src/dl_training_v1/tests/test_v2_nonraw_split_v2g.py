@@ -17,6 +17,7 @@ import gzip
 import hashlib
 import json
 import os
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -88,7 +89,7 @@ def computed(mode="L7b"):
 
 
 def ref_folds(M, specs, partition, gv=GV):
-    return g.split(H, list(range(N)), rowsel_raw.feature_bytes(M, specs), gv, partition)
+    return g.split(H, list(range(N)), rowsel_raw.feature_bytes(M, specs), group_values=gv, partition=partition)
 
 
 class Groups(unittest.TestCase):
@@ -114,6 +115,25 @@ class Groups(unittest.TestCase):
         for M, specs, part in ((A, SPECS_T1, "t1"), (VALUES, RAW_SPECS, "l7a")):
             fn = tool.split_fn_v2g(part, None)
             self.assertEqual(fn(H, np.arange(N), M, specs), tool.v2_split(H, M, specs, part)[0])
+
+    def test_both_tools_pass_the_partition_to_split_explicitly(self):
+        """PR #218 F5: rowsel_split_v2_groups.split() is always called with partition= (the route's universe label) and
+        folds=, by keyword, from both tools; never left to a default."""
+        calls = []
+        real = g.split
+
+        def spy(*a, **kw):
+            calls.append((len(a), dict(kw)))
+            return real(*a, **kw)
+        with mock.patch.object(g, "split", spy):
+            tool.v2g_split(H, A, SPECS_T1, "t1", GV, SPEC)
+            l7a.local.v2g_split(H, VALUES, RAW_SPECS, l7a.local.ROUTES_V2G["L7a"]["partition"], GV, SPEC)
+            computed_fresh = tool.compute_dataset(g_entry(), t1_inputs(), "L7b", set(), {"code": "x"}, version=tool.SPLIT_V2G)
+        self.assertTrue(calls)
+        self.assertTrue(all(n == 3 and kw.get("partition") in ("t1", "l7a") and kw.get("folds") == 5 and "group_values" in kw
+                            for n, kw in calls), calls[:3])
+        self.assertEqual({kw["partition"] for _, kw in calls}, {"t1", "l7a"})
+        self.assertEqual(computed_fresh["cut"]["cut_id"], computed("L7b")["cut"]["cut_id"])
 
     def test_partition_and_group_spec_are_bound(self):
         folds, srep = tool.v2g_split(H, A, SPECS_T1, "t1", GV, SPEC)
@@ -143,7 +163,8 @@ class TargetFree(unittest.TestCase):
         def leaky(partition, group_values):
             def fn(h, positions, values, specs, folds=5):
                 yv = [np.float64(v).tobytes() for v in np.asarray(values)[:, -1]]
-                return g.split(h, [int(p) for p in positions], rowsel_raw.feature_bytes(values, specs), yv, partition, folds)
+                return g.split(h, [int(p) for p in positions], rowsel_raw.feature_bytes(values, specs), group_values=yv,
+                               partition=partition, folds=folds)
             return fn
         with mock.patch.object(tool, "split_fn_v2g", leaky):
             _, srep = tool.v2g_split(H, A, SPECS_T1, "t1", GV, SPEC)
@@ -165,6 +186,81 @@ class TargetFree(unittest.TestCase):
         M = np.array(A, copy=True)
         M[:, -1] = np.random.default_rng(2).normal(size=N)                 # y never reaches the group key
         self.assertEqual(tool.t1_group_values(M, GCOL), gv)
+
+    def _tied(self):
+        """Three non-last group columns tied to the target: an exact byte copy, an affine copy, and a column whose groups
+        each hold a single target value (non-affine). Each is refused with its reason; the fixture's region column is not."""
+        out = []
+        M = np.array(A, copy=True)
+        M[:, 1] = M[:, -1]
+        out.append(("group_bytes_equal_target_bytes", M))
+        M = np.array(A, copy=True)
+        M[:, 1] = 3.0 * M[:, -1] + 2.0
+        out.append(("group_affine_copy_of_target", M))
+        M = np.array(A, copy=True)
+        lev = np.arange(N) % 7 / 6.0
+        M[:, 1] = lev
+        M[:, -1] = lev ** 2 + 0.3
+        out.append(("target_function_of_group", M))
+        return out
+
+    def test_a_target_tied_group_column_is_refused_in_the_l7b_tool(self):
+        self.assertIsNone(g.target_tied_group(GV, A[:, -1]))              # control: the region column is admitted
+        for reason, M in self._tied():
+            e = g_entry()
+            e["group_column"] = {"spec": g.group_spec(1, "n1"), "source": "test", "evidence": {}}
+            with self.assertRaises(tool.SplitV2Error) as cm:
+                t1_inputs(M, e)
+            self.assertEqual(cm.exception.reason, "group_column_target_tied", reason)
+            self.assertTrue(cm.exception.detail.startswith(reason), cm.exception.detail)
+            out = Path(tempfile.mkdtemp(prefix="nonraw-v2gsplit-tied-", dir=os.environ.get("TMPDIR")))
+            rec = tool.run_dataset_v2(e, out, "L7b", lambda e, M=M: t1_inputs(M, e), set(), {"code": "x"}, log=lambda s: None,
+                                      version=tool.SPLIT_V2G)
+            self.assertEqual((rec["status"], rec["reason"]), ("failed", "group_column_target_tied"))
+            self.assertEqual(sorted(p.name for p in out.iterdir()), ["_datasets"])
+
+    def test_a_target_tied_group_column_is_refused_in_the_l7a_tool(self):
+        lo = l7a.local
+        for reason, M in self._tied():
+            e = g_entry()
+            e["group_column"] = {"spec": g.group_spec(1, "n1"), "source": "test", "evidence": {}}
+
+            def load(e, M=M):                                               # what make_l7a_loader does after the rematch
+                inp = l7a.l7a_inputs(e, VALUES, RAW_SPECS, "a" * 64, "m" * 64, base.COV, "incoming", {"sha256": "r" * 64}, {},
+                                     base.REMATCH)
+                return lo.attach_groups(inp, e, M)
+            with self.assertRaises(lo.SplitV2Error) as cm:
+                load(e)
+            self.assertEqual((cm.exception.reason, cm.exception.detail.split(":")[0]), ("group_column_target_tied", reason))
+            out = Path(tempfile.mkdtemp(prefix="nonraw-v2gsplit-tied-l7a-", dir=os.environ.get("TMPDIR")))
+            rec = lo.run_dataset_v2(e, out, "L7a", load, set(), {"code": "x"}, log=lambda s: None, version=lo.SPLIT_V2G)
+            self.assertEqual((rec["status"], rec["reason"]), ("failed", "group_column_target_tied"))
+            self.assertEqual(sorted(p.name for p in out.iterdir()), ["_datasets"])
+
+    def test_an_ambiguous_candidate_tied_to_the_target_refuses_the_dataset(self):
+        M = np.array(A, copy=True)
+        M[:, 1] = 3.0 * M[:, -1] + 2.0
+        e = g_entry()
+        e["group_column"] = {"ambiguous": [1, 2], "names": ["n0", "n1", "n2", "c0", "target"], "evidence": {"census_candidates": []}}
+        with self.assertRaises(tool.SplitV2Error) as cm:
+            tool.attach_groups(tool.l7b_inputs(e, M, META, "m" * 64, "a" * 64, base.COV, "frozen"), e, M)
+        self.assertEqual(cm.exception.reason, "group_column_target_tied")
+
+    def test_an_admitted_group_column_records_the_check(self):
+        for mode in ("L7b", "L7a"):
+            for _, _, rec in computed(mode)["results"]:
+                gt = rec["universe"]["group_target_tie"]
+                self.assertEqual((gt["result"], gt["reasons_checked"]), ("admit", list(g.TARGET_TIE_REASONS)))
+
+    def test_group_values_carry_no_missing_marker(self):
+        """PR #218 F4 note: the T1 group values have no missing marker at all (A is finite: scale_check refuses a
+        non-finite data object), so target_tied_group's affine test parses every value as the column's own float; no
+        8-byte marker can be mistaken for a number. Each value is 8 bytes and unpacks to the column value."""
+        gv = tool.t1_group_values(A, GCOL)
+        self.assertTrue(all(isinstance(v, bytes) and len(v) == 8 for v in gv))
+        self.assertEqual([struct.unpack("<d", v)[0] for v in gv], [float(x) + 0.0 for x in A[:, GCOL]])
+        self.assertTrue(np.isfinite(A).all())
+        self.assertNotIn(None, gv)
 
     def test_the_group_column_is_never_the_target(self):
         with self.assertRaises(tool.SplitV2Error) as cm:
@@ -205,7 +301,7 @@ class Identity(unittest.TestCase):
                 self.assertTrue(rec["counterfactual"]["train_side_invariant"])
 
     def test_v2_cut_and_identity_are_unchanged(self):
-        res = tool.compute_dataset(base.plan_entry(), base.t1_inputs(), "L7b", set(), {"code": "x"})
+        res = tool.compute_dataset(base.plan_entry(), base.t1_inputs(), "L7b", set(), {"code": "x"}, version=tool.SPLIT_V2)
         self.assertEqual([r[0] for r in res["results"]], [r[0] for r in base.computed("L7b")["results"]])
         self.assertTrue(res["cut"]["cut_id"].startswith("trainonly-split-v2:"))
         self.assertNotIn("group_column", res["results"][0][2]["identity_body"])
@@ -264,7 +360,8 @@ class FewComponents(unittest.TestCase):
     def test_an_unexplained_empty_fold_is_refused(self):
         def hole(partition, gv):                                        # MUST FAIL: fold 2 left empty with >= 5 components
             def fn(h, positions, values, specs, folds=5):
-                f = g.split(h, [int(p) for p in positions], rowsel_raw.feature_bytes(values, specs), gv, partition, folds)
+                f = g.split(h, [int(p) for p in positions], rowsel_raw.feature_bytes(values, specs), group_values=gv,
+                            partition=partition, folds=folds)
                 f[1] = sorted(f[1] + f[2])
                 f[2] = []
                 return f

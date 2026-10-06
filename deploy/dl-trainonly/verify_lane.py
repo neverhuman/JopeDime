@@ -7,9 +7,10 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 
-HANDOFF_SHA = "365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f"
+HANDOFF_SHA = "253e593b7537cdecf75a89be24a83804bc63d7e2596e02cc0c28d780a50f2b9e"
 # Ordered newest to oldest: each manifest's supersedes_sha256 names the next pin; the oldest names none.
 PREDECESSORS = (
+    ("predecessor/restage-20261006T082918Z/MANIFEST.json", "365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f"),
     ("predecessor/restage-20261006T073946Z/MANIFEST.json", "6314ef6f33f01878a149cdb36823a78c96d6ae3e2c45cf409d756711c71d6619"),
     ("predecessor/restage-20261006T035515Z/MANIFEST.json", "009532038cee11ea20075a7291e4b247c7df8e97806946a61bd8dce7dd635802"),
     ("predecessor/MANIFEST.json", "4b8c54da7e4b11cc2f30b02aa88f159d5240134bf4962e670d2bfcddbcd699ad"),
@@ -20,6 +21,8 @@ SUPPLEMENTS = (
     "predecessor/restage-20261006T035515Z/test_v2_publish.py.bbb8e5deb2e68846022c25de2971f9fc6ce22845c7d49ca1cb8a0922a4ad0780",
     "predecessor/restage-20261006T035515Z/test_v2_rowsel_raw.py.f33f3d2b270e533060374d4a6a442d5c6010fda727f062ac3758b9bf9ea9ace7",
 )
+# Stagings a producer manifest records as abandoned and never pushed; they must never be a chain member.
+ABANDONED = "abandoned_unpushed_stagings"
 HEX = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -75,6 +78,19 @@ def verify(root, handoff_sha=HANDOFF_SHA, predecessors=PREDECESSORS, supplements
         newer = manifest
     if "supersedes_sha256" in newer:
         raise ValueError("predecessor chain incomplete")
+    abandoned = {}
+    for manifest in [current] + [manifest for _, _, manifest in chain]:
+        listed = manifest.get(ABANDONED, [])
+        if not isinstance(listed, list):
+            raise ValueError("invalid abandoned staging record")
+        for record in listed:
+            if (not isinstance(record, dict) or not isinstance(record.get("manifest"), str)
+                    or not isinstance(record.get("manifest_sha256"), str) or not HEX.fullmatch(record["manifest_sha256"])):
+                raise ValueError("invalid abandoned staging record")
+            abandoned[record["manifest_sha256"]] = record["manifest"]
+    members = {handoff_sha} | {expected for _, expected in predecessors}
+    if set(abandoned) & members or {"predecessor/" + name for name in abandoned.values()} & {name for name, _ in predecessors}:
+        raise ValueError("abandoned staging inside custody chain")
     records = {}
     for name, record in current["files"].items():
         if not name.startswith("src/dl_training_v1/"):
@@ -138,6 +154,7 @@ def verify(root, handoff_sha=HANDOFF_SHA, predecessors=PREDECESSORS, supplements
     return {"schema": "jope.dl-source-custody/v2", "handoff_sha256": handoff_sha,
             "predecessor_sha256": [expected for _, expected in predecessors], "current_files": len(current["files"]),
             "historical_versions": len(current["historical_versions"]), "supplemental_versions": len(supplements),
+            "abandoned_unpushed_stagings": sorted(abandoned),
             "python_syntax_files": len(python_files), "predecessor_restoration": reconstruction,
             "scope": "exact source custody and syntax only; no imported code, execution, runtime or training authority"}
 

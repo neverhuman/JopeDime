@@ -1,0 +1,1158 @@
+"""P7 tests 4-6 on CPU fixtures (PLAN §5 P7; §6.6 checkpoint closure, publish protocol and restore proofs).
+
+- Test 4: one optimizer update (``train.run`` with ``max_updates=1``) changes ``parameter_sha256``, and an independent
+  recomputation over the sorted ``named_parameters()`` (tied ``lm_head.weight`` excluded) reproduces it. The weights
+  stay tied.
+- Test 5: a local commit round-trips bitwise into freshly built objects, and re-saving gives byte-identical files.
+  Flipped, truncated, missing and extra files are refused, and weights-only commits never resume. The file-backed
+  versioned store has S3 conditional semantics, and the publish protocol resolves lost responses, poisoned keys and
+  foreign pointers.
+- Test 6: run A goes uninterrupted to step 80. Run B yields at step 37 through the STOP file and publishes to the fake
+  store. A fresh subprocess seeds every RNG with unrelated values, restores B's closure into an empty directory and
+  continues to step 80. Its closure files and ``parameter_sha256`` must equal A's. Negative controls: each perturbed
+  component must diverge from A, and each dropped component must be refused. A resume is refused against other
+  training data, another trainer source tree or another runtime (§6.6 identities); a run whose store draws from the
+  global RNGs while publishing still equals A (§6.6 determinism); event seqs never repeat across a yield/resume chain.
+- §6.8 at resume: an unpublished yield is published first by the next launch, a pointer target that is the newest
+  local commit is continued in place, and every other combination stops before anything is written.
+
+Owner DL-D7 line ``p7_cpu_restore_proof_wall_cap_s=1800``: tearDownModule fails the module beyond 1800 s of wall time.
+"""
+import copy
+import dataclasses
+import hashlib
+import json
+import os
+import random
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import types
+import unittest
+from pathlib import Path
+
+import numpy as np
+import safetensors.torch
+import torch
+
+from dltrain import ckpt, common, model, sampler, train
+from tests import fixtures_p7
+
+WALL_CAP_S = 1800.0
+CHILD_TIMEOUT_S = 900
+SRC = Path(__file__).resolve().parents[2]
+PREFIX = "experiments/gp-policy-dl/v1/"
+STOP_STEP, FINAL_STEP, FIXTURE_STEPS = 37, 80, 3
+COMPARED_KINDS = ("models", "optimizer", "optimizer-meta", "sampler", "rng", "rng-meta", "journal")
+CLOSURE_ATTR = {"models": "model_tensors", "optimizer": "optimizer_tensors", "optimizer-meta": "optimizer_meta",
+                "rng": "rng_tensors", "rng-meta": "rng_meta", "sampler": "sampler_state", "journal": "journal_bytes"}
+PERTURBATIONS = ("exp_avg*1.5", "exp_avg_sq*2", "step-1", "scheduler-1", "sampler_cursor+1",
+                 "torch_rng=Generator(12345)", "python_rng=Random(12345)", "numpy_rng=RandomState(12345)")
+WRITER = {"host": "p7-fixture", "pid": 0, "starttick": "0", "unit": None}
+# The trainer's static dltrain import closure (train.source_tree_files); a new trainer import must be added here.
+TRAINER_CLOSURE = ("__init__", "ckpt", "common", "evaluate", "labels", "live", "model", "objective", "sampler", "train")
+SHORT_STEPS, SHORT_EVERY, SHORT_STOP = 6, 2, 3
+
+# The fresh subprocess of test 6: unrelated seeds, then resume B's published closure from the store into an empty
+# working directory and continue to the plan's max_updates.
+CHILD = r"""
+import json, random, sys
+import numpy as np
+import torch
+random.seed(20261005); np.random.seed(1234567); torch.manual_seed(987654321)
+from pathlib import Path
+from dltrain import ckpt, model, train
+from tests import fixtures_p7
+args = json.loads(sys.argv[1])
+model.configure_determinism(4)
+random.random(); np.random.standard_normal(5); torch.rand(5)
+plan = train.load_run_plan(Path(args["plan"]))
+data = fixtures_p7.train_data()
+store = ckpt.FileVersionedStore(Path(args["store"]))
+result = train.resume_from_store(plan, data, store, Path(args["workdir"]), store_prefix=args["prefix"])
+print("P7_CHILD_RESULT " + json.dumps({"result": result.to_json(), "num_threads": torch.get_num_threads(),
+                                       "plan_sha256": train.plan_sha256(plan)}, sort_keys=True))
+"""
+
+_MODULE: dict = {}
+
+
+def setUpModule() -> None:
+    _MODULE["t0"] = time.monotonic()
+    model.configure_determinism(4)
+    tmp = tempfile.TemporaryDirectory(dir=os.environ["TMPDIR"], prefix="p7-restore-module-")
+    unittest.addModuleCleanup(tmp.cleanup)
+    _MODULE["tmp"] = Path(tmp.name)
+
+
+def tearDownModule() -> None:
+    elapsed = time.monotonic() - _MODULE["t0"]
+    sys.stderr.write(f"\n[p7 restore] module wall time {elapsed:.1f} s (DL-D7 cap {WALL_CAP_S:.0f} s)\n")
+    if elapsed > WALL_CAP_S:
+        raise AssertionError(f"restore module wall time {elapsed:.1f} s exceeds the DL-D7 cap of {WALL_CAP_S:.0f} s")
+
+
+# ------------------------------------------------------------------------------------------------------ helpers
+def make_tmp(case: unittest.TestCase) -> Path:
+    tmp = tempfile.TemporaryDirectory(dir=os.environ["TMPDIR"], prefix="p7-restore-")
+    case.addCleanup(tmp.cleanup)
+    return Path(tmp.name)
+
+
+def make_plan(**overrides) -> dict:
+    return train.make_run_plan(**fixtures_p7.plan_kwargs(**overrides))
+
+
+def run_seed(plan: dict) -> bytes:
+    return bytes.fromhex(plan["run_seed_hex"])
+
+
+def manual_parameter_sha256(named) -> str:
+    """Independent recomputation of the §6.6 rule: for each name in sorted order, ``name NUL F32 NUL shape-csv LF``
+    followed by the tensor's little-endian float32 bytes."""
+    h = hashlib.sha256()
+    for name in sorted(named):
+        t = named[name].detach().to("cpu").contiguous()
+        if t.dtype != torch.float32:
+            raise AssertionError(f"{name} is {t.dtype}")
+        h.update(f"{name}\0F32\0{','.join(str(int(s)) for s in t.shape)}\n".encode("utf-8"))
+        h.update(np.ascontiguousarray(t.numpy(), dtype="<f4").tobytes())
+    return h.hexdigest()
+
+
+def tensor_bytes(t: torch.Tensor) -> bytes:
+    return t.detach().to("cpu").contiguous().numpy().tobytes()
+
+
+def rng_snapshot() -> tuple:
+    return torch.get_rng_state().clone(), random.getstate(), np.random.get_state()
+
+
+def same_rng(a: tuple, b: tuple) -> bool:
+    (ta, pa, na), (tb, pb, nb) = a, b
+    return (torch.equal(ta, tb) and pa == pb and na[0] == nb[0] and np.array_equal(na[1], nb[1])
+            and tuple(na[2:]) == tuple(nb[2:]))
+
+
+def closure_digest(commit_dir: Path) -> dict:
+    """sha256 of every compared closure file plus parameter_sha256 and step, from a strictly verified commit."""
+    commit, _closure = ckpt.open_commit(Path(commit_dir))
+    out = {kind: commit.doc["files"][kind]["sha256"] for kind in COMPARED_KINDS}
+    out.update(parameter_sha256=commit.doc["parameter_sha256"], step=commit.step)
+    return out
+
+
+def copy_commit(src: Path, dst: Path) -> Path:
+    shutil.copytree(src, dst)
+    for p in dst.iterdir():
+        p.chmod(0o644)
+    return dst
+
+
+def rewrite_consistently(commit_dir: Path, kind: str, body: bytes | None) -> Path:
+    """Replace (or drop) one closure file and update commit.json's entry and tensor inventory to match, so only the
+    loader's semantic checks can refuse the result."""
+    commit_path = commit_dir / ckpt.COMMIT_FILE
+    doc = json.loads(commit_path.read_bytes())
+    name = kind + ckpt.KINDS[kind]
+    if body is None:
+        (commit_dir / name).unlink()
+        del doc["files"][kind]
+    else:
+        (commit_dir / name).write_bytes(body)
+        doc["files"][kind] = {"name": name, "sha256": common.sha256_bytes(body), "bytes": len(body)}
+        if kind in doc["tensor_inventory_sha256"]:
+            doc["tensor_inventory_sha256"][kind] = model.tensor_inventory_sha256(safetensors.torch.load(body))
+    commit_path.write_bytes(common.canonical(doc))
+    return commit_dir
+
+
+def fixture_step(m, opt, sch, smp, data) -> bytes:
+    """One deterministic update that consumes the python, numpy and torch (dropout) global RNGs in that order."""
+    draw = smp.draw_next()
+    batch = sampler.collate(draw, data)
+    scale = 0.05 * random.random()
+    noise = torch.from_numpy(np.random.standard_normal(tuple(batch.ctx_z.shape)).astype(np.float32))
+    m.train()
+    out = m(batch.tokens, batch.lengths, batch.ctx_z + scale * noise, batch.seq_ctx)
+    loss = (out.logits.float().square().mean() + out.q_hat.square().mean() + out.feas_logits.square().mean()
+            + out.rt_hat.square().mean())
+    opt.zero_grad(set_to_none=True)
+    loss.backward()
+    opt.step()
+    sch.step()
+    return common.canonical(draw.journal_record() | {"loss": float(loss.detach())}) + b"\n"
+
+
+def closure_fixture() -> types.SimpleNamespace:
+    """A committed closure after FIXTURE_STEPS updates, its in-memory snapshot, and the originals' next update."""
+    if "fixture" in _MODULE:
+        return _MODULE["fixture"]
+    plan, data = make_plan(), fixtures_p7.train_data()
+    train.seed_fresh(run_seed(plan))
+    m, opt, sch = train.build_training_objects(plan)
+    smp = sampler.MacroSampler(data.fit, run_seed(plan), data.config)
+    journal = b"".join(fixture_step(m, opt, sch, smp, data) for _ in range(FIXTURE_STEPS))
+    names = {id(p): n for n, p in m.named_parameters()}
+    sched = sch.state_dict()
+    snap = {"params": {n: p.detach().clone() for n, p in m.named_parameters()},
+            "opt_state": {names[id(p)]: {k: v.clone() for k, v in st.items()} for p, st in opt.state.items()},
+            "groups": copy.deepcopy([{k: v for k, v in g.items() if k != "params"} for g in opt.param_groups]),
+            "sched": copy.deepcopy({k: sched[k] for k in ckpt.SCHEDULER_KEYS}),
+            "rng": rng_snapshot(), "sampler": smp.state_dict(), "journal": journal}
+    commit = ckpt.save_local_commit(
+        _MODULE["tmp"] / "fixture", run_id=plan["run_id"], step=FIXTURE_STEPS, model=m, optimizer=opt, scheduler=sch,
+        sampler_state=smp.state_dict(), journal_bytes=journal, identities={"run_id": plan["run_id"], "fixture": "t5"},
+        parent=None, last_event_seq=0, expected_pointer=None)
+    snap["rng_after_save"] = rng_snapshot()
+    fixture_step(m, opt, sch, smp, data)
+    snap["next_params"] = {n: p.detach().clone() for n, p in m.named_parameters()}
+    _MODULE["fixture"] = types.SimpleNamespace(plan=plan, data=data, commit=commit, snap=snap)
+    return _MODULE["fixture"]
+
+
+class FlakyStore:
+    """Wraps a store; its first ``fail_puts`` PUTs raise ConnectionResetError before reaching it (nothing written)."""
+
+    def __init__(self, inner: ckpt.FileVersionedStore, fail_puts: int):
+        self.inner, self.bucket, self.fail_puts, self.puts = inner, inner.bucket, fail_puts, 0
+
+    def _gate(self) -> None:
+        self.puts += 1
+        if self.puts <= self.fail_puts:
+            raise ConnectionResetError("connection reset before the request was sent")
+
+    def put_create_only(self, key, body):
+        self._gate()
+        return self.inner.put_create_only(key, body)
+
+    def put_if_match(self, key, body, etag):
+        self._gate()
+        return self.inner.put_if_match(key, body, etag)
+
+    def get(self, key, version_id=None):
+        return self.inner.get(key, version_id)
+
+
+def lose_responses(n: int):
+    """A fault hook whose first ``n`` calls raise TimeoutError after the write succeeded (a lost response)."""
+    calls = []
+
+    def fault(op: str, key: str) -> None:
+        calls.append((op, key))
+        if len(calls) <= n:
+            raise TimeoutError(f"response to {op} lost")
+    fault.calls = calls
+    return fault
+
+
+def pointer_body(run_id: str, seq: int, target: str, prev: str | None = None, writer: str = "w1") -> bytes:
+    return common.canonical({"schema": ckpt.SCHEMA_POINTER, "run_id": run_id, "pointer_name": "resume",
+                             "target_manifest_sha256": target, "target_version_id": "v-" + target[:8], "seq": seq,
+                             "prev_version_id": prev, "writer": {"host": writer}, "utc_us": 1_000_000 + seq})
+
+
+class RngDrawingStore:
+    """Wraps a store; every get() first draws from the global Python, numpy and torch RNGs, as a client's retry backoff
+    would (botocore's ExponentialBackoff jitter calls random.random())."""
+
+    def __init__(self, inner: ckpt.FileVersionedStore):
+        self.inner, self.bucket, self.draws = inner, inner.bucket, 0
+
+    def put_create_only(self, key, body):
+        return self.inner.put_create_only(key, body)
+
+    def put_if_match(self, key, body, etag):
+        return self.inner.put_if_match(key, body, etag)
+
+    def get(self, key, version_id=None):
+        random.random()
+        np.random.random()
+        torch.rand(1)
+        self.draws += 1
+        return self.inner.get(key, version_id)
+
+
+class OutageStore:
+    """Wraps a store; while ``down`` every PUT raises ConnectionResetError before reaching it (nothing is written)."""
+
+    def __init__(self, inner: ckpt.FileVersionedStore):
+        self.inner, self.bucket, self.down = inner, inner.bucket, False
+
+    def _gate(self) -> None:
+        if self.down:
+            raise ConnectionResetError("store outage: the request was never sent")
+
+    def put_create_only(self, key, body):
+        self._gate()
+        return self.inner.put_create_only(key, body)
+
+    def put_if_match(self, key, body, etag):
+        self._gate()
+        return self.inner.put_if_match(key, body, etag)
+
+    def get(self, key, version_id=None):
+        return self.inner.get(key, version_id)
+
+
+def events(workdir: Path) -> list[dict]:
+    return [json.loads(line) for line in (Path(workdir) / "events.jsonl").read_bytes().splitlines()]
+
+
+def data_from(ctxs, recs, enc) -> sampler.TrainData:
+    cfg = fixtures_p7.sampler_config()
+    corpus = sampler.Corpus.build(ctxs, recs, enc, fixtures_p7.assignment())
+    return sampler.TrainData(corpus, sampler.fit(corpus, cfg), cfg, fixtures_p7.legal_mask, fixtures_p7.V,
+                             fixtures_p7.ENC_DIM)
+
+
+def pointer_history(store: ckpt.FileVersionedStore, run_id: str) -> list[dict]:
+    """Every version of the run's resume pointer, oldest first: its body plus the step of the manifest it names."""
+    key = ckpt.pointer_key(PREFIX, run_id)
+    out = []
+    for version in store.list_versions(key):
+        doc = json.loads(store.get(key, version_id=version["version_id"]).body)
+        manifest = json.loads(store.get(ckpt.manifest_key(PREFIX, run_id, doc["target_manifest_sha256"]),
+                                        version_id=doc["target_version_id"]).body)
+        out.append(dict(doc, target_step=manifest["step"], version_id=version["version_id"],
+                        manifest_files={k: r["sha256"] for k, r in manifest["files"].items()}))
+    return out
+
+
+# ------------------------------------------------------------------------------------------------------- test 4
+class OneUpdateTest(unittest.TestCase):
+    """P7 test 4: one optimizer update changes parameter_sha256 (sorted named_parameters, tied alias excluded)."""
+
+    def test_one_update_changes_parameter_sha256(self):
+        tmp = make_tmp(self)
+        plan = make_plan(max_updates=1)
+        data = fixtures_p7.train_data()
+        res = train.run(plan, data, tmp / "run")
+        self.assertEqual((res.status, res.step), ("COMPLETED", 1))
+        self.assertTrue(res.optimizer_parameter_change_verified)
+        self.assertNotEqual(res.initial_parameter_sha256, res.parameter_sha256)
+        self.assertEqual(torch.get_num_threads(), 4)
+
+        train.seed_fresh(run_seed(plan))
+        m0, _opt0, _sch0 = train.build_training_objects(plan)
+        names = model.parameter_names(m0)
+        self.assertNotIn("lm_head.weight", names)
+        self.assertIn("tok_emb.weight", names)
+        self.assertEqual(manual_parameter_sha256(dict(m0.named_parameters())), res.initial_parameter_sha256)
+        self.assertEqual(model.parameter_sha256(m0), res.initial_parameter_sha256)
+
+        commit, closure = ckpt.open_commit(Path(res.last_commit))
+        self.assertEqual((commit.step, commit.doc["parameter_sha256"]), (1, res.parameter_sha256))
+        self.assertEqual(sorted(closure.model_tensors), names)
+        self.assertEqual(manual_parameter_sha256(closure.model_tensors), res.parameter_sha256)
+        self.assertEqual({float(v) for k, v in closure.optimizer_tensors.items() if k.endswith(".step")}, {1.0})
+        self.assertEqual(closure.optimizer_meta["scheduler"]["last_epoch"], 1)
+        self.assertEqual(closure.sampler_state["cursor"], 1)
+        self.assertEqual(len(closure.journal_bytes.splitlines()), 1)
+        before = dict(m0.named_parameters())
+        moved = [n for n in names if tensor_bytes(before[n]) != tensor_bytes(closure.model_tensors[n])]
+        self.assertIn("tok_emb.weight", moved)
+
+        # The step-1 closure was captured from the trained model, and capture refuses an untied model. Loading it
+        # into fresh objects keeps lm_head.weight the very tok_emb.weight tensor, with the same hash.
+        m1, opt1, sch1 = train.build_training_objects(plan)
+        ckpt.apply_closure(closure, model=m1, optimizer=opt1, scheduler=sch1)
+        model.assert_tied(m1)
+        self.assertIs(m1.lm_head.weight, m1.tok_emb.weight)
+        self.assertEqual(model.parameter_sha256(m1), res.parameter_sha256)
+        self.assertEqual(manual_parameter_sha256(dict(m1.named_parameters())), res.parameter_sha256)
+
+
+# ------------------------------------------------------------------------------------------------------- test 5
+class CheckpointClosureTest(unittest.TestCase):
+    """P7 test 5: bitwise round trip, byte-identical re-save, strict refusals and weights-only commits."""
+
+    def setUp(self):
+        self.fx = closure_fixture()
+        self.tmp = make_tmp(self)
+
+    def fresh_objects(self, seed: int = 999):
+        torch.manual_seed(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+        m, opt, sch = train.build_training_objects(self.fx.plan)
+        smp = sampler.MacroSampler(self.fx.data.fit, run_seed(self.fx.plan), self.fx.data.config)
+        return m, opt, sch, smp
+
+    def restore(self):
+        m, opt, sch, smp = self.fresh_objects()
+        self.assertNotEqual(model.parameter_sha256(m), self.fx.commit.doc["parameter_sha256"])
+        closure = ckpt.read_commit(self.fx.commit.dir)
+        ckpt.apply_closure(closure, model=m, optimizer=opt, scheduler=sch)
+        smp.load_state_dict(closure.sampler_state)
+        return closure, m, opt, sch, smp
+
+    def assert_bitwise(self, a: torch.Tensor, b: torch.Tensor, what: str) -> None:
+        self.assertEqual((a.dtype, tuple(a.shape)), (b.dtype, tuple(b.shape)), what)
+        self.assertTrue(tensor_bytes(a) == tensor_bytes(b), f"{what} differs bitwise")
+
+    def assert_refused(self, commit_dir: Path, what: str) -> None:
+        with self.assertRaises(ckpt.CheckpointRefused, msg=what):
+            ckpt.read_commit(commit_dir)
+
+    def test_round_trip_is_bitwise(self):
+        closure, m, opt, sch, smp = self.restore()
+        snap = self.fx.snap
+        self.assertTrue(same_rng(rng_snapshot(), snap["rng"]), "torch/python/numpy RNG states differ after restore")
+        params = dict(m.named_parameters())
+        self.assertEqual(sorted(params), sorted(snap["params"]))
+        for name, t in snap["params"].items():
+            self.assert_bitwise(params[name], t, f"parameter {name}")
+        model.assert_tied(m)
+        names = {id(p): n for n, p in m.named_parameters()}
+        restored = {names[id(p)]: st for p, st in opt.state.items()}
+        self.assertEqual(sorted(restored), sorted(snap["opt_state"]))
+        self.assertEqual(sorted(restored), sorted(params))
+        for name, state in snap["opt_state"].items():
+            self.assertEqual(sorted(restored[name]), ["exp_avg", "exp_avg_sq", "step"])
+            for slot, t in state.items():
+                self.assert_bitwise(restored[name][slot], t, f"optimizer {name}.{slot}")
+        self.assertEqual({float(st["step"]) for st in restored.values()}, {float(FIXTURE_STEPS)})
+        self.assertEqual([{k: v for k, v in g.items() if k != "params"} for g in opt.param_groups], snap["groups"])
+        sd = sch.state_dict()
+        self.assertEqual({k: sd[k] for k in ckpt.SCHEDULER_KEYS}, snap["sched"])
+        self.assertEqual(sd["last_epoch"], FIXTURE_STEPS)
+        self.assertEqual((smp.cursor, smp.state_dict()), (FIXTURE_STEPS, snap["sampler"]))
+        self.assertEqual(closure.journal_bytes, snap["journal"])
+
+    def test_capture_consumes_no_rng(self):
+        self.assertTrue(same_rng(self.fx.snap["rng_after_save"], self.fx.snap["rng"]))
+
+    def test_restored_objects_continue_identically(self):
+        _closure, m, opt, sch, smp = self.restore()
+        fixture_step(m, opt, sch, smp, self.fx.data)
+        for name, p in m.named_parameters():
+            self.assert_bitwise(p, self.fx.snap["next_params"][name], f"{name} after one more update")
+
+    def test_resave_is_byte_identical(self):
+        closure, m, opt, sch, smp = self.restore()
+        again = ckpt.save_local_commit(
+            self.tmp, run_id=closure.run_id, step=closure.step, model=m, optimizer=opt, scheduler=sch,
+            sampler_state=smp.state_dict(), journal_bytes=closure.journal_bytes, identities=closure.identities,
+            parent=closure.parent, last_event_seq=closure.last_event_seq, expected_pointer=closure.expected_pointer)
+        first = self.fx.commit
+        self.assertEqual(sorted(first.doc["files"]), sorted(ckpt.REQUIRED_RESUMABLE))
+        self.assertEqual(again.doc["files"], first.doc["files"])
+        for entry in first.doc["files"].values():
+            self.assertTrue((first.dir / entry["name"]).read_bytes() == (again.dir / entry["name"]).read_bytes(),
+                            f"{entry['name']} is not byte-identical after re-saving")
+        without_time = lambda d: {k: v for k, v in d.items() if k != "wall_time_utc_us"}  # noqa: E731
+        self.assertEqual(without_time(again.doc), without_time(first.doc))
+        with self.assertRaises(ckpt.CheckpointRefused):  # a local commit is never replaced
+            ckpt.write_commit(self.tmp / "commits", closure)
+
+    def test_corrupted_files_refused(self):
+        src = self.fx.commit.dir
+        names = sorted(p.name for p in src.iterdir())
+        self.assertEqual(names, sorted([ckpt.COMMIT_FILE] + [e["name"] for e in self.fx.commit.doc["files"].values()]))
+        raw = (src / ckpt.COMMIT_FILE).read_bytes()
+        doc = self.fx.commit.doc
+        # commit.json flips land on verified fields: every file hash, parameter_sha256, the step, the schema
+        verified = [e["sha256"] for e in doc["files"].values()] + [doc["parameter_sha256"], ckpt.SCHEMA_LOCAL_COMMIT]
+        commit_positions = sorted({0, len(raw) - 1, raw.index(b'"step":') + len(b'"step":')}
+                                  | {raw.index(v.encode()) + 5 for v in verified})
+        ckpt.read_commit(copy_commit(src, self.tmp / "pristine"))
+        for name in names:
+            size = (src / name).stat().st_size
+            positions = commit_positions if name == ckpt.COMMIT_FILE else sorted({0, 8, size // 2, size - 1})
+            for pos in positions:
+                d = copy_commit(src, self.tmp / f"flip-{name}-{pos}")
+                data = bytearray((d / name).read_bytes())
+                data[pos] ^= 0x01
+                (d / name).write_bytes(bytes(data))
+                self.assert_refused(d, f"one-byte flip at offset {pos} of {name}")
+            for keep in (size - 1, size // 2, 0):
+                d = copy_commit(src, self.tmp / f"trunc-{name}-{keep}")
+                os.truncate(d / name, keep)
+                self.assert_refused(d, f"{name} truncated to {keep} bytes")
+            d = copy_commit(src, self.tmp / f"missing-{name}")
+            (d / name).unlink()
+            self.assert_refused(d, f"missing {name}")
+        for extra in ("extra.bin", ".hidden", "models.safetensors.bak"):
+            d = copy_commit(src, self.tmp / f"extra-{extra}")
+            (d / extra).write_bytes(b"x")
+            self.assert_refused(d, f"unlisted file {extra}")
+        d = copy_commit(src, self.tmp / "extra-dir")
+        (d / "sub").mkdir()
+        self.assert_refused(d, "unlisted directory")
+
+    def test_consistent_rewrites_refused_by_recomputation(self):
+        src = self.fx.commit.dir
+        closure = ckpt.read_commit(src)
+        same = (src / "models.safetensors").read_bytes()
+        ckpt.read_commit(rewrite_consistently(copy_commit(src, self.tmp / "same"), "models", same))  # control
+        weights = dict(closure.model_tensors)
+        first = sorted(weights)[0]
+        weights[first] = weights[first] + 1.0
+        cases = {
+            "changed weights (parameter_sha256 stale)": ("models", safetensors.torch.save(weights)),
+            "safetensors metadata": ("models", safetensors.torch.save(closure.model_tensors, metadata={"x": "y"})),
+            "optimizer moment with a wrong shape": ("optimizer", safetensors.torch.save(
+                {k: (v[:1] if k.endswith(".exp_avg") and v.dim() else v)
+                 for k, v in closure.optimizer_tensors.items()})),
+            "renamed rng tensor": ("rng", safetensors.torch.save({"torch_gpu": closure.rng_tensors["torch_cpu"]})),
+            "non-canonical sampler JSON": ("sampler", json.dumps(closure.sampler_state, indent=1).encode()),
+            "journal record count != step": ("journal", closure.journal_bytes + closure.journal_bytes.splitlines()[0]
+                                             + b"\n"),
+        }
+        for what, (kind, body) in cases.items():
+            with self.subTest(case=what):
+                self.assert_refused(rewrite_consistently(copy_commit(src, self.tmp / kind / what.replace(" ", "-")),
+                                                         kind, body), what)
+
+    def test_weights_only_is_never_resumable(self):
+        closure = ckpt.read_commit(self.fx.commit.dir)
+        wo = ckpt.write_commit(self.tmp / "wo", closure.weights_only())
+        self.assertFalse(wo.doc["resumable"])
+        self.assertEqual(sorted(wo.doc["files"]), ["models"])
+        self.assertEqual(wo.doc["parameter_sha256"], self.fx.commit.doc["parameter_sha256"])
+        loaded = ckpt.read_commit(wo.dir)
+        self.assertFalse(loaded.resumable)
+        m, opt, sch, _smp = self.fresh_objects()
+        with self.assertRaises(ckpt.CheckpointRefused):
+            ckpt.apply_closure(loaded, model=m, optimizer=opt, scheduler=sch)
+        with self.assertRaises(ckpt.CheckpointRefused):
+            ckpt.apply_closure(loaded, model=m, optimizer=opt, scheduler=sch, require_resumable=False)
+        rng = rng_snapshot()
+        ckpt.apply_closure(loaded, model=m, require_resumable=False)
+        self.assertEqual(model.parameter_sha256(m), wo.doc["parameter_sha256"])
+        self.assertTrue(same_rng(rng, rng_snapshot()), "a weights-only load must not touch any RNG")
+        with self.assertRaises(ckpt.CheckpointRefused):  # resumable cannot be claimed without the closure
+            ckpt.write_commit(self.tmp / "claim", dataclasses.replace(closure.weights_only(), resumable=True))
+        with self.assertRaises(ckpt.CheckpointRefused):  # a non-resumable commit is weights-only
+            ckpt.write_commit(self.tmp / "partial", dataclasses.replace(closure, resumable=False))
+        claimed = copy_commit(wo.dir, self.tmp / "claimed")
+        doc = json.loads((claimed / ckpt.COMMIT_FILE).read_bytes())
+        doc["resumable"] = True
+        (claimed / ckpt.COMMIT_FILE).write_bytes(common.canonical(doc))
+        self.assert_refused(claimed, "weights-only commit.json edited to resumable=true")
+
+    def test_layout_mismatch_refused_before_loading(self):
+        closure = ckpt.read_commit(self.fx.commit.dir)
+        m, _opt, _sch, _smp = self.fresh_objects()
+        before = model.parameter_sha256(m)
+        wrong = {
+            "one param group": torch.optim.AdamW(m.parameters(), lr=1e-3, fused=False, foreach=False),
+            "another optimizer class": torch.optim.SGD(model.param_groups(m, 0.01), lr=1e-3),
+        }
+        for what, opt in wrong.items():
+            with self.subTest(case=what):
+                with self.assertRaises(ckpt.CheckpointRefused):
+                    ckpt.apply_closure(closure, model=m, optimizer=opt,
+                                       scheduler=torch.optim.lr_scheduler.LambdaLR(opt, lambda e: 1.0))
+                self.assertEqual(model.parameter_sha256(m), before)
+        small = model.PolicyLM(fixtures_p7.model_config(d_model=16))
+        opt = torch.optim.AdamW(model.param_groups(small, 0.01), lr=3e-3, fused=False, foreach=False)
+        with self.assertRaises(ckpt.CheckpointRefused):  # same names and groups, other shapes
+            ckpt.apply_closure(closure, model=small, optimizer=opt,
+                               scheduler=torch.optim.lr_scheduler.LambdaLR(opt, lambda e: 1.0))
+
+    def test_step0_closure_without_optimizer_state(self):
+        plan = self.fx.plan
+        train.seed_fresh(run_seed(plan))
+        m, opt, sch = train.build_training_objects(plan)
+        smp = sampler.MacroSampler(self.fx.data.fit, run_seed(plan), self.fx.data.config)
+        c = ckpt.save_local_commit(self.tmp, run_id=plan["run_id"], step=0, model=m, optimizer=opt, scheduler=sch,
+                                   sampler_state=smp.state_dict(), journal_bytes=b"", identities={}, parent=None,
+                                   last_event_seq=0, expected_pointer=None)
+        closure = ckpt.read_commit(c.dir)
+        self.assertEqual(closure.optimizer_tensors, {})
+        self.assertEqual(closure.optimizer_meta["names_without_state"], model.parameter_names(m))
+        m2, opt2, sch2, _smp2 = self.fresh_objects()
+        ckpt.apply_closure(closure, model=m2, optimizer=opt2, scheduler=sch2)
+        self.assertEqual(len(opt2.state), 0)
+        self.assertEqual(model.parameter_sha256(m2), c.doc["parameter_sha256"])
+        self.assertEqual(sch2.state_dict()["last_epoch"], 0)
+
+
+class VersionedStoreTest(unittest.TestCase):
+    """P7 test 5: FileVersionedStore S3 conditional semantics and the §6.6 publish protocol."""
+
+    def setUp(self):
+        self.tmp = make_tmp(self)
+
+    def test_conditional_writes_and_exact_version_reads(self):
+        store = ckpt.FileVersionedStore(self.tmp / "s")
+        key = ckpt.dep_key(PREFIX, "journal", "0" * 64)
+        self.assertEqual((ckpt.PreconditionFailed.status, ckpt.NoSuchKey.status), (412, 404))
+        v1 = store.put_create_only(key, b"one")
+        with self.assertRaises(ckpt.PreconditionFailed):
+            store.put_create_only(key, b"one")
+        with self.assertRaises(ckpt.PreconditionFailed):
+            store.put_create_only(key, b"two")
+        with self.assertRaises(ckpt.PreconditionFailed):
+            store.put_if_match(key, b"two", '"' + "0" * 32 + '"')
+        v2 = store.put_if_match(key, b"two", v1.etag)
+        with self.assertRaises(ckpt.PreconditionFailed):  # the ETag is stale now
+            store.put_if_match(key, b"three", v1.etag)
+        self.assertEqual(store.get(key), ckpt.GetResult(body=b"two", version_id=v2.version_id, etag=v2.etag))
+        self.assertEqual(store.get(key, version_id=v1.version_id).body, b"one")
+        self.assertEqual(store.get(key, version_id=v2.version_id).body, b"two")
+        with self.assertRaises(ckpt.NoSuchKey):
+            store.get(key, version_id="f" * 32)
+        with self.assertRaises(ckpt.NoSuchKey):
+            store.get(key + ".absent")
+        with self.assertRaises(ckpt.NoSuchKey):
+            store.put_if_match(key + ".absent", b"x", v1.etag)
+        self.assertEqual(v1.etag, '"' + hashlib.md5(b"one").hexdigest() + '"')
+        for seq, (put, body) in enumerate(((v1, b"one"), (v2, b"two")), start=1):
+            self.assertEqual(put.version_id, hashlib.sha256(
+                f"{key}\0{seq}\0{common.sha256_bytes(body)}".encode()).hexdigest()[:32])
+        kdir = self.tmp / "s" / hashlib.sha256(key.encode()).hexdigest()
+        self.assertEqual((kdir / "key.txt").read_text(), key)
+        lines = (kdir / "log.jsonl").read_bytes().splitlines()
+        self.assertEqual([json.loads(line) for line in lines], [
+            {"seq": 1, "version_id": v1.version_id, "etag": v1.etag, "sha256": common.sha256_bytes(b"one"), "bytes": 3},
+            {"seq": 2, "version_id": v2.version_id, "etag": v2.etag, "sha256": common.sha256_bytes(b"two"),
+             "bytes": 3}])
+        self.assertTrue(all(common.canonical(json.loads(line)) == line for line in lines))
+        self.assertEqual(sorted(p.name for p in (kdir / "blobs").iterdir()), sorted([v1.version_id, v2.version_id]))
+        self.assertEqual(ckpt.FileVersionedStore(self.tmp / "s").list_versions(key), store.list_versions(key))
+        for obj in (store, ckpt.FileVersionedStore):
+            self.assertEqual([a for a in dir(obj) if "delete" in a.lower() or "remove" in a.lower()], [])
+
+    def test_publish_dependency_resolutions(self):
+        body = b'{"cursor":1}'
+        key = ckpt.dep_key(PREFIX, "sampler", common.sha256_bytes(body))
+        store = ckpt.FileVersionedStore(self.tmp / "plain")
+        ref = ckpt.publish_dependency(store, key, body)
+        self.assertEqual(ref, {"bucket": store.bucket, "key": key, "version_id": store.get(key).version_id,
+                               "sha256": common.sha256_bytes(body), "bytes": len(body), "readback_verified": True,
+                               "new_bytes": len(body)})
+        self.assertEqual(ckpt.publish_dependency(store, key, body), dict(ref, new_bytes=0))  # 412 with equal bytes
+        with self.assertRaises(ckpt.PoisonedKey):
+            ckpt.publish_dependency(store, key, b'{"cursor":2}')
+        self.assertEqual(len(store.list_versions(key)), 1)
+
+        fault = lose_responses(1)  # the PUT is applied but its response is lost: equal bytes on re-read
+        lossy = ckpt.FileVersionedStore(self.tmp / "lossy", fault=fault)
+        ref = ckpt.publish_dependency(lossy, key, body)
+        self.assertEqual(fault.calls, [("put_create_only", key)])
+        self.assertEqual([v["version_id"] for v in lossy.list_versions(key)], [ref["version_id"]])
+        self.assertEqual(ref["new_bytes"], len(body))
+
+        poisoned = ckpt.FileVersionedStore(self.tmp / "poisoned")
+        poisoned.put_create_only(key, b"other bytes")
+        with self.assertRaises(ckpt.PoisonedKey):  # a 412 whose re-read finds different bytes
+            ckpt.publish_dependency(poisoned, key, body)
+        with self.assertRaises(ckpt.PoisonedKey):  # a transport error whose re-read finds different bytes
+            ckpt.publish_dependency(FlakyStore(poisoned, 1), key, body)
+        self.assertEqual(len(poisoned.list_versions(key)), 1)
+
+        flaky = FlakyStore(ckpt.FileVersionedStore(self.tmp / "flaky"), 1)
+        ref = ckpt.publish_dependency(flaky, key, body)  # absent after a failed PUT: one more create-only PUT
+        self.assertEqual((flaky.puts, ref["new_bytes"], len(flaky.inner.list_versions(key))), (2, len(body), 1))
+        dead = FlakyStore(ckpt.FileVersionedStore(self.tmp / "dead"), 2)
+        with self.assertRaises(ConnectionResetError):
+            ckpt.publish_dependency(dead, key, body)
+        self.assertEqual(dead.puts, 2)
+        with self.assertRaises(ckpt.NoSuchKey):
+            dead.get(key)
+
+    def test_cas_pointer_cases(self):
+        store = ckpt.FileVersionedStore(self.tmp / "p")
+        key = ckpt.pointer_key(PREFIX, "run-x")
+        m1, m2, m3 = (common.sha256_bytes(s) for s in (b"m1", b"m2", b"m3"))
+        b1 = pointer_body("run-x", 1, m1)
+        v1, e1, s1 = ckpt.cas_pointer(store, key, b1, None, parent_manifest_sha256=None)
+        head = store.get(key)
+        self.assertEqual((v1, e1, s1), (head.version_id, head.etag, 1))
+        exp1 = ckpt.ExpectedPointer(v1, e1, common.sha256_bytes(b1), 1, m1, "mv1")
+        with self.assertRaises(ckpt.Conflict):  # no expectation, but a pointer exists
+            ckpt.cas_pointer(store, key, pointer_body("run-x", 1, m2), None, parent_manifest_sha256=None)
+        with self.assertRaises(ckpt.Conflict):  # the manifest's parent is not the pointer's target
+            ckpt.cas_pointer(store, key, pointer_body("run-x", 2, m2, v1), exp1, parent_manifest_sha256=m3)
+        b2 = pointer_body("run-x", 2, m2, v1)
+        v2, e2, s2 = ckpt.cas_pointer(store, key, b2, exp1, parent_manifest_sha256=m1)
+        self.assertEqual((s2, len(store.list_versions(key))), (2, 2))
+        self.assertEqual(ckpt.cas_pointer(store, key, b2, exp1, parent_manifest_sha256=m1), (v2, e2, 2))  # adopt
+        exp2 = ckpt.ExpectedPointer(v2, e2, common.sha256_bytes(b2), 2, m2, "mv2")
+        with self.assertRaises(ckpt.Conflict):  # a stale expectation
+            ckpt.cas_pointer(store, key, pointer_body("run-x", 3, m3, v1), exp1, parent_manifest_sha256=m2)
+        store.put_if_match(key, pointer_body("run-x", 3, m3, v2, writer="foreign"), e2)
+        with self.assertRaises(ckpt.Conflict):  # a foreign writer moved the pointer
+            ckpt.cas_pointer(store, key, pointer_body("run-x", 3, m3, v2), exp2, parent_manifest_sha256=m2)
+        with self.assertRaises(ckpt.Conflict):  # absent while this writer expects a version
+            ckpt.cas_pointer(store, ckpt.pointer_key(PREFIX, "run-y"), pointer_body("run-y", 3, m3, v2), exp2,
+                             parent_manifest_sha256=m2)
+        self.assertEqual(len(store.list_versions(key)), 3)
+
+        fault = lose_responses(2)  # lost responses on the create and on the If-Match are adopted by the re-GET
+        lossy = ckpt.FileVersionedStore(self.tmp / "lossy", fault=fault)
+        lv1, le1, _ = ckpt.cas_pointer(lossy, key, b1, None, parent_manifest_sha256=None)
+        lv2, _le2, _ = ckpt.cas_pointer(lossy, key, b2, ckpt.ExpectedPointer(lv1, le1, common.sha256_bytes(b1), 1,
+                                                                              m1, "mv1"), parent_manifest_sha256=m1)
+        self.assertEqual([op for op, _ in fault.calls], ["put_create_only", "put_if_match"])
+        self.assertEqual([v["version_id"] for v in lossy.list_versions(key)], [lv1, lv2])
+
+        dead = FlakyStore(ckpt.FileVersionedStore(self.tmp / "dead"), 2)
+        with self.assertRaises(ckpt.Conflict):  # a PUT unresolved after one repeat
+            ckpt.cas_pointer(dead, key, b1, None, parent_manifest_sha256=None)
+        self.assertEqual(dead.puts, 2)
+        with self.assertRaises(ckpt.NoSuchKey):
+            dead.get(key)
+
+    def test_expected_pointer_persistence(self):
+        self.assertIsNone(ckpt.load_expected(self.tmp))
+        e = ckpt.ExpectedPointer("v" * 32, '"' + "a" * 32 + '"', "b" * 64, 3, "c" * 64, "d" * 32)
+        ckpt.save_expected(self.tmp, e)
+        self.assertEqual((self.tmp / "state" / "expected-pointer.json").read_bytes(), common.canonical(e.to_json()))
+        self.assertEqual(ckpt.load_expected(self.tmp), e)
+        with self.assertRaises(ckpt.CheckpointRefused):
+            ckpt.ExpectedPointer.from_json(dict(e.to_json(), extra=1))
+
+    def test_publish_and_restore_round_trip(self):
+        fx = closure_fixture()
+        store = ckpt.FileVersionedStore(self.tmp / "store")
+        commit, closure = ckpt.open_commit(fx.commit.dir)
+        pub = ckpt.publish_commit(store, commit, prefix=PREFIX, expected=None, writer=WRITER)
+        # P8: the journal is published as content-addressed chunks plus an index (ckpt.PUBLISHED_KINDS)
+        self.assertEqual(sorted(pub["deps"]), sorted("journal-index" if k == "journal" else k
+                                                     for k in commit.doc["files"]))
+        for kind, ref in pub["deps"].items():
+            if kind == "journal-index":
+                index_body = store.get(ref["key"], version_id=ref["version_id"]).body
+                self.assertEqual(ckpt._restore_journal(store, PREFIX, index_body),  # noqa: SLF001
+                                 (commit.dir / commit.doc["files"]["journal"]["name"]).read_bytes())
+                continue
+            entry = commit.doc["files"][kind]
+            self.assertEqual(ref["key"], ckpt.dep_key(PREFIX, kind, entry["sha256"]))
+            self.assertEqual((ref["sha256"], ref["bytes"], ref["new_bytes"], ref["readback_verified"]),
+                             (entry["sha256"], entry["bytes"], entry["bytes"], True))
+            self.assertTrue(store.get(ref["key"], version_id=ref["version_id"]).body
+                            == (commit.dir / entry["name"]).read_bytes())
+        ptr = pub["pointer"]
+        head = store.get(ckpt.pointer_key(PREFIX, closure.run_id))
+        self.assertEqual((head.version_id, head.etag, common.sha256_bytes(head.body), ptr.seq),
+                         (ptr.version_id, ptr.etag, ptr.sha256, 1))
+        pdoc = json.loads(head.body)
+        self.assertEqual((pdoc["schema"], pdoc["pointer_name"], pdoc["target_manifest_sha256"],
+                          pdoc["target_version_id"], pdoc["prev_version_id"], pdoc["writer"]),
+                         (ckpt.SCHEMA_POINTER, "resume", ptr.manifest_sha256, ptr.manifest_version_id, None, WRITER))
+        manifest = json.loads(store.get(ckpt.manifest_key(PREFIX, closure.run_id, ptr.manifest_sha256),
+                                        version_id=ptr.manifest_version_id).body)
+        self.assertEqual((manifest["schema"], manifest["step"], manifest["parameter_sha256"]),
+                         (ckpt.SCHEMA_CHECKPOINT, closure.step, commit.doc["parameter_sha256"]))
+        self.assertEqual(manifest["files"]["models"], {k: pub["deps"]["models"][k] for k in ckpt.S3REF_KEYS})
+
+        restored, pointer = ckpt.restore_closure(store, prefix=PREFIX, run_id=closure.run_id,
+                                                 dest_dir=self.tmp / "restore")
+        self.assertEqual(pointer, ptr)
+        self.assertEqual(restored.dir, self.tmp / "restore" / "commits" / f"{closure.step:010d}")
+        self.assertEqual(restored.doc["files"], commit.doc["files"])
+        for entry in commit.doc["files"].values():
+            self.assertTrue((restored.dir / entry["name"]).read_bytes() == (commit.dir / entry["name"]).read_bytes())
+        self.assertEqual((restored.doc["expected_pointer"], restored.doc["parent"], restored.doc["wall_time_utc_us"]),
+                         (ptr.to_json(), commit.doc["parent"], commit.doc["wall_time_utc_us"]))
+
+        child = dataclasses.replace(
+            closure, step=closure.step + 1,
+            journal_bytes=closure.journal_bytes + common.canonical({"step": closure.step + 1}) + b"\n",
+            parent={"commit_sha256": commit.commit_sha256, "manifest_sha256": ptr.manifest_sha256,
+                    "manifest_version_id": ptr.manifest_version_id}, expected_pointer=ptr.to_json())
+        child_commit = ckpt.write_commit(self.tmp / "commits", child)
+        pub2 = ckpt.publish_commit(store, child_commit, prefix=PREFIX, expected=ptr, writer=WRITER)
+        head_key = ckpt.pointer_key(PREFIX, closure.run_id)
+        self.assertEqual(pub2["pointer"].seq, 2)
+        self.assertEqual(json.loads(store.get(head_key).body)["prev_version_id"], ptr.version_id)
+        shared = sorted(set(child_commit.doc["files"]) - {"journal"})
+        self.assertEqual([pub2["deps"][k]["new_bytes"] for k in shared], [0] * len(shared))  # deduplicated (412)
+        with self.assertRaises(ckpt.Conflict):  # republishing the parentless commit: its parent is not the target
+            ckpt.publish_commit(store, commit, prefix=PREFIX, expected=pub2["pointer"], writer=WRITER)
+        self.assertEqual(len(store.list_versions(head_key)), 2)
+        restored2, pointer2 = ckpt.restore_closure(store, prefix=PREFIX, run_id=closure.run_id,
+                                                   dest_dir=self.tmp / "restore2")
+        self.assertEqual((restored2.step, pointer2), (closure.step + 1, pub2["pointer"]))
+
+        with self.assertRaises(ckpt.CheckpointRefused):  # destination not empty
+            ckpt.restore_closure(store, prefix=PREFIX, run_id=closure.run_id, dest_dir=self.tmp / "restore")
+        with self.assertRaises(ckpt.CheckpointRefused):  # no pointer for another run
+            ckpt.restore_closure(store, prefix=PREFIX, run_id="other-run", dest_dir=self.tmp / "restore3")
+        ref = pub2["deps"]["models"]
+        blob = self.tmp / "store" / hashlib.sha256(ref["key"].encode()).hexdigest() / "blobs" / ref["version_id"]
+        data = bytearray(blob.read_bytes())
+        data[-1] ^= 0x01
+        blob.write_bytes(bytes(data))
+        with self.assertRaises(ckpt.CheckpointRefused):  # stored bytes differ from the manifest: nothing written
+            ckpt.restore_closure(store, prefix=PREFIX, run_id=closure.run_id, dest_dir=self.tmp / "restore4")
+        self.assertFalse((self.tmp / "restore4" / "commits").exists())
+
+
+# ------------------------------------------------------------------------------------------------------- test 6
+def perturb(name: str, c: ckpt.ClosureData) -> None:
+    """Apply one negative-control perturbation to a closure read from B's step-37 commit."""
+    opt = c.optimizer_tensors
+    if name == "exp_avg*1.5":
+        c.optimizer_tensors = {k: v * 1.5 if k.endswith(".exp_avg") else v for k, v in opt.items()}
+    elif name == "exp_avg_sq*2":
+        c.optimizer_tensors = {k: v * 2.0 if k.endswith(".exp_avg_sq") else v for k, v in opt.items()}
+    elif name == "step-1":
+        c.optimizer_tensors = {k: v - 1.0 if k.endswith(".step") else v for k, v in opt.items()}
+    elif name == "scheduler-1":
+        c.optimizer_meta["scheduler"]["last_epoch"] -= 1
+        c.optimizer_meta["scheduler"]["_step_count"] -= 1
+    elif name == "sampler_cursor+1":
+        c.sampler_state["cursor"] += 1
+    elif name == "torch_rng=Generator(12345)":
+        g = torch.Generator()
+        g.manual_seed(12345)
+        c.rng_tensors = {"torch_cpu": g.get_state()}
+    elif name == "python_rng=Random(12345)":
+        version, internal, gauss_next = random.Random(12345).getstate()
+        c.rng_meta["python"] = {"version": version, "internal": list(internal), "gauss_next": gauss_next}
+    elif name == "numpy_rng=RandomState(12345)":
+        s = np.random.RandomState(12345).get_state()
+        c.rng_meta["numpy"] = {"bit_generator": s[0], "key": [int(x) for x in s[1]], "pos": int(s[2]),
+                               "has_gauss": int(s[3]), "cached_gaussian": float(s[4])}
+    else:
+        raise KeyError(name)
+
+
+def inner_drops(c: ckpt.ClosureData) -> dict:
+    """Consistent rewrites that drop one component inside a closure file: name -> (kind, new file bytes)."""
+    opt = c.optimizer_tensors
+    no_scheduler = {k: v for k, v in c.optimizer_meta.items() if k != "scheduler"}
+    return {
+        "optimizer:exp_avg": ("optimizer", safetensors.torch.save({k: v for k, v in opt.items()
+                                                                     if not k.endswith(".exp_avg")})),
+        "optimizer:exp_avg_sq": ("optimizer", safetensors.torch.save({k: v for k, v in opt.items()
+                                                                        if not k.endswith(".exp_avg_sq")})),
+        "optimizer:step": ("optimizer", safetensors.torch.save({k: v for k, v in opt.items()
+                                                                  if not k.endswith(".step")})),
+        "optimizer-meta:scheduler": ("optimizer-meta", common.canonical(no_scheduler)),
+        "rng:torch_cpu": ("rng", safetensors.torch.save({})),
+        "rng-meta:python": ("rng-meta", common.canonical({k: v for k, v in c.rng_meta.items() if k != "python"})),
+        "rng-meta:numpy": ("rng-meta", common.canonical({k: v for k, v in c.rng_meta.items() if k != "numpy"})),
+        "sampler:cursor": ("sampler", common.canonical({k: v for k, v in c.sampler_state.items() if k != "cursor"})),
+    }
+
+
+class ExactResumeTest(unittest.TestCase):
+    """P7 test 6: exact resume from a fake-store closure in a fresh subprocess, with negative controls."""
+
+    @classmethod
+    def setUpClass(cls):
+        tmp = tempfile.TemporaryDirectory(dir=os.environ["TMPDIR"], prefix="p7-resume-")
+        cls.addClassCleanup(tmp.cleanup)
+        cls.tmp = Path(tmp.name)
+        cls.plan = make_plan()
+        cls.plan_path = cls.tmp / "run-plan.json"
+        train.write_run_plan(cls.plan_path, cls.plan)
+        cls.data = fixtures_p7.train_data()
+        t0 = time.monotonic()
+        cls.A = train.run(cls.plan, cls.data, cls.tmp / "A")
+        t1 = time.monotonic()
+        cls.store_root = cls.tmp / "store"
+        cls.store = ckpt.FileVersionedStore(cls.store_root)
+        stop = cls.tmp / "STOP"
+
+        def after_step(step: int) -> None:
+            if step == STOP_STEP:
+                stop.touch()
+        cls.B = train.run(cls.plan, cls.data, cls.tmp / "B", store=cls.store, store_prefix=PREFIX, stop_file=stop,
+                          hooks=train.TrainHooks(after_step=after_step))
+        sys.stderr.write(f"\n[p7 restore] run A {t1 - t0:.1f} s, run B {time.monotonic() - t1:.1f} s\n")
+        cls.a_digest = closure_digest(Path(cls.A.last_commit))
+        cls.b_commit = Path(cls.B.last_commit)
+        # Cross-run determinism evidence: these hashes must be identical in every run of the suite.
+        sys.stderr.write(f"[p7 restore] run A step {cls.A.step} parameter_sha256 {cls.A.parameter_sha256} "
+                         f"journal_sha256 {cls.A.journal_sha256}; run B step {cls.B.step} parameter_sha256 "
+                         f"{cls.B.parameter_sha256}\n")
+
+    def empty_dir(self, name: str) -> Path:
+        d = self.tmp / name
+        d.mkdir(parents=True)
+        return d
+
+    def test_run_a_completes_and_run_b_yields_published(self):
+        self.assertEqual(self.plan["ceilings"]["max_updates"], FINAL_STEP)
+        self.assertEqual(self.plan["determinism"]["num_threads"], 4)
+        self.assertEqual(torch.get_num_threads(), 4)
+        self.assertEqual((self.A.status, self.A.step, self.A.reason), ("COMPLETED", FINAL_STEP, None))
+        self.assertTrue(self.A.optimizer_parameter_change_verified)
+        self.assertEqual(self.a_digest["step"], FINAL_STEP)
+        self.assertEqual((self.B.status, self.B.reason, self.B.step), ("YIELDED_TO_INTAKE", "stop_file", STOP_STEP))
+        self.assertIsNotNone(self.B.published)
+        self.assertEqual(self.b_commit.name, f"{STOP_STEP:010d}")
+        head = self.store.get(ckpt.pointer_key(PREFIX, self.plan["run_id"]))
+        pdoc = json.loads(head.body)
+        manifest = json.loads(self.store.get(ckpt.manifest_key(PREFIX, self.plan["run_id"],
+                                                               pdoc["target_manifest_sha256"]),
+                                             version_id=pdoc["target_version_id"]).body)
+        self.assertEqual((manifest["step"], manifest["parameter_sha256"]), (STOP_STEP, self.B.parameter_sha256))
+        expected = ckpt.load_expected(self.tmp / "B")
+        self.assertEqual((expected.version_id, expected.sha256, expected.seq, expected.manifest_sha256),
+                         (head.version_id, common.sha256_bytes(head.body), pdoc["seq"],
+                          pdoc["target_manifest_sha256"]))
+        b_events = events(self.tmp / "B")
+        self.assertEqual([e["event"] for e in b_events[-3:]], ["commit", "published", "finished"])
+        self.assertEqual(ckpt.pointer_event_seq(pdoc), b_events[-1]["seq"],
+                         "the yield pointer must reserve every seq up to B's last event")
+        every = self.plan["train"]["commit_every_updates"]
+        self.assertLess(every, STOP_STEP)
+        self.assertEqual(closure_digest(self.tmp / "B" / "commits" / f"{every:010d}"),
+                         closure_digest(self.tmp / "A" / "commits" / f"{every:010d}"))
+
+    def test_fresh_subprocess_resume_equals_uninterrupted(self):
+        workdir = self.empty_dir("C")
+        store_root = self.tmp / "store-C"  # a replica of B's bucket, so B's own pointer stays at step 37
+        shutil.copytree(self.store_root, store_root)
+        args = {"plan": str(self.plan_path), "store": str(store_root), "workdir": str(workdir), "prefix": PREFIX}
+        t0 = time.monotonic()
+        proc = subprocess.run([sys.executable, "-c", CHILD, json.dumps(args)], cwd=str(SRC), env=dict(os.environ),
+                              capture_output=True, text=True, timeout=CHILD_TIMEOUT_S)
+        sys.stderr.write(f"\n[p7 restore] fresh-subprocess resume {time.monotonic() - t0:.1f} s\n")
+        self.assertEqual(proc.returncode, 0, f"child failed:\n{proc.stderr[-6000:]}")
+        lines = [line for line in proc.stdout.splitlines() if line.startswith("P7_CHILD_RESULT ")]
+        self.assertEqual(len(lines), 1, proc.stdout[-2000:])
+        out = json.loads(lines[0].split(" ", 1)[1])
+        res = out["result"]
+        self.assertEqual((res["status"], res["step"]), ("COMPLETED", FINAL_STEP))
+        self.assertEqual((out["num_threads"], torch.get_num_threads()), (4, 4))
+        self.assertEqual(out["plan_sha256"], train.plan_sha256(self.plan))
+        c_commit = Path(res["last_commit"])
+        self.assertTrue(c_commit.is_relative_to(workdir), c_commit)
+        self.assertEqual(closure_digest(c_commit), self.a_digest)
+        self.assertEqual((res["parameter_sha256"], res["journal_sha256"]),
+                         (self.A.parameter_sha256, self.A.journal_sha256))
+        final, pointer = ckpt.restore_closure(ckpt.FileVersionedStore(store_root), prefix=PREFIX,
+                                              run_id=self.plan["run_id"], dest_dir=self.tmp / "final-restore")
+        self.assertEqual(closure_digest(final.dir), self.a_digest)  # the child's last publish is A's closure too
+        self.assertEqual(pointer.seq, ckpt.load_expected(workdir).seq)
+        b_events, c_events = events(self.tmp / "B"), events(workdir)
+        self.assertEqual((c_events[0]["event"], c_events[0]["rule"]), ("resumed", "restored_pointer_target"))
+        self.assertEqual(c_events[0]["seq"], b_events[-1]["seq"] + 1, "C must continue above B's last event")
+        seqs = [e["seq"] for e in b_events + c_events]
+        self.assertEqual(len(seqs), len(set(seqs)), "an event seq repeats across the B -> C yield/resume chain")
+
+    def test_in_process_resume_from_b_equals_a(self):
+        res = train.resume_from_commit(self.plan, self.data, self.b_commit, self.empty_dir("D"))
+        self.assertEqual((res.status, res.step), ("COMPLETED", FINAL_STEP))
+        self.assertEqual(closure_digest(Path(res.last_commit)), self.a_digest)
+        b_events, d_events = events(self.tmp / "B"), events(self.tmp / "D")
+        self.assertEqual((d_events[0]["event"], d_events[0]["seq"]), ("resumed", b_events[-1]["seq"] + 1))
+        self.assertEqual(len({e["seq"] for e in b_events + d_events}), len(b_events) + len(d_events))
+
+    def test_publishing_run_whose_store_draws_global_rng_equals_a(self):
+        """§6.6 determinism: a store client that draws from the global RNGs while publishing (retry jitter) must not
+        shift the training streams; the step boundary is restored, so every commit equals run A's."""
+        store = RngDrawingStore(ckpt.FileVersionedStore(self.tmp / "store-P"))
+        res = train.run(self.plan, self.data, self.tmp / "P", store=store, store_prefix=PREFIX)
+        self.assertEqual((res.status, res.step), ("COMPLETED", FINAL_STEP))
+        self.assertGreater(store.draws, 0)
+        self.assertEqual((res.parameter_sha256, res.journal_sha256), (self.A.parameter_sha256, self.A.journal_sha256))
+        self.assertEqual(closure_digest(Path(res.last_commit)), self.a_digest)
+        every = self.plan["train"]["commit_every_updates"]
+        for step in range(every, FINAL_STEP, every):
+            self.assertEqual(closure_digest(self.tmp / "P" / "commits" / f"{step:010d}"),
+                             closure_digest(self.tmp / "A" / "commits" / f"{step:010d}"), f"commit {step}")
+        published = [e for e in events(self.tmp / "P") if e["event"] == "published"]
+        self.assertEqual(len(published), FINAL_STEP // every)
+        self.assertTrue(all(e["rng_restored"] for e in published), "the publishes drew no RNG, so nothing was tested")
+
+    def test_resume_refuses_other_training_data(self):
+        """§6.6 identities: the closure binds the training data's content, so a resume against re-encoded contexts or
+        changed labels is refused although the sampler fit is identical; stamped refs must equal the plan's."""
+        ctxs, recs, enc = fixtures_p7.contexts(), fixtures_p7.records(), fixtures_p7.encodings()
+        universe = set(self.data.fit.pi)
+        shifted = {k: (v + np.float32(0.5) if k in universe else v) for k, v in enc.items()}
+        slower = [dict(r, wall_us=2 * r["wall_us"])
+                  if r["context_sha256"] in universe and r["outcome"] == "completed" and r["wall_us"] else r
+                  for r in recs]
+        for what, data in (("re-encoded", data_from(ctxs, recs, shifted)), ("rt-labels", data_from(ctxs, slower, enc))):
+            with self.subTest(what):
+                self.assertEqual(data.fit.sha256(), self.data.fit.sha256())
+                with self.assertRaisesRegex(ckpt.CheckpointRefused, "train_data_sha256"):
+                    train.resume_from_commit(self.plan, data, self.b_commit, self.empty_dir(f"data-{what}"))
+        stamped = dataclasses.replace(self.data, refs={"corpus": "c" * 64})
+        for name, call in (("resume", lambda: train.resume_from_commit(self.plan, stamped, self.b_commit,
+                                                                       self.empty_dir("data-stamped"))),
+                           ("fresh", lambda: train.run(self.plan, stamped, self.empty_dir("data-stamped-fresh")))):
+            with self.subTest(name), self.assertRaisesRegex(ValueError, "'corpus'"):
+                call()
+        plan = make_plan(max_updates=1, refs={"corpus": "c" * 64})
+        res = train.run(plan, stamped, self.empty_dir("data-stamped-ok"))
+        self.assertEqual((res.status, res.step), ("COMPLETED", 1))
+
+    def test_resume_refuses_another_source_tree_runtime_or_data_identity(self):
+        ids = ckpt.open_commit(self.b_commit)[0].doc["identities"]
+        self.assertEqual((ids["source_tree_sha256"], ids["runtime_sha256"], ids["train_data_sha256"]),
+                         (train.source_tree_sha256(), train.runtime_sha256(), self.data.content_sha256))
+        files = train.source_tree_files()
+        self.assertEqual([path for path, _ in files], [f"dltrain/{name}.py" for name in sorted(TRAINER_CLOSURE)])
+        package = SRC / "dltrain"
+        lines = "".join(f"{path}\0{common.sha256_file(package / Path(path).name)}\n" for path, _ in files)
+        self.assertEqual(train.source_tree_sha256(), common.sha256_bytes(lines.encode()))
+        self.assertEqual(sorted(train.runtime_identity()), ["cpu_capability", "executable_sha256", "numpy", "python",
+                                                            "safetensors", "torch", "torch_config_sha256"])
+        self.assertEqual(train.runtime_sha256(), common.sha256_bytes(common.canonical(train.runtime_identity())))
+        for key in ("source_tree_sha256", "runtime_sha256", "train_data_sha256"):
+            with self.subTest(identity=key):
+                d = copy_commit(self.b_commit, self.tmp / "ident" / key)
+                doc = json.loads((d / ckpt.COMMIT_FILE).read_bytes())
+                doc["identities"][key] = "0" * 64
+                (d / ckpt.COMMIT_FILE).write_bytes(common.canonical(doc))
+                ckpt.read_commit(d)                         # a valid commit whose only change is that identity
+                with self.assertRaisesRegex(ckpt.CheckpointRefused, key):
+                    train.resume_from_commit(self.plan, self.data, d, self.empty_dir(f"ident-{key}"))
+
+    def test_perturbed_closures_diverge(self):
+        b_files = ckpt.open_commit(self.b_commit)[0].doc["files"]
+        for name in PERTURBATIONS:
+            with self.subTest(control=name):
+                closure = ckpt.read_commit(self.b_commit)
+                perturb(name, closure)
+                commit = ckpt.write_commit(self.tmp / "ctl" / name, closure)
+                self.assertNotEqual(commit.doc["files"], b_files, f"{name} did not change the closure")
+                res = train.resume_from_commit(self.plan, self.data, commit.dir, self.empty_dir(f"ctl-work-{name}"))
+                self.assertEqual((res.status, res.step), ("COMPLETED", FINAL_STEP))
+                if res.parameter_sha256 == self.A.parameter_sha256:
+                    self.fail(f"fixture insensitive: control {name!r} still reproduces run A's parameter_sha256 "
+                              f"at step {FINAL_STEP}")
+                self.assertNotEqual(closure_digest(Path(res.last_commit)), self.a_digest)
+
+    def test_dropped_components_refused(self):
+        closure = ckpt.read_commit(self.b_commit)
+        for kind in ckpt.REQUIRED_RESUMABLE:
+            with self.subTest(dropped=kind, where="write_commit"):
+                with self.assertRaises(ckpt.CheckpointRefused):
+                    ckpt.write_commit(self.tmp / "drop-mem" / kind,
+                                      dataclasses.replace(closure, **{CLOSURE_ATTR[kind]: None}))
+        same = (self.b_commit / "sampler.json").read_bytes()
+        ckpt.read_commit(rewrite_consistently(copy_commit(self.b_commit, self.tmp / "drop-control"), "sampler", same))
+        drops = {f"file:{kind}": (kind, None) for kind in ckpt.REQUIRED_RESUMABLE}
+        drops.update(inner_drops(closure))
+        for name, (kind, body) in drops.items():
+            with self.subTest(dropped=name):
+                d = rewrite_consistently(copy_commit(self.b_commit, self.tmp / "drop" / name), kind, body)
+                with self.assertRaises(ckpt.CheckpointRefused):
+                    ckpt.read_commit(d)
+                with self.assertRaises(ckpt.CheckpointRefused):
+                    train.resume_from_commit(self.plan, self.data, d, self.empty_dir(f"drop-work-{name}"))
+
+
+class YieldResumeProtocolTest(unittest.TestCase):
+    """§6.8 at resume (ckpt.resume_point) on a 6-step plan that commits every 2 updates and stops at step 3, against
+    the uninterrupted run U. A local commit is never discarded silently, and event seqs never repeat."""
+
+    @classmethod
+    def setUpClass(cls):
+        tmp = tempfile.TemporaryDirectory(dir=os.environ["TMPDIR"], prefix="p7-yield-")
+        cls.addClassCleanup(tmp.cleanup)
+        cls.tmp = Path(tmp.name)
+        cls.plan = make_plan(max_updates=SHORT_STEPS, train=fixtures_p7.train_config(commit_every_updates=SHORT_EVERY))
+        cls.run_id = cls.plan["run_id"]
+        cls.data = fixtures_p7.train_data()
+        cls.U = train.run(cls.plan, cls.data, cls.tmp / "U")
+        cls.u_digest = closure_digest(Path(cls.U.last_commit))
+
+    def yielded(self, name: str, *, outage_from: int | None):
+        """A launch that stops at SHORT_STOP through the STOP file; its store refuses every PUT from step
+        ``outage_from`` on (0: from the start; None: never)."""
+        store = OutageStore(ckpt.FileVersionedStore(self.tmp / f"store-{name}"))
+        stop = self.tmp / f"STOP-{name}"
+        store.down = outage_from == 0
+
+        def after_step(step: int) -> None:
+            if step == SHORT_STOP:
+                stop.touch()
+            if outage_from is not None and step == outage_from:
+                store.down = True
+        res = train.run(self.plan, self.data, self.tmp / name, store=store, store_prefix=PREFIX, stop_file=stop,
+                        hooks=train.TrainHooks(after_step=after_step))
+        store.down = False
+        return res, store
+
+    def resume(self, store, name: str, local: str | None) -> train.RunResult:
+        return train.resume_from_store(self.plan, self.data, store, self.tmp / name, store_prefix=PREFIX,
+                                       local_commits=None if local is None else self.tmp / local / "commits")
+
+    def assert_chain(self, first: str, second: str, rule: str) -> list[dict]:
+        """The second launch resumed under ``rule`` above every event seq of the first, with no repeated seq."""
+        a, b = events(self.tmp / first), events(self.tmp / second)
+        self.assertEqual((b[0]["event"], b[0]["rule"], b[0]["step"]), ("resumed", rule, SHORT_STOP))
+        self.assertEqual(b[0]["seq"], a[-1]["seq"] + 1)
+        self.assertEqual(len({e["seq"] for e in a + b}), len(a) + len(b))
+        return a
+
+    def test_unpublished_yield_is_published_first_by_the_next_launch(self):
+        res, store = self.yielded("B1", outage_from=SHORT_STOP)
+        self.assertEqual((res.status, res.reason, res.step), ("YIELDED_UNPUBLISHED", "stop_file", SHORT_STOP))
+        self.assertEqual([p["target_step"] for p in pointer_history(store.inner, self.run_id)], [SHORT_EVERY])
+        local_commit = ckpt.open_commit(self.tmp / "B1" / "commits" / f"{SHORT_STOP:010d}")[0]
+        out = self.resume(store, "C1", "B1")
+        self.assertEqual((out.status, out.step), ("COMPLETED", SHORT_STEPS))
+        self.assertEqual(closure_digest(Path(out.last_commit)), self.u_digest)
+        self.assertEqual(out.parameter_sha256, self.U.parameter_sha256)
+        self.assertFalse((self.tmp / "C1" / "restore").exists())
+        history = pointer_history(store.inner, self.run_id)
+        self.assertEqual([p["target_step"] for p in history], [SHORT_EVERY, SHORT_STOP, 4, SHORT_STEPS])
+        published_first = history[1]
+        self.assertEqual(published_first["prev_version_id"], history[0]["version_id"])
+        files = {k: e["sha256"] for k, e in local_commit.doc["files"].items() if k != "journal"}
+        self.assertEqual({k: v for k, v in published_first["manifest_files"].items() if k != "journal-index"}, files)
+        self.assertIn("journal-index", published_first["manifest_files"])      # P8: chunked journal
+        b_events = self.assert_chain("B1", "C1", "published_newest_local_first")
+        self.assertIn("publish_failed", [e["event"] for e in b_events])
+        self.assertEqual(published_first["writer"]["event_seq"], b_events[-1]["seq"])
+
+    def test_unpublished_first_commit_is_published_create_only(self):
+        res, store = self.yielded("B5", outage_from=0)
+        self.assertEqual((res.status, res.step), ("YIELDED_UNPUBLISHED", SHORT_STOP))
+        with self.assertRaises(ckpt.NoSuchKey):
+            store.get(ckpt.pointer_key(PREFIX, self.run_id))
+        out = self.resume(store, "C5", "B5")
+        self.assertEqual((out.status, out.step, closure_digest(Path(out.last_commit))),
+                         ("COMPLETED", SHORT_STEPS, self.u_digest))
+        history = pointer_history(store.inner, self.run_id)
+        self.assertEqual([(p["target_step"], p["seq"]) for p in history], [(SHORT_STOP, 1), (4, 2), (SHORT_STEPS, 3)])
+        self.assertIsNone(history[0]["prev_version_id"])
+        self.assert_chain("B5", "C5", "published_newest_local_first")
+
+    def test_pointer_target_that_is_the_newest_local_commit_is_continued_in_place(self):
+        res, store = self.yielded("B2", outage_from=None)
+        self.assertEqual((res.status, res.step), ("YIELDED_TO_INTAKE", SHORT_STOP))
+        out = self.resume(store, "C2", "B2")
+        self.assertEqual((out.status, out.step, closure_digest(Path(out.last_commit))),
+                         ("COMPLETED", SHORT_STEPS, self.u_digest))
+        self.assertFalse((self.tmp / "C2" / "restore").exists())
+        self.assertEqual([p["target_step"] for p in pointer_history(store.inner, self.run_id)],
+                         [SHORT_EVERY, SHORT_STOP, 4, SHORT_STEPS])
+        self.assertEqual(events(self.tmp / "C2")[0]["commit_dir"],
+                         str(self.tmp / "B2" / "commits" / f"{SHORT_STOP:010d}"))
+        self.assert_chain("B2", "C2", "target_is_newest_local")
+
+    def test_every_other_combination_stops_before_writing(self):
+        _res, store = self.yielded("B3", outage_from=None)          # pointer at B3's published step 3
+        self.yielded("B4", outage_from=SHORT_STOP)                  # B4's own step 3 never reached any store
+        key = ckpt.pointer_key(PREFIX, self.run_id)
+        versions = store.inner.list_versions(key)
+        cases = {"same-step-other-closure": "B4", "newer-not-a-child": "U"}
+        for what, local in cases.items():
+            with self.subTest(what):
+                with self.assertRaisesRegex(ckpt.CheckpointRefused, "STOP"):
+                    self.resume(store, f"C3-{what}", local)
+                self.assertEqual(store.inner.list_versions(key), versions)
+                self.assertEqual(os.listdir(self.tmp / f"C3-{what}"), [])
+        empty = ckpt.FileVersionedStore(self.tmp / "store-empty")
+        for local in (None, "B3"):                                  # B3's newest commit has a published parent
+            with self.subTest(empty_store_with=local), self.assertRaisesRegex(ckpt.CheckpointRefused, "no resume pointer"):
+                self.resume(empty, f"C3-empty-{local}", local)
+        self.assertEqual(empty.list_versions(key), [])
+        with self.assertRaisesRegex(ValueError, "resume_from_store"):
+            train.resume_from_commit(self.plan, self.data, self.tmp / "B3" / "commits" / f"{SHORT_STOP:010d}",
+                                     self.tmp / "C3-local", store=store)
+        with self.assertRaisesRegex(ckpt.CheckpointRefused, "resume pointer"):
+            train.run(self.plan, self.data, self.tmp / "C3-fresh", store=store, store_prefix=PREFIX)
+        self.assertEqual(store.inner.list_versions(key), versions)
+
+
+if __name__ == "__main__":
+    unittest.main()

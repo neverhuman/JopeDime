@@ -1,0 +1,116 @@
+"""Loader-side guards for tranche-wise S1 training data (owner rulings DL-TRAINING-PATH, S1-RAW-NOW; LEAK RULE).
+
+The trainer never reads S1 outputs directly: the S1-tail builder emits per-context shards and tranche manifests, and
+a tranche loader turns them into ``sampler.Corpus`` inputs. Every path and record it reads passes these guards:
+
+- ``assert_label_path``: S1 outer-test outputs (``s1-prod/outer-test/``, scored after selection, tagged
+  unreviewed_adapter) are never read by s1_tail, the P4/P5 corpus or the trainer. Any path whose resolved form
+  contains a denied part is refused, before it is opened.
+- ``assert_inner_cv_record``: training labels come from S1 inner-CV selection only: a ``jope.s1-evaluation/v1``
+  record under the two-fold protocol whose folds are all ``inner_cv`` (indices exactly {0, 1} when completed), and
+  no key anywhere whose name mentions outer/test/holdout/official carries a value.
+- ``admit_contexts``: every context row passes ``dltrain.admission.Admission`` (fail closed: sealed_excluded and
+  heldout refused, denylisted views refused, unknown assignment refused); dev is admitted for selection/validation
+  only and must carry split_role 'dev'; train contexts must be 'train_fit' or 'diag'.
+"""
+from __future__ import annotations
+
+import copy
+import re
+from pathlib import Path
+from typing import Iterable, Mapping
+
+from dltrain import admission as admission_mod
+
+DENIED_LABEL_PATH_PARTS = ("s1-prod/outer-test",)
+S1_EVALUATION_SCHEMA = "jope.s1-evaluation/v1"
+S1_FOLD_PROTOCOL = "jope.s1-two-fold/v1"
+INNER_CV_FOLDS = 2
+_LEAKY_KEY = re.compile(r"(?i)outer|test|holdout|official")
+TRAIN_ASSIGNMENTS = ("train_fit", "train_nonpool")
+TRAIN_SPLIT_ROLES = ("train_fit", "diag")
+ROW_KEYS = ("context_sha256", "view_id", "assignment", "split_role", "family_id")
+
+
+class LabelSourceRefused(RuntimeError):
+    """A label path or record is not an S1 inner-CV selection source."""
+
+
+def assert_label_path(path) -> Path:
+    """Refuse any path (lexical or resolved) containing a denied part; returns the resolved path."""
+    p = Path(path)
+    for form in (str(p), str(Path(p).absolute()), str(p.resolve())):
+        norm = form.replace("\\", "/")
+        for part in DENIED_LABEL_PATH_PARTS:
+            if part in norm:
+                raise LabelSourceRefused(f"label source {form} is under a denied path ({part}): S1 outer-test outputs "
+                                         "are never read by the corpus or the trainer")
+    return p.resolve()
+
+
+def _leaky_keys(obj, where: str = "") -> list[str]:
+    found = []
+    if isinstance(obj, Mapping):
+        for k, v in obj.items():
+            here = f"{where}/{k}"
+            if isinstance(k, str) and _LEAKY_KEY.search(k) and v is not None:
+                found.append(here)
+            found.extend(_leaky_keys(v, here))
+    elif isinstance(obj, (list, tuple)):
+        for i, v in enumerate(obj):
+            found.extend(_leaky_keys(v, f"{where}/{i}"))
+    return found
+
+
+def assert_inner_cv_record(rec: Mapping) -> Mapping:
+    """Refuse anything but an S1 inner-CV selection record (see module docstring); returns ``rec``."""
+    if not isinstance(rec, Mapping):
+        raise LabelSourceRefused("an S1 record is a JSON object")
+    if rec.get("schema") != S1_EVALUATION_SCHEMA:
+        raise LabelSourceRefused(f"record schema {rec.get('schema')!r} is not {S1_EVALUATION_SCHEMA}")
+    if rec.get("fold_protocol") != S1_FOLD_PROTOCOL:
+        raise LabelSourceRefused(f"fold_protocol {rec.get('fold_protocol')!r} is not {S1_FOLD_PROTOCOL}")
+    if rec.get("inner_cv_folds") != INNER_CV_FOLDS or isinstance(rec.get("inner_cv_folds"), bool):
+        raise LabelSourceRefused(f"inner_cv_folds must be {INNER_CV_FOLDS}, got {rec.get('inner_cv_folds')!r}")
+    leaky = _leaky_keys(rec)
+    if leaky:
+        raise LabelSourceRefused(f"record carries outer-test/holdout fields {leaky[:5]}: never a training label")
+    folds = rec.get("inner_cv") or []
+    if not isinstance(folds, list):
+        raise LabelSourceRefused("inner_cv must be a list")
+    for f in folds:
+        if not isinstance(f, Mapping) or f.get("kind") != "inner_cv":
+            raise LabelSourceRefused(f"fold kind {f.get('kind') if isinstance(f, Mapping) else f!r} is not inner_cv")
+    if rec.get("status") == "completed":
+        idx = sorted(f.get("index") for f in folds)
+        if idx != list(range(INNER_CV_FOLDS)):
+            raise LabelSourceRefused(f"a completed record needs inner folds {list(range(INNER_CV_FOLDS))}, got {idx}")
+        for f in folds:
+            for block in ("metrics", "baseline_metrics"):
+                if not isinstance(f.get(block), Mapping) or "rmse" not in f[block]:
+                    raise LabelSourceRefused(f"inner fold {f.get('index')} lacks {block}.rmse")
+    return rec
+
+
+def admit_contexts(rows: Iterable[Mapping], admission: admission_mod.Admission) -> list[dict]:
+    """Admit every context row or refuse the whole tranche (fail closed). ``admission`` should be built with
+    purpose='selection' so dev passes ``Admission.check``; dev rows must then carry split_role 'dev' (selection and
+    validation only, never a training label), train rows 'train_fit' or 'diag'. Returns row copies in input order."""
+    out = []
+    for row in rows:
+        missing = [k for k in ROW_KEYS if k not in row]
+        if missing:
+            raise admission_mod.AdmissionRefused(f"context row lacks {missing}")
+        a = admission.check(view_id=row["view_id"], assignment=row["assignment"])
+        if a == "dev":
+            if row["split_role"] != "dev":
+                raise admission_mod.AdmissionRefused(f"dev context {row['context_sha256']} claims split_role "
+                                                     f"{row['split_role']!r}; dev is for selection only")
+        elif a in TRAIN_ASSIGNMENTS:
+            if row["split_role"] not in TRAIN_SPLIT_ROLES:
+                raise admission_mod.AdmissionRefused(f"train context {row['context_sha256']} has split_role "
+                                                     f"{row['split_role']!r}")
+        else:
+            raise admission_mod.AdmissionRefused(f"{row['view_id']}: assignment {a!r} is not admitted")
+        out.append(copy.deepcopy(dict(row)))
+    return out

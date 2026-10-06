@@ -1,0 +1,1003 @@
+"""PLAN §5 P8 gate tests (dltrain.gpu_gate). CPU-only, no network, no real nvidia-smi or systemctl call, CUDA never touched.
+
+Every source is a fixture snapshot written under $TMPDIR (required; a /tmp TMPDIR is refused, and nothing is cleaned up):
+queue-status.json, cpu-admission.json, nvidia-smi CSV output, /proc/locks text and systemctl output. Lock and unit
+injections use a lane-owned dummy lock file and the lane-owned glob `jopedime-dltrain-p8test-gpu-*`; the real TabPFN lock and
+the jopedime-incoming-* namespace are never used. Two tests read the real /proc/locks after taking a lock on the lane-owned
+dummy file, and one starts a CPU-only child process to show the watchdog's default hard exit (os._exit(75)).
+"""
+import ast
+import contextlib
+import fcntl
+import fnmatch
+import hashlib
+import io
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import unittest
+from pathlib import Path
+
+from dltrain import gpu_gate as gg
+
+REAL_LOCK = Path("/home/ubuntu/scratch/jopedime-regression-research-2k-incoming-intake-v1/tabpfn-gpu.lock")
+REAL_Q = Path("/home/ubuntu/scratch/jopedime-regression-research-2k-incoming-intake-v1/queue-status.json")
+REAL_C = Path("/home/ubuntu/scratch/jopedime-regression-research-2k-per-fold-hwm-20261001/gp/cpu-admission.json")
+UNIT_GLOB = "jopedime-dltrain-p8test-gpu-*"
+LANE_UNIT = "jopedime-dltrain-p8test-gpu-0a1b2c.service"
+HOST = "xbabe2"
+S = 10**9
+NOW = 1_791_282_900 * S + 123_456_789
+SLACK_S = 1.0          # scheduling slack under the test scope's CPUQuota/nice
+CLEAN_GPU = "0, 24576, 266, 23859, 0, 32"
+
+
+_RUN_DIR: list[Path] = []
+
+
+def tmp_root() -> Path:
+    """One directory per test run under $TMPDIR, holding every fixture of that run (left in place)."""
+    if not _RUN_DIR:
+        t = os.environ.get("TMPDIR")
+        if not t:
+            raise RuntimeError("TMPDIR must be set; these tests never use /tmp")
+        p = Path(t).resolve()
+        if p == Path("/tmp") or Path("/tmp") in p.parents:
+            raise RuntimeError(f"TMPDIR {p} is under /tmp; refused")
+        p.mkdir(parents=True, exist_ok=True)
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        _RUN_DIR.append(Path(tempfile.mkdtemp(prefix=f"p8gate-run-{stamp}-", dir=p)))
+    return _RUN_DIR[0]
+
+
+def codes(v) -> list[str]:
+    reasons = v.reasons if isinstance(v, gg.Verdict) else v
+    return [r.split(":", 1)[0] for r in reasons]
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+class Fx:
+    """One fixture directory with every gate source as a snapshot, plus a fake run_cmd."""
+
+    def __init__(self, name: str, now_ns: int = NOW):
+        self.dir = Path(tempfile.mkdtemp(prefix=f"p8gate-{name}-", dir=tmp_root()))
+        self.now_ns = now_ns
+        self.q, self.c = self.dir / "queue-status.json", self.dir / "cpu-admission.json"
+        self.lock, self.proc_locks = self.dir / "lane-dummy-tabpfn-gpu.lock", self.dir / "proc-locks.txt"
+        self.lock.write_bytes(b"")
+        self.units: list[tuple[str, str]] = [("jopedime-dltrain-p8test-gpu-old.service", "failed"),
+                                             ("jopedime-dltrain-p8test-gpu-done.service", "inactive"),
+                                             ("jopedime-incoming-gpu-not-lane.service", "active")]   # outside the glob
+        self.gpu_lines = [CLEAN_GPU]
+        self.apps_lines: list[str] = []
+        self.fail: set[str] = set()
+        self.calls: list[list[str]] = []
+        self.outputs: dict[str, str] = {}
+        self.write_q()
+        self.write_c()
+        self.write_locks()
+
+    # ---- snapshots
+    def queue_doc(self, age_s=5.0, poll_age_s=600.0, states=None, items=None):
+        if states is None:
+            states = {"complete": 582, "frozen": 570, "gp_recovery_required": 100, "rejected": 3, "retired": 73}
+        if items is None:
+            items = [{"canonical": "c" * 64, "dataset": "d" * 16, "id": f"{i:064x}", "reason": '{"exit_code": 0}',
+                      "sample": "s" * 64, "state": s} for i, s in enumerate(["complete", "retired", "rejected",
+                                                                              "gp_recovery_required", "frozen"])]
+        return {"schema": gg.QUEUE_SCHEMA, "utc_ns_text": str(self.now_ns - int(age_s * S)),
+                "registry": {"states": states, "items": items,
+                             "poll": {"utc_ns": str(self.now_ns - int(poll_age_s * S)), "seq": 320, "status": "complete",
+                                      "payload": '{"errors":[]}'}},
+                "gp_active": [], "gpu_nodes": ["xbabe1", "xbabe2", "xbabe3"], "local_capacity": 640,
+                "aws_lambda_calls": 0, "original_separate": True}
+
+    def _put(self, path: Path, data: bytes):
+        tmp = path.with_name(path.name + ".part")
+        tmp.write_bytes(data)
+        os.replace(tmp, path)
+
+    def write_q(self, doc=None, raw: bytes | None = None, **kw):
+        self._put(self.q, raw if raw is not None else json.dumps(doc if doc is not None else self.queue_doc(**kw)).encode())
+
+    def cpu_doc(self, age_s=5.0, admit=True, rolling=29.2):
+        return {"admit": admit, "sampled_unix_seconds": self.now_ns / 1e9 - age_s,
+                "nodes": {HOST: {"cpu_busy_percent": 27.8, "cpu_rolling_percent": rolling, "disk_free_bytes": 5 * 10**11},
+                          "xbabe1": {"cpu_rolling_percent": 99.0}}}
+
+    def write_c(self, doc=None, raw: bytes | None = None, **kw):
+        self._put(self.c, raw if raw is not None else json.dumps(doc if doc is not None else self.cpu_doc(**kw)).encode())
+
+    def at(self, t_ns: int, rolling=29.2, admit=True, c_age_s=5.0, **qkw):
+        """Advance the injected clock and rewrite fresh Q and C snapshots for it."""
+        self.now_ns = t_ns
+        self.write_q(**qkw)
+        self.write_c(rolling=rolling, admit=admit, age_s=c_age_s)
+        return t_ns
+
+    def lock_id(self) -> str:
+        st = os.stat(self.lock)
+        return f"{os.major(st.st_dev):02x}:{os.minor(st.st_dev):02x}:{st.st_ino}"
+
+    def write_locks(self, held=False, waiter=False, extra: list[str] | None = None):
+        dev, ino = self.lock_id().rsplit(":", 1)
+        lines = ["1: FLOCK  ADVISORY  WRITE 3196799 103:07:191829370 0 EOF",
+                 "2: POSIX  ADVISORY  READ 3758465 103:07:84411533 128 128",
+                 "3: OFDLCK ADVISORY  READ  -1 00:d7:11461 0 EOF",
+                 f"4: FLOCK  ADVISORY  WRITE 999 {dev}:{int(ino) + 1} 0 EOF"]          # same device, neighbouring inode
+        if held:
+            lines.append(f"5: FLOCK  ADVISORY  WRITE 4242 {self.lock_id()} 0 EOF")
+        if waiter:
+            lines.append(f"5: -> FLOCK  ADVISORY  WRITE 4243 {self.lock_id()} 0 EOF")
+        lines += extra or []
+        self._put(self.proc_locks, ("\n".join(lines) + "\n").encode())
+
+    # ---- fake commands
+    def run_cmd(self, argv):
+        self.calls.append(list(argv))
+        if argv[0] == "systemctl":
+            if argv[:3] != ["systemctl", "--user", "list-units"] or not argv[3].startswith("jopedime-dltrain-p8test-"):
+                raise AssertionError(f"fixture refuses a non-lane unit query: {argv}")
+            if "systemctl" in self.fail:
+                raise gg.CommandFailed("systemctl exited 1")
+            states = next(a for a in argv if a.startswith("--state=")).split("=", 1)[1].split(",")
+            out = "".join(f"{n} loaded {s} running P8 lane test unit\n" for n, s in self.units
+                          if fnmatch.fnmatchcase(n, argv[3]) and s in states)
+        elif argv[0] == "nvidia-smi" and argv[1].startswith("--query-gpu="):
+            if "gpu" in self.fail:
+                raise gg.CommandFailed("nvidia-smi exited 9")
+            out = "".join(line + "\n" for line in self.gpu_lines)
+        elif argv[0] == "nvidia-smi" and argv[1].startswith("--query-compute-apps="):
+            if "apps" in self.fail:
+                raise gg.CommandFailed("nvidia-smi exited 9")
+            out = "".join(line + "\n" for line in self.apps_lines)
+        else:
+            raise AssertionError(f"unexpected command {argv}")
+        self.outputs[argv[1] if argv[0] == "nvidia-smi" else "systemctl"] = out
+        return out
+
+    def sources(self, **kw) -> gg.GateSources:
+        base = dict(queue_status=self.q, cpu_admission=self.c, lock_path=self.lock, proc_locks=self.proc_locks,
+                    unit_glob=UNIT_GLOB, host=HOST, disk_path=self.dir, disk_floor_bytes=1, run_cmd=self.run_cmd)
+        base.update(kw)
+        return gg.GateSources(**base)
+
+    def admit(self, src=None, **kw) -> gg.Verdict:
+        return gg.admission_probe(src or self.sources(), now_ns=self.now_ns, **kw)
+
+    def cont(self, state, self_pid=4242, src=None, **kw) -> gg.Verdict:
+        return gg.continuation_probe(self_pid, src or self.sources(), state=state, now_ns=self.now_ns, **kw)
+
+
+class Constants(unittest.TestCase):
+    def test_exact_sources_and_thresholds(self):
+        d = gg.DEFAULT_SOURCES
+        self.assertEqual((d.queue_status, d.cpu_admission, d.lock_path, d.proc_locks), (REAL_Q, REAL_C, REAL_LOCK, Path("/proc/locks")))
+        self.assertEqual((d.unit_glob, d.host, d.disk_path, d.disk_floor_bytes, d.run_cmd),
+                         ("jopedime-incoming-gpu-*", None, Path("/"), 300_000_000_000, None))
+        self.assertEqual(gg.BLOCKING_STATES, {"queued", "discovered", "validated", "benchmarking", "benchmark_recovery_required"})
+        self.assertEqual(gg.KNOWN_STATES, {"benchmarked", "benchmarking", "complete", "evolving", "frozen", "gp_recovery_required",
+                                           "queued", "rejected", "retired", "benchmark_recovery_required", "discovered", "validated"})
+        self.assertEqual(set(gg.DECISIONS), {"ADMIT", "REFUSE", "CONTINUE", "PAUSE", "YIELD", "STOP", "ABORT_GATE"})
+        argv = gg.unit_argv("x-*")
+        self.assertEqual(argv[:4], ["systemctl", "--user", "list-units", "x-*"])
+        self.assertIn("active", next(a for a in argv if a.startswith("--state=")).split("=", 1)[1].split(","))
+        self.assertIn("--no-legend", argv)
+        self.assertIn("--plain", argv)
+        self.assertEqual(gg.GPU_QUERY[1], "--query-gpu=index,memory.total,memory.used,memory.free,utilization.gpu,temperature.gpu")
+        self.assertEqual(gg.APPS_QUERY[1], "--query-compute-apps=pid,process_name,used_memory")
+
+    def test_module_is_stdlib_only_and_never_touches_locks_or_other_processes(self):
+        tree = ast.parse(Path(gg.__file__).read_text())
+        for node in ast.walk(tree):                                    # code only: drop every docstring
+            body = getattr(node, "body", None)
+            if (isinstance(body, list) and body and isinstance(body[0], ast.Expr)
+                    and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str)):
+                node.body = body[1:] or [ast.Pass()]
+        code = ast.unparse(tree)
+        imported = {a.name.split(".")[0] for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom))
+                    for a in (n.names if isinstance(n, ast.Import) else [ast.alias(n.module or "")])}
+        self.assertLessEqual(imported, {"argparse", "hashlib", "json", "math", "os", "re", "socket", "subprocess", "sys",
+                                        "threading", "time", "dataclasses", "pathlib", "typing"})
+        for banned in ("torch", "cuda", "CUDA", "fcntl", "flock", "lockf", "cmdline", "environ'", "/proc/self", "pgrep",
+                       "'ps'", "kill("):
+            self.assertFalse(banned in code, f"gpu_gate code contains {banned!r}")
+        self.assertEqual(code.count("/proc/"), code.count("/proc/locks"))
+        root = Path(gg.__file__).resolve().parents[1]
+        r = subprocess.run([sys.executable, "-c", "import sys, json, dltrain.gpu_gate; print(json.dumps(sorted("
+                            "m for m in sys.modules if m.split('.')[0] in ('torch', 'numpy', 'pynvml'))))"],
+                           env=child_env(root), capture_output=True, text=True, timeout=60, cwd=root)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout), [])
+
+    def test_default_run_cmd(self):
+        self.assertEqual(gg._default_run_cmd([sys.executable, "-c", "print('ok')"]), "ok\n")
+        with self.assertRaises(gg.CommandFailed):
+            gg._default_run_cmd([sys.executable, "-c", "raise SystemExit(4)"])
+
+
+class Admission(unittest.TestCase):
+    def setUp(self):
+        self.fx = Fx(self._testMethodName[5:30])
+
+    def assertRefused(self, v, code):
+        self.assertEqual(v.decision, gg.REFUSE, v.reasons)
+        self.assertIn(code, codes(v), v.reasons)
+
+    def assertAdmitted(self, v):
+        self.assertEqual((v.decision, v.reasons), (gg.ADMIT, ()), v.reasons)
+
+    def test_admit_path_and_observations(self):
+        fx = self.fx
+        v = fx.admit()
+        self.assertAdmitted(v)
+        self.assertTrue(v.ok)
+        self.assertEqual((v.mode, v.utc_us), ("admit", NOW // 1000))
+        o = v.observations
+        self.assertEqual(o["sources"]["queue_status"]["sha256"], sha(fx.q.read_bytes()))
+        self.assertEqual(o["sources"]["cpu_admission"]["sha256"], sha(fx.c.read_bytes()))
+        self.assertEqual(o["sources"]["proc_locks"]["sha256"], sha(fx.proc_locks.read_bytes()))
+        self.assertEqual(o["sources"]["tabpfn_lock"]["id"], fx.lock_id())
+        self.assertFalse(o["sources"]["tabpfn_lock"]["held"])
+        self.assertEqual(o["commands"]["units"]["stdout_sha256"], sha(fx.outputs["systemctl"].encode()))
+        self.assertEqual(o["commands"]["gpu"]["stdout_sha256"], sha(fx.outputs[gg.GPU_QUERY[1]].encode()))
+        self.assertEqual(o["commands"]["compute_apps"]["stdout_sha256"], sha(fx.outputs[gg.APPS_QUERY[1]].encode()))
+        self.assertEqual(o["intake_signals"], [])
+        self.assertEqual(o["gate_sha256"], sha(Path(gg.__file__).read_bytes()))
+        self.assertEqual(o["sources"]["cpu_admission"]["cpu_rolling_percent"], 29.2)
+        self.assertEqual([c[3] for c in fx.calls if c[0] == "systemctl"], [UNIT_GLOB])
+        doc = json.loads(v.to_json())
+        self.assertEqual((doc["schema"], doc["decision"], doc["reasons"]), (gg.VERDICT_SCHEMA, "ADMIT", []))
+
+    def test_fixture_never_names_real_lock_or_incoming_units(self):
+        s = self.fx.sources()
+        self.assertNotEqual(s.lock_path.resolve(), REAL_LOCK)
+        self.assertFalse(s.unit_glob.startswith("jopedime-incoming"))
+        self.assertTrue(str(s.lock_path).startswith(str(tmp_root())))
+
+    # ---- lock
+    def test_refuse_lock_held_fixture_snapshot(self):
+        self.fx.write_locks(held=True)
+        v = self.fx.admit()
+        self.assertRefused(v, "tabpfn_lock_held")
+        self.assertTrue(v.observations["sources"]["tabpfn_lock"]["held"])
+        self.assertEqual(v.observations["intake_signals"], ["tabpfn_lock_held:1"])
+
+    def test_refuse_lock_waiter_line(self):
+        self.fx.write_locks(waiter=True)
+        self.assertRefused(self.fx.admit(), "tabpfn_lock_held")
+
+    def test_refuse_lock_held_real_proc_locks(self):
+        fx = self.fx
+        src = fx.sources(proc_locks=Path("/proc/locks"))
+        self.assertAdmitted(fx.admit(src))
+        for how in ("flock", "lockf"):
+            with self.subTest(how=how), open(fx.lock, "r+b") as fh:
+                if how == "flock":
+                    fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                else:
+                    fcntl.lockf(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                self.assertRefused(fx.admit(src), "tabpfn_lock_held")
+            self.assertAdmitted(fx.admit(src))
+
+    def test_lock_is_only_stat_ed_never_opened(self):
+        fx = self.fx
+        fx.write_locks(held=True)
+        os.chmod(fx.lock, 0)
+        try:
+            v = fx.admit()
+        finally:
+            os.chmod(fx.lock, 0o664)
+        self.assertRefused(v, "tabpfn_lock_held")
+        self.assertNotIn("lock_path_unreadable", codes(v))
+
+    def test_refuse_lock_path_or_proc_locks_unreadable(self):
+        self.assertRefused(self.fx.admit(self.fx.sources(lock_path=self.fx.dir / "absent.lock")), "lock_path_unreadable")
+        self.assertRefused(self.fx.admit(self.fx.sources(proc_locks=self.fx.dir / "absent-locks")), "proc_locks_unreadable")
+        self.fx.write_locks(extra=["6: GARBLED LINE WITHOUT AN INODE"])
+        self.assertRefused(self.fx.admit(), "proc_locks_unparsable")
+
+    # ---- units
+    def test_refuse_active_lane_unit(self):
+        self.assertAdmitted(self.fx.admit())
+        self.fx.units.append((LANE_UNIT, "active"))
+        v = self.fx.admit()
+        self.assertRefused(v, "intake_unit_active")
+        self.assertIn(f"intake_unit_active:{LANE_UNIT}", v.reasons)
+        self.assertEqual(v.observations["commands"]["units"]["units"], [LANE_UNIT])
+
+    def test_refuse_activating_unit_and_unit_query_failure(self):
+        self.fx.units.append((LANE_UNIT, "activating"))
+        self.assertRefused(self.fx.admit(), "intake_unit_active")
+        self.fx.units.pop()
+        self.fx.fail.add("systemctl")
+        self.assertRefused(self.fx.admit(), "unit_query_failed")
+
+    # ---- registry
+    def test_refuse_benchmarking_item(self):
+        doc = self.fx.queue_doc()
+        doc["registry"]["items"].append({"id": "f" * 64, "state": "benchmarking", "reason": '{"node": "xbabe2"}'})
+        self.fx.write_q(doc)
+        v = self.fx.admit()
+        self.assertRefused(v, "benchmarking_items")
+        self.assertEqual(v.observations["sources"]["queue_status"]["benchmarking_item_ids"], ["f" * 16])
+
+    def test_refuse_blocking_item_states(self):
+        for s in sorted(gg.BLOCKING_STATES - {"benchmarking"}):
+            with self.subTest(state=s):
+                doc = self.fx.queue_doc()
+                doc["registry"]["items"].append({"id": "e" * 64, "state": s})
+                self.fx.write_q(doc)
+                v = self.fx.admit()
+                self.assertRefused(v, "blocking_items")
+                self.assertIn(f"blocking_items:{s}=1", v.reasons)
+
+    def test_refuse_each_blocking_state_count(self):
+        for s in sorted(gg.BLOCKING_STATES):
+            with self.subTest(state=s):
+                self.fx.write_q(states={"complete": 3, s: 2})
+                v = self.fx.admit()
+                self.assertRefused(v, "intake_state")
+                self.assertIn(f"intake_state:{s}=2", v.reasons)
+                self.fx.write_q(states={"complete": 3, s: 0})        # sparse counts may carry a zero
+                self.assertAdmitted(self.fx.admit())
+
+    def test_queued_alone(self):
+        self.fx.write_q(states={"queued": 1})
+        self.assertEqual(self.fx.admit().reasons, ("intake_state:queued=1",))
+
+    def test_nonblocking_states_admit(self):
+        self.fx.write_q(states={s: 7 for s in gg.KNOWN_STATES - gg.BLOCKING_STATES})
+        self.assertAdmitted(self.fx.admit())
+        self.fx.write_q(states={})
+        self.assertAdmitted(self.fx.admit())
+
+    def test_refuse_unknown_state_key(self):
+        self.fx.write_q(states={"complete": 1, "gpu_active": 0})
+        v = self.fx.admit()
+        self.assertRefused(v, "unknown_state_key")
+        self.assertIn("unknown_state_key:gpu_active", v.reasons)
+
+    def test_refuse_unknown_item_state(self):
+        doc = self.fx.queue_doc()
+        doc["registry"]["items"].append({"id": "1", "state": "warming"})
+        self.fx.write_q(doc)
+        self.assertRefused(self.fx.admit(), "unknown_item_state")
+
+    def test_refuse_missing_or_malformed_registry_parts(self):
+        cases = {
+            "queue_status_missing": [lambda d: d["registry"].pop("states"), lambda d: d["registry"].pop("items"),
+                                     lambda d: d["registry"].pop("poll"), lambda d: d["registry"]["poll"].pop("utc_ns"),
+                                     lambda d: d.pop("registry"), lambda d: d.pop("utc_ns_text"), lambda d: d.pop("schema")],
+            "queue_status_malformed": [lambda d: d["registry"].__setitem__("states", [["complete", 1]]),
+                                       lambda d: d["registry"].__setitem__("items", {"a": 1}),
+                                       lambda d: d["registry"]["states"].__setitem__("complete", True),
+                                       lambda d: d["registry"]["states"].__setitem__("complete", -1),
+                                       lambda d: d["registry"]["states"].__setitem__("complete", "582"),
+                                       lambda d: d["registry"]["items"].append({"id": "x"}),
+                                       lambda d: d.__setitem__("utc_ns_text", "17912829e9"),
+                                       lambda d: d.__setitem__("utc_ns_text", 1.5e18),
+                                       lambda d: d["registry"]["poll"].__setitem__("utc_ns", None)],
+            "queue_status_schema": [lambda d: d.__setitem__("schema", "jope.incoming-queue-status/v2")],
+        }
+        for code, muts in cases.items():
+            for i, mut in enumerate(muts):
+                with self.subTest(code=code, i=i):
+                    doc = self.fx.queue_doc()
+                    mut(doc)
+                    self.fx.write_q(doc)
+                    self.assertRefused(self.fx.admit(), code)
+
+    def test_refuse_unreadable_q(self):
+        for raw in (b"{not json", b"[1, 2]", b'{"schema": NaN}', b"\xff\xfe"):
+            with self.subTest(raw=raw):
+                self.fx.write_q(raw=raw)
+                v = self.fx.admit()
+                self.assertEqual(v.decision, gg.REFUSE)
+                self.assertTrue({"queue_status_unreadable", "queue_status_malformed"} & set(codes(v)), v.reasons)
+        self.assertRefused(self.fx.admit(self.fx.sources(queue_status=self.fx.dir / "absent.json")), "queue_status_unreadable")
+
+    def test_q_age_boundaries(self):
+        self.fx.write_q(age_s=45.0)
+        self.assertRefused(self.fx.admit(), "queue_status_stale")
+        doc = self.fx.queue_doc()
+        doc["utc_ns_text"] = str(NOW - 45 * S + 1)
+        self.fx.write_q(doc)
+        self.assertAdmitted(self.fx.admit())
+        doc["utc_ns_text"] = str(NOW + 1)
+        self.fx.write_q(doc)
+        self.assertRefused(self.fx.admit(), "queue_status_future")
+        doc["utc_ns_text"] = str(NOW)
+        self.fx.write_q(doc)
+        self.assertAdmitted(self.fx.admit())
+
+    def test_poll_age_boundaries(self):
+        self.fx.write_q(poll_age_s=1800.0)
+        self.assertRefused(self.fx.admit(), "registry_poll_stale")
+        doc = self.fx.queue_doc()
+        doc["registry"]["poll"]["utc_ns"] = str(NOW - 1800 * S + 1)
+        self.fx.write_q(doc)
+        self.assertAdmitted(self.fx.admit())
+        doc["registry"]["poll"]["utc_ns"] = str(NOW + S)
+        self.fx.write_q(doc)
+        self.assertRefused(self.fx.admit(), "registry_poll_future")
+        doc["registry"]["poll"]["utc_ns"] = NOW - 60 * S          # an integer is accepted as well as digit text
+        self.fx.write_q(doc)
+        self.assertAdmitted(self.fx.admit())
+
+    # ---- GPU
+    def test_refuse_foreign_compute_app_and_self_pid_excluded(self):
+        self.fx.apps_lines = ["31337, /home/ubuntu/JopeDime/python/.venv/bin/python3, 256"]
+        v = self.fx.admit()
+        self.assertRefused(v, "foreign_compute_app")
+        self.assertEqual(v.observations["commands"]["compute_apps"]["foreign_pids"], [31337])
+        self.assertEqual(v.observations["intake_signals"], [])
+        self.assertAdmitted(self.fx.admit(self_pids=(31337,)))
+        self.fx.apps_lines.append("31338, worker, with, comma, 512")
+        self.assertEqual(self.fx.admit(self_pids=(31337,)).reasons, ("foreign_compute_app:31338",))
+
+    def test_compute_apps_edge_output(self):
+        self.fx.apps_lines = ["No running processes found"]
+        self.assertAdmitted(self.fx.admit())
+        self.fx.apps_lines = ["[N/A], python3, 10"]
+        self.assertRefused(self.fx.admit(), "compute_apps_unparsable")
+        self.fx.apps_lines = []
+        self.fx.fail.add("apps")
+        self.assertRefused(self.fx.admit(), "compute_apps_query_failed")
+
+    def test_refuse_low_free_memory(self):
+        self.fx.gpu_lines = ["0, 24576, 4097, 20479, 0, 32"]
+        v = self.fx.admit()
+        self.assertEqual(v.reasons, ("gpu_free_low:0=20479MiB",))
+        self.fx.gpu_lines = ["0, 24576, 4096, 20480, 0, 32"]
+        self.assertAdmitted(self.fx.admit())
+
+    def test_refuse_utilisation(self):
+        self.fx.gpu_lines = ["0, 24576, 266, 23859, 5, 32"]
+        self.assertEqual(codes(self.fx.admit()), ["gpu_util_high"])
+        self.fx.gpu_lines = ["0, 24576, 266, 23859, 4, 32"]
+        self.assertAdmitted(self.fx.admit())
+
+    def test_refuse_temperature(self):
+        self.fx.gpu_lines = ["0, 24576, 266, 23859, 0, 80"]
+        self.assertEqual(codes(self.fx.admit()), ["gpu_temp_high"])
+        self.fx.gpu_lines = ["0, 24576, 266, 23859, 0, 79"]
+        self.assertAdmitted(self.fx.admit())
+        self.fx.gpu_lines = [CLEAN_GPU, "1, 24576, 266, 23859, 0, 81"]       # every reported GPU must pass
+        self.assertEqual(self.fx.admit().reasons, ("gpu_temp_high:1=81C",))
+
+    def test_refuse_unparsable_missing_or_failed_gpu_query(self):
+        for lines, code in ((["0, 24576, 266, 23859, [N/A], 32"], "gpu_query_unparsable"),
+                            (["0, 24576, 266, 23859, 0"], "gpu_query_unparsable"),
+                            (["0, 24576, 266, 23859, 0, nan"], "gpu_query_unparsable"),
+                            ([], "no_gpu")):
+            with self.subTest(lines=lines):
+                self.fx.gpu_lines = lines
+                self.assertRefused(self.fx.admit(), code)
+        self.fx.gpu_lines = [CLEAN_GPU]
+        self.fx.fail.add("gpu")
+        self.assertRefused(self.fx.admit(), "gpu_query_failed")
+
+    # ---- CPU guard
+    def test_refuse_cpu_admission_stale_future_or_unreadable(self):
+        self.fx.write_c(age_s=45.5)
+        self.assertRefused(self.fx.admit(), "cpu_admission_stale")
+        self.fx.write_c(age_s=44.5)
+        self.assertAdmitted(self.fx.admit())
+        self.fx.write_c(age_s=-6.0)
+        self.assertRefused(self.fx.admit(), "cpu_admission_future")
+        self.fx.write_c(age_s=-4.0)
+        self.assertAdmitted(self.fx.admit())
+        self.assertRefused(self.fx.admit(self.fx.sources(cpu_admission=self.fx.dir / "absent.json")), "cpu_admission_unreadable")
+        self.fx.write_c(raw=b'{"admit": true, "sampled_unix_seconds": NaN}')
+        self.assertRefused(self.fx.admit(), "cpu_admission_unreadable")
+
+    def test_refuse_admit_false(self):
+        for admit in (False, "true", 1, None):
+            with self.subTest(admit=admit):
+                self.fx.write_c(admit=admit)
+                self.assertEqual(codes(self.fx.admit()), ["cpu_admit_false"])
+
+    def test_refuse_rolling_75(self):
+        self.fx.write_c(rolling=75.0)
+        self.assertEqual(self.fx.admit().reasons, ("cpu_rolling_high:75.00",))
+        self.fx.write_c(rolling=74.99)
+        self.assertAdmitted(self.fx.admit())
+
+    def test_refuse_missing_cpu_keys_and_host(self):
+        for drop, code in (("admit", "cpu_admission_missing"), ("sampled_unix_seconds", "cpu_admission_missing"),
+                           ("nodes", "cpu_admission_missing")):
+            with self.subTest(drop=drop):
+                doc = self.fx.cpu_doc()
+                doc.pop(drop)
+                self.fx.write_c(doc)
+                self.assertRefused(self.fx.admit(), code)
+        doc = self.fx.cpu_doc()
+        doc["nodes"][HOST].pop("cpu_rolling_percent")
+        self.fx.write_c(doc)
+        self.assertIn(f"cpu_admission_missing:nodes.{HOST}.cpu_rolling_percent", self.fx.admit().reasons)
+        doc["nodes"][HOST]["cpu_rolling_percent"] = "29"
+        self.fx.write_c(doc)
+        self.assertRefused(self.fx.admit(), "cpu_admission_malformed")
+        self.fx.write_c()
+        self.assertIn("cpu_admission_missing:nodes.xbabe9", self.fx.admit(self.fx.sources(host="xbabe9")).reasons)
+
+    # ---- disk and accumulation
+    def test_refuse_disk_floor(self):
+        v = self.fx.admit(self.fx.sources(disk_floor_bytes=10**30))
+        self.assertEqual(codes(v), ["disk_below_floor"])
+        self.assertLess(v.observations["disk"]["free_bytes"], 10**30)
+        self.assertRefused(self.fx.admit(self.fx.sources(disk_path=self.fx.dir / "absent")), "disk_unreadable")
+
+    def test_every_reason_is_listed(self):
+        self.fx.write_q(states={"queued": 4})
+        self.fx.write_locks(held=True)
+        self.fx.apps_lines = ["77, other, 1"]
+        self.fx.gpu_lines = ["0, 24576, 266, 23859, 9, 90"]
+        self.fx.write_c(admit=False, rolling=99.0)
+        v = self.fx.admit(self.fx.sources(disk_floor_bytes=10**30))
+        self.assertEqual(set(codes(v)), {"tabpfn_lock_held", "intake_state", "foreign_compute_app", "gpu_util_high",
+                                         "gpu_temp_high", "cpu_admit_false", "cpu_rolling_high", "disk_below_floor"})
+        self.assertEqual(set(codes(v.observations["intake_signals"])), {"tabpfn_lock_held", "intake_state"})
+
+
+class IntakeSignals(unittest.TestCase):
+    def test_signals_and_non_signals(self):
+        fx = Fx("intake")
+        self.assertEqual(gg.intake_signals(fx.sources(), now_ns=NOW), [])
+        fx.apps_lines = ["99, codex-neural-worker, 900"]               # foreign app: not an intake signal
+        fx.write_c(admit=False, age_s=500)                              # CPU guard: not an intake signal
+        self.assertEqual(gg.intake_signals(fx.sources(), now_ns=NOW), [])
+        fx.write_locks(held=True)
+        fx.units.append((LANE_UNIT, "active"))
+        fx.write_q(states={"benchmarking": 1})
+        self.assertEqual(codes(gg.intake_signals(fx.sources(), now_ns=NOW)),
+                         ["tabpfn_lock_held", "intake_unit_active", "intake_state"])
+        self.assertEqual(codes(gg.intake_signals(fx.sources(queue_status=fx.dir / "absent"), now_ns=NOW))[-1],
+                         "queue_status_unreadable")
+        self.assertIn("queue_status_stale", codes(gg.intake_signals(fx.sources(), now_ns=NOW + 60 * S)))
+
+
+class Continuation(unittest.TestCase):
+    PID = 4242
+
+    def setUp(self):
+        self.fx = Fx(self._testMethodName[5:30])
+        self.fx.apps_lines = [f"{self.PID}, /home/ubuntu/.venvs/jope-dltrain-v1/bin/python, 12000"]
+        self.fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 60"]      # trainer's own reserve and load
+        self.st = gg.ContinuationState()
+
+    def probe(self, **kw):
+        return self.fx.cont(self.st, self_pid=self.PID, **kw)
+
+    def test_continue_with_own_pid_and_own_load(self):
+        v = self.probe()
+        self.assertEqual((v.mode, v.decision, v.reasons), ("continue", gg.CONTINUE, ()))
+        self.assertEqual(v.observations["commands"]["compute_apps"]["foreign_pids"], [])
+        self.fx.apps_lines.append("5151, data-loader-worker, 300")
+        self.assertEqual(self.probe().decision, gg.YIELD)
+        self.assertEqual(self.probe(extra_self_pids=(5151,)).decision, gg.CONTINUE)
+
+    def test_yield_on_intake_signals(self):
+        def lock():
+            self.fx.write_locks(held=True)
+
+        def unit():
+            self.fx.units.append((LANE_UNIT, "active"))
+
+        def queued():
+            self.fx.write_q(states={"queued": 1})
+
+        def bench_item():
+            doc = self.fx.queue_doc()
+            doc["registry"]["items"].append({"id": "b" * 64, "state": "benchmarking"})
+            self.fx.write_q(doc)
+
+        def stale_q():
+            self.fx.write_q(age_s=50)
+
+        for inject, code in ((lock, "tabpfn_lock_held"), (unit, "intake_unit_active"), (queued, "intake_state"),
+                             (bench_item, "benchmarking_items"), (stale_q, "queue_status_stale")):
+            with self.subTest(code=code):
+                fx = self.fx = Fx("cont-" + code)
+                fx.apps_lines = [f"{self.PID}, python, 12000"]
+                self.assertEqual(self.probe().decision, gg.CONTINUE)
+                inject()
+                v = self.probe()
+                self.assertEqual(v.decision, gg.YIELD, v.reasons)
+                self.assertEqual(codes(v.observations["intake_signals"]), [code])
+
+    def test_yield_on_foreign_app_or_gpu_query_failure(self):
+        self.fx.apps_lines.append("31337, /usr/bin/python3, 256")
+        v = self.probe()
+        self.assertEqual((v.decision, v.reasons), (gg.YIELD, ("foreign_compute_app:31337",)))
+        self.assertEqual(v.observations["intake_signals"], [])
+        self.fx.apps_lines.pop()
+        self.fx.fail.add("gpu")
+        self.assertEqual(codes(self.probe()), ["gpu_query_failed"])
+
+    def test_pause_then_resume_after_60s_below_70(self):
+        fx, t0 = self.fx, NOW
+        fx.at(t0, rolling=76.0)
+        v = self.probe()
+        self.assertEqual((v.decision, codes(v)), (gg.PAUSE, ["cpu_rolling_high"]))
+        fx.at(t0 + 15 * S, rolling=72.0)                     # below 75 but not below 70: still paused
+        self.assertEqual(codes(self.probe()), ["cpu_resume_hold"])
+        fx.at(t0 + 30 * S, rolling=65.0)                     # cool window starts
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.at(t0 + 60 * S, rolling=71.0)                     # interrupted: the window restarts
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.at(t0 + 75 * S, rolling=69.0)
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.at(t0 + 135 * S - 1, rolling=60.0)               # 60 s minus 1 ns of continuous cool
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        self.assertEqual(self.st.paused_since_ns, t0)
+        fx.at(t0 + 135 * S, rolling=60.0)
+        v = self.probe()
+        self.assertEqual((v.decision, v.reasons), (gg.CONTINUE, ()))
+        self.assertIsNone(self.st.paused_since_ns)
+        self.assertFalse(self.st.cpu_hold)
+        fx.at(t0 + 150 * S, rolling=74.0)                    # running: 70..75 does not pause
+        self.assertEqual(self.probe().decision, gg.CONTINUE)
+
+    def test_pause_on_stale_guard_or_admit_false(self):
+        fx, t0 = self.fx, NOW
+        for kw, code in (({"c_age_s": 46.0}, "cpu_admission_stale"), ({"admit": False}, "cpu_admit_false")):
+            with self.subTest(code=code):
+                self.st = gg.ContinuationState()
+                fx.at(t0, **kw)
+                self.assertEqual((self.probe().decision, codes(self.probe())), (gg.PAUSE, [code]))
+                fx.at(t0 + 10 * S)
+                self.assertEqual(codes(self.probe()), ["cpu_resume_hold"])
+                fx.at(t0 + 70 * S)
+                self.assertEqual(self.probe().decision, gg.CONTINUE)
+        self.st = gg.ContinuationState()
+        fx.at(t0)
+        self.assertEqual(self.probe(src=fx.sources(cpu_admission=fx.dir / "absent.json")).decision, gg.PAUSE)
+
+    def test_yield_after_600s_paused(self):
+        fx, t0 = self.fx, NOW
+        fx.at(t0, rolling=90.0)
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.at(t0 + 600 * S, rolling=90.0)
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.at(t0 + 600 * S + 1, rolling=72.0)
+        v = self.probe()
+        self.assertEqual(v.decision, gg.YIELD)
+        self.assertEqual(codes(v), ["paused_too_long", "cpu_resume_hold"])
+        self.assertEqual(v.observations["intake_signals"], [])
+
+    def test_thermal_pause_resume_and_stop(self):
+        fx = self.fx
+        fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 80"]
+        self.assertEqual(self.probe().reasons, ("gpu_temp_pause:0=80C",))
+        fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 79"]
+        self.assertEqual(self.probe().decision, gg.CONTINUE)
+        fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 84.9"]
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 85"]
+        self.assertEqual((self.probe().decision, codes(self.probe())), (gg.STOP, ["gpu_temp_stop"]))
+
+    def test_thermal_pause_too_long_yields(self):
+        fx, t0 = self.fx, NOW
+        fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 82"]
+        fx.at(t0)
+        self.assertEqual(self.probe().decision, gg.PAUSE)
+        fx.at(t0 + 601 * S)
+        self.assertEqual(codes(self.probe()), ["paused_too_long", "gpu_temp_pause"])
+
+    def test_abort_gate_on_disk_floor(self):
+        v = self.probe(src=self.fx.sources(disk_floor_bytes=10**30))
+        self.assertEqual((v.decision, codes(v)), (gg.ABORT_GATE, ["disk_below_floor"]))
+
+    def test_precedence(self):
+        fx = self.fx
+        fx.write_locks(held=True)
+        self.assertEqual(self.probe().decision, gg.YIELD)
+        fx.write_c(rolling=99.0)
+        self.assertEqual(self.probe().decision, gg.YIELD)
+        v = self.probe(src=fx.sources(disk_floor_bytes=10**30))
+        self.assertEqual(v.decision, gg.ABORT_GATE)
+        self.assertIn("tabpfn_lock_held", codes(v))
+        fx.gpu_lines = ["0, 24576, 12500, 12076, 97, 88"]
+        v = self.probe(src=fx.sources(disk_floor_bytes=10**30))
+        self.assertEqual(v.decision, gg.STOP)
+        self.assertEqual(codes(v)[:3], ["gpu_temp_stop", "disk_below_floor", "tabpfn_lock_held"])
+
+
+class Cli(unittest.TestCase):
+    def run_main(self, argv, src):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = gg.main(argv, src=src)
+        return rc, buf.getvalue()
+
+    def test_exit_codes_and_json(self):
+        fx = Fx("cli", now_ns=time.time_ns())
+        rc, out = self.run_main(["probe", "--mode", "admit", "--json"], fx.sources())
+        doc = json.loads(out)
+        self.assertEqual((rc, doc["decision"], doc["mode"], doc["schema"]), (0, "ADMIT", "admit", gg.VERDICT_SCHEMA))
+        fx.write_q(states={"queued": 1})
+        rc, out = self.run_main(["probe", "--mode", "admit", "--json"], fx.sources())
+        self.assertEqual((rc, json.loads(out)["reasons"]), (3, ["intake_state:queued=1"]))
+        fx.write_q()
+        fx.apps_lines = ["4242, python, 100"]
+        rc, out = self.run_main(["probe", "--mode", "admit"], fx.sources())
+        self.assertEqual((rc, out.strip()), (3, "REFUSE foreign_compute_app:4242"))
+        self.assertEqual(self.run_main(["probe", "--mode", "admit", "--self-pid", "4242"], fx.sources())[0], 0)
+        rc, out = self.run_main(["probe", "--mode", "continue", "--json", "--self-pid", "4242"], fx.sources())
+        self.assertEqual((rc, json.loads(out)["decision"]), (0, "CONTINUE"))
+        rc, out = self.run_main(["probe", "--mode", "continue", "--json"], fx.sources())      # own pid is the CLI's
+        self.assertEqual((rc, json.loads(out)["decision"]), (3, "YIELD"))
+
+    def test_probe_exception_fails_closed(self):
+        fx = Fx("cli-exc", now_ns=time.time_ns())
+        for mode, decision in (("admit", "REFUSE"), ("continue", "YIELD")):
+            with self.subTest(mode=mode):
+                rc, out = self.run_main(["probe", "--mode", mode, "--json"], fx.sources(queue_status=None))
+                doc = json.loads(out)
+                self.assertEqual((rc, doc["decision"], doc["reasons"]), (3, decision, ["probe_exception:TypeError"]))
+
+
+def child_env(root: Path) -> dict:
+    return {"PATH": "/usr/bin:/bin", "HOME": os.environ.get("HOME", "/home/ubuntu"), "PYTHONPATH": str(root),
+            "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1", "TMPDIR": str(tmp_root()), "CUDA_VISIBLE_DEVICES": ""}
+
+
+def verdict(decision, intake=()):
+    return gg.Verdict("continue", decision, tuple(intake), {"intake_signals": list(intake)}, time.time_ns() // 1000)
+
+
+class WatchdogTests(unittest.TestCase):
+    INTERVAL, HARD = 0.1, 0.6
+
+    def make(self, name, **kw):
+        fx = Fx(name, now_ns=time.time_ns())
+        exits = []
+        fired = threading.Event()
+
+        def fake_exit(code):
+            exits.append((code, time.monotonic()))
+            fired.set()
+
+        wd = gg.Watchdog(os.getpid(), fx.sources(), interval_s=kw.pop("interval_s", self.INTERVAL),
+                         hard_exit_s=kw.pop("hard_exit_s", self.HARD), hard_exit=fake_exit, **kw)
+        self.addCleanup(wd.disarm)
+        return fx, wd, exits, fired
+
+    def wait_probes(self, wd, n, timeout=10.0):
+        end = time.monotonic() + timeout
+        while wd.probes < n and time.monotonic() < end:
+            time.sleep(0.01)
+        self.assertGreaterEqual(wd.probes, n)
+
+    def test_bounds(self):
+        for kw in ({"interval_s": 15.01}, {"interval_s": 0}, {"hard_exit_s": 60.5}, {"hard_exit_s": 0}):
+            with self.subTest(**kw), self.assertRaises(ValueError):
+                gg.Watchdog(1, gg.DEFAULT_SOURCES, **kw)
+        wd = gg.Watchdog(1, gg.DEFAULT_SOURCES)
+        self.assertEqual((wd.interval_s, wd.hard_exit_s, wd.daemon), (15.0, 60.0, True))
+
+    def test_startup_unit_signal_yields_within_interval_then_hard_exit(self):
+        fx, wd, exits, fired = self.make("wd-startup")
+        wd.start()
+        self.wait_probes(wd, 1)
+        self.assertEqual(wd.latest.decision, gg.CONTINUE, wd.latest.reasons)     # reserve held, no step taken yet
+        t_inj = time.monotonic()
+        fx.units.append((LANE_UNIT, "active"))
+        self.assertTrue(wd.yield_requested.wait(10))
+        self.assertLessEqual(time.monotonic() - t_inj, self.INTERVAL + SLACK_S)
+        self.assertTrue(fired.wait(10))
+        (code, t_exit), = exits
+        self.assertEqual(code, 75)
+        self.assertGreaterEqual(t_exit - wd.intake_first_seen, self.HARD - 1e-3)
+        self.assertLessEqual(t_exit - t_inj, self.HARD + self.INTERVAL + SLACK_S)
+        wd.join(5)
+        self.assertFalse(wd.is_alive())
+        self.assertTrue(wd.hard_exit_fired.is_set())
+        self.assertEqual(wd.latest.decision, gg.YIELD)
+        self.assertIn("intake_unit_active", codes(wd.intake_first_reasons))
+
+    def test_checkpoint_pause_lock_signal_hard_exit_while_trainer_blocked(self):
+        fx, wd, exits, fired = self.make("wd-ckpt")
+        in_checkpoint, release, steps = threading.Event(), threading.Event(), []
+
+        def trainer():
+            while not wd.yield_requested.is_set():
+                steps.append(time.monotonic())
+                if len(steps) == 3:
+                    in_checkpoint.set()
+                    release.wait(30)          # a checkpoint write that does not return in time
+                    return
+                time.sleep(0.02)
+
+        wd.start()
+        self.wait_probes(wd, 2)
+        t = threading.Thread(target=trainer, daemon=True)
+        t.start()
+        self.assertTrue(in_checkpoint.wait(10))
+        t_inj = time.monotonic()
+        fx.write_locks(held=True)
+        self.assertTrue(wd.yield_requested.wait(10))
+        self.assertLessEqual(time.monotonic() - t_inj, self.INTERVAL + SLACK_S)
+        self.assertTrue(fired.wait(10))
+        self.assertTrue(t.is_alive(), "the trainer was still in its checkpoint pause when the hard exit fired")
+        self.assertEqual(exits[0][0], 75)
+        self.assertGreaterEqual(exits[0][1] - wd.intake_first_seen, self.HARD - 1e-3)
+        self.assertLessEqual(exits[0][1] - t_inj, self.HARD + self.INTERVAL + SLACK_S)
+        self.assertEqual(len(steps), 3)
+        release.set()
+        t.join(5)
+        self.assertIn("tabpfn_lock_held", codes(wd.intake_first_reasons))
+
+    def test_disarm_before_deadline_prevents_hard_exit(self):
+        fx, wd, exits, fired = self.make("wd-disarm", hard_exit_s=1.0)
+        fx.write_locks(held=True)
+        wd.start()
+        self.assertTrue(wd.yield_requested.wait(10))
+        wd.disarm()
+        wd.join(5)
+        self.assertFalse(wd.is_alive())
+        self.assertFalse(fired.wait(1.0 + 3 * self.INTERVAL))
+        self.assertEqual(exits, [])
+
+    def test_disarm_during_inflight_probe_wins_over_hard_exit(self):
+        """The trainer disarms (normal exit) while a probe is in flight and the deadline has already passed."""
+        clock, holder = [0.0], {}
+
+        def mono():
+            clock[0] += 100.0                 # every reading is far past any hard-exit deadline
+            return clock[0]
+
+        def probe():
+            holder["wd"].disarm()
+            return verdict(gg.YIELD, ("tabpfn_lock_held:1",))
+
+        fx, wd, exits, fired = self.make("wd-disarm-race", probe=probe, monotonic=mono)
+        holder["wd"] = wd
+        wd.start()
+        wd.join(5)
+        self.assertFalse(wd.is_alive())
+        self.assertEqual((exits, wd.probes), ([], 1))
+        self.assertFalse(wd.hard_exit_fired.is_set())
+        self.assertTrue(wd.yield_requested.is_set())
+        self.assertIsNotNone(wd.intake_first_seen)
+
+    def test_foreign_app_yields_without_hard_exit(self):
+        fx, wd, exits, fired = self.make("wd-foreign")
+        fx.apps_lines = ["31337, codex-neural-encoding-worker, 900"]
+        wd.start()
+        self.assertTrue(wd.yield_requested.wait(10))
+        self.assertFalse(fired.wait(self.HARD + 4 * self.INTERVAL))
+        self.assertEqual(wd.latest.decision, gg.YIELD)
+        self.assertIsNone(wd.intake_first_seen)
+
+    def test_stop_and_abort_request_yield_without_hard_exit(self):
+        for d in (gg.STOP, gg.ABORT_GATE):
+            with self.subTest(decision=d):
+                fx, wd, exits, fired = self.make("wd-" + d, probe=lambda d=d: verdict(d))
+                wd.start()
+                self.assertTrue(wd.yield_requested.wait(10))
+                self.assertFalse(fired.wait(self.HARD + 3 * self.INTERVAL))
+                wd.disarm()
+
+    def test_pause_does_not_request_yield(self):
+        fx, wd, exits, fired = self.make("wd-pause", probe=lambda: verdict(gg.PAUSE))
+        wd.start()
+        self.wait_probes(wd, 4)
+        self.assertFalse(wd.yield_requested.is_set())
+
+    def test_probe_exception_counts_as_yield_and_arms_hard_exit(self):
+        def broken():
+            raise OSError("nvidia-smi vanished")
+
+        fx, wd, exits, fired = self.make("wd-exc", probe=broken)
+        wd.start()
+        self.assertTrue(wd.yield_requested.wait(10))
+        self.assertEqual(wd.latest.decision, gg.YIELD)
+        self.assertEqual(wd.latest.reasons, ("probe_exception:OSError",))
+        self.assertTrue(wd.errors and "nvidia-smi vanished" in wd.errors[0]["error"])
+        self.assertTrue(fired.wait(10))
+        self.assertEqual(exits[0][0], 75)
+
+    def test_probes_at_least_every_interval(self):
+        times = []
+
+        def probe():
+            times.append(time.monotonic())
+            return verdict(gg.CONTINUE)
+
+        fx, wd, exits, fired = self.make("wd-rate", interval_s=0.05, probe=probe)
+        wd.start()
+        time.sleep(1.0)
+        wd.disarm()
+        wd.join(5)
+        gaps = [b - a for a, b in zip(times, times[1:])]
+        self.assertGreaterEqual(len(times), 8)
+        self.assertLessEqual(max(gaps), 0.05 + 0.25, gaps)
+
+    def test_child_trainer_releases_reserve_only_by_exiting(self):
+        """CPU-only child: holds a stand-in reserve, blocks in a checkpoint pause, default hard exit os._exit(75)."""
+        fx = Fx("wd-child", now_ns=time.time_ns())
+        root = Path(gg.__file__).resolve().parents[1]
+        cfg = {"q": str(fx.q), "c": str(fx.c), "lock": str(fx.lock), "dir": str(fx.dir), "glob": UNIT_GLOB,
+               "interval": 0.1, "hard_exit_s": 1.0, "ready": str(fx.dir / "ready"), "yield_seen": str(fx.dir / "yield-seen")}
+        (fx.dir / "cfg.json").write_text(json.dumps(cfg))
+        script = fx.dir / "child_trainer.py"
+        script.write_text(CHILD)
+        with open(fx.dir / "child.stderr", "wb") as err:
+            p = subprocess.Popen([sys.executable, str(script), str(fx.dir / "cfg.json")], cwd=root, env=child_env(root),
+                                 stdout=subprocess.DEVNULL, stderr=err)
+            try:
+                end = time.monotonic() + 30
+                while not Path(cfg["ready"]).exists() and p.poll() is None and time.monotonic() < end:
+                    time.sleep(0.02)
+                self.assertTrue(Path(cfg["ready"]).exists(), (fx.dir / "child.stderr").read_text())
+                self.assertEqual(json.loads(Path(cfg["ready"]).read_text())["decision"], gg.CONTINUE)
+                with open(fx.lock, "r+b") as fh:
+                    fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)            # lane-owned dummy lock, real /proc/locks
+                    t_inj = time.monotonic()
+                    rc = p.wait(timeout=cfg["hard_exit_s"] + cfg["interval"] + 20)
+                    t_exit = time.monotonic()
+            finally:
+                if p.poll() is None:
+                    p.kill()
+                    p.wait()
+        self.assertEqual(rc, 75, (fx.dir / "child.stderr").read_text())
+        self.assertIn("hard exit 75", (fx.dir / "child.stderr").read_text())
+        t_yield = float(Path(cfg["yield_seen"]).read_text())
+        self.assertLessEqual(t_yield - t_inj, cfg["interval"] + SLACK_S)
+        self.assertGreaterEqual(t_exit - t_inj, cfg["hard_exit_s"] - 0.05)
+        self.assertLessEqual(t_exit - t_inj, cfg["hard_exit_s"] + cfg["interval"] + SLACK_S + 1.0)
+
+
+CHILD = r'''
+import json, os, sys, threading, time
+from pathlib import Path
+from dltrain import gpu_gate as gg
+
+cfg = json.loads(Path(sys.argv[1]).read_text())
+PID = os.getpid()
+
+
+def run_cmd(argv):
+    if argv[0] == "systemctl":
+        assert argv[3] == cfg["glob"]
+        return ""
+    if argv[1].startswith("--query-gpu="):
+        return "0, 24576, 12500, 12076, 97, 60\n"
+    return f"{PID}, {sys.executable}, 12000\n"                    # the trainer's own reserve: excluded
+
+
+src = gg.GateSources(queue_status=Path(cfg["q"]), cpu_admission=Path(cfg["c"]), lock_path=Path(cfg["lock"]),
+                     proc_locks=Path("/proc/locks"), unit_glob=cfg["glob"], host="xbabe2", disk_path=Path(cfg["dir"]),
+                     disk_floor_bytes=1, run_cmd=run_cmd)
+reserve = bytearray(8 << 20)        # stand-in for the GPU memory reserve; CUDA is never initialised here
+wd = gg.Watchdog(PID, src, interval_s=cfg["interval"], hard_exit_s=cfg["hard_exit_s"])
+wd.start()
+while wd.latest is None:
+    time.sleep(0.01)
+Path(cfg["ready"]).write_text(json.dumps({"decision": wd.latest.decision, "reasons": list(wd.latest.reasons)}))
+
+
+def on_yield():
+    wd.yield_requested.wait()
+    Path(cfg["yield_seen"]).write_text(repr(time.monotonic()))
+
+
+threading.Thread(target=on_yield, daemon=True).start()
+threading.Event().wait(60)          # checkpoint pause that never returns: the reserve is released only by exiting
+del reserve
+sys.exit(0)                         # reached only if the watchdog failed
+'''
+
+
+if __name__ == "__main__":
+    unittest.main()

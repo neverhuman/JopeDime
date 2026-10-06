@@ -1,0 +1,39 @@
+"""RIGHTS-HELD-FILL fetch plan (ALL-DATA-RESEARCH, owner-decisions-20261006T102636Z.json): the 36 formerly rights_held
+datasets of the frozen acquisition-capped clean bucket, URL = the acquisition's own request (meta.acquisition.socrata_csv_url,
+with its $limit), exactly as the coverage research-only plan did. Create-only output."""
+import hashlib, json, sys
+from pathlib import Path
+from urllib.parse import urlparse
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+COV = RUN / "receipts/trainonly-v2/build/rowsel-raw-v2-coverage-summary-20261006T052815Z.json"
+COV_SHA = "b3f1a9e0"  # prefix as posted; full sha recorded below
+inv = json.loads((RUN / "tmp/trainonly-v1/epoch0-datasets.json").read_bytes())
+cov_b = COV.read_bytes(); cov = json.loads(cov_b)
+gate = {json.loads(l)["dataset_hash"] for l in (RUN / "receipts/trainonly-v2/rights-gate-no-license-20261005T180254Z.jsonl").read_text().splitlines() if l.strip()}
+rr = set(json.loads((RUN / "tmp/rights-research-datasets.json").read_bytes()))
+held = sorted(x["dataset_hash"] for x in cov["coverage_datasets"] if x.get("reason") == "rights_held")
+assert len(held) == 36 and set(held) == gate - rr, "36 != rights gate minus RIGHTS-RESEARCH"
+orig = {}
+for l in (RUN / "receipts/trainonly-v2/l7a-fetch-plan-20261005T175037Z.jsonl").read_text().splitlines():
+    if l.strip():
+        p = json.loads(l); orig[p["dataset_hash"]] = p
+rows = []
+for h in held:
+    k = inv["meta_key"][h].rsplit("/", 1)[1]
+    mb = (RUN / "inputs/t1-meta" / f"{k}.json").read_bytes()
+    assert hashlib.sha256(mb).hexdigest() == k
+    m = json.loads(mb); a = m["acquisition"]
+    url = a["socrata_csv_url"]
+    assert url.startswith(orig[h]["url"] + "?$limit="), (h, url)
+    rows.append({"action": "fetch", "dataset_hash": h, "declared_bytes": m.get("source_size_bytes"), "declared_rows": a.get("fetched_rows"),
+                 "host": urlparse(url).netloc, "license": None, "local_sha256": None, "plan_url": orig[h]["url"], "platform": "socrata",
+                 "url": url, "url_source": "meta.acquisition.socrata_csv_url (the acquisition's own request; the plan URL lacks $limit)",
+                 "t1_meta_sha256": k, "rights_basis": "formerly rights_held; ALL-DATA-RESEARCH owner-decisions-20261006T102636Z.json",
+                 "verify": "bytes recorded not trusted; rows/columns re-derived and content-matched to the T1 meta before use"})
+out = Path(sys.argv[1])
+body = "".join(json.dumps(r, sort_keys=True) + "\n" for r in rows).encode()
+with open(out, "xb") as f:
+    f.write(body)
+print(json.dumps({"plan": str(out), "sha256": hashlib.sha256(body).hexdigest(), "rows": len(rows),
+                  "unique_urls": len({r["url"] for r in rows}), "hosts": sorted({r["host"] for r in rows}),
+                  "coverage_summary_sha256": hashlib.sha256(cov_b).hexdigest()}))

@@ -40,8 +40,9 @@ universe and builder:
 Rights-held datasets are refused before any read (none is in the clean-v1 scope).
 
 Usage (inside the lane slice):
-  v2_build_l7a.py --out DIR --shard I --of N                                                    (registry, unchanged)
-  v2_build_l7a.py --out DIR --summarize --of N --tests-log LOG --mutants JSON [--receipt PATH]   (registry summary)
+  --split-version is required (PR #218 finding 10: no default split); registry-epoch0 only as an explicit replay:
+  v2_build_l7a.py --split-version registry-epoch0 --out DIR --shard I --of N
+  v2_build_l7a.py --split-version registry-epoch0 --out DIR --summarize --of N --tests-log LOG --mutants JSON [--receipt PATH]
   v2_build_l7a.py --split-version rowsel-raw-split-v2 --plan clean-l7a --out NEW_TREE --of N
   v2_build_l7a.py --split-version rowsel-raw-split-v2 --out NEW_TREE --shard I --of N [--datasets h1,h2]
   v2_build_l7a.py --split-version rowsel-raw-split-v2 --summarize --out NEW_TREE --of N --tests-log LOG --mutants JSON [--pilot P]
@@ -458,7 +459,7 @@ def summarize(a):
 L7A_V2_CODE = ("tools/v2_build_l7a.py", "dltrain/t1raw.py")
 
 
-def code_shas_v2(version=None) -> dict:
+def code_shas_v2(version) -> dict:
     return local.code_shas_v2(L7A_V2_CODE, version=version)
 
 
@@ -570,7 +571,9 @@ def main(argv=None):
     ap.add_argument("--mutants")
     ap.add_argument("--receipt")
     ap.add_argument("--datasets", help="comma-separated dataset hashes (smoke runs only)")
-    ap.add_argument("--split-version", choices=local.SPLIT_VERSIONS, default=local.SPLIT_REGISTRY)
+    ap.add_argument("--split-version", choices=local.SPLIT_VERSIONS, required=True,
+                    help="required, no default (PR #218 finding 10): rowsel-raw-split-v2 or rowsel-split-v2-groups; "
+                         "registry-epoch0 only for an explicit historical replay")
     ap.add_argument("--plan", choices=("clean-l7a",))
     ap.add_argument("--allow-other-out", action="store_true")
     ap.add_argument("--pilot")
@@ -586,6 +589,8 @@ def main(argv=None):
             ap.error("--shard is required for a build")
         held, _ = held_set()
         return local.build_v2(a, loader=make_l7a_loader(held), codes=code_shas_v2(a.split_version))
+    if a.split_version != local.SPLIT_REGISTRY:                       # unreachable with argparse choices; never a fallback
+        ap.error(f"unknown --split-version {a.split_version!r}")
     if a.plan or a.pilot or a.receipt_stem:
         ap.error("--plan/--pilot/--receipt-stem need --split-version rowsel-raw-split-v2")
     if a.summarize:

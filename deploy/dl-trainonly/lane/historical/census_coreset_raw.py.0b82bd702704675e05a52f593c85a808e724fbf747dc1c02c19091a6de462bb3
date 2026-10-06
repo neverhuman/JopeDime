@@ -1,0 +1,59 @@
+"""Read-only: the split-scope census (tmp/split-scope/census.py, edccdb7c, logic copied verbatim) for the coreset-class
+datasets built on the raw route (ROWSEL-RAW-v2 class all_rows_coreset + ROWSEL-RAW-v2-nonnumeric), which census.py
+skipped (it censused clean/kmeans only). Uses the pinned gsk.py port (83183db4). Writes argv[1] (create-only)."""
+import json, sys, time
+sys.path.insert(0, "/home/ubuntu/scratch/jopedime-dl-training-v1/tmp/split-scope")
+import gsk
+RUN = "/home/ubuntu/scratch/jopedime-dl-training-v1"
+INV = json.load(open(RUN + "/tmp/rowsel/inventory.json"))
+hs = set()
+for t in ("ROWSEL-RAW-v2", "ROWSEL-RAW-v2-nonnumeric"):
+    pl = json.load(open(f"{RUN}/build-v2/{t}/plan.json"))
+    hs |= {e["dataset_hash"] for e in pl["datasets"] if e.get("disposition", "build") == "build" and e["class"] == "all_rows_coreset"}
+out = open(sys.argv[1], "x")
+for h in sorted(hs):
+    v = INV[h]; cls = v["class"][0]; t = time.time()
+    rec = {"dataset_hash": h, "class": cls, "cohort": v["cohort"], "split_sha256": v["split_sha256"]}
+    try:
+        body, path = gsk.load_verified(v["split_sha256"], gsk.SPLIT_DIRS)
+        split = json.loads(body)
+        assert split["method"] == "grouped-stratified-kfold/v1" and split["task"] == "regression"
+        assert split["source"]["dataset_hash"] == h
+        assert split["source"]["train_sha256"] == v["manifest_source"]["train"]
+        assert split["source"]["test_sha256"] == v["manifest_source"]["test"]
+        rec["split_path"] = path
+        rows = gsk.universe(split)
+        n, ncol = len(rows), len(rows[0])
+        keys = [gsk.dup_key(r) for r in rows]
+        seed = split["folds"][0]["seed"]
+        k, folds, comps = gsk.generate_folds(keys, seed)
+        multi = [c for c in comps if len(c) > 1]
+        rec.update(n=n, columns=ncol, base_seed=seed, effective_folds=split["effective_folds"],
+                   dup_components=len(comps), dup_multi_components=len(multi),
+                   rows_in_dup_multi=sum(len(c) for c in multi), gen_k_none=k,
+                   match_group_none=(k == split["effective_folds"] and folds == split["folds"]))
+        if not rec["match_group_none"]:
+            fold_of = [None] * n
+            for f in split["folds"]:
+                if f["repeat"] == 0:
+                    for i in f["test_indices"]:
+                        fold_of[i] = f["fold"]
+            cands = []
+            for c in range(ncol):
+                m = {}
+                if all(m.setdefault(rows[i][c], fold_of[i]) == fold_of[i] for i in range(n)):
+                    cands.append(c)
+            tried = []
+            for c in cands:
+                groups = [rows[i][c] for i in range(n)]
+                kc, fc, cc = gsk.generate_folds(keys, seed, groups=groups)
+                ok = kc == split["effective_folds"] and fc == split["folds"]
+                tried.append({"column": c, "is_target": c == ncol - 1, "distinct": len({g for g in groups}),
+                              "components": len(cc), "match": ok})
+            rec["group_column_candidates"] = tried
+            rec["reproducing_group_columns"] = [x["column"] for x in tried if x["match"]]
+    except Exception as e:
+        rec["error"] = f"{type(e).__name__}: {e}"
+    rec["seconds"] = round(time.time() - t, 2)
+    out.write(json.dumps(rec, sort_keys=True) + "\n"); out.flush()
+print("done", len(hs))

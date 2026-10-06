@@ -1,0 +1,13 @@
+#!/bin/bash
+# Launch the fill GPU chain (unit jopedime-dltrain-gpuenc-fill-xbabe3-a1) the moment jopedime-dltrain-gpuenc-v6all-xbabe3-a1 is
+# not active (main's slot, 11:2xZ), polling systemctl --user is-active every 15 s. Units only; touches no other unit.
+set -u
+R=/home/ubuntu/scratch/jopedime-dl-training-v1; X=$R/pydeps/tab35-xbabe3-extra-v1
+until [ "$(ssh -o BatchMode=yes xbabe3 'systemctl --user is-active jopedime-dltrain-gpuenc-v6all-xbabe3-a1')" != "active" ]; do sleep 15; done
+echo "v6all-xbabe3-a1 inactive $(date -u +%FT%TZ)"
+ssh -o BatchMode=yes xbabe3 "systemd-run --user --collect --unit=jopedime-dltrain-gpuenc-fill-xbabe3-a1 --slice=jopedime-dltrain.slice \
+  -p RuntimeMaxSec=7200 -p MemoryMax=16G -p MemorySwapMax=0 -p CPUQuota=600% -p TasksMax=2048 -p Nice=10 -p IOSchedulingClass=idle \
+  --working-directory=$R/tmp --setenv=PYTHONPATH=$R/pydeps/tab35-runtime-v1:$X --setenv=TMPDIR=$R/tmp \
+  --setenv=CUDA_VISIBLE_DEVICES=0 --setenv=OMP_NUM_THREADS=4 --setenv=AWS_CONFIG_FILE=/dev/null --setenv=AWS_SHARED_CREDENTIALS_FILE=/dev/null \
+  --property=StandardOutput=append:$R/tmp/fill/chain-fill-xbabe3-a1.log --property=StandardError=append:$R/tmp/fill/chain-fill-xbabe3-a1.log \
+  $R/tmp/fill/chain-fill-xbabe3.sh" && echo "LAUNCHED $(date -u +%FT%TZ)"

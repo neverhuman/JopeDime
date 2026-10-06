@@ -1,0 +1,161 @@
+"""PROVENANCE-01 resolver (tools/v2_provenance.py): full-sha256 custody binding only, fail closed on any unresolved hash.
+
+Each case runs a scratch copy of the tool against a scratch RUN tree and a stub v2_publish (its real_clients() leaves a
+marker if it is ever called), so nothing outside the temp dir is read or written.
+"""
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+TOOL = Path(__file__).resolve().parents[1] / "tools" / "v2_provenance.py"
+STUB = '''from pathlib import Path
+RUN = Path(__RUN__)
+DEFAULT_PUBLISH_LEDGER = RUN / "receipts/trainonly-v2/publish/v2-publish-ledger.jsonl"
+class s3io:
+    V2_PREFIX_KEY = "experiments/gp-policy-dl/v2-trainonly/"
+def real_clients():
+    (RUN / "CLIENTS_CREATED").write_text("x")
+    raise SystemExit("stub: no clients in tests")
+'''
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+class Resolver(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="prov-", dir=os.environ.get("TMPDIR")))
+        self.run = self.tmp / "run"
+        self.custody = self.run / "receipts/trainonly-v2/code-custody"
+        self.pub = self.run / "receipts/trainonly-v2/publish"
+        for d in (self.custody, self.pub, self.run / "receipts/trainonly-v2/build", self.run / "build-v2"):
+            d.mkdir(parents=True)
+        (self.pub / "v2-publish-ledger.jsonl").write_text("")
+        tools = self.tmp / "tools"; tools.mkdir()
+        src = TOOL.read_text().replace('RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")', f'RUN = Path({str(self.run)!r})')
+        (tools / "v2_provenance.py").write_text(src)
+        (tools / "v2_publish.py").write_text(STUB.replace("__RUN__", repr(str(self.run))))
+        self.tool = tools / "v2_provenance.py"
+        body = b"print('builder')\n"
+        self.full = sha(body)
+        (self.custody / f"builder.py.{self.full}").write_bytes(body)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def manifest(self, code):
+        (self.pub / "v2-publish-manifest-x-000000000000.json").write_text(json.dumps({"code_sha256": code, "publisher_code_sha256": self.full}))
+
+    def run_tool(self, *args):
+        r = subprocess.run([sys.executable, str(self.tool), "--name", "prov-test", *args], capture_output=True, text=True, timeout=120)
+        out = json.loads(r.stdout.strip().splitlines()[-1]) if r.stdout.strip() else {}
+        return r.returncode, out
+
+    def test_full_sha_resolves_and_passes(self):
+        self.manifest(self.full)
+        rc, out = self.run_tool()
+        self.assertEqual((rc, out["verdict"], out["unresolved"]), (0, "PASS", []))
+
+    def test_short_prefix_never_binds(self):
+        self.manifest(self.full[:12])                     # a custody file DOES start with this prefix
+        rc, out = self.run_tool()
+        self.assertEqual((rc, out["verdict"]), (2, "FAIL"))
+        self.assertTrue(any(u.endswith(self.full[:12]) for u in out["unresolved"]))
+        self.assertEqual(self.code_status(), "NOT A FULL SHA256")
+
+    def test_non_hex_64_chars_is_not_a_sha(self):
+        self.manifest(self.full.upper())                   # 64 chars, not lowercase hex: never looked up
+        rc, out = self.run_tool()
+        self.assertEqual((rc, out["verdict"], self.code_status()), (2, "FAIL", "NOT A FULL SHA256"))
+
+    def code_status(self):
+        doc = json.loads(sorted(self.pub.glob("v2-prov-test-*.json"))[-1].read_text())
+        return doc["manifests"][0]["code"].get("status")
+
+    def test_unknown_full_sha_fails_closed(self):
+        self.manifest("f" * 64)
+        rc, out = self.run_tool()
+        self.assertEqual((rc, out["verdict"], self.code_status()), (2, "FAIL", "NOT FOUND"))
+
+    def test_publish_refused_before_any_client_when_unresolved(self):
+        self.manifest("e" * 64)
+        rc, out = self.run_tool("--publish")
+        self.assertEqual(rc, 2)
+        self.assertFalse((self.run / "CLIENTS_CREATED").exists())
+        self.assertNotIn("published", out)
+
+    # --- #218 owner pre-review F1-F3 ---
+    def gpu_ctx(self, name, gpu):
+        d = self.run / "build-v2" / "GPU-x" / "out" / name; d.mkdir(parents=True)
+        (d / "context.json").write_text(json.dumps({"view_id": name, **({"gpu": gpu} if gpu is not None else {})}))
+
+    def summary(self, name, doc):
+        (self.run / "receipts/trainonly-v2/build" / name).write_text(json.dumps(doc))
+
+    def published(self, name, doc):
+        body = json.dumps(doc).encode()
+        local = self.pub / f"v2-{name}-local.json"; local.write_bytes(body)
+        key = f"experiments/gp-policy-dl/v2-trainonly/manifests/{name}/{sha(body)[:12]}.json"
+        with (self.pub / "v2-publish-ledger.jsonl").open("a") as fh:
+            fh.write(json.dumps({"event": "verified", "key": key, "sha256": sha(body), "bytes": len(body), "version_id": "v1"}) + "\n")
+
+    def test_f1_unresolved_gpu_runner_fails(self):
+        self.manifest(self.full)
+        self.gpu_ctx("c1", {"code_sha256": {"v2_gpu_encode.py": self.full}})
+        self.assertEqual(self.run_tool()[0], 0)
+        self.gpu_ctx("c2", {"code_sha256": {"v2_gpu_encode.py": "d" * 64}})
+        rc, out = self.run_tool()
+        self.assertEqual(rc, 2)
+        self.assertTrue(any(u.startswith("gpu_encode_versions:" + "d" * 64) for u in out["unresolved"]))
+
+    def test_f2_every_row_of_a_published_doc_is_scanned(self):
+        self.manifest(self.full)
+        self.published("s1-list", {"code_sha256": self.full, "rows": [{"runner_code_sha256": self.full}, {"runner_code_sha256": "c" * 64}]})
+        rc, out = self.run_tool()
+        self.assertEqual(rc, 2)
+        self.assertTrue(any("c" * 64 in u and "/rows[*]" in u for u in out["unresolved"]))
+
+    def test_f3_missing_hashes_are_unresolved(self):
+        cases = {
+            "manifest": lambda: self.manifest(None),
+            "build_summary": lambda: (self.manifest(self.full), self.summary("t-summary-1.json", {"schema": "jope.x-summary/v1"})),
+            "gpu_context": lambda: (self.manifest(self.full), self.gpu_ctx("c3", {"input": {}})),
+            "gpu_context_no_block": lambda: (self.manifest(self.full), self.gpu_ctx("c4", None)),
+            "published_doc_without_hash": lambda: (self.manifest(self.full), self.published("plain-doc", {"rows": [{"a": 1}]})),
+            "empty_hash_in_published_doc": lambda: (self.manifest(self.full), self.published("empty-doc", {"code_sha256": ""})),
+        }
+        for name, make in cases.items():
+            with self.subTest(name):
+                self.tearDown(); self.setUp(); make()
+                rc, out = self.run_tool()
+                self.assertEqual(rc, 2, name)
+                self.assertTrue(any("MISSING CODE HASH" in u for u in out["unresolved"]), (name, out["unresolved"]))
+                rc2, _ = self.run_tool("--publish")
+                self.assertEqual(rc2, 2); self.assertFalse((self.run / "CLIENTS_CREATED").exists())
+
+    def test_summary_classification(self):
+        self.manifest(self.full)
+        self.summary("a-summary-correction-1.json", {"schema": "jope.x-summary-correction/v1"})     # addendum: no hash needed
+        self.summary("b-summary-1.json", {"schema": "jope.x-summary/v1", "code_sha256": {"t.py": self.full}})
+        self.assertEqual(self.run_tool()[0], 0)
+        self.summary("c-summary-odd.json", {"schema": "jope.something-else/v1"})                     # unclassified fails closed
+        rc, out = self.run_tool()
+        self.assertEqual(rc, 2)
+        self.assertTrue(any("UNCLASSIFIED SUMMARY" in u for u in out["unresolved"]))
+
+    def test_custody_file_must_hash_to_its_name(self):
+        (self.custody / f"liar.py.{'a' * 64}").write_bytes(b"not a")
+        self.manifest(self.full)
+        rc, _ = self.run_tool()
+        self.assertNotEqual(rc, 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
