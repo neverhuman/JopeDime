@@ -1532,3 +1532,50 @@ fn extreme_surrogate_counts_are_refused_without_overflow() {
         );
     }
 }
+
+/// Review 02 of the wiring PR (B17-R02-UNBOUNDED-PARENT-PARSE): a refinement parent read back from
+/// evidence is untrusted, so the trace check parses only the pipeline form and counts each
+/// expression source's nesting bytes before the expression parser sees it. Unary plus and
+/// redundant parentheses never reach the parsed tree, so a source at the limit binds exactly as
+/// its plain form does; one byte more is refused unparsed.
+#[test]
+fn an_untrusted_parent_expression_is_bounded_before_it_is_parsed() {
+    use super::refinement::{MAX_PARENT_EXPRESSION_NESTING, SMALL_ALLOWANCE};
+    let trace = RefinementTrace {
+        method: DAMPED_LS.into(),
+        stages: vec![StageTrace::Coordinate {
+            stage: 0,
+            reason: SMALL_ALLOWANCE.into(),
+            evaluations: 5,
+            rejected_trials: 0,
+        }],
+    };
+    let parent = |source: &str| {
+        format!("(pipe X (derive expr=\"{source}\" append=false) (ridge lambda_frac=0.000000001))")
+    };
+    let body = "sin(0.5*c0)";
+    assert_eq!(parent(body), SINE);
+    assert_eq!(trace.check(SINE, "sites", 60).unwrap(), (5, 0));
+    // `(` and `*`.
+    let room = MAX_PARENT_EXPRESSION_NESTING - 2;
+    let plus = |n: usize| format!("{}{body}", "+".repeat(n));
+    let grouped = |n: usize| format!("{}{body}{}", "(".repeat(n), ")".repeat(n));
+    let product = |n: usize| format!("{body}{}", "*1".repeat(n));
+    for source in [plus(room), grouped(room)] {
+        assert_eq!(
+            trace.check(&parent(&source), "sites", 60).unwrap(),
+            (5, 0),
+            "{source}"
+        );
+    }
+    for source in [plus(room + 1), grouped(room + 1), product(room + 1)] {
+        let error = trace.check(&parent(&source), "sites", 60).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("nests too deeply"),
+            "{source}: {error:#}"
+        );
+    }
+    let closed_form = format!("(sym raw \"{}\")", plus(room + 1));
+    let error = trace.check(&closed_form, "sites", 60).unwrap_err();
+    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+}
