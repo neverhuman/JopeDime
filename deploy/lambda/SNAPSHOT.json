@@ -162,7 +162,7 @@
       ]
     },
     "teacher-v2-freeze": {
-      "kind": "fallback freeze evidence, since no stopped-state handoff was posted: the import's step 20 re-verified the snapshot locally and on its archive mirror; the three snapshots' fresh hashes of the live source are equal (source-after.sha256 28826359\u2026, the 08:21Z one without its .env line) and their six listings are byte-identical (5b47ea32\u2026); newest source mtime 07:31:56Z, newest build output 07:33:36Z; no process with cwd/exe in the directory at 12:44Z",
+      "kind": "fallback freeze evidence, since no stopped-state handoff was posted: the import's step 20 re-verified the snapshot locally and on its archive mirror; the three snapshots' fresh hashes of the live source are equal (source-after.sha256 28826359…, the 08:21Z one without its .env line) and their six listings are byte-identical (5b47ea32…); newest source mtime 07:31:56Z, newest build output 07:33:36Z; no process with cwd/exe in the directory at 12:44Z",
       "path": "~/jope-evidence/teacher-v2-import/20-freeze/FREEZE-CHECK.json",
       "sha256": "f687799f116cca19fb9d395a8b6d42373c73ba399ac43d13def6ee678246634c",
       "files": 24,
@@ -2718,7 +2718,7 @@
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml.v2",
       "tree_sha256": "5986b2932034ee8b000e8365d014c0dd0e6ef35918077f79a02ee18523109c12",
       "custody_tarball": null,
-      "reason": "declares package jope-regression-lambda, which deploy/lambda/regression/rust/Cargo.toml also declares; repo-layout's dup-package rule has no allowlist. It is the regression worker's frozen manifest with the feat-math path six levels deep for this body. The proposal binary in the snapshot's target/ (regression-bootstrap, sha256 d8bdbe7d\u2026, anchor teacher-v2-custody-snapshot) is this package's bin; that the campaign ran that binary is unconfirmed until Codex publishes the run's source manifest (anchor teacher-v2-source-manifest). Not built here; rename it back to Cargo.toml (and run lambda-workspaces.sh sync-locks) to build it"
+      "reason": "declares package jope-regression-lambda, which deploy/lambda/regression/rust/Cargo.toml also declares; repo-layout's dup-package rule has no allowlist. It is the regression worker's frozen manifest with the feat-math path six levels deep for this body. The proposal binary in the snapshot's target/ (regression-bootstrap, sha256 d8bdbe7d…, anchor teacher-v2-custody-snapshot) is this package's bin; that the campaign ran that binary is unconfirmed until Codex publishes the run's source manifest (anchor teacher-v2-source-manifest). Not built here; rename it back to Cargo.toml (and run lambda-workspaces.sh sync-locks) to build it"
     },
     {
       "body": "teacher-v2",
@@ -3211,9 +3211,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml",
-      "tree_sha256": "7301e04b39c2ff08d2add5ed6557cfadda81b414ff11fa60f54392b6a3d1ceb2",
+      "tree_sha256": "0593ec8579499d497459cdaca334f74b270e3817be6fba8b1db2ea00f23241b0",
       "custody_tarball": null,
-      "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission"
+      "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission",
+      "tree_change": "PR214 initial hosted hygiene37408085806: declare repository Apache-2.0 license on the newly CI-built proposal workspace; preserve original manifest SHA and licensing guard"
     }
   ],
   "excluded": [
