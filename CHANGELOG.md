@@ -12,10 +12,10 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at e0e7f819c, including merged #221/#223/#225/#226/#227/#228.
-Rebase onto final main and finalize the date before publication. GP-language coverage, the
-maintained Tanh mutation gate, jankurai triage and final-main qualification remain publication
-prerequisites. Successor B18-B20 wiring is tracked separately. -->
+<!-- Local release preparation at f4357b6bd, including merged #221/#223/#225/#226/#227/#228/#230.
+Rebase onto final main and finalize the date before publication. GP-language #231 (including the
+maintained Tanh mutation gate), jankurai triage and final-main qualification remain publication
+prerequisites. B18 archive evidence wiring is merged; B19/B20 wiring is tracked separately. -->
 
 ### feat-math and emitters
 
@@ -55,6 +55,10 @@ prerequisites. Successor B18-B20 wiring is tracked separately. -->
   Fit the stage surrogate on training rows, then accept its candidate only when whole-pipeline
   training loss strictly decreases. Retain coordinate refinement as the default and verify
   bounded parent parsing, objective charges and published trace consistency (#227).
+- Publish the measured loss/cost Pareto front with opt-in `--pareto-archive`, canonical archive
+  bytes and receipt digests. Rebuild the archive from bounded, re-derived observations when
+  verifying evidence. The archive leaves ranking, parent selection and the selected program
+  unchanged; default sidecar bytes remain pinned (#230).
 - Route profile-aware pipelines through bounded search and refinement, caller-controlled trial
   limits, fitted C++ export and manifest-bound recipe artifacts. Refined children publish under
   their own observations (#155-#165, #208).
