@@ -109,6 +109,8 @@ impl Measurement {
             "mutate",
             "crossover",
             super::REFINE,
+            // laneD:B20-rewrite-simplify
+            super::REWRITE,
         ]
         .into_iter()
         .find(|s| *s == r.origin)

@@ -82,6 +82,9 @@ pub fn publish(
     // laneD:B18-pareto-archive begin
     let engine_selection = super::archive::publish(searched, root)?;
     // laneD:B18-pareto-archive end
+    // laneD:B20-rewrite-simplify begin
+    let engine_selection = super::search::moves::publish(searched, root, engine_selection)?;
+    // laneD:B20-rewrite-simplify end
     let record = Search {
         engine: receipt::ENGINE.into(),
         profile_id: searched.profile_id.into(),
@@ -225,6 +228,9 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
     // laneD:B18-pareto-archive begin
     check_archive(root, s, &observations)?;
     // laneD:B18-pareto-archive end
+    // laneD:B20-rewrite-simplify begin
+    check_moves(root, &r, &records, &observations, &evaluator)?;
+    // laneD:B20-rewrite-simplify end
     let manifest: serde_json::Value = serde_json::from_slice(&read_file(
         root,
         Path::new("emit/manifest.json"),
@@ -462,6 +468,46 @@ fn check_archive(root: &Path, s: &Search, observations: &[Kernel2Observation]) -
     Ok(())
 }
 // laneD:B18-pareto-archive end
+
+// laneD:B20-rewrite-simplify begin
+/// The move records are published exactly when a move was selected, match their digest, and
+/// re-derive (`moves::check`): which parents each round's passes read, each proposal from its
+/// parent, each outcome from the measurements, and the pool refusal count. Without a selected
+/// move no measurement has a move's origin.
+fn check_moves(
+    root: &Path,
+    r: &Receipt,
+    measurements: &[Measurement],
+    observations: &[Kernel2Observation],
+    evaluator: &super::Kernel2Evaluator,
+) -> Result<()> {
+    use super::search::moves;
+    let s = &r.search;
+    let path = Path::new(moves::PATH);
+    let Some(record) = s.engine_selection.as_ref().and_then(|e| e.moves.as_ref()) else {
+        ensure!(
+            std::fs::symlink_metadata(root.join(path)).is_err()
+                && measurements
+                    .iter()
+                    .all(|m| m.observation.origin != super::REWRITE),
+            "move evidence is published without its selection"
+        );
+        return Ok(());
+    };
+    let digest = record
+        .sha256
+        .as_deref()
+        .context("the moves record has no digest")?;
+    let published: Vec<moves::MoveRecord> =
+        serde_json::from_slice(&read_file(root, path, digest)?)?;
+    let width = r
+        .dataset
+        .columns
+        .checked_sub(1)
+        .context("no feature columns")? as usize;
+    moves::check(&published, s, measurements, observations, evaluator, width)
+}
+// laneD:B20-rewrite-simplify end
 
 fn check_seeding(s: &Search, measurements: &[Measurement]) -> Result<()> {
     let seeding = &s.seeding;

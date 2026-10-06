@@ -1,8 +1,8 @@
-//! Protected-semantics e-graph simplification (B20).
+//! Protected-semantics e-graph simplification.
 //!
-//! Staged: `v2/mod.rs` declares this module only under `#[cfg(test)]`, following the Lane D
-//! kickoff, and nothing outside its tests calls it. The search move is wired once B19 merges;
-//! OWNER_DIRECTIVES allows no wiring before B11 and B16 merge.
+//! Opt-in: [`MathExpr::simplify_v2`] is the only entry. The kernel2 route calls it only from its
+//! exact rewrite pass (`--rewrite-simplify`) on the ranked parents' expressions after each search
+//! round; with the pass off nothing calls it.
 //!
 //! A small in-crate e-graph: union-find, a hashcons keyed by literal bits (so `0.0` and `-0.0`
 //! are different nodes), and a rebuild back to congruence after every write phase (Willsey et
@@ -56,7 +56,10 @@
 //! libm-backed function is excluded too, because libm results are not portable; that one is
 //! pinned only as never applied.
 
+// B20 core; the kernel2 caller is laneD:B20-rewrite-simplify.
+
 use super::*;
+use crate::kernel::expression_search::{ExpressionSimplification, SaturationStop};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -119,6 +122,18 @@ enum Saturation {
     NodeLimit,
     /// The input fails the structure check, so saturation never started.
     Malformed,
+}
+
+impl Saturation {
+    /// The public name of this stop, for records.
+    fn public(self) -> SaturationStop {
+        match self {
+            Self::Saturated => SaturationStop::Saturated,
+            Self::IterationLimit => SaturationStop::IterationLimit,
+            Self::NodeLimit => SaturationStop::NodeLimit,
+            Self::Malformed => SaturationStop::Malformed,
+        }
+    }
 }
 
 /// The rules, in their fixed application order.
@@ -641,6 +656,55 @@ fn simplify(expression: &MathExpr) -> Simplified<'_> {
         &RULES,
         Limits::for_input(count_nodes(&expression.root)),
     )
+}
+
+// laneD:B20-rewrite-simplify: the public entry.
+/// Why `simplify_v2` refuses a tree outside the structure limits, before any copy of it.
+const STRUCTURE_REFUSAL: &str =
+    "simplify_v2 refuses a tree outside the structure limits before it is copied";
+
+impl MathExpr {
+    /// The exact simplification of an expression the profile admits under `scope`. It reads no
+    /// rows: the result depends on the tree alone.
+    ///
+    /// `self` must pass the same admission as every search edit (`Search::finish`: the pool, the
+    /// caps and the negation rule), or this is an error. `simplify` then runs with the
+    /// production rules and limits, and its smaller tree is kept only when that admission accepts
+    /// it too. A smaller tree the profile refuses, such as a negation of a variable under a
+    /// constants-only negation rule, is discarded and its refusal returned.
+    ///
+    /// `self` may be any tree, one decoded from JSON included, and the copy and the admission's
+    /// normalization both recurse. So the borrowed tree's structure check (`from_ast`'s node,
+    /// depth and arity limits, walked with an explicit stack) comes first, and a tree outside it is
+    /// refused before anything copies or walks it recursively.
+    pub fn simplify_v2(
+        &self,
+        profile: &SearchProfile,
+        scope: ExpressionScope,
+    ) -> Result<ExpressionSimplification> {
+        self.check_structure(MAX_NODES, MAX_DEPTH)
+            .map_err(|error| error.context(STRUCTURE_REFUSAL))?;
+        let search = Search::new(profile, scope)?;
+        let input = search.finish(self.root.clone())?;
+        let result = simplify(&input);
+        let (simplified, refusal) = if result.changed {
+            match search.finish(result.expression.root.clone()) {
+                Ok(expression) => (Some(expression), None),
+                Err(error) => (None, Some(format!("{error:#}"))),
+            }
+        } else {
+            (None, None)
+        };
+        Ok(ExpressionSimplification {
+            simplified,
+            refusal,
+            stop: result.stop.public(),
+            iterations: result.iterations,
+            enodes: result.enodes,
+            applications: result.applications,
+            peak: result.peak,
+        })
+    }
 }
 
 /// An upper bound on the e-nodes a right-hand side can add.

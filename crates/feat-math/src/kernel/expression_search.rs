@@ -215,3 +215,50 @@ pub struct GuardedLmRefinement {
     pub trace: LmTrace,
 }
 // laneD:B17-lm-refinement end
+
+// laneD:B20-rewrite-simplify begin
+/// Why the exact rewrite saturation of `MathExpr::simplify_v2` stopped.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SaturationStop {
+    /// A round changed nothing: it created no e-node and merged no classes.
+    Saturated,
+    /// The round limit was reached.
+    IterationLimit,
+    /// The next application might have passed the e-node cap.
+    NodeLimit,
+    /// The input failed the structure check, so saturation never started.
+    Malformed,
+}
+
+impl SaturationStop {
+    /// A stable snake_case name for records.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Saturated => "saturated",
+            Self::IterationLimit => "iteration_limit",
+            Self::NodeLimit => "node_limit",
+            Self::Malformed => "malformed",
+        }
+    }
+}
+
+/// The outcome of `MathExpr::simplify_v2`, with how its saturation went. The counters are those
+/// of the saturation run, whether or not its tree was kept.
+#[derive(Clone, Debug)]
+pub struct ExpressionSimplification {
+    /// The smaller equivalent tree, admitted by the profile; `None` when saturation found no
+    /// smaller tree, or found one the profile refused.
+    pub simplified: Option<MathExpr>,
+    /// Why the profile refused the smaller tree, which is then discarded.
+    pub refusal: Option<String>,
+    pub stop: SaturationStop,
+    /// Saturation rounds run.
+    pub iterations: usize,
+    /// E-nodes after saturation.
+    pub enodes: usize,
+    /// Rewrite applications.
+    pub applications: usize,
+    /// The most e-nodes held at any point, the input's own included.
+    pub peak: usize,
+}
+// laneD:B20-rewrite-simplify end
