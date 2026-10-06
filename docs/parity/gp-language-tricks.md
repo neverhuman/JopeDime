@@ -90,4 +90,27 @@ The first fused execution passes both trick tests (113.81 seconds) with 972 exac
 
 The first strict imported-conversion run exposed another defect: the legacy Symbolic expression recipe included an unused `static max_num` helper. Its first subtraction witness failed under `-Wall -Werror`; the earlier proof lacked those flags. On the committed Lane B correction `c7a8127948ed059191b769e8f7860493effe6154`, both conversion tests now pass: all nine complete recipes execute in Python, Rust, g++ and clang++, matching 72 explicit expected output words with unchanged strict compiler flags. The command took 53.15 seconds including compilation; test execution took 28.12 seconds. This is focused dependency evidence, not final PR qualification or a merged-repair claim. Original failing logs remain retained under `GP_LANGUAGE_REDTEAM/fusion-focused-01/`; the successful run is under `dependency-c7-strict-conversion/`.
 
-The maintained `math_expr::evolution::v2::egraph::tests::all_libm_calls_preserve_literal_shape_including_tanh` test protects the B20 exclusion of constant libm folding. It checks eleven functions, five literal values including both signed zeros, and direct versus arithmetic-produced arguments (110 shapes). Each enclosing call must remain a call, its e-class must contain no literal, and evaluation bits/faults must remain identical. The simplifier is still test-only; this test does not establish runtime search wiring. Adding exactly Lane C's four-line unauthorized constant-Tanh fold changes 22 passing maintained tests to 21 passes and a failure in the new test. The control and mutant compile successfully; their source hashes, commands and raw logs are in `GP_LANGUAGE_REDTEAM/tanh-maintained-mutation/result.json`. Mutation source and logs remain outside Git; production folding rules are unchanged.
+The maintained `math_expr::evolution::v2::egraph::tests::all_libm_calls_preserve_literal_shape_including_tanh` test protects the B20 exclusion of constant libm folding. It checks eleven functions, five literal values including both signed zeros, and direct versus arithmetic-produced arguments (110 shapes). Each enclosing call must remain a call, its e-class must contain no literal, and evaluation bits/faults must remain identical. At that focused observation, the simplifier was still test-only; this guard test does not itself qualify runtime search wiring. Adding exactly Lane C's four-line unauthorized constant-Tanh fold changes 22 passing maintained tests to 21 passes and a failure in the new test. The control and mutant compile successfully; their source hashes, commands and raw logs are in `GP_LANGUAGE_REDTEAM/tanh-maintained-mutation/result.json`. Mutation source and logs remain outside Git; production folding rules are unchanged.
+
+## Bounded tiny-tail compositions
+
+`bounded_exponential_compositions_keep_tiny_tails_and_backend_faults` adds four
+legal tree compositions without changing a runtime guard. For dyadic
+`d = -i/4`, `i=0..2800`, the tree `E(d) = (exp(d/32)^8)^4` keeps the
+exponential argument in `[-21.875,0]` and both guarded power exponents at most
+8. The existing node/depth budget accepts it. It preserves positive values
+through `exp(-700)` instead of inheriting the direct `exp(d)` argument clamp.
+
+The maintained corpus checks E(d), the smaller two-logit softmax component,
+and `max(a,b)+log1p(E(min(a,b)-max(a,b)))` on logits `(d,0)` (2,801 rows each).
+It also checks a two-coordinate RBF on 75 half-step coordinate pairs. Python's
+400-digit Decimal arithmetic supplies independent references: all 8,478
+positive values must meet **5e-14 relative error**, with no absolute-error floor
+that could accept a zeroed tail. This bounds the corpus, not arbitrary inputs.
+
+All four trees round-trip through source and versioned bytes. Actual Python,
+Rust, g++ and clang++ compilation/execution must match native output **and
+fault words** exactly, including nine extra signed-zero, subnormal, maximum,
+NaN and infinity probes per tree. The original 27-case matrix now also checks
+fault words; its reference bounds and output-word checks are unchanged.
+These compositions do not add lazy selection or remove the direct exp guard.
