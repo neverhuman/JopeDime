@@ -12,7 +12,7 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at f4357b6bd, including merged #221/#223/#225/#226/#227/#228/#230.
+<!-- Local release preparation at 2e0b7723, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230.
 Rebase onto final main and finalize the date before publication. GP-language #231 (including the
 maintained Tanh mutation gate), jankurai triage and final-main qualification remain publication
 prerequisites. B18 archive evidence wiring is merged; B19/B20 wiring is tracked separately. -->
@@ -84,6 +84,8 @@ prerequisites. B18 archive evidence wiring is merged; B19/B20 wiring is tracked 
   indices (#199, #222).
 - Refuse oversized GPU copies before CUDA dispatch in release builds, retain empty-copy no-ops,
   restrict transfers to sealed scalar representations and make allocation fields private (#226).
+- Validate mapped corpus record bounds before reading rows and record the resulting evaluator
+  lineage through an explicit identity-only compatibility transition (#229).
 
 ### DL lane
 
@@ -91,6 +93,9 @@ prerequisites. B18 archive evidence wiring is merged; B19/B20 wiring is tracked 
   publisher and publish-tool custody. These source and fixture records retain the train-only
   boundary and do not establish a new live training qualification (#216, #218).
 - Record the owner's all-data DL research ruling while retaining the leak boundary (#220).
+- Require published JTT1 payloads to omit outer-test blocks and keep outer-test labels in local
+  JTS1 scorer artifacts. Refuse unstripped payloads before publication and quarantine old keys
+  without deleting objects (#224).
 
 ### CI, build and release
 
