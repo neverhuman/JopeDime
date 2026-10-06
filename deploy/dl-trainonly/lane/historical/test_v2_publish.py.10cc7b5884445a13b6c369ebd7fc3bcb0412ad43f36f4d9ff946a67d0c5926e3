@@ -1,0 +1,511 @@
+"""Offline proofs for tools/v2_publish.py: fake S3 behind the real s3io.Guard, temp build trees, no network, no AWS."""
+import contextlib
+import hashlib
+import importlib.util
+import io
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import botocore
+
+from dltrain import common, s3io
+
+SRC = Path(__file__).resolve().parents[1]
+_spec = importlib.util.spec_from_file_location("v2_publish", SRC / "tools" / "v2_publish.py")
+vp = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(vp)
+
+V, P = s3io.V2_PREFIX_KEY, s3io.PREFIX_KEY
+CODES = {"dltrain/t1prep.py": "1" * 64, "tools/v2_build_local.py": "2" * 64}
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def make_context(shard: Path, ds: str, fold: int = 0, files=None, split_seed=None, **over) -> Path:
+    files = files if files is not None else {"encoder.jtt1.gz": os.urandom(64), "teacher.jtt1.gz": os.urandom(48), "a0.f32": os.urandom(16)}
+    view = over.pop("view_id", f"{ds}__r0__f{fold}")
+    d = shard / view
+    d.mkdir(parents=True)
+    for name, body in files.items():
+        (d / name).write_bytes(body)
+    seed = split_seed or f"{ds}{fold}"
+    ctx = {"schema": vp.CONTEXT_SCHEMA, "view_id": view, "dataset_hash": ds, "fold": fold, "context_sha256": sha(f"ctx{seed}".encode()),
+           "outer_train_indices_sha256": sha(f"tr{seed}".encode()), "outer_test_indices_sha256": sha(f"te{seed}".encode()),
+           "n_train": 10, "n_test": 3, "scaler_sha256": sha(f"sc{seed}".encode()), "inner_labels_sha256": sha(b"il"),
+           "t1_meta_sha256": sha(b"meta"), "values_mode": "L7b", "published": False, "code_sha256": dict(CODES), "utc_us": 1, "row_selection_leak": ["clean"],
+           "files": {n: {"sha256": sha(b), "bytes": len(b)} for n, b in files.items()}}
+    ctx.update(over)
+    (d / "context.json").write_text(json.dumps(ctx, sort_keys=True) + "\n")
+    (d / ".done").write_bytes(b"ok\n")
+    return d
+
+
+class _Base(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="v2pub-"))
+        self.build = self.tmp / "build"
+        self.shard = self.build / "shard-0"
+        self.shard.mkdir(parents=True)
+        self.budget_path = self.tmp / "s3-v2-ledger.jsonl"
+        self.ledger_path = self.tmp / "publish-ledger.jsonl"
+        self.bucket = vp.FakeBucket()
+        self.rights_ds = set()
+        self.assertNotEqual(self.budget_path.resolve(), s3io.V2_LEDGER_PATH.resolve())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def run_once(self, limit=None, workers=1):
+        writer, reader, _ = vp.fake_clients(self.budget_path, self.bucket)
+        ledger = vp.PublishLedger(self.ledger_path)
+        try:
+            return vp.run(self.build, writer, reader, ledger, writer._dltrain_guard.ledger, limit=limit, workers=workers)
+        finally:
+            ledger.close()
+
+    def ledger_records(self):
+        return [json.loads(x) for x in self.ledger_path.read_bytes().splitlines()]
+
+    def body(self, key):
+        return self.bucket.objects[(s3io.BUCKET, key)][-1][1]
+
+    def assert_layout(self):
+        for key in self.bucket.keys():
+            self.assertTrue(key.startswith(V), key)
+            self.assertFalse(key.startswith(P), key)
+            self.assertEqual(len(self.bucket.objects[(s3io.BUCKET, key)]), 1, f"{key} has more than one version")
+            self.assertEqual(any(f"/{c}/" in key for c in ("tabpfn35", "target", "context2048")) or key.split("/")[-3] in self.rights_ds,
+                             key.startswith(s3io.V2_RESEARCH_ONLY_KEY), key)
+        for op, key, _ in self.bucket.calls:
+            self.assertIn(op, ("PutObject", "GetObject"))
+            self.assertTrue(key.startswith(V), key)
+
+
+class PublishLayout(_Base):
+    def test_keys_receipts_readback_and_research_only(self):
+        ds_a, ds_b = "0123456789abcdef", "fedcba9876543210"
+        make_context(self.shard, ds_a, 0)
+        files_b = {"encoder.jtt1.gz": b"enc", "a0.f32": b"\x00" * 8, "hyperion.npy": b"hyp", "tabpfn35.npy": b"tabpfn-research"}
+        make_context(self.shard, ds_b, 3, files=files_b)
+        doc = self.run_once()
+        self.assertEqual(doc["verdict"], "PASS", json.dumps(doc, default=str)[:3000])
+        self.assert_layout()
+        c12 = sha(common.canonical(CODES))[:12]
+        stem_b = f"{ds_b}/f3/{sha(f'tr{ds_b}3'.encode())[:12]}-{sha(f'sc{ds_b}3'.encode())[:12]}-{c12}"
+        expected = {f"{V}inputs/jtt1-encoder/{stem_b}.jtt1.gz", f"{V}encodings/a0/{stem_b}.f32", f"{V}encodings/hyperion/{stem_b}.npy",
+                    f"{V}research-only/encodings/tabpfn35/{stem_b}.npy", f"{V}receipts/jtt1-encoder/{stem_b}.json",
+                    f"{V}receipts/a0/{stem_b}.json", f"{V}receipts/hyperion/{stem_b}.json", f"{V}research-only/receipts/tabpfn35/{stem_b}.json"}
+        keys = set(self.bucket.keys())
+        self.assertTrue(expected <= keys, expected - keys)
+        self.assertEqual(len(keys), 2 * (3 + 4))
+        tab_key = f"{V}research-only/encodings/tabpfn35/{stem_b}.npy"
+        self.assertEqual(self.body(tab_key), b"tabpfn-research")
+        with self.assertRaises(s3io.ResearchOnlyRefused):
+            s3io.assert_production_loadable(tab_key)
+        with self.assertRaises(s3io.ResearchOnlyRefused):
+            s3io.assert_production_loadable(f"{V}research-only/receipts/tabpfn35/{stem_b}.json")
+        s3io.assert_production_loadable(f"{V}encodings/hyperion/{stem_b}.npy")
+        for comp, okey, ext in (("tabpfn35", tab_key, None), ("hyperion", f"{V}encodings/hyperion/{stem_b}.npy", None)):
+            rkey = (f"{V}research-only/receipts/" if comp == "tabpfn35" else f"{V}receipts/") + f"{comp}/{stem_b}.json"
+            rec = json.loads(self.body(rkey))
+            vid, obody = self.bucket.objects[(s3io.BUCKET, okey)][0]
+            self.assertEqual((rec["key"], rec["version_id"], rec["sha256"], rec["bytes"]), (okey, vid, sha(obody), len(obody)))
+            self.assertEqual(rec["production_loader_allowed"], comp != "tabpfn35")
+            self.assertEqual((rec["dataset_hash"], rec["fold"], rec["code12"], rec["values_mode"]), (ds_b, 3, c12, "L7b"))
+        gets = [c for c in self.bucket.calls if c[0] == "GetObject"]
+        self.assertEqual(len(gets), len(keys))
+        self.assertTrue(all(c[2] for c in gets), "every readback pins a VersionId")
+        recs = self.ledger_records()
+        self.assertEqual(sum(r["event"] == "verified" for r in recs), len(keys))
+        self.assertEqual(sum(r["event"] == "context_done" for r in recs), 2)
+        total = sum(len(vs[0][1]) for vs in self.bucket.objects.values())
+        self.assertEqual(s3io.V2Ledger(self.budget_path).usage()["used_bytes"], total)
+        self.assertEqual(doc["budget_after"]["used_bytes"], total)
+        for ctx_dir in self.shard.iterdir():   # the build tree is never modified
+            self.assertFalse(json.loads((ctx_dir / "context.json").read_text())["published"])
+
+    def test_resume_verifies_by_get_and_never_reputs(self):
+        for i in range(3):
+            make_context(self.shard, f"{i:016x}", i)
+        self.assertEqual(self.run_once()["verdict"], "PASS")
+        puts, budget = len(self.bucket.puts()), self.budget_path.read_bytes()
+        self.bucket.calls.clear()
+        doc = self.run_once()
+        self.assertEqual(doc["verdict"], "PASS")
+        self.assertEqual(self.bucket.puts(), [], "a resumed run must not PUT verified objects again")
+        gets = [c for c in self.bucket.calls if c[0] == "GetObject"]
+        self.assertEqual(len(gets), puts)
+        self.assertTrue(all(c[2] for c in gets))
+        self.assertEqual(doc["publish"]["stats"], {"object_verified_existing": 9, "receipt_verified_existing": 9, "contexts_done": 3})
+        self.assertEqual(self.budget_path.read_bytes(), budget, "no new budget reservations on resume")
+        self.assert_layout()
+
+    def test_interrupted_put_resumes_create_only(self):
+        make_context(self.shard, "0123456789abcdef", 0)
+        make_context(self.shard, "1123456789abcdef", 1)
+        plan = vp.scan_context(self.shard / "0123456789abcdef__r0__f0")
+        key = plan["objects"][0]["key"]
+        self.bucket.put_faults[key] = [("after", botocore.exceptions.ReadTimeoutError(endpoint_url="https://x"))]
+        doc = self.run_once()
+        self.assertEqual(doc["verdict"], "INCOMPLETE")
+        self.assertEqual([f["view_id"] for f in doc["failed"]], ["0123456789abcdef__r0__f0"])
+        self.assertEqual([r["event"] for r in self.ledger_records() if r.get("key") == key], ["intent", "failed"])
+        doc = self.run_once()
+        self.assertEqual(doc["verdict"], "PASS", json.dumps(doc["failed"]))
+        self.assertEqual(doc["publish"]["stats"]["object_already_present_equal_bytes"], 1)
+        verified = [r for r in self.ledger_records() if r.get("key") == key and r["event"] == "verified"]
+        self.assertEqual(len(verified), 1)
+        self.assertEqual(verified[0]["version_id"], self.bucket.objects[(s3io.BUCKET, key)][0][0])
+        self.assertIn(("GetObject", key, verified[0]["version_id"]), self.bucket.calls, "412-equal is pinned by an exact-version GET")
+        self.assert_layout()
+
+    def test_workers_publish_the_same_keys(self):
+        for i in range(6):
+            make_context(self.shard, f"{i:016x}", i % 5)
+        doc = self.run_once(workers=4)
+        self.assertEqual(doc["verdict"], "PASS")
+        self.assertEqual(len(self.bucket.keys()), 36)
+        self.assert_layout()
+
+    def test_limit_selects_first_contexts(self):
+        for i in range(4):
+            make_context(self.shard, f"{i:016x}", 0)
+        doc = self.run_once(limit=2)
+        self.assertEqual((doc["scan"]["contexts_selected"], doc["contexts_done_in_selection"], doc["verdict"]), (2, 2, "PASS"))
+        self.assertEqual({k.split("/")[-3] for k in self.bucket.keys()}, {f"{0:016x}", f"{1:016x}"})
+
+
+class Refusals(_Base):
+    def _refused(self, doc):
+        return {r["view_id"]: r["reason"] for r in doc["scan"]["refused"]}
+
+    def test_bad_contexts_are_refused_before_any_put(self):
+        good = make_context(self.shard, "a" * 16, 0)
+        make_context(self.shard, "b" * 16, 0, published=True)
+        d = make_context(self.shard, "c" * 16, 0)
+        (d / "a0.f32").write_bytes(b"tampered-after-build")                  # hash and size differ
+        d = make_context(self.shard, "d" * 16, 0)
+        raw = (d / "a0.f32").read_bytes()
+        (d / "a0.f32").write_bytes(bytes([raw[0] ^ 1]) + raw[1:])              # same size, different hash
+        d = make_context(self.shard, "e" * 16, 0)
+        (d / ".done").unlink()
+        make_context(self.shard, "f" * 16, 0, files={"a0.f32": b"x", "extra.bin": b"y"})
+        d = make_context(self.shard, "1" * 16, 0)
+        (d / "stray.tmp").write_bytes(b"z")
+        d = make_context(self.shard, "2" * 16, 0)
+        (d / "a0.f32").unlink()
+        (d / "a0.f32").symlink_to(good / "a0.f32")
+        make_context(self.shard, "3" * 16, 0, dataset_hash="XYZ")
+        make_context(self.shard, "5" * 16, 0, schema="jope.other/v1")
+        d = make_context(self.shard, "6" * 16, 0)
+        ctx = json.loads((d / "context.json").read_text())
+        del ctx["published"]
+        (d / "context.json").write_text(json.dumps(ctx))
+        make_context(self.shard, "7" * 16, 0, published="false")
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {
+            "b" * 16 + "__r0__f0": "published_flag", "c" * 16 + "__r0__f0": "hash_mismatch", "d" * 16 + "__r0__f0": "hash_mismatch",
+            "e" * 16 + "__r0__f0": "not_done", "f" * 16 + "__r0__f0": "unknown_file", "1" * 16 + "__r0__f0": "unlisted_files",
+            "2" * 16 + "__r0__f0": "missing_file", "3" * 16 + "__r0__f0": "context_field", "5" * 16 + "__r0__f0": "context_schema",
+            "6" * 16 + "__r0__f0": "published_flag", "7" * 16 + "__r0__f0": "published_flag"})
+        self.assertEqual(doc["verdict"], "INCOMPLETE")
+        self.assertEqual({k.split("/")[-3] for k in self.bucket.keys()}, {"a" * 16}, "only the good context was published")
+        self.assert_layout()
+
+    def test_values_mode_and_row_selection_gate(self):
+        make_context(self.shard, "a" * 16, 0)                                                         # L7b, clean
+        make_context(self.shard, "b" * 16, 0, schema="jope.dl-v2-l7a-context/v1", values_mode="L7a", admitted_values_mode="L7a")
+        make_context(self.shard, "c" * 16, 0, schema="jope.dl-v2-l7a-context/v1")                    # L7a schema, L7b values
+        make_context(self.shard, "d" * 16, 0, admitted_values_mode="L7a")                            # admitted mode differs
+        make_context(self.shard, "e" * 16, 0, row_selection_leak=["kmeans"])
+        make_context(self.shard, "f" * 16, 0, row_selection_leak=["clean", "acquisition_cap"])
+        make_context(self.shard, "1" * 16, 0, row_selection_leak=[])
+        d = make_context(self.shard, "2" * 16, 0)
+        ctx = json.loads((d / "context.json").read_text())
+        del ctx["row_selection_leak"]                                                                  # ungated tree
+        (d / "context.json").write_text(json.dumps(ctx))
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {
+            "c" * 16 + "__r0__f0": "values_mode", "d" * 16 + "__r0__f0": "values_mode", "e" * 16 + "__r0__f0": "row_selection_gate",
+            "f" * 16 + "__r0__f0": "row_selection_gate", "1" * 16 + "__r0__f0": "row_selection_gate",
+            "2" * 16 + "__r0__f0": "row_selection_gate"})
+        self.assertEqual({k.split("/")[-3] for k in self.bucket.keys()}, {"a" * 16, "b" * 16})
+        modes = {}
+        for (_, key), versions in self.bucket.objects.items():
+            if "/receipts/" in key:
+                r = json.loads(versions[-1][1] if isinstance(versions[-1], tuple) else versions[-1]["body"])
+                self.assertEqual(r["row_selection_leak"], ["clean"])
+                modes[r["dataset_hash"]] = r["values_mode"]
+        self.assertEqual(modes, {"a" * 16: "L7b", "b" * 16: "L7a"})
+        self.assert_layout()
+
+    def test_dope_receipt_carries_exposure(self):
+        dope = {"kernel_sha256": "k" * 64, "exposure": {"lift_eligible": False, "pretraining_overlap": {"status": "Exposed"}}}
+        files = {"encoder.jtt1.gz": os.urandom(64), "teacher.jtt1.gz": os.urandom(48), "a0.f32": os.urandom(16), "dope.npy": os.urandom(32)}
+        make_context(self.shard, "a" * 16, 0, files=files, dope=dope)
+        self.run_once()
+        got = {}
+        for (_, key), versions in self.bucket.objects.items():
+            if "/receipts/" in key:
+                r = json.loads(versions[-1][1] if isinstance(versions[-1], tuple) else versions[-1]["body"])
+                got[r["component"]] = r.get("dope")
+        self.assertEqual(got.pop("dope"), dope)
+        self.assertEqual(set(got.values()), {None}, "only the dope receipt carries the dope block")
+
+    def test_rowsel_schemas_gpu_and_rowsel_receipts(self):
+        rowsel = {"route": "t1", "identity": "i" * 64, "outer_split_changed": False, "train_positions": list(range(50))}
+        make_context(self.shard, "a" * 16, 0, schema="jope.dl-v2-rowsel-context/v1", rowsel=rowsel,
+                     epoch0={"view_id": "old", "context_sha256": "c" * 64, "l7b_context": {"path": "/x"}})
+        make_context(self.shard, "b" * 16, 0, schema="jope.dl-v2-rowsel-raw-context/v1", values_mode="L7a")
+        make_context(self.shard, "c" * 16, 0, schema="jope.dl-v2-rowsel-raw-context/v1")                 # raw schema, L7b values
+        gpu = {"components": {"hyperion": {"seconds": 1.0}, "tabpfn35": {"seconds": 2.0}}, "input": {"k": 1}, "pins": {"p": 1},
+               "code_sha256": {"c": 1}, "manifest": {"m": 1}, "owner_decision": "o"}
+        make_context(self.shard, "d" * 16, 0, files={"hyperion.npy": os.urandom(40), "tabpfn35.npy": os.urandom(40)}, gpu=gpu)
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"c" * 16 + "__r0__f0": "values_mode"})
+        got = {}
+        for (_, key), versions in self.bucket.objects.items():
+            if "/receipts/" in key:
+                r = json.loads(versions[-1][1])
+                got[(r["dataset_hash"], r["component"])] = r
+        ra = got[("a" * 16, "a0")]
+        self.assertEqual(ra["rowsel"], {"route": "t1", "identity": "i" * 64, "outer_split_changed": False})
+        self.assertEqual(ra["epoch0"], {"view_id": "old", "context_sha256": "c" * 64})
+        self.assertNotIn("rowsel", got[("b" * 16, "a0")])
+        self.assertEqual(got[("d" * 16, "hyperion")]["gpu"]["component"], {"seconds": 1.0})
+        self.assertEqual(got[("d" * 16, "tabpfn35")]["gpu"]["component"], {"seconds": 2.0})
+        self.assertTrue(got[("d" * 16, "tabpfn35")]["research_only"])
+        self.assertNotIn("gpu", got[("a" * 16, "a0")])
+        self.assert_layout()
+
+    def test_target_and_context2048_are_research_only_and_tagged(self):
+        files = {n: os.urandom(24) for n in ("hyperion.npy", "foundation.npy", "target.npy", "context2048.npy", "tabpfn35.npy")}
+        tags = {"hyperion": {"ruling": "HYPERION-ARMB-LABELS", "status": "Exposed"}, "target": {"ruling": "TARGET-ENC", "label_exposed": True}}
+        make_context(self.shard, "a" * 16, 0, files=files, label_exposure=tags)
+        self.run_once()
+        rec = {}
+        for (_, key), versions in self.bucket.objects.items():
+            comp = key.split("/")[-4]
+            if "/receipts/" in key:
+                rec[comp] = json.loads(versions[-1][1])
+            else:
+                self.assertEqual(key.startswith(s3io.V2_RESEARCH_ONLY_KEY), comp in ("target", "context2048", "tabpfn35"), key)
+                if comp in ("target", "context2048", "tabpfn35"):
+                    with self.assertRaises(s3io.ResearchOnlyRefused):
+                        s3io.assert_production_loadable(key)
+                else:
+                    s3io.assert_production_loadable(key)
+        self.assertEqual(rec["hyperion"]["label_exposure"], tags["hyperion"])
+        self.assertEqual(rec["target"]["label_exposure"], tags["target"])
+        self.assertNotIn("label_exposure", rec["foundation"])
+        self.assertTrue(rec["context2048"]["research_only"] and not rec["context2048"]["production_loader_allowed"])
+        self.assertFalse(rec["hyperion"]["research_only"])
+        self.assert_layout()
+
+    def test_rights_research_contexts_are_research_only_without_row_data(self):
+        self.rights_ds = {"b" * 16}
+        vec = {"a0.f32": os.urandom(16), "dope.npy": os.urandom(32), "hyperion.npy": os.urandom(24)}
+        make_context(self.shard, "a" * 16, 0, files=dict(vec))                                            # licensed: normal
+        make_context(self.shard, "b" * 16, 0, files=dict(vec), rights="research-only", rights_decision="d#sha256=x")
+        make_context(self.shard, "c" * 16, 0, rights="research-only")                                  # carries JTT1 row data
+        make_context(self.shard, "d" * 16, 0, files=dict(vec), rights="production")                      # unknown rights value
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"c" * 16 + "__r0__f0": "rights_row_data", "d" * 16 + "__r0__f0": "rights"})
+        for (_, key), versions in self.bucket.objects.items():
+            ds = key.split("/")[-3]
+            if ds == "b" * 16:
+                self.assertTrue(key.startswith(s3io.V2_RESEARCH_ONLY_KEY), key)
+                with self.assertRaises(s3io.ResearchOnlyRefused):
+                    s3io.assert_production_loadable(key)
+                if "/receipts/" in key:
+                    r = json.loads(versions[-1][1])
+                    self.assertEqual((r["rights"], r["rights_decision"], r["research_only"], r["production_loader_allowed"]),
+                                     ("research-only", "d#sha256=x", True, False))
+            elif ds == "a" * 16 and "/hyperion/" in key:
+                s3io.assert_production_loadable(key)
+                if "/receipts/" in key:
+                    self.assertNotIn("rights", json.loads(versions[-1][1]))
+        self.assertEqual({k.split("/")[-3] for k in self.bucket.keys()}, {"a" * 16, "b" * 16})
+        self.assert_layout()
+
+    def test_acquisition_cap_only_for_receipted_t1_fallback(self):
+        fb = {"coverage_sha256": "f" * 64, "reason": "unmatched"}
+        T1 = "jope.dl-v2-rowsel-context/v1"
+        make_context(self.shard, "a" * 16, 0, schema=T1, row_selection_leak=["acquisition_cap"], t1_fallback=fb)   # admitted
+        make_context(self.shard, "b" * 16, 0, schema=T1, row_selection_leak=["acquisition_cap"])                   # superseded T1
+        make_context(self.shard, "c" * 16, 0, row_selection_leak=["acquisition_cap"], t1_fallback=fb)            # wrong schema
+        make_context(self.shard, "d" * 16, 0, schema=T1, row_selection_leak=["acquisition_cap"], t1_fallback={"coverage_sha256": "x"})
+        make_context(self.shard, "e" * 16, 0, schema=T1, row_selection_leak=["kmeans"], t1_fallback=fb)          # other labels never
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {k * 16 + "__r0__f0": "row_selection_gate" for k in "bcde"})
+        rec = [json.loads(v[-1][1]) for (_, k), v in self.bucket.objects.items() if "/receipts/" in k]
+        self.assertTrue(rec and all(r["t1_fallback"] == fb and r["row_selection_leak"] == ["acquisition_cap"] for r in rec))
+        self.assert_layout()
+
+    def test_resplit_schemas_need_a_new_cut(self):
+        good = {"cut_id": "trainonly-split-v2:" + "a" * 64, "comparable_with_replaced": False, "replaces_cut": {"x": 1}}
+        goodg = dict(good, cut_id="trainonly-split-v2g:" + "b" * 64)
+        RS, L7A, L7B = "jope.dl-v2-rowsel-context/v2", "jope.dl-v2-l7a-context/v2split", "jope.dl-v2-local-context/v2split"
+        make_context(self.shard, "a" * 16, 0, schema=RS, cut=good)                                        # admitted
+        make_context(self.shard, "a" * 16, 1, schema=L7A, values_mode="L7a", cut=goodg)                  # admitted
+        make_context(self.shard, "a" * 16, 2, schema=L7B, cut=good, rights="licensed")                    # admitted, production
+        make_context(self.shard, "b" * 16, 0, schema=RS)                                                  # no cut
+        make_context(self.shard, "c" * 16, 0, schema=L7B, cut=dict(good, comparable_with_replaced=True))  # comparable with old cut
+        make_context(self.shard, "d" * 16, 0, schema=L7B, cut=dict(good, cut_id="registry:" + "a" * 64)) # old registry cut
+        make_context(self.shard, "e" * 16, 0, schema=L7B, cut=dict(good, cut_id="trainonly-split-v2:xyz"))
+        make_context(self.shard, "f" * 16, 0, schema=L7A, cut=good)                                       # L7a schema, L7b values
+        make_context(self.shard, "9" * 16, 0, schema=L7B, cut=good, rights="licensed-maybe")              # unknown rights value
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"b" * 16 + "__r0__f0": "cut", "c" * 16 + "__r0__f0": "cut", "d" * 16 + "__r0__f0": "cut",
+                                              "e" * 16 + "__r0__f0": "cut", "f" * 16 + "__r0__f0": "values_mode",
+                                              "9" * 16 + "__r0__f0": "rights"})
+        keys = list(self.bucket.keys())
+        self.assertTrue(keys and {k.split("/")[-3] for k in keys} == {"a" * 16})
+        for (_, key), versions in self.bucket.objects.items():
+            if "/hyperion/" in key or "/jtt1-encoder/" in key or "/a0/" in key:
+                s3io.assert_production_loadable(key)
+            if "/receipts/" in key and "/f2/" in key:
+                self.assertEqual(json.loads(versions[-1][1])["rights"], "licensed")
+        self.assert_layout()
+
+    def test_v2_t1_fallback_needs_its_rowsel_split_record(self):
+        cut = {"cut_id": "trainonly-split-v2:" + "a" * 64, "comparable_with_replaced": False}
+        fb = {"source_sha256": "f" * 64, "rule": "ROWSEL-SPLIT: raw source unmatched; rebuilt on T1 keeping acquisition_cap", "reason": "rows_unmatched"}
+        RS = "jope.dl-v2-rowsel-context/v2"
+        make_context(self.shard, "a" * 16, 0, schema=RS, cut=cut, row_selection_leak=["acquisition_cap"], t1_fallback=fb)   # admitted
+        make_context(self.shard, "b" * 16, 0, schema=RS, cut=cut, row_selection_leak=["acquisition_cap"],
+                     t1_fallback=dict(fb, rule="other"))
+        make_context(self.shard, "c" * 16, 0, schema=RS, cut=cut, row_selection_leak=["acquisition_cap"],
+                     t1_fallback={"coverage_sha256": "f" * 64, "reason": "unmatched"})                                 # v1 record on v2
+        make_context(self.shard, "d" * 16, 0, schema=RS, cut=cut, row_selection_leak=["acquisition_cap"], t1_fallback=dict(fb, source_sha256="x"))
+        make_context(self.shard, "e" * 16, 0, schema=RS, cut=cut, row_selection_leak=["acquisition_cap"],               # v1 field + rule
+                     t1_fallback={"coverage_sha256": "f" * 64, "rule": fb["rule"], "reason": "rows_unmatched"})
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {k * 16 + "__r0__f0": "row_selection_gate" for k in "bcde"})
+        self.assertEqual({k.split("/")[-3] for k in self.bucket.keys()}, {"a" * 16})
+        self.assert_layout()
+
+    def test_key_collision_refuses_both(self):
+        make_context(self.shard, "a" * 16, 0, split_seed="same", view_id="a" * 16 + "__r0__f0__x")
+        make_context(self.shard, "a" * 16, 0, split_seed="same", view_id="a" * 16 + "__r0__f0__y")
+        doc = self.run_once()
+        self.assertEqual(set(self._refused(doc).values()), {"key_collision"})
+        self.assertEqual(len(doc["scan"]["refused"]), 2)
+        self.assertEqual(self.bucket.calls, [])
+
+    def test_poisoned_key_is_never_overwritten(self):
+        make_context(self.shard, "a" * 16, 0)
+        key = vp.scan_context(self.shard / ("a" * 16 + "__r0__f0"))["objects"][0]["key"]
+        self.bucket.objects[(s3io.BUCKET, key)] = [("old-version", b"someone else's bytes")]
+        doc = self.run_once()
+        self.assertEqual(doc["failed_by_type"], {"PoisonedKey": 1})
+        self.assertEqual(self.bucket.objects[(s3io.BUCKET, key)], [("old-version", b"someone else's bytes")])
+        self.assertFalse(any(r["event"] == "verified" and r["key"] == key for r in self.ledger_records()))
+
+    def test_readback_mismatch_fails_the_context(self):
+        make_context(self.shard, "a" * 16, 0)
+        key = vp.scan_context(self.shard / ("a" * 16 + "__r0__f0"))["objects"][0]["key"]
+        self.bucket.corrupt_reads[key] = b"corrupt"
+        doc = self.run_once()
+        self.assertEqual(doc["failed_by_type"], {"ReadbackMismatch": 1})
+        self.assertFalse(any(r["event"] == "verified" and r["key"] == key for r in self.ledger_records()))
+        self.assertFalse(any(r["event"] == "context_done" for r in self.ledger_records()))
+
+    def test_ledger_conflict_after_local_rebuild(self):
+        d = make_context(self.shard, "a" * 16, 0)
+        self.assertEqual(self.run_once()["verdict"], "PASS")
+        new = b"rebuilt-bytes"
+        (d / "a0.f32").write_bytes(new)
+        ctx = json.loads((d / "context.json").read_text())
+        ctx["files"]["a0.f32"] = {"sha256": sha(new), "bytes": len(new)}
+        (d / "context.json").write_text(json.dumps(ctx))
+        self.bucket.calls.clear()
+        doc = self.run_once()
+        self.assertEqual(doc["failed_by_type"], {"PublishConflict": 1})
+        self.assertEqual(self.bucket.puts(), [])
+
+    def test_budget_preflight_and_guard(self):
+        make_context(self.shard, "a" * 16, 0)
+        s3io.V2Ledger(self.budget_path).reserve(V + "seed/x", sha(b"seed"), s3io.V2_BUDGET_BYTES - 10)
+        doc = self.run_once()
+        self.assertFalse(doc["preflight"]["fits"])
+        self.assertIn("stopped", doc)
+        self.assertEqual((doc["verdict"], self.bucket.calls), ("INCOMPLETE", []))
+        writer, reader, _ = vp.fake_clients(self.budget_path, self.bucket)   # the guard holds even without the preflight
+        ledger = vp.PublishLedger(self.ledger_path)
+        try:
+            with self.assertRaises(s3io.BudgetExceeded):
+                vp.Publisher(writer, reader, ledger).publish_context(vp.scan_context(self.shard / ("a" * 16 + "__r0__f0")))
+        finally:
+            ledger.close()
+        self.assertEqual(self.bucket.keys(), [])
+
+    def test_publish_ledger_is_exclusive_and_validated(self):
+        a = vp.PublishLedger(self.ledger_path)
+        with self.assertRaisesRegex(RuntimeError, "another publisher"):
+            vp.PublishLedger(self.ledger_path)
+        a.close()
+        with open(self.ledger_path, "ab") as f:
+            f.write(b'{"schema":"jope.dl-v2-publish-ledger/v1","event":"verified","key":"experiments/gp-policy-dl/v1/x"}\n')
+        with self.assertRaises(s3io.LedgerCorrupt):
+            vp.PublishLedger(self.ledger_path)
+        self.ledger_path.write_bytes(b'{"schema"')
+        with self.assertRaises(s3io.LedgerCorrupt):
+            vp.PublishLedger(self.ledger_path)
+
+
+class Cli(_Base):
+    def test_dry_run_builds_no_aws_client_and_leaves_real_ledgers_alone(self):
+        make_context(self.shard, "a" * 16, 0, files={"a0.f32": b"a0", "tabpfn35.npy": b"t"})
+        real_budget, real_publish = self.tmp / "real-budget.jsonl", self.tmp / "real-publish.jsonl"
+        s3io.V2Ledger(real_budget).reserve(V + "seed/x", sha(b"seed"), 1000)
+        before = real_budget.read_bytes()
+        receipt = self.tmp / "receipt.json"
+        boom = mock.Mock(side_effect=AssertionError("dry run must not build an AWS client"))
+        with mock.patch.object(s3io, "V2_LEDGER_PATH", real_budget), mock.patch.object(vp, "DEFAULT_PUBLISH_LEDGER", real_publish), \
+                mock.patch.object(s3io, "make_client", boom), mock.patch("boto3.session.Session", boom):
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = vp.main(["--build", str(self.build), "--dry-run", "--work-dir", str(self.tmp / "work"), "--receipt", str(receipt)])
+        self.assertEqual(rc, 0)
+        doc = json.loads(receipt.read_text())
+        self.assertEqual((doc["mode"], doc["verdict"], doc["ledgers"]["budget_is_real"]), ("dry-run", "PASS", False))
+        self.assertEqual(doc["dry_run_bucket"]["keys_outside_v2"], 0)
+        self.assertEqual(doc["dry_run_bucket"]["tabpfn35_keys_outside_research_only"], 0)
+        self.assertEqual(doc["dry_run_bucket"]["research_only_keys"], 2)
+        self.assertEqual(doc["budget_before"]["used_bytes"], 1000, "the dry run starts from a copy of the real budget")
+        self.assertEqual(real_budget.read_bytes(), before)
+        self.assertFalse(real_publish.exists())
+        boom.assert_not_called()
+        with contextlib.redirect_stderr(io.StringIO()):
+            with mock.patch.object(vp, "DEFAULT_PUBLISH_LEDGER", real_publish), self.assertRaises(SystemExit):
+                vp.main(["--build", str(self.build), "--dry-run", "--publish-ledger", str(real_publish)])
+            with self.assertRaises(SystemExit):
+                vp.main(["--build", str(self.build)])
+            with self.assertRaises(SystemExit):
+                vp.main(["--build", str(self.build), "--dry-run", "--real"])
+
+    def test_real_mode_uses_the_v2_writer_and_the_real_budget_ledger(self):
+        seen = []
+
+        def fake_make_client(**kw):
+            seen.append({k: v for k, v in kw.items() if k != "session"})
+            guard = s3io.Guard(writes=kw.get("writes", False), v2=kw.get("v2", False),
+                               ledger=self.budget_path if kw.get("writes") else None)
+            return vp.FakeClient(self.bucket, guard)
+        with mock.patch.object(s3io, "make_client", side_effect=fake_make_client), mock.patch("boto3.session.Session") as sess:
+            writer, reader = vp.real_clients()
+        sess.assert_called_once_with(profile_name=s3io.PROFILE, region_name=s3io.REGION)
+        self.assertEqual(seen, [{"writes": True, "v2": True, "ledger_path": s3io.V2_LEDGER_PATH}, {"v2": True}])
+        self.assertTrue(writer._dltrain_guard.v2 and writer._dltrain_guard.writes)
+        self.assertFalse(reader._dltrain_guard.writes)
+
+
+if __name__ == "__main__":
+    unittest.main()

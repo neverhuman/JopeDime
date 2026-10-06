@@ -1,0 +1,1143 @@
+"""Provisional v2 train-only build, local and unpublished (L7b values: T1 decoded and re-fitted on outer-train rows).
+
+DEFAULT (--split-version registry-epoch0, unchanged): per epoch-0 context (scale_check.resolve_context lineage), the
+outer-train/test rows R/T are the epoch-0 context's (the registry folds, jope.virtual-splits/v1 grouped-stratified-
+kfold/v1). Writes under OUT/<shard>/<view_id>/:
+  encoder.jtt1.gz   train-only min-max JTT1 (t1prep.prepare): the encoders' training-side input
+  teacher.jtt1.gz   same rows, columns and inner folds, values re-fitted (categories re-coded, target copies dropped)
+                    but NOT min-max scaled: the evaluator in patch 0001 scales per fit on its own fit rows
+  a0.f32            A0 meta-features of encoder.jtt1 (metafeatures.from_raw)
+  context.json      identities, sha256 of every file, t1prep strata, code sha256, values mode, published=false
+  .done             written last; a context with .done is skipped (resumable, idempotent)
+Per shard: shard-<i>-of-<n>.receipt.json (expected vs done vs failed). No S3, network or GPU; nothing is published.
+
+SPLIT V2 (--split-version rowsel-raw-split-v2; owner ruling NONRAW-SPLIT-A, owner-decisions-20261006T053215Z.json). The
+registry split reads y through its exact full-row duplicate key (receipts/trainonly-v2/split-scope-nonraw-20261006T034028Z
+.json), so the non-raw contexts are re-split with the raw route's target-free split v2 (dltrain/rowsel_raw_split_v2.py,
+used unmodified):
+  scope       plan.json from a pinned publish manifest (clean-v1 L7b datasets, or the research clean datasets); a dataset
+              is in scope with ALL its epoch-0 contexts (replacement is per dataset)
+  universe    every row of the dataset's epoch-0 data object A as this tool reads it (scale_check.resolve_context: the T1
+              table). Epoch-0 coverage, checked per dataset: every epoch-0 context's R u T is all of A (R = complement of
+              the registry test fold), and A is the whole T1 table (manifest sample_rows == source_rows for every
+              in-scope dataset). So the epoch-0 clean views covered the whole T1 table, in 1-5 registry folds.
+              Position = 0-based row index in A.
+  partition   "t1" (the universe label in the row rank; tools/v2_build_l7a.py uses "l7a" for its matched source rows)
+  groups      exact parsed float64 bytes of the T1 FEATURE columns (categorical columns as their T1-coded value, a
+              bijection of the code); the target column is never part of the key
+  folds       rowsel_raw_split_v2.outer_split(h, positions, values, specs, partition="t1"): 5 folds, all built
+  per fold    T = fold f, R = every other position (both ascending), then exactly the default build: t1prep refit on R,
+              train-only min-max, inner 2-fold labels from R, target-copy drop on R, JTT1 train rows then test rows
+  gates       split: no duplicate group straddles folds, the target permuted/replaced/constant never moves it
+              (rowsel_raw.split_target_check), and duplicate-preserving outer-test feature/target changes of every fold
+              never move it (rowsel_raw_split_v2.value_check); per context: the train side (scaler, encoder and teacher
+              train rows, inner labels, A0, train-side refit report) is bit-identical when the outer-test rows are
+              perturbed, and the gate's own base equals the written artifacts; the new view_id collides with no
+              existing view_id (holdout denylist v2 and every context.json under build-v2, frozen at plan time)
+  identity    top-level `cut` {cut_id "trainonly-split-v2:" + split sha256 exactly as rowsel_raw_split_v2 returns it,
+              schema, partition, replaces_cut (the registry split object sha256), comparable_with_replaced false};
+              `split` (the raw route's split record fields); view_id <h>__r0__f<f>__l7bsplit2_<identity[:12]>;
+              `epoch0_replaced` (dataset level)
+  writes      only when all 5 folds pass every gate: files + context.json of every fold, then .done of every fold.
+              A .done context is never rewritten; its recorded identity and files must equal the recomputed ones.
+              The tree gets plan.json, existing-view-ids.json, _datasets/<h>.json per dataset and, after the verified
+              summary, .complete (all create-only).
+
+Usage (inside the lane slice, RUN/tmp/p2fix3/py.sh):
+  v2_build_local.py --out DIR --shard I --of N [--views v1,v2]                     registry folds (unchanged default)
+  v2_build_local.py --split-version rowsel-raw-split-v2 --plan {clean-l7b,research-clean} --out NEW_TREE --of N
+  v2_build_local.py --split-version rowsel-raw-split-v2 --out NEW_TREE --shard I --of N [--datasets h1,h2]
+  v2_build_local.py --split-version rowsel-raw-split-v2 --summarize --out NEW_TREE --of N --tests-log LOG --mutants JSON
+                    [--pilot JSON] [--receipt-stem STEM]
+"""
+import argparse
+import collections
+import functools
+import glob
+import gzip
+import hashlib
+import json
+import os
+import resource
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+from dltrain import cpuguard, jtt1, metafeatures, rowsel_raw, rowsel_raw_split_v2, scale_check, t1prep, trainonly
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+META_DIR = RUN / "inputs" / "t1-meta"
+DATASETS_INV = RUN / "tmp" / "trainonly-v1" / "epoch0-datasets.json"
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def atomic(path: Path, data: bytes):
+    tmp = path.with_name("." + path.name + ".tmp")
+    with open(tmp, "wb") as f:
+        f.write(data); f.flush(); os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
+def code_shas():
+    root = Path(__file__).resolve().parents[1]
+    return {f: sha((root / f).read_bytes()) for f in ("tools/v2_build_local.py", "dltrain/t1prep.py", "dltrain/trainonly.py",
+                                                        "dltrain/metafeatures.py", "dltrain/scale_check.py", "dltrain/jtt1.py")}
+
+
+def l7b_artifacts(A, meta, R, T) -> dict:
+    """One context in memory, exactly the default build: t1prep refit on R, train-only min-max, inner folds from R, JTT1
+    train rows then test rows; teacher = the refitted, unscaled rows; A0 of the encoder JTT1."""
+    split = t1prep.prepare(A, meta, R, T)
+    fitted, rep = t1prep.refit(A, meta, R)
+    teacher = trainonly.jtt1_bytes(fitted[R], fitted[T].reshape(-1, fitted.shape[1]), split["inner_labels"])
+    a0 = metafeatures.from_raw(split["jtt1"])[0]
+    return {"encoder_raw": split["jtt1"], "teacher_raw": teacher, "a0": a0, "report": rep,
+            "scaler_sha256": sha(trainonly.scaler_bytes(split)),
+            "inner_labels_sha256": sha(np.asarray(split["inner_labels"], np.uint8).tobytes()),
+            "inner_loads": split["inner_cv"]["loads"]}
+
+
+def context_files(art) -> dict:
+    return {"encoder.jtt1.gz": gzip.compress(art["encoder_raw"], compresslevel=3, mtime=0),
+            "teacher.jtt1.gz": gzip.compress(art["teacher_raw"], compresslevel=3, mtime=0),
+            "a0.f32": art["a0"]}
+
+
+def files_meta(files, art) -> dict:
+    return {"encoder.jtt1.gz": {"sha256": sha(files["encoder.jtt1.gz"]), "raw_sha256": sha(art["encoder_raw"]),
+                                "bytes": len(files["encoder.jtt1.gz"])},
+            "teacher.jtt1.gz": {"sha256": sha(files["teacher.jtt1.gz"]), "raw_sha256": sha(art["teacher_raw"]),
+                                "bytes": len(files["teacher.jtt1.gz"])},
+            "a0.f32": {"sha256": sha(files["a0.f32"]), "bytes": len(files["a0.f32"])}}
+
+
+def build_one(c, meta, meta_sha, d: Path, codes):
+    """Registry (epoch-0) context: R/T exactly as the epoch-0 context resolved them."""
+    R, T = [int(i) for i in c["R"]], [int(i) for i in c["T"]]
+    art = l7b_artifacts(c["A"], meta, R, T)
+    files = context_files(art)
+    d.mkdir(parents=True, exist_ok=True)
+    for name in ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32"):
+        atomic(d / name, files[name])
+    row = c["row"]
+    ctx = {"schema": "jope.dl-v2-local-context/v1", "view_id": row["view_id"], "dataset_hash": row["dataset_hash"], "fold": int(row["fold"]),
+           "context_sha256": row["context_sha256"], "outer_train_indices_sha256": sha(json.dumps(R).encode()),
+           "outer_test_indices_sha256": sha(json.dumps(T).encode()), "n_train": len(R), "n_test": len(T),
+           "files": files_meta(files, art), "scaler_sha256": art["scaler_sha256"], "inner_labels_sha256": art["inner_labels_sha256"],
+           "inner_loads": art["inner_loads"], "t1prep": art["report"], "t1_meta_sha256": meta_sha, "values_mode": "L7b",
+           "published": False, "code_sha256": codes, "utc_us": int(time.time() * 1e6)}
+    atomic(d / "context.json", (json.dumps(ctx, sort_keys=True) + "\n").encode())
+    atomic(d / ".done", b"ok\n")
+    return ctx
+
+
+def build_registry(a):
+    """The default build (registry folds), unchanged. --views restricts it to named contexts (reproduction checks only;
+    the shard receipt then gets a .partial name)."""
+    cpuguard.set_threads(2)
+    out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    codes = code_shas()
+    src = scale_check.Sources(load_index=False)
+    cache = scale_check.DataCache(max_items=4)
+    inv = json.loads(DATASETS_INV.read_text())
+    rows = sorted(src.included(), key=lambda r: (r["dataset_hash"], int(r["fold"])))
+    mine = [r for r in rows if int(r["dataset_hash"][:8], 16) % a.of == a.shard]
+    if a.views:
+        keep = set(a.views.split(","))
+        mine = [r for r in mine if r["view_id"] in keep]
+    t0 = time.time(); done = skipped = 0; failed = []
+    for n, r in enumerate(mine):
+        d = out / f"shard-{a.shard}" / r["view_id"]
+        if (d / ".done").exists():
+            skipped += 1; continue
+        if n % 25 == 0:
+            ok, reasons, _ = cpuguard.check()
+            while not ok:
+                print(json.dumps({"guard": "PAUSE", "reasons": reasons}), flush=True); time.sleep(15); ok, reasons, _ = cpuguard.check()
+        try:
+            c = scale_check.resolve_context(r, src, cache)
+            k = inv["meta_key"][r["dataset_hash"]].rsplit("/", 1)[1]
+            mb = (META_DIR / f"{k}.json").read_bytes()
+            if sha(mb) != k:
+                raise RuntimeError("meta sha mismatch")
+            build_one(c, json.loads(mb), k, d, codes)
+            done += 1
+        except Exception as e:  # recorded per context; the shard continues
+            failed.append({"view_id": r["view_id"], "error": f"{type(e).__name__}: {e}"[:300]})
+        if (done + len(failed)) % 100 == 0:
+            print(json.dumps({"shard": a.shard, "progress": done + skipped + len(failed), "of": len(mine), "failed": len(failed),
+                              "elapsed_s": round(time.time() - t0)}), flush=True)
+    rec = {"schema": "jope.dl-v2-local-shard/v1", "shard": a.shard, "of": a.of, "expected": len(mine), "built_now": done,
+           "already_done": skipped, "failed": failed, "complete": done + skipped == len(mine), "elapsed_s": round(time.time() - t0, 1),
+           "values_mode": "L7b", "published": False, "code_sha256": codes, "utc_us": int(time.time() * 1e6)}
+    if a.views:
+        rec["views_filter"] = sorted(set(a.views.split(",")))
+    name = f"shard-{a.shard}-of-{a.of}.receipt.json" if not a.views else f"shard-{a.shard}-of-{a.of}.partial-{int(time.time())}.receipt.json"
+    atomic(out / name, (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
+    print(json.dumps({k: rec[k] for k in ("shard", "expected", "built_now", "already_done", "complete", "elapsed_s")} | {"failed": len(failed)}))
+    return 0 if rec["complete"] else 1
+
+
+# ======================================================================================== split v2 (NONRAW-SPLIT-A)
+
+SPLIT_REGISTRY = "registry-epoch0"                    # the default: the epoch-0 contexts' own R/T (registry folds)
+SPLIT_V2 = rowsel_raw_split_v2.SPLIT_SCHEMA           # "rowsel-raw-split-v2"
+SPLIT_VERSIONS = (SPLIT_REGISTRY, SPLIT_V2)
+OUTER_FOLDS = rowsel_raw_split_v2.OUTER_FOLDS
+CUT_PREFIX = "trainonly-split-v2:"
+IDENTITY_SCHEMA = "jope.dl-nonraw-v2split/v1"
+PLAN_SCHEMA = "jope.dl-v2-nonraw-v2split-plan/v1"
+DATASET_SCHEMA = "jope.dl-v2-nonraw-v2split-dataset/v1"
+SHARD_SCHEMA = "jope.dl-v2-nonraw-v2split-shard/v1"
+VERIFY_SCHEMA = "jope.dl-v2-nonraw-v2split-verify/v1"
+SUMMARY_SCHEMA = "jope.dl-v2-nonraw-v2split-summary/v1"
+EXISTING_SCHEMA = "jope.dl-v2-existing-view-ids/v1"
+ROUTES = {"L7b": {"partition": "t1", "tag": "l7bsplit2", "context_schema": "jope.dl-v2-local-context/v2split",
+                  "universe": "t1_table_rows"},
+          "L7a": {"partition": "l7a", "tag": "l7asplit2", "context_schema": "jope.dl-v2-l7a-context/v2split",
+                  "universe": "l7a_matched_source_rows"}}
+RECEIPTS = RUN / "receipts" / "trainonly-v2"
+PUBLISH = RECEIPTS / "publish"
+BUILD_V2 = RUN / "build-v2"
+CLEAN_MANIFEST = PUBLISH / "v2-publish-manifest-clean-v1-54f06c54059e.json"
+RESEARCH_MANIFEST = PUBLISH / "v2-publish-manifest-rights-research-clean-vectors-v1-e79234d6d1b8.json"
+RESEARCH_GPU_MANIFEST = PUBLISH / "v2-publish-manifest-rights-research-clean-gpu-v1-8f9231dca498.json"
+DENYLIST = PUBLISH / "v2-holdout-denylist-holdout-denylist-v2-1503ca7a7654.json"
+LEAK_V2 = RECEIPTS / "row-selection-leak-v2-20261005T200546Z.jsonl"
+INVENTORY = RUN / "tmp" / "rowsel" / "inventory.json"
+SCOPE_RECEIPT = RECEIPTS / "split-scope-nonraw-20261006T034028Z.json"
+OWNER_DECISION = Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261006T053215Z.json")
+PINS = {CLEAN_MANIFEST: "54f06c54059ed5056a89107d2c11ed1a357cd864b77fdb5aafb660493526f659",
+        RESEARCH_MANIFEST: "e79234d6d1b88c925357b3e1696e27b34616d39e7a48f7a6011e8c8ee3b74dc2",
+        RESEARCH_GPU_MANIFEST: "8f9231dca498fa396c91c79612bdc888ae09ed18314922f072c34e2cb622b1be",
+        DENYLIST: "1503ca7a7654abf8c4f25a11dc226cbd145f70d9b6f3b41dd877e26e14a7796a",
+        LEAK_V2: "2196d4e8a504f9a3a41c5fc910d588353ac54fb6ac538dfccc8658780c1f6905",
+        INVENTORY: "02dafb3039d0b35e44fd465f9fc461460e70a5515391a389756bc9b8b43e5f5f",
+        SCOPE_RECEIPT: "ff65a65d494d828be38222548d094ca25f45191b678091b7d6ec1c826937cd26",
+        OWNER_DECISION: "8c455c418ec985d64b07063b73aa15c6f1a59161adfe8e0cbb0ac95c1e13a2ea",
+        DATASETS_INV: "482ea4876ec157bdd58f9021ecb602ca206deb71021cbc7066c0c18db3e2e6c4"}
+SCOPES = {"clean-l7b": {"values_mode": "L7b", "manifest": CLEAN_MANIFEST, "tree": BUILD_V2 / "L7b-v2split",
+                        "published_tree": BUILD_V2 / "PUBLISH-clean-v1", "rights": "licensed"},
+          "research-clean": {"values_mode": "L7b", "manifest": RESEARCH_MANIFEST, "tree": BUILD_V2 / "RIGHTS-RESEARCH-clean-v2split",
+                             "published_tree": BUILD_V2 / "RIGHTS-RESEARCH-clean-v1" / "publish-vectors", "rights": "research-only",
+                             "cross_check_manifest": RESEARCH_GPU_MANIFEST},
+          "clean-l7a": {"values_mode": "L7a", "manifest": CLEAN_MANIFEST, "tree": BUILD_V2 / "L7a-v2split",
+                        "published_tree": BUILD_V2 / "PUBLISH-clean-v1", "rights": "licensed"}}
+NEW_TREES = tuple(s["tree"] for s in SCOPES.values())
+OLD_TREES = tuple(BUILD_V2 / n for n in ("L7a", "L7b", "RIGHTS-RESEARCH-clean-v1", "PUBLISH-clean-v1"))
+REGISTRY_CUT = {"schema": "jope.virtual-splits/v1", "method": "grouped-stratified-kfold/v1",
+                "generator": "crates/jope-datasets/src/virtual_split.rs (xbabe2-recovery worktree, read-only)",
+                "y_exposure": "duplicate key = sha256 over every parsed CSV field, the target included (split-scope-nonraw-"
+                              "20261006T034028Z.json)"}
+EPOCH0_FOLD_CORRESPONDENCE = "none: a new value-free outer split (split v2); new fold f is not epoch-0 fold f"
+CF_SALT = "nonraw-v2split-cf-v1"
+T1_PERTURBATIONS = ("features", "targets", "categories", "outlier", "drop", "replace_with_train_copies")
+POLICY = {"s3_calls": 0, "network": False, "gpu": False, "git": False, "published": False, "credential_files_read": False,
+          "deletes": 0}
+
+
+class SplitV2Error(ValueError):
+    """A dataset that cannot be rebuilt on split v2; `reason` is a short stable code for the receipts."""
+
+    def __init__(self, reason: str, detail: str = ""):
+        super().__init__(f"{reason}: {detail}" if detail else reason)
+        self.reason = reason
+        self.detail = detail
+
+
+def canon(o) -> bytes:
+    return json.dumps(o, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+
+
+def jdump(o) -> bytes:
+    return (json.dumps(o, sort_keys=True) + "\n").encode()
+
+
+def sha_file(p) -> str:
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def ref(p) -> dict:
+    p = Path(p)
+    return {"path": str(p), "sha256": sha_file(p), "bytes": p.stat().st_size}
+
+
+def create_only(path: Path, data: bytes):
+    with open(path, "xb") as f:
+        f.write(data); f.flush(); os.fsync(f.fileno())
+
+
+def cpu_s() -> float:
+    r = resource.getrusage(resource.RUSAGE_SELF)
+    return r.ru_utime + r.ru_stime
+
+
+def maxrss_mb() -> int:
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+
+
+V2_CODE_FILES = ("tools/v2_build_local.py", "dltrain/t1prep.py", "dltrain/trainonly.py", "dltrain/metafeatures.py",
+                 "dltrain/scale_check.py", "dltrain/jtt1.py", "dltrain/rowsel_raw.py", "dltrain/rowsel_raw_split_v2.py",
+                 "dltrain/cpuguard.py")
+
+
+def code_shas_v2(extra=()) -> dict:
+    root = Path(__file__).resolve().parents[1]
+    return {f: sha((root / f).read_bytes()) for f in V2_CODE_FILES + tuple(extra)}
+
+
+# ------------------------------------------------------------------------------------------- the split
+
+def t1_group_specs(width: int) -> list:
+    """Grouping specs over a T1 table of `width` columns: every FEATURE column as numeric (exact float64 bytes), the
+    target last. rowsel_raw.feature_bytes reads specs[:-1] only, so the target never reaches the group key."""
+    specs = [{"index": j, "name": f"t1_col{j}", "kind": "numeric"} for j in range(width - 1)]
+    specs.append({"index": width - 1, "name": "target", "kind": "numeric", "target": True})
+    return specs
+
+
+def split_prep(dataset_hash: str, values, specs, partition: str) -> rowsel_raw.Prep:
+    """The universe as a rowsel_raw.Prep (positions 0..n-1, values read-only), for split_report and the value gates."""
+    v = np.ascontiguousarray(np.asarray(values, dtype=np.float64))
+    v.setflags(write=False)
+    pos = np.arange(v.shape[0], dtype=np.int64)
+    pos.setflags(write=False)
+    rep = {"rows": int(v.shape[0]), "partition": partition, "positions_sha256": sha(np.asarray(pos, "<u8").tobytes()),
+           "position_basis": "0-based row index of the universe (the epoch-0 data object A)"}
+    return rowsel_raw.Prep(dataset_hash, list(specs), pos, v, (), (), rep)
+
+
+def split_fn(partition: str):
+    return functools.partial(rowsel_raw_split_v2.outer_split, partition=partition)
+
+
+def v2_split(dataset_hash: str, values, specs, partition: str) -> tuple:
+    """(folds, split record). The record carries the raw route's split fields plus the gates: straddling groups, the
+    target check and the per-fold value check. The split sha256 is rowsel_raw_split_v2.split_sha256 exactly as it is
+    returned (its canonical body holds the module's partition constant, 'raw'; the universe label is `partition`)."""
+    prep = split_prep(dataset_hash, values, specs, partition)
+    fn = split_fn(partition)
+    folds = fn(dataset_hash, prep.positions, prep.values, prep.specs)
+    srep = rowsel_raw_split_v2.split_report(prep, folds)
+    tc = rowsel_raw.split_target_check(fn, prep)
+    vc = [rowsel_raw_split_v2.value_check(fn, prep, f, salt=CF_SALT) for f in range(OUTER_FOLDS)]
+    srep.update(partition=partition, target_check=tc, target_invariant=bool(tc["target_invariant"]),
+                value_check={"folds": [{"fold": c["fold"], "valid": c["valid"], "invariant": c["invariant"],
+                                        "rows_moved": {k: v["rows_moved"] for k, v in c["cases"].items()}} for c in vc],
+                             "invariant": all(c["valid"] and c["invariant"] for c in vc)},
+                sha256_partition_field=rowsel_raw_split_v2.PARTITION)
+    srep["value_check_invariant"] = srep["value_check"]["invariant"]
+    return folds, srep
+
+
+def split_gate(srep) -> list:
+    bad = []
+    if srep["groups_straddling_folds"]:
+        bad.append("groups_straddle_folds")
+    if not srep["target_invariant"]:
+        bad.append("split_reads_target")
+    if not srep["value_check_invariant"]:
+        bad.append("split_moves_under_outer_test_values")
+    if min(srep["fold_sizes"]) == 0 or len(srep["fold_sizes"]) != OUTER_FOLDS:
+        bad.append("empty_outer_fold")
+    return bad
+
+
+def split_record(srep) -> dict:
+    """The raw route's `rowsel.split` fields (v2_rowsel_raw.run_dataset split_ref), plus the universe label."""
+    out = {k: srep[k] for k in ("schema", "sha256", "fold_sizes", "groups", "largest_group", "groups_straddling_folds",
+                                "duplicate_rows", "domain", "rule", "partition", "target_invariant", "value_check_invariant")}
+    out["sha256_partition_field"] = srep["sha256_partition_field"]
+    return out
+
+
+def cut_block(srep, e) -> dict:
+    reg = e["registry_split"]
+    return {"cut_id": CUT_PREFIX + srep["sha256"], "schema": srep["schema"], "partition": srep["partition"],
+            "replaces_cut": reg["sha256"], "comparable_with_replaced": False,
+            "replaces_cut_ref": dict(REGISTRY_CUT, split_key=reg.get("key"), split_object_sha256=reg["sha256"],
+                                     epoch0_view_ids=[c["view_id"] for c in e["epoch0"]]),
+            "hwm_comparison": "GP-teacher HWM comparisons use this cut_id only, never the replaced registry cut",
+            "cut_id_basis": "'trainonly-split-v2:' + rowsel_raw_split_v2.split_sha256(h, folds) as returned (canonical JSON "
+                            "{schema, dataset_hash, partition: module constant 'raw', folds}); the universe label is "
+                            "cut.partition"}
+
+
+def fold_rows(folds, f: int, n: int) -> tuple:
+    """(R, T) of new fold f: T = the fold's positions, R = every other position; both ascending."""
+    T = sorted(int(p) for p in folds[f])
+    tset = set(T)
+    R = [p for p in range(n) if p not in tset]
+    return R, T
+
+
+# ------------------------------------------------------------------------------------------- per-context gate (L7b)
+
+def t1_train_side(art) -> dict:
+    rep = art["report"]
+    refit_train = {"kept_columns": rep["kept_columns"], "target_copy_dropped": rep["target_copy_dropped"],
+                   "categorical_train": {k: v["train"] for k, v in sorted(rep["categorical"].items())},
+                   "possibly_imputed_train": rep["possibly_imputed_cells"]["train"]}
+    return {"scaler": art["scaler_sha256"], "encoder_train_rows": jtt1.train_rows_sha256(art["encoder_raw"]),
+            "teacher_train_rows": jtt1.train_rows_sha256(art["teacher_raw"]), "inner_labels": art["inner_labels_sha256"],
+            "a0": sha(art["a0"]), "refit_train": sha(canon(refit_train))}
+
+
+def _code_value(s, code):
+    span = s["hi"] - s["lo"]
+    return (float(code) - s["lo"]) / span if span != 0 else 0.0
+
+
+def perturb_t1_test_rows(A, meta, R, T, kind: str, salt: str = CF_SALT) -> tuple:
+    """(matrix, outer_test) with the outer-test rows of A changed (valid T1 codes for categorical columns); R untouched."""
+    W = np.array(A, dtype=np.float64, copy=True)
+    Tn = np.asarray(T, dtype=np.int64)
+    specs = t1prep.layout(meta, W.shape[1])
+    num = [s["index"] for s in specs if s["kind"] != "categorical_codes"]
+    cats = [s for s in specs if s["kind"] == "categorical_codes"]
+    rng = np.random.default_rng(int.from_bytes(hashlib.sha256(f"{salt}|{kind}".encode()).digest()[:8], "little"))
+    T_out = list(T)
+    if kind == "features":
+        if num:
+            W[np.ix_(Tn, num)] = rng.normal(0.5, 3.0, size=(Tn.size, len(num)))
+        for s in cats:
+            codes = sorted(s["inverse"])
+            W[Tn, s["index"]] = [_code_value(s, c) for c in rng.choice(codes, size=Tn.size)]
+    elif kind == "targets":
+        W[Tn, -1] = rng.normal(1e7, 1e6, size=Tn.size)
+    elif kind == "categories":
+        for s in cats:                                     # categories no outer-train row holds (cycled), else the highest
+            span = s["hi"] - s["lo"]
+            train_codes = set(np.rint(np.asarray(A, dtype=np.float64)[R, s["index"]] * span + s["lo"]).astype(np.int64).tolist())
+            unused = [c for c in sorted(s["inverse"]) if c not in train_codes] or [max(s["inverse"])]
+            W[Tn, s["index"]] = [_code_value(s, unused[k % len(unused)]) for k in range(Tn.size)]
+        if num and Tn.size:
+            W[Tn[0], num[0]] = -7.0
+    elif kind == "outlier":
+        if Tn.size:
+            if num:
+                W[Tn[0], num] = 1e12
+            W[Tn[0], -1] = -1e12
+    elif kind == "drop":
+        T_out = list(T)[1::2]
+    elif kind == "replace_with_train_copies":
+        if Tn.size and len(R):
+            W[Tn] = np.asarray(A, dtype=np.float64)[rng.choice(np.asarray(R, dtype=np.int64), size=Tn.size)]
+            W[Tn, -1] = W[Tn, -1] * -3.0 + 11.0
+    else:
+        raise SplitV2Error("unknown_perturbation", kind)
+    return W, T_out
+
+
+def t1_value_counterfactual(A, meta, R, T, art, build=None) -> dict:
+    """The train side of context (R, T) must be bit-identical when only its outer-test rows change. The gate rebuilds
+    its own base and requires it to equal `art` (the artifacts that are written)."""
+    build = build or l7b_artifacts
+    base = build(A, meta, R, T)
+    want = t1_train_side(base)
+    same_base = (base["encoder_raw"] == art["encoder_raw"] and base["teacher_raw"] == art["teacher_raw"]
+                 and base["a0"] == art["a0"] and want == t1_train_side(art))
+    cases = {}
+    Ra = np.asarray(R, dtype=np.int64)
+    for kind in T1_PERTURBATIONS:
+        W, T2 = perturb_t1_test_rows(A, meta, R, T, kind)
+        if W[Ra].tobytes() != np.asarray(A, dtype=np.float64)[Ra].tobytes():
+            raise SplitV2Error("perturbation_touched_train_rows", kind)
+        got = t1_train_side(build(W, meta, R, T2))
+        cases[kind] = sorted(k for k in want if got[k] != want[k])
+    return {"cases": cases, "base_equals_written": bool(same_base),
+            "train_side_invariant": bool(same_base) and not any(cases.values()), "train_side": want}
+
+
+# ------------------------------------------------------------------------------------------- identity and records
+
+def identity_body(mode: str, h: str, fold: int, cut: dict, split_ref: dict, universe: dict, R, T) -> dict:
+    return {"schema": IDENTITY_SCHEMA, "route": f"nonraw-{mode.lower()}", "values_mode": mode, "dataset_hash": h,
+            "fold": int(fold), "cut_id": cut["cut_id"], "partition": cut["partition"],
+            "split": {k: split_ref[k] for k in ("schema", "sha256", "fold_sizes")},
+            "universe": {k: universe.get(k) for k in ("kind", "rows", "data_sha256", "values_sha256", "t1_meta_sha256")},
+            "outer_train_indices_sha256": sha(json.dumps(list(R)).encode()),
+            "outer_test_indices_sha256": sha(json.dumps(list(T)).encode()),
+            "row_order": "JTT1 train rows ascending universe position, then test rows ascending"}
+
+
+def make_view_id(h: str, fold: int, tag: str, identity: str) -> str:
+    return f"{h}__r0__f{int(fold)}__{tag}_{identity[:12]}"
+
+
+def new_context_sha256(schema, view_id, h, fold, identity, fmeta, art, R, T) -> str:
+    return sha(canon({"schema": schema, "view_id": view_id, "dataset_hash": h, "fold": int(fold), "identity": identity,
+                      "files": {k: v.get("raw_sha256", v["sha256"]) for k, v in fmeta.items()},
+                      "scaler_sha256": art["scaler_sha256"], "inner_labels_sha256": art["inner_labels_sha256"],
+                      "outer_train_indices_sha256": sha(json.dumps(list(R)).encode()),
+                      "outer_test_indices_sha256": sha(json.dumps(list(T)).encode())}))
+
+
+def epoch0_replaced(e, sealed: int, holdout) -> dict:
+    return {"level": "dataset", "contexts": e["epoch0"], "count": len(e["epoch0"]), "new_contexts": OUTER_FOLDS,
+            "context_count_changed": len(e["epoch0"]) != OUTER_FOLDS, "fold_correspondence": EPOCH0_FOLD_CORRESPONDENCE,
+            "epoch0_sealed_contexts": int(sealed), "epoch0_holdout": holdout,
+            "replaced_cut": e["registry_split"]["sha256"]}
+
+
+def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None) -> dict:
+    """Every gate and every context of one dataset in memory; nothing is written. Returns {'passed', 'reason', 'detail',
+    'split', 'cut', 'results': [(view_id, files, context record)], 'contexts': [summaries]}."""
+    h = e["dataset_hash"]
+    route = ROUTES[mode]
+    partition = route["partition"]
+    out = {"passed": False, "reason": None, "detail": "", "results": [], "contexts": []}
+    folds, srep = v2_split(h, inp["values"], inp["specs"], partition)
+    out["split"] = srep
+    bad = split_gate(srep)
+    if bad:
+        raise SplitV2Error("split_check_failed", json.dumps({"failed": bad, "target_check": srep["target_check"],
+                                                              "value_check": srep["value_check"]})[:1500])
+    sref = split_record(srep)
+    cut = cut_block(srep, e)
+    out["cut"] = cut
+    e0 = epoch0_replaced(e, inp.get("sealed", 0), inp.get("holdout"))
+    out["epoch0_replaced"] = e0
+    n = int(inp["n"])
+    seen = set()
+    for f in range(OUTER_FOLDS):
+        if guard is not None:
+            guard.wait()
+        tf, cf0 = time.time(), cpu_s()
+        R, T = fold_rows(folds, f, n)
+        art = inp["build"](R, T)
+        hdr = jtt1.parse_header(art["encoder_raw"])
+        if (hdr["n_train"], hdr["n_test"]) != (len(R), len(T)):
+            raise SplitV2Error("jtt1_layout", f"{hdr} for {len(R)}/{len(T)}")
+        cf = inp["counterfactual"](R, T, art)
+        body = identity_body(mode, h, f, cut, sref, inp["universe"], R, T)
+        identity = sha(canon(body))
+        vid = make_view_id(h, f, route["tag"], identity)
+        if vid in existing or vid in seen:
+            raise SplitV2Error("view_id_collision", vid)
+        seen.add(vid)
+        files = context_files(art)
+        fmeta = files_meta(files, art)
+        schema = route["context_schema"]
+        crec = dict(inp["common"])
+        crec.update({
+            "schema": schema, "view_id": vid, "dataset_hash": h, "fold": f, "split_version": SPLIT_V2,
+            "context_sha256": new_context_sha256(schema, vid, h, f, identity, fmeta, art, R, T),
+            "context_sha256_basis": "sha256 of canonical JSON {schema, view_id, dataset_hash, fold, identity, files (raw "
+                                    "sha256), scaler, inner labels, outer train/test indices}; a NEW context identity, not "
+                                    "an epoch-0 context_sha256",
+            "values_mode": mode, "published": False, "row_selection_leak": ["clean"],
+            "outer_train_indices_sha256": body["outer_train_indices_sha256"],
+            "outer_test_indices_sha256": body["outer_test_indices_sha256"],
+            "indices_basis": "json list of universe positions (0-based row index of the epoch-0 data object A) in JTT1 "
+                             "row order",
+            "n_train": len(R), "n_test": len(T), "files": fmeta, "scaler_sha256": art["scaler_sha256"],
+            "inner_labels_sha256": art["inner_labels_sha256"], "inner_loads": art["inner_loads"],
+            inp["report_key"]: art["report"], "cut": cut, "split": sref, "universe": inp["universe"],
+            "epoch0_replaced": e0, "identity": identity, "identity_body": body,
+            "counterfactual": {"train_side_invariant": cf["train_side_invariant"],
+                               "base_equals_written": cf["base_equals_written"], "cases": sorted(cf["cases"]),
+                               "differing": {k: v for k, v in cf["cases"].items() if v}, "train_side": cf["train_side"]},
+            "code_sha256": dict(codes)})
+        out["results"].append((vid, files, crec))
+        out["contexts"].append({"fold": f, "view_id": vid, "identity": identity, "context_sha256": crec["context_sha256"],
+                                "n_train": len(R), "n_test": len(T), "passed": bool(cf["train_side_invariant"]),
+                                "failures": sorted(k for k, v in cf["cases"].items() if v)
+                                + ([] if cf["base_equals_written"] else ["counterfactual_base_differs"]),
+                                "cpu_s": round(cpu_s() - cf0, 2), "wall_s": round(time.time() - tf, 2)})
+        if log:
+            log(json.dumps({"dataset": h, "fold": f, "passed": cf["train_side_invariant"], "cpu_s": out["contexts"][-1]["cpu_s"],
+                            "maxrss_mb": maxrss_mb()}))
+        if not cf["train_side_invariant"]:
+            raise SplitV2Error("counterfactual_failed", json.dumps(out["contexts"][-1]))
+    out["passed"] = True
+    return out
+
+
+def write_dataset(out_shard: Path, results) -> tuple:
+    """Phase 1: files + context.json of every pending context; phase 2: .done of every pending context. A .done
+    context is never rewritten; it must equal the recomputed identity and files. Returns (written, already_done)."""
+    pending, already = [], 0
+    for vid, files, crec in results:
+        d = out_shard / vid
+        if (d / ".done").exists():
+            old = json.loads((d / "context.json").read_bytes())
+            if old.get("identity") != crec["identity"] or old.get("files") != crec["files"]:
+                raise SplitV2Error("done_context_differs", vid)
+            already += 1
+            continue
+        pending.append((d, files, crec))
+    for d, files, crec in pending:
+        d.mkdir(parents=True, exist_ok=True)
+        for name, body in files.items():
+            atomic(d / name, body)
+        atomic(d / "context.json", jdump(dict(crec, utc_us=int(time.time() * 1e6))))
+    for d, _, _ in pending:
+        atomic(d / ".done", b"ok\n")
+    return len(pending), already
+
+
+def run_dataset_v2(e, out_shard: Path, mode: str, loader, existing, codes, guard=None, log=print, ctx_args=()) -> dict:
+    """Load, gate and build one dataset; write only when every gate of every fold passed. The dataset record goes to
+    out_shard/_datasets/<h>.json (also on failure)."""
+    h = e["dataset_hash"]
+    t0, c0 = time.time(), cpu_s()
+    rec = {"schema": DATASET_SCHEMA, "dataset_hash": h, "values_mode": mode, "split_version": SPLIT_V2,
+           "partition": ROUTES[mode]["partition"], "code_sha256": codes, "status": "failed", "published": False,
+           "epoch0_contexts": len(e["epoch0"]), "epoch0_replaced": None}
+    rec.update(e.get("context_extra") or {})
+    try:
+        inp = loader(e, *ctx_args)
+        rec["universe"] = inp["universe"]
+        res = compute_dataset(e, inp, mode, existing, codes, guard, log)
+        rec.update(split=res["split"], cut=res["cut"], epoch0_replaced=res["epoch0_replaced"], contexts=res["contexts"])
+        written, already = write_dataset(out_shard, res["results"])
+        rec.update(status="done", reason=None, contexts_written=written, contexts_already_done=already)
+    except SplitV2Error as err:
+        rec.update(reason=err.reason, detail=err.detail[:2000])
+    except trainonly.IneligibleSplit as err:
+        rec.update(reason="ineligible_split", detail=str(err)[:2000])
+    except Exception as err:  # recorded; the shard continues
+        rec.update(reason=getattr(err, "reason", "exception"), detail=f"{type(err).__name__}: {err}"[:2000])
+    rec.setdefault("contexts", [])
+    rec.update(cpu_s=round(cpu_s() - c0, 2), wall_s=round(time.time() - t0, 2), maxrss_mb=maxrss_mb(),
+               utc_us=int(time.time() * 1e6))
+    (out_shard / "_datasets").mkdir(parents=True, exist_ok=True)
+    atomic(out_shard / "_datasets" / f"{h}.json", jdump(rec))
+    return rec
+
+
+def dataset_done(out_shard: Path, h: str, codes) -> bool:
+    p = out_shard / "_datasets" / f"{h}.json"
+    if not p.exists():
+        return False
+    r = json.loads(p.read_bytes())
+    return (r.get("status") == "done" and r.get("code_sha256") == codes and len(r.get("contexts", [])) == OUTER_FOLDS
+            and all((out_shard / c["view_id"] / ".done").exists() for c in r["contexts"]))
+
+
+# ------------------------------------------------------------------------------------------- epoch-0 inputs
+
+def epoch0_universe(ctxs) -> tuple:
+    """The dataset's universe from its resolved epoch-0 contexts: one data object A shared by all of them, every
+    context's R u T exactly all of A (disjoint). Returns (A, coverage report)."""
+    data = sorted({c["refs"]["data_sha256"] for c in ctxs})
+    if len(data) != 1:
+        raise SplitV2Error("epoch0_contexts_on_different_data_objects", json.dumps(data))
+    A = ctxs[0]["A"]
+    n = int(A.shape[0])
+    union = set()
+    for c in ctxs:
+        R, T = [int(i) for i in c["R"]], [int(i) for i in c["T"]]
+        if set(R) & set(T) or sorted(R + T) != list(range(n)):
+            raise SplitV2Error("epoch0_context_not_full_universe", c["row"]["view_id"])
+        union.update(T)
+    shapes = {(int(c["shape"]["sample_rows"]), int(c["shape"]["source_rows"])) for c in ctxs}
+    if len(shapes) != 1:
+        raise SplitV2Error("epoch0_shapes_differ", json.dumps(sorted(shapes)))
+    sample_rows, source_rows = shapes.pop()
+    cov = {"rows": n, "sample_rows": sample_rows, "source_rows": source_rows, "subsampled": sample_rows < source_rows,
+           "epoch0_folds": sorted(int(c["fold"]) for c in ctxs), "epoch0_each_context_covers_all_rows": True,
+           "epoch0_test_rows_union": len(union),
+           "statement": "each epoch-0 context's outer-train u outer-test rows are all rows of the data object A; "
+                        + ("A is a SUBSAMPLE of the source rows" if sample_rows < source_rows else
+                           "A is the whole T1 table (sample_rows == source_rows)")}
+    return A, data[0], cov
+
+
+def resolve_epoch0(e, src, cache, by_dataset) -> tuple:
+    rows = sorted(by_dataset.get(e["dataset_hash"], []), key=lambda r: int(r["fold"]))
+    if [(r["view_id"], r["context_sha256"]) for r in rows] != [(c["view_id"], c["context_sha256"]) for c in e["epoch0"]]:
+        raise SplitV2Error("epoch0_contexts_differ_from_plan")
+    ctxs = [scale_check.resolve_context(r, src, cache) for r in rows]
+    sealed = sum(1 for r in rows if r["context_sha256"] in src.sealed_ctx)
+    holdout = sorted({json.dumps(src.holdout_flag(r["context_sha256"]), sort_keys=True) for r in rows})
+    return rows, ctxs, sealed, [json.loads(x) for x in holdout]
+
+
+def load_meta(h: str, inv) -> tuple:
+    k = inv["meta_key"][h].rsplit("/", 1)[1]
+    mb = (META_DIR / f"{k}.json").read_bytes()
+    if sha(mb) != k:
+        raise SplitV2Error("meta_sha_mismatch", k)
+    return json.loads(mb), k
+
+
+def l7b_inputs(e, A, meta, meta_sha: str, data_sha: str, cov, cohort: str, sealed: int = 0, holdout=()) -> dict:
+    """L7b universe: the T1 table rows (data object A), grouping on the T1 feature bytes, partition 't1'."""
+    A = np.ascontiguousarray(np.asarray(A, dtype=np.float64))
+    universe = {"kind": ROUTES["L7b"]["universe"], "partition": ROUTES["L7b"]["partition"], "rows": int(A.shape[0]),
+                "columns": int(A.shape[1]), "data_sha256": data_sha, "values_sha256": sha(np.ascontiguousarray(A, "<f8").tobytes()),
+                "t1_meta_sha256": meta_sha, "positions": "0..rows-1 = row index of the epoch-0 data object A (the T1 table)",
+                "group_basis": "exact float64 bytes of every T1 feature column (canonical -0.0/NaN); target excluded",
+                "epoch0_coverage": cov}
+    common = {"t1_meta_sha256": meta_sha, "data_sha256": data_sha, "cohort": cohort, "rights": e.get("rights"),
+              "epoch0_row_selection_leak": e["epoch0_labels"]}
+    common.update(e.get("context_extra") or {})
+    return {"values": A, "specs": t1_group_specs(A.shape[1]), "n": int(A.shape[0]), "universe": universe, "common": common,
+            "sealed": sealed, "holdout": list(holdout), "report_key": "t1prep",
+            "build": lambda R, T: l7b_artifacts(A, meta, R, T),
+            "counterfactual": lambda R, T, art: t1_value_counterfactual(A, meta, R, T, art)}
+
+
+def l7b_loader(e, src, cache, inv, by_dataset) -> dict:
+    rows, ctxs, sealed, holdout = resolve_epoch0(e, src, cache, by_dataset)
+    A, data_sha, cov = epoch0_universe(ctxs)
+    meta, k = load_meta(e["dataset_hash"], inv)
+    return l7b_inputs(e, A, meta, k, data_sha, cov, rows[0]["cohort"], sealed, holdout)
+
+
+# ------------------------------------------------------------------------------------------- plan
+
+def check_pins():
+    for p, want in PINS.items():
+        got = sha_file(p)
+        if got != want:
+            raise SystemExit(f"pinned input drift: {p} {got} != {want}")
+
+
+def scan_existing_view_ids(exclude=()) -> tuple:
+    """Every view_id named by an existing context.json under build-v2 (trees in `exclude` skipped) and by the holdout
+    denylist v2. Returns (sorted ids, per-source counts)."""
+    ids, counts = set(), collections.Counter()
+    excl = [os.path.abspath(x) + "/" for x in exclude]
+    for dirpath, dirnames, filenames in os.walk(BUILD_V2):
+        if any((os.path.abspath(dirpath) + "/").startswith(x) for x in excl):
+            dirnames[:] = []
+            continue
+        if "context.json" in filenames:
+            try:
+                v = json.loads(Path(dirpath, "context.json").read_bytes()).get("view_id")
+            except (OSError, ValueError):
+                v = None
+            v = v or Path(dirpath).name
+            ids.add(v)
+            ids.add(Path(dirpath).name)
+            counts["build_v2_context_json"] += 1
+    dl = json.loads(DENYLIST.read_bytes())
+    for v in list(dl.get("assignment_by_view", {})) + [c["view_id"] for c in dl.get("contexts", [])]:
+        ids.add(v)
+        counts["denylist_v2_entries"] += 1
+    return sorted(ids), dict(counts)
+
+
+def load_existing(out: Path, pl) -> set:
+    p = out / "existing-view-ids.json"
+    b = p.read_bytes()
+    if sha(b) != pl["existing_view_ids"]["sha256"]:
+        raise SystemExit("existing-view-ids.json drift")
+    return set(json.loads(b)["view_ids"])
+
+
+def manifest_scope(scope: str) -> tuple:
+    """(contexts by dataset, manifest ref): the published contexts of this scope from its pinned manifest."""
+    cfg = SCOPES[scope]
+    man = json.loads(cfg["manifest"].read_bytes())
+    ctxs = [c for c in man["contexts"] if c["values_mode"] == cfg["values_mode"]]
+    if cfg.get("cross_check_manifest"):
+        other = json.loads(cfg["cross_check_manifest"].read_bytes())
+        if sorted((c["view_id"], c["context_sha256"]) for c in other["contexts"]) != sorted((c["view_id"], c["context_sha256"]) for c in ctxs):
+            raise SystemExit("research manifests disagree on the context set")
+    by = collections.defaultdict(list)
+    for c in ctxs:
+        by[c["dataset_hash"]].append(c)
+    return by, ref(cfg["manifest"])
+
+
+def plan_entry_extra(scope: str, h: str, mctx, cfg) -> dict:
+    """Rights fields of the research scope, read from the published research contexts (must agree per dataset)."""
+    if scope != "research-clean":
+        return {}
+    vals = set()
+    for c in mctx:
+        hits = glob.glob(str(cfg["published_tree"] / "shard-*" / c["view_id"] / "context.json"))
+        if len(hits) != 1:
+            raise SystemExit(f"{c['view_id']}: {len(hits)} published research contexts")
+        d = json.loads(Path(hits[0]).read_bytes())
+        vals.add((d.get("rights"), d.get("rights_decision")))
+    if len(vals) != 1 or next(iter(vals))[0] != "research-only":
+        raise SystemExit(f"{h}: research rights fields disagree: {vals}")
+    r, dec = vals.pop()
+    return {"rights": r, "rights_decision": dec}
+
+
+def est_cost(e) -> float:
+    return float(e["shape"]["sample_rows"]) * (min(int(e["shape"]["columns"]), 400) + 20)
+
+
+def make_plan(a, extra_entry=None, extra_inputs=None) -> int:
+    """plan.json + existing-view-ids.json for one new tree (both create-only; an identical plan.json is accepted)."""
+    scope = a.plan
+    cfg = SCOPES[scope]
+    out = Path(a.out)
+    if any(out.resolve() == t.resolve() for t in OLD_TREES if t.exists()):
+        raise SystemExit(f"{out} is an epoch-0 tree; split-v2 trees are new and create-only")
+    if out.resolve() != cfg["tree"].resolve() and not a.allow_other_out:
+        raise SystemExit(f"--out for {scope} is {cfg['tree']} (pass --allow-other-out for a pilot directory)")
+    check_pins()
+    out.mkdir(parents=True, exist_ok=True)
+    by_m, man_ref = manifest_scope(scope)
+    src = scale_check.Sources(load_index=False)
+    by_e = collections.defaultdict(list)
+    for r in src.included():
+        by_e[r["dataset_hash"]].append(r)
+    leak = {}
+    for l in LEAK_V2.read_bytes().decode().splitlines():
+        if l.strip():
+            r = json.loads(l)
+            leak[r["view_id"]] = r["row_selection_leak"]
+    inv = json.loads(INVENTORY.read_bytes())
+    entries = []
+    for h in sorted(by_m):
+        mctx = sorted(by_m[h], key=lambda c: int(c["fold"]))
+        ep = sorted(by_e[h], key=lambda r: int(r["fold"]))
+        if [(r["view_id"], r["context_sha256"]) for r in ep] != [(c["view_id"], c["context_sha256"]) for c in mctx]:
+            raise SystemExit(f"{h}: the manifest does not hold every included epoch-0 context of the dataset")
+        labels = {json.dumps(leak.get(c["view_id"])) for c in mctx}
+        if labels != {json.dumps(["clean"])}:
+            raise SystemExit(f"{h}: epoch-0 row-selection labels {labels}")
+        iv = inv[h]
+        if iv["class"] != ["clean"] or [int(c["fold"]) for c in mctx] != [int(f) for f in iv["folds"]]:
+            raise SystemExit(f"{h}: inventory class/folds {iv['class']}/{iv['folds']}")
+        pub = []
+        for c in mctx:
+            hits = glob.glob(str(cfg["published_tree"] / "shard-*" / c["view_id"] / "context.json"))
+            if len(hits) != 1 or sha_file(hits[0]) != c["local_context_json_sha256"]:
+                raise SystemExit(f"{c['view_id']}: published context.json missing or differs from the manifest")
+            pub.append(hits[0])
+        e = {"dataset_hash": h, "cohort": mctx[0]["cohort"], "values_mode": cfg["values_mode"], "rights": cfg["rights"],
+             "epoch0": [{"view_id": c["view_id"], "context_sha256": c["context_sha256"], "fold": int(c["fold"]),
+                         "published_context_json": {"path": p, "sha256": c["local_context_json_sha256"]}}
+                        for c, p in zip(mctx, pub)],
+             "epoch0_labels": ["clean"],
+             "registry_split": {"sha256": iv["split_sha256"], "key": iv.get("split_key"), "version_id": iv.get("split_version_id"),
+                                "local": iv.get("split_local")},
+             "shape": iv["shape"]}
+        x = plan_entry_extra(scope, h, mctx, cfg)
+        if x:
+            e["context_extra"] = x
+        if extra_entry is not None:
+            extra_entry(e)
+        entries.append(e)
+    loads = [0.0] * a.of
+    for e in sorted(entries, key=lambda e: (-est_cost(e), e["dataset_hash"])):     # LPT: deterministic balance
+        i = min(range(a.of), key=lambda k: (loads[k], k))
+        e["shard"], e["est_cost"] = i, est_cost(e)
+        loads[i] += est_cost(e)
+    ex_path = out / "existing-view-ids.json"
+    if ex_path.exists():
+        ex_body = ex_path.read_bytes()
+    else:
+        ids, counts = scan_existing_view_ids(exclude=[out] + list(NEW_TREES))
+        ex_body = jdump({"schema": EXISTING_SCHEMA, "view_ids": ids, "counts": counts, "count": len(ids),
+                         "sources": {"build_v2": str(BUILD_V2), "denylist": ref(DENYLIST)},
+                         "excluded_trees": sorted(str(t) for t in NEW_TREES)})
+        create_only(ex_path, ex_body)
+    ex = json.loads(ex_body)
+    doc = {"schema": PLAN_SCHEMA, "scope": scope, "values_mode": cfg["values_mode"], "split_version": SPLIT_V2,
+           "partition": ROUTES[cfg["values_mode"]]["partition"], "view_tag": ROUTES[cfg["values_mode"]]["tag"], "of": a.of,
+           "tree": str(out), "datasets": entries,
+           "counts": {"datasets": len(entries), "epoch0_contexts": sum(len(e["epoch0"]) for e in entries),
+                      "new_contexts": OUTER_FOLDS * len(entries),
+                      "datasets_with_fewer_than_5_epoch0_contexts": sum(len(e["epoch0"]) < OUTER_FOLDS for e in entries),
+                      "rows": sum(int(e["shape"]["sample_rows"]) for e in entries)},
+           "shard_est_cost": loads, "epoch": src.epoch_ref,
+           "inputs": {"manifest": man_ref, "inventory": ref(INVENTORY), "row_selection_leak_v2": ref(LEAK_V2),
+                      "split_scope_receipt": ref(SCOPE_RECEIPT), "owner_decision": ref(OWNER_DECISION),
+                      "holdout_denylist_v2": ref(DENYLIST), "epoch0_datasets": ref(DATASETS_INV)}
+                     | ({"cross_check_manifest": ref(cfg["cross_check_manifest"])} if cfg.get("cross_check_manifest") else {})
+                     | (extra_inputs or {}),
+           "existing_view_ids": {"path": str(ex_path), "sha256": sha(ex_body), "count": ex["count"], "counts": ex["counts"]},
+           "outer_folds": OUTER_FOLDS, "replaced_cut": REGISTRY_CUT}
+    p = out / "plan.json"
+    body = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    if p.exists() and p.read_bytes() != body:
+        raise SystemExit(f"{p} exists with different content; refusing to replace a pinned plan")
+    if not p.exists():
+        create_only(p, body)
+    print(json.dumps({"plan": str(p), "sha256": sha(body), "counts": doc["counts"], "shard_est_cost": loads,
+                      "existing_view_ids": doc["existing_view_ids"]["count"]}))
+    return 0
+
+
+def load_plan(out: Path) -> tuple:
+    b = (out / "plan.json").read_bytes()
+    return json.loads(b), sha(b)
+
+
+# ------------------------------------------------------------------------------------------- build
+
+def build_v2(a, loader=None, codes=None) -> int:
+    cpuguard.set_threads(2)
+    out = Path(a.out)
+    pl, plan_sha = load_plan(out)
+    if pl["of"] != a.of or pl["split_version"] != SPLIT_V2:
+        raise SystemExit(f"plan is for --of {pl['of']} / {pl['split_version']}")
+    mode = pl["values_mode"]
+    loader = loader or l7b_loader
+    codes = codes or code_shas_v2()
+    existing = load_existing(out, pl)
+    out_shard = out / f"shard-{a.shard}"
+    out_shard.mkdir(parents=True, exist_ok=True)
+    src = scale_check.Sources(load_index=False)
+    cache = scale_check.DataCache(max_items=2)
+    inv = json.loads(DATASETS_INV.read_text())
+    by_dataset = collections.defaultdict(list)
+    for r in src.included():
+        by_dataset[r["dataset_hash"]].append(r)
+    mine = [e for e in pl["datasets"] if e["shard"] == a.shard]
+    if a.datasets:
+        keep = set(a.datasets.split(","))
+        mine = [e for e in mine if e["dataset_hash"] in keep]
+    guard = cpuguard.Guard(journal_path=out / f"shard-{a.shard}.guard.jsonl")
+    t0, c0 = time.time(), cpu_s()
+    done_now, skipped, failed = [], [], []
+    for n, e in enumerate(sorted(mine, key=lambda e: (-e["est_cost"], e["dataset_hash"]))):
+        h = e["dataset_hash"]
+        if dataset_done(out_shard, h, codes):
+            skipped.append(h)
+            continue
+        guard.wait()
+        rec = run_dataset_v2(e, out_shard, mode, loader, existing, codes, guard, ctx_args=(src, cache, inv, by_dataset))
+        if rec["status"] == "done":
+            done_now.append(h)
+        else:
+            failed.append({"dataset_hash": h, "reason": rec.get("reason"), "detail": (rec.get("detail") or "")[:500],
+                           "epoch0_contexts": len(e["epoch0"])})
+        print(json.dumps({"shard": a.shard, "n": n + 1, "of": len(mine), "dataset": h, "status": rec["status"],
+                          "reason": rec.get("reason"), "cpu_s": rec["cpu_s"], "elapsed_s": round(time.time() - t0)}), flush=True)
+    rec = {"schema": SHARD_SCHEMA, "shard": a.shard, "of": a.of, "plan_sha256": plan_sha, "values_mode": mode,
+           "datasets_filter": a.datasets, "expected_datasets": len(mine), "done_now": len(done_now), "already_done": len(skipped),
+           "failed": failed, "complete": not failed and len(done_now) + len(skipped) == len(mine),
+           "cpu_s": round(cpu_s() - c0, 1), "wall_s": round(time.time() - t0, 1), "maxrss_mb": maxrss_mb(),
+           "guard": guard.summary(), "published": False, "code_sha256": codes, "utc_us": int(time.time() * 1e6)}
+    name = f"shard-{a.shard}-of-{a.of}.receipt.json" if not a.datasets else f"shard-{a.shard}-of-{a.of}.partial-{int(time.time())}.receipt.json"
+    atomic(out / name, (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
+    print(json.dumps({k: rec[k] for k in ("shard", "expected_datasets", "done_now", "already_done", "complete", "cpu_s", "wall_s")}
+                     | {"failed": len(failed)}))
+    return 0 if rec["complete"] else 1
+
+
+# ------------------------------------------------------------------------------------------- verify + summary
+
+def verify_tree(out: Path, pl, codes) -> dict:
+    """Re-read the tree: every done dataset's contexts (.done, files vs recorded sha256, identity recomputed, view_id
+    form, cut_id formula, split gates, counterfactual), orphans, and view_id collisions against a FRESH scan of every
+    other context.json under build-v2 plus the holdout denylist v2."""
+    mode = pl["values_mode"]
+    route = ROUTES[mode]
+    problems, new_ids, ctx_dirs = [], [], set()
+    counts = collections.Counter()
+    failures = []
+    datasets = []
+    for e in pl["datasets"]:
+        h = e["dataset_hash"]
+        sd = out / f"shard-{e['shard']}"
+        p = sd / "_datasets" / f"{h}.json"
+        counts["planned_datasets"] += 1
+        counts["planned_epoch0_contexts"] += len(e["epoch0"])
+        if not p.exists():
+            counts["missing_records"] += 1
+            failures.append({"dataset_hash": h, "reason": "not_built", "epoch0_contexts_kept": len(e["epoch0"])})
+            continue
+        r = json.loads(p.read_bytes())
+        row = {"dataset_hash": h, "shard": e["shard"], "status": r["status"], "reason": r.get("reason"),
+               "record": {"path": str(p), "sha256": sha_file(p)}, "epoch0_contexts": len(e["epoch0"]),
+               "cpu_s": r.get("cpu_s"), "maxrss_mb": r.get("maxrss_mb")}
+        if r["status"] != "done":
+            counts["failed_datasets"] += 1
+            counts["failed_epoch0_contexts_kept"] += len(e["epoch0"])
+            failures.append({"dataset_hash": h, "reason": r.get("reason"), "detail": (r.get("detail") or "")[:600],
+                             "epoch0_contexts_kept": len(e["epoch0"])})
+            datasets.append(row)
+            continue
+        if r.get("code_sha256") != codes:
+            problems.append(f"{h}: built with other code")
+        if r["cut"]["cut_id"] != CUT_PREFIX + r["split"]["sha256"] or r["split"]["schema"] != SPLIT_V2:
+            problems.append(f"{h}: cut/split identity")
+        if r["split"]["groups_straddling_folds"] or not r["split"]["target_invariant"] or not r["split"]["value_check_invariant"]:
+            problems.append(f"{h}: split gate")
+        if len(r["contexts"]) != OUTER_FOLDS:
+            problems.append(f"{h}: {len(r['contexts'])} contexts")
+        for c in r["contexts"]:
+            d = sd / c["view_id"]
+            ctx_dirs.add(str(d))
+            new_ids.append(c["view_id"])
+            if not (d / ".done").exists():
+                problems.append(f"{c['view_id']}: no .done")
+                continue
+            cj = json.loads((d / "context.json").read_bytes())
+            ident = sha(canon(cj["identity_body"]))
+            checks = {"identity": ident == cj["identity"] == c["identity"],
+                      "view_id": cj["view_id"] == c["view_id"] == make_view_id(h, cj["fold"], route["tag"], ident),
+                      "cut": cj["cut"] == r["cut"] and cj["cut"]["comparable_with_replaced"] is False
+                      and cj["cut"]["replaces_cut"] == e["registry_split"]["sha256"]
+                      and cj["cut"]["partition"] == route["partition"],
+                      "split": cj["split"]["sha256"] == r["split"]["sha256"] and cj["split"]["groups_straddling_folds"] == 0
+                      and cj["split"]["target_invariant"] is True,
+                      "counterfactual": cj["counterfactual"]["train_side_invariant"] is True,
+                      "epoch0_replaced": cj["epoch0_replaced"]["level"] == "dataset"
+                      and [x["view_id"] for x in cj["epoch0_replaced"]["contexts"]] == [x["view_id"] for x in e["epoch0"]],
+                      "context_sha256": cj["context_sha256"] == c["context_sha256"],
+                      "files": all(sha_file(d / n) == m["sha256"] and (d / n).stat().st_size == m["bytes"]
+                                   for n, m in cj["files"].items()),
+                      "jtt1": jtt1.parse_header(gzip.decompress((d / "encoder.jtt1.gz").read_bytes()))["n_train"] == cj["n_train"],
+                      "published_false": cj["published"] is False}
+            bad = sorted(k for k, ok in checks.items() if not ok)
+            if bad:
+                problems.append(f"{c['view_id']}: {bad}")
+            counts["verified_contexts"] += 1
+        counts["done_datasets"] += 1
+        counts["done_new_contexts"] += len(r["contexts"])
+        counts["epoch0_contexts_replaced"] += len(e["epoch0"])
+        counts["context_count_changed_datasets"] += int(r["epoch0_replaced"]["context_count_changed"])
+        row.update(new_view_ids=[c["view_id"] for c in r["contexts"]], cut_id=r["cut"]["cut_id"],
+                   fold_sizes=r["split"]["fold_sizes"], groups=r["split"]["groups"], duplicate_rows=r["split"]["duplicate_rows"],
+                   universe_rows=r["universe"]["rows"])
+        datasets.append(row)
+    orphans = []
+    for sd in sorted(out.glob("shard-*")):
+        if sd.is_dir():
+            for d in sd.iterdir():
+                if d.is_dir() and d.name != "_datasets" and str(d) not in ctx_dirs:
+                    orphans.append(str(d))
+    existing, ex_counts = scan_existing_view_ids(exclude=[out])
+    frozen = set(json.loads((out / "existing-view-ids.json").read_bytes())["view_ids"])
+    coll = sorted(set(new_ids) & set(existing))
+    coll_frozen = sorted(set(new_ids) & frozen)
+    dup = sorted(v for v, k in collections.Counter(new_ids).items() if k > 1)
+    counts["orphan_context_dirs"] = len(orphans)
+    return {"counts": dict(counts), "problems": problems, "failures": failures, "orphans": orphans, "datasets": datasets,
+            "view_id_collisions": {"fresh_scan_existing": len(existing), "fresh_scan_counts": ex_counts,
+                                   "collisions_fresh": coll, "collisions_plan_frozen": coll_frozen, "duplicates_within_tree": dup,
+                                   "new_view_ids": len(new_ids)},
+            "passed": not problems and not orphans and not coll and not coll_frozen and not dup}
+
+
+def pilot_compare(out: Path, pilot_receipt) -> dict | None:
+    """The pilot's contexts (a separate directory) must equal the full tree's: same view_ids and file sha256s."""
+    if not pilot_receipt:
+        return None
+    pr = json.loads(Path(pilot_receipt).read_bytes())
+    res = {}
+    for h, d in pr.get("datasets", {}).items():
+        want = {c["view_id"]: c["files"] for c in d.get("contexts", [])}
+        got = {}
+        for vid in want:
+            hits = glob.glob(str(out / "shard-*" / vid / "context.json"))
+            got[vid] = ({k: m["sha256"] for k, m in json.loads(Path(hits[0]).read_bytes())["files"].items()} if len(hits) == 1 else None)
+        res[h] = {"contexts": len(want), "same": want == got}
+    return {"receipt": ref(pilot_receipt), "datasets": res, "all_same": all(v["same"] for v in res.values())}
+
+
+def summarize_v2(a, codes=None, stem=None) -> int:
+    out = Path(a.out)
+    pl, plan_sha = load_plan(out)
+    codes = codes or code_shas_v2()
+    stem = a.receipt_stem or stem or f"nonraw-v2split-{pl['scope']}"
+    ts = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    ver = verify_tree(out, pl, codes)
+    pilot = pilot_compare(out, a.pilot)
+    vdoc = {"schema": VERIFY_SCHEMA, "utc_us": int(time.time() * 1e6), "tree": str(out), "scope": pl["scope"],
+            "plan": {"path": str(out / "plan.json"), "sha256": plan_sha}, "split_version": SPLIT_V2,
+            "partition": pl["partition"], "code_sha256": codes, "pilot_vs_full": pilot, **ver,
+            "passed": ver["passed"] and (pilot is None or pilot["all_same"])}
+    vp = RECEIPTS / "build" / f"{stem}-verify-{ts}.json"
+    vbody = (json.dumps(vdoc, indent=1, sort_keys=True) + "\n").encode()
+    create_only(vp, vbody)
+    shard_receipts = []
+    for p in sorted(out.glob(f"shard-*-of-{pl['of']}.receipt.json")):
+        r = json.loads(p.read_bytes())
+        shard_receipts.append(ref(p) | {k: r.get(k) for k in ("expected_datasets", "done_now", "already_done", "complete", "cpu_s",
+                                                              "wall_s", "maxrss_mb", "guard", "plan_sha256")}
+                              | {"failed": len(r.get("failed", []))})
+    mut = json.loads(Path(a.mutants).read_bytes())
+    root = Path(__file__).resolve().parents[1]
+    tests_file = root / "tests" / "test_v2_nonraw_split_v2.py"
+    sdoc = {"schema": SUMMARY_SCHEMA, "utc_us": int(time.time() * 1e6), "tree": str(out), "scope": pl["scope"],
+            "values_mode": pl["values_mode"], "split_version": SPLIT_V2, "partition": pl["partition"],
+            "plan": {"path": str(out / "plan.json"), "sha256": plan_sha, "counts": pl["counts"], "inputs": pl["inputs"],
+                     "existing_view_ids": pl["existing_view_ids"]},
+            "verify": {"path": str(vp), "sha256": sha(vbody), "passed": vdoc["passed"], "problems": len(ver["problems"])},
+            "counts": ver["counts"], "failures": ver["failures"],
+            "failure_reasons": dict(collections.Counter(f["reason"] for f in ver["failures"])),
+            "view_id_collisions": {k: (len(v) if isinstance(v, list) else v) for k, v in ver["view_id_collisions"].items()},
+            "shard_receipts": shard_receipts,
+            "cpu": {"dataset_cpu_s": round(sum((d.get("cpu_s") or 0) for d in ver["datasets"]), 1),
+                    "shard_process_cpu_s": round(sum((s.get("cpu_s") or 0) for s in shard_receipts), 1)},
+            "tests": {"log": ref(a.tests_log), "tail": Path(a.tests_log).read_text().strip().splitlines()[-3:]},
+            "mutants": {"path": a.mutants, "sha256": sha_file(a.mutants), "totals": mut.get("totals"),
+                        "survived": [k for k, v in mut.get("mutants", {}).items() if not v.get("killed")],
+                        "leak_mutants_killed": mut.get("totals", {}).get("leak_killed")},
+            "pilot_vs_full": pilot, "code_sha256": codes | {"tests/test_v2_nonraw_split_v2.py": sha_file(tests_file)},
+            "owner_decision": pl["inputs"]["owner_decision"], "policy": POLICY}
+    sp = RECEIPTS / "build" / f"{stem}-summary-{ts}.json"
+    sbody = (json.dumps(sdoc, indent=1, sort_keys=True) + "\n").encode()
+    create_only(sp, sbody)
+    complete = vdoc["passed"] and not ver["counts"].get("missing_records")
+    marker = None
+    if complete:
+        marker = out / ".complete"
+        create_only(marker, jdump({"schema": "jope.dl-v2-nonraw-v2split-tree-complete/v1", "tree": str(out), "scope": pl["scope"],
+                                   "split_version": SPLIT_V2, "summary": {"path": str(sp), "sha256": sha(sbody)},
+                                   "verify": {"path": str(vp), "sha256": sha(vbody)}, "counts": ver["counts"],
+                                   "published": False, "utc_us": int(time.time() * 1e6)}))
+    print(json.dumps({"verify": str(vp), "verify_sha256": sha(vbody), "summary": str(sp), "summary_sha256": sha(sbody),
+                      "counts": ver["counts"], "failure_reasons": sdoc["failure_reasons"], "problems": ver["problems"][:5],
+                      "collisions": sdoc["view_id_collisions"], "complete_marker": str(marker) if marker else None}))
+    return 0 if complete else 1
+
+
+# ------------------------------------------------------------------------------------------- CLI
+
+def arg_parser():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--shard", type=int)
+    ap.add_argument("--of", type=int, required=True)
+    ap.add_argument("--split-version", choices=SPLIT_VERSIONS, default=SPLIT_REGISTRY)
+    ap.add_argument("--views", help="registry build only: comma-separated view_ids (reproduction checks)")
+    ap.add_argument("--plan", choices=tuple(SCOPES), help="split v2: write the tree's plan.json for this scope")
+    ap.add_argument("--allow-other-out", action="store_true", help="split v2 plan: a pilot directory instead of the scope tree")
+    ap.add_argument("--datasets", help="split v2 build: comma-separated dataset hashes (pilot / smoke runs only)")
+    ap.add_argument("--summarize", action="store_true")
+    ap.add_argument("--tests-log")
+    ap.add_argument("--mutants")
+    ap.add_argument("--pilot")
+    ap.add_argument("--receipt-stem")
+    return ap
+
+
+def main(argv=None):
+    ap = arg_parser()
+    a = ap.parse_args(argv)
+    if a.split_version == SPLIT_REGISTRY:
+        if a.plan or a.summarize or a.datasets:
+            ap.error("--plan/--summarize/--datasets need --split-version rowsel-raw-split-v2")
+        if a.shard is None:
+            ap.error("--shard is required for a build")
+        return build_registry(a)
+    if a.views:
+        ap.error("--views is for the registry build only")
+    if a.plan:
+        if SCOPES[a.plan]["values_mode"] != "L7b":
+            ap.error(f"scope {a.plan} is built by tools/v2_build_l7a.py")
+        return make_plan(a)
+    if a.summarize:
+        return summarize_v2(a)
+    if a.shard is None:
+        ap.error("--shard is required for a build")
+    return build_v2(a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

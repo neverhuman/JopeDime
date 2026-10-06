@@ -1,40 +1,33 @@
 {
  "changes_since_prior": {
   "added": {
-   "dltrain/rowsel_raw_split_v2.py": "97340df3edf5a825c0f9315185a39ad4e925022359a11e9ec7e0e0ad0a59a2c2",
-   "tests/test_rowsel_raw_split_v2.py": "a8679b8b4afa9e467b7b3495307bb56457dfe7e2be2e8d8ad019dcdc9587a698",
-   "tests/test_v2_rowsel_raw_helper.py": "b9e0bb43a5ee9e6261bbc4f2dea717eb181dabb3311b2a8a9ec578969d290889",
-   "tools/v2_rowsel_raw_helper.py": "c208370f3eb89ca81f80a703c742a8a5d382946caa2870d4c39a82f1724c5f72"
+   "tools/v2_pubset.py": "cc49c9891606e825bb5c0ff26b0819a23f1a1b5cd3af35743a251604d6272b72"
   },
   "changed": {
-   "tests/test_v2_rowsel_raw.py": {
-    "from": "2ae3cf61cdbe29e15ecaa642c4f5e5edc78db32211f4337083ad943afc550f09",
-    "to": "f33f3d2b270e533060374d4a6a442d5c6010fda727f062ac3758b9bf9ea9ace7"
+   "tests/test_v2_publish.py": {
+    "from": "10cc7b5884445a13b6c369ebd7fc3bcb0412ad43f36f4d9ff946a67d0c5926e3",
+    "to": "4110c05dd51228b5e495f44c6febc8d596b06e49112af941271a96815e3553a8"
    },
-   "tools/v2_holdout_denylist.py": {
-    "from": "8c957d9b6b8c3056634c9eeb90304b22ff342e5ae6f6395506b9814f7d4b5f85",
-    "to": "a78cf86d713df974c682cdd15dd0debf968a56481ce6f9ac82004e684d5a9812"
+   "tools/v2_holdout_supplement.py": {
+    "from": "a4469788ebc40aa0f38b70724abc3699e553bcd86f78f11371ddeb6f547c553e",
+    "to": "fe68c3376db429c7cd8c740f3a9989a037ef5793e340888bde7f33d9a9b8548b"
    },
-   "tools/v2_provenance.py": {
-    "from": "7375ef15dd61671c48653dac2c82b3367f58b1b9a094a0ad18962428a5477e98",
-    "to": "94614077bb1d640185172693ea41196d84425626dc0998ff4a8a1985eccaa109"
+   "tools/v2_publish.py": {
+    "from": "cdde4eae146f971ed80cd4177cd94fcaddeddcff5bb605f55e4748d185a50f7b",
+    "to": "e97d74c767f5cde16464befc77a2b7afe1333e7604a720ae3cb70f305c30abb1"
    },
-   "tools/v2_rowsel_raw.py": {
-    "from": "f3baa74fa67da624cce89cbddfce2c76ec481556ae275cff64a4cfc5e3a67cf0",
-    "to": "28be7f98ae0ae1bbf1f093d1120717216ac872d80dfb68d8b38a84fa462ca88f"
-   },
-   "tools/v2_rowsel_raw_coverage.py": {
-    "from": "34f393f33f7e1cea170a8fa02a2517d18238b603d73e3d06782148231ab17b37",
-    "to": "6e745b62d81caccce9086ccec3cb82536bd5c12e95db199da7f3c4c0b775eeea"
+   "tools/v2_rowsel_raw_manifest.py": {
+    "from": "94eef29796d9ee904aaea3a8ba5954804dac02b37b09b8c3faa42fe58e67cb5e",
+    "to": "35ff745880dfacc39371c7ca45323e793c1839209f9701cd1bc73596e11a4dcc"
    },
    "tools/v2_s1_input_list.py": {
-    "from": "63eeea989c5252e0b227d6a7f506d764cd0299951d5994ca6b8082f943126a77",
-    "to": "058ee4f52d319dc071ee0edea9b9dfb7a97c338cba4b6d9ab9f5f607aae80fb9"
+    "from": "058ee4f52d319dc071ee0edea9b9dfb7a97c338cba4b6d9ab9f5f607aae80fb9",
+    "to": "89c99d3a268236383df8cb0f1ee60f89501f28e2a0328cfd7f93d01702094e0f"
    }
   },
   "removed": []
  },
- "created_utc": "2026-10-06T04:01:17Z",
+ "created_utc": "2026-10-06T08:33:39Z",
  "dependencies": {
   "Dope": "dope-kernel built from ~/dope 63696a5d into RUN/build/dope-target (bc3c4460)",
   "GPU encode": "system /usr/bin/python3.12 with torch 2.7.0+cu12x, safetensors, psutil; Codex's gpu_encoders.py ff419384 read-only from /home/ubuntu/scratch/jopedime-regression-neural-encoding-v1; lane-owned TabPFN runtime tabpfn 9.0.0 + pandas 2.3.2 + skrub 0.10.1 (manifest RUN/pydeps/tab35-runtime-v1.files.sha256 8ad8cb6e)",
@@ -209,6 +202,10 @@
    "bytes": 9266,
    "sha256": "97340df3edf5a825c0f9315185a39ad4e925022359a11e9ec7e0e0ad0a59a2c2"
   },
+  "src/dl_training_v1/dltrain/rowsel_split_v2_groups.py": {
+   "bytes": 6250,
+   "sha256": "9e0fb521a989356e8d5aece36666afcac0772d8da24b36ad977bdded91c9d7a3"
+  },
   "src/dl_training_v1/dltrain/s3io.py": {
    "bytes": 47045,
    "sha256": "26740428ba3d1111b44b2a52a30002c40d885f2d3c18b2ae2be479bec8d5dbdd"
@@ -273,6 +270,10 @@
    "bytes": 19648,
    "sha256": "3e3fe43380c37c3798f0b5949b768209e1c0ed6d5d378fea4933087082afc412"
   },
+  "src/dl_training_v1/tests/registry_split_port.py": {
+   "bytes": 4534,
+   "sha256": "54f07d7877115a1d7c61970084f466431dad5ef5b9e4657b2e148d6d1cf848dc"
+  },
   "src/dl_training_v1/tests/restore/__init__.py": {
    "bytes": 173,
    "sha256": "84b1884280a5ef3a1ef351cb51e15317c3ce7b0c5074f766f766e658a337621c"
@@ -321,6 +322,10 @@
    "bytes": 12088,
    "sha256": "a8679b8b4afa9e467b7b3495307bb56457dfe7e2be2e8d8ad019dcdc9587a698"
   },
+  "src/dl_training_v1/tests/test_rowsel_split_v2_groups.py": {
+   "bytes": 8898,
+   "sha256": "e944c74c312094e20bd67c6e125d521bcb45c526dbf6319fba414dd4b4bd9c7d"
+  },
   "src/dl_training_v1/tests/test_s3io.py": {
    "bytes": 43483,
    "sha256": "7d30f3402ffb818efb8ca39e23b448f8ff27176dd6ec32a1f6d58f8a51459419"
@@ -337,17 +342,33 @@
    "bytes": 16985,
    "sha256": "c49031d307ac514a37bd97a183d3e74b29fde5e4180f1cc5b5af0f793e6296b6"
   },
+  "src/dl_training_v1/tests/test_v2_nonraw_split_v2.py": {
+   "bytes": 39399,
+   "sha256": "b98e6e1b9072cf79f8bd62d1e6254b3d84c23ca1834171cff23c6a66c83e2621"
+  },
+  "src/dl_training_v1/tests/test_v2_nonraw_split_v2g.py": {
+   "bytes": 20571,
+   "sha256": "0256fea10785b71c07be5d18fa931d6aa53b277ca0dea95cc4466a269fd4c56b"
+  },
   "src/dl_training_v1/tests/test_v2_publish.py": {
-   "bytes": 28353,
-   "sha256": "bbb8e5deb2e68846022c25de2971f9fc6ce22845c7d49ca1cb8a0922a4ad0780"
+   "bytes": 33459,
+   "sha256": "4110c05dd51228b5e495f44c6febc8d596b06e49112af941271a96815e3553a8"
   },
   "src/dl_training_v1/tests/test_v2_rowsel_build.py": {
    "bytes": 48297,
    "sha256": "87fb6db397a22a41bc444b23ab56aa6bb9d3a7a232fe959b372f5ea33559b73f"
   },
+  "src/dl_training_v1/tests/test_v2_rowsel_build_split_v2.py": {
+   "bytes": 25256,
+   "sha256": "712012b4907ef76cbcc6da472f7da0d1a2e8bb5907e4974c364f045896392c8b"
+  },
+  "src/dl_training_v1/tests/test_v2_rowsel_build_split_v2g.py": {
+   "bytes": 41448,
+   "sha256": "16efa403d8297577f21998e8b346e9368c042a7d859d942994a3e8e2e44f7ddf"
+  },
   "src/dl_training_v1/tests/test_v2_rowsel_raw.py": {
-   "bytes": 58460,
-   "sha256": "f33f3d2b270e533060374d4a6a442d5c6010fda727f062ac3758b9bf9ea9ace7"
+   "bytes": 59291,
+   "sha256": "b30c2fae55f4677265b4a96a17112532b8127d3ddffd53fe3b711284f7524c33"
   },
   "src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
    "bytes": 13214,
@@ -570,12 +591,12 @@
    "sha256": "fc4cf94f049d3c6d010ae5be83a26529cf6e0eb741e8329393a3cdb2ff8ae05f"
   },
   "src/dl_training_v1/tools/v2_build_l7a.py": {
-   "bytes": 24436,
-   "sha256": "914489bb32ad547ac456f6215dca73e7bc24fea97b024b18f6250664c466be32"
+   "bytes": 35706,
+   "sha256": "feb60328122abeae3c2b31469916f449be3ca204a771ce985aa37f32de077d02"
   },
   "src/dl_training_v1/tools/v2_build_local.py": {
-   "bytes": 6410,
-   "sha256": "0a7026490e46ffea8466c7b25776a66cef68ce54fdd057861de6f82c108217e0"
+   "bytes": 93459,
+   "sha256": "f507af5419a64c0ca3f1fab17649fa986117cf5fc8feb191a668ad10b8dcc71b"
   },
   "src/dl_training_v1/tools/v2_coverage_ledger.py": {
    "bytes": 8518,
@@ -598,8 +619,8 @@
    "sha256": "a78cf86d713df974c682cdd15dd0debf968a56481ce6f9ac82004e684d5a9812"
   },
   "src/dl_training_v1/tools/v2_holdout_supplement.py": {
-   "bytes": 6814,
-   "sha256": "a4469788ebc40aa0f38b70724abc3699e553bcd86f78f11371ddeb6f547c553e"
+   "bytes": 7209,
+   "sha256": "fe68c3376db429c7cd8c740f3a9989a037ef5793e340888bde7f33d9a9b8548b"
   },
   "src/dl_training_v1/tools/v2_manifest.py": {
    "bytes": 4652,
@@ -610,16 +631,20 @@
    "sha256": "94614077bb1d640185172693ea41196d84425626dc0998ff4a8a1985eccaa109"
   },
   "src/dl_training_v1/tools/v2_publish.py": {
-   "bytes": 36318,
-   "sha256": "3b265fca2d031899e43a6f99af51034b2e51864a009fade145cfa97a1aa900a2"
+   "bytes": 38295,
+   "sha256": "e97d74c767f5cde16464befc77a2b7afe1333e7604a720ae3cb70f305c30abb1"
   },
   "src/dl_training_v1/tools/v2_publish_manifest.py": {
    "bytes": 12597,
    "sha256": "31e87b329100e9bb8586e563a28cce81d6b715ad2c6d2d3016a5c0c621a3a7fc"
   },
+  "src/dl_training_v1/tools/v2_pubset.py": {
+   "bytes": 3369,
+   "sha256": "cc49c9891606e825bb5c0ff26b0819a23f1a1b5cd3af35743a251604d6272b72"
+  },
   "src/dl_training_v1/tools/v2_rowsel_build.py": {
-   "bytes": 61796,
-   "sha256": "ed00684a320f079ce9016ee6df0a0668bc431b8e37e77566c0f4805157d0fa92"
+   "bytes": 140559,
+   "sha256": "fcfe38285df6d628faae7b87bdd4105eb35abf3d58987472f955250c5e2e428e"
   },
   "src/dl_training_v1/tools/v2_rowsel_manifest.py": {
    "bytes": 13135,
@@ -638,27 +663,28 @@
    "sha256": "c208370f3eb89ca81f80a703c742a8a5d382946caa2870d4c39a82f1724c5f72"
   },
   "src/dl_training_v1/tools/v2_rowsel_raw_manifest.py": {
-   "bytes": 8949,
-   "sha256": "94eef29796d9ee904aaea3a8ba5954804dac02b37b09b8c3faa42fe58e67cb5e"
+   "bytes": 10178,
+   "sha256": "35ff745880dfacc39371c7ca45323e793c1839209f9701cd1bc73596e11a4dcc"
   },
   "src/dl_training_v1/tools/v2_s1_input_list.py": {
-   "bytes": 9919,
-   "sha256": "058ee4f52d319dc071ee0edea9b9dfb7a97c338cba4b6d9ab9f5f607aae80fb9"
+   "bytes": 11060,
+   "sha256": "89c99d3a268236383df8cb0f1ee60f89501f28e2a0328cfd7f93d01702094e0f"
+  },
+  "src/dl_training_v1/tools/v2_superseded.py": {
+   "bytes": 4816,
+   "sha256": "91ec3cfee7a329b8dd62aa2dfad49f50ce46d7c141407de25ba07ae19239a4f1"
   }
  },
  "historical_added": [
-  "admission.py.11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58",
-  "rowsel_raw_split_v2.py.97340df3edf5a825c0f9315185a39ad4e925022359a11e9ec7e0e0ad0a59a2c2",
-  "superseded_raw_split_v1_inline.py.cd51465f47ff0aaf0da7bd0d84b82bb5e576f016a71a189d6385121d56710029",
-  "test_rowsel_raw_split_v2.py.a8679b8b4afa9e467b7b3495307bb56457dfe7e2be2e8d8ad019dcdc9587a698",
-  "v2_holdout_denylist.py.8c957d9b6b8c3056634c9eeb90304b22ff342e5ae6f6395506b9814f7d4b5f85",
-  "v2_holdout_denylist.py.ff89b46891e7bada5c34bc6f2ca2b4531f719ebd2ba921a8740b2fa40f2c7b6a",
-  "v2_provenance.py.7375ef15dd61671c48653dac2c82b3367f58b1b9a094a0ad18962428a5477e98",
-  "v2_rowsel_raw.py.28be7f98ae0ae1bbf1f093d1120717216ac872d80dfb68d8b38a84fa462ca88f",
-  "v2_rowsel_raw_coverage.py.6e745b62d81caccce9086ccec3cb82536bd5c12e95db199da7f3c4c0b775eeea",
-  "v2_s1_input_list.py.3280c6c59158e1e62836fd622d95ea421b037fc730f1abcecc3c6af42561f098",
-  "v2_s1_input_list.py.40ba1c6975165847e16397a56d3f1fb5fe59d926bb6df107e84816083d27dc70",
-  "v2_s1_input_list.py.63eeea989c5252e0b227d6a7f506d764cd0299951d5994ca6b8082f943126a77"
+  "test_v2_publish.py.4110c05dd51228b5e495f44c6febc8d596b06e49112af941271a96815e3553a8",
+  "test_v2_publish.py.b5f8b6b1ffbe26ebbc68092e7f3bb092c4242e4da2fb4a3f580cea5358709596",
+  "v2_holdout_supplement.py.a4469788ebc40aa0f38b70724abc3699e553bcd86f78f11371ddeb6f547c553e",
+  "v2_holdout_supplement.py.fe68c3376db429c7cd8c740f3a9989a037ef5793e340888bde7f33d9a9b8548b",
+  "v2_publish.py.6e0c1b4020103bc98672f39fc9af2109df72e3e405c958c183eeb471cc30978a",
+  "v2_publish.py.e97d74c767f5cde16464befc77a2b7afe1333e7604a720ae3cb70f305c30abb1",
+  "v2_pubset.py.cc49c9891606e825bb5c0ff26b0819a23f1a1b5cd3af35743a251604d6272b72",
+  "v2_rowsel_raw_manifest.py.35ff745880dfacc39371c7ca45323e793c1839209f9701cd1bc73596e11a4dcc",
+  "v2_s1_input_list.py.89c99d3a268236383df8cb0f1ee60f89501f28e2a0328cfd7f93d01702094e0f"
  ],
  "historical_hash_map": {
   "0519ea30": "tools/v2_rowsel_manifest.py first version (rowsel-t1-clean-v1)",
@@ -671,16 +697,24 @@
   "40ba1c69": "tools/v2_s1_input_list.py that built s1-input-list-v2 production 4bae9a6b / research b8541bde (reconstructed byte-exact)",
   "7375ef15": "tools/v2_provenance.py that built provenance-v1 6d9ca99d",
   "8c957d9b": "tools/v2_holdout_denylist.py that built holdout-denylist-v1 ee12d721 (reconstructed byte-exact)",
+  "91ec3cfe": "tools/v2_superseded.py: create-only SUPERSEDED docs; reproduces superseded-raw-split-v1 766277695b02 byte-exactly",
   "97340df3": "dltrain/rowsel_raw_split_v2.py: value-free outer split (RAW-SPLIT-RULING B); duplicate groups ranked by min sha256(h NUL domain NUL partition NUL index); replaces the feature-byte-ordered split of rowsel_raw.py 18eac154",
+  "9e0fb521": "dltrain/rowsel_split_v2_groups.py: GROUP-UNION-B split (exact-duplicate features OR annotated group; target never used); schema rowsel-split-v2-groups; cut_id trainonly-split-v2g:<sha>",
   "a8679b8b": "tests/test_rowsel_raw_split_v2.py: must FAIL on the 18eac154 split (outer-test feature change moves the partition)",
   "c208370f": "tools/v2_rowsel_raw_helper.py: additive helper shards (prepared, not launched)",
+  "cc49c989": "tools/v2_pubset.py: create-only filtered tree copies without a local SUPERSEDED record's contexts",
   "cd51465f": "inline script that built manifests/superseded-raw-split-v1/766277695b02 (kept byte-exact; no code_sha256 field in that doc)",
+  "cdde4eae": "tools/v2_publish.py: admits re-split schemas, rights licensed, v2 t1_fallback; cut guard (mutants 9/9)",
   "cfa1d899": "tools/v2_publish.py (rowsel-t1 full + gpu-clean-v1 publishes)",
+  "e97d74c7": "tools/v2_publish.py final: cut prefix must match the split schema (split, rowsel.split or the GPU plan's rowsel.split_schema); routing identical to cdde4eae/3b265fca on all 26 trees (publisher-equivalence receipts); mutants 13/13",
   "ed00684a": "tools/v2_rowsel_build.py current (frozen-kmeans research scope)",
   "f01fa91f": "tools/v2_rowsel_build.py that built the 1,749 incoming T1 contexts",
   "f2580ff0": "tools/v2_s1_input_list.py that built s1-input-list-v1",
   "f3baa74f": "tools/v2_rowsel_raw.py that built ROWSEL-RAW-v1-nonnumeric (superseded split, never published)",
+  "f507af54": "tools/v2_build_local.py final (v2split/v2gsplit hooks); a53aa6c8 built the clean v2split trees",
   "fa4b411c": "tools/v2_publish.py (research, v6, 810 GPU publishes)",
+  "fcfe3828": "tools/v2_rowsel_build.py final (split-version hook: registry | rowsel-raw-split-v2 | rowsel-split-v2-groups; empty-fold convention); c0b989b6 built the T1 v2split trees, 6e1e166e built 21 T1 v2gsplit datasets",
+  "feb60328": "tools/v2_build_l7a.py final; a8b60258 built L7a-v2split",
   "ff89b468": "tools/v2_holdout_denylist.py that built holdout-denylist-v2 1503ca7a (--superseded)"
  },
  "historical_versions": {
@@ -720,6 +754,10 @@
    "bytes": 9266,
    "sha256": "97340df3edf5a825c0f9315185a39ad4e925022359a11e9ec7e0e0ad0a59a2c2"
   },
+  "rowsel_split_v2_groups.py.9e0fb521a989356e8d5aece36666afcac0772d8da24b36ad977bdded91c9d7a3": {
+   "bytes": 6250,
+   "sha256": "9e0fb521a989356e8d5aece36666afcac0772d8da24b36ad977bdded91c9d7a3"
+  },
   "s3io.py.26740428ba3d1111b44b2a52a30002c40d885f2d3c18b2ae2be479bec8d5dbdd": {
    "bytes": 47045,
    "sha256": "26740428ba3d1111b44b2a52a30002c40d885f2d3c18b2ae2be479bec8d5dbdd"
@@ -748,6 +786,18 @@
    "bytes": 12088,
    "sha256": "a8679b8b4afa9e467b7b3495307bb56457dfe7e2be2e8d8ad019dcdc9587a698"
   },
+  "test_v2_publish.py.10cc7b5884445a13b6c369ebd7fc3bcb0412ad43f36f4d9ff946a67d0c5926e3": {
+   "bytes": 32209,
+   "sha256": "10cc7b5884445a13b6c369ebd7fc3bcb0412ad43f36f4d9ff946a67d0c5926e3"
+  },
+  "test_v2_publish.py.4110c05dd51228b5e495f44c6febc8d596b06e49112af941271a96815e3553a8": {
+   "bytes": 33459,
+   "sha256": "4110c05dd51228b5e495f44c6febc8d596b06e49112af941271a96815e3553a8"
+  },
+  "test_v2_publish.py.b5f8b6b1ffbe26ebbc68092e7f3bb092c4242e4da2fb4a3f580cea5358709596": {
+   "bytes": 33148,
+   "sha256": "b5f8b6b1ffbe26ebbc68092e7f3bb092c4242e4da2fb4a3f580cea5358709596"
+  },
   "test_v2_rowsel_build.py.1b89846ee36999b21f905d6900c23973b896da474019fa6b3c6d494eb18a03cc": {
    "bytes": 37620,
    "sha256": "1b89846ee36999b21f905d6900c23973b896da474019fa6b3c6d494eb18a03cc"
@@ -755,6 +805,22 @@
   "test_v2_rowsel_build.py.87fb6db397a22a41bc444b23ab56aa6bb9d3a7a232fe959b372f5ea33559b73f": {
    "bytes": 48297,
    "sha256": "87fb6db397a22a41bc444b23ab56aa6bb9d3a7a232fe959b372f5ea33559b73f"
+  },
+  "test_v2_rowsel_build_split_v2.py.712012b4907ef76cbcc6da472f7da0d1a2e8bb5907e4974c364f045896392c8b": {
+   "bytes": 25256,
+   "sha256": "712012b4907ef76cbcc6da472f7da0d1a2e8bb5907e4974c364f045896392c8b"
+  },
+  "test_v2_rowsel_build_split_v2.py.aa146563c65704a33dc58b6857c69341de12411dabba88eeac2bc90663960690": {
+   "bytes": 25150,
+   "sha256": "aa146563c65704a33dc58b6857c69341de12411dabba88eeac2bc90663960690"
+  },
+  "test_v2_rowsel_build_split_v2g.py.16efa403d8297577f21998e8b346e9368c042a7d859d942994a3e8e2e44f7ddf": {
+   "bytes": 41448,
+   "sha256": "16efa403d8297577f21998e8b346e9368c042a7d859d942994a3e8e2e44f7ddf"
+  },
+  "test_v2_rowsel_build_split_v2g.py.cf070939a9c6fdda1e6fb952792f70027fc43344e7728c6c5162a2ae50916ee5": {
+   "bytes": 27296,
+   "sha256": "cf070939a9c6fdda1e6fb952792f70027fc43344e7728c6c5162a2ae50916ee5"
   },
   "trainonly.py.64be113425fe17c1bbd7fd29b20cd28f56edf57304f07e6ee1a00fb3cd6f55ac": {
    "bytes": 16923,
@@ -764,9 +830,33 @@
    "bytes": 24436,
    "sha256": "914489bb32ad547ac456f6215dca73e7bc24fea97b024b18f6250664c466be32"
   },
+  "v2_build_l7a.py.a8b60258cb9f5ec274a027e457b6a985ff2363c57b58cc9803d301cf11fb73ed": {
+   "bytes": 35194,
+   "sha256": "a8b60258cb9f5ec274a027e457b6a985ff2363c57b58cc9803d301cf11fb73ed"
+  },
+  "v2_build_l7a.py.feb60328122abeae3c2b31469916f449be3ca204a771ce985aa37f32de077d02": {
+   "bytes": 35706,
+   "sha256": "feb60328122abeae3c2b31469916f449be3ca204a771ce985aa37f32de077d02"
+  },
   "v2_build_local.py.0a7026490e46ffea8466c7b25776a66cef68ce54fdd057861de6f82c108217e0": {
    "bytes": 6410,
    "sha256": "0a7026490e46ffea8466c7b25776a66cef68ce54fdd057861de6f82c108217e0"
+  },
+  "v2_build_local.py.1a8b73a83a1fb6e79e2e3f618d2e0b90d4a031fb86d5ec6aec3f5935487b18c4": {
+   "bytes": 92016,
+   "sha256": "1a8b73a83a1fb6e79e2e3f618d2e0b90d4a031fb86d5ec6aec3f5935487b18c4"
+  },
+  "v2_build_local.py.8839ea695fe0dfad273af9cf800a46d640a82c2b0124657a3de385c26d337b8d": {
+   "bytes": 66226,
+   "sha256": "8839ea695fe0dfad273af9cf800a46d640a82c2b0124657a3de385c26d337b8d"
+  },
+  "v2_build_local.py.a53aa6c852859e243bdc9fab3979c3de6a469a45128dd6b48b6e684d65b0a7b8": {
+   "bytes": 70889,
+   "sha256": "a53aa6c852859e243bdc9fab3979c3de6a469a45128dd6b48b6e684d65b0a7b8"
+  },
+  "v2_build_local.py.f507af5419a64c0ca3f1fab17649fa986117cf5fc8feb191a668ad10b8dcc71b": {
+   "bytes": 93459,
+   "sha256": "f507af5419a64c0ca3f1fab17649fa986117cf5fc8feb191a668ad10b8dcc71b"
   },
   "v2_dope_run.py.1ab431da15020303ee388df82a3e1f32ee4339bd3d71ffc4fd5af7bf3057c057": {
    "bytes": 9398,
@@ -796,21 +886,41 @@
    "bytes": 7067,
    "sha256": "8c957d9b6b8c3056634c9eeb90304b22ff342e5ae6f6395506b9814f7d4b5f85"
   },
+  "v2_holdout_denylist.py.a78cf86d713df974c682cdd15dd0debf968a56481ce6f9ac82004e684d5a9812": {
+   "bytes": 9279,
+   "sha256": "a78cf86d713df974c682cdd15dd0debf968a56481ce6f9ac82004e684d5a9812"
+  },
   "v2_holdout_denylist.py.ff89b46891e7bada5c34bc6f2ca2b4531f719ebd2ba921a8740b2fa40f2c7b6a": {
    "bytes": 8364,
    "sha256": "ff89b46891e7bada5c34bc6f2ca2b4531f719ebd2ba921a8740b2fa40f2c7b6a"
+  },
+  "v2_holdout_supplement.py.a4469788ebc40aa0f38b70724abc3699e553bcd86f78f11371ddeb6f547c553e": {
+   "bytes": 6814,
+   "sha256": "a4469788ebc40aa0f38b70724abc3699e553bcd86f78f11371ddeb6f547c553e"
   },
   "v2_holdout_supplement.py.c23bc3630dc3c7f7975fcdbffb0522f4bc8f3c9a32006b247c7de736df40fb67": {
    "bytes": 6576,
    "sha256": "c23bc3630dc3c7f7975fcdbffb0522f4bc8f3c9a32006b247c7de736df40fb67"
   },
+  "v2_holdout_supplement.py.fe68c3376db429c7cd8c740f3a9989a037ef5793e340888bde7f33d9a9b8548b": {
+   "bytes": 7209,
+   "sha256": "fe68c3376db429c7cd8c740f3a9989a037ef5793e340888bde7f33d9a9b8548b"
+  },
   "v2_provenance.py.7375ef15dd61671c48653dac2c82b3367f58b1b9a094a0ad18962428a5477e98": {
    "bytes": 5046,
    "sha256": "7375ef15dd61671c48653dac2c82b3367f58b1b9a094a0ad18962428a5477e98"
   },
+  "v2_provenance.py.94614077bb1d640185172693ea41196d84425626dc0998ff4a8a1985eccaa109": {
+   "bytes": 8305,
+   "sha256": "94614077bb1d640185172693ea41196d84425626dc0998ff4a8a1985eccaa109"
+  },
   "v2_publish.py.3b265fca2d031899e43a6f99af51034b2e51864a009fade145cfa97a1aa900a2": {
    "bytes": 36318,
    "sha256": "3b265fca2d031899e43a6f99af51034b2e51864a009fade145cfa97a1aa900a2"
+  },
+  "v2_publish.py.6e0c1b4020103bc98672f39fc9af2109df72e3e405c958c183eeb471cc30978a": {
+   "bytes": 38073,
+   "sha256": "6e0c1b4020103bc98672f39fc9af2109df72e3e405c958c183eeb471cc30978a"
   },
   "v2_publish.py.8200a7391871e5139706dce51c68c874ed09139ad17bef76f5e9bfddabce7105": {
    "bytes": 32973,
@@ -824,9 +934,17 @@
    "bytes": 34161,
    "sha256": "bd6e72b3af927acb99252e8cba9e902ebbbde32764b0e89367693af76b90ee75"
   },
+  "v2_publish.py.cdde4eae146f971ed80cd4177cd94fcaddeddcff5bb605f55e4748d185a50f7b": {
+   "bytes": 37653,
+   "sha256": "cdde4eae146f971ed80cd4177cd94fcaddeddcff5bb605f55e4748d185a50f7b"
+  },
   "v2_publish.py.cfa1d899660d5d783f745363b628892beb412351df1f60469b2de0a21aa7d8c3": {
    "bytes": 34652,
    "sha256": "cfa1d899660d5d783f745363b628892beb412351df1f60469b2de0a21aa7d8c3"
+  },
+  "v2_publish.py.e97d74c767f5cde16464befc77a2b7afe1333e7604a720ae3cb70f305c30abb1": {
+   "bytes": 38295,
+   "sha256": "e97d74c767f5cde16464befc77a2b7afe1333e7604a720ae3cb70f305c30abb1"
   },
   "v2_publish.py.fa4b411c6ba37cb0acff8c71d1296fbc3b44bbdd0929aebd64abc7801324b10f": {
    "bytes": 35741,
@@ -852,6 +970,22 @@
    "bytes": 11626,
    "sha256": "af000aaac6672e4634112c8a6046335ed2fd25ad70ede7e4f758fba9f2ccc11c"
   },
+  "v2_pubset.py.cc49c9891606e825bb5c0ff26b0819a23f1a1b5cd3af35743a251604d6272b72": {
+   "bytes": 3369,
+   "sha256": "cc49c9891606e825bb5c0ff26b0819a23f1a1b5cd3af35743a251604d6272b72"
+  },
+  "v2_rowsel_build.py.6e1e166eba12e7856d165448adeeb054257b438eb09d823093ce8005bbebebaf": {
+   "bytes": 130927,
+   "sha256": "6e1e166eba12e7856d165448adeeb054257b438eb09d823093ce8005bbebebaf"
+  },
+  "v2_rowsel_build.py.c0b989b638f2037c8b8c498ebc0b8dc329e2502b68f8b7701742a270148c1827": {
+   "bytes": 101837,
+   "sha256": "c0b989b638f2037c8b8c498ebc0b8dc329e2502b68f8b7701742a270148c1827"
+  },
+  "v2_rowsel_build.py.deff1bcb5e4b5dfd0c0056cf6744f7c918b425b9514d8cebabf24aa4459e017e": {
+   "bytes": 105166,
+   "sha256": "deff1bcb5e4b5dfd0c0056cf6744f7c918b425b9514d8cebabf24aa4459e017e"
+  },
   "v2_rowsel_build.py.ed00684a320f079ce9016ee6df0a0668bc431b8e37e77566c0f4805157d0fa92": {
    "bytes": 61796,
    "sha256": "ed00684a320f079ce9016ee6df0a0668bc431b8e37e77566c0f4805157d0fa92"
@@ -859,6 +993,10 @@
   "v2_rowsel_build.py.f01fa91fd6beca190dbeb594af75b8f9104767fa0b177b53dfd14a3f1e429f41": {
    "bytes": 50492,
    "sha256": "f01fa91fd6beca190dbeb594af75b8f9104767fa0b177b53dfd14a3f1e429f41"
+  },
+  "v2_rowsel_build.py.fcfe38285df6d628faae7b87bdd4105eb35abf3d58987472f955250c5e2e428e": {
+   "bytes": 140559,
+   "sha256": "fcfe38285df6d628faae7b87bdd4105eb35abf3d58987472f955250c5e2e428e"
   },
   "v2_rowsel_manifest.py.0519ea3023d6e2117c64ae6c5eb4ac2690269f24ab0d9db0972dc22b9ff035d8": {
    "bytes": 9777,
@@ -896,9 +1034,17 @@
    "bytes": 27500,
    "sha256": "6e745b62d81caccce9086ccec3cb82536bd5c12e95db199da7f3c4c0b775eeea"
   },
+  "v2_rowsel_raw_manifest.py.35ff745880dfacc39371c7ca45323e793c1839209f9701cd1bc73596e11a4dcc": {
+   "bytes": 10178,
+   "sha256": "35ff745880dfacc39371c7ca45323e793c1839209f9701cd1bc73596e11a4dcc"
+  },
   "v2_rowsel_raw_manifest.py.94eef29796d9ee904aaea3a8ba5954804dac02b37b09b8c3faa42fe58e67cb5e": {
    "bytes": 8949,
    "sha256": "94eef29796d9ee904aaea3a8ba5954804dac02b37b09b8c3faa42fe58e67cb5e"
+  },
+  "v2_s1_input_list.py.058ee4f52d319dc071ee0edea9b9dfb7a97c338cba4b6d9ab9f5f607aae80fb9": {
+   "bytes": 9919,
+   "sha256": "058ee4f52d319dc071ee0edea9b9dfb7a97c338cba4b6d9ab9f5f607aae80fb9"
   },
   "v2_s1_input_list.py.3280c6c59158e1e62836fd622d95ea421b037fc730f1abcecc3c6af42561f098": {
    "bytes": 9212,
@@ -912,9 +1058,17 @@
    "bytes": 9273,
    "sha256": "63eeea989c5252e0b227d6a7f506d764cd0299951d5994ca6b8082f943126a77"
   },
+  "v2_s1_input_list.py.89c99d3a268236383df8cb0f1ee60f89501f28e2a0328cfd7f93d01702094e0f": {
+   "bytes": 11060,
+   "sha256": "89c99d3a268236383df8cb0f1ee60f89501f28e2a0328cfd7f93d01702094e0f"
+  },
   "v2_s1_input_list.py.f2580ff0f9395767d7504a5fd6e50529e3224bffd3432af984c8c3799833016f": {
    "bytes": 7364,
    "sha256": "f2580ff0f9395767d7504a5fd6e50529e3224bffd3432af984c8c3799833016f"
+  },
+  "v2_superseded.py.91ec3cfee7a329b8dd62aa2dfad49f50ce46d7c141407de25ba07ae19239a4f1": {
+   "bytes": 4816,
+   "sha256": "91ec3cfee7a329b8dd62aa2dfad49f50ce46d7c141407de25ba07ae19239a4f1"
   }
  },
  "notes": [
@@ -933,34 +1087,41 @@
   "sept29_materializer_spec": "NOT found locally by the S1 pilot agent; its findings and the engine's expected inputs are in RUN/receipts/trainonly-v2/s1-pilot/README.md and pilot-receipt.json (eb61ad68)"
  },
  "schema": "jope.dl-lane-handoff/v2",
- "source_root": "restage-20261006T035515Z/src/dl_training_v1 (copied from the git-ignored lane SRC .agent/experiments/lambda-training/local_lambda/dl_training_v1; __pycache__ excluded)",
- "supersedes": "MANIFEST.json",
- "supersedes_sha256": "4b8c54da7e4b11cc2f30b02aa88f159d5240134bf4962e670d2bfcddbcd699ad",
+ "source_root": "restage-20261006T082918Z/src/dl_training_v1 (copied from the git-ignored lane SRC .agent/experiments/lambda-training/local_lambda/dl_training_v1; __pycache__ excluded)",
+ "supersedes": "restage-20261006T073946Z/MANIFEST.json",
+ "supersedes_sha256": "6314ef6f33f01878a149cdb36823a78c96d6ae3e2c45cf409d756711c71d6619",
  "test_commands": [
   "cd src/dl_training_v1 && python -m unittest discover -s tests -t .   # lane suites (unittest; pytest not used)",
   "python -m unittest tests.test_v2_publish tests.test_s3io tests.test_v2_rowsel_build tests.test_v2_rowsel_raw tests.test_nonnumeric tests.test_rowsel tests.test_t1raw tests.test_t1prep tests.test_trainonly",
   "mutation harnesses: RUN/tmp/*mut*/ and receipts/trainonly-v2/build/mutants-*.json; run each mutant in a COPY of the tree with that copy's PYTHONPATH and cwd (else the original modules are imported)",
+  "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
+  "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154"
  ],
  "tests_run_on_staged_copy": {
-  "cwd_and_pythonpath": "restage-20261006T035515Z/src/dl_training_v1",
+  "cwd_and_pythonpath": "restage-20261006T082918Z/src/dl_training_v1",
   "exit": 0,
   "modules": [
    "tests.test_rowsel_raw_split_v2",
+   "tests.test_rowsel_split_v2_groups",
    "tests.test_v2_rowsel_raw",
    "tests.test_v2_rowsel_raw_helper",
+   "tests.test_v2_rowsel_build",
+   "tests.test_v2_rowsel_build_split_v2",
+   "tests.test_v2_rowsel_build_split_v2g",
+   "tests.test_v2_nonraw_split_v2",
+   "tests.test_v2_nonraw_split_v2g",
    "tests.test_v2_publish",
    "tests.test_rowsel",
    "tests.test_nonnumeric",
    "tests.test_t1raw",
    "tests.test_t1prep",
    "tests.test_trainonly",
-   "tests.test_s3io",
-   "tests.test_v2_rowsel_build"
+   "tests.test_s3io"
   ],
-  "seconds": 362.0,
+  "seconds": 261.6,
   "summary": [
-   "Ran 329 tests in 359.230s",
+   "Ran 454 tests in 257.150s",
    "",
    "OK"
   ]

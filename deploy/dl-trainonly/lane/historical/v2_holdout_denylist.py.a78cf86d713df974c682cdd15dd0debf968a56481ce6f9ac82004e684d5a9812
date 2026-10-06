@@ -1,0 +1,140 @@
+"""Additive production denylist (HOLDOUT-INPUTS-140): every object key and view_id of every published v2 context whose P3
+assignment is sealed_excluded or heldout, plus the assignment of every published context (so loaders can fail closed on
+unknown ones). Built from the local copies of the manifests verified in the publish ledger, and P3 holdout.json + the
+families registry, all pinned by sha256. --publish PUTs it create-only under manifests/holdout-denylist-v1/. Then the
+must-fail check (--check) hands dltrain.admission one sealed_excluded and one heldout context (must refuse), one train_fit
+context (must admit) and a missing/tampered denylist (must refuse), and writes a receipt.
+
+Usage (lane slice): v2_holdout_denylist.py --name holdout-denylist-v1 [--publish] [--check]
+"""
+import argparse
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+PUB = RUN / "receipts/trainonly-v2/publish"
+REFUSE = {"sealed_excluded", "heldout"}
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--name", required=True)
+    ap.add_argument("--publish", action="store_true")
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--superseded", default="", help="comma-separated manifest names whose contexts and objects are SUPERSEDED (RAW-SPLIT-RULING)")
+    ap.add_argument("--superseded-reason", default="split deviation: outer split ordered by feature-byte hash (18eac154), superseded by rowsel-raw-split-v2 rebuild")
+    a = ap.parse_args(argv)
+    spec = importlib.util.spec_from_file_location("v2_publish", Path(__file__).resolve().parent / "v2_publish.py")
+    vp = importlib.util.module_from_spec(spec); spec.loader.exec_module(vp)
+    hb, rb = (RUN / "holdout/holdout.json").read_bytes(), (RUN / "families/g2/registry.json").read_bytes()
+    assign = json.loads(hb)["assignment"]
+    ds2fam = {m["dataset_hash"]: fid for fid, f in json.loads(rb)["families"].items() for m in (f.get("members") or []) if m.get("dataset_hash")}
+    verified = {}
+    for line in vp.DEFAULT_PUBLISH_LEDGER.read_bytes().splitlines():
+        r = json.loads(line)
+        if r.get("event") == "verified" and "/manifests/" in r["key"]:
+            verified[r["key"]] = r
+    manifests, ctx_rows, keys, by_view = [], {}, set(), {}
+    sup_by_fold, live_by_fold = {}, {}                 # (dataset_hash, fold) -> view_id, for the rebuilt-replacement check
+    for key, r in sorted(verified.items()):
+        name, f = key.split("/manifests/", 1)[1].split("/")
+        local = PUB / f"v2-publish-manifest-{name}-{f[:-5]}.json"
+        if not local.exists():
+            continue                                   # supplements, S1 lists and provenance are not context manifests
+        mb = local.read_bytes()
+        if sha(mb) != r["sha256"]:
+            raise SystemExit(f"{local}: differs from the ledger's verified record")
+        m = json.loads(mb)
+        manifests.append({"key": key, "version_id": r["version_id"], "sha256": r["sha256"], "contexts": len(m.get("contexts", []))})
+        sup = name in {x for x in a.superseded.split(",") if x}
+        for c in m.get("contexts", []):
+            asg = assign.get(ds2fam.get(c["dataset_hash"]), "no_family")
+            if sup:
+                row = ctx_rows.setdefault(c["view_id"], {"view_id": c["view_id"], "dataset_hash": c["dataset_hash"], "assignment": asg, "manifests": []})
+                row["superseded"] = a.superseded_reason; row["manifests"].append(key)
+                by_view[c["view_id"]] = asg
+                sup_by_fold[(c["dataset_hash"], c.get("fold"))] = c["view_id"]
+                for o in c.get("objects", []):
+                    keys.add(o["key"]); keys.add(o["receipt_key"])
+                continue
+            by_view[c["view_id"]] = asg
+            if asg.startswith("train"):
+                live_by_fold[(c["dataset_hash"], c.get("fold"))] = c["view_id"]
+            if asg in REFUSE:
+                ctx_rows.setdefault(c["view_id"], {"view_id": c["view_id"], "dataset_hash": c["dataset_hash"], "assignment": asg, "manifests": []})
+                ctx_rows[c["view_id"]]["manifests"].append(key)
+                for o in c.get("objects", []):
+                    keys.add(o["key"]); keys.add(o["receipt_key"])
+    doc = {"schema": "jope.dl-v2-holdout-denylist/v1", "name": a.name,
+           "rule": "HOLDOUT-INPUTS-140: loaders refuse these contexts and object keys by assignment at load time and fail closed without "
+                   "this denylist (dltrain.admission); additive only: nothing published is moved, deleted or overwritten",
+           "sources": {"holdout_sha256": sha(hb), "registry_sha256": sha(rb)}, "manifests": manifests,
+           "superseded_manifests": sorted(x for x in a.superseded.split(",") if x), "superseded_reason": a.superseded_reason if a.superseded else None,
+           "counts": {"refused_contexts": len(ctx_rows), "refused_object_keys": len(keys),
+                      "superseded_contexts": sum(1 for x in ctx_rows.values() if x.get("superseded")),
+                      "by_assignment": {k: sum(1 for x in ctx_rows.values() if x["assignment"] == k) for k in sorted(REFUSE)}},
+           "contexts": sorted(ctx_rows.values(), key=lambda x: x["view_id"]), "object_keys": sorted(keys),
+           "assignment_by_view": dict(sorted(by_view.items())), "code_sha256": sha(Path(__file__).read_bytes())}
+    body = (json.dumps(doc, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    dg = sha(body)
+    local = PUB / f"v2-holdout-denylist-{a.name}-{dg[:12]}.json"
+    if not local.exists():
+        local.write_bytes(body)
+    out = {"local": str(local), "sha256": dg, **doc["counts"], "manifests": len(manifests)}
+    if a.check:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from dltrain.admission import Admission, AdmissionRefused
+        def refused(adm, v, k=None):
+            try:
+                adm.check(v, k); return False
+            except AdmissionRefused:
+                return True
+        adm = Admission(local, dg)
+        sealed = next(x for x in doc["contexts"] if x["assignment"] == "sealed_excluded")
+        held = next(x for x in doc["contexts"] if x["assignment"] == "heldout")
+        train = next(v for v, s in by_view.items() if s == "train_fit")
+        a_key = next(iter(doc["object_keys"]))
+        tampered = RUN / "tmp" / "denylist-tampered.json"; tampered.write_bytes(body.replace(b'"heldout"', b'"train_fit"', 1))
+        res = {"sealed_excluded_refused": refused(adm, sealed["view_id"]), "heldout_refused": refused(adm, held["view_id"]),
+               "denylisted_object_key_refused": refused(adm, "unlisted-view-for-key-check", a_key),
+               "train_fit_admitted": not refused(adm, train), "dev_refused_for_training": refused(adm, next(v for v, s in by_view.items() if s == "dev")),
+               "missing_denylist_refuses": refused(Admission(RUN / "tmp" / "no-such-denylist.json", dg), train),
+               "tampered_denylist_refuses": refused(Admission(tampered, dg), train),
+               "unknown_view_refuses": refused(adm, "unknown__view")}
+        sup_rows = [x for x in doc["contexts"] if x.get("superseded") and x["assignment"] not in REFUSE]
+        if sup_rows:
+            res["superseded_train_fit_context_refused"] = refused(adm, sup_rows[0]["view_id"])
+        # once a rebuild is published: its context is admitted while the superseded one of the same dataset and fold is refused
+        # (a rebuild that reused the superseded view_id would be refused too: rebuilt_replacement_admitted is then False -> FAIL)
+        pair = next(((sup_by_fold[k], live_by_fold[k]) for k in sorted(sup_by_fold, key=str) if k in live_by_fold), None)
+        if pair:
+            res["superseded_twin_refused"] = refused(adm, pair[0])
+            res["rebuilt_replacement_admitted"] = not refused(adm, pair[1])
+        tampered.unlink()
+        passed = all(res.values())
+        rec = {"schema": "jope.dl-v2-admission-must-fail/v1", "denylist_sha256": dg,
+               "samples": {"sealed_excluded": sealed["view_id"], "heldout": held["view_id"], "train_fit": train, "superseded_twin_and_rebuilt": pair},
+               "results": res, "verdict": "PASS" if passed else "FAIL",
+               "admission_code_sha256": sha((Path(__file__).resolve().parents[1] / "dltrain/admission.py").read_bytes())}
+        rp = PUB / f"v2-admission-must-fail-{dg[:12]}.json"; rp.write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
+        out["must_fail_check"] = {"verdict": rec["verdict"], "receipt": str(rp), "results": res}
+    if a.publish:
+        writer, reader = vp.real_clients(); ledger = vp.PublishLedger(vp.DEFAULT_PUBLISH_LEDGER)
+        try:
+            out["published"] = vp.Publisher(writer, reader, ledger).publish_bytes(f"{vp.s3io.V2_PREFIX_KEY}manifests/{a.name}/{dg[:12]}.json", body,
+                                                                                   "application/json", "manifest", f"denylist:{a.name}")
+        finally:
+            ledger.close()
+    print(json.dumps(out, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

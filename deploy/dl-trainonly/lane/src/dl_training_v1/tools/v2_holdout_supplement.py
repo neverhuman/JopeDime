@@ -38,8 +38,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
     ap.add_argument("--ctx2048", action="append", default=[], help="MANIFEST_NAME=PATH#SHA256 of its passing context2048 control pilot")
+    ap.add_argument("--skip", default="", help="comma-separated manifest names left out (e.g. SUPERSEDED sets; listed in the document)")
     ap.add_argument("--publish", action="store_true")
     a = ap.parse_args(argv)
+    skip = {x for x in a.skip.split(",") if x}
     vp = load_vp()
     hb, rb = HOLDOUT[0].read_bytes(), REGISTRY[0].read_bytes()
     if not sha(hb).startswith(HOLDOUT[1]) or not sha(rb).startswith(REGISTRY[1]):
@@ -68,6 +70,8 @@ def main(argv=None):
         local = PUB / f"v2-publish-manifest-{name}-{file[:-5]}.json"
         if name.startswith(("holdout-supplement", "holdout-denylist", "s1-input-list")) or not local.exists():
             continue                                   # not a context manifest (supplements, denylists, S1 lists, provenance)
+        if name in skip:
+            continue                                   # superseded set: not described again (see skipped_manifests)
         mb = local.read_bytes()
         if sha(mb) != r["sha256"]:
             raise SystemExit(f"{local}: sha256 differs from the ledger's verified record for {key}")
@@ -91,6 +95,8 @@ def main(argv=None):
                "development lift number; trainers refuse them; scored once in the final P3 held-out evaluation",
                "sources": {"holdout": {"path": str(HOLDOUT[0]), "sha256": sha(hb)}, "registry": {"path": str(REGISTRY[0]), "sha256": sha(rb)}},
                "manifests": entries, "code_sha256": sha(Path(__file__).read_bytes())}
+        if skip:
+            doc["skipped_manifests"] = sorted(skip)
         body = (json.dumps(doc, sort_keys=True, separators=(",", ":")) + "\n").encode()
         digest = sha(body)
         local = PUB / f"v2-holdout-supplement-{a.name}-{kind}-{digest[:12]}.json"

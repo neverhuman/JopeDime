@@ -7,9 +7,19 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 
-HANDOFF_SHA = "009532038cee11ea20075a7291e4b247c7df8e97806946a61bd8dce7dd635802"
-PREDECESSOR_SHA = "4b8c54da7e4b11cc2f30b02aa88f159d5240134bf4962e670d2bfcddbcd699ad"
-SUPPLEMENT_NAME = "test_v2_rowsel_raw.py.2ae3cf61cdbe29e15ecaa642c4f5e5edc78db32211f4337083ad943afc550f09"
+HANDOFF_SHA = "365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f"
+# Ordered newest to oldest: each manifest's supersedes_sha256 names the next pin; the oldest names none.
+PREDECESSORS = (
+    ("predecessor/restage-20261006T073946Z/MANIFEST.json", "6314ef6f33f01878a149cdb36823a78c96d6ae3e2c45cf409d756711c71d6619"),
+    ("predecessor/restage-20261006T035515Z/MANIFEST.json", "009532038cee11ea20075a7291e4b247c7df8e97806946a61bd8dce7dd635802"),
+    ("predecessor/MANIFEST.json", "4b8c54da7e4b11cc2f30b02aa88f159d5240134bf4962e670d2bfcddbcd699ad"),
+)
+# Predecessor current versions that no later manifest retains, preserved byte for byte.
+SUPPLEMENTS = (
+    "predecessor/test_v2_rowsel_raw.py.2ae3cf61cdbe29e15ecaa642c4f5e5edc78db32211f4337083ad943afc550f09",
+    "predecessor/restage-20261006T035515Z/test_v2_publish.py.bbb8e5deb2e68846022c25de2971f9fc6ce22845c7d49ca1cb8a0922a4ad0780",
+    "predecessor/restage-20261006T035515Z/test_v2_rowsel_raw.py.f33f3d2b270e533060374d4a6a442d5c6010fda727f062ac3758b9bf9ea9ace7",
+)
 HEX = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -47,16 +57,24 @@ def pinned_json(root, name, expected):
     return json.loads(data, object_pairs_hook=unique)
 
 
-def verify(root, handoff_sha=HANDOFF_SHA, predecessor_sha=PREDECESSOR_SHA, supplement_name=SUPPLEMENT_NAME):
+def verify(root, handoff_sha=HANDOFF_SHA, predecessors=PREDECESSORS, supplements=SUPPLEMENTS):
     root = Path(root)
     if root.is_symlink() or not root.is_dir():
         raise ValueError("invalid custody root")
     current = pinned_json(root, "MANIFEST.json", handoff_sha)
-    prior = pinned_json(root, "predecessor/MANIFEST.json", predecessor_sha)
-    if current.get("schema") != "jope.dl-lane-handoff/v2" or prior.get("schema") != "jope.dl-lane-handoff/v1":
+    if not predecessors:
+        raise ValueError("predecessor chain missing")
+    chain = [(name, expected, pinned_json(root, name, expected)) for name, expected in predecessors]
+    schemas = [current.get("schema")] + [manifest.get("schema") for _, _, manifest in chain]
+    if any(s != "jope.dl-lane-handoff/v2" for s in schemas[:-1]) or schemas[-1] != "jope.dl-lane-handoff/v1":
         raise ValueError("unsupported custody schema")
-    if current.get("supersedes_sha256") != predecessor_sha:
-        raise ValueError("predecessor identity mismatch")
+    newer = current
+    for _, expected, manifest in chain:
+        if newer.get("supersedes_sha256") != expected:
+            raise ValueError("predecessor identity mismatch")
+        newer = manifest
+    if "supersedes_sha256" in newer:
+        raise ValueError("predecessor chain incomplete")
     records = {}
     for name, record in current["files"].items():
         if not name.startswith("src/dl_training_v1/"):
@@ -84,32 +102,42 @@ def verify(root, handoff_sha=HANDOFF_SHA, predecessor_sha=PREDECESSOR_SHA, suppl
                 discovered.add(path.relative_to(root).as_posix())
     if discovered != set(records):
         raise ValueError("source inventory mismatch")
-    supplement = read_regular(root, "predecessor/" + supplement_name)
-    supplement_sha = supplement_name.rsplit(".", 1)[-1]
-    if not HEX.fullmatch(supplement_sha) or sha(supplement) != supplement_sha:
-        raise ValueError("supplemental predecessor bytes mismatch")
+    available = {sha(data): name for name, data in captured.items()}
+    for name in supplements:
+        if not name.startswith("predecessor/"):
+            raise ValueError("supplemental predecessor outside custody")
+        supplement = read_regular(root, name)
+        supplement_sha = name.rsplit(".", 1)[-1]
+        if not HEX.fullmatch(supplement_sha) or sha(supplement) != supplement_sha:
+            raise ValueError("supplemental predecessor bytes mismatch")
+        if supplement_sha in available:
+            raise ValueError("redundant supplemental predecessor")
+        available[supplement_sha] = name
     if any(p.is_symlink() for p in (root / "predecessor").rglob("*")):
         raise ValueError("predecessor symlink")
-    predecessor_paths = {"predecessor/MANIFEST.json", "predecessor/" + supplement_name}
+    predecessor_paths = {name for name, _, _ in chain} | set(supplements)
     if {p.relative_to(root).as_posix() for p in (root / "predecessor").rglob("*") if p.is_file()} != predecessor_paths:
         raise ValueError("predecessor inventory mismatch")
-    available = {sha(data): name for name, data in captured.items()}
-    available[supplement_sha] = "predecessor/" + supplement_name
     reconstruction = {}
-    for name, record in prior["files"].items():
-        if record["sha256"] not in available:
-            raise ValueError("predecessor version lost: " + name)
-        reconstruction[name] = available[record["sha256"]]
-    for name, record in prior["historical_versions"].items():
-        retained = current["historical_versions"].get(name, {})
-        if any(retained.get(field) != record[field] for field in ("sha256", "bytes")):
-            raise ValueError("historical predecessor version lost: " + name)
+    for _, expected, prior in chain:
+        restored = reconstruction[expected] = {}
+        for name, record in prior["files"].items():
+            if record["sha256"] not in available:
+                raise ValueError("predecessor version lost: " + name)
+            restored[name] = available[record["sha256"]]
+        for name, record in prior["historical_versions"].items():
+            retained = current["historical_versions"].get(name, {})
+            if any(retained.get(field) != record[field] for field in ("sha256", "bytes")):
+                raise ValueError("historical predecessor version lost: " + name)
+    referenced = {record["sha256"] for _, _, prior in chain for record in prior["files"].values()}
+    if any(name.rsplit(".", 1)[-1] not in referenced for name in supplements):
+        raise ValueError("unreferenced supplemental predecessor")
     python_files = [name for name in captured if name.endswith(".py")]
     for name in python_files:
         ast.parse(captured[name], filename=name)
-    return {"schema": "jope.dl-source-custody/v1", "handoff_sha256": handoff_sha,
-            "predecessor_sha256": predecessor_sha, "current_files": len(current["files"]),
-            "historical_versions": len(current["historical_versions"]), "supplemental_versions": 1,
+    return {"schema": "jope.dl-source-custody/v2", "handoff_sha256": handoff_sha,
+            "predecessor_sha256": [expected for _, expected in predecessors], "current_files": len(current["files"]),
+            "historical_versions": len(current["historical_versions"]), "supplemental_versions": len(supplements),
             "python_syntax_files": len(python_files), "predecessor_restoration": reconstruction,
             "scope": "exact source custody and syntax only; no imported code, execution, runtime or training authority"}
 

@@ -58,7 +58,16 @@ CONTEXT_SCHEMA = "jope.dl-v2-local-context/v1"
 # context schema -> the only values_mode it may carry (L7b: tools/v2_build_local.py; L7a: tools/v2_build_l7a.py)
 CONTEXT_SCHEMAS = {CONTEXT_SCHEMA: "L7b", "jope.dl-v2-l7a-context/v1": "L7a",
                    # ROWSEL-TRAINONLY / ROWSEL-SPLIT rebuilds (tools/v2_rowsel_build.py on T1; the raw-universe builder on raw rows)
-                   "jope.dl-v2-rowsel-context/v1": "L7b", "jope.dl-v2-rowsel-raw-context/v1": "L7a"}
+                   "jope.dl-v2-rowsel-context/v1": "L7b", "jope.dl-v2-rowsel-raw-context/v1": "L7a",
+                   # NONRAW-SPLIT-A re-splits (split v2, new cut identity): T1 row selection, clean L7a, clean L7b
+                   "jope.dl-v2-rowsel-context/v2": "L7b", "jope.dl-v2-l7a-context/v2split": "L7a", "jope.dl-v2-local-context/v2split": "L7b"}
+# re-split schemas must carry a cut block on the new target-free split, never comparable with the registry cut it replaces
+CUT_SCHEMAS = {"jope.dl-v2-rowsel-context/v2", "jope.dl-v2-l7a-context/v2split", "jope.dl-v2-local-context/v2split"}
+CUT_PREFIXES = ("trainonly-split-v2:", "trainonly-split-v2g:")
+# the cut prefix must name the split the context was built with (red-team finding: a v2g context with a v2 prefix)
+CUT_PREFIX_BY_SPLIT = {"rowsel-raw-split-v2": "trainonly-split-v2:", "rowsel-split-v2-groups": "trainonly-split-v2g:"}
+# rights values published under production keys: none recorded, or "licensed" (the clean builders' source licence tag)
+RIGHTS_PRODUCTION = (None, "licensed")
 GPU_COMPONENTS = {"hyperion", "foundation", "target", "context2048", "tabpfn35", "hyperion_v6"}
 # ROWSEL-TRAINONLY gate: a context is publishable only when its row_selection_leak labels are all admitted. Contexts
 # from a row-selection rebuild get their own label, admitted here only after that rebuild's mutant gate passes.
@@ -166,8 +175,21 @@ def scan_context(d: Path) -> dict:
     fb = ctx.get("t1_fallback")
     if ctx.get("schema") == "jope.dl-v2-rowsel-context/v1" and isinstance(fb, dict) and SHA_RE.fullmatch(str(fb.get("coverage_sha256", ""))):
         admitted.add("acquisition_cap")
+    if ctx.get("schema") == "jope.dl-v2-rowsel-context/v2" and isinstance(fb, dict) and SHA_RE.fullmatch(str(fb.get("source_sha256", ""))) \
+            and str(fb.get("rule", "")).startswith("ROWSEL-SPLIT"):
+        admitted.add("acquisition_cap")
     if not isinstance(labels, list) or not labels or not set(labels) <= admitted:
         raise Refused("row_selection_gate", f"row_selection_leak={labels!r}; admitted {sorted(ROW_SELECTION_ADMITTED)}")
+    if ctx["schema"] in CUT_SCHEMAS:
+        cut = ctx.get("cut")
+        split = ctx.get("split") or (ctx.get("rowsel") or {}).get("split") or {}
+        schema = split.get("schema") if isinstance(split, dict) else None
+        # GPU trees built from the T1 v2split plans carry the parent's reduced rowsel record (rowsel.split_schema, no split)
+        schema = schema or (ctx.get("rowsel") or {}).get("split_schema")
+        want = CUT_PREFIX_BY_SPLIT.get(schema)
+        if not isinstance(cut, dict) or want is None or not str(cut.get("cut_id", "")).startswith(want) \
+                or not SHA_RE.fullmatch(str(cut.get("cut_id", "")).split(":", 1)[-1]) or cut.get("comparable_with_replaced") is not False:
+            raise Refused("cut", repr(cut)[:200])
     if ctx.get("published") is not False:
         raise Refused("published_flag", f"context.json published={ctx.get('published')!r}; only published=false is publishable")
     if ctx.get("view_id") != d.name:
@@ -185,7 +207,7 @@ def scan_context(d: Path) -> dict:
     files = ctx.get("files")
     if not isinstance(files, dict) or not files:
         raise Refused("context_field", "files")
-    if ctx.get("rights") not in (None, RIGHTS_RESEARCH):
+    if ctx.get("rights") not in RIGHTS_PRODUCTION + (RIGHTS_RESEARCH,):
         raise Refused("rights", repr(ctx.get("rights")))
     if ctx.get("rights") == RIGHTS_RESEARCH and set(files) & ROW_LEVEL_FILES:
         raise Refused("rights_row_data", ",".join(sorted(set(files) & ROW_LEVEL_FILES)))

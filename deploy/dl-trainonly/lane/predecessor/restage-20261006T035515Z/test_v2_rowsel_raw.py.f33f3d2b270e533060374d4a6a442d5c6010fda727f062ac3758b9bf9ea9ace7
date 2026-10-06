@@ -1,0 +1,1064 @@
+"""Raw-universe row-selection rebuild (dltrain/rowsel_raw.py, tools/v2_rowsel_raw.py). Every invariance check is paired
+with a control that MUST FAIL it, so a check that cannot fail is not counted as evidence.
+
+  Universe     read_source positions, row-wise cleanup, value-free row ids
+  PreCap       the pre-cap reads positions only (value-keyed control fails)
+  Split        reads no target (target-stratified control fails); duplicate feature rows never straddle folds
+               (position-hash control fails); the greedy rule matches an independent reference
+  TrainSide    outer-test values (features, targets, missingness, test-only categories) leave the train selection, the
+               sampler fit, the encoder/teacher train block, the scaler, the inner labels and A0 bit-identical
+  Draw         test rows are the positional-id sha256 draw over F_f and do not move when any value changes
+  Controls     a train-union-test selector and an all-row value refit are caught by the per-context gate
+  Resume       .done is written last, only when every fold passes; a done context is never rewritten; resume skips
+"""
+import csv
+import hashlib
+import importlib.util
+import io
+import json
+import os
+import shutil
+import tempfile
+import unittest
+import zipfile
+from pathlib import Path
+from unittest import mock
+
+import numpy as np
+
+from dltrain import jtt1, rowsel, rowsel_raw, t1raw, trainonly
+from tests.test_t1prep import upstream_t1
+
+SRC = Path(__file__).resolve().parents[1]
+_spec = importlib.util.spec_from_file_location("v2_rowsel_raw", SRC / "tools" / "v2_rowsel_raw.py")
+tool = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(tool)
+
+H = "0f1e2d3c4b5a6978"
+N = 2600
+DUP = 160
+POOL = ["3400.0", "4700.0", "5900.0", "6000.0", "6300.0"]
+HEADER = ["n0", "c0", "n1", "yy", "n2", "extra"]
+
+
+def raw_data(n=N, seed=11, dup=DUP):
+    """Numeric n0..n2 with missing cells, one categorical c0 with missing cells, a target, and `dup` rows whose features
+    copy an earlier row exactly while their targets differ."""
+    rng = np.random.default_rng(seed)
+    num = rng.normal(size=(n, 3)) * np.array([1.0, 50.0, 3.0]) + np.array([0.0, 1000.0, -2.0])
+    num[rng.random(size=num.shape) < 0.05] = np.nan
+    cat = [POOL[int(rng.integers(0, 5))] if rng.random() > 0.08 else None for _ in range(n)]
+    y = (2.0 * np.nan_to_num(num[:, 0]) + 0.01 * np.nan_to_num(num[:, 1]) + rng.normal(scale=0.2, size=n)
+         + np.array([0.0 if c is None else 0.3 * POOL.index(c) for c in cat]))
+    src = rng.choice(n - dup, size=dup, replace=False)
+    for k, i in enumerate(range(n - dup, n)):
+        num[i], cat[i] = num[src[k]], cat[src[k]]
+        y[i] = y[src[k]] + 1.0 + 0.01 * k
+    return num, cat, y
+
+
+RARE = "3000.0"          # a meta key no raw row of the fixture holds (the acquisition saw it elsewhere): codes sort below it
+
+
+def make_t1_meta(num, cat, y):
+    t1, meta = upstream_t1(np.vstack([num, num[:1]]), [cat + [RARE]], np.append(y, y[0]))
+    meta["original_headers"] = list(HEADER)
+    meta["target_original_name"] = meta["source_target_column_original"] = "yy"
+    meta["acquisition"] = {"acquired_at": "2026-10-02T12:00:00+00:00", "tool": "fixture",
+                           "download": {"container": "plain;sep=,;enc=utf-8", "encoding": "utf-8"}}
+    return t1[:-1], meta
+
+
+def make_meta(num, cat, y):
+    return make_t1_meta(num, cat, y)[1]
+
+
+def csv_text(idx, num=None, cat=None, y=None):
+    num, cat, y = (_NUM if num is None else num), (_CAT if cat is None else cat), (_Y if y is None else y)
+    txt = lambda v: "" if np.isnan(v) else repr(float(v))
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(HEADER)
+    for i in idx:
+        w.writerow([txt(num[i, 0]), "" if cat[i] is None else cat[i], txt(num[i, 1]), repr(float(y[i])), txt(num[i, 2]), "x"])
+    return buf.getvalue()
+
+
+def t1raw_values(num, cat, y, specs):
+    inv = {k: c for c, k in specs[3]["inverse"].items()}
+    codes = np.asarray([t1raw.MISSING_CODE if c is None else inv[c] for c in cat], dtype=np.float64)
+    return np.column_stack([num, codes, y])
+
+
+_NUM, _CAT, _Y = raw_data()
+T1, META = make_t1_meta(_NUM, _CAT, _Y)
+SPECS = t1raw.columns(META, 5)
+VALUES = t1raw_values(_NUM, _CAT, _Y, SPECS)
+PREP = rowsel_raw.prepare_universe(H, VALUES, SPECS)
+FOLDS = rowsel_raw.outer_split(H, PREP.positions, PREP.values, SPECS)
+SPLIT_REF = rowsel_raw.split_report(PREP, FOLDS)
+UREF = {"raw_sha256s": ["a" * 64], "match_receipt_sha256": "b" * 64, "partition": "raw"}
+_BUILT = {}
+
+
+def built(fold, counterfactual=True):
+    key = (fold, counterfactual)
+    if key not in _BUILT:
+        _BUILT[key] = rowsel_raw.build_fold(PREP, FOLDS, fold, UREF, SPLIT_REF, counterfactual=counterfactual)
+    return _BUILT[key]
+
+
+def train_side(r):
+    """Every train-side field of one built context."""
+    art, v = r["artifacts"], r["view"]
+    return {"train_order": r["train_order"], "train_fit_identity": v.train_fit.identity,
+            "train_fit_fingerprints": v.train_fit.fingerprints, "quotas": v.quotas,
+            "encoder_train_rows": jtt1.train_rows_sha256(art["encoder_raw"]),
+            "teacher_train_rows": jtt1.train_rows_sha256(art["teacher_raw"]), "scaler": art["scaler_sha256"],
+            "inner_labels": art["inner_labels_sha256"], "a0": hashlib.sha256(art["a0"]).hexdigest(),
+            "sampler_category_maps": r["sampler_category_maps"]}
+
+
+def perturb_fold_rows(values, fold_positions, kind, seed=3):
+    """Raw values with the rows at fold_positions changed (positions are read_source indices = VALUES row numbers)."""
+    W = np.array(values, dtype=np.float64, copy=True)
+    idx = np.asarray(sorted(fold_positions), dtype=np.int64)
+    rng = np.random.default_rng(seed)
+    if kind == "features":
+        block = W[np.ix_(idx, [0, 1, 2])]
+        W[np.ix_(idx, [0, 1, 2])] = np.where(np.isnan(block), block, rng.normal(7.0, 300.0, size=block.shape))
+    elif kind == "targets":
+        W[idx, -1] = rng.normal(1e6, 1e5, size=idx.size)
+    elif kind == "missingness":
+        block = W[np.ix_(idx, [0, 1, 2])]
+        W[np.ix_(idx, [0, 1, 2])] = np.where(np.isnan(block), 0.25, np.where(rng.random(block.shape) < 0.4, np.nan, block))
+        W[idx[::3], 3] = t1raw.MISSING_CODE
+    elif kind == "test_only_category":
+        W[idx, 3] = float([c for c, k in SPECS[3]["inverse"].items() if k == RARE][0])   # no fit row holds it; sorts first
+    else:
+        raise ValueError(kind)
+    return W
+
+
+# --------------------------------------------------------------------------------------------------- universe
+
+class Universe(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.mkdtemp(prefix="rowselraw-", dir=os.environ.get("TMPDIR"))
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def write_csv(self, rows):
+        buf = io.StringIO()
+        w = csv.writer(buf, lineterminator="\n")
+        w.writerow(HEADER)
+        for r in rows:
+            w.writerow(r)
+        p = os.path.join(self.dir, "data.csv")
+        Path(p).write_text(buf.getvalue())
+        return p
+
+    def test_positions_are_read_source_indices_and_cleanup_is_row_wise(self):
+        n = 400
+        txt = lambda v: "" if np.isnan(v) else repr(float(v))
+        rows = [[txt(_NUM[i, 0]), "" if _CAT[i] is None else _CAT[i], txt(_NUM[i, 1]), repr(float(_Y[i])), txt(_NUM[i, 2]),
+                 "x"] for i in range(n)]
+        rows[5][3] = ""                     # no target: not a candidate
+        rows[9][1] = "9999.5"               # a category the meta does not know: not a candidate
+        rows[17][3] = "NA"                  # no target (pandas NA text)
+        p = self.write_csv(rows)
+        got = t1raw.read_source(p, META, SPECS)
+        self.assertEqual(got["values"].shape, (n, 5))
+        prep = rowsel_raw.prepare_universe(H, got["values"], SPECS)
+        want = [i for i in range(n) if i not in (5, 9, 17)]
+        self.assertEqual(prep.positions.tolist(), want)
+        self.assertEqual(prep.report["cleanup"], dict(prep.report["cleanup"], data_rows=n, no_target=2,
+                                                      unmapped_category_with_target=1, candidates=n - 3))
+        self.assertEqual(prep.row_ids, tuple(rowsel.positional_row_id(H, "raw", i) for i in want))
+        same = (prep.values == got["values"][want]) | (np.isnan(prep.values) & np.isnan(got["values"][want]))
+        self.assertTrue(bool(same.all()))
+        self.assertFalse(prep.report["precap"]["applied"])
+
+    def test_row_ids_are_value_free(self):
+        V2 = perturb_fold_rows(VALUES, range(N), "targets")
+        V2 = perturb_fold_rows(V2, range(N), "features")
+        p2 = rowsel_raw.prepare_universe(H, V2, SPECS)
+        self.assertEqual(p2.row_ids, PREP.row_ids)
+        self.assertNotEqual(p2.row_bytes, PREP.row_bytes)
+
+    def test_feature_bytes_exclude_the_target_and_canonicalise(self):
+        a = np.array([[0.0, 1.0, np.nan, 0.0, 5.0], [-0.0, 1.0, np.nan, 0.0, 9.0]])
+        fb = rowsel_raw.feature_bytes(a, SPECS)
+        self.assertEqual(fb[0], fb[1])                                     # -0.0 == 0.0, NaN == NaN, target ignored
+        b = a.copy(); b[1, 3] = t1raw.MISSING_CODE
+        self.assertNotEqual(*rowsel_raw.feature_bytes(b, SPECS))
+        self.assertNotEqual(rowsel_raw.row_bytes(a, SPECS)[0], rowsel_raw.row_bytes(a, SPECS)[1])
+
+
+# --------------------------------------------------------------------------------------------------- pre-cap
+
+def value_keyed_precap(h, positions, values, cap):
+    """CONTROL: keeps the cap rows with the lowest target."""
+    pos = np.asarray(positions)
+    return np.sort(pos[np.argsort(values[pos, -1], kind="stable")[:cap]])
+
+
+class PreCap(unittest.TestCase):
+    CAP = 700
+
+    def test_precap_is_the_smallest_hash_ranks(self):
+        pos = np.flatnonzero(np.isfinite(VALUES[:, -1]))
+        kept, rep = rowsel_raw.precap(H, pos, self.CAP)
+        ranked = sorted(pos.tolist(), key=lambda p: hashlib.sha256(
+            f"{H}\0trainonly-rowsel-precap-v1\0raw\0{p}".encode()).digest())
+        self.assertEqual(kept.tolist(), sorted(ranked[:self.CAP]))
+        self.assertTrue(rep["applied"])
+        self.assertEqual((rep["rows_before"], rep["rows_after"]), (pos.size, self.CAP))
+        self.assertEqual(rowsel_raw.precap(H, pos[::-1], self.CAP)[0].tolist(), kept.tolist())   # order-free
+
+    def test_precap_is_value_free(self):
+        base = rowsel_raw.prepare_universe(H, VALUES, SPECS, cap=self.CAP)
+        for kind in ("targets", "features", "missingness"):
+            V2 = perturb_fold_rows(VALUES, range(N), kind)
+            got = rowsel_raw.prepare_universe(H, V2, SPECS, cap=self.CAP)
+            self.assertEqual(got.positions.tolist(), base.positions.tolist(), kind)
+
+    def test_value_keyed_precap_control_fails(self):
+        pos = np.arange(N)
+        a = value_keyed_precap(H, pos, VALUES, self.CAP)
+        b = value_keyed_precap(H, pos, perturb_fold_rows(VALUES, range(N), "targets"), self.CAP)
+        self.assertNotEqual(a.tolist(), b.tolist())
+
+    def test_universe_at_or_below_cap_is_kept_whole(self):
+        self.assertFalse(PREP.report["precap"]["applied"])
+        self.assertEqual(PREP.positions.tolist(), list(range(N)))
+        kept, rep = rowsel_raw.precap(H, np.arange(10), 10)
+        self.assertEqual((kept.tolist(), rep["applied"]), (list(range(10)), False))
+        self.assertEqual(rowsel_raw.PRECAP_ROWS, 200_000)
+
+
+# --------------------------------------------------------------------------------------------------- split
+
+def stratified_split(h, positions, values, specs, folds=rowsel_raw.OUTER_FOLDS):
+    """CONTROL: v1-style target-stratified parent folds (sort by target, deal round robin)."""
+    pos = np.asarray(positions)
+    order = np.argsort(np.asarray(values)[:, -1], kind="stable")
+    return {f: sorted(int(p) for p in pos[order[f::folds]]) for f in range(folds)}
+
+
+def position_split(h, positions, values, specs, folds=rowsel_raw.OUTER_FOLDS):
+    """CONTROL: a value-free split that ignores duplicate groups."""
+    out = {f: [] for f in range(folds)}
+    for p in np.asarray(positions).tolist():
+        out[int(hashlib.sha256(f"{h}|{p}".encode()).digest()[0]) % folds].append(p)
+    return out
+
+
+def reference_split(h, positions, values, specs, folds=5):
+    """Independent re-statement of ROWSEL-SPLIT from the owner text."""
+    keys = {}
+    for p, row in zip(np.asarray(positions).tolist(), np.asarray(values)):
+        b = b""
+        for j in (0, 1, 2):
+            v = 0.0 if row[j] == 0 else row[j]
+            b += np.float64(np.nan if np.isnan(v) else v).tobytes()
+        c = int(row[3])
+        b += b"\x00" if c == t1raw.MISSING_CODE else (b"\x01" + len(SPECS[3]["inverse"][c]).to_bytes(4, "little")
+                                                      + SPECS[3]["inverse"][c].encode())
+        keys.setdefault(hashlib.sha256(b).hexdigest(), []).append(p)
+    order = sorted(keys, key=lambda g: hashlib.sha256(f"{h}\0trainonly-rowsel-split-v1\0{g}".encode()).digest())
+    sizes, out = [0] * folds, {f: [] for f in range(folds)}
+    for g in order:
+        f = sizes.index(min(sizes))
+        out[f] += keys[g]
+        sizes[f] += len(keys[g])
+    return {f: sorted(v) for f, v in out.items()}
+
+
+class Split(unittest.TestCase):
+    def test_split_matches_the_owner_rule(self):
+        self.assertEqual(FOLDS, reference_split(H, PREP.positions, PREP.values, SPECS))
+        self.assertEqual(sorted(p for v in FOLDS.values() for p in v), PREP.positions.tolist())
+        sizes = SPLIT_REF["fold_sizes"]
+        self.assertLessEqual(max(sizes) - min(sizes), SPLIT_REF["largest_group"])
+        self.assertEqual(SPLIT_REF["sha256"], rowsel_raw.split_sha256(H, FOLDS))
+
+    def test_split_reads_no_target(self):
+        r = rowsel_raw.split_target_check(rowsel_raw.outer_split, PREP)
+        self.assertTrue(r["target_invariant"], r)
+        rng = np.random.default_rng(9)
+        V = np.array(PREP.values, copy=True)
+        V[:, -1] = V[rng.permutation(V.shape[0]), -1]
+        self.assertEqual(rowsel_raw.outer_split(H, PREP.positions, V, SPECS), FOLDS)
+        V[:, -1] = rng.normal(size=V.shape[0]) * 1e9
+        self.assertEqual(rowsel_raw.outer_split(H, PREP.positions, V, SPECS), FOLDS)
+
+    def test_target_stratified_split_control_fails(self):
+        r = rowsel_raw.split_target_check(stratified_split, PREP)
+        self.assertFalse(r["target_invariant"])
+        self.assertIn("permuted", r["variants_differing"])
+
+    def test_duplicate_feature_rows_never_straddle_folds(self):
+        self.assertGreaterEqual(SPLIT_REF["duplicate_rows"], DUP)
+        self.assertEqual(SPLIT_REF["groups_straddling_folds"], 0)
+        fold_of = {p: f for f, v in FOLDS.items() for p in v}
+        keys = rowsel_raw.group_keys(PREP.values, SPECS)
+        seen = {}
+        for p, g in zip(PREP.positions.tolist(), keys):
+            seen.setdefault(g, set()).add(fold_of[p])
+        self.assertTrue(all(len(f) == 1 for f in seen.values()))
+        self.assertGreater(len(keys) - len(seen), 0)                      # the fixture really has duplicate groups
+
+    def test_position_hash_split_control_straddles(self):
+        r = rowsel_raw.split_report(PREP, position_split(H, PREP.positions, PREP.values, SPECS))
+        self.assertGreater(r["groups_straddling_folds"], 0)
+
+    def test_split_is_input_order_free(self):
+        perm = np.random.default_rng(1).permutation(PREP.positions.size)
+        self.assertEqual(rowsel_raw.outer_split(H, PREP.positions[perm], PREP.values[perm], SPECS), FOLDS)
+
+
+# --------------------------------------------------------------------------------------------------- train side
+
+class TrainSide(unittest.TestCase):
+    FOLD = 2
+
+    def test_outer_test_values_leave_the_train_side_bit_identical(self):
+        base = built(self.FOLD, counterfactual=False)
+        for kind in ("features", "targets", "missingness", "test_only_category"):
+            with self.subTest(kind=kind):
+                V2 = perturb_fold_rows(VALUES, FOLDS[self.FOLD], kind)
+                p2 = rowsel_raw.prepare_universe(H, V2, SPECS)
+                self.assertFalse(np.array_equal(p2.values, PREP.values, equal_nan=True))
+                got = rowsel_raw.build_fold(p2, FOLDS, self.FOLD, UREF, SPLIT_REF, counterfactual=False)
+                self.assertEqual(train_side(got), train_side(base))
+                self.assertEqual(got["test_order"], base["test_order"])              # the draw did not move either
+
+    def test_a_train_row_change_is_seen(self):
+        """Power: the same comparison sees one changed outer-train value (row bytes -> fit fingerprints)."""
+        base = built(self.FOLD, counterfactual=False)
+        p = base["train_order"][0]
+        V2 = np.array(VALUES, copy=True)
+        V2[p, -1] = np.nextafter(V2[p, -1], np.inf)
+        got = rowsel_raw.build_fold(rowsel_raw.prepare_universe(H, V2, SPECS), FOLDS, self.FOLD, UREF, SPLIT_REF,
+                                    counterfactual=False)
+        self.assertNotEqual(train_side(got)["train_fit_identity"], train_side(base)["train_fit_identity"])
+
+    def test_sampler_category_codes_come_from_fit_rows(self):
+        held = np.isin(PREP.positions, FOLDS[0])
+        X, maps = rowsel_raw.sampler_matrix(PREP, ~held)
+        V2 = perturb_fold_rows(VALUES, FOLDS[0], "test_only_category")
+        p2 = rowsel_raw.prepare_universe(H, V2, SPECS)
+        X2, maps2 = rowsel_raw.sampler_matrix(p2, ~held)
+        self.assertEqual(maps, maps2)
+        self.assertEqual(X[~held].tobytes(), X2[~held].tobytes())
+        Xall, _ = rowsel_raw.sampler_matrix(p2, np.ones(held.size, dtype=bool))      # CONTROL: codes fitted on all rows
+        self.assertNotEqual(Xall[~held].tobytes(), X2[~held].tobytes())
+        self.assertTrue(bool(np.all(np.isnan(X[PREP.values[:, 3] == t1raw.MISSING_CODE, 3]))))
+
+    def test_every_fold_passes_both_gates(self):
+        for f in range(rowsel_raw.OUTER_FOLDS):
+            with self.subTest(fold=f):
+                r = built(f)
+                self.assertTrue(r["passed"], r["failures"])
+                self.assertTrue(r["rowsel_counterfactual"]["train_side_invariant"])
+                self.assertTrue(r["rowsel_counterfactual"]["test_draw_invariant"])
+                self.assertTrue(r["value_counterfactual"]["train_side_invariant"])
+                self.assertEqual(sorted(r["value_counterfactual"]["cases"]), sorted(rowsel_raw.VALUE_PERTURBATIONS))
+
+    def test_quotas_rows_and_order(self):
+        sizes = {f: len(v) for f, v in FOLDS.items()}
+        q = rowsel.fold_quotas(sizes, 2000)
+        for f in range(rowsel_raw.OUTER_FOLDS):
+            r = built(f)
+            self.assertEqual(r["view"].quotas, q[f])
+            self.assertEqual((len(r["train_order"]), len(r["test_order"])), q[f])
+            self.assertEqual(r["train_order"], list(r["view"].train_fit.output_order))
+            self.assertFalse(set(r["train_order"]) & set(FOLDS[f]))
+            self.assertTrue(set(r["test_order"]) <= set(FOLDS[f]))
+            hdr = jtt1.parse_header(r["artifacts"]["encoder_raw"])
+            self.assertEqual((hdr["n_train"], hdr["n_test"]), q[f])
+            want = np.asarray(PREP.values[PREP.rows_of(r["train_order"]), -1])
+            _, _, _, y = jtt1.train_view(r["artifacts"]["teacher_raw"])          # teacher JTT1: unscaled raw target
+            self.assertEqual(y.tobytes(), want.tobytes())
+            self.assertTrue(r["view_id"].startswith(f"{H}__r0__f{f}__rowselraw1_"))
+            self.assertEqual(r["view_id"][-12:], r["identity"][:12])
+
+    def test_small_universe_keeps_every_row(self):
+        V = VALUES[:1500]
+        p = rowsel_raw.prepare_universe(H, V, SPECS)
+        folds = rowsel_raw.outer_split(H, p.positions, p.values, SPECS)
+        r = rowsel_raw.build_fold(p, folds, 1, UREF, rowsel_raw.split_report(p, folds))
+        self.assertTrue(r["passed"], r["failures"])
+        self.assertTrue(r["view"].train_fit.passthrough)
+        self.assertEqual(sorted(r["train_order"] + r["test_order"]), p.positions.tolist())
+
+    def test_build_is_deterministic(self):
+        a = built(4, counterfactual=False)
+        b = rowsel_raw.build_fold(rowsel_raw.prepare_universe(H, VALUES, SPECS), FOLDS, 4, UREF, SPLIT_REF, counterfactual=False)
+        self.assertEqual((a["view_id"], train_side(a)), (b["view_id"], train_side(b)))
+        self.assertEqual(rowsel_raw.context_files(a), rowsel_raw.context_files(b))
+
+
+# --------------------------------------------------------------------------------------------------- draw
+
+class Draw(unittest.TestCase):
+    def test_test_rows_are_the_positional_sha256_draw(self):
+        for f in (0, 3):
+            r = built(f)
+            ids = [rowsel.positional_row_id(H, "raw", p) for p in FOLDS[f]]
+            ranked = sorted(zip(ids, FOLDS[f]), key=lambda t: hashlib.sha256(
+                f"{H}\0trainonly-rowsel-v1\0{t[0]}".encode()).digest())
+            n_test = r["view"].quotas[1]
+            self.assertEqual(r["test_order"], [p for _, p in ranked[:n_test]])
+
+    def test_draw_unchanged_when_every_value_changes(self):
+        base = built(1)
+        V2 = perturb_fold_rows(perturb_fold_rows(VALUES, range(N), "features"), range(N), "targets")
+        got = rowsel_raw.build_fold(rowsel_raw.prepare_universe(H, V2, SPECS), FOLDS, 1, UREF, SPLIT_REF,
+                                    counterfactual=False)
+        self.assertEqual(got["test_order"], base["test_order"])
+        self.assertNotEqual(got["train_order"], base["train_order"])        # the train side did see the train values
+
+
+# --------------------------------------------------------------------------------------------------- controls
+
+def all_rows_refit_prepare(values, specs, outer_train, outer_test, **kw):
+    """CONTROL: imputation medians, category codes and target-copy detection fitted on train UNION test rows."""
+    fitted, report = t1raw.refit(values, specs, list(outer_train) + list(outer_test))
+    split = trainonly.prepare_split(fitted, outer_train, outer_test, **kw)
+    split["t1raw"] = report
+    split["fitted"] = fitted
+    return split
+
+
+class Controls(unittest.TestCase):
+    def test_train_union_test_selector_is_caught(self):
+        r = rowsel_raw.build_fold(PREP, FOLDS, 0, UREF, SPLIT_REF, select_fn=rowsel.v1_view)
+        self.assertFalse(r["passed"])
+        self.assertIn("rowsel_train_side_not_invariant", r["failures"])
+
+    def test_all_row_value_refit_is_caught(self):
+        r = rowsel_raw.build_fold(PREP, FOLDS, 0, UREF, SPLIT_REF, prepare=all_rows_refit_prepare)
+        self.assertFalse(r["passed"])
+        self.assertEqual(r["failures"], ["values_train_side_not_invariant"])
+        self.assertTrue(any(r["value_counterfactual"]["cases"].values()))
+
+
+# --------------------------------------------------------------------------------------------------- tool: resume, .done
+
+class _Guard:
+    def wait(self):
+        return 0.0
+
+
+def plan_entry(cls="all_rows_coreset", h=H, n_epoch0=4):
+    return {"dataset_hash": h, "class": cls, "cohort": "frozen", "epoch0_labels": tool.LABEL_OF[cls],
+            "epoch0": [{"view_id": f"{h}__r0__f{f}", "context_sha256": hashlib.sha256(f"{h}{f}".encode()).hexdigest(),
+                        "fold": f} for f in range(n_epoch0)],
+            "match_record": {"path": "/nonexistent/match.json", "sha256": "c" * 64}}
+
+
+def fake_inputs(e, src, cache, inv, held):
+    if e["dataset_hash"] in held:
+        raise rowsel_raw.RowselRawError("held_no_license")
+    return {"meta_sha256": "d" * 64, "raw_ref": {"sha256": "e" * 64, "file": "/nonexistent/data"},
+            "record": {"data_sha256": "f" * 64, "match": {"rows": 2000, "raw_rows": N}}, "A": None, "rows": [], "sealed": 0}
+
+
+def fake_rematch(inp):
+    return np.array(VALUES, copy=True), SPECS, {"values_sha256": "0" * 64, "read_report_equal": True}
+
+
+class Resume(unittest.TestCase):
+    CODES = {"tools/v2_rowsel_raw.py": "1" * 64}
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="rowselraw-out-", dir=os.environ.get("TMPDIR")))
+        self.shard = self.dir / "shard-0"
+        self.shard.mkdir()
+        self.p1 = mock.patch.object(tool, "load_inputs", fake_inputs)
+        self.p2 = mock.patch.object(tool, "rematch", fake_rematch)
+        self.p1.start(); self.p2.start()
+
+    def tearDown(self):
+        self.p1.stop(); self.p2.stop()
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def run_ds(self, e=None, held=(), **kw):
+        return tool.run_dataset(e or plan_entry(), self.shard, self.CODES, None, None, None, set(held), _Guard(),
+                                log=lambda s: None, **kw)
+
+    def context_dirs(self):
+        return sorted(d for d in self.shard.iterdir() if d.is_dir() and d.name != "_datasets")
+
+    def test_done_written_last_and_resume_never_rewrites(self):
+        rec = self.run_ds()
+        self.assertEqual((rec["status"], rec["contexts_written"], rec["contexts_already_done"]), ("done", 5, 0), rec.get("detail"))
+        dirs = self.context_dirs()
+        self.assertEqual(len(dirs), 5)
+        stamp = {}
+        for d in dirs:
+            ctx = json.loads((d / "context.json").read_bytes())
+            self.assertTrue((d / ".done").exists())
+            self.assertEqual(sorted(p.name for p in d.iterdir()), sorted(list(ctx["files"]) + ["context.json", ".done"]))
+            for name, meta in ctx["files"].items():
+                self.assertEqual(hashlib.sha256((d / name).read_bytes()).hexdigest(), meta["sha256"])
+            self.assertEqual((ctx["schema"], ctx["values_mode"], ctx["published"], ctx["row_selection_leak"]),
+                             (rowsel_raw.CONTEXT_SCHEMA, "L7a", False, ["clean"]))
+            self.assertTrue(ctx["rowsel"]["outer_split_changed"])
+            self.assertEqual(ctx["epoch0_replaced"]["count"], 4)
+            self.assertTrue(ctx["epoch0_replaced"]["context_count_changed"])
+            for f in ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32", "context.json", ".done"):
+                stamp[(d.name, f)] = (d / f).stat().st_mtime_ns
+        self.assertTrue(tool.dataset_done(self.shard, H, self.CODES))
+        self.assertFalse(tool.dataset_done(self.shard, H, {"tools/v2_rowsel_raw.py": "2" * 64}))   # code changed: rebuild
+        again = self.run_ds()
+        self.assertEqual((again["status"], again["contexts_written"], again["contexts_already_done"]), ("done", 0, 5))
+        for d in dirs:
+            for f in ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32", "context.json", ".done"):
+                self.assertEqual((d / f).stat().st_mtime_ns, stamp[(d.name, f)])
+
+    def test_a_context_without_done_is_rebuilt_identically(self):
+        self.run_ds()
+        d = self.context_dirs()[1]
+        before = {f: (d / f).read_bytes() for f in ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32")}
+        (d / ".done").unlink()
+        (d / "a0.f32").write_bytes(b"partial")
+        self.assertFalse(tool.dataset_done(self.shard, H, self.CODES))
+        rec = self.run_ds()
+        self.assertEqual((rec["status"], rec["contexts_written"], rec["contexts_already_done"]), ("done", 1, 4))
+        self.assertTrue((d / ".done").exists())
+        self.assertEqual({f: (d / f).read_bytes() for f in before}, before)
+
+    def test_a_crash_while_writing_leaves_no_done_marker(self):
+        real = tool.atomic
+
+        def crash(path, data):
+            if path.name == "a0.f32" and "__f2__" in path.parent.name:
+                raise OSError("simulated crash")
+            return real(path, data)
+        with mock.patch.object(tool, "atomic", crash):
+            rec = self.run_ds()
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "exception"))
+        self.assertTrue(self.context_dirs())
+        self.assertFalse([d for d in self.context_dirs() if (d / ".done").exists()])
+        self.assertFalse(tool.dataset_done(self.shard, H, self.CODES))
+        rec = self.run_ds()                                              # resume completes the dataset
+        self.assertEqual((rec["status"], rec["contexts_written"]), ("done", 5))
+
+    def test_a_done_context_with_another_identity_is_refused(self):
+        self.run_ds()
+        d = self.context_dirs()[0]
+        ctx = json.loads((d / "context.json").read_bytes())
+        ctx["rowsel"]["identity"] = "9" * 64
+        (d / "context.json").write_text(json.dumps(ctx))
+        rec = self.run_ds()
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "done_context_differs"))
+
+    def test_a_failing_fold_writes_nothing_and_keeps_epoch0(self):
+        rec = self.run_ds(select_fn=rowsel.v1_view)
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "counterfactual_failed"))
+        self.assertEqual(self.context_dirs(), [])
+        self.assertEqual(rec["epoch0_replaced"]["count"], 4)
+        self.assertFalse(tool.dataset_done(self.shard, H, self.CODES))
+        on_disk = json.loads((self.shard / "_datasets" / f"{H}.json").read_bytes())
+        self.assertEqual(on_disk["status"], "failed")
+
+    def test_held_dataset_is_refused_before_any_read(self):
+        self.p1.stop()
+        try:
+            e = plan_entry()
+            with mock.patch.object(tool, "sha_file", side_effect=AssertionError("read a held source")), \
+                 mock.patch.object(Path, "read_bytes", side_effect=AssertionError("read a held source")):
+                with self.assertRaises(rowsel_raw.RowselRawError) as cm:
+                    tool.load_inputs(e, None, None, {"meta_key": {}}, {H})
+            self.assertEqual(cm.exception.reason, "held_no_license")
+        finally:
+            self.p1.start()
+
+
+# --------------------------------------------------------------------------------------------------- coverage bucket
+
+_cspec = importlib.util.spec_from_file_location("v2_rowsel_raw_coverage", SRC / "tools" / "v2_rowsel_raw_coverage.py")
+cov = importlib.util.module_from_spec(_cspec)
+_cspec.loader.exec_module(cov)
+PICK = sorted(np.random.default_rng(21).choice(N, size=400, replace=False).tolist())   # the T1 research view: a subset
+A = T1[PICK]
+RIGHTS = {"rights": "research-only", "rights_decision": f"{cov.RR_DECISION}#sha256={cov.RR_DECISION_SHA256}"}
+
+
+class Coverage(unittest.TestCase):
+    CODES = {"tools/v2_rowsel_raw.py": "1" * 64}
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="rowselraw-cov-", dir=os.environ.get("TMPDIR")))
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def write_zip(self, members):
+        p = self.dir / "src.zip"
+        with zipfile.ZipFile(p, "w") as zf:
+            for name, text in members.items():
+                zf.writestr(name, text)
+        return p
+
+    def test_zip_member_is_chosen_by_content(self):
+        other = np.array(_Y, copy=True) + 1000.0
+        p = self.write_zip({"Readme.txt": "about\n", "day.csv": csv_text(range(N), y=other), "hour.csv": csv_text(range(N))})
+        with self.assertRaises(t1raw.T1RawError):                       # t1raw alone refuses: three table members
+            t1raw.read_source(p, META, SPECS)
+        specs, read, m, trial = cov.first_match(p, META, A)
+        self.assertTrue(m["matched"])
+        self.assertEqual(trial["selected"], "hour.csv")
+        self.assertEqual(sorted(trial["members"]), ["Readme.txt", "day.csv", "hour.csv"])
+        self.assertFalse(trial["members"]["day.csv"]["matched"])
+        self.assertEqual(read["values"].shape[0], N)
+
+    def test_two_matching_members_are_refused(self):
+        p = self.write_zip({"a.csv": csv_text(range(N)), "b.csv": csv_text(range(N))})
+        with self.assertRaises(rowsel_raw.RowselRawError) as cm:
+            cov.first_match(p, META, A)
+        self.assertEqual(cm.exception.reason, "zip_member_not_unique_by_content")
+
+    def test_no_matching_member_reports_the_closest_members_reason(self):
+        p = self.write_zip({"day.csv": csv_text(range(N), y=np.array(_Y) + 1000.0),
+                            "hour.csv": csv_text([i for i in range(N) if i != PICK[0]])})
+        specs, read, m, trial = cov.first_match(p, META, A)
+        self.assertFalse(m["matched"])
+        self.assertEqual((trial["selected"], trial["closest_unmatched"]), (None, "hour.csv"))
+        plain = self.dir / "hour.csv"
+        plain.write_text(csv_text([i for i in range(N) if i != PICK[0]]))
+        self.assertEqual(cov._classify(m["stats"], read["report"]), t1raw.match_dataset(plain, META, A)["reason"])
+
+    def test_unmatched_source_is_refused_with_the_t1raw_reason(self):
+        p = self.dir / "src.csv"
+        p.write_text(csv_text([i for i in range(N) if i not in set(PICK[:5])]))      # five T1 rows have no raw row
+        specs, read, m, _ = cov.first_match(p, META, A)
+        self.assertFalse(m["matched"])
+        want = t1raw.match_dataset(p, META, A)                          # the same reason code t1raw gives
+        self.assertEqual(want["status"], "unmatched")
+        self.assertEqual(cov._classify(m["stats"], read["report"]), want["reason"])
+        self.assertEqual(want["reason"], "rows_unmatched_target")        # the removed rows leave no target candidate
+
+    def fixture_dirs(self, rights="research-only", body=None):
+        """A meta store, a raw dir with fetch.json/.done and a fake epoch (resolve_context returns the T1 view)."""
+        k = hashlib.sha256(json.dumps(META).encode()).hexdigest()
+        meta_dir = self.dir / "meta"; meta_dir.mkdir()
+        (meta_dir / f"{k}.json").write_text(json.dumps(META))
+        raw_dir = self.dir / "raw"; (raw_dir / H).mkdir(parents=True)
+        f = raw_dir / H / "data.csv"
+        f.write_text(body if body is not None else csv_text(range(N)))
+        (raw_dir / H / "fetch.json").write_text(json.dumps({"file": str(f), "sha256": hashlib.sha256(f.read_bytes()).hexdigest(),
+                                                            "status": "fetched_size_differs", "url": "https://example.invalid/x"}))
+        (raw_dir / H / ".done").write_text("ok\n")
+        rows = [{"dataset_hash": H, "fold": fo, "view_id": f"{H}__r0__f{fo}", "context_sha256": str(fo) * 64} for fo in range(5)]
+        e = {"dataset_hash": H, "class": cov.CLASS, "cohort": "frozen", "epoch0_labels": ["clean"], "rights": rights,
+             "disposition": "build", "shard": 1, "raw_dir": str(raw_dir), "match_record": None,
+             "epoch0": [{"view_id": r["view_id"], "context_sha256": r["context_sha256"], "fold": r["fold"]} for r in rows]}
+        if rights == "research-only":
+            e["context_extra"] = dict(RIGHTS)
+
+        class Src:
+            sealed_ctx = set()
+
+            def included(self):
+                return rows
+        return e, Src(), {"meta_key": {H: f"blobs/sha256/{k}"}}, meta_dir
+
+    def run_cov(self, e, src, inv, meta_dir):
+        out = self.dir / "out"; (out / "shard-1").mkdir(parents=True)
+        load = cov.make_loader(out, self.CODES)
+        fake = lambda r, s, c: {"refs": {"data_sha256": "d" * 64}, "A": A}
+        with mock.patch.object(cov.tool, "META_DIR", meta_dir), mock.patch.object(cov.scale_check, "resolve_context", fake):
+            rec = cov.tool.run_dataset(e, out / "shard-1", self.CODES, src, None, inv, set(), _Guard(), log=lambda s: None,
+                                       loader=load, matcher=cov.matcher)
+        return rec, out
+
+    def test_research_only_contexts_carry_the_rights_fields(self):
+        e, src, inv, meta_dir = self.fixture_dirs()
+        rec, out = self.run_cov(e, src, inv, meta_dir)
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        self.assertEqual((rec["rights"], rec["rights_decision"]), (RIGHTS["rights"], RIGHTS["rights_decision"]))
+        mrec = json.loads(Path(e["match_record"]["path"]).read_bytes())
+        self.assertEqual((mrec["status"], mrec["rights"]), ("matched", "research-only"))
+        self.assertEqual(hashlib.sha256(Path(e["match_record"]["path"]).read_bytes()).hexdigest(), e["match_record"]["sha256"])
+        dirs = [d for d in (out / "shard-1").iterdir() if d.name != "_datasets"]
+        self.assertEqual(len(dirs), 5)
+        for d in dirs:
+            ctx = json.loads((d / "context.json").read_bytes())
+            self.assertTrue((d / ".done").exists())
+            self.assertEqual((ctx["rights"], ctx["rights_decision"], ctx["row_selection_leak"]),
+                             (RIGHTS["rights"], RIGHTS["rights_decision"], ["clean"]))
+            self.assertEqual(ctx["rowsel"]["universe"]["match_receipt_sha256"], e["match_record"]["sha256"])
+            self.assertTrue(ctx["rowsel"]["counterfactual"]["passed"])
+
+    def test_licensed_contexts_have_no_rights_override(self):
+        e, src, inv, meta_dir = self.fixture_dirs(rights="licensed")
+        rec, out = self.run_cov(e, src, inv, meta_dir)
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        d = next(d for d in (out / "shard-1").iterdir() if d.name != "_datasets")
+        self.assertNotIn("rights", json.loads((d / "context.json").read_bytes()))
+
+    def test_unmatched_raw_writes_no_context(self):
+        e, src, inv, meta_dir = self.fixture_dirs(body=csv_text([i for i in range(N) if i != PICK[0]]))
+        rec, out = self.run_cov(e, src, inv, meta_dir)
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "rows_unmatched_target"))
+        self.assertEqual([d for d in (out / "shard-1").iterdir() if d.name != "_datasets"], [])
+        self.assertEqual(json.loads(Path(e["match_record"]["path"]).read_bytes())["status"], "unmatched")
+
+    def test_a_source_moved_after_its_fetch_is_read_from_its_dir(self):
+        e, src, inv, meta_dir = self.fixture_dirs()
+        fj = Path(e["raw_dir"]) / H / "fetch.json"
+        d = json.loads(fj.read_bytes())
+        d["file"] = str(self.dir / "elsewhere" / H / "data.csv")         # the path at fetch time, before the move
+        fj.write_text(json.dumps(d))
+        rec, out = self.run_cov(e, src, inv, meta_dir)
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        raw = json.loads(Path(e["match_record"]["path"]).read_bytes())["raw"]
+        self.assertTrue(raw["relocated"])
+        self.assertEqual(raw["file"], str(Path(e["raw_dir"]) / H / "data.csv"))
+
+    def test_raw_custody_mismatch_is_refused(self):
+        e, src, inv, meta_dir = self.fixture_dirs()
+        f = Path(e["raw_dir"]) / H / "data.csv"
+        f.write_text(f.read_text() + "\n")
+        rec, out = self.run_cov(e, src, inv, meta_dir)
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "raw_custody_mismatch"))
+
+    def test_rights_held_is_refused_before_any_read(self):
+        e, src, inv, meta_dir = self.fixture_dirs()
+        e.update(rights="held", disposition="not_built")
+        load = cov.make_loader(self.dir, self.CODES)
+        with mock.patch.object(Path, "read_bytes", side_effect=AssertionError("read a held source")), \
+             mock.patch.object(cov.tool, "sha_file", side_effect=AssertionError("read a held source")):
+            with self.assertRaises(rowsel_raw.RowselRawError) as cm:
+                load(e, src, None, inv, set())
+        self.assertEqual(cm.exception.reason, "rights_held")
+
+
+# --------------------------------------------------------------------------------------------------- route: nonnumeric
+
+from dltrain import nonnumeric  # noqa: E402
+from tests import test_nonnumeric as tnn  # noqa: E402
+
+H2 = "a1b2c3d4e5f60718"
+
+
+def leaky_universe(values, specs, text, readings):
+    """CONTROL: the acquisition's all-row rank code as the universe value (what the text gate must catch)."""
+    V, sp = tool.all_row_rank_universe(values, specs, text, readings)
+    return V, sp, {"control": "all-row staging rank"}
+
+
+class NonnumericRoute(unittest.TestCase):
+    CODES = {"tools/v2_rowsel_raw.py": "1" * 64}
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="rowselraw-nn-", dir=os.environ.get("TMPDIR")))
+        self.cols = tnn.raw_columns()
+        self.t1, self.meta, clean = tnn.staging(self.cols)
+        self.A = self.t1[tnn.coreset(clean)]
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def setup_dirs(self, body=None, tier="matched"):
+        mb = json.dumps(self.meta).encode()
+        k = hashlib.sha256(mb).hexdigest()
+        meta_dir = self.dir / "meta"; meta_dir.mkdir()
+        (meta_dir / f"{k}.json").write_bytes(mb)
+        raw_dir = self.dir / "raw"; (raw_dir / H2).mkdir(parents=True)
+        f = raw_dir / H2 / "source.csv"
+        f.write_bytes(body if body is not None else tnn.csv_bytes(self.cols))
+        rs = hashlib.sha256(f.read_bytes()).hexdigest()
+        (raw_dir / H2 / "fetch.json").write_text(json.dumps({"file": str(f), "sha256": rs, "status": "fetched_size_matches",
+                                                             "url": "https://example.invalid/s.csv"}))
+        (raw_dir / H2 / ".done").write_text("ok\n")
+        rows = [{"dataset_hash": H2, "fold": fo, "view_id": f"{H2}__r0__f{fo}", "context_sha256": str(fo) * 64} for fo in range(5)]
+        e = {"dataset_hash": H2, "class": "all_rows_coreset", "cohort": "frozen", "epoch0_labels": ["all_rows_coreset"],
+             "epoch0": [{"view_id": r["view_id"], "context_sha256": r["context_sha256"], "fold": r["fold"]} for r in rows],
+             "study": {"status": tier, "reason": None, "raw_sha256": rs}, "l7a_record": {"raw_sha256": rs},
+             "nonnumeric_tier": tier, "disposition": "build", "match_record": None,
+             "context_extra": {"values_route": "nonnumeric", "nonnumeric_tier": tier, "nonnumeric_decision": "x#sha256=y"}}
+
+        class Src:
+            sealed_ctx = set()
+
+            def included(self):
+                return rows
+        self.patches = [mock.patch.object(tool, "META_DIR", meta_dir), mock.patch.object(tool, "RAW_DIR", raw_dir),
+                        mock.patch.object(tool.scale_check, "resolve_context",
+                                          lambda r, s, c, A=self.A: {"refs": {"data_sha256": "d" * 64}, "A": A})]
+        for pt in self.patches:
+            pt.start()
+        self.addCleanup(lambda: [pt.stop() for pt in self.patches])
+        return e, Src(), {"meta_key": {H2: f"blobs/sha256/{k}"}}
+
+    def run_nn(self, e, src, inv, held=()):
+        out = self.dir / "out"; (out / "shard-0").mkdir(parents=True, exist_ok=True)
+        rec = tool.run_dataset(e, out / "shard-0", self.CODES, src, None, inv, set(held), _Guard(), log=lambda s: None,
+                               loader=tool.make_nonnumeric_loader(out, self.CODES), matcher=tool.nonnumeric_matcher,
+                               post_gate=tool.nonnumeric_text_gate)
+        return rec, out
+
+    def test_route_builds_every_fold_with_both_gates_and_the_text_gate(self):
+        e, src, inv = self.setup_dirs()
+        rec, out = self.run_nn(e, src, inv)
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        mp = Path(e["match_record"]["path"])
+        self.assertEqual(hashlib.sha256(mp.read_bytes()).hexdigest(), e["match_record"]["sha256"])
+        mrec = json.loads(mp.read_bytes())
+        self.assertEqual((mrec["tier"], mrec["readings"]), ("matched", {"n0": nonnumeric.RANK, "c0": nonnumeric.RANK,
+                                                                        "n1": nonnumeric.NUMERIC}))
+        self.assertEqual(rec["rematch"]["values_sha256"], mrec["values_sha256"])
+        g = rec["post_gate"]
+        self.assertTrue(g["passed"], g)
+        self.assertEqual(g["rank_text_columns"], ["c0", "n0"])
+        self.assertTrue(g["control_fails_as_required"], g)
+        dirs = [d for d in (out / "shard-0").iterdir() if d.name != "_datasets"]
+        self.assertEqual(len(dirs), 5)
+        for d in dirs:
+            ctx = json.loads((d / "context.json").read_bytes())
+            self.assertTrue((d / ".done").exists())
+            self.assertEqual((ctx["values_route"], ctx["nonnumeric_tier"], ctx["row_selection_leak"]), ("nonnumeric", "matched", ["clean"]))
+            self.assertEqual(ctx["rowsel"]["universe"]["match_receipt_sha256"], e["match_record"]["sha256"])
+            self.assertTrue(ctx["rowsel"]["counterfactual"]["passed"])
+            self.assertIn("c0", ctx["t1raw"]["categorical"])          # text: categories refitted on outer-train rows
+            self.assertIn("n0", ctx["t1raw"]["categorical"])
+
+    def test_text_gate_catches_an_all_row_encoded_universe(self):
+        e, src, inv = self.setup_dirs()
+        with mock.patch.object(nonnumeric, "universe", leaky_universe):
+            rec, out = self.run_nn(e, src, inv)
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "post_gate_failed"), rec.get("detail"))
+        self.assertTrue(rec["post_gate"]["clean_train_side_differs"])
+        self.assertEqual([d for d in (out / "shard-0").iterdir() if d.name != "_datasets"], [])
+
+    def test_matcher_refuses_a_universe_other_than_the_receipts(self):
+        e, src, inv = self.setup_dirs()
+        inp = tool.make_nonnumeric_loader(self.dir / "o", self.CODES)(e, src, None, inv, set())
+        V, sp, rep = tool.nonnumeric_matcher(dict(inp))
+        self.assertEqual(rep["values_sha256"], inp["record"]["values_sha256"])
+        for change in ({"values_sha256": "0" * 64}, {"readings": {n: nonnumeric.RANK for n in inp["record"]["readings"]}}):
+            bad = dict(inp, record=dict(inp["record"], **change))
+            with self.assertRaises((t1raw.T1RawError, rowsel_raw.RowselRawError)) as cm:
+                tool.nonnumeric_matcher(bad)
+            self.assertIn(cm.exception.reason, ("nonnumeric_universe_differs", "text_columns_differ_from_pinned"))
+
+    def test_tier_must_equal_the_study(self):
+        e, src, inv = self.setup_dirs(tier="matched_covered")
+        rec, out = self.run_nn(e, src, inv)
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "nonnumeric_tier_differs_from_study"))
+        self.assertEqual(json.loads(Path(e["match_record"]["path"]).read_bytes())["tier"], "matched")
+
+    def test_unmatched_source_writes_no_context(self):
+        cols = {c: list(v) for c, v in self.cols.items()}
+        drop = int(np.flatnonzero(np.all(self.t1 == self.A[0], axis=1))[0])
+        clean = [i for i in range(len(cols["id"])) if cols["yy"][i] != ""]
+        for c in cols:
+            del cols[c][clean[drop]]                                     # one T1 row has no raw row any more
+        e, src, inv = self.setup_dirs(body=tnn.csv_bytes(cols))
+        rec, out = self.run_nn(e, src, inv)
+        self.assertEqual(rec["status"], "failed")
+        self.assertNotIn(rec["reason"], ("post_gate_failed", "nonnumeric_tier_differs_from_study"))
+        self.assertEqual(json.loads(Path(e["match_record"]["path"]).read_bytes())["status"], "unmatched")
+        self.assertEqual([d for d in (out / "shard-0").iterdir() if d.name != "_datasets"], [])
+
+    def test_raw_custody_must_equal_the_study_and_l7a(self):
+        e, src, inv = self.setup_dirs()
+        e["study"]["raw_sha256"] = "9" * 64
+        rec, out = self.run_nn(e, src, inv)
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "raw_custody_mismatch"))
+
+    def test_held_dataset_is_refused_before_any_read(self):
+        e, src, inv = self.setup_dirs()
+        load = tool.make_nonnumeric_loader(self.dir, self.CODES)
+        with mock.patch.object(Path, "read_bytes", side_effect=AssertionError("read a held source")), \
+             mock.patch.object(tool, "sha_file", side_effect=AssertionError("read a held source")):
+            with self.assertRaises(rowsel_raw.RowselRawError) as cm:
+                load(e, src, None, inv, {H2})
+        self.assertEqual(cm.exception.reason, "held_no_license")
+
+    def test_match_receipt_is_deterministic_and_view_ids_reproduce(self):
+        e, src, inv = self.setup_dirs()
+        rec1, out1 = self.run_nn(e, src, inv)
+        b1 = Path(e["match_record"]["path"]).read_bytes()
+        e2 = json.loads(json.dumps(dict(e, match_record=None)))
+        shutil.move(str(out1), str(self.dir / "out-run1"))
+        rec2, out2 = self.run_nn(e2, src, inv)
+        self.assertEqual(Path(e2["match_record"]["path"]).read_bytes(), b1)
+        self.assertEqual([c["view_id"] for c in rec2["contexts"]], [c["view_id"] for c in rec1["contexts"]])
+
+    def test_text_gate_control_has_power_on_two_text_columns(self):
+        cols = {c: list(v) for c, v in self.cols.items()}
+        two = {"n0": ["delta", "alpha"], "c0": ["lo", "hi"]}
+        for c, words in two.items():
+            cols[c] = [v if nonnumeric.is_na(v) else words[i % 2] for i, v in enumerate(cols[c])]
+        self.cols = cols
+        self.t1, self.meta, clean = tnn.staging(cols)
+        self.A = self.t1[tnn.coreset(clean)]
+        e, src, inv = self.setup_dirs()
+        rec, out = self.run_nn(e, src, inv)
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        g = rec["post_gate"]
+        self.assertEqual({n: g["inserted"][n]["outer_train_texts"] for n in g["rank_text_columns"]}, {"c0": 2, "n0": 2})
+        self.assertTrue(g["passed"], g)
+        self.assertTrue(g["control_fails_as_required"], g)
+
+    def test_build_routes_the_nonnumeric_hooks(self):
+        import argparse
+        hooks = tool.route_hooks(argparse.Namespace(route="nonnumeric"), self.dir, self.CODES)
+        self.assertEqual(sorted(hooks), ["loader", "matcher", "post_gate"])
+        self.assertIs(hooks["matcher"], tool.nonnumeric_matcher)
+        self.assertIs(hooks["post_gate"], tool.nonnumeric_text_gate)
+        self.assertEqual(hooks["loader"].__qualname__, "make_nonnumeric_loader.<locals>.load")
+        self.assertEqual(tool.route_hooks(argparse.Namespace(route="l7a"), self.dir, self.CODES), {})
+        self.assertEqual(tool.route_hooks(argparse.Namespace(), self.dir, self.CODES), {})
+
+    def test_code_files_and_the_later_file_rule(self):
+        self.assertIn("dltrain/nonnumeric.py", tool.CODE_FILES)
+        codes = tool.code_shas()
+        self.assertEqual(set(codes), set(tool.CODE_FILES))
+        self.assertTrue(tool.code_known(dict(codes), codes))
+        old = {k: v for k, v in codes.items() if k != "dltrain/nonnumeric.py"}       # built before nonnumeric existed
+        self.assertTrue(tool.code_known(old, codes))
+        missing = {k: v for k, v in codes.items() if k != "dltrain/t1raw.py"}
+        self.assertFalse(tool.code_known(missing, codes))
+        self.assertFalse(tool.code_known(dict(codes, **{"dltrain/t1raw.py": "0" * 64}), codes))
+
+
+# --------------------------------------------------------------------------------------------------- split version hook
+
+from dltrain import rowsel_raw_split_v2 as split_v2  # noqa: E402
+import argparse  # noqa: E402
+
+
+class SplitVersion(unittest.TestCase):
+    CODES = {"tools/v2_rowsel_raw.py": "1" * 64}
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="rowselraw-split-", dir=os.environ.get("TMPDIR")))
+        self.shard = self.dir / "shard-0"; self.shard.mkdir()
+        self.p1 = mock.patch.object(tool, "load_inputs", fake_inputs)
+        self.p2 = mock.patch.object(tool, "rematch", fake_rematch)
+        self.p1.start(); self.p2.start()
+
+    def tearDown(self):
+        self.p1.stop(); self.p2.stop()
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def run_ds(self, e):
+        return tool.run_dataset(e, self.shard, self.CODES, None, None, None, set(), _Guard(), log=lambda s: None)
+
+    def contexts(self, rec):
+        return [json.loads((self.shard / c["view_id"] / "context.json").read_bytes()) for c in rec["contexts"]]
+
+    def test_an_entry_without_a_version_is_v1_for_verification(self):
+        rec = self.run_ds(plan_entry())
+        self.assertEqual((rec["status"], rec["split_version"], rec["split"]["schema"]), ("done", tool.SPLIT_V1, "rowsel-raw-split-v1"))
+        self.assertEqual(rec["split"]["sha256"], rowsel_raw.split_sha256(H, FOLDS))
+        self.assertEqual({c["rowsel"]["identity_body"]["split"]["schema"] for c in self.contexts(rec)}, {"rowsel-raw-split-v1"})
+
+    def test_a_v2_entry_builds_the_v2_split(self):
+        e = dict(plan_entry(), split_version=tool.SPLIT_V2)
+        rec = self.run_ds(e)
+        self.assertEqual((rec["status"], rec["split_version"], rec["split"]["schema"]), ("done", tool.SPLIT_V2, "rowsel-raw-split-v2"),
+                         rec.get("detail"))
+        f2 = split_v2.outer_split(H, PREP.positions, PREP.values, SPECS)
+        self.assertEqual(rec["split"]["sha256"], split_v2.split_sha256(H, f2))
+        self.assertEqual(rec["split"]["fold_sizes"], [len(f2[f]) for f in range(5)])
+        self.assertTrue(rec["split"]["target_check"]["target_invariant"])
+        v1_ids = {c["view_id"] for c in tool.run_dataset(plan_entry(), self.dir / "v1", self.CODES, None, None, None, set(), _Guard(),
+                                                         log=lambda s: None)["contexts"]}
+        for f, ctx in enumerate(self.contexts(rec)):
+            self.assertEqual(ctx["rowsel"]["identity_body"]["split"]["schema"], "rowsel-raw-split-v2")
+            self.assertEqual(ctx["rowsel"]["split"]["sha256"], split_v2.split_sha256(H, f2))
+            self.assertNotIn(ctx["view_id"], v1_ids)                      # new keys, never a v1 key
+            r = rowsel_raw.build_fold(PREP, f2, f, ctx["rowsel"]["universe"], ctx["rowsel"]["split"], counterfactual=False)
+            self.assertEqual(r["view_id"], ctx["view_id"])                # the context is fold f of the v2 split
+
+    def test_an_unknown_version_is_refused_before_any_read(self):
+        with mock.patch.object(tool, "load_inputs", side_effect=AssertionError("read before the version check")):
+            rec = self.run_ds(dict(plan_entry(), split_version="rowsel-raw-split-v9"))
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "unknown_split_version"))
+
+    def test_the_target_check_runs_on_the_selected_split(self):
+        with mock.patch.dict(tool.SPLIT_VERSIONS, {"strat": (stratified_split, rowsel_raw.split_report)}):
+            rec = self.run_ds(dict(plan_entry(), split_version="strat"))         # CONTROL: a target-stratified split
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "split_check_failed"))
+        self.assertEqual([d for d in self.shard.iterdir() if d.name != "_datasets"], [])
+
+    def test_plans_name_their_version_and_v1_plans_stay_byte_identical(self):
+        doc = {"datasets": [{"dataset_hash": "a"}, {"dataset_hash": "b"}]}
+        self.assertEqual(tool.stamp_split_version(json.loads(json.dumps(doc)), tool.SPLIT_V1), doc)
+        d2 = tool.stamp_split_version(json.loads(json.dumps(doc)), tool.SPLIT_V2)
+        self.assertEqual((d2["split_version"], {e["split_version"] for e in d2["datasets"]}), (tool.SPLIT_V2, {tool.SPLIT_V2}))
+        self.assertEqual(tool.plan_split_version(doc), tool.SPLIT_V1)
+        with self.assertRaises(SystemExit):
+            tool.stamp_split_version(doc, "rowsel-raw-split-v9")
+        self.assertEqual(tool.default_out("l7a", tool.SPLIT_V1), tool.OUT)
+        self.assertEqual(tool.default_out("nonnumeric", tool.SPLIT_V1), tool.OUT_NONNUMERIC)
+        self.assertEqual(tool.default_out("l7a", tool.SPLIT_V2).name, "ROWSEL-RAW-v2")
+        self.assertEqual(tool.default_out("nonnumeric", tool.SPLIT_V2).name, "ROWSEL-RAW-v2-nonnumeric")
+        self.assertEqual(cov.OUT_V2.name, "ROWSEL-RAW-v2-coverage")
+
+    def test_a_build_refuses_a_plan_of_another_split_version(self):
+        (self.dir / "plan.json").write_text(json.dumps({"of": 3, "datasets": [], "split_version": tool.SPLIT_V2}))
+        with self.assertRaises(SystemExit):
+            tool.build(argparse.Namespace(out=str(self.dir), of=3, shard=0, split_version=tool.SPLIT_V1, datasets=None, route="l7a"))
+
+    def test_code_files_and_later_files(self):
+        self.assertIn("dltrain/rowsel_raw_split_v2.py", tool.CODE_FILES)
+        self.assertIn("dltrain/rowsel_raw_split_v2.py", tool.LATER_CODE_FILES)
+        codes = tool.code_shas()
+        v1_built = {k: v for k, v in codes.items() if k not in ("dltrain/nonnumeric.py", "dltrain/rowsel_raw_split_v2.py")}
+        self.assertTrue(tool.code_known(v1_built, codes))
+        self.assertFalse(tool.code_known({k: v for k, v in codes.items() if k != "dltrain/rowsel_raw.py"}, codes))
+
+    def test_only_finished_new_version_trees_are_marked(self):
+        self.assertTrue(tool.should_mark_complete(True, tool.SPLIT_V2))
+        self.assertFalse(tool.should_mark_complete(True, tool.SPLIT_V1))       # a v1 tree is never written to
+        self.assertFalse(tool.should_mark_complete(False, tool.SPLIT_V2))
+        self.assertFalse(tool.should_mark_complete(True, "rowsel-raw-split-v9"))
+
+    def test_the_complete_marker_is_create_only(self):
+        r = self.dir / "summary.json"; r.write_text("{}")
+        m = tool.write_complete(self.dir, r, {"done": 1}, tool.SPLIT_V2)
+        body = json.loads(m.read_bytes())
+        self.assertEqual((m.name, body["split_version"], body["summary"]["sha256"]), (".complete", tool.SPLIT_V2, hashlib.sha256(b"{}").hexdigest()))
+        with self.assertRaises(FileExistsError):
+            tool.write_complete(self.dir, r, {"done": 1}, tool.SPLIT_V2)
+
+
+class SplitVersionRoutes(NonnumericRoute):
+    """v2 through the nonnumeric route (text gate with the v2 folds) and the coverage route (rights fields kept)."""
+
+    def test_v2_through_the_nonnumeric_route(self):
+        e, src, inv = self.setup_dirs()
+        e["split_version"] = tool.SPLIT_V2
+        rec, out = self.run_nn(e, src, inv)
+        self.assertEqual((rec["status"], rec["split"]["schema"]), ("done", "rowsel-raw-split-v2"), rec.get("detail"))
+        self.assertTrue(rec["post_gate"]["passed"] and rec["post_gate"]["control_fails_as_required"], rec["post_gate"])
+
+    def test_v2_through_the_coverage_route_keeps_rights(self):
+        c = Coverage("test_research_only_contexts_carry_the_rights_fields")
+        c.setUp()
+        try:
+            e, src, inv, meta_dir = c.fixture_dirs()
+            e["split_version"] = tool.SPLIT_V2
+            rec, out = c.run_cov(e, src, inv, meta_dir)
+            self.assertEqual((rec["status"], rec["split"]["schema"], rec["rights"]), ("done", "rowsel-raw-split-v2", "research-only"),
+                             rec.get("detail"))
+            for d in (out / "shard-1").iterdir():
+                if d.name != "_datasets":
+                    ctx = json.loads((d / "context.json").read_bytes())
+                    self.assertEqual((ctx["rights"], ctx["rowsel"]["split"]["schema"]), ("research-only", "rowsel-raw-split-v2"))
+        finally:
+            c.tearDown()
+
+
+if __name__ == "__main__":
+    unittest.main()
