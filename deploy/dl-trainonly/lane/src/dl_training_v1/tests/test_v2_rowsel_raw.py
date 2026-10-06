@@ -460,6 +460,11 @@ def plan_entry(cls="all_rows_coreset", h=H, n_epoch0=4):
             "match_record": {"path": "/nonexistent/match.json", "sha256": "c" * 64}}
 
 
+def explicit_version(e):
+    """The version a test requests explicitly: the entry's own, or the v1 replay for a field-less (v1) fixture entry."""
+    return e["split_version"] if "split_version" in e else tool.SPLIT_V1
+
+
 def fake_inputs(e, src, cache, inv, held):
     if e["dataset_hash"] in held:
         raise rowsel_raw.RowselRawError("held_no_license")
@@ -487,8 +492,9 @@ class Resume(unittest.TestCase):
         shutil.rmtree(self.dir, ignore_errors=True)
 
     def run_ds(self, e=None, held=(), **kw):
+        # the field-less fixture entry is a v1 plan entry: the v1 replay is requested explicitly (no v1 default, #218/10)
         return tool.run_dataset(e or plan_entry(), self.shard, self.CODES, None, None, None, set(held), _Guard(),
-                                log=lambda s: None, **kw)
+                                log=lambda s: None, split_version=tool.SPLIT_V1, **kw)
 
     def context_dirs(self):
         return sorted(d for d in self.shard.iterdir() if d.is_dir() and d.name != "_datasets")
@@ -674,7 +680,7 @@ class Coverage(unittest.TestCase):
         fake = lambda r, s, c: {"refs": {"data_sha256": "d" * 64}, "A": A}
         with mock.patch.object(cov.tool, "META_DIR", meta_dir), mock.patch.object(cov.scale_check, "resolve_context", fake):
             rec = cov.tool.run_dataset(e, out / "shard-1", self.CODES, src, None, inv, set(), _Guard(), log=lambda s: None,
-                                       loader=load, matcher=cov.matcher)
+                                       loader=load, matcher=cov.matcher, split_version=explicit_version(e))
         return rec, out
 
     def test_research_only_contexts_carry_the_rights_fields(self):
@@ -801,7 +807,7 @@ class NonnumericRoute(unittest.TestCase):
         out = self.dir / "out"; (out / "shard-0").mkdir(parents=True, exist_ok=True)
         rec = tool.run_dataset(e, out / "shard-0", self.CODES, src, None, inv, set(held), _Guard(), log=lambda s: None,
                                loader=tool.make_nonnumeric_loader(out, self.CODES), matcher=tool.nonnumeric_matcher,
-                               post_gate=tool.nonnumeric_text_gate)
+                               post_gate=tool.nonnumeric_text_gate, split_version=explicit_version(e))
         return rec, out
 
     def test_route_builds_every_fold_with_both_gates_and_the_text_gate(self):
@@ -950,14 +956,22 @@ class SplitVersion(unittest.TestCase):
         self.p1.stop(); self.p2.stop()
         shutil.rmtree(self.dir, ignore_errors=True)
 
-    def run_ds(self, e):
-        return tool.run_dataset(e, self.shard, self.CODES, None, None, None, set(), _Guard(), log=lambda s: None)
+    def run_ds(self, e, split_version=None):
+        return tool.run_dataset(e, self.shard, self.CODES, None, None, None, set(), _Guard(), log=lambda s: None,
+                                split_version=split_version)
 
     def contexts(self, rec):
         return [json.loads((self.shard / c["view_id"] / "context.json").read_bytes()) for c in rec["contexts"]]
 
-    def test_an_entry_without_a_version_is_v1_for_verification(self):
-        rec = self.run_ds(plan_entry())
+    def test_an_entry_without_a_version_is_refused_unless_v1_is_requested_explicitly(self):
+        with mock.patch.object(tool, "load_inputs", side_effect=AssertionError("read before the version check")):
+            for req in (None, tool.SPLIT_V2):
+                rec = self.run_ds(plan_entry(), split_version=req)
+                self.assertEqual((rec["status"], rec["reason"]), ("failed", "split_version_not_given"), req)
+            rec = self.run_ds(dict(plan_entry(), split_version=tool.SPLIT_V2), split_version=tool.SPLIT_V1)
+            self.assertEqual((rec["status"], rec["reason"]), ("failed", "split_version_mismatch"))
+        self.assertEqual([d for d in self.shard.iterdir() if d.name != "_datasets"], [])
+        rec = self.run_ds(plan_entry(), split_version=tool.SPLIT_V1)
         self.assertEqual((rec["status"], rec["split_version"], rec["split"]["schema"]), ("done", tool.SPLIT_V1, "rowsel-raw-split-v1"))
         self.assertEqual(rec["split"]["sha256"], rowsel_raw.split_sha256(H, FOLDS))
         self.assertEqual({c["rowsel"]["identity_body"]["split"]["schema"] for c in self.contexts(rec)}, {"rowsel-raw-split-v1"})
@@ -972,7 +986,7 @@ class SplitVersion(unittest.TestCase):
         self.assertEqual(rec["split"]["fold_sizes"], [len(f2[f]) for f in range(5)])
         self.assertTrue(rec["split"]["target_check"]["target_invariant"])
         v1_ids = {c["view_id"] for c in tool.run_dataset(plan_entry(), self.dir / "v1", self.CODES, None, None, None, set(), _Guard(),
-                                                         log=lambda s: None)["contexts"]}
+                                                         log=lambda s: None, split_version=tool.SPLIT_V1)["contexts"]}
         for f, ctx in enumerate(self.contexts(rec)):
             self.assertEqual(ctx["rowsel"]["identity_body"]["split"]["schema"], "rowsel-raw-split-v2")
             self.assertEqual(ctx["rowsel"]["split"]["sha256"], split_v2.split_sha256(H, f2))
@@ -1007,7 +1021,14 @@ class SplitVersion(unittest.TestCase):
         self.assertEqual(tool.stamp_split_version(json.loads(json.dumps(doc)), tool.SPLIT_V1), doc)
         d2 = tool.stamp_split_version(json.loads(json.dumps(doc)), tool.SPLIT_V2)
         self.assertEqual((d2["split_version"], {e["split_version"] for e in d2["datasets"]}), (tool.SPLIT_V2, {tool.SPLIT_V2}))
-        self.assertEqual(tool.plan_split_version(doc), tool.SPLIT_V1)
+        with self.assertRaises(SystemExit):                                # a field-less (v1) plan needs an explicit v1
+            tool.plan_split_version(doc)
+        with self.assertRaises(SystemExit):
+            tool.plan_split_version(doc, tool.SPLIT_V2)
+        self.assertEqual(tool.plan_split_version(doc, tool.SPLIT_V1), tool.SPLIT_V1)
+        self.assertEqual(tool.plan_split_version(d2), tool.SPLIT_V2)
+        with self.assertRaises(SystemExit):
+            tool.plan_split_version(d2, tool.SPLIT_V1)
         with self.assertRaises(SystemExit):
             tool.stamp_split_version(doc, "rowsel-raw-split-v9")
         self.assertEqual(tool.default_out("l7a", tool.SPLIT_V1), tool.OUT)

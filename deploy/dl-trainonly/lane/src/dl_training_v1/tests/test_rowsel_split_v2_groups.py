@@ -165,5 +165,117 @@ class Identity(unittest.TestCase):
         self.assertIsNone(g.group_spec(None, None))
 
 
+
+def f8(values):
+    """The builders' group encoding: canonical little-endian float64 bytes (NaN -> None here)."""
+    return [None if np.isnan(v) else np.asarray(v + 0.0, dtype="<f8").tobytes() for v in np.asarray(values, dtype=np.float64)]
+
+
+class TargetTie(unittest.TestCase):
+    """g.target_tied_group: dataset-level refusal of a group column that copies, determines or bins the target
+    (finding 8, owner pre-review F4)."""
+    Y = np.asarray(PREP.values[:, -1], dtype=np.float64)
+
+    def test_a_non_last_column_copying_the_target_is_refused(self):
+        V = np.array(PREP.values, copy=True)
+        V[:, 1] = V[:, -1]                                               # feature n1 := y (not the last column)
+        self.assertEqual(g.target_tied_group(f8(V[:, 1]), V[:, -1]), "group_bytes_equal_target_bytes")
+        y = np.array(V[:, -1], copy=True); y[:7] = -0.0                 # a -0.0 target matches the canonical +0.0 group bytes
+        self.assertEqual(g.target_tied_group(f8(y), y), "group_bytes_equal_target_bytes")
+
+    def test_an_affine_copy_is_refused(self):
+        y = np.random.default_rng(5).normal(size=400)                     # distinct targets: every group a singleton
+        self.assertEqual(g.target_tied_group(f8(3.0 * y - 2.0), y), "group_affine_copy_of_target")
+        self.assertEqual(g.target_tied_group(f8(-0.25 * y + 7.0), y), "group_affine_copy_of_target")
+        gv = f8(3.0 * y - 2.0); gv[::10] = [None] * len(gv[::10])        # missing cells do not hide the copy
+        self.assertEqual(g.target_tied_group(gv, y), "group_affine_copy_of_target")
+        self.assertIsNone(g.target_tied_group(f8(3.0 * y - 2.0 + np.random.default_rng(6).normal(0, 1e-3, y.size)), y))
+
+    def test_a_column_determining_the_target_is_refused(self):
+        rng = np.random.default_rng(7)
+        region = rng.integers(0, 23, 600)
+        effect = rng.normal(size=23)                                      # a non-linear map: no affine copy
+        y = effect[region]
+        gv = f8(region.astype(float))
+        y_none = y.copy(); gv_none = list(gv)
+        for i in range(0, 600, 50):                                       # rows without a group value: varying targets
+            gv_none[i] = None; y_none[i] = rng.normal()
+        self.assertEqual(g.target_tied_group(gv, y), "target_function_of_group")
+        self.assertEqual(g.target_tied_group(gv_none, y_none), "target_function_of_group")
+        self.assertEqual(g.target_tied_group([("r", int(r)) for r in region], y), "target_function_of_group")   # any hashable
+
+    def test_a_legitimate_group_column_is_admitted(self):
+        gv = region_of(PREP.values)
+        self.assertIsNone(g.target_tied_group(gv, self.Y))
+        y = np.array(self.Y, copy=True)
+        k = next(i for i, x in enumerate(gv) if x is not None)
+        y[k] = np.frombuffer(gv[k], dtype="<f8")[0]                      # one row whose group bytes equal its target
+        self.assertIsNone(g.target_tied_group(gv, y))
+
+    def test_an_all_singleton_column_is_admitted(self):
+        y = np.round(np.random.default_rng(9).normal(size=300), 1)        # repeated targets
+        ids = np.random.default_rng(10).permutation(300).astype(float)    # unique group per row, unrelated to y
+        self.assertIsNone(g.target_tied_group(f8(ids), y))
+        self.assertIsNone(g.target_tied_group([None] * 300, y))
+        self.assertIsNone(g.target_tied_group([], []))
+
+    def test_a_binned_target_is_refused(self):
+        """F4: floor(y/k) and quantile bins: y varies inside each group, yet the groups are a step function of y."""
+        y = np.random.default_rng(11).normal(size=600)
+        self.assertEqual(g.target_tied_group([int(v) for v in np.floor(y / 0.5)], y), "group_is_binned_target")
+        self.assertEqual(g.target_tied_group(f8(np.floor(y / 0.5)), y), "group_is_binned_target")
+        q = np.searchsorted(np.quantile(y, np.linspace(0, 1, 11)[1:-1]), y, side="right")       # 10 quantile bins
+        self.assertEqual(len(set(q.tolist())), 10)
+        self.assertEqual(g.target_tied_group([f"bin{b}" for b in q], y), "group_is_binned_target")
+        two = (y > np.median(y)).astype(int)                                # exactly 2 bins
+        self.assertEqual(g.target_tied_group(two.tolist(), y), "group_is_binned_target")
+        gv = [int(v) for v in np.floor(y / 0.5)]; gv[::7] = [None] * len(gv[::7])          # rows without a group
+        self.assertEqual(g.target_tied_group(gv, y), "group_is_binned_target")
+
+    def test_disjoint_ranges_without_a_function_of_y_are_admitted(self):
+        """A y value shared by two groups: not a function of y, so disjoint multi-row ranges alone do not refuse."""
+        self.assertIsNone(g.target_tied_group(["A", "A", "B", "B", "C"], [1.0, 2.0, 5.0, 6.0, 1.0]))
+        self.assertEqual(g.target_tied_group(["A", "A", "B", "B", "C"], [1.0, 2.0, 5.0, 6.0, 9.0]), "group_is_binned_target")
+
+    def test_near_total_determination(self):
+        """F4: >= 99% of all rows in single-target multi-row groups is refused; 98% is admitted."""
+        rng = np.random.default_rng(12)
+
+        def case(constant_groups, varying_groups):
+            gv, y = [], []
+            for k in range(constant_groups):
+                gv += [f"c{k}"] * 10; y += [float(k) + 0.5] * 10
+            for k in range(varying_groups):
+                gv += [f"v{k}"] * 10; y += rng.uniform(-5, constant_groups + 5, 10).tolist()
+            return gv, np.asarray(y)
+        self.assertEqual(g.target_tied_group(*case(99, 1)), "target_nearly_determined_by_group")    # 990 / 1000
+        self.assertIsNone(g.target_tied_group(*case(98, 2)))                                        # 980 / 1000
+        gv, y = case(99, 1)
+        self.assertIsNone(g.target_tied_group(gv + [None] * 10, np.concatenate([y, np.zeros(10)])))   # 990 / 1010 < 99%
+
+    def test_a_legitimate_group_overlapping_in_y_is_admitted(self):
+        gv = region_of(PREP.values)
+        rng_by = {}
+        for x, t in zip(gv, self.Y):
+            if x is not None:
+                lo, hi = rng_by.get(x, (t, t)); rng_by[x] = (min(lo, t), max(hi, t))
+        r = sorted(rng_by.values())
+        self.assertTrue(any(b[0] <= a[1] for a, b in zip(r, r[1:])))         # the groups overlap in y
+        self.assertIsNone(g.target_tied_group(gv, self.Y))
+
+    def test_the_split_never_takes_the_target(self):
+        import inspect
+        for fn in (g.split, g.components):
+            self.assertFalse({"y", "target", "targets"} & set(inspect.signature(fn).parameters))
+        params = inspect.signature(g.split).parameters                     # F5: no default selects a universe
+        self.assertIs(params["partition"].default, inspect.Parameter.empty)
+        self.assertIs(params["group_values"].default, inspect.Parameter.empty)
+        with self.assertRaises(TypeError):
+            g.split(H, POS, FB, GV)
+        self.assertEqual(g.split(H, POS, FB, GV, "raw"), F_G)
+        with self.assertRaises(ValueError):
+            g.target_tied_group([b"a"], [1.0, 2.0])
+
+
 if __name__ == "__main__":
     unittest.main()

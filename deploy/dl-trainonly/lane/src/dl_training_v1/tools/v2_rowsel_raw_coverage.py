@@ -256,8 +256,7 @@ def build(a):
     out = Path(a.out)
     pl = json.loads((out / "plan.json").read_bytes())
     plan_sha = tool.sha_file(out / "plan.json")
-    if tool.plan_split_version(pl) != a.split_version:
-        raise SystemExit(f"plan split version {tool.plan_split_version(pl)} != --split-version {a.split_version}")
+    tool.plan_split_version(pl, a.split_version)
     codes = code_shas()
     src = scale_check.Sources(load_index=False)
     cache = scale_check.DataCache(max_items=2)
@@ -277,7 +276,7 @@ def build(a):
             results.append({"dataset_hash": e["dataset_hash"], "status": "already_done"})
             continue
         guard.wait()
-        rec = tool.run_dataset(dict(e), sd, codes, src, cache, inv, set(), guard, loader=load, matcher=matcher)
+        rec = tool.run_dataset(dict(e), sd, codes, src, cache, inv, set(), guard, loader=load, matcher=matcher, split_version=a.split_version)
         results.append({"dataset_hash": e["dataset_hash"], "rights": e["rights"], "status": rec["status"], "reason": rec.get("reason"),
                         "detail": (rec.get("detail") or "")[:500], "cpu_s": rec["cpu_s"]})
         print(json.dumps(results[-1]), flush=True)
@@ -299,8 +298,8 @@ def summarize(a):
     codes = code_shas()
     main = json.loads(Path(a.main_summary).read_bytes())
     main_plan = json.loads((Path(a.main_out) / "plan.json").read_bytes())
-    version = tool.plan_split_version(pl)
-    if tool.plan_split_version(main_plan) != version or main.get("split_version", tool.SPLIT_V1) != version:
+    version = tool.plan_split_version(pl, a.split_version)
+    if tool.plan_split_version(main_plan, version) != version or main.get("split_version", tool.SPLIT_V1) != version:
         raise SystemExit("main tree and coverage tree use different split versions")
     per_ds = []
     counts = collections.Counter()
@@ -419,7 +418,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=("plan", "build", "summarize"))
     ap.add_argument("--out")
-    ap.add_argument("--split-version", choices=tuple(tool.SPLIT_VERSIONS), default=tool.SPLIT_V1)
+    ap.add_argument("--split-version", choices=tuple(tool.SPLIT_VERSIONS), default=tool.SPLIT_V2,
+                    help=f"default {tool.SPLIT_V2} (target-free); {tool.SPLIT_V1} only when passed explicitly")
     ap.add_argument("--main-out", help="the main tree whose plan/summary this coverage summary is read with")
     ap.add_argument("--datasets")
     ap.add_argument("--main-summary")

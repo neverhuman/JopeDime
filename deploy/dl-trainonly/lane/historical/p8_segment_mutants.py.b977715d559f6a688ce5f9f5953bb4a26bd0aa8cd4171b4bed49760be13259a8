@@ -1,0 +1,289 @@
+"""Mutant harness for tests/test_p8_segment_transition.py (P8 segment transition guards).
+
+Each mutant is a fresh COPY of SRC (dltrain/, tools/, tests/__init__.py, tests/fixtures_p7.py and the test file) under
+RUN/tmp/p8-segment-tests/mutants-<stamp>/<name>/, with exactly one guard disabled (or one carried-state rule broken).
+The suite runs in that copy with cwd = the copy and PYTHONPATH = the copy only, so the mutated modules are the ones
+imported. The test module itself refuses to run if dltrain resolves outside its own tree (P8SEG-IMPORT-GUARD); a
+mutant whose output shows that guard is a HARNESS ERROR, never a detection. Every mutation must match its source text
+exactly once.
+
+A mutant counts as DETECTED when a test that passes in the unmutated baseline copy fails or errors. Tests listed in
+--exclude (known baseline failures) are dropped before the run, and the run stops at the first failure (failfast).
+Mutants marked "layer" disable one layer of a multi-layer guard: they may survive by design, and their combined
+mutant must be detected.
+
+Nothing is deleted. Run inside the lane slice:
+  RUN/tmp/p2fix3/py.sh RUN/tmp/p8-segment-tests/p8_segment_mutants.py [--jobs 3] [--exclude TEST_ID ...] [NAME ...]
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+import concurrent.futures
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+ROOT = RUN / "tmp" / "p8-segment-tests"
+PY = "/home/ubuntu/.venvs/jope-dltrain-v1/bin/python"
+TEST_MODULE = "tests.test_p8_segment_transition"
+COPY_FILES = ("tests/__init__.py", "tests/fixtures_p7.py", "tests/test_p8_segment_transition.py")
+COPY_DIRS = ("dltrain", "tools")
+TIMEOUT_S = 1800
+
+RUNNER = r'''
+import json, sys, unittest
+exclude = set(json.loads(sys.argv[1]))
+suite = unittest.defaultTestLoader.loadTestsFromName("tests.test_p8_segment_transition")
+def flat(s):
+    for t in s:
+        if isinstance(t, unittest.TestSuite):
+            yield from flat(t)
+        else:
+            yield t
+keep = unittest.TestSuite([t for t in flat(suite) if t.id() not in exclude])
+res = unittest.TextTestRunner(verbosity=2, failfast=True).run(keep)
+bad = [t.id() for t, _ in res.failures + res.errors]
+print("P8MUT_RESULT " + json.dumps({"ran": res.testsRun, "failed": bad, "ok": res.wasSuccessful()}))
+'''
+
+
+def early_return(func: str, value: str = "None"):
+    """A mutation that makes ``func`` (a module-level def) return ``value`` before its first statement."""
+    def apply(text: str) -> str:
+        nodes = [n for n in ast.parse(text).body if isinstance(n, ast.FunctionDef) and n.name == func]
+        if len(nodes) != 1:
+            raise RuntimeError(f"expected one def {func}, found {len(nodes)}")
+        first = nodes[0].body[0]
+        lines = text.splitlines(keepends=True)
+        lines.insert(first.lineno - 1, " " * first.col_offset + f"return {value}\n")
+        return "".join(lines)
+    apply.label = f"early return {value} in {func}"
+    return apply
+
+
+def replace(old: str, new: str):
+    def apply(text: str) -> str:
+        n = text.count(old)
+        if n != 1:
+            raise RuntimeError(f"mutation text found {n} times: {old[:80]!r}")
+        return text.replace(old, new)
+    apply.label = f"{old.strip()[:70]!r} -> {new.strip()[:50]!r}"
+    return apply
+
+
+T, TR = "dltrain/train.py", "dltrain/tranche.py"
+PARENT_PRE = early_return("_check_transition_parent")
+PARENT_POST = replace('    if transition is not None and point.pointer.manifest_sha256 != plan["segment"]'
+                      '["parent_checkpoint_manifest_sha256"]:', "    if False:")
+PARENT_RUN_MANIFEST = replace('            if resume.pointer_manifest_sha256 != seg["parent_checkpoint_manifest_sha256"]:',
+                              "            if False:")
+PARENT_RUN_STEP = replace('            if closure.step != seg["start_step"]:', "            if False:")
+PARENT_RUN_PLAN = replace('            if closure.identities.get("run_plan_sha256") != seg["parent_plan_sha256"]:',
+                          "            if False:")
+PRE_STEP = replace('    if manifest["step"] != seg["start_step"]:', "    if False:")
+PRE_PLAN = replace('    if manifest["identities"].get("run_plan_sha256") != seg["parent_plan_sha256"]:', "    if False:")
+
+# name -> (kind, [(file, mutation), ...]); kind "guard" must be detected, "layer" may survive by design.
+MUTANTS = {
+    # ---- tranche prefix rule (train.check_tranche_prefix / _check_entries)
+    "prefix_noop": ("guard", [(T, early_return("check_tranche_prefix"))]),
+    "prefix_context_ids_only": ("guard", [(T, replace("        if entries[i] != parent_entries[i]:",
+                                                      '        if entries[i]["context_sha256"] != '
+                                                      'parent_entries[i]["context_sha256"]:'))]),
+    "prefix_length_only": ("guard", [(T, replace("        if entries[i] != parent_entries[i]:",
+                                                 "        if False:"))]),
+    "duplicate_context_allowed": ("guard", [(T, replace('        if e["context_sha256"] in seen:',
+                                                        "        if False:"))]),
+    # ---- plan-level transition rules (train._check_transition)
+    "check_transition_noop": ("guard", [(T, early_return("_check_transition"))]),
+    "plan_diff_off": ("guard", [(T, replace("    if diff:\n", "    if False:\n"))]),
+    "plan_core_ignores_all_refs": ("guard", [(T, replace(
+        '    core["refs"] = {k: v for k, v in plan["refs"].items() if k not in _TRANSITION_REFS}',
+        '    core["refs"] = {}'))]),
+    "parent_plan_sha_off": ("guard", [(T, replace('    if seg["parent_plan_sha256"] != plan_sha256(parent):',
+                                                  "    if False:"))]),
+    "parent_manifest_sha_off": ("guard", [(T, replace(
+        '    if corpus_manifest_sha256(transition.parent_manifest) != pseg["corpus_manifest_sha256"]:',
+        "    if False:"))]),
+    "manifest_sha_off": ("guard", [(T, replace(
+        '    if corpus_manifest_sha256(transition.manifest) != seg["corpus_manifest_sha256"]:', "    if False:"))]),
+    "transition_data_check_off": ("guard", [(T, early_return("_check_transition_data"))]),
+    "not_segment_check_off": ("guard", [(T, replace(
+        '    if seg is None or seg["index"] < 1:\n        raise TransitionRefused("transition refused: the plan is not',
+        '    if False:\n        raise TransitionRefused("transition refused: the plan is not'))]),
+    # ---- named parent checkpoint (three layers: read-only pre-check, post-restore check, _start_resume checks)
+    "parent_precheck_off": ("guard", [(T, PARENT_PRE)]),
+    "parent_precheck_step_off": ("guard", [(T, PRE_STEP)]),
+    "parent_precheck_plan_off": ("guard", [(T, PRE_PLAN)]),
+    "parent_post_restore_check_off": ("layer", [(T, PARENT_POST)]),
+    "parent_start_resume_checks_off": ("layer", [(T, PARENT_RUN_MANIFEST), (T, PARENT_RUN_STEP), (T, PARENT_RUN_PLAN)]),
+    "parent_all_layers_off": ("guard", [(T, PARENT_PRE), (T, PARENT_POST), (T, PARENT_RUN_MANIFEST),
+                                        (T, PARENT_RUN_STEP), (T, PARENT_RUN_PLAN)]),
+    "start_step_all_layers_off": ("guard", [(T, PRE_STEP), (T, PARENT_RUN_STEP)]),
+    # ---- identities relaxed by a transition
+    "mutable_set_widened": ("guard", [(T, replace(
+        '_TRANSITION_MUTABLE = frozenset({"run_plan_sha256", "train_data_sha256", "sampler_fit_sha256"})',
+        "_TRANSITION_MUTABLE = frozenset(RESUME_IDENTITY_KEYS)"))]),
+    "relax_everything_at_use": ("guard", [(T, replace("            relaxed = _TRANSITION_MUTABLE",
+                                                      "            relaxed = frozenset(RESUME_IDENTITY_KEYS)"))]),
+    "needs_transition_off": ("guard", [(T, replace(
+        '            raise TransitionRefused("resume refused: this segment plan\'s first launch needs a Transition")',
+        "            pass"))]),
+    # ---- carried state (no reset at the boundary)
+    "cursor_reset_on_transition": ("guard", [(T, replace(
+        '            sampler_state["fit_sha256"] = self.data.fit.sha256()      # the cursor carries over to the new fit',
+        '            sampler_state["fit_sha256"] = self.data.fit.sha256()\n            sampler_state["cursor"] = 0'))]),
+    "rng_reseeded_on_transition": ("guard", [(T, replace(
+        "        ckpt.apply_closure(closure, model=self.net, optimizer=self.opt, scheduler=self.sched)  # RNG restored last",
+        "        ckpt.apply_closure(closure, model=self.net, optimizer=self.opt, scheduler=self.sched)\n"
+        "        if transition is not None:\n            seed_fresh(self.run_seed)"))]),
+    "optimizer_reset_on_transition": ("guard", [(T, replace(
+        "        ckpt.apply_closure(closure, model=self.net, optimizer=self.opt, scheduler=self.sched)  # RNG restored last",
+        "        ckpt.apply_closure(closure, model=self.net, optimizer=self.opt, scheduler=self.sched)\n"
+        "        if transition is not None:\n            self.opt.state.clear()"))]),
+    "schedule_reset_on_transition": ("guard", [(T, replace(
+        "        ckpt.apply_closure(closure, model=self.net, optimizer=self.opt, scheduler=self.sched)  # RNG restored last",
+        "        ckpt.apply_closure(closure, model=self.net, optimizer=self.opt, scheduler=self.sched)\n"
+        "        if transition is not None:\n            self.sched.last_epoch = 0\n"
+        "            for _g, _b in zip(self.opt.param_groups, self.sched.base_lrs):\n"
+        "                _g['lr'] = _b * self.sched.lr_lambdas[0](0)"))]),
+    # ---- loader-side guards (dltrain/tranche.py)
+    "label_path_noop": ("guard", [(TR, early_return("assert_label_path", "Path(path)"))]),
+    "label_path_lexical_only": ("guard", [(TR, replace(
+        "    for form in (str(p), str(Path(p).absolute()), str(p.resolve())):", "    for form in (str(p),):"))]),
+    "inner_cv_record_noop": ("guard", [(TR, early_return("assert_inner_cv_record", "rec"))]),
+    "leaky_keys_off": ("guard", [(TR, replace("    leaky = _leaky_keys(rec)", "    leaky = []"))]),
+    "fold_kind_off": ("guard", [(TR, replace(
+        '        if not isinstance(f, Mapping) or f.get("kind") != "inner_cv":',
+        "        if not isinstance(f, Mapping):"))]),
+    "fold_index_off": ("guard", [(TR, replace("        if idx != list(range(INNER_CV_FOLDS)):", "        if False:"))]),
+    "admit_noop": ("guard", [(TR, early_return("admit_contexts", "[dict(r) for r in rows]"))]),
+    "admit_skips_admission": ("guard", [(TR, replace(
+        '        a = admission.check(view_id=row["view_id"], assignment=row["assignment"])',
+        '        a = row["assignment"]'))]),
+    "admit_dev_role_off": ("guard", [(TR, replace('            if row["split_role"] != "dev":', "            if False:"))]),
+    "admit_train_role_off": ("guard", [(TR, replace('            if row["split_role"] not in TRAIN_SPLIT_ROLES:',
+                                                    "            if False:"))]),
+}
+
+
+def sha_file(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def make_copy(dest: Path) -> None:
+    dest.mkdir(parents=True)
+    for d in COPY_DIRS:
+        shutil.copytree(SRC / d, dest / d, ignore=shutil.ignore_patterns("__pycache__"))
+    (dest / "tests").mkdir()
+    for f in COPY_FILES:
+        shutil.copy2(SRC / f, dest / f)
+    (dest / "p8_mutant_runner.py").write_text(RUNNER)
+
+
+def run_suite(copy: Path, exclude: list[str], log: Path) -> dict:
+    env = {"PYTHONPATH": str(copy), "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1",
+           "TMPDIR": str(RUN / "tmp"), "CUDA_VISIBLE_DEVICES": "", "OMP_NUM_THREADS": "4",
+           "AWS_CONFIG_FILE": "/dev/null", "AWS_SHARED_CREDENTIALS_FILE": "/dev/null", "HOME": "/home/ubuntu",
+           "PATH": "/usr/bin:/bin"}
+    t0 = time.monotonic()
+    proc = subprocess.run([PY, "p8_mutant_runner.py", json.dumps(exclude)], cwd=copy, env=env, capture_output=True,
+                          text=True, timeout=TIMEOUT_S)
+    log.write_text(proc.stdout + "\n---- stderr ----\n" + proc.stderr)
+    out = {"returncode": proc.returncode, "wall_s": round(time.monotonic() - t0, 1),
+           "import_guard": "P8SEG-IMPORT-GUARD" in proc.stderr + proc.stdout}
+    lines = [x for x in proc.stdout.splitlines() if x.startswith("P8MUT_RESULT ")]
+    out.update(json.loads(lines[0].split(" ", 1)[1]) if lines else {"ran": None, "failed": None, "ok": None})
+    m = re.findall(r"^(?:FAIL|ERROR): (\S+) .*$", proc.stderr, re.M)
+    out["first_failure_line"] = m[0] if m else None
+    return out
+
+
+def run_mutant(base: Path, name: str, exclude: list[str]) -> dict:
+    kind, muts = MUTANTS[name] if name != "baseline_unmutated" else ("baseline", [])
+    d = base / name
+    make_copy(d)
+    applied = []
+    for rel, fn in muts:
+        p = d / rel
+        before = p.read_text()
+        after = fn(before)
+        if after == before:
+            raise RuntimeError(f"{name}: mutation left {rel} unchanged")
+        p.write_text(after)
+        applied.append({"file": rel, "mutation": fn.label, "src_sha256": sha_file(SRC / rel),
+                        "mutant_sha256": sha_file(p)})
+    res = run_suite(d, exclude, base / f"{name}.log")
+    if res["import_guard"]:
+        verdict = "HARNESS_ERROR"
+    elif kind == "baseline":
+        verdict = "BASELINE_OK" if res["ok"] else "BASELINE_FAILED"
+    elif res["ok"] is None:
+        verdict = "HARNESS_ERROR"
+    else:
+        verdict = "SURVIVED" if res["ok"] else "DETECTED"
+    return {"name": name, "kind": kind, "verdict": verdict, "applied": applied, **res}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("names", nargs="*")
+    ap.add_argument("--jobs", type=int, default=3)
+    ap.add_argument("--exclude", action="append", default=[], help="test id to drop (a known baseline failure)")
+    args = ap.parse_args()
+    names = args.names or sorted(MUTANTS)
+    unknown = sorted(set(names) - set(MUTANTS))
+    if unknown:
+        raise SystemExit(f"unknown mutants {unknown}")
+    src_before = {f: sha_file(SRC / f) for f in ("dltrain/train.py", "dltrain/tranche.py", COPY_FILES[-1])}
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    base = ROOT / f"mutants-{stamp}"
+    base.mkdir(parents=True)
+    print(f"mutant root {base}; SRC sha256 {json.dumps(src_before)}", flush=True)
+    baseline = run_mutant(base, "baseline_unmutated", args.exclude)
+    print(json.dumps({k: baseline[k] for k in ("name", "verdict", "ran", "failed", "wall_s")}), flush=True)
+    results = [baseline]
+    if baseline["verdict"] != "BASELINE_OK":
+        print("baseline copy does not pass: mutant verdicts would be meaningless; stopping", flush=True)
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
+            futs = {pool.submit(run_mutant, base, n, args.exclude): n for n in names}
+            for fut in concurrent.futures.as_completed(futs):
+                try:
+                    r = fut.result()
+                except Exception as err:  # noqa: BLE001 - a broken mutation is a harness error, reported
+                    r = {"name": futs[fut], "kind": MUTANTS[futs[fut]][0], "verdict": "HARNESS_ERROR",
+                         "error": repr(err)[:500]}
+                results.append(r)
+                print(json.dumps({k: r.get(k) for k in ("name", "kind", "verdict", "failed", "wall_s", "error")}),
+                      flush=True)
+    src_after = {f: sha_file(SRC / f) for f in src_before}
+    summary = {
+        "schema": "jope.dl-p8-segment-mutants/v1", "stamp": stamp, "src": str(SRC), "src_sha256_before": src_before,
+        "src_sha256_after": src_after, "src_unchanged": src_before == src_after, "exclude": args.exclude,
+        "counts": {v: sum(1 for r in results if r["verdict"] == v)
+                   for v in ("BASELINE_OK", "BASELINE_FAILED", "DETECTED", "SURVIVED", "HARNESS_ERROR")},
+        "guard_survivors": sorted(r["name"] for r in results if r["verdict"] == "SURVIVED" and r["kind"] == "guard"),
+        "layer_survivors": sorted(r["name"] for r in results if r["verdict"] == "SURVIVED" and r["kind"] == "layer"),
+        "results": sorted(results, key=lambda r: r["name"]),
+    }
+    (base / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
+    print(json.dumps({k: summary[k] for k in ("counts", "guard_survivors", "layer_survivors", "src_unchanged")}),
+          flush=True)
+    print(f"summary {base / 'summary.json'}", flush=True)
+    ok = (baseline["verdict"] == "BASELINE_OK" and not summary["guard_survivors"]
+          and not summary["counts"]["HARNESS_ERROR"] and summary["src_unchanged"])
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

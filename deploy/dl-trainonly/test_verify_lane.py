@@ -31,9 +31,11 @@ class Custody(unittest.TestCase):
             "files": {"src/dl_training_v1/one.py": self.record(middle)},
             "historical_versions": {self.history_name: self.record(historical)}}
         self.mid_sha = self.put_json("predecessor/mid/MANIFEST.json", self.mid)
+        self.abandoned_sha = v.sha(b"abandoned staging bytes\n")
         self.manifest = {"schema": "jope.dl-lane-handoff/v2", "supersedes_sha256": self.mid_sha,
             "files": {"src/dl_training_v1/one.py": self.record(current)},
-            "historical_versions": {self.history_name: self.record(historical)}}
+            "historical_versions": {self.history_name: self.record(historical)},
+            v.ABANDONED: [{"manifest": "gone/MANIFEST.json", "manifest_sha256": self.abandoned_sha, "reason": "fixture"}]}
         self.pin = self.put_json("MANIFEST.json", self.manifest)
         for name, data in (("src/dl_training_v1/one.py", current), ("historical/" + self.history_name, historical),
                            (self.supplement_name, supplement), (self.middle_supplement, middle)):
@@ -77,17 +79,20 @@ class Custody(unittest.TestCase):
         self.assertEqual(set(restored[self.old_sha]), set(self.old["files"]))
         self.assertEqual(restored[self.mid_sha], {"src/dl_training_v1/one.py": self.middle_supplement})
         self.assertEqual(restored[self.old_sha]["src/dl_training_v1/prior.py"], self.supplement_name)
+        self.assertEqual(report["abandoned_unpushed_stagings"], [self.abandoned_sha])
 
     def test_actual_import_matches_frozen_producer_pins(self):
         report = v.verify(Path(v.__file__).with_name("lane"))
         self.assertEqual(report["handoff_sha256"], v.HANDOFF_SHA)
         self.assertEqual(report["predecessor_sha256"], [expected for _, expected in v.PREDECESSORS])
-        self.assertEqual(report["current_files"], 156)
-        self.assertEqual(report["historical_versions"], 88)
+        self.assertEqual(report["current_files"], 158)
+        self.assertEqual(report["historical_versions"], 190)
         self.assertEqual(report["supplemental_versions"], 3)
-        self.assertEqual(report["python_syntax_files"], 146)
+        self.assertEqual(report["python_syntax_files"], 148)
         self.assertEqual([len(report["predecessor_restoration"][expected]) for _, expected in v.PREDECESSORS],
-                         [155, 147, 143])
+                         [156, 155, 147, 143])
+        self.assertEqual(report["abandoned_unpushed_stagings"],
+                         ["e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5"])
 
     def test_same_width_current_edit_refused(self):
         self.put("src/dl_training_v1/one.py", b"x = 2\n")
@@ -222,6 +227,33 @@ class Custody(unittest.TestCase):
         self.repin_chain()
         with self.assertRaisesRegex(ValueError, "historical predecessor version lost"):
             self.verify()
+
+    def test_abandoned_staging_inside_chain_refused(self):
+        self.manifest[v.ABANDONED][0]["manifest_sha256"] = self.mid_sha
+        self.pin = self.put_json("MANIFEST.json", self.manifest)
+        with self.assertRaisesRegex(ValueError, "abandoned staging inside custody chain"):
+            self.verify()
+
+    def test_abandoned_staging_path_inside_chain_refused(self):
+        self.manifest[v.ABANDONED][0]["manifest"] = "mid/MANIFEST.json"
+        self.pin = self.put_json("MANIFEST.json", self.manifest)
+        with self.assertRaisesRegex(ValueError, "abandoned staging inside custody chain"):
+            self.verify()
+
+    def test_abandoned_staging_recorded_by_predecessor_refused(self):
+        self.mid[v.ABANDONED] = [{"manifest": "MANIFEST.json", "manifest_sha256": v.sha(
+            (json.dumps(self.old, sort_keys=True) + "\n").encode())}]
+        self.repin_chain()
+        with self.assertRaisesRegex(ValueError, "abandoned staging inside custody chain"):
+            self.verify()
+
+    def test_malformed_abandoned_staging_record_refused(self):
+        for bad in ({"manifest": "gone/MANIFEST.json"}, [{"manifest": "gone/MANIFEST.json", "manifest_sha256": "e1ca4e35"}],
+                    ["e1ca4e35"], [{"manifest_sha256": self.abandoned_sha}]):
+            self.manifest[v.ABANDONED] = bad
+            self.pin = self.put_json("MANIFEST.json", self.manifest)
+            with self.assertRaisesRegex(ValueError, "invalid abandoned staging record"):
+                self.verify()
 
     def test_redundant_or_unreferenced_supplement_refused(self):
         name = "predecessor/mid/one.py." + v.sha(b"x = 1\n")

@@ -189,6 +189,23 @@ class Gates(Base):
         self.assertEqual((rec["status"], rec["reason"]), ("failed", "split_gate_failed"))
         self.assertIn("split_moves_under_group_preserving_changes", rec["detail"])
 
+    def test_a_group_column_tied_to_the_target_is_refused_before_the_split(self):
+        """PR #218 finding 8: a feature column that copies the target (x3 := y, not the last column) or determines it
+        is refused at dataset level; no context is written and the split is never computed."""
+        mc = M.copy(); mc[:, 3] = mc[:, 5]
+        md = M.copy(); md[:, 5] = tb._r9(np.sin(7.0 * md[:, GCOL]) ** 2)       # y a non-linear function of the group column
+        for m, prof, want in ((mc, rb.profile_v2g(3, "x3", REPL), "group_bytes_equal_target_bytes"),
+                              (md, profile(), "target_function_of_group")):
+            with self.subTest(want=want):
+                shard = self.dir / f"shard-{want}"; shard.mkdir()
+                with mock.patch.object(g, "split", side_effect=AssertionError("split computed for a refused dataset")):
+                    _, rec = self.build(m=m, shard=shard, prof=prof, expect_done=False)
+                self.assertEqual((rec["status"], rec["reason"], rec["detail"], rec["group_target_tie"]),
+                                 ("failed", "group_column_tied_to_target", want, want))
+                self.assertEqual([d for d in shard.iterdir() if d.name != "_datasets"], [])
+        _, ok = self.build()
+        self.assertIsNone(ok["group_target_tie"])
+
     def test_a_change_that_merges_groups_is_not_valid(self):
         """The validity check is the component structure WITH groups: a fold change that moves the fold's group values
         onto a level another fold holds merges groups and must be invalid (so it can never count as invariance)."""
@@ -597,11 +614,25 @@ class Evidence(unittest.TestCase):
         five = rb.group_disposition(self.evidence(tb.lines_of(M), GCOL, [GCOL]), tb.COLS)
         self.assertEqual((five["empty_folds"], five["effective_folds"]), ([], 5))
 
+    def test_a_reproducing_column_tied_to_the_target_is_refused(self):
+        m = M.copy(); m[:, 3] = m[:, 5]                                    # x3 copies y
+        ev = self.evidence(tb.lines_of(m), 3, [3, GCOL])
+        self.assertEqual(ev["reproducing"], [3])
+        self.assertEqual((ev["per_candidate"]["3"]["target_tie"], ev["per_candidate"][str(GCOL)]["target_tie"]),
+                         ("group_bytes_equal_target_bytes", None))
+        d = rb.group_disposition(ev, tb.COLS)
+        self.assertEqual((d["disposition"], d["reason"], d["detail"]), ("not_built", "group_column_tied_to_target",
+                                                                        {"3": "group_bytes_equal_target_bytes"}))
+        ok = self.evidence(tb.lines_of(M), GCOL, [GCOL])
+        self.assertIsNone(ok["per_candidate"][str(GCOL)]["target_tie"])
+
     def test_group_values_are_canonical_float64_values(self):
         gv = rb.t1_group_values(np.array([[-0.0, 1.0], [0.0, 1.0], [0.5, 1.0], [np.nan, 1.0], [np.nan, 2.0]]), 0)
         self.assertEqual(gv[0], gv[1]); self.assertNotEqual(gv[1], gv[2])
         self.assertEqual((gv[3], gv[4]), (rb.MISSING_GROUP, rb.MISSING_GROUP))
         self.assertEqual(gv[2], np.float64(0.5).tobytes())
+        self.assertNotEqual(len(rb.MISSING_GROUP), 8)                    # never decoded as a numeric '<f8' group value
+        self.assertIsNone(rb.rowsel_split_v2_groups._group_number(rb.MISSING_GROUP))
 
     def test_a_field_and_value_grouping_mismatch_is_refused(self):
         """'0.1' and '0.10' are one value but two registry groups."""

@@ -1,0 +1,49 @@
+"""Pilot equivalence: xbabe2 (live resolve_context, lane venv) vs xbabe3 (bundle replay, python3.12 + numpy 2.5.3 overlay),
+same tree path on both hosts. Every payload, match receipt and .done byte-identical; context.json and dataset records equal
+after removing only wall-clock/resource fields. Writes a create-only receipt (argv[3])."""
+import hashlib, json, sys
+from pathlib import Path
+A, B, out = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+TIMING = {"utc_us", "cpu_s", "wall_s", "maxrss_mb"}
+def strip(o):
+    if isinstance(o, dict):
+        return {k: strip(v) for k, v in o.items() if k not in TIMING}
+    if isinstance(o, list):
+        return [strip(x) for x in o]
+    return o
+def files(root):
+    return sorted(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file() and "/" in str(p.relative_to(root))
+                  and not p.name.endswith(".log") and "guard" not in p.name and "receipt" not in p.name)
+fa, fb = files(A), files(B)
+res = {"schema": "jope.dl-v2-rowsel-raw-fill-pilot-equivalence/v1", "a": {"tree": str(A), "host": "xbabe2", "epoch0": "live"},
+       "b": {"tree": str(B), "host": "xbabe3", "epoch0": "bundle"}, "same_file_set": fa == fb, "only_a": sorted(set(fa) - set(fb)),
+       "only_b": sorted(set(fb) - set(fa)), "files": {}}
+ok = fa == fb
+for f in sorted(set(fa) & set(fb)):
+    pa, pb = A / f, B / f
+    if pa.read_bytes() == pb.read_bytes():
+        res["files"][f] = {"equal": "bytes", "sha256": sha(pa)}
+    elif pa.name.endswith(".json"):
+        ja, jb = json.loads(pa.read_bytes()), json.loads(pb.read_bytes())
+        eq = strip(ja) == strip(jb)
+        res["files"][f] = {"equal": "after_timing_fields" if eq else False, "sha256_a": sha(pa), "sha256_b": sha(pb)}
+        ok &= eq
+    else:
+        res["files"][f] = {"equal": False, "sha256_a": sha(pa), "sha256_b": sha(pb)}
+        ok = False
+kinds = {}
+for f, v in res["files"].items():
+    k = f.rsplit("/", 1)[-1] if "/" in f else f
+    k = k if not k.endswith(".json") or k == "context.json" else ("_match" if f.startswith("_match") else "_datasets" if "_datasets" in f else k)
+    kinds.setdefault(k, {}).setdefault(str(v["equal"]), 0)
+    kinds[k][str(v["equal"])] += 1
+res["by_kind"] = kinds
+res["timing_fields_ignored"] = sorted(TIMING)
+res["passed"] = bool(ok)
+body = (json.dumps(res, indent=1, sort_keys=True) + "\n").encode()
+with open(out, "xb") as fh:
+    fh.write(body)
+out.chmod(0o444)
+print(json.dumps({"receipt": str(out), "sha256": hashlib.sha256(body).hexdigest(), "passed": res["passed"], "by_kind": kinds,
+                  "only_a": res["only_a"], "only_b": res["only_b"]}))

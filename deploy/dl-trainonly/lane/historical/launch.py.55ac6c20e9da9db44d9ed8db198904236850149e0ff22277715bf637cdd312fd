@@ -1,0 +1,159 @@
+"""P8 launch envelope (PLAN §5 P8, §6.8; owner rulings DL-TRAINING-PATH, GPU-BUDGET, UNITS).
+
+``python -m dltrain.launch --unit jopedime-dltrain-<name>-aN --run-dir DIR [--dry-run] -- <policylm_main run args>``
+
+- One fixed-name transient service per launch (``systemd-run --user --collect``), never a relauncher: no
+  ``Restart=``, no timer, no loop. A resume is a new, manual launch with its own unit name.
+- Unit properties: ``RuntimeMaxSec`` (to the grant deadline), ``MemoryMax`` (<= 16G on this lane), swap 0,
+  ``CPUQuota`` (default 400%), ``TasksMax``, ``Nice=10``, ``IOWeight=10``, stdout/stderr appended to a log file.
+- Environment: PYTHONPATH and the working directory are an immutable content-addressed snapshot of the lane source
+  (``RUN/build/p8-src/<tree12>/``), so a running unit never sees later edits; deterministic CUDA
+  (``CUBLAS_WORKSPACE_CONFIG=:4096:8``, ``CUDA_VISIBLE_DEVICES=0``); S3 only through ``AWS_PROFILE`` (resolved
+  in-process by its credential_process; no key material is exported, written or logged).
+- Refuses: a unit name outside ``jopedime-dltrain-*-a<N>``, a unit that already exists, host xbabe0, MemoryMax
+  above the cap. The admission probe itself runs inside the launched process before CUDA initialisation
+  (``policylm_main run``), whose self-declared create-only launch receipt binds pid, starttick, INVOCATION_ID,
+  executable/argv/run-plan/admission sha256 and the source identities.
+- ``--dry-run`` prints the exact unit properties and argv (JSON) and starts nothing. Every real launch writes a
+  create-only launch-request record ``<run-dir>/launch/<unit>.request.json`` first.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+from dltrain import common
+
+RUN_ROOT = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+SNAPSHOT_ROOT = RUN_ROOT / "build" / "p8-src"
+VENV_PY = "/home/ubuntu/.venvs/jope-dltrain-v1/bin/python"
+UNIT_RE = re.compile(r"jopedime-dltrain-[a-z0-9][a-z0-9-]{0,80}-a[1-9][0-9]{0,3}")
+MEMORY_RE = re.compile(r"([1-9][0-9]*)G")
+MEMORY_CAP_GIB = 16
+FORBIDDEN_HOSTS = ("xbabe0",)
+SNAPSHOT_DIRS = ("dltrain", "tools", "schemas")
+REQUEST_SCHEMA = "jope.dl-launch-request/v1"
+
+
+def src_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def tree_manifest(root: Path) -> list[tuple[str, str]]:
+    out = []
+    for d in SNAPSHOT_DIRS:
+        base = root / d
+        if not base.is_dir():
+            continue
+        for p in sorted(base.rglob("*")):
+            if p.is_file() and "__pycache__" not in p.parts:
+                out.append((str(p.relative_to(root)), common.sha256_file(p)))
+    return out
+
+
+def tree_sha256(manifest: list[tuple[str, str]]) -> str:
+    return common.sha256_bytes("".join(f"{path}\0{sha}\n" for path, sha in manifest).encode())
+
+
+def snapshot(root: Path | None = None, dest_root: Path = SNAPSHOT_ROOT) -> tuple[Path, str]:
+    """Copy the lane source (dltrain/, tools/, schemas/) into ``dest_root/<tree12>/`` once (content-addressed,
+    read-only files) and verify the copy hashes to the same tree; an existing snapshot is re-verified, never
+    rewritten."""
+    root = root or src_root()
+    manifest = tree_manifest(root)
+    tsha = tree_sha256(manifest)
+    dest = dest_root / tsha[:12]
+    if not dest.exists():
+        tmp = dest_root / f".tmp-{tsha[:12]}-{os.urandom(4).hex()}"
+        for rel, _sha in manifest:
+            (tmp / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(root / rel, tmp / rel)
+            os.chmod(tmp / rel, 0o444)
+        common.atomic_write(tmp / "SNAPSHOT.json", common.canonical({"tree_sha256": tsha, "files": manifest,
+                                                                     "source": str(root)}))
+        os.rename(tmp, dest)
+    got = tree_sha256(tree_manifest(dest))
+    if got != tsha:
+        raise RuntimeError(f"snapshot {dest} hashes to {got}, expected {tsha}")
+    return dest, tsha
+
+
+def unit_exists(unit: str) -> bool:
+    out = subprocess.run(["systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", f"{unit}.service"],
+                         capture_output=True, text=True, timeout=15).stdout
+    return bool(out.strip())
+
+
+def build_argv(*, unit: str, snap: Path, log: Path, run_args: list[str], memory_max: str = "16G",
+               cpu_quota: str = "400%", tasks_max: int = 512, runtime_max_s: int = 3600, aws: bool = False) -> list[str]:
+    if UNIT_RE.fullmatch(unit) is None:
+        raise ValueError(f"unit {unit!r} must match {UNIT_RE.pattern}")
+    m = MEMORY_RE.fullmatch(memory_max)
+    if m is None or int(m.group(1)) > MEMORY_CAP_GIB:
+        raise ValueError(f"MemoryMax {memory_max!r} must be <N>G with N <= {MEMORY_CAP_GIB}")
+    if not isinstance(runtime_max_s, int) or runtime_max_s < 60:
+        raise ValueError("runtime_max_s must be an integer >= 60")
+    env = {"PYTHONPATH": str(snap), "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1",
+           "TMPDIR": str(RUN_ROOT / "tmp"), "OMP_NUM_THREADS": "4", "MKL_NUM_THREADS": "4",
+           "CUDA_VISIBLE_DEVICES": "0", "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}
+    if aws:
+        env.update({"AWS_PROFILE": "veox-jepson-prod", "AWS_REGION": "us-east-2"})
+    argv = ["systemd-run", "--user", "--collect", "--slice=jopedime-dltrain.slice", f"--unit={unit}",
+            "-p", f"RuntimeMaxSec={runtime_max_s}", "-p", f"MemoryMax={memory_max}", "-p", "MemorySwapMax=0",
+            "-p", f"CPUQuota={cpu_quota}", "-p", f"TasksMax={tasks_max}", "-p", "Nice=10", "-p", "IOWeight=10",
+            "-p", f"StandardOutput=append:{log}", "-p", f"StandardError=append:{log}",
+            f"--working-directory={snap}"]
+    argv += [f"--setenv={k}={v}" for k, v in sorted(env.items())]
+    argv += [VENV_PY, "-m", "dltrain.policylm_main", "run", "--unit", unit] + list(run_args)
+    return argv
+
+
+def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    run_args: list[str] = []
+    if "--" in argv:
+        i = argv.index("--")
+        argv, run_args = argv[:i], argv[i + 1:]
+    ap = argparse.ArgumentParser(prog="dltrain.launch")
+    ap.add_argument("--unit", required=True)
+    ap.add_argument("--run-dir", required=True)
+    ap.add_argument("--memory-max", default="16G")
+    ap.add_argument("--cpu-quota", default="400%")
+    ap.add_argument("--runtime-max-s", type=int, default=3600)
+    ap.add_argument("--aws", action="store_true", help="give the unit AWS_PROFILE (S3 create-only store)")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args(argv)
+    host = socket.gethostname()
+    if host in FORBIDDEN_HOSTS:
+        raise SystemExit(f"refused: never {host}")
+    if "--run-dir" not in run_args:
+        run_args = ["--run-dir", args.run_dir] + run_args
+    run_dir = Path(args.run_dir)
+    log = run_dir / f"{args.unit}.log"
+    snap, tsha = (snapshot() if not args.dry_run else (src_root(), tree_sha256(tree_manifest(src_root()))))
+    full = build_argv(unit=args.unit, snap=snap, log=log, run_args=run_args, memory_max=args.memory_max,
+                      cpu_quota=args.cpu_quota, runtime_max_s=args.runtime_max_s, aws=args.aws)
+    req = {"schema": REQUEST_SCHEMA, "host": host, "unit": args.unit, "argv": full,
+           "argv_sha256": common.sha256_bytes(common.canonical(full)), "snapshot": str(snap), "tree_sha256": tsha,
+           "dry_run": args.dry_run, "utc_us": common.utc_us()}
+    if args.dry_run:
+        print(json.dumps(req, indent=1))
+        return 0
+    if unit_exists(args.unit):
+        raise SystemExit(f"refused: unit {args.unit} already exists (a new launch takes a new aN)")
+    common.immutable_write(run_dir / "launch" / f"{args.unit}.request.json", common.canonical(req))
+    out = subprocess.run(full, capture_output=True, text=True, timeout=60)
+    print(json.dumps({"unit": args.unit, "rc": out.returncode, "stdout": out.stdout.strip()[-400:],
+                      "stderr": out.stderr.strip()[-400:], "snapshot": str(snap), "tree_sha256": tsha}))
+    return out.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())

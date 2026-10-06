@@ -1,8 +1,14 @@
 """Provisional v2 train-only build, local and unpublished (L7b values: T1 decoded and re-fitted on outer-train rows).
 
-DEFAULT (--split-version registry-epoch0, unchanged): per epoch-0 context (scale_check.resolve_context lineage), the
-outer-train/test rows R/T are the epoch-0 context's (the registry folds, jope.virtual-splits/v1 grouped-stratified-
-kfold/v1). Writes under OUT/<shard>/<view_id>/:
+NO DEFAULT SPLIT (PR #218 review finding 10; owner ruling: defaults must be target-free). --split-version is required;
+the tool refuses to run without an explicit rowsel-raw-split-v2 or rowsel-split-v2-groups, and the functions that take a
+split version (compute_dataset, run_dataset_v2, make_plan, build_v2, code_shas_v2, routes) have no default and refuse
+None. registry-epoch0 runs only when passed explicitly (historical replay of the epoch-0 trees).
+
+REGISTRY (explicit --split-version registry-epoch0 only; historical replay, byte-identical to the epoch-0 L7b tree): per
+epoch-0 context (scale_check.resolve_context lineage), the outer-train/test rows R/T are the epoch-0 context's (the
+registry folds, jope.virtual-splits/v1 grouped-stratified-kfold/v1, whose duplicate key reads y). Writes under
+OUT/<shard>/<view_id>/:
   encoder.jtt1.gz   train-only min-max JTT1 (t1prep.prepare): the encoders' training-side input
   teacher.jtt1.gz   same rows, columns and inner folds, values re-fitted (categories re-coded, target copies dropped)
                     but NOT min-max scaled: the evaluator in patch 0001 scales per fit on its own fit rows
@@ -62,6 +68,9 @@ RIGHTS-RESEARCH-clean-v2gsplit; tools/v2_build_l7a.py: L7a-v2gsplit), with the s
   group value the exact float64 bytes of that T1 column of the epoch-0 data object A (the bytes the registry grouped on;
               A has no missing cell); row i of the L7a universe is A row i, so both routes group identically
   gates       the v2 gates plus: no annotated group straddles folds (rowsel_split_v2_groups.straddling_groups == 0)
+  target tie  a group column that copies or determines the target is refused before the split
+              (rowsel_split_v2_groups.target_tied_group over every row of A; reason recorded, no context built;
+              PR #218 finding 8); the last-column and census is_target refusals stay
   folds       a dataset with fewer than 5 components (e.g. 4 annotated groups; the registry's effective_folds was 4 too)
               leaves the trailing folds empty: they are recorded (split.empty_folds) and get no context; any other
               empty fold is refused
@@ -71,7 +80,7 @@ RIGHTS-RESEARCH-clean-v2gsplit; tools/v2_build_l7a.py: L7a-v2gsplit), with the s
               names the as-built v2split contexts of the dataset
 
 Usage (inside the lane slice, RUN/tmp/p2fix3/py.sh):
-  v2_build_local.py --out DIR --shard I --of N [--views v1,v2]                     registry folds (unchanged default)
+  v2_build_local.py --split-version registry-epoch0 --out DIR --shard I --of N [--views v1,v2]   (explicit replay only)
   v2_build_local.py --split-version rowsel-raw-split-v2 --plan {clean-l7b,research-clean} --out NEW_TREE --of N
   v2_build_local.py --split-version rowsel-raw-split-v2 --out NEW_TREE --shard I --of N [--datasets h1,h2]
   v2_build_local.py --split-version rowsel-raw-split-v2 --summarize --out NEW_TREE --of N --tests-log LOG --mutants JSON
@@ -213,7 +222,7 @@ def build_registry(a):
 
 # ======================================================================================== split v2 (NONRAW-SPLIT-A)
 
-SPLIT_REGISTRY = "registry-epoch0"                    # the default: the epoch-0 contexts' own R/T (registry folds)
+SPLIT_REGISTRY = "registry-epoch0"                    # explicit only (replay): the epoch-0 contexts' own R/T (registry folds)
 SPLIT_V2 = rowsel_raw_split_v2.SPLIT_SCHEMA           # "rowsel-raw-split-v2"
 SPLIT_V2G = rowsel_split_v2_groups.SPLIT_SCHEMA     # "rowsel-split-v2-groups" (GROUP-UNION-B)
 SPLIT_VERSIONS = (SPLIT_REGISTRY, SPLIT_V2, SPLIT_V2G)
@@ -327,14 +336,23 @@ V2_CODE_FILES = ("tools/v2_build_local.py", "dltrain/t1prep.py", "dltrain/traino
                  "dltrain/cpuguard.py")
 
 
+def require_split_version(version, allowed=None) -> str:
+    """No default split (PR #218 finding 10): a split version must be passed explicitly; None or an unknown one is refused."""
+    allowed = (SPLIT_V2, SPLIT_V2G) if allowed is None else tuple(allowed)
+    if version not in allowed:
+        raise SplitV2Error("split_version_required", f"{version!r} not in {allowed}")
+    return version
+
+
 def code_shas_v2(extra=(), version=None) -> dict:
+    require_split_version(version)
     root = Path(__file__).resolve().parents[1]
     files = V2_CODE_FILES + tuple(extra) + (("dltrain/rowsel_split_v2_groups.py",) if version == SPLIT_V2G else ())
     return {f: sha((root / f).read_bytes()) for f in files}
 
 
 def routes(version) -> dict:
-    return ROUTES_V2G if version == SPLIT_V2G else ROUTES
+    return ROUTES_V2G if require_split_version(version) == SPLIT_V2G else ROUTES
 
 
 # ------------------------------------------------------------------------------------------- the split
@@ -419,7 +437,7 @@ def split_fn_v2g(partition: str, group_values):
     rowsel_raw.feature_bytes), annotated group values FIXED (aligned with positions 0..n-1)."""
     def fn(dataset_hash, positions, values, specs, folds=OUTER_FOLDS):
         return rowsel_split_v2_groups.split(dataset_hash, [int(p) for p in positions], rowsel_raw.feature_bytes(values, specs),
-                                            group_values, partition, folds)
+                                            group_values=group_values, partition=partition, folds=folds)   # explicit (F5)
     return fn
 
 
@@ -480,13 +498,24 @@ def cut_block_v2g(srep, e) -> dict:
                             "canonical JSON {schema, dataset_hash, partition, group_column {index, name}, folds}"}
 
 
+GROUP_TARGET_TIE = ("rowsel_split_v2_groups.target_tied_group(group values, A[:, -1]) over every row of A: refuses a group "
+                    "column whose '<f8' bytes equal the T1 target, that is an affine copy of it, or that determines it "
+                    "(PR #218 finding 8). Dataset-level admission only: split() and components() never receive y.")
+
+
 def t1_group_values(A, index: int) -> list:
-    """Annotated group value per universe row: the exact (canonical) float64 bytes of T1 column `index` of A."""
+    """Annotated group value per universe row: the exact (canonical) float64 bytes of T1 column `index` of A. Refused when
+    the column is not a feature column (the last is the target) or when it copies or determines the target
+    (rowsel_split_v2_groups.target_tied_group against A's target column, every row; the reason is recorded)."""
     A = np.asarray(A, dtype=np.float64)
     if not 0 <= int(index) < A.shape[1] - 1:
         raise SplitV2Error("group_column_not_a_feature", f"{index} of {A.shape[1]} columns (the last is the target)")
     col = np.ascontiguousarray(A[:, int(index)] + 0.0, dtype="<f8")
-    return [col[i:i + 1].tobytes() for i in range(col.shape[0])]
+    values = [col[i:i + 1].tobytes() for i in range(col.shape[0])]
+    tie = rowsel_split_v2_groups.target_tied_group(values, A[:, -1])
+    if tie is not None:
+        raise SplitV2Error("group_column_target_tied", f"{tie}: T1 column {int(index)}")
+    return values
 
 
 def attach_groups(inp: dict, e, A) -> dict:
@@ -504,7 +533,10 @@ def attach_groups(inp: dict, e, A) -> dict:
     inp["group_values"] = t1_group_values(A, gc["spec"]["index"])
     inp["universe"] = dict(inp["universe"], group_column=gc["spec"], annotated_groups=len(set(inp["group_values"])),
                            group_value_basis="exact float64 bytes of T1 column group_column.index of the epoch-0 data object A "
-                                             "(the bytes the registry grouped on); universe row i is A row i")
+                                             "(the bytes the registry grouped on); universe row i is A row i",
+                           group_target_tie={"result": "admit", "rule": GROUP_TARGET_TIE,
+                                             "rel_tol": rowsel_split_v2_groups.AFFINE_REL_RMSE,
+                                             "reasons_checked": list(rowsel_split_v2_groups.TARGET_TIE_REASONS)})
     return inp
 
 
@@ -677,9 +709,10 @@ def epoch0_replaced(e, sealed: int, holdout, new_contexts: int = OUTER_FOLDS) ->
             "replaced_cut": e["registry_split"]["sha256"]}
 
 
-def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None, version=SPLIT_V2) -> dict:
+def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None, version=None) -> dict:
     """Every gate and every context of one dataset in memory; nothing is written. Returns {'passed', 'reason', 'detail',
-    'split', 'cut', 'results': [(view_id, files, context record)], 'contexts': [summaries]}."""
+    'split', 'cut', 'results': [(view_id, files, context record)], 'contexts': [summaries]}. `version` is required."""
+    require_split_version(version)
     h = e["dataset_hash"]
     route = routes(version)[mode]
     partition = route["partition"]
@@ -785,9 +818,10 @@ def write_dataset(out_shard: Path, results) -> tuple:
     return len(pending), already
 
 
-def run_dataset_v2(e, out_shard: Path, mode: str, loader, existing, codes, guard=None, log=print, ctx_args=(), version=SPLIT_V2) -> dict:
+def run_dataset_v2(e, out_shard: Path, mode: str, loader, existing, codes, guard=None, log=print, ctx_args=(), version=None) -> dict:
     """Load, gate and build one dataset; write only when every gate of every fold passed. The dataset record goes to
-    out_shard/_datasets/<h>.json (also on failure)."""
+    out_shard/_datasets/<h>.json (also on failure). `version` is required (refused before anything is read or written)."""
+    require_split_version(version)
     h = e["dataset_hash"]
     t0, c0 = time.time(), cpu_s()
     rec = {"schema": DATASET_SCHEMA, "dataset_hash": h, "values_mode": mode, "split_version": version,
@@ -1023,9 +1057,9 @@ def est_cost(e) -> float:
 
 def make_plan(a, extra_entry=None, extra_inputs=None) -> int:
     """plan.json + existing-view-ids.json for one new tree (both create-only; an identical plan.json is accepted)."""
+    version = require_split_version(getattr(a, "split_version", None))         # before any read or write
     scope = a.plan
     cfg = SCOPES[scope]
-    version = getattr(a, "split_version", SPLIT_V2)
     tree = TREES_V2G[scope] if version == SPLIT_V2G else cfg["tree"]
     out = Path(a.out)
     if any(out.resolve() == t.resolve() for t in OLD_TREES + ((cfg["tree"],) if version == SPLIT_V2G else ()) if t.exists()):
@@ -1206,11 +1240,12 @@ def load_plan(out: Path) -> tuple:
 # ------------------------------------------------------------------------------------------- build
 
 def build_v2(a, loader=None, codes=None) -> int:
+    asked = require_split_version(getattr(a, "split_version", None))           # before any read or write
     cpuguard.set_threads(2)
     out = Path(a.out)
     pl, plan_sha = load_plan(out)
     version = pl["split_version"]
-    if pl["of"] != a.of or version not in (SPLIT_V2, SPLIT_V2G) or version != getattr(a, "split_version", version):
+    if pl["of"] != a.of or version not in (SPLIT_V2, SPLIT_V2G) or version != asked:
         raise SystemExit(f"plan is for --of {pl['of']} / {pl['split_version']}")
     mode = pl["values_mode"]
     loader = loader or l7b_loader
@@ -1500,7 +1535,9 @@ def arg_parser():
     ap.add_argument("--out", required=True)
     ap.add_argument("--shard", type=int)
     ap.add_argument("--of", type=int, required=True)
-    ap.add_argument("--split-version", choices=SPLIT_VERSIONS, default=SPLIT_REGISTRY)
+    ap.add_argument("--split-version", choices=SPLIT_VERSIONS, required=True,
+                    help="required, no default (PR #218 finding 10): rowsel-raw-split-v2 or rowsel-split-v2-groups; "
+                         "registry-epoch0 only for an explicit historical replay")
     ap.add_argument("--views", help="registry build only: comma-separated view_ids (reproduction checks)")
     ap.add_argument("--plan", choices=tuple(SCOPES), help="split v2: write the tree's plan.json for this scope")
     ap.add_argument("--allow-other-out", action="store_true", help="split v2 plan: a pilot directory instead of the scope tree")

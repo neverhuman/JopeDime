@@ -1,0 +1,973 @@
+"""P8 segment transition: one PolicyLM run as a chain of create-only segment plans over growing S1 tranches.
+
+CPU only. Every store is ckpt.FileVersionedStore or the guarded s3store.open_fake bucket under $TMPDIR (a /tmp TMPDIR
+is refused). Nothing is deleted: each test run leaves its evidence under $TMPDIR/p8-segment-tests/run-*. No network,
+no GPU, no S3.
+
+Spec (coordinator-approved). Segment k carries ``segment = {index, start_step, corpus_manifest_sha256,
+parent_plan_sha256, parent_checkpoint_manifest_sha256}``, and its refs.corpus and refs.encoding name tranche k.
+``resume_from_store(..., transition=Transition(...))`` relaxes only the run_plan, train_data and sampler_fit
+identities, and only when four conditions hold:
+- the closure is exactly the named parent checkpoint;
+- the parent plan sha matches;
+- every other identity is equal;
+- tranche k-1's manifest is an exact prefix of tranche k's (existing contexts' shard sha256s byte-identical).
+Optimizer, scheduler, RNG, step and sampler cursor carry over, and future draws are counter-based over the new fit.
+
+- T0 (c, d): the owner path-deny rule (an s1-prod/outer-test path is never a label source). Also refused through
+  dltrain.admission (tranche.admit_contexts): dev, heldout, sealed and denylisted contexts in a tranche. Only S1
+  inner-CV selection records are labels (tranche.assert_inner_cv_record).
+- T1 (c): refusals. Each transition refusal happens before anything is written: the workdir stays absent and the
+  store pointer is unchanged. Cases:
+  - a dropped, rewritten, reordered, inserted or duplicated T0 context;
+  - a different model, objective, seed or any other plan key;
+  - a parent that is not the named checkpoint, or a pointer that moved past it;
+  - a wrong start_step, parent plan, manifest sha or refs.corpus;
+  - transition=None on a changed corpus;
+  - a Transition for a plain plan;
+  - a closure whose runtime or source identity differs (only three identities are relaxed);
+  - data whose contexts are not the manifest's tranche.
+- T2 (a): seg 0 on T0 to N0 -> checkpoint -> seg 1 on T1 to N. Carried state is checked directly:
+  - journal prefix;
+  - lr schedule not reset;
+  - every draw is the counter-based draw over its segment's fit;
+  - AdamW step counts;
+  - sampler cursor;
+  - a T1 == T0 transition equals the uninterrupted run bit for bit, which proves the optimizer, scheduler, every RNG
+    stream, the step and the cursor all carry.
+- T3 (b): a stop/resume inside segment 1 equals (a), and so does one continued from the local commits. A Transition
+  for an in-segment resume is refused, and a chained segment 2 (index 2, parent = segment 1) works.
+- T4 (a): the chain twice, with each segment in its own fresh process over the guarded fake store (s3store.open_fake),
+  is bit-identical: every closure file, params, optimizer, RNG and journal. It also equals the in-process chain.
+
+Run inside the lane slice:  RUN/tmp/p2fix3/py.sh -m unittest tests.test_p8_segment_transition -v
+"""
+from __future__ import annotations
+
+import copy
+import dataclasses
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from dltrain import admission as admission_mod
+from dltrain import ckpt, common, model, sampler, synthetic_data, train
+from dltrain import objective as objective_mod
+
+from tests import fixtures_p7
+
+SRC = Path(__file__).resolve().parents[1]
+# A mutant copy must import its own dltrain: refuse to run against another tree (PYTHONPATH/cwd mistakes).
+IMPORT_GUARD = "P8SEG-IMPORT-GUARD"
+if Path(train.__file__).resolve().parent != SRC / "dltrain":
+    raise ImportError(f"{IMPORT_GUARD}: dltrain imported from {Path(train.__file__).resolve().parent}, "
+                      f"expected {SRC / 'dltrain'}")
+
+PREFIX = "experiments/gp-policy-dl/v1/"
+RUN_ID = "p8-seg"
+RUN_SEED = bytes.fromhex("5e" * 32)
+N0, M, N = 6, 9, 12          # switch step, in-segment stop step, max_updates
+EVERY = 3                    # commit cadence (commits at 3, 6, 9; terminal at 12)
+N_T0, N_T1, N_T2 = 8, 12, 14  # tranche sizes in contexts (T2 adds the dev family's two contexts)
+SPEC = synthetic_data.SyntheticSpec(vocab_size=32, max_seq=24, mean_len=10.0, ctx_dim=8, n_train_families=6,
+                                    n_dev_families=1, datasets_per_family=1, contexts_per_dataset=2,
+                                    programs_per_context=12, y_rows=24, seed_tag="p8-segment-test")
+CHILD_TIMEOUT_S = 600
+WALL_CAP_S = 1500.0
+OTHER_SHA = "ab" * 32
+REAL_S1 = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod")
+
+CHILD = r"""
+import json, random, sys
+import numpy as np
+import torch
+random.seed(20261006); np.random.seed(7654321); torch.manual_seed(123456789)
+random.random(); np.random.standard_normal(7); torch.rand(7)
+from tests import test_p8_segment_transition as T
+out = T.child_main(json.loads(sys.argv[1]))
+print("P8SEG_CHILD " + json.dumps(out, sort_keys=True))
+"""
+
+
+# ------------------------------------------------------------------------------------------------------ helpers
+def tmp_root() -> Path:
+    t = os.environ.get("TMPDIR")
+    if not t:
+        raise RuntimeError("TMPDIR must be set; these tests never use /tmp")
+    p = Path(t).resolve()
+    if p == Path("/tmp") or Path("/tmp") in p.parents:
+        raise RuntimeError(f"TMPDIR {p} is under /tmp; refused")
+    root = p / "p8-segment-tests"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+_MODULE: dict = {}
+
+
+def run_dir() -> Path:
+    """One directory per test-module run, never removed (evidence)."""
+    if "dir" not in _MODULE:
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        _MODULE["dir"] = Path(tempfile.mkdtemp(prefix=f"run-{stamp}-", dir=tmp_root()))
+    return _MODULE["dir"]
+
+
+def new_dir(name: str) -> Path:
+    return Path(tempfile.mkdtemp(prefix=f"{name}-", dir=run_dir()))
+
+
+def setUpModule() -> None:
+    _MODULE["t0"] = time.monotonic()
+    model.configure_determinism(4)
+
+
+def tearDownModule() -> None:
+    elapsed = time.monotonic() - _MODULE["t0"]
+    sys.stderr.write(f"\n[p8 segment] module wall time {elapsed:.1f} s; evidence under {_MODULE.get('dir')}\n")
+    if elapsed > WALL_CAP_S:
+        raise AssertionError(f"module wall time {elapsed:.1f} s exceeds {WALL_CAP_S:.0f} s")
+
+
+def sampler_cfg():
+    return fixtures_p7.sampler_config()
+
+
+def model_cfg(**kw):
+    return fixtures_p7.model_config(**{"vocab_size": SPEC.vocab_size, "ctx_dim": SPEC.ctx_dim,
+                                       "max_seq": SPEC.max_seq, **kw})
+
+
+def train_cfg(**kw):
+    return fixtures_p7.train_config(**{"commit_every_updates": EVERY, "warmup": 4, **kw})
+
+
+_TRANCHES: dict = {}
+
+
+def tranche(n: int):
+    """(TrainData, entries) of the first n synthetic contexts (cached per process)."""
+    if n not in _TRANCHES:
+        _TRANCHES[n] = synthetic_data.tranche(SPEC, sampler_cfg(), n)
+    return _TRANCHES[n]
+
+
+def msha(entries) -> str:
+    return train.corpus_manifest_sha256(entries)
+
+
+def make_plan0(data0, e0, **kw) -> dict:
+    args = {"run_id": RUN_ID, "run_seed": RUN_SEED, "arm": "p8-seg", "objective": "successor-v1",
+            "model": model_cfg(), "sampler": sampler_cfg(), "train": train_cfg(), "max_updates": N,
+            "deadline_utc_us": None, "storage_cap_bytes": 1 << 30, "refs": dict(data0.refs),
+            "corpus_manifest_sha256": msha(e0), **kw}
+    return train.make_run_plan(**args)
+
+
+def make_seg(parent_plan, data, entries, *, start_step: int, parent_manifest: str) -> dict:
+    return train.make_segment_plan(parent_plan, refs=dict(data.refs), corpus_manifest_sha256=msha(entries),
+                                   start_step=start_step, parent_checkpoint_manifest_sha256=parent_manifest)
+
+
+def restamp(data, corpus_ref: str):
+    """``data`` with refs.corpus and refs.encoding replaced (content unchanged)."""
+    return dataclasses.replace(data, refs=dict(data.refs, corpus=corpus_ref, encoding=corpus_ref))
+
+
+def with_refs(data, entries):
+    """``data`` stamped as tranche ``entries`` (corpus and encoding refs name that manifest)."""
+    return restamp(data, train.CORPUS_REF_PREFIX + msha(entries))
+
+
+def stopper(stop: Path, at: int) -> train.TrainHooks:
+    def after_step(step: int) -> None:
+        if step == at:
+            stop.touch()
+    return train.TrainHooks(after_step=after_step)
+
+
+def closure_digest(commit_dir) -> dict:
+    """sha256 of every closure file of a strictly verified commit, plus parameter_sha256 and step."""
+    commit, _closure = ckpt.open_commit(Path(commit_dir))
+    out = {kind: ref["sha256"] for kind, ref in commit.doc["files"].items()}
+    out.update(parameter_sha256=commit.doc["parameter_sha256"], step=commit.step)
+    return out
+
+
+def events(workdir) -> list[dict]:
+    return [json.loads(x) for x in (Path(workdir) / "events.jsonl").read_bytes().splitlines()]
+
+
+def resumed_event(workdir) -> dict:
+    return next(e for e in events(workdir) if e["event"] == "resumed")
+
+
+def journal(path) -> list[dict]:
+    return [json.loads(x) for x in Path(path).read_bytes().splitlines()]
+
+
+def pointer_targets(store: ckpt.FileVersionedStore, prefix: str = PREFIX) -> list[tuple[int, str]]:
+    """(manifest step, manifest sha256) of every version of the run's resume pointer, oldest first."""
+    key = ckpt.pointer_key(prefix, RUN_ID)
+    out = []
+    for v in store.list_versions(key):
+        doc = json.loads(store.get(key, version_id=v["version_id"]).body)
+        man = json.loads(store.get(ckpt.manifest_key(prefix, RUN_ID, doc["target_manifest_sha256"]),
+                                   version_id=doc["target_version_id"]).body)
+        out.append((man["step"], doc["target_manifest_sha256"]))
+    return out
+
+
+def pointer_versions(store: ckpt.FileVersionedStore) -> list:
+    return store.list_versions(ckpt.pointer_key(PREFIX, RUN_ID))
+
+
+def copy_store(src: Path, name: str) -> tuple[Path, ckpt.FileVersionedStore]:
+    dst = new_dir(name) / "store"
+    shutil.copytree(src, dst)
+    return dst, ckpt.FileVersionedStore(dst)
+
+
+def strip_step_fields(rec: dict) -> dict:
+    return {k: v for k, v in rec.items() if k not in ("lr", "loss", "grad_norm")}
+
+
+# ------------------------------------------------------------------------------------------- the shared chain
+class World:
+    """Built once per process:
+    - seg 0 (plan0, T0) yields at N0 into store S0, and S0 is kept pristine;
+    - seg 1 (plan1, T1) runs from a copy to N (chain A);
+    - the uninterrupted plan0 run U on T0 goes to N."""
+
+    def __init__(self):
+        t0 = time.monotonic()
+        self.data0, self.e0 = tranche(N_T0)
+        self.data1, self.e1 = tranche(N_T1)
+        self.data2, self.e2 = tranche(N_T2)
+        self.plan0 = make_plan0(self.data0, self.e0)
+        base = self.base = new_dir("world")
+        self.s0_root = base / "store-seg0"
+        store = ckpt.FileVersionedStore(self.s0_root)
+        stop = base / "STOP-seg0"
+        self.seg0_wd = base / "seg0"
+        self.S0 = train.run(self.plan0, self.data0, self.seg0_wd, store=store, store_prefix=PREFIX, stop_file=stop,
+                            hooks=stopper(stop, N0))
+        self.pm0 = self.S0.published["pointer"]["manifest_sha256"] if self.S0.published else None
+        self.targets0 = pointer_targets(store)
+        self.plan1 = make_seg(self.plan0, self.data1, self.e1, start_step=N0, parent_manifest=self.pm0)
+        self.tr01 = train.Transition(parent_plan=self.plan0, parent_manifest=list(self.e0), manifest=list(self.e1))
+        _root, chain_store = copy_store(self.s0_root, "chainA")
+        self.A_wd = new_dir("chainA-run") / "work"
+        self.A = train.resume_from_store(self.plan1, self.data1, chain_store, self.A_wd, store_prefix=PREFIX,
+                                         transition=self.tr01)
+        self.A_digest = closure_digest(self.A.last_commit)
+        self.U = train.run(self.plan0, self.data0, base / "U")
+        self.U_digest = closure_digest(self.U.last_commit)
+        sys.stderr.write(f"\n[p8 segment] world built in {time.monotonic() - t0:.1f} s: seg0 {self.S0.status}@"
+                         f"{self.S0.step} chainA {self.A.status}@{self.A.step} parameter_sha256 "
+                         f"{self.A.parameter_sha256} journal_sha256 {self.A.journal_sha256}\n")
+
+
+def world() -> World:
+    if "world" not in _MODULE:
+        _MODULE["world"] = World()
+    return _MODULE["world"]
+
+
+# ------------------------------------------------------------------------------------------- fresh-process child
+def child_main(args: dict) -> dict:
+    """One segment in a fresh process over the guarded fake store (s3store.open_fake, persisted under disk_root)."""
+    from dltrain import s3store
+    model.configure_determinism(4)
+    d = Path(args["dir"])
+    data0, e0 = tranche(N_T0)
+    prefix = s3store.SMOKE_PREFIX_KEY
+    store, ledger, _bucket = s3store.open_fake(prefix_key=prefix, view_id=RUN_ID,
+                                               ledger_path=d / f"publish-ledger-{args['mode']}.jsonl",
+                                               budget_ledger_path=d / "budget-ledger.jsonl", disk_root=d / "bucket")
+    try:
+        if args["mode"] == "seg0":
+            plan0 = make_plan0(data0, e0)
+            train.write_run_plan(d / "plan0.json", plan0)
+            stop = d / "STOP-seg0"
+            res = train.run(plan0, data0, d / "seg0", store=store, store_prefix=prefix, stop_file=stop,
+                            hooks=stopper(stop, N0))
+            return {"result": res.to_json(), "pm0": res.published["pointer"]["manifest_sha256"],
+                    "digest": closure_digest(res.last_commit), "plan0_sha256": train.plan_sha256(plan0),
+                    "e0_sha256": msha(e0)}
+        plan0 = train.load_run_plan(d / "plan0.json")
+        data1, e1 = tranche(N_T1)
+        plan1 = make_seg(plan0, data1, e1, start_step=N0, parent_manifest=args["pm0"])
+        train.write_run_plan(d / "plan1.json", plan1)
+        res = train.resume_from_store(plan1, data1, store, d / "seg1", store_prefix=prefix,
+                                      transition=train.Transition(parent_plan=plan0, parent_manifest=list(e0),
+                                                                  manifest=list(e1)))
+        ev = resumed_event(d / "seg1")
+        return {"result": res.to_json(), "digest": closure_digest(res.last_commit),
+                "plan1_sha256": train.plan_sha256(plan1), "e1_sha256": msha(e1),
+                "resumed": {k: ev.get(k) for k in ("event", "rule", "step", "sampler_cursor")}}
+    finally:
+        ledger.close()
+
+
+def run_child(args: dict) -> dict:
+    env = dict(os.environ, PYTHONPATH=str(SRC), CUDA_VISIBLE_DEVICES="")
+    proc = subprocess.run([sys.executable, "-c", CHILD, json.dumps(args)], cwd=str(SRC), env=env,
+                          capture_output=True, text=True, timeout=CHILD_TIMEOUT_S)
+    if proc.returncode != 0:
+        raise AssertionError(f"child {args['mode']} failed:\n{proc.stderr[-6000:]}")
+    lines = [x for x in proc.stdout.splitlines() if x.startswith("P8SEG_CHILD ")]
+    if len(lines) != 1:
+        raise AssertionError(f"child {args['mode']} printed no result:\n{proc.stdout[-2000:]}")
+    return json.loads(lines[0].split(" ", 1)[1])
+
+
+# ======================================================================================== T0: loader-side guards
+def write_denylist(d: Path, assignment_by_view: dict, denied: tuple = ()) -> tuple[Path, str]:
+    doc = {"contexts": [{"view_id": v, "assignment": assignment_by_view[v]} for v in denied], "object_keys": [],
+           "assignment_by_view": assignment_by_view}
+    path = d / "denylist.json"
+    body = common.canonical(doc)
+    path.write_bytes(body)
+    return path, common.sha256_bytes(body)
+
+
+class T0LabelSourceAndAdmissionTest(unittest.TestCase):
+    """(c) the owner path-deny rule, admission of tranche contexts, and (d) inner-CV-only labels."""
+
+    @classmethod
+    def setUpClass(cls):
+        from dltrain import tranche as tranche_mod
+        cls.tr = tranche_mod
+        cls.dir = new_dir("labels")
+
+    # ---------------------------------------------------------------- path-deny rule
+    def test_outer_test_label_path_is_refused(self):
+        tr = self.tr
+        self.assertIn("s1-prod/outer-test", tr.DENIED_LABEL_PATH_PARTS)
+        fake = self.dir / "tree" / "s1-prod"
+        (fake / "outer-test" / "ctx").mkdir(parents=True)
+        (fake / "contexts" / "ctx").mkdir(parents=True)
+        target = fake / "outer-test" / "ctx" / "eval.json"
+        target.write_bytes(b"{}")
+        inner = fake / "contexts" / "ctx" / "final.json"
+        inner.write_bytes(b"{}")
+        (self.dir / "innocent.json").symlink_to(target)
+        (self.dir / "labels-dir").symlink_to(fake / "outer-test", target_is_directory=True)
+        refused = {"real": REAL_S1 / "outer-test" / "ctx" / "eval.json",
+                   "real-str": str(REAL_S1 / "outer-test" / "x.json"),
+                   "dotdot": REAL_S1 / "contexts" / ".." / "outer-test" / "y.json",
+                   "fake-tree": target, "file-symlink": self.dir / "innocent.json",
+                   "dir-symlink": self.dir / "labels-dir" / "ctx" / "eval.json",
+                   "dotdot-fake": fake / "contexts" / ".." / "outer-test" / "ctx" / "eval.json"}
+        for name, p in refused.items():
+            with self.subTest(refused=name), self.assertRaises(tr.LabelSourceRefused):
+                tr.assert_label_path(p)
+        for name, p in {"real-contexts": REAL_S1 / "contexts" / "ctx" / "final.json", "fake-inner": inner,
+                        "fake-inner-str": str(inner)}.items():
+            with self.subTest(allowed=name):
+                tr.assert_label_path(p)
+
+    # ---------------------------------------------------------------- admission of tranche contexts
+    def admission(self, purpose: str = "selection"):
+        views = {"v-train": "train_fit", "v-nonpool": "train_nonpool", "v-dev": "dev", "v-held": "heldout",
+                 "v-sealed": "sealed_excluded", "v-denied": "train_fit"}
+        path, sha = write_denylist(new_dir("admission"), views, denied=("v-denied",))
+        return admission_mod.Admission(path, sha, purpose=purpose)
+
+    @staticmethod
+    def row(view: str, assignment: str, split_role: str) -> dict:
+        return {"context_sha256": common.sha256_bytes(view.encode()), "view_id": view, "assignment": assignment,
+                "split_role": split_role, "family_id": "fam-" + view}
+
+    def test_heldout_sealed_and_denylisted_contexts_refuse_the_tranche(self):
+        adm = self.admission()
+        good = [self.row("v-train", "train_fit", "train_fit"), self.row("v-nonpool", "train_nonpool", "train_fit")]
+        self.assertEqual(self.tr.admit_contexts(good, adm), good)
+        for view, a in (("v-held", "heldout"), ("v-sealed", "sealed_excluded"), ("v-denied", "train_fit"),
+                        ("v-other", "prohibited_excluded")):
+            for role in ("train_fit", "dev", a):
+                with self.subTest(view=view, split_role=role), self.assertRaises(admission_mod.AdmissionRefused):
+                    self.tr.admit_contexts(good + [self.row(view, a, role)], adm)
+
+    def test_dev_context_never_enters_training(self):
+        adm = self.admission()
+        for role in ("train_fit", "diag"):
+            with self.subTest(split_role=role), self.assertRaises(admission_mod.AdmissionRefused):
+                self.tr.admit_contexts([self.row("v-dev", "dev", role)], adm)
+        ok = self.tr.admit_contexts([self.row("v-train", "train_fit", "train_fit"), self.row("v-dev", "dev", "dev")],
+                                    adm)
+        self.assertEqual([(r["view_id"], r["split_role"]) for r in ok], [("v-train", "train_fit"), ("v-dev", "dev")])
+        with self.assertRaises(admission_mod.AdmissionRefused):        # a train-purpose Admission refuses dev too
+            self.tr.admit_contexts([self.row("v-dev", "dev", "dev")], self.admission(purpose="train"))
+
+    def test_train_context_with_a_non_training_split_role_is_refused(self):
+        adm = self.admission()
+        for role in ("dev", "heldout", "sealed_excluded", "outer_test"):
+            with self.subTest(split_role=role), self.assertRaises(admission_mod.AdmissionRefused):
+                self.tr.admit_contexts([self.row("v-train", "train_fit", role)], adm)
+        ok = self.tr.admit_contexts([self.row("v-train", "train_fit", "diag")], adm)
+        self.assertEqual([r["split_role"] for r in ok], ["diag"])
+
+    def test_fail_closed_admission_refuses_everything(self):
+        path, _sha = write_denylist(new_dir("admission-bad"), {"v-train": "train_fit"})
+        adm = admission_mod.Admission(path, "0" * 64, purpose="selection")
+        with self.assertRaises(admission_mod.AdmissionRefused):
+            self.tr.admit_contexts([self.row("v-train", "train_fit", "train_fit")], adm)
+        row = self.row("v-train", "train_fit", "train_fit")
+        del row["assignment"]
+        with self.assertRaises(admission_mod.AdmissionRefused):
+            self.tr.admit_contexts([row], self.admission())
+
+    # ---------------------------------------------------------------- (d) labels: inner-CV selection records only
+    @staticmethod
+    def inner_cv_record() -> dict:
+        def fold(i):
+            return {"kind": "inner_cv", "index": i, "metrics": {"rmse": 0.8 + 0.1 * i},
+                    "baseline_metrics": {"rmse": 1.0 + 0.1 * i}, "wall_us": 120000 + i, "score_rows": 12,
+                    "train_rows": 12, "predictions_sha256": "12" * 32}
+        return {"schema": "jope.s1-evaluation/v1", "status": "completed", "fold_protocol": "jope.s1-two-fold/v1",
+                "program": {"dsl": "(pipe X (ridge))", "program_sha256": "cd" * 32}, "context_sha256": "ef" * 32,
+                "inner_cv_folds": 2, "inner_cv": [fold(0), fold(1)]}
+
+    def test_inner_cv_selection_record_is_accepted(self):
+        rec = self.inner_cv_record()
+        self.tr.assert_inner_cv_record(rec)
+        failed = dict(rec, status="failed", inner_cv=[])
+        self.tr.assert_inner_cv_record(failed)
+
+    def test_outer_test_material_in_label_records_is_refused(self):
+        def outer_fold(r):
+            r["inner_cv"].append({"kind": "outer_test", "index": 2, "metrics": {"rmse": 0.5}})
+
+        def test_metrics(r):
+            r["test_metrics"] = {"rmse": 0.5}
+
+        def holdout_metrics(r):
+            r["inner_cv"][0]["holdout"] = {"rmse": 0.5}
+
+        def official(r):
+            r["official_score"] = 0.5
+
+        def fold_kind(r):
+            r["inner_cv"][1]["kind"] = "outer"
+
+        def schema(r):
+            r["schema"] = "jope.s1-outer-test/v1"
+
+        def outer_key(r):
+            r["program"]["outer_test"] = {"rmse": 0.4}
+
+        def completed_without_folds(r):
+            del r["inner_cv"]
+
+        def one_fold(r):
+            r["inner_cv"] = r["inner_cv"][:1]
+
+        def duplicate_index(r):
+            r["inner_cv"][1]["index"] = 0
+
+        def three_folds(r):
+            r["inner_cv_folds"] = 3
+
+        def protocol(r):
+            r["fold_protocol"] = "jope.s1-outer-holdout/v1"
+
+        def no_metrics(r):
+            del r["inner_cv"][0]["metrics"]
+
+        cases = [outer_fold, test_metrics, holdout_metrics, official, fold_kind, schema, outer_key,
+                 completed_without_folds, one_fold, duplicate_index, three_folds, protocol, no_metrics]
+        for mutate in cases:
+            rec = self.inner_cv_record()
+            mutate(rec)
+            with self.subTest(mutate.__name__), self.assertRaises(self.tr.LabelSourceRefused):
+                self.tr.assert_inner_cv_record(rec)
+
+
+# ======================================================================================== T1: refusals
+class T1RefusalTest(unittest.TestCase):
+    """(c) transition refusals happen before anything is written: the workdir is never created and the store pointer
+    is unchanged. Refusals inside the trainer (identities) leave no journal, events or commits."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.w = world()
+
+    def refused(self, plan, data, transition, *, regex: str, exc=None, store_root: Path | None = None,
+                pristine: bool = True):
+        exc = exc or train.TransitionRefused
+        _root, store = copy_store(store_root or self.w.s0_root, "refusal")
+        before = pointer_versions(store)
+        wd = new_dir("refusal-run") / "work"
+        with self.assertRaisesRegex(exc, regex):
+            train.resume_from_store(plan, data, store, wd, store_prefix=PREFIX, transition=transition)
+        self.assertEqual(pointer_versions(store), before, "a refusal moved the pointer")
+        if pristine and wd.exists():
+            self.assertEqual(sorted(os.listdir(wd)), [], "a transition refusal wrote into the workdir")
+        for name in ("journal.jsonl", "events.jsonl", "commits"):
+            self.assertFalse((wd / name).exists(), f"a refusal wrote {name}")
+
+    def seg_case(self, entries, *, start_step=N0, parent_manifest=None, parent_plan=None, parent_entries=None):
+        """A segment-1 plan and Transition over a (possibly altered) tranche manifest, data stamped to match."""
+        w = self.w
+        data = with_refs(w.data1, entries)
+        plan = make_seg(w.plan0, data, entries, start_step=start_step, parent_manifest=parent_manifest or w.pm0)
+        tr = train.Transition(parent_plan=parent_plan or w.plan0, parent_manifest=list(parent_entries or w.e0),
+                              manifest=list(entries))
+        return plan, data, tr
+
+    # ---------------------------------------------------------------- tranche prefix rule
+    def test_dropped_t0_context_is_refused(self):
+        e = [x for i, x in enumerate(self.w.e1) if i != 2]
+        self.refused(*self.seg_case(e), regex="not an exact prefix")
+
+    def test_changed_t0_shard_bytes_are_refused(self):
+        e = copy.deepcopy(self.w.e1)
+        e[3]["shard_sha256"] = common.sha256_bytes(b"rewritten shard " + e[3]["shard_sha256"].encode())
+        self.refused(*self.seg_case(e), regex="not an exact prefix")
+
+    def test_reordered_t0_contexts_are_refused(self):
+        e = copy.deepcopy(self.w.e1)
+        e[0], e[1] = e[1], e[0]
+        self.refused(*self.seg_case(e), regex="not an exact prefix")
+
+    def test_new_context_inserted_inside_t0_is_refused(self):
+        w = self.w
+        k = len(w.e0)
+        e = list(w.e0[:3]) + [w.e1[k]] + list(w.e0[3:]) + list(w.e1[k + 1:])
+        self.refused(*self.seg_case(e), regex="not an exact prefix")
+
+    def test_duplicate_context_is_refused(self):
+        w = self.w
+        for name, dup in (("dup-of-t0", list(w.e1) + [dict(w.e1[0])]), ("dup-new", list(w.e1) + [dict(w.e1[-1])])):
+            with self.subTest(name):
+                with self.assertRaisesRegex(train.TransitionRefused, "duplicate context"):
+                    train.corpus_manifest_sha256(dup)
+                with self.assertRaisesRegex(train.TransitionRefused, "duplicate context|not an exact prefix"):
+                    train.check_tranche_prefix(w.e0, dup)
+                tr = train.Transition(parent_plan=w.plan0, parent_manifest=list(w.e0), manifest=dup)
+                self.refused(w.plan1, w.data1, tr, regex="duplicate context")
+
+    def test_check_tranche_prefix_directly(self):
+        w = self.w
+        train.check_tranche_prefix(w.e0, w.e1)
+        train.check_tranche_prefix(w.e0, w.e0)
+        bad = copy.deepcopy(w.e1)
+        bad[0]["shard_sha256"] = OTHER_SHA
+        moved = copy.deepcopy(w.e1)
+        moved[len(w.e0) - 1], moved[len(w.e0)] = moved[len(w.e0)], moved[len(w.e0) - 1]
+        for name, e in (("drop-first", w.e1[1:]), ("changed", bad), ("shorter", w.e0[:-1]), ("swap-at-edge", moved)):
+            with self.subTest(name), self.assertRaisesRegex(train.TransitionRefused, "not an exact prefix"):
+                train.check_tranche_prefix(w.e0, e)
+
+    # ---------------------------------------------------------------- plan keys that must equal the parent's
+    def test_model_objective_seed_and_other_plan_keys_are_refused(self):
+        w = self.w
+
+        def model_change(p):
+            p["model"] = model_cfg(dropout=0.2).to_json()
+
+        def objective_change(p):
+            p["objective"] = objective_mod.BASELINE_V1
+            p["objective_sha256"] = objective_mod.objective_sha256(objective_mod.BASELINE_V1)
+
+        def seed_change(p):
+            p["run_seed_hex"] = "7a" * 32
+
+        def lr_change(p):
+            p["train"]["lr"] = p["train"]["lr"] * 2
+
+        def schedule_change(p):
+            p["schedule"]["warmup"] = p["schedule"]["warmup"] + 1
+
+        def ceiling_change(p):
+            p["ceilings"]["max_updates"] = N + 6
+            p["schedule"]["max_updates"] = N + 6
+
+        def sampler_change(p):
+            p["sampler"]["b_ctx"] = 2
+
+        def determinism_change(p):
+            p["determinism"]["num_threads"] = 2
+
+        def arm_change(p):
+            p["arm"] = "other-arm"
+
+        def experiment_change(p):
+            p["experiment_id"] = "other-experiment"
+
+        def run_id_change(p):
+            p["run_id"] = "p8-seg-other"
+
+        def tokenizer_ref(p):
+            p["refs"]["tokenizer"] = "tokenizer:" + OTHER_SHA
+
+        def holdout_ref(p):
+            p["refs"]["holdout_binding"] = "holdout:" + OTHER_SHA
+
+        def grammar_ref(p):
+            p["refs"]["grammar"] = "grammar:" + OTHER_SHA
+
+        for mutate in (model_change, objective_change, seed_change, lr_change, schedule_change, ceiling_change,
+                       sampler_change, determinism_change, arm_change, experiment_change, run_id_change,
+                       tokenizer_ref, holdout_ref, grammar_ref):
+            plan = copy.deepcopy(w.plan1)
+            mutate(plan)
+            with self.subTest(mutate.__name__):
+                self.refused(plan, w.data1, w.tr01, regex="differs from its parent")
+
+    # ---------------------------------------------------------------- the named parent
+    def test_parent_that_is_not_the_named_checkpoint_is_refused(self):
+        w = self.w
+        steps = dict(w.targets0)
+        self.assertEqual(sorted(steps), [EVERY, N0])
+        plan, data, tr = self.seg_case(w.e1, parent_manifest=steps[EVERY])   # a real earlier checkpoint of the run
+        self.refused(plan, data, tr, regex="not the named parent checkpoint")
+        plan, data, tr = self.seg_case(w.e1, parent_manifest=OTHER_SHA)
+        self.refused(plan, data, tr, regex="not the named parent checkpoint")
+        empty = new_dir("empty-store") / "store"
+        empty.mkdir()
+        ckpt.FileVersionedStore(empty)
+        self.refused(w.plan1, w.data1, w.tr01, regex="not the named parent checkpoint", store_root=empty)
+
+    def test_pointer_moved_past_the_named_checkpoint_is_refused(self):
+        """Segment 0 continued after the switch step: the pointer target is no longer the named checkpoint."""
+        w = self.w
+        root, store = copy_store(w.s0_root, "moved")
+        stop = root.parent / "STOP-moved"
+        res = train.resume_from_store(w.plan0, w.data0, store, root.parent / "seg0-more", store_prefix=PREFIX,
+                                      stop_file=stop, hooks=stopper(stop, M))
+        self.assertEqual((res.status, res.step), ("YIELDED_TO_INTAKE", M))
+        pm9 = res.published["pointer"]["manifest_sha256"]
+        self.refused(w.plan1, w.data1, w.tr01, regex="not the named parent checkpoint", store_root=root)
+        plan, data, tr = self.seg_case(w.e1, parent_manifest=pm9, start_step=N0)
+        self.refused(plan, data, tr, regex="start_step", store_root=root)
+        plan, data, tr = self.seg_case(w.e1, parent_manifest=pm9, start_step=M)     # the honest switch at M works
+        _r, ok_store = copy_store(root, "moved-ok")
+        out = train.resume_from_store(plan, data, ok_store, new_dir("moved-ok-run") / "work", store_prefix=PREFIX,
+                                      transition=tr)
+        self.assertEqual((out.status, out.step), ("COMPLETED", N))
+
+    def test_wrong_start_step_is_refused(self):
+        for step in (N0 - 1, N0 + 1):
+            with self.subTest(start_step=step):
+                plan, data, tr = self.seg_case(self.w.e1, start_step=step)
+                self.refused(plan, data, tr, regex="start_step")
+
+    def test_wrong_parent_plan_is_refused(self):
+        w = self.w
+        other_parent = make_plan0(w.data0, w.e0, arm="other-parent")
+        self.refused(*self.seg_case(w.e1, parent_plan=other_parent), regex="parent_plan_sha256")
+        plan = copy.deepcopy(w.plan1)
+        plan["segment"]["parent_plan_sha256"] = OTHER_SHA
+        self.refused(plan, w.data1, w.tr01, regex="parent_plan_sha256")
+
+    def test_parent_plan_that_is_not_the_closures_plan_is_refused(self):
+        """A consistent segment plan over another parent plan than the one whose closure the pointer names."""
+        w = self.w
+        other_parent = make_plan0(w.data0, w.e0, arm="other-parent")
+        plan = make_seg(other_parent, w.data1, w.e1, start_step=N0, parent_manifest=w.pm0)
+        tr = train.Transition(parent_plan=other_parent, parent_manifest=list(w.e0), manifest=list(w.e1))
+        self.refused(plan, w.data1, tr, regex="parent_plan_sha256")
+
+    def test_wrong_manifest_shas_are_refused(self):
+        w = self.w
+        tr = train.Transition(parent_plan=w.plan0, parent_manifest=list(w.e0[:-1]), manifest=list(w.e1))
+        self.refused(w.plan1, w.data1, tr, regex="corpus_manifest_sha256")
+        tr = train.Transition(parent_plan=w.plan0, parent_manifest=list(w.e0),
+                              manifest=list(w.e1) + [{"context_sha256": OTHER_SHA, "shard_sha256": OTHER_SHA}])
+        self.refused(w.plan1, w.data1, tr, regex="corpus_manifest_sha256")
+        plan = copy.deepcopy(w.plan1)                 # consistent plan/data refs naming a manifest nobody passed
+        plan["segment"]["corpus_manifest_sha256"] = OTHER_SHA
+        ref = train.CORPUS_REF_PREFIX + OTHER_SHA
+        plan["refs"]["corpus"] = plan["refs"]["encoding"] = ref
+        self.refused(plan, restamp(w.data1, ref), w.tr01, regex="corpus_manifest_sha256")
+
+    def test_refs_corpus_not_naming_the_manifest_is_refused(self):
+        w = self.w
+        plan = copy.deepcopy(w.plan1)
+        plan["refs"]["corpus"] = w.plan0["refs"]["corpus"]
+        self.refused(plan, restamp(w.data1, w.plan0["refs"]["corpus"]), w.tr01, exc=(train.TransitionRefused, ValueError),
+                     regex="refs.corpus")
+
+    def test_data_that_is_not_the_manifest_tranche_is_refused(self):
+        """The run must be a function of the manifests: T0's content stamped as tranche T1 is not tranche T1."""
+        w = self.w
+        self.refused(w.plan1, with_refs(w.data0, w.e1), w.tr01, regex="not the manifest tranche")
+        extra = with_refs(w.data2, w.e1)            # T1's refs over T2's content (two extra dev contexts)
+        self.refused(w.plan1, extra, w.tr01, regex="not the manifest tranche")
+
+    # ---------------------------------------------------------------- transition=None / not a segment
+    def test_transition_none_on_a_changed_corpus_is_refused(self):
+        w = self.w
+        self.refused(w.plan1, w.data1, None, regex="needs a Transition", pristine=False)
+        plain = make_plan0(w.data1, w.e1)            # a new segment-0 plan over T1 under the same run_id
+        self.refused(plain, w.data1, None, exc=ckpt.CheckpointRefused,
+                     regex="resume refused: identity run_plan_sha256 differs", pristine=False)
+        self.refused(w.plan0, w.data1, None, exc=(ckpt.CheckpointRefused, ValueError), regex="differs",
+                     pristine=False)
+
+    def test_transition_on_a_non_segment_plan_is_refused(self):
+        w = self.w
+        self.refused(w.plan0, w.data1, w.tr01, regex="not a segment plan")
+        self.refused(make_plan0(w.data1, w.e1), w.data1, w.tr01, regex="not a segment plan")
+        bare = copy.deepcopy(w.plan1)
+        del bare["segment"]
+        self.refused(bare, w.data1, w.tr01, regex="not a segment plan")
+
+    # ---------------------------------------------------------------- only three identities are relaxed
+    def test_closure_with_other_runtime_or_source_identity_is_refused(self):
+        w = self.w
+        for fn in ("runtime_sha256", "source_tree_sha256"):
+            with self.subTest(fn):
+                d = new_dir(f"foreign-{fn}")
+                store = ckpt.FileVersionedStore(d / "store")
+                stop = d / "STOP"
+                fake = (lambda device="cpu": OTHER_SHA) if fn == "runtime_sha256" else (lambda: OTHER_SHA)
+                with mock.patch.object(train, fn, fake):
+                    res = train.run(w.plan0, w.data0, d / "seg0", store=store, store_prefix=PREFIX, stop_file=stop,
+                                    hooks=stopper(stop, N0))
+                pm = res.published["pointer"]["manifest_sha256"]
+                plan = make_seg(w.plan0, w.data1, w.e1, start_step=N0, parent_manifest=pm)
+                self.refused(plan, w.data1, w.tr01, exc=ckpt.CheckpointRefused, regex=f"identity {fn} differs",
+                             store_root=d / "store", pristine=False)
+
+
+# ======================================================================================== T2: state carries over
+class T2CarriedStateTest(unittest.TestCase):
+    """(a) the T0 -> T1 chain in process: plans, identities, journal, schedule, draws, optimizer, RNG."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.w = world()
+
+    def test_segment_plans_and_chain_shape(self):
+        w = self.w
+        self.assertEqual((w.S0.status, w.S0.reason, w.S0.step), ("YIELDED_TO_INTAKE", "stop_file", N0))
+        self.assertEqual(w.targets0[-1], (N0, w.pm0))
+        self.assertEqual(w.plan0["segment"], {"index": 0, "start_step": 0, "corpus_manifest_sha256": msha(w.e0),
+                                              "parent_plan_sha256": None, "parent_checkpoint_manifest_sha256": None})
+        self.assertEqual(w.plan1["segment"], {"index": 1, "start_step": N0, "corpus_manifest_sha256": msha(w.e1),
+                                              "parent_plan_sha256": train.plan_sha256(w.plan0),
+                                              "parent_checkpoint_manifest_sha256": w.pm0})
+        self.assertEqual(w.plan1["refs"]["corpus"], "corpus-manifest:" + msha(w.e1))
+        self.assertEqual(w.plan1["refs"]["encoding"], w.data1.refs["encoding"])
+        same = {k: v for k, v in w.plan0.items() if k not in ("refs", "segment")}
+        self.assertEqual({k: v for k, v in w.plan1.items() if k not in ("refs", "segment")}, same,
+                         "a segment plan must copy every parent key except refs.corpus/encoding and segment")
+        self.assertEqual({k: v for k, v in w.plan1["refs"].items() if k not in ("corpus", "encoding")},
+                         {k: v for k, v in w.plan0["refs"].items() if k not in ("corpus", "encoding")})
+        self.assertEqual(w.e1[:len(w.e0)], w.e0, "fixture: T0 must be an exact prefix of T1")
+        self.assertGreater(len(w.e1), len(w.e0))
+        self.assertEqual((w.A.status, w.A.step), ("COMPLETED", N))
+
+    def test_transition_relaxes_exactly_three_identities(self):
+        self.assertEqual(set(train._TRANSITION_MUTABLE), {"run_plan_sha256", "train_data_sha256",
+                                                          "sampler_fit_sha256"})
+
+    def test_final_closure_carries_segment_1_identities(self):
+        w = self.w
+        _commit, closure = ckpt.open_commit(Path(w.A.last_commit))
+        ids = closure.identities
+        self.assertEqual(ids["run_plan_sha256"], train.plan_sha256(w.plan1))
+        self.assertEqual(ids["train_data_sha256"], w.data1.content_sha256)
+        self.assertEqual(ids["sampler_fit_sha256"], w.data1.fit.sha256())
+        self.assertNotEqual(w.data1.fit.sha256(), w.data0.fit.sha256())
+        self.assertEqual(closure.sampler_state["fit_sha256"], w.data1.fit.sha256())
+        self.assertEqual(closure.sampler_state["cursor"], N)
+        _c0, parent = ckpt.open_commit(w.seg0_wd / "commits" / f"{N0:010d}")
+        for key in train.RESUME_IDENTITY_KEYS:
+            if key not in ("run_plan_sha256", "train_data_sha256", "sampler_fit_sha256"):
+                self.assertEqual(ids[key], parent.identities[key], key)
+
+    def test_journal_schedule_and_draws_carry_over(self):
+        w = self.w
+        seg0 = (w.seg0_wd / "journal.jsonl").read_bytes()
+        final = (w.A_wd / "journal.jsonl").read_bytes()
+        self.assertTrue(final.startswith(seg0), "segment 1's journal must continue segment 0's byte for byte")
+        recs = journal(w.A_wd / "journal.jsonl")
+        self.assertEqual([r["step"] for r in recs], list(range(1, N + 1)), "sampler cursor / step must not reset")
+        tc, sch = w.plan1["train"], w.plan1["schedule"]
+        for r in recs:
+            want = tc["lr"] * objective_mod.lr_factor(r["step"] - 1, warmup=sch["warmup"],
+                                                      max_updates=sch["max_updates"], lr=sch["lr"],
+                                                      lr_min=sch["lr_min"])
+            self.assertAlmostEqual(r["lr"], want, places=12, msg=f"lr at step {r['step']} (schedule reset?)")
+        seed = bytes.fromhex(w.plan0["run_seed_hex"])
+        s0 = sampler.MacroSampler(w.data0.fit, seed, w.data0.config)
+        s1 = sampler.MacroSampler(w.data1.fit, seed, w.data1.config)
+        t0_ctx = {e["context_sha256"] for e in w.e0}
+        new_ctx = set()
+        for r in recs:
+            ref = (s0 if r["step"] <= N0 else s1).draw(r["step"]).journal_record()
+            self.assertEqual(strip_step_fields(r), ref, f"step {r['step']} is not the counter-based draw")
+            ctxs = {s["context_sha256"] for s in r["slots"]}
+            if r["step"] <= N0:
+                self.assertLessEqual(ctxs, t0_ctx, "segment 0 drew a context outside T0")
+            else:
+                new_ctx |= ctxs - t0_ctx
+        self.assertTrue(new_ctx, "segment 1 never drew a T1-only context: the new fit was not used")
+
+    def test_optimizer_scheduler_and_cursor_carry_over(self):
+        w = self.w
+        _c, closure = ckpt.open_commit(w.A_wd / "commits" / f"{N0 + EVERY:010d}")
+        steps = {k: float(v) for k, v in closure.optimizer_tensors.items() if k.endswith(".step")}
+        self.assertTrue(steps)
+        self.assertEqual(set(steps.values()), {float(N0 + EVERY)}, "AdamW step counts were reset at the transition")
+        self.assertEqual(closure.optimizer_meta["scheduler"]["last_epoch"], N0 + EVERY)
+        self.assertEqual(closure.sampler_state["cursor"], N0 + EVERY)
+        ev = resumed_event(w.A_wd)
+        self.assertEqual((ev["step"], ev["sampler_cursor"], ev["rule"]), (N0, N0, "restored_pointer_target"))
+        tev = [e for e in events(w.A_wd) if e["event"] == "segment_transition"]
+        self.assertEqual(len(tev), 1)
+
+    def test_identity_transition_equals_uninterrupted_run(self):
+        """T1 == T0: a transition that adds nothing must reproduce the uninterrupted run bit for bit, so optimizer,
+        scheduler, every RNG stream, the step and the cursor all carry across the segment boundary."""
+        w = self.w
+        plan1 = make_seg(w.plan0, w.data0, w.e0, start_step=N0, parent_manifest=w.pm0)
+        _root, store = copy_store(w.s0_root, "identity")
+        wd = new_dir("identity-run") / "work"
+        res = train.resume_from_store(plan1, w.data0, store, wd, store_prefix=PREFIX,
+                                      transition=train.Transition(parent_plan=w.plan0, parent_manifest=list(w.e0),
+                                                                  manifest=list(w.e0)))
+        self.assertEqual((res.status, res.step), ("COMPLETED", N))
+        self.assertEqual(closure_digest(res.last_commit), w.U_digest)
+        self.assertEqual((res.parameter_sha256, res.journal_sha256), (w.U.parameter_sha256, w.U.journal_sha256))
+
+
+# ======================================================================================== T3: resume inside a segment
+class T3ResumeInsideSegmentTest(unittest.TestCase):
+    """(b) a stop/resume inside segment 1 equals the uninterrupted chain; a chained segment 2 works."""
+
+    @classmethod
+    def setUpClass(cls):
+        w = cls.w = world()
+        root, store = copy_store(w.s0_root, "chainB")
+        stop = root.parent / "STOP-B"
+        cls.B1_wd = root.parent / "B1"
+        cls.B1 = train.resume_from_store(w.plan1, w.data1, store, cls.B1_wd, store_prefix=PREFIX,
+                                         transition=w.tr01, stop_file=stop, hooks=stopper(stop, M))
+        cls.after_b1 = root.parent / "store-after-B1"
+        shutil.copytree(root, cls.after_b1)
+        cls.pmM = cls.B1.published["pointer"]["manifest_sha256"] if cls.B1.published else None
+
+    def test_stop_resume_inside_segment_1_equals_chain_a(self):
+        w = self.w
+        self.assertEqual((self.B1.status, self.B1.step), ("YIELDED_TO_INTAKE", M))
+        _root, store = copy_store(self.after_b1, "chainB-resume")
+        wd = new_dir("B2") / "work"
+        res = train.resume_from_store(w.plan1, w.data1, store, wd, store_prefix=PREFIX)
+        self.assertEqual((res.status, res.step), ("COMPLETED", N))
+        self.assertEqual(closure_digest(res.last_commit), w.A_digest)
+        self.assertEqual((res.parameter_sha256, res.journal_sha256), (w.A.parameter_sha256, w.A.journal_sha256))
+        ev = resumed_event(wd)
+        self.assertEqual((ev["step"], ev["sampler_cursor"]), (M, M))
+        self.assertFalse([e for e in events(wd) if e["event"] == "segment_transition"])
+
+    def test_in_segment_resume_from_local_commits_equals_chain_a(self):
+        w = self.w
+        _root, store = copy_store(self.after_b1, "chainB-local")
+        res = train.resume_from_store(w.plan1, w.data1, store, new_dir("B3") / "work", store_prefix=PREFIX,
+                                      local_commits=self.B1_wd / "commits")
+        self.assertEqual((res.status, res.step, closure_digest(res.last_commit)), ("COMPLETED", N, w.A_digest))
+
+    def test_transition_for_an_in_segment_resume_is_refused(self):
+        w = self.w
+        _root, store = copy_store(self.after_b1, "chainB-retransition")
+        before = pointer_versions(store)
+        wd = new_dir("B5") / "work"
+        with self.assertRaisesRegex(train.TransitionRefused, "not the named parent checkpoint"):
+            train.resume_from_store(w.plan1, w.data1, store, wd, store_prefix=PREFIX, transition=w.tr01)
+        self.assertEqual(pointer_versions(store), before)
+        self.assertFalse(wd.exists() and any(wd.iterdir()))
+
+    def test_in_segment_resume_still_refuses_other_data(self):
+        """Inside segment 1 nothing is relaxed: T0's content stamped as T1 is refused."""
+        w = self.w
+        _root, store = copy_store(self.after_b1, "chainB-otherdata")
+        before = pointer_versions(store)
+        wd = new_dir("B4") / "work"
+        with self.assertRaisesRegex(ckpt.CheckpointRefused, "identity (train_data|sampler_fit)_sha256 differs"):
+            train.resume_from_store(w.plan1, with_refs(w.data0, w.e1), store, wd, store_prefix=PREFIX)
+        self.assertEqual(pointer_versions(store), before)
+        self.assertFalse((wd / "journal.jsonl").exists())
+
+    def test_chained_segment_2(self):
+        w = self.w
+        self.assertEqual(w.e2[:len(w.e1)], w.e1)
+        plan2 = make_seg(w.plan1, w.data2, w.e2, start_step=M, parent_manifest=self.pmM)
+        self.assertEqual(plan2["segment"]["index"], 2)
+        self.assertEqual(plan2["segment"]["parent_plan_sha256"], train.plan_sha256(w.plan1))
+        tr12 = train.Transition(parent_plan=w.plan1, parent_manifest=list(w.e1), manifest=list(w.e2))
+        _root, store = copy_store(self.after_b1, "seg2-wrong-parent")
+        before = pointer_versions(store)
+        for name, bad in (("plan0-as-parent", train.Transition(parent_plan=w.plan0, parent_manifest=list(w.e1),
+                                                               manifest=list(w.e2))),
+                          ("t0-as-parent-manifest", train.Transition(parent_plan=w.plan1,
+                                                                     parent_manifest=list(w.e0),
+                                                                     manifest=list(w.e2)))):
+            with self.subTest(name), self.assertRaises(train.TransitionRefused):
+                train.resume_from_store(plan2, w.data2, store, new_dir("seg2-bad") / "work", store_prefix=PREFIX,
+                                        transition=bad)
+        self.assertEqual(pointer_versions(store), before)
+        _root, store = copy_store(self.after_b1, "seg2")
+        wd = new_dir("seg2-run") / "work"
+        res = train.resume_from_store(plan2, w.data2, store, wd, store_prefix=PREFIX, transition=tr12)
+        self.assertEqual((res.status, res.step), ("COMPLETED", N))
+        _c, closure = ckpt.open_commit(Path(res.last_commit))
+        self.assertEqual(closure.identities["run_plan_sha256"], train.plan_sha256(plan2))
+        recs = journal(wd / "journal.jsonl")
+        seed = bytes.fromhex(w.plan0["run_seed_hex"])
+        s2 = sampler.MacroSampler(w.data2.fit, seed, w.data2.config)
+        self.assertEqual(recs[:M], journal(self.B1_wd / "journal.jsonl"))
+        for r in recs[M:]:
+            self.assertEqual(strip_step_fields(r), s2.draw(r["step"]).journal_record())
+
+
+# ======================================================================================== T4: fresh processes
+class T4FreshProcessDeterminismTest(unittest.TestCase):
+    """(a) the chain twice, every segment in its own fresh process over the guarded fake store."""
+
+    def test_fresh_processes_twice_are_bit_identical(self):
+        w = world()
+        outs = []
+        for name in ("X", "Y"):
+            d = new_dir(f"fresh-{name}")
+            a = run_child({"mode": "seg0", "dir": str(d)})
+            b = run_child({"mode": "seg1", "dir": str(d), "pm0": a["pm0"]})
+            outs.append((a, b))
+        (ax, bx), (ay, by) = outs
+        self.assertEqual((ax["result"]["status"], ax["result"]["step"]), ("YIELDED_TO_INTAKE", N0))
+        self.assertEqual((bx["result"]["status"], bx["result"]["step"]), ("COMPLETED", N))
+        self.assertEqual(bx["resumed"], {"event": "resumed", "rule": "restored_pointer_target", "step": N0,
+                                         "sampler_cursor": N0})
+        # The parent checkpoint manifest (and so plan1's sha) carries wall_time_utc_us and differs per chain; the
+        # training state is a function of (tranche manifests, switch steps) only.
+        self.assertNotEqual(ax["pm0"], ay["pm0"])
+        for key in ("digest", "plan0_sha256", "e0_sha256"):
+            self.assertEqual(ax[key], ay[key], key)
+        for key in ("digest", "e1_sha256", "resumed"):
+            self.assertEqual(bx[key], by[key], key)
+        for key in ("parameter_sha256", "journal_sha256", "initial_parameter_sha256", "step", "status"):
+            self.assertEqual(bx["result"][key], by["result"][key], key)
+        # ... and equal to the in-process chain over the plain FileVersionedStore.
+        self.assertEqual(ax["digest"], closure_digest(w.seg0_wd / "commits" / f"{N0:010d}"))
+        self.assertEqual(ax["plan0_sha256"], train.plan_sha256(w.plan0))
+        self.assertEqual(bx["digest"], w.A_digest)
+        self.assertEqual((bx["result"]["parameter_sha256"], bx["result"]["journal_sha256"]),
+                         (w.A.parameter_sha256, w.A.journal_sha256))
+        sys.stderr.write(f"\n[p8 segment] fresh X/Y final parameter_sha256 {bx['result']['parameter_sha256']} "
+                         f"journal_sha256 {bx['result']['journal_sha256']}\n")
+
+
+if __name__ == "__main__":
+    unittest.main()

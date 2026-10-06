@@ -1,0 +1,26 @@
+"""Read-only: which files does the builder's input side (scale_check.Sources + resolve_context for every epoch-0 context
+of the 36 fill datasets) open? Prints the external file list with sizes, for the xbabe3 input mirror decision."""
+import json, sys, os
+from pathlib import Path
+opened = set()
+def hook(ev, args):
+    if ev == "open" and args and isinstance(args[0], (str, bytes, os.PathLike)):
+        p = os.fsdecode(args[0])
+        if p.startswith("/home/"):
+            opened.add(os.path.realpath(p))
+sys.addaudithook(hook)
+from dltrain import scale_check
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+hs = [json.loads(l)["dataset_hash"] for l in (RUN / "receipts/trainonly-v2/fill/fetch-plan-formerly-held.jsonl").read_text().splitlines()]
+src = scale_check.Sources(load_index=False); cache = scale_check.DataCache(max_items=2)
+n = 0
+for r in src.included():
+    if r["dataset_hash"] in hs:
+        c = scale_check.resolve_context(r, src, cache); n += 1
+print("contexts", n)
+tot = 0
+for p in sorted(opened):
+    if os.path.isfile(p) and "/site-packages/" not in p and "/dl_training_v1/" not in p:
+        s = os.path.getsize(p); tot += s
+        print(s, p)
+print("total_bytes", tot)
