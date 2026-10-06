@@ -2628,6 +2628,13 @@
         "gp",
         "fitting"
       ]
+    },
+    "target:feat-math/test/gp_language_tricks": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
     }
   },
   "baseline_triage": [
