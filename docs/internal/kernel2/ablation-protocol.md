@@ -49,7 +49,8 @@ cargo run --release -p jope-bench -- ablation \
 - `--scratch` keeps every search's evidence (`prepared.json`, `search.json`,
   `observations.json`). Without it the evidence goes to a temporary directory under `TMPDIR` and is
   removed; with neither `--scratch` nor `TMPDIR` the harness refuses to run rather than use the
-  system temporary directory. Keep evidence outside the checkout.
+  system temporary directory. Keep evidence outside the checkout. One comparison at a time holds
+  a scratch directory (`.ablation-lock`; see "Reservation and marker").
 
 The default dataset set is the ten committed regression datasets of `datasets/test` (collection
 `test-10`, `datasets/manifest.json`): the real-data half of fixture set D5 in `MASTER_PLAN.md`,
@@ -92,8 +93,24 @@ created) or an empty directory that is not a symbolic link. Anything else, also 
 holds only an earlier comparison with other seeds and the same fold seed, a stray file, a symbolic
 link, a regular file or a path that cannot be inspected, is refused before anything is written.
 `--scratch` given on the command line is created empty when it is absent, and a run without
-`--scratch` uses a fresh temporary directory. A legacy-only comparison makes no such check and
-writes `prepared.json` as it always has.
+`--scratch` uses a fresh temporary directory.
+
+**Reservation and marker.** Every comparison, legacy-only included, first creates its scratch
+directory when it is absent and then reserves it: it creates `<scratch>/.ablation-lock`
+atomically and holds it for the whole comparison, so every later check and write happens under
+the reservation. A second comparison on the same scratch, in the same process or another, is
+refused while the lock file exists (`another comparison holds this --scratch`). The lock file
+records the holder's process id and start time and holds no evidence; it is removed when the
+comparison ends, also after a refusal or an error. A crash can leave it behind: remove it by hand,
+and only when no comparison is running. Under the reservation, a comparison with a kernel2
+profile requires the scratch to hold nothing but its own lock file and then creates the permanent
+marker `<scratch>/.ablation-kernel2` before any other write; the marker is never removed. Every
+later comparison, legacy-only included, refuses a scratch that holds the marker before it writes
+anything (`holds a kernel2 comparison's evidence; use a new --scratch`), so no later comparison
+through the harness rewrites a kernel2 comparison's partition or searches. A legacy-only
+comparison on a scratch only legacy-only comparisons used behaves as before: it writes no marker,
+a later legacy-only comparison into the same scratch is still admitted (rewriting
+`prepared.json`), and the scratch holds the same entries afterwards, since the lock file is gone.
 
 **A kernel2 comparison is not accuracy evidence unless it is reported as paired wins, ties and
 losses beside both medians.** The harness writes them to `body.paired` (definitions
@@ -262,6 +279,24 @@ when it is not set; never under the system temporary directory.
   are refused with nothing changed.
 - `ablation::tests::ablation_kernel2_admits_an_unused_scratch`: an existing empty directory, an
   absent path and the directory `execute` creates for `--scratch` are admitted.
+- `ablation::tests::ablation_legacy_refuses_a_scratch_a_kernel2_comparison_used` and
+  `review03_legacy_followup_preserves_kernel2_preparation`: a legacy-only comparison after a
+  kernel2 one in the same scratch is refused with every entry unchanged, and the first document's
+  `prepared_sha256` still names `prepared.json`.
+- `ablation::tests::ablation_kernel2_refuses_a_scratch_a_legacy_comparison_used` and
+  `ablation_legacy_reruns_into_a_legacy_scratch_as_before`: a kernel2 comparison after a
+  legacy-only one is refused; a legacy-only one after a legacy-only one is admitted with the
+  body bytes of a fresh scratch.
+- `ablation::tests::ablation_concurrent_comparisons_on_one_scratch_admit_exactly_one` and
+  `review03_concurrent_library_runs_preserve_both_preparations`: comparisons started together on
+  one scratch admit exactly one; the scratch then holds the winner's evidence alone.
+- `ablation::tests::ablation_a_lock_file_refuses_and_a_comparison_removes_its_own`,
+  `ablation_reservation_is_released_while_unwinding` and
+  `ablation_kernel2_marker_persists_and_legacy_writes_none`: an existing (stale) lock file is
+  refused and named, a comparison removes its own lock after success, after a refusal and while
+  unwinding, and only a kernel2 comparison leaves the marker.
+- `ablation::tests::ablation_kernel2_refuses_a_symlinked_scratch_ending_in_a_slash`: a symbolic
+  link spelled with a trailing `/` is refused as a kernel2 scratch.
 - `ablation::tests::ablation_paired_refuses_a_nonfinite_m1`,
   `ablation_paired_refuses_a_summary_that_is_not_finite` and
   `review02_public_paired_refuses_nonfinite_m1`: equal NaNs, equal infinities, an infinity or NaN
