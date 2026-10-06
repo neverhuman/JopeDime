@@ -242,6 +242,20 @@ impl ScalarModel {
             || value
                 .get("numerical_policy")
                 .is_some_and(|v| !matches!(v.as_str(), Some("v1" | "v2")))
+            || value
+                .get("profile")
+                .is_some_and(|v| v.as_str() != Some(MODEL_PROFILE))
+            || value
+                .get("grammar_sha256")
+                .is_some_and(|v| v.as_str() != Some(grammar_sha256().as_str()))
+            || value
+                .get("emitter_feature_identity")
+                .is_some_and(|v| v.as_str() != Some(EMITTER_IDENTITY))
+            || value.get("output_schema").is_some_and(|v| {
+                v.as_array().is_none_or(|items| {
+                    items.len() != 1 || items[0].as_str() != Some("prediction:f64")
+                })
+            })
         {
             return Err(VersionError::UnsupportedVersion(
                 "scalar model header".into(),
