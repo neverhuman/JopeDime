@@ -1,4 +1,4 @@
-//! Bounded Levenberg–Marquardt constant fitting with a dual-number Jacobian (B17).
+//! Bounded Levenberg–Marquardt constant fitting with a dual-number Jacobian.
 //!
 //! Opt-in: the one public entry is [`MathExpr::optimize_constants_lm_guarded`], which admits by
 //! the version-two search contract and fits the linear-scaled residuals. The raw residuals, the
@@ -27,6 +27,8 @@
 //! values must equal the native ones bit for bit. The winner replaces the start only when a fresh
 //! native re-score is strictly better than the start's. Every native pass is charged: the first
 //! Jacobian reuses the start's admitted values, and the re-score's fresh admission is its one pass.
+
+// B17 core.
 
 use super::*;
 use crate::kernel::expression_search::{
