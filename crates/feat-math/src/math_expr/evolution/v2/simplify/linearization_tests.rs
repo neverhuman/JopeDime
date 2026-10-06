@@ -393,3 +393,116 @@ fn only_one_variable_subtrees_where_a_line_fits_are_considered() {
         .linearizable_v2(&baseline(), scope())
         .is_err());
 }
+
+// Fix round 01: a recorded fit stays in the evaluator's range, and the records of one expression
+// agree about the samples they share.
+
+#[test]
+fn a_recorded_fit_must_stay_in_the_evaluators_range() {
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(NEAR_LINEAR, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(NEAR_LINEAR, &kept).unwrap(), live);
+    assert!(kept.iter().filter(|e| e.fit.is_some()).count() > 1);
+    let refused = |bad: &[LinearizationEvidence]| {
+        let error = recorded(NEAR_LINEAR, bad).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("a recorded fit disagrees with its stop"),
+            "{error:#}"
+        );
+    };
+    // An exact-fit claim needs `max_error <= 4 eps max|f|`; a max|f| inflated past the range met
+    // it, and widened the bound with it.
+    let mut exact = kept.clone();
+    let fit = exact[0].fit.as_mut().unwrap();
+    fit.stop = MinimaxStop::ExactFit;
+    fit.max_abs = (fit.max_error / (4.0 * f64::EPSILON) * 1.5).max(2.0 * MAX_ABS);
+    refused(&exact);
+    // max|f|, lo or hi past the range, on every fit of the variable alike (so that the shared
+    // training range still agrees).
+    let edits: [fn(&mut LinearFit); 3] = [
+        |f| f.max_abs = 2.0 * MAX_ABS,
+        |f| f.lo = -2.0 * MAX_ABS,
+        |f| f.hi = 2.0 * MAX_ABS,
+    ];
+    for edit in edits {
+        let mut bad = kept.clone();
+        for e in &mut bad {
+            if let Some(fit) = e.fit.as_mut() {
+                edit(fit);
+            }
+        }
+        refused(&bad);
+    }
+    // At the range's edge a consistent record is accepted: its bound grows with max|f|, which
+    // is the limit of checking a record without its rows.
+    let mut edge = kept.clone();
+    edge[0].fit.as_mut().unwrap().max_abs = MAX_ABS;
+    let out = recorded(NEAR_LINEAR, &edge).unwrap();
+    assert!(out[0].expression.is_some());
+}
+
+/// `(sin(c0)+c0)` twice: the root and two equal subtrees are considered.
+const REPEATED: &str = "(sin(c0)+c0)*(sin(c0)+c0)";
+
+#[test]
+fn records_of_one_expression_must_agree_about_the_samples_they_share() {
+    let training = rows(-0.5, 1.5, 201);
+    let refused = |source: &str, bad: &[LinearizationEvidence], expected: &str| {
+        let error = recorded(source, bad).unwrap_err();
+        assert!(format!("{error:#}").contains(expected), "{error:#}");
+    };
+    let unsampled = LinearizationEvidence {
+        fit: None,
+        lowered_error: None,
+        refusal: Some(LINEARIZE_UNSAMPLED.into()),
+    };
+    // A repeated subtree has the same samples, so the same record.
+    let live = linearize(REPEATED, &training);
+    assert_eq!(live.len(), 3);
+    assert_eq!(live[1].subtree, live[2].subtree);
+    assert!(live[1].fit.is_some());
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(REPEATED, &kept).unwrap(), live);
+    let repeated = "a repeated subtree records other samples";
+    let mut hidden = kept.clone();
+    hidden[2] = unsampled.clone();
+    refused(REPEATED, &hidden, repeated);
+    let mut other = kept.clone();
+    other[2].fit.as_mut().unwrap().coefficients[0] += 0.25;
+    refused(REPEATED, &other, repeated);
+    // A subtree that occurs once has no such witness: its fit hidden as unsampled is accepted.
+    let mut root = kept.clone();
+    root[0] = unsampled;
+    let out = recorded(REPEATED, &root).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_UNSAMPLED));
+    // The subtrees of one variable read its values on the same rows: one training range.
+    let live = linearize(NEAR_LINEAR, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert!(kept[0].fit.is_some() && kept[1].fit.is_some());
+    let mut moved = kept.clone();
+    moved[1].fit.as_mut().unwrap().lo += 1e-3;
+    refused(
+        NEAR_LINEAR,
+        &moved,
+        "subtrees of one variable record different training ranges",
+    );
+    // A fit of the variable, and a refusal of too few distinct values of that same variable.
+    for reason in [FEW_ABSCISSAE, EMPTY_INTERVAL] {
+        let mut few = kept.clone();
+        few[1] = LinearizationEvidence {
+            fit: None,
+            lowered_error: None,
+            refusal: Some(format!("{LINEARIZE_FIT_REFUSED}: {reason}")),
+        };
+        refused(
+            NEAR_LINEAR,
+            &few,
+            "a fit and a refusal of the same variable's values disagree",
+        );
+    }
+    // Without a fit beside it, that refusal stands, as the live path gives it.
+    let few = linearize(NEAR_LINEAR, &rows(0.0, 1.0, 2));
+    let kept: Vec<LinearizationEvidence> = few.iter().map(evidence).collect();
+    assert_eq!(recorded(NEAR_LINEAR, &kept).unwrap(), few);
+}

@@ -1,6 +1,7 @@
-//! The bounded minimax linearization pass's proposals (laneD:B19-minimax-linearize): what a parent
-//! offers, from its text and each `derive` stage's training input, and the same re-derived from a
-//! record of the fits.
+//! The bounded minimax linearization pass's proposals: what a parent offers, from its text and
+//! each `derive` stage's training input, and the same re-derived from a record of the fits.
+
+// laneD:B19-minimax-linearize
 
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::{
@@ -16,6 +17,7 @@ use feat_math::{
     GenomeIr,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 use crate::{
     kernel2::{refinement::training_prefix, Kernel2Evaluator},
@@ -310,13 +312,27 @@ pub(crate) fn propose(
 
 /// The proposals of `parent` re-derived from `records`, its published linearization records in
 /// order: everything but each fit and the line's measured error, which the records keep, is
-/// recomputed from the parent's text. The records must account for every considered subtree.
+/// recomputed from the parent's text. The records must account for every considered subtree, and
+/// a faulting training input ([`PREFIX_FAULTS`]) refuses every subtree of its stage or none, as
+/// `propose` refuses them.
 pub(crate) fn rederive(
     evaluator: &Kernel2Evaluator,
     parent: &str,
     width: usize,
     records: &[LinearizationRecord],
 ) -> Result<Vec<LinearProposal>> {
+    let mut stages: BTreeMap<usize, (usize, usize)> = BTreeMap::new();
+    for record in records {
+        let (subtrees, faulted) = stages.entry(record.stage).or_default();
+        *subtrees += 1;
+        *faulted += usize::from(record.refusal.as_deref() == Some(PREFIX_FAULTS));
+    }
+    ensure!(
+        stages
+            .values()
+            .all(|&(subtrees, faulted)| faulted == 0 || faulted == subtrees),
+        "a faulting training input refuses only some of its stage's subtrees"
+    );
     let profile = evaluator.profile();
     let mut used = 0usize;
     let proposals = assemble(evaluator, parent, width, |_, index, expression, scope| {

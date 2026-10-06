@@ -98,6 +98,14 @@ samples' values in other rows, and nothing off the training range, where the lin
 the subtree. The pass never accepts a program on its line's error: it only offers it, and the
 whole program's native protected measurement on the cut decides where it ranks.
 
+What the bound measures: it is the fit's own largest training error, with room for rounding. It
+checks that lowering the fit to ordinary nodes, `x * a1 + a0` evaluated in that order, lost no
+precision; it does not say the line is a good stand-in for the subtree. A poor fit has a large
+`max_error` and a bound to match, and its line is still offered; the native score is the only
+judge of quality. (Open question for the owner, with the D7 wording "bounded minimax
+linearization": whether the pass should also refuse lines whose fit error is large relative to
+the subtree's range, which would be a separate, versioned rule.)
+
 ## Publication and verification
 
 - `search/cut-0/moves.json`: the linearization pass adds one record per considered subtree, in the
@@ -116,28 +124,54 @@ whole program's native protected measurement on the cut decides where it ranks.
   `{"ids": ["feat-math.minimax-linearize.v1"], "sha256": "<sha256 of moves.json>"}`, or
   `["feat-math.rewrite-saturate.v1", "feat-math.minimax-linearize.v1"]` with both passes, in the
   order each round runs them.
-- The v4 receipt schema is unchanged: the selection record already holds an id list, and the move
-  records are a sidecar.
+- The linearization pass adds no receipt field: the selection record already holds an id list, and
+  the move records are a sidecar. (With the rewrite pass also selected, the record carries that
+  pass's `refused_by_pool` and `not_run` counts, the optional fields the v4 schema gained for it.)
 
 `jope pipeline verify-receipt --evidence` (`publication::verify_run`) re-derives the records:
 
 - the selection names known ids once, in their order, and is canonical;
-- records are in round order, the rewrite pass's before the linearization pass's within a round,
-  with at most `top_k` parents per pass and round, each parent read once per round;
+- the set and order of records: for each round, the measurements made before the pass (this
+  round's rewritten programs included) are ranked as the pass ranked them, and the records must
+  name, in order, the first `top_k` distinct ranked programs with a subtree the pass considers,
+  each with one record per considered subtree. Only the run's last round may stop short of that
+  list, on the allowance or the start guard, in a run that stopped on its evaluations or seconds
+  bound, and a pass that ended must end with that parent's records. Under an evaluations stop the
+  last round is pinned exactly: a parent's records may start only while the allowance lasts (some
+  measurement of the run is still to come), and a pass that stops short must stop where it ran
+  out (every measurement made). Under a seconds stop it is not: where the start guard refused is
+  not in the evidence, so in the last round the trailing records that measure nothing can be
+  deleted, and records that measure nothing appended for the next ranked parents, undetected. A
+  parent's whole group of records deleted, a group for a program the pass did not read, or groups
+  swapped are refused;
 - each parent's records re-derive from its published program and the fits they record: the
   considered subtrees and their order, every stage, path, subtree and node count, the degree, the
   bound, the bracket rule, the line and its nodes from the recorded coefficients, every refusal
   after the fit, the admitted expression, the program and the pipeline admission's reason are
   recomputed and compared;
+- the recorded evidence agrees with itself, checked per stage expression: each fit is consistent
+  with its stop and within the evaluator's range (`|lo|`, `|hi|` and `max|f|` at most 1e12, the
+  only range the sampling produces); a faulting training input refuses every subtree of its stage
+  or none; a subtree that occurs twice in one expression records the same samples both times; the
+  fits of one variable in one stage share its training range; and a fit and a refusal of that
+  variable's values alone (too few distinct values) do not both occur. The range bound stops an
+  inflated `max|f|` only past 1e12: within it, an `exact_fit` claim still closes for a `max_error`
+  up to `4 ε 1e12` (about 8.9e-4), and a `noise_limited` one for a bracket up to `64 ε 1e12`
+  (about 0.014), with the bound widened to match;
 - each outcome re-derives from the published measurements, as the rewrite pass's do, a
   `no_allowance` record needs an evaluations stop, nothing is measured after a pass ended, and
   every `linearize` measurement is accounted for by exactly one record.
 
-Not re-derived: the fit itself and the line's measured error. The training rows are not published
-evidence, so verification takes them as recorded and checks only that they agree with the fit's
-stop (finite values, a bracket that does not invert, at most 32 steps, and the stop's own closing
-test). An edit to those numbers that keeps them consistent and leaves the bound, the line and the
-decisions unchanged is not detected; a fit replay needs the training rows.
+What verification cannot prove. Without the training rows, `verify_run` checks each record's
+internal consistency and re-derives the line, the program and the outcome from it; it does not
+re-measure the fit. The fit, its training range, `max|f|` and the line's measured error are taken
+as recorded. So an edit that keeps those numbers consistent passes: for example, a closed fit's
+`max_error` and `levelled` scaled up together, with the bound recomputed to match, re-derives the
+same decisions and is accepted (a test pins this limit). So does a refused subtree's fit replaced
+by the refusal "a training row faults or is not finite in the subtree", which only that subtree's
+own rows could contradict, unless the same subtree occurs twice. Neither edit can change which
+programs were measured or how they scored: an offered line's record is bound to its measured
+program, and the measurement is the native score. A fit replay needs the training rows.
 
 ## Default behaviour is byte-identical
 
@@ -184,7 +218,9 @@ feat-math lib, the `linearization_tests` module of `simplify.rs`:
 - a fit whose bracket did not close (`stalled`, `degenerate`, `iteration_limit`) is refused before
   any line is built, and `closed` holds for exactly the three closing stops;
 - the recorded path re-derives the live result exactly, across every refusal; recorded numbers
-  drive the bound and must agree with their stop;
+  drive the bound and must agree with their stop and the evaluator's range; records of one
+  expression must agree with each other (a repeated subtree, one variable's training range, a
+  fit beside a refusal of the same values);
 - each check of the lowering is named in order; only one-variable subtrees where a line fits are
   considered.
 
@@ -201,6 +237,12 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
 - frozen-clock replay of the receipt and every file with the flag alone, with the rewrite pass,
   and with the damped least-squares refinement, the front and the rewrite pass, each verified;
 - tamper refusals, the selection record, the flag, and the shipped-text lint (of this note too);
+  among them a fit inflated past the evaluator's range, a fit hidden behind a faulting-input
+  refusal beside sibling fits, a parent's group deleted, swapped with the next one, or repeated
+  after the next one, each refused by the check named for it; and the two documented limits,
+  accepted: a consistently scaled fit, and a refused line's fit hidden as an unsampled subtree
+  (a group for a parent the pass did not read is tested for the rewrite pass, whose records share
+  the same parent-order check);
 - with the flag off: the seeded pins, no file and no record.
 
 Not done: the three-language emitted-winner check of linearized programs. They are ordinary
