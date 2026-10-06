@@ -8791,6 +8791,22 @@
       ],
       "dispositions": [],
       "scope": "Stdlib Python audit-guard controls: all socket events, process launches, credential/private-lane input reads, library-cache exception, and exact declared host exclusions before private stat. No numerical work or network traffic; Python audit scope, not OS/native-extension isolation."
+    },
+    "target:feat-math/test/gp_language_tricks": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/gp_language_tricks.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Concrete GP grammar constructions for regression, links, splines, finite decision trees/ensembles, kernels, transforms and reductions; real Python/Rust/strict C++17 compilation, exact evaluator words plus separate mathematical references. Explicit eager selection/protected arithmetic/resource boundaries; no universal grammar, fit or shared harness claim."
     }
   }
 }
