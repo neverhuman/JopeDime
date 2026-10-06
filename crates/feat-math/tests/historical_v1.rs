@@ -401,7 +401,20 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     // B05–B07: typed scalar planner and three-language recipe/fitted adapters.
     let scalar_recipes = old_fixture("transitions/b05_b07_recipes_identity_rebaseline.v1.json");
     assert_eq!(scalar_recipes["fixtures"].as_array().unwrap().len(), 2);
-    let identity_chain = [transition, successor, b12, b13, b10, b11, scalar_recipes];
+    // Owner-approved manifest cmp_owned change: identity-only, no behavior drift.
+    let manifest_cmp = old_fixture("transitions/manifest_cmp_owned_identity_rebaseline.v1.json");
+    assert_eq!(manifest_cmp["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(manifest_cmp["fixtures"][0]["path"], changed_fixtures[1]);
+    let identity_chain = [
+        transition,
+        successor,
+        b12,
+        b13,
+        b10,
+        b11,
+        scalar_recipes,
+        manifest_cmp,
+    ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
     let mut old_fixtures = 0;
