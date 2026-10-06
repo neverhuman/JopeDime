@@ -389,7 +389,20 @@ pub fn ordered_training_sha256(x: &[Vec<f64>], y: &[f64]) -> Result<String> {
     }
     Ok(hex::encode(h.finalize()))
 }
+// Synthetic arbitration tests control elapsed time independently of runtime
+// hashing throughput. Each thread uses the real clock unless its fixture opts in.
+#[cfg(test)]
+thread_local! {
+    static SYNTHETIC_MONOTONIC_NS: std::cell::Cell<Option<u64>> = const {
+        std::cell::Cell::new(None)
+    };
+}
+
 pub(super) fn monotonic_ns() -> Result<u64> {
+    #[cfg(test)]
+    if let Some(now) = SYNTHETIC_MONOTONIC_NS.with(std::cell::Cell::get) {
+        return Ok(now);
+    }
     let mut ts = libc::timespec {
         tv_sec: 0,
         tv_nsec: 0,
