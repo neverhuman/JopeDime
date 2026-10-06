@@ -1796,3 +1796,61 @@ fn rewrite_parents_are_bounded_before_they_are_parsed() {
     let error = propose(&opt.evaluator, &closed_form, 1).unwrap_err();
     assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
 }
+
+/// Independent review 01 of the wiring PR (B20-R01-AST-FIRST): `MathExpr::simplify_v2`, the
+/// public entry, checks a decoded tree's structure before it copies or normalizes it. A
+/// `MathExpr` decoded from JSON has had no structure check, and the copy and `Search::finish`'s
+/// normalization both recurse.
+#[test]
+fn simplify_v2_checks_a_decoded_tree_before_copying_it() {
+    let opt = options(4, 64, FaultPolicy::RejectHard);
+    let profile = opt.evaluator.profile();
+    let pool = profile.expr.as_ref().unwrap();
+    let scope = || ExpressionScope {
+        columns: pool.column_upper_exclusive,
+        elementwise: false,
+        max_nodes: pool.max_nodes,
+        max_depth: pool.max_depth,
+    };
+    // #202 review 04's shallow 65-node tree: one call with 64 literal arguments.
+    let leaves = vec![serde_json::json!({ "Const": 1.0 }); 64];
+    let wide: MathExpr =
+        serde_json::from_value(serde_json::json!({ "root": { "Call": ["Abs", leaves] } })).unwrap();
+    let error = wide.simplify_v2(profile, scope()).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("before it is copied"),
+        "{error:#}"
+    );
+    // An admitted tree passes the check and simplifies as before.
+    assert!(MathExpr::parse("1*c0")
+        .unwrap()
+        .simplify_v2(profile, scope())
+        .is_ok());
+}
+
+/// Independent review 01 of the wiring PR (B20-R01-ROUND-BOUND): `check` replays every round the
+/// receipt declares, so the round count is bounded by the search's stop rule first, at most
+/// `BARREN_ROUND_LIMIT` rounds per completed evaluation plus that many. One more is refused, with
+/// `search.json` and the receipt rehashed so that only the bound can see it.
+#[test]
+fn verify_bounds_the_round_count_before_replaying_rounds() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = run_options(temp.path(), 40, four_parents(), simplify());
+    let receipt = run::run(&opt).unwrap();
+    let s = &receipt.search;
+    let bound = BARREN_ROUND_LIMIT * (s.completed_evaluations + 1);
+    assert!(s.generations <= bound, "{} > {bound}", s.generations);
+    let output = &opt.run.output;
+    let mut edited = receipt.clone();
+    edited.search.generations = bound + 1;
+    let summary = serde_json::to_vec_pretty(&edited.search).unwrap();
+    std::fs::write(output.join("search/cut-0/search.json"), &summary).unwrap();
+    edited.search_sha256 = crate::sha256_hex(&summary);
+    let path = output.join("receipt.json");
+    std::fs::write(&path, serde_json::to_vec(&edited).unwrap()).unwrap();
+    let error = publication::verify_run(&path).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("round count exceeds"),
+        "{error:#}"
+    );
+}
