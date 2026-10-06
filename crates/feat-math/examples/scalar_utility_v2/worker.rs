@@ -27,6 +27,7 @@ struct FitEvaluation<T> {
     candidate: T,
     lambda: f64,
     score: f64,
+    raw_score: f64,
     faults: FaultTotals,
     fold_scores: Vec<f64>,
 }
@@ -187,8 +188,10 @@ fn evaluate_folds<T: Clone>(
             hard_lambda_refusal = true;
             continue;
         }
-        let scores = scores
-            .into_iter()
+        let raw_scores = scores;
+        let scores = raw_scores
+            .iter()
+            .copied()
             .map(|score| match policy {
                 FaultPolicy::Penalize {
                     lambda_domain,
@@ -204,8 +207,9 @@ fn evaluate_folds<T: Clone>(
             candidate: candidate.clone(),
             lambda,
             score,
+            raw_score: raw_scores.iter().sum::<f64>() / raw_scores.len() as f64,
             faults,
-            fold_scores: scores,
+            fold_scores: raw_scores,
         };
         if best
             .as_ref()
@@ -407,7 +411,7 @@ pub fn compare_existing_formulas(
                 let index = records.len();
                 records.push(json!({"name":formula.name,"compared_functions":formula.compared_functions,
                     "comparison_limits":formula.note,"producer_admission":producer_admission,"execution_route":"explicit-unbound-legacy-formula; generic scalar fit","nodes":nodes,"depth":depth,
-                    "cv_bits":evaluation.score.to_bits(),"lambda_bits":evaluation.lambda.to_bits(),
+                    "cv_bits":evaluation.raw_score.to_bits(),"objective_bits":evaluation.score.to_bits(),"lambda_bits":evaluation.lambda.to_bits(),
                     "fold_score_bits":evaluation.fold_scores.iter().map(|v|v.to_bits()).collect::<Vec<_>>(),
                     "faults":counts(evaluation.faults),"refit_faults":counts(refit_faults),
                     "fits":work.fits-before,"program":formula.program.to_bytes().map_err(|e|e.to_string())?,
@@ -510,7 +514,7 @@ pub fn search(
                 work.completed += 1;
                 attempts.push(json!({"attempt":index+1,"seed":draw_seed,"edit":edit,
                     "program":evaluation.candidate.program().to_bytes().map_err(|e|e.to_string())?,
-                    "lambda_bits":evaluation.lambda.to_bits(),"score_bits":evaluation.score.to_bits(),
+                    "lambda_bits":evaluation.lambda.to_bits(),"score_bits":evaluation.score.to_bits(),"raw_cv_bits":evaluation.raw_score.to_bits(),
                     "fold_score_bits":evaluation.fold_scores.iter().map(|v|v.to_bits()).collect::<Vec<_>>(),
                     "faults":counts(evaluation.faults),"fits":work.fits-fits_before}));
                 // Stable insertion uses the existing fault-policy comparator;
@@ -529,7 +533,7 @@ pub fn search(
             }
         }
         if let Some(best) = population.first() {
-            progression.push((index + 1, best.score));
+            progression.push((index + 1, best.raw_score));
         }
     }
     let winner = population
@@ -544,7 +548,7 @@ pub fn search(
     let mut refit_faults = FaultTotals::default();
     add_repeated_passes(&features, &masks, &mut refit_faults, &mut work)?;
     let elite: Vec<_> = population.iter().take(10).collect();
-    let mut scores: Vec<_> = elite.iter().map(|entry| entry.score).collect();
+    let mut scores: Vec<_> = elite.iter().map(|entry| entry.raw_score).collect();
     scores.sort_by(f64::total_cmp);
     let top_ten_median = if scores.len() % 2 == 0 {
         (scores[scores.len() / 2 - 1] + scores[scores.len() / 2]) / 2.0
@@ -559,7 +563,7 @@ pub fn search(
         .map(|(_, v)| *v)
         .max_by(f64::total_cmp)
         .ok_or("no initial fitted population")?;
-    let threshold = initial + 0.95 * (winner.score - initial);
+    let threshold = initial + 0.95 * (winner.raw_score - initial);
     let evals_to_95 = progression
         .iter()
         .find(|(_, score)| *score >= threshold)
@@ -569,7 +573,7 @@ pub fn search(
     // unreachable for a negative final score; do not manufacture zero.
     let literal_evals_to_95 = progression
         .iter()
-        .find(|(_, score)| *score >= 0.95 * winner.score)
+        .find(|(_, score)| *score >= 0.95 * winner.raw_score)
         .map(|(n, _)| *n);
     let mut elite_metrics = vec![];
     for entry in &elite {
@@ -589,17 +593,17 @@ pub fn search(
                 "tokens":tokens.code_tokens+tokens.doc_tokens,"source_sha256":format!("{:x}",Sha256::digest(source.as_bytes()))}),
             );
         }
-        elite_metrics.push(json!({"nodes":nodes,"depth":depth,"required_features":program.required_features().map_err(|e|e.to_string())?,"card_token_occurrences":usage(program),"sources":sources}));
+        elite_metrics.push(json!({"cv_bits":entry.raw_score.to_bits(),"objective_bits":entry.score.to_bits(),"nodes":nodes,"depth":depth,"required_features":program.required_features().map_err(|e|e.to_string())?,"card_token_occurrences":usage(program),"sources":sources}));
     }
-    let deterministic = json!({"training_only_fold_key":key,"fold_assignments":(0..training.len()).map(|index|fold_of(&key,index,3)).collect::<Vec<_>>(),"training_rows":training.len(),"evaluator":"native-scalar-ridge-inner-cv-v1","profile":profile.canonical_json(),"profile_sha256":profile.sha256(),
-        "seed":seed,"budget":budget,"attempted":work.attempted,"completed":work.completed,
+    let deterministic = json!({"training_only_fold_key":key,"fold_assignments":(0..training.len()).map(|index|fold_of(&key,index,3)).collect::<Vec<_>>(),"training_rows":training.len(),"evaluator":"native-scalar-ridge-inner-cv-v2","profile":profile.canonical_json(),"profile_sha256":profile.sha256(),
+        "quality_definition":"raw-inner-fold-r2;selection-objective-separate","seed":seed,"budget":budget,"attempted":work.attempted,"completed":work.completed,
         "refused":work.refused,"hard_rejected_attempts":work.hard_rejected_attempts,
         "unobserved_internal_passes":work.unobserved_internal_passes,
         "cell_accounting_complete":work.unobserved_internal_passes == 0,
         "invalid_offspring_proposals":work.rejected_births+work.invalid_edits,"fit_attempts":work.fit_attempts,"fits":work.fits,"predictions":work.predictions,
         "evaluated_rows":work.evaluated_rows,"all_pass_faults":counts(work.cells),
         "edit_attempts":work.edit_attempts,"birth_attempts":work.birth_attempts,"rejected_births":work.rejected_births,"invalid_edits":work.invalid_edits,"unchanged_edits":work.unchanged_edits,
-        "best_cv_bits":winner.score.to_bits(),"top_ten_median_bits":top_ten_median.to_bits(),
+        "best_cv_bits":winner.raw_score.to_bits(),"best_objective_bits":winner.score.to_bits(),"top_ten_median_bits":top_ten_median.to_bits(),
         "evals_to_95_final_best":literal_evals_to_95,"evals_to_95_improvement":evals_to_95,"elite":elite_metrics,"attempts":attempts,
         "winner_json":model.to_json().map_err(|e|e.to_string())?,"winner_refit_faults":counts(refit_faults)});
     Ok(SearchResult {
