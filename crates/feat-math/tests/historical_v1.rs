@@ -414,6 +414,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let clippy_floor = old_fixture("transitions/required_clippy_floor_identity_rebaseline.v1.json");
     assert_eq!(clippy_floor["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(clippy_floor["fixtures"][0]["path"], changed_fixtures[1]);
+    // Checked corpus mapping bounds mint new teaching and scan-policy source identities.
+    let corpus_bounds = old_fixture("transitions/corpus_bounds_identity_rebaseline.v1.json");
+    assert_eq!(corpus_bounds["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(corpus_bounds["fixtures"][0]["path"], changed_fixtures[1]);
     let identity_chain = [
         transition,
         successor,
@@ -425,6 +429,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         manifest_cmp,
         authority_clock,
         clippy_floor,
+        corpus_bounds,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
