@@ -349,6 +349,58 @@ class Refusals(_Base):
         self.assertTrue(rec and all(r["t1_fallback"] == fb and r["row_selection_leak"] == ["acquisition_cap"] for r in rec))
         self.assert_layout()
 
+    def test_resplit_schemas_need_a_new_cut(self):
+        good = {"cut_id": "trainonly-split-v2:" + "a" * 64, "comparable_with_replaced": False, "replaces_cut": {"x": 1}}
+        goodg = dict(good, cut_id="trainonly-split-v2g:" + "b" * 64)
+        RS, L7A, L7B = "jope.dl-v2-rowsel-context/v2", "jope.dl-v2-l7a-context/v2split", "jope.dl-v2-local-context/v2split"
+        V2, V2G = {"schema": "rowsel-raw-split-v2"}, {"schema": "rowsel-split-v2-groups"}
+        make_context(self.shard, "a" * 16, 0, schema=RS, cut=good, rowsel={"split": V2})                  # admitted (T1: rowsel.split)
+        make_context(self.shard, "a" * 16, 1, schema=L7A, values_mode="L7a", cut=goodg, split=V2G)       # admitted (group split)
+        make_context(self.shard, "a" * 16, 2, schema=L7B, cut=good, rights="licensed", split=V2)          # admitted, production
+        make_context(self.shard, "b" * 16, 0, schema=RS, rowsel={"split": V2})                            # no cut
+        make_context(self.shard, "c" * 16, 0, schema=L7B, split=V2, cut=dict(good, comparable_with_replaced=True))  # comparable
+        make_context(self.shard, "d" * 16, 0, schema=L7B, split=V2, cut=dict(good, cut_id="registry:" + "a" * 64))  # old registry cut
+        make_context(self.shard, "e" * 16, 0, schema=L7B, split=V2, cut=dict(good, cut_id="trainonly-split-v2:xyz"))
+        make_context(self.shard, "f" * 16, 0, schema=L7A, split=V2, cut=good)                             # L7a schema, L7b values
+        make_context(self.shard, "9" * 16, 0, schema=L7B, split=V2, cut=good, rights="licensed-maybe")    # unknown rights value
+        make_context(self.shard, "8" * 16, 0, schema=L7B, split=V2G, cut=good)                            # group split, v2 prefix
+        make_context(self.shard, "7" * 16, 0, schema=L7B, split=V2, cut=goodg)                            # v2 split, v2g prefix
+        make_context(self.shard, "6" * 16, 0, schema=L7B, cut=good)                                       # no split record
+        make_context(self.shard, "5" * 16, 0, schema=L7B, split={"schema": "grouped-stratified-kfold/v1"}, cut=good)  # registry split
+        make_context(self.shard, "a" * 16, 3, schema=RS, cut=good, rowsel={"split_schema": "rowsel-raw-split-v2"})    # GPU-tree record
+        make_context(self.shard, "4" * 16, 0, schema=RS, cut=good, rowsel={"split_schema": "rowsel-split-v2-groups"}) # GPU record, wrong prefix
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"b" * 16 + "__r0__f0": "cut", "c" * 16 + "__r0__f0": "cut", "d" * 16 + "__r0__f0": "cut",
+                                              "e" * 16 + "__r0__f0": "cut", "f" * 16 + "__r0__f0": "values_mode",
+                                              "9" * 16 + "__r0__f0": "rights", "8" * 16 + "__r0__f0": "cut", "7" * 16 + "__r0__f0": "cut",
+                                              "6" * 16 + "__r0__f0": "cut", "5" * 16 + "__r0__f0": "cut", "4" * 16 + "__r0__f0": "cut"})
+        keys = list(self.bucket.keys())
+        self.assertTrue(keys and {k.split("/")[-3] for k in keys} == {"a" * 16})
+        for (_, key), versions in self.bucket.objects.items():
+            if "/hyperion/" in key or "/jtt1-encoder/" in key or "/a0/" in key:
+                s3io.assert_production_loadable(key)
+            if "/receipts/" in key and "/f2/" in key:
+                self.assertEqual(json.loads(versions[-1][1])["rights"], "licensed")
+        self.assert_layout()
+
+    def test_v2_t1_fallback_needs_its_rowsel_split_record(self):
+        cut = {"cut_id": "trainonly-split-v2:" + "a" * 64, "comparable_with_replaced": False}
+        rs = {"split": {"schema": "rowsel-raw-split-v2"}}
+        fb = {"source_sha256": "f" * 64, "rule": "ROWSEL-SPLIT: raw source unmatched; rebuilt on T1 keeping acquisition_cap", "reason": "rows_unmatched"}
+        RS = "jope.dl-v2-rowsel-context/v2"
+        make_context(self.shard, "a" * 16, 0, schema=RS, cut=cut, rowsel=rs, row_selection_leak=["acquisition_cap"], t1_fallback=fb)   # admitted
+        make_context(self.shard, "b" * 16, 0, schema=RS, cut=cut, rowsel=rs, row_selection_leak=["acquisition_cap"],
+                     t1_fallback=dict(fb, rule="other"))
+        make_context(self.shard, "c" * 16, 0, schema=RS, cut=cut, rowsel=rs, row_selection_leak=["acquisition_cap"],
+                     t1_fallback={"coverage_sha256": "f" * 64, "reason": "unmatched"})                                 # v1 record on v2
+        make_context(self.shard, "d" * 16, 0, schema=RS, cut=cut, rowsel=rs, row_selection_leak=["acquisition_cap"], t1_fallback=dict(fb, source_sha256="x"))
+        make_context(self.shard, "e" * 16, 0, schema=RS, cut=cut, rowsel=rs, row_selection_leak=["acquisition_cap"],               # v1 field + rule
+                     t1_fallback={"coverage_sha256": "f" * 64, "rule": fb["rule"], "reason": "rows_unmatched"})
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {k * 16 + "__r0__f0": "row_selection_gate" for k in "bcde"})
+        self.assertEqual({k.split("/")[-3] for k in self.bucket.keys()}, {"a" * 16})
+        self.assert_layout()
+
     def test_key_collision_refuses_both(self):
         make_context(self.shard, "a" * 16, 0, split_seed="same", view_id="a" * 16 + "__r0__f0__x")
         make_context(self.shard, "a" * 16, 0, split_seed="same", view_id="a" * 16 + "__r0__f0__y")

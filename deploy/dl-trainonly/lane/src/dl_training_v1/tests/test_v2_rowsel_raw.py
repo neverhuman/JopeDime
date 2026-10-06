@@ -986,9 +986,20 @@ class SplitVersion(unittest.TestCase):
         self.assertEqual((rec["status"], rec["reason"]), ("failed", "unknown_split_version"))
 
     def test_the_target_check_runs_on_the_selected_split(self):
-        with mock.patch.dict(tool.SPLIT_VERSIONS, {"strat": (stratified_split, rowsel_raw.split_report)}):
-            rec = self.run_ds(dict(plan_entry(), split_version="strat"))         # CONTROL: a target-stratified split
+        def target_ordered_split(h, positions, values, specs, folds=5):
+            """CONTROL: v2's duplicate groups (so nothing straddles) ordered by their mean target."""
+            groups = split_v2.duplicate_groups(positions, values, specs)
+            at = {int(p): i for i, p in enumerate(np.asarray(positions).tolist())}
+            y = np.asarray(values)[:, -1]
+            sizes, out = [0] * folds, {f: [] for f in range(folds)}
+            for m in sorted(groups.values(), key=lambda m: (float(np.mean([y[at[p]] for p in m])), min(m))):
+                f = sizes.index(min(sizes)); out[f] += m; sizes[f] += len(m)
+            return {f: sorted(v) for f, v in out.items()}
+        with mock.patch.dict(tool.SPLIT_VERSIONS, {"tgt": (target_ordered_split, split_v2.split_report)}):
+            rec = self.run_ds(dict(plan_entry(), split_version="tgt"))
         self.assertEqual((rec["status"], rec["reason"]), ("failed", "split_check_failed"))
+        self.assertEqual(rec["split"]["groups_straddling_folds"], 0)              # only the target check can catch it
+        self.assertFalse(rec["split"]["target_check"]["target_invariant"])
         self.assertEqual([d for d in self.shard.iterdir() if d.name != "_datasets"], [])
 
     def test_plans_name_their_version_and_v1_plans_stay_byte_identical(self):

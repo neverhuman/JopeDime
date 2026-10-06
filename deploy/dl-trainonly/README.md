@@ -151,4 +151,4 @@ The [earlier CPU build receipt](../../docs/internal/core-ip/dl-trainonly/dope-cp
 remains historical and provisional at its build time; it is not the active pin.
 See the [C6 packet](../../docs/internal/core-ip/dl-trainonly/teacher-packet.md).
 
-The [DL lane source custody](SOURCE_CUSTODY.md) retains the pinned 2026-10-06 builder handoff, predecessor versions and offline fixture checks. It does not grant runtime adoption, training, GPU work or publication.
+The [DL lane source custody](SOURCE_CUSTODY.md) retains the pinned 2026-10-06 builder handoff restage `365ec3ce` (non-raw split v2 and v2-groups hooks, the group split module, the final publisher and the publish tools), its ordered predecessor chain and offline fixture checks. It does not grant runtime adoption, training, GPU work or publication.

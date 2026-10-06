@@ -16,15 +16,42 @@ to OUT/shard-<i>/_datasets/<dataset_hash>.json. Per shard: shard-<i>-of-<n>.rece
 by values_mode, failed). No S3, network or GPU; nothing is published. Sharding is the L7b rule (dataset_hash[:8] % n),
 so L7a shard i points into L7b shard i.
 
+SPLIT V2 + GROUPS (--split-version rowsel-split-v2-groups; GROUP-UNION-B): the 6 group-annotated clean L7a datasets are
+rebuilt into RUN/build-v2/L7a-v2gsplit with tools/v2_build_local.py's v2g machinery (group values = the T1 column bytes
+of A, row i of the L7a universe being A row i); see that tool's docstring.
+
+SPLIT V2 (--split-version rowsel-raw-split-v2; owner ruling NONRAW-SPLIT-A): the clean-v1 L7a datasets are re-split with
+the raw route's target-free split v2 and rebuilt into a NEW create-only tree (RUN/build-v2/L7a-v2split). The machinery
+(plan, gates, identity, cut block, writes, verify/summary) is tools/v2_build_local.py's; this tool supplies the L7a
+universe and builder:
+  universe    the matched source rows: t1raw.match_dataset on the same raw bytes (custody: fetch.json == L7a dataset record
+              == file sha256), which must reproduce the L7a record's values_sha256 and read report. Row i is the source
+              row matched to row i of the epoch-0 data object A (the whole T1 table: sample_rows == source_rows, and every
+              epoch-0 context's R u T is all of A). Position = 0-based row index in A; partition label "l7a".
+  groups      rowsel_raw.feature_bytes over the matched values (canonical float64 numeric/datetime cells, meta key text of
+              categorical cells); the target is never part of the key
+  per fold    T = fold f, R = the other rows (ascending): t1raw.prepare (train-median imputation, train-only category
+              codes and target-copy drop, train-only min-max, inner folds from R), teacher = refitted unscaled rows, A0
+  gates       the split gates of v2_build_local, and per context rowsel_raw.value_counterfactual (outer-test raw values
+              perturbed: features, targets, missingness, categories, outlier, drop, train copies) with its base equal to
+              the written artifacts. A dataset that fails any gate on any fold is not written (no per-context L7b
+              fallback: the failure and its reason go to the dataset record and the summary).
+  view_id     <h>__r0__f<f>__l7asplit2_<identity[:12]>
+Rights-held datasets are refused before any read (none is in the clean-v1 scope).
+
 Usage (inside the lane slice):
-  v2_build_l7a.py --out DIR --shard I --of N
-  v2_build_l7a.py --out DIR --summarize --of N --tests-log LOG --mutants JSON [--receipt PATH]
+  v2_build_l7a.py --out DIR --shard I --of N                                                    (registry, unchanged)
+  v2_build_l7a.py --out DIR --summarize --of N --tests-log LOG --mutants JSON [--receipt PATH]   (registry summary)
+  v2_build_l7a.py --split-version rowsel-raw-split-v2 --plan clean-l7a --out NEW_TREE --of N
+  v2_build_l7a.py --split-version rowsel-raw-split-v2 --out NEW_TREE --shard I --of N [--datasets h1,h2]
+  v2_build_l7a.py --split-version rowsel-raw-split-v2 --summarize --out NEW_TREE --of N --tests-log LOG --mutants JSON [--pilot P]
 """
 import argparse
 import collections
 import glob
 import gzip
 import hashlib
+import importlib.util
 import json
 import os
 import sys
@@ -33,7 +60,11 @@ from pathlib import Path
 
 import numpy as np
 
-from dltrain import cpuguard, metafeatures, scale_check, t1raw, trainonly
+from dltrain import cpuguard, metafeatures, rowsel_raw, scale_check, t1raw, trainonly
+
+_spec = importlib.util.spec_from_file_location("v2_build_local", Path(__file__).resolve().parent / "v2_build_local.py")
+local = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(local)
 
 RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
 META_DIR = RUN / "inputs" / "t1-meta"
@@ -43,6 +74,8 @@ RECEIPTS = RUN / "receipts" / "trainonly-v2"
 PLAN = RECEIPTS / "l7a-fetch-plan-licensed-only.jsonl"
 LEAK = RECEIPTS / "row-selection-leak-20261005T185553Z.jsonl"
 L7B = RUN / "build-v2" / "L7b"
+L7A_OUT = RUN / "build-v2" / "L7a"
+L7A_SUMMARY = RECEIPTS / "l7a-build-summary-20261005T204452Z.json"
 SCHEMA = "jope.dl-v2-l7a-context/v1"
 CODE_FILES = ("tools/v2_build_l7a.py", "dltrain/t1raw.py", "dltrain/t1prep.py", "dltrain/trainonly.py", "dltrain/metafeatures.py",
               "dltrain/scale_check.py", "dltrain/jtt1.py")
@@ -124,27 +157,37 @@ def write_record(d: Path, rec: dict):
     atomic(d / ".done", b"ok\n")
 
 
-def build_l7a(c, values, specs, d: Path):
-    """One L7a context: refit on outer-train rows, train-only min-max, inner folds, JTT1; files as the L7b build."""
-    R, T = [int(i) for i in c["R"]], [int(i) for i in c["T"]]
+def l7a_artifacts(values, specs, R, T) -> dict:
+    """One L7a context in memory: refit on outer-train rows, train-only min-max, inner folds, JTT1 train then test rows;
+    teacher = the refitted, unscaled rows; A0 of the encoder JTT1."""
     split = t1raw.prepare(values, specs, R, T)
     fitted = split["fitted"]
     teacher = trainonly.jtt1_bytes(fitted[R], fitted[T].reshape(-1, fitted.shape[1]), split["inner_labels"])
-    enc_gz = gzip.compress(split["jtt1"], compresslevel=3, mtime=0)
-    tea_gz = gzip.compress(teacher, compresslevel=3, mtime=0)
     a0 = metafeatures.from_raw(split["jtt1"])[0]
+    return {"encoder_raw": split["jtt1"], "teacher_raw": teacher, "a0": a0, "report": split["t1raw"], "t1raw": split["t1raw"],
+            "scaler_sha256": sha(trainonly.scaler_bytes(split)),
+            "inner_labels_sha256": sha(np.asarray(split["inner_labels"], np.uint8).tobytes()),
+            "inner_loads": split["inner_cv"]["loads"]}
+
+
+def build_l7a(c, values, specs, d: Path):
+    """One L7a context: refit on outer-train rows, train-only min-max, inner folds, JTT1; files as the L7b build."""
+    R, T = [int(i) for i in c["R"]], [int(i) for i in c["T"]]
+    art = l7a_artifacts(values, specs, R, T)
+    enc_gz = gzip.compress(art["encoder_raw"], compresslevel=3, mtime=0)
+    tea_gz = gzip.compress(art["teacher_raw"], compresslevel=3, mtime=0)
+    a0 = art["a0"]
     d.mkdir(parents=True, exist_ok=True)
     atomic(d / "encoder.jtt1.gz", enc_gz)
     atomic(d / "teacher.jtt1.gz", tea_gz)
     atomic(d / "a0.f32", a0)
     return {"outer_train_indices_sha256": sha(json.dumps(R).encode()), "outer_test_indices_sha256": sha(json.dumps(T).encode()),
             "n_train": len(R), "n_test": len(T),
-            "files": {"encoder.jtt1.gz": {"sha256": sha(enc_gz), "raw_sha256": sha(split["jtt1"]), "bytes": len(enc_gz)},
-                      "teacher.jtt1.gz": {"sha256": sha(tea_gz), "raw_sha256": sha(teacher), "bytes": len(tea_gz)},
+            "files": {"encoder.jtt1.gz": {"sha256": sha(enc_gz), "raw_sha256": sha(art["encoder_raw"]), "bytes": len(enc_gz)},
+                      "teacher.jtt1.gz": {"sha256": sha(tea_gz), "raw_sha256": sha(art["teacher_raw"]), "bytes": len(tea_gz)},
                       "a0.f32": {"sha256": sha(a0), "bytes": len(a0)}},
-            "scaler_sha256": sha(trainonly.scaler_bytes(split)),
-            "inner_labels_sha256": sha(np.asarray(split["inner_labels"], np.uint8).tobytes()),
-            "inner_loads": split["inner_cv"]["loads"], "t1raw": split["t1raw"]}
+            "scaler_sha256": art["scaler_sha256"], "inner_labels_sha256": art["inner_labels_sha256"],
+            "inner_loads": art["inner_loads"], "t1raw": art["t1raw"]}
 
 
 def match_summary(st):
@@ -410,6 +453,113 @@ def summarize(a):
     return 0 if doc["sums_to_included"] else 1
 
 
+# ======================================================================================== split v2 (NONRAW-SPLIT-A)
+
+L7A_V2_CODE = ("tools/v2_build_l7a.py", "dltrain/t1raw.py")
+
+
+def code_shas_v2(version=None) -> dict:
+    return local.code_shas_v2(L7A_V2_CODE, version=version)
+
+
+def l7a_value_counterfactual(values, specs, R, T, art) -> dict:
+    """rowsel_raw.value_counterfactual on this context's rows (outer-train rows first, then outer-test rows): every
+    outer-test perturbation must leave the train side bit-identical; the gate's base must equal the written artifacts."""
+    V = np.ascontiguousarray(np.asarray(values, dtype=np.float64)[list(R) + list(T)])
+    base = rowsel_raw.l7a_artifacts(V, specs, len(R), prepare=t1raw.prepare)
+    same = (base["encoder_raw"] == art["encoder_raw"] and base["teacher_raw"] == art["teacher_raw"] and base["a0"] == art["a0"]
+            and rowsel_raw.values_train_side(base) == rowsel_raw.values_train_side(art))
+    vcf = rowsel_raw.value_counterfactual(V, specs, len(R), base=base, prepare=t1raw.prepare)
+    return {"cases": vcf["cases"], "base_equals_written": bool(same),
+            "train_side_invariant": bool(same) and bool(vcf["train_side_invariant"]), "train_side": vcf["train_side"]}
+
+
+def check_rematch(m, rec) -> tuple:
+    """The re-run match must reproduce the L7a dataset record: matched, same values sha256, same read report."""
+    if m.get("status") != "matched":
+        raise local.SplitV2Error("rematch_unmatched", f"{m.get('reason')}: {m.get('detail')}")
+    vs = sha(np.ascontiguousarray(m["values"], "<f8").tobytes())
+    if vs != rec["values_sha256"]:
+        raise local.SplitV2Error("rematch_values_differ", vs)
+    if m["read"] != rec["read"]:
+        raise local.SplitV2Error("rematch_read_report_differs")
+    return m["values"], list(m["specs"]), {"values_sha256": vs, "read_report_equal": True, "match_stats_equal": m["stats"] == rec["match"]}
+
+
+def make_l7a_loader(held):
+    def load(e, src, cache, inv, by_dataset):
+        h = e["dataset_hash"]
+        if h in held:
+            raise local.SplitV2Error("held_no_license")                         # before any read of its source
+        mr = e["l7a_record"]
+        b = Path(mr["path"]).read_bytes()
+        if sha(b) != mr["sha256"]:
+            raise local.SplitV2Error("l7a_record_drift", mr["path"])
+        rec = json.loads(b)
+        if rec.get("status") != "matched":
+            raise local.SplitV2Error("l7a_record_not_matched", str(rec.get("reason")))
+        rows, ctxs, sealed, holdout = local.resolve_epoch0(e, src, cache, by_dataset)
+        A, data_sha, cov = local.epoch0_universe(ctxs)
+        if data_sha != rec["data_sha256"]:
+            raise local.SplitV2Error("data_object_differs_from_matched", data_sha)
+        meta, k = local.load_meta(h, inv)
+        if rec["t1_meta_sha256"] != k:
+            raise local.SplitV2Error("meta_sha_mismatch", k)
+        fdir = RAW_DIR / h
+        if not (fdir / ".done").exists():
+            raise local.SplitV2Error("raw_not_done")
+        fj = json.loads((fdir / "fetch.json").read_bytes())
+        raw_path = Path(fj["file"])
+        if raw_path.parent.resolve() != fdir.resolve():
+            raise local.SplitV2Error("raw_outside_dataset_dir", str(raw_path))
+        got = sha_file(raw_path)
+        if got != fj.get("sha256") or got != rec["raw"]["sha256"]:
+            raise local.SplitV2Error("raw_custody_mismatch", f"{got} fetch {fj.get('sha256')} l7a {rec['raw']['sha256']}")
+        raw_ref = {"file": str(raw_path), "sha256": got, "bytes": raw_path.stat().st_size, "fetch_status": fj.get("status"),
+                   "url": fj.get("url"), "byte_identical_to_original": got.startswith(h)}
+        values, specs, rematch = check_rematch(t1raw.match_dataset(raw_path, meta, A), rec)
+        if np.asarray(values).shape[0] != A.shape[0]:
+            raise local.SplitV2Error("matched_rows_differ_from_universe", f"{np.asarray(values).shape} vs {A.shape}")
+        inp = l7a_inputs(e, values, specs, data_sha, k, cov, rows[0]["cohort"], raw_ref, rec, rematch, sealed, holdout)
+        return local.attach_groups(inp, e, A) if e.get("group_column") else inp       # GROUP-UNION-B: T1 column bytes
+    return load
+
+
+def l7a_inputs(e, values, specs, data_sha, meta_sha, cov, cohort, raw_ref, rec, rematch, sealed=0, holdout=()) -> dict:
+    """L7a universe: the matched source rows (row i matched to A row i), grouping on their parsed feature bytes,
+    partition 'l7a'."""
+    values = np.ascontiguousarray(np.asarray(values, dtype=np.float64))
+    specs = list(specs)
+    mr = e.get("l7a_record")
+    universe = {"kind": local.ROUTES["L7a"]["universe"], "partition": local.ROUTES["L7a"]["partition"],
+                "rows": int(values.shape[0]), "columns": int(values.shape[1]), "data_sha256": data_sha,
+                "values_sha256": rematch["values_sha256"], "t1_meta_sha256": meta_sha, "raw_sha256": (raw_ref or {}).get("sha256"),
+                "match_record": mr,
+                "positions": "0..rows-1 = row index of the epoch-0 data object A (the T1 table); row i holds the source "
+                             "row t1raw.match_dataset matched to A row i",
+                "group_basis": "rowsel_raw.feature_bytes of the matched source values: canonical float64 of numeric and "
+                               "datetime cells, meta key text of categorical cells; target excluded",
+                "rematch": rematch, "epoch0_coverage": cov}
+    common = {"t1_meta_sha256": meta_sha, "data_sha256": data_sha, "cohort": cohort, "rights": e.get("rights"),
+              "raw_source": raw_ref, "match": match_summary((rec or {}).get("match")), "match_record": mr,
+              "values_sha256": rematch["values_sha256"], "epoch0_row_selection_leak": e["epoch0_labels"]}
+    return {"values": values, "specs": specs, "n": int(values.shape[0]), "universe": universe, "common": common,
+            "sealed": sealed, "holdout": list(holdout), "report_key": "t1raw",
+            "build": lambda R, T: l7a_artifacts(values, specs, R, T),
+            "counterfactual": lambda R, T, art: l7a_value_counterfactual(values, specs, R, T, art)}
+
+
+def plan_l7a_entry(e):
+    """The L7a dataset record of the epoch-0 L7a tree, pinned by sha256; it must be 'matched'."""
+    hits = glob.glob(str(L7A_OUT / "shard-*" / "_datasets" / f"{e['dataset_hash']}.json"))
+    if len(hits) != 1:
+        raise SystemExit(f"{e['dataset_hash']}: {len(hits)} L7a dataset records")
+    r = json.loads(Path(hits[0]).read_bytes())
+    if r["status"] != "matched":
+        raise SystemExit(f"{e['dataset_hash']}: L7a record status {r['status']}")
+    e["l7a_record"] = {"path": hits[0], "sha256": sha_file(Path(hits[0]))}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
@@ -420,7 +570,24 @@ def main(argv=None):
     ap.add_argument("--mutants")
     ap.add_argument("--receipt")
     ap.add_argument("--datasets", help="comma-separated dataset hashes (smoke runs only)")
+    ap.add_argument("--split-version", choices=local.SPLIT_VERSIONS, default=local.SPLIT_REGISTRY)
+    ap.add_argument("--plan", choices=("clean-l7a",))
+    ap.add_argument("--allow-other-out", action="store_true")
+    ap.add_argument("--pilot")
+    ap.add_argument("--receipt-stem")
     a = ap.parse_args(argv)
+    if a.split_version in (local.SPLIT_V2, local.SPLIT_V2G):
+        if a.plan:
+            return local.make_plan(a, extra_entry=plan_l7a_entry,
+                                   extra_inputs={"l7a_build_summary": local.ref(L7A_SUMMARY), "rights_gate": held_set()[1]})
+        if a.summarize:
+            return local.summarize_v2(a, codes=code_shas_v2(a.split_version))
+        if a.shard is None:
+            ap.error("--shard is required for a build")
+        held, _ = held_set()
+        return local.build_v2(a, loader=make_l7a_loader(held), codes=code_shas_v2(a.split_version))
+    if a.plan or a.pilot or a.receipt_stem:
+        ap.error("--plan/--pilot/--receipt-stem need --split-version rowsel-raw-split-v2")
     if a.summarize:
         return summarize(a)
     if a.shard is None:
