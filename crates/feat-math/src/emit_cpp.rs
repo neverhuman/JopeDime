@@ -97,6 +97,14 @@ fn emit_cpp_inner(
         sections.push(PORTABLE_WARNING_END.to_string());
     }
     for helper in helper_set(plan) {
+        // A standalone scalar stage preserves raw inputs and replaces its
+        // features through its own epilogue; neither generic helper is called.
+        if stages.len() == 1
+            && scalar_emit::raw_input(plan)
+            && matches!(helper, Helper::Sanitize | Helper::FinishStage)
+        {
+            continue;
+        }
         if expressions && matches!(helper, Helper::MathSigmoid) {
             // The shared expression helper block supplies this same scalar.
             continue;
@@ -525,7 +533,7 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> 
         Some(PlannedOp::ScalarV2 { .. })
     );
     if raw_scalar {
-        out.push_str("    if(x_in.empty()||y.size()!=x_in.size())throw std::invalid_argument(\"scalar training shape\");for(double v:y)if(!std::isfinite(v)||std::abs(v)>1e12)throw std::invalid_argument(\"scalar training labels\");\n");
+        out.push_str("    if(x_in.empty()||y.size()!=x_in.size()){throw std::invalid_argument(\"scalar training shape\");}\n    for(double v:y){if(!std::isfinite(v)||std::abs(v)>1e12){throw std::invalid_argument(\"scalar training labels\");}}\n");
     }
     // B12: preserve the explicit v2 fit contract across native recipes.
     if stages

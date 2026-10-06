@@ -60,6 +60,17 @@ fn legacy_value(instruction: Instruction, language: ScalarLanguage) -> Option<St
         });
     }
     if language == ScalarLanguage::Rust {
+        if let Instruction::Call(ScalarFunction::V1(function @ (Func::Min | Func::Max)), args, _) =
+            instruction
+        {
+            // The native runtime kernel selects the second operand on ties.
+            // LLVM may fold f64::min/max to a different signed-zero selection
+            // when a preceding register is constant; keep that tie explicit.
+            let a = args[0];
+            let b = args[1];
+            let cmp = if function == Func::Min { "<" } else { ">" };
+            return Some(format!("(if registers[{b}].is_nan() || registers[{a}] {cmp} registers[{b}] {{ registers[{a}] }} else {{ registers[{b}] }})"));
+        }
         if let Instruction::Binary(BinOp::Pow, a, b) = instruction {
             // Native operands are runtime values. Hide both operands so LLVM
             // cannot replace a literal power-of-two base with exp2, or fold a
