@@ -1,6 +1,6 @@
-# Published JTT1 payload strip (plan)
+# Published JTT1 payload strip
 
-Status: plan only. This file adds no code and grants no publication, compute or runtime authority.
+Status: implemented in this PR. The plan below was written first (`264f93a9`); the implementation arrived in the lane-handoff restage commit `9e9fcc90bea103fe3485a753ccfc7d8da3f65c8b`. This file grants no publication, compute or runtime authority: a publish run still needs this PR merged and the separate publish gate.
 
 ## Ruling
 
@@ -71,7 +71,6 @@ The strip tool, the gate, the scorer adapter and the changed builders enter code
 
 ## Delivery
 
-- **Now:** this PR carries only this plan. It depends on #218 merging first and changes no file that #218 changes.
-- **After #218 merges:** the lane code arrives as a later lane-handoff restage commit on this branch, with exact producer bytes, `verify_lane.py` pins, and the offline runner and coverage updates in the same form as #218. Before that commit, the branch is brought up to date with main by a history-preserving update. It is never force-pushed or rewritten.
+- **Done in this PR:** #218 merged first (`a403e931`). The branch is brought up to date with main only by history-preserving merges and is never force-pushed or rewritten. The lane code arrived as the lane-handoff restage commit `9e9fcc90`, with exact producer bytes, `verify_lane.py` pins, and the offline runner and coverage updates in the same form as #218.
 - **P8:** keeps reading through `train_view` and is not blocked by this change.
 - **Other work:** the RAW-GROUP follow-up PR stays separate.
