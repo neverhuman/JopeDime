@@ -39,6 +39,7 @@ use crate::{
     kernel2::{
         receipt::Search,
         records::{Faults, Measurement},
+        refinement::parse_untrusted_pipeline,
         EngineRecord, Kernel2Evaluator, Kernel2Observation, REWRITE, REWRITE_SATURATE,
     },
     prepare::Cut,
@@ -232,9 +233,15 @@ fn simplify_round(
     Ok(())
 }
 
+/// Whether `text` is a pipeline program with a `map` or `derive` stage. [`check`] reads the
+/// parents back from evidence, which is untrusted, so the text is parsed within
+/// [`parse_untrusted_pipeline`]'s bounds, and a program over them is not readable.
 fn has_expression_stage(text: &str) -> bool {
-    matches!(GenomeIr::parse(text), Ok(GenomeIr::Pipeline(pipe))
-        if pipe.stages.iter().any(|s| matches!(s.op.as_str(), "map" | "derive")))
+    parse_untrusted_pipeline(text).is_ok_and(|pipe| {
+        pipe.stages
+            .iter()
+            .any(|s| matches!(s.op.as_str(), "map" | "derive"))
+    })
 }
 
 /// The parents the pass `id` reads from `observations`, the measurements made before it: the
@@ -302,15 +309,16 @@ impl Proposal {
 /// assembled from the stages the profile admitted, checked by the pipeline admission every
 /// measured program passes. It reads no rows: `width` is the input's column count. A stage whose
 /// expression cannot be rewritten keeps it and records why ([`NOT_RUN`]), so a rewrite or
-/// admission failure refuses that stage instead of ending the run.
+/// admission failure refuses that stage instead of ending the run. [`check`] calls it on parents
+/// read back from evidence, so `parent` is parsed within [`parse_untrusted_pipeline`]'s bounds
+/// before any expression is.
 pub(crate) fn propose(
     evaluator: &Kernel2Evaluator,
     parent: &str,
     width: usize,
 ) -> Result<Proposal> {
-    let GenomeIr::Pipeline(mut pipe) = GenomeIr::parse(parent)? else {
-        bail!("the rewrite pass needs a pipeline program");
-    };
+    let mut pipe =
+        parse_untrusted_pipeline(parent).context("the rewrite pass needs a pipeline program")?;
     let profile = evaluator.profile();
     let pool = profile.expr.as_ref().context("expression pool required")?;
     let mut rewrites = Vec::new();
