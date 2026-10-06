@@ -55,10 +55,7 @@ pub fn read_hashed(path: &Path, what: &str) -> Result<(Vec<u8>, String)> {
 /// refusal wording, for receivers whose error text is part of their contract.
 pub fn read_bound(path: &Path, expected: &serde_json::Value, refusal: &str) -> Result<Vec<u8>> {
     let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
-    ensure!(
-        *expected == hash(&bytes),
-        "{refusal}"
-    );
+    ensure!(*expected == hash(&bytes), "{refusal}");
     after_verification(path);
     Ok(bytes)
 }
