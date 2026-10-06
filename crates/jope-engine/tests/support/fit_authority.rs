@@ -209,14 +209,6 @@ impl Fixture {
                 fs::read_to_string(&fixture.stderr).unwrap()
             );
             if fixture.socket.exists() && fixture.identity_path().exists() {
-                let identity: serde_json::Value = read_json(&fixture.identity_path()).unwrap();
-                assert_eq!(
-                    identity["process"],
-                    serde_json::to_value(
-                        ProcessIdentity::read(fixture.child.as_ref().unwrap().id()).unwrap()
-                    )
-                    .unwrap()
-                );
                 // Publishing socket identity happens before the CLI installs
                 // SIGTERM handling. A served probe proves the run loop is ready.
                 let mut stream = UnixStream::connect(&fixture.socket).unwrap();
@@ -239,6 +231,16 @@ impl Fixture {
                 stream.read_exact(&mut bytes).unwrap();
                 let response: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
                 assert_eq!(response["ok"], true, "{response}");
+                // A served response also proves identity publication completed;
+                // existence alone can expose the create-before-write window.
+                let identity: serde_json::Value = read_json(&fixture.identity_path()).unwrap();
+                assert_eq!(
+                    identity["process"],
+                    serde_json::to_value(
+                        ProcessIdentity::read(fixture.child.as_ref().unwrap().id()).unwrap()
+                    )
+                    .unwrap()
+                );
                 break;
             }
             assert!(
