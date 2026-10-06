@@ -1341,33 +1341,6 @@ fn final_cv(
         gene.cv_failed_folds = failures;
         evals += folds.len();
     }
-    #[allow(unreachable_code)]
-    if false {
-        for gene in top.iter_mut() {
-            let Ok(genome) = GenomeIr::parse(&gene.canonical) else {
-                gene.cv7_mean_r2 = None;
-                continue;
-            };
-            let mut scores = Vec::new();
-            for f in 0..folds.len() {
-                let valid_ids = &folds[f];
-                let train_ids: Vec<usize> = folds
-                    .iter()
-                    .enumerate()
-                    .filter(|(i, _)| *i != f)
-                    .flat_map(|(_, ids)| ids.iter().copied())
-                    .collect();
-                let (tx, ty) = subset(x, y, &train_ids);
-                let (vx, vy) = subset(x, y, valid_ids);
-                evals += 1;
-                match model::fit_predict(&genome, &tx, &ty, &vx) {
-                    Ok(pred) => scores.push(r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0))),
-                    Err(_) => scores.push(-1.0),
-                }
-            }
-            gene.cv7_mean_r2 = Some(scores.iter().sum::<f64>() / scores.len() as f64);
-        }
-    }
     Ok(evals)
 }
 
