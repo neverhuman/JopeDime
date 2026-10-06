@@ -278,9 +278,11 @@ fn recorded_numbers_drive_the_bound_and_must_agree_with_their_stop() {
     missing[0].lowered_error = None;
     let out = recorded(NEAR_LINEAR, &missing).unwrap();
     assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_OUT_OF_RANGE));
-    // Changed coefficients change the line, and so the admitted expression.
+    // Changed coefficients change the line, and so the admitted expression. The samples' largest
+    // |f| is widened past the moved line, so that its recorded error stays one the line allows.
     let mut moved = kept.clone();
     moved[0].fit.as_mut().unwrap().coefficients[0] += 0.5;
+    moved[0].fit.as_mut().unwrap().max_abs += 1.0;
     let out = recorded(NEAR_LINEAR, &moved).unwrap();
     assert_ne!(out[0].expression, live[0].expression);
     // Non-finite coefficients are refused by name.
@@ -566,12 +568,129 @@ fn a_recorded_line_error_must_be_a_finite_nonnegative_residual() {
             "{error}: {refusal:#}"
         );
     }
-    // A zero error is one a line can reach: the line is offered.
-    let mut exact = kept.clone();
-    exact[0].lowered_error = Some(0.0);
-    assert!(recorded(NEAR_LINEAR, &exact).unwrap()[0]
+    // The smallest error the record's own line allows is offered (review 02 adds that floor).
+    let mut floor = kept.clone();
+    floor[0].lowered_error = Some(residual_floor(kept[0].fit.as_ref().unwrap()));
+    assert!(recorded(NEAR_LINEAR, &floor).unwrap()[0]
         .expression
         .is_some());
+}
+
+/// The least residual a recorded line can have on its own record: at either sampled end, its
+/// value's distance from `max|f|`, and never under zero.
+fn residual_floor(fit: &LinearFit) -> f64 {
+    [fit.lo, fit.hi]
+        .map(|end| horner(&fit.coefficients, end).abs() - fit.max_abs)
+        .into_iter()
+        .fold(0.0, f64::max)
+}
+
+/// The live measurement keeps a line only while it is in the evaluator's range at every sample,
+/// and `lo` and `hi` are samples whose targets are within `max|f|` (B19 wiring review 02,
+/// B19-R02-IMPOSSIBLE-ENDPOINT-RESIDUAL). So a recorded line error is at most
+/// `MAX_ABS + max|f|`, the line is in range at both ends, and the error is at least the line's
+/// residual there. Each bound is exact, and a record at it is accepted.
+#[test]
+fn a_recorded_line_error_must_be_one_its_line_and_samples_allow() {
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(NEAR_LINEAR, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(NEAR_LINEAR, &kept).unwrap(), live);
+    let fit = kept[0].fit.unwrap();
+    let error = kept[0].lowered_error.unwrap();
+    let refused = |bad: &[LinearizationEvidence], expected: &str| {
+        let refusal = recorded(NEAR_LINEAR, bad).unwrap_err();
+        assert!(format!("{refusal:#}").contains(expected), "{refusal:#}");
+    };
+    // Past what the evaluator's range allows; at it, the error only misses the bound.
+    for over in [(MAX_ABS + fit.max_abs).next_up(), 1e100] {
+        let mut bad = kept.clone();
+        bad[0].lowered_error = Some(over);
+        refused(&bad, "exceeds what the evaluator's range allows");
+    }
+    let mut at = kept.clone();
+    at[0].lowered_error = Some(MAX_ABS + fit.max_abs);
+    let out = recorded(NEAR_LINEAR, &at).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    // The line moved far from every target keeps its small recorded error: refused. At the
+    // moved line's own floor the record is consistent and misses the bound; one step under it
+    // is refused.
+    let mut moved = kept.clone();
+    let line = moved[0].fit.as_mut().unwrap();
+    line.coefficients[0] += 10.0 * (fit.max_abs + error) + 1.0;
+    let floor = residual_floor(line);
+    assert!(floor > error, "{floor} <= {error}");
+    refused(&moved, "smaller than the line's residual at a sampled end");
+    moved[0].lowered_error = Some(floor);
+    let out = recorded(NEAR_LINEAR, &moved).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    moved[0].lowered_error = Some(floor.next_down());
+    refused(&moved, "smaller than the line's residual at a sampled end");
+    // A line outside the evaluator's range at a sampled end cannot have been measured (here at
+    // both ends, `lo` = -0.5 and `hi` = 1.5).
+    let mut steep = kept.clone();
+    steep[0].fit.as_mut().unwrap().coefficients = [0.0, 4.0 * MAX_ABS];
+    refused(&steep, "outside the evaluator's range at a sampled end");
+    // A line that cannot be lowered is refused before it is measured: its recorded error is not
+    // read at the ends, as for every refusal before the measurement.
+    let mut flat = kept.clone();
+    flat[0].fit.as_mut().unwrap().coefficients = [f64::NAN; 2];
+    let out = recorded(NEAR_LINEAR, &flat).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_NON_FINITE));
+}
+
+/// A closing stop returns the fit of the step it stops at, the iteration cap stops after the last
+/// step, and the fit's residuals and `max|f|` are maxima of absolute values from `+0.0`, never
+/// `-0.0` (B19 wiring review 02's two notes).
+#[test]
+fn a_recorded_fit_must_carry_its_stops_step_and_positive_zeros() {
+    let disagrees = "a recorded fit disagrees with its stop";
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(NEAR_LINEAR, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    let fit = kept[0].fit.unwrap();
+    assert!(fit.stop.closed() && fit.iterations == fit.steps && fit.steps < MAX_ITERATIONS);
+    let edits: [fn(&mut LinearFit); 2] = [
+        |f| f.steps += 1,
+        |f| {
+            f.stop = MinimaxStop::IterationLimit;
+            f.steps = MAX_ITERATIONS - 1;
+        },
+    ];
+    for edit in edits {
+        let mut bad = kept.clone();
+        edit(bad[0].fit.as_mut().unwrap());
+        let error = recorded(NEAR_LINEAR, &bad).unwrap_err();
+        assert!(format!("{error:#}").contains(disagrees), "{error:#}");
+    }
+    // A subtree that is zero on every row: its fit's bracket and max|f| are all `+0.0`.
+    let zero = "(c0-c0)*(c0-c0)";
+    let live = linearize(zero, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(zero, &kept).unwrap(), live);
+    let at = kept
+        .iter()
+        .position(|e| e.fit.is_some_and(|f| f.max_abs == 0.0))
+        .expect("a fit of the zero subtree");
+    let edits: [fn(&mut LinearFit); 3] = [
+        |f| f.levelled = -0.0,
+        |f| f.max_error = -0.0,
+        |f| f.max_abs = -0.0,
+    ];
+    for edit in edits {
+        let mut bad = kept.clone();
+        edit(bad[at].fit.as_mut().unwrap());
+        assert_ne!(
+            bad[at]
+                .fit
+                .map(|f| [f.levelled, f.max_error, f.max_abs].map(f64::to_bits)),
+            kept[at]
+                .fit
+                .map(|f| [f.levelled, f.max_error, f.max_abs].map(f64::to_bits))
+        );
+        let error = recorded(zero, &bad).unwrap_err();
+        assert!(format!("{error:#}").contains(disagrees), "{error:#}");
+    }
 }
 
 /// A fit refused for a coefficient past the finite range is published without its coefficients
