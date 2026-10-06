@@ -78,14 +78,33 @@ summaries and resource controls are retained under
 or tmpfs. No sync, restoration, assertion, timeout or filter is removed. A loaded storage
 failure is not waived by a passing run elsewhere.
 
+## Teaching fixture storage
+
+The authenticated handoff test constructs all 19 original isolated fixtures: 13 altered
+handoffs, the early-window/missing/revoked refusals, and three task-specific positive
+controls. Its additional missing-handoff quarantine assertion remains. The fixed
+repository-local fixture directory ignored `TMPDIR`. A frozen original receiving-path
+run timed out at 240 seconds, with 208.885 seconds inside 799 fsync calls before termination;
+the active test thread repeatedly waited on the ext4 journal. Counts from this interrupted
+trace do not establish a complete execution.
+
+`JOPE_TEACHING_TEST_ROOT` now selects an existing persistent directory only in the test
+module. No environment is mutated by a test. The default directory is unchanged. Explicit
+roots must be absolute, canonical directories outside `/tmp`; invalid explicit roots fail
+without fallback. Each fixture still owns a fresh directory, and the same issuer, hash,
+physical-path, job/output, original-window and resource validations execute. There is no
+production override or authority relaxation. The root-validation test exercises the
+default, a valid explicit directory, and relative, `/tmp`, missing and non-directory refusals.
+
 ## Acceptance
 
 Use the lane's reused target and preserve the repository Cargo settings. Set `TMPDIR` to an
 explicit owned persistent-disk fixture directory outside `/tmp`; retain its filesystem/device
-identity and available capacity. Enforce the original 4-CPU/16-GiB, 15-minute batch limits.
+identity and available capacity. Also set `JOPE_TEACHING_TEST_ROOT` to that existing directory
+for the synthetic teaching fixtures; `TMPDIR` alone does not relocate them. Enforce the original 4-CPU/16-GiB, 15-minute batch limits.
 
 ```sh
-cargo nextest run --locked --profile pr -p jope-learning -p jainnode -p jope-parallel   --test-threads 2 -E 'test(every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for) | test(concurrent_runtime_accepts_durable_cancellation_while_execution_runs) | test(projected_gp_candidates_are_exactly_representable_unique_and_durable) | test(concurrent_runtime_enforces_the_signed_)'
+cargo nextest run --locked --profile pr -p jope-learning -p jainnode -p jope-parallel   --test-threads 2 -E 'test(every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for) | test(concurrent_runtime_accepts_durable_cancellation_while_execution_runs) | test(projected_gp_candidates_are_exactly_representable_unique_and_durable) | test(concurrent_runtime_enforces_the_signed_) | test(teaching_fixture_root_preserves_default_and_refuses_invalid_overrides) | test(teacher_admission_consumes_an_authenticated_w2_handoff)'
 cargo test --locked -p jainnode
 cargo clippy --locked -p jainnode -p jope-learning --all-targets -- -D warnings
 just required
@@ -96,7 +115,7 @@ fault-case/sync accounting, unchanged-limit root-disk recovery and full selected
 coverage. A full selected-tier invocation exhausted its original 900-second batch after
 846 passing cases and four interrupted cases; 1,559 were not run. Keep that failure and
 inventory. Four fixed hash partitions may establish complete coverage in separate bounded
-batches, with an independently checked disjoint union of the same 2,409 selected cases.
+batches, with an independently checked disjoint union of the same 2,410 selected cases.
 The existing exclusions remain 29 ignored cases and four PR-profile exclusions.
 Report inherited required-gate failures separately. Source, focused proof, hosted
 CI and operational qualification remain separate states.

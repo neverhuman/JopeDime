@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4166,
+  "count": 4167,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -3679,12 +3679,12 @@
     }
    },
    "jope-learning": {
-    "count": 210,
+    "count": 211,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
       "kind": "lib",
-      "count": 147,
+      "count": 148,
       "ignored": 0,
       "tests": [
        "canon::tests::sha256_vector",
@@ -3760,6 +3760,7 @@
        "eligibility::tests::stale_identity_missing_fold_and_reordered_rows_cannot_teach",
        "eligibility::tests::structural_receipt_without_actual_predictions_or_complete_execution_is_ineligible",
        "eligibility::tests::tampered_prediction_blob_fails_closed",
+       "eligibility::tests::teaching_fixture_root_preserves_default_and_refuses_invalid_overrides",
        "eligibility::tests::transitions::eligibility_alone_and_redelivery_never_count_as_improvement",
        "eligibility::tests::unknown_accounting_and_unbound_fitted_outputs_cannot_be_substituted",
        "encoder_receipt::tests::complete_binding_roundtrips_and_missing_provenance_fails",
@@ -6529,7 +6530,7 @@
   }
  },
  "totals": {
-  "rust": 4166,
+  "rust": 4167,
   "python": 172
  }
 }
