@@ -156,7 +156,7 @@ impl Api {
 /// Drop and is intentionally ignored — the context outlives the process).
 pub struct DeviceBuffer<'api> {
     api: &'api Api,
-    pub ptr: CUdeviceptr,
+    ptr: CUdeviceptr,
     // Only allocation construction can set the capacity used by transfer checks.
     bytes: usize,
 }
@@ -187,6 +187,10 @@ impl<'api> DeviceBuffer<'api> {
             "cuMemAlloc",
         )?;
         Ok(DeviceBuffer { api, ptr, bytes })
+    }
+
+    pub fn ptr(&self) -> CUdeviceptr {
+        self.ptr
     }
 
     pub fn upload<T: DeviceScalar>(&self, host: &[T]) -> Result<(), String> {
