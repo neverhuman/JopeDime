@@ -1280,6 +1280,9 @@ fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
 /// before the comparison creates its scratch or computes anything, and again immediately before
 /// it creates the temporary file of the document ([`replace_document`]). Refused, with
 /// [`OUT_REFUSED`] and the reason:
+/// - `out`'s file name is [`LOCK_FILE`] or [`KERNEL2_MARKER`]: those names are reserved, since a
+///   document written there would itself hold or mark its directory (a legacy-only `out` in its
+///   own scratch, or a directory a later scratch or `out` lies under);
 /// - `out` is a symbolic link, or exists and is not a regular file, or cannot be inspected;
 /// - `out`, resolved by [`resolve_destination`] (symbolic links and `..` included), lies in a
 ///   directory that holds [`KERNEL2_MARKER`] or [`LOCK_FILE`], checked from the directory that
@@ -1288,10 +1291,11 @@ fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
 /// - the comparison has a kernel2 profile and `out` lies inside its own scratch, resolved the
 ///   same way, which the scratch's marker does not cover before the comparison creates it.
 ///
-/// A legacy-only comparison whose `out` is elsewhere, its own scratch included, is admitted as
-/// before. A hard link at `out` is admitted: [`replace_document`] renames a new file over it, so
-/// the inode it shares is not written. The check and the rename are separate steps; a change to
-/// `out`'s directory between them is not prevented.
+/// A legacy-only comparison whose `out` is elsewhere, its own scratch included, is admitted, and
+/// gets the same document bytes as before (see [`replace_document`] for what else differs). A
+/// hard link at `out` is admitted: [`replace_document`] renames a new file over it, so the inode
+/// it shares is not written. The check and the rename are separate steps; a change to `out`'s
+/// directory between them is not prevented.
 fn check_out(out: &Path, scratch: Option<&Path>, kernel2: bool) -> Result<()> {
     let refused = |reason: &str| {
         format!(
@@ -1300,6 +1304,15 @@ fn check_out(out: &Path, scratch: Option<&Path>, kernel2: bool) -> Result<()> {
         )
     };
     let literal: PathBuf = out.components().collect();
+    if let Some(name) = literal
+        .file_name()
+        .filter(|name| *name == LOCK_FILE || *name == KERNEL2_MARKER)
+    {
+        bail!(refused(&format!(
+            "its file name {} is reserved for a comparison's lock file or marker",
+            name.to_string_lossy()
+        )))
+    }
     match std::fs::symlink_metadata(&literal) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
         Err(error) => return Err(error).with_context(|| refused("it cannot be inspected")),
@@ -2393,13 +2406,20 @@ fn paired_counts(pairs: &[Pair<'_>]) -> Result<PairedCounts> {
 /// probability, for a fair coin over `wins + losses` tosses, of a split at least as uneven as the
 /// one observed, capped at 1. It is 1 when there is no untied pair. Only multiplications and
 /// divisions are used, with the halvings of `2^-n` interleaved so no step overflows, so the value
-/// replays on any host.
+/// replays on any host. The two-sided factor 2 is one halving fewer, not a doubling at the end,
+/// so the result underflows no earlier than the exact value: a unanimous split of `n` pairs
+/// gives exactly `2^(1-n)` down to the smallest positive f64, `2^-1074` at `n = 1075`, and 0 from
+/// `n = 1076` on, where the exact value is at most half of that. A value under `2^-1022` is
+/// subnormal and carries fewer significant bits.
 pub fn sign_test(wins: u64, losses: u64) -> f64 {
     let n = wins + losses;
+    if n == 0 {
+        return 1.0;
+    }
     let tail = wins.min(losses);
-    // P(X = tail) = C(n, tail) / 2^n.
+    // 2 P(X = tail) = C(n, tail) / 2^(n - 1).
     let mut point = 1.0_f64;
-    let mut halvings = n;
+    let mut halvings = n - 1;
     for i in 1..=tail {
         point *= (n - tail + i) as f64 / i as f64;
         while point >= 1.0 && halvings > 0 {
@@ -2417,7 +2437,7 @@ pub fn sign_test(wins: u64, losses: u64) -> f64 {
         ratio *= k as f64 / (n - k + 1) as f64;
         sum += ratio;
     }
-    (2.0 * point * sum).min(1.0)
+    (point * sum).min(1.0)
 }
 
 /// Each slot's search seconds, for `timing.paired`.
@@ -2489,9 +2509,14 @@ impl Drop for TemporaryDocument {
 /// Write the document to `out` without truncating any existing file, and return the file's
 /// sha256. The bytes are [`write_document`]'s. They go to a new temporary file in `out`'s
 /// directory, `.<out name>.tmp-<process id>-<n>`, created with `create_new` so nothing already
-/// there is opened; the file is flushed and synced, then renamed over `out`. An existing `out` is
-/// replaced, not written, so another hard link to its old inode keeps its bytes. On any error the
-/// temporary file, and nothing else, is removed. `out`'s directory must exist.
+/// there is opened; the file is flushed and synced, then renamed over `out`, and then `out`'s
+/// directory is synced, so the rename is not only in memory when this returns (as far as the
+/// filesystem honours a directory sync). An existing `out` is replaced, not written, so another
+/// hard link to its old inode keeps its bytes; the new file has the default mode and owner of a
+/// new file, not the old file's permissions, owner, ACLs or extended attributes. Before the
+/// rename, an error removes the temporary file and nothing else (a failure to remove it leaves
+/// it); a failure to sync the directory is reported with the document already at `out`. `out`'s
+/// directory must exist.
 fn replace_document(out: &Path, document: &Document) -> Result<String> {
     use std::io::Write as _;
     let text = document_text(document)?;
@@ -2534,6 +2559,14 @@ fn replace_document(out: &Path, document: &Document) -> Result<String> {
     std::fs::rename(&temporary.path, out)
         .with_context(|| format!("rename {} to {}", temporary.path.display(), out.display()))?;
     temporary.renamed = true;
+    std::fs::File::open(directory)
+        .and_then(|handle| handle.sync_all())
+        .with_context(|| {
+            format!(
+                "sync {} after the document was renamed into it",
+                directory.display()
+            )
+        })?;
     Ok(sha256_hex(text.as_bytes()))
 }
 
@@ -2576,10 +2609,11 @@ pub struct AblationArgs {
     /// Searches run concurrently; the results do not depend on it.
     #[arg(long, default_value_t = 1)]
     pub jobs: usize,
-    /// Where to write the jope.bench-ablation/v1 document. Refused when it is a symbolic link or
-    /// not a regular file, when it lies under a directory that holds a kernel2 comparison's
-    /// evidence (.ablation-kernel2) or a comparison in progress (.ablation-lock), and, with a
-    /// kernel2 profile, when it lies inside --scratch.
+    /// Where to write the jope.bench-ablation/v1 document. Refused when its file name is
+    /// .ablation-lock or .ablation-kernel2 (reserved), when it is a symbolic link or not a regular
+    /// file, when it lies under a directory that holds a kernel2 comparison's evidence
+    /// (.ablation-kernel2) or a comparison in progress (.ablation-lock), and, with a kernel2
+    /// profile, when it lies inside --scratch.
     #[arg(long)]
     pub out: PathBuf,
     /// Keep every search's evidence under this directory (default: a temporary directory under
@@ -5241,5 +5275,153 @@ mod tests {
         let changed = changed_entries(&before, &tree(root.path()));
         assert!(changed.is_empty(), "a failed write changed {changed:?}");
         assert!(temporary_documents(root.path()).is_empty());
+    }
+
+    // polish-01: review 05's notes on reserved --out names, the same winner, the sign test's
+    // underflow and the directory sync.
+
+    /// Review note PR0-O-LEGACY-CONTROL-NAMES: a `--out` whose file name is `.ablation-lock` or
+    /// `.ablation-kernel2` is refused for every comparison, before anything is created: a
+    /// legacy-only `--out` inside its own legacy scratch (absent, or an existing empty
+    /// directory), one in an ordinary directory (also spelled with a trailing `/`), and a
+    /// kernel2 comparison's, outside or inside its own scratch. A name that only begins with a
+    /// reserved name is not refused.
+    #[test]
+    fn ablation_execute_refuses_a_reserved_out_name() {
+        let root = scratch();
+        let reason = "is reserved for a comparison's lock file or marker";
+        for name in [LOCK_FILE, KERNEL2_MARKER] {
+            let own = root.path().join(format!("own{name}"));
+            let kernel2 = root.path().join(format!("kernel2{name}"));
+            let ordinary = root.path().join(format!("ordinary{name}"));
+            let slash = PathBuf::from(format!("{}/", ordinary.join(name).display()));
+            for args in [
+                legacy_out_args(own.clone(), own.join(name)),
+                legacy_out_args(root.path().join("second"), ordinary.join(name)),
+                legacy_out_args(root.path().join("second"), slash),
+                shared_scratch_args(kernel2.clone(), root.path().join(name)),
+                shared_scratch_args(kernel2.clone(), kernel2.join(name)),
+            ] {
+                let error = out_refusal(&args, root.path(), reason);
+                assert!(error.contains(name), "{name} not in {error}");
+            }
+            std::fs::create_dir(&own).unwrap();
+            let error = out_refusal(
+                &legacy_out_args(own.clone(), own.join(name)),
+                root.path(),
+                reason,
+            );
+            assert!(error.contains(name), "{name} not in {error}");
+            assert!(names(&own).is_empty());
+        }
+        let own = root.path().join("own");
+        let near = own.join(format!("{LOCK_FILE}.json"));
+        execute(&legacy_out_args(own.clone(), near.clone())).unwrap();
+        assert!(near.is_file());
+        assert_eq!(
+            names(&own),
+            set(&[".ablation-lock.json", "prepared", "search"])
+        );
+    }
+
+    /// Review note PR0-O-WINNER-TEST: the independent reviewer's same-winner test (review 05),
+    /// adopted with its name and intent. The committed fixture's tied pairs always share a
+    /// program, so a count of tied scores would also pass it; here a tie with different programs
+    /// is not the same winner, and a win with the same program is.
+    #[test]
+    fn review05_same_winner_means_program_identity_including_score_ties() {
+        let runs = [
+            paired_run("A", "d0", 1, 1.0, "p"),
+            paired_run("B", "d0", 1, 1.0, "q"),
+            paired_run("A", "d0", 2, 2.0, "p"),
+            paired_run("B", "d0", 2, 1.5, "p"),
+        ];
+        let result = paired(&["d0".to_owned()], &runs).unwrap();
+        assert_eq!(
+            (
+                result.overall.wins,
+                result.overall.ties,
+                result.overall.same_winner
+            ),
+            (1, 1, 1)
+        );
+        let tied = paired(&["d0".to_owned()], &runs[..2]).unwrap();
+        assert_eq!(tied.overall.same_winner, 0);
+        let same = paired(&["d0".to_owned()], &runs[2..]).unwrap();
+        assert_eq!(same.overall.same_winner, 1);
+    }
+
+    /// Review note PR0-O-SIGN-UNDERFLOW: a unanimous split of `n` pairs has the exact two-sided
+    /// p `2^(1-n)`. It is returned exactly at `n = 1074` (`2^-1073`) and at `n = 1075`
+    /// (`2^-1074`, the smallest positive f64), and is 0 at `n = 1076`, where the exact `2^-1075`
+    /// is half the smallest positive f64 and rounds to even. Also the review's independent
+    /// integer oracle for every split up to 120 pairs.
+    #[test]
+    fn ablation_sign_test_is_exact_down_to_the_smallest_positive_f64() {
+        for (n, expected) in [
+            (1074, f64::from_bits(2)),
+            (1075, f64::from_bits(1)),
+            (1076, 0.0),
+        ] {
+            assert_eq!(sign_test(n, 0).to_bits(), expected.to_bits(), "n {n}");
+            assert_eq!(sign_test(0, n).to_bits(), expected.to_bits(), "n {n}");
+        }
+        // 2^-1074 = 2^-1022 * 2^-52.
+        assert_eq!(f64::from_bits(1), f64::MIN_POSITIVE * f64::EPSILON);
+        for n in 1u32..=120 {
+            let mut binomial = 1u128;
+            let mut sum = 1u128;
+            for tail in 0..=n / 2 {
+                if tail > 0 {
+                    binomial = binomial * u128::from(n - tail + 1) / u128::from(tail);
+                    sum += binomial;
+                }
+                let exact = (2.0 * sum as f64 / 2f64.powi(n as i32)).min(1.0);
+                let p = sign_test(u64::from(tail), u64::from(n - tail));
+                assert!(
+                    (p - exact).abs() <= 1e-12 * exact,
+                    "n {n} tail {tail}: {p} against {exact}"
+                );
+            }
+        }
+    }
+
+    /// Review notes PR0-O-FSYNC and PR0-O-REPLACE-METADATA: with the directory synced after the
+    /// rename, [`replace_document`] still writes exactly [`write_document`]'s bytes, into a new
+    /// nested directory and again over its own earlier document, and leaves nothing else in the
+    /// directory. A replaced read-only `--out` gets the mode of any new file in that directory,
+    /// not its old mode.
+    #[test]
+    fn ablation_document_replacement_syncs_its_directory_and_keeps_the_bytes() {
+        let root = scratch();
+        let report = run(
+            &legacy_scratch_config(6, 20_260_907),
+            &root.path().join("s"),
+        )
+        .unwrap();
+        let plain = root.path().join("plain.json");
+        let plain_sha256 = write_document(&plain, &report.document).unwrap();
+        let expected = std::fs::read(&plain).unwrap();
+        let out = root.path().join("a/b/ablation.json");
+        create_document_parent(&out).unwrap();
+        for _ in 0..2 {
+            assert_eq!(
+                replace_document(&out, &report.document).unwrap(),
+                plain_sha256
+            );
+            assert_eq!(std::fs::read(&out).unwrap(), expected);
+            assert_eq!(names(&root.path().join("a/b")), set(&["ablation.json"]));
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            let mode = |path: &Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
+            let fresh = root.path().join("a/b/fresh.json");
+            std::fs::write(&fresh, b"{}\n").unwrap();
+            std::fs::set_permissions(&out, std::fs::Permissions::from_mode(0o400)).unwrap();
+            replace_document(&out, &report.document).unwrap();
+            assert_eq!(std::fs::read(&out).unwrap(), expected);
+            assert_eq!(mode(&out), mode(&fresh));
+        }
     }
 }
