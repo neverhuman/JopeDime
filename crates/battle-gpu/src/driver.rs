@@ -34,6 +34,16 @@ macro_rules! api {
         }
 
         impl Api {
+            #[cfg(test)]
+            fn test_api() -> Api {
+                Api {
+                    $($name: {
+                        unsafe extern "C" fn reject_call($(_: $arg),*) -> CUresult { 1 }
+                        reject_call
+                    },)*
+                }
+            }
+
             fn load(handle: *mut c_void) -> Result<Api, String> {
                 Ok(Api {
                     $($name: {
@@ -146,9 +156,26 @@ impl Api {
 /// Drop and is intentionally ignored — the context outlives the process).
 pub struct DeviceBuffer<'api> {
     api: &'api Api,
-    pub ptr: CUdeviceptr,
-    pub bytes: usize,
+    ptr: CUdeviceptr,
+    // Only allocation construction can set the capacity used by transfer checks.
+    bytes: usize,
 }
+
+mod scalar {
+    pub trait Sealed {}
+    impl Sealed for f32 {}
+    impl Sealed for f64 {}
+    impl Sealed for i32 {}
+    impl Sealed for u64 {}
+}
+
+/// Padding-free scalar types for which every bit pattern is a valid value.
+/// Sealing prevents a device download from constructing invalid Rust values.
+pub trait DeviceScalar: Copy + scalar::Sealed {}
+impl DeviceScalar for f32 {}
+impl DeviceScalar for f64 {}
+impl DeviceScalar for i32 {}
+impl DeviceScalar for u64 {}
 
 impl<'api> DeviceBuffer<'api> {
     pub fn alloc(api: &'api Api, bytes: usize) -> Result<DeviceBuffer<'api>, String> {
@@ -162,24 +189,42 @@ impl<'api> DeviceBuffer<'api> {
         Ok(DeviceBuffer { api, ptr, bytes })
     }
 
-    pub fn upload<T: Copy>(&self, host: &[T]) -> Result<(), String> {
+    pub fn ptr(&self) -> CUdeviceptr {
+        self.ptr
+    }
+
+    pub fn upload<T: DeviceScalar>(&self, host: &[T]) -> Result<(), String> {
         let bytes = std::mem::size_of_val(host);
         if bytes == 0 {
             return Ok(());
         }
-        debug_assert!(bytes <= self.bytes);
+        if bytes > self.bytes {
+            return Err(format!(
+                "device transfer of {bytes} bytes exceeds allocation of {} bytes",
+                self.bytes
+            ));
+        }
+        // SAFETY: these initialized scalars have no padding, and the checked byte count
+        // fits the live device allocation. The driver borrows the host slice for this call.
         self.api.check(
             unsafe { (self.api.cuMemcpyHtoD_v2)(self.ptr, host.as_ptr() as *const c_void, bytes) },
             "cuMemcpyHtoD",
         )
     }
 
-    pub fn download<T: Copy>(&self, host: &mut [T]) -> Result<(), String> {
+    pub fn download<T: DeviceScalar>(&self, host: &mut [T]) -> Result<(), String> {
         let bytes = std::mem::size_of_val(host);
         if bytes == 0 {
             return Ok(());
         }
-        debug_assert!(bytes <= self.bytes);
+        if bytes > self.bytes {
+            return Err(format!(
+                "device transfer of {bytes} bytes exceeds allocation of {} bytes",
+                self.bytes
+            ));
+        }
+        // SAFETY: the checked count fits the device allocation and the live mutable
+        // host slice. DeviceScalar permits every downloaded bit pattern.
         self.api.check(
             unsafe {
                 (self.api.cuMemcpyDtoH_v2)(host.as_mut_ptr() as *mut c_void, self.ptr, bytes)
@@ -192,5 +237,109 @@ impl<'api> DeviceBuffer<'api> {
 impl Drop for DeviceBuffer<'_> {
     fn drop(&mut self) {
         unsafe { (self.api.cuMemFree_v2)(self.ptr) };
+    }
+}
+
+#[cfg(test)]
+mod buffer_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Mutex;
+
+    static LOCK: Mutex<()> = Mutex::new(());
+    static COPY_CALLS: AtomicUsize = AtomicUsize::new(0);
+    static COPY_BYTES: AtomicUsize = AtomicUsize::new(0);
+
+    unsafe extern "C" fn free(_: CUdeviceptr) -> CUresult {
+        CUDA_SUCCESS
+    }
+
+    unsafe extern "C" fn upload(_: CUdeviceptr, _: *const c_void, bytes: usize) -> CUresult {
+        COPY_CALLS.fetch_add(1, Ordering::SeqCst);
+        COPY_BYTES.store(bytes, Ordering::SeqCst);
+        CUDA_SUCCESS
+    }
+
+    unsafe extern "C" fn download(host: *mut c_void, _: CUdeviceptr, bytes: usize) -> CUresult {
+        COPY_CALLS.fetch_add(1, Ordering::SeqCst);
+        COPY_BYTES.store(bytes, Ordering::SeqCst);
+        // SAFETY: these tests pass live mutable numeric slices covering the copy size.
+        unsafe { std::ptr::write_bytes(host.cast::<u8>(), 0xff, bytes) };
+        CUDA_SUCCESS
+    }
+
+    fn api() -> Api {
+        COPY_CALLS.store(0, Ordering::SeqCst);
+        COPY_BYTES.store(0, Ordering::SeqCst);
+        let mut api = Api::test_api();
+        api.cuMemFree_v2 = free;
+        api.cuMemcpyHtoD_v2 = upload;
+        api.cuMemcpyDtoH_v2 = download;
+        api
+    }
+
+    #[test]
+    fn oversized_upload_is_refused_before_the_driver_call() {
+        let _lock = LOCK.lock().unwrap();
+        let api = api();
+        let buffer = DeviceBuffer {
+            api: &api,
+            ptr: 42,
+            bytes: 8,
+        };
+        let error = buffer.upload(&[1u64, 2]).unwrap_err();
+        assert!(error.contains("16 bytes exceeds allocation of 8 bytes"));
+        assert_eq!(COPY_CALLS.load(Ordering::SeqCst), 0);
+    }
+
+    #[test]
+    fn oversized_download_is_refused_without_modifying_the_host() {
+        let _lock = LOCK.lock().unwrap();
+        let api = api();
+        let buffer = DeviceBuffer {
+            api: &api,
+            ptr: 42,
+            bytes: 8,
+        };
+        let mut host = [3u64, 4];
+        let error = buffer.download(&mut host).unwrap_err();
+        assert!(error.contains("16 bytes exceeds allocation of 8 bytes"));
+        assert_eq!(COPY_CALLS.load(Ordering::SeqCst), 0);
+        assert_eq!(host, [3, 4]);
+    }
+
+    #[test]
+    fn exact_size_and_smaller_transfers_execute_the_checked_driver_calls() {
+        let _lock = LOCK.lock().unwrap();
+        let api = api();
+        let buffer = DeviceBuffer {
+            api: &api,
+            ptr: 42,
+            bytes: 8,
+        };
+        buffer.upload(&[1f64]).unwrap();
+        assert_eq!(COPY_BYTES.load(Ordering::SeqCst), 8);
+        buffer.upload(&[1f32]).unwrap();
+        assert_eq!(COPY_BYTES.load(Ordering::SeqCst), 4);
+        buffer.upload(&[1i32]).unwrap();
+        let mut host = [0f64];
+        buffer.download(&mut host).unwrap();
+        assert_eq!(host[0].to_bits(), u64::MAX);
+        assert_eq!(COPY_BYTES.load(Ordering::SeqCst), 8);
+        assert_eq!(COPY_CALLS.load(Ordering::SeqCst), 4);
+    }
+
+    #[test]
+    fn empty_transfers_do_not_call_the_driver() {
+        let _lock = LOCK.lock().unwrap();
+        let api = api();
+        let buffer = DeviceBuffer {
+            api: &api,
+            ptr: 42,
+            bytes: 0,
+        };
+        buffer.upload(&[] as &[f32]).unwrap();
+        buffer.download(&mut [] as &mut [f64]).unwrap();
+        assert_eq!(COPY_CALLS.load(Ordering::SeqCst), 0);
     }
 }

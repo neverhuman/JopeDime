@@ -1,7 +1,8 @@
-//! Bounded Levenberg–Marquardt constant fitting with a dual-number Jacobian (B17).
+//! Bounded Levenberg–Marquardt constant fitting with a dual-number Jacobian.
 //!
-//! Staged: `refinement.rs` declares this module only under `#[cfg(test)]` until B11 and B16 merge
-//! and the search adapter is wired (OWNER_DIRECTIVES v1.3). Nothing outside its tests calls it.
+//! Opt-in: the one public entry is [`MathExpr::optimize_constants_lm_guarded`], which admits by
+//! the version-two search contract and fits the linear-scaled residuals. The raw residuals, the
+//! structural admission and Levenberg's identity scaling serve this module's tests only.
 //!
 //! The optimizer is Algorithm 3.16 of Madsen, Nielsen and Tingleff, *Methods for Non-Linear Least
 //! Squares Problems* (2nd ed., IMM DTU, 2004): Levenberg–Marquardt with Nielsen's damping update.
@@ -27,8 +28,13 @@
 //! native re-score is strictly better than the start's. Every native pass is charged: the first
 //! Jacobian reuses the start's admitted values, and the re-score's fresh admission is its one pass.
 
+// B17 core.
+
 use super::*;
-use crate::kernel::expression_search::GuardedRefinementBudget;
+use crate::kernel::expression_search::{
+    GuardedConstantRefinement, GuardedLmRefinement, GuardedRefinementBudget, LmIteration,
+    LmJacobianCharge, LmOptions, LmStatus, LmTrace, LM_MAX_SITES,
+};
 
 mod dual;
 use dual::{Program, MAX_PARAMS};
@@ -67,6 +73,7 @@ mod passes {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Scaling {
     /// Levenberg's `D = I` (MNT's examples).
+    #[cfg(test)]
     Identity,
     /// Marquardt scaling by the running maximum of `diag(JᵀJ)` (MINPACK `mode = 1`), floored at
     /// `scale_floor` times its largest entry.
@@ -157,6 +164,7 @@ struct Iteration {
 }
 
 impl Iteration {
+    #[cfg(test)]
     fn bits(&self) -> (u64, u64, Option<u64>, bool, bool) {
         (
             self.mu.to_bits(),
@@ -558,6 +566,7 @@ fn rcond(m: &Matrix, l: &Matrix, p: usize) -> f64 {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Objective {
     /// `f - y`.
+    #[cfg(test)]
     Raw,
     /// `α + β f - y`. The affine pair are two more parameters, reset to their closed form after
     /// every accepted step; the native score is the coordinate search's `LinearScaled` MSE.
@@ -570,6 +579,7 @@ enum Admission<'a> {
     Profile(Search<'a>),
     /// The structural caps (64 nodes, depth 16) and the printed form, as `optimize_constants_v1`
     /// admits. For fixtures outside every kernel2 pool.
+    #[cfg(test)]
     Structure,
 }
 
@@ -577,6 +587,7 @@ impl Admission<'_> {
     fn finish(&self, root: Expr) -> Result<MathExpr> {
         match self {
             Self::Profile(search) => search.finish(root),
+            #[cfg(test)]
             Self::Structure => {
                 let source = MathExpr::from_ast(normalize(root))?.to_source()?;
                 MathExpr::parse(&source)
@@ -664,6 +675,7 @@ impl ExprProblem<'_, '_> {
     fn residuals_of(&self, theta: &[f64], values: &[f64]) -> Vec<f64> {
         let p = self.sites.len();
         match self.objective {
+            #[cfg(test)]
             Objective::Raw => values
                 .iter()
                 .zip(self.targets)
@@ -731,6 +743,7 @@ impl Problem for ExprProblem<'_, '_> {
             saturated += usize::from(dual.faults.intersects(FaultSeverity::Saturation.classes()));
             let mut jacobian = [0.0; MAX_PARAMS];
             match objective {
+                #[cfg(test)]
                 Objective::Raw => jacobian[..p].copy_from_slice(&dual.tangent[..p]),
                 Objective::LinearScaled => {
                     let beta = theta[p + 1];
@@ -795,6 +808,7 @@ fn native_score(
     targets: &[f64],
 ) -> Result<(f64, Option<[f64; 2]>)> {
     match objective {
+        #[cfg(test)]
         Objective::Raw => {
             let sum = values
                 .iter()
@@ -991,6 +1005,148 @@ impl MathExpr {
         Ok(result)
     }
 }
+
+// laneD:B17-lm-refinement begin
+impl MathExpr {
+    /// Bounded damped least squares over the literal sites of a row expression, on TRAINING rows
+    /// only, admitted by the version-two search contract (`Search::finish`) and fitted to the
+    /// coordinate search's linear-scaled residuals `α + β f - y`. The guard is asked before every
+    /// pass, and the winner replaces the start only on a strictly better fresh native re-score.
+    /// Invalid training data, budget or options, or a start the admission refuses, is an error,
+    /// as in the coordinate search. An elementwise scope is unsupported and spends nothing.
+    pub fn optimize_constants_lm_guarded(
+        &self,
+        profile: &SearchProfile,
+        scope: ExpressionScope,
+        rows: &[Vec<f64>],
+        targets: &[f64],
+        options: LmOptions,
+        budget: GuardedRefinementBudget<'_>,
+    ) -> Result<GuardedLmRefinement> {
+        let admission = Admission::Profile(Search::new(profile, scope)?);
+        let options = Options {
+            tau: options.tau,
+            jacobian_cost: match options.jacobian {
+                LmJacobianCharge::Sites => JacobianCost::Sites,
+                LmJacobianCharge::One => JacobianCost::One,
+            },
+            ..Options::default()
+        };
+        let result = self.optimize_constants_lm(
+            &admission,
+            rows,
+            targets,
+            Objective::LinearScaled,
+            &options,
+            budget,
+        )?;
+        // The same admission the optimizer made of its start: deterministic and uncharged.
+        let start = admission.finish(self.root.clone())?;
+        let sites = literal_paths(&start.root).len();
+        Ok(result.guarded(start, sites, options.jacobian_cost))
+    }
+
+    /// The literal sites `optimize_constants_lm_guarded` fits in this expression, as its trace's
+    /// `sites` reports them: one per maximal literal. Its admission keeps that count, since
+    /// normalizing a literal and printing it again leaves one literal, so a caller can size a budget
+    /// before it asks for the fit. A row expression is supported with 1 to [`LM_MAX_SITES`] sites.
+    pub fn literal_sites(&self) -> usize {
+        literal_paths(&self.root).len()
+    }
+}
+
+// The fit's parameters are the literal sites and the affine pair of the linear-scaled residuals.
+const _: () = assert!(LM_MAX_SITES + 2 == MAX_PARAMS);
+
+impl Status {
+    fn public(self) -> LmStatus {
+        match self {
+            Self::ExactFit => LmStatus::ExactFit,
+            Self::Gradient => LmStatus::Gradient,
+            Self::Step => LmStatus::Step,
+            Self::IterationLimit => LmStatus::IterationLimit,
+            Self::BudgetExhausted => LmStatus::BudgetExhausted,
+            Self::DampingLimit => LmStatus::DampingLimit,
+            Self::NonFiniteJacobian => LmStatus::NonFiniteJacobian,
+            Self::Stopped => LmStatus::Stopped,
+            Self::Unsupported => LmStatus::Unsupported,
+            Self::InitialRefused => LmStatus::InitialRefused,
+        }
+    }
+}
+
+/// The failure a refused start reports; it cost one evaluation, as in the coordinate search.
+const INITIAL_REFUSED: &str =
+    "initial value refused: a traced fault or a nonfinite objective on training rows";
+
+impl LmRefinement {
+    /// The outcome in the coordinate search's terms, and the trace. A start refused or stopped
+    /// before its pass, or an unsupported shape, reports no refinement.
+    fn guarded(self, start: MathExpr, sites: usize, cost: JacobianCost) -> GuardedLmRefinement {
+        let run = self.run.as_ref();
+        let initial = usize::from(run.is_some() || self.status == Status::InitialRefused);
+        let rescore = run.map_or(0, |r| self.refinement.evaluations - r.evaluations);
+        let trace = LmTrace {
+            status: self.status.public(),
+            changed: self.changed,
+            sites,
+            jacobian_cost: match cost {
+                JacobianCost::Sites => sites,
+                JacobianCost::One => 1,
+            },
+            initial,
+            trials: run.map_or(0, |r| r.trials),
+            jacobians: run.map_or(0, |r| r.jacobians),
+            rescore,
+            rejected_trials: self.refinement.rejected_trials,
+            solve_failures: run.map_or(0, |r| r.solve_failures),
+            accepted: run.map_or(0, |r| r.accepted),
+            rescored: self.rescore,
+            nonsmooth_rows: self.nonsmooth_rows,
+            saturated_rows: self.saturated_rows,
+            iterations: run.map_or_else(Vec::new, |r| {
+                r.trace
+                    .iter()
+                    .map(|i| LmIteration {
+                        mu: i.mu,
+                        objective: i.objective,
+                        trial: i.trial,
+                        accepted: i.accepted,
+                        solved: i.solved,
+                    })
+                    .collect()
+            }),
+        };
+        let outcome = match self.status {
+            Status::InitialRefused => GuardedConstantRefinement {
+                refinement: None,
+                stopped: false,
+                failure: Some(INITIAL_REFUSED.into()),
+            },
+            Status::Unsupported => GuardedConstantRefinement {
+                refinement: None,
+                stopped: false,
+                failure: None,
+            },
+            Status::Stopped if initial == 0 => GuardedConstantRefinement {
+                refinement: None,
+                stopped: true,
+                failure: None,
+            },
+            status => GuardedConstantRefinement {
+                refinement: Some(self.refinement),
+                stopped: status == Status::Stopped,
+                failure: None,
+            },
+        };
+        GuardedLmRefinement {
+            outcome,
+            start,
+            trace,
+        }
+    }
+}
+// laneD:B17-lm-refinement end
 
 #[cfg(test)]
 mod tests {
@@ -2321,3 +2477,378 @@ mod tests {
         "sin((1.5245388001203537*c0)) | evaluations=100",
     ];
 }
+
+// laneD:B17-lm-refinement begin
+/// The public entry: the same optimizer behind the version-two admission, in the coordinate
+/// search's terms, with a trace that accounts for every charged pass.
+#[cfg(test)]
+mod public_tests {
+    use super::*;
+    use crate::kernel::profile::{profile, SearchProfile};
+    use std::cell::Cell;
+
+    fn baseline() -> SearchProfile {
+        profile("kernel2-baseline", 3).unwrap()
+    }
+
+    fn sine_data() -> (Vec<Vec<f64>>, Vec<f64>) {
+        let rows: Vec<Vec<f64>> = (0..32).map(|i| vec![-1.55 + f64::from(i) / 10.0]).collect();
+        let targets = rows
+            .iter()
+            .map(|r| 3.0 * (1.7 * r[0]).sin() + 0.5)
+            .collect();
+        (rows, targets)
+    }
+
+    fn public(
+        source: &str,
+        rows: &[Vec<f64>],
+        targets: &[f64],
+        options: LmOptions,
+        max_evaluations: usize,
+        guard: &mut dyn FnMut() -> bool,
+    ) -> GuardedLmRefinement {
+        MathExpr::parse(source)
+            .unwrap()
+            .optimize_constants_lm_guarded(
+                &baseline(),
+                ExpressionScope::search_profile(1, false),
+                rows,
+                targets,
+                options,
+                GuardedRefinementBudget {
+                    max_evaluations,
+                    may_start: guard,
+                },
+            )
+            .unwrap()
+    }
+
+    #[test]
+    fn default_options_are_the_core_defaults() {
+        let options = LmOptions::default();
+        assert_eq!(options.tau.to_bits(), Options::default().tau.to_bits());
+        assert_eq!(options.jacobian, LmJacobianCharge::Sites);
+        assert_eq!(Options::default().jacobian_cost, JacobianCost::Sites);
+        let names: Vec<&str> = LmStatus::ALL.iter().map(|s| s.as_str()).collect();
+        let mut distinct = names.clone();
+        distinct.sort_unstable();
+        distinct.dedup();
+        assert_eq!(distinct.len(), names.len());
+    }
+
+    /// At every budget, and with either Jacobian charge, the public entry reports what the
+    /// staged optimizer does under the same admission, and the trace's charge is the outcome's.
+    #[test]
+    fn the_public_entry_reports_the_core_optimizer_and_its_charges() {
+        let (rows, targets) = sine_data();
+        let profile = baseline();
+        for jacobian in [LmJacobianCharge::Sites, LmJacobianCharge::One] {
+            let options = LmOptions {
+                jacobian,
+                ..LmOptions::default()
+            };
+            for source in ["sin(1.5*c0)", "sin(1.5*c0)+(0.25*c0)", "sqrt(1.0+(c0*c0))"] {
+                for budget in [1usize, 2, 3, 4, 7, 12, 40, 200] {
+                    let asked = Cell::new(0usize);
+                    let mut guard = || {
+                        asked.set(asked.get() + 1);
+                        true
+                    };
+                    let actual = public(source, &rows, &targets, options, budget, &mut guard);
+                    let search =
+                        Search::new(&profile, ExpressionScope::search_profile(1, false)).unwrap();
+                    let core = MathExpr::parse(source)
+                        .unwrap()
+                        .optimize_constants_lm(
+                            &Admission::Profile(search),
+                            &rows,
+                            &targets,
+                            Objective::LinearScaled,
+                            &Options {
+                                jacobian_cost: match jacobian {
+                                    LmJacobianCharge::Sites => JacobianCost::Sites,
+                                    LmJacobianCharge::One => JacobianCost::One,
+                                },
+                                ..Options::default()
+                            },
+                            GuardedRefinementBudget {
+                                max_evaluations: budget,
+                                may_start: &mut || true,
+                            },
+                        )
+                        .unwrap();
+                    let trace = &actual.trace;
+                    let outcome = &actual.outcome;
+                    let label = format!("{source} {jacobian:?} {budget}");
+                    assert_eq!(trace.status, core.status.public(), "{label}");
+                    assert_eq!(trace.changed, core.changed, "{label}");
+                    assert_eq!(trace.evaluations(), outcome.evaluations(), "{label}");
+                    assert_eq!(trace.evaluations(), core.refinement.evaluations, "{label}");
+                    assert!(trace.evaluations() <= budget, "{label}");
+                    assert_eq!(trace.rejected_trials, outcome.rejected_trials(), "{label}");
+                    assert_eq!(
+                        trace.iterations.len(),
+                        trace.trials + trace.solve_failures,
+                        "{label}"
+                    );
+                    assert_eq!(
+                        trace
+                            .iterations
+                            .iter()
+                            .map(|i| i.mu.to_bits())
+                            .collect::<Vec<_>>(),
+                        core.run.as_ref().map_or_else(Vec::new, |r| r
+                            .trace
+                            .iter()
+                            .map(|i| i.mu.to_bits())
+                            .collect()),
+                        "{label}"
+                    );
+                    // One guard question per charged native pass and per Jacobian.
+                    assert_eq!(
+                        asked.get(),
+                        trace.initial + trace.trials + trace.jacobians + trace.rescore,
+                        "{label}"
+                    );
+                    let refinement = outcome.refinement.as_ref().unwrap();
+                    assert_eq!(
+                        refinement.expression.to_source().unwrap(),
+                        core.refinement.expression.to_source().unwrap(),
+                        "{label}"
+                    );
+                    assert_eq!(
+                        refinement.score.to_bits(),
+                        core.refinement.score.to_bits(),
+                        "{label}"
+                    );
+                    assert!(!outcome.stopped && outcome.failure.is_none(), "{label}");
+                    // The admitted start is the refinement whenever the winner did not replace it.
+                    if !trace.changed {
+                        assert_eq!(
+                            actual.start.to_source().unwrap(),
+                            refinement.expression.to_source().unwrap(),
+                            "{label}"
+                        );
+                    }
+                }
+            }
+        }
+        // The frequency fixture is recovered within a modest budget.
+        let mut always = || true;
+        let fit = public(
+            "sin(1.5*c0)",
+            &rows,
+            &targets,
+            LmOptions::default(),
+            200,
+            &mut always,
+        );
+        assert!(fit.trace.changed, "{:?}", fit.trace.status);
+        let refined = fit.outcome.refinement.unwrap();
+        let root = &refined.expression.root;
+        let sites = literal_paths(root);
+        assert_eq!(sites.len(), 1);
+        let frequency = literal_value(at(root, &sites[0])).unwrap();
+        assert!((frequency - 1.7).abs() <= 1e-6, "{frequency}");
+        assert_eq!(
+            fit.trace.rescored.map(f64::to_bits),
+            Some(refined.score.to_bits())
+        );
+    }
+
+    #[test]
+    fn unsupported_refused_and_stopped_starts_report_no_refinement() {
+        let (rows, targets) = sine_data();
+        // An elementwise scope spends nothing and never asks the guard.
+        let mut never_asked = || panic!("an unsupported shape asks nothing");
+        let elementwise = MathExpr::parse("sin(1.5*x)")
+            .unwrap()
+            .optimize_constants_lm_guarded(
+                &baseline(),
+                ExpressionScope::search_profile(1, true),
+                &rows,
+                &targets,
+                LmOptions::default(),
+                GuardedRefinementBudget {
+                    max_evaluations: 10,
+                    may_start: &mut never_asked,
+                },
+            )
+            .unwrap();
+        assert_eq!(elementwise.trace.status, LmStatus::Unsupported);
+        assert!(elementwise.outcome.refinement.is_none());
+        assert_eq!(elementwise.outcome.evaluations(), 0);
+        assert_eq!(elementwise.trace.evaluations(), 0);
+        // A refused guard starts nothing.
+        let mut refuse = || false;
+        let stopped = public(
+            "sin(1.5*c0)",
+            &rows,
+            &targets,
+            LmOptions::default(),
+            10,
+            &mut refuse,
+        );
+        assert_eq!(stopped.trace.status, LmStatus::Stopped);
+        assert!(stopped.outcome.stopped && stopped.outcome.refinement.is_none());
+        assert_eq!(stopped.outcome.evaluations(), 0);
+        assert_eq!(stopped.trace.evaluations(), 0);
+        // A start with a Domain fault on a training row is a failure that cost one evaluation.
+        let mut always = || true;
+        let refused = public(
+            "sqrt(c0-5.0)",
+            &rows,
+            &targets,
+            LmOptions::default(),
+            10,
+            &mut always,
+        );
+        assert_eq!(refused.trace.status, LmStatus::InitialRefused);
+        assert!(refused.outcome.refinement.is_none() && !refused.outcome.stopped);
+        assert_eq!(refused.outcome.failure.as_deref(), Some(INITIAL_REFUSED));
+        assert_eq!(refused.outcome.evaluations(), 1);
+        assert_eq!(refused.outcome.rejected_trials(), 1);
+        assert_eq!(
+            (refused.trace.evaluations(), refused.trace.rejected_trials),
+            (1, 1)
+        );
+        // Invalid options are an error, as in the core.
+        let mut always = || true;
+        assert!(MathExpr::parse("sin(1.5*c0)")
+            .unwrap()
+            .optimize_constants_lm_guarded(
+                &baseline(),
+                ExpressionScope::search_profile(1, false),
+                &rows,
+                &targets,
+                LmOptions {
+                    tau: 0.0,
+                    ..LmOptions::default()
+                },
+                GuardedRefinementBudget {
+                    max_evaluations: 10,
+                    may_start: &mut always,
+                },
+            )
+            .is_err());
+    }
+
+    /// A guard that refuses partway keeps the start, is never asked again, and the trace still
+    /// accounts for what was charged.
+    #[test]
+    fn a_partway_refusal_keeps_the_start_and_its_charges() {
+        let (rows, targets) = sine_data();
+        let mut always = || true;
+        let full = public(
+            "sin(1.5*c0)",
+            &rows,
+            &targets,
+            LmOptions::default(),
+            200,
+            &mut always,
+        );
+        let total =
+            full.trace.initial + full.trace.trials + full.trace.jacobians + full.trace.rescore;
+        for allowed in 1..total {
+            let asked = Cell::new(0usize);
+            let mut guard = || {
+                asked.set(asked.get() + 1);
+                asked.get() <= allowed
+            };
+            let result = public(
+                "sin(1.5*c0)",
+                &rows,
+                &targets,
+                LmOptions::default(),
+                200,
+                &mut guard,
+            );
+            assert_eq!(asked.get(), allowed + 1, "{allowed}");
+            assert_eq!(result.trace.status, LmStatus::Stopped, "{allowed}");
+            assert!(result.outcome.stopped && !result.trace.changed, "{allowed}");
+            assert_eq!(result.trace.evaluations(), result.outcome.evaluations());
+            let kept = result.outcome.refinement.unwrap();
+            assert_eq!(
+                kept.expression.to_source().unwrap(),
+                result.start.to_source().unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn the_trace_replays_bit_for_bit() {
+        let (rows, targets) = sine_data();
+        let run = || {
+            let mut always = || true;
+            public(
+                "sin(1.5*c0)+(0.25*c0)",
+                &rows,
+                &targets,
+                LmOptions::default(),
+                120,
+                &mut always,
+            )
+        };
+        let (a, b) = (run(), run());
+        let bits = |t: &LmTrace| {
+            t.iterations
+                .iter()
+                .map(|i| {
+                    (
+                        i.mu.to_bits(),
+                        i.objective.to_bits(),
+                        i.trial.map(f64::to_bits),
+                        i.accepted,
+                        i.solved,
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+        assert!(!a.trace.iterations.is_empty());
+        assert_eq!(bits(&a.trace), bits(&b.trace));
+        assert_eq!(a.trace, b.trace);
+        let (x, y) = (a.outcome.refinement.unwrap(), b.outcome.refinement.unwrap());
+        assert_eq!(
+            x.expression.to_source().unwrap(),
+            y.expression.to_source().unwrap()
+        );
+        assert_eq!(x.score.to_bits(), y.score.to_bits());
+    }
+
+    /// `literal_sites` counts, before any fit, the sites the fit reports after its admission
+    /// (negative and nested literals included), and the shape is unsupported exactly outside
+    /// `1..=LM_MAX_SITES`.
+    #[test]
+    fn literal_sites_are_the_sites_the_fit_reports() {
+        let (rows, targets) = sine_data();
+        for (source, expected) in [
+            ("sin(1.5*c0)", 1usize),
+            ("sin(1.5*c0)+(0.25*c0)", 2),
+            ("(-1.5*c0)+2.0", 2),
+            ("(c0*-0.5)-(0.5-1.5)", 3),
+            ("-(-1.5)*c0", 1),
+            ("sin(c0)", 0),
+        ] {
+            let expression = MathExpr::parse(source).unwrap();
+            assert_eq!(expression.literal_sites(), expected, "{source}");
+            let mut always = || true;
+            let fit = public(
+                source,
+                &rows,
+                &targets,
+                LmOptions::default(),
+                30,
+                &mut always,
+            );
+            assert_eq!(
+                fit.trace.status == LmStatus::Unsupported,
+                !(1..=LM_MAX_SITES).contains(&expected),
+                "{source}"
+            );
+            assert_eq!(fit.trace.sites, expected, "{source}");
+            assert_eq!(fit.start.literal_sites(), expected, "{source}");
+        }
+    }
+}
+// laneD:B17-lm-refinement end

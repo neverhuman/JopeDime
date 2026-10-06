@@ -6,7 +6,10 @@ use feat_math::{evolve::FaultPolicy, kernel::profile::shipped_kernel2_profiles};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::{EvaluationBudget, Kernel2Evaluator, Kernel2Observation, RefinedChild};
+use super::{
+    EngineRecord, EngineSelection, EvaluationBudget, Kernel2Evaluator, Kernel2Observation,
+    RefinedChild,
+};
 use crate::{
     prepare::Cut,
     search::{SearchOptions, ELITES},
@@ -55,6 +58,14 @@ impl Options {
     pub fn evaluator(&self) -> &Kernel2Evaluator {
         &self.evaluator
     }
+    // laneD:B17-lm-refinement begin
+    /// Select opt-in engine methods, checked against this refinement allowance.
+    pub fn with_engine(mut self, engine: EngineSelection) -> Result<Self> {
+        self.evaluator = self.evaluator.with_engine(engine)?;
+        self.check()?;
+        Ok(self)
+    }
+    // laneD:B17-lm-refinement end
     fn check(&self) -> Result<()> {
         self.search.budget.check()?;
         ensure!(
@@ -66,6 +77,9 @@ impl Options {
                 && self.refinement.trials_per_program <= self.search.budget.evaluations,
             "refinement allowance exceeds the cut's bounds"
         );
+        // laneD:B17-lm-refinement begin
+        self.evaluator.engine().validate(self.refinement)?;
+        // laneD:B17-lm-refinement end
         Ok(())
     }
 }
@@ -81,6 +95,9 @@ pub struct CutSearch {
     pub budget_evaluations: usize,
     pub budget_seconds: u64,
     pub refinement: Refinement,
+    /// Opt-in engine methods; absent for the default selection.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub engine: Option<EngineRecord>,
     pub generations: usize,
     pub completed_evaluations: usize,
     pub candidate_measurements: usize,
@@ -178,6 +195,7 @@ impl State {
             budget_evaluations: options.search.budget.evaluations,
             budget_seconds: options.search.budget.seconds,
             refinement: options.refinement,
+            engine: options.evaluator.engine_record(),
             generations: self.generation + 1,
             completed_evaluations: self.budget.used(),
             candidate_measurements: self.observations.len(),
@@ -205,6 +223,8 @@ impl State {
 /// Run a cut on the same evaluation stack as the shipping legacy search.
 /// Each optimizer objective and each child measurement spend the same allowance.
 /// Cancellation returns no result; an admitted operation is nonpreemptive.
+/// It writes nothing: a selected front (`EngineSelection::archive`) is only recorded in the
+/// result's `engine`, and is built when `publication::publish` publishes the result.
 pub fn run_cut(cut: &Cut, options: &Options) -> Result<CutSearch> {
     generation::check(cut, options)?;
     crate::parallel::on_evaluation_stack(|| generation::run(cut, options))?

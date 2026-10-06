@@ -493,12 +493,23 @@ fn run_wave(
     }
 
     let solve_start = Instant::now();
-    let (px, py, pvx, pvy) = (d_train_x.ptr, d_train_y.ptr, d_valid_x.ptr, d_valid_y.ptr);
-    let (pxo, pyo, pvxo, pvyo) = (d_x_off.ptr, d_y_off.ptr, d_vx_off.ptr, d_vy_off.ptr);
-    let (pso, pgo, pwo) = (d_stat_off.ptr, d_gram_off.ptr, d_w_off.ptr);
-    let (ptn, pvn, pp, pl) = (d_train_n.ptr, d_valid_n.ptr, d_p.ptr, d_lambda.ptr);
-    let (pm, psc, pym) = (d_means.ptr, d_scales.ptr, d_y_means.ptr);
-    let (pg, pb, pz, pw, psr) = (d_gram.ptr, d_atb.ptr, d_z.ptr, d_w.ptr, d_scores.ptr);
+    let (px, py, pvx, pvy) = (
+        d_train_x.ptr(),
+        d_train_y.ptr(),
+        d_valid_x.ptr(),
+        d_valid_y.ptr(),
+    );
+    let (pxo, pyo, pvxo, pvyo) = (d_x_off.ptr(), d_y_off.ptr(), d_vx_off.ptr(), d_vy_off.ptr());
+    let (pso, pgo, pwo) = (d_stat_off.ptr(), d_gram_off.ptr(), d_w_off.ptr());
+    let (ptn, pvn, pp, pl) = (d_train_n.ptr(), d_valid_n.ptr(), d_p.ptr(), d_lambda.ptr());
+    let (pm, psc, pym) = (d_means.ptr(), d_scales.ptr(), d_y_means.ptr());
+    let (pg, pb, pz, pw, psr) = (
+        d_gram.ptr(),
+        d_atb.ptr(),
+        d_z.ptr(),
+        d_w.ptr(),
+        d_scores.ptr(),
+    );
 
     let mut a1 = ptr_args![px, py, pxo, pyo, pso, ptn, pp, pm, psc, pym, problems];
     launch(gpu.f_col_stats, wave.len() as c_uint, 128, &mut a1)?;

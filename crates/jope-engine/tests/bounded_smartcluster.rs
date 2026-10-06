@@ -903,14 +903,36 @@ fn participant_argv(host: &Host, dir: &Path) -> Vec<String> {
     ]
 }
 /// Run the participant directly (not as a SmartCluster job); its exit status and refusal.
-/// `control` becomes its descriptor 3 when given.
+/// A private duplicate of `control` is inherited at its actual descriptor number. Ambient
+/// descriptors, including a wrapper's flock file, remain untouched.
 fn run_outside(
     host: &Host,
     case: &str,
     env: &[(&str, String)],
-    control: Option<&std::os::unix::net::UnixStream>,
+    control: Option<std::os::fd::BorrowedFd<'_>>,
 ) -> (bool, String) {
-    use std::os::{fd::AsRawFd, unix::process::CommandExt};
+    use std::os::{
+        fd::{AsRawFd, FromRawFd, OwnedFd},
+        unix::process::CommandExt,
+    };
+    let duplicate = control.map(|control| {
+        // SAFETY: fcntl returns a fresh descriptor without replacing any existing descriptor.
+        let fd = unsafe { libc::fcntl(control.as_raw_fd(), libc::F_DUPFD_CLOEXEC, 3) };
+        assert!(
+            fd >= 0,
+            "duplicate control: {}",
+            std::io::Error::last_os_error()
+        );
+        // SAFETY: a successful F_DUPFD_CLOEXEC gives this OwnedFd sole ownership of `fd`.
+        unsafe { OwnedFd::from_raw_fd(fd) }
+    });
+    // Linux cannot allocate this descriptor number. Check its absence in the child too;
+    // unlike closing a low descriptor before exec, startup cannot reuse this claimed slot.
+    const ABSENT_CONTROL_FD: i32 = i32::MAX;
+    let fd = duplicate
+        .as_ref()
+        .map_or(ABSENT_CONTROL_FD, AsRawFd::as_raw_fd);
+    let has_control = duplicate.is_some();
     let dir = host.root.join(format!("outside-{case}"));
     let mut command = Command::new(participant_binary());
     command
@@ -918,23 +940,33 @@ fn run_outside(
         .env_clear()
         .env("CUDA_VISIBLE_DEVICES", "-1")
         .envs(env.iter().map(|(k, v)| (*k, v.as_str())))
+        .env("SCQ_CONTROL_FD", fd.to_string())
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
-    if let Some(control) = control {
-        let fd = control.as_raw_fd();
-        // SAFETY: dup2 and fcntl are async-signal-safe. When the socket already is descriptor 3
-        // (as under nextest), dup2 is a no-op that keeps close-on-exec, so clear it explicitly.
-        unsafe {
-            command.pre_exec(move || {
-                if (fd != 3 && libc::dup2(fd, 3) < 0) || libc::fcntl(3, libc::F_SETFD, 0) < 0 {
+    // SAFETY: only async-signal-safe fcntl and errno inspection run between fork and exec.
+    // The owned duplicate stays alive in the parent through status(); only its child copy
+    // loses CLOEXEC. The caller's descriptor and flags are never changed.
+    unsafe {
+        command.pre_exec(move || {
+            if has_control {
+                if libc::fcntl(fd, libc::F_SETFD, 0) < 0 {
                     return Err(std::io::Error::last_os_error());
                 }
-                Ok(())
-            });
-        }
+            } else {
+                if libc::fcntl(fd, libc::F_GETFD) >= 0 {
+                    return Err(std::io::Error::from_raw_os_error(libc::EINVAL));
+                }
+                let error = std::io::Error::last_os_error();
+                if error.raw_os_error() != Some(libc::EBADF) {
+                    return Err(error);
+                }
+            }
+            Ok(())
+        });
     }
     let status = command.status().unwrap();
+    drop(duplicate);
     (
         status.success(),
         fs::read_to_string(dir.join("outbox/refusal.txt")).unwrap_or_default(),
@@ -949,6 +981,75 @@ fn block_on<F: std::future::Future>(future: F) -> F::Output {
 }
 
 #[test]
+fn an_inherited_flock_file_is_refused_without_releasing_the_parent_lock() {
+    use std::os::fd::{AsFd, AsRawFd};
+
+    let host = Host::new(5);
+    let path = host.root.join("parent.lock");
+    let lock = fs::OpenOptions::new()
+        .create_new(true)
+        .read(true)
+        .write(true)
+        .open(&path)
+        .unwrap();
+    // SAFETY: these operations borrow the open File's descriptor; neither closes it.
+    assert_eq!(
+        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
+        0
+    );
+    let flags = unsafe { libc::fcntl(lock.as_raw_fd(), libc::F_GETFD) };
+    assert!(flags >= 0);
+    let contended = || {
+        // A new open file description is essential: dup/try_clone would share the lock.
+        let contender = fs::File::open(&path).unwrap();
+        // SAFETY: contender is open and remains owned by this File.
+        assert_eq!(
+            unsafe { libc::flock(contender.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
+            -1
+        );
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::EWOULDBLOCK)
+        );
+    };
+    contended();
+
+    // A syntactically valid claim reaches the real control-channel verifier. No job is
+    // submitted: the inherited regular file must be refused before job lookup or work.
+    let forged = [
+        ("SCQ_JOB_ID", jain_smartcluster::JobId::new().to_string()),
+        ("SCQ_ATTEMPT_NUMBER", "1".to_string()),
+        ("SCQ_ATTEMPT_FENCE", "1".to_string()),
+    ];
+    let (ok, refusal) = run_outside(&host, "flock-file", &forged, Some(lock.as_fd()));
+    assert!(!ok);
+    assert!(
+        refusal.contains("is not a SmartCluster control socket"),
+        "{refusal}"
+    );
+    assert!(!refusal.contains("is not an open descriptor"), "{refusal}");
+    let outbox = host.root.join("outside-flock-file/outbox");
+    let files: Vec<_> = fs::read_dir(outbox)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect();
+    assert_eq!(files, vec![std::ffi::OsString::from("refusal.txt")]);
+    // The child refused an open file, and left the parent's descriptor and lock intact.
+    assert_eq!(
+        unsafe { libc::fcntl(lock.as_raw_fd(), libc::F_GETFD) },
+        flags
+    );
+    contended();
+    drop(lock);
+    // No surviving child/helper duplicate may keep the lock after its owner releases it.
+    let contender = fs::File::open(path).unwrap();
+    assert_eq!(
+        unsafe { libc::flock(contender.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
+        0
+    );
+}
+
+#[test]
 fn a_participant_proves_its_smartcluster_job_before_any_work() {
     use jain_smartcluster::{
         AttemptNumber, FenceToken, FencedAttempt, IdempotencyKey, JobSpec, JobState, TerminalStatus,
@@ -958,6 +1059,7 @@ fn a_participant_proves_its_smartcluster_job_before_any_work() {
         job_identity::{verify_job_record, ExpectedJob},
         supervisor::{DISPATCH_LABEL, PLAN_LABEL},
     };
+    use std::os::fd::AsFd;
     let host = Host::new(5);
     let rank0 = &host.ranks[0].supervision;
     let dispatch = |rank| rendezvous::dispatch_id(&host.sha, 1, rank).unwrap();
@@ -1037,13 +1139,12 @@ fn a_participant_proves_its_smartcluster_job_before_any_work() {
         ("SCQ_JOB_ID", genuine.id.to_string()),
         ("SCQ_ATTEMPT_NUMBER", "1".to_string()),
         ("SCQ_ATTEMPT_FENCE", "1".to_string()),
-        ("SCQ_CONTROL_FD", "3".to_string()),
     ];
     let (ok, refusal) = run_outside(&host, "no-control", &forged, None);
     assert!(!ok);
     assert!(refusal.contains("is not an open descriptor"), "{refusal}");
     let (ours, _theirs) = std::os::unix::net::UnixStream::pair().unwrap();
-    let (ok, refusal) = run_outside(&host, "impostor-daemon", &forged, Some(&ours));
+    let (ok, refusal) = run_outside(&host, "impostor-daemon", &forged, Some(ours.as_fd()));
     assert!(!ok);
     assert!(
         refusal.contains("is not the pinned SmartCluster executable"),

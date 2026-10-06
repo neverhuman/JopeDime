@@ -564,6 +564,637 @@ fn profile_runs_replay_receipt_and_all_sidecars_with_a_frozen_clock() {
     }
 }
 
+// laneD:B17-lm-refinement begin
+fn lm_seeded(output: &Path, evaluations: usize) -> run::Options {
+    let mut base = seeded(output).run;
+    base.budget.evaluations = evaluations;
+    run::Options::new(
+        base,
+        "kernel2-baseline",
+        FaultPolicy::RejectHard,
+        Refinement {
+            top_k: 1,
+            trials_per_program: 12,
+        },
+    )
+    .unwrap()
+    .with_engine(super::EngineSelection {
+        refine: super::RefineMethod::Lm(feat_math::kernel::expression_search::LmOptions::default()),
+        archive: None,
+    })
+    .unwrap()
+}
+
+const SIDECARS: [&str; 7] = [
+    "receipt.json",
+    "prepared/prepared.json",
+    "search/cut-0/search.json",
+    "search/cut-0/observations.json",
+    "search/cut-0/refinements.json",
+    "emit/model.rs",
+    "emit/manifest.json",
+];
+
+#[test]
+fn lm_runs_replay_receipt_and_all_sidecars_with_a_frozen_clock() {
+    let temp = tempfile::tempdir().unwrap();
+    let a = lm_seeded(&temp.path().join("a"), 40);
+    let b = lm_seeded(&temp.path().join("b"), 40);
+    let receipt = run::run(&a).unwrap();
+    assert_eq!(receipt, run::run(&b).unwrap());
+    for relative in SIDECARS {
+        assert_eq!(
+            std::fs::read(a.run.output.join(relative)).unwrap(),
+            std::fs::read(b.run.output.join(relative)).unwrap(),
+            "{relative}"
+        );
+    }
+    let engine = receipt.search.engine_selection.as_ref().unwrap();
+    assert_eq!(engine.refine.as_ref().unwrap().id, super::DAMPED_LS);
+    assert!(receipt.search.objective_trials > 0);
+    assert_eq!(
+        publication::verify_run(&a.run.output.join("receipt.json")).unwrap(),
+        receipt
+    );
+    let refinements: Value = serde_json::from_slice(
+        &std::fs::read(a.run.output.join("search/cut-0/refinements.json")).unwrap(),
+    )
+    .unwrap();
+    assert!(refinements
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|r| r["refinement"]["trace"]["stages"]
+            .as_array()
+            .is_some_and(|s| s.iter().any(|s| s["kind"] == "surrogate"))));
+}
+
+#[test]
+fn explicit_coordinate_method_keeps_receipt_bytes_and_lm_flags_are_checked() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = "a".repeat(40);
+    let dataset = options(&temp.path().join("unused"), 4).run.dataset;
+    let base = [
+        "--search-profile",
+        "kernel2-baseline",
+        "--refine-top-k",
+        "1",
+        "--refine-trials",
+        "4",
+        "--budget",
+        "evaluations=6,seconds=300",
+        "--policy",
+        "skip",
+        "--emit",
+        "rust",
+        "--rng-seed",
+        "7",
+        "--source-commit",
+        source.as_str(),
+    ];
+    let make = |extra: &[&str], output: PathBuf| {
+        let mut argv = base.to_vec();
+        argv.extend_from_slice(extra);
+        let (mut search, profile) = args(&argv);
+        search.dataset = dataset.clone();
+        let mut opt = profile.options(&search, output, false).unwrap().unwrap();
+        opt.run.clock = Clock::Frozen;
+        opt
+    };
+    let implicit = make(&[], temp.path().join("implicit"));
+    let explicit = make(
+        &["--refine-method", "coordinate"],
+        temp.path().join("explicit"),
+    );
+    let receipt = run::run(&implicit).unwrap();
+    assert_eq!(receipt, run::run(&explicit).unwrap());
+    for relative in SIDECARS {
+        assert_eq!(
+            std::fs::read(implicit.run.output.join(relative)).unwrap(),
+            std::fs::read(explicit.run.output.join(relative)).unwrap(),
+            "{relative}"
+        );
+    }
+    assert!(serde_json::to_value(&receipt).unwrap()["search"]
+        .get("engine_selection")
+        .is_none());
+    assert!(!String::from_utf8(
+        std::fs::read(implicit.run.output.join("search/cut-0/refinements.json")).unwrap()
+    )
+    .unwrap()
+    .contains("\"trace\""));
+    make(&["--refine-method", "lm"], temp.path().join("lm"));
+    for (flags, refusal) in [
+        (
+            vec!["--refine-method", "lm"],
+            "legacy search refuses kernel2 fault/refinement options",
+        ),
+        (
+            vec![
+                "--search-profile",
+                "legacy",
+                "--refine-method",
+                "coordinate",
+            ],
+            "legacy search refuses kernel2 fault/refinement options",
+        ),
+        (
+            vec![
+                "--search-profile",
+                "kernel2-baseline",
+                "--refine-top-k",
+                "1",
+                "--refine-trials",
+                "4",
+                "--refine-method",
+                "fast",
+            ],
+            "--refine-method must be coordinate or lm",
+        ),
+        (
+            vec![
+                "--search-profile",
+                "kernel2-baseline",
+                "--refine-top-k",
+                "1",
+                "--refine-trials",
+                "2",
+                "--refine-method",
+                "lm",
+            ],
+            "--refine-trials of at least 3",
+        ),
+        (
+            vec![
+                "--search-profile",
+                "kernel2-baseline",
+                "--refine-top-k",
+                "0",
+                "--refine-trials",
+                "4",
+                "--refine-method",
+                "lm",
+            ],
+            "--refine-top-k of at least 1",
+        ),
+    ] {
+        let output = temp.path().join("refused");
+        let (mut search, profile) = args(&flags);
+        search.dataset = dataset.clone();
+        let error = profile.options(&search, output.clone(), false).unwrap_err();
+        assert!(
+            format!("{error:#}").contains(refusal),
+            "{flags:?}: {error:#}"
+        );
+        assert!(!output.exists());
+    }
+}
+
+/// Rewrites one run's refinements sidecar and selection record, rehashing search.json and the
+/// receipt, so that only the evidence checks can refuse the change.
+fn rewrite_lm_evidence(
+    output: &Path,
+    receipt: &receipt::Receipt,
+    refinements: &Value,
+    engine: Option<super::EngineRecord>,
+) -> PathBuf {
+    let dir = output.join("search/cut-0");
+    let bytes = serde_json::to_vec_pretty(refinements).unwrap();
+    std::fs::write(dir.join("refinements.json"), &bytes).unwrap();
+    let mut edited = receipt.clone();
+    edited.search.refinements_sha256 = crate::sha256_hex(&bytes);
+    edited.search.engine_selection = engine;
+    let summary = serde_json::to_vec_pretty(&edited.search).unwrap();
+    std::fs::write(dir.join("search.json"), &summary).unwrap();
+    edited.search_sha256 = crate::sha256_hex(&summary);
+    let path = output.join("receipt.json");
+    std::fs::write(&path, serde_json::to_vec(&edited).unwrap()).unwrap();
+    path
+}
+
+#[test]
+fn rehashed_lm_traces_and_selection_records_are_refused() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = lm_seeded(&temp.path().join("run"), 40);
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    let originals: Vec<(PathBuf, Vec<u8>)> = [
+        "receipt.json",
+        "search/cut-0/search.json",
+        "search/cut-0/refinements.json",
+    ]
+    .iter()
+    .map(|r| (output.join(r), std::fs::read(output.join(r)).unwrap()))
+    .collect();
+    let restore = || {
+        for (file, bytes) in &originals {
+            std::fs::write(file, bytes).unwrap();
+        }
+    };
+    let engine = receipt.search.engine_selection.clone();
+    let refinements: Value = serde_json::from_slice(&originals[2].1).unwrap();
+    // Rewriting the untouched evidence through the same path still verifies.
+    rewrite_lm_evidence(output, &receipt, &refinements, engine.clone());
+    publication::verify_run(&path).unwrap();
+    restore();
+    let traced = refinements
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|r| r["refinement"]["trace"].is_object())
+        .expect("a refinement with a trace");
+    let stage = &refinements[traced]["refinement"]["trace"]["stages"][0];
+    let mut edits: Vec<(&str, Value)> = Vec::new();
+    let mut dropped = refinements.clone();
+    dropped[traced]["refinement"]
+        .as_object_mut()
+        .unwrap()
+        .remove("trace");
+    edits.push(("dropped trace", dropped));
+    let mut reordered = refinements.clone();
+    reordered[traced]["refinement"]["trace"]["method"] = "feat-math.other.v1".into();
+    edits.push(("unknown method", reordered));
+    if stage["kind"] == "surrogate" {
+        for field in [
+            "trials",
+            "jacobians",
+            "initial",
+            "rescore",
+            "rejected_trials",
+        ] {
+            let mut edited = refinements.clone();
+            let value = &mut edited[traced]["refinement"]["trace"]["stages"][0]["surrogate"][field];
+            *value = (value.as_u64().unwrap() + 1).into();
+            edits.push((field, edited));
+        }
+        if stage["pipeline"].is_object() {
+            let mut flipped = refinements.clone();
+            let accepted =
+                &mut flipped[traced]["refinement"]["trace"]["stages"][0]["pipeline"]["accepted"];
+            *accepted = (!accepted.as_bool().unwrap()).into();
+            edits.push(("pipeline decision", flipped));
+        }
+    } else {
+        let mut edited = refinements.clone();
+        let value = &mut edited[traced]["refinement"]["trace"]["stages"][0]["evaluations"];
+        *value = (value.as_u64().unwrap() + 1).into();
+        edits.push(("coordinate evaluations", edited));
+    }
+    for (label, edited) in &edits {
+        let path = rewrite_lm_evidence(output, &receipt, edited, engine.clone());
+        assert!(publication::verify_run(&path).is_err(), "{label}");
+        restore();
+    }
+    // A trace without the selection that produces it.
+    let path = rewrite_lm_evidence(output, &receipt, &refinements, None);
+    assert!(publication::verify_run(&path).is_err(), "unselected trace");
+    restore();
+    // A selection the receipt cannot name.
+    let mut value = serde_json::to_value(&receipt).unwrap();
+    value["search"]["engine_selection"]["refine"]["id"] = "feat-math.other.v1".into();
+    assert!(receipt::validate_value(&value).is_err());
+    let mut value = serde_json::to_value(&receipt).unwrap();
+    value["search"]["engine_selection"]["refine"]["jacobian"] = "one".into();
+    receipt::validate_value(&value).unwrap();
+    // With more than one literal site the two charges differ, so the other charge is refused.
+    let multi_site = refinements.as_array().unwrap().iter().any(|r| {
+        r["refinement"]["trace"]["stages"]
+            .as_array()
+            .is_some_and(|s| s.iter().any(|s| s["surrogate"]["sites"].as_u64() > Some(1)))
+    });
+    if multi_site {
+        let mut record = engine.clone().unwrap();
+        record.refine.as_mut().unwrap().jacobian = "one".into();
+        let path = rewrite_lm_evidence(output, &receipt, &refinements, Some(record));
+        assert!(publication::verify_run(&path).is_err(), "jacobian charge");
+        restore();
+    }
+    publication::verify_run(&path).unwrap();
+    // A coordinate run's refinements cannot claim the selection after the fact.
+    let plain = seeded(&temp.path().join("plain"));
+    let plain_receipt = run::run(&plain).unwrap();
+    let plain_refinements: Value = serde_json::from_slice(
+        &std::fs::read(plain.run.output.join("search/cut-0/refinements.json")).unwrap(),
+    )
+    .unwrap();
+    let path = rewrite_lm_evidence(
+        &plain.run.output,
+        &plain_receipt,
+        &plain_refinements,
+        engine,
+    );
+    assert!(publication::verify_run(&path).is_err(), "claimed selection");
+}
+
+/// A run through the CLI flags: `trials` per program with `method`, `evaluations` in all, one
+/// seed, a frozen clock, and the seeds file beside the output.
+fn flag_run(
+    dir: &Path,
+    seed: &str,
+    evaluations: usize,
+    trials: usize,
+    method: &str,
+) -> run::Options {
+    std::fs::create_dir_all(dir).unwrap();
+    let source = "a".repeat(40);
+    let budget = format!("evaluations={evaluations},seconds=300");
+    let trials = trials.to_string();
+    let (mut search, profile) = args(&[
+        "--search-profile",
+        "kernel2-baseline",
+        "--refine-top-k",
+        "1",
+        "--refine-trials",
+        trials.as_str(),
+        "--refine-method",
+        method,
+        "--budget",
+        budget.as_str(),
+        "--policy",
+        "skip",
+        "--emit",
+        "rust",
+        "--rng-seed",
+        "7",
+        "--source-commit",
+        source.as_str(),
+    ]);
+    search.dataset = options(&dir.join("unused"), 4).run.dataset;
+    let mut opt = profile
+        .options(&search, dir.join("run"), false)
+        .unwrap()
+        .unwrap();
+    opt.run.clock = Clock::Frozen;
+    let path = dir.join("seeds.json");
+    let file = crate::seeds::SeedsFile::new(None, vec![seed_entry(seed)]);
+    std::fs::write(&path, serde_json::to_vec(&file).unwrap()).unwrap();
+    opt.run.seed_genomes = Some(path);
+    opt
+}
+
+/// `--refine-trials 4 --refine-method lm` on a single-site seed: no stage reaches its surrogate
+/// minimum (one site plus five), so the run is the coordinate run, measurements and refinements
+/// bit for bit, and every trace stage names the small allowance.
+#[test]
+fn lm_under_the_surrogate_minimum_is_the_coordinate_run_with_its_reason() {
+    let temp = tempfile::tempdir().unwrap();
+    let seed = "(pipe X (derive expr=\"sin(0.5*c0)\") (ridge))";
+    let coordinate = flag_run(&temp.path().join("coordinate"), seed, 40, 4, "coordinate");
+    let lm = flag_run(&temp.path().join("lm"), seed, 40, 4, "lm");
+    let (plain, traced) = (run::run(&coordinate).unwrap(), run::run(&lm).unwrap());
+    for (opt, receipt) in [(&coordinate, &plain), (&lm, &traced)] {
+        assert_eq!(
+            publication::verify_run(&opt.run.output.join("receipt.json")).unwrap(),
+            *receipt
+        );
+    }
+    let read =
+        |opt: &run::Options, relative: &str| std::fs::read(opt.run.output.join(relative)).unwrap();
+    assert_eq!(
+        read(&coordinate, "search/cut-0/observations.json"),
+        read(&lm, "search/cut-0/observations.json")
+    );
+    let expected: Value =
+        serde_json::from_slice(&read(&coordinate, "search/cut-0/refinements.json")).unwrap();
+    let mut actual: Value =
+        serde_json::from_slice(&read(&lm, "search/cut-0/refinements.json")).unwrap();
+    assert!(!expected.as_array().unwrap().is_empty());
+    let mut stages = 0;
+    for record in actual.as_array_mut().unwrap() {
+        let charged = record["refinement"]["evaluations"].as_u64().unwrap();
+        let trace = record["refinement"]
+            .as_object_mut()
+            .unwrap()
+            .remove("trace");
+        assert_eq!(trace.is_some(), charged > 0);
+        for stage in trace.iter().flat_map(|t| t["stages"].as_array().unwrap()) {
+            assert_eq!(stage["kind"], "coordinate", "{stage}");
+            assert_eq!(
+                stage["reason"],
+                super::refinement::SMALL_ALLOWANCE,
+                "{stage}"
+            );
+            stages += 1;
+        }
+    }
+    assert!(stages > 0);
+    assert_eq!(actual, expected);
+    // The summaries differ only by the selection and the refinements digest.
+    let summary = |opt: &run::Options| {
+        let mut value: Value =
+            serde_json::from_slice(&read(opt, "search/cut-0/search.json")).unwrap();
+        let fields = value.as_object_mut().unwrap();
+        fields.remove("refinements_sha256");
+        let selection = fields.remove("engine_selection");
+        (value, selection.is_some())
+    };
+    assert_eq!(summary(&coordinate), (summary(&lm).0, false));
+    assert!(summary(&lm).1);
+    assert_eq!(
+        (
+            plain.search.objective_trials,
+            plain.search.rejected_trials,
+            plain.search.completed_evaluations
+        ),
+        (
+            traced.search.objective_trials,
+            traced.search.rejected_trials,
+            traced.search.completed_evaluations
+        )
+    );
+}
+
+/// A two-site seed whose first refinement is a surrogate stage whose winner's pipeline pass ran.
+const MULTI_SITE_SEED: &str = "(pipe X (derive expr=\"sin(0.5*c0)+(0.3*c1)\") (ridge))";
+
+/// The rehashed-evidence refusals on a fixture that has every shape they edit: a surrogate stage
+/// with two literal sites and a pipeline decision. Each edit is checked to have changed the
+/// evidence before its refusal is checked, and the two records the review found accepted (a
+/// fallback with equal counts, Jacobians traded for trials) are among them.
+#[test]
+fn rehashed_multi_site_lm_traces_are_refused_with_every_edit_applied() {
+    use super::refinement::{ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED};
+    let temp = tempfile::tempdir().unwrap();
+    let opt = flag_run(&temp.path().join("multi"), MULTI_SITE_SEED, 40, 12, "lm");
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    let originals: Vec<(PathBuf, Vec<u8>)> = [
+        "receipt.json",
+        "search/cut-0/search.json",
+        "search/cut-0/refinements.json",
+    ]
+    .iter()
+    .map(|r| (output.join(r), std::fs::read(output.join(r)).unwrap()))
+    .collect();
+    let restore = || {
+        for (file, bytes) in &originals {
+            std::fs::write(file, bytes).unwrap();
+        }
+    };
+    let engine = receipt.search.engine_selection.clone();
+    let refinements: Value = serde_json::from_slice(&originals[2].1).unwrap();
+    rewrite_lm_evidence(output, &receipt, &refinements, engine.clone());
+    publication::verify_run(&path).unwrap();
+    restore();
+    // The fixture's guarantee, checked rather than assumed.
+    let pointer = refinements
+        .as_array()
+        .unwrap()
+        .iter()
+        .enumerate()
+        .find_map(|(r, record)| {
+            let stages = record["refinement"]["trace"]["stages"].as_array()?;
+            let s = stages.iter().position(|s| {
+                s["kind"] == "surrogate"
+                    && s["surrogate"]["sites"].as_u64() >= Some(2)
+                    && s["pipeline"]["evaluations"] == 2
+                    && s["pipeline"]["winner"].is_u64()
+            })?;
+            Some(format!("/{r}/refinement/trace/stages/{s}"))
+        })
+        .expect("a multi-site surrogate stage with a pipeline decision");
+    let stage = refinements.pointer(&pointer).unwrap().clone();
+    let count = |value: &Value| value.as_u64().unwrap();
+    let charge = |s: &Value| {
+        let surrogate = &s["surrogate"];
+        count(&surrogate["initial"])
+            + count(&surrogate["trials"])
+            + count(&surrogate["jacobian_cost"]) * count(&surrogate["jacobians"])
+            + count(&surrogate["rescore"])
+            + count(&s["pipeline"]["evaluations"])
+    };
+    let (evaluations, rejected) = (
+        charge(&stage),
+        count(&stage["surrogate"]["rejected_trials"])
+            + count(&stage["pipeline"]["rejected_trials"]),
+    );
+    let mut edits: Vec<(String, Value)> = Vec::new();
+    let mut edit = |label: String, change: &dyn Fn(&mut Value)| {
+        let mut edited = refinements.clone();
+        change(edited.pointer_mut(&pointer).unwrap());
+        assert_ne!(edited, refinements, "{label}: the edit was not applied");
+        edits.push((label, edited));
+    };
+    for field in [
+        "trials",
+        "jacobians",
+        "initial",
+        "rescore",
+        "rejected_trials",
+        "sites",
+        "accepted",
+    ] {
+        edit(field.into(), &|s| {
+            let value = &mut s["surrogate"][field];
+            *value = (value.as_u64().unwrap() + 1).into();
+        });
+    }
+    edit("pipeline decision".into(), &|s| {
+        let accepted = &mut s["pipeline"]["accepted"];
+        *accepted = (!accepted.as_bool().unwrap()).into();
+    });
+    edit("winner's pass dropped".into(), &|s| {
+        let pipeline = s["pipeline"].as_object_mut().unwrap();
+        pipeline.remove("winner");
+        pipeline.insert("evaluations".into(), 1.into());
+        pipeline.insert("accepted".into(), false.into());
+    });
+    edit("start's loss dropped".into(), &|s| {
+        s["pipeline"].as_object_mut().unwrap().remove("start");
+    });
+    edit("pipeline passes dropped".into(), &|s| {
+        s.as_object_mut().unwrap().remove("pipeline");
+    });
+    // The review's first trigger: the stage replaced by a fallback with equal counts.
+    for reason in [ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED] {
+        edit(format!("fallback {reason}"), &|s| {
+            *s = json!({
+                "kind": "coordinate",
+                "stage": s["stage"],
+                "reason": reason,
+                "evaluations": evaluations,
+                "rejected_trials": rejected,
+            });
+        });
+    }
+    // The review's second trigger at this stage's charge: one more Jacobian, and a Jacobian's
+    // worth fewer trials with the steps they took, keep the stage's charge and every refusal.
+    edit("jacobians for trials".into(), &|s| {
+        let before = charge(s);
+        let surrogate = &mut s["surrogate"];
+        let cost = count(&surrogate["jacobian_cost"]);
+        let iterations = surrogate["iterations"].as_array_mut().unwrap();
+        let removed: Vec<Value> = iterations
+            .drain(iterations.len() - cost as usize..)
+            .collect();
+        assert!(removed
+            .iter()
+            .all(|i| i["solved"] == true && i["trial"].is_u64()));
+        let steps = removed.iter().filter(|i| i["accepted"] == true).count() as u64;
+        surrogate["accepted"] = (count(&surrogate["accepted"]) - steps).into();
+        surrogate["trials"] = (count(&surrogate["trials"]) - cost).into();
+        surrogate["jacobians"] = (count(&surrogate["jacobians"]) + 1).into();
+        assert_eq!(charge(s), before);
+    });
+    for (label, edited) in &edits {
+        let path = rewrite_lm_evidence(output, &receipt, edited, engine.clone());
+        assert!(publication::verify_run(&path).is_err(), "{label}");
+        restore();
+    }
+    // A stage with two sites re-derives a different charge under `one`.
+    let mut record = engine.clone().unwrap();
+    record.refine.as_mut().unwrap().jacobian = "one".into();
+    let path = rewrite_lm_evidence(output, &receipt, &refinements, Some(record));
+    assert!(publication::verify_run(&path).is_err(), "jacobian charge");
+    restore();
+    publication::verify_run(&output.join("receipt.json")).unwrap();
+}
+
+/// The default runs against the stack before the method was wired: these digests were measured
+/// at a8bd39855, the commit before the wiring (fix-01 probe, the same two runs in this lane on
+/// that commit's sources). The search sidecars are pinned; emission is not this change's subject.
+#[test]
+fn default_runs_keep_the_pre_wiring_search_sidecars() {
+    let temp = tempfile::tempdir().unwrap();
+    for (opt, pins) in [
+        (
+            seeded(&temp.path().join("seeded")),
+            [
+                "8b8dccfe93aff8fe789ebc37dd125145a28b9d9d702b42dea2fa737575008059",
+                "b2444c5c34dee80c91aa52d19a4a34aeaa358bf68dd3919723f52463fb2c5420",
+                "ad1e6ab3e218f237120668e39321daf2a60cc43b5a503011f1a05ecbbb907767",
+                "a6e3af0c1a0b0e85bfe64e3d8bd5c869e6a58b890403ba3438efba144e12a4d7",
+            ],
+        ),
+        (
+            options(&temp.path().join("plain"), 16),
+            [
+                "8b8dccfe93aff8fe789ebc37dd125145a28b9d9d702b42dea2fa737575008059",
+                "fb3f1637f853a232ca9d13d7cc5aa9b8d4644704ce46ad121377a3837c7948fb",
+                "fa6fd28f1aa37a516a39719ebd49d476624f3e220af92ec2a67b4104dc48bb96",
+                "75b7234a70a005c8ba7533ad9ec200dcbe70bb3537e3d97ffe5f75bc449bd3fa",
+            ],
+        ),
+    ] {
+        run::run(&opt).unwrap();
+        for (relative, pin) in [
+            "prepared/prepared.json",
+            "search/cut-0/search.json",
+            "search/cut-0/observations.json",
+            "search/cut-0/refinements.json",
+        ]
+        .into_iter()
+        .zip(pins)
+        {
+            let bytes = std::fs::read(opt.run.output.join(relative)).unwrap();
+            assert_eq!(crate::sha256_hex(&bytes), pin, "{relative}");
+        }
+    }
+}
+// laneD:B17-lm-refinement end
+
 #[test]
 fn v4_schema_matches_its_generated_type_and_legacy_schemas_are_unchanged() {
     assert_eq!(receipt::schema(), receipt::derived_schema());

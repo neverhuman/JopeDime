@@ -367,3 +367,8 @@ fn invalid_pairing_precedes_false_guard() {
 fn invalid_pairing_precedes_true_guard() {
     check_invalid_elementwise_linear_objective(true);
 }
+
+// laneD:B17-lm-refinement begin
+#[path = "kernel2_refinement_control/emitted_winners.rs"]
+mod emitted_winners;
+// laneD:B17-lm-refinement end

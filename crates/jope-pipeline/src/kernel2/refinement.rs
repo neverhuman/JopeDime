@@ -19,6 +19,9 @@ pub struct TrainingRefinement {
     pub changed: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure: Option<String>,
+    /// Present only for the opt-in damped least-squares refinement, once it spent a trial.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trace: Option<RefinementTrace>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -59,6 +62,7 @@ impl Kernel2Evaluator {
             rejected_trials: 0,
             changed: false,
             failure: None,
+            trace: None,
         };
         let allowance = trial_limit.min(budget.remaining());
         for index in 0..pipe.stages.len() {
@@ -289,3 +293,14 @@ fn has_constant(root: &Expr) -> bool {
 
 mod guarded;
 pub use guarded::{GuardedGeneration, GuardedTrainingRefinement};
+// laneD:B17-lm-refinement begin
+mod lm;
+#[cfg(test)]
+pub(crate) use lm::{
+    stage_minimum, ELEMENTWISE, FALLBACK_REASONS, MAX_PARENT_EXPRESSION_NESTING, SMALL_ALLOWANCE,
+    UNSUPPORTED,
+};
+pub use lm::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
+// laneD:B17-lm-refinement end
+// laneD:B18-pareto-archive: the archive check parses its untrusted observations within the same bounds.
+pub(crate) use lm::parse_untrusted_pipeline;

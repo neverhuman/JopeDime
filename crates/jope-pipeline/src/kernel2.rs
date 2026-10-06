@@ -16,6 +16,17 @@ mod fitting;
 mod measurement;
 mod refinement;
 pub use refinement::{RefinedChild, TrainingRefinement};
+// laneD:B17-lm-refinement begin
+mod engine;
+pub use engine::{
+    EngineRecord, EngineSelection, RefineMethod, RefineRecord, DAMPED_LS, DAMPED_LS_MIN_TRIALS,
+};
+pub use refinement::{IterationBits, PipelineCheck, RefinementTrace, StageTrace, SurrogateTrace};
+// laneD:B17-lm-refinement end
+// laneD:B18-pareto-archive begin
+pub mod archive;
+pub use engine::{ArchivePolicy, ArchiveRecord, FRONT_LOSS_COST};
+// laneD:B18-pareto-archive end
 
 /// A structural or traced Hard refusal, with no candidate score.
 pub const INADMISSIBLE: &str = "inadmissible";
@@ -80,6 +91,8 @@ impl EvaluationBudget {
 pub struct Kernel2Evaluator {
     profile: SearchProfile,
     fault_policy: FaultPolicy,
+    /// Opt-in engine methods; the default selects none.
+    engine: EngineSelection,
 }
 
 impl Kernel2Evaluator {
@@ -93,6 +106,7 @@ impl Kernel2Evaluator {
             profile,
             // Settled OQ4: no automatic Penalize default flip before R1.
             fault_policy: FaultPolicy::RejectHard,
+            engine: EngineSelection::default(),
         })
     }
 
@@ -111,6 +125,23 @@ impl Kernel2Evaluator {
     pub fn fault_policy(&self) -> FaultPolicy {
         self.fault_policy
     }
+
+    // laneD:B17-lm-refinement begin
+    /// Select opt-in engine methods. They apply to the guarded route that searches use
+    /// (`refine_training_guarded` and `finish_generation_guarded`).
+    pub fn with_engine(mut self, engine: EngineSelection) -> Result<Self> {
+        engine.check_options()?;
+        self.engine = engine;
+        Ok(self)
+    }
+    pub fn engine(&self) -> &EngineSelection {
+        &self.engine
+    }
+    /// `None` for the default selection, so a default receipt keeps its bytes.
+    pub fn engine_record(&self) -> Option<EngineRecord> {
+        self.engine.record()
+    }
+    // laneD:B17-lm-refinement end
 }
 
 /// Refuse malformed rows before fitting a stage or executing a fitted prefix.
@@ -138,6 +169,12 @@ mod tests;
 
 #[cfg(test)]
 mod refinement_guarded_tests;
+
+#[cfg(test)]
+mod refinement_lm_tests;
+
+#[cfg(test)]
+mod archive_tests;
 
 pub use refinement::{GuardedGeneration, GuardedTrainingRefinement};
 

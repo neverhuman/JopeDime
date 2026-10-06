@@ -1,5 +1,31 @@
 {
   "$defs": {
+    "ArchiveRecord": {
+      "additionalProperties": false,
+      "description": "The loss × cost front a run publishes.",
+      "properties": {
+        "cost_version": {
+          "description": "The cost version of every member's complexity.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The method id, `feat-math.front-loss-cost.v1`.",
+          "type": "string"
+        },
+        "sha256": {
+          "description": "The sha256 of `search/cut-0/archive.json`. Publication adds it, so a receipt's record\nalways has one; the selection's own record, before anything is published, has none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "cost_version"
+      ],
+      "type": "object"
+    },
     "Artifact": {
       "additionalProperties": false,
       "description": "One emitted source file.",
@@ -108,6 +134,33 @@
         "sha256",
         "bytes"
       ],
+      "type": "object"
+    },
+    "EngineRecord": {
+      "additionalProperties": false,
+      "description": "The opt-in engine methods a run selected. Absent from a receipt for the default selection.",
+      "properties": {
+        "archive": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArchiveRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "refine": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RefineRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
       "type": "object"
     },
     "Exclusion": {
@@ -384,6 +437,30 @@
       ],
       "type": "object"
     },
+    "RefineRecord": {
+      "additionalProperties": false,
+      "description": "The constant refinement method, when it is not the coordinate search.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "jacobian": {
+          "description": "What one Jacobian is charged: `sites` (one evaluation per literal site) or `one`.",
+          "type": "string"
+        },
+        "tau": {
+          "description": "The initial damping relative to the largest scaled curvature.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "jacobian",
+        "tau"
+      ],
+      "type": "object"
+    },
     "Refinement": {
       "description": "Explicit training-refinement allowance; it shares the cut's total budget.",
       "properties": {
@@ -442,6 +519,17 @@
         },
         "engine": {
           "type": "string"
+        },
+        "engine_selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EngineRecord"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Opt-in engine methods. Absent for the default selection, so its receipts keep their bytes."
         },
         "evaluations": {
           "format": "uint",

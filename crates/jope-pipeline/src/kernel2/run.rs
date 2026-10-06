@@ -8,6 +8,7 @@ use super::{
     publication,
     receipt::{self, Receipt},
     search::{self, Refinement},
+    EngineSelection,
 };
 use crate::{
     dataset, emit, prepare, receipt as receipt_v3,
@@ -20,6 +21,8 @@ pub struct Options {
     profile_id: String,
     fault_policy: FaultPolicy,
     refinement: Refinement,
+    /// Opt-in engine methods; the default selects none.
+    engine: EngineSelection,
 }
 
 impl Options {
@@ -34,10 +37,20 @@ impl Options {
             profile_id: profile.into(),
             fault_policy: policy,
             refinement,
+            engine: EngineSelection::default(),
         };
         options.preflight()?;
         Ok(options)
     }
+
+    // laneD:B17-lm-refinement begin
+    /// Select opt-in engine methods, checked by the same preflight as every other option.
+    pub fn with_engine(mut self, engine: EngineSelection) -> Result<Self> {
+        self.engine = engine;
+        self.preflight()?;
+        Ok(self)
+    }
+    // laneD:B17-lm-refinement end
 
     fn coordinator(&self) -> Result<search::Options> {
         let r = &self.run;
@@ -54,7 +67,8 @@ impl Options {
             &self.profile_id,
             self.fault_policy,
             self.refinement,
-        )
+        )?
+        .with_engine(self.engine.clone())
     }
 
     fn preflight(&self) -> Result<()> {

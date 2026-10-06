@@ -8,7 +8,7 @@ use std::{collections::BTreeMap, path::Path};
 use super::{
     records::Measurement,
     search::{PolicyRecord, Refinement},
-    Kernel2Evaluator,
+    EngineRecord, Kernel2Evaluator,
 };
 use crate::{receipt as receipt_v3, search};
 
@@ -47,6 +47,9 @@ pub struct Search {
     pub best: Measurement,
     pub observations_sha256: String,
     pub refinements_sha256: String,
+    /// Opt-in engine methods. Absent for the default selection, so its receipts keep their bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine_selection: Option<EngineRecord>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -178,6 +181,11 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
             "seconds stop before the bound"
         );
     }
+    // laneD:B17-lm-refinement begin
+    if let Some(engine) = &s.engine_selection {
+        engine.selection()?.validate(s.refinement)?;
+    }
+    // laneD:B17-lm-refinement end
     let evaluator = s.evaluator()?;
     let best = s.best.derive(evaluator.fault_policy())?;
     ensure!(
@@ -186,12 +194,27 @@ pub fn validate_value(value: &serde_json::Value) -> Result<Receipt> {
             && best.observation.generation < s.generations,
         "invalid selected measurement"
     );
+    // laneD:B18-pareto-archive begin
+    let archive_sha256 = s
+        .engine_selection
+        .as_ref()
+        .and_then(|e| e.archive.as_ref())
+        .map(|a| {
+            a.sha256
+                .as_ref()
+                .context("a published archive needs its digest")
+        })
+        .transpose()?;
+    // laneD:B18-pareto-archive end
     for digest in [
         &receipt.search_sha256,
         &s.observations_sha256,
         &s.refinements_sha256,
         &receipt.emit_manifest_sha256,
-    ] {
+    ]
+    .into_iter()
+    .chain(archive_sha256)
+    {
         ensure!(
             digest.len() == 64
                 && digest

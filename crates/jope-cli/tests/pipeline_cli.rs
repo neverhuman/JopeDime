@@ -493,3 +493,89 @@ fn kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds() {
         serde_json::from_slice(&std::fs::read(directory.join("receipt.json")).unwrap()).unwrap();
     assert_eq!(receipt["schema"], "jope.pipeline-receipt/v4");
 }
+
+// laneD:B17-lm-refinement begin
+/// `--refine-method lm` through the real binary: a kernel2 run whose one-literal seed (the one
+/// jope-pipeline's LM run tests use) gives the damped least-squares refinement a `derive` stage to
+/// fit; 8 trials hold that stage's surrogate minimum (one site plus five). The receipt records the
+/// selection, a published refinement carries a surrogate stage, and `verify-receipt --evidence`,
+/// which re-derives every refinement trace, accepts the run.
+#[test]
+fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
+    use sha2::{Digest, Sha256};
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("run");
+    let seed = "(pipe X (derive expr=\"1*c0\") (ridge))";
+    let seeds = temp.path().join("seeds.json");
+    let file = serde_json::json!({
+        "schema": "jope.pipeline-seeds/v1",
+        "genomes": [{"genome": seed, "program_sha256": format!("{:x}", Sha256::digest(seed))}],
+    });
+    std::fs::write(&seeds, serde_json::to_vec(&file).unwrap()).unwrap();
+    let result = jope()
+        .args(run_args(&directory, "evaluations=20,seconds=600"))
+        .args([
+            "--search-profile",
+            "kernel2-baseline",
+            "--refine-top-k",
+            "1",
+            "--refine-trials",
+            "8",
+            "--refine-method",
+            "lm",
+            "--rng-seed",
+            "7",
+            "--source-commit",
+            &"a".repeat(40),
+            "--json",
+        ])
+        .arg("--seed-genomes")
+        .arg(&seeds)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let receipt: Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(receipt["schema"], "jope.pipeline-receipt/v4");
+    assert_eq!(
+        receipt["search"]["engine_selection"],
+        serde_json::json!({"refine": {
+            "id": "feat-math.constant-refinement.damped-ls.v1",
+            "jacobian": "sites",
+            "tau": 1e-3,
+        }})
+    );
+    let refinements: Value = serde_json::from_slice(
+        &std::fs::read(directory.join("search/cut-0/refinements.json")).unwrap(),
+    )
+    .unwrap();
+    assert!(
+        refinements
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["refinement"]["trace"]["stages"]
+                .as_array()
+                .is_some_and(|stages| stages.iter().any(|s| s["kind"] == "surrogate"))),
+        "{refinements}"
+    );
+    let verified = jope()
+        .args(["pipeline", "verify-receipt", "--receipt"])
+        .arg(directory.join("receipt.json"))
+        .args(["--evidence", "--json"])
+        .output()
+        .unwrap();
+    assert!(
+        verified.status.success(),
+        "{}",
+        String::from_utf8_lossy(&verified.stderr)
+    );
+    assert_eq!(
+        serde_json::from_slice::<Value>(&verified.stdout).unwrap(),
+        receipt
+    );
+}
+// laneD:B17-lm-refinement end
