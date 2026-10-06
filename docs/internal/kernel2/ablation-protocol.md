@@ -175,10 +175,13 @@ bit-equal. For the comparison overall and for each dataset, `body.paired` gives:
 - how many pairs keep the same M1 program (`program_sha256`), whatever their scores: a tie with
   different programs does not count, a win or loss with the same program does.
 
-The sign test is exact as a test; its p is an f64. A unanimous split of n pairs gives exactly
-2^(1-n) down to the smallest positive f64, 2^-1074 at n = 1075; from n = 1076 on the exact value
-is at most half of that and the p is 0. A p under 2^-1022 is subnormal and carries fewer
-significant bits.
+The sign test is exact as a test, and its p is the exact probability rounded once to the nearest
+f64, ties to even. The tail sum of binomial coefficients is computed exactly in integers, so the
+p replays bit for bit on any host, subnormal values included. A unanimous split of n pairs gives
+exactly 2^(1-n) down to the smallest positive f64, 2^-1074 at n = 1075; the p is 0 only where the
+exact value is at most half of that (from n = 1076 on for a unanimous split). A p under 2^-1022
+is subnormal and carries fewer significant bits. The time grows with the smaller count times the
+number of pairs, which is at most one per dataset and seed.
 
 Every report of the result (PR body, commit message, receipt, ledger) quotes:
 - the overall and per-dataset W/T/L with both medians;
@@ -397,6 +400,10 @@ when it is not set; never under the system temporary directory.
 - `ablation::tests::ablation_sign_test_is_exact_down_to_the_smallest_positive_f64`: a unanimous
   split of 1074, 1075 and 1076 pairs gives 2^-1073, 2^-1074 and 0 bit for bit, and every split up
   to 120 pairs matches an independent integer oracle.
+- `ablation::tests::review06_sign_test_is_the_correctly_rounded_exact_tail`: the p is the
+  correctly rounded exact probability, bit for bit, for every split up to 120 pairs and for every
+  split with at most 12 on the smaller side up to 1200 pairs, against an oracle computed apart
+  from the implementation, including the subnormal cases review 06 found rounded to 0.
 - `ablation::tests::ablation_kernel2_text_passes_the_shipped_text_lint`: the new option names,
   help, ids and document keys pass `lint_shipped_text`. Only that new text is checked. Text that
   predates the kernel2 arms (some of the command's help and the legacy record's keys) is not, and

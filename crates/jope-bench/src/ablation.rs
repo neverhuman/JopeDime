@@ -2403,41 +2403,109 @@ fn paired_counts(pairs: &[Pair<'_>]) -> Result<PairedCounts> {
 }
 
 /// The two-sided exact sign test of `wins` against `losses` (ties already left out): the
-/// probability, for a fair coin over `wins + losses` tosses, of a split at least as uneven as the
-/// one observed, capped at 1. It is 1 when there is no untied pair. Only multiplications and
-/// divisions are used, with the halvings of `2^-n` interleaved so no step overflows, so the value
-/// replays on any host. The two-sided factor 2 is one halving fewer, not a doubling at the end,
-/// so the result underflows no earlier than the exact value: a unanimous split of `n` pairs
-/// gives exactly `2^(1-n)` down to the smallest positive f64, `2^-1074` at `n = 1075`, and 0 from
-/// `n = 1076` on, where the exact value is at most half of that. A value under `2^-1022` is
-/// subnormal and carries fewer significant bits.
+/// probability, for a fair coin over `n = wins + losses` tosses, of a split at least as uneven as
+/// the one observed, capped at 1. It is 1 when there is no untied pair.
+///
+/// The probability is `S / 2^(n-1)` with `S` the sum of `C(n, k)` over `k` up to the smaller
+/// count. `S` is computed exactly in integers, and the probability is rounded once to the nearest
+/// f64, ties to even ([`round_scaled`]). So the result is the correctly rounded exact probability
+/// for every split, and it replays bit for bit on any host. A value under `2^-1022` is subnormal
+/// and carries fewer significant bits; the result is 0 only where the exact value is at most half
+/// of the smallest positive f64, `2^-1074` (a unanimous split of more than 1075 pairs, for
+/// example). The time grows with the smaller count times `n`; a comparison has at most one pair
+/// per dataset and seed.
 pub fn sign_test(wins: u64, losses: u64) -> f64 {
     let n = wins + losses;
-    if n == 0 {
+    let tail = wins.min(losses);
+    // An even split, or one short of it for an odd n, is at least half the mass on each side.
+    if n == 0 || 2 * tail + 1 >= n {
         return 1.0;
     }
-    let tail = wins.min(losses);
-    // 2 P(X = tail) = C(n, tail) / 2^(n - 1).
-    let mut point = 1.0_f64;
-    let mut halvings = n - 1;
-    for i in 1..=tail {
-        point *= (n - tail + i) as f64 / i as f64;
-        while point >= 1.0 && halvings > 0 {
-            point *= 0.5;
-            halvings -= 1;
+    // C(n, k) and the running sum S, as little-endian 64-bit limbs.
+    let mut binomial = vec![1_u64];
+    let mut sum = vec![1_u64];
+    for k in 0..tail {
+        // C(n, k + 1) = C(n, k) (n - k) / (k + 1), an exact division.
+        let mut carry = 0_u128;
+        for limb in &mut binomial {
+            let value = u128::from(*limb) * u128::from(n - k) + carry;
+            *limb = value as u64;
+            carry = value >> 64;
+        }
+        if carry > 0 {
+            binomial.push(carry as u64);
+        }
+        let mut rest = 0_u128;
+        for limb in binomial.iter_mut().rev() {
+            let value = (rest << 64) | u128::from(*limb);
+            *limb = (value / u128::from(k + 1)) as u64;
+            rest = value % u128::from(k + 1);
+        }
+        while binomial.len() > 1 && binomial.last() == Some(&0) {
+            binomial.pop();
+        }
+        if sum.len() < binomial.len() {
+            sum.resize(binomial.len(), 0);
+        }
+        let mut carry = 0_u128;
+        for (index, limb) in sum.iter_mut().enumerate() {
+            let value =
+                u128::from(*limb) + u128::from(binomial.get(index).copied().unwrap_or(0)) + carry;
+            *limb = value as u64;
+            carry = value >> 64;
+        }
+        if carry > 0 {
+            sum.push(carry as u64);
         }
     }
-    for _ in 0..halvings {
-        point *= 0.5;
+    round_scaled(&sum, n)
+}
+
+/// `s / 2^(n-1)`, for an integer `s >= 0` (little-endian 64-bit limbs) and `n >= 1`, rounded
+/// once to the nearest f64 with ties to even, and capped at 1. The rounding keeps 53 significant
+/// bits in the normal range and whole multiples of `2^-1074` below it, so subnormal results are
+/// rounded once too, never twice.
+fn round_scaled(s: &[u64], n: u64) -> f64 {
+    /// Bit `index` of `s`, which has `length` significant bits; 0 outside them.
+    fn bit(s: &[u64], length: u64, index: i64) -> bool {
+        index >= 0 && (index as u64) < length && (s[(index / 64) as usize] >> (index % 64)) & 1 == 1
     }
-    // P(X <= tail) / P(X = tail) = sum over k <= tail of C(n, k) / C(n, tail).
-    let mut ratio = 1.0_f64;
-    let mut sum = 1.0_f64;
-    for k in (1..=tail).rev() {
-        ratio *= k as f64 / (n - k + 1) as f64;
-        sum += ratio;
+    let Some(top) = s.iter().rposition(|&limb| limb != 0) else {
+        return 0.0;
+    };
+    let length = top as u64 * 64 + u64::from(64 - s[top].leading_zeros());
+    // s / 2^(n-1) lies in [2^e, 2^(e+1)) with e = length - n.
+    if length >= n {
+        return 1.0;
     }
-    (point * sum).min(1.0)
+    let exponent = length as i64 - n as i64;
+    // The weight of one unit in the last place, and m = s / 2^shift in those units.
+    let mut unit = (exponent - 52).max(-1074);
+    let shift = unit - 1 + n as i64;
+    let mut m = if shift <= 0 {
+        // s has at most 53 bits here, so it is exact.
+        s[0] << -shift
+    } else {
+        let mut quotient = 0_u64;
+        for index in (shift..length as i64).rev() {
+            quotient = (quotient << 1) | u64::from(bit(s, length, index));
+        }
+        let half = bit(s, length, shift - 1);
+        let below = (0..shift - 1).any(|index| bit(s, length, index));
+        if half && (below || quotient & 1 == 1) {
+            quotient += 1;
+        }
+        quotient
+    };
+    if m == 1 << 53 {
+        m = 1 << 52;
+        unit += 1;
+    }
+    if unit == -1074 {
+        // Subnormal, or the smallest normal binade, where the bits are m itself.
+        return f64::from_bits(m);
+    }
+    f64::from_bits((((unit + 1075) as u64) << 52) | (m - (1 << 52))).min(1.0)
 }
 
 /// Each slot's search seconds, for `timing.paired`.
@@ -5422,6 +5490,87 @@ mod tests {
             replace_document(&out, &report.document).unwrap();
             assert_eq!(std::fs::read(&out).unwrap(), expected);
             assert_eq!(mode(&out), mode(&fresh));
+        }
+    }
+
+    // review 06 (PR0-R9): the sign test is the correctly rounded exact tail probability.
+
+    /// The correctly rounded value of `s 2^(1-n)`, capped at 1, for an exact tail sum `s` and
+    /// `n <= 1200`, computed apart from [`round_scaled`]. A normal result is the f64 conversion
+    /// of `s` (to nearest, ties to even) scaled by two exact powers of two. A subnormal result is
+    /// `s / 2^(n-1075)` rounded to an integer, ties to even, which is its bit pattern.
+    fn correctly_rounded(s: u128, n: u32) -> f64 {
+        assert!(n <= 1200);
+        let length = 128 - s.leading_zeros();
+        if length >= n {
+            return 1.0;
+        }
+        if length + 1022 >= n {
+            return ((s as f64) * 2f64.powi(-600) * 2f64.powi(601 - n as i32)).min(1.0);
+        }
+        let units = if n <= 1075 {
+            s << (1075 - n)
+        } else {
+            let shift = n - 1075;
+            let quotient = s >> shift;
+            let remainder = s & ((1_u128 << shift) - 1);
+            let half = 1_u128 << (shift - 1);
+            if remainder > half || (remainder == half && quotient & 1 == 1) {
+                quotient + 1
+            } else {
+                quotient
+            }
+        };
+        f64::from_bits(units as u64)
+    }
+
+    /// Review 06, PR0-R9: the sign test is the correctly rounded exact probability, bit for bit,
+    /// for every split up to 120 pairs and for every split with at most 12 on the smaller side up
+    /// to 1200 pairs, in both orientations. That covers the review's (9, 1086), whose last bit the
+    /// earlier arithmetic changed in the normal range, and the review's cases that it sent to 0
+    /// although the exact value rounds to the smallest positive f64.
+    #[test]
+    fn review06_sign_test_is_the_correctly_rounded_exact_tail() {
+        let check = |n: u32, max_tail: u32| {
+            let mut binomial = 1_u128;
+            let mut sum = 1_u128;
+            for tail in 0..=max_tail.min(n / 2) {
+                if tail > 0 {
+                    binomial = binomial * u128::from(n - tail + 1) / u128::from(tail);
+                    sum += binomial;
+                }
+                let expected = correctly_rounded(sum, n);
+                for (wins, losses) in [(tail, n - tail), (n - tail, tail)] {
+                    let p = sign_test(u64::from(wins), u64::from(losses));
+                    assert_eq!(
+                        p.to_bits(),
+                        expected.to_bits(),
+                        "{wins} wins, {losses} losses: {p:e} against {expected:e}"
+                    );
+                }
+            }
+        };
+        for n in 1..=120 {
+            check(n, n / 2);
+        }
+        for n in 121..=1200 {
+            check(n, 12);
+        }
+        // The review's subnormal cases, as bit patterns of multiples of 2^-1074.
+        for (wins, losses, bits) in [
+            (1, 1085, 1),
+            (2, 1093, 1),
+            (6, 1121, 1),
+            (12, 1157, 1),
+            (1, 1076, 270),
+            (2, 1074, 289_714),
+            (2, 1084, 288),
+        ] {
+            assert_eq!(
+                sign_test(wins, losses).to_bits(),
+                bits,
+                "{wins} wins, {losses} losses"
+            );
         }
     }
 }
