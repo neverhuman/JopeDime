@@ -659,6 +659,10 @@ fn simplify(expression: &MathExpr) -> Simplified<'_> {
 }
 
 // laneD:B20-rewrite-simplify: the public entry.
+/// Why `simplify_v2` refuses a tree outside the structure limits, before any copy of it.
+const STRUCTURE_REFUSAL: &str =
+    "simplify_v2 refuses a tree outside the structure limits before it is copied";
+
 impl MathExpr {
     /// The exact simplification of an expression the profile admits under `scope`. It reads no
     /// rows: the result depends on the tree alone.
@@ -668,11 +672,18 @@ impl MathExpr {
     /// production rules and limits, and its smaller tree is kept only when that admission accepts
     /// it too. A smaller tree the profile refuses, such as a negation of a variable under a
     /// constants-only negation rule, is discarded and its refusal returned.
+    ///
+    /// `self` may be any tree, one decoded from JSON included, and the copy and the admission's
+    /// normalization both recurse. So the borrowed tree's structure check (`from_ast`'s node,
+    /// depth and arity limits, walked with an explicit stack) comes first, and a tree outside it is
+    /// refused before anything copies or walks it recursively.
     pub fn simplify_v2(
         &self,
         profile: &SearchProfile,
         scope: ExpressionScope,
     ) -> Result<ExpressionSimplification> {
+        self.check_structure(MAX_NODES, MAX_DEPTH)
+            .map_err(|error| error.context(STRUCTURE_REFUSAL))?;
         let search = Search::new(profile, scope)?;
         let input = search.finish(self.root.clone())?;
         let result = simplify(&input);

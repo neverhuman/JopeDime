@@ -96,6 +96,9 @@ and ranks by its text, as any tie does.
 - the record names the known id once, and is canonical;
 - `moves.json` exists exactly when the record does, and matches the record's digest; without the
   record no measurement has the `rewrite` origin;
+- the run's round count, read from the receipt, is at most what its evaluations allow under the
+  search's stop rule (eight rounds in a row that spend nothing end it, so at most eight rounds
+  per completed evaluation, plus eight), checked before the replay walks every round;
 - the set and order of records: for each round, the measurements made before the pass are ranked
   as the pass ranked them, and the records must name, in order, the first `top_k` distinct ranked
   programs with an expression stage, one record each. Only the run's last round may stop short of
@@ -158,7 +161,8 @@ A rewritten program scores exactly as its original, and ranking has no cost term
 cannot raise the selected program's score; each measurement it spends is one the search does not
 spend elsewhere. An equal-budget ablation is expected to show ties or losses on M1. Its value is
 smaller programs, which shows only with a cost-aware ranking or the loss × cost front. The
-ablation harness has no kernel2 profile yet (`ablation-protocol.md`).
+ablation harness has the `kernel2-baseline` and `kernel2-experimental` profiles (PR-0, #221;
+`ablation-protocol.md`) but no arm that selects this pass, and no such run has been made.
 
 ## Tests
 
@@ -184,6 +188,8 @@ jope-pipeline lib, `kernel2::search::moves::tests`:
   accepting each run and every measured rewrite scoring as its parent;
 - parents over the parsing bound are not readable and are refused unparsed; parents at it are
   read and rewritten as their plain form;
+- `simplify_v2` refuses a decoded tree outside the structure limits before it copies it, and a
+  receipt whose round count exceeds the stop rule's bound is refused before the replay;
 - tamper refusals, each by the check named for it where it is new (set and order, exactness, the
   pool refusal count), the record, the flag, and the shipped-text lint (of this note too);
 - with the flag off: the seeded pins, no file and no record.

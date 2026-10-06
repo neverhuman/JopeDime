@@ -33,7 +33,7 @@ use feat_math::{
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, path::Path, time::Duration};
 
-use super::{CutSearch, Options, State};
+use super::{generation::BARREN_ROUND_LIMIT, CutSearch, Options, State};
 use crate::{
     clock::Stamp,
     kernel2::{
@@ -496,6 +496,14 @@ pub(crate) fn check(
         known: 0,
         ended: false,
     };
+    // The round count comes from the receipt and the loop below replays every round, so it is
+    // bounded first: a run has at most `BARREN_ROUND_LIMIT` rounds per completed evaluation, plus
+    // that many (the search's stop rule).
+    ensure!(
+        s.generations
+            <= BARREN_ROUND_LIMIT.saturating_mul(s.completed_evaluations.saturating_add(1)),
+        "the run's round count exceeds what its evaluations allow"
+    );
     let mut next = 0usize;
     // The round in which a pass stopped short of its parents or ended.
     let mut stopped: Option<usize> = None;
