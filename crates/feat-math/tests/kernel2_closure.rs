@@ -1088,3 +1088,7 @@ mod scalar_utility_v2;
 
 #[path = "scalar_v2/producer_ip.rs"]
 mod scalar_artifact_ip_v2;
+
+// B05–B07: separate Experimental lifecycle and native boundary faults.
+#[path = "scalar_v2/producer_capabilities.rs"]
+mod scalar_capabilities_v2;
