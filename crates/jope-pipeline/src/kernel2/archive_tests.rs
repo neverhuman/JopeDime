@@ -1137,7 +1137,11 @@ fn the_key_is_the_codec_bytes_so_expression_spellings_are_distinct_keys() {
 fn the_legacy_dispatcher_refuses_each_kernel2_flag_before_writing() {
     // `ProfileArgs::options` writes nothing either way, so the flag tests' `!output.exists()`
     // after it cannot fail. The CLI's own dispatcher writes a run when it accepts one.
-    for flag in ["--pareto-archive", "--rewrite-simplify"] {
+    for flag in [
+        "--pareto-archive",
+        "--rewrite-simplify",
+        "--linearize-subtrees",
+    ] {
         legacy_dispatch_refuses_before_writing(flag);
     }
 }
