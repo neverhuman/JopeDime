@@ -6,7 +6,9 @@ import subprocess
 import sys
 import unittest
 
-from run_lane_offline import make_audit
+from unittest import mock
+
+from run_lane_offline import HOST_CASES, PRIVATE_INPUT_ROOTS, case_ids, make_audit, offline_suite
 
 
 class AuditGuard(unittest.TestCase):
@@ -45,6 +47,58 @@ class AuditGuard(unittest.TestCase):
                 self.audit("open", (str(Path.home() / name), "r", 0))
         self.assertEqual(len(self.denied), 5)
         self.audit("open", ("/dev/null", "r", 0))
+
+    def test_private_lane_input_reads_refused(self):
+        for root in PRIVATE_INPUT_ROOTS:
+            with self.assertRaisesRegex(RuntimeError, "private-lane input reads"):
+                self.audit("open", (str(root / "fixture-not-read.json"), "r", 0))
+        self.assertEqual(self.denied, ["private-lane input read"] * 2)
+
+    def test_read_guard_refuses_lexical_and_resolved_symlink_escapes(self):
+        private = PRIVATE_INPUT_ROOTS[0] / "fixture-not-read.json"
+        with mock.patch.object(Path, "resolve", return_value=Path("/dev/null")) as resolve:
+            with self.assertRaisesRegex(RuntimeError, "private-lane input reads"):
+                self.audit("open", (str(private), "r", 0))
+            with self.assertRaisesRegex(RuntimeError, "credential-file reads"):
+                self.audit("open", (str(Path.home() / ".aws/fixture"), "r", 0))
+            resolve.assert_not_called()
+        with mock.patch.object(Path, "resolve", return_value=private):
+            with self.assertRaisesRegex(RuntimeError, "private-lane input reads"):
+                self.audit("open", ("/fixture/alias-not-opened.json", "r", 0))
+
+    def test_only_declared_host_cases_excluded_without_private_stat(self):
+        class Named(unittest.TestCase):
+            def __init__(self, name):
+                super().__init__()
+                self.name = name
+
+            def id(self):
+                return self.name
+
+        stat = Path.stat
+        private = PRIVATE_INPUT_ROOTS[0] / "fixture-not-statted.json"
+
+        def checked_stat(path, *args, **kwargs):
+            if path == private:
+                raise AssertionError("private host stat attempted")
+            return stat(path, *args, **kwargs)
+
+        class Loader:
+            def loadTestsFromNames(loader, modules):
+                self.assertFalse(private.exists())
+                self.assertTrue(Path("/dev/null").exists())
+                return unittest.TestSuite(Named(name) for name in modules)
+
+        names = list(HOST_CASES) + ["fixture.authorized"]
+        unavailable = []
+        with mock.patch.object(Path, "stat", checked_stat):
+            suite, collected = offline_suite(Loader(), names, unavailable)
+        self.assertEqual(collected, names)
+        self.assertEqual(list(case_ids(suite)), ["fixture.authorized"])
+        self.assertEqual(unavailable, [str(private)])
+        for malformed in (names[1:], names + [names[0]]):
+            with self.assertRaisesRegex(ValueError, "unique declared host cases"):
+                offline_suite(Loader(), malformed, [])
 
     def test_unrelated_events_do_not_create_false_failures(self):
         self.audit("import", ("fixture",))
