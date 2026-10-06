@@ -1,8 +1,8 @@
-//! Protected-semantics e-graph simplification (B20).
+//! Protected-semantics e-graph simplification.
 //!
 //! Opt-in: [`MathExpr::simplify_v2`] is the only entry. The kernel2 route calls it only from its
-//! exact rewrite pass (`--rewrite-simplify`, laneD:B20-rewrite-simplify) on the ranked parents'
-//! expressions after each search round; with the pass off nothing calls it.
+//! exact rewrite pass (`--rewrite-simplify`) on the ranked parents' expressions after each search
+//! round; with the pass off nothing calls it.
 //!
 //! A small in-crate e-graph: union-find, a hashcons keyed by literal bits (so `0.0` and `-0.0`
 //! are different nodes), and a rebuild back to congruence after every write phase (Willsey et
@@ -55,6 +55,8 @@
 //! protected `log` of a negative raises LOG_DOMAIN), and `x/c` for `|c| = 2^-40`. Folding a
 //! libm-backed function is excluded too, because libm results are not portable; that one is
 //! pinned only as never applied.
+
+// B20 core; the kernel2 caller is laneD:B20-rewrite-simplify.
 
 use super::*;
 use crate::kernel::expression_search::{ExpressionSimplification, SaturationStop};
@@ -656,9 +658,10 @@ fn simplify(expression: &MathExpr) -> Simplified<'_> {
     )
 }
 
+// laneD:B20-rewrite-simplify: the public entry.
 impl MathExpr {
-    /// The exact simplification of an expression the profile admits under `scope`
-    /// (laneD:B20-rewrite-simplify). It reads no rows: the result depends on the tree alone.
+    /// The exact simplification of an expression the profile admits under `scope`. It reads no
+    /// rows: the result depends on the tree alone.
     ///
     /// `self` must pass the same admission as every search edit (`Search::finish`: the pool, the
     /// caps and the negation rule), or this is an error. `simplify` then runs with the

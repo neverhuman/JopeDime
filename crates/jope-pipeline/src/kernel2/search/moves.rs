@@ -1,19 +1,29 @@
-//! Deterministic moves at the end of each search round (laneD:B20-rewrite-simplify).
+//! Deterministic moves at the end of each search round.
 //!
 //! A move proposes children from the round's ranked parents without drawing from any random
 //! stream. Each new child the profile admits is measured like every other program: one
-//! evaluation from the shared allowance, origin [`SIMPLIFY`], under the start guard refinement
-//! uses. Proposal work is not charged. Every proposal is recorded in [`PATH`], which
-//! `publication::verify_run` re-derives from the parents alone. With no move selected the search
-//! never calls this module and nothing is written.
+//! evaluation from the shared allowance, under the start guard refinement uses, with its pass's
+//! origin. Proposal work is not charged. Every proposal is recorded in [`PATH`]. With no move
+//! selected the search never calls this module and nothing is written.
 //!
-//! The one move is the exact rewrite pass ([`REWRITE_SATURATE`]): every `map` or `derive` stage's
-//! expression of each of the round's top `refinement.top_k` ranked parents with such a stage is
-//! simplified by `MathExpr::simplify_v2`, from the expression text alone. A smaller tree the
-//! profile refuses is discarded and its reason recorded. A later move adds its pass to
-//! [`finish_round`] and its id to the selection record.
+//! The one move is the exact rewrite pass ([`REWRITE_SATURATE`], origin [`REWRITE`]): every
+//! `map` or `derive` stage's expression of each of the round's top `refinement.top_k` ranked
+//! parents with such a stage is simplified by `MathExpr::simplify_v2`, from the expression text
+//! alone. A smaller tree the profile refuses is discarded and its reason recorded, and so is a
+//! stage whose expression cannot be rewritten at all ([`NOT_RUN`]); the pass goes on either way.
+//! A later move adds its pass to [`finish_round`] and its id to the selection record.
+//!
+//! [`check`] re-derives the records against the published measurements. For each round and pass
+//! it ranks the measurements made before the pass, as the pass ranked them, and requires the
+//! records to follow that list of parents in order: all of it, or a prefix only in a run that
+//! ended in that round on its evaluations or seconds bound (exactly where the allowance ran out
+//! under an evaluations stop; under a seconds stop, where the start guard refused, which is not
+//! published). A rewrite record re-derives from its parent's text alone, and a measured rewritten
+//! program must score bit for bit as its parent.
 
-use anyhow::{bail, ensure, Context, Result};
+// laneD:B20-rewrite-simplify (the module).
+
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use feat_math::{
     dsl::ParamValue,
     kernel::search::admit_child,
@@ -27,10 +37,12 @@ use super::{CutSearch, Options, State};
 use crate::{
     clock::Stamp,
     kernel2::{
-        receipt::Search, records::Measurement, EngineRecord, Kernel2Evaluator, REWRITE_SATURATE,
-        SIMPLIFY,
+        receipt::Search,
+        records::{Faults, Measurement},
+        EngineRecord, Kernel2Evaluator, Kernel2Observation, REWRITE, REWRITE_SATURATE,
     },
     prepare::Cut,
+    search::{STOPPED_BY_EVALUATIONS, STOPPED_BY_SECONDS},
     sha256_hex,
 };
 
@@ -47,6 +59,12 @@ pub const DUPLICATE: &str = "duplicate";
 pub const NOT_STARTED: &str = "not_started";
 /// The admitted program was measured at `measurement`, whatever that measurement's status.
 pub const MEASURED: &str = "measured";
+
+/// The stop of a stage whose expression could not be rewritten at all, because it does not parse
+/// or the profile refuses it: saturation never ran, and the stage's refusal says why.
+pub const NOT_RUN: &str = "not_run";
+/// The start of the refusal of a stage whose expression could not be rewritten at all.
+pub const REWRITE_FAILED: &str = "the stage's expression could not be rewritten";
 
 /// One proposal of one move for one parent.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -79,7 +97,8 @@ pub struct MoveRecord {
 pub struct StageRewrite {
     /// The stage's index in the parent.
     pub stage: usize,
-    /// Why saturation stopped: `saturated`, `iteration_limit`, `node_limit` or `malformed`.
+    /// Why saturation stopped: `saturated`, `iteration_limit`, `node_limit` or `malformed`; or
+    /// [`NOT_RUN`] when it never ran, with every counter 0 and the reason in `refusal`.
     pub stop: String,
     pub iterations: usize,
     pub enodes: usize,
@@ -88,9 +107,46 @@ pub struct StageRewrite {
     /// The smaller expression the profile admitted, which replaced the stage's.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expression: Option<String>,
-    /// Why the profile refused the smaller expression, which was discarded.
+    /// Why the profile refused the smaller expression, which was discarded; or, with the stop
+    /// [`NOT_RUN`], why the stage's own expression could not be rewritten.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub refusal: Option<String>,
+}
+
+impl StageRewrite {
+    /// Whether the profile's admission (the pool, the caps or the negation rule) refused a smaller
+    /// expression that saturation found, so the stage kept its own.
+    pub fn refused_by_pool(&self) -> bool {
+        self.refusal.is_some() && self.stop != NOT_RUN
+    }
+
+    /// Whether the stage's own expression could not be rewritten at all ([`NOT_RUN`]).
+    pub fn not_run(&self) -> bool {
+        self.stop == NOT_RUN
+    }
+}
+
+/// How many times the rewrite pass dropped a smaller expression because the profile's admission
+/// refused it, over every record of `moves`: the count `MovesRecord::refused_by_pool` publishes,
+/// refusal events per round a parent is read; a parent ranked top for N rounds adds N. It does
+/// not count distinct expressions.
+pub fn refused_by_pool(moves: &[MoveRecord]) -> usize {
+    rewrite_stages(moves)
+        .filter(|r| r.refused_by_pool())
+        .count()
+}
+
+/// How many stage entries of the rewrite pass's records have the stop [`NOT_RUN`]: the count
+/// `MovesRecord::not_run` publishes. A genuine run is expected to have none.
+pub fn not_run(moves: &[MoveRecord]) -> usize {
+    rewrite_stages(moves).filter(|r| r.not_run()).count()
+}
+
+fn rewrite_stages(moves: &[MoveRecord]) -> impl Iterator<Item = &StageRewrite> {
+    moves
+        .iter()
+        .filter(|m| m.id == REWRITE_SATURATE)
+        .flat_map(|m| &m.rewrites)
 }
 
 /// Whether the search runs [`finish_round`]: some move is selected.
@@ -123,21 +179,12 @@ fn simplify_round(
     may_start: &mut dyn FnMut() -> bool,
 ) -> Result<()> {
     let width = cut.train_x.first().map_or(0, Vec::len);
-    let mut unique = BTreeSet::new();
-    let parents: Vec<(String, String)> = options
-        .evaluator
-        .rank(&state.observations)
-        .into_iter()
-        .filter(|o| unique.insert(o.observation.genome.clone()))
-        .filter(|o| has_expression_stage(&o.observation.genome))
-        .take(options.refinement.top_k)
-        .map(|o| {
-            (
-                o.observation.genome.clone(),
-                o.observation.program_sha256.clone(),
-            )
-        })
-        .collect();
+    let parents = owned(ranked_parents(
+        &options.evaluator,
+        &state.observations,
+        REWRITE_SATURATE,
+        options.refinement.top_k,
+    )?);
     for (parent, parent_sha256) in parents {
         if state.budget.remaining() == 0 || !may_start() {
             break;
@@ -165,7 +212,7 @@ fn simplify_round(
                         &child,
                         cut,
                         state.generation,
-                        SIMPLIFY,
+                        REWRITE,
                         options.search.clock,
                         &mut state.budget,
                     )
@@ -188,6 +235,46 @@ fn simplify_round(
 fn has_expression_stage(text: &str) -> bool {
     matches!(GenomeIr::parse(text), Ok(GenomeIr::Pipeline(pipe))
         if pipe.stages.iter().any(|s| matches!(s.op.as_str(), "map" | "derive")))
+}
+
+/// The parents the pass `id` reads from `observations`, the measurements made before it: the
+/// ranked programs, each at its first place, that the pass can read (an expression stage for the
+/// rewrite pass), at most `top_k`, in rank order. The search and [`check`] both call it.
+fn ranked_parents<'a>(
+    evaluator: &Kernel2Evaluator,
+    observations: &'a [Kernel2Observation],
+    id: &str,
+    top_k: usize,
+) -> Result<Vec<&'a Kernel2Observation>> {
+    let mut unique = BTreeSet::new();
+    let mut parents = Vec::new();
+    for o in evaluator.rank(observations) {
+        if parents.len() == top_k {
+            break;
+        }
+        let genome = &o.observation.genome;
+        if !unique.insert(genome.clone()) {
+            continue;
+        }
+        let readable = id == REWRITE_SATURATE && has_expression_stage(genome);
+        if readable {
+            parents.push(o);
+        }
+    }
+    Ok(parents)
+}
+
+/// Each parent's program and sha256, so the search state can change while the pass reads them.
+fn owned(parents: Vec<&Kernel2Observation>) -> Vec<(String, String)> {
+    parents
+        .into_iter()
+        .map(|o| {
+            (
+                o.observation.genome.clone(),
+                o.observation.program_sha256.clone(),
+            )
+        })
+        .collect()
 }
 
 /// The rewrite pass's proposal for one parent, before any search state is read.
@@ -213,7 +300,9 @@ impl Proposal {
 
 /// Each expression stage of `parent` simplified on its own, from its text alone, and the program
 /// assembled from the stages the profile admitted, checked by the pipeline admission every
-/// measured program passes. It reads no rows: `width` is the input's column count.
+/// measured program passes. It reads no rows: `width` is the input's column count. A stage whose
+/// expression cannot be rewritten keeps it and records why ([`NOT_RUN`]), so a rewrite or
+/// admission failure refuses that stage instead of ending the run.
 pub(crate) fn propose(
     evaluator: &Kernel2Evaluator,
     parent: &str,
@@ -229,38 +318,29 @@ pub(crate) fn propose(
         if !matches!(stage.op.as_str(), "map" | "derive") {
             continue;
         }
-        let Some(ParamValue::Str(source)) = stage.params.get("expr") else {
-            bail!("expression stage without an expression");
-        };
         let scope = ExpressionScope {
             columns: pool.column_upper_exclusive,
             elementwise: stage.op == "map",
             max_nodes: pool.max_nodes,
             max_depth: pool.max_depth,
         };
-        let outcome = MathExpr::parse(source)?
-            .simplify_v2(profile, scope)
-            .context("the rewrite pass refused an admitted parent")?;
-        let expression = outcome
-            .simplified
-            .as_ref()
-            .map(MathExpr::to_source)
-            .transpose()?;
-        if let Some(text) = &expression {
+        let rewrite = rewrite_stage(index, stage.params.get("expr"), evaluator, scope)
+            .unwrap_or_else(|error| StageRewrite {
+                stage: index,
+                stop: NOT_RUN.into(),
+                iterations: 0,
+                enodes: 0,
+                applications: 0,
+                peak: 0,
+                expression: None,
+                refusal: Some(format!("{REWRITE_FAILED}: {error:#}")),
+            });
+        if let Some(text) = &rewrite.expression {
             stage
                 .params
                 .insert("expr".into(), ParamValue::Str(text.clone()));
         }
-        rewrites.push(StageRewrite {
-            stage: index,
-            stop: outcome.stop.as_str().into(),
-            iterations: outcome.iterations,
-            enodes: outcome.enodes,
-            applications: outcome.applications,
-            peak: outcome.peak,
-            expression,
-            refusal: outcome.refusal,
-        });
+        rewrites.push(rewrite);
     }
     if rewrites.iter().all(|r| r.expression.is_none()) {
         return Ok(Proposal {
@@ -282,8 +362,52 @@ pub(crate) fn propose(
     })
 }
 
+/// The rewrite of stage `index`'s expression `source` under `scope`, or why it could not run: the
+/// expression is missing or does not parse, `simplify_v2` refuses it (the profile does not admit
+/// it), or the rewrite panics. Each is the same for the same text, so `check` re-derives it.
+fn rewrite_stage(
+    index: usize,
+    source: Option<&ParamValue>,
+    evaluator: &Kernel2Evaluator,
+    scope: ExpressionScope,
+) -> Result<StageRewrite> {
+    let Some(ParamValue::Str(source)) = source else {
+        bail!("expression stage without an expression");
+    };
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        MathExpr::parse(source)?.simplify_v2(evaluator.profile(), scope)
+    }))
+    .map_err(|payload| {
+        // The panic's own message, when it carries one, so the record says what failed.
+        let message = payload
+            .downcast_ref::<&str>()
+            .map(|s| (*s).to_owned())
+            .or_else(|| payload.downcast_ref::<String>().cloned());
+        match message {
+            Some(message) => anyhow!("the rewrite stopped on an internal error: {message}"),
+            None => anyhow!("the rewrite stopped on an internal error"),
+        }
+    })??;
+    let expression = outcome
+        .simplified
+        .as_ref()
+        .map(MathExpr::to_source)
+        .transpose()?;
+    Ok(StageRewrite {
+        stage: index,
+        stop: outcome.stop.as_str().into(),
+        iterations: outcome.iterations,
+        enodes: outcome.enodes,
+        applications: outcome.applications,
+        peak: outcome.peak,
+        expression,
+        refusal: outcome.refusal,
+    })
+}
+
 /// Writes the move records under `root` when a move was selected, and returns `engine` with
-/// their digest. Without a selected move nothing is written and `engine` is returned as is.
+/// their digest and, with the rewrite pass selected, its pool refusal and not-run counts. Without
+/// a selected move nothing is written and `engine` is returned as is.
 pub(crate) fn publish(
     searched: &CutSearch,
     root: &Path,
@@ -293,114 +417,266 @@ pub(crate) fn publish(
         let bytes = serde_json::to_vec_pretty(&searched.moves)?;
         std::fs::write(root.join(PATH), &bytes)?;
         record.sha256 = Some(sha256_hex(&bytes));
+        record.refused_by_pool = pool_count(&record.ids, &searched.moves);
+        record.not_run = not_run_count(&record.ids, &searched.moves);
     }
     Ok(engine)
 }
 
-/// Re-derives published move records against the published measurements: each record's proposal
-/// from its parent alone, its outcome from the measurements, and every [`SIMPLIFY`] measurement
-/// from exactly one record.
+/// The pool refusal count a moves record publishes: present exactly when the rewrite pass ran.
+fn pool_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
+    ids.iter()
+        .any(|id| id == REWRITE_SATURATE)
+        .then(|| refused_by_pool(moves))
+}
+
+/// The not-run count a moves record publishes: present exactly when the rewrite pass ran.
+fn not_run_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
+    ids.iter()
+        .any(|id| id == REWRITE_SATURATE)
+        .then(|| not_run(moves))
+}
+
+/// Re-derives published move records against the published measurements, which `observations`
+/// holds re-derived, in the same order.
+///
+/// For each round and each selected pass, in the order the search runs them, it ranks the
+/// measurements made before the pass as the pass ranked them and takes the parents the pass read
+/// (`ranked_parents`). The records must follow those parents in order, one record each: all of
+/// them, or a prefix when the pass stopped on the allowance or the start guard, which only the
+/// run's last round can do, in a run that stopped on its evaluations or seconds bound. Under an
+/// evaluations stop that prefix is exact: in the last round a parent's records start only while a
+/// measurement of the run is still to come, and a pass stops short only once every measurement is
+/// made. Under a seconds stop it is not: where the start guard refused is not published, so the
+/// last round's trailing records that measure nothing could be removed, or such records appended
+/// for the next ranked parents, without this check seeing it. Each record's proposal re-derives
+/// from its parent alone, and its outcome from the measurements: a measured child is the next
+/// measurement, of its pass's origin and round, and one whose program no earlier measurement has;
+/// a measured rewritten program scores bit for bit as its parent. Every [`REWRITE`] measurement is
+/// accounted for by exactly one record, and the selection record's pool refusal and not-run
+/// counts are counted again from the records.
 pub(crate) fn check(
     moves: &[MoveRecord],
     s: &Search,
     measurements: &[Measurement],
+    observations: &[Kernel2Observation],
     evaluator: &Kernel2Evaluator,
     width: usize,
 ) -> Result<()> {
-    let ids = s
+    let selection = s
         .engine_selection
         .as_ref()
         .and_then(|e| e.moves.as_ref())
-        .map(|m| m.ids.as_slice())
-        .unwrap_or_default();
-    let mut measured = BTreeSet::new();
-    // The current round and its records so far.
-    let mut round = (0usize, 0usize);
-    for m in moves {
-        ensure!(
-            ids.contains(&m.id) && m.id == REWRITE_SATURATE,
-            "a move record names an unselected method"
-        );
-        ensure!(m.round >= round.0, "move records are out of round order");
-        round = (m.round, if m.round == round.0 { round.1 + 1 } else { 1 });
-        ensure!(
-            m.round < s.generations && round.1 <= s.refinement.top_k,
-            "move records exceed their rounds"
-        );
-        let parent = measurements
-            .iter()
-            .find(|p| {
-                p.observation.program_sha256 == m.parent_sha256
-                    && p.observation.status == crate::search::MEASURED
-                    && p.observation.generation <= m.round
-            })
-            .context("a move parent was not measured")?;
-        let proposal = propose(evaluator, &parent.observation.genome, width)?;
-        ensure!(
-            proposal.rewrites == m.rewrites
-                && proposal.program == m.program
-                && proposal.reason == m.reason,
-            "a move record does not re-derive from its parent"
-        );
-        let program = m.program.as_deref();
-        let earlier = |end: usize| {
-            measurements[..end]
-                .iter()
-                .any(|o| Some(o.observation.genome.as_str()) == program)
-        };
-        match m.outcome.as_str() {
-            UNCHANGED | REFUSED => ensure!(
-                !proposal.admitted && proposal.outcome() == m.outcome && m.measurement.is_none(),
-                "a move outcome does not re-derive"
-            ),
-            DUPLICATE => ensure!(
-                proposal.admitted
-                    && m.measurement.is_none()
-                    && measurements.iter().any(|o| {
-                        Some(o.observation.genome.as_str()) == program
-                            && o.observation.generation <= m.round
-                    }),
-                "a duplicate move names no earlier measurement"
-            ),
-            NOT_STARTED => ensure!(
-                proposal.admitted
-                    && m.measurement.is_none()
-                    && s.stopped_by == crate::search::STOPPED_BY_SECONDS,
-                "an unstarted move lacks a seconds stop"
-            ),
-            MEASURED => {
-                let index = m.measurement.context("a measured move has no index")?;
-                let child = measurements
-                    .get(index)
-                    .context("a move measurement index is out of range")?;
+        .context("move records without a selected move")?;
+    ensure!(
+        measurements.len() == observations.len(),
+        "move measurements do not re-derive"
+    );
+    ensure!(
+        selection.refused_by_pool == pool_count(&selection.ids, moves),
+        "the pool refusal count does not re-derive from the move records"
+    );
+    ensure!(
+        selection.not_run == not_run_count(&selection.ids, moves),
+        "the not-run count does not re-derive from the move records"
+    );
+    let mut accounted = Accounted {
+        s,
+        measurements,
+        observations,
+        measured: BTreeSet::new(),
+        known: 0,
+        ended: false,
+    };
+    let mut next = 0usize;
+    // The round in which a pass stopped short of its parents or ended.
+    let mut stopped: Option<usize> = None;
+    for round in 0..s.generations {
+        for id in &selection.ids {
+            let (origin, later): (&str, &[&str]) = match id.as_str() {
+                REWRITE_SATURATE => (REWRITE, &[REWRITE]),
+                _ => bail!("a move record names an unselected method"),
+            };
+            // The measurements made before the pass: every earlier round's, and this round's but
+            // for the children of this pass and of the passes after it.
+            let before = |o: &Kernel2Observation| {
+                o.observation.generation < round
+                    || (o.observation.generation == round && !later.contains(&o.observation.origin))
+            };
+            let start = observations.iter().take_while(|o| before(o)).count();
+            ensure!(
+                observations[start..].iter().all(|o| !before(o)),
+                "move measurements are out of round order"
+            );
+            accounted.known = start;
+            let parents =
+                ranked_parents(evaluator, &observations[..start], id, s.refinement.top_k)?;
+            // In the last round of a run that stopped on its evaluations bound nothing is charged
+            // after the passes, so the allowance left when a pass reaches a parent is the number
+            // of measurements still to come: the pass reads a parent only while one is.
+            let spent = round + 1 == s.generations && s.stopped_by == STOPPED_BY_EVALUATIONS;
+            let mut read = 0usize;
+            while next < moves.len() && moves[next].round == round && moves[next].id == *id {
                 ensure!(
-                    proposal.admitted
-                        && measured.insert(index)
-                        && child.observation.origin == SIMPLIFY
-                        && Some(child.observation.genome.as_str()) == program
-                        && child.observation.generation == m.round
-                        && !earlier(index)
-                        && measurements[..index].iter().any(|p| {
-                            p.observation.program_sha256 == m.parent_sha256
-                                && p.observation.status == crate::search::MEASURED
-                        }),
-                    "a measured move does not re-derive"
+                    stopped.is_none() && !accounted.ended,
+                    "move records continue after their pass ended"
                 );
+                ensure!(
+                    !spent || accounted.known < observations.len(),
+                    "a move record starts after the allowance was spent"
+                );
+                let m = &moves[next];
+                let parent = parents
+                    .get(read)
+                    .filter(|p| p.observation.program_sha256 == m.parent_sha256)
+                    .copied()
+                    .context("move records do not follow the ranked parents")?;
+                let proposal = propose(evaluator, &parent.observation.genome, width)?;
+                ensure!(
+                    proposal.rewrites == m.rewrites
+                        && proposal.program == m.program
+                        && proposal.reason == m.reason,
+                    "a move record does not re-derive from its parent"
+                );
+                accounted.outcome(m, proposal.admitted, proposal.outcome(), origin, parent)?;
+                next += 1;
+                read += 1;
             }
-            _ => bail!("unknown move outcome"),
+            if accounted.ended || read < parents.len() {
+                // There, a pass stops short or ends only where the allowance ran out: with every
+                // measurement of the run made.
+                ensure!(
+                    !spent || accounted.known == observations.len(),
+                    "a move pass stopped short of its ranked parents with allowance left"
+                );
+                stopped.get_or_insert(round);
+            }
         }
     }
     ensure!(
-        measured
+        next == moves.len(),
+        "move records do not follow the ranked parents"
+    );
+    if let Some(round) = stopped {
+        ensure!(
+            round + 1 == s.generations
+                && (s.stopped_by == STOPPED_BY_EVALUATIONS || s.stopped_by == STOPPED_BY_SECONDS),
+            "a move pass stopped short of its ranked parents before the run's last round"
+        );
+    }
+    ensure!(
+        accounted.measured
             == measurements
                 .iter()
                 .enumerate()
-                .filter(|(_, m)| m.observation.origin == SIMPLIFY)
+                .filter(|(_, m)| m.observation.origin == REWRITE)
                 .map(|(i, _)| i)
                 .collect(),
-        "rewrite measurements do not re-derive"
+        "move measurements do not re-derive"
     );
     Ok(())
+}
+
+/// What a measurement scores, as bits: its status, training and held-out R², RMSE, selection
+/// score, and fault counts.
+type Scored = (
+    &'static str,
+    Option<u64>,
+    Option<u64>,
+    Option<u64>,
+    Option<u64>,
+    Faults,
+);
+
+fn scored(o: &Kernel2Observation) -> Scored {
+    (
+        o.observation.status,
+        o.observation.train_r2.map(f64::to_bits),
+        o.observation.hold_r2.map(f64::to_bits),
+        o.observation.rmse.map(f64::to_bits),
+        o.selection_score.map(f64::to_bits),
+        Faults::from(o.faults),
+    )
+}
+
+/// What the outcome checks have established so far, against the published measurements.
+struct Accounted<'a> {
+    s: &'a Search,
+    measurements: &'a [Measurement],
+    observations: &'a [Kernel2Observation],
+    /// The measurement indices the records claim.
+    measured: BTreeSet<usize>,
+    /// How many measurements had been made when the current record's pass reached it.
+    known: usize,
+    /// A pass ended on its start guard; nothing is measured after it.
+    ended: bool,
+}
+
+impl Accounted<'_> {
+    /// Re-derives one record's outcome from the measurements: `admitted` is whether its
+    /// re-derived program was admitted, `refused` the outcome it records when not, `origin` its
+    /// pass's measurement origin, and `parent` the ranked measurement its pass read.
+    fn outcome(
+        &mut self,
+        m: &MoveRecord,
+        admitted: bool,
+        refused: &str,
+        origin: &str,
+        parent: &Kernel2Observation,
+    ) -> Result<()> {
+        let s = self.s;
+        let program = m.program.as_deref();
+        let known = self.measurements[..self.known]
+            .iter()
+            .any(|o| Some(o.observation.genome.as_str()) == program);
+        match m.outcome.as_str() {
+            UNCHANGED | REFUSED => ensure!(
+                !admitted && refused == m.outcome && m.measurement.is_none(),
+                "a move outcome does not re-derive"
+            ),
+            DUPLICATE => ensure!(
+                admitted && m.measurement.is_none() && known,
+                "a duplicate move names no earlier measurement"
+            ),
+            NOT_STARTED => {
+                ensure!(
+                    admitted
+                        && m.measurement.is_none()
+                        && !known
+                        && s.stopped_by == STOPPED_BY_SECONDS,
+                    "an unstarted move lacks a seconds stop"
+                );
+                self.ended = true;
+            }
+            MEASURED => {
+                let index = m.measurement.context("a measured move has no index")?;
+                let child = self
+                    .measurements
+                    .get(index)
+                    .context("a move measurement index is out of range")?;
+                ensure!(
+                    !self.ended
+                        && admitted
+                        && !known
+                        && index == self.known
+                        && self.measured.insert(index)
+                        && child.observation.origin == origin
+                        && Some(child.observation.genome.as_str()) == program
+                        && child.observation.generation == m.round,
+                    "a measured move does not re-derive"
+                );
+                // The rewrite rules keep every value bit for bit, so the child scores exactly as
+                // its parent: the same status, R², RMSE, selection score and fault counts.
+                ensure!(
+                    origin != REWRITE || scored(&self.observations[index]) == scored(parent),
+                    "a rewritten program does not score bit for bit as its parent"
+                );
+                self.known += 1;
+            }
+            _ => bail!("unknown move outcome"),
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]

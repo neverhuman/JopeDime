@@ -289,6 +289,24 @@
           },
           "type": "array"
         },
+        "not_run": {
+          "description": "With the exact rewrite pass selected, how many stage entries of `moves.json` have the stop\n`not_run`: a stage whose own expression could not be rewritten at all (it did not parse,\nthe profile refused it, or the rewrite failed). Measured parents pass the same admission,\nso a genuine run is expected to publish 0; a nonzero count names a fault to look into, with\neach entry's reason. Publication adds it; `verify_run` counts it again from the records.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "refused_by_pool": {
+          "description": "With the exact rewrite pass selected, how many times it dropped a smaller expression because\nthe profile's admission (`Search::finish`: the pool, the caps and the negation rule) refused\nit, such as a unary minus over a variable under the constants-only negation rule: the stage\nentries of `moves.json` that name such a refusal. Not distinct expressions: it counts\nrefusal events per round a parent is read; a parent ranked top for N rounds adds N.\nPublication adds it, as it adds the digest; `verify_run` counts it again from the records.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "sha256": {
           "description": "The sha256 of `search/cut-0/moves.json`. Publication adds it, so a receipt's record always\nhas one; the selection's own record, before anything is published, has none.",
           "type": [

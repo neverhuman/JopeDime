@@ -194,7 +194,7 @@ fn rewritten_children_score_bit_for_bit_as_their_parents_and_cost_one_each() {
         for m in &measured {
             let child = &state.observations[m.measurement.unwrap()];
             let parent = parent_of(&state, m);
-            assert_eq!(child.observation.origin, crate::kernel2::SIMPLIFY);
+            assert_eq!(child.observation.origin, crate::kernel2::REWRITE);
             assert_eq!(child.observation.generation, state.generation);
             assert_eq!(Some(&child.observation.genome), m.program.as_ref());
             assert!(child.observation.measured(), "{:?}", child.observation);
@@ -469,7 +469,7 @@ fn check_exact(opt: &run::Options) -> usize {
         count,
         measurements
             .iter()
-            .filter(|m| m.observation.origin == crate::kernel2::SIMPLIFY)
+            .filter(|m| m.observation.origin == crate::kernel2::REWRITE)
             .count()
     );
     count
@@ -539,6 +539,8 @@ fn rewrite_runs_replay_every_file_with_a_frozen_clock_and_verify() {
         );
         let record = s.engine_selection.as_ref().unwrap().moves.as_ref().unwrap();
         assert_eq!(record.ids, [REWRITE_SATURATE]);
+        // No stage of a measured parent failed to rewrite.
+        assert_eq!(record.not_run, Some(0), "{label}");
         assert_eq!(
             record.sha256.as_deref(),
             Some(crate::sha256_hex(&read(&a, PATH)).as_str())
@@ -615,7 +617,7 @@ fn with_the_flag_off_nothing_is_selected_called_or_written() {
         }
         assert!(published_measurements(opt)
             .iter()
-            .all(|m| m.observation.origin != crate::kernel2::SIMPLIFY));
+            .all(|m| m.observation.origin != crate::kernel2::REWRITE));
         publication::verify_run(&opt.run.output.join("receipt.json")).unwrap();
     }
     // With the flag on, every measurement before the first rewrite child is the same as off:
@@ -625,7 +627,7 @@ fn with_the_flag_off_nothing_is_selected_called_or_written() {
     let (off, with) = (published_measurements(&plain), published_measurements(&on));
     let first = with
         .iter()
-        .position(|m| m.observation.origin == crate::kernel2::SIMPLIFY)
+        .position(|m| m.observation.origin == crate::kernel2::REWRITE)
         .unwrap();
     assert!(first > 0);
     assert_eq!(off[..first], with[..first]);
@@ -918,7 +920,7 @@ fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
         DUPLICATE,
         NOT_STARTED,
         MEASURED,
-        crate::kernel2::SIMPLIFY,
+        crate::kernel2::REWRITE,
     ] {
         lint(text);
     }
@@ -939,4 +941,817 @@ fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
     if let Some(long) = flag.get_long_help() {
         lint(&long.to_string());
     }
+}
+
+// Fix round 01: parents that raise faults, inputs the rewrite cannot read, the pool refusal
+// count, and the set and order of the published records.
+
+/// `(pipe X (<op> expr="<source>") (ridge))`, as the search prints it.
+fn carrier(op: &str, source: &str) -> String {
+    let expression = MathExpr::parse(source).unwrap().to_source().unwrap();
+    GenomeIr::parse(&format!("(pipe X ({op} expr=\"{expression}\") (ridge))"))
+        .unwrap()
+        .canonical()
+}
+
+/// Three columns with a `0.0` and a `-0.0` in `c0`, values of `c0` under -1, negative values of
+/// `c1`, and a row whose columns are equal (a zero row standard deviation).
+fn faulting_cut() -> Cut {
+    let row = |i: usize| -> Vec<f64> {
+        let t = i as f64;
+        match i {
+            3 => vec![-0.0, -0.0, 0.5],
+            7 => vec![1.0, 1.0, 1.0],
+            _ => vec![(t - 12.0) / 4.0, (i % 5) as f64 - 2.0, (0.7 * t).sin()],
+        }
+    };
+    let target = |r: &Vec<f64>| r[0] + 0.5 * r[1] - r[2];
+    let train_x: Vec<Vec<f64>> = (0..24).map(row).collect();
+    let hold_x: Vec<Vec<f64>> = (24..32).map(row).collect();
+    Cut {
+        index: 2,
+        train_y: train_x.iter().map(target).collect(),
+        hold_y: hold_x.iter().map(target).collect(),
+        hold_indices: (0..hold_x.len()).collect(),
+        train_x,
+        hold_x,
+    }
+}
+
+#[test]
+fn rewritten_children_keep_fault_counts_and_signed_zeros_bit_for_bit() {
+    use feat_math::math_expr::FaultClass;
+    let cut = faulting_cut();
+    assert!(cut
+        .train_x
+        .iter()
+        .any(|r| r[0] == 0.0 && r[0].is_sign_negative()));
+    // Each parent, the expression its rewrite gives, and the fault class its own expression
+    // raises on a training row (none checked for the elementwise carrier, whose cells the
+    // row-summary evaluator reads).
+    let cases: [(String, &str, Option<FaultClass>); 5] = [
+        (
+            carrier("derive", "(1.0*c1)/(c0*1.0)"),
+            "c1/c0",
+            Some(FaultClass::DivNearZero),
+        ),
+        (
+            carrier("derive", "log1p(c0/1.0)"),
+            "log1p(c0)",
+            Some(FaultClass::Log1pDomain),
+        ),
+        (
+            carrier("derive", "sqrt(c1*1.0)"),
+            "sqrt(c1)",
+            Some(FaultClass::SqrtProjected),
+        ),
+        // `c0 + (-0.0)` keeps the sign of every zero, so the division sees `-0.0` as before.
+        (
+            carrier("derive", "1.0/(c0+(-0.0))"),
+            "1.0/c0",
+            Some(FaultClass::DivNearZero),
+        ),
+        // A `map` stage that reads row summaries runs on the compiled evaluator.
+        (
+            carrier("map", "(x-row_mean)/(row_std*1.0)"),
+            "(x-row_mean)/row_std",
+            None,
+        ),
+    ];
+    for policy in [FaultPolicy::RejectHard, penalize()] {
+        let opt = options(1, 64, policy);
+        for (parent, rewritten, class) in &cases {
+            let mut state = parents(&cut, &opt, &[parent.as_str()]);
+            let original = state.observations[0].clone();
+            assert!(
+                original.faults.domain_cells > 0,
+                "{parent}: {:?}",
+                original.faults
+            );
+            if let Some(class) = class {
+                let GenomeIr::Pipeline(pipe) = GenomeIr::parse(parent).unwrap() else {
+                    panic!("{parent} is not a pipeline");
+                };
+                let Some(ParamValue::Str(source)) = pipe.stages[0].params.get("expr") else {
+                    panic!("{parent} has no expression");
+                };
+                let expression = MathExpr::parse(source).unwrap();
+                assert!(
+                    cut.train_x
+                        .iter()
+                        .any(|row| expression.eval_row_traced(row).1.contains(class.set())),
+                    "{parent} raises no {}",
+                    class.name()
+                );
+            }
+            simplify_round(&mut state, &cut, &opt, &mut || true).unwrap();
+            assert_eq!(state.moves.len(), 1, "{parent}");
+            let m = &state.moves[0];
+            assert_eq!(m.outcome, MEASURED, "{parent}: {m:?}");
+            assert_eq!(m.program, Some(with_expression(parent, 0, rewritten)));
+            let child = &state.observations[m.measurement.unwrap()];
+            assert_eq!(child.observation.origin, crate::kernel2::REWRITE);
+            // Status, R², RMSE, selection score and every fault count, bit for bit.
+            assert_eq!(scored(child), scored(&original), "{policy:?} {parent}");
+            assert_eq!(scores(child), scores(&original), "{policy:?} {parent}");
+        }
+    }
+}
+
+/// `c0/(-1.0)`, which the pass reduces to `-c0`, a negation of a variable the profile refuses.
+const DIVIDED: &str = "(pipe X (derive expr=\"c0/(-1.0)\") (ridge))";
+/// `x*(-1.0)` in an elementwise carrier, which the pass reduces to `-x`, refused the same way.
+const MAPPED_NEGATED: &str = "(pipe X (map expr=\"x*(-1.0)\") (ridge))";
+
+#[test]
+fn the_pool_refusal_count_of_fixed_parents_is_pinned() {
+    let cut = data();
+    let opt = options(4, 64, FaultPolicy::RejectHard);
+    let mut state = parents(&cut, &opt, &[NEGATED, MIXED, DIVIDED, MAPPED_NEGATED]);
+    simplify_round(&mut state, &cut, &opt, &mut || true).unwrap();
+    assert_eq!(state.moves.len(), 4);
+    // One smaller expression dropped per parent: the negation of a variable each reduces to.
+    assert_eq!(refused_by_pool(&state.moves), 4);
+    let dropped: Vec<&StageRewrite> = state
+        .moves
+        .iter()
+        .flat_map(|m| &m.rewrites)
+        .filter(|r| r.refused_by_pool())
+        .collect();
+    assert_eq!(dropped.len(), 4);
+    for r in dropped {
+        let refusal = r.refusal.as_deref().unwrap();
+        assert!(refusal.contains("negative constant"), "{refusal}");
+        assert!(r.expression.is_none() && r.stop != NOT_RUN && r.applications > 0);
+    }
+    // The count is what publication writes and `verify_run` counts again.
+    let ids = [REWRITE_SATURATE.to_owned()];
+    assert_eq!(pool_count(&ids, &state.moves), Some(4));
+    // A stage the rewrite cannot read is refused, not counted.
+    let unreadable = propose(
+        &opt.evaluator,
+        "(pipe X (derive expr=\"exp(c0)\") (ridge))",
+        1,
+    )
+    .unwrap();
+    assert!(!unreadable.rewrites[0].refused_by_pool());
+}
+
+/// `exp(c0)`: a function outside the kernel2 pool.
+const OUTSIDE_POOL: &str = "(pipe X (derive expr=\"exp(c0)\") (ridge))";
+/// 16 nodes at depth 4: over the 15-node cap.
+const OVER_CAPS: &str =
+    "(pipe X (derive expr=\"clip((c0*1.0),(c0*1.0),(c0*1.0))+(c0*(c0*1.0))\") (ridge))";
+
+#[test]
+fn a_parent_the_rewrite_cannot_read_is_refused_and_the_pass_goes_on() {
+    let cut = data();
+    let opt = options(4, 64, FaultPolicy::RejectHard);
+    for (text, why) in [(OUTSIDE_POOL, "function"), (OVER_CAPS, "node")] {
+        // `simplify_v2` refuses the expression itself: the stage is refused, not the run.
+        let proposal = propose(&opt.evaluator, text, 1).unwrap();
+        assert!(!proposal.admitted && proposal.program.is_none() && proposal.reason.is_none());
+        assert_eq!(proposal.outcome(), REFUSED);
+        let r = &proposal.rewrites[0];
+        assert_eq!(r.stop, NOT_RUN);
+        assert_eq!(
+            (r.iterations, r.enodes, r.applications, r.peak),
+            (0, 0, 0, 0)
+        );
+        assert!(r.expression.is_none() && !r.refused_by_pool());
+        let refusal = r.refusal.as_deref().unwrap();
+        assert!(
+            refusal.starts_with(REWRITE_FAILED) && refusal.len() > REWRITE_FAILED.len() + 2,
+            "{refusal}"
+        );
+        // The profile's own reason: the pool's functions, or the node cap.
+        assert!(refusal.contains(why), "{refusal}");
+        lint(refusal);
+        // The same proposal again: what `check` re-derives.
+        assert_eq!(
+            propose(&opt.evaluator, text, 1).unwrap().rewrites,
+            proposal.rewrites
+        );
+        // In a round, ranked first: refused, and the pass reads the next parent.
+        let mut state = parents(&cut, &opt, &[ONE_TIMES]);
+        let mut unreadable = state.observations[0].clone();
+        unreadable.observation.genome = text.into();
+        unreadable.observation.program_sha256 = crate::sha256_hex(text.as_bytes());
+        unreadable.selection_score = unreadable.selection_score.map(|s| s + 1.0);
+        state.observations.push(unreadable);
+        let used = state.budget.used();
+        simplify_round(&mut state, &cut, &opt, &mut || true).unwrap();
+        assert_eq!(state.moves.len(), 2, "{text}");
+        assert_eq!(
+            state.moves[0].parent_sha256,
+            crate::sha256_hex(text.as_bytes())
+        );
+        assert_eq!(state.moves[0].outcome, REFUSED);
+        assert_eq!(state.moves[0].rewrites, proposal.rewrites);
+        assert_eq!(state.moves[1].outcome, MEASURED);
+        assert_eq!(state.budget.used(), used + 1);
+        assert_eq!(refused_by_pool(&state.moves), 0);
+        // The receipt's not-run count sees it.
+        assert_eq!(not_run(&state.moves), 1);
+        assert_eq!(
+            not_run_count(&[REWRITE_SATURATE.to_owned()], &state.moves),
+            Some(1)
+        );
+    }
+}
+
+/// Rewrites a run's observations, rehashing search.json and the receipt, so that only the checks
+/// that read the observations can refuse the change.
+fn rewrite_measurements(output: &Path, receipt: &Receipt, measurements: &[Measurement]) -> PathBuf {
+    let bytes = serde_json::to_vec_pretty(measurements).unwrap();
+    std::fs::write(output.join("search/cut-0/observations.json"), &bytes).unwrap();
+    let mut edited = receipt.clone();
+    edited.search.observations_sha256 = crate::sha256_hex(&bytes);
+    let summary = serde_json::to_vec_pretty(&edited.search).unwrap();
+    std::fs::write(output.join("search/cut-0/search.json"), &summary).unwrap();
+    edited.search_sha256 = crate::sha256_hex(&summary);
+    let path = output.join("receipt.json");
+    std::fs::write(&path, serde_json::to_vec(&edited).unwrap()).unwrap();
+    path
+}
+
+/// `verify_run`'s refusal of `path`, which must name one of `expected`.
+fn refusal_of(path: &Path, label: &str, expected: &[&str]) -> String {
+    let error = format!(
+        "{:#}",
+        publication::verify_run(path).map(|_| ()).expect_err(label)
+    );
+    assert!(
+        expected.iter().any(|e| error.contains(e)),
+        "{label}: {error}"
+    );
+    format!("{label}: {error}")
+}
+
+/// A named edit of one published measurement.
+type MeasurementEdit = (&'static str, fn(&mut Measurement));
+
+/// The refusals of the set and order check: a record off the ranked parents, a pass short of
+/// them with records after it, or a pass short of them before the run's last round.
+const OFF_THE_PARENTS: [&str; 3] = [
+    "move records do not follow the ranked parents",
+    "move records continue after their pass ended",
+    "a move pass stopped short of its ranked parents before the run's last round",
+];
+
+#[test]
+fn verify_refuses_records_off_the_ranked_parents_and_inexact_children() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = run_options(temp.path(), 40, four_parents(), simplify());
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let originals: Vec<(PathBuf, Vec<u8>)> = [
+        "receipt.json",
+        "search/cut-0/search.json",
+        "search/cut-0/observations.json",
+        PATH,
+    ]
+    .iter()
+    .map(|r| (output.join(r), std::fs::read(output.join(r)).unwrap()))
+    .collect();
+    let restore = || {
+        for (file, bytes) in &originals {
+            std::fs::write(file, bytes).unwrap();
+        }
+    };
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let moves = published_moves(&opt);
+    let measurements = published_measurements(&opt);
+    // The published count re-derives from the records.
+    assert_eq!(
+        engine.moves.as_ref().unwrap().refused_by_pool,
+        Some(refused_by_pool(&moves))
+    );
+    let mut errors = Vec::new();
+    // Records deleted: an unchanged, a refused or a duplicate one, whichever the run has.
+    let mut deleted = 0;
+    for outcome in [UNCHANGED, REFUSED, DUPLICATE] {
+        let Some(at) = moves.iter().position(|m| m.outcome == outcome) else {
+            continue;
+        };
+        let mut edited = moves.clone();
+        edited.remove(at);
+        let bytes = serde_json::to_vec_pretty(&edited).unwrap();
+        let path = rewrite(
+            output,
+            &receipt,
+            Some(bytes.as_slice()),
+            Some(digested(&engine, &bytes)),
+        );
+        let label = format!("{outcome} record removed");
+        errors.push(refusal_of(&path, &label, &OFF_THE_PARENTS));
+        restore();
+        deleted += 1;
+    }
+    assert!(deleted > 0, "the run has no record that measures nothing");
+    // The last record of an earlier round's pass removed: that pass now stops short of its
+    // parents, which only the run's last round may do.
+    let last = (0..moves.len())
+        .filter(|&i| moves[i].outcome != MEASURED)
+        .find(|&i| {
+            moves[i].round + 1 < receipt.search.generations
+                && moves.get(i + 1).is_none_or(|n| n.round != moves[i].round)
+        })
+        .expect("an earlier round whose last record measures nothing");
+    let mut edited = moves.clone();
+    edited.remove(last);
+    let bytes = serde_json::to_vec_pretty(&edited).unwrap();
+    let path = rewrite(
+        output,
+        &receipt,
+        Some(bytes.as_slice()),
+        Some(digested(&engine, &bytes)),
+    );
+    errors.push(refusal_of(
+        &path,
+        "a round's last record removed",
+        &OFF_THE_PARENTS[1..],
+    ));
+    restore();
+    // A record for a program the pass did not read: the bootstrap, which has no expression stage,
+    // so its record re-derives (nothing to rewrite) and only the parent list refuses it.
+    let bootstrap = crate::search::BOOTSTRAP_GENOME;
+    let proposal = propose(&evaluator(), bootstrap, 1).unwrap();
+    assert!(proposal.rewrites.is_empty() && proposal.program.is_none());
+    let mut edited = moves.clone();
+    edited.insert(
+        0,
+        MoveRecord {
+            id: REWRITE_SATURATE.into(),
+            round: 0,
+            parent_sha256: crate::sha256_hex(bootstrap.as_bytes()),
+            program: None,
+            outcome: UNCHANGED.into(),
+            reason: None,
+            measurement: None,
+            rewrites: Vec::new(),
+        },
+    );
+    let bytes = serde_json::to_vec_pretty(&edited).unwrap();
+    let path = rewrite(
+        output,
+        &receipt,
+        Some(bytes.as_slice()),
+        Some(digested(&engine, &bytes)),
+    );
+    errors.push(refusal_of(
+        &path,
+        "record for an unread parent",
+        &OFF_THE_PARENTS[..1],
+    ));
+    restore();
+    // Two records of one round swapped.
+    let pair = moves
+        .windows(2)
+        .position(|w| w[0].round == w[1].round && w[0].parent_sha256 != w[1].parent_sha256)
+        .expect("a round with two records");
+    let mut edited = moves.clone();
+    edited.swap(pair, pair + 1);
+    let bytes = serde_json::to_vec_pretty(&edited).unwrap();
+    let path = rewrite(
+        output,
+        &receipt,
+        Some(bytes.as_slice()),
+        Some(digested(&engine, &bytes)),
+    );
+    errors.push(refusal_of(&path, "records swapped", &OFF_THE_PARENTS[..1]));
+    restore();
+    // The pool refusal count changed or dropped, the records unchanged.
+    for (label, count) in [
+        ("pool refusal count", Some(refused_by_pool(&moves) + 1)),
+        ("pool refusal count dropped", None),
+    ] {
+        let mut record = engine.clone();
+        record.moves.as_mut().unwrap().refused_by_pool = count;
+        let path = rewrite(output, &receipt, None, Some(record));
+        errors.push(refusal_of(
+            &path,
+            label,
+            &["the pool refusal count does not re-derive from the move records"],
+        ));
+        restore();
+    }
+    // A rewritten child's scores or fault counts edited: it no longer scores as its parent. The
+    // child is not the selected program, and under RejectHard neither edit moves its rank.
+    let child = moves
+        .iter()
+        .filter(|m| m.outcome == MEASURED)
+        .filter_map(|m| m.measurement)
+        .find(|&i| measurements[i].observation.genome != receipt.search.best.observation.genome)
+        .expect("a rewritten child that was not selected");
+    let edits: [MeasurementEdit; 3] = [
+        ("child training R2", |m| {
+            m.observation.train_r2 = m.observation.train_r2.map(|v| v - 1e-9)
+        }),
+        ("child RMSE", |m| {
+            m.observation.rmse = m.observation.rmse.map(|v| v * (1.0 + 1e-9) + 1e-12)
+        }),
+        ("child evaluated cells", |m| {
+            m.faults.evaluated_cells += 1;
+            let mut totals = feat_math::kernel::admission::FaultTotals::default();
+            totals.evaluated_cells = m.faults.evaluated_cells;
+            totals.domain_cells = m.faults.domain_cells;
+            totals.saturation_cells = m.faults.saturation_cells;
+            m.domain_fault_rate = totals.domain_rate();
+            m.saturation_fault_rate = totals.saturation_rate();
+        }),
+    ];
+    for (label, edit) in edits {
+        let mut edited = measurements.clone();
+        edit(&mut edited[child]);
+        assert_ne!(edited, measurements, "{label}: the edit was not applied");
+        let path = rewrite_measurements(output, &receipt, &edited);
+        errors.push(refusal_of(
+            &path,
+            label,
+            &["a rewritten program does not score bit for bit as its parent"],
+        ));
+        restore();
+    }
+    publication::verify_run(&path).unwrap();
+    let root = output.display().to_string();
+    for error in errors {
+        lint(&error.replace(&root, "<run>"));
+    }
+}
+
+#[test]
+fn an_unstarted_record_ends_its_pass() {
+    let temp = tempfile::tempdir().unwrap();
+    // Every seconds bound has passed: generation 0 measures the bootstrap and the two seeds, and
+    // the pass stops before its first parent, in a run that stops on its seconds bound.
+    let mut opt = run_options(temp.path(), 40, four_parents(), simplify());
+    let seeds = temp.path().join("two-seeds.json");
+    let file = crate::seeds::SeedsFile::new(
+        None,
+        [ONE_TIMES, FOLDED]
+            .iter()
+            .map(|genome| crate::seeds::SeedGenome {
+                genome: (*genome).into(),
+                program_sha256: crate::sha256_hex(genome.as_bytes()),
+                bank_entry_sha256: None,
+                receipt_sha256: None,
+            })
+            .collect(),
+    );
+    std::fs::write(&seeds, serde_json::to_vec(&file).unwrap()).unwrap();
+    opt.run.seed_genomes = Some(seeds);
+    opt.run.clock = Clock::Expired;
+    let receipt = run::run(&opt).unwrap();
+    assert_eq!(receipt.search.stopped_by, crate::search::STOPPED_BY_SECONDS);
+    assert_eq!(receipt.search.generations, 1);
+    assert!(published_moves(&opt).is_empty());
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    publication::verify_run(&path).unwrap();
+    // The two parents round 0's pass would read, in rank order.
+    let observations: Vec<Kernel2Observation> = published_measurements(&opt)
+        .iter()
+        .map(|m| m.derive(FaultPolicy::RejectHard).unwrap())
+        .collect();
+    let width = (receipt.dataset.columns - 1) as usize;
+    let ranked = owned(ranked_parents(&evaluator(), &observations, REWRITE_SATURATE, 4).unwrap());
+    assert_eq!(ranked.len(), 2);
+    let unstarted = |(genome, sha256): &(String, String)| {
+        let proposal = propose(&evaluator(), genome, width).unwrap();
+        assert!(proposal.admitted, "{genome}");
+        MoveRecord {
+            id: REWRITE_SATURATE.into(),
+            round: 0,
+            parent_sha256: sha256.clone(),
+            program: proposal.program,
+            outcome: NOT_STARTED.into(),
+            reason: None,
+            measurement: None,
+            rewrites: proposal.rewrites,
+        }
+    };
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    // One unstarted record for the first parent: what a run whose start guard refused that
+    // measurement publishes.
+    let one = vec![unstarted(&ranked[0])];
+    let bytes = serde_json::to_vec_pretty(&one).unwrap();
+    let path = rewrite(
+        output,
+        &receipt,
+        Some(bytes.as_slice()),
+        Some(digested(&engine, &bytes)),
+    );
+    publication::verify_run(&path).unwrap();
+    // A record after it: the pass had ended.
+    let two = vec![unstarted(&ranked[0]), unstarted(&ranked[1])];
+    let bytes = serde_json::to_vec_pretty(&two).unwrap();
+    let path = rewrite(
+        output,
+        &receipt,
+        Some(bytes.as_slice()),
+        Some(digested(&engine, &bytes)),
+    );
+    let error = refusal_of(
+        &path,
+        "a record after an unstarted one",
+        &["move records continue after their pass ended"],
+    );
+    lint(&error.replace(&output.display().to_string(), "<run>"));
+    // The second parent alone: not the first ranked parent.
+    let skipped = vec![unstarted(&ranked[1])];
+    let bytes = serde_json::to_vec_pretty(&skipped).unwrap();
+    let path = rewrite(
+        output,
+        &receipt,
+        Some(bytes.as_slice()),
+        Some(digested(&engine, &bytes)),
+    );
+    refusal_of(&path, "the first parent skipped", &OFF_THE_PARENTS[..1]);
+}
+
+// Fix round 02: the last round of a run stopped on its evaluations bound, the last-round rule on
+// its own, and the not-run count.
+
+/// `engine` with the digest and both counts of `moves` (serialized as `bytes`), as publication
+/// writes them, so that only the record checks can refuse the records.
+fn recounted(engine: &EngineRecord, moves: &[MoveRecord], bytes: &[u8]) -> EngineRecord {
+    let mut engine = digested(engine, bytes);
+    let record = engine.moves.as_mut().unwrap();
+    record.refused_by_pool = Some(refused_by_pool(moves));
+    record.not_run = Some(not_run(moves));
+    engine
+}
+
+/// Publishes `moves` in place of the run's records, under a recounted selection record.
+fn publish_recounted(
+    output: &Path,
+    receipt: &Receipt,
+    engine: &EngineRecord,
+    moves: &[MoveRecord],
+) -> PathBuf {
+    let bytes = serde_json::to_vec_pretty(moves).unwrap();
+    rewrite(
+        output,
+        receipt,
+        Some(bytes.as_slice()),
+        Some(recounted(engine, moves, &bytes)),
+    )
+}
+
+/// The files a records edit rewrites, read back so they can be restored.
+fn originals(output: &Path) -> Vec<(PathBuf, Vec<u8>)> {
+    ["receipt.json", "search/cut-0/search.json", PATH]
+        .iter()
+        .map(|r| (output.join(r), std::fs::read(output.join(r)).unwrap()))
+        .collect()
+}
+
+fn restore(originals: &[(PathBuf, Vec<u8>)]) {
+    for (file, bytes) in originals {
+        std::fs::write(file, bytes).unwrap();
+    }
+}
+
+#[test]
+fn under_an_evaluations_stop_the_last_round_stops_where_the_allowance_ran_out() {
+    let temp = tempfile::tempdir().unwrap();
+    // 24 evaluations: one round, whose rewrite pass measures one child with the last evaluation
+    // and stops short of its other three ranked parents.
+    let opt = run_options(temp.path(), 24, four_parents(), simplify());
+    let receipt = run::run(&opt).unwrap();
+    let s = &receipt.search;
+    assert_eq!(s.stopped_by, crate::search::STOPPED_BY_EVALUATIONS);
+    assert_eq!(s.generations, 1);
+    let output = &opt.run.output;
+    let saved = originals(output);
+    let engine = s.engine_selection.clone().unwrap();
+    let moves = published_moves(&opt);
+    let measurements = published_measurements(&opt);
+    assert_eq!(moves.len(), 1);
+    assert_eq!(moves[0].outcome, MEASURED);
+    assert_eq!(moves[0].measurement, Some(measurements.len() - 1));
+    publication::verify_run(&output.join("receipt.json")).unwrap();
+    // The round's ranked parents, as the pass read them.
+    let observations: Vec<Kernel2Observation> = measurements
+        .iter()
+        .map(|m| m.derive(FaultPolicy::RejectHard).unwrap())
+        .collect();
+    let start = observations.len() - 1;
+    let parents =
+        owned(ranked_parents(&evaluator(), &observations[..start], REWRITE_SATURATE, 4).unwrap());
+    assert_eq!(parents.len(), 4);
+    assert_eq!(moves[0].parent_sha256, parents[0].1);
+    let mut errors = Vec::new();
+    // A record for the next ranked parent appended after the measurement that spent the
+    // allowance. Its program was already measured, so as a duplicate it re-derives on its own,
+    // and only the allowance refuses it.
+    let width = (receipt.dataset.columns - 1) as usize;
+    let proposal = propose(&evaluator(), &parents[1].0, width).unwrap();
+    assert!(proposal.admitted);
+    let program = proposal.program.clone().unwrap();
+    assert!(measurements.iter().any(|m| m.observation.genome == program));
+    let mut appended = moves.clone();
+    appended.push(MoveRecord {
+        id: REWRITE_SATURATE.into(),
+        round: 0,
+        parent_sha256: parents[1].1.clone(),
+        program: proposal.program,
+        outcome: DUPLICATE.into(),
+        reason: proposal.reason,
+        measurement: None,
+        rewrites: proposal.rewrites,
+    });
+    let path = publish_recounted(output, &receipt, &engine, &appended);
+    errors.push(refusal_of(
+        &path,
+        "a record after the allowance was spent",
+        &["a move record starts after the allowance was spent"],
+    ));
+    restore(&saved);
+    // The round's measured record removed: the pass now stops short with an evaluation of
+    // allowance left, the one its child spent.
+    let path = publish_recounted(output, &receipt, &engine, &[]);
+    errors.push(refusal_of(
+        &path,
+        "the last round's measured record removed",
+        &["a move pass stopped short of its ranked parents with allowance left"],
+    ));
+    restore(&saved);
+    // The not-run count changed or dropped, the records unchanged.
+    for (label, count) in [("not-run count", Some(1)), ("not-run count dropped", None)] {
+        let mut record = engine.clone();
+        assert_eq!(record.moves.as_ref().unwrap().not_run, Some(0));
+        record.moves.as_mut().unwrap().not_run = count;
+        let path = rewrite(output, &receipt, None, Some(record));
+        errors.push(refusal_of(
+            &path,
+            label,
+            &["the not-run count does not re-derive from the move records"],
+        ));
+        restore(&saved);
+    }
+    publication::verify_run(&output.join("receipt.json")).unwrap();
+    let root = output.display().to_string();
+    for error in errors {
+        lint(&error.replace(&root, "<run>"));
+    }
+}
+
+#[test]
+fn only_the_last_round_may_stop_short() {
+    let temp = tempfile::tempdir().unwrap();
+    // 36 evaluations: two rounds. Round 0's pass reads four parents (measured, duplicate,
+    // unchanged, unchanged); round 1's reads none, the allowance spent before it.
+    let opt = run_options(temp.path(), 36, four_parents(), simplify());
+    let receipt = run::run(&opt).unwrap();
+    let s = &receipt.search;
+    assert_eq!(s.stopped_by, crate::search::STOPPED_BY_EVALUATIONS);
+    assert_eq!(s.generations, 2);
+    let output = &opt.run.output;
+    let saved = originals(output);
+    let engine = s.engine_selection.clone().unwrap();
+    let moves = published_moves(&opt);
+    let outcomes: Vec<&str> = moves.iter().map(|m| m.outcome.as_str()).collect();
+    assert_eq!(outcomes, [MEASURED, DUPLICATE, UNCHANGED, UNCHANGED]);
+    assert!(moves.iter().all(|m| m.round == 0));
+    // Round 0's records after its measured one removed. No measurement is left unaccounted, no
+    // record follows, and the counts are recounted, so only the rule that a pass may stop short
+    // only in the run's last round refuses it.
+    let kept = &moves[..1];
+    let path = publish_recounted(output, &receipt, &engine, kept);
+    let error = refusal_of(
+        &path,
+        "an earlier round's tail removed",
+        &["a move pass stopped short of its ranked parents before the run's last round"],
+    );
+    restore(&saved);
+    publication::verify_run(&output.join("receipt.json")).unwrap();
+    lint(&error.replace(&output.display().to_string(), "<run>"));
+}
+
+// Fix round 03: the owner's D9b ruling on what the pool refusal count counts.
+
+#[test]
+fn a_parent_ranked_top_for_n_rounds_adds_n_pool_refusals() {
+    let temp = tempfile::tempdir().unwrap();
+    // [`NEGATED`] as the only seed, one parent per round and no refinement trials: the seed stays
+    // the top ranked parent with an expression stage in every round whose pass runs. Its only
+    // rewrite output, the negation of `c0`, is refused by the profile, so no child is measured
+    // and nothing outranks it. 48 evaluations: six rounds, the last with its allowance spent
+    // before its pass.
+    let mut opt = run_options(
+        temp.path(),
+        48,
+        Refinement {
+            top_k: 1,
+            trials_per_program: 0,
+        },
+        simplify(),
+    );
+    let seeds = temp.path().join("negated-seed.json");
+    let file = crate::seeds::SeedsFile::new(
+        None,
+        vec![crate::seeds::SeedGenome {
+            genome: NEGATED.into(),
+            program_sha256: crate::sha256_hex(NEGATED.as_bytes()),
+            bank_entry_sha256: None,
+            receipt_sha256: None,
+        }],
+    );
+    std::fs::write(&seeds, serde_json::to_vec(&file).unwrap()).unwrap();
+    opt.run.seed_genomes = Some(seeds);
+    let receipt = run::run(&opt).unwrap();
+    let s = &receipt.search;
+    let moves = published_moves(&opt);
+    let n = moves.len();
+    assert!(n >= 3, "{n} rounds read the parent");
+    assert_eq!(s.stopped_by, crate::search::STOPPED_BY_EVALUATIONS);
+    assert_eq!(s.generations, n + 1);
+    // One record per round, each for the same parent, each the same refusal by the pool.
+    let parent = crate::sha256_hex(NEGATED.as_bytes());
+    for (round, m) in moves.iter().enumerate() {
+        assert_eq!(
+            (m.round, m.parent_sha256.as_str(), m.outcome.as_str()),
+            (round, parent.as_str(), REFUSED)
+        );
+        assert!(m.program.is_none() && m.measurement.is_none());
+        assert_eq!(m.rewrites.len(), 1);
+        assert!(m.rewrites[0].refused_by_pool(), "{:?}", m.rewrites[0]);
+        assert_eq!(m.rewrites, moves[0].rewrites);
+    }
+    // The published count is N: one per round the parent is read, not one per distinct
+    // expression.
+    let record = s.engine_selection.as_ref().unwrap().moves.as_ref().unwrap();
+    assert_eq!(record.refused_by_pool, Some(n));
+    assert_eq!(refused_by_pool(&moves), n);
+    assert_eq!(pool_count(&record.ids, &moves), Some(n));
+    // `verify_run` accepts the run, re-deriving N from the records (and, since it re-derives the
+    // set and order of records against the ranked measurements, that the parent was the top
+    // ranked one in each of those rounds).
+    let output = &opt.run.output;
+    assert_eq!(
+        publication::verify_run(&output.join("receipt.json")).unwrap(),
+        receipt
+    );
+    // N - 1 and N + 1, search.json and the receipt rehashed: refused.
+    let saved = originals(output);
+    let engine = s.engine_selection.clone().unwrap();
+    let mut errors = Vec::new();
+    for count in [n - 1, n + 1] {
+        let mut edited = engine.clone();
+        edited.moves.as_mut().unwrap().refused_by_pool = Some(count);
+        let path = rewrite(output, &receipt, None, Some(edited));
+        errors.push(refusal_of(
+            &path,
+            &format!("a pool refusal count of {count} for {n} rounds"),
+            &["the pool refusal count does not re-derive from the move records"],
+        ));
+        restore(&saved);
+    }
+    publication::verify_run(&output.join("receipt.json")).unwrap();
+    let root = output.display().to_string();
+    for error in errors {
+        lint(&error.replace(&root, "<run>"));
+    }
+}
+
+// Fix round 04: a record past the run's last round, which only the final check that every
+// record was read refuses (mutants-01, M-E2).
+
+#[test]
+fn verify_refuses_a_move_record_past_the_runs_last_round() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = run_options(temp.path(), 40, four_parents(), simplify());
+    let receipt = run::run(&opt).unwrap();
+    let s = &receipt.search;
+    let output = &opt.run.output;
+    let saved = originals(output);
+    let engine = s.engine_selection.clone().unwrap();
+    let moves = published_moves(&opt);
+    publication::verify_run(&output.join("receipt.json")).unwrap();
+    // A copy of a record that measures nothing, for the round after the run's last, appended
+    // with the counts recounted. The check reads records round by round up to the run's last
+    // round, so it never compares this one with a parent, a proposal or a measurement; only the
+    // final check that every record was read refuses it.
+    let mut extra = moves
+        .iter()
+        .find(|m| m.outcome != MEASURED)
+        .expect("a record that measures nothing")
+        .clone();
+    extra.round = s.generations;
+    let mut appended = moves.clone();
+    appended.push(extra);
+    let path = publish_recounted(output, &receipt, &engine, &appended);
+    let error = publication::verify_run(&path)
+        .map(|_| ())
+        .expect_err("a record past the run's last round");
+    assert_eq!(
+        error.root_cause().to_string(),
+        "move records do not follow the ranked parents",
+        "{error:#}"
+    );
+    lint(&format!("{error:#}").replace(&output.display().to_string(), "<run>"));
+    restore(&saved);
+    publication::verify_run(&output.join("receipt.json")).unwrap();
 }
