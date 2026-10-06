@@ -2421,10 +2421,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/README.md",
-      "tree_sha256": "21af7cd44cf320e73b85813baa41668c2e42fd759a54a7ac0c78d0bd4036d2f6",
+      "tree_sha256": "da0b930b9542f6967b3a6bbc3bd2cf0ac6f4d76ae9264dfbee24a986e33ef5d3",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "S1: document atomic terminal-history import and its remaining runtime limits"
+      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
     },
     {
       "body": "teacher-v2",
@@ -2439,10 +2439,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/SCHEMA.md",
-      "tree_sha256": "d4c2e8d665c7c832aa18b2bf0d8963de4af075f371093b64c1e8739325f099e8",
+      "tree_sha256": "ec4b8062bbc62b56c226ac9e1789b89b27a11042ba8840e63bbf0c47a66827d4",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "S1: specify typed terminal replay validation and separate attempt accounting"
+      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
     },
     {
       "body": "teacher-v2",
@@ -2594,10 +2594,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
-      "tree_sha256": "ae7e1c620de4df2cc35396619e7f623ce61a0ee97d7d8fc50097af2a7d49d7ea",
+      "tree_sha256": "cb232bd500cd2c5209b6d3119815c79bca8a345142163bbb48222bb30e3417e7",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "S1: validate complete terminal histories and refuse duplicates before atomic replay; receiving fixtures"
+      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
     },
     {
       "body": "teacher-v2",
@@ -3130,10 +3130,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/qualify_s1.py",
-      "tree_sha256": "632033d0baf329ea448a0750840a2edd9ff31b23f7a0d9936c09bf61fbdae1c0",
+      "tree_sha256": "0ae491c078a10d124bddd285006b6acefbafab4b836d96fb24300a1c42eeba86",
       "custody_tarball": null,
       "reason": "Additive S1 fixed-budget coordination and synthetic conformance; no campaign execution",
-      "tree_change": "S1: qualify invalid-history and duplicated-replay mutations by intended assertion failures"
+      "tree_change": "S1 review5422242754: bind issued DSL identities; refuse exhausted counters and nonfinite derived CV products; preserve frozen records"
     }
   ],
   "excluded": [

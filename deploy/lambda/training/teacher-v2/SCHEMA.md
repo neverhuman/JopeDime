@@ -44,7 +44,11 @@ is not provenance authentication.
 
 Seen and replay inputs must contain complete terminal records with schema
 `jope.island-scored-evaluation/s1-v1`, status `completed`, `failed` or `timeout`,
-a typed program, an in-range island and nonoverflowing birth/draw counters.
+a typed program whose SHA256 matches its DSL bytes, an in-range island and
+nonoverflowing birth/draw/sequence counters. The proposal path checks remaining
+birth/sequence capacity before requesting another batch and checks returned draw
+increments. Live results match the full issued program, including its birth,
+parents and operator. Semantic-cache imports use the same program digest check.
 Completed records require the finite CV fitness and semantic products, roots and
 matching origin island emitted by live admission. Unknown or missing status,
 incomplete fields and duplicate terminal program results refuse. Validation and
@@ -54,6 +58,10 @@ do not increment measured completions. The initial seen cache is separate from
 the set of terminal results already applied to this engine. Attempt-level retries
 and failures remain in the separate budget ledger; history import cannot issue
 extra work allowance or establish exact sampler/optimizer resume.
+Live scoring checks normalized residuals after float32 conversion and validates
+the projected signature, cases and derived CV scalars before pending or measured
+state changes. Thus finite float64 inputs do not authorize nonfinite float32
+selection products. Optional official-test diagnostics remain outside that check.
 
 `s1_budget.py` carries channel 4 into tracked code: all contexts continue through
 18 fixed equal generations without consulting HWM/test fields. A frozen plan

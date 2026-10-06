@@ -28,6 +28,12 @@ workspaces through the existing Lambda lane, and the mutation qualifier.
 Seen and resume files use the same terminal-history validator. It checks the
 schema, context, selection protocol, program, island and progress fields before
 admitting a record; completed records also require valid finite CV products.
+Program identity is SHA256 of the supplied DSL bytes; live results must also
+match the complete program retained with the pending proposal. Synthetic fixtures
+use that same digest rule. Digest consistency does not authenticate a producer.
+Finite CV values that overflow normalized float32 residuals or their projected
+products refuse before consuming pending work. Exhausted proposal counters
+refuse before proposal progress changes.
 An import refuses repeated terminal program results, including failed and timeout
 results. Replay commits the complete staged engine only after reselection succeeds,
 so a refused import preserves populations, counters, seen state and the RNG.

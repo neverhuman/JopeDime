@@ -83,6 +83,21 @@ MUTANTS = {
             'if !unique.insert(format!("{}:{}", row.program.program_sha256, rows.len())) {',
             "duplicate_history_cannot_advance_completed_generations",
         ),
+        "history_dsl_identity": (
+            "|| program.program_sha256 != sha256(program.dsl.as_bytes())",
+            "|| false",
+            "edge_program_body_is_bound_at_every_receiving_boundary",
+        ),
+        "nonfinite_projected_semantics": (
+            "if self\n            .signature",
+            "if false && self\n            .signature",
+            "edge_finite_cv_overflow_refuses_before_live_mutation",
+        ),
+        "exhausted_history_sequence": (
+            ".filter(|seq| seq.checked_add(1).is_some())",
+            ".filter(|_| true)",
+            "edge_exhausted_counters_refuse_before_progress_changes",
+        ),
     },
     "lambda-worker": {
         "scaler_scored_rows": (
@@ -132,6 +147,15 @@ def intended_rust_failure(output, assertion, exit_code):
         ],
         "duplicate_history_cannot_advance_completed_generations": [
             "S1_ASSERT_HISTORY_DUPLICATE", "S1_ASSERT_HISTORY_REIMPORT",
+        ],
+        "edge_program_body_is_bound_at_every_receiving_boundary": [
+            "S1_ASSERT_PROGRAM_BINDING", "S1_ASSERT_ISSUED_PROGRAM",
+        ],
+        "edge_finite_cv_overflow_refuses_before_live_mutation": [
+            "S1_ASSERT_FINITE_SEMANTICS",
+        ],
+        "edge_exhausted_counters_refuse_before_progress_changes": [
+            "S1_ASSERT_COUNTER_CAPACITY",
         ],
     }.get(assertion, [])
     return (
