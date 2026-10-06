@@ -17,7 +17,7 @@ The original JSON report SHA-256 is `bbe87e72d5718f9e456c906c924d419d5178cde684b
 
 ## Release limitations
 
-The unresolved unsafe-site, handle-threading, unbounded-channel and executable-deserialization findings remain risks. This release must not advertise arbitrary artifacts as safely loadable, bounded live campaigns as qualified, complete GPU safety, complete W1–W12 remediation, or a clean Jankurai audit. Missing runtime/provenance proof remains missing. Existing replay fixtures, source pins, assertions, tolerances, failure records and test lanes remain intact.
+The unresolved unsafe-site, handle-threading, uncapped legacy admission and executable-deserialization findings remain risks. This release must not advertise arbitrary artifacts as safely loadable, bounded live campaigns as qualified, complete GPU safety, complete W1–W12 remediation, or a clean Jankurai audit. Missing runtime/provenance proof remains missing. Existing replay fixtures, source pins, assertions, tolerances, failure records and test lanes remain intact.
 
 The README badge is routed to Lane B's existing release change. ROOT separately adds a direct contributor link to AGENTS.md, independently confirmed absent on this source; that supplemental navigation repair was flagged by the earlier auditor but is not an additional finding in this 544-row report.
 
@@ -42,7 +42,7 @@ The README badge is routed to Lane B's existing release change. ROOT separately 
 | HLT-025-RELEASE-READINESS-GAP | 1 | release-layout (1): Document the existing release runbook |
 | HLT-026-COST-BUDGET-GAP | 1 | cost (1): Keep campaign budgets and CI cost proof separate |
 | HLT-027-HUMAN-REVIEW-EVIDENCE-GAP | 1 | io-comment (1): Reject a file-reader comment as a review attestation |
-| HLT-029-RUST-BAD-BEHAVIOR | 347 | channel (3): Defer bounded-queue redesign; raw (2): Review raw-view lifetime and bounds separately; send (2): Retain thread-safety review as a release limitation; unsafe (335): Defer complete unsafe-site qualification; unsafe-string (2): Reject an unsafe-code detector false positive; zero-mask (2): Document valid Linux affinity-mask initialization; zero-signal (1): Retain signal-structure proof debt |
+| HLT-029-RUST-BAD-BEHAVIOR | 347 | raw (2): Review raw-view lifetime and bounds separately; send (2): Retain thread-safety review as a release limitation; uncapped-admission (3): Separate uncapped admission from channel creation; unsafe (335): Defer complete unsafe-site qualification; unsafe-string (2): Reject an unsafe-code detector false positive; zero-mask (2): Document valid Linux affinity-mask initialization; zero-signal (1): Retain signal-structure proof debt |
 | HLT-033-PYTHON-BAD-BEHAVIOR | 10 | checksum (1): Separate checksum verification from TLS; pickle (5): Restrict the claim to trusted executable artifacts; pickle-test (2): Preserve executable-artifact tests; pinned-exec (1): Retain the authenticated-code trust boundary; sql-fixture (1): Document parameterized test SQL |
 | HLT-034-CI-BAD-BEHAVIOR | 9 | ci-concurrency (4): Defer workflow scheduling changes; ci-metadata (4): Reject a metadata-as-secret detector mismatch; ci-selfhost (1): Record runner isolation as a separate gate |
 | HLT-035-GIT-BAD-BEHAVIOR | 5 | git-fixture (3): Preserve isolated Git fixture setup; git-help (2): Keep conditional recovery instructions |
@@ -125,11 +125,15 @@ Owner: Engine owner. Closure: Retain exact mapping bounds and byte-hash parity t
 
 Owner: GPU owner / Lane C. Closure: Review handle ownership, locking and CUDA context assumptions with actual runtime qualification.
 
-### channel — 3 findings
+### uncapped-admission — 3 findings
 
-**Defer bounded-queue redesign.** The unbounded channel is a real resource/backpressure concern. Changing capacity during a release freeze can change scheduling, failure handling and deadlock behavior. Keep it visible; this release does not establish a bounded production campaign merely because a command exists.
+**Separate uncapped admission from channel creation.** The three matches are MicroAdmission::unbounded(): the opt-in legacy-policy call in PlanArgs::admission, the constructor setting eval_cap and retirement limits to maximum values, and the unit test of pre-breadth behavior. They do not construct a channel. The legacy opt-in removes the normal per-dataset evaluation cap and retirement rules, so permission to use it and enforcement of any admitted overall evaluation ceiling/deadline need separate qualification. The constructor and test alone do not establish that a production campaign exceeds its grant. Preserve the capped default and replay compatibility; no queue redesign follows from these matches.
 
-Owner: Campaign owner. Closure: Freeze queue limits; test blocked consumers, cancellation, exhaustion and durable failure accounting.
+Owner: Campaign owner. Closure: Review the opt-in flag/environment path in PlanArgs::admission against the frozen campaign budget. Qualify rejection of an unauthorized uncapped policy and enforcement of total evaluations and the original deadline when a legacy opt-in is explicitly admitted; retain capped-default and legacy-policy replay tests.
+
+- Ordinal 145, `crates/jope-campaigns/src/bin/jope_selfplay_wave.rs:214`: PlanArgs::admission selects the legacy uncapped policy only through the admission_unbounded flag or JOPE_MICRO_ADMISSION_UNBOUNDED setting. This match is a policy-selection call, not channel creation.
+- Ordinal 177, `crates/jope-campaigns/src/selfplay_data.rs:533`: MicroAdmission::unbounded constructs a legacy policy with eval_cap=u64::MAX and retirement thresholds at maximum values; it creates no queue.
+- Ordinal 178, `crates/jope-campaigns/src/selfplay_data.rs:1725`: The unbounded_policy_admits_everything unit test explicitly constructs the legacy policy to protect pre-breadth replay behavior. The test is not a production admission.
 
 ### pickle — 5 findings
 
@@ -205,9 +209,9 @@ Owner: Campaign owner. Closure: Retain the explanatory contract; qualify classif
 
 ### rot-disabled — 1 finding
 
-**Remove the hard-disabled duplicate CV loop.** final_cv contains an if false block and an unreachable-code allowance after the active pooled/nonpooled evaluators. Removing only that unreachable block preserves the active scores and fit allowance while eliminating misleading parked implementation.
+**Remove the hard-disabled duplicate CV loop.** final_cv contains an if false block and an unreachable-code allowance after the active pooled/nonpooled evaluators. Removing that block and renaming its now-unused positional x parameter to _x preserves the active scores and fit allowance while eliminating misleading parked implementation.
 
-Owner: ROOT. Closure: Focused HLT-040 PR; existing 14 strategy-screen tests, formatting and detector replay. Exact-head CI/review still required.
+Owner: ROOT. Closure: Focused HLT-040 PR; existing 14 strategy-screen tests, strict -D warnings compilation, formatting and detector replay. Exact-head CI/review still required.
 
 ### copy — 12 findings
 
@@ -307,8 +311,8 @@ Owner: Core/data owners. Closure: Continue receiving-boundary, ancestry, forbidd
 
 ## Verification and release integration
 
-[PR #233](https://github.com/neverhuman/JopeDime/pull/233) has frozen head `ac631826d1f0db51d75409337a58c0331efb4ce6`. The 27-line disabled loop is the sole deletion; active code and all maintained test bytes are unchanged. All 14 strategy-screen tests passed again at that exact head after main integration. Hosted CI, independent review and merge remain separate pending gates.
+[PR #233](https://github.com/neverhuman/JopeDime/pull/233) has corrected head `3628d76cefca2c970c69ef6853fdbfcbab95c51e`. It removes the 27-line disabled loop and renames the now-unused positional parameter from `x` to `_x`; the active function body and all maintained test bytes are unchanged. The strict build reproduced the unused-parameter failure on the former head. All 14 strategy-screen tests and `cargo rustc --locked -p jope-dime-regressor --bin jope_strategy_screen -- -D warnings` passed at the corrected head after history-preserving main integration. Fresh hosted CI, independent re-review and merge remain separate pending gates.
 
-`just required` on unchanged main failed with exit 101 at `crates/jope-campaigns/src/bin/jope_task_learning_controller.rs:3982`: `clippy::field_reassign_with_default` in a test initializer. Hygiene and formatting completed; PR-tier Rust tests and Python checks were not reached. A second unchanged-main Clippy replay also exposes six needless borrows in `jope-bench/src/panel/inference.rs`, a useless conversion in `jope-learning/src/eligibility.rs`, type complexity in `jope-learning/src/state.rs`, and two cloned-reference-to-slice warnings in `jope-learning/src/progress/tests/reconcile.rs`. This is a release blocker separate from Jankurai triage, and the precise repro/logs were posted to the owning lanes. Do not call the full required gate passed.
+`just required` on unchanged main failed with exit 101 at `crates/jope-campaigns/src/bin/jope_task_learning_controller.rs:3982`: `clippy::field_reassign_with_default` in a test initializer. Hygiene and formatting completed; PR-tier Rust tests and Python checks were not reached. A second unchanged-main Clippy replay also exposes six needless borrows in `jope-bench/src/panel/inference.rs`, a useless conversion in `jope-learning/src/eligibility.rs`, type complexity in `jope-learning/src/state.rs`, and two cloned-reference-to-slice warnings in `jope-learning/src/progress/tests/reconcile.rs`. This is a release blocker separate from Jankurai triage, and the precise repro/logs were posted to the owning lanes. A fresh clean-main workspace Clippy replay on `9662441e1207e702b18f513d10d96346dd5a12bd` also failed. Its separate capacity-target replay reproduced `jope_capacity.rs:262:13` and `:476:6`, where corrected PR #233's full gate stopped. Run-specific diagnostic inventories and logs are retained; additional baseline findings are not hidden. Do not call the full required gate passed.
 
 The release owner must carry a link to this document and its limitations into CHANGELOG `[1.0.0]`, which supplies the shipping release notes. Until the audit documentation and focused fix pass review and that release-note integration lands, criterion 4 remains pending publication; this file does not authorize tagging or promotion.

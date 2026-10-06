@@ -56,7 +56,6 @@
     "by_rationale": {
       "badge": 1,
       "boundary": 2,
-      "channel": 3,
       "checksum": 1,
       "ci-audit": 2,
       "ci-concurrency": 4,
@@ -90,6 +89,7 @@
       "shape": 1,
       "sql-fixture": 1,
       "sql-product": 1,
+      "uncapped-admission": 3,
       "unsafe": 335,
       "unsafe-string": 2,
       "unsupported": 1,
@@ -175,11 +175,11 @@
       "closure_route": "Review handle ownership, locking and CUDA context assumptions with actual runtime qualification.",
       "finding_count": 2
     },
-    "channel": {
-      "decision": "Defer bounded-queue redesign",
-      "rationale": "The unbounded channel is a real resource/backpressure concern. Changing capacity during a release freeze can change scheduling, failure handling and deadlock behavior. Keep it visible; this release does not establish a bounded production campaign merely because a command exists.",
+    "uncapped-admission": {
+      "decision": "Separate uncapped admission from channel creation",
+      "rationale": "The three matches are MicroAdmission::unbounded(): the opt-in legacy-policy call in PlanArgs::admission, the constructor setting eval_cap and retirement limits to maximum values, and the unit test of pre-breadth behavior. They do not construct a channel. The legacy opt-in removes the normal per-dataset evaluation cap and retirement rules, so permission to use it and enforcement of any admitted overall evaluation ceiling/deadline need separate qualification. The constructor and test alone do not establish that a production campaign exceeds its grant. Preserve the capped default and replay compatibility; no queue redesign follows from these matches.",
       "owner": "Campaign owner",
-      "closure_route": "Freeze queue limits; test blocked consumers, cancellation, exhaustion and durable failure accounting.",
+      "closure_route": "Review the opt-in flag/environment path in PlanArgs::admission against the frozen campaign budget. Qualify rejection of an unauthorized uncapped policy and enforcement of total evaluations and the original deadline when a legacy opt-in is explicitly admitted; retain capped-default and legacy-policy replay tests.",
       "finding_count": 3
     },
     "pickle": {
@@ -268,9 +268,9 @@
     },
     "rot-disabled": {
       "decision": "Remove the hard-disabled duplicate CV loop",
-      "rationale": "final_cv contains an if false block and an unreachable-code allowance after the active pooled/nonpooled evaluators. Removing only that unreachable block preserves the active scores and fit allowance while eliminating misleading parked implementation.",
+      "rationale": "final_cv contains an if false block and an unreachable-code allowance after the active pooled/nonpooled evaluators. Removing that block and renaming its now-unused positional x parameter to _x preserves the active scores and fit allowance while eliminating misleading parked implementation.",
       "owner": "ROOT",
-      "closure_route": "Focused HLT-040 PR; existing 14 strategy-screen tests, formatting and detector replay. Exact-head CI/review still required.",
+      "closure_route": "Focused HLT-040 PR; existing 14 strategy-screen tests, strict -D warnings compilation, formatting and detector replay. Exact-head CI/review still required.",
       "finding_count": 1
     },
     "copy": {
@@ -2992,10 +2992,11 @@
       "source_line_sha256": "7cde0dfc44b089beff16a745b9654ef657f4c8d3e9d1ed079f26be5bc4d8ae18",
       "problem": "unbounded channel or task creation needs explicit backpressure proof",
       "disposition": "documented-with-rationale",
-      "rationale_id": "channel",
+      "rationale_id": "uncapped-admission",
       "owner": "Campaign owner",
       "implementation_state": "documented; no code change claimed",
-      "raw_evidence": "retained in immutable full audit"
+      "raw_evidence": "retained in immutable full audit",
+      "source_interpretation": "PlanArgs::admission selects the legacy uncapped policy only through the admission_unbounded flag or JOPE_MICRO_ADMISSION_UNBOUNDED setting. This match is a policy-selection call, not channel creation."
     },
     {
       "ordinal": 146,
@@ -3012,10 +3013,10 @@
       "disposition": "fix-in-PR",
       "rationale_id": "rot-disabled",
       "owner": "ROOT",
-      "implementation_state": "PR #233 open; 14 exact-head tests pass; CI/review/merge pending",
+      "implementation_state": "PR #233 open; 14 exact-head tests and strict build pass; fresh CI/review/merge pending",
       "raw_evidence": "retained in immutable full audit",
       "fix_pr": "https://github.com/neverhuman/JopeDime/pull/233",
-      "fix_head_sha": "ac631826d1f0db51d75409337a58c0331efb4ce6"
+      "fix_head_sha": "3628d76cefca2c970c69ef6853fdbfcbab95c51e"
     },
     {
       "ordinal": 147,
@@ -3570,10 +3571,11 @@
       "source_line_sha256": "daf92b4e50d888ae14d24f2c1b90f4cd06ff3dde5b4aebf50520eaf68fce491c",
       "problem": "unbounded channel or task creation needs explicit backpressure proof",
       "disposition": "documented-with-rationale",
-      "rationale_id": "channel",
+      "rationale_id": "uncapped-admission",
       "owner": "Campaign owner",
       "implementation_state": "documented; no code change claimed",
-      "raw_evidence": "retained in immutable full audit"
+      "raw_evidence": "retained in immutable full audit",
+      "source_interpretation": "MicroAdmission::unbounded constructs a legacy policy with eval_cap=u64::MAX and retirement thresholds at maximum values; it creates no queue."
     },
     {
       "ordinal": 178,
@@ -3588,10 +3590,11 @@
       "source_line_sha256": "a0021fe0171d768700dcea010626ad4ee732290818ff7f8aae9155b6b59c25af",
       "problem": "unbounded channel or task creation needs explicit backpressure proof",
       "disposition": "documented-with-rationale",
-      "rationale_id": "channel",
+      "rationale_id": "uncapped-admission",
       "owner": "Campaign owner",
       "implementation_state": "documented; no code change claimed",
-      "raw_evidence": "retained in immutable full audit"
+      "raw_evidence": "retained in immutable full audit",
+      "source_interpretation": "The unbounded_policy_admits_everything unit test explicitly constructs the legacy policy to protect pre-breadth replay behavior. The test is not a production admission."
     },
     {
       "ordinal": 179,
@@ -10186,10 +10189,10 @@
     "rot-disabled": {
       "number": 233,
       "url": "https://github.com/neverhuman/JopeDime/pull/233",
-      "head_sha": "ac631826d1f0db51d75409337a58c0331efb4ce6",
-      "base_sha": "1d0a27acb4bb9357f277ef1b8e6518fe2f6d17fb",
+      "head_sha": "3628d76cefca2c970c69ef6853fdbfcbab95c51e",
+      "base_sha": "9662441e1207e702b18f513d10d96346dd5a12bd",
       "writer": "jepsontaylor",
-      "timestamp": "2026-10-06T19:49:49.058063+00:00"
+      "timestamp": "2026-10-06T20:38:19.820783+00:00"
     }
   },
   "supplemental_repairs": [
