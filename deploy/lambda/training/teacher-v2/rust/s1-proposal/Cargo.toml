@@ -1,5 +1,5 @@
 [package]
-name = "jope-regression-lambda"
+name = "jope-s1-proposal-engine"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
@@ -9,7 +9,7 @@ publish = false
 
 [[bin]]
 name = "jope-s1-proposal"
-path = "src/main.rs"
+path = "../proposal-engine/src/main.rs"
 
 [dependencies]
 feat-math = { path = "../../../../../../crates/feat-math" }
