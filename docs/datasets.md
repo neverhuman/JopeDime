@@ -113,6 +113,26 @@ and 104 `recorded`. These figures were counted on 2026-09-23 from `catalog/v1/ca
 (sha256 `ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120`). The older figure of
 1,416 unknown covered the 2,613 real regression datasets only.
 
+### DL research: owner ruling ALL-DATA-RESEARCH (2026-10-06)
+
+Owner ruling (Jepson Taylor, 2026-10-06 04:17 MT; recorded in
+[`internal/core-ip/dl-trainonly/license-ruling-all-data-research.json`](internal/core-ip/dl-trainonly/license-ruling-all-data-research.json)):
+**all datasets may be used regardless of licence** in the DL research pipeline
+(`deploy/dl-trainonly`, `s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/`). They were all
+found with LLMs, the use is research only, and the corpus will later be filled with synthetic data.
+
+- Lifted: licence/rights-based dataset exclusions in the DL pipeline, including the 36 `rights_held`
+  datasets (Chicago, NYC, Austin, SF portals; 180 epoch-0 contexts) and the RIGHTS-RESEARCH
+  "lift measurement only" limit on Rdatasets/UCI/CDC. Licence status `unknown` or `restricted` is
+  not a reason to exclude a dataset from DL research training, Hyperion v6 fine-tuning, train-only
+  encodings, GP teacher inputs or high-water marks.
+- Unchanged: the **leak rule** — no target or label information from test rows may reach any
+  encoder, selector, scaler or teacher (label-free pretraining exposure is allowed). Holdout,
+  `sealed_excluded` and leakage denylists (holdout-denylist v1/v2, superseded splits) are not
+  licence policy and stay in force. TabPFN 3.5 stays research-only. The public-collection rule above
+  still applies; the ruling grants no redistribution, no public release of raw rows and no
+  production use. No S3 object is rewritten or deleted.
+
 ## The ten committed test datasets (`datasets/test/`, collection `test-10`)
 
 Chosen using the historical SOTArena `tabular-regression-v2` published snapshot, which listed

@@ -1,0 +1,38 @@
+{
+  "schema": "jope.dataset-license-ruling/v1",
+  "ruling_id": "ALL-DATA-RESEARCH",
+  "ruling_local": "2026-10-06T04:17:00-06:00",
+  "ruling_utc": "2026-10-06T10:17:00Z",
+  "owner": "Jepson Taylor (repository owner)",
+  "recorded_by": "ENG:watcher (VP Engineering, sole DL sign-off), relaying the owner's own words",
+  "authority_kind": "owner ruling on dataset licence use for the DL research pipeline",
+  "ruling": "All datasets may be used regardless of licence. They were all found with LLMs, the use is research only, and the corpus will later be filled with synthetic data.",
+  "scope": {
+    "applies_to": [
+      "the DL research pipeline under deploy/dl-trainonly and its S3 prefix s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/",
+      "Hyperion v6 fine-tuning (v5 armB fine-tuned on all data; v5 is not retrained)",
+      "train-only encodings, GP teacher (S1) inputs and high-water marks, and the DL policy training run"
+    ],
+    "lifted_exclusions": [
+      "licence/rights-based dataset exclusions in the DL pipeline, including the 36 rights_held datasets (Chicago, NYC, Austin, SF portals; 180 epoch-0 contexts)",
+      "the RIGHTS-RESEARCH limitation of Rdatasets/UCI/CDC datasets to lift measurement only",
+      "licence status unknown or restricted as a reason to exclude a dataset from DL research training"
+    ],
+    "unchanged": [
+      "the LEAK RULE: no target or label information from test rows may reach any encoder, selector, scaler or teacher; label-free pretraining exposure is allowed",
+      "holdout, sealed_excluded and denylist handling that exists for leakage or evaluation reasons (holdout-denylist v1/v2 and superseded-split denylists are not licence policy and stay in force)",
+      "TabPFN 3.5 stays research-only and denied to production loaders (model terms, not dataset licence)",
+      "public collection licence rule enforced by `jope datasets verify --catalog` (this ruling grants no redistribution and publishes no raw rows)",
+      "no S3 object is rewritten or deleted; existing create-only objects stay where they are"
+    ]
+  },
+  "not_granted": [
+    "redistribution or public release of any dataset or raw rows",
+    "production (non-research) use of outputs derived from licence-unknown data",
+    "any relaxation of the leak rule"
+  ],
+  "supersedes": [
+    "RIGHTS-RESEARCH (2026-10-05T22:36:47Z) dataset scope limits",
+    "rights_held disposition in the DL coverage ledger"
+  ]
+}
