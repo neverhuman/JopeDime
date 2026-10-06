@@ -1,0 +1,172 @@
+"""Read-only scan for the raw-route group-annotated receipt (RIGHTS-HELD-FILL, main's request 10:4xZ).
+Per dataset: registry group column (census), match-receipt carry check (T1 group value <-> raw-universe value of the same
+column, through t1raw.match's T1-row -> raw value-class assignment), and the as-built split recomputed from the source
+(rowsel_raw_split_v2.outer_split; its sha must equal the dataset record's) with the annotated group's fold straddling.
+Builds nothing; writes one JSON line per dataset to argv[1] (create-only). argv[2]: shard i/n."""
+import hashlib, importlib.util, json, sys, time, collections
+from pathlib import Path
+import numpy as np
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+from dltrain import nonnumeric, rowsel_raw, rowsel_raw_split_v2, scale_check, t1raw
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1"); B = RUN / "build-v2"
+sha = lambda b: hashlib.sha256(b).hexdigest()
+def sha_file(p): return sha(Path(p).read_bytes())
+
+def census():
+    out = {}
+    for f, src in ((RUN / "tmp/split-scope/census-all.jsonl", "tmp/split-scope/census-all.jsonl (census.py edccdb7c, clean/kmeans)"),
+                   (RUN / "tmp/fill/census-coreset-raw.jsonl", "tmp/fill/census-coreset-raw.jsonl (census.py logic, coreset raw-route)")):
+        for l in f.read_text().splitlines():
+            r = json.loads(l)
+            if r.get("match_group_none") is False:
+                out[r["dataset_hash"]] = (r, src, str(f), sha_file(f))
+    return out
+
+def targets(cen):
+    rows = []
+    for tree, route in (("ROWSEL-RAW-v2", "l7a"), ("ROWSEL-RAW-v2-nonnumeric", "nonnumeric"), ("ROWSEL-RAW-v2-coverage", "coverage"),
+                        ("FILL", "fill")):
+        if tree == "FILL":
+            for h in ("047d631d7f3c0e9c",):
+                rows.append({"dataset_hash": h, "tree": None, "route": "fill-held", "entry": None})
+            continue
+        pl = json.loads((B / tree / "plan.json").read_bytes())
+        for e in pl["datasets"]:
+            if e["dataset_hash"] in cen and e.get("disposition", "build") == "build":
+                rows.append({"dataset_hash": e["dataset_hash"], "tree": tree, "route": route, "entry": e})
+    return rows
+
+def key(x):
+    x = float(x)
+    return "NA" if (np.isnan(x) or x == t1raw.MISSING_CODE) else x.hex()
+
+def scan(t, cen, src, cache, inv):
+    h = t["dataset_hash"]; c, csrc, cpath, csha = cen[h]
+    out = {"dataset_hash": h, "tree": t["tree"], "route": t["route"]}
+    k = inv["meta_key"][h].rsplit("/", 1)[1]
+    meta = json.loads((RUN / "inputs/t1-meta" / f"{k}.json").read_bytes())
+    cols = c["reproducing_group_columns"]
+    out["registry_group_column"] = {
+        "t1_index": cols[0] if len(cols) == 1 else None, "candidates_reproducing": cols, "ambiguous": len(cols) != 1,
+        "t1_name": [meta["output_headers"][j] for j in cols], "encoding": [meta.get("feature_encodings", {}).get(meta["output_headers"][j], {}).get("kind") for j in cols],
+        "source": csrc, "census_file": cpath, "census_sha256": csha,
+        "evidence": {"rule": "gsk.py port (83183db4) of grouped-stratified-kfold/v1 reproduces EVERY repeat/fold of the registry split object only with group=<this T1 column>; with group=None it does not",
+                     "registry_split_sha256": c["split_sha256"], "registry_split_path": c.get("split_path"), "t1_rows": c["n"],
+                     "t1_columns_incl_target": c["columns"], "group_column_candidates": c.get("group_column_candidates")}}
+    rows = sorted((r for r in src.included() if r["dataset_hash"] == h), key=lambda r: int(r["fold"]))
+    out["epoch0_view_ids"] = [r["view_id"] for r in rows]
+    e = t["entry"]
+    if t["route"] == "fill-held":
+        fdir = RUN / "inputs/t1-raw-formerly-held" / h
+        out.update(status="not_built", reason="held: raw route has no v2-groups split (main 10:3xZ HOLD)")
+        raw = Path(json.loads((fdir / "fetch.json").read_bytes())["file"]); match_rec = None
+    else:
+        rec_p = B / t["tree"] / f"shard-{e['shard']}" / "_datasets" / f"{h}.json"
+        rec = json.loads(rec_p.read_bytes())
+        out["dataset_record"] = {"path": str(rec_p), "sha256": sha_file(rec_p), "status": rec["status"], "reason": rec.get("reason")}
+        if rec["status"] != "done":
+            out.update(status="not_built", reason=rec.get("reason"), detail=(rec.get("detail") or "")[:300])
+            return out
+        out["status"] = "built"
+        out["view_ids"] = [x["view_id"] for x in rec["contexts"]]
+        out["contexts"] = len(out["view_ids"])
+        out["recorded_split"] = {k2: rec["split"][k2] for k2 in ("schema", "sha256", "fold_sizes", "groups_straddling_folds")}
+        cj = json.loads((B / t["tree"] / f"shard-{e['shard']}" / out["view_ids"][0] / "context.json").read_bytes())
+        out["cut_id"] = (cj.get("cut") or {}).get("cut_id")
+        mr = cj["match_receipt"]
+        match_rec = json.loads(Path(mr["path"]).read_bytes())
+        if sha_file(mr["path"]) != mr["sha256"]:
+            raise SystemExit(f"{h}: match receipt drift")
+        out["match_receipt"] = {"path": mr["path"], "sha256": mr["sha256"], "status": match_rec.get("status"),
+                                "tier": match_rec.get("tier"), "rows": (match_rec.get("match") or {}).get("rows"),
+                                "matched_rows": (match_rec.get("match") or {}).get("matched_rows")}
+        raw = Path(cj["raw_source"]["file"])
+        if sha_file(raw) != cj["raw_source"]["sha256"]:
+            raise SystemExit(f"{h}: raw drift")
+    A = np.asarray(scale_check.resolve_context(rows[0], src, cache)["A"], dtype=np.float64)
+    specs = t1raw.columns(meta, A.shape[1])
+    s_read = t1raw.read_source(raw, meta, specs)
+    if t["route"] == "nonnumeric":
+        readings = match_rec["readings"]
+        cand = nonnumeric.text_columns(specs, s_read["report"])
+        text = nonnumeric.confirm_text(specs, nonnumeric.read_text(raw, meta, specs, s_read["report"], cand)) if cand else {}
+        M = nonnumeric.match_matrix(s_read["values"], specs, text, readings)
+        V, uspecs, _ = nonnumeric.universe(s_read["values"], specs, text, readings)
+        if sha(np.ascontiguousarray(V, "<f8").tobytes()) != match_rec["values_sha256"]:
+            raise SystemExit(f"{h}: nonnumeric universe differs from match receipt")
+    else:
+        M, V, uspecs = s_read["values"], s_read["values"], specs
+    m = t1raw.match(A, specs, M)
+    if t["route"] == "l7a" and sha(np.ascontiguousarray(t1raw.matched_values(m), "<f8").tobytes()) != match_rec["values_sha256"]:
+        raise SystemExit(f"{h}: rematch values differ from L7a record")
+    out["rematch"] = {k2: m["stats"][k2] for k2 in ("rows", "matched_rows", "unmatched_rows", "ambiguous_rows", "oversubscribed_rows", "raw_rows")}
+    carry = []
+    for j in cols:
+        if uspecs[j]["name"] != meta["output_headers"][j]:
+            raise SystemExit(f"{h}: spec {j} name {uspecs[j]['name']} != header {meta['output_headers'][j]}")
+        tgt = M.shape[1] - 1
+        keep = np.flatnonzero(~np.isnan(np.asarray(M, dtype=np.float64)[:, tgt]))
+        _, invc = np.unique(t1raw._canonical(np.asarray(M, dtype=np.float64)[keep]), axis=0, return_inverse=True)
+        cls_rows = collections.defaultdict(list)
+        for r_, cc in zip(keep.tolist(), np.asarray(invc).reshape(-1).tolist()):
+            cls_rows[cc].append(r_)
+        t2u, u2t, multi_cls, assigned = collections.defaultdict(set), collections.defaultdict(set), 0, 0
+        col = uspecs[j]["index"]
+        for i, a in enumerate(m["assign"].tolist()):
+            if a < 0:
+                continue
+            assigned += 1
+            uv = {key(V[r_, col]) for r_ in cls_rows[a]}
+            multi_cls += len(uv) > 1
+            tv = key(A[i, j])
+            for u in uv:
+                t2u[tv].add(u); u2t[u].add(tv)
+        bij = multi_cls == 0 and all(len(v) == 1 for v in t2u.values()) and all(len(v) == 1 for v in u2t.values())
+        carry.append({"t1_index": j, "raw_source_name": uspecs[j].get("source_name"), "universe_kind": uspecs[j]["kind"],
+                      "nonnumeric_reading": (match_rec or {}).get("readings", {}).get(uspecs[j]["name"]) if t["route"] == "nonnumeric" else None,
+                      "t1_rows_assigned": assigned, "t1_rows": int(A.shape[0]), "t1_group_values": len(t2u), "raw_group_values_on_assigned": len(u2t),
+                      "value_classes_with_two_group_values": multi_cls, "bijective_t1_to_raw_group_values": bool(bij)})
+    out["carry"] = {"possible": bool(m["matched"] or t["route"] == "nonnumeric") and all(c_["bijective_t1_to_raw_group_values"] and c_["t1_rows_assigned"] == c_["t1_rows"] for c_ in carry),
+                    "basis": "the group column is a T1 feature column; every raw-universe row carries its own value of it (raw read through the T1 meta coding; a text column through its row-wise pointer). The match assigns each T1 row a raw value class; the T1 group value and the raw value must correspond one-to-one",
+                    "per_column": carry}
+    if out.get("status") != "built":
+        return out
+    prep = rowsel_raw.prepare_universe(h, V, uspecs)
+    folds = rowsel_raw_split_v2.outer_split(h, prep.positions, prep.values, uspecs)
+    ssha = rowsel_raw_split_v2.split_sha256(h, folds)
+    out["recomputed_split"] = {"sha256": ssha, "equals_record": ssha == out["recorded_split"]["sha256"], "universe_rows": int(prep.positions.size),
+                               "fold_sizes": [len(folds[f]) for f in sorted(folds)]}
+    fold_of = {p: f for f, v in folds.items() for p in v}
+    pos = prep.positions.tolist()
+    st = []
+    for j in cols:
+        col = uspecs[j]["index"]
+        g = collections.defaultdict(set); size = collections.Counter()
+        for r_, p in enumerate(pos):
+            kk = key(prep.values[r_, col]); g[kk].add(fold_of[p]); size[kk] += 1
+        strad = [kk for kk, fs in g.items() if len(fs) > 1]
+        st.append({"t1_index": j, "groups": len(g), "groups_straddling_folds": len(strad), "rows_in_straddling_groups": sum(size[kk] for kk in strad),
+                   "rows": len(pos), "largest_group_rows": max(size.values()), "missing_group_rows": size.get("NA", 0),
+                   "max_folds_of_one_group": max(len(fs) for fs in g.values())})
+    out["as_built_group_straddling"] = st
+    out["straddles"] = any(x["groups_straddling_folds"] for x in st)
+    return out
+
+def main():
+    i, n = map(int, sys.argv[2].split("/"))
+    cen = census()
+    ts = [t for k_, t in enumerate(sorted(targets(cen), key=lambda t: (t["tree"] or "~", t["dataset_hash"]))) if k_ % n == i]
+    src = scale_check.Sources(load_index=False); cache = scale_check.DataCache(max_items=2)
+    inv = json.loads((RUN / "tmp/trainonly-v1/epoch0-datasets.json").read_bytes())
+    with open(sys.argv[1], "x") as f:
+        for t in ts:
+            t0 = time.time()
+            try:
+                r = scan(t, cen, src, cache, inv)
+            except Exception as ex:
+                r = {"dataset_hash": t["dataset_hash"], "tree": t["tree"], "route": t["route"], "scan_error": f"{type(ex).__name__}: {ex}"[:500]}
+            r["scan_s"] = round(time.time() - t0, 1)
+            f.write(json.dumps(r, sort_keys=True) + "\n"); f.flush()
+            print(t["dataset_hash"], r.get("status"), r.get("straddles"), r.get("scan_error", ""), r["scan_s"], flush=True)
+
+main()

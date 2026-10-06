@@ -38,6 +38,21 @@ def pinned(spec):
     return b, {"path": p, "sha256": want, "bytes": len(b)}
 
 
+CUT_PREFIXES = ("trainonly-split-v2:", "trainonly-split-v2g:")
+
+
+def cut_of(ctx):
+    """The context's outer-split identity for HWM comparisons: the cut block of a re-split context, or, for raw v2 contexts
+    (no cut block), "trainonly-split-v2:" + rowsel.split.sha256 (the formula of rowsel-raw-v2-cut-index-*.json). None otherwise."""
+    c = ctx.get("cut") or {}
+    if str(c.get("cut_id", "")).startswith(CUT_PREFIXES):
+        return c["cut_id"]
+    sp = (ctx.get("rowsel") or {}).get("split") or {}
+    if sp.get("schema") == "rowsel-raw-split-v2" and len(str(sp.get("sha256", ""))) == 64:
+        return "trainonly-split-v2:" + sp["sha256"]
+    return None
+
+
 def source_ctx(src_tree: Path):
     out = {}
     for p in glob.glob(f"{src_tree}/shard-*/*/context.json"):
@@ -53,7 +68,8 @@ def main(argv=None):
     ap.add_argument("--build", required=True)
     ap.add_argument("--name", required=True)
     ap.add_argument("--source", required=True, action="append", help="raw build tree(s) the contexts came from")
-    ap.add_argument("--summary", required=True)
+    ap.add_argument("--summary", required=True, action="append", help="PATH#SHA256 of each build summary (repeat for several trees)")
+    ap.add_argument("--require-cut", action="store_true", help="refuse any context without a split-v2/v2g cut_id (re-split sets)")
     ap.add_argument("--coverage", default=None)
     ap.add_argument("--rights-research", action="store_true")
     ap.add_argument("--ledger", default=str(TV2 / "publish" / "v2-publish-ledger.jsonl"))
@@ -61,8 +77,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
     spec = importlib.util.spec_from_file_location("v2_publish", Path(__file__).resolve().parent / "v2_publish.py")
     vp = importlib.util.module_from_spec(spec); spec.loader.exec_module(vp)
-    _, sref = pinned(a.summary)
-    inputs = {"summary": sref}
+    srefs = [pinned(s)[1] for s in a.summary]
+    inputs = {"summary": srefs[0] if len(srefs) == 1 else srefs}
     cov = None
     if a.coverage:
         cb, inputs["coverage"] = pinned(a.coverage)
@@ -102,6 +118,8 @@ def main(argv=None):
                     got = ctx["files"].get(f) or (ctx.get("row_level_inputs_local_custody") or {}).get(f) or {}
                     if got.get("sha256") != sc["files"][f]["sha256"]:
                         raise SystemExit(f"{p['view_id']}: {f} differs from the source build")
+            if a.require_cut and cut_of(ctx) is None:
+                raise SystemExit(f"{p['view_id']}: no split-v2/v2g cut_id")
             if a.rights_research != (ctx.get("rights") == "research-only"):
                 raise SystemExit(f"{p['view_id']}: rights {ctx.get('rights')!r} does not match this manifest kind")
             objs = []
@@ -117,6 +135,7 @@ def main(argv=None):
                             "outer_train_indices_sha256": ctx["outer_train_indices_sha256"], "outer_test_indices_sha256": ctx["outer_test_indices_sha256"],
                             "inner_labels_sha256": ctx["inner_labels_sha256"], "scaler_sha256": ctx["scaler_sha256"],
                             "rowsel_identity": (ctx.get("rowsel") or {}).get("identity"), "rights": ctx.get("rights"),
+                            "cut_id": cut_of(ctx), "comparable_with_replaced": (ctx.get("cut") or {}).get("comparable_with_replaced", False if cut_of(ctx) else None),
                             "label_exposure": ctx.get("label_exposure"), "holdout_assignment": ctx.get("holdout_assignment"),
                             "local_context_json_sha256": p["context_json_sha256"], "objects": objs})
         datasets.append({"dataset_hash": h, "class": ps[0]["ctx"].get("class"), "replaces_epoch0": rep})

@@ -1,0 +1,19 @@
+import json, shutil, subprocess, time
+from pathlib import Path
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1"); PY = "/home/ubuntu/.venvs/jope-dltrain-v1/bin/python"
+M = [("loader_manifest_check_off", "dltrain/policylm_main.py",
+      "        if seg is None or train.corpus_manifest_sha256(entries) != seg[\"corpus_manifest_sha256\"]:\n            raise ValueError(\"the tranche file's",
+      "        if False:\n            raise ValueError(\"the tranche file's"),
+     ("loader_label_path_off", "dltrain/policylm_main.py", "        tranche.assert_label_path(raw[\"tail_out\"])", "        pass")]
+out = RUN / "tmp/p8/mutants" / time.strftime("loader-%Y%m%dT%H%M%SZ", time.gmtime()); out.mkdir(parents=True)
+res = []
+for name, rel, old, new in [("baseline", None, None, None)] + M:
+    d = out / name; shutil.copytree(SRC, d, ignore=shutil.ignore_patterns("__pycache__"))
+    if rel:
+        p = d / rel; s = p.read_text(); assert s.count(old) == 1, name; p.write_text(s.replace(old, new))
+    t = out / "tmp" / name; t.mkdir(parents=True)
+    pr = subprocess.run(["env", "-C", str(d), f"PYTHONPATH={d}", "PYTHONDONTWRITEBYTECODE=1", f"TMPDIR={t}", "CUDA_VISIBLE_DEVICES=",
+                         PY, "-m", "unittest", "tests.test_p8_trainer.LoaderGuardTests"], capture_output=True, text=True)
+    res.append({"mutant": name, "rc": pr.returncode, "killed": pr.returncode != 0 if rel else None, "tail": pr.stderr[-200:]})
+(out / "results.json").write_text(json.dumps(res, indent=1)); print(json.dumps([(r["mutant"], r["rc"], r["killed"]) for r in res]))

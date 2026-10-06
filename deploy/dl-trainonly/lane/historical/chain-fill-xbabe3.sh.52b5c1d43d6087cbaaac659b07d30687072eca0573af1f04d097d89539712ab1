@@ -1,0 +1,28 @@
+#!/bin/bash
+# RIGHTS-HELD-FILL GPU chain on xbabe3 (runs as unit jopedime-dltrain-gpuenc-fill-xbabe3-aN): one GPU process at a time;
+# 3-context pilots with --perturb block AND --perturb targets (all 6 components incl. the context2048 composed and
+# single-input controls) must PASS, then the production encode of every planned context. No retry inside; never publishes.
+# Runner: the frozen fill snapshot's tools/v2_gpu_encode.py (73b5de92); runtime = lane TabPFN 3.5 runtime + xbabe3 extra overlay.
+# Interpreter as the earlier xbabe3 chains: /usr/bin/python3.12 with user site (no -s) for the runner itself.
+set -u
+R=/home/ubuntu/scratch/jopedime-dl-training-v1; S=$R/tmp/fill/src-20261006T110505Z; G=$R/build-v2/RIGHTS-HELD-FILL-v2/gpu
+HV=$R/build-v2/HYPERION-V6/weights/hyperion_v6_infer.safetensors; HS=4d656b867d974012ded2c94a7ed2c71c214f0edf26381168badfb74208b97a2f
+C=hyperion,foundation,target,tabpfn35,context2048,hyperion_v6; RT=$R/pydeps/tab35-runtime-v1+xbabe3-extra.files.sha256
+[ "$(sha256sum $S/tools/v2_gpu_encode.py | cut -c1-64)" = "73b5de9263342b678cbad5a3991163309e693e5a33e81c36090f9e1f25bf3fec" ] || { echo RUNNER-SHA-FAIL; exit 1; }
+for mode in block targets; do
+  d=pilot; [ $mode = targets ] && d=pilot-targetflip
+  /usr/bin/python3.12 -s -c "
+import json; rows=[json.loads(l) for l in open('$G/plans/plan-xbabe3.jsonl')]; pick=[rows[i] for i in sorted({min(5,len(rows)-1), len(rows)//2, max(0,len(rows)-7)})][:3]
+open('$G/$d/plan-pilot3.jsonl','x').write(''.join(json.dumps(r,sort_keys=True)+'\n' for r in pick))" || { echo "PILOT-PLAN-FAIL $mode"; exit 2; }
+  /usr/bin/python3.12 $S/tools/v2_gpu_encode.py --plan $G/$d/plan-pilot3.jsonl --out $G/$d --pilot 3 --perturb $mode --components $C \
+    --hyperion-v6 $HV#$HS --runtime-manifest $RT || { echo "PILOT-RUN-FAIL $mode"; exit 2; }
+  f=$(ls -t $G/$d/pilot-*.json | head -1)
+  /usr/bin/python3.12 -s -c "
+import json,sys; d=json.load(open('$f'))
+ok=all(all(p['outputs_bit_identical'].values()) and all(p['control_differs'].values()) and all(p['context2048_single_input_control_differs'].values()) and p['train_view_identical_under_test_perturbation'] and len(p['outputs_bit_identical'])==6 for p in d['pilot_results']) and len(d['pilot_results'])==3
+sys.exit(0 if ok else 3)" || { echo "PILOT-FAIL $mode $f"; exit 3; }
+  echo "pilot PASS $mode $f $(sha256sum $f | cut -c1-64)"
+done
+/usr/bin/python3.12 $S/tools/v2_gpu_encode.py --plan $G/plans/plan-xbabe3.jsonl --out $G/out --components $C --hyperion-v6 $HV#$HS \
+  --runtime-manifest $RT || { echo ENCODE-FAIL; exit 4; }
+echo "CHAIN-DONE $(date -u +%FT%TZ)"

@@ -18,9 +18,12 @@ from unittest import mock
 from verify_lane import verify
 
 MODULES = (
-    "tests.test_rowsel_raw_split_v2", "tests.test_v2_rowsel_raw", "tests.test_v2_rowsel_raw_helper",
+    "tests.test_rowsel_raw_split_v2", "tests.test_rowsel_split_v2_groups", "tests.test_v2_rowsel_raw",
+    "tests.test_v2_rowsel_raw_helper", "tests.test_v2_rowsel_build", "tests.test_v2_rowsel_build_split_v2",
+    "tests.test_v2_rowsel_build_split_v2g", "tests.test_v2_nonraw_split_v2", "tests.test_v2_nonraw_split_v2g",
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
-    "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_v2_rowsel_build",
+    "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
+    "tests.test_jtt1",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -29,7 +32,45 @@ PRIVATE_INPUT_ROOTS = (
 HOST_CASES = {
     "tests.test_v2_rowsel_build.Scope.test_real_scope_is_the_admitted_class": "requires pinned private incoming-scope metadata and qualified host custody",
     "tests.test_v2_rowsel_build.FrozenScope.test_real_frozen_scope": "requires pinned private frozen-scope/rights metadata and qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2.CodeCustody.test_summary_completes_when_recorded_bytes_are_in_custody": "summary reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2.CodeCustody.test_summary_fails_when_a_recorded_hash_cannot_be_produced": "summary reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2.Registry.test_the_default_route_builds_the_previous_builders_bytes": "loads the private-lane builder copy ed00684a (same bytes retained as lane/historical/v2_rowsel_build.py.ed00684a...); requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2.Scope.test_a_fallback_dataset_rebuilt_on_raw_is_refused": "class setup loads pinned private scale-check sources and tree-scope receipts; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2.Scope.test_the_three_trees": "class setup loads pinned private scale-check sources and tree-scope receipts; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_changed_later_repeat_is_not_reproduced": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_field_and_value_grouping_mismatch_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ambiguous_columns_need_identical_component_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_fewer_components_than_outer_folds_plan_trailing_empty_folds": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_group_values_are_canonical_float64_values": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_missing_cells_are_one_group": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_the_reproducing_column_is_found": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Summary.test_summary_of_a_v2gsplit_tree": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Supplement.test_a_context_count_short_of_the_effective_folds_is_a_problem": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Supplement.test_supplement_plan_build_and_summary": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.V2.test_the_v2_route_builds_the_bytes_c0b989b6_built": "loads the private-lane code-custody builder c0b989b6 (same bytes retained as lane/historical/v2_rowsel_build.py.c0b989b6...); requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_tied_column_never_reaches_the_union_find": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ties_are_checked_before_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_split_defaults.BeforeAfter.test_v2": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.BeforeAfter.test_v2g": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.PortCheck.test_the_registry_replay_lineage_equals_fcfe3828s": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.RawDefaults.test_the_explicit_v1_replay_builds_28be7f98s_bytes": "compares against the private code-custody builder bytes 28be7f98 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.RawDefaults.test_the_v2_path_builds_28be7f98s_bytes": "compares against the private code-custody builder bytes 28be7f98 (same bytes retained in lane/historical/); requires qualified host custody",
+    "tests.test_split_defaults.V2Path.test_v2_build_never_fits_on_every_row": "the v2 build reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+    "tests.test_split_defaults.V2Path.test_v2g_build_never_fits_on_every_row": "the v2 build reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+    "tests.test_v2_provenance.Resolver.test_custody_file_must_hash_to_its_name": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_f1_unresolved_gpu_runner_fails": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_f2_every_row_of_a_published_doc_is_scanned": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_f3_missing_hashes_are_unresolved": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_full_sha_resolves_and_passes": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_non_hex_64_chars_is_not_a_sha": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_publish_refused_before_any_client_when_unresolved": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_short_prefix_never_binds": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_summary_classification": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
 }
+# Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
+EXPECTED_COLLECTED = 515
 
 
 def case_ids(suite):
@@ -167,8 +208,9 @@ def main():
         json.dump(report, stream, indent=2)
         stream.write("\n")
     print(json.dumps({key: report[key] for key in ("collected", "executed", "excluded", "failed", "skipped", "seconds", "handoff_sha256", "source_unchanged")}))
-    return not (result.wasSuccessful() and not forbidden and before == after and len(collected_names) == 329
-                and len(names) == result.testsRun == 327 and set(collected_names) - set(names) == set(HOST_CASES)
+    return not (result.wasSuccessful() and not forbidden and before == after and len(collected_names) == EXPECTED_COLLECTED
+                and len(names) == result.testsRun == EXPECTED_COLLECTED - len(HOST_CASES)
+                and set(collected_names) - set(names) == set(HOST_CASES)
                 and not result.skipped and not result.expectedFailures and not result.unexpectedSuccesses)
 
 

@@ -1,0 +1,308 @@
+"""Create-only checkpoint store for PolicyLM runs (PLAN §6.6 publish protocol, under the owner's create-only rule).
+
+``ckpt.publish_commit`` and ``ckpt.resume_point`` speak to a ``VersionedStore`` (create-only PUT, If-Match PUT,
+exact-version GET). The lane's v2 writer is strictly create-only (``s3io.Guard(v2=True)``: IfNoneMatch='*', never
+If-Match, never a delete) and owner ruling DL-TRAINING-PATH puts checkpoints create-only under
+``v2-trainonly/research-only/models/policylm-v1/``. This adapter keeps every §6.6 rule and changes only how the CAS
+pointer is stored:
+
+- Dependencies and manifests go through ``tools/v2_publish.Publisher.publish_bytes`` (publish ledger, create-only
+  PUT, exact-version readback; a 412 with equal bytes is success, different bytes are ``PoisonedKey``).
+- The logical pointer ``<prefix>campaigns/<run>/resume/HEAD.json`` is never written. Each pointer state is its own
+  create-only object ``.../resume/seq-<seq:010d>.json`` whose body is the §6.6 pointer document with that ``seq``.
+  Advancing from seq n is a create-only PUT of seq n+1, so two writers racing for the same successor cannot both
+  succeed: the loser's 412 (different bytes) becomes ``PreconditionFailed`` and ``ckpt.cas_pointer``'s re-read turns
+  it into ``Conflict``. Seq keys are contiguous (n+1 is written only after n was read), so the head is found with an
+  exponential-then-binary search of exact GETs from a monotone hint; no listing is needed.
+- The logical pointer's version id and ETag are both ``"<seq>:<S3 VersionId>"``; an If-Match PUT succeeds only when
+  that is still the head. A GET of the logical pointer by version id reads that seq key at that exact VersionId.
+
+The exact-version readback of a dependency is done inside ``publish_bytes``; the adapter remembers the verified bytes
+of (key, VersionId) so ``ckpt.publish_dependency``'s own readback of the same version is served without a second
+download. Restores in a fresh process always GET by exact VersionId from S3.
+"""
+from __future__ import annotations
+
+import json
+import re
+import threading
+
+import botocore.exceptions
+from botocore.exceptions import ClientError
+
+from dltrain import ckpt, common, s3io
+
+POLICYLM_PREFIX_KEY = s3io.V2_RESEARCH_ONLY_KEY + "models/policylm-v1/"
+SMOKE_PREFIX_KEY = POLICYLM_PREFIX_KEY + "smoke/"
+_POINTER_RE = re.compile(r"^(?P<base>.+/campaigns/[A-Za-z0-9._-]+/resume/)HEAD\.json$")
+_SEQ_KEY_RE = re.compile(r"/resume/seq-\d{10}\.json$")
+_LOGICAL_VID_RE = re.compile(r"^(?P<seq>[1-9]\d{0,9}):(?P<vid>[^:\s]+)$")
+_TRANSPORT = (botocore.exceptions.EndpointConnectionError, botocore.exceptions.ConnectTimeoutError,
+              botocore.exceptions.ReadTimeoutError, botocore.exceptions.ConnectionClosedError)
+CONTENT_TYPES = {".safetensors": "application/octet-stream", ".jsonl": "application/x-ndjson",
+                 ".json": "application/json"}
+
+
+def seq_key(pointer_key: str, seq: int) -> str:
+    m = _POINTER_RE.match(pointer_key)
+    if m is None or isinstance(seq, bool) or not isinstance(seq, int) or seq < 1:
+        raise ValueError(f"not a resume pointer key / seq: {pointer_key!r} {seq!r}")
+    return f"{m.group('base')}seq-{seq:010d}.json"
+
+
+def _status(err) -> int:
+    return int(getattr(err, "response", {}).get("ResponseMetadata", {}).get("HTTPStatusCode") or 0)
+
+
+class CreateOnlyStore:
+    """``ckpt.VersionedStore`` over a v2 ``Publisher`` (writes) and a v2 read client; every key lies under
+    ``prefix_key``, which must be inside ``POLICYLM_PREFIX_KEY``."""
+
+    bucket = s3io.BUCKET
+
+    def __init__(self, publisher, reader, *, prefix_key: str, view_id: str):
+        if not (isinstance(prefix_key, str) and prefix_key.startswith(POLICYLM_PREFIX_KEY) and prefix_key.endswith("/")):
+            raise ValueError(f"prefix_key must lie under {POLICYLM_PREFIX_KEY} and end with '/': {prefix_key!r}")
+        self.publisher, self.reader = publisher, reader
+        self.prefix_key, self.view_id = prefix_key, view_id
+        self._verified: dict[tuple[str, str], bytes] = {}
+        self._hint: dict[str, int] = {}
+        self._lock = threading.Lock()
+        self.stats = {"puts": 0, "gets": 0, "cached_readbacks": 0, "pointer_probes": 0}
+
+    def __repr__(self) -> str:
+        return f"CreateOnlyStore(s3://{self.bucket}/{self.prefix_key})"
+
+    # ------------------------------------------------------------------ key rules
+    def _check_key(self, key: str) -> None:
+        if not isinstance(key, str) or not key.startswith(self.prefix_key):
+            raise s3io.S3Refused(f"key outside the store prefix {self.prefix_key}: {key!r}")
+        if _SEQ_KEY_RE.search(key):
+            raise s3io.S3Refused(f"pointer seq keys are written only through the logical pointer: {key!r}")
+
+    # ------------------------------------------------------------------ raw S3
+    def _get_raw(self, key: str, version_id: str | None = None) -> ckpt.GetResult:
+        self.stats["gets"] += 1
+        params = {"Bucket": self.bucket, "Key": key}
+        if version_id is not None:
+            params["VersionId"] = version_id
+        try:
+            resp = self.reader.get_object(**params)
+            body = resp["Body"].read()
+        except ClientError as err:
+            if _status(err) == 404:
+                raise ckpt.NoSuchKey(f"404: {key}" + (f"@{version_id}" if version_id else "")) from None
+            if _status(err) >= 500:
+                raise ConnectionError(f"GET {key}: HTTP {_status(err)}") from None
+            raise
+        except _TRANSPORT as err:
+            raise ConnectionError(f"GET {key}: {type(err).__name__}") from None
+        vid = resp.get("VersionId")
+        if not vid or vid == "null" or (version_id is not None and vid != version_id):
+            raise ckpt.CheckpointRefused(f"GET {key} returned VersionId {vid!r}, wanted {version_id!r}")
+        return ckpt.GetResult(body=body, version_id=vid, etag=str(resp.get("ETag") or ""))
+
+    def _publish(self, key: str, body: bytes, kind: str) -> dict:
+        self.stats["puts"] += 1
+        ext = "." + key.rsplit(".", 1)[-1]
+        if key.endswith(".jsonl"):
+            ext = ".jsonl"
+        try:
+            res = self.publisher.publish_bytes(key, body, CONTENT_TYPES.get(ext, "application/octet-stream"), kind,
+                                               self.view_id)
+        except s3io.PoisonedKey as err:
+            raise ckpt.PoisonedKey(str(err)[:500]) from None
+        except ClientError as err:
+            if _status(err) == 412:
+                raise ckpt.PreconditionFailed(f"412: {key}") from None
+            if _status(err) >= 500 or _status(err) in (408, 409):
+                raise ConnectionError(f"PUT {key}: HTTP {_status(err)}") from None
+            raise
+        except _TRANSPORT as err:
+            raise ConnectionError(f"PUT {key}: {type(err).__name__}") from None
+        with self._lock:
+            self._verified[(key, res["version_id"])] = bytes(body)
+        return res
+
+    # ------------------------------------------------------------------ pointer
+    def _pointer_head(self, pkey: str) -> tuple[int, ckpt.GetResult] | None:
+        """(seq, raw GetResult) of the highest existing seq key, or None when there is none."""
+
+        def probe(n: int):
+            self.stats["pointer_probes"] += 1
+            try:
+                return self._get_raw(seq_key(pkey, n))
+            except ckpt.NoSuchKey:
+                return None
+
+        lo = self._hint.get(pkey, 0)
+        found = {}
+        step, hi = 1, lo + 1
+        while True:
+            got = probe(hi)
+            if got is None:
+                break
+            found[hi] = got
+            lo, step = hi, step * 2
+            hi = lo + step
+        while hi - lo > 1:
+            mid = (lo + hi) // 2
+            got = probe(mid)
+            if got is None:
+                hi = mid
+            else:
+                found[mid], lo = got, mid
+        if lo == 0:
+            return None
+        got = found.get(lo) or probe(lo)
+        if got is None:
+            raise ckpt.CheckpointRefused(f"pointer seq {lo} of {pkey} vanished")
+        self._hint[pkey] = lo
+        return lo, got
+
+    @staticmethod
+    def _logical(seq: int, raw: ckpt.GetResult) -> ckpt.GetResult:
+        lv = f"{seq}:{raw.version_id}"
+        return ckpt.GetResult(body=raw.body, version_id=lv, etag=lv)
+
+    @staticmethod
+    def _body_seq(body: bytes) -> int:
+        try:
+            seq = json.loads(body)["seq"]
+        except (ValueError, KeyError, TypeError) as err:
+            raise ckpt.CheckpointRefused(f"pointer body has no seq: {err}") from None
+        if isinstance(seq, bool) or not isinstance(seq, int) or seq < 1:
+            raise ckpt.CheckpointRefused(f"pointer body seq {seq!r} is invalid")
+        return seq
+
+    def _pointer_create(self, pkey: str, seq: int, body: bytes) -> ckpt.PutResult:
+        try:
+            res = self._publish(seq_key(pkey, seq), body, "pointer")
+        except ckpt.PoisonedKey as err:     # another writer took this seq first: the CAS lost
+            raise ckpt.PreconditionFailed(f"412: pointer seq {seq} of {pkey} holds other bytes ({err})") from None
+        self._hint[pkey] = max(self._hint.get(pkey, 0), seq)
+        lv = f"{seq}:{res['version_id']}"
+        return ckpt.PutResult(version_id=lv, etag=lv)
+
+    # ------------------------------------------------------------------ VersionedStore
+    def put_create_only(self, key: str, body: bytes) -> ckpt.PutResult:
+        body = bytes(body)
+        if _POINTER_RE.match(key):
+            if not key.startswith(self.prefix_key):
+                raise s3io.S3Refused(f"key outside the store prefix {self.prefix_key}: {key!r}")
+            if self._body_seq(body) != 1:
+                raise ckpt.CheckpointRefused("a create-only pointer write must carry seq 1")
+            if self._pointer_head(key) is not None:
+                raise ckpt.PreconditionFailed(f"412: {key} already exists (If-None-Match '*')")
+            return self._pointer_create(key, 1, body)
+        self._check_key(key)
+        kind = "manifest" if "/manifests/" in key else "dependency"
+        res = self._publish(key, body, kind)
+        return ckpt.PutResult(version_id=res["version_id"], etag=res["version_id"])
+
+    def put_if_match(self, key: str, body: bytes, etag: str) -> ckpt.PutResult:
+        body = bytes(body)
+        if not _POINTER_RE.match(key) or not key.startswith(self.prefix_key):
+            raise s3io.S3Refused(f"If-Match is allowed only on this store's logical resume pointer: {key!r}")
+        m = _LOGICAL_VID_RE.match(etag or "")
+        if m is None:
+            raise ckpt.PreconditionFailed(f"412: {key} If-Match {etag!r} is not a logical pointer ETag")
+        seq, vid = int(m.group("seq")), m.group("vid")
+        if self._body_seq(body) != seq + 1:
+            raise ckpt.CheckpointRefused(f"pointer body seq must be {seq + 1} to replace seq {seq}")
+        head = self._pointer_head(key)
+        if head is None:
+            raise ckpt.NoSuchKey(f"404: {key}")
+        if head[0] != seq or head[1].version_id != vid:
+            raise ckpt.PreconditionFailed(f"412: {key} head is {head[0]}:{head[1].version_id}, If-Match {etag}")
+        return self._pointer_create(key, seq + 1, body)
+
+    def get(self, key: str, version_id: str | None = None) -> ckpt.GetResult:
+        if _POINTER_RE.match(key):
+            if not key.startswith(self.prefix_key):
+                raise s3io.S3Refused(f"key outside the store prefix {self.prefix_key}: {key!r}")
+            if version_id is None:
+                head = self._pointer_head(key)
+                if head is None:
+                    raise ckpt.NoSuchKey(f"404: {key}")
+                return self._logical(*head)
+            m = _LOGICAL_VID_RE.match(version_id)
+            if m is None:
+                raise ckpt.NoSuchKey(f"404: {key} has no logical version {version_id!r}")
+            seq = int(m.group("seq"))
+            return self._logical(seq, self._get_raw(seq_key(key, seq), m.group("vid")))
+        self._check_key(key)
+        if version_id is not None:
+            with self._lock:
+                body = self._verified.get((key, version_id))
+            if body is not None:
+                self.stats["cached_readbacks"] += 1
+                return ckpt.GetResult(body=body, version_id=version_id, etag=version_id)
+        return self._get_raw(key, version_id)
+
+
+def open_real(*, prefix_key: str, view_id: str, ledger_path):
+    """The real store: v2 writer (charged to the lane's v2 byte-budget ledger) and v2 reader from
+    ``AWS_PROFILE`` (resolved in-process by its credential_process; nothing is exported or logged), plus the run's
+    exclusive publish ledger. Returns (store, publish_ledger)."""
+    from tools import v2_publish
+    writer, reader = v2_publish.real_clients()
+    ledger = v2_publish.PublishLedger(ledger_path)
+    return CreateOnlyStore(v2_publish.Publisher(writer, reader, ledger), reader, prefix_key=prefix_key,
+                           view_id=view_id), ledger
+
+
+def _disk_fake(root):
+    """tools/v2_publish's guarded fake bucket and clients, persisted under ``root`` (blobs + an append-only object
+    log) so a second process sees the same versions: the fresh-process restore proof without real S3."""
+    import os
+    from pathlib import Path
+    from tools import v2_publish
+
+    root = Path(root)
+    (root / "blobs").mkdir(parents=True, exist_ok=True)
+    log = root / "objects.jsonl"
+
+    class DiskBucket(v2_publish.FakeBucket):
+        def __init__(self):
+            super().__init__()
+            if log.exists():
+                for line in log.read_bytes().splitlines():
+                    rec = json.loads(line)
+                    body = (root / "blobs" / rec["vid"]).read_bytes()
+                    if common.sha256_bytes(body) != rec["sha256"]:
+                        raise RuntimeError(f"fake bucket blob {rec['vid']} is corrupt")
+                    self.objects.setdefault((rec["bucket"], rec["key"]), []).append((rec["vid"], body))
+                    self._n = max(self._n, int(rec["vid"][5:]))
+
+        def persist(self, bucket, key, vid, body):
+            common.immutable_write(root / "blobs" / vid, body)
+            with open(log, "ab") as f:
+                f.write(common.canonical({"bucket": bucket, "key": key, "vid": vid,
+                                          "sha256": common.sha256_bytes(body)}) + b"\n")
+                f.flush()
+                os.fsync(f.fileno())
+
+    class DiskClient(v2_publish.FakeClient):
+        def put_object(self, **params):
+            out = super().put_object(**params)
+            self.bucket.persist(params["Bucket"], params["Key"], out["VersionId"], bytes(params["Body"]))
+            return out
+
+    return DiskBucket, DiskClient
+
+
+def open_fake(*, prefix_key: str, view_id: str, ledger_path, budget_ledger_path, bucket=None, disk_root=None):
+    """The same store over ``tools/v2_publish``'s guarded fake bucket (tests and dry runs); with ``disk_root`` the
+    bucket persists across processes. Returns (store, publish_ledger, bucket)."""
+    from tools import v2_publish
+    if disk_root is not None:
+        bucket_cls, client_cls = _disk_fake(disk_root)
+        bucket = bucket or bucket_cls()
+        writer = client_cls(bucket, s3io.Guard(writes=True, v2=True, ledger=budget_ledger_path))
+        reader = client_cls(bucket, s3io.Guard(v2=True))
+    else:
+        writer, reader, bucket = v2_publish.fake_clients(budget_ledger_path, bucket)
+    ledger = v2_publish.PublishLedger(ledger_path)
+    return CreateOnlyStore(v2_publish.Publisher(writer, reader, ledger), reader, prefix_key=prefix_key,
+                           view_id=view_id), ledger, bucket

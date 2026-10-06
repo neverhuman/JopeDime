@@ -191,8 +191,7 @@ def dry_run(a, helpers: int) -> list:
 def run(a, src=None, cache=None, inv=None, held=None, log=_print):
     out = Path(a.out)
     pl, plan_sha = tool.load_plan(out)
-    if tool.plan_split_version(pl) != a.split_version:
-        raise SystemExit(f"plan split version {tool.plan_split_version(pl)} != {a.split_version}")
+    tool.plan_split_version(pl, a.split_version)
     codes = tool.code_shas()
     chk = owner_codes_match(out, codes)
     if not chk["equal"]:
@@ -226,7 +225,7 @@ def run(a, src=None, cache=None, inv=None, held=None, log=_print):
             continue
         sd = staging / f"shard-{i}"
         sd.mkdir(parents=True, exist_ok=True)
-        rec = tool.run_dataset(dict(e), sd, codes, src, cache, inv, held, guard, log=lambda s: None, **hooks)
+        rec = tool.run_dataset(dict(e), sd, codes, src, cache, inv, held, guard, log=lambda s: None, split_version=a.split_version, **hooks)
         ev = {"dataset_hash": h, "status": rec["status"], "reason": rec.get("reason"), "cpu_s": rec["cpu_s"], **diag}
         if rec["status"] == "done":
             ev["publish"] = publish(rec, sd, owner_shard)

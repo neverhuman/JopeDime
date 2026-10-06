@@ -1,0 +1,16 @@
+#!/bin/bash
+# Launch one fill step on xbabe3 as a fixed transient user unit in the lane slice:
+#   fill-xbabe3.sh <step> <MemoryMax> <CPUQuota> <args to v2_rowsel_raw_fill.py...>
+# python3.12 -s, PYTHONPATH = frozen source snapshot + numpy 2.5.3 (the lane venv's), nice 10 + ionice idle, no swap,
+# no AWS config, no GPU. Never touches jope-runner@* (CPUQuota/MemoryMax bound this unit only).
+set -eu
+R=/home/ubuntu/scratch/jopedime-dl-training-v1; S=$R/tmp/fill/src-20261006T110505Z; P=$R/pydeps/fill-numpy-2.5.3-v1
+step=$1; mem=$2; cpu=$3; shift 3
+exec systemd-run --user --collect --unit=jopedime-dltrain-fill-xbabe3-$step --slice=jopedime-dltrain.slice \
+  -p MemoryMax=$mem -p MemorySwapMax=0 -p CPUQuota=$cpu -p TasksMax=512 -p Nice=10 -p IOSchedulingClass=idle \
+  -p RuntimeMaxSec=10800 --working-directory=$S \
+  --setenv=PYTHONPATH=$S:$P --setenv=PYTHONNOUSERSITE=1 --setenv=PYTHONDONTWRITEBYTECODE=1 --setenv=TMPDIR=$R/tmp \
+  --setenv=CUDA_VISIBLE_DEVICES= --setenv=OMP_NUM_THREADS=2 --setenv=OPENBLAS_NUM_THREADS=2 \
+  --setenv=AWS_CONFIG_FILE=/dev/null --setenv=AWS_SHARED_CREDENTIALS_FILE=/dev/null \
+  -p StandardOutput=append:$R/tmp/fill/$step.log -p StandardError=append:$R/tmp/fill/$step.log \
+  /usr/bin/python3.12 -s $S/tools/v2_rowsel_raw_fill.py "$@"

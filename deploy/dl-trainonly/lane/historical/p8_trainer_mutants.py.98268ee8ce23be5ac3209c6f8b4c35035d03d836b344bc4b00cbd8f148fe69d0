@@ -1,0 +1,69 @@
+"""Mutant harness for tests/test_p8_trainer.py (P8 trainer path). Each mutant: its own copy of SRC, one textual patch,
+the suite run with that copy's PYTHONPATH and `env -C` the copy (failfast). Killed == suite fails."""
+import concurrent.futures, json, shutil, subprocess, sys, time
+from pathlib import Path
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+PY = "/home/ubuntu/.venvs/jope-dltrain-v1/bin/python"
+M = [
+ ("s3_seq_contiguity", "dltrain/s3store.py", "        return self._pointer_create(key, seq + 1, body)", "        return self._pointer_create(key, seq + 2, body)"),
+ ("s3_ifmatch_stale_ok", "dltrain/s3store.py", "        if head[0] != seq or head[1].version_id != vid:", "        if False:"),
+ ("s3_create_existing_ok", "dltrain/s3store.py", "            if self._pointer_head(key) is not None:\n                raise ckpt.PreconditionFailed", "            if False:\n                raise ckpt.PreconditionFailed"),
+ ("s3_lost_race_poisoned", "dltrain/s3store.py", "            raise ckpt.PreconditionFailed(f\"412: pointer seq {seq} of {pkey} holds other bytes ({err})\") from None", "            raise"),
+ ("s3_prefix_unchecked", "dltrain/s3store.py", "        if not isinstance(key, str) or not key.startswith(self.prefix_key):\n            raise s3io.S3Refused", "        if False:\n            raise s3io.S3Refused"),
+ ("s3_no_binary_search", "dltrain/s3store.py", "        while hi - lo > 1:", "        while False:"),
+ ("s3_reuse_counts_new", "dltrain/s3store.py", "            raise ckpt.PreconditionFailed(f\"412: {key} already created and verified (publish ledger)\")", "            return {\"key\": key, \"version_id\": prior[\"version_id\"], \"sha256\": prior[\"sha256\"], \"bytes\": prior[\"bytes\"], \"outcome\": \"x\"}"),
+ ("journal_whole_upload", "dltrain/ckpt.py", "        if kind == \"journal\":\n            deps[\"journal-index\"]", "        if False:\n            deps[\"journal-index\"]"),
+ ("journal_chunk_unverified", "dltrain/ckpt.py", "        _require(got.version_id == ref[\"version_id\"] and len(got.body) == ref[\"bytes\"]\n                 and common.sha256_bytes(got.body) == ref[\"sha256\"], f\"journal chunk {i} differs from its index\")", "        pass"),
+ ("journal_drop_last_chunk", "dltrain/ckpt.py", "    return [b\"\".join(lines[i:i + chunk_lines]) for i in range(0, len(lines), chunk_lines)]", "    return [b\"\".join(lines[i:i + chunk_lines]) for i in range(0, len(lines), chunk_lines)][:-1] or [b\"\"]"),
+ ("rng_cuda_gap_ok", "dltrain/ckpt.py", "    _require(set(tensors) == {\"torch_cpu\"} | {_cuda_rng_key(i) for i in range(n_cuda)},", "    _require(True or set(tensors) == {\"torch_cpu\"} | {_cuda_rng_key(i) for i in range(n_cuda)},"),
+ ("rng_cuda_device_unchecked", "dltrain/ckpt.py", "            _require(torch.cuda.is_available() and torch.cuda.device_count() == len(cuda_states),", "            _require(True,"),
+ ("cuda_no_cublas_check", "dltrain/model.py", "        if workspace not in CUBLAS_WORKSPACE_CONFIGS:", "        if False:"),
+ ("launch_mem_cap", "dltrain/launch.py", "    if m is None or int(m.group(1)) > MEMORY_CAP_GIB:", "    if m is None:"),
+ ("launch_unit_name", "dltrain/launch.py", "    if UNIT_RE.fullmatch(unit) is None:", "    if False:"),
+ ("launch_restart", "dltrain/launch.py", "            \"-p\", f\"CPUQuota={cpu_quota}\",", "            \"-p\", f\"CPUQuota={cpu_quota}\", \"-p\", \"Restart=on-failure\","),
+ ("mirror_overwrite", "dltrain/policylm_main.py", "    if final.exists():\n        raise FileExistsError(f\"{final} exists; mirror files are never replaced\")", "    if False:\n        raise FileExistsError(f\"{final} exists; mirror files are never replaced\")"),
+ ("mirror_skip_new_chunks", "dltrain/policylm_main.py", "                for c in chunks[prev // k:]]", "                for c in chunks[prev // k + 1:]]"),
+ ("mirror_writable", "dltrain/policylm_main.py", "    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)", "    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)"),
+ ("excl_no_sha_check", "dltrain/exclusions.py", "    if got != sha256:", "    if False:"),
+ ("excl_filter_keeps", "dltrain/exclusions.py", "        if vid in excl.view_ids:\n            dropped.append(vid)\n            continue", "        if False:\n            dropped.append(vid)\n            continue"),
+ ("excl_no_review_flag", "dltrain/exclusions.py", "        if flag is not None:", "        if False:"),
+ ("excl_assert_noop", "dltrain/exclusions.py", "    if hit:", "    if False:"),
+ ("excl_missing_view_ok", "dltrain/exclusions.py", "        if not isinstance(vid, str) or not vid:\n            raise", "        if False:\n            raise"),
+ ("sel_publish_all", "dltrain/train.py", "        selected = self.store is not None and (every is None or self.step % every == 0)", "        selected = self.store is not None"),
+ ("sel_publish_none", "dltrain/train.py", "        selected = self.store is not None and (every is None or self.step % every == 0)", "        selected = False"),
+ ("sel_terminal_not_flagged", "dltrain/train.py", "                 else self._commit(will_publish=self.store is not None))", "                 else self._commit(will_publish=False))"),
+ ("sel_cfg_zero_ok", "dltrain/train.py", "            (self.publish_every_updates is None or (_is_int(self.publish_every_updates)\n                                                    and self.publish_every_updates >= 1),", "            (True,"),
+ ("mirror_dedup_off", "dltrain/policylm_main.py", "        if will_publish:\n            mirror_skipped.append", "        if False:\n            mirror_skipped.append"),
+ ("mirror_exit_recheck_off", "dltrain/policylm_main.py", "            if c.step in published_steps:", "            if False:"),
+]
+def run_one(name, rel, old, new, out):
+    d = out / name
+    shutil.copytree(SRC, d, ignore=shutil.ignore_patterns("__pycache__"))
+    if rel:
+        p = d / rel; s = p.read_text()
+        if s.count(old) != 1:
+            return {"mutant": name, "status": "PATCH_NOT_FOUND", "count": s.count(old)}
+        p.write_text(s.replace(old, new))
+    t = out / "tmp" / name; t.mkdir(parents=True, exist_ok=True)
+    cmd = ["env", "-C", str(d), f"PYTHONPATH={d}", "PYTHONNOUSERSITE=1", "PYTHONDONTWRITEBYTECODE=1", f"TMPDIR={t}",
+           "CUDA_VISIBLE_DEVICES=", "OMP_NUM_THREADS=2", PY, "-c",
+           "import sys,unittest,dltrain; assert dltrain.__file__.startswith(sys.argv[1]), dltrain.__file__; "
+           "r=unittest.main(module=None, argv=['x','tests.test_p8_trainer','-f'], exit=False); sys.exit(0 if r.result.wasSuccessful() else 1)",
+           str(d)]
+    t0 = time.time(); pr = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    return {"mutant": name, "file": rel, "rc": pr.returncode, "killed": pr.returncode != 0, "wall_s": round(time.time() - t0, 1),
+            "tail": pr.stderr[-300:]}
+def main():
+    out = RUN / "tmp/p8/mutants" / time.strftime("run-%Y%m%dT%H%M%SZ", time.gmtime()); out.mkdir(parents=True)
+    base = run_one("baseline", None, None, None, out)
+    res = {"baseline": base, "mutants": []}
+    if base["rc"] != 0:
+        print(json.dumps(res)); sys.exit(2)
+    with concurrent.futures.ThreadPoolExecutor(3) as ex:
+        res["mutants"] = list(ex.map(lambda m: run_one(*m, out), M))
+    res["killed"] = sum(m.get("killed", False) for m in res["mutants"]); res["total"] = len(M)
+    (out / "results.json").write_text(json.dumps(res, indent=1))
+    print(json.dumps({"out": str(out), "killed": res["killed"], "total": res["total"],
+                      "survived": [m["mutant"] for m in res["mutants"] if not m.get("killed")]}))
+main()

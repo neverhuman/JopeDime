@@ -1495,6 +1495,7 @@ mod tests {
     use jope_pipeline::experiment::REQUEST_SCHEMA;
     use jope_pipeline::experiment_v2::{Consumption, RESULT_SCHEMA};
     use serde_json::json;
+    use std::path::PathBuf;
 
     struct Fixture {
         _directory: tempfile::TempDir,
@@ -2011,6 +2012,57 @@ mod tests {
         fixture_spec(selected_task, context, None, &exact_on(improved))
     }
 
+    fn teaching_fixture_root(requested: Option<&Path>) -> anyhow::Result<PathBuf> {
+        let root = match requested {
+            Some(root) => {
+                anyhow::ensure!(root.is_absolute(), "teaching fixture root must be absolute");
+                root.to_path_buf()
+            }
+            None => {
+                let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../target/tmp/teaching-fixtures");
+                fs::create_dir_all(&root)?;
+                root
+            }
+        };
+        let root = fs::canonicalize(root)?;
+        anyhow::ensure!(root.is_dir(), "teaching fixture root must be a directory");
+        anyhow::ensure!(
+            !root.starts_with("/tmp"),
+            "teaching fixture root must be outside /tmp"
+        );
+        Ok(root)
+    }
+
+    #[test]
+    fn teaching_fixture_root_preserves_default_and_refuses_invalid_overrides() {
+        let default = teaching_fixture_root(None).unwrap();
+        assert_eq!(
+            default,
+            fs::canonicalize(
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp/teaching-fixtures")
+            )
+            .unwrap()
+        );
+        let directory = tempfile::tempdir_in(&default).unwrap();
+        assert_eq!(
+            teaching_fixture_root(Some(directory.path())).unwrap(),
+            fs::canonicalize(directory.path()).unwrap()
+        );
+        for invalid in [
+            PathBuf::from("relative/teaching"),
+            PathBuf::from("/tmp"),
+            PathBuf::from("/tmp/../tmp"),
+            directory.path().join("missing"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.toml"),
+        ] {
+            assert!(
+                teaching_fixture_root(Some(&invalid)).is_err(),
+                "{invalid:?}"
+            );
+        }
+    }
+
     // All inputs/predictions are synthetic; these tests establish admission mechanics,
     // not corpus admission, real fitted-model accuracy, or a completed live search.
     // `fold_targets` overrides the balanced default; `predict` maps (fold, held rows,
@@ -2021,10 +2073,11 @@ mod tests {
         fold_targets: Option<Vec<Vec<String>>>,
         predict: Predict,
     ) -> Fixture {
-        let fixture_root =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp/teaching-fixtures");
-        fs::create_dir_all(&fixture_root).unwrap();
-        let directory = tempfile::tempdir_in(fs::canonicalize(&fixture_root).unwrap()).unwrap();
+        // Set once by the invoking test process; malformed explicit roots never fall back.
+        // This relocates only synthetic fixtures, not production authority or fit inputs.
+        let requested = std::env::var_os("JOPE_TEACHING_TEST_ROOT");
+        let fixture_root = teaching_fixture_root(requested.as_deref().map(Path::new)).unwrap();
+        let directory = tempfile::tempdir_in(fixture_root).unwrap();
         let state = State::at(directory.path());
         let classes: Vec<String> = match selected_task {
             Task::Regression => vec![],
