@@ -229,7 +229,7 @@ pub fn verify_run(path: &Path) -> Result<Receipt> {
     check_archive(root, s, &observations)?;
     // laneD:B18-pareto-archive end
     // laneD:B20-rewrite-simplify begin
-    check_moves(root, &r, &records, &evaluator)?;
+    check_moves(root, &r, &records, &observations, &evaluator)?;
     // laneD:B20-rewrite-simplify end
     let manifest: serde_json::Value = serde_json::from_slice(&read_file(
         root,
@@ -471,12 +471,14 @@ fn check_archive(root: &Path, s: &Search, observations: &[Kernel2Observation]) -
 
 // laneD:B20-rewrite-simplify begin
 /// The move records are published exactly when a move was selected, match their digest, and
-/// re-derive: each proposal from its parent, each outcome from the measurements. Without a
-/// selected move no measurement has the rewrite pass's origin.
+/// re-derive (`moves::check`): which parents each round's passes read, each proposal from its
+/// parent, each outcome from the measurements, and the pool refusal count. Without a selected
+/// move no measurement has a move's origin.
 fn check_moves(
     root: &Path,
     r: &Receipt,
     measurements: &[Measurement],
+    observations: &[Kernel2Observation],
     evaluator: &super::Kernel2Evaluator,
 ) -> Result<()> {
     use super::search::moves;
@@ -487,7 +489,7 @@ fn check_moves(
             std::fs::symlink_metadata(root.join(path)).is_err()
                 && measurements
                     .iter()
-                    .all(|m| m.observation.origin != super::SIMPLIFY),
+                    .all(|m| m.observation.origin != super::REWRITE),
             "move evidence is published without its selection"
         );
         return Ok(());
@@ -503,7 +505,7 @@ fn check_moves(
         .columns
         .checked_sub(1)
         .context("no feature columns")? as usize;
-    moves::check(&published, s, measurements, evaluator, width)
+    moves::check(&published, s, measurements, observations, evaluator, width)
 }
 // laneD:B20-rewrite-simplify end
 

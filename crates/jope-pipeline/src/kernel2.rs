@@ -36,8 +36,9 @@ pub const INADMISSIBLE: &str = "inadmissible";
 /// A child produced by training-only constant refinement.
 pub const REFINE: &str = "refine";
 // laneD:B20-rewrite-simplify begin
-/// A child produced by the exact rewrite pass from a ranked parent's expressions.
-pub const SIMPLIFY: &str = "simplify";
+/// A child produced by the exact rewrite pass from a ranked parent's expressions. Not
+/// `simplify`, which `arm_counts` already names for the search's own simplification edit.
+pub const REWRITE: &str = "rewrite";
 // laneD:B20-rewrite-simplify end
 
 /// Kernel2 evidence adds fields without extending legacy observation JSON.

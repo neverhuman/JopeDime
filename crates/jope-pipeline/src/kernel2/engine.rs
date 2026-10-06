@@ -108,6 +108,8 @@ impl EngineSelection {
         let moves = self.simplify.then(|| MovesRecord {
             ids: vec![REWRITE_SATURATE.into()],
             sha256: None,
+            refused_by_pool: None,
+            not_run: None,
         });
         (refine.is_some() || archive.is_some() || moves.is_some()).then_some(EngineRecord {
             refine,
@@ -184,8 +186,10 @@ impl EngineRecord {
                 "unknown or empty move selection"
             );
             selection.simplify = true;
-            // As with the archive, the digest is evidence that publication adds.
+            // As with the archive, the digest and the counts are evidence that publication adds.
             moves.sha256 = None;
+            moves.refused_by_pool = None;
+            moves.not_run = None;
         }
         // laneD:B20-rewrite-simplify end
         selection.check_options()?;
@@ -259,5 +263,20 @@ pub struct MovesRecord {
     /// has one; the selection's own record, before anything is published, has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sha256: Option<String>,
+    /// With the exact rewrite pass selected, how many times it dropped a smaller expression because
+    /// the profile's admission (`Search::finish`: the pool, the caps and the negation rule) refused
+    /// it, such as a unary minus over a variable under the constants-only negation rule: the stage
+    /// entries of `moves.json` that name such a refusal. Not distinct expressions: it counts
+    /// refusal events per round a parent is read; a parent ranked top for N rounds adds N.
+    /// Publication adds it, as it adds the digest; `verify_run` counts it again from the records.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub refused_by_pool: Option<usize>,
+    /// With the exact rewrite pass selected, how many stage entries of `moves.json` have the stop
+    /// `not_run`: a stage whose own expression could not be rewritten at all (it did not parse,
+    /// the profile refused it, or the rewrite failed). Measured parents pass the same admission,
+    /// so a genuine run is expected to publish 0; a nonzero count names a fault to look into, with
+    /// each entry's reason. Publication adds it; `verify_run` counts it again from the records.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub not_run: Option<usize>,
 }
 // laneD:B20-rewrite-simplify end
