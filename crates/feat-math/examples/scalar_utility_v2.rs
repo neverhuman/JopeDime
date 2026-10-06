@@ -130,7 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if input["sha256"] != input_hash {
             return Err("utility input hash mismatch".into());
         }
-        let data: Value = serde_json::from_slice(bytes)?;
+        let data: Value = serde_json::from_slice(&bytes)?;
         if data["schema"] != "feat-math.scalar-utility-common-input.v2"
             || data["labels_unchanged"] != true
             || data["worker_train_count"] != 64
