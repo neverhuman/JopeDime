@@ -24,11 +24,13 @@ fn host_memory_stalls_and_stale_stage_receipts_are_not_reported_as_normal_gpu_wa
                     f,
                     0,
                     &hardware,
-                    &serde_json::Value::Null,
-                    &serde_json::Value::Null,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural: &serde_json::Value::Null,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -127,11 +129,13 @@ fn selected_checkpoint_current_corpus_and_isolated_work_are_visible() {
                 f,
                 0,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -162,11 +166,13 @@ fn selected_checkpoint_current_corpus_and_isolated_work_are_visible() {
                 f,
                 0,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -252,11 +258,13 @@ fn conflicting_live_workers_and_lease_receipts_show_uncertainty() {
                 f,
                 0,
                 &h,
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -280,11 +288,13 @@ fn all_views_resize_and_mark_missing_telemetry() {
                         f,
                         view,
                         &Hardware::default(),
-                        &serde_json::Value::Null,
-                        &serde_json::Value::Null,
-                        &serde_json::Value::Null,
-                        "",
-                        &History::default(),
+                        jope_parallel::dashboard::DashboardData {
+                            gp: &serde_json::Value::Null,
+                            neural: &serde_json::Value::Null,
+                            run: &serde_json::Value::Null,
+                            events: "",
+                            history: &History::default(),
+                        },
                     )
                 })
                 .unwrap();
@@ -297,11 +307,13 @@ fn all_views_resize_and_mark_missing_telemetry() {
                 f,
                 1,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &serde_json::Value::Null,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -332,11 +344,13 @@ fn all_views_resize_and_mark_missing_telemetry() {
                 f,
                 1,
                 &h,
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &serde_json::Value::Null,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -372,7 +386,20 @@ fn overview_uses_durable_progress_and_marks_invalidated_training() {
     let neural = serde_json::json!({"phase":"completed real-corpus training block","timestamp":now()-100,"step":300,"steps":300,"world":8});
     let run = serde_json::json!({"phase":"old encoding phase","contexts":{"completed":3500,"total":3500,"families":31,"dimensions":2048},"pilot_started":false});
     terminal
-        .draw(|f| dashboard::render(f, 0, &h, &gp, &neural, &run, "", &History::default()))
+        .draw(|f| {
+            dashboard::render(
+                f,
+                0,
+                &h,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &neural,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
+            )
+        })
         .unwrap();
     let text = terminal
         .backend()
@@ -394,7 +421,20 @@ fn overview_uses_durable_progress_and_marks_invalidated_training() {
     let mut invalid = neural;
     invalid["invalidated"] = true.into();
     terminal
-        .draw(|f| dashboard::render(f, 0, &h, &gp, &invalid, &run, "", &History::default()))
+        .draw(|f| {
+            dashboard::render(
+                f,
+                0,
+                &h,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &invalid,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
+            )
+        })
         .unwrap();
     let text = terminal
         .backend()
@@ -418,11 +458,13 @@ fn stale_gp_history_does_not_display_live_slots_or_worker_rows() {
                 f,
                 3,
                 &Hardware::default(),
-                &gp,
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &serde_json::Value::Null,
+                    run: &serde_json::Value::Null,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -475,7 +517,20 @@ fn capture_live_dashboard_screens() {
     for view in 0..5 {
         let mut terminal = Terminal::new(TestBackend::new(160, 55)).unwrap();
         terminal
-            .draw(|f| dashboard::render(f, view, &h, &gp, &neural, &run, "", &History::default()))
+            .draw(|f| {
+                dashboard::render(
+                    f,
+                    view,
+                    &h,
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &gp,
+                        neural: &neural,
+                        run: &run,
+                        events: "",
+                        history: &History::default(),
+                    },
+                )
+            })
             .unwrap();
         let buffer = terminal.backend().buffer();
         let text = buffer
@@ -526,7 +581,20 @@ fn live_encoder_takes_priority_and_pending_dependency_is_visible() {
     let mut neural = serde_json::json!({"phase":"Hyperion new cohort", "encoding":true,"timestamp":now(),"completed":250,"total":4000});
     let run = serde_json::json!({"cycle":{"phase":"GP teaching comparison"},"contexts":{"completed":7000,"total":7000},"encoding_pipeline":{"phase":"Qualify new sampler shapes","timestamp":now()-100,"completed":0,"total":4000,"reason":"eight-rank parity before component inference","complete":false}});
     terminal
-        .draw(|f| dashboard::render(f, 0, &h, &gp, &neural, &run, "", &History::default()))
+        .draw(|f| {
+            dashboard::render(
+                f,
+                0,
+                &h,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &neural,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
+            )
+        })
         .unwrap();
     let screen = |t: &Terminal<TestBackend>| {
         t.backend()
@@ -544,14 +612,40 @@ fn live_encoder_takes_priority_and_pending_dependency_is_visible() {
         .contains("Hyperion new cohort"));
     neural["phase"] = "completed encoding block".into();
     terminal
-        .draw(|f| dashboard::render(f, 0, &h, &gp, &neural, &run, "", &History::default()))
+        .draw(|f| {
+            dashboard::render(
+                f,
+                0,
+                &h,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &neural,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
+            )
+        })
         .unwrap();
     let text = screen(&terminal);
     assert!(text.contains("eight-rank parity before component inference"));
     assert!(text.contains("stale"));
     assert!(!text.contains("Encoding queue finished"));
     terminal
-        .draw(|f| dashboard::render(f, 2, &h, &gp, &neural, &run, "", &History::default()))
+        .draw(|f| {
+            dashboard::render(
+                f,
+                2,
+                &h,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &neural,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
+            )
+        })
         .unwrap();
     assert!(screen(&terminal).contains("Saved checkpoint"));
 }
@@ -599,11 +693,13 @@ fn learning_history_uses_saved_metrics_and_does_not_promote_a_probe() {
                 f,
                 0,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -661,11 +757,13 @@ fn managed_cycles_and_raw_scores_are_distinct_from_matched_reports() {
                 f,
                 3,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -724,11 +822,13 @@ fn newest_managed_report_is_visible_when_its_path_sorts_before_history() {
                 f,
                 0,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -785,11 +885,13 @@ fn transition_receipts_and_five_second_teacher_feed_do_not_look_stalled() {
                     f,
                     0,
                     &Hardware::default(),
-                    &serde_json::Value::Null,
-                    neural,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -869,11 +971,13 @@ fn completed_auxiliary_displays_actual_steps_and_configured_limit_after_plateau(
                     f,
                     0,
                     &Hardware::default(),
-                    &serde_json::Value::Null,
-                    &serde_json::Value::Null,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural: &serde_json::Value::Null,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -934,11 +1038,13 @@ fn proposal_library_is_saved_seeds_not_encodings_or_gp_teaching_scores() {
                     f,
                     0,
                     &h,
-                    &serde_json::Value::Null,
-                    &serde_json::Value::Null,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural: &serde_json::Value::Null,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -993,11 +1099,13 @@ fn report_watcher_waiting_is_live_at_its_fifteen_second_poll_interval() {
                     f,
                     0,
                     &Hardware::default(),
-                    &serde_json::Value::Null,
-                    &serde_json::Value::Null,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural: &serde_json::Value::Null,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -1040,8 +1148,10 @@ fn receipts_of_retired_producers_show_history_not_pending_work() {
     };
     let lines = |run: &serde_json::Value| {
         rendered_lines(
-            160,
-            55,
+            TerminalSize {
+                width: 160,
+                height: 55,
+            },
             0,
             &hardware,
             &serde_json::Value::Null,
@@ -1201,11 +1311,13 @@ fn admitted_library_counts_only_matching_compact_gp_outputs_with_a_bounded_scan(
                 f,
                 0,
                 &Hardware::default(),
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &second,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &second,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -1246,11 +1358,13 @@ fn repeated_gp_search_jobs_are_distinct_from_unique_cut_encodings() {
                 f,
                 0,
                 &Hardware::default(),
-                &gp,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -1271,11 +1385,13 @@ fn repeated_gp_search_jobs_are_distinct_from_unique_cut_encodings() {
                 f,
                 3,
                 &Hardware::default(),
-                &gp,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &gp,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -1330,11 +1446,13 @@ fn pure_predictions_keep_their_scope_separate_from_admitted_library_searches() {
                     f,
                     0,
                     &h,
-                    &serde_json::Value::Null,
-                    &serde_json::Value::Null,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural: &serde_json::Value::Null,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -1397,11 +1515,13 @@ fn selected_replay_counts_remain_visible_without_legacy_progress_fields() {
                     f,
                     view,
                     &Hardware::default(),
-                    &serde_json::Value::Null,
-                    &serde_json::Value::Null,
-                    run,
-                    "",
-                    &History::default(),
+                    jope_parallel::dashboard::DashboardData {
+                        gp: &serde_json::Value::Null,
+                        neural: &serde_json::Value::Null,
+                        run,
+                        events: "",
+                        history: &History::default(),
+                    },
                 )
             })
             .unwrap();
@@ -1454,11 +1574,13 @@ fn fresh_unrelated_packing_inventory_does_not_certify_a_stale_cycle() {
                 f,
                 0,
                 &hardware,
-                &serde_json::Value::Null,
-                &serde_json::Value::Null,
-                &run,
-                "",
-                &History::default(),
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural: &serde_json::Value::Null,
+                    run: &run,
+                    events: "",
+                    history: &History::default(),
+                },
             )
         })
         .unwrap();
@@ -1474,9 +1596,15 @@ fn fresh_unrelated_packing_inventory_does_not_certify_a_stale_cycle() {
     assert!(!text.contains("aux plateaued"), "{text}");
 }
 
-fn rendered_lines(
+/// Inputs kept together for rendered lines; no serialized contract changes.
+#[derive(Clone, Copy)]
+struct TerminalSize {
     width: u16,
     height: u16,
+}
+
+fn rendered_lines(
+    size: TerminalSize,
     view: usize,
     hardware: &Hardware,
     neural: &serde_json::Value,
@@ -1484,6 +1612,8 @@ fn rendered_lines(
     events: &str,
     history: &History,
 ) -> Vec<String> {
+    let TerminalSize { width, height } = size;
+
     let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
     terminal
         .draw(|frame| {
@@ -1491,11 +1621,13 @@ fn rendered_lines(
                 frame,
                 view,
                 hardware,
-                &serde_json::Value::Null,
-                neural,
-                run,
-                events,
-                history,
+                jope_parallel::dashboard::DashboardData {
+                    gp: &serde_json::Value::Null,
+                    neural,
+                    run,
+                    events,
+                    history,
+                },
             )
         })
         .unwrap();
@@ -1523,8 +1655,10 @@ fn held_training_receipt_never_reports_policy_running() {
     let neural = serde_json::json!({"phase":"held","step":0,"steps":0,"timestamp":now()});
     let run = serde_json::json!({"phase":"private rendered fixture","pilot_started":false});
     let rows = rendered_lines(
-        160,
-        55,
+        TerminalSize {
+            width: 160,
+            height: 55,
+        },
         0,
         &hardware,
         &neural,
@@ -1542,7 +1676,18 @@ fn held_training_receipt_never_reports_policy_running() {
     assert!(rows.join("\n").contains("GPU training held"));
     let mut details = History::default();
     details.learning_details = true;
-    let rows = rendered_lines(160, 55, 2, &hardware, &neural, &run, "", &details);
+    let rows = rendered_lines(
+        TerminalSize {
+            width: 160,
+            height: 55,
+        },
+        2,
+        &hardware,
+        &neural,
+        &run,
+        "",
+        &details,
+    );
     assert!(rows.join("\n").contains("Policy optimization: HELD"));
 }
 
@@ -1555,8 +1700,10 @@ fn automatic_hold_does_not_hide_stale_receipt_or_claim_existing_worker_stopped()
         "training_hold_reason":"frozen diagnostics rejected","training_task_reservation":{"identity":"existing-task"}},
         "operations":{"services":{"jope-parallel-campaign":{"ActiveState":"active"}}}});
     let rows = rendered_lines(
-        220,
-        70,
+        TerminalSize {
+            width: 220,
+            height: 70,
+        },
         0,
         &hardware,
         &neural,
@@ -1574,8 +1721,10 @@ fn automatic_hold_does_not_hide_stale_receipt_or_claim_existing_worker_stopped()
     assert!(policy.contains("separate reconciliation"));
     let future = serde_json::json!({"phase":"training","step":1,"timestamp":now()+120});
     let rows = rendered_lines(
-        160,
-        55,
+        TerminalSize {
+            width: 160,
+            height: 55,
+        },
         0,
         &hardware,
         &future,
@@ -1606,7 +1755,18 @@ fn compact_overview_exposes_hold_and_scrolls_whole_records_without_clipping() {
     let neural =
         serde_json::json!({"phase":"held","timestamp":now(),"training_hold_reason":reason});
     let run = serde_json::json!({"contexts":{"completed":23,"total":23,"families":5}});
-    let rows = rendered_lines(48, 15, 0, &hardware, &neural, &run, "", &History::default());
+    let rows = rendered_lines(
+        TerminalSize {
+            width: 48,
+            height: 15,
+        },
+        0,
+        &hardware,
+        &neural,
+        &run,
+        "",
+        &History::default(),
+    );
     assert!(rows.join("\n").contains("Policy optimization: HELD"));
     assert!(!rows.join("\n").contains("RUNNING"));
     assert!(rows.last().unwrap().contains("scroll"));
@@ -1614,7 +1774,21 @@ fn compact_overview_exposes_hold_and_scrolls_whole_records_without_clipping() {
     for offset in 0..160 {
         let mut history = History::default();
         history.compact_offsets[0] = offset;
-        all.push_str(&rendered_lines(48, 15, 0, &hardware, &neural, &run, "", &history).join("\n"));
+        all.push_str(
+            &rendered_lines(
+                TerminalSize {
+                    width: 48,
+                    height: 15,
+                },
+                0,
+                &hardware,
+                &neural,
+                &run,
+                "",
+                &history,
+            )
+            .join("\n"),
+        );
     }
     let all = all.split_whitespace().collect::<Vec<_>>().join(" ");
     for marker in [
@@ -1626,8 +1800,10 @@ fn compact_overview_exposes_hold_and_scrolls_whole_records_without_clipping() {
         assert!(all.contains(marker), "missing compact record {marker}");
     }
     let wide = rendered_lines(
-        160,
-        55,
+        TerminalSize {
+            width: 160,
+            height: 55,
+        },
         0,
         &hardware,
         &neural,
@@ -1658,8 +1834,10 @@ fn compact_hardware_and_events_keep_last_records_reachable_after_resize() {
         history.compact_offsets[1] = offset;
         all.push_str(
             &rendered_lines(
-                48,
-                15,
+                TerminalSize {
+                    width: 48,
+                    height: 15,
+                },
                 1,
                 &hardware,
                 &serde_json::Value::Null,
@@ -1680,8 +1858,10 @@ fn compact_hardware_and_events_keep_last_records_reachable_after_resize() {
         .collect::<Vec<_>>()
         .join("\n");
     let rows = rendered_lines(
-        48,
-        15,
+        TerminalSize {
+            width: 48,
+            height: 15,
+        },
         4,
         &hardware,
         &serde_json::Value::Null,
@@ -1694,8 +1874,10 @@ fn compact_hardware_and_events_keep_last_records_reachable_after_resize() {
     assert!(rows.last().unwrap().contains("scroll"));
     for view in 0..5 {
         let rows = rendered_lines(
-            48,
-            15,
+            TerminalSize {
+                width: 48,
+                height: 15,
+            },
             view,
             &Hardware::default(),
             &serde_json::Value::Null,

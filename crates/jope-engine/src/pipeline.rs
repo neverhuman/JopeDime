@@ -55,9 +55,11 @@ fn build_corpus_atomic(
 ) -> Result<()> {
     crate::corpus_publication::build(
         root,
-        contexts,
-        vocab,
-        observations,
+        crate::corpus_publication::PublicationSources {
+            contexts,
+            vocab,
+            observations,
+        },
         output,
         true,
         Some(&corpus_cache_path(root, output)?),
@@ -421,13 +423,15 @@ pub fn run(
             root,
             corpus_path,
             &train1,
-            8,
-            256,
-            steps,
-            1000,
-            train1.exists(),
-            None,
-            initialize,
+            crate::controller::TrainingOptions {
+                world: 8,
+                micro: 256,
+                steps,
+                checkpoint_steps: 1000,
+                resume: train1.exists(),
+                fail_rank: None,
+                initialize,
+            },
         )?;
     }
     let first = latest(root, &train1)?;
@@ -675,13 +679,15 @@ pub fn run(
             root,
             &corpus2,
             &train2,
-            8,
-            256,
-            steps,
-            1000,
-            train2.exists(),
-            None,
-            Some(&second_initialization),
+            crate::controller::TrainingOptions {
+                world: 8,
+                micro: 256,
+                steps,
+                checkpoint_steps: 1000,
+                resume: train2.exists(),
+                fail_rank: None,
+                initialize: Some(&second_initialization),
+            },
         )?;
     }
     crate::campaign::check_deadline()?;

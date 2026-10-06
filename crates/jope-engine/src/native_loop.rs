@@ -1363,10 +1363,12 @@ impl Loop {
                 &assessment,
                 &completed.run,
                 generation,
-                &next_parent,
-                &parent,
-                &train_ref,
-                &comparison,
+                crate::native_loop::ParentEvidence {
+                    cp: &next_parent,
+                    previous: &parent,
+                    train: &train_ref,
+                    comparison: &comparison,
+                },
             )?;
             ensure!(decision.accepted, "predecessor checkpoint was not accepted");
             let state: Value = native_genome::load(&self.root, &next_parent)?;
@@ -1748,10 +1750,12 @@ impl Loop {
                 &assessment,
                 &self.config.run,
                 generation,
-                &candidate_checkpoint,
-                &checkpoint,
-                &train_ref,
-                &comparison,
+                crate::native_loop::ParentEvidence {
+                    cp: &candidate_checkpoint,
+                    previous: &checkpoint,
+                    train: &train_ref,
+                    comparison: &comparison,
+                },
             )?;
             if !decision.accepted {
                 p.idle_reasons
@@ -1840,16 +1844,29 @@ fn verify_result_binding(
     );
     Ok(())
 }
+/// Checkpoint and comparison references required by a parent decision.
+#[derive(Clone, Copy)]
+struct ParentEvidence<'a> {
+    pub cp: &'a Artifact,
+    pub previous: &'a Artifact,
+    pub train: &'a Artifact,
+    pub comparison: &'a Artifact,
+}
+
 fn verify_parent_decision(
     d: &ProposalParentDecision,
     a: &Value,
     run: &str,
     g: u64,
-    cp: &Artifact,
-    previous: &Artifact,
-    train: &Artifact,
-    comparison: &Artifact,
+    evidence: ParentEvidence<'_>,
 ) -> Result<()> {
+    let ParentEvidence {
+        cp,
+        previous,
+        train,
+        comparison,
+    } = evidence;
+
     ensure!(
         d.schema == "jope.proposal_parent_decision.v1"
             && d.run == run
@@ -2045,17 +2062,43 @@ mod tests {
             &json!({"committed":true}),
             "r",
             0,
-            &a,
-            &a,
-            &a,
-            &a
+            crate::native_loop::ParentEvidence {
+                cp: &a,
+                previous: &a,
+                train: &a,
+                comparison: &a
+            },
         )
         .is_err());
         let review = json!({"schema":"jope.proposal_parent_quality_review.v1","checkpoint":a,"previous_parent":a,"training_result":a,"comparison":a,
             "accepted":true,"sealed_test_used":false,"serving_promotion":false,"reviewer":"unit-test reviewer","rationale":"unit-test evidence decision"});
-        verify_parent_decision(&decision, &review, "r", 0, &a, &a, &a, &a).unwrap();
+        verify_parent_decision(
+            &decision,
+            &review,
+            "r",
+            0,
+            crate::native_loop::ParentEvidence {
+                cp: &a,
+                previous: &a,
+                train: &a,
+                comparison: &a,
+            },
+        )
+        .unwrap();
         decision.checkpoint.sha256 = "2".repeat(64);
-        assert!(verify_parent_decision(&decision, &review, "r", 0, &a, &a, &a, &a).is_err());
+        assert!(verify_parent_decision(
+            &decision,
+            &review,
+            "r",
+            0,
+            crate::native_loop::ParentEvidence {
+                cp: &a,
+                previous: &a,
+                train: &a,
+                comparison: &a
+            },
+        )
+        .is_err());
     }
     #[test]
     fn unequal_valid_arms_remain_preserved_but_do_not_invent_matches() {

@@ -198,11 +198,13 @@ fn run_cli(argv: &[String]) -> Result<()> {
             &path("prepared")?,
             text("cut")?.parse()?,
             &path("output")?,
-            text("evaluations")?.parse()?,
-            text("seconds")?.parse()?,
-            qualification,
-            values.get("seeds").map(Path::new),
-            values.get("vocabulary").map(Path::new),
+            crate::gp::SearchOptions {
+                evaluations: text("evaluations")?.parse()?,
+                seconds: text("seconds")?.parse()?,
+                qualification,
+                seeds: values.get("seeds").map(Path::new),
+                vocabulary: values.get("vocabulary").map(Path::new),
+            },
             values
                 .get("rng-seed")
                 .map(|seed| seed.parse::<u64>())

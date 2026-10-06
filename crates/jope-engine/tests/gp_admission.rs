@@ -44,7 +44,7 @@ fn search_command(root: &Path, prepared: &Path, output: &Path) -> Command {
         .arg(root)
         .arg("search")
         .arg("--prepared")
-        .arg(&prepared)
+        .arg(prepared)
         .args([
             "--cut",
             "0",
@@ -57,7 +57,7 @@ fn search_command(root: &Path, prepared: &Path, output: &Path) -> Command {
         .arg("--vocabulary")
         .arg(&vocabulary)
         .arg("--output")
-        .arg(&output)
+        .arg(output)
         .env_remove("JOPE_EXPERIMENT_DIR")
         .env_remove("JOPE_EXPERIMENT_CRASH_AFTER")
         .env_remove("JOPE_FIT_AUTHORITY")

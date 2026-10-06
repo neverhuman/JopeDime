@@ -369,9 +369,11 @@ pub(crate) fn verify_result(
             row,
             &candidate.context,
             &prepared,
-            &task.vocabulary.sha256,
-            &expected,
-            &training,
+            crate::label_admission::AdmissionInputs {
+                vocabulary_sha: &task.vocabulary.sha256,
+                expected: &expected,
+                fit_training: &training,
+            },
             &mut authority,
         )?;
         if task.stage == Stage::Direct {

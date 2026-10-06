@@ -418,11 +418,21 @@ pub fn validate(
         row,
         context,
         prepared,
-        vocabulary_sha,
-        expected,
-        &training,
+        crate::label_admission::AdmissionInputs {
+            vocabulary_sha,
+            expected,
+            fit_training: &training,
+        },
         &mut authority,
     )
+}
+
+/// Frozen admission policy and preverified training/vocabulary identities.
+#[derive(Clone, Copy)]
+pub struct AdmissionInputs<'a> {
+    pub vocabulary_sha: &'a str,
+    pub expected: &'a Value,
+    pub fit_training: &'a str,
 }
 
 /// The publication owner verifies each immutable cut once, outside label scans.
@@ -431,11 +441,15 @@ pub(crate) fn validate_preverified(
     row: &Value,
     context: &ContextRow,
     prepared: &Prepared,
-    vocabulary_sha: &str,
-    expected: &Value,
-    fit_training: &str,
+    inputs: AdmissionInputs<'_>,
     authority: &mut crate::eval_registry::Authority,
 ) -> Result<()> {
+    let AdmissionInputs {
+        vocabulary_sha,
+        expected,
+        fit_training,
+    } = inputs;
+
     ensure!(
         expected["schema"] == POLICY_SCHEMA && expected["evaluator_protocol"] == PROTOCOL,
         "unknown admission policy"

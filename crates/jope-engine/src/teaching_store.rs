@@ -126,17 +126,33 @@ fn verify_shard(root: &Path, shard: &Shard) -> Result<PathBuf> {
     Ok(path)
 }
 
+/// Program, value and ranking target assigned when packing a shard.
+type AssignedLabels = Vec<(String, f32, f32)>;
+
+#[derive(Clone, Copy)]
+struct GroupLabels<'a> {
+    pub vocab: &'a Vocab,
+    pub binding: &'a str,
+    pub policy: &'a str,
+    pub lineage: &'a BTreeMap<String, Value>,
+    pub previous: &'a BTreeMap<String, (f32, f32)>,
+}
+
 fn pack_group(
     root: &Path,
     store: &Path,
     context: usize,
     programs: Programs,
-    vocab: &Vocab,
-    binding: &str,
-    policy: &str,
-    lineage: &BTreeMap<String, Value>,
-    previous: &BTreeMap<String, (f32, f32)>,
-) -> Result<(Shard, Vec<(String, f32, f32)>)> {
+    labels: GroupLabels<'_>,
+) -> Result<(Shard, AssignedLabels)> {
+    let GroupLabels {
+        vocab,
+        binding,
+        policy,
+        lineage,
+        previous,
+    } = labels;
+
     let key = hash(&serde_json::to_vec(&(
         binding, context, &programs, lineage,
     ))?);
@@ -269,56 +285,41 @@ fn pack_group(
     Ok((shard, assigned))
 }
 
+/// Immutable inputs and destinations for one teaching publication.
+#[derive(Clone, Copy)]
+pub struct PublishRequest<'a> {
+    pub contexts_path: &'a Path,
+    pub vocabulary: &'a Path,
+    pub sources: &'a [PathBuf],
+    pub output: &'a Path,
+    pub store: &'a Path,
+    pub qualification: bool,
+}
+
 /// Source order is an explicit append-only contract for legacy first-label
 /// semantics. Mutated, removed or reordered receipts require a new store.
 pub fn publish(
     root: &Path,
-    contexts_path: &Path,
-    vocabulary: &Path,
-    sources: &[PathBuf],
-    output: &Path,
-    store: &Path,
-    qualification: bool,
+    request: PublishRequest<'_>,
     policy: &str,
     progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<()> {
     ensure!(
-        qualification,
+        request.qualification,
         "production publication requires a frozen strict admission manifest"
     );
-    publish_impl(
-        root,
-        contexts_path,
-        vocabulary,
-        sources,
-        output,
-        store,
-        qualification,
-        policy,
-        None,
-        progress,
-    )
+    publish_impl(root, request, policy, None, progress)
 }
 
 pub fn publish_admitted(
     root: &Path,
-    contexts_path: &Path,
-    vocabulary: &Path,
-    sources: &[PathBuf],
-    output: &Path,
-    store: &Path,
-    qualification: bool,
+    request: PublishRequest<'_>,
     admission: &Path,
     progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<()> {
     publish_impl(
         root,
-        contexts_path,
-        vocabulary,
-        sources,
-        output,
-        store,
-        qualification,
+        request,
         "strict_midrank_v4",
         Some(admission),
         progress,
@@ -327,16 +328,20 @@ pub fn publish_admitted(
 
 fn publish_impl(
     root: &Path,
-    contexts_path: &Path,
-    vocabulary: &Path,
-    sources: &[PathBuf],
-    output: &Path,
-    store: &Path,
-    qualification: bool,
+    request: PublishRequest<'_>,
     policy: &str,
     admission: Option<&Path>,
     mut progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<()> {
+    let PublishRequest {
+        contexts_path,
+        vocabulary,
+        sources,
+        output,
+        store,
+        qualification,
+    } = request;
+
     ensure!(
         [
             "reference_v1",
@@ -428,6 +433,7 @@ fn publish_impl(
     let semantic_sources = concat!(
         include_str!("corpus.rs"),
         include_str!("grammar.rs"),
+        include_str!("grammar/automaton.rs"),
         include_str!("teaching_store.rs"),
         include_str!("task_contract.rs"),
         include_str!("prepare.rs"),
@@ -610,9 +616,11 @@ fn publish_impl(
                         &row,
                         &contexts[c],
                         &prepared[&contexts[c].prepared],
-                        &hash(&vocab_bytes),
-                        expected,
-                        training,
+                        crate::label_admission::AdmissionInputs {
+                            vocabulary_sha: &hash(&vocab_bytes),
+                            expected,
+                            fit_training: training,
+                        },
                         authority.as_mut().context("approved authority absent")?,
                     )
                 });
@@ -700,10 +708,12 @@ fn publish_impl(
         let mut contribution = corpus::scan_ledger(
             rows,
             path,
-            &by_cut,
-            &contexts,
-            &prepared,
-            &vocab,
+            crate::corpus::ScanInputs {
+                by_cut: &by_cut,
+                contexts: &contexts,
+                prepared: &prepared,
+                vocab: &vocab,
+            },
             qualification,
             &mut tokens,
         )?;
@@ -903,7 +913,17 @@ fn publish_impl(
         }
         let packed = if programs.len() >= 8 {
             Some(pack_group(
-                &root, &store, context, programs, &vocab, &binding, policy, &lineage, &previous,
+                &root,
+                &store,
+                context,
+                programs,
+                crate::teaching_store::GroupLabels {
+                    vocab: &vocab,
+                    binding: &binding,
+                    policy,
+                    lineage: &lineage,
+                    previous: &previous,
+                },
             )?)
         } else {
             None
@@ -1036,8 +1056,10 @@ pub struct TeachingRecords {
     parts: Vec<(usize, Records, Vec<usize>)>,
     count: usize,
 }
+type ResidentTeaching = (String, std::rc::Rc<(Index, TeachingRecords)>);
+
 thread_local! {
-    static RESIDENT: std::cell::RefCell<Option<(String,std::rc::Rc<(Index,TeachingRecords)>)>> = const { std::cell::RefCell::new(None) };
+    static RESIDENT: std::cell::RefCell<Option<ResidentTeaching>> = const { std::cell::RefCell::new(None) };
 }
 
 /// Retain the sealed view across tasks with the same immutable identity. Every

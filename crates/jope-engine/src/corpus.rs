@@ -39,6 +39,7 @@ pub(crate) struct TokenCache {
     payload_bytes: usize,
 }
 impl TokenCache {
+    #[cfg(test)]
     fn encode(&mut self, vocab: &Vocab, genome: &str) -> std::result::Result<Vec<usize>, String> {
         self.encode_for_task(vocab, genome, "regression")
     }
@@ -515,16 +516,29 @@ impl LedgerCache {
     }
 }
 
+/// Immutable cut, preparation and vocabulary views shared by ledger scans.
+#[derive(Clone, Copy)]
+pub(crate) struct ScanInputs<'a> {
+    pub by_cut: &'a BTreeMap<(String, usize), usize>,
+    pub contexts: &'a [ContextRow],
+    pub prepared: &'a BTreeMap<PathBuf, Prepared>,
+    pub vocab: &'a Vocab,
+}
+
 pub(crate) fn scan_ledger(
     rows: Vec<Value>,
     path: &Path,
-    by_cut: &BTreeMap<(String, usize), usize>,
-    contexts: &[ContextRow],
-    prepared: &BTreeMap<PathBuf, Prepared>,
-    vocab: &Vocab,
+    inputs: ScanInputs<'_>,
     qualification: bool,
     token_cache: &mut TokenCache,
 ) -> Result<Contribution> {
+    let ScanInputs {
+        by_cut,
+        contexts,
+        prepared,
+        vocab,
+    } = inputs;
+
     let mut contribution = Contribution::default();
     for o in rows {
         crate::campaign::check_deadline()?;
@@ -615,7 +629,7 @@ pub(crate) fn scan_ledger(
                 .or_default() += 1;
             continue;
         }
-        let tokens = match token_cache.encode_for_task(&vocab, genome, task) {
+        let tokens = match token_cache.encode_for_task(vocab, genome, task) {
             Ok(tokens) => tokens,
             Err(reason) => {
                 *contribution.counts.entry(reason).or_default() += 1;
@@ -668,9 +682,11 @@ pub fn build_observed(
 ) -> Result<()> {
     build_impl(
         root,
-        contexts_path,
-        vocab_path,
-        observations,
+        crate::corpus::CorpusSources {
+            contexts_path,
+            vocab_path,
+            observations,
+        },
         output,
         qualification,
         None,
@@ -679,27 +695,41 @@ pub fn build_observed(
     .map(|_| ())
 }
 
+/// Pinned context, vocabulary and observation inputs for a corpus build.
+#[derive(Clone, Copy)]
+pub struct CorpusSources<'a> {
+    pub contexts_path: &'a Path,
+    pub vocab_path: &'a Path,
+    pub observations: &'a [PathBuf],
+}
+
 /// Reuse validated ledger contributions in a private cache under `root/runs`.
 /// Every ledger is SHA256-checked on every call; reuse avoids JSON parsing and
 /// tokenization, not source I/O. This never changes corpus bytes or provenance.
 /// The caller retains responsibility for atomic publication of `output`.
 pub fn build_observed_cached(
     root: &Path,
-    contexts_path: &Path,
-    vocab_path: &Path,
-    observations: &[PathBuf],
+    sources: CorpusSources<'_>,
     output: &Path,
     qualification: bool,
     cache_path: &Path,
     progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<ScanCacheStats> {
+    let CorpusSources {
+        contexts_path,
+        vocab_path,
+        observations,
+    } = sources;
+
     ensure!(qualification, "production corpus requires teaching_store::publish_admitted and a frozen admission manifest");
     let cache = LedgerCache::open(root, cache_path, output, observations)?;
     build_impl(
         root,
-        contexts_path,
-        vocab_path,
-        observations,
+        crate::corpus::CorpusSources {
+            contexts_path,
+            vocab_path,
+            observations,
+        },
         output,
         qualification,
         Some(cache),
@@ -709,14 +739,18 @@ pub fn build_observed_cached(
 
 fn build_impl(
     root: &Path,
-    contexts_path: &Path,
-    vocab_path: &Path,
-    observations: &[PathBuf],
+    sources: CorpusSources<'_>,
     output: &Path,
     qualification: bool,
     cache: Option<LedgerCache>,
     mut progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<ScanCacheStats> {
+    let CorpusSources {
+        contexts_path,
+        vocab_path,
+        observations,
+    } = sources;
+
     crate::campaign::check_deadline()?;
     ensure!(qualification, "production corpus requires teaching_store::publish_admitted and a frozen admission manifest");
     ensure!(!output.exists(), "corpus version exists");
@@ -738,6 +772,7 @@ fn build_impl(
             concat!(
                 include_str!("corpus.rs"),
                 include_str!("grammar.rs"),
+                include_str!("grammar/automaton.rs"),
                 include_str!("task_contract.rs"),
                 include_str!("prepare.rs"),
                 include_str!("encoding.rs"),
@@ -838,10 +873,12 @@ fn build_impl(
                     let contribution = scan_ledger(
                         rows,
                         &path,
-                        &by_cut,
-                        &contexts,
-                        &prepared,
-                        &vocab,
+                        crate::corpus::ScanInputs {
+                            by_cut: &by_cut,
+                            contexts: &contexts,
+                            prepared: &prepared,
+                            vocab: &vocab,
+                        },
                         qualification,
                         &mut token_cache,
                     )?;
@@ -859,10 +896,12 @@ fn build_impl(
                 let contribution = scan_ledger(
                     rows,
                     &path,
-                    &by_cut,
-                    &contexts,
-                    &prepared,
-                    &vocab,
+                    crate::corpus::ScanInputs {
+                        by_cut: &by_cut,
+                        contexts: &contexts,
+                        prepared: &prepared,
+                        vocab: &vocab,
+                    },
                     qualification,
                     &mut token_cache,
                 )?;
@@ -884,10 +923,13 @@ fn build_impl(
             for (context, programs) in contribution.selected {
                 let target = selected.entry(context).or_default();
                 for (genome, label) in programs {
-                    if target.contains_key(&genome) {
-                        *counts.entry("duplicate_program_cut".into()).or_default() += 1;
-                    } else {
-                        target.insert(genome, label);
+                    match target.entry(genome) {
+                        std::collections::btree_map::Entry::Occupied(_) => {
+                            *counts.entry("duplicate_program_cut".into()).or_default() += 1;
+                        }
+                        std::collections::btree_map::Entry::Vacant(entry) => {
+                            entry.insert(label);
+                        }
                     }
                 }
             }

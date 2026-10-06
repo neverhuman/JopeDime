@@ -971,7 +971,8 @@ fn a_participant_proves_its_smartcluster_job_before_any_work() {
     // spec differs from its supervisor's only by `edit`.
     let client = jain_smartcluster::Client::new(rank0.daemon.socket.clone());
     let (mut genuine, mut other_job) = (None, None);
-    let cases: [(&str, fn(&mut JobSpec, &str), &str); 3] = [
+    type JobMutation = fn(&mut JobSpec, &str);
+    let cases: [(&str, JobMutation, &str); 3] = [
         // Positive control: it proves its job, then finds no coordinator listening.
         ("genuine", |_, _| {}, "connect 127.0.0.1"),
         (

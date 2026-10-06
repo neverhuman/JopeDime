@@ -289,7 +289,7 @@ pub fn evaluate_regression_seed(
             .failures
             .push("a fold regressed by more than 2%".into());
     }
-    if !(report.bootstrap_lower_bound > 0.0) {
+    if report.bootstrap_lower_bound.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
         report
             .failures
             .push("one-sided 95% grouped-bootstrap lower bound is not positive".into());

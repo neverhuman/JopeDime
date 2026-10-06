@@ -147,6 +147,14 @@ pub fn run_composite_embedding_sweep(
     Ok(embedding)
 }
 
+/// Inputs kept together for run composite sweep; no serialized contract changes.
+#[derive(Clone, Copy)]
+pub struct PatchInput {
+    pub pad_u8: u8,
+    pub quant_scale: f32,
+    pub max_patch: usize,
+}
+
 /// The composite randomized sweep. Sweep 0 = identity permutations (UI moving front); sweeps 1..K
 /// shuffle rows and columns with `seeded(plan.seed ^ mix64(k))`. Each sweep tiles every scale in
 /// `plan.scales`, batching patches (chunk-capped so ~`target_chunks_per_sweep` frames stream per
@@ -156,13 +164,17 @@ pub fn run_composite_embedding_sweep(
 pub fn run_composite_sweep(
     model: &dyn PatchModel,
     xu8: &U8Grid,
-    pad_u8: u8,
-    quant_scale: f32,
-    max_patch: usize,
+    input: PatchInput,
     plan: &SweepPlan,
     sink: &dyn Sink,
     on_chunk: impl FnMut(ChunkReport<'_>),
 ) -> Result<SweepOutput> {
+    let PatchInput {
+        pad_u8,
+        quant_scale,
+        max_patch,
+    } = input;
+
     let (embedding, confidence) = run_sweep(
         model,
         xu8,

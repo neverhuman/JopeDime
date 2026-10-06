@@ -26,10 +26,12 @@ impl Fixture {
             &authority,
             &watermark,
             "(pipe X (ridge alpha=1))",
-            vec![vec![1.]],
-            vec![2.],
-            b"pp".to_vec(),
-            b"view".to_vec(),
+            crate::eval_registry::FitInputs {
+                x: vec![vec![1.]],
+                y: vec![2.],
+                preprocessing: b"pp".to_vec(),
+                feature_view: b"view".to_vec(),
+            },
             0,
         )
         .unwrap();

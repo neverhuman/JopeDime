@@ -118,21 +118,6 @@ impl Fixture {
             .join(family)
             .join("observations.json")
     }
-    fn strict_receipt(&self, path: &Path, identity: &Value) {
-        let mut rows: Vec<Value> = read_json(path).unwrap();
-        for (n, row) in rows.iter_mut().enumerate() {
-            if !row["failure"].is_null() {
-                row["metrics"] = Value::Null;
-            }
-            attach_completion(self.root(), path.parent().unwrap(), n, row);
-        }
-        write_json(path, &rows).unwrap();
-        write_json(&path.with_file_name("search.json"),&json!({"schema":"parallel.search.v1",
-            "observations_sha256":file_hash(path).unwrap(),"completed_evaluations":rows.len(),"completed_at":1,
-            "final_tests_opened":false,"evaluator_sha256":identity["evaluator_sha256"],
-            "evaluator_protocol":identity["evaluator_protocol"],"prepared_sha256":identity["prepared_sha256"],
-            "cut":identity["cut"],"vocabulary_sha256":identity["vocabulary_sha256"]})).unwrap();
-    }
     fn cache(&self) -> PathBuf {
         self.root().join("runs/experiment/scan-cache")
     }
@@ -150,9 +135,11 @@ impl Fixture {
     fn cached(&self, name: &str, qualification: bool) -> anyhow::Result<ScanCacheStats> {
         corpus::build_observed_cached(
             self.root(),
-            &self.contexts(),
-            &self.vocab(),
-            &self.observations(),
+            jope_parallel::corpus::CorpusSources {
+                contexts_path: &self.contexts(),
+                vocab_path: &self.vocab(),
+                observations: &self.observations(),
+            },
             &self.root().join(name),
             qualification,
             &self.cache(),
@@ -493,13 +480,15 @@ fn cache_and_source_symlinks_and_overlapping_namespaces_are_rejected() {
     ] {
         assert!(corpus::build_observed_cached(
             f.root(),
-            &f.contexts(),
-            &f.vocab(),
-            &f.observations(),
+            jope_parallel::corpus::CorpusSources {
+                contexts_path: &f.contexts(),
+                vocab_path: &f.vocab(),
+                observations: &f.observations()
+            },
             &f.root().join("runs/experiment/output"),
             true,
             &cache,
-            |_, _, _| Ok(())
+            |_, _, _| Ok(()),
         )
         .is_err());
     }
@@ -518,9 +507,11 @@ fn canceled_cache_commits_resume_without_adopting_partial_contributions() {
         f.full("full", true);
         assert!(corpus::build_observed_cached(
             f.root(),
-            &f.contexts(),
-            &f.vocab(),
-            &f.observations(),
+            jope_parallel::corpus::CorpusSources {
+                contexts_path: &f.contexts(),
+                vocab_path: &f.vocab(),
+                observations: &f.observations()
+            },
             &f.root().join("canceled"),
             true,
             &f.cache(),
@@ -529,7 +520,7 @@ fn canceled_cache_commits_resume_without_adopting_partial_contributions() {
                     anyhow::bail!("injected cancellation");
                 }
                 Ok(())
-            }
+            },
         )
         .is_err());
         assert!(!f.root().join("canceled").exists());
@@ -588,9 +579,11 @@ fn cache_kill_child() {
     let boundary = std::env::var("JOPE_CORPUS_KILL_BOUNDARY").unwrap();
     corpus::build_observed_cached(
         &root,
-        &root.join("contexts.json"),
-        &root.join("vocabulary.json"),
-        &[root.join("observations")],
+        jope_parallel::corpus::CorpusSources {
+            contexts_path: &root.join("contexts.json"),
+            vocab_path: &root.join("vocabulary.json"),
+            observations: &[root.join("observations")],
+        },
         &root.join("killed"),
         true,
         &root.join("runs/experiment/scan-cache"),
@@ -745,12 +738,14 @@ fn sharded_export_matches_reference_and_only_changed_groups_are_rebuilt() {
     let publish = |sources: &[PathBuf], name: &str| {
         store::publish(
             f.root(),
-            &f.contexts(),
-            &f.vocab(),
-            sources,
-            &f.root().join(name),
-            &cache,
-            true,
+            jope_parallel::teaching_store::PublishRequest {
+                contexts_path: &f.contexts(),
+                vocabulary: &f.vocab(),
+                sources,
+                output: &f.root().join(name),
+                store: &cache,
+                qualification: true,
+            },
             "reference_v1",
             |_, _, _| Ok(()),
         )
@@ -824,12 +819,14 @@ fn frozen_z_keeps_admitted_percentiles_when_a_new_teacher_arrives() {
     let cache = f.root().join("runs/frozen/store");
     store::publish(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &f.observations(),
-        &f.root().join("frozen-a"),
-        &cache,
-        true,
+        jope_parallel::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &f.observations(),
+            output: &f.root().join("frozen-a"),
+            store: &cache,
+            qualification: true,
+        },
         "frozen_z_v1",
         |_, _, _| Ok(()),
     )
@@ -849,12 +846,14 @@ fn frozen_z_keeps_admitted_percentiles_when_a_new_teacher_arrives() {
     write_json(&added.with_file_name("search.json"), &json!({})).unwrap();
     store::publish(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &[f.observations()[0].clone(), added],
-        &f.root().join("frozen-b"),
-        &cache,
-        true,
+        jope_parallel::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &[f.observations()[0].clone(), added],
+            output: &f.root().join("frozen-b"),
+            store: &cache,
+            qualification: true,
+        },
         "frozen_z_v1",
         |_, _, _| Ok(()),
     )
@@ -882,30 +881,34 @@ fn sharded_interruption_tampering_and_source_order_are_enforced() {
         let output = f.root().join("sharded");
         assert!(store::publish(
             f.root(),
-            &f.contexts(),
-            &f.vocab(),
-            &f.observations(),
-            &output,
-            &cache,
-            true,
+            jope_parallel::teaching_store::PublishRequest {
+                contexts_path: &f.contexts(),
+                vocabulary: &f.vocab(),
+                sources: &f.observations(),
+                output: &output,
+                store: &cache,
+                qualification: true
+            },
             "reference_v1",
             |op, _, _| {
                 if op == boundary {
                     anyhow::bail!("injected interruption");
                 }
                 Ok(())
-            }
+            },
         )
         .is_err());
         assert!(!output.exists());
         store::publish(
             f.root(),
-            &f.contexts(),
-            &f.vocab(),
-            &f.observations(),
-            &output,
-            &cache,
-            true,
+            jope_parallel::teaching_store::PublishRequest {
+                contexts_path: &f.contexts(),
+                vocabulary: &f.vocab(),
+                sources: &f.observations(),
+                output: &output,
+                store: &cache,
+                qualification: true,
+            },
             "reference_v1",
             |_, _, _| Ok(()),
         )
@@ -931,12 +934,14 @@ fn sharded_interruption_tampering_and_source_order_are_enforced() {
     let cache = f.root().join("runs/shards/store");
     store::publish(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &f.observations(),
-        &f.root().join("one"),
-        &cache,
-        true,
+        jope_parallel::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &f.observations(),
+            output: &f.root().join("one"),
+            store: &cache,
+            qualification: true,
+        },
         "reference_v1",
         |_, _, _| Ok(()),
     )
@@ -944,14 +949,16 @@ fn sharded_interruption_tampering_and_source_order_are_enforced() {
     fs::write(f.ledger("family-a"), b"[]").unwrap();
     assert!(store::publish(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &f.observations(),
-        &f.root().join("two"),
-        &cache,
-        true,
+        jope_parallel::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &f.observations(),
+            output: &f.root().join("two"),
+            store: &cache,
+            qualification: true
+        },
         "reference_v1",
-        |_, _, _| Ok(())
+        |_, _, _| Ok(()),
     )
     .is_err());
 }
@@ -977,12 +984,14 @@ fn versioned_midranks_use_original_precision_and_preserve_observations() {
     let source_sha = file_hash(&f.ledger("family-a")).unwrap();
     store::publish(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &f.observations(),
-        &f.root().join("midrank"),
-        &f.root().join("runs/midrank/store"),
-        true,
+        jope_parallel::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &f.observations(),
+            output: &f.root().join("midrank"),
+            store: &f.root().join("runs/midrank/store"),
+            qualification: true,
+        },
         "midrank_v2",
         |_, _, _| Ok(()),
     )
@@ -1088,14 +1097,16 @@ fn legacy_publication_cannot_bypass_production_admission() {
     let f = Fixture::new();
     assert!(jope_parallel::teaching_store::publish(
         f.root(),
-        &f.contexts(),
-        &f.vocab(),
-        &f.observations(),
-        &f.root().join("must-not-publish"),
-        &f.root().join("runs/new-store"),
-        false,
+        jope_parallel::teaching_store::PublishRequest {
+            contexts_path: &f.contexts(),
+            vocabulary: &f.vocab(),
+            sources: &f.observations(),
+            output: &f.root().join("must-not-publish"),
+            store: &f.root().join("runs/new-store"),
+            qualification: false
+        },
         "reference_v1",
-        |_, _, _| Ok(())
+        |_, _, _| Ok(()),
     )
     .is_err());
     assert!(!f.root().join("runs/new-store").exists());

@@ -90,15 +90,17 @@ fn fit_v7(
                 sink,
                 t0,
                 "block",
-                train.n,
-                train.c,
-                output_dim,
-                HyperionEngine::V7,
-                Some(device),
-                Some("running"),
-                None,
-                Some(done_frac),
-                None,
+                crate::hyperion::HyperionEvent {
+                    rows: train.n,
+                    cols: train.c,
+                    output_dim,
+                    engine: HyperionEngine::V7,
+                    device: Some(device),
+                    status: Some("running"),
+                    message: None,
+                    done_frac: Some(done_frac),
+                    preview: None,
+                },
             );
         }
     };
@@ -106,9 +108,11 @@ fn fit_v7(
     let train_out = run_composite_sweep(
         &model,
         &xu8_train,
-        settings.pad_u8,
-        settings.quant_scale,
-        settings.max_patch,
+        crate::hyperion_v7::sweep::PatchInput {
+            pad_u8: settings.pad_u8,
+            quant_scale: settings.quant_scale,
+            max_patch: settings.max_patch,
+        },
         &plan,
         sink,
         |report| {
@@ -150,9 +154,11 @@ fn fit_v7(
     let hold_out = run_composite_sweep(
         &model,
         &xu8_hold,
-        settings.pad_u8,
-        settings.quant_scale,
-        settings.max_patch,
+        crate::hyperion_v7::sweep::PatchInput {
+            pad_u8: settings.pad_u8,
+            quant_scale: settings.quant_scale,
+            max_patch: settings.max_patch,
+        },
         &plan,
         sink,
         |report| {
@@ -261,9 +267,11 @@ pub fn encode_v7_dataset(
     run_composite_sweep(
         &model,
         &xu8,
-        settings.pad_u8,
-        settings.quant_scale,
-        settings.max_patch,
+        crate::hyperion_v7::sweep::PatchInput {
+            pad_u8: settings.pad_u8,
+            quant_scale: settings.quant_scale,
+            max_patch: settings.max_patch,
+        },
         &plan,
         &NullSink,
         |_| {},
@@ -339,9 +347,11 @@ impl V7DatasetEncoder {
         run_composite_sweep(
             &self.model,
             &xu8,
-            self.settings.pad_u8,
-            self.settings.quant_scale,
-            self.settings.max_patch,
+            crate::hyperion_v7::sweep::PatchInput {
+                pad_u8: self.settings.pad_u8,
+                quant_scale: self.settings.quant_scale,
+                max_patch: self.settings.max_patch,
+            },
             &plan,
             &NullSink,
             |_| {},
@@ -486,9 +496,11 @@ fn transform_scoring_v7(encoded: &Matrix, state: &HyperionState) -> Result<Matri
     let out = run_composite_sweep(
         &model,
         &xu8,
-        state.sweep.pad_u8,
-        state.sweep.quant_scale,
-        state.sweep.max_patch,
+        crate::hyperion_v7::sweep::PatchInput {
+            pad_u8: state.sweep.pad_u8,
+            quant_scale: state.sweep.quant_scale,
+            max_patch: state.sweep.max_patch,
+        },
         &plan,
         &NullSink,
         |_| {},
@@ -632,7 +644,7 @@ fn dump_cellmap_npy(path: &str, cellmap: &[f32], h: usize, w: usize) {
     let unpadded = 10 + base.len() + 1;
     let pad = (64 - (unpadded % 64)) % 64;
     let mut hdr = base.into_bytes();
-    hdr.extend(std::iter::repeat(b' ').take(pad));
+    hdr.extend(std::iter::repeat_n(b' ', pad));
     hdr.push(b'\n');
     let hlen = hdr.len() as u16;
     if let Ok(mut f) = std::fs::File::create(path) {

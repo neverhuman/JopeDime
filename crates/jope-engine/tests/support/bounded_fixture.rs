@@ -395,11 +395,13 @@ pub fn result(
     (serde_json::to_vec(&envelope).unwrap(), payload)
 }
 
+pub type RetainedWork = (SupervisorHandle, Liveness, Option<(Vec<u8>, Vec<u8>)>);
+
 /// Deterministic in-memory supervisor for state-machine tests. The shared state lets the
 /// test change liveness and retained results after the coordinator owns the supervisor.
 #[derive(Default)]
 pub struct FakeState {
-    pub work: BTreeMap<String, (SupervisorHandle, Liveness, Option<(Vec<u8>, Vec<u8>)>)>,
+    pub work: BTreeMap<String, RetainedWork>,
     pub launches: u32,
     pub terminations: u32,
 }

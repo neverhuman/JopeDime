@@ -170,9 +170,11 @@ impl ScaleCase {
             row,
             &self.context,
             &self.prepared,
-            &self.vocabulary,
-            &self.s.policy,
-            &self.training,
+            crate::label_admission::AdmissionInputs {
+                vocabulary_sha: &self.vocabulary,
+                expected: &self.s.policy,
+                fit_training: &self.training,
+            },
             &mut authority,
         )
     }
@@ -289,12 +291,14 @@ fn publish(s: &Strict, label: &str) -> rusqlite::Connection {
     let cache = root.join(format!("runs/{label}/store"));
     store::publish_admitted(
         root,
-        &s.f.contexts(),
-        &s.f.vocab(),
-        &s.f.observations(),
-        &root.join(label),
-        &cache,
-        true,
+        crate::teaching_store::PublishRequest {
+            contexts_path: &s.f.contexts(),
+            vocabulary: &s.f.vocab(),
+            sources: &s.f.observations(),
+            output: &root.join(label),
+            store: &cache,
+            qualification: true,
+        },
         &s.expected,
         |_, _, _| Ok(()),
     )

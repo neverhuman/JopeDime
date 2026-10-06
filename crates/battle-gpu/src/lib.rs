@@ -67,6 +67,18 @@ struct Gpu {
 // All access is serialized through the backend Mutex; raw handles never leave it.
 unsafe impl Send for Gpu {}
 
+impl Drop for Gpu {
+    fn drop(&mut self) {
+        // Release the stream before its owning context, while the driver library
+        // is still loaded. The process-lifetime BACKEND retains its usual lifetime.
+        unsafe {
+            (self.api.cuCtxSetCurrent)(self.ctx);
+            (self.api.cuStreamDestroy)(self.stream);
+            (self.api.cuCtxDestroy_v2)(self.ctx);
+        }
+    }
+}
+
 static BACKEND: OnceLock<Result<Mutex<Gpu>, String>> = OnceLock::new();
 
 fn backend() -> Result<&'static Mutex<Gpu>, String> {
