@@ -12,10 +12,11 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at 1d0a27acb, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231.
+<!-- Local release preparation at e8ccd65ac, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234.
 Rebase onto final main and finalize the date before publication. GP-language #231 includes the
-maintained Tanh mutation gate; final verifier binding, jankurai triage and final-main qualification
-remain publication prerequisites. B18 archive wiring is merged; B19/B20 wiring is tracked separately. -->
+maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
+binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
+merged; B19 wiring is tracked separately. -->
 
 ### feat-math and emitters
 
@@ -113,6 +114,9 @@ remain publication prerequisites. B18 archive wiring is merged; B19/B20 wiring i
 - Fix manifest hash comparison and record an identity-only lineage transition (#212).
 - Repair inherited Clippy findings in receiving libraries, alongside earlier behavior-preserving
   lint fixes (#209, #219).
+- Remove the disabled duplicate final-CV loop and retain its positional input under an unused
+  parameter name so strict warning checks pass. Active scoring and retained tests are unchanged
+  (#233).
 - Stabilize executor preparation, daemon polling, lost-ACK and durable execution fixtures while
   preserving work limits and retained deadlines (#175, #181, #187, #194).
 - Stabilize durable recovery and cancellation fixtures without extending signed work limits;
@@ -125,6 +129,13 @@ remain publication prerequisites. B18 archive wiring is merged; B19/B20 wiring i
 
 ### Documentation
 
+- Publish the [complete Jankurai finding register and release rationale](docs/release/jankurai-v1.md)
+  for the pinned `2e0b7723` audit: 544 findings, 468 hard and 76 soft. Its score remains 47/85,
+  with a failing audit exit; the differing auditor binary prevents treating the changed finding
+  total as a source-health improvement (#234).
+- Retain the documented unsafe-site and handle-threading proof gaps, uncapped legacy admission
+  qualification, and executable-artifact loading limitations. These dispositions establish no
+  clean audit, complete GPU safety, complete W1–W12 remediation, or qualified live campaign.
 - Record operator-specific numerical, profile, recipe and export receipts and evaluator-identity
   transitions with their remaining admission and utility requirements.
 - Document GP tree coverage and emitter determinism in `docs/parity/gp-language-tricks.md` and
