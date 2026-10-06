@@ -1,0 +1,193 @@
+"""PAYLOAD-STRIP-PUBLISH mutant gate. Each mutant runs in a COPY of SRC (shutil.copytree) with that copy's PYTHONPATH and cwd,
+under the lane slice limits of RUN/tmp/p2fix3/py.sh; a preflight in every copy asserts that dltrain and the tools resolve
+inside the copy. A mutant is killed when its test modules fail. The unmutated baseline copy must pass first.
+Usage: system python3 mutants_payload_strip.py OUT_DIR   (OUT_DIR create-only; receipt OUT_DIR/mutants-payload-strip.json)
+"""
+import concurrent.futures
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+PY = "/home/ubuntu/.venvs/jope-dltrain-v1/bin/python"
+PUB, STRIP, LAB, MAN = "tools/v2_publish.py", "tools/v2_strip_outer_test.py", "dltrain/scorer_labels.py", "tools/v2_rowsel_raw_manifest.py"
+ADP = "tools/s1_outer_test_scorer.py"
+T_PUB, T_STRIP = "tests.test_v2_publish", "tests.test_payload_strip"
+BOTH = [T_PUB, T_STRIP]
+
+# (name, file, old, new, tests, leak?)  leak = the mutant would let an outer-test target reach a published payload / a reader
+M = [
+    # ---- the 13 prior publisher mutants (mutants-v2-publish-cutprefix-20261006T081903Z.json), re-applied to the gated file
+    ("any_rights", PUB, 'if ctx.get("rights") not in RIGHTS_PRODUCTION + (RIGHTS_RESEARCH,):', "if False:", BOTH, False),
+    ("comparable_ok", PUB, 'or cut.get("comparable_with_replaced") is not False:', 'or cut.get("comparable_with_replaced") not in (False, True):', BOTH, False),
+    ("cut_sha_unchecked", PUB, 'or not SHA_RE.fullmatch(str(cut.get("cut_id", "")).split(":", 1)[-1]) or cut.get("comparable_with_replaced") is not False:',
+     'or False or cut.get("comparable_with_replaced") is not False:', BOTH, False),
+    ("fallback_no_rule", PUB, 'and str(fb.get("rule", "")).startswith("ROWSEL-SPLIT"):', "and True:", BOTH, False),
+    ("fallback_v1_field_on_v2", PUB, 'SHA_RE.fullmatch(str(fb.get("source_sha256", ""))) \\',
+     'SHA_RE.fullmatch(str(fb.get("source_sha256", fb.get("coverage_sha256", "")))) \\', BOTH, False),
+    ("gpu_record_ignored", PUB, 'schema = schema or (ctx.get("rowsel") or {}).get("split_schema")', "schema = schema", BOTH, False),
+    ("l7a_v2split_as_l7b", PUB, '"jope.dl-v2-l7a-context/v2split": "L7a", "jope.dl-v2-local-context/v2split": "L7b"}',
+     '"jope.dl-v2-l7a-context/v2split": "L7b", "jope.dl-v2-local-context/v2split": "L7b"}', BOTH, False),
+    ("licensed_to_research", PUB, 'return component in RESEARCH_ONLY_COMPONENTS or ctx.get("rights") == RIGHTS_RESEARCH',
+     'return component in RESEARCH_ONLY_COMPONENTS or ctx.get("rights") is not None', BOTH, False),
+    ("missing_split_ok", PUB, "want = CUT_PREFIX_BY_SPLIT.get(schema)", 'want = CUT_PREFIX_BY_SPLIT.get(schema) or "trainonly-split-v2"', BOTH, False),
+    ("no_cut_check", PUB, 'if ctx["schema"] in CUT_SCHEMAS:', 'if False and ctx["schema"] in CUT_SCHEMAS:', BOTH, False),
+    ("prefix_any_of_two", PUB, 'not str(cut.get("cut_id", "")).startswith(want) \\', 'not str(cut.get("cut_id", "")).startswith(CUT_PREFIXES) \\', BOTH, False),
+    ("registry_prefix_ok", PUB, 'CUT_PREFIX_BY_SPLIT = {"rowsel-raw-split-v2": "trainonly-split-v2:", "rowsel-split-v2-groups": "trainonly-split-v2g:"}',
+     'CUT_PREFIX_BY_SPLIT = {"rowsel-raw-split-v2": "", "rowsel-split-v2-groups": "trainonly-split-v2g:"}', BOTH, False),
+    ("registry_split_mapped", PUB, 'CUT_PREFIX_BY_SPLIT = {"rowsel-raw-split-v2": "trainonly-split-v2:", "rowsel-split-v2-groups": "trainonly-split-v2g:"}',
+     'CUT_PREFIX_BY_SPLIT = {"rowsel-raw-split-v2": "trainonly-split-v2:", "rowsel-split-v2-groups": "trainonly-split-v2g:", "grouped-stratified-kfold/v1": "trainonly-split-v2:"}',
+     BOTH, False),
+    # ---- PAYLOAD-STRIP-PUBLISH publisher gate
+    ("gate_skip_scan", PUB, '            assert_no_outer_test(name, body, ctx["n_train"])\n', "            pass\n", BOTH, True),
+    ("gate_ntest_never", PUB, '    if h["n_test"] != 0:\n', '    if h["n_test"] < 0:\n', BOTH, True),
+    ("gate_encoder_only", PUB, "        if name in ROW_LEVEL_FILES:\n            body = p.read_bytes()", '        if name == "encoder.jtt1.gz":\n            body = p.read_bytes()', BOTH, True),
+    ("gate_header_only_no_length", PUB, "        h = jtt1.parse_header(raw)\n",
+     '        h = dict(zip(("n_train", "n_test", "p", "inner_folds"), jtt1.HEADER.unpack(bytes(raw[4:17]))))\n', BOTH, True),
+    ("gate_not_gzip_fail_open", PUB, '        raise Refused("row_level_payload", f"{name}: not a gzip body ({type(err).__name__})") from None',
+     '        return {"n_test": 0, "n_train": n_train}', BOTH, True),
+    ("gate_parse_fail_open", PUB, '        raise Refused("row_level_payload", f"{name}: {type(err).__name__}: {err}"[:300]) from None',
+     '        return {"n_test": 0, "n_train": n_train}', BOTH, True),
+    ("gate_no_ntrain_bind", PUB, '    if n_train is not None and h["n_train"] != n_train:', "    if False:", BOTH, True),
+    ("gate_missing_ntrain_ok", PUB, '            if type(ctx.get("n_train")) is not int:\n                raise', '            if False:\n                raise', BOTH, True),
+    ("gate_publish_context_skip", PUB, '                assert_no_outer_test(obj["name"], body, plan["ctx"].get("n_train"))', "                pass", BOTH, True),
+    ("gate_no_run_stop", PUB, "    if leak:\n", "    if False:\n", BOTH, False),
+    ("gate_reasons_narrow", PUB, 'ROW_LEVEL_REFUSALS = {"outer_test_rows", "row_level_payload"}', 'ROW_LEVEL_REFUSALS = {"outer_test_rows"}', BOTH, False),
+    ("receipt_strip_record_dropped", PUB, '    if obj["name"] in ROW_LEVEL_FILES and isinstance(ctx.get("publication_strip"), dict):', "    if False:", BOTH, False),
+    # ---- strip tool
+    ("strip_keeps_test_block", STRIP,
+     '    stripped = jtt1.MAGIC + jtt1.HEADER.pack(h["n_train"], 0, h["p"], h["inner_folds"]) + bytes(raw[jtt1.HEADER_BYTES:stop])',
+     "    stripped = bytes(raw)", [T_STRIP], True),
+    ("strip_ntest_header_only", STRIP,
+     '    stripped = jtt1.MAGIC + jtt1.HEADER.pack(h["n_train"], 0, h["p"], h["inner_folds"]) + bytes(raw[jtt1.HEADER_BYTES:stop])',
+     '    stripped = jtt1.MAGIC + jtt1.HEADER.pack(h["n_train"] + h["n_test"], 0, h["p"], h["inner_folds"]) + bytes(raw[jtt1.HEADER_BYTES:jtt1.HEADER_BYTES + h["n_train"]]) + bytes(h["n_test"]) + bytes(raw[jtt1.HEADER_BYTES + h["n_train"]:])',
+     [T_STRIP], True),
+    ("strip_no_recorded_train_rows", STRIP, "    if trs != trs_s or (expect_train_rows is not None and trs != expect_train_rows):", "    if trs != trs_s:", [T_STRIP], False),
+    ("strip_no_raw_check", STRIP, '        if sha(raw) != files[name].get("raw_sha256"):', "        if False:", [T_STRIP], False),
+    ("strip_no_gz_check", STRIP, '        if sha(body) != files[name].get("sha256") or len(body) != files[name].get("bytes"):', "        if False:", [T_STRIP], False),
+    ("scorer_block_altered", STRIP, '"train_rows_sha256": r["train_rows_sha256"]}, r["test_block"])', '"train_rows_sha256": r["train_rows_sha256"]}, r["test_block"][:-8] + bytes(8))',
+     [T_STRIP], False),
+    ("strip_scorer_into_publish_tree", STRIP, '                path = scorer_dst / p["shard"] / p["view_id"] / name.split("/", 1)[1]',
+     '                path = dst / p["shard"] / p["view_id"] / name.split("/", 1)[1]', [T_STRIP], True),
+    ("strip_files_not_updated", STRIP, '        new_files[name] = {"bytes": len(stripped_gz), "raw_sha256": sha(r["stripped"]), "sha256": sha(stripped_gz)}',
+     '        new_files[name] = dict(files[name])', [T_STRIP], False),
+    ("strip_writes_on_refusal", STRIP, "    if refused or not plans:\n", "    if not plans:\n", [T_STRIP], False),
+    ("scan_no_ntest", STRIP, '            if h["n_test"] != 0:\n                findings.append', '            if False:\n                findings.append', [T_STRIP], True),
+    ("scan_header_ntrain_only", STRIP, 'for i in range(min(n_bind, h["n_train"] + h["n_test"]), h["n_train"] + h["n_test"])',
+     'for i in range(h["n_train"], h["n_train"] + h["n_test"])', [T_STRIP], True),
+    ("scan_all_rows", STRIP, 'for i in range(min(n_bind, h["n_train"] + h["n_test"]), h["n_train"] + h["n_test"])',
+     'for i in range(0, h["n_train"] + h["n_test"])', [T_STRIP], False),
+    ("scan_features_too", STRIP, "                           if bytes(raw[base + i * w + w - 8:base + i * w + w]) in targets)",
+     "                           if any(bytes(raw[base + i * w + k:base + i * w + k + 8]) in targets for k in range(0, w, 8)))", [T_STRIP], False),
+    ("scan_no_ntrain_record", STRIP, "            if n_bind != h[\"n_train\"]:\n", "            if False:\n", [T_STRIP], True),
+    ("scan_no_scorer_name_check", STRIP, '        if p.is_file() and (p.name.endswith(scorer_labels.SUFFIX) or ".jts1" in p.name):', "        if False:", [T_STRIP], True),
+    ("scan_no_scorer_magic_check", STRIP, "                    if gzip.decompress(p.read_bytes())[:4] == scorer_labels.MAGIC:", "                    if False:", [T_STRIP], True),
+    # ---- scorer artifact module
+    ("scorer_magic_is_jtt1", LAB, 'MAGIC = b"JTS1"', 'MAGIC = b"JTT1"', [T_STRIP], True),
+    ("scorer_targets_from_feature0", LAB, "    return {block[i * w + w - 8:i * w + w] for i in range(h[\"n_test\"])}",
+     "    return {block[i * w:i * w + 8] for i in range(h[\"n_test\"])}", [T_STRIP], True),
+    ("scorer_no_block_sha", LAB, ' or _sha(block) != h["test_block_sha256"]:', ":", [T_STRIP], False),
+    ("scorer_reconstruct_unchecked", LAB, '    if _sha(out) != h["original_raw_sha256"]:\n        raise ScorerError("reconstruction differs from the original raw sha256")\n',
+     "", [T_STRIP], False),
+    ("scorer_load_ignores_expect", LAB, "        if h.get(k) != v:\n", "        if False:\n", [T_STRIP], True),
+    ("scorer_load_ignores_artifact_sha", LAB, "    if want_gz is not None and _sha(data) != want_gz:", "    if False:", [T_STRIP], True),
+    # ---- manifest binding of stripped copies
+    ("manifest_strip_ignored", MAN, "                    if srec is not None:   #", "                    if srec is not None and False:   #", [T_STRIP], False),
+    ("manifest_original_unbound", MAN, '(orig.get("sha256"), orig.get("raw_sha256")) != (sc["files"][f]["sha256"], sc["files"][f].get("raw_sha256"))',
+     "False", [T_STRIP], True),
+    # ---- S1 outer-test scorer adapter (the only scorer-side reader)
+    ("adapter_reads_original_teacher", ADP, "        raw = scorer_labels.reconstruct(stripped, art)",
+     '        raw = gzip.decompress(Path(r["teacher"]["path"]).read_bytes())', [T_STRIP], True),
+    ("adapter_skips_scorer_sha", ADP, '    if sha(agz) != ent["scorer_sha256"]:', "    if False:", [T_STRIP], True),
+    ("adapter_skips_stripped_sha", ADP, '    if sha(sgz) != ent["stripped"]["sha256"] or len(sgz) != ent["stripped"]["bytes"]:', "    if False:", [T_STRIP], False),
+    ("adapter_index_by_view_only", ADP, '    ent = index.get((view, r["teacher"]["raw_sha256"]))',
+     "    ent = next((v for k, v in index.items() if k[0] == view), None)", [T_STRIP], True),
+    ("adapter_summary_pin_unchecked", ADP, "        if sha(b) != want:\n            raise SystemExit", "        if False:\n            raise SystemExit", [T_STRIP], False),
+    ("static_second_reader", "tools/s1_tail.py", None, "\nimport dltrain.scorer_labels as _sl  # mutant: a second scorer-side reader\n", [T_STRIP], True),
+    # ---- static isolation: leaking modules appended to copies of real dltrain/tools files (the check must fail)
+    ("static_encoder_imports_scorer", "dltrain/encodings.py", None, "\nfrom dltrain import scorer_labels  # mutant\n", [T_STRIP], True),
+    ("static_scaler_imports_scorer", "dltrain/normalizers.py", None, "\nimport dltrain.scorer_labels as _sl  # mutant\n", [T_STRIP], True),
+    ("static_selector_relative_import", "dltrain/objective.py", None, "\nfrom .scorer_labels import load as _l  # mutant\n", [T_STRIP], True),
+    ("static_teacher_opens_artifact", "tools/v2_gpu_encode.py", None, "\n_P = 'teacher.scorer-outer-test.jts1.gz'  # mutant\n", [T_STRIP], True),
+    ("static_dynamic_import", "tools/v2_s1_input_list.py", None, "\nimport importlib\n_m = 'dltrain.scorer_labels'  # mutant\n", [T_STRIP], True),
+]
+
+PREFLIGHT = ("import sys, os, importlib.util; from pathlib import Path; import dltrain.jtt1 as j, dltrain.scorer_labels as s; "
+             "root = Path(os.getcwd()).resolve(); assert Path(j.__file__).resolve().parents[1] == root, j.__file__; "
+             "assert Path(s.__file__).resolve().parents[1] == root, s.__file__; print('preflight-ok', root)")
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def run_copy(copy: Path, tests: list) -> dict:
+    base = ["systemd-run", "--user", "--scope", "--quiet", "--slice=jopedime-dltrain.slice", "-p", "CPUQuota=300%", "-p", "MemoryMax=6G",
+            "-p", "MemorySwapMax=0", "-p", "TasksMax=256", "nice", "-n", "10", "env", "-C", str(copy), f"PYTHONPATH={copy}", "PYTHONNOUSERSITE=1",
+            "PYTHONDONTWRITEBYTECODE=1", f"TMPDIR={RUN}/tmp", "CUDA_VISIBLE_DEVICES=", "OMP_NUM_THREADS=4", "AWS_CONFIG_FILE=/dev/null",
+            "AWS_SHARED_CREDENTIALS_FILE=/dev/null", PY]
+    pre = subprocess.run(base + ["-c", PREFLIGHT], capture_output=True, text=True)
+    if pre.returncode != 0 or "preflight-ok" not in pre.stdout:
+        return {"preflight": "FAILED", "stderr": pre.stderr[-800:]}
+    t0 = time.time()
+    r = subprocess.run(base + ["-m", "unittest", *tests], capture_output=True, text=True)
+    tail = r.stderr.strip().splitlines()[-3:]
+    return {"preflight": "ok", "rc": r.returncode, "tail": tail, "seconds": round(time.time() - t0, 1),
+            "failing": sorted({l.split("(")[1].split(")")[0].rsplit(".", 1)[-1] + "." + l.split()[1] for l in r.stderr.splitlines()
+                               if l.startswith(("FAIL: ", "ERROR: ")) and "(" in l})[:20]}
+
+
+def one(out: Path, m):
+    name, rel, old, new, tests, leak = m
+    copy = out / name
+    shutil.copytree(SRC, copy)
+    f = copy / rel
+    s = f.read_text()
+    if old is None:
+        s2 = s + new
+    else:
+        if s.count(old) != 1:
+            return name, {"status": "NOT-APPLIED", "count": s.count(old), "leak": leak}
+        s2 = s.replace(old, new)
+    f.write_text(s2)
+    res = run_copy(copy, tests)
+    status = "PREFLIGHT-FAILED" if res["preflight"] != "ok" else ("killed" if res["rc"] != 0 else "SURVIVED")
+    return name, {"status": status, "leak": leak, "file": rel, "tests": tests, "mutated_sha256": sha(s2.encode()), **res}
+
+
+def main():
+    out = Path(sys.argv[1])
+    out.mkdir(parents=True, exist_ok=False)
+    base = out / "_baseline"
+    shutil.copytree(SRC, base)
+    b = run_copy(base, BOTH)
+    if b.get("rc") != 0:
+        print(json.dumps({"baseline": b}))
+        return 2
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        results = dict(ex.map(lambda m: one(out, m), M))
+    files = sorted({m[1] for m in M} | {"tests/test_v2_publish.py", "tests/test_payload_strip.py"})  # appended-to files: their unmutated bytes
+    doc = {"schema": "jope.dl-v2-mutants/v1", "method": "each mutant in a COPY of SRC with that copy's PYTHONPATH and cwd (preflight asserts the "
+           "imported dltrain resolves inside the copy); killed = its test modules fail", "baseline": b,
+           "source_sha256": {f: sha((SRC / f).read_bytes()) for f in files}, "harness_sha256": sha(Path(__file__).read_bytes()),
+           "code_sha256": sha(Path(__file__).read_bytes()),
+           "total": len(results), "killed": sum(r["status"] == "killed" for r in results.values()),
+           "survived": sorted(k for k, r in results.items() if r["status"] == "SURVIVED"),
+           "not_applied": sorted(k for k, r in results.items() if r["status"] not in ("killed", "SURVIVED")),
+           "leak_mutants": {k: r["status"] for k, r in results.items() if r["leak"]}, "results": results,
+           "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    body = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    with open(out / "mutants-payload-strip.json", "xb") as fh:
+        fh.write(body)
+    print(json.dumps({"total": doc["total"], "killed": doc["killed"], "survived": doc["survived"], "not_applied": doc["not_applied"],
+                      "receipt_sha256": sha(body)}))
+    return 0 if doc["killed"] == doc["total"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

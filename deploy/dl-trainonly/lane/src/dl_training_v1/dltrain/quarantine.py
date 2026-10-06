@@ -1,0 +1,98 @@
+"""PAYLOAD-STRIP-PUBLISH quarantine of the unstripped JTT1 payloads published before the owner ruling (2026-10-06 06:52 MT).
+
+Every object ever put under v2-trainonly/inputs/jtt1-encoder/ or inputs/jtt1-teacher/ is an UNSTRIPPED payload: it carries
+outer-test rows and targets (3,280 + 3,280 verified in the publish ledger, 2026-10-05 21:00Z to 2026-10-06 02:15Z). Stripped
+payloads (n_test = 0) publish only under the new components jtt1-encoder-s0 / jtt1-teacher-s0 (inputs/jtt1-*-s0/,
+receipts/jtt1-*-s0/), which can never collide with those keys. Nothing here deletes or overwrites any object.
+
+A key is quarantined when
+  (a) RULE: any path segment pair ("inputs", "jtt1-encoder" | "jtt1-teacher"), compared case-insensitively on every "/"
+      segment (so "//" or case variants cannot slip past). It needs no document, so it fails closed; non-strings count.
+  (b) LIST: it is listed in a quarantine document (schema jope.dl-v2-quarantine/v1, tools/v2_quarantine_unstripped.py) under
+      QUARANTINE_DIR, named v2-quarantine-*-<sha256[:12]>.json. A document that does not hash to its name or does not parse
+      raises QuarantineCorrupt (fail-closed).
+The publisher (tools/v2_publish.py) refuses to put such a key; loaders read through guarded_get_exact / load_raw here (and the
+S1 list builder through is_quarantined), which refuse it before any request or cache access.
+"""
+import hashlib
+import json
+from pathlib import Path
+
+QUARANTINE_DIR = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/quarantine")
+SCHEMA = "jope.dl-v2-quarantine/v1"
+REASON = "contains outer-test targets; published before owner ruling 06:52 MT; never read"
+QUARANTINED_COMPONENTS = ("jtt1-encoder", "jtt1-teacher")
+STRIPPED_COMPONENTS = {"encoder.jtt1.gz": "jtt1-encoder-s0", "teacher.jtt1.gz": "jtt1-teacher-s0"}
+_cache: dict = {}
+
+
+def key_scheme() -> dict:
+    """The stripped-payload key scheme recorded in every publication_strip record and checked by the publisher."""
+    return {n: {"component": c, "object_prefix": f"inputs/{c}/", "receipt_prefix": f"receipts/{c}/"} for n, c in sorted(STRIPPED_COMPONENTS.items())}
+
+
+class QuarantinedKey(Exception):
+    pass
+
+
+class QuarantineCorrupt(Exception):
+    pass
+
+
+def rule_match(key) -> bool:
+    if not isinstance(key, str):
+        return True
+    segs = [s for s in key.lower().split("/") if s]     # empty segments ("//") are dropped before pairing
+    return any(a == "inputs" and b in QUARANTINED_COMPONENTS for a, b in zip(segs, segs[1:]))
+
+
+def _docs(qdir: Path):
+    qdir = Path(qdir)
+    files = sorted(qdir.glob("v2-quarantine-*.json")) if qdir.exists() and qdir.is_dir() else []
+    stamp = tuple((str(p), p.stat().st_size, p.stat().st_mtime_ns) for p in files)
+    hit = _cache.get(str(qdir))
+    if hit is not None and hit[0] == stamp:
+        return hit[1]
+    keys = {}
+    for p in files:
+        body = p.read_bytes()
+        if hashlib.sha256(body).hexdigest()[:12] != p.stem.rsplit("-", 1)[-1]:
+            raise QuarantineCorrupt(f"{p}: does not hash to its name")
+        try:
+            doc = json.loads(body)
+        except ValueError as err:
+            raise QuarantineCorrupt(f"{p}: not JSON") from err
+        if not isinstance(doc, dict) or doc.get("schema") != SCHEMA or not isinstance(doc.get("entries"), list):
+            raise QuarantineCorrupt(f"{p}: not a {SCHEMA} document")
+        for e in doc["entries"]:
+            keys.setdefault(e["key"], []).append({"version_id": e.get("version_id"), "sha256": e.get("sha256"), "doc": p.name})
+    _cache[str(qdir)] = (stamp, keys)
+    return keys
+
+
+def listed(key, qdir: Path | None = None) -> list:
+    return _docs(QUARANTINE_DIR if qdir is None else qdir).get(key, [])
+
+
+def is_quarantined(key, qdir: Path | None = None) -> bool:
+    return rule_match(key) or bool(listed(key, qdir))
+
+
+def assert_not_quarantined(key, qdir: Path | None = None) -> str:
+    if is_quarantined(key, qdir):
+        raise QuarantinedKey(f"quarantined key (unstripped JTT1 payload: {REASON}): {key!r}")
+    return key
+
+
+def guarded_get_exact(client, key: str, version_id: str, bucket=None, qdir: Path | None = None):
+    """Exact-version GET for loaders: refuses a quarantined key before any request (then dltrain.s3io.get_exact)."""
+    assert_not_quarantined(key, qdir)
+    from dltrain import s3io
+    return s3io.get_exact(client, key, version_id, bucket=bucket or s3io.BUCKET)
+
+
+def load_raw(ref, cache_dir, client=None, ledger=None, qdir: Path | None = None):
+    """jtt1.load_raw for a v2 input_ref, refusing a quarantined key before any cache or S3 access."""
+    assert_not_quarantined(ref.get("key") if isinstance(ref, dict) else None, qdir)
+    from dltrain import jtt1
+    return jtt1.load_raw(ref, cache_dir, client=client, ledger=ledger)

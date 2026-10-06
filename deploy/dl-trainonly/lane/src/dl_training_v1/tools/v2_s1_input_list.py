@@ -60,6 +60,21 @@ def cut_of(ctx):
     return None
 
 
+TEACHER_COMPONENTS = ("jtt1-teacher-s0", "jtt1-teacher")
+
+
+def teacher_object(name, c):
+    """The context's one teacher object. PAYLOAD-STRIP-PUBLISH: only a stripped payload (component jtt1-teacher-s0) is
+    loadable; a quarantined key (the unstripped inputs/jtt1-teacher/ objects published before the ruling) is refused."""
+    from dltrain import quarantine
+    t = [o for o in c["objects"] if o["component"] in TEACHER_COMPONENTS]
+    if len(t) != 1:
+        raise SystemExit(f"{name}/{c['view_id']}: expected one teacher object")
+    if quarantine.is_quarantined(t[0]["key"]) or t[0]["component"] != quarantine.STRIPPED_COMPONENTS["teacher.jtt1.gz"]:
+        raise SystemExit(f"{name}/{c['view_id']}: teacher key {t[0]['key']} is quarantined (unstripped; outer-test targets)")
+    return t[0]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
@@ -92,10 +107,7 @@ def main(argv=None):
         sources[name] = {"path": str(path), "sha256": sha(mb)}
         ds_rep = {d["dataset_hash"]: d["replaces_epoch0"] for d in m.get("datasets", [])}   # raw route: dataset-level replacement
         for c in m["contexts"]:
-            t = [o for o in c["objects"] if o["component"] == "jtt1-teacher"]
-            if len(t) != 1:
-                raise SystemExit(f"{name}/{c['view_id']}: expected one teacher object")
-            t = t[0]
+            t = teacher_object(name, c)
             prod.append({"view_id": c["view_id"], "dataset_hash": c["dataset_hash"], "fold": c["fold"], "context_sha256": c["context_sha256"],
                          "values_mode": c["values_mode"], "inner_labels_sha256": c["inner_labels_sha256"],
                          "outer_train_indices_sha256": c["outer_train_indices_sha256"], "outer_test_indices_sha256": c["outer_test_indices_sha256"],

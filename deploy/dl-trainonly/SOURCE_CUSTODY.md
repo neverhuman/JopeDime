@@ -2,9 +2,10 @@
 
 This directory retains the DL lane's 2026-10-06 source handoff for review and reproducible offline fixtures. It does not install, dispatch, adopt or authorize the staged entrypoints.
 
-`lane/MANIFEST.json` is the exact producer manifest `23d3a8a7fd6d15f056e6d5465a9e524ae46f5b69fd9d0e6c6f4721251ce70413` (restage `20261006T131001Z`): 158 current files and 204 historical versions. Its predecessor chain is retained byte for byte under `lane/predecessor/`, newest first:
+`lane/MANIFEST.json` is the exact producer manifest `4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d` (restage `20261006T153320Z`, PR #224 payload strip): 165 current files and 262 historical versions. Its predecessor chain is retained byte for byte under `lane/predecessor/`, newest first:
 
-- `restage-20261006T114844Z/MANIFEST.json` (`253e593b7537cdecf75a89be24a83804bc63d7e2596e02cc0c28d780a50f2b9e`), the manifest this directory carried before;
+- `restage-20261006T131001Z/MANIFEST.json` (`23d3a8a7fd6d15f056e6d5465a9e524ae46f5b69fd9d0e6c6f4721251ce70413`), PR #218's merged handoff and the manifest this directory carried before;
+- `restage-20261006T114844Z/MANIFEST.json` (`253e593b7537cdecf75a89be24a83804bc63d7e2596e02cc0c28d780a50f2b9e`);
 - `restage-20261006T082918Z/MANIFEST.json` (`365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f`);
 - `restage-20261006T073946Z/MANIFEST.json` (`6314ef6f33f01878a149cdb36823a78c96d6ae3e2c45cf409d756711c71d6619`);
 - `restage-20261006T035515Z/MANIFEST.json` (`009532038cee11ea20075a7291e4b247c7df8e97806946a61bd8dce7dd635802`);
@@ -18,7 +19,7 @@ Three predecessor current files that no later manifest retains are preserved the
 - the `00953203` version of `test_v2_publish.py` (`bbb8e5de`), which is also the original's;
 - the `00953203` version of `test_v2_rowsel_raw.py` (`f33f3d2b`).
 
-The latter two come from the retained `restage-20261006T035515Z` staging and equal the blobs committed here at that time. Every current file of all five predecessors can be restored from the verifier's per-manifest reconstruction map. All 190, 88, 79, 58 and 46 of their historical payloads remain available.
+The latter two come from the retained `restage-20261006T035515Z` staging and equal the blobs committed here at that time. Every current file of all six predecessors can be restored from the verifier's per-manifest reconstruction map. All 204, 190, 88, 79, 58 and 46 of their historical payloads remain available.
 
 The predecessor manifest `253e593b` records `restage-20261006T113426Z` under `abandoned_unpushed_stagings` (`e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5`). That staging was never pushed because it picked up the out-of-scope P8 file `dltrain/exclusions.py`. It is not in `lane/`, and the verifier refuses any abandoned staging that appears in the chain, by manifest sha or by path.
 
@@ -53,7 +54,7 @@ Source custody still grants no runtime authority. Changing a default again requi
 - **Findings 4, 5 and 6:**
   - `encoder.jtt1.gz` and `teacher.jtt1.gz` still contain the outer-test block. Train-side use is through `jtt1.train_view` (train range only), enforced by `tests.test_jtt1` (including `test_counterfactual_test_row_change`, now in the offline selection) and the `train_rows_sha256` gates.
   - The S1 inner-CV-only must-fail control passed (`RUN/receipts/trainonly-v2/s1-control/receipt.json`, `714eb90e71a4253fb94f6605711709f0c2e1eb09146ba06e86da34d4c86d4014`), which closes the teacher-input gate previously listed here as open.
-  - Stripping the payloads is not part of this custody. It remains an open owner decision; no owner ruling accepts the current route in its place.
+  - Owner ruling 06:52 MT (2026-10-06): the train_view/flip-test route is accepted for #218's merge and for local training, but NOT for publication. Nothing that carries outer-test targets goes to S3. Published encoder and teacher payloads are stripped to JTT1 `n_test = 0`, and outer-test labels move to a local-only scorer artifact. PR #224 implements this; see "Payload strip" below.
 - **Finding 7:** test-side categorical missing/unseen counts are recorded counts, not inputs to the scaler, the fold assignment or A0.
 - **Finding 8 (F4, F5, F6):**
   - **F4:** `target_tied_group` refuses a group column that is bytes-equal to the target, an affine copy (relative RMSE ≤ 1e-10), a function of it, binned with disjoint target ranges, or nearly determined by it (≥ 99%). Module mutants are killed 24/24, including 11 leak mutants, and 0 of the 26 T1 group datasets are refused.
@@ -95,6 +96,25 @@ The lane's red-team, scope, equivalence and mutant receipts are retained in the 
 
 Fresh production input-list admission, G0 provenance/controller integration, S1 pilot, publication, policy training and serving promotion remain independently qualified gates.
 
+## Payload strip (PR #224, owner ruling 06:52 MT)
+
+The ruling: nothing that carries outer-test targets goes to S3, and the published encoder and teacher payloads hold no outer-test target values. Outer-test labels move to a separate scorer-only artifact with its own sha256, read only by the outer-test scorer adapter.
+
+- **Stripped payload.** `tools/v2_strip_outer_test.py` writes a create-only publish copy of each tree. Each `encoder.jtt1.gz` and `teacher.jtt1.gz` is rewritten as JTT1 with `n_test = 0`: the same header fields otherwise, the same inner-fold labels and the same train block. `jtt1.train_view` and `train_rows_sha256` are byte-identical, so A0 and every GPU input binding are unchanged.
+- **Scorer artifact.** The outer-test rows and targets move to a scorer-only artifact (`dltrain/scorer_labels.py`, magic `JTS1`, which no JTT1 decoder accepts). It is written to a separate local scorer tree, never to a publish tree, and never to S3.
+- **Readers.** `tools/s1_outer_test_scorer.py`, the S1 outer-test adapter, and the strip tool are the only modules allowed to import or name the artifact; a static import test enforces this. On 24 sampled contexts, including the 4 must-fail contexts, the adapter reproduces the stored `official_test` bytes exactly.
+- **Publisher gate.** `tools/v2_publish.py` refuses any row-level payload with `n_test > 0`, a header `n_train` that differs from the context's, or the scorer magic. A preflight scan of the whole batch fails closed before any AWS session or client exists, and `publish_context` re-checks the bytes before every PUT.
+- **New keys.** Stripped payloads publish only under the new `inputs/jtt1-encoder-s0/` and `inputs/jtt1-teacher-s0/` keys.
+- **Quarantine.** The 6,560 unstripped `inputs/jtt1-encoder|teacher/` objects published before the ruling (627,957,830 bytes, 2026-10-05 21:00Z to 2026-10-06 02:15Z) are listed in a local quarantine document (`tools/v2_quarantine_unstripped.py`, `dltrain/quarantine.py`). The publisher, `s3io.get_exact` and `jtt1.load_raw` refuse any quarantined or old-scheme key before any request or cache read. Nothing is deleted; their retention is the owner's decision.
+- **Evidence** (lane receipts, not imported here):
+  - strip mutants 80/80 killed, 44 of them leak mutants;
+  - guard mutants for the s3io, jtt1 and publisher-preflight additions 3/3 killed;
+  - a 7-family pilot PASS;
+  - the S1 adapter equivalence check, 24/24;
+  - the provenance dry run, 0 unresolved.
+- **History.** `historical/` grows to every code-custody version recorded so far, including P8 and RAW-GROUP custody bytes. These are inert history, not current lane files.
+- **Scope.** Neither this custody nor this PR runs the full strip or a publish batch.
+
 ## Checks
 
 Run the stdlib custody verifier and refusal fixtures from the repository root:
@@ -116,7 +136,7 @@ The verifier uses committed expected manifest pins for the handoff and its order
 
 These are source custody checks, not executed-family coverage or producer authentication for operational consumers.
 
-The Python CI lane additionally runs exactly 19 preserved unittest modules through `run_lane_offline.py`: 515 collected identities, of which 477 synthetic cases execute and 38 named cases stay explicitly deferred.
+The Python CI lane additionally runs exactly 21 preserved unittest modules through `run_lane_offline.py`: 555 collected identities, of which 517 synthetic cases execute and 38 named cases stay explicitly deferred.
 
 What the runner allows and refuses:
 
@@ -154,4 +174,4 @@ The output directory must not exist. Neither it nor the custody checkout may lie
 
 Local evidence for the original import is retained in `/home/ubuntu/jope-evidence/s1-twofold-bootstrap-20261006/`. The original 191-member predecessor archive has SHA256 `24c5404bf0b0ec4f8d40e96008dcb1db40bc36c5954be86aa6e96a8d91899528`. The restage and its predecessors are retained in `/home/ubuntu/jope-evidence/dl-lane-handoff/`, indexed by `RESTAGES.jsonl`.
 
-The producer ran the same 19 modules on the staged bytes with private host inputs present: 515 tests, exit 0 (`tests_run_on_staged_copy` in the manifest). The initial offline harness's library-probe refusal, missing CI dependency, refused urllib3 IPv6 import probe and CI private-path collection and execution refusals are separate retained outcomes. Earlier local329, 454- and 508-identity receipts cover the earlier eleven-, sixteen- and nineteen-module selections and do not establish current host qualification. `just required` has an unchanged-main Clippy baseline; this import does not claim a passing complete CPU diagnostic.
+The producer ran the same 21 modules on the staged bytes with private host inputs present: 555 tests, exit 0 (`tests_run_on_staged_copy` in the manifest). The initial offline harness's library-probe refusal, missing CI dependency, refused urllib3 IPv6 import probe and CI private-path collection and execution refusals are separate retained outcomes. Earlier 329-, 454-, 508- and 515-identity receipts cover the earlier eleven-, sixteen- and nineteen-module selections and do not establish current host qualification. `just required` has an unchanged-main Clippy baseline; this import does not claim a passing complete CPU diagnostic.

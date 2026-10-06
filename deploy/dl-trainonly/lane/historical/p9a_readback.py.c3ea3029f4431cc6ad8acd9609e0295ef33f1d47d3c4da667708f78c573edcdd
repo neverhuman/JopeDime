@@ -1,0 +1,18 @@
+"""Independent read-only exact-version GETs (v2 read client) of the P9a S3 closure at step 2000."""
+import hashlib, json, sys
+from pathlib import Path
+import boto3
+from dltrain import s3io
+rid = sys.argv[1]; RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+led = [json.loads(x) for x in (RUN / f"receipts/trainonly-v2/policylm/{rid}/publish-ledger.jsonl").read_bytes().splitlines()]
+reader = s3io.make_client(v2=True, session=boto3.session.Session(profile_name=s3io.PROFILE, region_name=s3io.REGION))
+out = []
+for r in (x for x in led if x["event"] == "verified"):
+    body, meta = s3io.get_exact(reader, r["key"], r["version_id"])
+    out.append({"key": r["key"], "version_id": r["version_id"], "sha256_ledger": r["sha256"],
+                "sha256_get": hashlib.sha256(body).hexdigest(), "bytes": len(body), "ok": hashlib.sha256(body).hexdigest() == r["sha256"] and len(body) == r["bytes"]})
+doc = {"schema": "jope.dl-p9a-s3-readback/v1", "run_id": rid, "objects": out, "all_ok": all(o["ok"] for o in out), "n": len(out)}
+p = RUN / f"build-v2/P8/runs/{rid}/launch/s3-readback-step2000.json"
+body = json.dumps(doc, indent=1, sort_keys=True).encode()
+with open(p, "xb") as f: f.write(body)
+print(p, hashlib.sha256(body).hexdigest(), doc["all_ok"], doc["n"])

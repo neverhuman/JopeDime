@@ -1,0 +1,399 @@
+"""P9b prep tests (CPU only, P7 fixtures): length-bucketed micro-batches with gradient accumulation, the best-dev
+pointer (PLAN §6.6) and dev validation every N updates."""
+from __future__ import annotations
+
+import dataclasses
+import json
+import os
+import tempfile
+import unittest
+from pathlib import Path
+
+from unittest import mock
+
+import torch
+
+from dltrain import ckpt, common, model, objective, s3store, sampler, train
+from tests import fixtures_p7
+
+TMP_ROOT = Path(os.environ.get("TMPDIR") or "/home/ubuntu/scratch/jopedime-dl-training-v1/tmp")
+
+
+def _tmp() -> Path:
+    TMP_ROOT.mkdir(parents=True, exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix="p9b-", dir=TMP_ROOT))
+
+
+def setUpModule():
+    model.configure_determinism(4)
+
+
+def _batches(mode: str, steps=(1, 2, 3, 7)):
+    kw = {"group_mode": mode} if mode == objective.BASELINE_V1 else {}
+    data = fixtures_p7.train_data(**kw)
+    smp = sampler.MacroSampler(data.fit, fixtures_p7.RUN_SEED, data.config)
+    return data, [sampler.collate(smp.draw(s), data) for s in steps]
+
+
+def _net(data, mode):
+    torch.manual_seed(5)
+    cfg = fixtures_p7.model_config(dropout=0.0, context_free_head=mode == objective.BASELINE_V1)
+    return model.PolicyLM(cfg)
+
+
+def _grads(net):
+    return {n: p.grad.detach().clone() for n, p in net.named_parameters() if p.grad is not None}
+
+
+class SplitTests(unittest.TestCase):
+    def test_parts_partition_the_batch_and_keep_contexts_whole(self):
+        _data, batches = _batches(objective.SUCCESSOR_V1)
+        for batch in batches:
+            for budget in (2, 40, 200, 10 ** 6):
+                parts = sampler.split_batch(batch, budget)
+                ids = [m for p in parts for m in p.member_ids]
+                self.assertEqual(sorted(ids), sorted(batch.member_ids))          # each sequence exactly once
+                self.assertEqual(len(ids), len(set(ids)))
+                ctxs = [c for p in parts for c in p.ctx_ids]
+                self.assertEqual(sorted(ctxs), sorted(batch.ctx_ids))            # each context in one part
+                for p in parts:
+                    self.assertEqual({p.ctx_ids[int(k)] for k in p.seq_ctx}, set(p.ctx_ids))
+                    self.assertEqual(p.tokens.shape[1], int(p.lengths.max()))
+                    self.assertEqual(p.legal.shape[1], p.tokens.shape[1] - 1)
+                    if len(p.ctx_ids) > 1:
+                        self.assertLessEqual(p.tokens.shape[0] * p.tokens.shape[1], budget)
+                    for k, (c, prog) in enumerate(p.member_ids):
+                        i = batch.member_ids.index((c, prog))
+                        self.assertTrue(torch.equal(p.tokens[k], batch.tokens[i, :p.tokens.shape[1]]))
+                        self.assertEqual(p.ctx_ids[int(p.seq_ctx[k])], c)
+                self.assertEqual(sum(p.n_tokens for p in parts), batch.n_tokens)
+                if budget == 10 ** 6:
+                    self.assertEqual(len(parts), 1)
+                if budget == 2:
+                    self.assertEqual(len(parts), len(batch.ctx_ids))
+        with self.assertRaises(ValueError):
+            sampler.split_batch(batches[0], 1)
+
+    def test_split_is_deterministic(self):
+        _data, batches = _batches(objective.SUCCESSOR_V1)
+        a = sampler.split_batch(batches[0], 60)
+        b = sampler.split_batch(batches[0], 60)
+        self.assertEqual([p.member_ids for p in a], [p.member_ids for p in b])
+
+
+class AccumulationTests(unittest.TestCase):
+    """Sum of part losses over the full batch's denominators == the unsplit loss; gradients likewise."""
+
+    def _check(self, mode):
+        data, batches = _batches(mode)
+        fn = objective.OBJECTIVES[mode]
+        for batch in batches:
+            net = _net(data, mode)
+            out = net(batch.tokens, batch.lengths, batch.ctx_z, batch.seq_ctx)
+            full = fn(out, batch)
+            full.loss.backward()
+            g_full = _grads(net)
+            norm = objective.normalizers(batch)
+            for budget in (2, 50, 120):
+                parts = sampler.split_batch(batch, budget)
+                net.zero_grad(set_to_none=True)
+                total, terms = 0.0, {}
+                for p in parts:
+                    o = net(p.tokens, p.lengths, p.ctx_z, p.seq_ctx)
+                    r = fn(o, p, norm=norm)
+                    r.loss.backward()
+                    total += float(r.loss.detach())
+                    for k, v in r.terms.items():
+                        terms[k] = terms.get(k, 0.0) + v
+                with self.subTest(mode=mode, step=batch.step, budget=budget, parts=len(parts)):
+                    self.assertAlmostEqual(total, float(full.loss.detach()), delta=1e-5 * max(1, abs(total)))
+                    for k in full.terms:
+                        self.assertAlmostEqual(terms[k], full.terms[k], delta=1e-5 * max(1.0, abs(full.terms[k])))
+                    g = _grads(net)
+                    self.assertEqual(set(g), set(g_full))
+                    for name in g:
+                        self.assertTrue(torch.allclose(g[name], g_full[name], rtol=1e-4, atol=1e-6), name)
+
+    def test_successor(self):
+        self._check(objective.SUCCESSOR_V1)
+
+    def test_baseline(self):
+        self._check(objective.BASELINE_V1)
+
+    def test_own_denominators_would_be_wrong(self):
+        """Control: parts normalised by their own counts do NOT sum to the full loss (the norm is load-bearing)."""
+        data, batches = _batches(objective.SUCCESSOR_V1)
+        batch = batches[0]
+        net = _net(data, objective.SUCCESSOR_V1)
+        full = float(objective.successor_v1(net(batch.tokens, batch.lengths, batch.ctx_z, batch.seq_ctx), batch).loss)
+        parts = sampler.split_batch(batch, 2)
+        own = sum(float(objective.successor_v1(net(p.tokens, p.lengths, p.ctx_z, p.seq_ctx), p).loss) for p in parts)
+        self.assertGreater(abs(own - full), 1e-3)
+
+    def test_normalizers_are_label_only_and_complete(self):
+        for mode in (objective.SUCCESSOR_V1, objective.BASELINE_V1):
+            _data, batches = _batches(mode)
+            norm = objective.normalizers(batches[0])
+            self.assertEqual(sorted(norm), sorted(objective.NORM_KEYS[mode]))
+            self.assertTrue(all(v > 0 for v in norm.values()), norm)
+
+
+def _plan(data, *, run_id="p9b", max_updates=8, **train_kw):
+    tc = fixtures_p7.train_config(**{"ctx_drop_prob": 0.0, "ctx_noise_std": 0.0, **train_kw})
+    return train.make_run_plan(**fixtures_p7.plan_kwargs(run_id=run_id, max_updates=max_updates,
+                                                         model=fixtures_p7.model_config(dropout=0.0), train=tc))
+
+
+def _journal(path):
+    return [json.loads(x) for x in Path(path).read_bytes().splitlines()]
+
+
+class TrainerMicroBatchTests(unittest.TestCase):
+    def test_same_draws_journal_and_loss_with_and_without_bucketing(self):
+        data = fixtures_p7.train_data()
+        d = _tmp()
+        a = train.run(_plan(data), data, d / "A")
+        b = train.run(_plan(data, micro_batch_tokens=60), data, d / "B")
+        self.assertEqual((a.status, b.status, a.step, b.step), ("COMPLETED", "COMPLETED", 8, 8))
+        ja, jb = _journal(d / "A" / "journal.jsonl"), _journal(d / "B" / "journal.jsonl")
+        self.assertEqual(len(ja), len(jb))
+        for x, y in zip(ja, jb):
+            self.assertEqual({k: v for k, v in x.items() if k not in ("loss", "grad_norm")},
+                             {k: v for k, v in y.items() if k not in ("loss", "grad_norm")})   # identical draw set
+            self.assertAlmostEqual(x["loss"], y["loss"], delta=1e-4 * max(1, abs(x["loss"])))
+            self.assertAlmostEqual(x["grad_norm"], y["grad_norm"], delta=1e-3 * max(1, abs(x["grad_norm"])))
+        pa = ckpt.read_commit(Path(a.last_commit)).model_tensors
+        pb = ckpt.read_commit(Path(b.last_commit)).model_tensors
+        for name in pa:
+            self.assertTrue(torch.allclose(pa[name], pb[name], rtol=1e-3, atol=1e-5), name)
+
+    def test_micro_batched_run_is_deterministic_and_resumes_exactly(self):
+        data = fixtures_p7.train_data()
+        d = _tmp()
+        plan = _plan(data, micro_batch_tokens=60, commit_every_updates=4)
+        a = train.run(plan, data, d / "A")
+        stop = d / "STOP"
+        b = train.run(plan, data, d / "B", stop_file=stop,
+                      hooks=train.TrainHooks(after_step=lambda s: stop.touch() if s == 4 else None))
+        self.assertEqual((b.status, b.step), ("YIELDED_TO_INTAKE", 4))
+        r = train.resume_from_commit(plan, data, Path(b.last_commit), d / "R")
+        self.assertEqual((r.parameter_sha256, r.journal_sha256), (a.parameter_sha256, a.journal_sha256))
+
+    def test_config_rules_and_plan_compatibility(self):
+        with self.assertRaises(ValueError):
+            train.TrainConfig(micro_batch_tokens=1)
+        with self.assertRaises(ValueError):
+            train.TrainConfig(eval_every_updates=0)
+        d = train.TrainConfig().to_json()
+        for key in ("micro_batch_tokens", "eval_every_updates", "best_dev", "publish_every_updates"):
+            self.assertNotIn(key, d)                           # P7/P9a-era plans hash unchanged
+        self.assertEqual(train.TrainConfig(micro_batch_tokens=64).to_json()["micro_batch_tokens"], 64)
+
+
+class EvalCadenceTests(unittest.TestCase):
+    def test_eval_every_updates(self):
+        data = fixtures_p7.train_data()
+        d = _tmp()
+        res = train.run(_plan(data, eval_every_updates=3, max_updates=10), data, d / "w")
+        steps = [e["step"] for e in _journal(d / "w" / "events.jsonl") if e["event"] == "dev_validation"]
+        self.assertEqual((res.status, steps), ("COMPLETED", [3, 6, 9]))
+
+
+class BestDevTests(unittest.TestCase):
+    def _run(self, d, store, **kw):
+        data = fixtures_p7.train_data()
+        plan = _plan(data, run_id="p9bbest", max_updates=12, commit_every_updates=2, eval_every_updates=2,
+                     best_dev=True, publish_every_updates=4, lr=3e-3, **kw)
+        return plan, data, train.run(plan, data, d / "w", store=store)
+
+    def _history(self, store, run_id):
+        key = ckpt.best_dev_key("", run_id)
+        return [json.loads(store.get(key, version_id=v["version_id"]).body) for v in store.list_versions(key)]
+
+    def test_pointer_tracks_the_best_published_dev_checkpoint(self):
+        d = _tmp()
+        store = ckpt.FileVersionedStore(d / "store")
+        plan, _data, res = self._run(d, store)
+        self.assertEqual(res.status, "COMPLETED")
+        events = _journal(d / "w" / "events.jsonl")
+        pubs = [e for e in events if e["event"] == "published"]
+        self.assertEqual([e["step"] for e in pubs], [4, 8, 12])
+        dev = {e["step"]: e["metrics"]["ce_per_token_family_macro"] for e in events if e["event"] == "dev_validation"}
+        hist = self._history(store, plan["run_id"])
+        self.assertGreaterEqual(len(hist), 1)
+        self.assertEqual([h["seq"] for h in hist], list(range(1, len(hist) + 1)))
+        values = [h["metric"]["value"] for h in hist]
+        self.assertEqual(values, sorted(values, reverse=True))                 # strictly improving
+        self.assertEqual(len(set(values)), len(values))
+        best_pub = min((dev[e["step"]], e["step"]) for e in pubs)
+        self.assertEqual((hist[-1]["metric"]["value"], hist[-1]["step"]), best_pub)
+        manifests = {e["manifest_sha256"]: e["manifest_version_id"] for e in pubs}
+        for h in hist:
+            self.assertEqual(manifests[h["target_manifest_sha256"]], h["target_version_id"])
+            self.assertEqual(h["metric"]["split"], "dev")
+        for e in pubs:
+            self.assertEqual(e["best_dev"]["value"], dev[e["step"]])            # metric computed once per step
+        self.assertEqual(sum(1 for e in events if e["event"] == "dev_validation" and e["step"] == 4), 1)
+
+    def test_a_foreign_best_dev_pointer_is_a_conflict(self):
+        d = _tmp()
+        store = ckpt.FileVersionedStore(d / "store")
+        key = ckpt.best_dev_key("", "p9bbest")
+        foreign = common.canonical({"schema": ckpt.SCHEMA_BEST_DEV, "run_id": "p9bbest", "pointer_name": "best-dev",
+                                    "target_manifest_sha256": "a" * 64, "target_version_id": "v", "step": 0,
+                                    "metric": {"value": -1.0}, "seq": 1, "prev_version_id": None,
+                                    "writer": {"host": "other"}, "utc_us": 1})
+        store.put_create_only(key, foreign)
+        with self.assertRaisesRegex(ckpt.CheckpointRefused, "best-dev"):
+            self._run(d, store)
+
+    def test_only_improvements_advance_and_metrics_are_computed_once_per_step(self):
+        """Scripted dev metric (by call order, one call per eval step 2..12): publishes at 4, 8, 12 see 3.0, 2.0,
+        2.5, so best-dev advances at 4 and 8 only; dev_metrics runs exactly once per eval step."""
+        scripted = iter([5.0, 3.0, 4.0, 2.0, 9.0, 2.5])
+        calls = []
+
+        def fake(net, data, split="dev", **_kw):
+            calls.append(split)
+            return {"ce_per_token_family_macro": next(scripted), "validation_split": "dev-family-v1", "contexts": 2,
+                    "families": 2, "token_validity": 1.0, "pairwise_accuracy_family_macro": 0.5}
+        d = _tmp()
+        store = ckpt.FileVersionedStore(d / "store")
+        with mock.patch.object(train.evaluate, "dev_metrics", side_effect=fake):
+            plan, _data, res = self._run(d, store)
+        self.assertEqual(res.status, "COMPLETED")
+        self.assertEqual(len(calls), 6)
+        hist = self._history(store, plan["run_id"])
+        self.assertEqual([(h["step"], h["metric"]["value"]) for h in hist], [(4, 3.0), (8, 2.0)])
+        pubs = [e for e in _journal(d / "w" / "events.jsonl") if e["event"] == "published"]
+        self.assertEqual([(e["step"], e["best_dev"]["advanced"]) for e in pubs], [(4, True), (8, True), (12, False)])
+
+    def test_a_concurrent_writer_conflicts(self):
+        d = _tmp()
+        store = ckpt.FileVersionedStore(d / "store")
+        exp = ckpt.advance_best_dev(store, prefix="", run_id="r", manifest_sha256="a" * 64, manifest_version_id="v1",
+                                    step=2, metric={"value": 1.0}, expected=None, writer={})
+        ckpt.advance_best_dev(store, prefix="", run_id="r", manifest_sha256="b" * 64, manifest_version_id="v2",
+                              step=4, metric={"value": 0.5}, expected=exp, writer={})
+        with self.assertRaises(ckpt.Conflict):                                # stale expectation
+            ckpt.advance_best_dev(store, prefix="", run_id="r", manifest_sha256="c" * 64, manifest_version_id="v3",
+                                  step=6, metric={"value": 0.4}, expected=exp, writer={})
+        with self.assertRaises(ckpt.Conflict):                                # absent expectation, pointer exists
+            ckpt.advance_best_dev(store, prefix="", run_id="r", manifest_sha256="c" * 64, manifest_version_id="v3",
+                                  step=6, metric={"value": 0.4}, expected=None, writer={})
+        empty = ckpt.FileVersionedStore(d / "empty")
+        with self.assertRaisesRegex(ckpt.Conflict, "absent"):                 # expectation, but no pointer at all
+            ckpt.advance_best_dev(empty, prefix="", run_id="r", manifest_sha256="c" * 64, manifest_version_id="v3",
+                                  step=6, metric={"value": 0.4}, expected=exp, writer={})
+
+    def test_create_only_store_keeps_best_dev_sequenced(self):
+        d = _tmp()
+        store, ledger, bucket = s3store.open_fake(prefix_key=s3store.SMOKE_PREFIX_KEY, view_id="r",
+                                                  ledger_path=d / "l.jsonl", budget_ledger_path=d / "b.jsonl")
+        p = s3store.SMOKE_PREFIX_KEY
+        exp = ckpt.advance_best_dev(store, prefix=p, run_id="r", manifest_sha256="a" * 64, manifest_version_id="v1",
+                                    step=2, metric={"value": 1.0}, expected=None, writer={})
+        exp2 = ckpt.advance_best_dev(store, prefix=p, run_id="r", manifest_sha256="b" * 64, manifest_version_id="v2",
+                                     step=4, metric={"value": 0.5}, expected=exp, writer={})
+        self.assertEqual(exp2.seq, 2)
+        found = ckpt.read_best_dev(store, p, "r")
+        self.assertEqual((found[0].version_id, found[1]["step"]), (exp2.version_id, 4))
+        keys = [k for k in bucket.keys() if "/best-dev/" in k]
+        self.assertEqual(keys, [s3store.seq_key(ckpt.best_dev_key(p, "r"), i) for i in (1, 2)])
+        self.assertFalse(any(k.endswith("HEAD.json") for k in bucket.keys()))
+        ledger.close()
+
+    def test_resume_adopts_the_pointer_and_keeps_improving_only(self):
+        d = _tmp()
+        store = ckpt.FileVersionedStore(d / "store")
+        data = fixtures_p7.train_data()
+        plan = _plan(data, run_id="p9bres", max_updates=12, commit_every_updates=2, eval_every_updates=2,
+                     best_dev=True, publish_every_updates=4, lr=3e-3)
+        stop = d / "STOP"
+        b = train.run(plan, data, d / "B", store=store, stop_file=stop,
+                      hooks=train.TrainHooks(after_step=lambda s: stop.touch() if s == 8 else None))
+        self.assertEqual((b.status, b.step), ("YIELDED_TO_INTAKE", 8))
+        before = self._history(store, "p9bres")
+        r = train.resume_from_store(plan, data, store, d / "R")
+        self.assertEqual(r.status, "COMPLETED")
+        resumed = [e for e in _journal(d / "R" / "events.jsonl") if e["event"] == "resumed"][0]
+        self.assertEqual(resumed["best_dev"]["value"], before[-1]["metric"]["value"])
+        after = self._history(store, "p9bres")
+        self.assertEqual(after[:len(before)], before)
+        values = [h["metric"]["value"] for h in after]
+        self.assertEqual(values, sorted(values, reverse=True))
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class EarlyStopTests(unittest.TestCase):
+    """Owner ruling 07:59 MT: dev eval every N updates, stop after `patience` evals without a strict improvement of
+    family-macro dev CE per token (not before min_updates), final selected checkpoint = best-dev."""
+
+    def _run(self, values, d, *, patience=2, min_updates=4, max_updates=20, stop_at=None, store=None, plan=None):
+        scripted = iter(values)
+
+        def fake(net, data, split="dev", **_kw):
+            return {"ce_per_token_family_macro": next(scripted), "validation_split": "dev-family-v1", "contexts": 2,
+                    "families": 2, "token_validity": 1.0, "pairwise_accuracy_family_macro": 0.5}
+        data = fixtures_p7.train_data()
+        plan = plan or _plan(data, run_id="p9bes", max_updates=max_updates, commit_every_updates=4,
+                             eval_every_updates=2, best_dev=True, publish_every_updates=8,
+                             early_stop_patience=patience, early_stop_min_updates=min_updates)
+        store = store or ckpt.FileVersionedStore(d / "store")
+        stop = d / "STOP"
+        hooks = train.TrainHooks(after_step=(lambda s: stop.touch() if s == stop_at else None))
+        with mock.patch.object(train.evaluate, "dev_metrics", side_effect=fake):
+            res = train.run(plan, data, d / "w", store=store, stop_file=stop, hooks=hooks)
+        return plan, data, store, res
+
+    def _best(self, store, run_id):
+        found = ckpt.read_best_dev(store, "", run_id)
+        return found[1] if found else None
+
+    def test_stops_after_patience_and_selects_the_best(self):
+        d = _tmp()
+        # evals at 2,4,6,8,10: best at 4 (2.0); 6 and 8 do not improve -> since=2 at step 8 -> stop at 8
+        plan, _data, store, res = self._run([3.0, 2.0, 2.5, 2.0, 1.0], d)
+        self.assertEqual((res.status, res.reason, res.step), ("COMPLETED", "early_stop", 8))
+        best = self._best(store, plan["run_id"])
+        self.assertEqual((best["step"], best["metric"]["value"]), (4, 2.0))
+        man = json.loads(store.get(ckpt.manifest_key("", plan["run_id"], best["target_manifest_sha256"]),
+                                   version_id=best["target_version_id"]).body)
+        self.assertEqual(man["step"], 4)                                    # best-dev targets the best checkpoint
+        ptr = json.loads(store.get(ckpt.pointer_key("", plan["run_id"])).body)
+        self.assertNotEqual(ptr["target_manifest_sha256"], best["target_manifest_sha256"])   # resume = latest state
+
+    def test_must_not_stop_before_min_updates_or_on_improvement(self):
+        d = _tmp()
+        # never improves after step 2, but min_updates 10: no stop before step 10 (evals 2..10 -> since 4 at 10)
+        plan, _data, store, res = self._run([1.0, 2.0, 2.0, 2.0, 2.0, 2.0], d, patience=2, min_updates=10)
+        self.assertEqual((res.reason, res.step), ("early_stop", 10))
+        d2 = _tmp()
+        _p, _d, _s, res2 = self._run([5.0, 4.0, 3.0, 2.0, 1.0, 0.5, 0.4, 0.3, 0.2, 0.1], d2, max_updates=20)
+        self.assertEqual((res2.status, res2.reason, res2.step), ("COMPLETED", None, 20))   # max_updates
+
+    def test_resume_keeps_the_stopping_decision(self):
+        d = _tmp()
+        values = [3.0, 2.0, 2.5, 2.4, 1.0, 1.0, 1.0, 1.0]
+        plan, data, store, b = self._run(values, d, patience=3, min_updates=4, stop_at=6)
+        self.assertEqual((b.status, b.step), ("YIELDED_TO_INTAKE", 6))
+        rest = iter(values[3:])
+
+        def fake(net, data, split="dev", **_kw):
+            return {"ce_per_token_family_macro": next(rest), "validation_split": "dev-family-v1", "contexts": 2,
+                    "families": 2, "token_validity": 1.0, "pairwise_accuracy_family_macro": 0.5}
+        with mock.patch.object(train.evaluate, "dev_metrics", side_effect=fake):
+            r = train.resume_from_store(plan, data, store, d / "R")
+        # since=1 at 6 (restored), 8: 2.4 > 2.0 -> since 2; 10: 1.0 improves -> since 0; 12,14,16: since 3 -> stop 16
+        self.assertEqual((r.status, r.reason, r.step), ("COMPLETED", "early_stop", 16))
+        self.assertEqual(self._best(store, plan["run_id"])["step"], 10)
+
+    def test_config_requires_eval_and_best_dev(self):
+        with self.assertRaises(ValueError):
+            train.TrainConfig(early_stop_patience=2)
+        with self.assertRaises(ValueError):
+            train.TrainConfig(early_stop_patience=2, eval_every_updates=2)
+        train.TrainConfig(early_stop_patience=2, eval_every_updates=2, best_dev=True)

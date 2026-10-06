@@ -1,0 +1,113 @@
+"""Tail the S1 production teacher ledger into create-only, P5-compatible train-only shards (dltrain.s1_tail).
+
+  s1_tail.py --ledger-dir RUN/receipts/trainonly-v2/s1-prod --out RUN/build-v2/S1-TAIL-v1 \
+      --denylist DENYLIST.json --denylist-sha256 SHA [--evaluations-root DIR ...] [--fetch-ssh] \
+      (--once | --follow --interval S [--max-polls N]) [--json]
+
+--once runs one poll. --follow is a foreground loop the operator runs (no timers, units or monitors are created): poll,
+print, sleep S, until --max-polls or Ctrl-C. The ledger directory is only read. Exit codes: 0 ok; 2 refused (ledger
+rewritten, binding mismatch, create-only conflict, admission fail-closed); 3 finalization conflicts are recorded.
+"""
+import argparse
+import json
+import shlex
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from dltrain import s1_tail  # noqa: E402
+
+
+def build_config(a) -> s1_tail.TailConfig:
+    if (a.vocab is None) != (a.vocab_sha256 is None):
+        raise SystemExit("--vocab and --vocab-sha256 go together")
+    seeds = seeds_sha = None
+    if a.seed_hashes:
+        seeds, seeds_sha = a.seed_hashes.split("#", 1)
+    return s1_tail.TailConfig(
+        ledger_dir=Path(a.ledger_dir), out_dir=Path(a.out), denylist=Path(a.denylist),
+        denylist_sha256=a.denylist_sha256, exclusion=Path(a.exclusion), exclusion_sha256=a.exclusion_sha256,
+        evaluation_roots=tuple(Path(p) for p in a.evaluations_root),
+        fetch_ssh=a.fetch_ssh, ssh_command=tuple(shlex.split(a.ssh_command)), ssh_timeout_s=a.ssh_timeout,
+        encoding_trees=tuple(Path(p) for p in a.encoding_tree) if a.encoding_tree else s1_tail.DEFAULT_ENCODING_TREES,
+        vocab_path=Path(a.vocab) if a.vocab else None, vocab_sha256=a.vocab_sha256,
+        seed_hashes=Path(seeds) if seeds else None, seed_hashes_sha256=seeds_sha,
+        max_seq=a.max_seq, max_emit=a.max_emit,
+        encoding_sets=tuple(dict(zip(("tree", "receipt", "sha256"), x.split("#", 2))) for x in a.encoding_set))
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--ledger-dir", required=True, help="S1 production ledger directory (read only)")
+    ap.add_argument("--out", required=True, help="output directory (create-only shards, append-only index)")
+    ap.add_argument("--denylist", required=True)
+    ap.add_argument("--denylist-sha256", required=True)
+    ap.add_argument("--exclusion", required=True, help="LINEAR-DETERMINED exclusion file (jope.dl-v2-linear-determined-"
+                                                       "exclusion/v1); its contexts are never emitted")
+    ap.add_argument("--exclusion-sha256", required=True)
+    ap.add_argument("--encoding-set", action="append", default=[],
+                    help="TREE#RECEIPT#SHA256 of a pinned assembled encoding set (e.g. hyperion_v6all), bound in "
+                         "header.json (repeatable)")
+    ap.add_argument("--tranche-receipt", action="store_true",
+                    help="after each poll, write a create-only receipt for the tranche of all index lines so far")
+    ap.add_argument("--evaluations-root", action="append", default=[],
+                    help="local mirror holding <ctx>/g0-evaluations.json and <ctx>/genNN/KK.pack.json.gz (repeatable)")
+    ap.add_argument("--fetch-ssh", action="store_true",
+                    help="stream missing evaluation records read-only from the final row's host_custody (tar -cf -)")
+    ap.add_argument("--ssh-command", default=" ".join(s1_tail.DEFAULT_SSH))
+    ap.add_argument("--ssh-timeout", type=int, default=900)
+    ap.add_argument("--encoding-tree", action="append", default=[],
+                    help="v2 build tree to resolve encodings (repeatable)")
+    ap.add_argument("--vocab", help="pinned P4 vocab.json (default: the data-independent base vocabulary)")
+    ap.add_argument("--vocab-sha256")
+    ap.add_argument("--seed-hashes", help="PATH#SHA256 of a JSON list of shared-seed program hashes")
+    ap.add_argument("--max-seq", type=int, default=s1_tail.DEFAULT_MAX_SEQ)
+    ap.add_argument("--max-emit", type=int, default=0, help="cap on shards emitted per poll (0 = none)")
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--once", action="store_true")
+    mode.add_argument("--follow", action="store_true")
+    ap.add_argument("--interval", type=float, default=60.0)
+    ap.add_argument("--max-polls", type=int, default=0, help="--follow: stop after N polls (0 = until Ctrl-C)")
+    ap.add_argument("--json", action="store_true", help="print each poll summary as one JSON line")
+    a = ap.parse_args(argv)
+    if a.follow and a.interval <= 0:
+        raise SystemExit("--interval must be > 0")
+    tail = s1_tail.S1Tail(build_config(a))
+    polls, rc = 0, 0
+    try:
+        while True:
+            polls += 1
+            try:
+                summary = tail.poll()
+            except s1_tail.S1TailError as err:
+                print(json.dumps({"status": "refused", "error": f"{type(err).__name__}: {err}"}, sort_keys=True))
+                return 2
+            summary["poll"] = polls
+            if a.tranche_receipt and summary.get("index", {}).get("lines"):
+                try:
+                    summary["tranche_receipt"] = str(s1_tail.write_tranche_receipt(a.out))
+                except s1_tail.S1TailError as err:
+                    print(json.dumps({"status": "refused", "error": f"{type(err).__name__}: {err}"}, sort_keys=True))
+                    return 2
+            if a.json:
+                print(json.dumps(summary, sort_keys=True), flush=True)
+            else:
+                idx, ctx = summary.get("index", {}), summary.get("contexts", {})
+                print(f"poll {polls}: {summary['status']} new_rows={summary.get('new_ledger_rows', 0)} "
+                      f"emitted_now={summary.get('emitted_now', 0)} shards={idx.get('lines', 0)} "
+                      f"records={idx.get('records', 0)} contexts={ctx.get('by_status', {})} "
+                      f"pending={summary.get('pending_now', {})} "
+                      f"conflicts={summary.get('conflicts', {}).get('lines', 0)}",
+                      flush=True)
+            rc = 3 if summary.get("conflicts", {}).get("lines") else 0
+            if a.once or (a.max_polls and polls >= a.max_polls):
+                return rc
+            time.sleep(a.interval)
+    except KeyboardInterrupt:
+        return rc
+
+
+if __name__ == "__main__":
+    sys.exit(main())
