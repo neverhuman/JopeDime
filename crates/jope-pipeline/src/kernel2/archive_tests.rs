@@ -1180,3 +1180,48 @@ fn legacy_dispatch_refuses_before_writing(flag: &str) {
     crate::cli::run(Cli::try_parse_from(argv(&ran, &[])).unwrap()).unwrap();
     assert!(ran.join("receipt.json").exists());
 }
+
+/// `verify_run` rebuilds the archive from published observations, which are untrusted, so each
+/// archived program is parsed within the trace check's bounds (B17 review 02's class): the
+/// pipeline form only, and each expression's nesting bytes counted before it is parsed. Unary plus
+/// and redundant parentheses never reach the parsed tree, so a source at the limit costs what its
+/// plain form costs; one byte more is refused unparsed.
+#[test]
+fn archived_programs_are_bounded_before_they_are_parsed() {
+    use super::refinement::MAX_PARENT_EXPRESSION_NESTING;
+    let e = evaluator();
+    let plain = measured(&e, SEED_SINE, &data());
+    assert!(archive::ranked(&plain));
+    let body = "sin(0.5*c0)";
+    let with = |source: &str| {
+        let mut o = plain.clone();
+        o.observation.genome = SEED_SINE.replace(body, source);
+        o
+    };
+    let cost_of = |o: &Kernel2Observation| {
+        let archive = archive::build(std::slice::from_ref(o)).unwrap();
+        let members = archive.members();
+        assert_eq!(members.len(), 1);
+        members[0].complexity
+    };
+    assert_eq!(cost_of(&plain), 6);
+    // `(` and `*`.
+    let room = MAX_PARENT_EXPRESSION_NESTING - 2;
+    let plus = |n: usize| format!("{}{body}", "+".repeat(n));
+    let grouped = |n: usize| format!("{}{body}{}", "(".repeat(n), ")".repeat(n));
+    let product = |n: usize| format!("{body}{}", "*1".repeat(n));
+    for source in [plus(room), grouped(room)] {
+        assert_eq!(cost_of(&with(&source)), 6, "{source}");
+    }
+    for source in [plus(room + 1), grouped(room + 1), product(room + 1)] {
+        let error = archive::build(&[with(&source)]).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("nests too deeply"),
+            "{source}: {error:#}"
+        );
+    }
+    let mut closed_form = plain.clone();
+    closed_form.observation.genome = format!("(sym raw \"{}\")", plus(room + 1));
+    let error = archive::build(&[closed_form]).unwrap_err();
+    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+}

@@ -35,7 +35,9 @@ use feat_math::{
 use sha2::{Digest, Sha256};
 use std::path::Path;
 
-use super::{search::CutSearch, EngineRecord, Kernel2Observation};
+use super::{
+    refinement::parse_untrusted_pipeline, search::CutSearch, EngineRecord, Kernel2Observation,
+};
 use crate::sha256_hex;
 
 /// The cost version of every archived complexity.
@@ -61,9 +63,13 @@ pub fn build(observations: &[Kernel2Observation]) -> Result<Archive> {
     Ok(archive)
 }
 
-/// One admitted observation as the archive takes it.
+/// One admitted observation as the archive takes it. `verify_run` rebuilds the archive from the
+/// published observations, which are untrusted, so each program is parsed within
+/// [`parse_untrusted_pipeline`]'s bounds before [`program_cost`] parses its expressions.
 fn entry(o: &Kernel2Observation) -> Result<Candidate> {
-    let genome = GenomeIr::parse(&o.observation.genome)?;
+    let genome = GenomeIr::Pipeline(
+        parse_untrusted_pipeline(&o.observation.genome).context("archived observation")?,
+    );
     let bytes = Program::import_legacy(&genome).to_bytes()?;
     Ok(Candidate {
         loss: -o

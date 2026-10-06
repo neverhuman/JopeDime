@@ -56,13 +56,14 @@ pub(crate) const SMALL_ALLOWANCE: &str = "allowance under the surrogate minimum"
 pub(crate) const UNSUPPORTED: &str = "unsupported expression shape";
 pub(crate) const FALLBACK_REASONS: [&str; 3] = [ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED];
 
-/// The most bytes among `( + - * / ^` a refinement parent's expression source may hold when the
-/// trace check binds it. Each of these bytes opens at most one level of the expression parser's
-/// recursion (a fixed chain of calls) and of the tree it builds, and no other byte opens one. The
-/// parser checks its node and depth caps only after it has built the tree, and unary plus and
-/// redundant parentheses never reach the tree. A parent read back from evidence is untrusted, so
-/// its sources are counted before they are parsed, and a source over this count is refused
-/// unparsed. A profile expression (at most 15 nodes) holds far fewer.
+/// The most bytes among `( + - * / ^` an expression source may hold in a program read back from
+/// evidence: a refinement parent the trace check binds, or an observation the archive check
+/// rebuilds. Each of these bytes opens at most one level of the expression parser's recursion (a
+/// fixed chain of calls) and of the tree it builds, and no other byte opens one. The parser checks
+/// its node and depth caps only after it has built the tree, and unary plus and redundant
+/// parentheses never reach the tree. Such a program is untrusted, so its sources are counted
+/// before they are parsed, and a source over this count is refused unparsed. A profile expression
+/// (at most 15 nodes) holds far fewer.
 pub(crate) const MAX_PARENT_EXPRESSION_NESTING: usize = 256;
 
 /// The bytes of `source` that can open a level of the expression parser's recursion.
@@ -71,6 +72,30 @@ fn expression_nesting(source: &str) -> usize {
         .bytes()
         .filter(|b| matches!(b, b'(' | b'+' | b'-' | b'*' | b'/' | b'^'))
         .count()
+}
+
+/// `text`, a pipeline program read back from evidence, parsed within the bounds the expression
+/// parser needs. Only the pipeline form, whose own parser does not recurse, is parsed: a
+/// closed-form program would reach the expression parser inside `GenomeIr::parse`. Each stage's
+/// `expr` is then refused when it holds more than [`MAX_PARENT_EXPRESSION_NESTING`] nesting bytes,
+/// before any caller parses it.
+pub(crate) fn parse_untrusted_pipeline(text: &str) -> Result<DslExpr> {
+    ensure!(
+        text.trim().starts_with("(pipe"),
+        "program is not a pipeline"
+    );
+    let GenomeIr::Pipeline(pipe) = GenomeIr::parse(text)? else {
+        anyhow::bail!("program is not a pipeline");
+    };
+    for stage in &pipe.stages {
+        if let Some(ParamValue::Str(source)) = stage.params.get("expr") {
+            ensure!(
+                expression_nesting(source) <= MAX_PARENT_EXPRESSION_NESTING,
+                "program expression nests too deeply to parse"
+            );
+        }
+    }
+    Ok(pipe)
 }
 
 /// The training rows and targets a refinement receives; nothing else reaches it.
@@ -406,23 +431,9 @@ impl RefinementTrace {
             "one" => LmJacobianCharge::One,
             _ => anyhow::bail!("unknown refinement jacobian charge"),
         };
-        // Only the pipeline form, whose own parser does not recurse, is parsed here; a closed-form
-        // parent would reach the expression parser inside `GenomeIr::parse`.
-        ensure!(
-            parent.trim().starts_with("(pipe"),
-            "refinement parent is not a pipeline"
-        );
-        let GenomeIr::Pipeline(pipe) = GenomeIr::parse(parent)? else {
-            anyhow::bail!("refinement parent is not a pipeline");
-        };
+        let pipe = parse_untrusted_pipeline(parent).context("refinement parent")?;
         let mut refined = Vec::new();
         for index in 0..pipe.stages.len() {
-            if let Some(ParamValue::Str(source)) = pipe.stages[index].params.get("expr") {
-                ensure!(
-                    expression_nesting(source) <= MAX_PARENT_EXPRESSION_NESTING,
-                    "refinement parent expression nests too deeply to parse"
-                );
-            }
             if let Some(expression) = stage_expression(&pipe, index)? {
                 if has_constant(expression.ast()) {
                     refined.push((index, expression.literal_sites()));
