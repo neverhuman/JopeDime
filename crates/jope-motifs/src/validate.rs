@@ -1277,7 +1277,7 @@ mod tests {
         let validation = fixture::passing_validation(&table);
         let export = crate::export::PublicExport::from_validation(&validation, &table);
         assert_eq!(export.promoted, 0);
-        let value = serde_json::to_value(&export).expect("json");
+        let value = serde_json::to_value(export).expect("json");
         assert_eq!(value["promotion"], "required_not_run");
     }
 

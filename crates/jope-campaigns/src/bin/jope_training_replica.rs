@@ -220,7 +220,7 @@ fn skipped(name: &str) -> bool {
         || name == "history.sqlite3-shm"
 }
 
-fn walk(archive: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+fn walk(_archive: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
     let mut entries: Vec<_> = match fs::read_dir(dir) {
         Ok(iter) => iter.filter_map(std::result::Result::ok).collect(),
         Err(_) => return Ok(()),
@@ -234,7 +234,7 @@ fn walk(archive: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
         let path = entry.path();
         let Ok(meta) = entry.metadata() else { continue };
         if meta.is_dir() {
-            walk(archive, &path, out)?;
+            walk(_archive, &path, out)?;
         } else if meta.is_file() {
             out.push(path);
         }
@@ -1096,10 +1096,9 @@ fn cmd_verify(root: &Path) -> Result<Value> {
 /// Canonical serialization of one `epoch` row, used to prove a restored row is
 /// byte-identical to the source. `raw_json` is the trainer's original line, so
 /// comparing it compares the actual archived bytes rather than a re-derivation.
-fn epoch_probe(
-    conn: &Connection,
-    limit: usize,
-) -> Result<Vec<(String, i64, String, String, String)>> {
+type EpochProbeRow = (String, i64, String, String, String);
+
+fn epoch_probe(conn: &Connection, limit: usize) -> Result<Vec<EpochProbeRow>> {
     let mut stmt = conn.prepare(
         "SELECT run_key, epoch, phase, raw_sha256, raw_json \
          FROM epoch ORDER BY run_key, epoch, phase LIMIT ?1",

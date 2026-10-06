@@ -2939,7 +2939,10 @@ mod tests {
     #[test]
     fn ties_are_not_wins() {
         let baseline = 1.0f64;
-        assert!(!(baseline < baseline));
+        assert!(!matches!(
+            baseline.partial_cmp(&baseline),
+            Some(std::cmp::Ordering::Less)
+        ));
         assert!(f64::from_bits(baseline.to_bits() - 1) < baseline);
     }
 

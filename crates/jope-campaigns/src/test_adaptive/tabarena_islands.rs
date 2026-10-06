@@ -287,8 +287,9 @@ fn collect_canonical_leaders(
     Ok(())
 }
 
-fn collect_local_leaders() -> Result<(HashMap<String, (f64, BTreeSet<String>)>, Vec<ArtifactHash>)>
-{
+type LocalLeaders = (HashMap<String, (f64, BTreeSet<String>)>, Vec<ArtifactHash>);
+
+fn collect_local_leaders() -> Result<LocalLeaders> {
     let mut leaders = HashMap::<String, (f64, BTreeSet<String>)>::new();
     let canonical = fs::read_to_string(canonical_scores_str())?;
     collect_canonical_leaders(&canonical, &mut leaders)?;
@@ -656,10 +657,10 @@ fn next_population(
         .collect::<Vec<_>>();
     if generation % 2 == 1 {
         let original = ranked.clone();
-        for source in 0..ISLANDS {
+        for (source, original_island) in original[..ISLANDS].iter().enumerate() {
             let destination = (source + 1) % ISLANDS;
             for rank in 0..2 {
-                ranked[destination][POPULATION - 2 + rank] = original[source][rank].clone();
+                ranked[destination][POPULATION - 2 + rank] = original_island[rank].clone();
             }
             ranked[destination].sort_by(rank_outcomes);
         }
@@ -670,8 +671,8 @@ fn next_population(
         bail!("TabArena generation has too few globally valid parents");
     }
     let mut next = Vec::with_capacity(TOTAL_POPULATION);
-    for island in 0..ISLANDS {
-        let local_parents = ranked[island]
+    for (island, ranked_island) in ranked[..ISLANDS].iter().enumerate() {
+        let local_parents = ranked_island
             .iter()
             .take_while(|outcome| outcome.valid)
             .take(PARENT_POOL)

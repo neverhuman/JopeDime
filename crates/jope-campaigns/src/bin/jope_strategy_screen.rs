@@ -395,7 +395,7 @@ fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
     let mut card = 0usize;
     for (d, ids) in order.chunks(chunk).enumerate() {
         let mut ids: Vec<usize> = ids.to_vec();
-        let mut rng = Pcg32::new(seed, 0x4b46_4f4c_44 ^ d as u64);
+        let mut rng = Pcg32::new(seed, 0x004b_464f_4c44 ^ d as u64);
         for i in (1..ids.len()).rev() {
             let j = (rng.next_u32() as usize) % (i + 1);
             ids.swap(i, j);
@@ -508,7 +508,7 @@ fn perturbed_generation_csv(
     let cols = x[0].len();
     let mut out = x.clone();
     let mut kept: Vec<usize> = train_ids.to_vec();
-    if generation % 2 == 0 {
+    if generation.is_multiple_of(2) {
         let mut sd = vec![0.0f64; cols];
         for c in 0..cols {
             let vals: Vec<f64> = train_ids.iter().map(|&i| x[i][c]).collect();
@@ -1254,7 +1254,8 @@ fn final_cv(
         // ss_tot denominator. feat_math documents the pooled form as the primary
         // CV estimate; the per-fold mean is unstable on small folds and rewards
         // a gene that drew one lucky slice.
-        let fold_preds: Vec<((usize, usize), Result<Vec<f64>, EvalFailure>)> = pairs
+        type FoldPrediction = ((usize, usize), Result<Vec<f64>, EvalFailure>);
+        let fold_preds: Vec<FoldPrediction> = pairs
             .par_iter()
             .map(|&(g, f)| {
                 (
@@ -1263,20 +1264,20 @@ fn final_cv(
                 )
             })
             .collect();
-        for g in 0..top.len() {
+        for (g, gene) in top.iter_mut().enumerate() {
             let mut oof_true: Vec<f64> = Vec::new();
             let mut oof_pred: Vec<f64> = Vec::new();
             let mut prediction_views: Vec<Option<&[f64]>> = Vec::with_capacity(folds.len());
             let mut failures = 0usize;
-            for f in 0..folds.len() {
+            for (f, fold) in folds.iter().enumerate() {
                 let entry = fold_preds
                     .iter()
                     .find(|((gg, ff), _)| *gg == g && *ff == f)
                     .map(|(_, r)| r);
                 match entry {
-                    Some(Ok(pred)) if pred.len() == folds[f].len() => {
+                    Some(Ok(pred)) if pred.len() == fold.len() => {
                         prediction_views.push(Some(pred.as_slice()));
-                        for (k, &row) in folds[f].iter().enumerate() {
+                        for (k, &row) in fold.iter().enumerate() {
                             oof_true.push(y[row]);
                             oof_pred.push(pred[k]);
                         }
@@ -1287,8 +1288,8 @@ fn final_cv(
                     }
                 }
             }
-            top[g].cv_failed_folds = failures;
-            top[g].cv7_mean_r2 = if config.strict_pooled_search() {
+            gene.cv_failed_folds = failures;
+            gene.cv7_mean_r2 = if config.strict_pooled_search() {
                 complete_pooled_oof_r2(y, &folds, &prediction_views)
             } else if oof_true.is_empty() {
                 None
@@ -1442,7 +1443,8 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         // collapses to the clip floor with zero variance, which then hands
         // selection to the complexity/hash fallback. Pooling the repeat's
         // predictions keeps the statistic defined at every n we support.
-        let outs: Vec<((usize, usize), Result<Vec<f64>, EvalFailure>)> = pairs
+        type FoldPrediction = ((usize, usize), Result<Vec<f64>, EvalFailure>);
+        let outs: Vec<FoldPrediction> = pairs
             .par_iter()
             .map(|&(g, f)| {
                 (
@@ -1455,11 +1457,11 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             let mut truth: Vec<f64> = Vec::new();
             let mut pred: Vec<f64> = Vec::new();
             let mut prediction_views: Vec<Option<&[f64]>> = Vec::with_capacity(folds.len());
-            for f in 0..folds.len() {
+            for (f, fold) in folds.iter().enumerate() {
                 if let Some((_, Ok(p))) = outs.iter().find(|((gg, ff), _)| *gg == g && *ff == f) {
-                    if p.len() == folds[f].len() {
+                    if p.len() == fold.len() {
                         prediction_views.push(Some(p.as_slice()));
-                        for (k, &row) in folds[f].iter().enumerate() {
+                        for (k, &row) in fold.iter().enumerate() {
                             truth.push(y[row]);
                             pred.push(p[k]);
                         }
@@ -1665,16 +1667,16 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     let mut mix = vec![f64::NAN; n];
     for _ in 0..8 {
         let mut best: Option<(usize, f64)> = None;
-        for g in 0..top.len() {
-            if oof_preds[g].iter().all(|v| !v.is_finite()) {
+        for (g, predictions) in oof_preds[..top.len()].iter().enumerate() {
+            if predictions.iter().all(|v| !v.is_finite()) {
                 continue;
             }
             let k = picks.len() as f64;
             let cand: Vec<f64> = (0..n)
                 .map(|i| {
                     let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
-                    let b = if oof_preds[g][i].is_finite() {
-                        oof_preds[g][i]
+                    let b = if predictions[i].is_finite() {
+                        predictions[i]
                     } else {
                         return f64::NAN;
                     };

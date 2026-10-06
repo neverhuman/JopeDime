@@ -127,7 +127,7 @@ struct Rating {
 }
 
 impl Rating {
-    fn new() -> Self {
+    fn unplayed() -> Self {
         Self {
             value: BASE_RATING,
             matches: 0,
@@ -145,11 +145,11 @@ impl Rating {
 fn play(table: &mut BTreeMap<String, Rating>, left: &str, right: &str, score: f64) {
     let left_rating = table
         .entry(left.to_owned())
-        .or_insert_with(Rating::new)
+        .or_insert_with(Rating::unplayed)
         .value;
     let right_rating = table
         .entry(right.to_owned())
-        .or_insert_with(Rating::new)
+        .or_insert_with(Rating::unplayed)
         .value;
     let left_expected = expected(left_rating, right_rating);
     {

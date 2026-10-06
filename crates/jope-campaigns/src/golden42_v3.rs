@@ -309,6 +309,7 @@ impl Lease {
         }
         let file = OpenOptions::new()
             .create(true)
+            .truncate(false)
             .read(true)
             .write(true)
             .open(path)?;
@@ -879,7 +880,7 @@ fn campaign_loop(
     population: &mut Vec<V3Candidate>,
     archive: &mut V3Archive,
     previous_checkpoint: &mut Option<String>,
-    workers: &mut Vec<WorkerProcess>,
+    workers: &mut [WorkerProcess],
     cpu_ids: &[usize],
     release: &Path,
     train_path: &Path,
@@ -897,7 +898,7 @@ fn campaign_loop(
         fs::create_dir_all(&generation_root)?;
         let mut receipts = BTreeMap::<usize, CandidateReceipt>::new();
         let mut cache_hits = 0usize;
-        for slot in 0..population.len() {
+        for (slot, member) in population.iter().enumerate() {
             let path = generation_root.join(format!("slot-{slot:03}.v1.json"));
             if path.exists() {
                 let receipt: CandidateReceipt = serde_json::from_slice(&fs::read(&path)?)?;
@@ -908,7 +909,7 @@ fn campaign_loop(
                     *generation,
                     slot,
                     test_targets,
-                    &population[slot],
+                    member,
                     release_sha256,
                 )?;
                 receipts.insert(slot, receipt);
@@ -1224,12 +1225,12 @@ fn spawn_workers(
     Ok(workers)
 }
 
-fn worker_channel(
-    workers: &mut [WorkerProcess],
-) -> Result<(
+type WorkerChannel = (
     Sender<(usize, Result<WorkerResponse>)>,
     Receiver<(usize, Result<WorkerResponse>)>,
-)> {
+);
+
+fn worker_channel(workers: &mut [WorkerProcess]) -> Result<WorkerChannel> {
     let (sender, receiver) = mpsc::channel();
     for worker in workers {
         let stdout = worker

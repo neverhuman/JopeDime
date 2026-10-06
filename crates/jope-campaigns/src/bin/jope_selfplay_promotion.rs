@@ -1998,10 +1998,16 @@ fn task_verdicts(
         internal_reasons.extend(task_specific.iter().cloned());
         internal_reasons.extend(inherited.iter().cloned());
         let mut milestone_reasons = internal_reasons.clone();
-        if !(delta >= TASK_INTERNAL_LIFT_MARGIN - 1e-12) {
+        if !matches!(
+            delta.partial_cmp(&(TASK_INTERNAL_LIFT_MARGIN - 1e-12)),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) {
             internal_reasons.push(format!("{task}_pairwise_lift_below_point_two"));
         }
-        if !(delta >= TASK_MILESTONE_LIFT_MARGIN - 1e-12) {
+        if !matches!(
+            delta.partial_cmp(&(TASK_MILESTONE_LIFT_MARGIN - 1e-12)),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) {
             milestone_reasons.push(format!("{task}_pairwise_lift_below_one_point"));
         }
         internal_reasons.extend(shared_internal_extra.iter().cloned());
@@ -3053,7 +3059,6 @@ impl Controller {
                 return Err(error);
             }
         };
-        let mut state = state;
         {
             let tournament = state.get_mut("tournament").unwrap();
             tournament["artifacts"][phase] = result.clone();

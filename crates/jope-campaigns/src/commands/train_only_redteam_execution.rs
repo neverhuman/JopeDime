@@ -816,7 +816,7 @@ fn legacy_refill(
                 winner
             };
             let left = tournament(&mut rng);
-            let crossover = rng.next_u64() % 4 == 0;
+            let crossover = rng.next_u64().is_multiple_of(4);
             let (genome, parents, operation, roots) = if crossover {
                 let right = tournament(&mut rng);
                 let Ok(genome) = crossover_canonical_pipelines(
@@ -1749,7 +1749,7 @@ fn smart_refill(
             };
             let left_index = tournament(&mut rng);
             let left = &ranked[left_index].candidate;
-            let crossover = rng.next_u64() % 4 == 0;
+            let crossover = rng.next_u64().is_multiple_of(4);
             let (genome, roots, origins, seeds, ancestry, operator) = if crossover {
                 let (crossover_left, right) = if island == "mixed" {
                     let (dl, transfer) = mixed_crossover_sources

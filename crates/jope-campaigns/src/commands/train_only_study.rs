@@ -1719,6 +1719,11 @@ fn sotarena_report_hashes(
     })
 }
 
+type EligibleDatasets = (
+    Vec<EligibilityRecord>,
+    Vec<(CatalogEntry, RegressionData, String, SotarenaReportHashes)>,
+);
+
 fn build_eligibility(
     run_id: &str,
     sotarena_root: &Path,
@@ -1727,10 +1732,7 @@ fn build_eligibility(
     generations: usize,
     selected_ids: &[&str],
     expected_eligible: Option<usize>,
-) -> Result<(
-    Vec<EligibilityRecord>,
-    Vec<(CatalogEntry, RegressionData, String, SotarenaReportHashes)>,
-)> {
+) -> Result<EligibleDatasets> {
     let entries = catalog
         .entries
         .iter()
@@ -2080,9 +2082,7 @@ fn build_transfer_rankings(
                 .iter()
                 .filter(|dataset| {
                     dataset.as_str() != target.dataset_hash
-                        && family_by_dataset
-                            .get(dataset.as_str())
-                            .map_or(true, |family| family != &target.source_family)
+                        && (family_by_dataset.get(dataset.as_str()) != Some(&target.source_family))
                 })
                 .cloned()
                 .collect::<Vec<_>>();
@@ -3106,7 +3106,7 @@ fn refill_population(
                 slot,
                 retry,
             ));
-            let crossover = rng.next_u64() % 4 == 0;
+            let crossover = rng.next_u64().is_multiple_of(4);
             let parent_a = tournament(&mut rng, ranked);
             let (operation, parents, roots, child) = if crossover {
                 let parent_b = tournament(&mut rng, ranked);
@@ -4430,11 +4430,11 @@ fn load_or_create_baselines(
             prior_aspfm_rmse: prior_aspfm_metric(&prior_aspfm, dataset_hash)?,
             prior_aspfm_report_path: absolute_path(&prior_aspfm)?,
             tabpfn_v3_report_sha256: sha256_file(tabpfn)?,
-            tabpfn_v3_rmse: baseline_metric(&tabpfn, dataset_hash, "tabpfn_v3_regressor")?,
-            tabpfn_v3_report_path: absolute_path(&tabpfn)?,
+            tabpfn_v3_rmse: baseline_metric(tabpfn, dataset_hash, "tabpfn_v3_regressor")?,
+            tabpfn_v3_report_path: absolute_path(tabpfn)?,
             tabfm_report_sha256: sha256_file(tabfm)?,
             tabfm_rmse,
-            tabfm_report_path: absolute_path(&tabfm)?,
+            tabfm_report_path: absolute_path(tabfm)?,
             tabfm_ensemble_report_sha256: sha256_file(tabfm_ensemble)?,
             tabfm_ensemble_rmse,
             tabfm_ensemble_report_path: absolute_path(tabfm_ensemble)?,
@@ -4913,7 +4913,7 @@ fn median(values: &[f64]) -> Result<f64> {
     let mut sorted = values.to_vec();
     sorted.sort_by(f64::total_cmp);
     let middle = sorted.len() / 2;
-    Ok(if sorted.len() % 2 == 0 {
+    Ok(if sorted.len().is_multiple_of(2) {
         (sorted[middle - 1] + sorted[middle]) / 2.0
     } else {
         sorted[middle]
@@ -5798,11 +5798,11 @@ mod tests {
         let a = scored(member(0, "(pipe X (ridge l2=0.1))", 4), 0.5, 0.1);
         let b = scored(member(1, "(pipe X (ridge l2=0.2))", 3), 0.5, 0.2);
         let c = scored(member(2, "(pipe X (ridge l2=0.3))", 2), 0.5, 0.2);
-        let mut values = vec![a, b, c.clone()];
+        let mut values = [a, b, c.clone()];
         values.sort_by(rank_scored);
         assert_eq!(values[0].member.semantic_sha256, c.member.semantic_sha256);
 
-        let mut same = vec![
+        let mut same = [
             scored(member(0, "(pipe X (ridge l2=0.4))", 2), 0.5, 0.2),
             scored(member(1, "(pipe X (ridge l2=0.5))", 2), 0.5, 0.2),
         ];

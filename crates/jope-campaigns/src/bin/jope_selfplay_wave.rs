@@ -659,9 +659,7 @@ fn validate_catalog_entries(entries: &[CatalogEntry]) -> Result<()> {
 /// reduction policy is deliberately not read from metadata: it is a builder
 /// decision and is stamped into every v2 shard so a later evaluator cannot
 /// silently execute a different reduction.
-fn timeseries_manifest_contract(
-    train_csv: &Path,
-) -> Result<(
+type TimeseriesManifestContract = (
     PathBuf,
     String,
     usize,
@@ -671,7 +669,9 @@ fn timeseries_manifest_contract(
     Vec<String>,
     Vec<String>,
     Value,
-)> {
+);
+
+fn timeseries_manifest_contract(train_csv: &Path) -> Result<TimeseriesManifestContract> {
     let meta_path = train_csv
         .parent()
         .context("timeseries train_csv has no parent directory")?
@@ -1228,13 +1228,12 @@ fn wave_chronology(output_root: &Path) -> HashMap<String, u64> {
 }
 
 /// Everything the admission policy needs, read once from the read-only corpus.
-fn dataset_signals(
-    corpus: &Path,
-    output_root: &Path,
-) -> Result<(
+type DatasetSignals = (
     HashMap<(String, String), u64>,
     HashMap<(String, String), DatasetSignal>,
-)> {
+);
+
+fn dataset_signals(corpus: &Path, output_root: &Path) -> Result<DatasetSignals> {
     let connection = open_readonly(corpus)?;
     connection.busy_timeout(std::time::Duration::from_secs(180))?;
     let counts = {
@@ -1565,8 +1564,7 @@ fn plan(args: PlanArgs) -> Result<Value> {
     // The cohort this call is answering for: the adopted immutable file when one
     // already exists, otherwise the plan just written. Everything reported below
     // must describe THIS cohort, because that is what downstream stages resolve.
-    let effective: CohortPlan;
-    if path.exists() {
+    let effective: CohortPlan = if path.exists() {
         // Adopt the immutable pending cohort; do NOT compare it against a fresh
         // derivation. `select_micro_cohort` ranks its `least_observed` lane by
         // live observation counts, and those grow as ingestion advances -- so
@@ -1622,11 +1620,11 @@ fn plan(args: PlanArgs) -> Result<Value> {
                 entry.dataset_hash
             );
         }
-        effective = current;
+        current
     } else {
         atomic_json(&path, &serde_json::to_value(&plan)?)?;
-        effective = plan;
-    }
+        plan
+    };
     // Report the ADOPTED cohort's catalog binding, never the live one. The
     // adoption branch above deliberately tolerates a cohort that outlived a
     // catalog rotation (see the NOTE on membership-instead-of-equality), so
@@ -2363,7 +2361,7 @@ fn breed_task_valid_child(
     attempt: usize,
     task: &str,
 ) -> Option<String> {
-    let child = if attempt % 2 == 0 {
+    let child = if attempt.is_multiple_of(2) {
         mutate_canonical_pipeline_v2(left_parent, seed, 12, true)
     } else {
         crossover_canonical_pipelines(left_parent, right_parent, seed, 12)
@@ -2673,10 +2671,10 @@ fn annotate_matched_evaluation_lanes(
         "native direct-DL accounting drift before matched-lane selection"
     );
 
-    let mut direct_index = 0;
-    for candidate in candidates
+    for (direct_index, candidate) in candidates
         .iter_mut()
         .filter(|candidate| candidate.origin == CandidateOrigin::DlDirect)
+        .enumerate()
     {
         let pair_id = causal_pair_identity(
             accepted_parent_checkpoint_sha256,
@@ -2696,7 +2694,6 @@ fn annotate_matched_evaluation_lanes(
                 ("valid_lineage", json!(true)),
             ],
         )?;
-        direct_index += 1;
     }
 
     let matched_indexes = candidates
@@ -3582,7 +3579,7 @@ mod tests {
         assert_eq!(contract.2, 3);
         assert_eq!(contract.3, 7);
         assert_eq!(contract.4, "D");
-        assert_eq!(contract.5, true);
+        assert!(contract.5);
         assert_eq!(contract.6, vec!["promo"]);
         assert!(contract.7.is_empty());
         assert_eq!(contract.8, json!({"version": TS_REDUCTION_V2}));

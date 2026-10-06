@@ -52,6 +52,8 @@ pub struct State {
     root: PathBuf,
 }
 
+pub type ReadablePointers = (Vec<(PointerKey, HwmRecord)>, Vec<(String, String)>);
+
 /// One *plain* path component: non-empty, no separator, no `.`/`..`, and nothing outside
 /// `[A-Za-z0-9._-]`.
 ///
@@ -259,9 +261,7 @@ impl State {
     }
 
     /// Every pointer on disk, sorted by key.
-    pub fn pointers_readable(
-        &self,
-    ) -> Result<(Vec<(PointerKey, HwmRecord)>, Vec<(String, String)>)> {
+    pub fn pointers_readable(&self) -> Result<ReadablePointers> {
         let directory = self.root.join("hwm");
         let mut records = Vec::new();
         let mut errors = Vec::new();

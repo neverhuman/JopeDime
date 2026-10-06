@@ -223,6 +223,8 @@ fn baseline_genomes(task: &str) -> Vec<(&'static str, &'static str)> {
     }
 }
 
+type PortfolioTally = HashMap<(String, String), (u64, HashMap<String, u64>, HashMap<String, u64>)>;
+
 fn build_portfolio(root: &Path, top_k: usize) -> Result<BTreeMap<String, Vec<PortfolioGenome>>> {
     let path = root.join("indexes/champions.json");
     let text =
@@ -230,8 +232,7 @@ fn build_portfolio(root: &Path, top_k: usize) -> Result<BTreeMap<String, Vec<Por
     let champions: Vec<Value> = serde_json::from_str(&text).context("parse champions")?;
 
     // genome -> (task, dataset count, checkpoint votes, source votes)
-    let mut tally: HashMap<(String, String), (u64, HashMap<String, u64>, HashMap<String, u64>)> =
-        HashMap::new();
+    let mut tally = PortfolioTally::new();
     for row in &champions {
         let task = row.get("task").and_then(Value::as_str).unwrap_or_default();
         let best = match row.get("best_new_strict") {
@@ -522,7 +523,8 @@ directory = true
 #[derive(Deserialize)]
 struct ReceiptRow {
     task: String,
-    dataset_hash: String,
+    #[serde(rename = "dataset_hash")]
+    _dataset_hash: String,
     semantic_sha256: String,
     metric: String,
     score: Option<f64>,
@@ -603,13 +605,13 @@ fn receipt_dir(runs: &Path, scq: &Path, cache: &Path, job_id: &str) -> Option<Pa
     Some(fetched)
 }
 
-fn median(values: &mut Vec<f64>) -> f64 {
+fn median(values: &mut [f64]) -> f64 {
     if values.is_empty() {
         return f64::NAN;
     }
     values.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let mid = values.len() / 2;
-    if values.len() % 2 == 0 {
+    if values.len().is_multiple_of(2) {
         (values[mid - 1] + values[mid]) / 2.0
     } else {
         values[mid]
@@ -865,8 +867,8 @@ mod tests {
 
     #[test]
     fn median_handles_even_and_odd() {
-        assert_eq!(median(&mut vec![1.0, 3.0]), 2.0);
-        assert_eq!(median(&mut vec![1.0, 5.0, 3.0]), 3.0);
-        assert!(median(&mut vec![]).is_nan());
+        assert_eq!(median(&mut [1.0, 3.0]), 2.0);
+        assert_eq!(median(&mut [1.0, 5.0, 3.0]), 3.0);
+        assert!(median(&mut []).is_nan());
     }
 }

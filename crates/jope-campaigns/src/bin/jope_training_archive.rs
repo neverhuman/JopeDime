@@ -892,7 +892,7 @@ fn ingest(root: &Path, dry_run: bool) -> Result<()> {
     let started = now_ms();
 
     if dry_run {
-        println!("{:<58} {:>6}  {}", "run_key", "rows", "path");
+        println!("{:<58} {:>6}  path", "run_key", "rows");
         for sp in &specs {
             let n = fs::read_to_string(&sp.path)
                 .map(|t| t.lines().filter(|l| !l.trim().is_empty()).count())
@@ -918,10 +918,8 @@ fn ingest(root: &Path, dry_run: bool) -> Result<()> {
         tx.execute("DELETE FROM flag", [])?;
         tx.execute("DELETE FROM field_catalog", [])?;
 
-        let mut field_stats: BTreeMap<
-            String,
-            (String, BTreeSet<String>, i64, i64, i64, String, String),
-        > = BTreeMap::new();
+        type FieldStats = (String, BTreeSet<String>, i64, i64, i64, String, String);
+        let mut field_stats: BTreeMap<String, FieldStats> = BTreeMap::new();
 
         for sp in &specs {
             let bytes = fs::read(&sp.path)?;
@@ -1614,8 +1612,8 @@ fn cmd_stats(root: &Path) -> Result<()> {
          FROM run GROUP BY lane, lane_kind, in_policy_curve ORDER BY MIN(started_at_ms)",
     )?;
     println!(
-        "{:<22} {:<6} {:<6} {:>5} {:>7}  {}",
-        "lane", "kind", "curve", "runs", "rows", "window (UTC)"
+        "{:<22} {:<6} {:<6} {:>5} {:>7}  window (UTC)",
+        "lane", "kind", "curve", "runs", "rows"
     );
     for r in st.query_map([], |r| {
         Ok((
@@ -1935,8 +1933,7 @@ fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Point>> {
     );
     let mut st = conn.prepare(&sql)?;
     let mut out = vec![];
-    let mut gidx = 0i64;
-    for r in st.query_map([], |r| {
+    for (gidx, r) in (1i64..).zip(st.query_map([], |r| {
         Ok((
             r.get::<_, String>(0)?,
             r.get::<_, String>(1)?,
@@ -1952,9 +1949,8 @@ fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Point>> {
             r.get::<_, i64>(11)?,
             r.get::<_, i64>(12)?,
         ))
-    })? {
+    })?) {
         let t = r?;
-        gidx += 1;
         out.push(Point {
             gidx,
             run_key: t.0,

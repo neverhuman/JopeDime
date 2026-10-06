@@ -3891,7 +3891,7 @@ fn next_population(
         for retry in 0..1_000 {
             let mut rng = Pcg32::new(
                 offspring_seed(&spec.dataset_hash, generation, slot, retry, lineage_salt),
-                0x7473_3432_6e657874,
+                0x7473_3432_6e65_7874,
             );
             let first = tournament_winner(&mut rng);
             let first_parent = &ranked[first].member;
@@ -6443,7 +6443,7 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
             })
             .collect::<Vec<_>>();
         let mut shards = Vec::new();
-        for shard in 0..SHARDS {
+        for (shard, node) in NODES[..SHARDS].iter().enumerate() {
             let mut receipt_bytes = Vec::new();
             for offset in 0..SHARD_SIZE {
                 let slot = shard * SHARD_SIZE + offset;
@@ -6473,7 +6473,7 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
             shards.push(ShardRecord {
                 generation,
                 shard,
-                node: NODES[shard].to_string(),
+                node: node.to_string(),
                 attempt: 0,
                 job_id: format!("job-{shard}"),
                 corpus_manifest_file: "/tmp/manifest.json".to_string(),

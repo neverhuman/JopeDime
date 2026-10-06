@@ -1408,7 +1408,7 @@ pub fn revalidate_replay(state: &State, entries: &[Qualification]) -> Result<Tea
         );
     }
     Ok(TeachingManifest {
-        schema: "jope.qualified-teaching-freeze/v1".into(),
+        schema: "jope.qualified-teaching-freeze/v1",
         entries: entries.to_vec(),
         excluded_diagnostic: 0,
         exclusions: vec![],

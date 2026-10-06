@@ -1425,7 +1425,7 @@ fn confirmed_campaign_winner_sources_at(
     runs_root: &Path,
     target_dataset_hash: &str,
 ) -> Result<Vec<CandidateSource>> {
-    let mut run_roots = fs::read_dir(&runs_root)?
+    let mut run_roots = fs::read_dir(runs_root)?
         .map(|entry| Ok(entry?.path()))
         .collect::<Result<Vec<_>>>()?;
     run_roots.sort();
@@ -2862,14 +2862,14 @@ fn run_dataset(
             bail!("generation-zero seed manifest changed");
         }
     } else {
-        fs::create_dir_all(&root)?;
+        fs::create_dir_all(root)?;
         immutable_write(&campaign_path, &canonical_json(&expected_identity)?)?;
         immutable_write(
             &root.join("seed-manifest.v1.json"),
             &canonical_json(&expected_manifest)?,
         )?;
     }
-    let (remote_binary, _) = stage_bundle(&expected_identity, &root)?;
+    let (remote_binary, _) = stage_bundle(&expected_identity, root)?;
     let started_at_unix_ms = started_at(root)?;
     let checkpoints = load_checkpoints(root, &expected_identity)?;
     let mut cache = load_checkpoint_cache(root, &checkpoints, &expected_identity, &test)?;

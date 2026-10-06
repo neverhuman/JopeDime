@@ -1366,7 +1366,7 @@ fn process_group_exists(pid: libc::pid_t) -> Result<bool> {
         if error.raw_os_error() == Some(libc::ESRCH) {
             return Ok(false);
         }
-        return Err(error).context("probe eval-one process group");
+        Err(error).context("probe eval-one process group")
     }
     #[cfg(not(unix))]
     {

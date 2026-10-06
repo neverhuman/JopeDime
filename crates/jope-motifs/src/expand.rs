@@ -203,7 +203,7 @@ mod tests {
             expanded.recipe_sha256,
             sha256_hex(expanded.canonical.as_bytes())
         );
-        assert_eq!(expanded.used, [motif.id.clone()]);
+        assert_eq!(expanded.used, std::slice::from_ref(&motif.id));
         assert!(expanded.canonical.contains(&motif.expansion));
     }
 

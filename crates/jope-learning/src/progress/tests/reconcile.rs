@@ -57,7 +57,11 @@ fn a_lost_race_is_rebased_onto_the_winner_only_on_apply() {
         r.scheduled(0).encoded().unwrap(),
         r.scheduled(1).encoded().unwrap(),
     );
-    let (e, b, winner) = race(&r, &[a_event.clone()], &[b_event.clone()]);
+    let (e, b, winner) = race(
+        &r,
+        std::slice::from_ref(&a_event),
+        std::slice::from_ref(&b_event),
+    );
 
     // Without reconciliation the loser is stuck: its driver's commit names a winner it never
     // recorded.

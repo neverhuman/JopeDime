@@ -1423,6 +1423,7 @@ fn check_warm_start_guard(root: &Path, alarms: &mut Alarms) {
 ///     20:47Z): binary heads 132,669 of 132,669 `logistic` (1.0000) and binary
 ///     decode validity 0.0407 — 96% of everything the model emitted for a
 ///     binary context carried a regression head.
+///
 /// So a 0.10 deficient fraction is already off the healthy branch, 1.0000 head
 /// share is a state this system has genuinely reached, and the two coexist
 /// under one checkpoint: the alarms have to be per task and per set.

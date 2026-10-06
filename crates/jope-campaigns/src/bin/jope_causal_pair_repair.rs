@@ -1036,9 +1036,8 @@ fn prepare_and_submit(
     let (job_id, spec) = render_spec(
         args, runner, request, &target, &evaluator, &manifest, attempt,
     )?;
-    match jobs.get(&job_id).map(String::as_str) {
-        None => submit_spec(args, &spec)?,
-        Some(_) => {}
+    if !jobs.contains_key(&job_id) {
+        submit_spec(args, &spec)?;
     }
     entry.status = "submitted".to_owned();
     entry.attempts = attempt;

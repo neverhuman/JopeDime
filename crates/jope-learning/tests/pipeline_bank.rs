@@ -94,23 +94,23 @@ fn bank_batches(state: &State) -> usize {
 fn only_an_hwm_improved_champion_is_banked() {
     let runs = ingested();
     let state = &runs.state;
-    let initialized = format!("{:#}", bank::add(&state, &runs.weak, None).unwrap_err());
+    let initialized = format!("{:#}", bank::add(state, &runs.weak, None).unwrap_err());
     assert!(
         initialized.contains("`initialized`, not `improved`"),
         "{initialized}"
     );
-    let tie = format!("{:#}", bank::add(&state, &runs.tie, None).unwrap_err());
+    let tie = format!("{:#}", bank::add(state, &runs.tie, None).unwrap_err());
     assert!(tie.contains("rejected this receipt"), "{tie}");
-    assert_eq!(bank_batches(&state), 0, "a refusal wrote to the bank");
+    assert_eq!(bank_batches(state), 0, "a refusal wrote to the bank");
 
-    let added = bank::add(&state, &runs.strong, None).unwrap();
+    let added = bank::add(state, &runs.strong, None).unwrap();
     assert!(!added.already_banked);
     assert_eq!(added.entry.hwm.transition, "improved");
     assert_eq!(
         added.entry.receipt_sha256,
         jope_pipeline::sha256_file(&runs.strong).unwrap()
     );
-    let listed = bank::list(&state).unwrap();
+    let listed = bank::list(state).unwrap();
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0].entry_sha256, added.entry_sha256);
 }
@@ -119,12 +119,12 @@ fn only_an_hwm_improved_champion_is_banked() {
 fn the_bank_is_append_only_and_content_addressed() {
     let runs = ingested();
     let state = &runs.state;
-    let first = bank::add(&state, &runs.strong, None).unwrap();
-    let again = bank::add(&state, &runs.strong, None).unwrap();
+    let first = bank::add(state, &runs.strong, None).unwrap();
+    let again = bank::add(state, &runs.strong, None).unwrap();
     assert!(again.already_banked);
     assert_eq!(again.entry_sha256, first.entry_sha256);
     assert_eq!(
-        bank_batches(&state),
+        bank_batches(state),
         1,
         "a repeated add wrote a second batch"
     );
@@ -139,7 +139,7 @@ fn the_bank_is_append_only_and_content_addressed() {
         text.replacen("\"validation_rmse\":", "\"validation_rmse\":1", 1),
     )
     .unwrap();
-    assert!(bank::list(&state).is_err());
+    assert!(bank::list(state).is_err());
 }
 
 #[test]
@@ -151,7 +151,7 @@ fn an_unverifiable_receipt_or_hwm_ledger_is_refused() {
     run(&options(&fresh, 2)).unwrap();
     let error = format!(
         "{:#}",
-        bank::add(&state, &fresh.join("receipt.json"), None).unwrap_err()
+        bank::add(state, &fresh.join("receipt.json"), None).unwrap_err()
     );
     assert!(error.contains("holds no decision"), "{error}");
     // A receipt whose evidence was edited.
@@ -164,7 +164,7 @@ fn an_unverifiable_receipt_or_hwm_ledger_is_refused() {
     std::fs::write(&observations, serde_json::to_vec_pretty(&rows).unwrap()).unwrap();
     let error = format!(
         "{:#}",
-        bank::add(&state, &copy.join("receipt.json"), None).unwrap_err()
+        bank::add(state, &copy.join("receipt.json"), None).unwrap_err()
     );
     assert!(error.contains("does not verify"), "{error}");
     // An HWM ledger that no longer walks clean.
@@ -177,26 +177,26 @@ fn an_unverifiable_receipt_or_hwm_ledger_is_refused() {
     let at = bytes.iter().position(|b| *b == b'{').unwrap() + 1;
     bytes.insert(at, b' ');
     std::fs::write(&batch, bytes).unwrap();
-    let error = format!("{:#}", bank::add(&state, &runs.strong, None).unwrap_err());
+    let error = format!("{:#}", bank::add(state, &runs.strong, None).unwrap_err());
     assert!(
         error.contains("does not verify") || error.contains("break"),
         "{error}"
     );
-    assert_eq!(bank_batches(&state), 0);
+    assert_eq!(bank_batches(state), 0);
 }
 
 #[test]
 fn an_export_seeds_the_next_run() {
     let runs = ingested();
     let (temp, state) = (&runs.temp, &runs.state);
-    bank::add(&state, &runs.strong, None).unwrap();
+    bank::add(state, &runs.strong, None).unwrap();
     let seeds = temp.path().join("seeds.json");
-    let exported = bank::export(&state, "1cb97b1d7314d43d", None, None, 4, &seeds).unwrap();
+    let exported = bank::export(state, "1cb97b1d7314d43d", None, None, 4, &seeds).unwrap();
     assert_eq!(exported.genomes, 1);
     // Never overwritten.
-    assert!(bank::export(&state, "1cb97b1d7314d43d", None, None, 4, &seeds).is_err());
+    assert!(bank::export(state, "1cb97b1d7314d43d", None, None, 4, &seeds).is_err());
     assert!(bank::export(
-        &state,
+        state,
         "0000000000000000",
         None,
         None,
@@ -206,7 +206,7 @@ fn an_export_seeds_the_next_run() {
     .is_err());
 
     let (file, sha) = jope_pipeline::seeds::read(&seeds).unwrap();
-    let banked = bank::list(&state).unwrap().remove(0);
+    let banked = bank::list(state).unwrap().remove(0);
     assert_eq!(file.genomes[0].genome, banked.entry.genome);
     assert_eq!(
         file.genomes[0].bank_entry_sha256.as_deref(),
@@ -300,7 +300,7 @@ fn an_export_never_ranks_across_comparison_identities() {
             Some(entry.receipt_sha256.as_str())
         );
     }
-    assert!(entries.iter().any(|e| *e == first));
+    assert!(entries.contains(&first));
 }
 
 fn copy_tree(from: &Path, to: &Path) {

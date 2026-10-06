@@ -964,7 +964,7 @@ fn migrate_rankings_champion(
     generation: usize,
     ranked: &[Vec<IslandSlotOutcome>],
 ) -> Result<(Vec<Vec<IslandSlotOutcome>>, MigrationRecord)> {
-    if generation < CHAMPION_START_GENERATION + 1 || generation % 2 == 0 {
+    if generation < CHAMPION_START_GENERATION + 1 || generation.is_multiple_of(2) {
         bail!("invalid champion ring migration generation {generation}");
     }
     migrate_rankings_with_policy(
@@ -1432,14 +1432,16 @@ fn genome_location(outcome: &IslandSlotOutcome) -> IslandGenomeLocation {
     }
 }
 
+type IslandEvolution = (
+    Vec<Vec<IslandPopulationMember>>,
+    Option<(String, String, MigrationRecord)>,
+);
+
 fn evolve_islands(
     identity: &IslandCampaignIdentity,
     generation: usize,
     ranked: &[Vec<IslandSlotOutcome>],
-) -> Result<(
-    Vec<Vec<IslandPopulationMember>>,
-    Option<(String, String, MigrationRecord)>,
-)> {
+) -> Result<IslandEvolution> {
     if generation + 1 == END_GENERATION {
         return Ok((vec![Vec::new(); ISLANDS], None));
     }
@@ -1638,7 +1640,7 @@ fn validate_checkpoint_history(
             bail!("island checkpoint generation sequence mismatch");
         }
         let mut outcomes = Vec::with_capacity(ISLANDS);
-        for island in 0..ISLANDS {
+        for (island, expected_island) in expected_population[..ISLANDS].iter().enumerate() {
             let state = &checkpoint.islands[island];
             if state.island != island
                 || state.logical_slots != ISLAND_POPULATION
@@ -1654,9 +1656,8 @@ fn validate_checkpoint_history(
             }
             let mut fresh = 0;
             let mut valid = 0;
-            for local_slot in 0..ISLAND_POPULATION {
+            for (local_slot, expected) in expected_island[..ISLAND_POPULATION].iter().enumerate() {
                 let outcome = &state.slots[local_slot];
-                let expected = &expected_population[island][local_slot];
                 if outcome.generation != generation
                     || outcome.island != island
                     || outcome.local_slot != local_slot
@@ -2855,7 +2856,7 @@ pub(crate) fn run_island_extension(registry: &Path, base_run_id: &str, resume: b
             handles.push(scope.spawn(move || {
                 let result = run_dataset(
                     registry,
-                    &manifest,
+                    manifest,
                     binding,
                     spec,
                     resume,
@@ -3146,15 +3147,11 @@ fn evolve_champion_islands(
     generation: usize,
     ranked: &[Vec<IslandSlotOutcome>],
     terminal: bool,
-) -> Result<(
-    Vec<Vec<IslandPopulationMember>>,
-    Option<(String, String, MigrationRecord)>,
-)> {
+) -> Result<IslandEvolution> {
     if terminal {
         return Ok((vec![Vec::new(); ISLANDS], None));
     }
-    let (parents, migration) = if generation >= CHAMPION_START_GENERATION + 1 && generation % 2 == 1
-    {
+    let (parents, migration) = if generation > CHAMPION_START_GENERATION && generation % 2 == 1 {
         let (parents, record) = migrate_rankings_champion(
             &identity.run_id,
             &identity.dataset.dataset_hash,
@@ -3355,7 +3352,7 @@ fn validate_champion_history(
             bail!("champion checkpoint generation sequence mismatch");
         }
         let mut outcomes = Vec::with_capacity(ISLANDS);
-        for island in 0..ISLANDS {
+        for (island, expected_island) in expected_population[..ISLANDS].iter().enumerate() {
             let state = &checkpoint.islands[island];
             let terminal = checkpoint.qualifying_descendant_win;
             if state.island != island
@@ -3367,9 +3364,8 @@ fn validate_champion_history(
             }
             let mut fresh = 0usize;
             let mut valid = 0usize;
-            for local_slot in 0..ISLAND_POPULATION {
+            for (local_slot, expected) in expected_island[..ISLAND_POPULATION].iter().enumerate() {
                 let outcome = &state.slots[local_slot];
-                let expected = &expected_population[island][local_slot];
                 if outcome.generation != generation
                     || outcome.island != island
                     || outcome.local_slot != local_slot
