@@ -410,6 +410,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/authority_synthetic_clock_identity_rebaseline.v1.json");
     assert_eq!(authority_clock["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(authority_clock["fixtures"][0]["path"], changed_fixtures[1]);
+    // Clippy remediation changes source identity; frozen and behavioral pins remain strict.
+    let clippy_floor = old_fixture("transitions/required_clippy_floor_identity_rebaseline.v1.json");
+    assert_eq!(clippy_floor["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(clippy_floor["fixtures"][0]["path"], changed_fixtures[1]);
     let identity_chain = [
         transition,
         successor,
@@ -420,6 +424,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         scalar_recipes,
         manifest_cmp,
         authority_clock,
+        clippy_floor,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
