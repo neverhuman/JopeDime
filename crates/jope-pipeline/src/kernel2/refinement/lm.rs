@@ -232,9 +232,12 @@ impl SurrogateTrace {
             .skip(1)
             .filter(|i| i.accepted)
             .count();
+        // The counts are untrusted here, so `jacobians - accepted` is taken checked: it is 0 or 1
+        // exactly when `accepted <= jacobians <= accepted + 1`, with no overflow at any value.
         ensure!(
-            self.accepted <= self.jacobians
-                && self.jacobians <= self.accepted + 1
+            self.jacobians
+                .checked_sub(self.accepted)
+                .is_some_and(|extra| extra <= 1)
                 && (self.iterations.is_empty() || self.jacobians > followed)
                 && (self.rescore == 0 || self.accepted > 0),
             "surrogate Jacobians or re-score disagree with its accepted steps"
@@ -435,7 +438,9 @@ impl RefinementTrace {
                         || (surrogate.changed && passes < PIPELINE_PASSES);
                     fitted
                         && surrogate.sites == sites
-                        && evaluations - passes + PIPELINE_PASSES <= room
+                        && (evaluations - passes)
+                            .checked_add(PIPELINE_PASSES)
+                            .is_some_and(|needed| needed <= room)
                         && (last || !ends)
                 }
             };
