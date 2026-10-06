@@ -227,6 +227,7 @@ fn run(command: &mut Command, root: &Path, name: &str) -> Result<String, String>
 fn check_backend(
     program: &ScalarExpressionProgram,
     language: ScalarLanguage,
+    cpp_compiler: Option<&str>,
     rows: &[Vec<f64>],
     dir: &Path,
 ) -> Result<Vec<u64>, String> {
@@ -290,10 +291,11 @@ fn check_backend(
             )?
         }
         ScalarLanguage::Cpp17 => {
+            let compiler = cpp_compiler.expect("C++17 compiler selected explicitly");
             let driver = "\n#include <fstream>\n#include <cstdio>\nint main(int argc,char** argv){if(argc!=2)return 2;std::ifstream in(argv[1]);std::uint64_t bits;std::vector<std::vector<double>> rows;while(in>>bits){std::vector<double> row(4);std::memcpy(&row[0],&bits,8);for(int j=1;j<4;++j){if(!(in>>bits))return 3;std::memcpy(&row[j],&bits,8);}rows.push_back(row);}const auto out=scalar_stage1_values(rows);for(const auto& row:out.first){std::uint64_t value;std::memcpy(&value,&row[0],8);std::printf(\"%016llx\\n\",static_cast<unsigned long long>(value));}}\n";
             fs::write(dir.join("case.cpp"), recipe + driver).unwrap();
             run(
-                Command::new("g++").current_dir(dir).args([
+                Command::new(compiler).current_dir(dir).args([
                     "-std=c++17",
                     "-Wall",
                     "-Werror",
@@ -305,12 +307,12 @@ fn check_backend(
                     "case-cpp",
                 ]),
                 dir,
-                "cpp-compile",
+                &format!("{compiler}-compile"),
             )?;
             run(
                 Command::new(dir.join("case-cpp")).arg(dir.join("input.txt")),
                 dir,
-                "cpp-run",
+                &format!("{compiler}-run"),
             )?
         }
     };
@@ -371,6 +373,11 @@ fn gp_tricks_compile_and_match_independent_references() {
         let words = values.iter().map(|v| v.to_bits()).collect::<Vec<_>>();
         let references = rows.iter().map(|r| (case.reference)(r)).collect::<Vec<_>>();
         for (i, (value, reference)) in values.iter().zip(&references).enumerate() {
+            assert!(
+                value.is_finite() && reference.is_finite(),
+                "{} row{i}",
+                case.name
+            );
             // Independent algebraic forms differ in association. This bounded mathematical
             // check is separate from mandatory exact evaluator/backend word comparisons.
             let bound = if case.name == "glm_probit_link_v2" {
@@ -386,25 +393,26 @@ fn gp_tricks_compile_and_match_independent_references() {
             }
         }
         let mut backends = Vec::new();
-        for lang in [
-            ScalarLanguage::Python,
-            ScalarLanguage::Rust,
-            ScalarLanguage::Cpp17,
+        for (lang, compiler) in [
+            (ScalarLanguage::Python, None),
+            (ScalarLanguage::Rust, None),
+            (ScalarLanguage::Cpp17, Some("g++")),
+            (ScalarLanguage::Cpp17, Some("clang++")),
         ] {
-            match check_backend(&program, lang, &rows, &dir) {
+            match check_backend(&program, lang, compiler, &rows, &dir) {
                 Ok(actual) if actual == words => backends
-                    .push(json!({"language":format!("{lang:?}"),"status":"PASS","words":actual})),
+                    .push(json!({"language":format!("{lang:?}"),"compiler":compiler,"status":"PASS","words":actual})),
                 Ok(actual) => {
                     failures.push(format!(
-                        "{} {lang:?} bits differ: {actual:?} != {words:?}",
+                        "{} {lang:?}/{compiler:?} bits differ: {actual:?} != {words:?}",
                         case.name
                     ));
-                    backends.push(json!({"language":format!("{lang:?}"),"status":"BITS_MISMATCH","words":actual}));
+                    backends.push(json!({"language":format!("{lang:?}"),"compiler":compiler,"status":"BITS_MISMATCH","words":actual}));
                 }
                 Err(error) => {
-                    failures.push(format!("{} {lang:?}: {error}", case.name));
+                    failures.push(format!("{} {lang:?}/{compiler:?}: {error}", case.name));
                     backends.push(
-                        json!({"language":format!("{lang:?}"),"status":"BACKEND_FAILED","error":error}),
+                        json!({"language":format!("{lang:?}"),"compiler":compiler,"status":"BACKEND_FAILED","error":error}),
                     );
                 }
             }

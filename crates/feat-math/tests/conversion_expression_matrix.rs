@@ -154,17 +154,26 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
             emit_cpp17(&genome, &EmitOptions::default()).unwrap().source + CPP_DRIVER,
         )
         .unwrap();
-        run(Command::new("g++")
-            .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
-            .arg(&cpp)
-            .arg("-o")
-            .arg(&binary));
-        let output = dir.join("cpp.out");
-        run(Command::new(&binary)
-            .arg(dir.join("train.csv"))
-            .arg(dir.join("test.csv"))
-            .arg(&output));
-        assert_eq!(bits(&output), expected, "{source}: C++17 recipe");
+        for compiler in ["g++", "clang++"] {
+            run(Command::new(compiler)
+                .args([
+                    "-std=c++17",
+                    "-Wall",
+                    "-Werror",
+                    "-O2",
+                    "-ffp-contract=off",
+                    "-fno-fast-math",
+                ])
+                .arg(&cpp)
+                .arg("-o")
+                .arg(&binary));
+            let output = dir.join("cpp.out");
+            run(Command::new(&binary)
+                .arg(dir.join("train.csv"))
+                .arg(dir.join("test.csv"))
+                .arg(&output));
+            assert_eq!(bits(&output), expected, "{source}: {compiler} C++17 recipe");
+        }
     }
     // Negative controls: a conversion that reassociates or moves negation cannot pass.
     for (a, b) in [(0, 1), (2, 3), (4, 5), (6, 7)] {
@@ -186,7 +195,8 @@ static std::vector<std::vector<double>> read_rows(const char* path) {
     return rows;
 }
 int main(int argc,char** argv) {
-    if(argc!=4)return 1;auto train=read_rows(argv[1]);std::vector<double> labels;
+    if(argc!=4){return 1;}
+    auto train=read_rows(argv[1]);std::vector<double> labels;
     for(auto& row:train){labels.push_back(row.back());row.pop_back();}
     const auto model=Model::fit(train,labels);std::ofstream out(argv[3]);
     for(double value:model.predict(read_rows(argv[2])))out<<std::setprecision(17)<<value<<'\n';
