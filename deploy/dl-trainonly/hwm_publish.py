@@ -530,6 +530,7 @@ def publish(plan_path, plan_sha, work_dir, receipt, dry_run, budget_snapshot=Non
         "publication state must be outside input custody",
     )
     for path in (work_dir, Path(receipt).absolute()):
+        require(".." not in path.parts, "parent traversal in output path")
         require(
             not path.is_relative_to(Path(plan["source"])),
             "receipt must be outside input custody",

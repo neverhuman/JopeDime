@@ -212,6 +212,45 @@ class PublisherTests(unittest.TestCase):
                 self.assertTrue(key.startswith(h.s3io.V2_RESEARCH_ONLY_KEY))
         self.assertEqual(result["completed"], 1)
 
+    def assert_output_alias_refused(self, work_dir, receipt):
+        plan, sha = self.freeze()
+        before = {
+            str(p.relative_to(self.source)): p.read_bytes()
+            for p in self.source.rglob("*")
+            if p.is_file()
+        }
+        with (
+            mock.patch.object(h.transport, "fake_clients") as fake,
+            mock.patch.object(h.transport, "real_clients") as real,
+            mock.patch.object(h.transport, "PublishLedger") as ledger,
+        ):
+            with self.assertRaises(h.Refused):
+                h.publish(plan, sha, work_dir, receipt, True)
+            fake.assert_not_called()
+            real.assert_not_called()
+            ledger.assert_not_called()
+        after = {
+            str(p.relative_to(self.source)): p.read_bytes()
+            for p in self.source.rglob("*")
+            if p.is_file()
+        }
+        self.assertEqual(before, after)
+        self.assertFalse((self.root / "publish").exists())
+
+    def test_work_directory_parent_alias_refused_before_state(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        self.assert_output_alias_refused(
+            outside / ".." / "source", self.root / "receipt.json"
+        )
+
+    def test_receipt_parent_alias_refused_before_state(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        self.assert_output_alias_refused(
+            self.root / "publish", outside / ".." / "source" / "receipt.json"
+        )
+
     def test_no_selection_is_a_terminal_record(self):
         self.final["outcome"] = self.event["outcome"] = "g0_not_ready"
         del self.final["selection"]
