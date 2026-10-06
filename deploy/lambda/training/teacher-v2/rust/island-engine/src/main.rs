@@ -1,3 +1,6 @@
+mod g0 {
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/g0.rs"));
+}
 use anyhow::{Context, Result, anyhow, bail};
 use base64::Engine as _;
 use flate2::read::GzDecoder;
@@ -22,6 +25,7 @@ const POPULATION: usize = ISLANDS * ISLAND_SIZE;
 const CASES: usize = 192;
 const SIGNATURE: usize = 64;
 const MIGRATION_INTERVAL: u64 = 3 * POPULATION as u64;
+const S1_TWO_FOLD: &str = "jope.s1-two-fold/v1";
 const SELECTION_PROTOCOL: &str = "jope.s1-inner-cv-selection/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -96,8 +100,20 @@ struct Individual {
 
 impl Individual {
     fn from_semantic(row: SemanticRow) -> Result<Self> {
-        if row.selection_protocol != SELECTION_PROTOCOL {
+        Self::from_semantic_in(row, SELECTION_PROTOCOL)
+    }
+    fn from_semantic_in(row: SemanticRow, protocol: &str) -> Result<Self> {
+        if row.selection_protocol != protocol {
             bail!("historical/test-derived semantic cache is not S1")
+        }
+        if protocol == S1_TWO_FOLD
+            && (row.cv_fold_wins > 2
+                || row.cv_gate_passed
+                    != (row.cv_geomean_rmse_ratio <= 0.90 && row.cv_fold_wins == 2)
+                || row.test_rmse.is_some()
+                || row.test_rmse_ratio.is_some())
+        {
+            bail!("two-fold cache has incompatible gate or test diagnostics")
         }
         if row.program_sha256 != row.program.program_sha256 {
             bail!("semantic row program mismatch")
@@ -196,6 +212,12 @@ struct Island {
 
 #[derive(Clone, Debug, Deserialize)]
 struct SampleManifest {
+    #[serde(default)]
+    inner_cv_folds: Option<usize>,
+    #[serde(default)]
+    fold_sizes: Vec<usize>,
+    #[serde(default)]
+    oof_targets_sha256: Option<String>,
     context_sha256: String,
     oof_rows: usize,
     oof_case_indices: Vec<usize>,
@@ -216,6 +238,7 @@ struct Pending {
 
 #[derive(Clone)]
 struct Engine {
+    inner_cv_folds: usize,
     context: String,
     proposal_binary: PathBuf,
     all: HashMap<String, Individual>,
@@ -325,6 +348,13 @@ fn median(values: &mut [f32]) -> f32 {
 }
 
 impl Engine {
+    fn protocol(&self) -> &'static str {
+        if self.inner_cv_folds == 2 {
+            S1_TWO_FOLD
+        } else {
+            SELECTION_PROTOCOL
+        }
+    }
     fn load(
         context: String,
         index: &Path,
@@ -333,12 +363,21 @@ impl Engine {
         projection_path: &Path,
         sample_path: &Path,
         proposal_binary: PathBuf,
+        inner_cv_folds: usize,
     ) -> Result<Self> {
+        if ![2, 7].contains(&inner_cv_folds) {
+            bail!("unsupported fold mode")
+        }
+        if let Some(path) = resume_jsonl {
+            if !path.is_file() {
+                bail!("requested resume file is missing or not a file")
+            }
+        }
         let sample: SampleManifest = serde_json::from_slice(&fs::read(sample_path)?)?;
         if sample.context_sha256 != context || sample.projection_rows != SIGNATURE {
             bail!("semantic sample/context mismatch")
         }
-        validate_sample(&sample)?;
+        validate_sample_mode(&sample, inner_cv_folds)?;
         let projection_bytes = fs::read(projection_path)?;
         if sha256(&projection_bytes) != sample.projection_f32_sha256 {
             bail!("semantic projection hash mismatch")
@@ -363,7 +402,11 @@ impl Engine {
                 bail!("semantic index contains foreign context")
             }
             max_birth = max_birth.max(row.program.birth_seq);
-            let individual = Individual::from_semantic(row)?;
+            let individual = if inner_cv_folds == 7 {
+                Individual::from_semantic(row)?
+            } else {
+                Individual::from_semantic_in(row, S1_TWO_FOLD)?
+            };
             all.insert(individual.program.program_sha256.clone(), individual);
         }
         let mut roots_memo = HashMap::<String, Vec<String>>::new();
@@ -373,7 +416,15 @@ impl Engine {
             all.get_mut(&hash).unwrap().roots = roots;
         }
         let mut seen = HashSet::new();
-        for row in read_history(seen_jsonl, &context)? {
+        for row in read_history_in(
+            seen_jsonl,
+            &context,
+            if inner_cv_folds == 2 {
+                S1_TWO_FOLD
+            } else {
+                SELECTION_PROTOCOL
+            },
+        )? {
             max_birth = max_birth.max(row.program.birth_seq);
             seen.insert(row.program.program_sha256);
         }
@@ -388,6 +439,7 @@ impl Engine {
             })
             .collect();
         let mut engine = Self {
+            inner_cv_folds,
             context,
             proposal_binary,
             all,
@@ -410,9 +462,7 @@ impl Engine {
             number_re: Regex::new(r"[-+]?(?:\d+\.\d+|\d+|\.\d+)(?:[eE][-+]?\d+)?")?,
         };
         engine.seed_islands()?;
-        if let Some(path) = resume_jsonl
-            && path.exists()
-        {
+        if let Some(path) = resume_jsonl {
             engine.load_resume(path)?;
         }
         Ok(engine)
@@ -709,7 +759,7 @@ impl Engine {
     }
 
     fn load_resume(&mut self, path: &Path) -> Result<()> {
-        let rows = read_history(path, &self.context)?;
+        let rows = read_history_in(path, &self.context, self.protocol())?;
         for row in &rows {
             if self.applied_results.contains(&row.program.program_sha256) {
                 bail!("replayed terminal program result")
@@ -909,7 +959,7 @@ impl Engine {
             bail!("unique admitted proposal stream exhausted")
         }
         Ok(
-            json!({"schema":"jope.island-proposal-batch/s1-v1","selection_protocol":SELECTION_PROTOCOL,"context_sha256":self.context,"proposals":output}),
+            json!({"schema":"jope.island-proposal-batch/s1-v1","selection_protocol":self.protocol(),"context_sha256":self.context,"proposals":output}),
         )
     }
 
@@ -943,6 +993,11 @@ impl Engine {
         decoder.read_to_end(&mut raw)?;
         let pack: Value = serde_json::from_slice(&raw)?;
         let record = &pack["record"];
+        if self.inner_cv_folds == 2
+            && (record["fold_protocol"] != S1_TWO_FOLD || record["inner_cv_folds"] != 2)
+        {
+            bail!("live result fold mode mismatch")
+        }
         if pack["schema"] != "jope.s1-invocation/v1"
             || record["schema"] != "jope.s1-evaluation/v1"
             || record["input_semantics"] != "unscaled_fit_rows_v1"
@@ -973,7 +1028,7 @@ impl Engine {
             self.pending.remove(&program.program_sha256);
             return Ok(json!({
                 "schema":"jope.island-scored-evaluation/s1-v1",
-            "selection_protocol":SELECTION_PROTOCOL,
+            "selection_protocol":self.protocol(),
                 "status":status,
                 "context_sha256":self.context,
                 "program":program,
@@ -1008,7 +1063,7 @@ impl Engine {
         let individual = &self.all[&hash];
         Ok(json!({
             "schema":"jope.island-scored-evaluation/s1-v1",
-            "selection_protocol":SELECTION_PROTOCOL,
+            "selection_protocol":self.protocol(),
             "status":"completed",
             "context_sha256":self.context,
             "program":individual.program,
@@ -1045,8 +1100,15 @@ impl Engine {
         program: Program,
         result_key: String,
     ) -> Result<Individual> {
-        validate_sample(&self.sample)?;
+        validate_sample_mode(&self.sample, self.inner_cv_folds)?;
         validate_program(&program)?;
+        if self.inner_cv_folds == 2
+            && (record["fold_protocol"] != S1_TWO_FOLD
+                || record["inner_cv_folds"] != 2
+                || record.get("official_test").is_some())
+        {
+            bail!("S1 two-fold evaluation must not carry test products")
+        }
         if record["schema"] != "jope.s1-evaluation/v1"
             || record["input_semantics"] != "unscaled_fit_rows_v1"
             || record["status"] != "completed"
@@ -1056,15 +1118,24 @@ impl Engine {
         let folds = record["inner_cv"]
             .as_array()
             .ok_or_else(|| anyhow!("inner_cv missing"))?;
-        if folds.len() != 7 {
-            bail!("expected seven folds")
+        if folds.len() != self.inner_cv_folds {
+            bail!("fold count differs from explicit engine mode")
         }
         let mut logs = Vec::new();
         let mut cv_rmse = Vec::new();
         let mut oof_predictions = Vec::new();
         let mut oof_targets = Vec::new();
         let mut wins = 0_u64;
-        for fold in folds {
+        for (index, fold) in folds.iter().enumerate() {
+            if self.inner_cv_folds == 2
+                && (fold["index"].as_u64() != Some(index as u64)
+                    || fold["kind"] != "inner_cv"
+                    || fold["score_rows"].as_u64() != Some(self.sample.fold_sizes[index] as u64)
+                    || array_f64(&fold["predictions"])?.len() != self.sample.fold_sizes[index]
+                    || array_f64(&fold["targets"])?.len() != self.sample.fold_sizes[index])
+            {
+                bail!("S1 fold identity or row count mismatch")
+            }
             let rmse = fold["metrics"]["rmse"]
                 .as_f64()
                 .ok_or_else(|| anyhow!("fold rmse"))?;
@@ -1093,7 +1164,11 @@ impl Engine {
             logs.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / logs.len() as f64;
         let sd = variance.sqrt();
         logs.sort_by(|a, b| b.total_cmp(a));
-        let tail = logs[..3].iter().sum::<f64>() / 3.0;
+        let tail = if self.inner_cv_folds == 2 {
+            logs[0]
+        } else {
+            logs[..3].iter().sum::<f64>() / 3.0
+        };
         let geo = mean.exp();
         // Test diagnostics may be absent or failed. Neither their value nor their
         // availability can censor an otherwise valid CV candidate.
@@ -1108,7 +1183,11 @@ impl Engine {
             .zip(test_baseline)
             .map(|(r, b)| r / b)
             .filter(|v| v.is_finite());
-        let gate = geo <= 0.90 && wins >= 5;
+        let gate = if self.inner_cv_folds == 2 {
+            geo <= 0.90 && wins == 2
+        } else {
+            geo <= 0.90 && wins >= 5
+        };
         let complexity = program.dsl.bytes().filter(|x| *x == b'(').count() as u64;
         let fitness = if gate {
             0.80 * mean + 0.10 * tail + 0.10 * sd + 0.0005 * complexity as f64
@@ -1120,6 +1199,11 @@ impl Engine {
             || oof_targets.len() != self.sample.oof_rows
         {
             bail!("OOF result shape mismatch")
+        }
+        if self.inner_cv_folds == 2
+            && Some(f64_hash(&oof_targets)) != self.sample.oof_targets_sha256
+        {
+            bail!("S1 targets differ from the frozen training-only sample")
         }
         let mut residual = Vec::with_capacity(self.sample.projection_cols);
         for (prediction, target) in oof_predictions.iter().zip(&oof_targets) {
@@ -1376,7 +1460,7 @@ impl Engine {
         roots.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
         json!({
             "schema":"jope.island-engine-status/s1-v1",
-            "selection_protocol":SELECTION_PROTOCOL,
+            "selection_protocol":self.protocol(),
             "budget_policy":"fixed_equal_18",
             "test_fields":"diagnostic_only",
             "context_sha256":self.context,
@@ -1412,7 +1496,7 @@ impl Engine {
             .collect::<Vec<_>>();
         json!({
             "schema":"jope.island-engine-snapshot/s1-v1",
-            "selection_protocol":SELECTION_PROTOCOL,
+            "selection_protocol":self.protocol(),
             "status":self.status(),
             "next_birth":self.next_birth,
             "next_draw":self.next_draw,
@@ -1445,7 +1529,10 @@ struct HistoryRow {
 }
 
 fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
-    if value["selection_protocol"] != SELECTION_PROTOCOL
+    validate_history_in(value, context, SELECTION_PROTOCOL)
+}
+fn validate_history_in(value: &Value, context: &str, protocol: &str) -> Result<HistoryRow> {
+    if value["selection_protocol"] != protocol
         || value["context_sha256"] != context
         || value["schema"] != "jope.island-scored-evaluation/s1-v1"
         || !matches!(
@@ -1480,7 +1567,8 @@ fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
         for field in ["test_rmse", "test_rmse_ratio"] {
             scored[field] = value[field].as_f64().map_or(Value::Null, |x| json!(x));
         }
-        let mut individual = Individual::from_semantic(serde_json::from_value(scored)?)?;
+        let mut individual =
+            Individual::from_semantic_in(serde_json::from_value(scored)?, protocol)?;
         individual.roots = serde_json::from_value(value["roots"].clone())?;
         individual.born_completed = value["born_completed"]
             .as_u64()
@@ -1503,11 +1591,18 @@ fn validate_history(value: &Value, context: &str) -> Result<HistoryRow> {
 }
 
 fn read_history(path: &Path, context: &str) -> Result<Vec<HistoryRow>> {
+    read_history_in(path, context, SELECTION_PROTOCOL)
+}
+fn read_history_in(path: &Path, context: &str, protocol: &str) -> Result<Vec<HistoryRow>> {
     let mut rows = Vec::new();
     let mut unique = HashSet::new();
     for line in BufReader::new(File::open(path)?).lines() {
         let value: Value = serde_json::from_str(&line?)?;
-        let row = validate_history(&value, context)?;
+        let row = if protocol == SELECTION_PROTOCOL {
+            validate_history(&value, context)?
+        } else {
+            validate_history_in(&value, context, protocol)?
+        };
         if !unique.insert(row.program.program_sha256.clone()) {
             bail!("duplicate terminal program result in history")
         }
@@ -1516,6 +1611,28 @@ fn read_history(path: &Path, context: &str) -> Result<Vec<HistoryRow>> {
     Ok(rows)
 }
 
+fn validate_sample_mode(sample: &SampleManifest, folds: usize) -> Result<()> {
+    validate_sample(sample)?;
+    if folds == 2
+        && (sample.inner_cv_folds != Some(2)
+            || sample.fold_sizes.len() != 2
+            || sample.fold_sizes.iter().any(|n| *n < 2)
+            || sample
+                .fold_sizes
+                .iter()
+                .try_fold(0usize, |a, b| a.checked_add(*b))
+                != Some(sample.oof_rows)
+            || sample.oof_targets_sha256.as_ref().is_none_or(|h| {
+                h.len() != 64
+                    || !h
+                        .bytes()
+                        .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
+            }))
+    {
+        bail!("S1 sample is not bound to exactly two training-only folds")
+    }
+    Ok(())
+}
 fn validate_sample(sample: &SampleManifest) -> Result<()> {
     if sample.oof_rows == 0
         || sample.projection_rows != SIGNATURE
@@ -1555,6 +1672,9 @@ fn arg_value(args: &[String], name: &str) -> Result<String> {
 
 fn main() -> Result<()> {
     let args = std::env::args().collect::<Vec<_>>();
+    if args.get(1).is_some_and(|a| a == "--score-g0") {
+        return g0::run(&args);
+    }
     let context = arg_value(&args, "--context")?;
     let index = PathBuf::from(arg_value(&args, "--control-index")?);
     let seen = PathBuf::from(arg_value(&args, "--seen-jsonl")?);
@@ -1574,6 +1694,11 @@ fn main() -> Result<()> {
         &projection,
         &sample,
         proposal,
+        if args.iter().any(|s| s == "--s1-two-fold") {
+            2
+        } else {
+            7
+        },
     )?;
     println!(
         "{}",
@@ -1657,6 +1782,7 @@ mod tests {
             })
             .collect();
         Engine {
+            inner_cv_folds: 7,
             context: "c".into(),
             proposal_binary: PathBuf::new(),
             all: HashMap::new(),
@@ -1668,6 +1794,9 @@ mod tests {
             pending: HashMap::new(),
             projection,
             sample: SampleManifest {
+                inner_cv_folds: None,
+                fold_sizes: Vec::new(),
+                oof_targets_sha256: None,
                 context_sha256: "c".into(),
                 oof_rows: OOF,
                 oof_case_indices: (0..CASES).map(|i| (i * 7) % OOF).collect(),
@@ -2373,6 +2502,109 @@ mod tests {
         assert_eq!(
             f64_hash(&[1.0, 2.0]),
             "dc91ce9a50ddc828740aa26743716897fdb2bb64f1db662fe263a59be56145ae"
+        );
+    }
+    pub(super) fn two_fold_score_fixture() -> (Engine, Value, Program) {
+        let mut e = s1_engine();
+        e.inner_cv_folds = 2;
+        let (mut r, p) = record(7, 11);
+        r.as_object_mut().unwrap().remove("official_test");
+        r["fold_protocol"] = json!(S1_TWO_FOLD);
+        r["inner_cv_folds"] = json!(2);
+        r["inner_cv"].as_array_mut().unwrap().truncate(2);
+        let mut targets = Vec::new();
+        let mut sizes = Vec::new();
+        for (index, f) in r["inner_cv"].as_array_mut().unwrap().iter_mut().enumerate() {
+            f["index"] = json!(index);
+            f["kind"] = json!("inner_cv");
+            let n = f["targets"].as_array().unwrap().len();
+            f["score_rows"] = json!(n);
+            sizes.push(n);
+            targets.extend(array_f64(&f["targets"]).unwrap());
+            f["metrics"]["rmse"] = json!(0.1);
+            f["baseline_metrics"]["rmse"] = json!(0.2);
+        }
+        let rows = targets.len();
+        e.sample.inner_cv_folds = Some(2);
+        e.sample.fold_sizes = sizes;
+        e.sample.oof_targets_sha256 = Some(f64_hash(&targets));
+        e.sample.oof_rows = rows;
+        e.sample.projection_cols = rows;
+        e.sample.oof_case_indices = (0..CASES).map(|i| i % rows).collect();
+        e.projection.truncate(SIGNATURE * rows);
+        (e, r, p)
+    }
+    #[test]
+    fn s1_two_fold_gate_requires_both_wins_and_refuses_wrong_count() {
+        let (e, r, p) = two_fold_score_fixture();
+        assert!(
+            e.score_record(&r, p.clone(), String::new())
+                .unwrap()
+                .cv_gate_passed
+        );
+        let mut one = r.clone();
+        one["inner_cv"][1]["metrics"]["rmse"] = json!(0.22);
+        assert!(
+            !e.score_record(&one, p.clone(), String::new())
+                .unwrap()
+                .cv_gate_passed,
+            "S1_ASSERT_TWO_WINS"
+        );
+        for count in [1, 7] {
+            let mut bad = r.clone();
+            let f = bad["inner_cv"][0].clone();
+            bad["inner_cv"] = json!(vec![f; count]);
+            assert!(e.score_record(&bad, p.clone(), String::new()).is_err());
+        }
+        let mut bad = r.clone();
+        bad["inner_cv"][1]["index"] = json!(0);
+        assert!(e.score_record(&bad, p.clone(), String::new()).is_err());
+        let mut bad = r.clone();
+        bad["inner_cv_folds"] = json!(7);
+        assert!(e.score_record(&bad, p.clone(), String::new()).is_err());
+        assert!(
+            s1_engine().score_record(&r, p, String::new()).is_err(),
+            "legacy seven-fold path still requires seven"
+        );
+    }
+    #[test]
+    fn s1_two_fold_selection_refuses_test_products_and_changed_targets() {
+        let (e, r, p) = two_fold_score_fixture();
+        let a = e.score_record(&r, p.clone(), String::new()).unwrap();
+        assert_eq!(a.test_rmse, None);
+        assert_eq!(a.test_rmse_ratio, None);
+        let mut bad = r.clone();
+        bad["official_test"] = json!({"targets":[1.0],"metrics":{"rmse":0.0}});
+        assert!(
+            e.score_record(&bad, p.clone(), String::new()).is_err(),
+            "S1_ASSERT_TEST_PRODUCTS"
+        );
+        let mut bad = r.clone();
+        bad["inner_cv"][0]["targets"][0] = json!(999.0);
+        assert!(e.score_record(&bad, p.clone(), String::new()).is_err());
+        let mut wrong = e.clone();
+        wrong.sample.inner_cv_folds = Some(7);
+        assert!(wrong.score_record(&r, p, String::new()).is_err());
+    }
+    #[test]
+    fn explicitly_missing_resume_fails_before_seed_inputs_are_read() {
+        let path = Path::new("this-resume-path-must-not-exist-for-s1");
+        let error = Engine::load(
+            "c".repeat(64),
+            path,
+            path,
+            Some(path),
+            path,
+            path,
+            PathBuf::new(),
+            2,
+        )
+        .err()
+        .unwrap()
+        .to_string();
+        assert!(
+            error.contains("requested resume file"),
+            "S1_ASSERT_REQUIRED_RESUME: {error}"
         );
     }
 }

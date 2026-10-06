@@ -2212,6 +2212,16 @@
         "training"
       ],
       "reason": "S1 fixed-budget continuation and durable attempt accounting, with failures and initialization inside the owner ceiling."
+    },
+    "python:deploy/lambda/training/teacher-v2/test_materialize_g0.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "training"
+      ],
+      "reason": "S1 two-fold G0 preparation and production executable conformance, including forbidden outer-target perturbation and admitted input controls."
     }
   },
   "baseline_triage": [

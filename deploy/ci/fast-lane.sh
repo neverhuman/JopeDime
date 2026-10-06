@@ -80,6 +80,7 @@ echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
 cargo deny --all-features check bans licenses sources
     # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
 bash deploy/ci/lambda.sh
+python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py
 python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out "$EVIDENCE/s1-mutants"
     # `just bump` keeps every workspace consistent (after lambda.sh, whose cargo runs fill the cache
     # that the bump's --offline cargo needs)
