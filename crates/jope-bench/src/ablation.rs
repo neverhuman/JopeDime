@@ -1116,10 +1116,10 @@ fn check_scratch_kind(scratch: &Path) -> Result<()> {
 /// ([`check_scratch_kind`]), whose only entry is this comparison's own [`LOCK_FILE`]. Anything
 /// else, an inspection error included, is refused. What this enforces: every dataset's
 /// `prepared/<dataset hash>/prepared.json` is shared by its searches, so a comparison with a
-/// kernel2 arm writes only into a scratch that no other comparison through this harness has
-/// written to, and it then marks the scratch ([`mark_kernel2`]) so that no later comparison
-/// through this harness writes there ([`check_not_kernel2`]). Writers outside the harness are not
-/// covered.
+/// kernel2 arm writes its evidence only into a scratch that held nothing but its own lock file,
+/// and it then marks the scratch ([`mark_kernel2`]). A later comparison through this harness
+/// refuses the marked scratch as its scratch ([`check_not_kernel2`]) and as the place of its
+/// `--out` document ([`check_out`]). Writers outside the harness are not covered.
 fn check_scratch_unused(scratch: &Path) -> Result<()> {
     let refused = || format!("{}: {SCRATCH_NOT_UNUSED}", scratch.display());
     check_scratch_kind(scratch)?;
@@ -1194,8 +1194,9 @@ impl Drop for Reservation {
 }
 
 /// Refuse, for every comparison and under its [`Reservation`], a scratch directory that holds
-/// [`KERNEL2_MARKER`], so no later comparison through this harness, legacy-only included,
-/// rewrites a kernel2 comparison's preparation or searches. An inspection error is refused too.
+/// [`KERNEL2_MARKER`], so no later comparison through this harness, legacy-only included, uses a
+/// kernel2 comparison's scratch as its own scratch. An inspection error is refused too. The
+/// `--out` document is admitted separately ([`check_out`]).
 fn check_not_kernel2(scratch: &Path) -> Result<()> {
     let refused = || format!("{}: {SCRATCH_HOLDS_KERNEL2}", scratch.display());
     match std::fs::symlink_metadata(scratch.join(KERNEL2_MARKER)) {
@@ -1218,6 +1219,131 @@ fn mark_kernel2(scratch: &Path) -> Result<()> {
         .with_context(|| format!("create {}", marker.display()))?;
     file.write_all(b"this --scratch holds a kernel2 comparison's evidence; use a new --scratch\n")
         .with_context(|| format!("write {}", marker.display()))
+}
+
+/// The refusal of a `--out` destination ([`check_out`]); the message names the reason.
+const OUT_REFUSED: &str = "--out refused";
+
+/// `path` with its symbolic links and `..` resolved, also when it does not exist yet: the nearest
+/// existing ancestor (inspected without following a final symbolic link, so a dangling link
+/// counts as existing and fails to resolve) is canonicalized, and the components that do not
+/// exist yet are appended. A `..` among those is refused, since what it names depends on
+/// directories that do not exist yet, and so is an ancestor that cannot be inspected. The error
+/// is the reason, for the caller's message.
+fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
+    let path: PathBuf = path.components().collect();
+    let mut existing = Path::new("");
+    for ancestor in path.ancestors() {
+        if ancestor.as_os_str().is_empty() {
+            break;
+        }
+        match std::fs::symlink_metadata(ancestor) {
+            Ok(_) => {
+                existing = ancestor;
+                break;
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => {
+                return Err(format!(
+                    "{} cannot be inspected: {error}",
+                    ancestor.display()
+                ))
+            }
+        }
+    }
+    let rest = path
+        .strip_prefix(existing)
+        .map_err(|_| format!("{} cannot be resolved", path.display()))?;
+    let base = if existing.as_os_str().is_empty() {
+        Path::new(".")
+    } else {
+        existing
+    };
+    let mut resolved = std::fs::canonicalize(base)
+        .map_err(|error| format!("{} cannot be resolved: {error}", base.display()))?;
+    for component in rest.components() {
+        match component {
+            std::path::Component::Normal(name) => resolved.push(name),
+            std::path::Component::CurDir => {}
+            _ => {
+                return Err(format!(
+                    "{} has a `..` after a directory that does not exist yet",
+                    path.display()
+                ))
+            }
+        }
+    }
+    Ok(resolved)
+}
+
+/// Decide whether the document may be written to `out`, for every comparison: [`execute`] asks
+/// before the comparison creates its scratch or computes anything, and again immediately before
+/// it writes the document. Refused, with [`OUT_REFUSED`] and the reason:
+/// - `out` is a symbolic link, or exists and is not a regular file, or cannot be inspected;
+/// - `out`, resolved by [`resolve_destination`] (symbolic links and `..` included), lies in a
+///   directory that holds [`KERNEL2_MARKER`] or [`LOCK_FILE`], checked from the directory that
+///   would hold the document up to the filesystem root, so a marked or reserved scratch anywhere
+///   above it is caught;
+/// - the comparison has a kernel2 profile and `out` lies inside its own scratch, resolved the
+///   same way, which the scratch's marker does not cover before the comparison creates it.
+///
+/// A legacy-only comparison whose `out` is elsewhere, its own scratch included, is admitted as
+/// before. The check and the write are separate steps; a writer that changes the destination
+/// between them is not prevented.
+fn check_out(out: &Path, scratch: Option<&Path>, kernel2: bool) -> Result<()> {
+    let refused = |reason: &str| {
+        format!(
+            "{}: {OUT_REFUSED} ({reason}); choose another --out",
+            out.display()
+        )
+    };
+    let literal: PathBuf = out.components().collect();
+    match std::fs::symlink_metadata(&literal) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error).with_context(|| refused("it cannot be inspected")),
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            bail!(refused("it is a symbolic link"))
+        }
+        Ok(metadata) if !metadata.file_type().is_file() => {
+            bail!(refused("it exists and is not a regular file"))
+        }
+        Ok(_) => {}
+    }
+    let destination =
+        resolve_destination(out).map_err(|reason| anyhow::anyhow!(refused(&reason)))?;
+    let holder = destination.parent().unwrap_or(&destination);
+    for dir in holder.ancestors() {
+        for (name, what) in [
+            (KERNEL2_MARKER, "a kernel2 comparison's evidence"),
+            (LOCK_FILE, "a comparison in progress"),
+        ] {
+            let entry = dir.join(name);
+            match std::fs::symlink_metadata(&entry) {
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => {
+                    return Err(error).with_context(|| {
+                        refused(&format!("{} cannot be inspected", entry.display()))
+                    })
+                }
+                Ok(_) => bail!(refused(&format!("{} holds {name}, {what}", dir.display()))),
+            }
+        }
+    }
+    if let (true, Some(scratch)) = (kernel2, scratch) {
+        let own = resolve_destination(scratch).map_err(|reason| {
+            anyhow::anyhow!(refused(&format!(
+                "this comparison's kernel2 --scratch cannot be resolved: {reason}"
+            )))
+        })?;
+        ensure!(
+            !destination.starts_with(&own),
+            refused(&format!(
+                "it is inside this comparison's kernel2 --scratch {}",
+                own.display()
+            ))
+        );
+    }
+    Ok(())
 }
 
 fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
@@ -2364,7 +2490,10 @@ pub struct AblationArgs {
     /// Searches run concurrently; the results do not depend on it.
     #[arg(long, default_value_t = 1)]
     pub jobs: usize,
-    /// Where to write the jope.bench-ablation/v1 document.
+    /// Where to write the jope.bench-ablation/v1 document. Refused when it is a symbolic link or
+    /// not a regular file, when it lies under a directory that holds a kernel2 comparison's
+    /// evidence (.ablation-kernel2) or a comparison in progress (.ablation-lock), and, with a
+    /// kernel2 profile, when it lies inside --scratch.
     #[arg(long)]
     pub out: PathBuf,
     /// Keep every search's evidence under this directory (default: a temporary directory under
@@ -2441,17 +2570,20 @@ fn paired_line(label: &str, c: &PairedCounts) -> String {
     )
 }
 
-/// Run `jope-bench ablation`. Every refusal of the options is made before the scratch directory
-/// is created. [`run`] then holds an exclusive [`Reservation`] of the scratch for the whole
-/// comparison, so a second comparison on the same `--scratch` is refused while this one runs,
-/// and refuses a scratch a kernel2 comparison used ([`check_not_kernel2`]). A comparison with a
-/// kernel2 profile also needs an unused `--scratch`: one created here, empty, or an existing empty
-/// directory; [`run`] refuses anything else before it writes ([`check_scratch_unused`]) and marks
-/// the scratch for good ([`mark_kernel2`]). The temporary scratch made without `--scratch` is
-/// always unused.
+/// Run `jope-bench ablation`. Every refusal of the options, and of the `--out` destination
+/// ([`check_out`]), is made before the scratch directory is created. [`run`] then holds an
+/// exclusive [`Reservation`] of the scratch for the whole comparison, so a second comparison on
+/// the same `--scratch` is refused while this one runs, and refuses a scratch a kernel2
+/// comparison used ([`check_not_kernel2`]). A comparison with a kernel2 profile also needs an
+/// unused `--scratch`: one created here, empty, or an existing empty directory; [`run`] refuses
+/// anything else before it writes ([`check_scratch_unused`]) and marks the scratch for good
+/// ([`mark_kernel2`]). The temporary scratch made without `--scratch` is always unused. After
+/// [`run`] returns, and so after its reservation is released, `--out` is checked again,
+/// immediately before the document is written.
 pub fn execute(args: &AblationArgs) -> Result<()> {
     let config = config(args)?;
     config.check()?;
+    check_out(&args.out, args.scratch.as_deref(), config.has_kernel2())?;
     let temporary;
     let scratch = match &args.scratch {
         Some(dir) => {
@@ -2469,6 +2601,7 @@ pub fn execute(args: &AblationArgs) -> Result<()> {
         }
     };
     let report = run(&config, &scratch)?;
+    check_out(&args.out, Some(&scratch), config.has_kernel2())?;
     let file_sha256 = write_document(&args.out, &report.document)?;
     let body = &report.document.body;
     eprintln!(
@@ -4653,5 +4786,215 @@ mod tests {
             changed.is_empty(),
             "a refused comparison changed {changed:?}"
         );
+    }
+
+    // Review 04: finding PR0-R8 (the --out document write).
+
+    /// [`shared_scratch_args`] for a legacy-only comparison: legacy A=A, seed 7, fold seed
+    /// 20260908, as [`legacy_scratch_config`]`(7, 20_260_908)`.
+    fn legacy_out_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
+        AblationArgs {
+            profile_a: Profile::Legacy.id().to_owned(),
+            profile_b: Profile::Legacy.id().to_owned(),
+            refine_top_k: None,
+            refine_trials: None,
+            seeds: vec![7],
+            fold_seed: 20_260_908,
+            ..shared_scratch_args(scratch, out)
+        }
+    }
+
+    /// `execute` refused for its `--out`: the message holds [`OUT_REFUSED`] and `reason` and,
+    /// with the test directory left out, passes the shipped-text lint; nothing under `root`
+    /// changed (no scratch created, no document written, no evidence touched).
+    fn out_refusal(args: &AblationArgs, root: &Path, reason: &str) -> String {
+        let before = tree(root);
+        let error = format!("{:#}", execute(args).unwrap_err());
+        assert!(
+            error.contains(OUT_REFUSED) && error.contains(reason),
+            "{reason:?} not in {error}"
+        );
+        let mut text = error.clone();
+        for prefix in [std::fs::canonicalize(root).unwrap(), root.to_path_buf()] {
+            text = text.replace(&prefix.display().to_string(), "<root>");
+        }
+        let hits = feat_math::transpile::lint_shipped_text(&text);
+        assert!(hits.is_empty(), "{text:?}: {hits:?}");
+        let changed = changed_entries(&before, &tree(root));
+        assert!(changed.is_empty(), "a refused --out changed {changed:?}");
+        error
+    }
+
+    /// The independent reviewer's PR0-R8 regression test (review 04), adopted with its name and
+    /// intent. Its directories are in a fresh test directory instead of the review's evidence
+    /// directory.
+    #[test]
+    fn review04_execute_output_preserves_marked_kernel2_evidence() {
+        let temporary = scratch();
+        let root = temporary.path().join("out-regression");
+        let first_dir = root.join("first");
+        let first = run(&shared_scratch_config(), &first_dir).unwrap();
+        write_document(&root.join("first.json"), &first.document).unwrap();
+        let record = &first.document.body.datasets[0];
+        let prepared = first_dir
+            .join("prepared")
+            .join(&record.dataset_hash)
+            .join("prepared.json");
+        let before = std::fs::read(&prepared).unwrap();
+        let mut args = shared_scratch_args(root.join("second"), prepared.clone());
+        args.profile_a = "legacy".to_owned();
+        args.profile_b = "legacy".to_owned();
+        args.refine_top_k = None;
+        args.refine_trials = None;
+        args.seeds = vec![7];
+        args.fold_seed = 20_260_908;
+        let result = execute(&args);
+        let after = std::fs::read(&prepared).unwrap();
+        println!(
+            "second execute success: {}; before: {}; after: {}; marker exists: {}",
+            result.is_ok(),
+            sha256_hex(&before),
+            sha256_hex(&after),
+            first_dir.join(KERNEL2_MARKER).exists()
+        );
+        assert_eq!(
+            sha256_hex(&after),
+            record.prepared_sha256,
+            "a successful execute --out bypassed the marker and invalidated the earlier document"
+        );
+    }
+
+    /// Review finding PR0-R8, the self-collision: a comparison with a kernel2 profile whose
+    /// `--out` names its own `prepared.json`, or any other path inside its own `--scratch`, is
+    /// refused before the scratch is created or anything is computed, also when the scratch
+    /// already exists empty.
+    #[test]
+    fn ablation_execute_refuses_an_out_inside_its_own_kernel2_scratch() {
+        let root = scratch();
+        let hash = load_dataset(&d5("pmlb-first-principles-supernovae-zg"))
+            .unwrap()
+            .row
+            .dataset_hash;
+        let own = root.path().join("scratch");
+        let reason = "inside this comparison's kernel2 --scratch";
+        for out in [
+            own.join("prepared").join(&hash).join("prepared.json"),
+            own.join("ablation.json"),
+        ] {
+            out_refusal(&shared_scratch_args(own.clone(), out), root.path(), reason);
+        }
+        std::fs::create_dir(&own).unwrap();
+        out_refusal(
+            &shared_scratch_args(own.clone(), own.join("ablation.json")),
+            root.path(),
+            reason,
+        );
+    }
+
+    /// Review finding PR0-R8: a later legacy-only comparison into a fresh scratch whose `--out`
+    /// lies in a kernel2 comparison's scratch is refused, directly, through a symbolic link to
+    /// that scratch, and through a `..` (after an existing directory, or after one that does not
+    /// exist yet). Nothing is written anywhere, and the first document's `prepared_sha256` still
+    /// names `prepared.json`.
+    #[test]
+    fn ablation_execute_refuses_an_out_in_a_kernel2_scratch() {
+        let root = scratch();
+        let first_dir = root.path().join("first");
+        let first = run(&shared_scratch_config(), &first_dir).unwrap();
+        let record = &first.document.body.datasets[0];
+        let relative = Path::new("prepared")
+            .join(&record.dataset_hash)
+            .join("prepared.json");
+        let second = root.path().join("second");
+        let marked = "holds .ablation-kernel2";
+        let mut outs = vec![
+            (first_dir.join(&relative), marked),
+            (first_dir.join("search").join("..").join(&relative), marked),
+            (first_dir.join("ablation.json"), marked),
+            (
+                root.path().join("missing/../first").join(&relative),
+                "a `..` after a directory that does not exist yet",
+            ),
+        ];
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink("first", root.path().join("link")).unwrap();
+            outs.insert(0, (root.path().join("link").join(&relative), marked));
+        }
+        for (out, reason) in outs {
+            out_refusal(&legacy_out_args(second.clone(), out), root.path(), reason);
+        }
+        assert_eq!(
+            sha256_hex(&std::fs::read(first_dir.join(&relative)).unwrap()),
+            record.prepared_sha256
+        );
+    }
+
+    /// Review finding PR0-R8: a `--out` in, or anywhere under, a directory that holds
+    /// `.ablation-lock` (a comparison in progress) is refused, with nothing written.
+    #[test]
+    fn ablation_execute_refuses_an_out_under_a_lock_file() {
+        let root = scratch();
+        let held = root.path().join("held");
+        std::fs::create_dir(&held).unwrap();
+        std::fs::write(held.join(LOCK_FILE), b"pid 1 started_unix 0\n").unwrap();
+        let second = root.path().join("second");
+        for out in [
+            held.join("ablation.json"),
+            held.join("sub/dir/ablation.json"),
+        ] {
+            out_refusal(
+                &legacy_out_args(second.clone(), out),
+                root.path(),
+                "holds .ablation-lock",
+            );
+        }
+    }
+
+    /// A `--out` that is a symbolic link (to an ordinary file) or an existing directory is
+    /// refused, for a legacy-only comparison too, with nothing written.
+    #[test]
+    fn ablation_execute_refuses_an_out_that_is_not_a_regular_file() {
+        let root = scratch();
+        let second = root.path().join("second");
+        #[cfg(unix)]
+        {
+            std::fs::write(root.path().join("target.json"), b"kept\n").unwrap();
+            std::os::unix::fs::symlink("target.json", root.path().join("link.json")).unwrap();
+            out_refusal(
+                &legacy_out_args(second.clone(), root.path().join("link.json")),
+                root.path(),
+                "is a symbolic link",
+            );
+        }
+        std::fs::create_dir(root.path().join("dir.json")).unwrap();
+        out_refusal(
+            &legacy_out_args(second, root.path().join("dir.json")),
+            root.path(),
+            "not a regular file",
+        );
+    }
+
+    /// A legacy-only comparison writes `--out` as before: in an ordinary directory, with the body
+    /// of the same comparison run through the library, and inside its own legacy scratch, which
+    /// then holds the document beside its evidence and no lock file or marker.
+    #[test]
+    fn ablation_execute_writes_a_legacy_out_as_before() {
+        let root = scratch();
+        let out = root.path().join("out/ablation.json");
+        execute(&legacy_out_args(root.path().join("scratch"), out.clone())).unwrap();
+        let written: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&out).unwrap()).unwrap();
+        let alone = scratch();
+        let report = run(&legacy_scratch_config(7, 20_260_908), alone.path()).unwrap();
+        assert_eq!(
+            written["body_sha256"].as_str(),
+            Some(report.document.body_sha256.as_str())
+        );
+        let own = root.path().join("own");
+        let inside = own.join("ablation.json");
+        execute(&legacy_out_args(own.clone(), inside.clone())).unwrap();
+        assert!(inside.is_file());
+        assert_eq!(names(&own), set(&["ablation.json", "prepared", "search"]));
     }
 }
