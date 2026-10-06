@@ -161,6 +161,11 @@ cd python
 bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider
 )
 python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
+    # The exact DL source handoff has its own offline unittest receipt; pytest totals stay separate.
+(
+cd python
+timeout 900s uv run --no-sync python ../deploy/dl-trainonly/run_lane_offline.py --output "$EVIDENCE/dl-lane-offline"
+)
     ;;
   rust-test)
     status=0

@@ -96,7 +96,8 @@
         "bash deploy/ci/test-bump.sh",
         "python3 deploy/lambda/training/teacher-v2/test_s1_budget.py",
         "python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out \"$JOPE_LANE_EVIDENCE/s1-mutants\"",
-        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py"
+        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py",
+        "python3 deploy/dl-trainonly/test_verify_lane.py"
       ]
     },
     "rust-check": {
@@ -261,7 +262,8 @@
       "evidence": [
         "collection/execution/deselection counts",
         "pytest results",
-        "Ruff exit"
+        "Ruff exit",
+        "DL offline subreceipt:329 actual unittest case IDs/counts/dependencies/source pins, separate from pytest"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -272,7 +274,8 @@
         "uv run --no-sync ruff check .",
         "uv run --no-sync ruff format --check .",
         "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$pytest_fixtures\" --junitxml=\"$EVIDENCE/junit.xml\"",
-        "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\""
+        "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\"",
+        "timeout 900s uv run --no-sync python ../deploy/dl-trainonly/run_lane_offline.py --output \"$EVIDENCE/dl-lane-offline\""
       ]
     },
     "e2e-smoke": {
@@ -965,6 +968,16 @@
         "replay under the same input identity"
       ],
       "owner_phase": "following CPU repair and qualification phase"
+    },
+    "dl-lane-qualification": {
+      "status": "deferred",
+      "reason": "Newly imported historical lane test families outside the eleven audited offline modules are not collected or executed by this source-custody PR; no pre-existing family is moved or excluded. Dependency and side-effect audit plus bounded fixtures are still required.",
+      "dependencies": [
+        "explicit maintained-family collection and side-effect audit",
+        "pinned runtime/input/fixture closure",
+        "capability-specific bounded qualification receipts"
+      ],
+      "owner_phase": "DL source handoff follow-up; live pilot and training remain separate"
     }
   },
   "items": {
@@ -7999,6 +8012,576 @@
       ],
       "dispositions": [],
       "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/restore/test_p7_restore.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_common.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_cpuguard.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_jtt1.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_nonnumeric.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_calibration.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_live.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_model_objective.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_sampler.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_raw_split_v2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1prep.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1raw.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_trainonly.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection in run_lane_offline.py, with own329-case receipt; this subreceipt is separate from the existing pytest count. Synthetic CPU only; no live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_dryrun.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_interface.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_mapping.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_parser.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_refusals.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_simulate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_unpromotable.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_keys.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_pin.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_screen.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_review_fixes.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_closure.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_commit_publish.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_hygiene.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_interface.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_registry.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_selection.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_verify.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_automaton.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_oracle.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_programs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_tokenizer.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_build.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_hygiene.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_poison.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_real.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_redteam.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_sample.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_schema.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_metafeatures.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_normalizers.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_review_findings.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_real.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+    },
+    "python:deploy/dl-trainonly/test_verify_lane.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct15-case stdlib source-custody fixture execution: trusted producer/predecessor pins, exact restoration, byte edits, self-sidecar replacement, missing/unlisted objects, symlink escapes and malformed identity refusals; imports no staged code."
     }
   }
 }

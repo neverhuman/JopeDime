@@ -1,0 +1,567 @@
+"""Raw-universe row-selection rebuild, local and unpublished (ROWSEL-TRAINONLY + ROWSEL-SPLIT; dltrain/rowsel_raw.py).
+
+Scope (recounted from the receipts, never from the plan's prose):
+  (a) all_rows_coreset   acquisition-selection class all_rows_coreset (frozen), every epoch-0 context labelled
+                         ["all_rows_coreset"] in row-selection-leak-v2, L7a dataset record status "matched"
+  (b) acquisition_capped acquisition-selection class kmeans, cohort incoming, reduced=true (original_size.downsampled),
+                         every epoch-0 context labelled ["kmeans"], L7a dataset record status "matched"
+Rights-held datasets (rights-gate receipt) are refused before any read; their raw files are never opened.
+
+Per dataset: the L7a match is re-run on the same raw bytes and must reproduce the L7a record (values_sha256, read
+report); then universe -> pre-cap -> 5-fold split -> per fold selection, L7a values, both counterfactual gates. Contexts
+are written only when all 5 folds pass (files, context.json, then .done last); otherwise nothing is written for the
+dataset, the failure goes to the dataset record and the shard receipt, and the dataset keeps its epoch-0 contexts.
+A context with .done is never rewritten; its recorded identity must equal the recomputed one.
+
+Usage (inside the lane slice, RUN/tmp/p2fix3/py.sh):
+  v2_rowsel_raw.py plan      [--out DIR] [--of 3]
+  v2_rowsel_raw.py build     [--out DIR] --shard I --of N [--datasets h1,h2]
+  v2_rowsel_raw.py summarize [--out DIR] --of N --tests-log LOG --mutants JSON [--pilot JSON] [--receipt PATH]
+No S3, network, GPU or git; nothing is published.
+"""
+import argparse
+import collections
+import glob
+import hashlib
+import json
+import os
+import resource
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+from dltrain import cpuguard, rowsel, rowsel_raw, scale_check, t1raw
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+META_DIR = RUN / "inputs" / "t1-meta"
+RAW_DIR = RUN / "inputs" / "t1-raw"
+DATASETS_INV = RUN / "tmp" / "trainonly-v1" / "epoch0-datasets.json"
+RECEIPTS = RUN / "receipts" / "trainonly-v2"
+ACQ = RECEIPTS / "acquisition-selection-20261005T2045Z.json"
+LEAK = RECEIPTS / "row-selection-leak-v2-20261005T200546Z.jsonl"
+L7A_SUMMARY = RECEIPTS / "l7a-build-summary-20261005T204452Z.json"
+L7A_OUT = RUN / "build-v2" / "L7a"
+OUT = RUN / "build-v2" / "ROWSEL-RAW-v1"
+OWNER = {"ROWSEL-SPLIT": "/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261005T210659Z.json",
+         "ROWSEL-TRAINONLY": "/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261005T203324Z.json"}
+CODE_FILES = ("tools/v2_rowsel_raw.py", "dltrain/rowsel_raw.py", "dltrain/rowsel.py", "dltrain/t1raw.py", "dltrain/t1prep.py",
+              "dltrain/trainonly.py", "dltrain/metafeatures.py", "dltrain/scale_check.py", "dltrain/jtt1.py", "dltrain/cpuguard.py")
+CLASSES = ("all_rows_coreset", "acquisition_capped")
+LABEL_OF = {"all_rows_coreset": ["all_rows_coreset"], "acquisition_capped": ["kmeans"]}
+PLAN_SCHEMA = "jope.dl-v2-rowsel-raw-plan/v1"
+DATASET_SCHEMA = "jope.dl-v2-rowsel-raw-dataset/v1"
+SHARD_SCHEMA = "jope.dl-v2-rowsel-raw-shard/v1"
+SUMMARY_SCHEMA = "jope.dl-v2-rowsel-raw-summary/v1"
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def sha_file(p) -> str:
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def ref(p) -> dict:
+    p = Path(p)
+    return {"path": str(p), "sha256": sha_file(p), "bytes": p.stat().st_size}
+
+
+def atomic(path: Path, data: bytes):
+    tmp = path.with_name("." + path.name + ".tmp")
+    with open(tmp, "wb") as f:
+        f.write(data); f.flush(); os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
+def jdump(o) -> bytes:
+    return (json.dumps(o, sort_keys=True) + "\n").encode()
+
+
+def code_shas():
+    root = Path(__file__).resolve().parents[1]
+    return {f: sha((root / f).read_bytes()) for f in CODE_FILES}
+
+
+def code_known(recorded, codes) -> bool:
+    """Recorded code equals the current code, except that the tool may be an earlier version kept read-only as
+    receipts/trainonly-v2/build/v2_rowsel_raw.build-<sha256>.py (the bytes that built it)."""
+    if not isinstance(recorded, dict) or set(recorded) != set(codes):
+        return False
+    t = "tools/v2_rowsel_raw.py"
+    if any(recorded[k] != codes[k] for k in codes if k != t):
+        return False
+    saved = RECEIPTS / "build" / f"v2_rowsel_raw.build-{recorded[t]}.py"
+    return recorded[t] == codes[t] or (saved.exists() and sha_file(saved) == recorded[t])
+
+
+def cpu_s() -> float:
+    r = resource.getrusage(resource.RUSAGE_SELF)
+    return r.ru_utime + r.ru_stime
+
+
+def maxrss_mb() -> int:
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+
+
+# --------------------------------------------------------------------------------------------------- scope
+
+def held_set():
+    paths = sorted(glob.glob(str(RECEIPTS / "rights-gate-no-license-*.jsonl")))
+    if len(paths) != 1:
+        raise SystemExit(f"expected one rights-gate receipt, found {paths}")
+    rows = [json.loads(l) for l in Path(paths[0]).read_bytes().decode().splitlines() if l.strip()]
+    return {r["dataset_hash"] for r in rows}, ref(paths[0])
+
+
+def l7a_records():
+    """dataset_hash -> (record, path, sha256), bound to the L7a summary's shard receipts."""
+    summ = json.loads(L7A_SUMMARY.read_bytes())
+    for s in summ["shard_receipts"]:
+        if sha_file(s["path"]) != s["sha256"]:
+            raise SystemExit(f"L7a shard receipt drift: {s['path']}")
+    out = {}
+    for p in sorted(glob.glob(str(L7A_OUT / "shard-*" / "_datasets" / "*.json"))):
+        b = Path(p).read_bytes()
+        r = json.loads(b)
+        if r["dataset_hash"] in out:
+            raise SystemExit(f"two L7a records for {r['dataset_hash']}")
+        out[r["dataset_hash"]] = (r, p, sha(b))
+    return out
+
+
+def recount(rows):
+    """The scope per class from the receipts. Returns (in-scope entries, per-class accounting)."""
+    acq = json.loads(ACQ.read_bytes())
+    leak = {}
+    for l in LEAK.read_bytes().decode().splitlines():
+        if l.strip():
+            r = json.loads(l)
+            leak[r["view_id"]] = r["row_selection_leak"]
+    held, _ = held_set()
+    recs = l7a_records()
+    by = collections.defaultdict(list)
+    for r in rows:
+        by[r["dataset_hash"]].append(r)
+    acct = {c: collections.Counter() for c in CLASSES}
+    scope = []
+    for h in sorted(acq):
+        a = acq[h]
+        if a["class"] == "all_rows_coreset":
+            cls = "all_rows_coreset"
+        elif a["class"] == "kmeans" and a["cohort"] == "incoming" and a["reduced"]:
+            cls = "acquisition_capped"
+        else:
+            continue
+        ctx = sorted(by[h], key=lambda r: int(r["fold"]))
+        n = len(ctx)
+        acct[cls]["class_datasets"] += 1
+        acct[cls]["class_contexts"] += n
+        labels = {json.dumps(leak.get(r["view_id"])) for r in ctx}
+        if labels != {json.dumps(LABEL_OF[cls])}:
+            raise SystemExit(f"{h}: epoch-0 leak labels {labels} != {LABEL_OF[cls]} for class {cls}")
+        if h in held:
+            acct[cls]["held_no_license_datasets"] += 1
+            acct[cls]["held_no_license_contexts"] += n
+            continue
+        rec = recs.get(h)
+        st = rec[0]["status"] if rec else "no_l7a_record"
+        if st != "matched":
+            key = f"not_matched:{(rec[0].get('reason') if rec else st)}"
+            acct[cls][key + "_datasets"] += 1
+            acct[cls][key + "_contexts"] += n
+            continue
+        r, p, s = rec
+        m = r["match"]
+        scope.append({"dataset_hash": h, "class": cls, "cohort": a["cohort"],
+                      "epoch0": [{"view_id": c["view_id"], "context_sha256": c["context_sha256"], "fold": int(c["fold"])}
+                                 for c in ctx],
+                      "epoch0_labels": LABEL_OF[cls], "match_record": {"path": p, "sha256": s},
+                      "raw_rows": m["raw_rows"], "raw_rows_with_target": m["raw_rows"] - m["raw_rows_without_target"],
+                      "header_width": r["read"]["header_width"], "acq_pre_selection_rows": a["pre_selection_rows"]})
+        acct[cls]["in_scope_datasets"] += 1
+        acct[cls]["in_scope_epoch0_contexts"] += n
+    return scope, {c: dict(v) for c, v in acct.items()}
+
+
+def est_cost(e) -> float:
+    n = min(e["raw_rows_with_target"], rowsel_raw.PRECAP_ROWS)
+    w = e["header_width"]
+    return 50 * n * (min(w, 60) + 30) * 0.42e-6 + e["raw_rows"] * w * 1.5e-6
+
+
+def plan(a):
+    out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    src = scale_check.Sources(load_index=False)
+    scope, acct = recount(src.included())
+    loads = [0.0] * a.of
+    for e in sorted(scope, key=lambda e: (-est_cost(e), e["dataset_hash"])):     # LPT: deterministic balance
+        i = min(range(a.of), key=lambda k: (loads[k], k))
+        e["shard"] = i
+        e["est_cpu_s"] = round(est_cost(e), 1)
+        loads[i] += est_cost(e)
+    scope.sort(key=lambda e: e["dataset_hash"])
+    held, held_ref = held_set()
+    doc = {"schema": PLAN_SCHEMA, "of": a.of, "datasets": scope, "accounting": acct, "epoch": src.epoch_ref,
+           "inputs": {"acquisition_selection": ref(ACQ), "row_selection_leak": ref(LEAK), "l7a_summary": ref(L7A_SUMMARY),
+                      "rights_gate": held_ref, "owner_decisions": {k: ref(v) for k, v in OWNER.items() if Path(v).exists()}},
+           "shard_est_cpu_s": [round(x, 1) for x in loads],
+           "precap_rows": rowsel_raw.PRECAP_ROWS, "outer_folds": rowsel_raw.OUTER_FOLDS, "budget": rowsel_raw.BUDGET}
+    p = out / "plan.json"
+    body = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    if p.exists() and p.read_bytes() != body:
+        raise SystemExit(f"{p} exists with different content; refusing to replace a pinned plan")
+    if not p.exists():
+        atomic(p, body)
+    print(json.dumps({"plan": str(p), "sha256": sha(body), "accounting": acct, "shard_est_cpu_s": doc["shard_est_cpu_s"],
+                      "in_scope": collections.Counter(e["class"] for e in scope)}))
+    return 0
+
+
+def load_plan(out: Path):
+    b = (out / "plan.json").read_bytes()
+    return json.loads(b), sha(b)
+
+
+# --------------------------------------------------------------------------------------------------- one dataset
+
+def load_inputs(e, src, cache, inv, held):
+    """Every input of one dataset, each sha256-checked against its receipt. Raises RowselRawError on a mismatch."""
+    h = e["dataset_hash"]
+    if h in held:
+        raise rowsel_raw.RowselRawError("held_no_license")                      # before any read of its source
+    mb_path = Path(e["match_record"]["path"])
+    mb = mb_path.read_bytes()
+    if sha(mb) != e["match_record"]["sha256"]:
+        raise rowsel_raw.RowselRawError("match_record_drift", str(mb_path))
+    rec = json.loads(mb)
+    k = inv["meta_key"][h].rsplit("/", 1)[1]
+    meta_b = (META_DIR / f"{k}.json").read_bytes()
+    if sha(meta_b) != k or rec["t1_meta_sha256"] != k:
+        raise rowsel_raw.RowselRawError("meta_sha_mismatch", k)
+    fdir = RAW_DIR / h
+    if not (fdir / ".done").exists():
+        raise rowsel_raw.RowselRawError("raw_not_done")
+    fj = json.loads((fdir / "fetch.json").read_bytes())
+    raw_path = Path(fj["file"])
+    if raw_path.parent.resolve() != fdir.resolve():
+        raise rowsel_raw.RowselRawError("raw_outside_dataset_dir", str(raw_path))
+    got = sha_file(raw_path)
+    if got != fj.get("sha256") or got != rec["raw"]["sha256"]:
+        raise rowsel_raw.RowselRawError("raw_custody_mismatch", f"{got} fetch {fj.get('sha256')} l7a {rec['raw']['sha256']}")
+    rows = [r for r in src.included() if r["dataset_hash"] == h]
+    rows.sort(key=lambda r: int(r["fold"]))
+    if [(r["view_id"], r["context_sha256"]) for r in rows] != [(c["view_id"], c["context_sha256"]) for c in e["epoch0"]]:
+        raise rowsel_raw.RowselRawError("epoch0_contexts_differ_from_plan")
+    c0 = scale_check.resolve_context(rows[0], src, cache)
+    if c0["refs"]["data_sha256"] != rec["data_sha256"]:
+        raise rowsel_raw.RowselRawError("data_object_differs_from_matched", c0["refs"]["data_sha256"])
+    raw_ref = {"file": str(raw_path), "sha256": got, "bytes": raw_path.stat().st_size, "fetch_status": fj.get("status"),
+               "url": fj.get("url"), "byte_identical_to_original": got.startswith(h)}
+    return {"meta": json.loads(meta_b), "meta_sha256": k, "raw_path": raw_path, "raw_ref": raw_ref, "record": rec,
+            "A": c0["A"], "rows": rows, "sealed": sum(1 for r in rows if r["context_sha256"] in src.sealed_ctx)}
+
+
+def rematch(inp):
+    """read_source + match on the same raw bytes; must reproduce the L7a dataset record. Returns (values, specs, read)."""
+    rec = inp["record"]
+    specs = t1raw.columns(inp["meta"], inp["A"].shape[1])
+    got = t1raw.read_source(inp["raw_path"], inp["meta"], specs)
+    m = t1raw.match(inp["A"], specs, got["values"])
+    if not m["matched"]:
+        raise rowsel_raw.RowselRawError("rematch_unmatched", json.dumps({k: m["stats"][k] for k in ("unmatched_rows", "ambiguous_rows", "oversubscribed_rows")}))
+    vs = sha(np.ascontiguousarray(t1raw.matched_values(m), "<f8").tobytes())
+    if vs != rec["values_sha256"]:
+        raise rowsel_raw.RowselRawError("rematch_values_differ", vs)
+    if got["report"] != rec["read"]:
+        raise rowsel_raw.RowselRawError("read_report_differs")
+    return got["values"], specs, {"values_sha256": vs, "read_report_equal": True, "match_stats_equal": m["stats"] == rec["match"]}
+
+
+def match_summary(st):
+    keys = ("rows", "matched_rows", "raw_rows", "raw_rows_without_target", "raw_value_classes", "print_class", "residual", "tol_rel")
+    return {k: st.get(k) for k in keys}
+
+
+def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_fn=None, log=print, loader=None, matcher=None):
+    """Build one dataset. Returns its dataset record (also written to out_shard/_datasets/<h>.json). `loader` and
+    `matcher` replace load_inputs/rematch for a scope without an L7a match record (tools/v2_rowsel_raw_coverage.py);
+    e['context_extra'] (plan data, e.g. rights) is added to the dataset record and to every context.json."""
+    h = e["dataset_hash"]
+    t0, c0 = time.time(), cpu_s()
+    rec = {"schema": DATASET_SCHEMA, "dataset_hash": h, "class": e["class"], "cohort": e["cohort"], "code_sha256": codes,
+           "epoch0_replaced": None, "status": "failed", "published": False}
+    rec.update(e.get("context_extra") or {})
+    contexts = []
+    try:
+        inp = (loader or load_inputs)(e, src, cache, inv, held)
+        values, specs, rematch_rep = (matcher or rematch)(inp)
+        rec["rematch"] = rematch_rep
+        prep = rowsel_raw.prepare_universe(h, values, specs)
+        del values
+        inp["A"] = None
+        rec["universe"] = prep.report
+        folds = rowsel_raw.outer_split(h, prep.positions, prep.values, specs)
+        srep = rowsel_raw.split_report(prep, folds)
+        srep["target_check"] = rowsel_raw.split_target_check(rowsel_raw.outer_split, prep)
+        rec["split"] = srep
+        if srep["groups_straddling_folds"] or not srep["target_check"]["target_invariant"]:
+            raise rowsel_raw.RowselRawError("split_check_failed", json.dumps(srep["target_check"]))
+        if min(srep["fold_sizes"]) == 0:
+            raise rowsel_raw.RowselRawError("empty_outer_fold", json.dumps(srep["fold_sizes"]))
+        mrec = e["match_record"]
+        universe_ref = {"raw_sha256s": [inp["raw_ref"]["sha256"]], "match_receipt_sha256": mrec["sha256"],
+                        "match_receipt": mrec["path"], "partition": rowsel_raw.PARTITION,
+                        "rows_before_precap": prep.report["precap"]["rows_before"],
+                        "rows_after_precap": prep.report["precap"]["rows_after"], "precap_applied": prep.report["precap"]["applied"],
+                        "positions_sha256": prep.report["positions_sha256"], "data_rows": prep.report["cleanup"]["data_rows"],
+                        "cleanup": {k: prep.report["cleanup"][k] for k in ("no_target", "unmapped_category_with_target")}}
+        split_ref = {k: srep[k] for k in ("schema", "sha256", "fold_sizes", "groups", "largest_group", "groups_straddling_folds",
+                                          "domain", "rule")} | {"target_invariant": srep["target_check"]["target_invariant"]}
+        e0 = {"level": "dataset", "contexts": e["epoch0"], "count": len(e["epoch0"]),
+              "fold_correspondence": "none: a new value-free outer split (ROWSEL-SPLIT); new fold f is not epoch-0 fold f",
+              "new_contexts": rowsel_raw.OUTER_FOLDS, "context_count_changed": len(e["epoch0"]) != rowsel_raw.OUTER_FOLDS,
+              "epoch0_sealed_contexts": inp["sealed"]}
+        rec["epoch0_replaced"] = e0
+        common = {"t1_meta_sha256": inp["meta_sha256"], "data_sha256": inp["record"]["data_sha256"], "raw_source": inp["raw_ref"],
+                  "match": match_summary(inp["record"]["match"]), "match_receipt": mrec, "class": e["class"],
+                  "cohort": e["cohort"], "epoch0_row_selection_leak": e["epoch0_labels"], "epoch0_replaced": e0,
+                  "code_sha256": codes, "rowsel_universe": universe_ref, "rowsel_split": split_ref}
+        common.update(e.get("context_extra") or {})
+        results = []
+        for f in range(rowsel_raw.OUTER_FOLDS):
+            guard.wait()
+            tf, cf = time.time(), cpu_s()
+            kw = {} if select_fn is None else {"select_fn": select_fn}
+            r = rowsel_raw.build_fold(prep, folds, f, universe_ref, split_ref, **kw)
+            files = rowsel_raw.context_files(r)
+            crec = rowsel_raw.context_record(r, prep, files, common)
+            results.append((r, files, crec))
+            contexts.append({"fold": f, "view_id": r["view_id"], "identity": r["identity"], "passed": r["passed"],
+                             "failures": r["failures"], "quotas": list(r["view"].quotas), "n_train": crec["n_train"],
+                             "n_test": crec["n_test"], "context_sha256": crec["context_sha256"],
+                             "cpu_s": round(cpu_s() - cf, 2), "wall_s": round(time.time() - tf, 2)})
+            log(json.dumps({"dataset": h, "fold": f, "passed": r["passed"], "failures": r["failures"],
+                            "cpu_s": contexts[-1]["cpu_s"], "maxrss_mb": maxrss_mb()}))
+            if not r["passed"]:
+                break                                                    # the dataset cannot be admitted any more
+        rec["contexts"] = contexts
+        failed = [c for c in contexts if not c["passed"]]
+        if failed:
+            raise rowsel_raw.RowselRawError("counterfactual_failed", json.dumps({c["fold"]: c["failures"] for c in failed}))
+        pending = []                                                     # every fold passed
+        for r, files, crec in results:
+            d = out_shard / r["view_id"]
+            if (d / ".done").exists():
+                old = json.loads((d / "context.json").read_bytes())
+                if old.get("rowsel", {}).get("identity") != r["identity"] or old.get("files") != crec["files"]:
+                    raise rowsel_raw.RowselRawError("done_context_differs", r["view_id"])
+                continue
+            pending.append((d, files, crec))
+        for d, files, crec in pending:                                   # phase 1: every file of every context
+            d.mkdir(parents=True, exist_ok=True)
+            for name, body in files.items():
+                atomic(d / name, body)
+            atomic(d / "context.json", jdump(dict(crec, utc_us=int(time.time() * 1e6))))
+        for d, _, _ in pending:                                          # phase 2: .done last, dataset-wide
+            atomic(d / ".done", b"ok\n")
+        rec.update(status="done", contexts_written=len(pending), contexts_already_done=len(results) - len(pending), reason=None)
+    except (rowsel_raw.RowselRawError, t1raw.T1RawError) as err:
+        rec.update(reason=err.reason, detail=err.detail[:2000])
+    except Exception as err:  # recorded; the shard continues
+        rec.update(reason="exception", detail=f"{type(err).__name__}: {err}"[:2000])
+    rec.setdefault("contexts", contexts)
+    rec.update(cpu_s=round(cpu_s() - c0, 2), wall_s=round(time.time() - t0, 2), maxrss_mb=maxrss_mb(), utc_us=int(time.time() * 1e6))
+    (out_shard / "_datasets").mkdir(parents=True, exist_ok=True)
+    atomic(out_shard / "_datasets" / f"{h}.json", jdump(rec))
+    return rec
+
+
+def dataset_done(out_shard: Path, h: str, codes) -> bool:
+    p = out_shard / "_datasets" / f"{h}.json"
+    if not p.exists():
+        return False
+    r = json.loads(p.read_bytes())
+    return (r.get("status") == "done" and r.get("code_sha256") == codes
+            and all((out_shard / c["view_id"] / ".done").exists() for c in r.get("contexts", [])))
+
+
+def build(a):
+    cpuguard.set_threads(2)
+    out = Path(a.out)
+    pl, plan_sha = load_plan(out)
+    if pl["of"] != a.of:
+        raise SystemExit(f"plan is for --of {pl['of']}")
+    out_shard = out / f"shard-{a.shard}"
+    out_shard.mkdir(parents=True, exist_ok=True)
+    codes = code_shas()
+    src = scale_check.Sources(load_index=False)
+    cache = scale_check.DataCache(max_items=2)
+    inv = json.loads(DATASETS_INV.read_text())
+    held, held_ref = held_set()
+    mine = [e for e in pl["datasets"] if e["shard"] == a.shard]
+    if a.datasets:
+        keep = set(a.datasets.split(","))
+        mine = [e for e in mine if e["dataset_hash"] in keep]
+    guard = cpuguard.Guard(journal_path=out / f"shard-{a.shard}.guard.jsonl")
+    t0, c0 = time.time(), cpu_s()
+    counts, failed, done_now, skipped = collections.Counter(), [], [], []
+    for n, e in enumerate(sorted(mine, key=lambda e: -e["est_cpu_s"])):
+        h = e["dataset_hash"]
+        if dataset_done(out_shard, h, codes):
+            skipped.append(h)
+            counts["already_done"] += 1
+            continue
+        guard.wait()
+        rec = run_dataset(e, out_shard, codes, src, cache, inv, held, guard)
+        if rec["status"] == "done":
+            done_now.append(h)
+            counts["done"] += 1
+        else:
+            failed.append({"dataset_hash": h, "class": e["class"], "reason": rec.get("reason"), "detail": rec.get("detail", "")[:500],
+                           "epoch0_contexts_kept": len(e["epoch0"])})
+            counts["failed"] += 1
+        print(json.dumps({"shard": a.shard, "n": n + 1, "of": len(mine), "dataset": h, "status": rec["status"],
+                          "reason": rec.get("reason"), "cpu_s": rec["cpu_s"], "elapsed_s": round(time.time() - t0)}), flush=True)
+    by_class = collections.defaultdict(collections.Counter)
+    for e in mine:
+        p = out_shard / "_datasets" / f"{e['dataset_hash']}.json"
+        st = json.loads(p.read_bytes())["status"] if p.exists() else "missing"
+        by_class[e["class"]][st] += 1
+    rec = {"schema": SHARD_SCHEMA, "shard": a.shard, "of": a.of, "plan_sha256": plan_sha, "datasets_filter": a.datasets,
+           "expected_datasets": len(mine), "done_now": len(done_now), "already_done": len(skipped), "failed": failed,
+           "status_by_class": {k: dict(v) for k, v in by_class.items()},
+           "complete": not failed and len(done_now) + len(skipped) == len(mine),
+           "cpu_s": round(cpu_s() - c0, 1), "wall_s": round(time.time() - t0, 1), "maxrss_mb": maxrss_mb(),
+           "guard": guard.summary(), "published": False, "code_sha256": codes, "rights_gate": held_ref,
+           "utc_us": int(time.time() * 1e6)}
+    name = f"shard-{a.shard}-of-{a.of}.receipt.json" if not a.datasets else f"shard-{a.shard}-of-{a.of}.partial-{int(time.time())}.receipt.json"
+    atomic(out / name, (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
+    print(json.dumps({k: rec[k] for k in ("shard", "expected_datasets", "done_now", "already_done", "complete", "cpu_s", "wall_s")}
+                     | {"failed": len(failed)}))
+    return 0 if rec["complete"] else 1
+
+
+# --------------------------------------------------------------------------------------------------- summary
+
+def summarize(a):
+    out = Path(a.out)
+    pl, plan_sha = load_plan(out)
+    codes = code_shas()
+    per_class = {c: collections.Counter() for c in CLASSES}
+    failures = collections.defaultdict(list)
+    datasets, cpu_ds, ctx_dirs = [], 0.0, set()
+    orphan = []
+    for e in pl["datasets"]:
+        h, cls = e["dataset_hash"], e["class"]
+        sd = out / f"shard-{e['shard']}"
+        p = sd / "_datasets" / f"{h}.json"
+        pc = per_class[cls]
+        pc["expected_datasets"] += 1
+        pc["expected_epoch0_contexts"] += len(e["epoch0"])
+        pc["expected_new_contexts"] += rowsel_raw.OUTER_FOLDS
+        if not p.exists():
+            pc["not_built_datasets"] += 1
+            failures[cls].append({"dataset_hash": h, "reason": "not_built"})
+            continue
+        r = json.loads(p.read_bytes())
+        cpu_ds += r.get("cpu_s", 0.0)
+        if r["status"] == "done":
+            ok = code_known(r.get("code_sha256"), codes)
+            for c in r["contexts"]:
+                d = sd / c["view_id"]
+                ctx_dirs.add(str(d))
+                cj = json.loads((d / "context.json").read_bytes()) if (d / ".done").exists() else None
+                if not cj or cj["rowsel"]["identity"] != c["identity"] or cj["context_sha256"] != c["context_sha256"]:
+                    ok = False
+                for name, meta in (cj or {}).get("files", {}).items():
+                    if sha_file(d / name) != meta["sha256"]:
+                        ok = False
+            if not ok:
+                raise SystemExit(f"{h}: done record does not match its context files or the current code")
+            pc["done_datasets"] += 1
+            pc["done_new_contexts"] += len(r["contexts"])
+            pc["epoch0_contexts_replaced"] += len(e["epoch0"])
+            pc["precap_applied_datasets"] += int(r["universe"]["precap"]["applied"])
+            pc["context_count_changed_datasets"] += int(r["epoch0_replaced"]["context_count_changed"])
+        else:
+            pc["failed_datasets"] += 1
+            pc["failed_epoch0_contexts_kept"] += len(e["epoch0"])
+            pc[f"failed_reason:{r.get('reason')}"] += 1
+            failures[cls].append({"dataset_hash": h, "reason": r.get("reason"), "detail": (r.get("detail") or "")[:400],
+                                  "epoch0_contexts_kept": len(e["epoch0"])})
+        datasets.append({"dataset_hash": h, "class": cls, "shard": e["shard"], "status": r["status"], "reason": r.get("reason"),
+                         "record_sha256": sha_file(p), "universe_rows": (r.get("universe") or {}).get("rows"),
+                         "rows_before_precap": ((r.get("universe") or {}).get("precap") or {}).get("rows_before"),
+                         "fold_sizes": (r.get("split") or {}).get("fold_sizes"), "split_sha256": (r.get("split") or {}).get("sha256"),
+                         "epoch0_contexts": len(e["epoch0"]), "new_view_ids": [c["view_id"] for c in r.get("contexts", [])] if r["status"] == "done" else [],
+                         "cpu_s": r.get("cpu_s"), "maxrss_mb": r.get("maxrss_mb")})
+    for sd in sorted(out.glob("shard-*")):
+        if sd.is_dir():
+            for d in sd.iterdir():
+                if d.is_dir() and d.name != "_datasets" and str(d) not in ctx_dirs:
+                    orphan.append(str(d))
+    shard_receipts = []
+    cpu_shards = 0.0
+    for p in sorted(out.glob(f"shard-*-of-{a.of}.receipt.json")):
+        r = json.loads(p.read_bytes())
+        cpu_shards += r["cpu_s"]
+        shard_receipts.append({"path": str(p), "sha256": sha_file(p), "expected_datasets": r["expected_datasets"],
+                               "done_now": r["done_now"], "already_done": r["already_done"], "failed": len(r["failed"]),
+                               "complete": r["complete"], "cpu_s": r["cpu_s"], "wall_s": r["wall_s"], "maxrss_mb": r["maxrss_mb"],
+                               "guard": r["guard"], "plan_sha256": r["plan_sha256"]})
+    mut = json.loads(Path(a.mutants).read_bytes())
+    root = Path(__file__).resolve().parents[1]
+    doc = {"schema": SUMMARY_SCHEMA, "utc_us": int(time.time() * 1e6), "out": str(out), "of": a.of,
+           "plan": {"path": str(out / "plan.json"), "sha256": plan_sha, "accounting": pl["accounting"], "inputs": pl["inputs"]},
+           "counts_per_class": {c: dict(v) for c, v in per_class.items()}, "failures": dict(failures),
+           "orphan_context_dirs": orphan, "datasets": datasets,
+           "cpu": {"dataset_cpu_s": round(cpu_ds, 1), "shard_process_cpu_s": round(cpu_shards, 1),
+                   "note": "getrusage user+sys of the shard processes (lane slice)"},
+           "shard_receipts": shard_receipts,
+           "tests": {"log": ref(a.tests_log), "tail": Path(a.tests_log).read_text().strip().splitlines()[-3:]},
+           "mutants": {"path": a.mutants, "sha256": sha_file(a.mutants), "totals": mut.get("totals"),
+                       "per_mutant": {k: {"killed": v["killed"], "failing": v["failing"], "leak_mutant": v.get("leak_mutant"),
+                                          "reason": v.get("reason")} for k, v in mut.get("mutants", {}).items()},
+                       "excluded_equivalent": mut.get("excluded_equivalent")},
+           "pilot": json.loads(Path(a.pilot).read_bytes()) if a.pilot else None,
+           "code_sha256": codes | {"tests/test_v2_rowsel_raw.py": sha_file(root / "tests/test_v2_rowsel_raw.py")},
+           "policy": {"s3_calls": 0, "network": False, "gpu": False, "git": False, "published": False,
+                      "held_sources_read": False, "credential_files_read": False}}
+    rp = Path(a.receipt) if a.receipt else RECEIPTS / "build" / f"rowsel-raw-summary-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
+    data = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    with open(rp, "xb") as f:
+        f.write(data)
+    print(json.dumps({"receipt": str(rp), "sha256": sha(data), "counts_per_class": doc["counts_per_class"], "orphans": len(orphan)}))
+    return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("cmd", choices=("plan", "build", "summarize"))
+    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--shard", type=int)
+    ap.add_argument("--of", type=int, default=3)
+    ap.add_argument("--datasets", help="comma-separated dataset hashes (pilot / smoke runs only)")
+    ap.add_argument("--tests-log")
+    ap.add_argument("--mutants")
+    ap.add_argument("--pilot")
+    ap.add_argument("--receipt")
+    a = ap.parse_args(argv)
+    if a.cmd == "plan":
+        return plan(a)
+    if a.cmd == "summarize":
+        return summarize(a)
+    if a.shard is None:
+        ap.error("--shard is required for build")
+    return build(a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,208 @@
+"""Publish-set manifest for row-selection rebuild contexts (ROWSEL-TRAINONLY / ROWSEL-SPLIT), the additive binding asked
+for by Codex at 21:01Z and the owner loop: every published rebuilt context is bound to its epoch-1 overlay record (which
+names the epoch-0 context it replaces), the rebuild receipts, the rights gate and the owner decisions; originals are
+retained and nothing is edited.
+
+The publishable set is recomputed from the pinned overlay: a replacement is published iff its context.json (the one the
+overlay pins by sha256 in the build tree) has row_selection_leak == ["clean"], its dataset is not rights-held, and its
+encoder/teacher/A0 bytes in the publish tree equal the overlay's. It must equal the publish tree exactly, and every object
+and receipt must have a verified publish-ledger record. --publish PUTs the manifest create-only to
+v2-trainonly/manifests/<name>/<sha12>.json through the guarded v2 writer.
+
+Usage (lane slice): v2_rowsel_manifest.py --build TREE --name rowsel-t1-clean-v1 --overlay RUN/epochs/epoch-001-rowsel-overlay.jsonl
+                    --overlay-sha256 HEX [--receipt NAME=PATH#SHA ...] [--publish]
+"""
+import argparse
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+TV2 = RUN / "receipts" / "trainonly-v2"
+AUDIT = Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts")
+SCHEMA = "jope.dl-v2-rowsel-publish-manifest/v1"
+RIGHTS = (TV2 / "rights-gate-no-license-20261005T180254Z.jsonl", "23fc60527a6ef6616d990042393359057ab32472a2d1dd929d81ed33ffe34519")
+DECISIONS = [AUDIT / "owner-decisions-20261005T203324Z.json", AUDIT / "owner-decisions-20261005T210659Z.json",
+             AUDIT / "owner-decisions-20261005T214040Z.json"]
+INPUT_FILES = ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32")
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def pinned(path: Path, want: str | None):
+    b = path.read_bytes()
+    if want and sha(b) != want:
+        raise SystemExit(f"{path}: sha256 {sha(b)} != pinned {want}")
+    return b, {"path": str(path), "sha256": sha(b), "bytes": len(b)}
+
+
+def load_vp():
+    spec = importlib.util.spec_from_file_location("v2_publish", Path(__file__).resolve().parent / "v2_publish.py")
+    vp = importlib.util.module_from_spec(spec); spec.loader.exec_module(vp)
+    return vp
+
+
+def read_ledger(path: Path):
+    verified = {}
+    for line in path.read_bytes().splitlines():
+        r = json.loads(line)
+        if r.get("event") == "verified":
+            p = verified.get(r["key"])
+            if p and (p["sha256"], p["bytes"], p["version_id"]) != (r["sha256"], r["bytes"], r["version_id"]):
+                raise SystemExit(f"ledger has two verified records for {r['key']}")
+            verified[r["key"]] = r
+    return verified
+
+
+def build(a):
+    vp = load_vp()
+    ob, oref = pinned(Path(a.overlay), a.overlay_sha256)
+    lines = [json.loads(l) for l in ob.decode().splitlines() if l.strip()]
+    header, recs = lines[0], [r for r in lines[1:] if r.get("kind") == "replace"]
+    rb, rref = pinned(*RIGHTS)
+    held = {json.loads(l)["dataset_hash"] for l in rb.decode().splitlines() if l.strip()}
+    inputs = {"overlay": oref, "rights_gate_no_license": rref}
+    fallback = set()
+    if a.t1_fallback:   # coverage receipt: incoming acquisition-capped datasets left to the T1 fallback
+        _p, _w = a.t1_fallback.split("#", 1)
+        fb_b, inputs["t1_fallback_coverage"] = pinned(Path(_p), _w)
+        fallback = {x["dataset_hash"] for x in json.loads(fb_b)["buckets"]["incoming_acquisition_capped_kmeans"]["datasets_not_rebuilt"]}
+    scope = set()
+    if a.rights_research:   # RIGHTS-RESEARCH (owner-decisions-20261005T223750Z.json): Rdatasets/UCI/CDC, research-only
+        sb, inputs["rights_research_scope"] = pinned(RUN / "tmp" / "rights-research-datasets.json", None)
+        scope = set(json.loads(sb))
+    for spec in a.receipt or []:
+        n, rest = spec.split("=", 1); p, want = rest.split("#", 1)
+        inputs[n] = pinned(Path(p), want)[1]
+    for p in DECISIONS:
+        inputs[p.stem] = pinned(p, None)[1]
+    disp, want_views, by_view = {}, set(), {}
+    for r in recs:
+        cj = Path(r["replacement"]["context_json"]["path"])
+        cb = cj.read_bytes()
+        c = json.loads(cb)
+        if sha(cb) != r["replacement"]["context_json"]["sha256"]:
+            # tools/v2_dope_run.py adds a `dope` block and files["dope.npy"] in place; accept only if removing exactly those
+            # reproduces the pinned bytes (same canonical serialization), so nothing else changed since the overlay pinned it
+            base = {k: v for k, v in c.items() if k != "dope"}
+            base["files"] = {k: v for k, v in c["files"].items() if k != "dope.npy"}
+            if sha((json.dumps(base, sort_keys=True) + "\n").encode()) != r["replacement"]["context_json"]["sha256"]:
+                raise SystemExit(f"{cj}: build-tree context.json changed since the overlay pinned it (beyond the Dope additions)")
+            c["_pin_check"] = "dope_additions_only"
+        labels = c.get("row_selection_leak")
+        if c["dataset_hash"] in held and not (a.rights_research and c.get("rights") == "research-only" and c["dataset_hash"] in scope):
+            d = "held_no_license"
+        elif not a.rights_research and c.get("rights") == "research-only":
+            d = "research_only_published_elsewhere"
+        elif a.rights_research and c.get("rights") != "research-only":
+            d = "licensed_published_elsewhere"
+        elif labels == ["clean"] and fallback:
+            d = "clean_published_elsewhere"   # a T1-fallback manifest binds only the receipted fallback contexts
+        elif labels == ["clean"]:
+            d = "published"
+        elif labels == ["acquisition_cap"] and c["dataset_hash"] in fallback:
+            d = "published"   # ROWSEL-SPLIT T1 fallback: raw source unmatched, acquisition_cap label kept
+        elif labels == ["acquisition_cap"]:
+            d = "acquisition_cap_superseded_by_raw_route" if fallback else "acquisition_cap_pending_raw_route"
+        else:
+            d = "not_admitted_label"
+        disp[d] = disp.get(d, 0) + 1
+        by_view[c["view_id"]] = {"overlay": r, "ctx": c, "disposition": d}
+        if d == "published":
+            want_views.add(c["view_id"])
+    plans, refused = vp.scan_build(Path(a.build))
+    if refused:
+        raise SystemExit(f"{len(refused)} contexts refused by the publisher scan; first {refused[0]}")
+    tree = {p["view_id"] for p in plans}
+    if tree != want_views:
+        raise SystemExit(f"tree/overlay mismatch: only-tree {len(tree - want_views)} only-overlay {len(want_views - tree)}")
+    verified = read_ledger(Path(a.ledger))
+    entries, missing = [], []
+    for p in sorted(plans, key=lambda p: p["view_id"]):
+        ctx, o = p["ctx"], by_view[p["view_id"]]
+        rep = o["overlay"]["replacement"]
+        if "gpu" in ctx:   # GPU output trees bind their one input, the encoder JTT1, by sha256 (tools/v2_gpu_encode.py)
+            if (ctx["gpu"].get("input") or {}).get("encoder_jtt1_sha256") != rep["files"]["encoder.jtt1.gz"]:
+                raise SystemExit(f"{p['view_id']}: GPU input encoder JTT1 differs from the overlay record")
+        else:
+            for f in INPUT_FILES:   # research-only trees keep row-level inputs in local custody (bound by sha256), not in the tree
+                got = ctx["files"].get(f) or (ctx.get("row_level_inputs_local_custody") or {}).get(f) or {}
+                if got.get("sha256") != rep["files"][f]:
+                    raise SystemExit(f"{p['view_id']}: {f} differs from the overlay record")
+        if a.rights_research and ctx.get("rights") != "research-only":
+            raise SystemExit(f"{p['view_id']}: not tagged rights=research-only")
+        if ctx["context_sha256"] != rep["context_sha256"]:
+            raise SystemExit(f"{p['view_id']}: context_sha256 differs from the overlay record")
+        objs = []
+        for ob_ in p["objects"]:
+            v, rv = verified.get(ob_["key"]), verified.get(ob_["receipt_key"])
+            if not v or not rv or (v["sha256"], v["bytes"]) != (ob_["sha256"], ob_["bytes"]):
+                missing.append(ob_["key"]); continue
+            objs.append({"component": ob_["component"], "key": ob_["key"], "version_id": v["version_id"], "sha256": v["sha256"], "bytes": v["bytes"],
+                         "receipt_key": ob_["receipt_key"], "receipt_version_id": rv["version_id"], "receipt_sha256": rv["sha256"],
+                         "research_only": ob_["research_only"]})
+        exp = (ctx.get("dope") or {}).get("exposure") or {}
+        entries.append({"view_id": p["view_id"], "dataset_hash": ctx["dataset_hash"], "fold": ctx["fold"], "context_sha256": ctx["context_sha256"],
+                        "replaces_epoch0": o["overlay"]["key"], "overlay_pin_check": o["ctx"].get("_pin_check", "exact"), "rowsel_identity": (ctx.get("rowsel") or {}).get("identity"),
+                        "rowsel_route": (ctx.get("rowsel") or {}).get("route"), "values_mode": ctx["values_mode"],
+                        "row_selection_leak": ctx["row_selection_leak"], "outer_train_indices_sha256": ctx["outer_train_indices_sha256"],
+                        "outer_test_indices_sha256": ctx["outer_test_indices_sha256"], "inner_labels_sha256": ctx["inner_labels_sha256"],
+                        "scaler_sha256": ctx["scaler_sha256"], "local_context_json_sha256": p["context_json_sha256"], "rights": ctx.get("rights"),
+                        "row_level_inputs_local_custody": ctx.get("row_level_inputs_local_custody"),
+                        "label_exposure": ctx.get("label_exposure"), "holdout_assignment": ctx.get("holdout_assignment"),
+                        "dope": {"lift_eligible": exp.get("lift_eligible"), "basis": exp.get("basis"), "family_id": exp.get("family_id"),
+                                 "holdout_assignment": exp.get("holdout_assignment")},
+                        "objects": objs})
+    doc = {"schema": SCHEMA, "name": a.name, "prefix": "s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/",
+           "overlay_header": header, "inputs": inputs,
+           "rule": "published iff the overlay-pinned replacement has row_selection_leak == ['clean'], is not rights-held, and its "
+                   "encoder/teacher/A0 bytes equal the overlay record; epoch-0 contexts are replaced, never edited",
+           "overlay_records": len(recs), "dispositions": disp, "published_contexts": len(entries),
+           "published_objects": sum(len(e["objects"]) for e in entries), "missing_in_ledger": len(missing),
+           "not_published": [{"view_id": v, "disposition": x["disposition"], "replaces_epoch0": x["overlay"]["key"],
+                              "row_selection_leak": x["ctx"].get("row_selection_leak")} for v, x in sorted(by_view.items()) if x["disposition"] != "published"],
+           "contexts": entries, "code_sha256": sha(Path(__file__).read_bytes()),
+           "publisher_code_sha256": sha((Path(__file__).resolve().parent / "v2_publish.py").read_bytes())}
+    return doc, missing, vp
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--build", required=True)
+    ap.add_argument("--name", required=True)
+    ap.add_argument("--overlay", required=True)
+    ap.add_argument("--overlay-sha256", required=True)
+    ap.add_argument("--receipt", action="append", help="NAME=PATH#SHA256 of a rebuild receipt to pin")
+    ap.add_argument("--ledger", default=str(TV2 / "publish" / "v2-publish-ledger.jsonl"))
+    ap.add_argument("--publish", action="store_true")
+    ap.add_argument("--rights-research", action="store_true", help="manifest of RIGHTS-RESEARCH rebuilt contexts (research-only)")
+    ap.add_argument("--t1-fallback", default=None, help="PATH#SHA256 of the raw coverage receipt: publish its T1-fallback acquisition_cap contexts")
+    a = ap.parse_args(argv)
+    doc, missing, vp = build(a)
+    body = (json.dumps(doc, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    digest = sha(body)
+    out = TV2 / "publish" / f"v2-publish-manifest-{a.name}-{digest[:12]}.json"
+    if not out.exists():
+        out.write_bytes(body)
+    summary = {k: doc[k] for k in ("overlay_records", "dispositions", "published_contexts", "published_objects", "missing_in_ledger")}
+    summary |= {"local": str(out), "sha256": digest}
+    if a.publish:
+        if missing:
+            raise SystemExit(f"refusing to publish the manifest: {len(missing)} objects lack a verified ledger record")
+        key = f"{vp.s3io.V2_PREFIX_KEY}{'research-only/' if a.rights_research else ''}manifests/{a.name}/{digest[:12]}.json"
+        writer, reader = vp.real_clients()
+        ledger = vp.PublishLedger(Path(a.ledger))
+        try:
+            summary["published"] = vp.Publisher(writer, reader, ledger).publish_bytes(key, body, "application/json", "manifest", f"manifest:{a.name}")
+        finally:
+            ledger.close()
+    print(json.dumps(summary, sort_keys=True))
+    return 0 if not missing else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

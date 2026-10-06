@@ -1,0 +1,30 @@
+import importlib.util, json, hashlib, glob
+from pathlib import Path
+R=Path("/home/ubuntu/scratch/jopedime-dl-training-v1"); PUB=R/"receipts/trainonly-v2/publish"
+spec=importlib.util.spec_from_file_location("vp","tools/v2_publish.py"); vp=importlib.util.module_from_spec(spec); spec.loader.exec_module(vp)
+sha=lambda b: hashlib.sha256(b).hexdigest()
+names=["rowsel-raw-clean-v1","gpu-rowsel-raw-clean-v1","rights-research-raw-vectors-v1","rights-research-raw-gpu-v1"]
+ver={}
+for line in vp.DEFAULT_PUBLISH_LEDGER.read_bytes().splitlines():
+    r=json.loads(line)
+    if r.get("event")=="verified" and "/manifests/" in r["key"]: ver[r["key"]]=r
+ms=[]; ctx=set(); keys=set()
+for key,r in sorted(ver.items()):
+    name,f=key.split("/manifests/",1)[1].split("/")
+    if name not in names: continue
+    local=PUB/f"v2-publish-manifest-{name}-{f[:-5]}.json"; b=local.read_bytes(); assert sha(b)==r["sha256"]
+    m=json.loads(b); ms.append({"name":name,"key":key,"version_id":r["version_id"],"sha256":r["sha256"],"contexts":len(m["contexts"])})
+    for c in m["contexts"]:
+        ctx.add(c["view_id"])
+        for o in c["objects"]: keys.add(o["key"]); keys.add(o["receipt_key"])
+A=sorted(Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts").glob("owner-decisions-*.json"))[-1]
+doc={"schema":"jope.dl-v2-superseded/v1","status":"SUPERSEDED","reason":"split deviation: the raw-route outer split ordered duplicate groups by a hash of feature bytes (dltrain/rowsel_raw.py 18eac154), so the partition moved under outer-test feature changes; target-free, but not the value-free split ROWSEL-SPLIT specifies",
+     "ruling":{"name":"RAW-SPLIT-RULING (ENG:watcher delegated, 2026-10-06T03:04:00Z)","decision_file":A.name,"sha256":sha(A.read_bytes())},
+     "evidence":{"redteam_receipt":"receipts/trainonly-v2/build/redteam-nonnumeric-publish/receipt.json","redteam_sha256":sha((R/"receipts/trainonly-v2/build/redteam-nonnumeric-publish/receipt.json").read_bytes())},
+     "rule":"objects stay in S3 untouched (no delete/overwrite); no loader, S1 list or teacher rescoring may use them; refused through the holdout denylist v2+; replaced by the rowsel-raw-split-v2 rebuild under new identities/keys",
+     "manifests":ms,"contexts":sorted(ctx),"object_keys":sorted(keys)}
+body=(json.dumps(doc,sort_keys=True,separators=(",",":"))+"\n").encode(); dg=sha(body); (PUB/f"v2-superseded-raw-split-v1-{dg[:12]}.json").write_bytes(body)
+writer,reader=vp.real_clients(); ledger=vp.PublishLedger(vp.DEFAULT_PUBLISH_LEDGER)
+try: r=vp.Publisher(writer,reader,ledger).publish_bytes(f"{vp.s3io.V2_PREFIX_KEY}manifests/superseded-raw-split-v1/{dg[:12]}.json",body,"application/json","manifest","superseded")
+finally: ledger.close()
+print(len(ms),"manifests",len(ctx),"contexts",len(keys),"keys",r["key"],r["version_id"])

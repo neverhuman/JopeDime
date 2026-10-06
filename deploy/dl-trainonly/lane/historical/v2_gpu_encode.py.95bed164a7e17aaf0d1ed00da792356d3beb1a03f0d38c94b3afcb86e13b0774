@@ -1,0 +1,440 @@
+"""v2 train-only GPU re-encode (owner G22-OWNER-ACK, delegated relay 2026-10-05T21:40Z; L6 caps).
+
+Standalone (stdlib + numpy + torch + psutil) so one file runs on xbabe1/xbabe2/xbabe3 under /usr/bin/python3.12. The
+pinned pretrained forwards are Codex's `gpu_encoders.Encoders` (sha256 ff419384..., the #199 runtime source), imported
+read-only from ENC_ROOT; their models are checked against the pins before any CUDA work. Nothing here writes to S3 or to
+ENC_ROOT: outputs go to --out, and are published later from xbabe2 through the guarded v2 writer (tools/v2_publish.py).
+
+Per plan row (one published clean context): the encoder JTT1 bytes are verified (gz and raw sha256 equal the published
+manifest's), and only the outer-train block is decoded (train_view slices the bytes before any parse). Exact/affine
+copies of the target are dropped train-only, as in the v1 worker. Then hyperion(X), foundation(X, y), target(X, y),
+tabpfn35(X, y) run on CUDA, and context2048 is assembled from hyperion, foundation and target with the pinned transforms.
+Each output is the pooled float32 vector saved as <component>.npy; context.json copies the parent identity, lists the files
+and carries a `gpu` block per component (recipe digest, seconds, peak memory, GPU UUID, input binding).
+
+Budget (L6): a per-host append-only ledger (fsynced) records an intent before and a result after every component run;
+at most 2 attempts per (view_id, component), a per-host GPU-second cap (default 8 h, so 3 hosts <= 24 h), and the
+2026-10-10T00:00Z deadline. Unknown outcomes (intent without result) count as attempts.
+
+Admission (PLAN 6.8, read-only): no foreign CUDA compute app on this GPU; >= 20 GiB free at start; the intake
+tabpfn-gpu.lock is checked in /proc/locks by inode and never opened for locking; CPU instant < 95% and rolling < 85%;
+the lane cpu-admission guard where present. Not admitted -> wait 15 s; more than 20 min -> exit YIELDED (manual relaunch).
+
+--pilot K runs the leak pilot on the first K plan rows instead of production: each context is encoded (a) as is, (b) with
+the outer-test byte block overwritten (train_view must be byte-identical and outputs bit-identical), and (c) a must-fail
+control that deliberately appends the outer-test rows to X (its outputs must differ). Pilot GPU time is charged.
+
+Usage: v2_gpu_encode.py --plan PLAN.jsonl --out DIR [--pilot K] [--host-cap-hours 8] [--limit N]
+"""
+import argparse
+import gzip
+import hashlib
+import io
+import json
+import os
+import socket
+import struct
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+ENC_ROOT = Path("/home/ubuntu/scratch/jopedime-regression-neural-encoding-v1")
+TABPFN_WEIGHTS = Path("/home/ubuntu/scratch/tabpfn35-encoder-20260927/models/tabpfn-v3.5-20260909.safetensors")
+INTAKE_LOCK = Path("/home/ubuntu/scratch/jopedime-regression-research-2k-incoming-intake-v1/tabpfn-gpu.lock")
+LANE_GUARD = Path("/home/ubuntu/scratch/jopedime-regression-research-2k-per-fold-hwm-20261001/gp/cpu-admission.json")
+PINS = {
+    ENC_ROOT / "gpu_encoders.py": "ff41938421be0ab2",
+    ENC_ROOT / "models/hyperion_v5_arm_b_identity": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+    ENC_ROOT / "models/starlight_core_regressor_identity": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+    ENC_ROOT / "models/target_encoder_fused_v1_identity": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+    ENC_ROOT / "models/target_encoder_fused_v1_metadata": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+    ENC_ROOT / "models/context-transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+    ENC_ROOT / "models/starlight_config.json": "4acacec8c148702e07147452e3e13dad586bd40f90878a3bbac8355753978acb",
+    TABPFN_WEIGHTS: "ece4d67eadfea42eb0e610df5189bea60cb7f31073d81e9c7a019b76eacf0be3",
+}
+COMPONENTS = ("hyperion", "foundation", "target", "tabpfn35", "context2048")
+DEADLINE_UNIX = 1791590400  # 2026-10-10T00:00:00Z
+MAX_ATTEMPTS = 2
+HEADER = struct.Struct("<IIIB")
+HB = 4 + HEADER.size
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def canonical(x) -> bytes:
+    return json.dumps(x, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+
+
+def atomic(path: Path, data: bytes):
+    tmp = path.with_name("." + path.name + ".tmp")
+    with open(tmp, "wb") as f:
+        f.write(data); f.flush(); os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
+# ------------------------------------------------------------------------------------------------ JTT1 train view
+def jtt1_header(raw):
+    if bytes(raw[:4]) != b"JTT1":
+        raise ValueError("only JTT1 is admitted")
+    n_train, n_test, p, inner = HEADER.unpack(bytes(raw[4:HB]))
+    if len(raw) != HB + n_train + 8 * (p + 1) * (n_train + n_test) or n_train < 1 or p < 1:
+        raise ValueError("JTT1 length or shape mismatch")
+    return n_train, n_test, p
+
+
+def train_view(raw):
+    """X f64[n_train, p], y f64[n_train] from the outer-train bytes only; the test range is never decoded."""
+    n_train, _, p = jtt1_header(raw)
+    start = HB + n_train
+    block = np.frombuffer(memoryview(raw)[start:start + 8 * (p + 1) * n_train], dtype="<f8").reshape(n_train, p + 1).copy()
+    return block[:, :-1], block[:, -1]
+
+
+def test_rows_for_control_only(raw):
+    """Decodes the outer-test block. Used only by the pilot's must-fail control, never by production."""
+    n_train, n_test, p = jtt1_header(raw)
+    start = HB + n_train + 8 * (p + 1) * n_train
+    return np.frombuffer(memoryview(raw)[start:], dtype="<f8").reshape(n_test, p + 1).copy()
+
+
+def perturb_test_block(raw, seed=7):
+    n_train, n_test, p = jtt1_header(raw)
+    start = HB + n_train + 8 * (p + 1) * n_train
+    noise = np.random.default_rng(seed).normal(size=n_test * (p + 1)).astype("<f8").tobytes()
+    return bytes(raw[:start]) + noise
+
+
+def drop_target_copies(X, y):
+    removed = []
+    if np.ptp(y) > 1e-12:
+        c = y - y.mean(); den = float(c @ c)
+        for i in range(X.shape[1]):
+            v = X[:, i]; slope = float(c @ (v - v.mean())) / den
+            if abs(slope) > 1e-12 and np.max(np.abs(v - (slope * y + (v.mean() - slope * y.mean())))) <= 1e-10 * max(1, float(np.max(np.abs(v)))):
+                removed.append(i)
+    kept = [i for i in range(X.shape[1]) if i not in removed]
+    if not kept:
+        raise ValueError("no non-target training features")
+    return X[:, kept].astype("float32"), y.astype("float32"), removed
+
+
+# ------------------------------------------------------------------------------------------------ admission
+def nvidia(query, kind="gpu"):
+    flag = "--query-gpu" if kind == "gpu" else "--query-compute-apps"
+    out = subprocess.check_output(["nvidia-smi", f"{flag}={query}", "--format=csv,noheader,nounits"], text=True).strip()
+    return [[x.strip() for x in line.split(",")] for line in out.splitlines() if line.strip()]
+
+
+def intake_lock_held():
+    """True if any /proc/locks entry names the intake lock's device and inode. Read-only: the lock is never opened."""
+    if not INTAKE_LOCK.exists():
+        return False
+    st = INTAKE_LOCK.stat()
+    want = (os.major(st.st_dev), os.minor(st.st_dev), st.st_ino)
+    for line in Path("/proc/locks").read_text().splitlines():
+        parts = line.split()
+        if len(parts) < 6:
+            continue
+        try:
+            maj, mnr, ino = parts[5].split(":")
+            if (int(maj, 16), int(mnr, 16), int(ino)) == want:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+class Admission:
+    def __init__(self):
+        import psutil
+        self.psutil, self.samples = psutil, []
+
+    def check(self, start=False):
+        reasons = []
+        own = os.getpid()
+        foreign = [a for a in nvidia("pid,used_memory", "apps") if a and a[0].isdigit() and int(a[0]) != own]
+        if foreign:
+            reasons.append(f"foreign CUDA compute apps: {len(foreign)}")
+        free = int(nvidia("memory.free")[0][0])
+        if start and free < 20 * 1024:
+            reasons.append(f"GPU free {free} MiB < 20480 at start")
+        if intake_lock_held():
+            reasons.append("intake tabpfn-gpu.lock held")
+        cpu = self.psutil.cpu_percent(interval=0.5)
+        now = time.monotonic(); self.samples = [(t, c) for t, c in self.samples if t > now - 60] + [(now, cpu)]
+        rolling = sum(c for _, c in self.samples) / len(self.samples)
+        if cpu >= 95 or rolling >= 85:
+            reasons.append(f"CPU instant {cpu:.0f}% rolling {rolling:.0f}%")
+        if LANE_GUARD.exists():
+            try:
+                g = json.loads(LANE_GUARD.read_text())
+                if g.get("admit") is False:
+                    reasons.append("lane cpu-admission admit=false")
+            except ValueError:
+                reasons.append("lane cpu-admission unreadable")
+        return not reasons, reasons, {"cpu": cpu, "rolling": rolling, "gpu_free_mib": free, "foreign_apps": len(foreign)}
+
+
+# ------------------------------------------------------------------------------------------------ ledger
+class Ledger:
+    def __init__(self, path: Path, cap_s: float):
+        self.path, self.cap_s = path, cap_s
+        self.attempts, self.seconds, self.open = {}, 0.0, {}
+        if path.exists():
+            for line in path.read_text().splitlines():
+                r = json.loads(line)
+                k = (r["view_id"], r["component"], r.get("kind", "production"))
+                if r["event"] == "intent":
+                    self.attempts[k] = self.attempts.get(k, 0) + 1; self.open[k] = r
+                else:
+                    self.open.pop(k, None); self.seconds += float(r.get("gpu_seconds", 0))
+        # an intent without a result is an unknown outcome: it keeps its attempt and is charged the per-attempt timeout
+        self.seconds += 1800.0 * len(self.open)
+        self.fd = os.open(str(path), os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+
+    def append(self, rec):
+        data = canonical(rec | {"host": HOST, "pid": os.getpid(), "utc_us": time.time_ns() // 1000}) + b"\n"
+        os.write(self.fd, data); os.fsync(self.fd)
+
+    def begin(self, view, comp, kind="production"):
+        k = (view, comp, kind)
+        if self.attempts.get(k, 0) >= MAX_ATTEMPTS:
+            raise RuntimeError(f"attempt cap reached for {view}/{comp}")
+        if self.seconds >= self.cap_s:
+            raise RuntimeError(f"host GPU-second cap {self.cap_s:.0f} s reached")
+        if time.time() >= DEADLINE_UNIX:
+            raise RuntimeError("deadline 2026-10-10T00:00Z reached")
+        self.attempts[k] = self.attempts.get(k, 0) + 1
+        self.append({"event": "intent", "view_id": view, "component": comp, "kind": kind, "attempt": self.attempts[k]})
+
+    def end(self, view, comp, ok, gpu_seconds, kind="production", **extra):
+        self.seconds += gpu_seconds
+        self.append({"event": "result", "view_id": view, "component": comp, "kind": kind, "ok": ok, "gpu_seconds": round(gpu_seconds, 3)} | extra)
+
+
+HOST = socket.gethostname().split(".")[0]
+
+
+def check_pins():
+    got = {}
+    for p, want in PINS.items():
+        h = sha(p.read_bytes())
+        if not h.startswith(want):
+            raise SystemExit(f"pin drift: {p} {h} (want {want})")
+        got[str(p)] = h
+    return got
+
+
+def recipe_digest(recipe):
+    return {"sha256": sha(canonical(recipe)), "summary": {k: v for k, v in recipe.items()
+                                                          if not isinstance(v, (list, dict)) or k in ("scales",)}}
+
+
+class Runner:
+    def __init__(self, ledger, components=COMPONENTS, v6=None):
+        import torch
+        sys.path.insert(0, str(ENC_ROOT))
+        from gpu_encoders import Encoders  # noqa: E402  (Codex's pinned forwards, read-only)
+        from safetensors.torch import load_file
+        self.torch, self.ledger = torch, ledger
+        self.enc = Encoders()
+        self.qualification = self.enc.qualify()
+        self.norm = load_file(str(ENC_ROOT / "models/context-transforms"), device="cuda:0")
+        self.uuid = nvidia("uuid")[0][0]
+        self.components, self.v6 = tuple(components), None
+        if v6:   # HYPERION-V6: the fine-tuned weights in the same pinned architecture, encoded with the same v5 recipe
+            from hyperion_reference import MatrixGhostUnifiedStandalone  # noqa: E402
+            path, want = v6
+            if sha(Path(path).read_bytes()) != want:
+                raise SystemExit(f"hyperion v6 weights sha256 mismatch: {path}")
+            m = MatrixGhostUnifiedStandalone().float().cuda().eval()
+            missing, extra = m.load_state_dict(load_file(str(path), device="cuda:0"), strict=False)
+            if missing or any(not x.startswith(("cell_mlp", "h_")) for x in extra):
+                raise SystemExit("hyperion v6 weights do not bind the complete embedding architecture")
+            self.v6 = m
+
+    def one(self, view, comp, X, y, kind, parent=None):
+        torch = self.torch
+        self.ledger.begin(view, comp, kind)
+        torch.cuda.reset_peak_memory_stats(); t0 = time.time()
+        try:
+            if comp == "hyperion":
+                arrays, recipe = self.enc.hyperion(X)
+            elif comp == "hyperion_v6":
+                saved = self.enc.models.get("hyperion")
+                self.enc.models["hyperion"] = self.v6
+                try:
+                    arrays, recipe = self.enc.hyperion(X)
+                finally:
+                    if saved is None:
+                        self.enc.models.pop("hyperion", None)
+                    else:
+                        self.enc.models["hyperion"] = saved
+            elif comp == "context2048":
+                v = {k: torch.from_numpy(parent[k]).cuda() for k in ("hyperion", "foundation", "target")}
+                n = self.norm
+                proj = (v["foundation"] - n["foundation_mean"]) @ n["projection"].t()
+                vec = torch.cat([(v["hyperion"] - n["hyperion_mean"]) / n["hyperion_scale"], (proj - n["projected_mean"]) / n["projected_scale"],
+                                 (v["target"] - n["target_mean"]) / n["target_scale"]]).float()
+                arrays, recipe = {"vector": vec.cpu().numpy()}, {"role": "historical context ABI assembly from this context's own v2 vectors",
+                                                                  "normalizer_sha256": PINS[ENC_ROOT / "models/context-transforms"]}
+            else:
+                arrays, recipe = getattr(self.enc, comp)(X, y)
+            torch.cuda.synchronize()
+            vec = np.asarray(arrays["vector"], dtype="<f4")
+            if not np.all(np.isfinite(vec)):
+                raise ValueError("non-finite vector")
+        except BaseException as e:
+            self.ledger.end(view, comp, False, time.time() - t0, kind, error=f"{type(e).__name__}: {e}"[:300])
+            raise
+        dt = time.time() - t0
+        info = {"seconds": round(dt, 3), "peak_bytes": int(torch.cuda.max_memory_allocated()), "gpu_uuid": self.uuid, "host": HOST,
+                "recipe": recipe_digest(recipe), "dimension": int(vec.shape[0])}
+        self.ledger.end(view, comp, True, dt, kind, dimension=int(vec.shape[0]))
+        torch.cuda.empty_cache()
+        return vec, info
+
+    def encode(self, view, raw, kind="production"):
+        X, y = train_view(raw)
+        Xk, yk, removed = drop_target_copies(X, y)
+        vecs, infos = {}, {}
+        for comp in self.components:
+            vecs[comp], infos[comp] = self.one(view, comp, Xk, yk, kind, parent=vecs)
+        binding = {"train_rows": int(X.shape[0]), "features_in": int(X.shape[1]), "removed_target_copy_features": removed,
+                   "train_block_sha256": sha(np.ascontiguousarray(np.column_stack([X, y])).astype("<f8").tobytes()), "selection_fit": "outer_train_only"}
+        return vecs, infos, binding
+
+
+def npy_bytes(vec):
+    b = io.BytesIO(); np.save(b, np.asarray(vec, dtype="<f4"), allow_pickle=False); return b.getvalue()
+
+
+def wait_admitted(adm, start=False):
+    t0 = time.monotonic()
+    while True:
+        ok, reasons, obs = adm.check(start)
+        if ok:
+            return obs
+        if time.monotonic() - t0 > 1200:
+            raise TimeoutError(f"YIELDED: not admitted for 20 min: {reasons}")
+        time.sleep(15)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--plan", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--pilot", type=int, default=0)
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--host-cap-hours", type=float, default=8.0)
+    ap.add_argument("--ledger-dir", default="/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/gpu",
+                    help="one GPU ledger per host for pilot and production alike, so the cap counts every run")
+    ap.add_argument("--runtime-manifest", required=True, help="per-file sha256 list of the pinned TabPFN 3.5 runtime on PYTHONPATH")
+    ap.add_argument("--components", default=",".join(COMPONENTS), help="subset to run; 'hyperion_v6' needs --hyperion-v6")
+    ap.add_argument("--hyperion-v6", default=None, help="PATH#SHA256 of the exported Hyperion v6 inference safetensors")
+    a = ap.parse_args(argv)
+    if HOST not in ("xbabe1", "xbabe2", "xbabe3"):
+        raise SystemExit(f"host {HOST} refused: xbabe1/xbabe2/xbabe3 only, never xbabe0")
+    out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    pins = check_pins()
+    plan_b = Path(a.plan).read_bytes(); rows = [json.loads(l) for l in plan_b.decode().splitlines() if l.strip()]
+    if a.limit:
+        rows = rows[: a.limit]
+    Path(a.ledger_dir).mkdir(parents=True, exist_ok=True)
+    ledger = Ledger(Path(a.ledger_dir) / f"gpu-ledger-{HOST}.jsonl", a.host_cap_hours * 3600)
+    rt = Path(a.runtime_manifest).read_bytes()
+    pins["tab35_runtime_manifest"] = sha(rt)
+    pins["pythonpath"] = os.environ.get("PYTHONPATH", "")
+    import tabpfn  # noqa: E402  must resolve inside the pinned runtime, not ~/.local
+    if not tabpfn.__file__.startswith(os.environ.get("PYTHONPATH", "//none").split(":")[0]):
+        raise SystemExit(f"tabpfn resolved outside the pinned runtime: {tabpfn.__file__}")
+    adm = Admission()
+    start_obs = wait_admitted(adm, start=True)
+    comps = tuple(c for c in a.components.split(",") if c)
+    known = set(COMPONENTS) | {"hyperion_v6"}
+    if not comps or set(comps) - known or ("context2048" in comps and not {"hyperion", "foundation", "target"} <= set(comps)):
+        raise SystemExit(f"bad --components {a.components}")
+    if ("hyperion_v6" in comps) != bool(a.hyperion_v6):
+        raise SystemExit("hyperion_v6 and --hyperion-v6 go together")
+    v6 = tuple(a.hyperion_v6.split("#", 1)) if a.hyperion_v6 else None
+    if v6:
+        pins["hyperion_v6_weights"] = v6[1]
+    run = Runner(ledger, comps, v6)
+    code = {"v2_gpu_encode.py": sha(Path(__file__).read_bytes())}
+    t_start = time.time(); done = skipped = 0; failed = []; pilot = []
+    status = out / f"status-{HOST}.json"
+    for i, r in enumerate(rows[: a.pilot] if a.pilot else rows):
+        d = out / r["view_id"]
+        if not a.pilot and (d / ".done").exists():
+            skipped += 1; continue
+        obs = wait_admitted(adm)
+        try:
+            gz = Path(r["encoder_path"]).read_bytes()
+            raw = gzip.decompress(gz)
+            if sha(gz) != r["encoder_sha256"] or sha(raw) != r["encoder_raw_sha256"]:
+                raise ValueError("encoder JTT1 differs from the published manifest")
+            if a.pilot:
+                v1, _, b1 = run.encode(r["view_id"], raw, "pilot-a")
+                raw2 = perturb_test_block(raw)
+                same_view = all(np.array_equal(u, w) for u, w in zip(train_view(raw), train_view(raw2)))
+                v2, _, b2 = run.encode(r["view_id"], raw2, "pilot-b")
+                X, y = train_view(raw); T = test_rows_for_control_only(raw)
+                Xl, yl, _ = drop_target_copies(np.vstack([X, T[:, :-1]]), np.concatenate([y, T[:, -1]]))
+                vc = {}
+                for comp in [c for c in run.components if c != "context2048"]:
+                    vc[comp], _ = run.one(r["view_id"], comp, Xl, yl, "pilot-control")
+                ctx_single = {}
+                if "context2048" in run.components:
+                    # CTX2048-CONTROL: context2048's only data path is its three inputs (its transforms are pinned, never fitted),
+                    # so the must-fail control composes it from the leaky inputs, all three and each one alone.
+                    vc["context2048"], _ = run.one(r["view_id"], "context2048", None, None, "pilot-control", parent=vc)
+                    for k in ("hyperion", "foundation", "target"):
+                        mixed = {**{c: v1[c] for c in ("hyperion", "foundation", "target")}, k: vc[k]}
+                        cv, _ = run.one(r["view_id"], "context2048", None, None, f"pilot-control-ctx-{k}", parent=mixed)
+                        ctx_single[k] = bool(not np.array_equal(v1["context2048"], cv))
+                pilot.append({"view_id": r["view_id"], "train_view_identical_under_test_perturbation": same_view,
+                              "outputs_bit_identical": {c: bool(np.array_equal(v1[c], v2[c])) for c in run.components},
+                              "max_abs_diff": {c: float(np.max(np.abs(v1[c] - v2[c]))) for c in run.components},
+                              "control_differs": {c: bool(not np.array_equal(v1[c], vc[c])) for c in vc},
+                              "context2048_single_input_control_differs": ctx_single,
+                              "binding_equal": b1 == b2})
+                continue
+            vecs, infos, binding = run.encode(r["view_id"], raw)
+            d.mkdir(parents=True, exist_ok=True)
+            files = {}
+            for comp, vec in vecs.items():
+                body = npy_bytes(vec); atomic(d / f"{comp}.npy", body); files[f"{comp}.npy"] = {"sha256": sha(body), "bytes": len(body)}
+            ctx = dict(r["parent"]) | {"files": files, "published": False,
+                                       "gpu": {"components": infos, "input": {"encoder_jtt1_key": r["encoder_key"], "encoder_jtt1_version_id": r["encoder_version_id"],
+                                                                              "encoder_jtt1_sha256": r["encoder_sha256"], "binding": binding},
+                                               "pins": pins, "code_sha256": code, "manifest": r["manifest"], "owner_decision": r["owner_decision"],
+                                               "qualification_sha256": sha(canonical(run.qualification)), "admission_at_start": obs}}
+            atomic(d / "context.json", (json.dumps(ctx, sort_keys=True) + "\n").encode())
+            atomic(d / ".done", b"ok\n")
+            done += 1
+        except TimeoutError:
+            raise
+        except Exception as e:
+            failed.append({"view_id": r["view_id"], "error": f"{type(e).__name__}: {e}"[:300]})
+        if i % 10 == 0:
+            atomic(status, canonical({"host": HOST, "done": done, "skipped": skipped, "failed": len(failed), "of": len(rows),
+                                      "gpu_seconds": round(ledger.seconds, 1), "elapsed_s": round(time.time() - t_start), "utc_us": time.time_ns() // 1000}))
+    rec = {"schema": "jope.dl-v2-gpu-encode-run/v1", "host": HOST, "gpu_uuid": run.uuid, "plan_sha256": sha(plan_b), "pilot": a.pilot,
+           "expected": len(rows[: a.pilot] if a.pilot else rows), "done": done, "skipped": skipped, "failed": failed, "pilot_results": pilot,
+           "gpu_seconds_host_total": round(ledger.seconds, 1), "pins": pins, "code_sha256": code, "qualification": run.qualification,
+           "admission_at_start": start_obs, "elapsed_s": round(time.time() - t_start, 1), "utc_us": time.time_ns() // 1000}
+    name = f"{'pilot' if a.pilot else 'run'}-{HOST}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
+    atomic(out / name, (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
+    atomic(status, canonical({"host": HOST, "state": "finished", "done": done, "skipped": skipped, "failed": len(failed), "of": rec["expected"],
+                              "gpu_seconds": round(ledger.seconds, 1), "utc_us": time.time_ns() // 1000}))
+    print(json.dumps({k: rec[k] for k in ("host", "expected", "done", "skipped", "gpu_seconds_host_total", "elapsed_s")} | {"failed": len(failed), "receipt": name}))
+    return 0 if not failed else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
