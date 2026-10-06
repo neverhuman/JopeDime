@@ -1,5 +1,6 @@
 """Offline proofs for tools/v2_publish.py: fake S3 behind the real s3io.Guard, temp build trees, no network, no AWS."""
 import contextlib
+import gzip
 import hashlib
 import importlib.util
 import io
@@ -12,8 +13,9 @@ from pathlib import Path
 from unittest import mock
 
 import botocore
+import numpy as np
 
-from dltrain import common, s3io
+from dltrain import common, jtt1, quarantine, s3io
 
 SRC = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("v2_publish", SRC / "tools" / "v2_publish.py")
@@ -28,8 +30,18 @@ def sha(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
+def jtt_raw(n_train: int = 10, n_test: int = 0, p: int = 2) -> bytes:
+    """A random JTT1; n_test=0 is the PAYLOAD-STRIP-PUBLISH publication form (outer-test block dropped)."""
+    vals = np.random.default_rng(int.from_bytes(os.urandom(4), "little")).normal(size=(n_train + n_test, p + 1)).astype("<f8")
+    return jtt1.MAGIC + jtt1.HEADER.pack(n_train, n_test, p, 2) + bytes(i % 2 for i in range(n_train)) + vals.tobytes()
+
+
+def jtt_gz(n_train: int = 10, n_test: int = 0, p: int = 2) -> bytes:
+    return gzip.compress(jtt_raw(n_train, n_test, p), mtime=0)
+
+
 def make_context(shard: Path, ds: str, fold: int = 0, files=None, split_seed=None, **over) -> Path:
-    files = files if files is not None else {"encoder.jtt1.gz": os.urandom(64), "teacher.jtt1.gz": os.urandom(48), "a0.f32": os.urandom(16)}
+    files = files if files is not None else {"encoder.jtt1.gz": jtt_gz(), "teacher.jtt1.gz": jtt_gz(), "a0.f32": os.urandom(16)}
     view = over.pop("view_id", f"{ds}__r0__f{fold}")
     d = shard / view
     d.mkdir(parents=True)
@@ -92,15 +104,15 @@ class PublishLayout(_Base):
     def test_keys_receipts_readback_and_research_only(self):
         ds_a, ds_b = "0123456789abcdef", "fedcba9876543210"
         make_context(self.shard, ds_a, 0)
-        files_b = {"encoder.jtt1.gz": b"enc", "a0.f32": b"\x00" * 8, "hyperion.npy": b"hyp", "tabpfn35.npy": b"tabpfn-research"}
+        files_b = {"encoder.jtt1.gz": jtt_gz(), "a0.f32": b"\x00" * 8, "hyperion.npy": b"hyp", "tabpfn35.npy": b"tabpfn-research"}
         make_context(self.shard, ds_b, 3, files=files_b)
         doc = self.run_once()
         self.assertEqual(doc["verdict"], "PASS", json.dumps(doc, default=str)[:3000])
         self.assert_layout()
         c12 = sha(common.canonical(CODES))[:12]
         stem_b = f"{ds_b}/f3/{sha(f'tr{ds_b}3'.encode())[:12]}-{sha(f'sc{ds_b}3'.encode())[:12]}-{c12}"
-        expected = {f"{V}inputs/jtt1-encoder/{stem_b}.jtt1.gz", f"{V}encodings/a0/{stem_b}.f32", f"{V}encodings/hyperion/{stem_b}.npy",
-                    f"{V}research-only/encodings/tabpfn35/{stem_b}.npy", f"{V}receipts/jtt1-encoder/{stem_b}.json",
+        expected = {f"{V}inputs/jtt1-encoder-s0/{stem_b}.jtt1.gz", f"{V}encodings/a0/{stem_b}.f32", f"{V}encodings/hyperion/{stem_b}.npy",
+                    f"{V}research-only/encodings/tabpfn35/{stem_b}.npy", f"{V}receipts/jtt1-encoder-s0/{stem_b}.json",
                     f"{V}receipts/a0/{stem_b}.json", f"{V}receipts/hyperion/{stem_b}.json", f"{V}research-only/receipts/tabpfn35/{stem_b}.json"}
         keys = set(self.bucket.keys())
         self.assertTrue(expected <= keys, expected - keys)
@@ -248,7 +260,7 @@ class Refusals(_Base):
 
     def test_dope_receipt_carries_exposure(self):
         dope = {"kernel_sha256": "k" * 64, "exposure": {"lift_eligible": False, "pretraining_overlap": {"status": "Exposed"}}}
-        files = {"encoder.jtt1.gz": os.urandom(64), "teacher.jtt1.gz": os.urandom(48), "a0.f32": os.urandom(16), "dope.npy": os.urandom(32)}
+        files = {"encoder.jtt1.gz": jtt_gz(), "teacher.jtt1.gz": jtt_gz(), "a0.f32": os.urandom(16), "dope.npy": os.urandom(32)}
         make_context(self.shard, "a" * 16, 0, files=files, dope=dope)
         self.run_once()
         got = {}
@@ -377,7 +389,7 @@ class Refusals(_Base):
         keys = list(self.bucket.keys())
         self.assertTrue(keys and {k.split("/")[-3] for k in keys} == {"a" * 16})
         for (_, key), versions in self.bucket.objects.items():
-            if "/hyperion/" in key or "/jtt1-encoder/" in key or "/a0/" in key:
+            if "/hyperion/" in key or "/jtt1-encoder-s0/" in key or "/a0/" in key:
                 s3io.assert_production_loadable(key)
             if "/receipts/" in key and "/f2/" in key:
                 self.assertEqual(json.loads(versions[-1][1])["rights"], "licensed")
@@ -470,7 +482,172 @@ class Refusals(_Base):
             vp.PublishLedger(self.ledger_path)
 
 
+class PayloadStripGate(_Base):
+    """PAYLOAD-STRIP-PUBLISH (owner ruling 2026-10-06 06:52 MT): no row-level payload with outer-test rows is ever put."""
+
+    def _refused(self, doc):
+        return {r["view_id"]: r["reason"] for r in doc["scan"]["refused"]}
+
+    def test_unstripped_payload_stops_the_whole_run_before_any_client_call(self):
+        make_context(self.shard, "a" * 16, 0)                                                       # stripped: publishable alone
+        make_context(self.shard, "b" * 16, 0, files={"encoder.jtt1.gz": jtt_gz(10, 3), "teacher.jtt1.gz": jtt_gz(), "a0.f32": b"a0"})
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"b" * 16 + "__r0__f0": "outer_test_rows"})
+        self.assertEqual(doc["verdict"], "FAIL")
+        self.assertIn("PAYLOAD-STRIP-PUBLISH", doc["stopped"])
+        self.assertEqual(self.bucket.calls, [], "nothing is put, not even the stripped context")
+
+    def test_teacher_and_encoder_are_both_gated(self):
+        for i, files in enumerate(({"encoder.jtt1.gz": jtt_gz(), "teacher.jtt1.gz": jtt_gz(10, 1)},
+                                   {"encoder.jtt1.gz": jtt_gz(10, 2), "teacher.jtt1.gz": jtt_gz()})):
+            make_context(self.shard, str(i) * 16, 0, files=files)
+        doc = self.run_once()
+        self.assertEqual(set(self._refused(doc).values()), {"outer_test_rows"})
+        self.assertEqual(len(doc["scan"]["refused"]), 2)
+        self.assertEqual(self.bucket.calls, [])
+
+    def test_malformed_payloads_are_refused_fail_closed(self):
+        stripped = jtt_raw()
+        cases = {
+            "1": gzip.compress(stripped + os.urandom(8 * 3 * 3), mtime=0),       # n_test=0 header with the test block still appended
+            "2": os.urandom(64),                                                  # not gzip
+            "3": gzip.compress(b"JTS1" + stripped[4:], mtime=0),                  # another magic
+            "4": jtt_gz(13, 0),                                                   # test rows folded into the train block
+            "5": gzip.compress(stripped, mtime=0) + gzip.compress(os.urandom(72), mtime=0),   # a second gzip member
+            "6": gzip.compress(stripped, mtime=0)[:-9],                           # truncated
+        }
+        for k, body in cases.items():
+            make_context(self.shard, k * 16, 0, files={"encoder.jtt1.gz": body, "a0.f32": b"x"})
+        make_context(self.shard, "7" * 16, 0, n_train=None)                                        # no n_train to bind to
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {k * 16 + "__r0__f0": "row_level_payload" for k in "1234567"})
+        self.assertEqual((doc["verdict"], self.bucket.calls), ("FAIL", []))
+        for body in cases.values():
+            with self.assertRaises(vp.Refused):
+                vp.assert_no_outer_test("encoder.jtt1.gz", body, 10)
+        self.assertEqual(vp.assert_no_outer_test("encoder.jtt1.gz", jtt_gz(), 10)["n_test"], 0)
+
+    def test_publish_context_regates_the_bytes_before_any_put(self):
+        d = make_context(self.shard, "a" * 16, 0)
+        plan = vp.scan_context(d)
+        bad = jtt_gz(10, 4)
+        (d / "encoder.jtt1.gz").write_bytes(bad)                               # a plan that never went through the scan
+        for o in plan["objects"]:
+            if o["name"] == "encoder.jtt1.gz":
+                o["sha256"], o["bytes"] = sha(bad), len(bad)
+        writer, reader, _ = vp.fake_clients(self.budget_path, self.bucket)
+        ledger = vp.PublishLedger(self.ledger_path)
+        try:
+            with self.assertRaises(vp.Refused) as cm:
+                vp.Publisher(writer, reader, ledger).publish_context(plan)
+        finally:
+            ledger.close()
+        self.assertEqual(cm.exception.reason, "outer_test_rows")
+        self.assertEqual(self.bucket.calls, [], "a0.f32 sorts before the encoder and is not put either")
+
+    def test_receipt_carries_the_publication_strip_record(self):
+        rec = {"schema": "jope.dl-v2-publication-strip/v1", "ruling": "PAYLOAD-STRIP-PUBLISH", "cut_id": None, "key_scheme": quarantine.key_scheme(),
+               "code_sha256": {"tools/v2_strip_outer_test.py": "3" * 64},
+               "files": {"encoder.jtt1.gz": {"original": {"sha256": "4" * 64}, "n_test_payload": 0}}}
+        make_context(self.shard, "a" * 16, 0, publication_strip=rec)
+        self.assertEqual(self.run_once()["verdict"], "PASS")
+        got = {}
+        for (_, key), versions in self.bucket.objects.items():
+            if "/receipts/" in key:
+                r = json.loads(versions[-1][1])
+                got[r["component"]] = r.get("publication_strip")
+        self.assertEqual(got["jtt1-encoder-s0"]["file"], rec["files"]["encoder.jtt1.gz"])
+        self.assertEqual(got["jtt1-encoder-s0"]["code_sha256"], rec["code_sha256"])
+        self.assertEqual(got["jtt1-encoder-s0"]["key_scheme"], quarantine.key_scheme())
+        self.assertIsNone(got["jtt1-teacher-s0"]["file"])
+        self.assertIsNone(got["a0"])
+
+
+class QuarantineGate(_Base):
+    """PAYLOAD-STRIP-PUBLISH: stripped payloads publish under -s0 keys only; the unstripped inputs/jtt1-encoder|teacher/
+    objects already published are quarantined and never put (or re-verified) again."""
+
+    def _refused(self, doc):
+        return {r["view_id"]: r["reason"] for r in doc["scan"]["refused"]}
+
+    def test_stripped_keys_never_collide_with_the_quarantined_scheme(self):
+        d = make_context(self.shard, "a" * 16, 0)
+        plan = vp.scan_context(d)
+        row = [o for o in plan["objects"] if o["name"] in vp.ROW_LEVEL_FILES]
+        self.assertEqual({o["component"] for o in row}, {"jtt1-encoder-s0", "jtt1-teacher-s0"})
+        for o in row:
+            self.assertFalse(quarantine.is_quarantined(o["key"]) or quarantine.is_quarantined(o["receipt_key"]))
+            c = o["component"]
+            self.assertIn(f"/inputs/{c}/", o["key"])
+            self.assertIn(f"/receipts/{c}/", o["receipt_key"])
+            old = o["key"].replace(f"/inputs/{c}/", f"/inputs/{c[:-3]}/")
+            self.assertTrue(quarantine.is_quarantined(old), old)                  # what the pre-ruling scheme produced
+
+    def test_a_quarantined_key_stops_the_run_before_any_client_call(self):
+        make_context(self.shard, "a" * 16, 0, files={"a0.f32": b"a0", "hyperion.npy": b"h"})   # no row data: publishable alone
+        make_context(self.shard, "b" * 16, 0)
+        old = ("jtt1-encoder", "inputs/jtt1-encoder/", "jtt1.gz", "application/gzip")
+        with mock.patch.dict(vp.FILES, {"encoder.jtt1.gz": old}):
+            doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"b" * 16 + "__r0__f0": "quarantined_key"})
+        self.assertEqual((doc["verdict"], self.bucket.calls), ("FAIL", []))
+
+    def test_a_key_listed_in_a_quarantine_document_is_refused(self):
+        d = make_context(self.shard, "a" * 16, 0)
+        key = [o for o in vp.scan_context(d)["objects"] if o["name"] == "teacher.jtt1.gz"][0]["key"]
+        qdir = self.tmp / "quarantine"
+        qdir.mkdir()
+        body = (json.dumps({"schema": quarantine.SCHEMA, "entries": [{"key": key, "version_id": "v", "sha256": "0" * 64}]}) + "\n").encode()
+        (qdir / f"v2-quarantine-test-{sha(body)[:12]}.json").write_bytes(body)
+        with mock.patch.object(quarantine, "QUARANTINE_DIR", qdir):
+            doc = self.run_once()
+            self.assertEqual(self._refused(doc), {"a" * 16 + "__r0__f0": "quarantined_key"})
+            self.assertEqual(self.bucket.calls, [])
+            (qdir / "v2-quarantine-bad-000000000000.json").write_bytes(body)        # does not hash to its name: fail closed
+            with self.assertRaises(quarantine.QuarantineCorrupt):
+                self.run_once()
+        self.assertEqual(self.bucket.calls, [])
+
+    def test_publish_bytes_refuses_a_quarantined_key_before_any_call(self):
+        writer, reader, _ = vp.fake_clients(self.budget_path, self.bucket)
+        ledger = vp.PublishLedger(self.ledger_path)
+        try:
+            for key in (f"{V}inputs/jtt1-teacher/{'a' * 16}/f0/x.jtt1.gz", f"{V}INPUTS//jtt1-Encoder/{'a' * 16}/f0/x.jtt1.gz"):
+                with self.assertRaises(vp.Refused) as cm:
+                    vp.Publisher(writer, reader, ledger).publish_bytes(key, b"x", "application/gzip", "object", "v")
+                self.assertEqual(cm.exception.reason, "quarantined_key")
+        finally:
+            ledger.close()
+        self.assertEqual(self.bucket.calls, [])
+        self.assertFalse(self.ledger_path.exists() and self.ledger_path.read_bytes(), "no intent is recorded")
+
+    def test_a_strip_record_naming_another_key_scheme_is_refused(self):
+        bad = {n: dict(v, component=v["component"][:-3]) for n, v in quarantine.key_scheme().items()}
+        make_context(self.shard, "a" * 16, 0, publication_strip={"schema": "jope.dl-v2-publication-strip/v1", "key_scheme": bad})
+        make_context(self.shard, "b" * 16, 0, publication_strip={"schema": "jope.dl-v2-publication-strip/v1"})
+        make_context(self.shard, "c" * 16, 0)
+        doc = self.run_once()
+        self.assertEqual(self._refused(doc), {"a" * 16 + "__r0__f0": "key_scheme", "b" * 16 + "__r0__f0": "key_scheme"})
+        self.assertEqual((doc["verdict"], self.bucket.calls), ("FAIL", []))
+
+
 class Cli(_Base):
+    def test_unstripped_batch_refuses_before_real_client_creation(self):
+        make_context(self.shard, "0123456789abcdef")
+        for fold, name in enumerate(vp.ROW_LEVEL_FILES):
+            with self.subTest(name=name):
+                bad = make_context(self.shard, "fedcba9876543210", fold=fold, files={name: jtt_gz(n_test=3)})
+                receipt = self.tmp / f"{name}.receipt.json"
+                with mock.patch.object(vp, "real_clients") as clients, contextlib.redirect_stdout(io.StringIO()):
+                    rc = vp.main(["--build", str(self.build), "--real", "--limit", "1",
+                                  "--publish-ledger", str(self.ledger_path), "--receipt", str(receipt)])
+                clients.assert_not_called()
+                self.assertEqual(rc, 2)
+                doc = json.loads(receipt.read_text())
+                self.assertEqual((doc["verdict"], doc["stage"]), ("FAIL", "preflight"))
+                self.assertFalse(self.ledger_path.exists())
+                shutil.rmtree(bad)
+
     def test_dry_run_builds_no_aws_client_and_leaves_real_ledgers_alone(self):
         make_context(self.shard, "a" * 16, 0, files={"a0.f32": b"a0", "tabpfn35.npy": b"t"})
         real_budget, real_publish = self.tmp / "real-budget.jsonl", self.tmp / "real-publish.jsonl"

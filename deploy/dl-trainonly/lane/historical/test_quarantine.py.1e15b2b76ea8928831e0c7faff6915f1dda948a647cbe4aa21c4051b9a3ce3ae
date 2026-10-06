@@ -1,0 +1,196 @@
+"""PAYLOAD-STRIP-PUBLISH quarantine: offline proofs for dltrain/quarantine.py, tools/v2_quarantine_unstripped.py, the
+quarantine-aware loaders and the S1 list builder. Must-fail: a quarantined key is refused by every loader before any
+request or cache access, and the quarantine tool lists exactly the verified unstripped objects of the ledger."""
+import contextlib
+import gzip
+import hashlib
+import importlib.util
+import io
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from dltrain import jtt1, quarantine, s3io
+
+SRC = Path(__file__).resolve().parents[1]
+V = s3io.V2_PREFIX_KEY
+
+
+def _load(name, rel):
+    spec = importlib.util.spec_from_file_location(name, SRC / rel)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+qt = _load("v2_quarantine_unstripped", "tools/v2_quarantine_unstripped.py")
+vp = _load("v2_publish", "tools/v2_publish.py")
+sl = _load("v2_s1_input_list", "tools/v2_s1_input_list.py")
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+class _Tmp(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="quar-", dir=os.environ.get("TMPDIR")))
+        self.qdir = self.tmp / "quarantine"
+        self.qdir.mkdir()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+
+class Rule(_Tmp):
+    def test_rule_covers_every_spelling_of_the_unstripped_scheme(self):
+        for k in (f"{V}inputs/jtt1-encoder/a/f0/x.jtt1.gz", f"{V}inputs/jtt1-teacher/a/f0/x.jtt1.gz",
+                  f"{V}research-only/inputs/jtt1-teacher/a/f0/x.jtt1.gz", f"{V}INPUTS/JTT1-Teacher/a/f0/x.jtt1.gz",
+                  f"{V}inputs//jtt1-encoder/a/f0/x.jtt1.gz", None, 7):
+            self.assertTrue(quarantine.is_quarantined(k, self.qdir), k)
+            with self.assertRaises(quarantine.QuarantinedKey):
+                quarantine.assert_not_quarantined(k, self.qdir)
+        for k in (f"{V}inputs/jtt1-encoder-s0/a/f0/x.jtt1.gz", f"{V}inputs/jtt1-teacher-s0/a/f0/x.jtt1.gz",
+                  f"{V}receipts/jtt1-encoder/a/f0/x.json", f"{V}encodings/a0/a/f0/x.f32", f"{V}manifests/jtt1-teacher/x.json"):
+            self.assertFalse(quarantine.is_quarantined(k, self.qdir), k)
+
+    def test_a_listed_key_is_quarantined_and_a_corrupt_document_fails_closed(self):
+        key = f"{V}inputs/jtt1-teacher-s0/a/f0/x.jtt1.gz"
+        self.assertFalse(quarantine.is_quarantined(key, self.qdir))
+        body = (json.dumps({"schema": quarantine.SCHEMA, "entries": [{"key": key, "version_id": "v1", "sha256": "0" * 64}]}) + "\n").encode()
+        (self.qdir / f"v2-quarantine-t-{sha(body)[:12]}.json").write_bytes(body)
+        self.assertTrue(quarantine.is_quarantined(key, self.qdir))
+        self.assertEqual(quarantine.listed(key, self.qdir)[0]["version_id"], "v1")
+        (self.qdir / "v2-quarantine-t-000000000000.json").write_bytes(body)
+        with self.assertRaises(quarantine.QuarantineCorrupt):
+            quarantine.is_quarantined(key, self.qdir)
+
+    def test_key_scheme_is_the_publishers(self):
+        ks = quarantine.key_scheme()
+        for name in vp.ROW_LEVEL_FILES:
+            self.assertEqual((ks[name]["component"], ks[name]["object_prefix"]), vp.FILES[name][:2])
+            self.assertFalse(quarantine.rule_match(V + ks[name]["object_prefix"] + "x"))
+
+
+class Loaders(_Tmp):
+    def test_native_exact_get_refuses_before_request(self):
+        client = mock.Mock()
+        for component in quarantine.QUARANTINED_COMPONENTS:
+            with self.assertRaises(quarantine.QuarantinedKey):
+                s3io.get_exact(client, f"{V}inputs/{component}/a/f0/x.jtt1.gz", "v1")
+        client.get_object.assert_not_called()
+
+    def test_native_raw_loader_refuses_before_cache_lookup(self):
+        for component in quarantine.QUARANTINED_COMPONENTS:
+            ref = {"key": f"{V}inputs/{component}/a/f0/x.jtt1.gz"}
+            with mock.patch.object(jtt1, "cache_path") as cache, self.assertRaises(quarantine.QuarantinedKey):
+                jtt1.load_raw(ref, self.tmp, client=mock.Mock())
+            cache.assert_not_called()
+
+    def test_guarded_get_exact_refuses_before_any_request(self):
+        bucket = vp.FakeBucket()
+        writer, reader, _ = vp.fake_clients(self.tmp / "budget.jsonl", bucket)
+        good = f"{V}inputs/jtt1-teacher-s0/a/f0/x.jtt1.gz"
+        vid = "fakev00000001"
+        bucket.objects[(s3io.BUCKET, good)] = [(vid, b"ok")]
+        with self.assertRaises(quarantine.QuarantinedKey):
+            quarantine.guarded_get_exact(reader, f"{V}inputs/jtt1-teacher/a/f0/x.jtt1.gz", vid, qdir=self.qdir)
+        self.assertEqual(bucket.calls, [], "no request for a quarantined key")
+        body, _ = quarantine.guarded_get_exact(reader, good, vid, qdir=self.qdir)
+        self.assertEqual(body, b"ok")
+
+    def test_load_raw_refuses_before_any_cache_or_client_access(self):
+        raw = jtt1.MAGIC + jtt1.HEADER.pack(3, 0, 1, 2) + bytes(3) + bytes(8 * 2 * 3)
+        gz = gzip.compress(raw, mtime=0)
+        cache = self.tmp / "cache"
+        cache.mkdir()
+        ref = {"key": f"{V}inputs/jtt1-encoder/a/f0/x.jtt1.gz", "version_id": "v", "bucket": s3io.BUCKET, "sha256": sha(gz),
+               "bytes": len(gz), "raw_sha256": sha(raw), "raw_bytes": len(raw)}
+        (cache / f"{sha(raw)}.jtt1.gz").write_bytes(gz)                     # even a verified cached copy is not served
+        client = mock.Mock(side_effect=AssertionError("no client use"))
+        with mock.patch.object(jtt1, "load_raw", side_effect=AssertionError("jtt1.load_raw must not be reached")):
+            with self.assertRaises(quarantine.QuarantinedKey):
+                quarantine.load_raw(ref, cache, client=client, qdir=self.qdir)
+        self.assertEqual(quarantine.load_raw(dict(ref, key=f"{V}inputs/jtt1-encoder-s0/a/f0/x.jtt1.gz"), cache, qdir=self.qdir), raw)
+        with self.assertRaises(quarantine.QuarantinedKey):
+            quarantine.load_raw({k: v for k, v in ref.items() if k != "key"}, cache, qdir=self.qdir)
+
+
+class S1List(unittest.TestCase):
+    def test_only_a_stripped_teacher_object_is_loadable(self):
+        ok = {"component": "jtt1-teacher-s0", "key": f"{V}inputs/jtt1-teacher-s0/a/f0/x.jtt1.gz"}
+        enc = {"component": "jtt1-encoder-s0", "key": f"{V}inputs/jtt1-encoder-s0/a/f0/x.jtt1.gz"}
+        self.assertEqual(sl.teacher_object("m", {"view_id": "v", "objects": [enc, ok]}), ok)
+        for bad in ({"component": "jtt1-teacher", "key": f"{V}inputs/jtt1-teacher/a/f0/x.jtt1.gz"},
+                    {"component": "jtt1-teacher-s0", "key": f"{V}inputs/jtt1-teacher/a/f0/x.jtt1.gz"},
+                    {"component": "jtt1-teacher", "key": f"{V}inputs/jtt1-teacher-s0/a/f0/x.jtt1.gz"}):
+            with self.assertRaisesRegex(SystemExit, "quarantined"):
+                sl.teacher_object("m", {"view_id": "v", "objects": [enc, bad]})
+        with self.assertRaisesRegex(SystemExit, "expected one teacher"):
+            sl.teacher_object("m", {"view_id": "v", "objects": [enc]})
+
+
+class Tool(_Tmp):
+    def _ledger(self):
+        recs, t = [], 1_000_000
+        for comp in ("jtt1-encoder", "jtt1-teacher"):
+            for i in range(3):
+                k = f"{V}inputs/{comp}/{'ab' * 8}/f{i}/s-c-k.jtt1.gz"
+                rk = f"{V}receipts/{comp}/{'ab' * 8}/f{i}/s-c-k.json"
+                t += 10
+                recs += [{"event": "intent", "key": k, "utc_us": t}, {"event": "verified", "key": k, "version_id": f"v{comp}{i}", "sha256": sha(k.encode()),
+                                                                      "bytes": 10 + i, "utc_us": t, "view_id": f"view{i}", "outcome": "created"},
+                         {"event": "verified", "key": rk, "version_id": f"r{comp}{i}", "sha256": sha(rk.encode()), "bytes": 5, "utc_us": t + 1}]
+        recs += [{"event": "failed", "key": f"{V}inputs/jtt1-teacher/x/f9/z.jtt1.gz", "utc_us": t},
+                 {"event": "verified", "key": f"{V}inputs/jtt1-teacher-s0/x/f0/z.jtt1.gz", "version_id": "s", "sha256": "1" * 64, "bytes": 1, "utc_us": t},
+                 {"event": "verified", "key": f"{V}encodings/a0/x/f0/z.f32", "version_id": "a", "sha256": "2" * 64, "bytes": 1, "utc_us": t},
+                 {"event": "verified", "key": f"{V}inputs/jtt1-encoder/{'ab' * 8}/f0/s-c-k.jtt1.gz", "version_id": "vjtt1-encoder0",
+                  "sha256": sha(f"{V}inputs/jtt1-encoder/{'ab' * 8}/f0/s-c-k.jtt1.gz".encode()), "bytes": 10, "utc_us": 1_000_010}]   # re-verified, equal
+        led = self.tmp / "ledger.jsonl"
+        led.write_text("".join(json.dumps(r) + "\n" for r in recs))
+        pub = self.tmp / "pub"
+        pub.mkdir()
+        (pub / "v2-publish-real-1.json").write_text(json.dumps({"started_utc_us": 1_000_000, "finished_utc_us": 1_000_035, "build": "B1"}))
+        (pub / "v2-publish-real-2.json").write_text(json.dumps({"started_utc_us": 1_000_036, "finished_utc_us": 2_000_000, "build": "B2"}))
+        return led, pub
+
+    def test_lists_exactly_the_verified_unstripped_objects(self):
+        led, pub = self._ledger()
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(qt.main(["--name", "t", "--ledger", str(led), "--pub", str(pub), "--out-dir", str(self.qdir)]), 0)
+        res = json.loads(out.getvalue())
+        p = Path(res["path"])
+        body = p.read_bytes()
+        self.assertEqual((sha(body), p.name), (res["sha256"], f"v2-quarantine-t-{sha(body)[:12]}.json"))
+        self.assertEqual(oct(p.stat().st_mode & 0o777), "0o444")
+        doc = json.loads(body)
+        self.assertEqual((doc["schema"], doc["reason"]), ("jope.dl-v2-quarantine/v1",
+                                                          "contains outer-test targets; published before owner ruling 06:52 MT; never read"))
+        keys = [e["key"] for e in doc["entries"]]
+        self.assertEqual(len(keys), 6)
+        self.assertEqual(doc["counts"]["by_component"], {"jtt1-encoder": 3, "jtt1-teacher": 3})
+        self.assertTrue(all("/inputs/jtt1-encoder/" in k or "/inputs/jtt1-teacher/" in k for k in keys))
+        e = doc["entries"][0]
+        self.assertEqual((e["version_id"], e["receipt"]["version_id"]), ("vjtt1-encoder0", "rjtt1-encoder0"))
+        self.assertEqual({x["run"]["receipt"] for x in doc["entries"]}, {"v2-publish-real-1.json", "v2-publish-real-2.json"})
+        self.assertEqual(doc["counts"]["with_receipt"], 6)
+        for k in keys:
+            self.assertTrue(quarantine.listed(k, self.qdir))
+        self.assertIn("tools/v2_quarantine_unstripped.py", doc["code_sha256"])
+
+    def test_conflicting_verified_records_stop_the_tool(self):
+        led, pub = self._ledger()
+        k = f"{V}inputs/jtt1-encoder/{'ab' * 8}/f0/s-c-k.jtt1.gz"
+        with open(led, "a") as f:
+            f.write(json.dumps({"event": "verified", "key": k, "version_id": "other", "sha256": "3" * 64, "bytes": 1, "utc_us": 5}) + "\n")
+        with self.assertRaises(SystemExit):
+            qt.build(led, pub, "t")
+
+
+if __name__ == "__main__":
+    unittest.main()

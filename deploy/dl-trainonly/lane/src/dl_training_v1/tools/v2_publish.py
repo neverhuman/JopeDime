@@ -22,6 +22,18 @@ readback. A context is refused before any PUT of it when .done is missing, conte
 malformed, a listed file is unknown, missing, a symlink, or does not hash/size as recorded, an unlisted file sits beside
 it, or its key collides with another context's. The build tree is only read, never modified.
 
+PAYLOAD-STRIP-PUBLISH gate (owner ruling 2026-10-06 06:52 MT, owner-decisions-20261006T125305Z.json): every row-level file
+(encoder/teacher JTT1) is decompressed and parsed and must be a JTT1 with n_test == 0 and n_train == context n_train, i.e. a
+publication copy made by tools/v2_strip_outer_test.py with the outer-test block dropped. Anything else (n_test > 0, bytes
+past the train block, not gzip, not JTT1) is refused fail-closed; one such payload in a build stops the whole run before
+any client call, and publish_context re-gates the exact bytes it is about to put.
+
+Key scheme and quarantine (dltrain/quarantine.py): stripped payloads publish only under the components jtt1-encoder-s0 and
+jtt1-teacher-s0 (inputs/jtt1-*-s0/, receipts/jtt1-*-s0/), which cannot collide with the 3,280 + 3,280 unstripped objects
+already published under inputs/jtt1-encoder|teacher/. Those keys are quarantined: any object or receipt key that matches the
+quarantine rule or a local quarantine document is refused at scan (the whole run stops) and again before any PUT; a context
+whose publication_strip record names another key scheme is refused.
+
 --dry-run runs the same code against an in-memory fake bucket that applies the real s3io.Guard at the parameter and
 request stages (a v2 writer charged to a COPY of the real budget ledger): no AWS client is built, nothing leaves the host,
 and the real publish and budget ledgers are not touched. --real publishes with the guarded boto3 clients (AWS_PROFILE).
@@ -35,6 +47,7 @@ import base64
 import collections
 import concurrent.futures
 import fcntl
+import gzip
 import hashlib
 import json
 import os
@@ -49,7 +62,7 @@ from urllib.parse import quote
 
 from botocore.exceptions import ClientError
 
-from dltrain import common, s3io
+from dltrain import common, jtt1, quarantine, s3io
 
 RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
 PUBLISH_DIR = RUN / "receipts" / "trainonly-v2" / "publish"
@@ -79,8 +92,8 @@ LEDGER_EVENTS = {"intent", "verified", "failed", "context_done"}
 PUBLISHER = "dltrain/tools/v2_publish.py"
 # file name listed in context.json -> (component, sub-prefix under V2_PREFIX_KEY, key extension, content type)
 FILES = {
-    "encoder.jtt1.gz": ("jtt1-encoder", "inputs/jtt1-encoder/", "jtt1.gz", "application/gzip"),
-    "teacher.jtt1.gz": ("jtt1-teacher", "inputs/jtt1-teacher/", "jtt1.gz", "application/gzip"),
+    # PAYLOAD-STRIP-PUBLISH: stripped payloads only, under the -s0 components (inputs/jtt1-encoder|teacher/ is quarantined)
+    **{n: (c, f"inputs/{c}/", "jtt1.gz", "application/gzip") for n, c in quarantine.STRIPPED_COMPONENTS.items()},
     "a0.f32": ("a0", "encodings/a0/", "f32", "application/octet-stream"),
     **{f"{n}.npy": (n, f"encodings/{n}/", "npy", "application/octet-stream")
        for n in ("hyperion", "foundation", "dope", "hyperion_v6")},
@@ -94,6 +107,8 @@ RESEARCH_ONLY_COMPONENTS = {"tabpfn35", "target", "context2048"}
 # research-only/ and its row-level inputs are never uploaded (no publishing of the raw data).
 RIGHTS_RESEARCH = "research-only"
 ROW_LEVEL_FILES = {"encoder.jtt1.gz", "teacher.jtt1.gz"}
+# PAYLOAD-STRIP-PUBLISH: refusal reasons that stop a whole run (an unstripped or unreadable row-level payload in the build)
+ROW_LEVEL_REFUSALS = {"outer_test_rows", "row_level_payload", "quarantined_key", "key_scheme"}
 CONTROL_FILES = {"context.json", ".done"}
 HEX16_RE = re.compile(r"[0-9a-f]{16}")
 SHA_RE = re.compile(r"[0-9a-f]{64}")
@@ -136,10 +151,31 @@ def keys_for(name: str, ctx: dict) -> tuple[str, str]:
     for k in (key, receipt_key):  # layout invariants, independent of the guard
         if not s3io._in_v2_prefix(s3io.BUCKET, k) or s3io.is_research_only(k) != research:  # noqa: SLF001
             raise Refused("layout_invariant", k)
+        if quarantine.is_quarantined(k):
+            raise Refused("quarantined_key", k)
     return key, receipt_key
 
 
 # --------------------------------------------------------------------------------------------------------- scan
+def assert_no_outer_test(name: str, body: bytes, n_train=None) -> dict:
+    """PAYLOAD-STRIP-PUBLISH gate for one row-level object: a gzip JTT1 whose header says n_test == 0 (and n_train ==
+    the context's n_train when given), with nothing past the train block. Fail-closed: any error is a refusal."""
+    try:
+        raw = gzip.decompress(body)
+    except Exception as err:  # noqa: BLE001 (not gzip, truncated, trailing garbage: refused, never admitted)
+        raise Refused("row_level_payload", f"{name}: not a gzip body ({type(err).__name__})") from None
+    try:
+        h = jtt1.parse_header(raw)
+    except Exception as err:  # noqa: BLE001
+        raise Refused("row_level_payload", f"{name}: {type(err).__name__}: {err}"[:300]) from None
+    if h["n_test"] != 0:
+        raise Refused("outer_test_rows", f"{name}: n_test={h['n_test']}; only stripped payloads (n_test == 0, "
+                                         "tools/v2_strip_outer_test.py) are publishable")
+    if n_train is not None and h["n_train"] != n_train:
+        raise Refused("row_level_payload", f"{name}: header n_train={h['n_train']} != context n_train={n_train}")
+    return h
+
+
 def _sha_field(ctx, name):
     v = ctx.get(name)
     if not isinstance(v, str) or not SHA_RE.fullmatch(v):
@@ -190,6 +226,8 @@ def scan_context(d: Path) -> dict:
         if not isinstance(cut, dict) or want is None or not str(cut.get("cut_id", "")).startswith(want) \
                 or not SHA_RE.fullmatch(str(cut.get("cut_id", "")).split(":", 1)[-1]) or cut.get("comparable_with_replaced") is not False:
             raise Refused("cut", repr(cut)[:200])
+    if isinstance(ctx.get("publication_strip"), dict) and ctx["publication_strip"].get("key_scheme") != quarantine.key_scheme():
+        raise Refused("key_scheme", repr(ctx["publication_strip"].get("key_scheme"))[:200])
     if ctx.get("published") is not False:
         raise Refused("published_flag", f"context.json published={ctx.get('published')!r}; only published=false is publishable")
     if ctx.get("view_id") != d.name:
@@ -228,6 +266,13 @@ def scan_context(d: Path) -> dict:
         size, digest = p.stat().st_size, common.sha256_file(p)
         if size != meta["bytes"] or digest != meta["sha256"]:
             raise Refused("hash_mismatch", f"{name}: {digest[:12]}/{size} != recorded {meta['sha256'][:12]}/{meta['bytes']}")
+        if name in ROW_LEVEL_FILES:
+            body = p.read_bytes()
+            if sha(body) != digest:
+                raise Refused("changed_since_scan", name)
+            if type(ctx.get("n_train")) is not int:
+                raise Refused("row_level_payload", f"{name}: context n_train missing; the gate cannot bind the payload")
+            assert_no_outer_test(name, body, ctx["n_train"])
         component, _, _, ctype = FILES[name]
         key, receipt_key = keys_for(name, ctx)
         objects.append({"name": name, "path": str(p), "component": component, "content_type": ctype, "key": key,
@@ -281,6 +326,11 @@ def receipt_body(plan: dict, obj: dict, version_id: str) -> bytes:
         g = ctx.get("gpu") or {}
         doc["gpu"] = {"component": (g.get("components") or {}).get(obj["component"]), "input": g.get("input"), "pins": g.get("pins"),
                       "code_sha256": g.get("code_sha256"), "manifest": g.get("manifest"), "owner_decision": g.get("owner_decision")}
+    if obj["name"] in ROW_LEVEL_FILES and isinstance(ctx.get("publication_strip"), dict):   # PAYLOAD-STRIP-PUBLISH lineage
+        ps = ctx["publication_strip"]
+        doc["publication_strip"] = {"schema": ps.get("schema"), "ruling": ps.get("ruling"), "cut_id": ps.get("cut_id"),
+                                    "key_scheme": ps.get("key_scheme"), "code_sha256": ps.get("code_sha256"),
+                                    "file": (ps.get("files") or {}).get(obj["name"])}
     if obj["component"] in (ctx.get("label_exposure") or {}):   # owner rulings TARGET-ENC / HYPERION-ARMB-LABELS, per context
         doc["label_exposure"] = ctx["label_exposure"][obj["component"]]
     if "rowsel" in ctx or "epoch0" in ctx:   # row-selection rebuilds: identity digest and the epoch-0 context replaced
@@ -387,6 +437,8 @@ class Publisher:
             self.stats.update(kv)
 
     def publish_bytes(self, key: str, body: bytes, content_type: str, kind: str, view_id: str) -> dict:
+        if quarantine.is_quarantined(key):   # PAYLOAD-STRIP-PUBLISH: never put (or re-verify) a quarantined key
+            raise Refused("quarantined_key", key)
         digest, n = sha(body), len(body)
         prior = self.ledger.verified.get(key)
         if prior is not None:   # already published and verified: re-check by exact-version GET, never re-put
@@ -419,6 +471,12 @@ class Publisher:
             raise s3io.ReadbackMismatch(f"{key}: readback {res.get('sha256')}/{res.get('bytes')} != {digest}/{n}")
 
     def publish_context(self, plan: dict) -> dict:
+        for obj in plan["objects"]:   # PAYLOAD-STRIP-PUBLISH: re-gate every row-level body before any client call of this context
+            if obj["name"] in ROW_LEVEL_FILES:
+                body = Path(obj["path"]).read_bytes()
+                if sha(body) != obj["sha256"] or len(body) != obj["bytes"]:
+                    raise Refused("changed_since_scan", obj["name"])
+                assert_no_outer_test(obj["name"], body, plan["ctx"].get("n_train"))
         refs = []
         for obj in plan["objects"]:
             body = Path(obj["path"]).read_bytes()
@@ -537,7 +595,8 @@ def real_clients():
 # --------------------------------------------------------------------------------------------------------- run
 def code_identity() -> dict:
     root = Path(__file__).resolve().parents[1]
-    return {f: common.sha256_file(root / f) for f in ("tools/v2_publish.py", "dltrain/s3io.py", "dltrain/common.py")}
+    return {f: common.sha256_file(root / f) for f in ("tools/v2_publish.py", "dltrain/s3io.py", "dltrain/common.py", "dltrain/jtt1.py",
+                                                      "dltrain/quarantine.py")}
 
 
 def preflight(plans, ledger: PublishLedger, budget: dict) -> dict:
@@ -567,7 +626,11 @@ def run(build: Path, writer, reader, ledger: PublishLedger, budget_ledger: s3io.
                                                                              "contexts_done": len(ledger.done_views)}}
     doc["preflight"] = pf = preflight(ready, ledger, doc["budget_before"])
     failed = []
-    if not pf["fits"]:
+    leak = [r for r in refused if r["reason"] in ROW_LEVEL_REFUSALS]
+    if leak:
+        doc["stopped"] = (f"PAYLOAD-STRIP-PUBLISH: {len(leak)} context(s) carry an unstripped or unreadable row-level payload, a "
+                          "quarantined key or another key scheme; nothing was put (publish the tools/v2_strip_outer_test.py copy)")
+    elif not pf["fits"]:
         doc["stopped"] = "preflight: the selected contexts could exceed the v2 byte budget; nothing was put"
     else:
         pub = Publisher(writer, reader, ledger)
@@ -588,7 +651,7 @@ def run(build: Path, writer, reader, ledger: PublishLedger, budget_ledger: s3io.
     doc["publish_ledger_after"] = {"verified": len(ledger.verified), "contexts_done": len(ledger.done_views)}
     done = len([p for p in ready if p["view_id"] in ledger.done_views])
     doc["contexts_done_in_selection"] = done
-    doc["verdict"] = "PASS" if pf["fits"] and not failed and not refused and done == len(ready) else "INCOMPLETE"
+    doc["verdict"] = "FAIL" if leak else "PASS" if pf["fits"] and not failed and not refused and done == len(ready) else "INCOMPLETE"
     doc["finished_utc_us"] = common.utc_us()
     return doc
 
@@ -620,6 +683,22 @@ def main(argv=None) -> int:
     receipt = Path(a.receipt) if a.receipt else PUBLISH_DIR / f"v2-publish-{'dryrun' if a.dry_run else 'real'}-{stamp}.json"
     if receipt.exists():
         ap.error(f"receipt {receipt} already exists")
+    # Inspect the whole batch before any AWS session, client, or budget ledger exists.
+    # run() scans again, and publish_context() rechecks bytes before publishing.
+    try:
+        _plans, refused = scan_build(build)
+        leak = [r for r in refused if r["reason"] in ROW_LEVEL_REFUSALS]
+    except Refused as err:
+        leak = [{"reason": err.reason, "message": str(err)}]
+    if leak:
+        doc = {"schema": RUN_SCHEMA, "build": str(build), "verdict": "FAIL", "stage": "preflight",
+               "scan": {"refused": leak}, "mode": "dry-run" if a.dry_run else "real",
+               "argv": common.redact_argv(sys.argv if argv is None else ["v2_publish.py", *argv]),
+               "code_sha256": code_identity()}
+        res = common.write_receipt(receipt, doc)
+        print(json.dumps({"receipt": res["path"], "sha256": res["sha256"], "verdict": "FAIL",
+                          "stage": "preflight", "refused": len(leak)}))
+        return 2
     try:
         if a.dry_run:
             work = Path(a.work_dir) if a.work_dir else RUN / "tmp" / f"v2-publish-dryrun-{stamp}"

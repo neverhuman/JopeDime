@@ -1,0 +1,1320 @@
+"""Offline tests for dltrain.s1_tail and tools/s1_tail.py (P8 DL-TRAINING-PATH: P4/P5 fed from the S1 ledger).
+
+Fixtures follow the production S1 formats (s1-prod/code/ledger.py and s1prod_context.py): ledger.header.json, the
+production and research JSONL ledgers (open/assign/defer/release/final rows), contexts/<ctx>/{final.json,
+summary.tar.gz (attempts.jsonl + digests.json)}, the execution host's per-attempt jope.s1-evaluation/v1 records
+(g0-evaluations.json, genNN/KK.pack.json.gz), the input list, P3 holdout/registry, the denylist, teacher JTT1 inputs
+and v2 build trees with encoding vectors. CPU only; every write goes under TMPDIR (never /tmp) and is kept (nothing
+is deleted); no network (the ssh fetch runs a local fake).
+Run inside the lane slice: python -m unittest tests_p5.test_s1_tail -v
+"""
+from __future__ import annotations
+
+import contextlib
+import gzip
+import hashlib
+import io
+import json
+import os
+import shutil
+import struct
+import sys
+import tarfile
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+from dltrain import admission as admission_mod
+from dltrain import dsl_tokenizer, exclusions, sampler, tranche
+from dltrain import s1_tail as T
+
+TOOLS = Path(__file__).resolve().parents[1] / "tools"
+PLAN = {"g0": 6, "generations": 1, "per_generation": 4, "per_context": 10, "max_program_attempts": 2}
+DSLS = [
+    "(pipe X (standardize append=true) (ridge))",
+    "(pipe X (robust_scale) (rand_proj append=true k=36 seed=8950) (ridge_gcv))",
+    "(pipe X (bin_onehot bins=7) (histgbm depth=3 lr=0.09432841824916438 rounds=129))",
+    "(pipe X (cheb append=true degree=5) (poly_interact) (ksmooth gamma=2.0 k=32))",
+    "(pipe X (quantile_bins append=true bins=31) (cheb append=true degree=6) (target_bin_encode bins=8) (ridge))",
+    "(pipe X (winsor_clip q=0.19576661617463118) (rff_cos append=true gamma=1.1817042540803127 n=26 seed=9554) "
+    "(ksmooth gamma=0.5 k=16))",
+    "(pipe X (blom) (standardize append=true) (histgbm depth=6 lr=0.04397279702482619 rounds=102))",
+    "(pipe X (target_bin_encode bins=9) (hinge knots=7) (pair_prod topk=13) (ridge_gcv))",
+    "(pipe X (robust_scale append=true) (ridge))",
+]
+# ordinal -> (program index, finish status); ordinal 9 re-attempts program 7 after its failure (2-attempt cap).
+ATTEMPTS = [(0, "completed"), (1, "completed"), (2, "completed"), (3, "failed"), (4, "completed"),
+            (5, "timeout"), (6, "completed"), (7, "failed"), (8, "unknown"), (7, "completed")]
+COMPONENTS = {"a0": 8, "dope": 12, "hyperion": 6, "hyperion_v6": 6, "foundation": 10, "target": 6,
+              "context2048": 10, "tabpfn35": 10}
+GPU_COMPONENTS = ("hyperion", "hyperion_v6", "foundation", "target", "context2048", "tabpfn35")
+# name: (assignment or None for "no family", ledger, use, finalized)
+SPECS = {
+    "t1": ("train_fit", "production", "train_teacher", True),
+    "t2": ("train_nonpool", "production", "train_teacher", True),
+    "t3": ("train_fit", "research", "train_teacher", True),
+    "dv": ("dev", "production", "selection_only", True),
+    "hd": ("heldout", "production", "train_teacher", True),
+    "se": ("sealed_excluded", "production", "train_teacher", True),
+    "un": (None, "production", "train_teacher", True),
+    "pr": ("prohibited_excluded", "production", "train_teacher", True),
+    "dk": ("train_fit", "production", "train_teacher", True),
+    "dw": ("train_fit", "production", "train_teacher", True),
+    "pd": ("train_fit", "production", "train_teacher", False),
+}
+DENIED_KEY = "experiments/gp-policy-dl/v2-trainonly/inputs/jtt1/dk/denied.jtt1.gz"
+N_TRAIN, N_TEST, P = 40, 12, 3
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def canon(doc) -> bytes:
+    return json.dumps(doc, sort_keys=True, separators=(",", ":"), allow_nan=False).encode() + b"\n"
+
+
+def wbytes(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        os.chmod(path, 0o644)
+    path.write_bytes(data)
+
+
+def wjson(path: Path, doc) -> bytes:
+    b = canon(doc)
+    wbytes(path, b)
+    return b
+
+
+def jtt1(X_tr, y_tr, X_te, y_te) -> bytes:
+    head = b"JTT1" + struct.pack("<IIIB", len(y_tr), len(y_te), X_tr.shape[1], 2)
+    inner = bytes(i % 2 for i in range(len(y_tr)))
+    mat = np.concatenate([np.c_[X_tr, y_tr], np.c_[X_te, y_te]]).astype("<f8")
+    return head + inner + mat.tobytes()
+
+
+def tar_gz(files: dict) -> bytes:
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as tar:
+        for name in sorted(files):
+            info = tarfile.TarInfo(name)
+            info.size, info.mtime, info.mode = len(files[name]), 0, 0o444
+            tar.addfile(info, io.BytesIO(files[name]))
+    return gzip.compress(buf.getvalue(), mtime=0)
+
+
+class Fixture:
+    """A production-shaped S1 world under `root`. poison=True perturbs every outer-test value (teacher JTT1 test rows,
+    final.json/final-row outer_test, outer-test ledger rows, a separate outer-test ledger and per-context outer-test
+    files) and nothing else. variants: {ctx_name: kind} for the negative cases."""
+
+    def __init__(self, root: Path, *, poison: bool = False, variants: dict | None = None,
+                 exclude: tuple = (), review: tuple = ()):
+        self.root, self.poison, self.variants = Path(root), poison, dict(variants or {})
+        self.exclude_names, self.review_names = tuple(exclude), tuple(review)
+        self.prod = self.root / "s1-prod"
+        self.host = self.root / "host" / "contexts"
+        self.trees = (self.root / "build/ROWSEL", self.root / "build/PUBLISH", self.root / "build/GPU")
+        self.names = list(SPECS)
+        self.ctx, self.view, self.y = {}, {}, {}
+        for i, n in enumerate(self.names):
+            self.ctx[n] = sha(f"ctx-{n}".encode())
+            self.view[n] = f"{i:02x}{n}00000000000__r0__f{i % 5}__rowselraw1_{self.ctx[n][:12]}"
+        self._p3()
+        self._denylist()
+        self.exclusion, self.exclusion_sha = self.write_exclusion(self.root / "exclusion.json",
+                                                                  self.exclude_names, self.review_names)
+        rows = [self._context(i, n) for i, n in enumerate(self.names)]
+        self.input_list_bytes = wjson(self.prod / "input-list.json", {"schema": "jope.dl-s1-prod-input-list/v1",
+                                                                      "admitted": rows, "refused": []})
+        self.header = {
+            "schema": T.LEDGER_HEADER_SCHEMA,
+            "input_list": {"path": str(self.prod / "input-list.json"), "sha256": sha(self.input_list_bytes)},
+            "p3": {"holdout": str(self.root / "p3/holdout.json"), "holdout_sha256": self.holdout_sha,
+                   "registry": str(self.root / "p3/registry.json"), "registry_sha256": self.registry_sha},
+            "ledgers": {"production": str(self.prod / "ledger-production.jsonl"),
+                        "research": str(self.prod / "ledger-research.jsonl")},
+            "outer_test": {"policy": "after selection, stored separately, create-only"}}
+        self.header_sha = sha(wjson(self.prod / T.LEDGER_HEADER_NAME, self.header))
+        self.finals = {}
+        for i, n in enumerate(self.names):
+            if SPECS[n][3]:
+                self.finals[n] = self._final(i, n)
+        wbytes(self.prod / "ledger-outer-test.jsonl", b"".join(
+            canon({"event": "outer_test", "context_sha256": self.ctx[n], "test_rmse": self._test_value(i)})
+            for i, n in enumerate(self.names)))
+        # the S1 outer-test subtree (unreviewed_adapter): poison values, and look-alike files that must never be read
+        ot = self.prod / "outer-test"
+        wbytes(ot / "ledger-outer-test.jsonl", b"".join(
+            canon({"event": "final", "context_sha256": self.ctx[n], "test_rmse": self._test_value(i),
+                   "official_test": {"metrics": {"rmse": self._test_value(i)}}}) for i, n in enumerate(self.names)))
+        for i, n in enumerate(self.names):
+            wjson(ot / "contexts" / self.ctx[n] / "g0-evaluations.json",
+                  [{"schema": T.EVAL_SCHEMA, "official_test": {"metrics": {"rmse": self._test_value(i)}},
+                    "outer_test_predictions": [self._test_value(i)] * 3}])
+
+    # ------------------------------------------------------------------------------------------------- pieces
+    def _test_value(self, i: int) -> float:
+        return (999.0 if self.poison else 1.0) + i
+
+    def _p3(self) -> None:
+        assign, fams = {}, {}
+        for i, n in enumerate(self.names):
+            a = SPECS[n][0]
+            if a is None:
+                continue
+            fam = f"fam-{n}"
+            assign[fam] = a
+            fams[fam] = {"members": [{"dataset_hash": self.dataset(n)}]}
+        self.holdout_sha = sha(wjson(self.root / "p3/holdout.json", {"assignment": assign}))
+        self.registry_sha = sha(wjson(self.root / "p3/registry.json", {"families": fams}))
+
+    def _denylist(self) -> None:
+        doc = {"schema": "jope.dl-v2-holdout-denylist/v1",
+               "contexts": [{"view_id": self.view["dw"], "assignment": "heldout"}],
+               "object_keys": [DENIED_KEY], "assignment_by_view": {}}
+        self.denylist = self.root / "denylist.json"
+        self.denylist_sha = sha(wjson(self.denylist, doc))
+
+    def write_exclusion(self, path: Path, exclude: tuple, review: tuple) -> tuple[Path, str]:
+        """A jope.dl-v2-linear-determined-exclusion/v1 file; a placeholder view keeps each list non-empty."""
+        def ctxs(names, dummy):
+            return [{"dataset": self.dataset(n), "view_id": self.view[n], "ols_rel_rmse": 1e-15} for n in names] \
+                or [{"dataset": "f" * 16, "view_id": dummy, "ols_rel_rmse": 1e-15}]
+        doc = {"schema": exclusions.SCHEMA,
+               "exclude": {"flag": exclusions.EXCLUDE_FLAG, "contexts": ctxs(exclude, "ffffffffffffffff__r0__f0__x")},
+               "review": {"flag": exclusions.REVIEW_FLAG, "contexts": ctxs(review, "eeeeeeeeeeeeeeee__r0__f0__y")}}
+        return path, sha(wjson(path, doc))
+
+    def dataset(self, n: str) -> str:
+        return sha(n.encode())[:16]
+
+    def family(self, n: str) -> str | None:
+        return None if SPECS[n][0] is None else f"fam-{n}"
+
+    def use(self, n: str) -> str:
+        return "train_teacher" if self.variants.get(n) == "dev_as_teacher" else SPECS[n][2]
+
+    def _context(self, i: int, n: str) -> dict:
+        rng = np.random.default_rng(1000 + i)
+        X_tr = rng.normal(size=(N_TRAIN, P))
+        y_tr = (X_tr @ np.array([1.0, -2.0, 0.5]) + rng.normal(scale=0.3, size=N_TRAIN) + 10.0 * i).round(6)
+        if self.variants.get(n) == "target_copy":
+            X_tr[:, 0] = 2.0 * y_tr + 1.0                              # an affine copy of the target in the features
+        prng = np.random.default_rng(9000 + i + (777 if self.poison else 0))
+        X_te = prng.normal(size=(N_TEST, P))
+        y_te = prng.normal(size=N_TEST) * (50.0 if self.poison else 1.0)
+        self.y[n] = [float(v) for v in y_tr]
+        raw = jtt1(X_tr, y_tr, X_te, y_te)
+        gz = gzip.compress(raw, mtime=0)
+        stripped = bytearray(raw)
+        end = 17 + N_TRAIN + N_TRAIN * (P + 1) * 8
+        for r in range(N_TEST):
+            o = end + r * (P + 1) * 8 + P * 8
+            stripped[o:o + 8] = struct.pack("<d", 0.0)
+        d = self.trees[0] / "shard-0" / self.view[n]
+        a0 = np.arange(COMPONENTS["a0"], dtype="<f4") + i
+        wbytes(d / "teacher.jtt1.gz", gz)
+        wbytes(d / "a0.f32", a0.tobytes())
+        wbytes(d / ".done", b"ok\n")
+        cdoc = {"schema": "jope.dl-v2-rowsel-raw-context/v1", "context_sha256": self.ctx[n], "view_id": self.view[n],
+                "dataset_hash": self.dataset(n), "fold": i % 5, "cohort": "frozen" if i % 2 else "incoming",
+                "files": {"teacher.jtt1.gz": {"sha256": sha(gz), "bytes": len(gz), "raw_sha256": sha(raw)},
+                          "a0.f32": {"sha256": sha(a0.tobytes()), "bytes": len(a0.tobytes())}}}
+        cjb = wjson(d / "context.json", cdoc)
+        # PUBLISH tree: dope (+ the same a0); GPU tree: six components
+        pd = self.trees[1] / "shard-0" / self.view[n]
+        dope = self._npy(np.linspace(0, 1, COMPONENTS["dope"], dtype=np.float32) + i)
+        a0b = a0.tobytes() if self.variants.get(n) != "encoding_conflict" else (a0 + 1).astype("<f4").tobytes()
+        wbytes(pd / "dope.npy", dope)
+        wbytes(pd / "a0.f32", a0b)
+        wbytes(pd / ".done", b"ok\n")
+        wjson(pd / "context.json", {"context_sha256": self.ctx[n], "view_id": self.view[n],
+                                    "files": {"dope.npy": {"sha256": sha(dope), "bytes": len(dope)},
+                                              "a0.f32": {"sha256": sha(a0b), "bytes": len(a0b)}}})
+        gd = self.trees[2] / "out" / self.view[n]
+        files = {}
+        for k, comp in enumerate(GPU_COMPONENTS):
+            b = self._npy(np.full(COMPONENTS[comp], 0.1 * (k + 1) + i, dtype=np.float32))
+            wbytes(gd / f"{comp}.npy", b)
+            files[f"{comp}.npy"] = {"sha256": sha(b), "bytes": len(b)}
+        if self.variants.get(n) == "encoding_corrupt":
+            wbytes(gd / "hyperion.npy", self._npy(np.zeros(COMPONENTS["hyperion"], dtype=np.float32)))
+        wbytes(gd / ".done", b"ok\n")
+        wjson(gd / "context.json", {"context_sha256": self.ctx[n], "view_id": self.view[n], "files": files})
+        a = SPECS[n][0]
+        row = {"context_dir": str(d), "context_json_sha256": sha(cjb), "context_sha256": self.ctx[n],
+               "cut_id": f"trainonly-split-v2:{sha(n.encode())}", "dataset_hash": self.dataset(n), "fold": i % 5,
+               "ledger": SPECS[n][1],
+               "p3": {"family_id": self.family(n),
+                      "assignment": "train_fit" if self.variants.get(n) == "p3_lie" else a},
+               "set": "RIGHTS-RESEARCH-raw-v2/custody" if SPECS[n][1] == "research" else "ROWSEL-RAW-v2",
+               "shape": {"n_train": N_TRAIN, "n_test": N_TEST, "p": P, "k": 2},
+               "s1_input": {"sha256": sha(bytes(stripped)), "bytes": len(stripped)},
+               "teacher": {"path": str(d / "teacher.jtt1.gz"), "gz_sha256": sha(gz), "gz_bytes": len(gz),
+                           "raw_sha256": sha(raw), "raw_bytes": len(raw)},
+               "use": self.use(n), "view_id": self.view[n]}
+        if n == "dk":
+            row["teacher_input"] = {"key": DENIED_KEY}
+        return row
+
+    @staticmethod
+    def _npy(arr: np.ndarray) -> bytes:
+        buf = io.BytesIO()
+        np.save(buf, arr, allow_pickle=False)
+        return buf.getvalue()
+
+    def _record(self, i: int, n: str, ordinal: int, prog: int, status: str) -> dict:
+        dsl = DSLS[prog]
+        program = {"birth_seq": ordinal, "dsl": dsl, "operator": "grammar_random", "parents": [],
+                   "program_sha256": sha(dsl.encode())}
+        base = {"schema": T.EVAL_SCHEMA, "input_semantics": "unscaled_fit_rows_v1", "program": program,
+                "fold_protocol": T.PROTOCOL, "inner_cv_folds": 2, "context_sha256": self.ctx[n]}
+        if status != "completed" or (self.variants.get(n) == "status_lie" and prog == 4):
+            rec = {**base, "status": "failed" if status in ("unknown", "completed") else status}
+            if status == "unknown":
+                rec["unknown_outcome"] = "reserved before an interruption; no committed output; charged"
+            return rec
+        b = [1.0 + 0.1 * i, 1.1 + 0.1 * i]
+        ratio = 1.2 if prog == 6 else 0.6 + 0.03 * prog
+        folds = []
+        for j in range(2):
+            fold = {"kind": "inner_cv", "index": j, "schema": "jope.teacher-fit/v2", "score_rows": N_TRAIN // 2,
+                    "train_rows": N_TRAIN // 2, "wall_us": 1000 + 10 * prog + j,
+                    "metrics": {"rmse": b[j] * (ratio + 0.01 * j), "mae": 0.5, "n": N_TRAIN // 2},
+                    "baseline_metrics": {"rmse": b[j], "n": N_TRAIN // 2},
+                    "training_metrics": {"rmse": 0.3}, "predictions": [0.1, 0.2], "targets": [0.3, 0.4]}
+            folds.append(fold)
+        if self.variants.get(n) == "outer_kind" and prog == 1:
+            folds[1]["kind"] = "outer_test"
+        rec = {**base, "status": "completed", "inner_cv": folds}
+        if self.variants.get(n) == "official_test" and prog == 2:
+            rec["official_test"] = {"metrics": {"rmse": 0.01}, "kind": "official_test"}
+        if self.variants.get(n) == "fold_test_rmse" and prog == 4:
+            folds[0]["test_rmse"] = 0.02
+        return rec
+
+    def _final(self, i: int, n: str) -> dict:
+        ctx = self.ctx[n]
+        hdir = self.host / ctx
+        att = [canon({"event": "open", "header_sha256": self.header_sha, "context_sha256": ctx,
+                      "ledger": SPECS[n][1], "plan": PLAN, "utc": "2026-10-06T11:00:00Z"})]
+        g0, packs, by = [], {}, {}
+        for o, (prog, status) in enumerate(ATTEMPTS):
+            stage, slot = ("g0", o) if o < PLAN["g0"] else ("gen00", o - PLAN["g0"])
+            att.append(canon({"event": "reserve", "ordinal": o, "program_sha256": sha(DSLS[prog].encode()),
+                              "slot": slot, "stage": stage, "utc": "2026-10-06T11:00:01Z"}))
+            att.append(canon({"event": "finish", "ordinal": o, "status": status, "utc": "2026-10-06T11:00:02Z",
+                              "wall_s": 0.5}))
+            by[status] = by.get(status, 0) + 1
+            rec = self._record(i, n, o, prog, status)
+            if o < PLAN["g0"]:
+                g0.append(rec)
+            else:
+                k = o - PLAN["g0"]
+                packs[f"gen00/{k:02d}.pack.json.gz"] = gzip.compress(canon(
+                    {"schema": T.PACK_SCHEMA, "attempt_id": f"gen00-{k:02d}", "record": rec}), mtime=0)
+        if self.variants.get(n) == "wrong_program":
+            g0[1] = dict(g0[1], program={**g0[1]["program"], "dsl": DSLS[8], "program_sha256": sha(DSLS[8].encode())})
+        files = {"g0-evaluations.json": canon(g0), **packs,
+                 "outer-test/score.json": canon({"test_rmse": self._test_value(i),
+                                                 "predictions": [self._test_value(i)]})}
+        for name, b in files.items():
+            wbytes(hdir / name, b)
+        if self.variants.get(n) == "tampered_mirror":
+            wbytes(hdir / "gen00/01.pack.json.gz", b"tampered")
+        attb = b"".join(att)
+        digests = {"attempts.jsonl": sha(attb), **{k: sha(v) for k, v in files.items()}}
+        digb = canon(digests)
+        summary = tar_gz({"attempts.jsonl": attb, "digests.json": digb})
+        outer = {"status": "pending", "reason": "poisoned outer-test note" if self.poison else "no scorer at pin"}
+        sel_prog = sha(DSLS[0].encode())
+        final = {"schema": T.FINAL_SCHEMA, "header_sha256": self.header_sha, "context_sha256": ctx,
+                 "view_id": self.view[n], "dataset_hash": self.dataset(n), "fold": i % 5,
+                 "set": "RIGHTS-RESEARCH-raw-v2/custody" if SPECS[n][1] == "research" else "ROWSEL-RAW-v2",
+                 "ledger": SPECS[n][1], "use": self.use(n), "p3": {"family_id": self.family(n),
+                                                                    "assignment": SPECS[n][0]},
+                 "cut_id": f"trainonly-split-v2:{sha(n.encode())}", "outcome": "selection_reached",
+                 "selection": {"program_sha256": sel_prog, "fitness": -0.3, "cv_geomean_rmse_ratio": 0.7,
+                               "leader_test_rmse_field": None},
+                 "attempts": {"charged": len(ATTEMPTS), "finished": len(ATTEMPTS), "by_status": by,
+                              "recovered_after_interruption": 1, "attempts_jsonl_sha256": sha(attb)},
+                 "outer_test": outer, "digests_sha256": sha(digb), "summary_tar_gz_sha256": sha(summary),
+                 "summary_bytes": len(summary), "host": "xbabe3", "unit": "u1"}
+        if self.variants.get(n) == "final_outer_numeric":
+            final["outer_test"] = {"status": "scored", "rmse": self._test_value(i)}
+        fb = wjson(self.prod / "contexts" / ctx / "final.json", final)
+        wbytes(self.prod / "contexts" / ctx / "summary.tar.gz", summary)
+        wjson(self.prod / "contexts" / ctx / "outer-test.json", {"test_rmse": self._test_value(i)})
+        return {"event": "final", "context_sha256": ctx, "view_id": self.view[n], "set": final["set"],
+                "cut_id": final["cut_id"], "use": self.use(n), "host": "xbabe3", "unit": "u1",
+                "outcome": "selection_reached", "attempts": {"charged": len(ATTEMPTS), "by_status": by},
+                "selected_program_sha256": sel_prog, "selected_fitness": -0.3, "selected_cv_ratio": 0.7,
+                "g0_unique_eligible": 5, "outer_test": final["outer_test"], "final_sha256": sha(fb),
+                "summary_sha256": sha(summary), "host_custody": f"xbabe3:{hdir}", "utc": "2026-10-06T11:05:00Z"}
+
+    # ------------------------------------------------------------------------------------------------- ledgers
+    def base_rows(self, ledger: str) -> list[dict]:
+        rows = [{"event": "open", "header_sha256": self.header_sha, "ledger": ledger, "utc": "2026-10-06T10:00:00Z"}]
+        for i, n in enumerate(self.names):
+            if SPECS[n][1] != ledger:
+                continue
+            if n == "pd":
+                rows.append({"event": "defer", "context_sha256": self.ctx[n], "view_id": self.view[n],
+                             "reason": "ordering", "utc": "x"})
+                rows.append({"event": "release", "context_sha256": self.ctx[n], "view_id": self.view[n],
+                             "reason": "ordering", "utc": "x"})
+            rows.append({"event": "assign", "context_sha256": self.ctx[n], "view_id": self.view[n], "use": self.use(n),
+                         "host": "xbabe3", "charge": 1248, "utc": "x"})
+            rows.append({"event": "outer_test_score", "context_sha256": self.ctx[n],
+                         "test_rmse": self._test_value(i), "official_test": {"rmse": self._test_value(i)}})
+        return rows
+
+    def write_ledgers(self, finals: list[str] | None = None) -> None:
+        finals = [n for n in self.names if n in self.finals] if finals is None else finals
+        for ledger in ("production", "research"):
+            rows = self.base_rows(ledger) + [self.finals[n] for n in finals if SPECS[n][1] == ledger]
+            wbytes(self.prod / f"ledger-{ledger}.jsonl", b"".join(canon(r) for r in rows))
+
+    def append(self, ledger: str, data: bytes) -> None:
+        with (self.prod / f"ledger-{ledger}.jsonl").open("ab") as f:
+            f.write(data)
+
+    def append_final(self, n: str) -> None:
+        self.append(SPECS[n][1], canon(self.finals[n]))
+
+    def config(self, out: Path, **kw) -> T.TailConfig:
+        base = dict(ledger_dir=self.prod, out_dir=out, denylist=self.denylist, denylist_sha256=self.denylist_sha,
+                    exclusion=self.exclusion, exclusion_sha256=self.exclusion_sha,
+                    evaluation_roots=(self.host,), encoding_trees=self.trees)
+        base.update(kw)
+        return T.TailConfig(**base)
+
+
+def build_fixture_out(tmpdir) -> tuple[Path, Path, str, Path, str]:
+    """Shared fixture (also used by tests/test_p8_trainer.py): a production-shaped S1 world under a new directory in
+    `tmpdir`, tailed once. Returns (out_dir, denylist, denylist_sha256, exclusion_path, exclusion_sha256). out_dir
+    holds shards for t1 (train_fit), t2 (train_nonpool), t3 (research ledger, review-flagged) and dv (dev); the
+    exclusion lists one placeholder view. Shard components: a0 dope hyperion hyperion_v6 foundation target
+    context2048 tabpfn35 (use ["a0", "hyperion_v6"]; hyperion_v6all needs spec encoding_sets)."""
+    root = Path(tempfile.mkdtemp(prefix="s1tail-fixture-", dir=str(tmpdir)))
+    fx = Fixture(root / "w", review=("t3",))
+    fx.write_ledgers(finals=["t1", "t2", "t3", "dv"])
+    out = root / "out"
+    T.S1Tail(fx.config(out)).poll()
+    return out, fx.denylist, fx.denylist_sha, fx.exclusion, fx.exclusion_sha
+
+
+class S1TailTest(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp = os.environ.get("TMPDIR", "")
+        if not tmp or tmp.startswith("/tmp"):
+            raise AssertionError("TMPDIR must be set to the lane scratch (never /tmp)")
+        # Kept after the test (lane rule: never delete); each test writes about 1 MB under TMPDIR.
+        self.root = Path(tempfile.mkdtemp(prefix=f"s1tail-{self._testMethodName[5:25]}-", dir=tmp))
+
+    def fixture(self, sub: str = "w", **kw) -> Fixture:
+        return Fixture(self.root / sub, **kw)
+
+    def run_tail(self, fx: Fixture, out: str = "out", **kw) -> tuple[dict, Path]:
+        o = self.root / out
+        return T.S1Tail(fx.config(o, **kw)).poll(), o
+
+    def index(self, out: Path) -> list[dict]:
+        return T.read_index(out)[0]
+
+    def refusals(self, out: Path) -> dict:
+        p = out / "refusals.jsonl"
+        return {json.loads(x)["context_sha256"]: json.loads(x)["reason"] for x in p.read_bytes().splitlines()} \
+            if p.exists() else {}
+
+    def shard_files(self, out: Path) -> dict:
+        return {str(p.relative_to(out)): p.read_bytes() for p in sorted((out / "shards").rglob("*.json"))}
+
+    # ------------------------------------------------------------------------------------------------- tests
+    def test_happy_path_emits_admitted_contexts_only(self):
+        fx = self.fixture()
+        fx.write_ledgers()
+        s, out = self.run_tail(fx)
+        self.assertEqual(s["status"], "ok")
+        idx = self.index(out)
+        got = {e["context_sha256"]: e for e in idx}
+        self.assertEqual(set(got), {fx.ctx[n] for n in ("t1", "t2", "t3", "dv")})
+        self.assertEqual(got[fx.ctx["t2"]]["assignment"], "train_nonpool")
+        self.assertEqual(got[fx.ctx["t2"]]["split_role"], "train_fit")
+        self.assertEqual(got[fx.ctx["t3"]]["ledger"], "research")
+        self.assertEqual([e["seq"] for e in idx], list(range(1, len(idx) + 1)))
+        shard = T.load_shard(out, got[fx.ctx["t1"]])
+        ctx = shard["context"]
+        self.assertEqual(ctx["y_train"], fx.y["t1"])                     # outer-train targets only, exactly
+        self.assertEqual(ctx["n_train"], N_TRAIN)
+        self.assertEqual(len(shard["records"]), len(DSLS))               # 10 attempts, 9 programs
+        self.assertEqual(shard["counts"]["duplicate_program_attempts"], 1)
+        outs = {r["program_sha256"]: r["outcome"] for r in shard["records"]}
+        self.assertEqual(outs[sha(DSLS[7].encode())], "completed")          # failed, then completed: completed wins
+        self.assertEqual(outs[sha(DSLS[3].encode())], "failed:unclassified")
+        self.assertEqual(outs[sha(DSLS[5].encode())], "timeout@90000ms")
+        self.assertEqual(outs[sha(DSLS[8].encode())], "missing")          # unknown outcome: never a label
+        rec0 = next(r for r in shard["records"] if r["program_sha256"] == sha(DSLS[0].encode()))
+        b = [1.0, 1.1]
+        self.assertEqual(rec0["baseline_rmse_j"], b)
+        self.assertEqual(rec0["rmse_j"], [b[0] * (0.6 + 0.01 * 0), b[1] * (0.6 + 0.01 * 1)])
+        self.assertEqual(rec0["wall_us"], 1000 + 1001)
+        self.assertEqual(rec0["backend"], "local")
+        self.assertTrue(rec0["gate_pass"])
+        rec6 = next(r for r in shard["records"] if r["program_sha256"] == sha(DSLS[6].encode()))
+        self.assertFalse(rec6["gate_pass"])
+        for r in shard["records"]:
+            T.validate_train_record(r)
+            self.assertEqual(sorted(r), sorted(T.RECORD_FIELDS))
+        self.assertEqual(sorted(shard["encodings"]), sorted(COMPONENTS))
+        self.assertEqual(shard["encodings_missing"], [])
+        self.assertTrue((out / "prov" / fx.ctx["t1"][:2] / f"{fx.ctx['t1']}.json").exists())
+        m = json.loads((out / "manifest.json").read_bytes())
+        self.assertEqual(m["index"]["lines"], 4)
+        self.assertEqual(m["index"]["sha256"], sha((out / "index.jsonl").read_bytes()))
+        self.assertEqual(m["contexts"]["by_status"]["assigned"], 1)        # pd: assigned, never final
+        self.assertGreaterEqual(m["ledger_rows"]["rows:outer_test"], 1)    # outer-test rows ignored, only counted
+
+    def test_incremental_consumption_across_appends(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1"])
+        tail = T.S1Tail(fx.config(self.root / "out"))
+        s1 = tail.poll()
+        out = self.root / "out"
+        self.assertEqual(s1["emitted_now"], 1)
+        first = self.shard_files(out)
+        fx.append_final("t2")
+        fx.append_final("t3")
+        s2 = T.S1Tail(fx.config(out)).poll()          # a fresh process resumes from the persisted cursor
+        self.assertEqual(s2["emitted_now"], 2)
+        self.assertEqual(s2["new_ledger_rows"], 2)
+        idx = self.index(out)
+        self.assertEqual([e["context_sha256"] for e in idx], [fx.ctx["t1"], fx.ctx["t2"], fx.ctx["t3"]])
+        after = self.shard_files(out)
+        for k, v in first.items():
+            self.assertEqual(after[k], v)
+        s3 = tail.poll()                               # idempotent: nothing new, same manifest bytes
+        mb = (out / "manifest.json").read_bytes()
+        stb = (out / "state.json").read_bytes()
+        self.assertEqual((s3["emitted_now"], s3["new_ledger_rows"]), (0, 0))
+        tail.poll()
+        self.assertEqual((out / "manifest.json").read_bytes(), mb)
+        self.assertEqual((out / "state.json").read_bytes(), stb)
+        self.assertEqual(len(self.index(out)), 3)
+
+    def test_torn_final_line_is_not_consumed(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=[])
+        line = canon(fx.finals["t1"])
+        fx.append("production", line[:40])
+        s, out = self.run_tail(fx)
+        self.assertEqual(s["emitted_now"], 0)
+        st = json.loads((out / "state.json").read_bytes())
+        size = (fx.prod / "ledger-production.jsonl").stat().st_size
+        self.assertEqual(st["cursors"]["production"]["offset"], size - 40)
+        fx.append("production", line[40:])
+        s2 = T.S1Tail(fx.config(out)).poll()
+        self.assertEqual(s2["emitted_now"], 1)
+        self.assertEqual([e["context_sha256"] for e in self.index(out)], [fx.ctx["t1"]])
+
+    def test_prefix_rewrite_and_truncation_refuse_loudly(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1"])
+        s, out = self.run_tail(fx)
+        led = fx.prod / "ledger-production.jsonl"
+        data = led.read_bytes()
+        led.write_bytes(data.replace(b'"reason":"ordering"', b'"reason":"orderinG"', 1))      # same length
+        with self.assertRaises(T.LedgerRewritten):
+            T.S1Tail(fx.config(out)).poll()
+        led.write_bytes(data[:len(data) // 2])
+        with self.assertRaises(T.LedgerRewritten):
+            T.S1Tail(fx.config(out)).poll()
+        rc, _ = self.cli(fx, out, "--once")
+        self.assertEqual(rc, 2)
+        led.write_bytes(data)
+        self.assertEqual(T.S1Tail(fx.config(out)).poll()["status"], "ok")   # the original bytes resume
+
+    def test_pending_vs_finalized(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=[])
+        s, out = self.run_tail(fx)
+        st = json.loads((out / "state.json").read_bytes())
+        self.assertEqual(st["contexts"][fx.ctx["t1"]]["status"], "assigned")
+        self.assertEqual(self.index(out), [])
+        # final row present, collected files absent -> pending (awaiting_collect), not consumed
+        cdir = fx.prod / "contexts" / fx.ctx["t1"]
+        moved = cdir.with_name(cdir.name + ".hidden")
+        cdir.rename(moved)
+        fx.append_final("t1")
+        s2 = T.S1Tail(fx.config(out)).poll()
+        self.assertEqual(s2["pending_now"], {"awaiting_collect": 1})
+        moved.rename(cdir)
+        # evaluation records unavailable, or only some of them -> pending (awaiting_evaluations)
+        s3 = T.S1Tail(fx.config(out, evaluation_roots=())).poll()
+        self.assertEqual(s3["pending_now"], {"awaiting_evaluations": 1})
+        partial = self.root / "partial"
+        wbytes(partial / fx.ctx["t1"] / "g0-evaluations.json",
+               (fx.host / fx.ctx["t1"] / "g0-evaluations.json").read_bytes())
+        s3b = T.S1Tail(fx.config(out, evaluation_roots=(partial,))).poll()
+        self.assertEqual(s3b["pending_now"], {"awaiting_evaluations": 1})
+        self.assertEqual(self.index(out), [])
+        s4 = T.S1Tail(fx.config(out)).poll()
+        self.assertEqual(s4["emitted_now"], 1)
+        st = json.loads((out / "state.json").read_bytes())
+        self.assertEqual(st["contexts"][fx.ctx["pd"]]["status"], "assigned")
+
+    def test_duplicate_and_conflicting_finalization(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1", "t2"])
+        s, out = self.run_tail(fx)
+        fx.append_final("t1")                                      # identical duplicate: counted, not re-consumed
+        s2 = T.S1Tail(fx.config(out)).poll()
+        self.assertEqual(s2["emitted_now"], 0)
+        st = json.loads((out / "state.json").read_bytes())
+        self.assertEqual(st["counts"]["duplicate_final_rows"], 1)
+        other = dict(fx.finals["t2"], summary_sha256="0" * 64, final_sha256="1" * 64)
+        fx.append("production", canon(other))                      # a different finalization: conflict
+        s3 = T.S1Tail(fx.config(out)).poll()
+        self.assertEqual(s3["conflicts"]["lines"], 1)
+        conf = [json.loads(x) for x in (out / "conflicts.jsonl").read_bytes().splitlines()]
+        self.assertEqual(conf[0]["context_sha256"], fx.ctx["t2"])
+        self.assertTrue(conf[0]["was_emitted"])
+        self.assertEqual(len(self.index(out)), 2)                  # never consumed twice
+        inputs = T.load_corpus_inputs(out)
+        self.assertNotIn(fx.ctx["t2"], {c["context_sha256"] for c in inputs.contexts})
+        self.assertEqual(inputs.skipped[fx.ctx["t2"]], "conflict")
+        rc, _ = self.cli(fx, out, "--once")
+        self.assertEqual(rc, 3)
+        # a conflict that arrives before emission: the context is never emitted
+        fx2 = self.fixture("w2")
+        fx2.write_ledgers(finals=["t1"])
+        fx2.append("production", canon(dict(fx2.finals["t1"], outcome="g0_not_ready")))
+        s5, out2 = self.run_tail(fx2, "out2")
+        self.assertEqual(self.index(out2), [])
+        self.assertEqual(s5["conflicts"]["lines"], 1)
+
+    def test_admission_refusals(self):
+        fx = self.fixture()
+        fx.write_ledgers()
+        s, out = self.run_tail(fx)
+        ref = self.refusals(out)
+        for n in ("hd", "se", "un", "pr", "dk", "dw"):
+            self.assertEqual(ref.get(fx.ctx[n]), "admission", n)
+        emitted = {e["context_sha256"] for e in self.index(out)}
+        for n in ("hd", "se", "un", "pr", "dk", "dw"):
+            self.assertNotIn(fx.ctx[n], emitted)
+            self.assertFalse((out / "shards" / fx.ctx[n][:2] / f"{fx.ctx[n]}.json").exists())
+        T.S1Tail(fx.config(out)).poll()                            # refusals are recorded once
+        self.assertEqual(len((out / "refusals.jsonl").read_bytes().splitlines()), 6)
+
+    def test_admission_fail_closed_and_disagreement(self):
+        fx = self.fixture()
+        fx.write_ledgers()
+        with self.assertRaises(T.S1TailError):
+            T.S1Tail(fx.config(self.root / "o1", denylist_sha256="0" * 64)).poll()
+        self.assertFalse((self.root / "o1" / "refusals.jsonl").exists())
+        doc = json.loads(fx.denylist.read_bytes())
+        doc["assignment_by_view"] = {fx.view["t1"]: "dev"}
+        other = self.root / "deny2.json"
+        b = canon(doc)
+        other.write_bytes(b)
+        s, out = self.run_tail(fx, "o2", denylist=other, denylist_sha256=sha(b))
+        self.assertEqual(self.refusals(out)[fx.ctx["t1"]], "assignment_disagreement")
+        with self.assertRaises(T.S1TailError):                     # OUT is bound to its denylist
+            T.S1Tail(fx.config(out)).poll()
+        fx3 = self.fixture("w3", variants={"hd": "p3_lie"})        # input list claims train_fit for a held family
+        fx3.write_ledgers(finals=["hd"])
+        s3, out3 = self.run_tail(fx3, "o3")
+        self.assertEqual(self.refusals(out3)[fx3.ctx["hd"]], "p3_disagreement")
+
+    def test_dev_goes_to_dev_split_only(self):
+        fx = self.fixture()
+        fx.write_ledgers()
+        s, out = self.run_tail(fx)
+        e = next(x for x in self.index(out) if x["context_sha256"] == fx.ctx["dv"])
+        self.assertEqual((e["assignment"], e["split_role"]), ("dev", "dev"))
+        shard = T.load_shard(out, e)
+        self.assertTrue(all(r["split_role"] == "dev" for r in shard["records"]))
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="train")
+        with self.assertRaises(admission_mod.AdmissionRefused):
+            adm.check(fx.view["dv"], assignment="dev")
+        corpus = T.build_corpus(out)
+        fit = sampler.fit(corpus, sampler.SamplerConfig())
+        self.assertNotIn(fx.ctx["dv"], fit.pi)
+        self.assertEqual(set(fit.pi), {fx.ctx["t1"], fx.ctx["t2"], fx.ctx["t3"]})
+        only_train = T.load_corpus_inputs(out, split_roles=("train_fit",))
+        self.assertNotIn(fx.ctx["dv"], {c["context_sha256"] for c in only_train.contexts})
+        # a dev context finalized as a training teacher is refused (final row alone, or input list and final row)
+        fx2 = self.fixture("w2")
+        fx2.finals["dv"]["use"] = "train_teacher"
+        fx2.write_ledgers(finals=["dv"])
+        s2, out2 = self.run_tail(fx2, "out2")
+        self.assertEqual(self.refusals(out2)[fx2.ctx["dv"]], "final_row_mismatch")
+        fx3 = self.fixture("w3", variants={"dv": "dev_as_teacher"})
+        fx3.write_ledgers(finals=["dv"])
+        s3, out3 = self.run_tail(fx3, "out3")
+        self.assertEqual(self.refusals(out3)[fx3.ctx["dv"]], "use_disagreement")
+        self.assertEqual(self.index(out3), [])
+
+    def test_outer_test_poison_leaves_shards_byte_identical(self):
+        fx = self.fixture("w")
+        fx.write_ledgers()
+        s1, out1 = self.run_tail(fx, "out1")
+        src1 = {p: (fx.prod / p).read_bytes() for p in ("ledger-production.jsonl", "ledger-outer-test.jsonl",
+                                                          "outer-test/ledger-outer-test.jsonl")}
+        teacher1 = Path(json.loads(fx.input_list_bytes)["admitted"][0]["teacher"]["path"]).read_bytes()
+        fxp = Fixture(self.root / "w", poison=True)                   # same paths, every outer-test value perturbed
+        fxp.write_ledgers()
+        for p, b in src1.items():
+            self.assertNotEqual((fxp.prod / p).read_bytes(), b, p)
+        self.assertNotEqual(Path(json.loads(fxp.input_list_bytes)["admitted"][0]["teacher"]["path"]).read_bytes(),
+                            teacher1)
+        self.assertNotEqual(fxp.finals["t1"]["final_sha256"], fx.finals["t1"]["final_sha256"])
+        s2, out2 = self.run_tail(fxp, "out2")
+        a, b = self.shard_files(out1), self.shard_files(out2)
+        self.assertEqual(len(a), 4)
+        self.assertEqual(a, b)
+        self.assertEqual((out1 / "index.jsonl").read_bytes(), (out2 / "index.jsonl").read_bytes())
+        self.assertEqual((out1 / "refusals.jsonl").read_bytes(), (out2 / "refusals.jsonl").read_bytes())
+
+    def test_outer_test_path_deny(self):
+        fx = self.fixture()
+        fx.write_ledgers()
+        ot = fx.prod / "outer-test"
+        target = ot / "ledger-outer-test.jsonl"
+        self.assertTrue(target.is_file())
+        for exc in (T.OuterTestPathRefused, tranche.LabelSourceRefused):
+            with self.assertRaises(exc):
+                T.guarded_read(target)
+        link = self.root / "innocent-looking"
+        link.symlink_to(ot, target_is_directory=True)              # only the resolved form names outer-test
+        with self.assertRaises(T.OuterTestPathRefused):
+            T.guarded_read(link / "ledger-outer-test.jsonl")
+        with self.assertRaises(T.OuterTestPathRefused):
+            T.LedgerTail(link / "ledger-outer-test.jsonl").read_new()
+        with self.assertRaises(T.OuterTestPathRefused):
+            T.S1Tail(fx.config(self.root / "o1", evaluation_roots=(link / "contexts",)))
+        with self.assertRaises(T.OuterTestPathRefused):
+            T.fetch_via_ssh(("false",), f"xbabe3:{ot}/contexts/{fx.ctx['t1']}", fx.ctx["t1"],
+                            ["g0-evaluations.json"], 5)
+        s, out = self.run_tail(fx)                                   # the subtree is never read: the run succeeds
+        self.assertEqual(len(self.index(out)), 4)
+        hdr = dict(fx.header, ledgers={**fx.header["ledgers"], "scores": str(ot / "scores.jsonl")})
+        wbytes(ot / "scores.jsonl", b"")
+        wjson(fx.prod / T.LEDGER_HEADER_NAME, hdr)
+        with self.assertRaises(T.S1TailError):
+            T.S1Tail(fx.config(self.root / "o2")).poll()
+
+    def test_tranche_entries_and_loader(self):
+        from dltrain import train
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1", "dv"])
+        out = self.root / "out"
+        tail = T.S1Tail(fx.config(out))
+        tail.poll()
+        e1 = T.tranche_entries(out / "index.jsonl")
+        shard_sha = {e["context_sha256"]: sha((out / e["shard"]).read_bytes()) for e in self.index(out)}
+        self.assertEqual(e1, [{"context_sha256": fx.ctx[n], "shard_sha256": shard_sha[fx.ctx[n]]}
+                              for n in ("t1", "dv")])
+        fx.append_final("t2")
+        fx.append_final("t3")
+        tail.poll()
+        e2 = T.tranche_entries(out)
+        self.assertEqual(len(e2), 4)
+        self.assertEqual(e2[:2], e1)                                 # tranche k-1 is an exact prefix of tranche k
+        self.assertEqual(T.tranche_entries(out, upto=2), e1)
+        with self.assertRaises(T.S1TailError):
+            T.tranche_entries(out, upto=5)
+        self.assertNotEqual(train.corpus_manifest_sha256(e1), train.corpus_manifest_sha256(e2))
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="selection")
+        ctxs, recs, encs, asg = T.load_tranche(out, e2, adm)
+        self.assertEqual([c["context_sha256"] for c in ctxs], [e["context_sha256"] for e in e2])
+        self.assertEqual({c["context_sha256"]: c["split_role"] for c in ctxs}[fx.ctx["dv"]], "dev")
+        corpus = sampler.Corpus.build(ctxs, recs, encs, asg)
+        self.assertEqual(set(sampler.fit(corpus, sampler.SamplerConfig()).pi),
+                         {fx.ctx[n] for n in ("t1", "t2", "t3")})
+        self.assertEqual(len(T.load_tranche(out, e1, (fx.denylist, fx.denylist_sha))[0]), 2)
+        with self.assertRaises(T.S1TailError):                       # not the index's own order
+            T.load_tranche(out, [e2[1], e2[0]], adm)
+        with self.assertRaises(T.S1TailError):
+            T.load_tranche(out, [dict(e2[0], shard_sha256="0" * 64)], adm)
+        with self.assertRaises(admission_mod.AdmissionRefused):      # a train-purpose admission refuses the dev row
+            T.load_tranche(out, e2, admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="train"))
+        deny_t1 = json.loads(fx.denylist.read_bytes())
+        deny_t1["contexts"].append({"view_id": fx.view["t1"], "assignment": "heldout"})
+        db = canon(deny_t1)
+        (self.root / "deny-t1.json").write_bytes(db)
+        with self.assertRaises(admission_mod.AdmissionRefused):      # one refused row refuses the whole tranche
+            T.load_tranche(out, e1, (self.root / "deny-t1.json", sha(db)))
+        first = out / self.index(out)[0]["shard"]
+        os.chmod(first, 0o644)
+        first.write_bytes(first.read_bytes().replace(b'"label_status":"OK"', b'"label_status":"OK" ', 1))
+        with self.assertRaises(T.S1TailError):                       # shard bytes changed after the manifest
+            T.load_tranche(out, e1, adm)
+
+    def test_linear_determined_exclusion_never_reaches_index_or_tranche(self):
+        from dltrain import train
+        fx = self.fixture(exclude=("t2",), review=("t3",))
+        fx.write_ledgers()
+        s, out = self.run_tail(fx)
+        self.assertEqual(self.refusals(out)[fx.ctx["t2"]], exclusions.EXCLUDE_FLAG)
+        idx = self.index(out)
+        self.assertNotIn(fx.ctx["t2"], {e["context_sha256"] for e in idx})
+        self.assertNotIn(fx.view["t2"], {e["view_id"] for e in idx})
+        self.assertFalse((out / "shards" / fx.ctx["t2"][:2] / f"{fx.ctx['t2']}.json").exists())
+        flags = {e["view_id"]: e["flags"] for e in idx}
+        self.assertEqual(flags[fx.view["t3"]], [exclusions.REVIEW_FLAG])
+        self.assertEqual(flags[fx.view["t1"]], [])
+        t3 = T.load_shard(out, next(e for e in idx if e["view_id"] == fx.view["t3"]))
+        self.assertEqual(t3["context"]["flags"], [exclusions.REVIEW_FLAG])
+        entries = T.tranche_entries(out)
+        self.assertNotIn(fx.ctx["t2"], {e["context_sha256"] for e in entries})
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="selection")
+        ctxs = T.load_tranche(out, entries, adm)[0]
+        self.assertNotIn(fx.view["t2"], {c["view_id"] for c in ctxs})
+        rec = T.tranche_receipt(out)
+        self.assertEqual(rec["exclusion"]["sha256"], fx.exclusion_sha)
+        self.assertEqual((rec["exclusion"]["excluded_contexts"], rec["exclusion"]["review_contexts"]), (1, 1))
+        self.assertEqual((rec["exclusion"]["excluded_in_tranche"], rec["exclusion"]["review_flagged_in_tranche"]),
+                         (0, 1))
+        self.assertEqual(rec["corpus_manifest"]["sha256"], train.corpus_manifest_sha256(entries))
+        path = T.write_tranche_receipt(out)
+        self.assertEqual(T.write_tranche_receipt(out), path)          # create-only, equal bytes
+        m = json.loads((out / "manifest.json").read_bytes())
+        self.assertEqual((m["exclusion"]["sha256"], m["exclusion"]["refused_contexts"],
+                          m["exclusion"]["review_flagged_emitted"]), (fx.exclusion_sha, 1, 1))
+        hdr = json.loads((out / "header.json").read_bytes())
+        self.assertEqual(hdr["exclusion"]["sha256"], fx.exclusion_sha)
+        # an index built before t1 was excluded: the tranche loader re-checks and refuses the whole tranche
+        fx2 = self.fixture("w2")
+        fx2.write_ledgers(finals=["t1"])
+        s2, out2 = self.run_tail(fx2, "out2")
+        e2 = T.tranche_entries(out2)
+        late, late_sha = fx2.write_exclusion(self.root / "late-exclusion.json", ("t1",), ())
+        with self.assertRaises(T.S1TailError):
+            T.load_tranche(out2, e2, adm, exclusion=exclusions.load(late, late_sha))
+        # the exclusion file is a required, pinned input
+        with self.assertRaises(T.S1TailError):
+            T.S1Tail(fx.config(self.root / "o3", exclusion_sha256="0" * 64))
+        with self.assertRaises(T.S1TailError):                       # OUT is bound to its exclusion file
+            T.S1Tail(fx.config(out, exclusion=late, exclusion_sha256=late_sha)).poll()
+
+    def test_train_data_for_tranche_t0_subset_t1(self):
+        from dltrain import automaton, train
+        fx = self.fixture(exclude=("t2",), review=("t3",))
+        fx.write_ledgers(finals=["t1", "dv"])
+        out = self.root / "out"
+        tail = T.S1Tail(fx.config(out))
+        tail.poll()
+        e0 = T.tranche_entries(out)
+        fx.append_final("t2")                                       # excluded: must never reach a tranche
+        fx.append_final("t3")
+        tail.poll()
+        e1 = T.tranche_entries(out)
+        self.assertEqual(e1[:len(e0)], e0)
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="selection")
+        cfg = sampler.SamplerConfig()
+        spec0 = {"tail_out": str(out), "components": ["a0", "hyperion_v6"],
+                 "exclusion": {"path": str(fx.exclusion), "sha256": fx.exclusion_sha}, "grammar": None,
+                 "vocab_sha256": dsl_tokenizer.Vocab.from_names({}).sha256, "max_seq": 512}
+        r0: dict = {}
+        d0 = T.train_data_for_tranche(spec0, e0, adm, cfg, encoding_trees=fx.trees, receipt=r0)
+        gb = T.grammar_binding(d0)
+        self.assertEqual(gb["sha256"], sha(Path(gb["path"]).read_bytes()))
+        spec1 = dict(spec0, grammar=gb)
+        d1 = T.train_data_for_tranche(spec1, e1, adm, cfg, encoding_trees=fx.trees)
+        r1 = T.train_data_receipt(d1)
+        self.assertEqual(r0["grammar"]["sha256"], r1["grammar"]["sha256"])
+        self.assertEqual(d0.refs["grammar"], d1.refs["grammar"])
+        self.assertEqual(d0.refs["tokenizer"], "vocab:" + spec0["vocab_sha256"])
+        self.assertEqual(d1.refs["corpus"], "corpus-manifest:" + train.corpus_manifest_sha256(e1))
+        self.assertEqual(set(d1.corpus.contexts), {e["context_sha256"] for e in e1})
+        self.assertEqual(set(d0.corpus.contexts), {e["context_sha256"] for e in e0})
+        self.assertNotIn(fx.ctx["t2"], d1.corpus.contexts)
+        self.assertNotIn(fx.view["t2"], {c["view_id"] for c in d1.corpus.contexts.values()})
+        self.assertEqual((d1.vocab_size, d1.ctx_dim), (282, COMPONENTS["a0"] + COMPONENTS["hyperion_v6"]))
+        self.assertEqual(r1["ctx_dim_by_component"], {"a0": COMPONENTS["a0"], "hyperion_v6": COMPONENTS["hyperion_v6"]})
+        self.assertEqual(r1["exclusion"]["sha256"], fx.exclusion_sha)
+        self.assertEqual(r1["exclusion"]["review_flagged_in_tranche"], 1)
+        self.assertEqual(r1["counts"]["records_dropped_syntax"], 0)
+        for ctx in d0.corpus.contexts:                              # T0 programs: identical masks in both tranches
+            for rec in d0.corpus.records[ctx]:
+                m0, m1 = d0.legal_mask_fn(rec["tokens"]), d1.legal_mask_fn(rec["tokens"])
+                self.assertEqual(m0.shape, (len(rec["tokens"]) - 1, 282))
+                self.assertTrue(np.array_equal(m0, m1))
+                self.assertTrue(all(m0[i, t] for i, t in enumerate(rec["tokens"][1:])))
+        draw = sampler.MacroSampler(d1.fit, b"\x02" * 32, cfg).draw(0)
+        batch = sampler.collate(draw, d1)
+        self.assertIsNotNone(batch)
+        self.assertTrue(d1.content_sha256)
+        with self.assertRaises(T.S1TailError):                      # a tampered pinned grammar is refused
+            T.train_data_for_tranche(dict(spec1, grammar=dict(gb, sha256="0" * 64)), e1, adm, cfg,
+                                     encoding_trees=fx.trees)
+        with self.assertRaises(T.S1TailError):                      # spec must match OUT/header.json
+            T.train_data_for_tranche(dict(spec0, max_seq=256), e1, adm, cfg, encoding_trees=fx.trees)
+        # SYNTAX-refused records are dropped and counted, never a collate-time crash
+        g, _, _ = T.run_grammar(out, gb, dsl_tokenizer.Vocab.from_names({}), 512)
+        good = d0.corpus.records[fx.ctx["t1"]][0]
+        bad = dict(good, program_sha256="0" * 64, tokens=[dsl_tokenizer.BOS, dsl_tokenizer.EOS], length=2)
+        kept, dropped, fn = T.syntax_masks(g, [good, bad])
+        self.assertEqual([r["program_sha256"] for r in kept], [good["program_sha256"]])
+        self.assertEqual(len(dropped), 1)
+        self.assertTrue(np.array_equal(fn(good["tokens"]), d0.legal_mask_fn(good["tokens"])))
+
+    def test_outer_test_material_in_selection_records_refuses(self):
+        cases = {"t1": "official_test", "t2": "outer_kind", "t3": "fold_test_rmse", "dv": "final_outer_numeric"}
+        fx = self.fixture(variants={v: k for v, k in cases.items()})
+        fx.write_ledgers()
+        s, out = self.run_tail(fx)
+        ref = self.refusals(out)
+        self.assertEqual(ref[fx.ctx["t1"]], "outer_test_in_selection_record")
+        self.assertEqual(ref[fx.ctx["t2"]], "non_inner_cv_fold_in_label")
+        self.assertEqual(ref[fx.ctx["t3"]], "outer_test_in_selection_record")
+        self.assertEqual(ref[fx.ctx["dv"]], "outer_test_metrics_in_selection")
+        self.assertEqual(self.index(out), [])
+
+    def test_integrity_refusals(self):
+        fx = self.fixture(variants={"t1": "tampered_mirror", "t2": "wrong_program"})
+        fx.write_ledgers(finals=["t1", "t2"])
+        s, out = self.run_tail(fx)
+        ref = self.refusals(out)
+        self.assertEqual(ref[fx.ctx["t1"]], "evaluation_sha_mismatch")     # mirror bytes differ from digests.json
+        self.assertEqual(ref[fx.ctx["t2"]], "attempt_program_mismatch")    # record program != reserved program
+        fx4 = self.fixture("w4", variants={"t1": "status_lie"})
+        fx4.write_ledgers(finals=["t1"])
+        s4, out4 = self.run_tail(fx4, "out4")
+        self.assertEqual(self.refusals(out4)[fx4.ctx["t1"]], "status_mismatch")
+        fx5 = self.fixture("w5", variants={"t1": "target_copy"})
+        fx5.write_ledgers(finals=["t1", "t2"])
+        s5, out5 = self.run_tail(fx5, "out5")
+        self.assertEqual(self.refusals(out5), {fx5.ctx["t1"]: "target_leak"})
+        self.assertEqual([e["context_sha256"] for e in self.index(out5)], [fx5.ctx["t2"]])
+        # summary edited after the final row: identity refusal
+        fx2 = self.fixture("w2")
+        fx2.write_ledgers(finals=["t1"])
+        wbytes(fx2.prod / "contexts" / fx2.ctx["t1"] / "summary.tar.gz", b"x")
+        s2, out2 = self.run_tail(fx2, "out2")
+        self.assertEqual(self.refusals(out2)[fx2.ctx["t1"]], "final_identity")
+        # a reservation without its finish row
+        fx3 = self.fixture("w3")
+        cdir = fx3.prod / "contexts" / fx3.ctx["t1"]
+        with tarfile.open(cdir / "summary.tar.gz", "r:gz") as t:
+            att = t.extractfile("attempts.jsonl").read()
+            dig = t.extractfile("digests.json").read()
+        att = b"".join(x + b"\n" for x in att.splitlines() if b'"ordinal":9,"status"' not in x)
+        summary = tar_gz({"attempts.jsonl": att, "digests.json": dig})
+        final = json.loads((cdir / "final.json").read_bytes())
+        by = dict(final["attempts"]["by_status"], completed=final["attempts"]["by_status"]["completed"] - 1)
+        final["attempts"].update(attempts_jsonl_sha256=sha(att), by_status=by, finished=len(ATTEMPTS) - 1)
+        final["summary_tar_gz_sha256"] = sha(summary)
+        fb = wjson(cdir / "final.json", final)
+        wbytes(cdir / "summary.tar.gz", summary)
+        fx3.finals["t1"].update(final_sha256=sha(fb), summary_sha256=sha(summary),
+                                attempts={"charged": len(ATTEMPTS), "by_status": by})
+        fx3.write_ledgers(finals=["t1"])
+        s3, out3 = self.run_tail(fx3, "out3")
+        self.assertEqual(self.refusals(out3)[fx3.ctx["t1"]], "attempt_ledger")
+
+    def test_tokenization_round_trip(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1"])
+        s, out = self.run_tail(fx)
+        vocab = dsl_tokenizer.Vocab.from_names({})
+        by_sha = {sha(d.encode()): d for d in DSLS}
+        shard = T.load_shard(out, self.index(out)[0])
+        self.assertEqual(shard["source"]["vocab_sha256"], vocab.sha256)
+        for r in shard["records"]:
+            dsl = by_sha[r["program_sha256"]]
+            self.assertEqual(dsl_tokenizer.detokenize(r["tokens"], vocab), dsl)
+            self.assertEqual(dsl_tokenizer.tokenize(dsl, vocab), r["tokens"])
+            self.assertEqual(r["skeleton_sha256"], dsl_tokenizer.skeleton_sha256(dsl))
+        sample = DSLS[5]
+        ids = dsl_tokenizer.tokenize(sample, vocab)
+        self.assertEqual((ids[0], ids[-1]), (dsl_tokenizer.BOS, dsl_tokenizer.EOS))
+        self.assertNotEqual(ids[1], dsl_tokenizer.RAW_BEGIN)
+        self.assertEqual(dsl_tokenizer.detokenize(ids, vocab), sample)
+        # over-long programs are refused records, never truncated
+        s2, out2 = self.run_tail(fx, "out2", max_seq=40)
+        shard2 = T.load_shard(out2, self.index(out2)[0])
+        self.assertTrue(shard2["refused_records"])
+        self.assertTrue(all(r["reason"] == "over_max_seq" and r["length"] > 40 for r in shard2["refused_records"]))
+        self.assertTrue(all(r["length"] <= 40 for r in shard2["records"]))
+
+    def test_corpus_build_and_sampler_fit(self):
+        fx = self.fixture()
+        fx.write_ledgers()
+        s, out = self.run_tail(fx)
+        inputs = T.load_corpus_inputs(out)
+        self.assertEqual(inputs.skipped, {})
+        self.assertEqual(inputs.assignment, {"fam-t1": "train_fit", "fam-t2": "train_nonpool", "fam-t3": "train_fit",
+                                             "fam-dv": "dev"})
+        width = sum(COMPONENTS.values())
+        self.assertTrue(all(v.shape == (width,) and v.dtype == np.float32 for v in inputs.encodings.values()))
+        corpus = sampler.Corpus.build(inputs.contexts, inputs.records, inputs.encodings, inputs.assignment)
+        self.assertEqual(corpus.encoding_dim, width)
+        fit = sampler.fit(corpus, sampler.SamplerConfig())
+        self.assertEqual(fit.n_contexts(), 3)
+        lab = corpus.labels.contexts[fx.ctx["t1"]]
+        self.assertEqual(lab.status, "OK")
+        self.assertEqual(lab.counts["missing"], 1)
+        self.assertEqual(lab.counts["q_known"], 6)
+        draw = sampler.MacroSampler(fit, b"\x01" * 32, sampler.SamplerConfig()).draw(0)
+        self.assertTrue(draw.journal_record())
+        part = T.load_corpus_inputs(out, components=("a0", "hyperion"))
+        self.assertEqual(next(iter(part.encodings.values())).shape, (COMPONENTS["a0"] + COMPONENTS["hyperion"],))
+        guarded = T.load_corpus_inputs(out, admission=(fx.denylist, fx.denylist_sha))
+        self.assertEqual(len(guarded.contexts), 4)
+
+    def test_encoding_conflict_and_corruption_are_never_imputed(self):
+        fx = self.fixture(variants={"t1": "encoding_conflict", "t2": "encoding_corrupt"})
+        fx.write_ledgers(finals=["t1", "t2", "t3"])
+        s, out = self.run_tail(fx)
+        idx = {e["context_sha256"]: e for e in self.index(out)}
+        sh1 = T.load_shard(out, idx[fx.ctx["t1"]])
+        sh2 = T.load_shard(out, idx[fx.ctx["t2"]])
+        self.assertEqual(sh1["encodings_conflicts"], ["a0"])
+        self.assertNotIn("a0", sh1["encodings"])
+        self.assertEqual(sh2["encodings_invalid"], {"hyperion": "sha256_mismatch"})
+        inputs = T.load_corpus_inputs(out)
+        self.assertEqual(inputs.skipped, {fx.ctx["t1"]: "encoding_missing", fx.ctx["t2"]: "encoding_missing"})
+        with self.assertRaises(T.S1TailError):
+            T.load_corpus_inputs(out, on_missing="raise")
+        both = T.load_corpus_inputs(out, components=("dope",))
+        self.assertEqual(len(both.contexts), 3)
+        # a component assembled after emission (a later encoding arm) resolves at load time from its build tree;
+        # a context the arm lacks is excluded (never substituted) and listed
+        late = self.root / "late-arm"
+        for n in ("t1", "t2"):
+            d = late / "out" / fx.view[n]
+            v = Fixture._npy(np.full(5, 7.0, dtype=np.float32))
+            wbytes(d / "late_arm.npy", v)
+            wbytes(d / ".done", b"ok\n")
+            wjson(d / "context.json", {"context_sha256": fx.ctx[n], "view_id": fx.view[n],
+                                       "files": {"late_arm.npy": {"sha256": sha(v), "bytes": len(v)}}})
+        entries = T.tranche_entries(out)
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="selection")
+        with self.assertRaises(T.S1TailError):
+            T.load_tranche(out, entries, adm, components=("late_arm", "dope"))
+        vr: dict = {}
+        ctxs, recs, encs, asg = T.load_tranche(out, entries, adm, components=("late_arm", "dope"),
+                                               encoding_trees=(late,), on_missing="exclude", vector_receipt=vr)
+        self.assertEqual({k: v.shape for k, v in encs.items()},
+                         {fx.ctx[n]: (5 + COMPONENTS["dope"],) for n in ("t1", "t2")})
+        self.assertTrue(all(float(v[0]) == 7.0 for v in encs.values()))
+        self.assertEqual(vr["_missing"], {fx.ctx["t3"]: ["late_arm"]})
+        self.assertEqual(vr[fx.ctx["t1"]]["late_arm"]["source"], "load_time_tree")
+        self.assertEqual(vr[fx.ctx["t1"]]["dope"]["source"], "shard")
+        self.assertEqual({c["context_sha256"] for c in ctxs}, {fx.ctx["t1"], fx.ctx["t2"]})
+
+    def test_pinned_assembled_hyperion_v6all(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1", "t2", "t3"])
+        s, out = self.run_tail(fx)
+        entries = T.tranche_entries(out)
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="selection")
+        pub, raw = self.root / "PUBLISH-v6all", self.root / "GPU-v6all"
+        listed = []
+        for k, n in enumerate(("t1", "t2", "t3")):
+            for tree, val, sub in ((pub, 1.0 + k, f"shard-xbabe1/{fx.view[n]}"), (raw, -9.0, f"out/{fx.view[n]}")):
+                d = tree / sub
+                v = Fixture._npy(np.full(4, val, dtype=np.float32))
+                wbytes(d / "hyperion_v6all.npy", v)
+                wbytes(d / ".done", b"ok\n")
+                cjb = wjson(d / "context.json", {"context_sha256": fx.ctx[n], "view_id": fx.view[n],
+                                                 "files": {"hyperion_v6all.npy": {"sha256": sha(v), "bytes": len(v)}}})
+                if tree is pub and n == "t1":
+                    listed.append({"view_id": fx.view[n], "files": {"hyperion_v6all.npy": {"sha256": sha(v)}}})
+                if tree is pub and n == "t2":
+                    listed.append({"view_id": fx.view[n], "context_json_sha256": sha(cjb)})
+        # t3 is assembled but not in the receipt yet (like the RIGHTS-HELD-FILL follow-on unit): excluded
+        receipt = self.root / "v6all-assembly-receipt.json"
+        rsha = sha(wjson(receipt, {"schema": "assembly-receipt", "contexts": listed}))
+        pinned = T.PinnedEncodingSet(pub, receipt, rsha)
+        vr: dict = {}
+        ctxs, recs, encs, asg = T.load_tranche(out, entries, adm, components=("a0", "hyperion_v6all"),
+                                               encoding_trees=(raw,), encoding_sets=[pinned], on_missing="exclude",
+                                               vector_receipt=vr)
+        self.assertEqual({c["context_sha256"] for c in ctxs}, {fx.ctx["t1"], fx.ctx["t2"]})
+        self.assertEqual(vr["_missing"], {fx.ctx["t3"]: ["hyperion_v6all"]})
+        self.assertEqual(float(encs[fx.ctx["t1"]][-1]), 1.0)               # the assembled vector, never the raw one
+        self.assertEqual(float(encs[fx.ctx["t2"]][-1]), 2.0)
+        self.assertTrue(vr[fx.ctx["t1"]]["hyperion_v6all"]["source"].startswith("pinned:"))
+        with self.assertRaises(T.S1TailError):                            # raw out dirs alone never serve v6all
+            T.load_tranche(out, entries, adm, components=("a0", "hyperion_v6all"), encoding_trees=(raw,))
+        with self.assertRaises(T.S1TailError):
+            T.PinnedEncodingSet(pub, receipt, "0" * 64)
+        bad = self.root / "v6all-bad-receipt.json"
+        bsha = sha(wjson(bad, {"contexts": [dict(listed[0], files={"hyperion_v6all.npy": {"sha256": "1" * 64}}),
+                                            listed[1]]}))
+        vr2: dict = {}
+        ctxs2 = T.load_tranche(out, entries, adm, components=("a0", "hyperion_v6all"),
+                               encoding_sets=[T.PinnedEncodingSet(pub, bad, bsha)], on_missing="exclude",
+                               vector_receipt=vr2)[0]
+        self.assertEqual({c["context_sha256"] for c in ctxs2}, {fx.ctx["t2"]})
+        spec = {"tail_out": str(out), "components": ["a0", "hyperion_v6all"],
+                "exclusion": {"path": str(fx.exclusion), "sha256": fx.exclusion_sha}, "grammar": None,
+                "vocab_sha256": dsl_tokenizer.Vocab.from_names({}).sha256, "max_seq": 512}
+        with self.assertRaisesRegex(T.S1TailError, "need a pinned assembled set"):   # refused up front, by name
+            T.train_data_for_tranche(spec, entries, adm, sampler.SamplerConfig(), encoding_trees=(raw,))
+        sets = [{"tree": str(pub), "receipt": str(receipt), "sha256": rsha}]
+        with self.assertRaises(T.S1TailError):                            # the set must be bound in OUT/header.json
+            T.train_data_for_tranche(dict(spec, encoding_sets=sets), entries, adm, sampler.SamplerConfig(),
+                                     encoding_trees=fx.trees)
+        s2, out2 = self.run_tail(fx, "out-bound", encoding_sets=tuple(sets))
+        self.assertEqual(json.loads((out2 / "header.json").read_bytes())["encoding_sets"][0]["sha256"], rsha)
+        spec = dict(spec, tail_out=str(out2))
+        entries = T.tranche_entries(out2)
+        d = T.train_data_for_tranche(dict(spec, encoding_sets=sets), entries, adm, sampler.SamplerConfig(),
+                                     encoding_trees=fx.trees)
+        r = T.train_data_receipt(d)
+        self.assertEqual(set(d.corpus.contexts), {fx.ctx["t1"], fx.ctx["t2"]})
+        self.assertEqual(d.ctx_dim, COMPONENTS["a0"] + 4)
+        self.assertEqual(r["encoding_sets"][0]["sha256"], rsha)
+        self.assertEqual(r["counts"]["contexts_excluded_missing_component"], 1)
+
+    def _forge(self, out: Path, name: str, mutate=None, shard_rel: str | None = None, line: int = 0,
+               update_index: bool = True) -> Path:
+        """A copy of OUT whose index line `line` points at an edited shard (simulating a tampered tail output)."""
+        dst = self.root / name
+        shutil.copytree(out, dst)
+        lines = [json.loads(x) for x in (dst / "index.jsonl").read_bytes().splitlines()]
+        e = lines[line]
+        shard = json.loads((dst / e["shard"]).read_bytes())
+        if mutate is not None:
+            shard = mutate(shard)
+        body = T._line(shard)
+        target = dst / (shard_rel or e["shard"])
+        wbytes(target, body)
+        if shard_rel:
+            e["shard"] = shard_rel
+        if update_index:
+            e["sha256"], e["bytes"] = sha(body), len(body)
+        wbytes(dst / "index.jsonl", b"".join(T._line(x) for x in lines))
+        return dst
+
+    def test_train_data_for_tranche_loader_guards(self):
+        out, deny, deny_sha, excl, excl_sha = build_fixture_out(self.root)
+        entries = T.tranche_entries(out)
+        adm = admission_mod.Admission(deny, deny_sha, purpose="selection")
+        cfg = sampler.SamplerConfig()
+        spec = {"tail_out": str(out), "components": ["a0", "hyperion_v6"],
+                "exclusion": {"path": str(excl), "sha256": excl_sha}, "grammar": None,
+                "vocab_sha256": dsl_tokenizer.Vocab.from_names({}).sha256, "max_seq": 512}
+
+        def tdft(sp=spec, ents=None, a=adm):
+            return T.train_data_for_tranche(sp, entries if ents is None else ents, a, cfg, encoding_trees=())
+
+        self.assertEqual(len(tdft().corpus.contexts), 4)                      # the unforged OUT loads
+        # (a) outer-test paths: tail_out lexically, via "..", via a symlink; exclusion/grammar/shard/encoding paths
+        ot = self.root / "s1-prod" / "outer-test"
+        shutil.copytree(out, ot / "out")
+        (self.root / "s1-prod" / "x").mkdir()
+        link = self.root / "looks-innocent"
+        link.symlink_to(ot, target_is_directory=True)
+        for bad in (ot / "out", self.root / "s1-prod" / "x" / ".." / "outer-test" / "out", link / "out"):
+            with self.assertRaises(tranche.LabelSourceRefused, msg=str(bad)):
+                tdft(dict(spec, tail_out=str(bad)))
+        wbytes(ot / "excl.json", excl.read_bytes())
+        with self.assertRaises(tranche.LabelSourceRefused):
+            tdft(dict(spec, exclusion={"path": str(ot / "excl.json"), "sha256": excl_sha}))
+        with self.assertRaises(tranche.LabelSourceRefused):
+            tdft(dict(spec, grammar={"path": str(ot / "g.json"), "sha256": "0" * 64}))
+        rel = os.path.relpath(ot / "shard-copy.json", self.root / "forged-shard-path")
+        forged = self._forge(out, "forged-shard-path", shard_rel=rel)
+        with self.assertRaises(tranche.LabelSourceRefused):
+            tdft(dict(spec, tail_out=str(forged)), T.tranche_entries(forged))
+        a0 = json.loads((out / T.read_index(out)[0][0]["shard"]).read_bytes())["encodings"]["a0"]
+        wbytes(ot / "a0.f32", Path(a0["path"]).read_bytes())
+
+        def a0_into_outer_test(sh):
+            sh["encodings"]["a0"]["path"] = str(ot / "a0.f32")
+            return sh
+
+        forged = self._forge(out, "forged-encoding-path", a0_into_outer_test)
+        with self.assertRaises(tranche.LabelSourceRefused):
+            tdft(dict(spec, tail_out=str(forged)), T.tranche_entries(forged))
+        # (b) heldout, sealed_excluded, unknown assignment, a dev row posing as train_fit, a denylisted view
+        for k, (field, value) in enumerate((("assignment", "heldout"), ("assignment", "sealed_excluded"),
+                                            ("assignment", "no_family"), ("assignment", None))):
+            def claim(sh, field=field, value=value):
+                sh["context"][field] = value
+                return sh
+            forged = self._forge(out, f"forged-assignment-{k}", claim)
+            with self.assertRaises((admission_mod.AdmissionRefused, T.S1TailError), msg=str(value)):
+                tdft(dict(spec, tail_out=str(forged)), T.tranche_entries(forged))
+        dv_line = next(i for i, e in enumerate(T.read_index(out)[0]) if e["split_role"] == "dev")
+
+        def dev_as_train(sh):
+            sh["context"]["split_role"] = "train_fit"
+            for r in sh["records"]:
+                r["split_role"] = "train_fit"
+            return sh
+
+        forged = self._forge(out, "forged-dev-role", dev_as_train, line=dv_line)
+        with self.assertRaises(admission_mod.AdmissionRefused):
+            tdft(dict(spec, tail_out=str(forged)), T.tranche_entries(forged))
+        t1_view = T.read_index(out)[0][0]["view_id"]
+        d2 = json.loads(deny.read_bytes())
+        d2["contexts"].append({"view_id": t1_view, "assignment": "heldout"})
+        db = canon(d2)
+        wbytes(self.root / "deny-t1.json", db)
+        with self.assertRaises(admission_mod.AdmissionRefused):
+            tdft(a=admission_mod.Admission(self.root / "deny-t1.json", sha(db), purpose="selection"))
+        # (c) an excluded linear-determined view_id
+        x = json.loads(excl.read_bytes())
+        x["exclude"]["contexts"].append({"dataset": "0" * 16, "view_id": t1_view, "ols_rel_rmse": 1e-15})
+        xb = canon(x)
+        wbytes(self.root / "excl-t1.json", xb)
+        with self.assertRaises(T.S1TailError):
+            tdft(dict(spec, exclusion={"path": str(self.root / "excl-t1.json"), "sha256": sha(xb)}))
+        # (d) shard bytes differ from the entry; a record altered with its entry sha recomputed but not the index
+        def bump(sh):
+            r = next(r for r in sh["records"] if r["rmse_j"] is not None)
+            r["rmse_j"] = [r["rmse_j"][0] * 0.5, r["rmse_j"][1]]
+            return sh
+
+        forged = self._forge(out, "forged-bytes", bump, update_index=False)
+        with self.assertRaises(T.S1TailError):
+            tdft(dict(spec, tail_out=str(forged)), T.tranche_entries(forged))
+        body = (forged / T.read_index(forged)[0][0]["shard"]).read_bytes()
+        recomputed = [dict(e) for e in T.tranche_entries(forged)]
+        recomputed[0]["shard_sha256"] = sha(body)
+        with self.assertRaises(T.S1TailError):
+            tdft(dict(spec, tail_out=str(forged)), recomputed)
+
+    def test_v6all_completion_receipt_tsv_adapter(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1", "t2", "t3"])
+        pub = self.root / "PUBLISH-hyperion-v6all-v1"
+        lines = []
+        for k, n in enumerate(("t1", "t2")):                               # t3: no TSV row -> excluded
+            d = pub / f"shard-xbabe{k + 1}" / fx.view[n]
+            v = Fixture._npy(np.full(4, 3.0 + k, dtype=np.float32))
+            wbytes(d / "hyperion_v6all.npy", v)
+            wbytes(d / ".done", b"ok\n")
+            cjb = wjson(d / "context.json", {"context_sha256": fx.ctx[n], "view_id": fx.view[n],
+                                             "files": {"hyperion_v6all.npy": {"sha256": sha(v), "bytes": len(v)}}})
+            lines.append(f"{fx.view[n]}\t{sha(cjb)}\t{sha(v)}\n")
+        hr = self.root / "GPU-v6all" / "host-receipts"
+        tsv = "".join(sorted(lines)).encode()
+        wbytes(hr / "assembled-set.tsv", tsv)
+
+        def receipt(**over):
+            doc = {"schema": T.V6ALL_COMPLETION_SCHEMA, "assembled": 2, "assembled_set_sha256": sha(tsv),
+                   "missing": [], "assembled_missing": [], "assembled_npy_mismatch": [],
+                   "label_exposure": {"counts": {"label_free_finetune": 2},
+                                      "value": "label-free (hyperion_v6all: v5 armB inheritance recorded)"}}
+            doc.update(over)
+            return sha(wjson(hr / "v6all-encode-completion.json", doc))
+
+        rsha = receipt()
+        ps = T.PinnedEncodingSet(pub, hr / "v6all-encode-completion.json", rsha)
+        self.assertEqual(ps.assembled_set_sha256, sha(tsv))
+        self.assertEqual(ps.binding()["assembled_set_sha256"], sha(tsv))
+        sets = ({"tree": str(pub), "receipt": str(hr / "v6all-encode-completion.json"), "sha256": rsha},)
+        s, out = self.run_tail(fx, encoding_sets=sets)
+        hdr = json.loads((out / "header.json").read_bytes())
+        self.assertEqual(hdr["encoding_sets"][0]["assembled_set_sha256"], sha(tsv))
+        self.assertEqual(T.tranche_receipt(out)["encoding_sets"][0]["assembled_set_sha256"], sha(tsv))
+        adm = admission_mod.Admission(fx.denylist, fx.denylist_sha, purpose="selection")
+        spec = {"tail_out": str(out), "components": ["a0", "hyperion_v6all"], "encoding_sets": list(sets),
+                "exclusion": {"path": str(fx.exclusion), "sha256": fx.exclusion_sha}, "grammar": None,
+                "vocab_sha256": dsl_tokenizer.Vocab.from_names({}).sha256, "max_seq": 512}
+        d = T.train_data_for_tranche(spec, T.tranche_entries(out), adm, sampler.SamplerConfig(),
+                                     encoding_trees=fx.trees)
+        r = T.train_data_receipt(d)
+        self.assertEqual(set(d.corpus.contexts), {fx.ctx["t1"], fx.ctx["t2"]})
+        self.assertEqual(r["excluded_missing_component"], {fx.ctx["t3"]: ["hyperion_v6all"]})
+        self.assertEqual(r["encoding_sets"][0]["assembled_set_sha256"], sha(tsv))
+        self.assertEqual(float(d.corpus.encodings[fx.ctx["t2"]][-1]), 4.0)
+        # fail closed: a TSV that is not the assembled set, a non-label-free receipt, a tampered vector
+        for over in ({"assembled_set_sha256": "0" * 64}, {"label_exposure": {"counts": {"label_free_finetune": 1},
+                                                                             "value": "label-free"}},
+                     {"assembled_npy_mismatch": [fx.view["t1"]]}):
+            with self.assertRaises(T.S1TailError, msg=str(over)):
+                T.PinnedEncodingSet(pub, hr / "v6all-encode-completion.json", receipt(**over))
+        rsha = receipt()
+        npy = pub / "shard-xbabe1" / fx.view["t1"] / "hyperion_v6all.npy"
+        wbytes(npy, Fixture._npy(np.full(4, 9.0, dtype=np.float32)))
+        ps2 = T.PinnedEncodingSet(pub, hr / "v6all-encode-completion.json", rsha)
+        self.assertEqual(ps2.resolve(fx.ctx["t1"], fx.view["t1"])["found"], {})
+
+    def test_shard_rebuild_with_other_bytes_refuses(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1"])
+        out = self.root / "out"
+        wbytes(out / "shards" / fx.ctx["t1"][:2] / f"{fx.ctx['t1']}.json", b"{}\n")
+        with self.assertRaises(T.ShardConflict):
+            T.S1Tail(fx.config(out)).poll()
+        self.assertEqual(self.index(out), [])
+
+    def test_ssh_fetch_streams_records_read_only(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1"])
+        fake = self.root / "fake_ssh.py"
+        fake.write_text("import subprocess, sys\n"
+                        "assert sys.argv[-2] == 'xbabe3'\n"
+                        "sys.exit(subprocess.run(['sh', '-c', sys.argv[-1]]).returncode)\n")
+        s, out = self.run_tail(fx, evaluation_roots=(), fetch_ssh=True, ssh_command=(sys.executable, str(fake)))
+        self.assertEqual(s["emitted_now"], 1)
+        s_ref, out_ref = self.run_tail(fx, "ref")
+        self.assertEqual(self.shard_files(out), self.shard_files(out_ref))
+        bad = self.root / "bad_ssh.py"
+        bad.write_text("import sys\nsys.exit(255)\n")
+        s2, out2 = self.run_tail(fx, "out2", evaluation_roots=(), fetch_ssh=True,
+                                 ssh_command=(sys.executable, str(bad)))
+        self.assertEqual(s2["pending_now"], {"awaiting_evaluations": 1})
+
+    def test_follower_and_cli(self):
+        fx = self.fixture()
+        fx.write_ledgers(finals=["t1"])
+        out = self.root / "out"
+        rc, lines = self.cli(fx, out, "--once", "--json")
+        self.assertEqual(rc, 0)
+        self.assertEqual(lines[-1]["emitted_now"], 1)
+        fol = T.ShardFollower(out)
+        self.assertEqual(len(fol.poll()), 1)
+        self.assertEqual(fol.poll(), [])
+        fx.append_final("t2")
+        rc, lines = self.cli(fx, out, "--follow", "--interval", "0.01", "--max-polls", "2", "--json")
+        self.assertEqual((rc, len(lines)), (0, 2))
+        self.assertEqual([x["emitted_now"] for x in lines], [1, 0])
+        new = fol.poll()
+        self.assertEqual([e["context_sha256"] for e in new], [fx.ctx["t2"]])
+        inputs = fol.inputs()
+        self.assertEqual({c["context_sha256"] for c in inputs.contexts}, {fx.ctx["t1"], fx.ctx["t2"]})
+        sampler.Corpus.build(inputs.contexts, inputs.records, inputs.encodings, inputs.assignment)
+
+    def test_waits_for_ledger_header(self):
+        fx = self.fixture()
+        empty = self.root / "empty"
+        empty.mkdir()
+        s = T.S1Tail(fx.config(self.root / "out", ledger_dir=empty)).poll()
+        self.assertEqual(s["status"], "waiting_for_ledger_header")
+
+    # ------------------------------------------------------------------------------------------------- helpers
+    def cli(self, fx: Fixture, out: Path, *args: str) -> tuple[int, list]:
+        sys.path.insert(0, str(TOOLS))
+        try:
+            import importlib
+            mod = importlib.import_module("s1_tail")
+            argv = ["--ledger-dir", str(fx.prod), "--out", str(out), "--denylist", str(fx.denylist),
+                    "--denylist-sha256", fx.denylist_sha, "--evaluations-root", str(fx.host),
+                    "--exclusion", str(fx.exclusion), "--exclusion-sha256", fx.exclusion_sha]
+            for t in fx.trees:
+                argv += ["--encoding-tree", str(t)]
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = mod.main(argv + list(args))
+        finally:
+            sys.path.remove(str(TOOLS))
+        lines = [json.loads(x) for x in buf.getvalue().splitlines() if x.startswith("{")]
+        return rc, lines
+
+
+if __name__ == "__main__":
+    unittest.main()

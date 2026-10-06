@@ -85,14 +85,15 @@ class Custody(unittest.TestCase):
         report = v.verify(Path(v.__file__).with_name("lane"))
         self.assertEqual(report["handoff_sha256"], v.HANDOFF_SHA)
         self.assertEqual(report["predecessor_sha256"], [expected for _, expected in v.PREDECESSORS])
-        self.assertEqual(report["current_files"], 158)
-        self.assertEqual(report["historical_versions"], 204)
+        self.assertEqual(report["current_files"], 165)
+        self.assertEqual(report["historical_versions"], 262)
         self.assertEqual(report["supplemental_versions"], 3)
-        self.assertEqual(report["python_syntax_files"], 148)
+        self.assertEqual(report["python_syntax_files"], 155)
         self.assertEqual([len(report["predecessor_restoration"][expected]) for _, expected in v.PREDECESSORS],
-                         [158, 156, 155, 147, 143])
+                         [158, 158, 156, 155, 147, 143])
         self.assertEqual(report["abandoned_unpushed_stagings"],
-                         ["e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5"])
+                         ["be5e5f600a15d01d83a13c2745d37748c772c0317ee3986153e236fc0fea0d7f",
+                          "e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5"])
 
     def test_same_width_current_edit_refused(self):
         self.put("src/dl_training_v1/one.py", b"x = 2\n")

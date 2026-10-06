@@ -1,0 +1,35 @@
+"""Create-only P9a launch record: T0 tranche facts, unit facts (systemctl show; no ps), trainer launch receipt, gate verdict,
+GPU ledger intent. Usage: p9a_launch_record.py RUN_ID UNIT"""
+import hashlib, json, subprocess, sys, time
+from pathlib import Path
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1"); rid, unit = sys.argv[1], sys.argv[2]
+R = RUN / "build-v2/P8/runs" / rid
+sha = lambda b: hashlib.sha256(b).hexdigest()
+for _ in range(120):
+    if (R / "launch/a1.json").exists() or (R / "launches/a1/admission.json").exists():
+        break
+    time.sleep(1)
+show = subprocess.run(["systemctl", "--user", "show", f"{unit}.service", "-p", "MainPID", "-p", "InvocationID",
+                       "-p", "ExecMainStartTimestamp", "-p", "ActiveState", "-p", "SubState", "-p", "MemoryMax",
+                       "-p", "CPUQuotaPerSecUSec", "-p", "RuntimeMaxUSec"], capture_output=True, text=True).stdout
+props = dict(l.split("=", 1) for l in show.strip().splitlines() if "=" in l)
+t0 = json.loads((R / "tranches/T0.json").read_bytes())
+lr = t0["receipt"].get("loader_receipt") or {}
+adm = R / "launches/a1/admission.json"; lrec = R / "launch/a1.json"; req = R / "launch" / f"{unit}.request.json"
+doc = {"schema": "jope.dl-p9a-launch-record/v1", "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "run_id": rid,
+       "launch_plan": {"path": str(RUN / "receipts/P8/launch-plan-20261006T123606Z.json"),
+                       "sha256": "a07fc73ed2377649043f562a08499c329d458015a1c2d7db9223505b31d0c177"},
+       "t0": {"path": str(R / "tranches/T0.json"), "sha256": sha((R / "tranches/T0.json").read_bytes()),
+              "corpus_manifest_sha256": t0["corpus_manifest_sha256"], "n_entries": t0["n_entries"],
+              "loader_counts": lr.get("counts"), "exclusion": t0["receipt"].get("exclusion"),
+              "loader_exclusion": lr.get("exclusion")},
+       "run_plan": {"path": str(R / "run-plan.json"), "sha256": sha((R / "run-plan.json").read_bytes())},
+       "unit": unit, "systemctl_show": props,
+       "launch_request": {"path": str(req), "sha256": sha(req.read_bytes())} if req.exists() else None,
+       "trainer_launch_receipt": ({"path": str(lrec), "sha256": sha(lrec.read_bytes()), "doc": json.loads(lrec.read_bytes())}
+                                  if lrec.exists() else None),
+       "gate_verdict": json.loads(adm.read_bytes()) if adm.exists() else None}
+body = json.dumps(doc, indent=1, sort_keys=True).encode()
+out = R / "launch" / "p9a-launch-record.json"
+with open(out, "xb") as f: f.write(body)
+print(out, sha(body))

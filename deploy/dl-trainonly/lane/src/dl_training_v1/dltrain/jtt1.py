@@ -103,6 +103,8 @@ def _atomic_create(path, data):
 
 def load_raw(ref, cache_dir, client=None, ledger=None):
     """Return the verified raw JTT1 bytes for an epoch context's input_ref, from the create-only cache or one exact GET."""
+    from dltrain import quarantine
+    quarantine.assert_not_quarantined(ref.get("key") if isinstance(ref, dict) else None)
     path = cache_path(cache_dir, ref)
     if path.exists():
         gz = path.read_bytes()

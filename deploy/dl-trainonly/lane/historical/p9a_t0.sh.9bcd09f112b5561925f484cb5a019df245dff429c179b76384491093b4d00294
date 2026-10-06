@@ -1,0 +1,12 @@
+#!/bin/bash
+# P9a T0 (launch plan a07fc73e): tranche 0 from S1-TAIL-v3 on snapshot 59ada6ba, plans for cuda (configure_determinism checks the device; no CUDA context is created).
+set -eu
+RUN=/home/ubuntu/scratch/jopedime-dl-training-v1; SNAP=$RUN/build/p8-src/59ada6ba9818; RID=$1; R=$RUN/build-v2/P8/runs/$RID
+DL=$RUN/receipts/trainonly-v2/publish/v2-holdout-denylist-holdout-denylist-v2-1503ca7a7654.json
+ES='[{"tree":"/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/PUBLISH-hyperion-v6all-v1","receipt":"/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-v6all/host-receipts/v6all-encode-completion.json","sha256":"4b382ebae933240b13d607b9518db8396351e7cf7f659ba6ed29fec3d4139d92"}]'
+exec systemd-run --user --scope --quiet --slice=jopedime-dltrain.slice -p CPUQuota=200% -p MemoryMax=6G -p MemorySwapMax=0 -p TasksMax=256 \
+  nice -n 10 env -C $SNAP PYTHONPATH=$SNAP PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 TMPDIR=$RUN/tmp CUDA_VISIBLE_DEVICES=0 CUBLAS_WORKSPACE_CONFIG=:4096:8 OMP_NUM_THREADS=4 \
+  /home/ubuntu/.venvs/jope-dltrain-v1/bin/python -m dltrain.policylm_main tranche --run-dir $R --index 0 --kind s1-tranche/v1 \
+  --tail-out $RUN/build-v2/S1-TAIL-v3 --run-id $RID --size S --steps 2000 --commit-every 1000 --publish-every 2000 --device cuda \
+  --components a0,hyperion_v6all --denylist $DL --denylist-sha256 1503ca7a7654abf8c4f25a11dc226cbd145f70d9b6f3b41dd877e26e14a7796a \
+  --encoding-sets "$ES"

@@ -2240,15 +2240,15 @@
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/restore/test_p7_restore.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_common.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_cpuguard.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_jtt1.py": {
       "role": "regression",
@@ -2270,19 +2270,37 @@
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_calibration.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_live.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_model_objective.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_sampler.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_payload_strip.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_quarantine.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel.py": {
       "role": "regression",
@@ -2439,151 +2457,151 @@
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_dryrun.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_interface.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_mapping.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_parser.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_refusals.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_simulate.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_unpromotable.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_keys.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_pin.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_screen.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_review_fixes.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_closure.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_commit_publish.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_hygiene.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_interface.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_registry.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_selection.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_verify.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_automaton.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_oracle.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_programs.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_tokenizer.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_build.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_hygiene.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_poison.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_real.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_redteam.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_sample.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_schema.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_metafeatures.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_normalizers.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_review_findings.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_real.py": {
       "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed nineteen-module offline selection; static source custody only, not executed coverage or operational qualification."
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
     "python:deploy/dl-trainonly/test_verify_lane.py": {
       "role": "infrastructure",

@@ -461,6 +461,8 @@ def safe_err(err: BaseException) -> dict:
 
 
 def get_exact(client, key: str, version_id: str, bucket: str = BUCKET) -> tuple[bytes, dict]:
+    from dltrain import quarantine
+    quarantine.assert_not_quarantined(key)
     resp = client.get_object(Bucket=bucket, Key=key, VersionId=version_id)
     body = resp["Body"].read()
     return body, {k: resp.get(k) for k in ("VersionId", "ETag", "ContentLength")}

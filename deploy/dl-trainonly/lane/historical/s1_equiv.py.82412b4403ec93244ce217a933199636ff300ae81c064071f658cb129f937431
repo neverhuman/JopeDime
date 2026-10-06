@@ -1,0 +1,178 @@
+"""PAYLOAD-STRIP-PUBLISH: equivalence of the proposed S1 outer-test scorer adapter (SRC tools/s1_outer_test_scorer.py, reading
+outer-test rows only from the scorer-only artifact) with the stored S1 outer-test scores of the original adapter.
+
+Offline, lane slice (RUN/tmp/p2fix3/py.sh), copies only: s1-prod is read, never written. In a new create-only work dir W:
+  1. strip the selected contexts from the trees the full strip will use (PUBLISH-rowsel-raw-v2, PUBLISH-rowsel-raw-nonnumeric-v2,
+     RIGHTS-RESEARCH-raw-v2/custody), located by (view_id, teacher raw_sha256 of the S1 input list), with tools/v2_strip_outer_test.py
+  2. score each context through the new adapter (pinned worker bootstrap.s1main --fit, scratch under W) and compare with
+     s1-prod/outer-test/scores/<ctx>.json: scorer_input sha256 and canonical official_test bytes must be identical
+  3. the 4 must-fail contexts: orig and outer-test-target-flip through the new adapter vs the stored checks/<ctx>.{orig,flip}.json
+  4. negative control: a valid JTS1 artifact whose targets differ is refused (no score)
+Usage: py.sh RUN/tmp/payload-strip/s1_equiv.py W [N_RANDOM]
+"""
+import concurrent.futures
+import gzip
+import hashlib
+import importlib.util
+import json
+import random
+import sys
+import threading
+import time
+from pathlib import Path
+
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+B = RUN / "build-v2"
+P = RUN / "receipts/trainonly-v2/s1-prod"
+TREES = {"rowsel-raw-v2": B / "PUBLISH-rowsel-raw-v2", "rowsel-raw-nonnumeric-v2": B / "PUBLISH-rowsel-raw-nonnumeric-v2",
+         "rights-research-raw-v2-custody": B / "RIGHTS-RESEARCH-raw-v2/custody"}
+MUSTFAIL = "outer-test/checks/mustfail-20261006T111045Z.json"
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def main():
+    W = Path(sys.argv[1])
+    n_random = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+    W.mkdir(parents=True, exist_ok=False)
+    t0 = time.time()
+    st = load("v2_strip_outer_test", SRC / "tools/v2_strip_outer_test.py")
+    ad = load("s1_outer_test_scorer", SRC / "tools/s1_outer_test_scorer.py")
+    from dltrain import scorer_labels
+    il_rows = {r["context_sha256"]: r for r in json.loads((P / "input-list.json").read_bytes())["admitted"]}
+    stored = {f.name[:-5]: f for f in (P / "outer-test/scores").glob("*.json")}
+    mf = json.loads((P / MUSTFAIL).read_bytes())
+    must = [r["context_sha256"] for r in mf["results"]]
+    rng = random.Random(20261006)
+    by_set = {}
+    for c in sorted(stored):
+        if c not in must:
+            by_set.setdefault(il_rows[c]["set"], []).append(c)
+    quota = {"ROWSEL-RAW-v2": round(n_random * 0.6), "ROWSEL-RAW-v2-nonnumeric": round(n_random * 0.3)}
+    quota["RIGHTS-RESEARCH-raw-v2/custody"] = n_random - sum(quota.values())
+    chosen = must + [c for s, q in quota.items() for c in rng.sample(by_set[s], q)]
+    # 1. strip the chosen contexts from the full-strip source trees, located by (view_id, teacher raw sha256)
+    where = {}
+    for name, tree in TREES.items():
+        for p in tree.glob("shard-*/*/context.json"):
+            c = json.loads(p.read_bytes())
+            f = (c.get("files") or {}).get("teacher.jtt1.gz")
+            if f:
+                where[(c["view_id"], f["raw_sha256"])] = name
+    views = {}
+    for c in chosen:
+        r = il_rows[c]
+        views.setdefault(where[(Path(r["context_dir"]).name, r["teacher"]["raw_sha256"])], set()).add(Path(r["context_dir"]).name)
+    specs, strips = [], {}
+    for name, vs in sorted(views.items()):
+        rec = W / "strip" / f"{name}.strip-summary.json"
+        rc = st.main(["strip", "--src", str(TREES[name]), "--dst", str(W / "strip" / name / "publish"), "--scorer-dst",
+                      str(W / "strip" / name / "scorer"), "--views", ",".join(sorted(vs)), "--receipt", str(rec)])
+        strips[name] = {"rc": rc, "views": len(vs), "summary": str(rec), "sha256": sha(rec.read_bytes())}
+        specs.append(f"{rec}#{sha(rec.read_bytes())}")
+    # 2. score through the new adapter into W, compare with the stored records
+    ad.configure(W / "out")
+    (W / "out/scores").mkdir(parents=True)
+    (W / "out/checks").mkdir(parents=True)
+    if sha(ad.WORKER.read_bytes()) != ad.WORKER_SHA:
+        raise SystemExit("worker identity")
+    index = ad.strip_index(specs)
+    finals = ad.ledger_finals()
+    jobs, lock, free = 3, threading.Lock(), [0, 1, 2]
+
+    def one(ctx):
+        with lock:
+            slot = free.pop()
+        try:
+            rec = ad.score_one(ctx, finals, il_rows, index, slot=slot)
+        finally:
+            with lock:
+                free.append(slot)
+        body = ad.canonical(rec)
+        ad.create(W / "out/scores" / f"{ctx}.json", body)
+        old = json.loads(stored[ctx].read_bytes())
+        return ctx, {"set": il_rows[ctx]["set"], "must_fail_context": ctx in must,
+                     "scorer_input_sha256_equal": rec["scorer_input"]["sha256"] == old["scorer_input"]["sha256"],
+                     "official_test_bytes_equal": ad.canonical(rec["official_test"]) == ad.canonical(old["official_test"]),
+                     "teacher_raw_sha256_equal": rec["teacher"]["raw_sha256"] == old["teacher"]["raw_sha256"],
+                     "final_json_sha256_equal": rec["final_json"]["sha256"] == old["final_json"]["sha256"],
+                     "read_via": rec["teacher"]["read_via"]["rule"], "new_record_sha256": sha(body),
+                     "stored_record": {"path": str(stored[ctx]), "sha256": sha(stored[ctx].read_bytes()), "code_sha256": old.get("code_sha256")},
+                     "official_test_sha256": sha(ad.canonical(rec["official_test"])), "rmse": rec["official_test"].get("metrics", {}).get("rmse")}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as ex:
+        scores = dict(ex.map(one, chosen))
+    # 3. must-fail contexts: orig and flip through the new adapter vs the stored checks
+    mres = {}
+    for ctx in must:
+        a = ad.score_one(ctx, finals, il_rows, index, None, "orig")
+        b = ad.score_one(ctx, finals, il_rows, index, ad.flip_targets, "outer_test_targets_flipped")
+        for x, tag in ((a, "orig"), (b, "flip")):
+            ad.create(W / "out/checks" / f"{ctx}.{tag}.json", ad.canonical(x))
+        oa = json.loads((P / "outer-test/checks" / f"{ctx}.orig.json").read_bytes())
+        ob = json.loads((P / "outer-test/checks" / f"{ctx}.flip.json").read_bytes())
+        mres[ctx] = {"orig_official_test_bytes_equal": ad.canonical(a["official_test"]) == ad.canonical(oa["official_test"]),
+                     "flip_official_test_bytes_equal": ad.canonical(b["official_test"]) == ad.canonical(ob["official_test"]),
+                     "orig_scorer_input_equal": a["scorer_input"]["sha256"] == oa["scorer_input"]["sha256"],
+                     "flip_scorer_input_equal": b["scorer_input"]["sha256"] == ob["scorer_input"]["sha256"],
+                     "flip_changes_official_test": a["official_test"]["metrics"] != b["official_test"]["metrics"],
+                     "fit_side_identical": all(a["official_test"].get(k) == b["official_test"].get(k)
+                                               for k in ("model_sha256", "scaler_sha256", "training_metrics", "predictions_sha256"))}
+    # 4. negative control: a valid JTS1 whose targets differ, pinned in a forged index entry, is refused
+    ctx = must[0]
+    r = il_rows[ctx]
+    key = (Path(r["context_dir"]).name, r["teacher"]["raw_sha256"])
+    ent = dict(index[key])
+    art = gzip.decompress(Path(ent["scorer_path"]).read_bytes())
+    h, block = scorer_labels.decode(art)
+    w = 8 * (h["p"] + 1)
+    forged_block = bytearray(block)
+    forged_block[w - 8:w] = (b"\x00" * 7 + b"\x40") if bytes(block[w - 8:w]) != b"\x00" * 7 + b"\x40" else b"\x00" * 8
+    forged = scorer_labels.gz(scorer_labels.encode({k: v for k, v in h.items() if k not in ("schema", "test_block_sha256")}, bytes(forged_block)))
+    fp = W / "negative-control" / "teacher.scorer-outer-test.jts1.gz"
+    fp.parent.mkdir()
+    ad.create(fp, forged)
+    ent.update(scorer_path=str(fp), scorer_sha256=sha(forged))
+    try:
+        ad.teacher_from_strip(ctx, il_rows, {key: ent})
+        neg = {"refused": False}
+    except ValueError as e:
+        neg = {"refused": True, "error": str(e)[:200]}
+    flush = ad.flush_scratch(jobs)
+    ok = all(all(v for k, v in s.items() if k.endswith("_equal")) for s in scores.values()) \
+        and all(all(v.values()) for v in mres.values()) and neg["refused"] and all(s["rc"] == 0 for s in strips.values())
+    doc = {"schema": "jope.dl-s1-outer-test-strip-equivalence/v1",
+           "claim": "the proposed adapter, reading outer-test rows only from the scorer-only artifact, feeds the pinned worker byte-identical "
+                    "input and reproduces the stored official_test records byte for byte",
+           "contexts": len(chosen), "must_fail_contexts": must, "random_seed": 20261006, "quota": quota, "strips": strips,
+           "scores": scores, "mustfail": mres, "negative_control": neg, "flush": flush,
+           "counts": {"scorer_input_equal": sum(s["scorer_input_sha256_equal"] for s in scores.values()),
+                      "official_test_bytes_equal": sum(s["official_test_bytes_equal"] for s in scores.values())},
+           "worker": {"path": str(ad.WORKER), "sha256": ad.WORKER_SHA},
+           "code_sha256": {"s1_equiv.py": sha(Path(__file__).read_bytes()),
+                           "tools/s1_outer_test_scorer.py": sha((SRC / "tools/s1_outer_test_scorer.py").read_bytes()),
+                           "tools/v2_strip_outer_test.py": sha((SRC / "tools/v2_strip_outer_test.py").read_bytes()),
+                           "dltrain/scorer_labels.py": sha((SRC / "dltrain/scorer_labels.py").read_bytes()),
+                           "dltrain/jtt1.py": sha((SRC / "dltrain/jtt1.py").read_bytes()),
+                           "s1-prod/code/outer_test_scorer.py (original, stored scores)": sha((P / "code/outer_test_scorer.py").read_bytes())},
+           "wall_s": round(time.time() - t0, 1), "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+           "verdict": "PASS" if ok else "FAIL"}
+    body = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    with open(W / "s1-outer-test-equivalence.json", "xb") as fh:
+        fh.write(body)
+    print(json.dumps({"verdict": doc["verdict"], "contexts": len(chosen), "counts": doc["counts"], "negative_control": neg["refused"],
+                      "mustfail_all": all(all(v.values()) for v in mres.values()), "receipt_sha256": sha(body), "wall_s": doc["wall_s"]}))
+    return 0 if ok else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
