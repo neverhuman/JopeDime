@@ -456,6 +456,13 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/gp_emitter_determinism": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/golden": {
       "role": "regression",
       "subsystems": [
