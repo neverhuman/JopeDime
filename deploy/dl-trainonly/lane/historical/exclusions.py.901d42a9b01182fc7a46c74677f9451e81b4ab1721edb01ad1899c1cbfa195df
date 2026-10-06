@@ -1,0 +1,91 @@
+"""Owner exclusions applied to every P8/P9 tranche (ruling LINEAR-DETERMINED, ENG:watcher delegated 2026-10-06
+05:30 MT; claude/receipts/owner-decisions-20261006T112914Z.json).
+
+``jope.dl-v2-linear-determined-exclusion/v1``: the ``exclude.contexts[].view_id`` (target linear in the train-row
+features, flag ``target_linear_in_features``) never become training labels or headline/HWM contexts; the
+``review.contexts[].view_id`` stay in training, flagged ``target_linear_near_review``. The file is pinned by sha256;
+an unreadable or mismatching file refuses (fail closed). Tranche and launch receipts record its sha256 and counts.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, Mapping
+
+SCHEMA = "jope.dl-v2-linear-determined-exclusion/v1"
+DEFAULT_PATH = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/build/"
+                    "linear-determined-exclusion-v1-d16f9ffbe6df.json")
+DEFAULT_SHA256 = "d16f9ffbe6dfb40bce7ed45214814aa23441c9628b563989929a6ad48ac5284f"
+EXCLUDE_FLAG = "target_linear_in_features"
+REVIEW_FLAG = "target_linear_near_review"
+
+
+class ExclusionRefused(RuntimeError):
+    """An excluded context would reach a tranche, or the exclusion file cannot be trusted."""
+
+
+@dataclass(frozen=True)
+class Exclusion:
+    path: str
+    sha256: str
+    view_ids: frozenset
+    review_view_ids: frozenset
+    datasets: tuple
+
+    def receipt(self) -> dict:
+        return {"path": self.path, "sha256": self.sha256, "excluded_contexts": len(self.view_ids),
+                "excluded_datasets": len(self.datasets), "review_contexts": len(self.review_view_ids),
+                "exclude_flag": EXCLUDE_FLAG, "review_flag": REVIEW_FLAG}
+
+
+def load(path=DEFAULT_PATH, sha256: str = DEFAULT_SHA256) -> Exclusion:
+    try:
+        raw = Path(path).read_bytes()
+    except OSError as err:
+        raise ExclusionRefused(f"exclusion file unreadable: {type(err).__name__}") from None
+    got = hashlib.sha256(raw).hexdigest()
+    if got != sha256:
+        raise ExclusionRefused(f"exclusion file sha256 {got} != pinned {sha256}")
+    doc = json.loads(raw)
+    if doc.get("schema") != SCHEMA:
+        raise ExclusionRefused(f"exclusion file schema {doc.get('schema')!r} != {SCHEMA}")
+    ex, rv = doc["exclude"], doc["review"]
+    if ex.get("flag") != EXCLUDE_FLAG or rv.get("flag") != REVIEW_FLAG:
+        raise ExclusionRefused("exclusion file flags are not the ruling's")
+    view_ids = frozenset(c["view_id"] for c in ex["contexts"])
+    review = frozenset(c["view_id"] for c in rv["contexts"])
+    if not view_ids or len(view_ids) != len(ex["contexts"]) or view_ids & review:
+        raise ExclusionRefused("exclusion lists are empty, duplicated or overlap the review list")
+    return Exclusion(path=str(path), sha256=got, view_ids=view_ids, review_view_ids=review,
+                     datasets=tuple(sorted({c["dataset"] for c in ex["contexts"]})))
+
+
+def assert_none_excluded(view_ids: Iterable[str], excl: Exclusion) -> None:
+    hit = sorted(set(view_ids) & excl.view_ids)
+    if hit:
+        raise ExclusionRefused(f"{len(hit)} excluded ({EXCLUDE_FLAG}) contexts would reach a tranche: {hit[:3]}")
+
+
+def flag_for(view_id: str, excl: Exclusion) -> str | None:
+    return REVIEW_FLAG if view_id in excl.review_view_ids else None
+
+
+def filter_rows(rows: Iterable[Mapping], excl: Exclusion) -> tuple[list[dict], list[str]]:
+    """(rows that may enter a tranche, with the review flag added where it applies; excluded view_ids). Every row
+    needs a view_id (fail closed)."""
+    kept, dropped = [], []
+    for row in rows:
+        vid = row.get("view_id")
+        if not isinstance(vid, str) or not vid:
+            raise ExclusionRefused(f"row without a view_id cannot be checked: {row.get('context_sha256')}")
+        if vid in excl.view_ids:
+            dropped.append(vid)
+            continue
+        out = dict(row)
+        flag = flag_for(vid, excl)
+        if flag is not None:
+            out["flags"] = sorted(set(out.get("flags") or []) | {flag})
+        kept.append(out)
+    return kept, dropped

@@ -1,0 +1,493 @@
+"""P8 trainer-path tests (CPU only, no network): chunked journal, the create-only S3 store adapter, the mirror file,
+the launch envelope, CUDA closure/determinism rules and an end-to-end stop/resume through the guarded fake bucket."""
+from __future__ import annotations
+
+import json
+import os
+import random
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import numpy as np
+import torch
+
+from dltrain import ckpt, common, exclusions, launch, model, policylm_main, s3store, sampler, synthetic_data, train
+
+TMP_ROOT = Path(os.environ.get("TMPDIR") or "/home/ubuntu/scratch/jopedime-dl-training-v1/tmp")
+PREFIX = s3store.SMOKE_PREFIX_KEY
+SPEC = synthetic_data.SyntheticSpec(vocab_size=48, max_seq=32, mean_len=16, ctx_dim=12, n_train_families=6,
+                                    n_dev_families=1, programs_per_context=14, seed_tag="p8-tests")
+
+
+def _tmp(case) -> Path:
+    TMP_ROOT.mkdir(parents=True, exist_ok=True)
+    d = Path(tempfile.mkdtemp(prefix="p8-trainer-", dir=TMP_ROOT))
+    return d
+
+
+def _plan(data, run_id="p8t", max_updates=10, commit_every=3, **kw):
+    mcfg = model.PolicyConfig(vocab_size=SPEC.vocab_size, ctx_dim=SPEC.ctx_dim, d_model=32, n_layers=2, n_heads=2,
+                              d_ff=64, max_seq=SPEC.max_seq, dropout=0.1)
+    tcfg = train.TrainConfig(lr=3e-3, lr_min=3e-4, warmup=3, commit_every_updates=commit_every,
+                             commit_every_seconds=None, eval_every_epochs=None, ctx_drop_prob=0.25, ctx_noise_std=0.05)
+    return train.make_run_plan(run_id=run_id, run_seed=bytes(range(32)), arm="syn", objective="successor-v1",
+                               model=mcfg, sampler=data.config, train=tcfg, max_updates=max_updates, refs=data.refs,
+                               **kw)
+
+
+class _Fake:
+    """A guarded fake-bucket store that persists under a directory (fresh store objects see the same versions)."""
+
+    def __init__(self, root: Path, run_id: str):
+        self.root, self.run_id, self.n = root, run_id, 0
+
+    def open(self):
+        self.n += 1
+        store, ledger, bucket = s3store.open_fake(prefix_key=PREFIX, view_id=self.run_id,
+                                                  ledger_path=self.root / f"ledger-{self.n}.jsonl",
+                                                  budget_ledger_path=self.root / "budget.jsonl",
+                                                  disk_root=self.root / "bucket")
+        return store, ledger, bucket
+
+
+def setUpModule():
+    model.configure_determinism(4)
+
+
+class JournalChunkTests(unittest.TestCase):
+    def test_chunks_are_prefix_stable_and_reassemble(self):
+        lines = [common.canonical({"i": i}) + b"\n" for i in range(1234)]
+        body = b"".join(lines)
+        chunks = ckpt.journal_chunks(body)
+        self.assertEqual(b"".join(chunks), body)
+        self.assertEqual(len(chunks), 3)
+        longer = ckpt.journal_chunks(body + b"".join(common.canonical({"i": i}) + b"\n" for i in range(1234, 1600)))
+        self.assertEqual(longer[:2], chunks[:2])          # full chunks never change
+        with self.assertRaises(ckpt.CheckpointRefused):
+            ckpt.journal_chunks(b'{"a":1}')
+
+    def test_publish_uploads_only_the_new_tail_and_restore_is_exact(self):
+        d = _tmp(self)
+        store = ckpt.FileVersionedStore(d / "store")
+        body1 = b"".join(common.canonical({"i": i}) + b"\n" for i in range(1100))
+        body2 = body1 + b"".join(common.canonical({"i": i}) + b"\n" for i in range(1100, 1700))
+        r1 = ckpt._publish_journal(store, "p/", body1)          # noqa: SLF001
+        r2 = ckpt._publish_journal(store, "p/", body2)          # noqa: SLF001
+        self.assertEqual(r1["new_bytes"], len(body1) + r1["bytes"])
+        # the two full chunks of body1 are 412-equal; only chunks 2..3 of body2 and its index are new
+        new_tail = sum(len(c) for c in ckpt.journal_chunks(body2)[2:])
+        self.assertEqual(r2["new_bytes"], new_tail + r2["bytes"])
+        idx = store.get(r2["key"], version_id=r2["version_id"]).body
+        self.assertEqual(ckpt._restore_journal(store, "p/", idx), body2)   # noqa: SLF001
+        doc = json.loads(idx)
+        doc["chunks"][0]["sha256"] = "0" * 64
+        with self.assertRaises(ckpt.CheckpointRefused):
+            ckpt._restore_journal(store, "p/", common.canonical(doc))   # noqa: SLF001
+
+
+class _CorruptChunks:
+    """A store wrapper serving flipped bytes for journal chunks (a corrupted object behind a valid VersionId)."""
+
+    def __init__(self, inner):
+        self.inner, self.bucket = inner, inner.bucket
+
+    def get(self, key, version_id=None):
+        got = self.inner.get(key, version_id)
+        if "/journal-chunk/" in key:
+            body = bytes([got.body[0] ^ 1]) + got.body[1:]
+            return ckpt.GetResult(body=body, version_id=got.version_id, etag=got.etag)
+        return got
+
+
+class JournalIntegrityTests(unittest.TestCase):
+    def test_a_corrupted_chunk_is_refused_by_name(self):
+        d = _tmp(self)
+        store = ckpt.FileVersionedStore(d / "store")
+        body = b"".join(common.canonical({"i": i}) + b"\n" for i in range(700))
+        ref = ckpt._publish_journal(store, "p/", body)                       # noqa: SLF001
+        idx = store.get(ref["key"], version_id=ref["version_id"]).body
+        with self.assertRaisesRegex(ckpt.CheckpointRefused, "journal chunk 0 differs from its index"):
+            ckpt._restore_journal(_CorruptChunks(store), "p/", idx)          # noqa: SLF001
+
+    def test_create_only_store_counts_reused_chunks_as_zero_new_bytes(self):
+        d = _tmp(self)
+        store, ledger, bucket = s3store.open_fake(prefix_key=PREFIX, view_id="r", ledger_path=d / "l.jsonl",
+                                                  budget_ledger_path=d / "b.jsonl")
+        body1 = b"".join(common.canonical({"i": i}) + b"\n" for i in range(1100))
+        body2 = body1 + b"".join(common.canonical({"i": i}) + b"\n" for i in range(1100, 1600))
+        ckpt._publish_journal(store, PREFIX, body1)                         # noqa: SLF001
+        puts_before = len(bucket.puts())
+        r2 = ckpt._publish_journal(store, PREFIX, body2)                    # noqa: SLF001
+        tail = sum(len(c) for c in ckpt.journal_chunks(body2)[2:])
+        self.assertEqual(r2["new_bytes"], tail + r2["bytes"])
+        self.assertEqual(store.stats["ledger_reuse"], 2)
+        self.assertEqual(len(bucket.puts()) - puts_before, 3)               # chunks 2 and 3 + the index
+        ledger.close()
+
+
+class StoreTests(unittest.TestCase):
+    def setUp(self):
+        self.d = _tmp(self)
+        self.fake = _Fake(self.d, "runx")
+
+    def _pointer(self, seq, prev=None, target="a" * 64):
+        return common.canonical({"schema": ckpt.SCHEMA_POINTER, "run_id": "runx", "pointer_name": "resume",
+                                 "target_manifest_sha256": target, "target_version_id": "v", "seq": seq,
+                                 "prev_version_id": prev, "writer": {}, "utc_us": 1})
+
+    def test_pointer_is_create_only_sequenced_and_cas_races_conflict(self):
+        store, ledger, bucket = self.fake.open()
+        pkey = ckpt.pointer_key(PREFIX, "runx")
+        with self.assertRaises(ckpt.NoSuchKey):
+            store.get(pkey)
+        p1 = store.put_create_only(pkey, self._pointer(1))
+        self.assertTrue(p1.version_id.startswith("1:"))
+        with self.assertRaises(ckpt.PreconditionFailed):
+            store.put_create_only(pkey, self._pointer(1, target="b" * 64))
+        p2 = store.put_if_match(pkey, self._pointer(2, p1.version_id), p1.etag)
+        self.assertEqual(store.get(pkey).body, self._pointer(2, p1.version_id))
+        with self.assertRaises(ckpt.PreconditionFailed):          # stale If-Match
+            store.put_if_match(pkey, self._pointer(2, p1.version_id, target="c" * 64), p1.etag)
+        # a second writer with a fresh store object races for seq 3: the loser sees PreconditionFailed
+        store2, ledger2, _ = s3store.open_fake(prefix_key=PREFIX, view_id="runx", ledger_path=self.d / "l2.jsonl",
+                                               budget_ledger_path=self.d / "budget.jsonl", bucket=bucket)
+        store.put_if_match(pkey, self._pointer(3, p2.version_id), p2.etag)
+        with self.assertRaises(ckpt.PreconditionFailed):
+            store2.put_if_match(pkey, self._pointer(3, p2.version_id, target="d" * 64), p2.etag)
+        # cas_pointer turns the lost race into Conflict
+        exp = ckpt.ExpectedPointer(version_id=p2.version_id, etag=p2.etag, sha256=common.sha256_bytes(
+            self._pointer(2, p1.version_id)), seq=2, manifest_sha256="a" * 64, manifest_version_id="v")
+        with self.assertRaises(ckpt.Conflict):
+            ckpt.cas_pointer(store2, pkey, self._pointer(3, p2.version_id, target="e" * 64), exp,
+                             parent_manifest_sha256="a" * 64)
+        # the CAS check passes on a stale view, then the create loses the race: PreconditionFailed, never PoisonedKey
+        stale = store2.get(pkey, version_id=p2.version_id)
+        raw = ckpt.GetResult(body=stale.body, version_id=p2.version_id.split(":", 1)[1], etag="")
+        with mock.patch.object(store2, "_pointer_head", return_value=(2, raw)):
+            with self.assertRaises(ckpt.PreconditionFailed):
+                store2.put_if_match(pkey, self._pointer(3, p2.version_id, target="f" * 64), p2.etag)
+        keys = bucket.keys()
+        self.assertFalse(any(k.endswith("HEAD.json") for k in keys))
+        self.assertEqual(sorted(k for k in keys if "/resume/" in k),
+                         [s3store.seq_key(pkey, i) for i in (1, 2, 3)])
+        self.assertTrue(all(c[0] != "PutObject" or True for c in bucket.calls))
+        ledger.close()
+        ledger2.close()
+
+    def test_refuses_keys_outside_prefix_and_direct_seq_keys(self):
+        store, ledger, _ = self.fake.open()
+        with self.assertRaises(Exception):
+            store.put_create_only("experiments/gp-policy-dl/v2-trainonly/models/x.json", b"{}")
+        with self.assertRaises(Exception):
+            store.put_create_only(PREFIX + "campaigns/runx/resume/seq-0000000001.json", b"{}")
+        with self.assertRaises(ValueError):
+            s3store.CreateOnlyStore(None, None, prefix_key="experiments/gp-policy-dl/v2-trainonly/", view_id="x")
+        ledger.close()
+
+    def test_head_search_finds_highest_contiguous_seq(self):
+        store, ledger, _ = self.fake.open()
+        pkey = ckpt.pointer_key(PREFIX, "runx")
+        prev = store.put_create_only(pkey, self._pointer(1))
+        for seq in range(2, 12):
+            prev = store.put_if_match(pkey, self._pointer(seq, prev.version_id), prev.etag)
+        ledger.close()
+        fresh, ledger2, _ = self.fake.open()                     # no hint: exponential + binary search
+        got = fresh.get(pkey)
+        self.assertEqual(json.loads(got.body)["seq"], 11)
+        self.assertLess(fresh.stats["pointer_probes"], 11)
+        ledger2.close()
+
+
+class EndToEndTests(unittest.TestCase):
+    """Fresh-process-equivalent stop/resume through the persisted guarded fake bucket: a new store object, a new
+    workdir, unrelated global RNG seeds; the result equals the uninterrupted run bit for bit (incl. the journal)."""
+
+    def test_stop_publish_restore_equals_uninterrupted(self):
+        d = _tmp(self)
+        data = synthetic_data.train_data(SPEC, sampler.SamplerConfig(b_ctx=4))
+        plan = _plan(data, max_updates=10, commit_every=3)
+        a = train.run(plan, data, d / "A")
+        fake = _Fake(d / "fake", plan["run_id"])
+        store, ledger, _ = fake.open()
+        stop = d / "STOP"
+        b = train.run(plan, data, d / "B", store=store, store_prefix=PREFIX, stop_file=stop,
+                      hooks=train.TrainHooks(after_step=lambda s: stop.touch() if s == 5 else None))
+        ledger.close()
+        self.assertEqual((b.status, b.step), ("YIELDED_TO_INTAKE", 5))
+        random.seed(1)
+        np.random.seed(2)
+        torch.manual_seed(3)
+        store2, ledger2, bucket = fake.open()
+        r = train.resume_from_store(plan, data, store2, d / "R", store_prefix=PREFIX)
+        ledger2.close()
+        self.assertEqual((r.status, r.step), ("COMPLETED", 10))
+        self.assertEqual((r.parameter_sha256, r.journal_sha256), (a.parameter_sha256, a.journal_sha256))
+        ca, cr = Path(a.last_commit), Path(r.last_commit)
+        for f in sorted(p.name for p in ca.iterdir() if p.name != "commit.json"):
+            self.assertEqual((ca / f).read_bytes(), (cr / f).read_bytes(), f)
+        keys = bucket.keys()
+        self.assertTrue(any("/objects/journal-chunk/" in k for k in keys))
+        self.assertFalse(any("/objects/journal/" in k for k in keys))      # never the whole journal
+
+    def test_mirror_file_roundtrip(self):
+        d = _tmp(self)
+        data = synthetic_data.train_data(SPEC, sampler.SamplerConfig(b_ctx=4))
+        plan = _plan(data, run_id="p8mirror", max_updates=7, commit_every=3)
+        run_dir = d / "run"
+        run_dir.mkdir()
+        made = []
+        with mock.patch.object(ckpt, "JOURNAL_CHUNK_LINES", 2):
+            res = train.run(plan, data, d / "w", hooks=train.TrainHooks(
+                after_commit=lambda c, *_: made.append(policylm_main.export_mirror_file(c.dir, run_dir))))
+            self.assertEqual([m["step"] for m in made], [3, 6, 7])
+            self.assertEqual(sorted(p.name for p in run_dir.iterdir()),
+                             ["ckpt_0000000003.ckpt", "ckpt_0000000006.ckpt", "ckpt_0000000007.ckpt"])
+            for m in made:
+                self.assertEqual(oct(os.stat(m["path"]).st_mode & 0o777), "0o444")
+            out = policylm_main.restore_mirror_commit(run_dir, 7, d / "restored")
+        orig = Path(res.last_commit)
+        for f in sorted(p.name for p in orig.iterdir()):
+            self.assertEqual((orig / f).read_bytes(), (out / f).read_bytes(), f)
+        before = sorted(p.name for p in run_dir.iterdir())
+        with self.assertRaises(FileExistsError):
+            policylm_main.export_mirror_file(orig, run_dir)
+        self.assertEqual(sorted(p.name for p in run_dir.iterdir()), before)   # nothing written, no partial file
+
+
+class ExclusionTests(unittest.TestCase):
+    """Owner ruling LINEAR-DETERMINED: the 25 excluded view_ids never reach a tranche; the 40 review ones are kept
+    and flagged; the file is pinned by sha256 (fail closed)."""
+
+    def test_real_file_loads_pinned(self):
+        ex = exclusions.load()
+        self.assertEqual((len(ex.view_ids), len(ex.datasets), len(ex.review_view_ids)), (25, 5, 40))
+        self.assertEqual(ex.receipt()["sha256"], exclusions.DEFAULT_SHA256)
+        with self.assertRaises(exclusions.ExclusionRefused):
+            exclusions.load(sha256="0" * 64)
+        with self.assertRaises(exclusions.ExclusionRefused):
+            exclusions.load(path=_tmp(self) / "missing.json")
+
+    def test_an_excluded_view_id_never_reaches_a_tranche(self):
+        ex = exclusions.load()
+        bad, review = sorted(ex.view_ids)[0], sorted(ex.review_view_ids)[0]
+        rows = [{"view_id": v, "context_sha256": common.sha256_bytes(v.encode())} for v in (bad, review, "ok__r0__f0")]
+        kept, dropped = exclusions.filter_rows(rows, ex)
+        self.assertEqual(dropped, [bad])
+        self.assertEqual([r["view_id"] for r in kept], [review, "ok__r0__f0"])
+        self.assertEqual(kept[0]["flags"], [exclusions.REVIEW_FLAG])
+        self.assertNotIn("flags", kept[1])
+        entries = [{"context_sha256": r["context_sha256"], "shard_sha256": "a" * 64} for r in kept]
+        self.assertNotIn(rows[0]["context_sha256"], {e["context_sha256"] for e in entries})
+        with self.assertRaisesRegex(exclusions.ExclusionRefused, "would reach a tranche"):
+            exclusions.assert_none_excluded([r["view_id"] for r in rows], ex)
+        with self.assertRaises(exclusions.ExclusionRefused):
+            exclusions.filter_rows([{"context_sha256": "x"}], ex)
+        exclusions.assert_none_excluded([r["view_id"] for r in kept], ex)
+
+
+class SelectivePublishTests(unittest.TestCase):
+    """Owner S3 BUDGET ruling: the lane prefix keeps only selected checkpoints (every publish_every updates, every
+    yield, the final one); the owner's mirror gets only the others; a closure is never in both."""
+
+    SPEC = '{"n_train_families":6,"n_dev_families":1,"programs_per_context":14,"vocab_size":48,"max_seq":32,' \
+           '"mean_len":16,"seed_tag":"p8-sel"}'
+
+    def _run(self, stop_at=None):
+        d = _tmp(self)
+        run_dir = d / "run"
+        policylm_main.main(["plan", "--run-dir", str(run_dir), "--run-id", "p8sel", "--size", "S", "--width", "12",
+                            "--steps", "10", "--commit-every", "2", "--publish-every", "4", "--b-ctx", "4",
+                            "--device", "cpu", "--spec-json", self.SPEC])
+        args = ["run", "--run-dir", str(run_dir), "--launch", "a1", "--gate", "minimal", "--store",
+                f"fake:{d / 'fake'}", "--live", "off"]
+        if stop_at is not None:
+            args += ["--stop-at-step", str(stop_at)]
+        rc = policylm_main.main(args)
+        events = [json.loads(x) for x in (run_dir / "launches/a1/work/events.jsonl").read_bytes().splitlines()]
+        published = sorted(e["step"] for e in events if e["event"] == "published")
+        commits = sorted(e["step"] for e in events if e["event"] == "commit")
+        mirror = sorted(int(p.name[5:15]) for p in run_dir.glob("ckpt_*.ckpt"))
+        result = json.loads((run_dir / "launches/a1/result.json").read_bytes())
+        return rc, published, commits, mirror, result
+
+    def test_selected_published_others_mirrored_never_both(self):
+        rc, published, commits, mirror, result = self._run()
+        self.assertEqual(rc, 0)
+        self.assertEqual(commits, [2, 4, 6, 8, 10])
+        self.assertEqual(published, [4, 8, 10])
+        self.assertEqual(mirror, [2, 6])
+        self.assertFalse(set(published) & set(mirror))
+        self.assertEqual(sorted(m["step"] for m in result["mirror_skipped"]), [4, 8, 10])
+
+    def test_yield_at_a_non_selected_cadence_step_is_published_not_mirrored(self):
+        rc, published, commits, mirror, result = self._run(stop_at=6)
+        self.assertEqual((rc, result["result"]["status"], result["result"]["step"]), (0, "YIELDED_TO_INTAKE", 6))
+        self.assertEqual(published, [4, 6])
+        self.assertEqual(mirror, [2])
+        self.assertFalse(set(published) & set(mirror))
+
+    def test_after_commit_is_told_which_commits_go_to_the_store(self):
+        d = _tmp(self)
+        data = synthetic_data.train_data(SPEC, sampler.SamplerConfig(b_ctx=4))
+        mcfg = model.PolicyConfig(vocab_size=SPEC.vocab_size, ctx_dim=SPEC.ctx_dim, d_model=32, n_layers=2, n_heads=2,
+                                  d_ff=64, max_seq=SPEC.max_seq, dropout=0.1)
+        tcfg = train.TrainConfig(lr=3e-3, lr_min=3e-4, warmup=3, commit_every_updates=2, commit_every_seconds=None,
+                                 eval_every_epochs=None, publish_every_updates=4)
+        plan = train.make_run_plan(run_id="p8flag", run_seed=bytes(range(32)), arm="syn", objective="successor-v1",
+                                   model=mcfg, sampler=data.config, train=tcfg, max_updates=10, refs=data.refs)
+        seen, stop = [], d / "STOP"
+
+        def after_step(s):
+            if s == 5:
+                stop.touch()
+        res = train.run(plan, data, d / "w", store=ckpt.FileVersionedStore(d / "store"), stop_file=stop,
+                        hooks=train.TrainHooks(after_step=after_step, after_commit=lambda c, w: seen.append((c.step, w))))
+        self.assertEqual((res.status, res.step), ("YIELDED_TO_INTAKE", 5))
+        self.assertEqual(seen, [(2, False), (4, True), (5, True)])
+
+    def test_publish_every_must_be_positive(self):
+        with self.assertRaises(ValueError):
+            train.TrainConfig(publish_every_updates=0)
+        self.assertNotIn("publish_every_updates", train.TrainConfig().to_json())     # P7-era plans unchanged
+        self.assertEqual(train.TrainConfig(publish_every_updates=4).to_json()["publish_every_updates"], 4)
+
+
+class LoaderGuardTests(unittest.TestCase):
+    """Coordinator gap 1 at the trainer's loader (policylm_main.load_data, s1-tranche/v1): the outer-test path deny
+    (lexical, '..', symlink), the manifest binding and the propagation of S1-tail refusals (excluded view). The
+    s1_tail loader is the single verification point for shard bytes and records (tests_p5/test_s1_tail.py)."""
+
+    @classmethod
+    def setUpClass(cls):
+        from tests_p5 import test_s1_tail
+        cls.d = _tmp(cls)
+        (cls.out, cls.deny, cls.deny_sha, cls.excl, cls.excl_sha) = test_s1_tail.build_fixture_out(cls.d)
+        cls.run_dir = cls.d / "run"
+        rc = policylm_main.main(["tranche", "--run-dir", str(cls.run_dir), "--index", "0", "--kind", "s1-tranche/v1",
+                                 "--tail-out", str(cls.out), "--run-id", "p8loader", "--size", "S", "--steps", "20",
+                                 "--commit-every", "10", "--device", "cpu", "--components", "a0,hyperion_v6",
+                                 "--denylist", str(cls.deny), "--denylist-sha256", cls.deny_sha,
+                                 "--exclusion", str(cls.excl), "--exclusion-sha256", cls.excl_sha])
+        assert rc == 0
+        cls.plan = train.load_run_plan(cls.run_dir / "run-plan.json")
+        cls.spec = json.loads((cls.run_dir / "data-spec.json").read_bytes())
+
+    def _plan_dir(self, name, **spec_over):
+        d = self.d / name
+        d.mkdir()
+        (d / "data-spec.json").write_bytes(common.canonical(dict(self.spec, **spec_over)))
+        return d
+
+    def test_loads_exactly_the_manifest_tranche(self):
+        from dltrain import s1_tail
+        data, entries = policylm_main.load_data(self.run_dir, self.plan)
+        self.assertEqual(set(data.corpus.contexts), {e["context_sha256"] for e in entries})
+        self.assertEqual(entries, s1_tail.tranche_entries(self.out))
+        self.assertEqual(data.refs["corpus"], self.plan["refs"]["corpus"])
+
+    def test_outer_test_tail_out_is_refused_lexically_dotdot_and_symlink(self):
+        from dltrain import tranche
+        bad = self.d / "s1-prod" / "outer-test"
+        bad.mkdir(parents=True, exist_ok=True)
+        link = self.d / "innocent-link"
+        if not link.exists():
+            link.symlink_to(bad)
+        from dltrain import s1_tail
+        for name, path in (("lexical", bad), ("dotdot", self.d / "s1-prod" / "outer-test" / ".." / "outer-test"),
+                           ("symlink", link)):
+            # refused at the trainer's loader itself, before the S1-tail loader is reached (first line of defence)
+            with self.subTest(name), self.assertRaises(tranche.LabelSourceRefused), \
+                    mock.patch.object(s1_tail, "train_data_for_tranche", side_effect=AssertionError("s1_tail reached")):
+                policylm_main.load_data(self._plan_dir(f"outer-{name}", tail_out=str(path)), self.plan)
+
+    def test_a_tranche_file_that_is_not_the_plan_manifest_is_refused(self):
+        t0 = json.loads((self.run_dir / "tranches" / "T0.json").read_bytes())
+        forged = self.d / "T0-forged.json"
+        forged.write_bytes(common.canonical(dict(t0, entries=t0["entries"][:-1])))
+        from dltrain import s1_tail
+        with self.assertRaises(ValueError) as cm, \
+                mock.patch.object(s1_tail, "train_data_for_tranche", side_effect=AssertionError("loaded before check")):
+            policylm_main.load_data(self._plan_dir("forged", entries_file=str(forged)), self.plan)
+        self.assertRegex(str(cm.exception), "corpus_manifest_sha256")
+
+    def test_an_excluded_view_in_the_tranche_is_refused(self):
+        from dltrain import s1_tail
+        shard = s1_tail.load_shard(self.out, s1_tail.read_index(self.out)[0][0])
+        view = shard["context"]["view_id"]
+        doc = json.loads(Path(self.excl).read_bytes())
+        doc["exclude"]["contexts"] = [{"dataset": "x", "view_id": view, "tree": "fixture", "ols_rel_rmse": 0.0}]
+        doc["review"]["contexts"] = [c for c in doc["review"]["contexts"] if c["view_id"] != view]
+        path = self.d / "exclusion-hit.json"
+        path.write_bytes(common.canonical(doc))
+        with self.assertRaises(Exception) as cm:
+            policylm_main.load_data(self._plan_dir("excl", exclusion={"path": str(path),
+                                                                      "sha256": common.sha256_file(path)}), self.plan)
+        self.assertRegex(str(cm.exception), "exclu|target_linear")
+
+
+class LaunchTests(unittest.TestCase):
+    def test_dry_run_argv_and_refusals(self):
+        snap = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/build/p8-src/x")
+        argv = launch.build_argv(unit="jopedime-dltrain-p7smoke-xbabe2-a9", snap=snap, log=Path("/l.log"),
+                                 run_args=["--run-dir", "/r", "--launch", "a1"], aws=True)
+        self.assertEqual(argv[:4], ["systemd-run", "--user", "--collect", "--slice=jopedime-dltrain.slice"])
+        for prop in ("MemoryMax=16G", "MemorySwapMax=0", "CPUQuota=400%", "Nice=10", "IOWeight=10",
+                     "RuntimeMaxSec=3600"):
+            self.assertIn(prop, argv)
+        self.assertIn("--setenv=CUBLAS_WORKSPACE_CONFIG=:4096:8", argv)
+        self.assertIn("--setenv=AWS_PROFILE=veox-jepson-prod", argv)
+        self.assertFalse(any("Restart" in a for a in argv))
+        self.assertFalse(any("SECRET" in a or "TOKEN" in a for a in argv))
+        for bad in ("jopedime-other-a1", "jopedime-dltrain-x", "jopedime-dltrain-p7smoke-xbabe2-b1"):
+            with self.assertRaises(ValueError):
+                launch.build_argv(unit=bad, snap=snap, log=Path("/l"), run_args=[])
+        with self.assertRaises(ValueError):
+            launch.build_argv(unit="jopedime-dltrain-p7smoke-xbabe2-a9", snap=snap, log=Path("/l"), run_args=[],
+                              memory_max="17G")
+
+    def test_snapshot_is_content_addressed(self):
+        d = _tmp(self)
+        snap, tsha = launch.snapshot(dest_root=d)
+        self.assertEqual(snap.name, tsha[:12])
+        self.assertEqual(launch.snapshot(dest_root=d), (snap, tsha))
+        self.assertTrue((snap / "dltrain" / "train.py").is_file())
+
+
+class CudaRuleTests(unittest.TestCase):
+    def test_cuda_determinism_needs_cublas_workspace(self):
+        with mock.patch.dict(os.environ, {"CUBLAS_WORKSPACE_CONFIG": ""}):
+            with self.assertRaisesRegex(RuntimeError, "CUBLAS_WORKSPACE_CONFIG"):
+                model.configure_determinism(4, "cuda")
+        with self.assertRaises(ValueError):
+            model.configure_determinism(4, "tpu")
+        self.assertEqual(model.configure_determinism(4)["device"], "cpu")
+        self.assertNotIn("cublas_workspace_config", model.configure_determinism(4))
+
+    def test_rng_closure_accepts_contiguous_cuda_states_only(self):
+        meta = ckpt._capture_rng()[1]                       # noqa: SLF001 (CUDA is never initialised here)
+        cpu = torch.get_rng_state()
+        cuda = torch.zeros(16, dtype=torch.uint8)
+        ckpt._check_rng({"torch_cpu": cpu}, meta)           # noqa: SLF001
+        ckpt._check_rng({"torch_cpu": cpu, "torch_cuda_0": cuda}, meta)   # noqa: SLF001
+        for bad in ({"torch_cuda_0": cuda}, {"torch_cpu": cpu, "torch_cuda_1": cuda},
+                    {"torch_cpu": cpu, "torch_cuda_0": cuda.to(torch.int64)}):
+            with self.assertRaises(ckpt.CheckpointRefused):
+                ckpt._check_rng(bad, meta)                  # noqa: SLF001
+
+    def test_cpu_restore_of_a_cuda_closure_is_refused(self):
+        d = _tmp(self)
+        data = synthetic_data.train_data(SPEC, sampler.SamplerConfig(b_ctx=4))
+        plan = _plan(data, run_id="p8cuda", max_updates=3, commit_every=3)
+        res = train.run(plan, data, d / "w")
+        closure = ckpt.read_commit(Path(res.last_commit))
+        closure.rng_tensors["torch_cuda_0"] = torch.zeros(16, dtype=torch.uint8)
+        net, opt, sched = train.build_training_objects(plan)
+        with mock.patch.object(torch.cuda, "is_available", return_value=False):
+            with self.assertRaisesRegex(ckpt.CheckpointRefused, "CUDA RNG"):
+                ckpt.apply_closure(closure, model=net, optimizer=opt, scheduler=sched)
+
+
+if __name__ == "__main__":
+    unittest.main()

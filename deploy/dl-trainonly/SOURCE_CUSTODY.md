@@ -2,9 +2,10 @@
 
 This directory retains the DL lane's 2026-10-06 source handoff for review and reproducible offline fixtures. It does not install, dispatch, adopt or authorize the staged entrypoints.
 
-`lane/MANIFEST.json` is the exact producer manifest `253e593b7537cdecf75a89be24a83804bc63d7e2596e02cc0c28d780a50f2b9e` (restage `20261006T114844Z`): 158 current files and 190 historical versions. Its predecessor chain is retained byte for byte under `lane/predecessor/`, newest first:
+`lane/MANIFEST.json` is the exact producer manifest `23d3a8a7fd6d15f056e6d5465a9e524ae46f5b69fd9d0e6c6f4721251ce70413` (restage `20261006T131001Z`): 158 current files and 204 historical versions. Its predecessor chain is retained byte for byte under `lane/predecessor/`, newest first:
 
-- `restage-20261006T082918Z/MANIFEST.json` (`365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f`), the manifest this directory carried before;
+- `restage-20261006T114844Z/MANIFEST.json` (`253e593b7537cdecf75a89be24a83804bc63d7e2596e02cc0c28d780a50f2b9e`), the manifest this directory carried before;
+- `restage-20261006T082918Z/MANIFEST.json` (`365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f`);
 - `restage-20261006T073946Z/MANIFEST.json` (`6314ef6f33f01878a149cdb36823a78c96d6ae3e2c45cf409d756711c71d6619`);
 - `restage-20261006T035515Z/MANIFEST.json` (`009532038cee11ea20075a7291e4b247c7df8e97806946a61bd8dce7dd635802`);
 - the original handoff `MANIFEST.json` (`4b8c54da7e4b11cc2f30b02aa88f159d5240134bf4962e670d2bfcddbcd699ad`).
@@ -17,17 +18,17 @@ Three predecessor current files that no later manifest retains are preserved the
 - the `00953203` version of `test_v2_publish.py` (`bbb8e5de`), which is also the original's;
 - the `00953203` version of `test_v2_rowsel_raw.py` (`f33f3d2b`).
 
-The latter two come from the retained `restage-20261006T035515Z` staging and equal the blobs committed here at that time. Every current file of all four predecessors can be restored from the verifier's per-manifest reconstruction map. All 88, 79, 58 and 46 of their historical payloads remain available.
+The latter two come from the retained `restage-20261006T035515Z` staging and equal the blobs committed here at that time. Every current file of all five predecessors can be restored from the verifier's per-manifest reconstruction map. All 190, 88, 79, 58 and 46 of their historical payloads remain available.
 
-The manifest's `abandoned_unpushed_stagings` records `restage-20261006T113426Z` (`e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5`). That staging was never pushed because it picked up the out-of-scope P8 file `dltrain/exclusions.py`. It is not in `lane/`, and the verifier refuses any abandoned staging that appears in the chain, by manifest sha or by path.
+The predecessor manifest `253e593b` records `restage-20261006T113426Z` under `abandoned_unpushed_stagings` (`e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5`). That staging was never pushed because it picked up the out-of-scope P8 file `dltrain/exclusions.py`. It is not in `lane/`, and the verifier refuses any abandoned staging that appears in the chain, by manifest sha or by path.
 
-The producer staging kept history at a shared `../historical/` path. This import normalizes exactly the manifest-listed history into `lane/historical/`; it does not rename historical results into current evidence. The producer's README inside `lane/` is the `20261006T114844Z` restage note and describes the original staging location. Current and historical source files and all five producer manifests are unchanged.
+The producer staging kept history at a shared `../historical/` path. This import normalizes exactly the manifest-listed history into `lane/historical/`; it does not rename historical results into current evidence. The producer's README inside `lane/` is the `20261006T131001Z` restage note and describes the original staging location. Current and historical source files and all six producer manifests are unchanged.
 
 This handoff carries the owner rulings NONRAW-SPLIT-A and GROUP-UNION-B, the publisher hardening, and the fixes for the PR #218 review findings. Hashes are listed in the table below.
 
 | file | sha256 | role |
 | --- | --- | --- |
-| `tools/v2_rowsel_build.py` | `8b056648` | non-raw split hook |
+| `tools/v2_rowsel_build.py` | `94fcc4b1` | non-raw split hook |
 | `tools/v2_build_local.py` | `8c3c9a6a` | non-raw split hook |
 | `tools/v2_build_l7a.py` | `0b0bc458` | non-raw split hook |
 | `dltrain/rowsel_split_v2_groups.py` | `792aec76` | group split, built on `dltrain/rowsel_raw_split_v2.py` (`97340df3`) |
@@ -58,6 +59,15 @@ Source custody still grants no runtime authority. Changing a default again requi
   - **F4:** `target_tied_group` refuses a group column that is bytes-equal to the target, an affine copy (relative RMSE ≤ 1e-10), a function of it, binned with disjoint target ranges, or nearly determined by it (≥ 99%). Module mutants are killed 24/24, including 11 leak mutants, and 0 of the 26 T1 group datasets are refused.
   - **F5:** `split()` requires `partition` and `group_values`.
   - **F6:** target_tied_group reads all-row y ONLY for the dataset-level admit/refuse bit. On admission, y never reaches split()/components() and the split identity is unchanged. On refusal, no context is built.
+  - **Plan-path order fix** (grok_sit_watch red-team FAIL at `eb91ab02`, issue comment 6016730510): on the plan path, `registry_group_evidence` ran `component_partition` on a candidate column before `target_tied_group`. A tied column's values therefore reached the union-find, and its evidence kept `v2g_components` and `component_structure_sha256`, although `group_disposition` then returned `not_built` and no context was built. In `tools/v2_rowsel_build.py` `94fcc4b1`:
+    - `target_tied_group` runs first.
+    - A tied column records only its tie and registry-port fields. Field grouping, `v2g_components` and `component_structure_sha256` are `null` with a not-computed marker, and its values never reach `component_partition` or `components`.
+    - `identical_components_across_reproducing` is `null` when a reproducing column has no structure.
+    - `group_disposition` checks ties first and requires identical components to be exactly `True`.
+
+    Evidence:
+    - Fix receipt: `RUN/receipts/trainonly-v2/build/pr218-finding8-tiefirst-fix-20261006T130400Z.json` (`75d4690e`). The must-fail tests FAILED on `8b056648` (the spy saw `component_partition`/`components` on the tied values, and the old disposition said "ambiguous") and pass on the fix. Mutants are killed 7/7, including 5 leak mutants.
+    - The port-free `EvidenceOrderNoPort` class in `tests/test_v2_rowsel_build_split_v2g.py` (`b5a40f2f`) has 5 tests, which run in offline CI. They FAILED on `8b056648` (`failures=4`) and pass on `94fcc4b1`, and they alone kill the same 7 mutants (logs `RUN/tmp/pr218-tiefirst/noport-mustfail-old-8b056648.log`, `noport-new-94fcc4b1.log` and `mutants-noport-result.json`).
 - **Finding 9 (F1, F2, F3; PROVENANCE-01):**
   - Code hashes bind by full sha256 only, and the resolver fails closed: exit 2, with `--publish` refused before any client is created.
   - Every published row is scanned, `gpu_encode_versions` are counted, and missing hashes are reported as `MISSING CODE HASH`.
@@ -106,7 +116,7 @@ The verifier uses committed expected manifest pins for the handoff and its order
 
 These are source custody checks, not executed-family coverage or producer authentication for operational consumers.
 
-The Python CI lane additionally runs exactly 19 preserved unittest modules through `run_lane_offline.py`: 508 collected identities, of which 472 synthetic cases execute and 36 named cases stay explicitly deferred.
+The Python CI lane additionally runs exactly 19 preserved unittest modules through `run_lane_offline.py`: 515 collected identities, of which 477 synthetic cases execute and 38 named cases stay explicitly deferred.
 
 What the runner allows and refuses:
 
@@ -122,9 +132,9 @@ These Python audit controls are not OS sandboxing or native-extension isolation.
 The runner excludes only these named identities, each with its reason in `HOST_CASES`:
 
 - **2 cases from `tests.test_v2_rowsel_build`** (private scope and rights metadata): `Scope.test_real_scope_is_the_admitted_class` and `FrozenScope.test_real_frozen_scope`.
-- **24 cases from `tests.test_v2_rowsel_build_split_v2`, `tests.test_v2_rowsel_build_split_v2g` and `tests.test_split_defaults`.** They read pinned private lane inputs:
+- **26 cases from `tests.test_v2_rowsel_build_split_v2`, `tests.test_v2_rowsel_build_split_v2g` and `tests.test_split_defaults`.** They read pinned private lane inputs:
   - the NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay;
-  - the registry port `gsk.py` (`Evidence` class setup);
+  - the registry port `gsk.py` (`Evidence` class setup, including its two finding-8 order tests; the port-free `EvidenceOrderNoPort` class is not excluded);
   - scale-check sources (`Scope` class setup);
   - earlier builder bytes (`ed00684a`, `c0b989b6`, `fcfe3828`, `28be7f98`).
 
@@ -144,4 +154,4 @@ The output directory must not exist. Neither it nor the custody checkout may lie
 
 Local evidence for the original import is retained in `/home/ubuntu/jope-evidence/s1-twofold-bootstrap-20261006/`. The original 191-member predecessor archive has SHA256 `24c5404bf0b0ec4f8d40e96008dcb1db40bc36c5954be86aa6e96a8d91899528`. The restage and its predecessors are retained in `/home/ubuntu/jope-evidence/dl-lane-handoff/`, indexed by `RESTAGES.jsonl`.
 
-The producer ran the same 19 modules on the staged bytes with private host inputs present: 508 tests, exit 0 (`tests_run_on_staged_copy` in the manifest). The initial offline harness's library-probe refusal, missing CI dependency, refused urllib3 IPv6 import probe and CI private-path collection and execution refusals are separate retained outcomes. Earlier local329 and 454-identity receipts cover the earlier eleven- and sixteen-module selections and do not establish current host qualification. `just required` has an unchanged-main Clippy baseline; this import does not claim a passing complete CPU diagnostic.
+The producer ran the same 19 modules on the staged bytes with private host inputs present: 515 tests, exit 0 (`tests_run_on_staged_copy` in the manifest). The initial offline harness's library-probe refusal, missing CI dependency, refused urllib3 IPv6 import probe and CI private-path collection and execution refusals are separate retained outcomes. Earlier local329, 454- and 508-identity receipts cover the earlier eleven-, sixteen- and nineteen-module selections and do not establish current host qualification. `just required` has an unchanged-main Clippy baseline; this import does not claim a passing complete CPU diagnostic.
