@@ -127,7 +127,7 @@
       "finding_count": 1
     },
     "fallback": {
-      "decision": "Keep bounded adapter failures visible",
+      "decision": "Keep adapter failures visible",
       "rationale": "The benchmark adapter catches an exception to produce a failure result. An exception-handler marker alone does not establish successful fallback computation. Full failure-accounting and permitted-input qualification remain required; this release note is not proof of those operational gates.",
       "owner": "Benchmark owner",
       "closure_route": "Replay adapter failures and verify their terminal accounting before expanding its qualified scope.",
@@ -253,7 +253,7 @@
       "finding_count": 4
     },
     "rot-version": {
-      "decision": "Preserve versioned contracts and qualified reference binaries",
+      "decision": "Preserve versioned contracts and reference binaries",
       "rationale": "The path contains an explicit algorithm/schema/release version. Renaming it merely to silence a pattern would break source pins, replay commands or persisted identities. Keep it until a reviewed migration retires its consumers.",
       "owner": "Respective versioned subsystem owner",
       "closure_route": "Inventory consumers and preserve source/evidence before a version migration.",
@@ -10200,5 +10200,6 @@
       "counted_in_current_audit": false,
       "reproduction": "README relative-link inventory on source2e contains no AGENTS.md link"
     }
-  ]
+  ],
+  "locator_semantics": "Original auditor paths/lines retained. Nominal absent profile paths have null file hashes; synthetic line 1 on an empty file has a valid empty-file hash and null line hash."
 }

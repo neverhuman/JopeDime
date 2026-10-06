@@ -2,7 +2,7 @@
 
 This is the release-note rationale for the full read-only audit of `2e0b7723b56a4edfcde87a875d24555724fc6801`. The score is **47/85**, with **544 findings: 468 hard and 76 soft across 29 rule families**. The audit failed its conformance gate. A documented disposition does not mean a defect was fixed, a safety argument was proved, or a capability was qualified.
 
-The [complete finding register](jankurai-v1-findings.json) retains every original finding ordinal, fingerprint, severity, path and line, with a hash of the source file and flagged line where they exist. Each entry has an explicit disposition, rationale and owner/closure route. Group totals below derive from that register. Raw secret-like snippets are redacted; their source identity is retained.
+The [complete finding register](jankurai-v1-findings.json) retains every original finding ordinal, fingerprint, severity, path and line, with a hash of the source file and flagged line where they exist. Each entry has an explicit disposition, rationale and owner/closure route. Group totals below derive from that register. Raw secret-like snippets are redacted; their source identity is retained. The auditor uses synthetic line 1 for an empty package initializer and nominal paths for missing profile files. Those entries retain the original locator; an unavailable file or line hash stays null rather than inventing source evidence.
 
 The installed Jankurai 1.6.11 binary has SHA-256 `9aa101c10cdc40c8a15e3f5c1341be3bce78e86f61754d849bbe8229e485a783`. Its digest differs from the earlier same-version binary used for the 1,995-finding report. The changed finding count is not evidence of a source improvement. The complete audit command was:
 
@@ -13,7 +13,7 @@ JANKURAI_NO_UPDATE_CHECK=1 jankurai audit . --full --no-score-history \
   --timings-json /path/to/evidence/timings.json
 ```
 
-The original JSON report SHA-256 is `bbe87e72d5718f9e456c906c924d419d5178cde684bd3889059d3610dc824307`. This audit ran in a clean registered worktree. It took 308.35 seconds and exited 1 because the score/hard findings did not meet the gate. Output generation and a complete failed audit are separate from an audit execution error.
+The original JSON report SHA-256 is `bbe87e72d5718f9e456c906c924d419d5178cde684bd3889059d3610dc824307`. This audit ran in a clean registered worktree. It took approximately 308 seconds and exited 1 because the score/hard findings did not meet the gate. Output generation and a complete failed audit are separate from an audit execution error.
 
 ## Release limitations
 
@@ -26,7 +26,7 @@ The README badge is routed to Lane B's existing release change. ROOT separately 
 | Rule family | Findings | Disposition and rationale groups |
 | --- | ---: | --- |
 | HLT-000-SCORE-DIMENSION | 3 | ci-audit (1): Record out-of-band audit without a passing gate claim; profile (2): Document the reference-profile exception |
-| HLT-001-DEAD-MARKER | 75 | fallback (1): Keep bounded adapter failures visible; marker (72): Retain lexical warnings with their exact locations; shape (1): Defer module-size restructuring; unsupported (1): Preserve explicit unsupported-state refusal |
+| HLT-001-DEAD-MARKER | 75 | fallback (1): Keep adapter failures visible; marker (72): Retain lexical warnings with their exact locations; shape (1): Defer module-size restructuring; unsupported (1): Preserve explicit unsupported-state refusal |
 | HLT-003-OWNERLESS-PATH | 1 | context (1): Retain context/ownership dimension debt |
 | HLT-005-PYTHON-PRODUCT-TRUTH | 2 | profile (2): Document the reference-profile exception |
 | HLT-006-DIRECT-DB-WRONG-LAYER | 1 | boundary (1): Retain unqualified boundary/provenance scope |
@@ -48,7 +48,7 @@ The README badge is routed to Lane B's existing release change. ROOT separately 
 | HLT-035-GIT-BAD-BEHAVIOR | 5 | git-fixture (3): Preserve isolated Git fixture setup; git-help (2): Keep conditional recovery instructions |
 | HLT-037-RELEASE-BAD-BEHAVIOR | 1 | git-fixture (1): Preserve isolated Git fixture setup |
 | HLT-038-REFERENCE-PROFILE-STRUCTURE-GAP | 4 | profile (4): Document the reference-profile exception |
-| HLT-040-REPO-ROT-BAD-BEHAVIOR | 26 | rot-disabled (1): Remove the hard-disabled duplicate CV loop; rot-doc (1): Reject a design-note-as-dead-code mismatch; rot-version (24): Preserve versioned contracts and qualified reference binaries |
+| HLT-040-REPO-ROT-BAD-BEHAVIOR | 26 | rot-disabled (1): Remove the hard-disabled duplicate CV loop; rot-doc (1): Reject a design-note-as-dead-code mismatch; rot-version (24): Preserve versioned contracts and reference binaries |
 | HLT-042-CI-LOCAL-PARITY | 10 | ci-layout (10): Document actual versioned CI entrypoints |
 | HLT-043-COPY-PASTE-BAD-BEHAVIOR | 12 | copy (12): Defer semantic consolidation |
 | HLT-046-UNNECESSARY-VARIETY | 22 | enum (22): Keep distinct namespace-local domain types |
@@ -65,7 +65,7 @@ Total: **544/544 dispositioned; 543 documented with rationale, 1 assigned to [th
 
 Owner: Release owners. Closure: Verify actual boundaries and qualify a versioned repository-specific audit profile; do not lower the present score floor.
 
-### shape — 1 findings
+### shape — 1 finding
 
 **Defer module-size restructuring.** The scorer reports large authored modules. Their size is maintenance debt; a split is not a safe name-only fix because visibility and qualification surfaces can change. Retain the finding and plan subsystem-specific refactors after the release freeze.
 
@@ -77,15 +77,15 @@ Owner: Core maintainers. Closure: Split one subsystem at a time with preserved t
 
 Owner: Respective source owner. Closure: Inspect the bound source location before changing behavior; preserve pinned source and historical records.
 
-### unsupported — 1 findings
+### unsupported — 1 finding
 
 **Preserve explicit unsupported-state refusal.** genome.rs rejects the unsupported caruana blend rather than executing an incomplete implementation. The regression release does not claim this operator. Removing the refusal would weaken the input boundary.
 
 Owner: GP owner. Closure: Implement and qualify the operator under a separate supported-version contract if it is needed.
 
-### fallback — 1 findings
+### fallback — 1 finding
 
-**Keep bounded adapter failures visible.** The benchmark adapter catches an exception to produce a failure result. An exception-handler marker alone does not establish successful fallback computation. Full failure-accounting and permitted-input qualification remain required; this release note is not proof of those operational gates.
+**Keep adapter failures visible.** The benchmark adapter catches an exception to produce a failure result. An exception-handler marker alone does not establish successful fallback computation. Full failure-accounting and permitted-input qualification remain required; this release note is not proof of those operational gates.
 
 Owner: Benchmark owner. Closure: Replay adapter failures and verify their terminal accounting before expanding its qualified scope.
 
@@ -107,7 +107,7 @@ Owner: Learning owner. Closure: Use syntax-aware detection; preserve path-refusa
 
 Owner: Campaign owner. Closure: Retain Linux type/bounds proof and affinity tests; re-evaluate on platform changes.
 
-### zero-signal — 1 findings
+### zero-signal — 1 finding
 
 **Retain signal-structure proof debt.** gp.rs zero-initializes libc::sigaction before assigning its handler/mask for a Linux syscall. This is not a general authorization for mem::zeroed. A platform-specific validity and signal-handler audit remains required.
 
@@ -143,25 +143,25 @@ Owner: Python/benchmark owner. Closure: Reject untrusted artifacts through the r
 
 Owner: Benchmark owner. Closure: Keep positive and malicious-artifact refusal tests; do not treat digest parity as authentication.
 
-### sql-fixture — 1 findings
+### sql-fixture — 1 finding
 
 **Document parameterized test SQL.** The flagged test_family_pin.py call has question-mark placeholders with a separately supplied parameter tuple. It builds a negative registry fixture in a temporary local database, not SQL by concatenating untrusted data.
 
 Owner: DL lane. Closure: Preserve read-only-registry refusal tests and parameter binding.
 
-### checksum — 1 findings
+### checksum — 1 finding
 
 **Separate checksum verification from TLS.** TokenizedCorpus(..., verify=False) is a corpus checksum-loading option, not an HTTP certificate-verification switch. Parent corpus binding and process-spawn reload checks must be reviewed separately; this note does not qualify all cached loading paths.
 
 Owner: Python trainer owner. Closure: Verify the admitted corpus and worker reload closure; keep TLS verification enabled in network clients.
 
-### pinned-exec — 1 findings
+### pinned-exec — 1 finding
 
 **Retain the authenticated-code trust boundary.** v2_rowsel_build.py reads the GSK port with read_verified(GSK, GSK_SHA256) before compile/exec. It deliberately executes pinned code rather than arbitrary caller-provided source. The pin/provenance and filesystem custody remain trusted prerequisites, and this is not a general safe eval API.
 
 Owner: DL lane. Closure: Verify producer authority, exact consumed bytes and source pin before execution; qualify a typed module replacement separately.
 
-### ci-selfhost — 1 findings
+### ci-selfhost — 1 finding
 
 **Record runner isolation as a separate gate.** A self-hosted label is not evidence of a Docker socket mount. fast-lane.sh explicitly says the CI image has no Docker socket; workflow permissions are read-only and checkout credentials are not persisted. Actual launcher isolation and hostile-PR qualification remain runner-owner gates. ROOT will not change ENG:JAILGUN runner controls.
 
@@ -193,17 +193,17 @@ Owner: Release owner. Closure: Keep test-root confinement and real-publish refus
 
 ### rot-version — 24 findings
 
-**Preserve versioned contracts and qualified reference binaries.** The path contains an explicit algorithm/schema/release version. Renaming it merely to silence a pattern would break source pins, replay commands or persisted identities. Keep it until a reviewed migration retires its consumers.
+**Preserve versioned contracts and reference binaries.** The path contains an explicit algorithm/schema/release version. Renaming it merely to silence a pattern would break source pins, replay commands or persisted identities. Keep it until a reviewed migration retires its consumers.
 
 Owner: Respective versioned subsystem owner. Closure: Inventory consumers and preserve source/evidence before a version migration.
 
-### rot-doc — 1 findings
+### rot-doc — 1 finding
 
 **Reject a design-note-as-dead-code mismatch.** binary_cv.rs contains prose explaining the schema-bound public fit path and class-stratified folds. The flagged comment is not executable parked code. Classification remains outside the initial regression remediation scope.
 
 Owner: Campaign owner. Closure: Retain the explanatory contract; qualify classification separately.
 
-### rot-disabled — 1 findings
+### rot-disabled — 1 finding
 
 **Remove the hard-disabled duplicate CV loop.** final_cv contains an if false block and an unreachable-code allowance after the active pooled/nonpooled evaluators. Removing only that unreachable block preserves the active scores and fit allowance while eliminating misleading parked implementation.
 
@@ -221,7 +221,7 @@ Owner: Engine/Lambda/DL owners. Closure: Classify each duplicated unit, prove se
 
 Owner: Respective type owners. Closure: Review each cited pair; consolidate only semantically identical contracts with compatibility tests.
 
-### badge — 1 findings
+### badge — 1 finding
 
 **Route live CI badge to the release owner.** The README lacks a health badge. Lane B owns the release README badge/version/GP changes. Record this pending presentation fix; do not publish a green audit badge for a score of 47 or treat a badge as current execution evidence.
 
@@ -245,49 +245,49 @@ Owner: Release/CI owners. Closure: Qualify a reproducible audit lane/profile sep
 
 Owner: Security/CI owners. Closure: Read exact-head security receipts and maintain pinned dependency/secret checks; retain uncovered scope.
 
-### secret-pattern — 1 findings
+### secret-pattern — 1 finding
 
 **Redact a scanner-policy token without claiming secret-free history.** The matched line is the gitleaks allowlist paths field containing a synthetic fixture/private-key-armor pattern, not a verified live credential. Default gitleaks rules remain enabled. The broad exception policy still needs independent review. Raw secret-like evidence is not copied into this public register.
 
 Owner: Security owner. Closure: Review each allowlist scope and run history/tree scans; rotate only independently confirmed live credentials.
 
-### fixture-freeze — 1 findings
+### fixture-freeze — 1 finding
 
 **Preserve immutable historical compatibility bytes.** The match is inside a historical content-addressed emitted-source fixture, not a changed current test assertion. Rewriting it would destroy the baseline. Current replay tests and approved transition records are required separately; the fixture alone is not proof.
 
 Owner: GP/release owners. Closure: Retain exact historical bytes and require maintained current replay/parity tests.
 
-### io-comment — 1 findings
+### io-comment — 1 finding
 
 **Reject a file-reader comment as a review attestation.** io.rs describes accepting plain/gzip/zstd inputs and fixture compression. It does not certify independent human review or a numerical result. Keep the actual PR review and verification records separate.
 
 Owner: Arena owner. Closure: Retain decompression fixtures; bind any future review claim to a named review and full source SHA.
 
-### sql-product — 1 findings
+### sql-product — 1 finding
 
 **Preserve parameterized SQL in the ledger.** The cited statement uses task=?, dataset_hash=?, semantic_sha256=? and protocol_sha256=? placeholders with bound parameters. Adjacent transactional recheck and insertion stay intact. The token match does not establish an unvalidated input sink.
 
 Owner: Campaign ledger owner. Closure: Retain race/idempotency and malicious-value tests without string interpolation.
 
-### nats — 1 findings
+### nats — 1 finding
 
 **Reject logarithmic-unit text as a streaming client.** decode_outcomes.rs:8 uses nats for logit spacing in a fixed-logit sampler fixture. It does not instantiate a NATS client or expose an unbounded streaming adapter.
 
 Owner: Policy owner. Closure: Retain sampler refusal/exhaustion fixtures; improve syntax/context-aware detection.
 
-### release-layout — 1 findings
+### release-layout — 1 finding
 
 **Document the existing release runbook.** The expected docs/release.md does not exist; docs/release/README.md contains the host release procedure and its limitations. Do not confuse documented source procedure with a completed dry run, signed package or tag.
 
 Owner: Release owner. Closure: Retain the runbook and qualify actual release evidence before publishing.
 
-### cost — 1 findings
+### cost — 1 finding
 
 **Keep campaign budgets and CI cost proof separate.** docs/testing.md documents test families; compute studies have separate immutable admissions and deadlines. A documentation score does not prove spend control. No training/GPU/storage grant or renewed budget is inferred by this audit.
 
 Owner: Campaign/CI owners. Closure: Bind each executed campaign to its original resource ceiling, deadline and complete attempt accounting.
 
-### observability — 1 findings
+### observability — 1 finding
 
 **Retain partial observability coverage.** The dimension score is below 85. CI receipt/result machinery and testing docs exist, but the score is not an operational recovery or complete logging proof. Missing runtime evidence remains open.
 
