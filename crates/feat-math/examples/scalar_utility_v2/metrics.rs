@@ -258,6 +258,7 @@ pub fn summarize(runs: &[Run]) -> Result<Value, String> {
     Ok(
         json!({"schema":"feat-math.scalar-utility-metrics.v1","runs":runs.len(),"cards":cards,
         "status":"native metrics; compiled parity and exact-head lifecycle still required",
+        "quality_definition":"M1/M2/M3 use raw inner-fold R2 of objective-selected winner/elites; fault penalties affect selection only",
         "noise_definition":"sample standard deviation of the five A seeds on each dataset",
         "cost_definition":"elite nodes/depth; best three-language code+doc tokens and recipe+fitted+codec bytes; wall per attempted evaluation",
         "invalid_offspring_denominator":"all birth and edit attempts, including refused proposals",
