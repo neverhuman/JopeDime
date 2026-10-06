@@ -114,6 +114,31 @@ fn state(outcome: ClaimOutcome) -> String {
     }
 }
 
+// The guard cannot cross threads, and unwinding restores the real clock.
+struct SyntheticClock(std::marker::PhantomData<std::rc::Rc<()>>);
+impl SyntheticClock {
+    fn frozen() -> Self {
+        let now = monotonic_ns().unwrap();
+        SYNTHETIC_MONOTONIC_NS.with(|clock| {
+            assert!(clock.get().is_none(), "synthetic clock already installed");
+            clock.set(Some(now));
+        });
+        Self(std::marker::PhantomData)
+    }
+
+    fn advance_to(&self, now: u64) {
+        SYNTHETIC_MONOTONIC_NS.with(|clock| {
+            assert!(now >= clock.get().unwrap());
+            clock.set(Some(now));
+        });
+    }
+}
+impl Drop for SyntheticClock {
+    fn drop(&mut self) {
+        SYNTHETIC_MONOTONIC_NS.with(|clock| clock.set(None));
+    }
+}
+
 #[test]
 fn missing_storage_and_uncovered_history_fail_closed() {
     let f = Fixture::new(false);
@@ -232,6 +257,9 @@ fn concurrent_104_requests_authorize_exactly_one_synthetic_start() {
                 barrier.wait();
                 match authority.claim(&fit, &request()).unwrap() {
                     ClaimOutcome::Claimed(claim) => {
+                        // This tests single-start arbitration, with the original
+                        // 30-second logical budget, independently of SDK hash cost.
+                        let _clock = SyntheticClock::frozen();
                         let start = authority
                             .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
                             .unwrap();
@@ -258,6 +286,35 @@ fn concurrent_104_requests_authorize_exactly_one_synthetic_start() {
         state(fixture.open().lookup(&fit(), &request()).unwrap()),
         "running"
     );
+}
+
+#[test]
+fn synthetic_clock_preserves_original_start_deadline_and_thread_isolation() {
+    let fixture = Fixture::new(true);
+    let (mut authority, fit, claim) = fixture.claim();
+    let clock = SyntheticClock::frozen();
+    assert!(
+        std::thread::spawn(|| SYNTHETIC_MONOTONIC_NS.with(|clock| clock.get().is_none()))
+            .join()
+            .unwrap()
+    );
+    let start = authority
+        .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
+        .unwrap();
+    assert_eq!(
+        start.deadline_monotonic_ns - start.authorized_monotonic_ns,
+        30_000_000_000
+    );
+    clock.advance_to(start.deadline_monotonic_ns);
+    let error = authority.consume_start(&fit, &start).err().unwrap();
+    assert_eq!(error.to_string(), "original start deadline expired");
+    assert_eq!(authority.checkpoint.seq, 4, "no expired start consumed");
+    assert_eq!(
+        state(authority.claim(&fit, &request()).unwrap()),
+        "authorized"
+    );
+    drop(clock);
+    assert!(SYNTHETIC_MONOTONIC_NS.with(|clock| clock.get().is_none()));
 }
 
 #[test]
