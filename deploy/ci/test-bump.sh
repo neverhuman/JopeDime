@@ -206,12 +206,32 @@ expect "a Lambda file that differs from SNAPSHOT.json ($tampered)" refuse \
 expect "  and changes nothing else" ok '^unchanged$' unchanged . ":(exclude)$tampered"
 for lock in "${locks[@]}"; do
   reset_tree
+  # A newly imported lock still equals its frozen bytes. Adding a change record alone
+  # must fail the snapshot check before sync-locks is reached. Retain that refusal,
+  # then make an actual synthetic non-version edit to exercise the sync fence too.
+  frozen=$(jq -r --arg p "$lock" '.files[] | select(.tree_path == $p) | .sha256' \
+    "$tree/deploy/lambda/SNAPSHOT.json")
+  now=$(sha256sum "$tree/$lock"); now=${now%% *}
   record=$(jq --arg p "$lock" '(.files[] | select(.tree_path == $p) | .tree_change) = "hand edit: another change"' \
     "$tree/deploy/lambda/SNAPSHOT.json")
   printf '%s\n' "$record" > "$tree/deploy/lambda/SNAPSHOT.json"
-  expect "SNAPSHOT.json records another change to $lock" refuse 'records another change to .*The lock is unchanged' \
-    bump "$scratch"
-  expect "  and the lock is as exported" ok '^unchanged$' unchanged "$lock"
+  if [[ $frozen == "$now" ]]; then
+    expect "SNAPSHOT.json invents a change to unchanged $lock" refuse \
+      'a tree_change for an unchanged one: .*not consistent before the bump.*nothing was changed' bump "$scratch"
+    expect "  and the lock is as exported" ok '^unchanged$' unchanged "$lock"
+    reset_tree
+    printf '\n# synthetic non-version hand edit\n' >> "$tree/$lock"
+    (cd "$tree" && bash "$helper" snapshot-refresh "$lock" 'hand edit: another change')
+    fixture_hash=$(sha256sum "$tree/$lock"); fixture_hash=${fixture_hash%% *}
+    expect "SNAPSHOT.json records another change to $lock" refuse \
+      'records another change to .*The lock is unchanged' bump "$scratch"
+    expect "  and the hand-edited lock is unchanged" ok 'OK$' \
+      bash -c 'printf "%s  %s\n" "$1" "$2" | sha256sum -c --strict' check "$fixture_hash" "$tree/$lock"
+  else
+    expect "SNAPSHOT.json records another change to $lock" refuse 'records another change to .*The lock is unchanged' \
+      bump "$scratch"
+    expect "  and the lock is as exported" ok '^unchanged$' unchanged "$lock"
+  fi
   reset_tree
   expect "cargo update changes $lock beyond its version lines" refuse \
     'beyond the version lines of .*the lock is unchanged' \
