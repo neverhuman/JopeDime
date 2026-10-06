@@ -1,6 +1,7 @@
 # JopeDime
 
 [![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+[![Main CPU CI](https://github.com/neverhuman/JopeDime/actions/workflows/full-main.yml/badge.svg?branch=main)](https://github.com/neverhuman/JopeDime/actions/workflows/full-main.yml)
 
 Standalone JOPE-Dime: a typed program-synthesis engine for tabular models,
 encoders (Hyperion and companions), and emitters that lower a program to Python,
@@ -30,13 +31,16 @@ an LLM. The `cpp20` target compiles the same C++17 source as C++20. Export suppo
 admission depend on the selected capability manifest and profile; experimental kernels retain
 their documented bounds.
 
+The GP emit targets are `python`, `rust`, `cpp17` and `cpp20`.
+
 The [GP language coverage record](docs/parity/gp-language-tricks.md) describes tree representation
 and differential compilation. The [emitter determinism record](docs/parity/gp-emitter-determinism.md)
 describes repeated and cross-process emission, compiler checks, protected-domain behavior and
 the documented numerical comparison contract.
 
-Build the released version from its signed tag with `git checkout v1.0.0` followed by
-`cargo build --locked`. Publication follows the reviewed release and its qualification gates.
+After publication, check out the release tag with `git checkout v1.0.0` and install the CLI with
+`cargo install --locked --path crates/jope-cli --bin jope`. Release assets have signed checksums;
+the Git tag is annotated. Publication follows the reviewed release and its qualification gates.
 
 ## v0.2.0 reference inventory
 
