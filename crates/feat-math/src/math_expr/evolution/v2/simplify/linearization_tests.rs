@@ -506,3 +506,36 @@ fn records_of_one_expression_must_agree_about_the_samples_they_share() {
     let kept: Vec<LinearizationEvidence> = few.iter().map(evidence).collect();
     assert_eq!(recorded(NEAR_LINEAR, &kept).unwrap(), few);
 }
+
+/// Like `simplify_v2` (B20 wiring review 01, B20-R01-AST-FIRST), the public linearization entries
+/// check a decoded tree's structure before they copy or normalize it: a `MathExpr` decoded from
+/// JSON has had no structure check, and the copy and the admission's normalization both recurse.
+#[test]
+fn the_public_entries_check_a_decoded_tree_before_copying_it() {
+    // #202 review 04's shallow 65-node tree: one call with 64 literal arguments.
+    let leaves = vec![serde_json::json!({ "Const": 1.0 }); 64];
+    let wide: MathExpr =
+        serde_json::from_value(serde_json::json!({ "root": { "Call": ["Abs", leaves] } })).unwrap();
+    let refused = |error: anyhow::Error| {
+        assert!(
+            format!("{error:#}").contains("before it is copied"),
+            "{error:#}"
+        );
+    };
+    refused(wide.linearizable_v2(&baseline(), scope()).unwrap_err());
+    refused(
+        wide.linearize_v2(&baseline(), scope(), &rows(0.0, 1.0, 8))
+            .unwrap_err(),
+    );
+    refused(
+        wide.linearize_recorded_v2(&baseline(), scope(), &mut |_| {
+            unreachable!("a refused tree records nothing")
+        })
+        .unwrap_err(),
+    );
+    // An admitted tree passes the check.
+    assert!(MathExpr::parse(NEAR_LINEAR)
+        .unwrap()
+        .linearizable_v2(&baseline(), scope())
+        .is_ok());
+}
