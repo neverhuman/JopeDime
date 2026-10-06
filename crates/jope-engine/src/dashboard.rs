@@ -118,23 +118,23 @@ mod worker_identity_tests {
     #[test]
     fn recognizes_batch_workers_without_a_world_flag() {
         assert!(experimental_gpu_rank(
-            b"jope-parallel\0qualify-batch-rank\0--rank\00\0"
+            b"jope-parallel\0qualify-batch-rank\0--rank\x000\0"
         ));
         assert!(experimental_gpu_rank(
-            b"jope-parallel\0train-rank\0--rank\07\0--world\08\0"
+            b"jope-parallel\0train-rank\0--rank\x007\0--world\08\0"
         ));
         assert!(experimental_gpu_rank(
-            b"python3\0encode.py\0--rank\00\0--world-size\08\0"
+            b"python3\0encode.py\0--rank\x000\0--world-size\08\0"
         ));
         assert!(!experimental_gpu_rank(b"python3\0batch-controller.py\0"));
         assert!(!experimental_gpu_rank(
             b"jope-parallel\0qualify-batch-rank\0--rank\0invalid\0"
         ));
         assert!(!experimental_gpu_rank(
-            b"python3\0/tmp/qualify-batch-rank\0--rank\00\0"
+            b"python3\0/tmp/qualify-batch-rank\0--rank\x000\0"
         ));
         assert!(!experimental_gpu_rank(
-            b"python3\0script.py\0--rank\00\0--world\00\0"
+            b"python3\0script.py\0--rank\x000\0--world\x000\0"
         ));
     }
 }
@@ -3037,7 +3037,7 @@ pub fn render(
             for i in 0..8 {
                 f.render_widget(
                     Sparkline::default()
-                        .data(&history.gpu[i].iter().copied().collect::<Vec<_>>())
+                        .data(history.gpu[i].iter().copied().collect::<Vec<_>>())
                         .max(100)
                         .style(Style::default().fg(Color::Cyan))
                         .block(Block::default().title(format!("GPU {i} · 120s"))),

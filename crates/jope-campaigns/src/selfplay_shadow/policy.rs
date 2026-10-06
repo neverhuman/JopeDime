@@ -1034,7 +1034,7 @@ pub enum PromotionDecision {
 
 pub fn promotion_decision(evidence: PromotionEvidence) -> Result<PromotionDecision> {
     ensure!(
-        (256..=2_048).contains(&evidence.datasets) && evidence.datasets % 128 == 0,
+        (256..=2_048).contains(&evidence.datasets) && evidence.datasets.is_multiple_of(128),
         "promotion evidence must use deterministic 128-dataset blocks"
     );
     ensure!(

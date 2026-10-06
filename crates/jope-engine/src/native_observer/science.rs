@@ -533,7 +533,7 @@ async fn graph_run(
             candidates.push((meta.modified()?, p));
         }
     }
-    candidates.sort_by(|a, b| b.0.cmp(&a.0));
+    candidates.sort_by_key(|b| std::cmp::Reverse(b.0));
     if candidates.len() > 8 {
         rows.notes.push(text(format!(
             "{id}: showing 8 of {} recorded graph results; selection mtime is not completion time",
@@ -1051,12 +1051,14 @@ mod tests {
     use super::*;
     #[test]
     fn a_fresh_source_does_not_hide_another_stale_scientific_row() {
-        let mut rows = Rows::default();
-        rows.checkpoints = vec![
-            json!({"identity":"old","status":"committed","scientific_verified_at_unix_ms":1000}),
-            json!({"identity":"recent","status":"committed","scientific_verified_at_unix_ms":39000}),
-        ];
-        rows.corpus = Some(json!({"sha256":"a".repeat(64),"scientific_verified_at_unix_ms":1000}));
+        let rows = Rows {
+            checkpoints: vec![
+                json!({"identity":"old","status":"committed","scientific_verified_at_unix_ms":1000}),
+                json!({"identity":"recent","status":"committed","scientific_verified_at_unix_ms":39000}),
+            ],
+            corpus: Some(json!({"sha256":"a".repeat(64),"scientific_verified_at_unix_ms":1000})),
+            ..Default::default()
+        };
         let reader = Reader {
             latest: Arc::new(Mutex::new(Observed {
                 at: Some(40000),

@@ -1027,7 +1027,7 @@ pub fn probe_accumulation(world: usize, microbatch: usize, global_batch: usize) 
     );
     let local_total = world * microbatch;
     ensure!(
-        global_batch % local_total == 0,
+        global_batch.is_multiple_of(local_total),
         "probe batch must divide the declared global batch"
     );
     Ok(global_batch / local_total)

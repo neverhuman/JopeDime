@@ -253,8 +253,7 @@ pub fn verify_continuation_partition(
     ensure!(
         state
             .get("preference_objective")
-            .map_or(true, |declared| policy.get("preference_objective")
-                == Some(declared)),
+            .is_none_or(|declared| policy.get("preference_objective") == Some(declared)),
         "recovered checkpoint declares a preference objective the continuation does not"
     );
     ensure!(
@@ -308,7 +307,7 @@ fn validate_checkpoint(path: &Path, step: u64) -> Result<String> {
             artifact.display()
         );
     }
-    Ok(file_hash(&state_path)?)
+    file_hash(&state_path)
 }
 
 pub fn reconcile(root: &Path, run: &Path) -> Result<()> {
