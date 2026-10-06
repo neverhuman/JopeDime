@@ -196,7 +196,7 @@ static std::pair<double,std::uint32_t> numerical_finish_v2(double value) {
     if(value< -1e12) return {-1e12,1u<<9};
     return {value,0};
 }
-static std::pair<double,std::uint32_t> numerical_asinh_v2(double value) {
+[[maybe_unused]] static std::pair<double,std::uint32_t> numerical_asinh_v2(double value) {
     if(!std::isfinite(value)) return {0.0,1u<<13};
     const double a=std::abs(value);
     if(a<0x1p-28) return {value,0};
@@ -330,7 +330,7 @@ static std::pair<double,std::uint32_t> numerical_l2_v2(const std::vector<double>
     }
     return {std::min(1e12,numerical_square_root_v2(squares)),0};
 }
-static std::pair<double,std::uint32_t> numerical_reduce_v2(const std::string& kind,const std::vector<double>& row) {
+[[maybe_unused]] static std::pair<double,std::uint32_t> numerical_reduce_v2(const std::string& kind,const std::vector<double>& row) {
     if(kind!="sum" && kind!="l1" && kind!="mean" && kind!="l2")
         throw std::invalid_argument("unsupported numerical reduction");
     for(const double cell:row) if(!std::isfinite(cell)) return {0.0,1u<<13};
