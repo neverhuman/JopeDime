@@ -45,8 +45,15 @@ fn emit_cpp_inner(
         } => return Err(vec!["target transforms".to_string()]),
         Plan::Symbolic { expr, affine, .. } if expressions => {
             let model = symbolic_cpp(expr, *affine)?;
+            // Symbolic recipes have no ridge/stage use of max_num. Mark only
+            // this opt-in copy; historical/default emitted bytes stay frozen.
+            let preamble = PREAMBLE.replacen(
+                "static double max_num(",
+                "[[maybe_unused]] static double max_num(",
+                1,
+            );
             return Ok([
-                PREAMBLE,
+                preamble.as_str(),
                 crate::FittedCppArtifact::expression_helpers(),
                 H_SANITIZE,
                 EXPRESSION_SHAPE,
