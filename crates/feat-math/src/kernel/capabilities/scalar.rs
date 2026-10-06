@@ -59,3 +59,9 @@ pub fn scalar_policy_v2_capability() -> ElementCap {
         "numerical policy v2; asinh and stable sum/mean/l1/l2; explicit Experimental scalar producers, prior<=0.25, width1..512, caps15/4; Baseline requires equal-budget receipts",
     )
 }
+
+/// Decision and receipt identities for explicit Experimental scalar producers.
+/// This document does not alter the frozen manifest or authorize Baseline selection.
+pub fn scalar_capability_decisions_json() -> &'static str {
+    include_str!("scalar_v2/decisions.json")
+}

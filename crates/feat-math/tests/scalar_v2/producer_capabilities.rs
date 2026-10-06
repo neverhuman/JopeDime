@@ -122,3 +122,73 @@ fn native_boundary_faults_are_covered_by_the_separate_capability_declaration() {
         }
     }
 }
+
+#[test]
+fn capability_decisions_bind_receipt_hashes_and_failed_promotion_gates() {
+    use serde_json::Value;
+    use sha2::{Digest, Sha256};
+    use std::collections::BTreeSet;
+    use std::path::Path;
+
+    let document: Value =
+        serde_json::from_str(capabilities::scalar_capability_decisions_json()).unwrap();
+    assert_eq!(
+        document["schema"],
+        "feat-math.scalar-capability-decisions.v1"
+    );
+    assert_eq!(document["promotion_authorized"], false);
+    let cards = document["cards"].as_array().unwrap();
+    assert_eq!(cards.len(), 3);
+    let mut names = BTreeSet::new();
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for card in cards {
+        let name = card["card"].as_str().unwrap();
+        assert!(matches!(name, "B05" | "B06" | "B07"));
+        assert!(names.insert(name));
+        assert_eq!(card["class"], "experimental");
+        assert_eq!(card["decision"], "keep-experimental");
+        assert_eq!(card["default_enabled"], false);
+        assert_eq!(card["parser_ids_retained"], true);
+        let filename = format!("{}-scalar-v2", name.to_lowercase());
+        for (path_key, hash_key, extension) in [
+            ("receipt_path", "receipt_sha256", "json"),
+            ("markdown_path", "markdown_sha256", "md"),
+        ] {
+            let expected = format!("docs/internal/gpms/receipts/{filename}.{extension}");
+            assert_eq!(card[path_key], expected);
+            let bytes = std::fs::read(root.join(expected)).unwrap();
+            assert_eq!(format!("{:x}", Sha256::digest(&bytes)), card[hash_key]);
+            if extension == "json" {
+                let receipt: Value = serde_json::from_slice(&bytes).unwrap();
+                assert_eq!(receipt["schema"], "gpms.ladder_receipt.v1");
+                assert_eq!(receipt["rung"], format!("{name}-scalar-v2"));
+                assert_eq!(receipt["decision"], card["decision"]);
+                assert_eq!(receipt["promotion_authorized"], false);
+                assert_eq!(
+                    receipt["measurement_source_sha"],
+                    document["measurement_source_sha"]
+                );
+                assert_eq!(receipt["gates"]["G-B"], "pass");
+                assert_eq!(receipt["compiled_parity"], "PASS");
+                assert_eq!(receipt["sanitizer_qualification"], "PASS");
+                assert_eq!(receipt["decline_reasons"], card["decline_reasons"]);
+                for gate in ["G-A", "G-C"] {
+                    assert_eq!(receipt["gates"][gate], "fail");
+                    assert!(receipt["decline_reasons"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|reason| reason["gate"] == gate
+                            && reason["reason"].as_str().is_some_and(|v| !v.is_empty())));
+                }
+                assert_eq!(receipt["caps"]["max_nodes"], 15);
+                assert_eq!(receipt["caps"]["max_depth"], 4);
+                assert_eq!(receipt["budget_evals"], 72);
+                assert_eq!(receipt["datasets"].as_array().unwrap().len(), 8);
+                assert_eq!(receipt["seeds"], serde_json::json!([3, 17, 29, 101, 701]));
+                assert_eq!(receipt["native_evidence"]["unknown_internal_passes"], 0);
+            }
+        }
+    }
+    assert_eq!(names, BTreeSet::from(["B05", "B06", "B07"]));
+}
