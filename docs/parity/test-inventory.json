@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4167,
+  "count": 4168,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -4147,7 +4147,7 @@
     }
    },
    "jope-parallel": {
-    "count": 789,
+    "count": 790,
     "ignored": 14,
     "binaries": {
      "jope-parallel": {
@@ -4835,12 +4835,13 @@
      },
      "jope-parallel::bounded_smartcluster": {
       "kind": "test",
-      "count": 5,
+      "count": 6,
       "ignored": 0,
       "tests": [
        "a_killed_rank_drains_the_whole_group_through_smartcluster",
        "a_participant_proves_its_smartcluster_job_before_any_work",
        "a_restarted_coordinator_reconciles_and_drains_with_no_orphan",
+       "an_inherited_flock_file_is_refused_without_releasing_the_parent_lock",
        "cancellation_drains_the_whole_group_through_smartcluster",
        "smartcluster_ranks_commit_the_whole_group_exactly_once"
       ]
@@ -6530,7 +6531,7 @@
   }
  },
  "totals": {
-  "rust": 4167,
+  "rust": 4168,
   "python": 172
  }
 }
