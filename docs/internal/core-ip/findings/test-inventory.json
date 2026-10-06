@@ -117,6 +117,10 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "python:deploy/ci/test-provenance.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
     "python:deploy/ci/test-qualify-demo.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
