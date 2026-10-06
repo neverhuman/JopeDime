@@ -150,3 +150,5 @@ whose binary digest also matches all three retained clean-v1 shard receipts.
 The [earlier CPU build receipt](../../docs/internal/core-ip/dl-trainonly/dope-cpu-build.json)
 remains historical and provisional at its build time; it is not the active pin.
 See the [C6 packet](../../docs/internal/core-ip/dl-trainonly/teacher-packet.md).
+
+The [DL lane source custody](SOURCE_CUSTODY.md) retains the pinned 2026-10-06 builder handoff, predecessor versions and offline fixture checks. It does not grant runtime adoption, training, GPU work or publication.

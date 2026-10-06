@@ -1,0 +1,616 @@
+"""Publish a local v2 train-only build tree to s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/.
+
+Owner decision L6(e): create-only, <= 40e9 bytes in total, never overwrite or delete anything, v1 untouched; TabPFN 3.5
+outputs only under v2-trainonly/research-only/ (never readable by the production loader, s3io.assert_production_loadable).
+
+Input: BUILD/shard-*/<view_id>/ as written by tools/v2_build_local.py: context.json (schema jope.dl-v2-local-context/v1,
+published=false, files {name: {sha256, bytes}}) and .done. Every listed file maps to one component (FILES below):
+
+  object   v2-trainonly/<sub><dataset_hash>/f<fold>/<split12>-<scaler12>-<code12>.<ext>
+  receipt  v2-trainonly/receipts/<component>/<dataset_hash>/f<fold>/<split12>-<scaler12>-<code12>.json
+           (tabpfn35: v2-trainonly/research-only/receipts/tabpfn35/...; nothing of it lands outside research-only/)
+  split12 = outer_train_indices_sha256[:12], scaler12 = scaler_sha256[:12], code12 = sha256(canonical(code_sha256))[:12]
+
+Every PUT is s3io.put_create_only on a v2 writer (IfNoneMatch='*', ChecksumSHA256, the persisted v2 byte-budget ledger)
+followed by an exact-version GET whose sha256 and bytes must match. Receipts are deterministic (context.json fields and
+the object's VersionId; no clock), so a resumed run renders identical bytes.
+
+Resumable: a local per-object publish ledger (append-only JSONL, fsynced) records intent before each PUT and the verified
+VersionId after its readback. An object already verified there is checked again by an exact-version GET and never
+re-put; an interrupted PUT is retried create-only, where a 412 with equal bytes is accepted only after an exact-version
+readback. A context is refused before any PUT of it when .done is missing, context.json says published != false or is
+malformed, a listed file is unknown, missing, a symlink, or does not hash/size as recorded, an unlisted file sits beside
+it, or its key collides with another context's. The build tree is only read, never modified.
+
+--dry-run runs the same code against an in-memory fake bucket that applies the real s3io.Guard at the parameter and
+request stages (a v2 writer charged to a COPY of the real budget ledger): no AWS client is built, nothing leaves the host,
+and the real publish and budget ledgers are not touched. --real publishes with the guarded boto3 clients (AWS_PROFILE).
+
+Usage (lane slice; see the module report for full command lines):
+  v2_publish.py --build RUN/build-v2/L7b --dry-run [--limit N] [--workers N]
+  v2_publish.py --build RUN/build-v2/L7b --real    [--limit N] [--workers N]
+"""
+import argparse
+import base64
+import collections
+import concurrent.futures
+import fcntl
+import hashlib
+import json
+import os
+import re
+import shutil
+import sys
+import threading
+import time
+import types
+from pathlib import Path
+from urllib.parse import quote
+
+from botocore.exceptions import ClientError
+
+from dltrain import common, s3io
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+PUBLISH_DIR = RUN / "receipts" / "trainonly-v2" / "publish"
+DEFAULT_PUBLISH_LEDGER = PUBLISH_DIR / "v2-publish-ledger.jsonl"
+CONTEXT_SCHEMA = "jope.dl-v2-local-context/v1"
+# context schema -> the only values_mode it may carry (L7b: tools/v2_build_local.py; L7a: tools/v2_build_l7a.py)
+CONTEXT_SCHEMAS = {CONTEXT_SCHEMA: "L7b", "jope.dl-v2-l7a-context/v1": "L7a",
+                   # ROWSEL-TRAINONLY / ROWSEL-SPLIT rebuilds (tools/v2_rowsel_build.py on T1; the raw-universe builder on raw rows)
+                   "jope.dl-v2-rowsel-context/v1": "L7b", "jope.dl-v2-rowsel-raw-context/v1": "L7a"}
+GPU_COMPONENTS = {"hyperion", "foundation", "target", "context2048", "tabpfn35"}
+# ROWSEL-TRAINONLY gate: a context is publishable only when its row_selection_leak labels are all admitted. Contexts
+# from a row-selection rebuild get their own label, admitted here only after that rebuild's mutant gate passes.
+ROW_SELECTION_ADMITTED = {"clean"}
+RECEIPT_SCHEMA = "jope.dl-v2-object-receipt/v1"
+RUN_SCHEMA = "jope.dl-v2-publish-run/v1"
+LEDGER_SCHEMA = "jope.dl-v2-publish-ledger/v1"
+LEDGER_EVENTS = {"intent", "verified", "failed", "context_done"}
+PUBLISHER = "dltrain/tools/v2_publish.py"
+# file name listed in context.json -> (component, sub-prefix under V2_PREFIX_KEY, key extension, content type)
+FILES = {
+    "encoder.jtt1.gz": ("jtt1-encoder", "inputs/jtt1-encoder/", "jtt1.gz", "application/gzip"),
+    "teacher.jtt1.gz": ("jtt1-teacher", "inputs/jtt1-teacher/", "jtt1.gz", "application/gzip"),
+    "a0.f32": ("a0", "encodings/a0/", "f32", "application/octet-stream"),
+    **{f"{n}.npy": (n, f"encodings/{n}/", "npy", "application/octet-stream")
+       for n in ("hyperion", "foundation", "target", "context2048", "dope")},
+    "tabpfn35.npy": ("tabpfn35", "research-only/encodings/tabpfn35/", "npy", "application/octet-stream"),
+}
+RESEARCH_ONLY_COMPONENTS = {"tabpfn35"}
+CONTROL_FILES = {"context.json", ".done"}
+HEX16_RE = re.compile(r"[0-9a-f]{16}")
+SHA_RE = re.compile(r"[0-9a-f]{64}")
+MAX_WORKERS = 8
+RECEIPT_VID_MARGIN = 256   # preflight upper bound for a receipt's VersionId and field growth
+
+
+class Refused(Exception):
+    def __init__(self, reason: str, detail: str = ""):
+        super().__init__(f"{reason}: {detail}" if detail else reason)
+        self.reason, self.detail = reason, detail
+
+
+class PublishConflict(RuntimeError):
+    """The local publish ledger records different bytes (or two versions) for one key."""
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def code12(code_sha256: dict) -> str:
+    return sha(common.canonical(code_sha256))[:12]
+
+
+def keys_for(name: str, ctx: dict) -> tuple[str, str]:
+    component, sub, ext, _ = FILES[name]
+    stem = (f"{ctx['dataset_hash']}/f{ctx['fold']}/{ctx['outer_train_indices_sha256'][:12]}-{ctx['scaler_sha256'][:12]}-"
+            f"{code12(ctx['code_sha256'])}")
+    research = component in RESEARCH_ONLY_COMPONENTS
+    key = f"{s3io.V2_PREFIX_KEY}{sub}{stem}.{ext}"
+    receipt_key = f"{s3io.V2_PREFIX_KEY}{'research-only/' if research else ''}receipts/{component}/{stem}.json"
+    for k in (key, receipt_key):  # layout invariants, independent of the guard
+        if not s3io._in_v2_prefix(s3io.BUCKET, k) or s3io.is_research_only(k) != research:  # noqa: SLF001
+            raise Refused("layout_invariant", k)
+    return key, receipt_key
+
+
+# --------------------------------------------------------------------------------------------------------- scan
+def _sha_field(ctx, name):
+    v = ctx.get(name)
+    if not isinstance(v, str) or not SHA_RE.fullmatch(v):
+        raise Refused("context_field", name)
+    return v
+
+
+def scan_context(d: Path) -> dict:
+    """Validate one built context without touching S3; returns its publish plan or raises Refused."""
+    if d.is_symlink() or not d.is_dir():
+        raise Refused("not_a_directory", str(d))
+    done = d / ".done"
+    if done.is_symlink() or not done.is_file():
+        raise Refused("not_done")
+    cj = d / "context.json"
+    if cj.is_symlink() or not cj.is_file():
+        raise Refused("no_context_json")
+    raw = cj.read_bytes()
+    try:
+        ctx = json.loads(raw)
+    except ValueError as err:
+        raise Refused("context_json_unreadable", type(err).__name__) from err
+    if not isinstance(ctx, dict) or ctx.get("schema") not in CONTEXT_SCHEMAS:
+        raise Refused("context_schema", repr(ctx.get("schema") if isinstance(ctx, dict) else type(ctx).__name__))
+    mode = CONTEXT_SCHEMAS[ctx["schema"]]
+    if ctx.get("values_mode") != mode or ctx.get("admitted_values_mode", mode) != mode:
+        raise Refused("values_mode", f"schema {ctx['schema']} needs {mode}; values_mode={ctx.get('values_mode')!r} "
+                                     f"admitted_values_mode={ctx.get('admitted_values_mode')!r}")
+    labels = ctx.get("row_selection_leak")
+    if not isinstance(labels, list) or not labels or not set(labels) <= ROW_SELECTION_ADMITTED:
+        raise Refused("row_selection_gate", f"row_selection_leak={labels!r}; admitted {sorted(ROW_SELECTION_ADMITTED)}")
+    if ctx.get("published") is not False:
+        raise Refused("published_flag", f"context.json published={ctx.get('published')!r}; only published=false is publishable")
+    if ctx.get("view_id") != d.name:
+        raise Refused("view_id_mismatch", f"{ctx.get('view_id')!r} != {d.name!r}")
+    if not isinstance(ctx.get("dataset_hash"), str) or not HEX16_RE.fullmatch(ctx["dataset_hash"]):
+        raise Refused("context_field", "dataset_hash")
+    if type(ctx.get("fold")) is not int or ctx["fold"] < 0:
+        raise Refused("context_field", "fold")
+    for f in ("outer_train_indices_sha256", "scaler_sha256", "context_sha256"):
+        _sha_field(ctx, f)
+    codes = ctx.get("code_sha256")
+    if not isinstance(codes, dict) or not codes or not all(isinstance(k, str) and isinstance(v, str) and SHA_RE.fullmatch(v)
+                                                           for k, v in codes.items()):
+        raise Refused("context_field", "code_sha256")
+    files = ctx.get("files")
+    if not isinstance(files, dict) or not files:
+        raise Refused("context_field", "files")
+    unlisted = sorted({p.name for p in d.iterdir()} - set(files) - CONTROL_FILES)
+    if unlisted:
+        raise Refused("unlisted_files", ",".join(unlisted)[:300])
+    objects = []
+    for name in sorted(files):
+        if name not in FILES:
+            raise Refused("unknown_file", name)
+        meta = files[name]
+        if not isinstance(meta, dict) or not isinstance(meta.get("sha256"), str) or not SHA_RE.fullmatch(meta["sha256"]) \
+                or type(meta.get("bytes")) is not int or meta["bytes"] < 0:
+            raise Refused("context_field", f"files.{name}")
+        p = d / name
+        if p.is_symlink() or not p.is_file():
+            raise Refused("missing_file", name)
+        size, digest = p.stat().st_size, common.sha256_file(p)
+        if size != meta["bytes"] or digest != meta["sha256"]:
+            raise Refused("hash_mismatch", f"{name}: {digest[:12]}/{size} != recorded {meta['sha256'][:12]}/{meta['bytes']}")
+        component, _, _, ctype = FILES[name]
+        key, receipt_key = keys_for(name, ctx)
+        objects.append({"name": name, "path": str(p), "component": component, "content_type": ctype, "key": key,
+                        "receipt_key": receipt_key, "sha256": digest, "bytes": size, "raw_sha256": meta.get("raw_sha256"),
+                        "research_only": component in RESEARCH_ONLY_COMPONENTS})
+    return {"dir": str(d), "view_id": d.name, "ctx": ctx, "context_json_sha256": sha(raw), "objects": objects}
+
+
+def scan_build(build: Path) -> tuple[list, list]:
+    plans, refused = [], []
+    shards = sorted(p for p in build.glob("shard-*") if p.is_dir() and not p.is_symlink())
+    if not shards:
+        raise Refused("empty_build", f"no shard-* directories under {build}")
+    for shard in shards:
+        for d in sorted(shard.iterdir()):
+            try:
+                plans.append(scan_context(d))
+            except Refused as r:
+                refused.append({"dir": str(d), "view_id": d.name, "reason": r.reason, "detail": r.detail})
+    owners = collections.defaultdict(list)
+    for p in plans:
+        for o in p["objects"]:
+            owners[o["key"]].append(p["view_id"])
+            owners[o["receipt_key"]].append(p["view_id"])
+    clash = {v for vs in owners.values() if len(vs) > 1 for v in vs}
+    if clash:
+        refused += [{"dir": p["dir"], "view_id": p["view_id"], "reason": "key_collision", "detail": "another context maps to the same key"}
+                    for p in plans if p["view_id"] in clash]
+        plans = [p for p in plans if p["view_id"] not in clash]
+    return plans, refused
+
+
+def receipt_body(plan: dict, obj: dict, version_id: str) -> bytes:
+    ctx = plan["ctx"]
+    doc = {"schema": RECEIPT_SCHEMA, "publisher": PUBLISHER, "bucket": s3io.BUCKET, "key": obj["key"], "version_id": version_id,
+           "sha256": obj["sha256"], "bytes": obj["bytes"], "raw_sha256": obj["raw_sha256"], "file": obj["name"],
+           "component": obj["component"], "content_type": obj["content_type"], "research_only": obj["research_only"],
+           "production_loader_allowed": not obj["research_only"], "code12": code12(ctx["code_sha256"]),
+           "local_context_json_sha256": plan["context_json_sha256"]}
+    for f in ("view_id", "dataset_hash", "fold", "context_sha256", "outer_train_indices_sha256", "outer_test_indices_sha256", "n_train",
+              "n_test", "scaler_sha256", "inner_labels_sha256", "t1_meta_sha256", "values_mode", "code_sha256", "row_selection_leak",
+              "row_selection_receipt"):
+        doc[f] = ctx.get(f)
+    if obj["component"] == "dope":
+        doc["dope"] = ctx.get("dope")   # kernel/router identity and pretraining exposure (lift_eligible only when Unseen)
+    if obj["component"] in GPU_COMPONENTS:   # tools/v2_gpu_encode.py: per-component recipe digest, timing, GPU, input binding
+        g = ctx.get("gpu") or {}
+        doc["gpu"] = {"component": (g.get("components") or {}).get(obj["component"]), "input": g.get("input"), "pins": g.get("pins"),
+                      "code_sha256": g.get("code_sha256"), "manifest": g.get("manifest"), "owner_decision": g.get("owner_decision")}
+    if "rowsel" in ctx or "epoch0" in ctx:   # row-selection rebuilds: identity digest and the epoch-0 context replaced
+        rs = ctx.get("rowsel") or {}
+        doc["rowsel"] = {"route": rs.get("route"), "identity": rs.get("identity"), "outer_split_changed": rs.get("outer_split_changed")}
+        doc["epoch0"] = {k: (ctx.get("epoch0") or {}).get(k) for k in ("view_id", "context_sha256")} if "epoch0" in ctx else ctx.get("epoch0_replaced")
+    return common.receipt_bytes(doc)
+
+
+# --------------------------------------------------------------------------------------------------- ledgers
+class PublishLedger:
+    """Local append-only JSONL: intent before each PUT, verified (VersionId, sha256, bytes) after its exact-version
+    readback, failed on error, context_done once all of a context's objects and receipts are verified. An exclusive
+    flock on <ledger>.lock keeps a second publisher off the same ledger."""
+
+    def __init__(self, path):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock = threading.Lock()
+        self.verified, self.done_views, self.lines = {}, set(), 0
+        self._lockfd = os.open(str(self.path) + ".lock", os.O_RDWR | os.O_CREAT, 0o644)
+        try:
+            fcntl.flock(self._lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            os.close(self._lockfd)
+            raise RuntimeError(f"another publisher holds {self.path}.lock") from None
+        if self.path.exists():
+            data = self.path.read_bytes()
+            if data and not data.endswith(b"\n"):
+                self.close()
+                raise s3io.LedgerCorrupt(f"{self.path} ends in a partial line; inspect it before resuming")
+            for line in data.splitlines():
+                try:
+                    rec = json.loads(line)
+                except ValueError as err:
+                    self.close()
+                    raise s3io.LedgerCorrupt(f"{self.path} line {self.lines}: not JSON") from err
+                try:
+                    self._apply(rec)
+                except BaseException:
+                    self.close()
+                    raise
+        self._fd = os.open(str(self.path), os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+
+    def _apply(self, rec):
+        if not isinstance(rec, dict) or rec.get("schema") != LEDGER_SCHEMA or rec.get("event") not in LEDGER_EVENTS:
+            raise s3io.LedgerCorrupt(f"{self.path} line {self.lines}: unknown record")
+        if rec["event"] in ("intent", "verified", "failed") and not s3io._in_v2_prefix(s3io.BUCKET, rec.get("key")):  # noqa: SLF001
+            raise s3io.LedgerCorrupt(f"{self.path} line {self.lines}: key outside V2_PREFIX")
+        if rec["event"] == "verified":
+            prev = self.verified.get(rec["key"])
+            if prev is not None and (prev["sha256"], prev["bytes"], prev["version_id"]) != (rec["sha256"], rec["bytes"], rec["version_id"]):
+                raise PublishConflict(f"{self.path}: two different verified records for {rec['key']}")
+            self.verified[rec["key"]] = rec
+        elif rec["event"] == "context_done":
+            self.done_views.add(rec["view_id"])
+        self.lines += 1
+
+    def append(self, rec: dict):
+        rec = {"schema": LEDGER_SCHEMA, "utc_us": common.utc_us()} | rec
+        common.assert_no_secrets_obj(rec)
+        data = common.canonical(rec) + b"\n"
+        with self.lock:
+            written = 0
+            while written < len(data):
+                written += os.write(self._fd, data[written:])
+            os.fsync(self._fd)
+            self._apply(json.loads(data))
+
+    def close(self):
+        for fd in (getattr(self, "_fd", None), self._lockfd):
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+        self._fd = None
+
+
+def _err(err: BaseException) -> dict:
+    """s3io.safe_err (no botocore free text), plus the message of this tool's own exceptions."""
+    out = s3io.safe_err(err)
+    if isinstance(err, (Refused, PublishConflict)):
+        out["message"] = str(err)[:300]
+    return out
+
+
+def file_identity(path) -> dict:
+    p = Path(path)
+    if not p.exists():
+        return {"path": str(p), "exists": False}
+    b = p.read_bytes()
+    return {"path": str(p), "sha256": sha(b), "bytes": len(b), "lines": b.count(b"\n")}
+
+
+# ------------------------------------------------------------------------------------------------- publisher
+class Publisher:
+    def __init__(self, writer, reader, ledger: PublishLedger):
+        self.writer, self.reader, self.ledger = writer, reader, ledger
+        self.stats, self.lock = collections.Counter(), threading.Lock()
+
+    def _count(self, **kv):
+        with self.lock:
+            self.stats.update(kv)
+
+    def publish_bytes(self, key: str, body: bytes, content_type: str, kind: str, view_id: str) -> dict:
+        digest, n = sha(body), len(body)
+        prior = self.ledger.verified.get(key)
+        if prior is not None:   # already published and verified: re-check by exact-version GET, never re-put
+            if (prior["sha256"], prior["bytes"]) != (digest, n):
+                raise PublishConflict(f"publish ledger records {prior['sha256'][:12]}/{prior['bytes']} for {key}, local is {digest[:12]}/{n}")
+            chk = s3io.verify_readback(self.reader, key, prior["version_id"], body)
+            self._match(chk, key, digest, n)
+            self._count(**{f"{kind}_verified_existing": 1})
+            return {"key": key, "version_id": prior["version_id"], "sha256": digest, "bytes": n, "outcome": "verified_existing"}
+        base = {"key": key, "sha256": digest, "bytes": n, "kind": kind, "view_id": view_id}
+        self.ledger.append({"event": "intent"} | base)
+        try:
+            res = s3io.put_create_only(self.writer, key, body, self.reader, content_type=content_type)
+            vid = res.get("version_id")
+            if not vid or vid == "null":
+                raise s3io.ReadbackMismatch(f"{key}: no usable VersionId ({vid!r})")
+            if res.get("outcome") != "created":   # 412-equal came from an unpinned GET: pin it
+                res = s3io.verify_readback(self.reader, key, vid, body) | {"outcome": res.get("outcome")}
+            self._match(res, key, digest, n)
+        except BaseException as err:
+            self.ledger.append({"event": "failed", "error": s3io.safe_err(err)} | base)
+            raise
+        self.ledger.append({"event": "verified", "version_id": vid, "outcome": res["outcome"]} | base)
+        self._count(**{f"{kind}_{res['outcome']}": 1, f"{kind}_bytes_put": n if res["outcome"] == "created" else 0})
+        return {"key": key, "version_id": vid, "sha256": digest, "bytes": n, "outcome": res["outcome"]}
+
+    @staticmethod
+    def _match(res, key, digest, n):
+        if res.get("sha256") != digest or res.get("bytes") != n:
+            raise s3io.ReadbackMismatch(f"{key}: readback {res.get('sha256')}/{res.get('bytes')} != {digest}/{n}")
+
+    def publish_context(self, plan: dict) -> dict:
+        refs = []
+        for obj in plan["objects"]:
+            body = Path(obj["path"]).read_bytes()
+            if sha(body) != obj["sha256"] or len(body) != obj["bytes"]:
+                raise Refused("changed_since_scan", obj["name"])
+            r = self.publish_bytes(obj["key"], body, obj["content_type"], "object", plan["view_id"])
+            rr = self.publish_bytes(obj["receipt_key"], receipt_body(plan, obj, r["version_id"]), "application/json", "receipt",
+                                    plan["view_id"])
+            refs.append({"file": obj["name"], "component": obj["component"], "object": r, "receipt": rr})
+        self.ledger.append({"event": "context_done", "view_id": plan["view_id"], "objects": len(refs)})
+        self._count(contexts_done=1)
+        return {"view_id": plan["view_id"], "refs": refs}
+
+
+# ------------------------------------------------------------------------------------------- fake S3 (dry run)
+def _client_error(status: int, code: str, op: str) -> ClientError:
+    return ClientError({"Error": {"Code": code, "Message": code}, "ResponseMetadata": {"HTTPStatusCode": status}}, op)
+
+
+class _Body:
+    def __init__(self, data: bytes):
+        self._data = data
+
+    def read(self, *_):
+        return self._data
+
+
+class FakeBucket:
+    """In-memory versioned lane bucket. put_faults[key] = [("before"|"after", exc)] raises before storing, or stores and
+    then raises (a PUT whose outcome the caller cannot see); corrupt_reads[key] = bytes served on exact-version GETs."""
+
+    def __init__(self):
+        self.objects, self.calls, self.put_faults, self.corrupt_reads = {}, [], {}, {}
+        self.lock, self._n = threading.Lock(), 0
+
+    def keys(self):
+        return sorted(k for (_, k), vs in self.objects.items() if vs)
+
+    def puts(self):
+        return [c for c in self.calls if c[0] == "PutObject"]
+
+
+class FakeClient:
+    """Applies the real s3io.Guard at the parameter stage and the request stage before touching the fake bucket."""
+
+    def __init__(self, bucket: FakeBucket, guard: s3io.Guard):
+        self.bucket, self._dltrain_guard = bucket, guard
+
+    def _check(self, op, params, headers=None):
+        model = types.SimpleNamespace(name=op)
+        self._dltrain_guard.check_params(params, model)
+        url = f"https://{params.get('Bucket')}.{s3io.S3_HOST}/{quote(str(params.get('Key') or ''), safe='/~')}"
+        self._dltrain_guard.check_request(model, {"headers": headers or {}, "url": url})
+        with self.bucket.lock:
+            self.bucket.calls.append((op, params.get("Key"), params.get("VersionId")))
+
+    def put_object(self, **params):
+        hdrs = {h: params[p] for p, h in (("IfNoneMatch", "If-None-Match"), ("IfMatch", "If-Match")) if params.get(p) is not None}
+        self._check("PutObject", params, hdrs)
+        key, body = params["Key"], bytes(params["Body"])
+        if params.get("ChecksumSHA256") != base64.b64encode(hashlib.sha256(body).digest()).decode():
+            raise _client_error(400, "BadDigest", "PutObject")
+        with self.bucket.lock:
+            faults = self.bucket.put_faults.get(key)
+            when, exc = faults.pop(0) if faults else (None, None)
+            if when == "before":
+                raise exc
+            versions = self.bucket.objects.setdefault((params["Bucket"], key), [])
+            if params.get("IfNoneMatch") == "*" and versions:
+                raise _client_error(412, "PreconditionFailed", "PutObject")
+            if params.get("IfNoneMatch") != "*":
+                raise AssertionError("fake bucket: only create-only PUTs are expected in v2")
+            self.bucket._n += 1
+            vid = f"fakev{self.bucket._n:08d}"
+            versions.append((vid, body))
+        if when == "after":
+            raise exc
+        return {"VersionId": vid, "ETag": '"' + hashlib.md5(body, usedforsecurity=False).hexdigest() + '"',
+                "ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    def get_object(self, **params):
+        self._check("GetObject", params)
+        with self.bucket.lock:
+            versions = list(self.bucket.objects.get((params["Bucket"], params["Key"])) or [])
+            corrupt = self.bucket.corrupt_reads.get(params["Key"])
+        if "VersionId" in params:
+            found = [v for v in versions if v[0] == params["VersionId"]]
+            if not found:
+                raise _client_error(404, "NoSuchVersion", "GetObject")
+            if corrupt is not None:
+                found = [(found[0][0], corrupt)]
+        else:
+            found = versions[-1:]
+            if not found:
+                raise _client_error(404, "NoSuchKey", "GetObject")
+        vid, body = found[0]
+        return {"Body": _Body(body), "VersionId": vid, "ContentLength": len(body),
+                "ETag": '"' + hashlib.md5(body, usedforsecurity=False).hexdigest() + '"'}
+
+
+def fake_clients(budget_ledger_path, bucket: FakeBucket | None = None):
+    bucket = bucket or FakeBucket()
+    writer = FakeClient(bucket, s3io.Guard(writes=True, v2=True, ledger=budget_ledger_path))
+    reader = FakeClient(bucket, s3io.Guard(v2=True))
+    return writer, reader, bucket
+
+
+def real_clients():
+    import boto3
+    session = boto3.session.Session(profile_name=s3io.PROFILE, region_name=s3io.REGION)
+    writer = s3io.make_client(writes=True, v2=True, ledger_path=s3io.V2_LEDGER_PATH, session=session)
+    reader = s3io.make_client(v2=True, session=session)
+    return writer, reader
+
+
+# --------------------------------------------------------------------------------------------------------- run
+def code_identity() -> dict:
+    root = Path(__file__).resolve().parents[1]
+    return {f: common.sha256_file(root / f) for f in ("tools/v2_publish.py", "dltrain/s3io.py", "dltrain/common.py")}
+
+
+def preflight(plans, ledger: PublishLedger, budget: dict) -> dict:
+    """Upper bound of new bytes this run may charge (objects not yet verified, receipts with a VersionId margin)."""
+    need = 0
+    for p in plans:
+        for o in p["objects"]:
+            if o["key"] not in ledger.verified:
+                need += o["bytes"]
+            if o["receipt_key"] not in ledger.verified:
+                need += len(receipt_body(p, o, "")) + RECEIPT_VID_MARGIN
+    return {"upper_bound_new_bytes": need, "remaining_bytes": budget["remaining_bytes"], "fits": need <= budget["remaining_bytes"]}
+
+
+def run(build: Path, writer, reader, ledger: PublishLedger, budget_ledger: s3io.V2Ledger, limit=None, workers=1) -> dict:
+    t0 = common.utc_us()
+    plans, refused = scan_build(build)
+    ready = plans[:limit] if limit is not None else plans
+    doc = {"schema": RUN_SCHEMA, "build": str(build), "bucket": s3io.BUCKET, "prefix": s3io.V2_PREFIX, "started_utc_us": t0,
+           "limit": limit, "workers": workers,
+           "scan": {"contexts_seen": len(plans) + len(refused), "contexts_ready": len(plans), "contexts_selected": len(ready),
+                    "refused": refused, "refused_by_reason": dict(collections.Counter(r["reason"] for r in refused)),
+                    "objects_selected": sum(len(p["objects"]) for p in ready),
+                    "bytes_selected": sum(o["bytes"] for p in ready for o in p["objects"]),
+                    "objects_by_component": dict(collections.Counter(o["component"] for p in ready for o in p["objects"]))},
+           "budget_before": budget_ledger.usage(), "publish_ledger_before": {"verified": len(ledger.verified),
+                                                                             "contexts_done": len(ledger.done_views)}}
+    doc["preflight"] = pf = preflight(ready, ledger, doc["budget_before"])
+    failed = []
+    if not pf["fits"]:
+        doc["stopped"] = "preflight: the selected contexts could exceed the v2 byte budget; nothing was put"
+    else:
+        pub = Publisher(writer, reader, ledger)
+
+        def one(plan):
+            try:
+                pub.publish_context(plan)
+                return None
+            except BaseException as err:  # noqa: BLE001 (recorded per context; the run continues)
+                return {"view_id": plan["view_id"], "error": _err(err)}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+            failed = [f for f in ex.map(one, ready) if f]
+        doc["publish"] = {"stats": dict(pub.stats)}
+    doc["failed"] = failed
+    doc["failed_by_type"] = dict(collections.Counter(f["error"].get("type") for f in failed))
+    doc["budget_after"] = budget_ledger.usage()
+    doc["publish_ledger_after"] = {"verified": len(ledger.verified), "contexts_done": len(ledger.done_views)}
+    done = len([p for p in ready if p["view_id"] in ledger.done_views])
+    doc["contexts_done_in_selection"] = done
+    doc["verdict"] = "PASS" if pf["fits"] and not failed and not refused and done == len(ready) else "INCOMPLETE"
+    doc["finished_utc_us"] = common.utc_us()
+    return doc
+
+
+def _stamp() -> str:
+    return time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(prog="v2_publish.py", description=__doc__.split("\n\n")[0])
+    ap.add_argument("--build", required=True, help="local v2 build root, e.g. RUN/build-v2/L7b (shard-*/<view_id>/)")
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--dry-run", action="store_true", help="in-memory fake bucket behind the real guard; no AWS client")
+    mode.add_argument("--real", action="store_true", help="publish with the guarded boto3 clients (AWS_PROFILE)")
+    ap.add_argument("--limit", type=int, default=None, help="publish only the first N ready contexts (sorted by shard, view_id)")
+    ap.add_argument("--workers", type=int, default=4, help=f"contexts in flight (1..{MAX_WORKERS})")
+    ap.add_argument("--publish-ledger", default=None, help=f"real default {DEFAULT_PUBLISH_LEDGER}; dry run uses its work dir")
+    ap.add_argument("--work-dir", default=None, help="dry run only: new directory for its ledgers (default RUN/tmp/v2-publish-dryrun-<utc>)")
+    ap.add_argument("--receipt", default=None, help="run receipt path (create-only; default under RUN/receipts/trainonly-v2/publish/)")
+    a = ap.parse_args(argv)
+    if not 1 <= a.workers <= MAX_WORKERS or (a.limit is not None and a.limit < 1):
+        ap.error(f"--workers must be 1..{MAX_WORKERS} and --limit >= 1")
+    if a.work_dir and not a.dry_run:
+        ap.error("--work-dir is for --dry-run")
+    if a.dry_run and a.publish_ledger and Path(a.publish_ledger).resolve() == DEFAULT_PUBLISH_LEDGER.resolve():
+        ap.error("a dry run never writes the real publish ledger")
+    stamp = _stamp()
+    build = Path(a.build).resolve()
+    receipt = Path(a.receipt) if a.receipt else PUBLISH_DIR / f"v2-publish-{'dryrun' if a.dry_run else 'real'}-{stamp}.json"
+    if receipt.exists():
+        ap.error(f"receipt {receipt} already exists")
+    try:
+        if a.dry_run:
+            work = Path(a.work_dir) if a.work_dir else RUN / "tmp" / f"v2-publish-dryrun-{stamp}"
+            work.mkdir(parents=True, exist_ok=False)
+            budget_path = work / "s3-v2-ledger.jsonl"   # a copy: the dry run sees real usage but never charges it
+            if s3io.V2_LEDGER_PATH.exists():
+                shutil.copyfile(s3io.V2_LEDGER_PATH, budget_path)
+            ledger_path = Path(a.publish_ledger) if a.publish_ledger else work / "publish-ledger.jsonl"
+            writer, reader, bucket = fake_clients(budget_path)
+        else:
+            ledger_path = Path(a.publish_ledger) if a.publish_ledger else DEFAULT_PUBLISH_LEDGER
+            (writer, reader), bucket = real_clients(), None
+        budget = writer._dltrain_guard.ledger  # noqa: SLF001
+        ledger = PublishLedger(ledger_path)
+    except BaseException as err:  # noqa: BLE001
+        print(json.dumps({"error": _err(err), "stage": "setup"}), file=sys.stderr)
+        return 3
+    try:
+        doc = run(build, writer, reader, ledger, budget, limit=a.limit, workers=a.workers)
+    except Refused as r:
+        doc = {"schema": RUN_SCHEMA, "build": str(build), "verdict": "FAIL", "stopped": str(r)}
+    finally:
+        ledger.close()
+    doc["mode"] = "dry-run" if a.dry_run else "real"
+    doc["argv"] = common.redact_argv(sys.argv if argv is None else ["v2_publish.py", *argv])
+    doc["code_sha256"] = code_identity()
+    doc["ledgers"] = {"publish": file_identity(ledger_path), "budget": file_identity(budget.path),
+                      "budget_is_real": Path(budget.path).resolve() == s3io.V2_LEDGER_PATH.resolve()}
+    if bucket is not None:
+        keys = bucket.keys()
+        doc["dry_run_bucket"] = {"objects": len(keys), "puts": len(bucket.puts()),
+                                 "gets": sum(1 for c in bucket.calls if c[0] == "GetObject"),
+                                 "keys_outside_v2": sum(1 for k in keys if not k.startswith(s3io.V2_PREFIX_KEY)),
+                                 "research_only_keys": sum(1 for k in keys if s3io.is_research_only(k)),
+                                 "research_only_keys_not_tabpfn35": sum(1 for k in keys if s3io.is_research_only(k) and "/tabpfn35/" not in k),
+                                 "tabpfn35_keys_outside_research_only": sum(1 for k in keys if "tabpfn35" in k and not k.startswith(s3io.V2_RESEARCH_ONLY_KEY)),
+                                 "bytes": sum(len(vs[-1][1]) for vs in bucket.objects.values() if vs)}
+    res = common.write_receipt(receipt, doc)
+    print(json.dumps({"receipt": res["path"], "sha256": res["sha256"], "verdict": doc["verdict"], "mode": doc["mode"],
+                      "refused": len(doc.get("scan", {}).get("refused", [])), "failed": len(doc.get("failed", [])),
+                      "stats": doc.get("publish", {}).get("stats"), "budget_after": doc.get("budget_after", {}).get("used_bytes")}))
+    return 0 if doc["verdict"] == "PASS" else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

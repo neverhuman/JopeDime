@@ -1,0 +1,93 @@
+"""PROVENANCE-01: resolve every code hash recorded by a v2 publish run, binding manifest, GPU encode or build summary to exact
+bytes in the content-addressed custody dir (RUN/receipts/trainonly-v2/code-custody/<file>.<sha256>), publish those bytes
+create-only under v2-trainonly/provenance/code/, and publish a provenance document under v2-trainonly/provenance/provenance-v*/.
+The lane source is git-ignored (not committed), so the bytes themselves are the record until a reviewed PR lands them.
+
+Usage (lane slice, online): v2_provenance.py --name provenance-v2 [--publish]
+"""
+import argparse
+import glob
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+C = RUN / "receipts/trainonly-v2/code-custody"
+PUB = RUN / "receipts/trainonly-v2/publish"
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--name", required=True)
+    ap.add_argument("--publish", action="store_true")
+    a = ap.parse_args()
+    spec = importlib.util.spec_from_file_location("vp", Path(__file__).resolve().parent / "v2_publish.py")
+    vp = importlib.util.module_from_spec(spec); spec.loader.exec_module(vp)
+    custody = {}
+    for p in C.iterdir():
+        name, h = p.name.rsplit(".", 1)
+        if sha(p.read_bytes()) != h:
+            raise SystemExit(f"custody file {p} does not hash to its name")
+        custody[h] = {"file": name, "path": p}
+
+    def resolve(h):
+        if not h:
+            return None
+        m = [k for k in custody if k.startswith(h)]
+        if not m:
+            return {"sha256_prefix": h, "status": "NOT FOUND"}
+        return {"sha256": m[0], "file": custody[m[0]]["file"], "code_key": f"{vp.s3io.V2_PREFIX_KEY}provenance/code/{custody[m[0]]['file']}.{m[0]}"}
+
+    man = []
+    for m in sorted(PUB.glob("v2-publish-manifest-*.json")):
+        if "-check" in m.name:
+            continue
+        d = json.loads(m.read_text())
+        man.append({"local": m.name, "sha256": sha(m.read_bytes()), "code": resolve(d.get("code_sha256")), "publisher": resolve(d.get("publisher_code_sha256"))})
+    runs = []
+    for f in sorted(PUB.glob("v2-publish-real-*.json")):
+        d = json.loads(f.read_text())
+        runs.append({"receipt": f.name, "sha256": sha(f.read_bytes()), "code": {k: resolve(v) for k, v in (d.get("code_sha256") or {}).items()}})
+    gpu = set()
+    for p in glob.glob(str(RUN / "build-v2/**/out/*/context.json"), recursive=True):
+        try:
+            gpu.add(json.loads(Path(p).read_text())["gpu"]["code_sha256"]["v2_gpu_encode.py"])
+        except Exception:
+            pass
+    builds = {}
+    for s in sorted((RUN / "receipts/trainonly-v2/build").glob("*summary*.json")):
+        cs = json.loads(s.read_text()).get("code_sha256") or {}
+        if isinstance(cs, dict):
+            builds[s.name] = {k: resolve(v) for k, v in cs.items()}
+    unresolved = sorted({f"{e['local']}:{x['sha256_prefix']}" for e in man for x in (e["code"], e["publisher"]) if x and x.get("status")}
+                        | {f"{r['receipt']}:{x['sha256_prefix']}" for r in runs for x in r["code"].values() if x and x.get("status")}
+                        | {f"{b}:{k}:{x['sha256_prefix']}" for b, v in builds.items() for k, x in v.items() if x and x.get("status")})
+    doc = {"schema": "jope.dl-v2-provenance/v1", "name": a.name,
+           "purpose": "PROVENANCE-01: every recorded code hash resolved to exact bytes; lane source is git-ignored, so the bytes are published here create-only",
+           "notes": ["18eac154 = dltrain/rowsel_raw.py (module); 3951fabf = tools/v2_rowsel_raw.py (tool that built ROWSEL-RAW-v1)",
+                     "2751260c, 0519ea30 (tools/v2_rowsel_manifest.py) and cfa1d899 (tools/v2_publish.py) were reconstructed by reverse-applying "
+                     "recorded edits and verified byte-exact by sha256"],
+           "manifests": man, "publish_runs": runs, "gpu_encode_versions": {h: resolve(h) for h in sorted(gpu)}, "build_summaries": builds,
+           "unresolved": unresolved, "code_sha256": sha(Path(__file__).read_bytes())}
+    body = (json.dumps(doc, sort_keys=True, indent=1) + "\n").encode(); dg = sha(body)
+    (PUB / f"v2-{a.name}-{dg[:12]}.json").write_bytes(body)
+    out = {"sha256": dg, "unresolved": unresolved, "custody_files": len(custody)}
+    if a.publish:
+        writer, reader = vp.real_clients(); ledger = vp.PublishLedger(vp.DEFAULT_PUBLISH_LEDGER)
+        try:
+            pub = vp.Publisher(writer, reader, ledger)
+            for h, c in custody.items():
+                pub.publish_bytes(f"{vp.s3io.V2_PREFIX_KEY}provenance/code/{c['file']}.{h}", c["path"].read_bytes(), "text/x-python", "provenance", "provenance")
+            out["published"] = pub.publish_bytes(f"{vp.s3io.V2_PREFIX_KEY}provenance/{a.name}/{dg[:12]}.json", body, "application/json", "manifest", "provenance")
+        finally:
+            ledger.close()
+    print(json.dumps(out, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
