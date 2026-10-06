@@ -27,8 +27,11 @@
 //! iterations), checked before every application, so the bound is hard. When saturation
 //! completes the result does not depend on rule order either; when a limit stops it, the partial
 //! write phase can. A tree is replaced only when the result is strictly smaller, or as small and
-//! shallower. An input that fails the structure check (the node and depth limits, and every
-//! call's arity, which serde decoding does not check) is returned unchanged.
+//! shallower. Every input first passes the structure check `from_ast` runs (the node and depth
+//! limits, and every call's arity, none of which serde decoding checks) on the borrowed tree,
+//! before anything counts, clones or recurses into it. That check is iterative and stops at the
+//! first violation, so its cost is bounded by the limits, not by the input. An input that fails
+//! it is returned unchanged: the result borrows the caller's tree and neither copies nor walks it.
 //!
 //! The rules (proof notes per rule in the tests):
 //! - R1 `x*1`, `1*x` → `x`; R2 `x/1` → `x`;
@@ -54,6 +57,7 @@
 //! pinned only as never applied.
 
 use super::*;
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 
 type Id = usize;
@@ -461,8 +465,10 @@ fn matches(eg: &EGraph, rule: Rule, node: &Node) -> Vec<Term> {
 
 /// The result of [`simplify`].
 #[derive(Clone, Debug)]
-struct Simplified {
-    expression: MathExpr,
+struct Simplified<'a> {
+    /// The smaller tree extraction found, or else the input itself, borrowed: a refused input is
+    /// never copied.
+    expression: Cow<'a, MathExpr>,
     changed: bool,
     stop: Saturation,
     iterations: usize,
@@ -470,6 +476,39 @@ struct Simplified {
     applications: usize,
     /// The most e-nodes the hashcons held at any point, the input's own included.
     peak: usize,
+}
+
+impl<'a> Simplified<'a> {
+    /// The refusal of an input that fails the structure check, before saturation starts. It
+    /// borrows the input, so nothing copies or walks it.
+    fn refused(expression: &'a MathExpr) -> Self {
+        Self {
+            expression: Cow::Borrowed(expression),
+            changed: false,
+            stop: Saturation::Malformed,
+            iterations: 0,
+            enodes: 0,
+            applications: 0,
+            peak: 0,
+        }
+    }
+}
+
+/// A result compares with a tree as the tree it holds.
+impl PartialEq<MathExpr> for Cow<'_, MathExpr> {
+    fn eq(&self, other: &MathExpr) -> bool {
+        **self == *other
+    }
+}
+
+/// Whether `expression` passes the structure check `from_ast` runs: at most `MAX_NODES` nodes,
+/// depth at most `MAX_DEPTH`, and every call's arity. `check_structure` walks the borrowed tree
+/// with an explicit stack, without recursion, and stops at the first violation. It checks a
+/// call's arity before pushing its arguments, so every node it visits pushes at most three, and
+/// it visits at most `MAX_NODES + 1` nodes whatever the input's size. Nothing may count, clone
+/// or recurse into an input before it passes.
+fn admitted(expression: &MathExpr) -> bool {
+    expression.check_structure(MAX_NODES, MAX_DEPTH).is_ok()
 }
 
 /// The saturation limits: rounds, and the hard e-node cap.
@@ -556,19 +595,12 @@ fn saturate(expression: &MathExpr, order: &[Rule], limits: Limits) -> Run {
     }
 }
 
-/// `expression` simplified under the exact rules, applied in `order`, within `limits`. An input
-/// that fails the structure check is returned unchanged, before any rule sees it.
-fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simplified {
-    if MathExpr::from_ast(expression.root.clone()).is_err() {
-        return Simplified {
-            expression: expression.clone(),
-            changed: false,
-            stop: Saturation::Malformed,
-            iterations: 0,
-            enodes: 0,
-            applications: 0,
-            peak: 0,
-        };
+/// `expression` simplified under the exact rules, applied in `order`, within `limits`. The
+/// structure check comes first: an input that fails it is returned unchanged, before anything
+/// counts, clones or recurses into it, and before any rule sees it.
+fn simplify_with<'a>(expression: &'a MathExpr, order: &[Rule], limits: Limits) -> Simplified<'a> {
+    if !admitted(expression) {
+        return Simplified::refused(expression);
     }
     let run = saturate(expression, order, limits);
     let best = extract(&run.eg);
@@ -580,12 +612,12 @@ fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simpl
         Some(tree) => {
             let size = (count_nodes(&tree.root), depth(&tree.root));
             if size < original {
-                (tree, true)
+                (Cow::Owned(tree), true)
             } else {
-                (expression.clone(), false)
+                (Cow::Borrowed(expression), false)
             }
         }
-        None => (expression.clone(), false),
+        None => (Cow::Borrowed(expression), false),
     };
     Simplified {
         expression,
@@ -598,7 +630,12 @@ fn simplify_with(expression: &MathExpr, order: &[Rule], limits: Limits) -> Simpl
     }
 }
 
-fn simplify(expression: &MathExpr) -> Simplified {
+/// [`simplify_with`] under every rule, within the production limits for the input's size, which
+/// is counted only once the input has passed the structure check.
+fn simplify(expression: &MathExpr) -> Simplified<'_> {
+    if !admitted(expression) {
+        return Simplified::refused(expression);
+    }
     simplify_with(
         expression,
         &RULES,
@@ -1544,6 +1581,182 @@ mod tests {
                 (&run.eg.parent, &run.eg.memo),
                 "{original:?}"
             );
+        }
+    }
+
+    /// `root` as serde decodes it: derived `Deserialize` checks no node or depth limit and no
+    /// call's arity.
+    fn decoded(root: Expr) -> MathExpr {
+        serde_json::from_value(serde_json::json!({ "root": root })).unwrap()
+    }
+
+    fn column(i: usize) -> Expr {
+        Expr::Var(Var::Col(i))
+    }
+
+    /// `n` negations over `tree`.
+    fn negated(n: usize, tree: Expr) -> Expr {
+        (0..n).fold(tree, |tree, _| Expr::Unary(UnOp::Neg, Box::new(tree)))
+    }
+
+    /// The complete tree of `-` over c0 with `levels` levels under its root: 2^(levels+1) - 1
+    /// nodes at depth levels + 1.
+    fn complete(levels: usize) -> Expr {
+        if levels == 0 {
+            return column(0);
+        }
+        Expr::Binary(
+            BinOp::Sub,
+            Box::new(complete(levels - 1)),
+            Box::new(complete(levels - 1)),
+        )
+    }
+
+    /// `input` fails the structure check `from_ast` runs, and both entry points refuse it before
+    /// saturation and hand back the input itself: the refusal holds no copy of it.
+    fn assert_refused(input: &MathExpr) {
+        assert!(MathExpr::from_ast(input.root.clone()).is_err());
+        let limits = Limits {
+            iterations: MAX_ITERATIONS,
+            enodes: NODE_CAP_MAX,
+        };
+        for result in [simplify(input), simplify_with(input, &RULES, limits)] {
+            assert_eq!(
+                (result.changed, result.stop, result.iterations),
+                (false, Saturation::Malformed, 0)
+            );
+            assert_eq!((result.enodes, result.applications, result.peak), (0, 0, 0));
+            let output: &MathExpr = &result.expression;
+            assert!(std::ptr::eq(output, input), "the refusal copied its input");
+        }
+    }
+
+    /// Independent review 04: serde decoding checks no arity, so a wrong one is refused wherever
+    /// it is, before anything counts, clones or recurses into the input.
+    #[test]
+    fn decoded_wrong_arities_are_refused_uncopied() {
+        // The reviewer's shallow 65-node tree (independent-review-04/malformed-65-nodes.json).
+        let leaves = vec![serde_json::json!({ "Const": 1.0 }); 64];
+        let reviewer: MathExpr =
+            serde_json::from_value(serde_json::json!({ "root": { "Call": ["Abs", leaves] } }))
+                .unwrap();
+        assert_eq!(count_nodes(&reviewer.root), 65);
+        assert!(reviewer.check_structure(MAX_NODES, MAX_DEPTH).is_err());
+        assert_refused(&reviewer);
+        // At the root.
+        for (func, arity) in [
+            (Func::Abs, 2),
+            (Func::Sin, 0),
+            (Func::Max, 1),
+            (Func::Step, 3),
+            (Func::Clip, 2),
+        ] {
+            assert_refused(&decoded(Expr::Call(func, (0..arity).map(column).collect())));
+        }
+        // Deep inside: at depth 15 under fourteen negations (with the right arity it is
+        // admitted), and in a sum's right branch.
+        assert_refused(&decoded(negated(
+            14,
+            Expr::Call(Func::Max, vec![column(0)]),
+        )));
+        let two_arguments = negated(14, Expr::Call(Func::Max, vec![column(0), column(1)]));
+        assert!(MathExpr::from_ast(two_arguments).is_ok());
+        assert_refused(&decoded(Expr::Binary(
+            BinOp::Mul,
+            Box::new(column(0)),
+            Box::new(Expr::Binary(
+                BinOp::Add,
+                Box::new(column(1)),
+                Box::new(Expr::Call(Func::Clip, vec![column(0), column(1)])),
+            )),
+        )));
+    }
+
+    /// Independent review 04: one node or one level over the limits is refused.
+    #[test]
+    fn decoded_inputs_over_the_limits_are_refused_uncopied() {
+        // 65 nodes, every arity right, at depth 8.
+        let nodes = decoded(negated(2, complete(5)));
+        assert_eq!((count_nodes(&nodes.root), depth(&nodes.root)), (65, 8));
+        assert_refused(&nodes);
+        // Depth 17: sixteen negations over c0.
+        let deep = decoded(negated(16, column(0)));
+        assert_eq!((count_nodes(&deep.root), depth(&deep.root)), (17, 17));
+        assert_refused(&deep);
+    }
+
+    /// Independent review 04: the structure check stops at the first violation, so refusing a
+    /// wide input costs no more than checking one at the limits. These are ordinary sizes.
+    #[test]
+    fn wide_decoded_inputs_are_refused_uncopied() {
+        // 10,000 leaves under one call: at the root, and under a sum.
+        let leaves = || (0..10_000).map(|i| column(i % 8)).collect::<Vec<_>>();
+        assert_refused(&decoded(Expr::Call(Func::Min, leaves())));
+        assert_refused(&decoded(Expr::Binary(
+            BinOp::Add,
+            Box::new(column(0)),
+            Box::new(Expr::Call(Func::Abs, leaves())),
+        )));
+        // Every arity right, but 16,383 nodes at depth 14: the check stops at the 65th node.
+        let wide = decoded(complete(13));
+        assert_eq!((count_nodes(&wide.root), depth(&wide.root)), (16_383, 14));
+        assert_refused(&wide);
+    }
+
+    /// Independent review 04: inputs exactly at the limits are admitted, and simplified as they
+    /// were before the structure check moved first.
+    #[test]
+    fn decoded_inputs_at_the_limits_are_admitted_as_before() {
+        let sub = |a, b| Expr::Binary(BinOp::Sub, Box::new(a), Box::new(b));
+        // 64 nodes at depth 16: c0 under fourteen negations, plus the negated difference of two
+        // complete trees. The negations cancel and the sum becomes a difference.
+        let both = Expr::Binary(
+            BinOp::Add,
+            Box::new(negated(14, column(0))),
+            Box::new(negated(1, sub(complete(4), complete(3)))),
+        );
+        let both_simplified = sub(column(0), sub(complete(4), complete(3)));
+        // 64 nodes at depth 7, which nothing shrinks, and 16 nodes at depth 16.
+        let nodes = negated(1, complete(5));
+        let deep = negated(15, column(0));
+        for (input, size, expected, changed) in [
+            (both, (64, 16), both_simplified, true),
+            (nodes.clone(), (64, 7), nodes, false),
+            (deep, (16, 16), negated(1, column(0)), true),
+        ] {
+            let input = decoded(input);
+            assert_eq!((count_nodes(&input.root), depth(&input.root)), size);
+            assert!(MathExpr::from_ast(input.root.clone()).is_ok());
+            let result = simplify(&input);
+            assert_eq!(result.expression, MathExpr::from_ast(expected).unwrap());
+            assert_eq!(
+                (result.changed, result.stop),
+                (changed, Saturation::Saturated)
+            );
+            assert!(
+                result.peak <= Limits::for_input(size.0).enodes,
+                "{result:?}"
+            );
+            assert_exact(&input, &result.expression);
+        }
+    }
+
+    /// Independent review 04: folding a libm-backed function is excluded, because libm results
+    /// are not portable, and no test pinned it. A literal argument, given or folded, leaves the
+    /// call in place, and the call's class never holds a literal.
+    #[test]
+    fn libm_calls_are_never_folded() {
+        for (input, expected) in [
+            ("sin(0.5)", "sin(0.5)"),
+            ("log1p(0.5)", "log1p(0.5)"),
+            ("cos((2.0*3.0))", "cos(6.0)"),
+        ] {
+            let original = MathExpr::parse(input).unwrap();
+            let limits = Limits::for_input(count_nodes(&original.root));
+            let run = saturate(&original, &RULES, limits);
+            assert_eq!(run.stop, Saturation::Saturated, "{input}");
+            assert!(run.eg.literal(run.root).is_none(), "{input}");
+            assert_eq!(source(input), printed(expected), "{input}");
         }
     }
 }
