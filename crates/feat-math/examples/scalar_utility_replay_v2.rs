@@ -166,7 +166,7 @@ fn replay_eec_event(
 fn cohort_manifest(raw: &[u8]) -> Value {
     assert_eq!(
         hash(raw),
-        "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
+        "74b05d8be0caa6a595815f9c89deb6be5ab716b1dedcd8a8669c7c7577296840"
     );
     serde_json::from_slice(raw).unwrap()
 }
