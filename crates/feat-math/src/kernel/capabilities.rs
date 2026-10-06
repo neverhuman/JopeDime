@@ -17,6 +17,8 @@ use std::sync::OnceLock;
 pub enum Grammar {
     V3,
     RowVectorV2,
+    // B05–B07: explicit typed scalar producers, outside frozen v3 rows.
+    ScalarV2,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -1281,6 +1283,10 @@ pub fn row_vector_v2_capability(wire: u16) -> Option<ElementCap> {
     }
     Some(ElementCap { class: Class::Searchable { since: Grammar::RowVectorV2, tier: Tier::Experimental }, fault_classes: READ.union(FaultSet::MAGNITUDE_CLAMPED).union(FaultSet::NONFINITE_SANITIZED), emitters: EmitterSupport { rust_recipe: YES, python_recipe: YES, cpp17_recipe: YES, cpp17_fitted: YES, javascript: NO_JS }, portable_twin: true, notes: "wire58, FeatureWithinRow only, prior<=0.25, deterministic preserve width, shrink boundary, stage-local BOUNDARY_DEGREE bit18; Baseline requires equal-budget promotion" })
 }
+
+// B05–B07: additive Experimental lifecycle; legacy manifest stays frozen.
+mod scalar_v2;
+pub use scalar_v2::{scalar_function_v2_capability, scalar_policy_v2_capability};
 
 #[cfg(test)]
 mod tests {
