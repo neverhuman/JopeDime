@@ -217,8 +217,9 @@ for lock in "${locks[@]}"; do
   printf '%s\n' "$record" > "$tree/deploy/lambda/SNAPSHOT.json"
   if [[ $frozen == "$now" ]]; then
     expect "SNAPSHOT.json invents a change to unchanged $lock" refuse \
-      'a tree_change for an unchanged one: .*not consistent before the bump.*nothing was changed' bump "$scratch"
+      "a tree_change for an unchanged one: $lock" bump "$scratch"
     expect "  and the lock is as exported" ok '^unchanged$' unchanged "$lock"
+    expect "  and no release files changed" ok '^unchanged$' unchanged . ':(exclude)deploy/lambda/SNAPSHOT.json'
     reset_tree
     printf '\n# synthetic non-version hand edit\n' >> "$tree/$lock"
     (cd "$tree" && bash "$helper" snapshot-refresh "$lock" 'hand edit: another change')
