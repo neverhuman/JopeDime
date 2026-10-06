@@ -326,12 +326,14 @@ struct Dataset {
     cuts: Vec<Cut>,
 }
 
-/// Load and partition every dataset, then write each partition under `scratch`. Every refusal,
-/// including a kernel2 search this comparison would repeat ([`check_unused`]) and, for a
-/// comparison with a kernel2 profile, a scratch directory that is not unused
-/// ([`check_scratch_unused`]), is made before anything is written: `prepare::build` is
-/// [`prepare::partition`] followed by [`prepare::Partition::write`], and the two halves run here
-/// with the refusals between them.
+/// Load and partition every dataset, then write each partition under `scratch`. Called while the
+/// comparison holds its [`Reservation`] of `scratch`. Every refusal is made before anything is
+/// written: a kernel2 search this comparison would repeat ([`check_unused`]), a scratch directory
+/// a comparison with a kernel2 profile used ([`check_not_kernel2`], for every comparison) and, for
+/// a comparison with a kernel2 profile, a scratch directory that holds anything but its own lock
+/// file ([`check_scratch_unused`]). Such a comparison then marks the scratch ([`mark_kernel2`])
+/// before its first other write. `prepare::build` is [`prepare::partition`] followed by
+/// [`prepare::Partition::write`], and the two halves run here with the refusals between them.
 fn load_datasets(config: &Config, scratch: &Path) -> Result<Vec<Dataset>> {
     let mut dirs = Vec::new();
     for path in &config.datasets {
@@ -390,8 +392,10 @@ fn load_datasets(config: &Config, scratch: &Path) -> Result<Vec<Dataset>> {
             }
         }
     }
+    check_not_kernel2(scratch)?;
     if config.has_kernel2() {
         check_scratch_unused(scratch)?;
+        mark_kernel2(scratch)?;
     }
     planned
         .into_iter()
@@ -849,12 +853,22 @@ struct Spec {
     seed: u64,
 }
 
-/// Run the comparison. Every search writes its evidence under `scratch`, which must not already
-/// hold a search for the same (slot, dataset, seed); with a kernel2 profile it must be unused,
-/// absent or an empty directory ([`check_scratch_unused`]).
+/// Run the comparison. Every search writes its evidence under `scratch`, which is created when
+/// absent. The comparison holds an exclusive [`Reservation`] of `scratch` from before its first
+/// check of the scratch to its end, so a second comparison on the same scratch is refused while
+/// it runs. `scratch` must not already hold a search for the same (slot, dataset, seed), nor a
+/// kernel2 comparison's marker ([`check_not_kernel2`]); with a kernel2 profile it must be absent
+/// or an empty directory that is not a symbolic link ([`check_scratch_kind`],
+/// [`check_scratch_unused`]), which the comparison then marks for good ([`mark_kernel2`]).
 pub fn run(config: &Config, scratch: &Path) -> Result<Report> {
     config.check()?;
     let started = Instant::now();
+    if config.has_kernel2() {
+        // Before the lock file is created, so nothing is written through a symbolic link or into
+        // a path that is not a directory; checked again under the reservation.
+        check_scratch_kind(scratch)?;
+    }
+    let _reservation = Reservation::take(scratch)?;
     let datasets = load_datasets(config, scratch)?;
     let mut specs = Vec::new();
     for (slot, profile) in [("A", config.profile_a), ("B", config.profile_b)] {
@@ -1075,27 +1089,135 @@ fn check_unused(output: &Path) -> Result<()> {
     }
 }
 
-/// The refusal of a scratch directory that a comparison with a kernel2 profile cannot use.
+/// The refusal of a scratch directory that a comparison with a kernel2 profile cannot use
+/// ([`check_scratch_kind`], [`check_scratch_unused`]).
 const SCRATCH_NOT_UNUSED: &str =
     "already holds ablation output; a comparison with a kernel2 profile needs an unused --scratch";
 
-/// Refuse, for a comparison with a kernel2 profile, a scratch directory that is not unused: the
-/// path must be absent (the comparison creates it) or a directory, not a symbolic link, with no
-/// entry. Anything else, an inspection error included, is refused. Every dataset's
-/// `prepared/<dataset hash>/prepared.json` is shared by its searches and later comparisons into
-/// the same scratch would rewrite it, so each comparison with a kernel2 arm takes its own scratch
-/// and no earlier document's `prepared_sha256` can change.
+/// Refuse, for a comparison with a kernel2 profile, a scratch path that exists but is not a
+/// directory, a symbolic link included, also when the path ends in `/` (which would make
+/// `symlink_metadata` follow the link). An absent path is admitted: [`Reservation::take`]
+/// creates it. Anything else, an inspection error included, is refused.
+fn check_scratch_kind(scratch: &Path) -> Result<()> {
+    let refused = || format!("{}: {SCRATCH_NOT_UNUSED}", scratch.display());
+    let path: PathBuf = scratch.components().collect();
+    match std::fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error).with_context(refused),
+        Ok(metadata) => {
+            ensure!(metadata.file_type().is_dir(), refused());
+            Ok(())
+        }
+    }
+}
+
+/// Refuse, for a comparison with a kernel2 profile and under its [`Reservation`], a scratch
+/// directory that is not unused: it must be a directory, not a symbolic link
+/// ([`check_scratch_kind`]), whose only entry is this comparison's own [`LOCK_FILE`]. Anything
+/// else, an inspection error included, is refused. What this enforces: every dataset's
+/// `prepared/<dataset hash>/prepared.json` is shared by its searches, so a comparison with a
+/// kernel2 arm writes only into a scratch that no other comparison through this harness has
+/// written to, and it then marks the scratch ([`mark_kernel2`]) so that no later comparison
+/// through this harness writes there ([`check_not_kernel2`]). Writers outside the harness are not
+/// covered.
 fn check_scratch_unused(scratch: &Path) -> Result<()> {
     let refused = || format!("{}: {SCRATCH_NOT_UNUSED}", scratch.display());
-    let kind = match std::fs::symlink_metadata(scratch) {
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => return Err(error).with_context(refused),
-        Ok(metadata) => metadata.file_type(),
-    };
-    ensure!(kind.is_dir(), refused());
-    let mut entries = std::fs::read_dir(scratch).with_context(refused)?;
-    ensure!(entries.next().is_none(), refused());
+    check_scratch_kind(scratch)?;
+    for entry in std::fs::read_dir(scratch).with_context(refused)? {
+        let name = entry.with_context(refused)?.file_name();
+        ensure!(
+            name.as_os_str() == std::ffi::OsStr::new(LOCK_FILE),
+            refused()
+        );
+    }
     Ok(())
+}
+
+/// The file a comparison holds in its scratch directory while it runs ([`Reservation`]).
+const LOCK_FILE: &str = ".ablation-lock";
+/// The permanent marker of a scratch directory a comparison with a kernel2 profile used
+/// ([`mark_kernel2`]).
+const KERNEL2_MARKER: &str = ".ablation-kernel2";
+/// The refusal of a scratch directory whose [`LOCK_FILE`] exists.
+const SCRATCH_RESERVED: &str = "another comparison holds this --scratch";
+/// The refusal, by every comparison, of a scratch directory that holds [`KERNEL2_MARKER`].
+const SCRATCH_HOLDS_KERNEL2: &str = "holds a kernel2 comparison's evidence; use a new --scratch";
+
+/// An exclusive reservation of a scratch directory for one comparison: its [`LOCK_FILE`],
+/// created atomically (`create_new`) before the comparison checks or writes anything in the
+/// scratch, and removed, with nothing else, when the reservation is dropped, also while
+/// unwinding. A second comparison on the same scratch, in this process or another, is refused
+/// while the first holds it. The file records the holder's process id and start time for a
+/// person; it holds no evidence. A crash can leave it behind; it is then removed by hand, once no
+/// comparison is running.
+struct Reservation {
+    lock: PathBuf,
+}
+
+impl Reservation {
+    /// Create `scratch` when it is absent (an empty directory changes no evidence), then its
+    /// [`LOCK_FILE`], refusing a lock file that already exists.
+    fn take(scratch: &Path) -> Result<Reservation> {
+        use std::io::Write as _;
+        std::fs::create_dir_all(scratch)
+            .with_context(|| format!("create {}", scratch.display()))?;
+        let lock = scratch.join(LOCK_FILE);
+        let mut file = match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&lock)
+        {
+            Ok(file) => file,
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => bail!(
+                "{}: {SCRATCH_RESERVED} ({}); if no comparison is running, remove the lock file",
+                scratch.display(),
+                lock.display()
+            ),
+            Err(error) => return Err(error).with_context(|| format!("create {}", lock.display())),
+        };
+        let reservation = Reservation { lock };
+        let started = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |elapsed| elapsed.as_secs());
+        writeln!(file, "pid {} started_unix {started}", std::process::id())
+            .with_context(|| format!("write {}", reservation.lock.display()))?;
+        Ok(reservation)
+    }
+}
+
+impl Drop for Reservation {
+    fn drop(&mut self) {
+        // Only the lock file: everything the comparison wrote stays. A failure leaves a lock
+        // that the next comparison reports by name.
+        let _ = std::fs::remove_file(&self.lock);
+    }
+}
+
+/// Refuse, for every comparison and under its [`Reservation`], a scratch directory that holds
+/// [`KERNEL2_MARKER`], so no later comparison through this harness, legacy-only included,
+/// rewrites a kernel2 comparison's preparation or searches. An inspection error is refused too.
+fn check_not_kernel2(scratch: &Path) -> Result<()> {
+    let refused = || format!("{}: {SCRATCH_HOLDS_KERNEL2}", scratch.display());
+    match std::fs::symlink_metadata(scratch.join(KERNEL2_MARKER)) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error).with_context(refused),
+        Ok(_) => bail!(refused()),
+    }
+}
+
+/// Mark a scratch directory, under the [`Reservation`] and before any other write, as one a
+/// comparison with a kernel2 profile used: [`KERNEL2_MARKER`], created atomically and never
+/// removed. Every later comparison refuses the scratch ([`check_not_kernel2`]).
+fn mark_kernel2(scratch: &Path) -> Result<()> {
+    use std::io::Write as _;
+    let marker = scratch.join(KERNEL2_MARKER);
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&marker)
+        .with_context(|| format!("create {}", marker.display()))?;
+    file.write_all(b"this --scratch holds a kernel2 comparison's evidence; use a new --scratch\n")
+        .with_context(|| format!("write {}", marker.display()))
 }
 
 fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
@@ -2248,7 +2370,8 @@ pub struct AblationArgs {
     /// Keep every search's evidence under this directory (default: a temporary directory under
     /// TMPDIR, removed afterwards; with neither this nor TMPDIR the run is refused rather than use
     /// the system temporary directory). It must not already hold a search of the same run; with a
-    /// kernel2 profile it must be absent or an empty directory.
+    /// kernel2 profile it must be absent or an empty directory, and no later comparison may use
+    /// it. One comparison at a time holds it (.ablation-lock).
     #[arg(long)]
     pub scratch: Option<PathBuf>,
 }
@@ -2319,9 +2442,13 @@ fn paired_line(label: &str, c: &PairedCounts) -> String {
 }
 
 /// Run `jope-bench ablation`. Every refusal of the options is made before the scratch directory
-/// is created. A comparison with a kernel2 profile also needs an unused `--scratch`: one created
-/// here, empty, or an existing empty directory. [`run`] refuses anything else before it writes
-/// ([`check_scratch_unused`]); the temporary scratch made without `--scratch` is always unused.
+/// is created. [`run`] then holds an exclusive [`Reservation`] of the scratch for the whole
+/// comparison, so a second comparison on the same `--scratch` is refused while this one runs,
+/// and refuses a scratch a kernel2 comparison used ([`check_not_kernel2`]). A comparison with a
+/// kernel2 profile also needs an unused `--scratch`: one created here, empty, or an existing empty
+/// directory; [`run`] refuses anything else before it writes ([`check_scratch_unused`]) and marks
+/// the scratch for good ([`mark_kernel2`]). The temporary scratch made without `--scratch` is
+/// always unused.
 pub fn execute(args: &AblationArgs) -> Result<()> {
     let config = config(args)?;
     config.check()?;
@@ -3821,7 +3948,7 @@ mod tests {
                 ..again
             },
         ] {
-            scratch_refusal(&again, dir.path());
+            scratch_refusal_saying(&again, dir.path(), SCRATCH_HOLDS_KERNEL2);
             let changed = changed_entries(&before, &tree(dir.path()));
             assert!(
                 changed.is_empty(),
@@ -3848,12 +3975,13 @@ mod tests {
         let dir = scratch();
         run(&config, dir.path()).unwrap();
         let before = tree(dir.path());
-        scratch_refusal(
+        scratch_refusal_saying(
             &Config {
                 seeds: vec![7],
                 ..config.clone()
             },
             dir.path(),
+            SCRATCH_HOLDS_KERNEL2,
         );
         let changed = changed_entries(&before, &tree(dir.path()));
         assert!(
@@ -3866,8 +3994,9 @@ mod tests {
     /// nothing changed: one holding only `prepared/`, one holding a stray file, a symbolic link
     /// to an empty directory, and a path that is a regular file, from the library and from the
     /// command line. Each case has its own test directory, whose whole tree is compared. A
-    /// regular file is refused by the per-search check, which runs first and cannot inspect a
-    /// search path under a file.
+    /// symbolic link and a regular file are refused before the lock file is created; the other
+    /// two under the reservation, whose lock file is created and removed in the scratch
+    /// directory, so that directory's own modification time is the one change allowed.
     #[test]
     fn ablation_kernel2_refuses_a_scratch_that_is_not_unused() {
         let config = shared_scratch_config();
@@ -3876,12 +4005,20 @@ mod tests {
             let path = make(root.path());
             let before = tree(root.path());
             scratch_refusal_saying(&config, &path, &needle(&path));
-            let changed = changed_entries(&before, &tree(root.path()));
+            let after = tree(root.path());
+            let changed = changed_entries(&before, &after);
+            let own = path.strip_prefix(root.path()).unwrap();
+            let kind = |entries: &BTreeMap<PathBuf, Entry>, entry: &PathBuf| {
+                entries.get(entry).map(|e| e.0)
+            };
             assert!(
-                changed.is_empty(),
+                changed.iter().all(|entry| entry.as_path() == own
+                    && kind(&before, entry) == Some("dir")
+                    && kind(&after, entry) == Some("dir")),
                 "{}: a refused comparison changed {changed:?}",
                 path.display()
             );
+            assert!(std::fs::symlink_metadata(path.join(LOCK_FILE)).is_err());
         };
         let unused = |_: &Path| SCRATCH_NOT_UNUSED.to_owned();
         refused(&unused, &|root: &Path| {
@@ -3904,14 +4041,11 @@ mod tests {
                 path
             });
         }
-        refused(
-            &|path: &Path| format!("inspect {}", path.join("search").display()),
-            &|root: &Path| {
-                let path = root.join("scratch");
-                std::fs::write(&path, b"a file").unwrap();
-                path
-            },
-        );
+        refused(&unused, &|root: &Path| {
+            let path = root.join("scratch");
+            std::fs::write(&path, b"a file").unwrap();
+            path
+        });
         let root = scratch();
         let path = root.path().join("scratch");
         std::fs::write(&path, b"a file").unwrap();
@@ -4072,5 +4206,452 @@ mod tests {
             }
         }
         assert!(accepted.is_empty(), "nonfinite RMSE accepted: {accepted:?}");
+    }
+
+    // Review 03: findings PR0-R4 (reopened: a later legacy-only comparison) and PR0-R6 (concurrent
+    // comparisons on one scratch directory).
+
+    /// The reproducer's dataset compared legacy against legacy: seed `seed`, fold seed
+    /// `fold_seed`, one evaluation, one cut and one job.
+    fn legacy_scratch_config(seed: u64, fold_seed: u64) -> Config {
+        Config {
+            profile_a: Profile::Legacy,
+            profile_b: Profile::Legacy,
+            seeds: vec![seed],
+            fold_seed,
+            refinement: None,
+            ..shared_scratch_config()
+        }
+    }
+
+    /// The names directly under `dir`.
+    fn names(dir: &Path) -> BTreeSet<String> {
+        std::fs::read_dir(dir)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+            .collect()
+    }
+
+    /// `names` as a set.
+    fn set(names: &[&str]) -> BTreeSet<String> {
+        names.iter().map(|name| (*name).to_owned()).collect()
+    }
+
+    /// The reviewer's PR0-R4 regression test (review 03), adopted with its name and intent. Its
+    /// scratch directory is in a fresh test directory instead of the review's evidence directory.
+    #[test]
+    fn review03_legacy_followup_preserves_kernel2_preparation() {
+        let root = scratch();
+        let dir = root.path().join("rust-legacy-followup");
+        let config = shared_scratch_config();
+        let first = run(&config, &dir).unwrap();
+        let record = &first.document.body.datasets[0];
+        let path = dir
+            .join("prepared")
+            .join(&record.dataset_hash)
+            .join("prepared.json");
+        let bytes = std::fs::read(&path).unwrap();
+        assert_eq!(sha256_hex(&bytes), record.prepared_sha256);
+        let legacy = Config {
+            profile_a: Profile::Legacy,
+            profile_b: Profile::Legacy,
+            seeds: vec![7],
+            fold_seed: 20_260_908,
+            refinement: None,
+            ..config
+        };
+        let second = run(&legacy, &dir);
+        println!("legacy followup successful: {}", second.is_ok());
+        let after = std::fs::read(path).unwrap();
+        println!(
+            "before {} after {}",
+            record.prepared_sha256,
+            sha256_hex(&after)
+        );
+        assert_eq!(
+            bytes, after,
+            "later comparison invalidated first prepared_sha256"
+        );
+    }
+
+    /// The reviewer's PR0-R6 regression test (review 03), adopted with its name and intent. Its
+    /// directories are in a fresh test directory instead of the review's evidence directory.
+    #[test]
+    fn review03_concurrent_library_runs_preserve_both_preparations() {
+        use std::sync::{Arc, Barrier};
+        let temporary = scratch();
+        let root = temporary.path().join("concurrent");
+        let mut both_succeeded = 0;
+        let mut broken = 0;
+        let mut attempts = Vec::new();
+        for attempt in 0..8 {
+            let scratch = root.join(format!("attempt-{attempt}"));
+            let barrier = Arc::new(Barrier::new(2));
+            let results = std::thread::scope(|scope| {
+                let handles: Vec<_> = [6, 7]
+                    .into_iter()
+                    .map(|seed| {
+                        let scratch = scratch.clone();
+                        let barrier = barrier.clone();
+                        scope.spawn(move || {
+                            let config = Config {
+                                seeds: vec![seed],
+                                fold_seed: 20_260_907 + (seed - 6),
+                                ..shared_scratch_config()
+                            };
+                            barrier.wait();
+                            run(&config, &scratch)
+                        })
+                    })
+                    .collect();
+                handles
+                    .into_iter()
+                    .map(|h| h.join().unwrap())
+                    .collect::<Vec<_>>()
+            });
+            let mut detail = Vec::new();
+            for (index, result) in results.iter().enumerate() {
+                match result {
+                    Ok(report) => {
+                        write_document(
+                            &root.join(format!("attempt-{attempt}-{index}.json")),
+                            &report.document,
+                        )
+                        .unwrap();
+                        let record = &report.document.body.datasets[0];
+                        let actual = sha256_hex(
+                            &std::fs::read(
+                                scratch
+                                    .join("prepared")
+                                    .join(&record.dataset_hash)
+                                    .join("prepared.json"),
+                            )
+                            .unwrap(),
+                        );
+                        let valid = actual == record.prepared_sha256;
+                        if !valid {
+                            broken += 1;
+                        }
+                        detail.push(serde_json::json!({"success":true,"prepared_sha256":record.prepared_sha256,"actual_sha256":actual,"valid":valid}));
+                    }
+                    Err(e) => {
+                        detail.push(serde_json::json!({"success":false,"error":format!("{e:#}")}))
+                    }
+                }
+            }
+            if results.iter().all(Result::is_ok) {
+                both_succeeded += 1;
+            }
+            attempts.push(serde_json::json!({"attempt":attempt,"runs":detail}));
+            if broken > 0 {
+                break;
+            }
+        }
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("result.json"),
+            serde_json::to_vec_pretty(&serde_json::json!({"attempts":attempts,"both_succeeded":both_succeeded,"broken":broken})).unwrap(),
+        )
+        .unwrap();
+        println!("both succeeded {both_succeeded}, invalid documents {broken}");
+        assert_eq!(
+            broken, 0,
+            "same-process comparisons broke each other's partition evidence"
+        );
+    }
+
+    /// Review finding PR0-R4, reopened: after a comparison with a kernel2 profile, a legacy-only
+    /// comparison into the same scratch directory is refused before anything is written, with
+    /// a new seed and fold seed (the review's reproducer) and with the same ones. Every entry
+    /// keeps its kind, modification time and bytes, the kernel2 marker included, and the first
+    /// document's `prepared_sha256` still names `prepared.json`.
+    #[test]
+    fn ablation_legacy_refuses_a_scratch_a_kernel2_comparison_used() {
+        let dir = scratch();
+        let first = run(&shared_scratch_config(), dir.path()).unwrap();
+        let record = &first.document.body.datasets[0];
+        let before = tree(dir.path());
+        for legacy in [
+            legacy_scratch_config(7, 20_260_908),
+            legacy_scratch_config(6, 20_260_907),
+        ] {
+            scratch_refusal_saying(&legacy, dir.path(), SCRATCH_HOLDS_KERNEL2);
+            let changed = changed_entries(&before, &tree(dir.path()));
+            assert!(
+                changed.is_empty(),
+                "{legacy:?}: a refused comparison changed {changed:?}"
+            );
+        }
+        assert!(before
+            .get(Path::new(KERNEL2_MARKER))
+            .is_some_and(|entry| entry.0 == "file"));
+        let prepared = dir
+            .path()
+            .join("prepared")
+            .join(&record.dataset_hash)
+            .join("prepared.json");
+        assert_eq!(
+            sha256_hex(&std::fs::read(prepared).unwrap()),
+            record.prepared_sha256
+        );
+    }
+
+    /// After a legacy-only comparison, a comparison with a kernel2 profile into the same scratch
+    /// directory is refused because the scratch is not empty, with nothing changed and no marker
+    /// written.
+    #[test]
+    fn ablation_kernel2_refuses_a_scratch_a_legacy_comparison_used() {
+        let dir = scratch();
+        run(&legacy_scratch_config(7, 20_260_908), dir.path()).unwrap();
+        let before = tree(dir.path());
+        scratch_refusal(&shared_scratch_config(), dir.path());
+        let changed = changed_entries(&before, &tree(dir.path()));
+        assert!(
+            changed.is_empty(),
+            "a refused comparison changed {changed:?}"
+        );
+        assert_eq!(names(dir.path()), set(&["prepared", "search"]));
+    }
+
+    /// A legacy-only comparison into a scratch directory another legacy-only comparison used is
+    /// admitted as before, here with a new seed and fold seed: its body bytes are those of the
+    /// same comparison in a fresh scratch, and neither scratch holds a lock file or a kernel2
+    /// marker afterwards.
+    #[test]
+    fn ablation_legacy_reruns_into_a_legacy_scratch_as_before() {
+        let dir = scratch();
+        run(&legacy_scratch_config(6, 20_260_907), dir.path()).unwrap();
+        let again = legacy_scratch_config(7, 20_260_908);
+        let second = run(&again, dir.path()).unwrap();
+        let fresh = scratch();
+        let alone = run(&again, fresh.path()).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&second.body_bytes),
+            String::from_utf8_lossy(&alone.body_bytes)
+        );
+        for dir in [dir.path(), fresh.path()] {
+            assert_eq!(names(dir), set(&["prepared", "search"]));
+        }
+    }
+
+    /// The kernel2 marker stays after a comparison with a kernel2 profile, and a legacy-only
+    /// comparison writes none; neither leaves its lock file.
+    #[test]
+    fn ablation_kernel2_marker_persists_and_legacy_writes_none() {
+        let dir = scratch();
+        run(&shared_scratch_config(), dir.path()).unwrap();
+        assert_eq!(
+            names(dir.path()),
+            set(&[KERNEL2_MARKER, "prepared", "search"])
+        );
+        assert!(dir.path().join(KERNEL2_MARKER).is_file());
+        let legacy = scratch();
+        run(&legacy_scratch_config(6, 20_260_907), legacy.path()).unwrap();
+        assert_eq!(names(legacy.path()), set(&["prepared", "search"]));
+    }
+
+    /// Review finding PR0-R6: a scratch directory whose lock file exists is refused by every
+    /// comparison, naming the lock and leaving it as it is, a stale one (no comparison running)
+    /// included; a symbolic link there counts too. A comparison removes its own lock after it
+    /// succeeds and after a refusal made under its reservation.
+    #[test]
+    fn ablation_a_lock_file_refuses_and_a_comparison_removes_its_own() {
+        let dir = scratch();
+        let lock = dir.path().join(LOCK_FILE);
+        std::fs::write(&lock, b"pid 1 started_unix 0\n").unwrap();
+        let before = tree(dir.path());
+        for config in [
+            legacy_scratch_config(6, 20_260_907),
+            shared_scratch_config(),
+        ] {
+            let error = scratch_refusal_saying(&config, dir.path(), SCRATCH_RESERVED);
+            assert!(
+                error.contains(&format!("({})", lock.display()))
+                    && error.contains("remove the lock file"),
+                "{error}"
+            );
+            let changed = changed_entries(&before, &tree(dir.path()));
+            assert!(
+                changed.is_empty(),
+                "{config:?}: a refused comparison changed {changed:?}"
+            );
+        }
+        #[cfg(unix)]
+        {
+            let linked = scratch();
+            std::os::unix::fs::symlink("missing", linked.path().join(LOCK_FILE)).unwrap();
+            let before = tree(linked.path());
+            scratch_refusal_saying(&shared_scratch_config(), linked.path(), SCRATCH_RESERVED);
+            let changed = changed_entries(&before, &tree(linked.path()));
+            assert!(
+                changed.is_empty(),
+                "a refused comparison changed {changed:?}"
+            );
+        }
+        std::fs::remove_file(&lock).unwrap();
+        run(&shared_scratch_config(), dir.path()).unwrap();
+        assert!(
+            std::fs::symlink_metadata(&lock).is_err(),
+            "the lock outlived its comparison"
+        );
+        let before = tree(dir.path());
+        scratch_refusal_saying(&shared_scratch_config(), dir.path(), SCRATCH_IN_USE);
+        scratch_refusal_saying(
+            &legacy_scratch_config(7, 20_260_908),
+            dir.path(),
+            SCRATCH_HOLDS_KERNEL2,
+        );
+        assert!(
+            std::fs::symlink_metadata(&lock).is_err(),
+            "a refused comparison left its lock"
+        );
+        let changed = changed_entries(&before, &tree(dir.path()));
+        assert!(
+            changed.is_empty(),
+            "a refused comparison changed {changed:?}"
+        );
+    }
+
+    /// The reservation removes its lock file, and nothing else, when it is dropped, also while a
+    /// panic unwinds.
+    #[test]
+    fn ablation_reservation_is_released_while_unwinding() {
+        let dir = scratch();
+        let lock = dir.path().join(LOCK_FILE);
+        std::fs::write(dir.path().join("kept"), b"kept").unwrap();
+        let unwound = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _reservation = Reservation::take(dir.path()).unwrap();
+            assert!(lock.is_file());
+            panic!("unwinding with the reservation held");
+        }));
+        assert!(unwound.is_err());
+        assert!(std::fs::symlink_metadata(&lock).is_err());
+        drop(Reservation::take(dir.path()).unwrap());
+        assert_eq!(names(dir.path()), set(&["kept"]));
+    }
+
+    /// Review finding PR0-R6: comparisons that start together on one absent scratch directory
+    /// (three threads behind a barrier: seeds 6, 7 and 6 with fold seeds 20260907, 20260908 and
+    /// 20260907; several attempts). Exactly one succeeds and every other one is refused. The
+    /// scratch then holds the winner's evidence alone: its kernel2 marker, its `prepared.json`
+    /// with the document's `prepared_sha256`, and in each slot only the search of its seed,
+    /// whose published best program and RMSE are the document's M1. No lock file is left.
+    #[test]
+    fn ablation_concurrent_comparisons_on_one_scratch_admit_exactly_one() {
+        use std::sync::{Arc, Barrier};
+        let contenders = [(6, 20_260_907), (7, 20_260_908), (6, 20_260_907)];
+        let refusals = [
+            SCRATCH_RESERVED,
+            SCRATCH_HOLDS_KERNEL2,
+            SCRATCH_IN_USE,
+            SCRATCH_NOT_UNUSED,
+        ];
+        for attempt in 0..4 {
+            let root = scratch();
+            let dir = root.path().join("scratch");
+            let barrier = Arc::new(Barrier::new(contenders.len()));
+            let results: Vec<(u64, Result<Report>)> = std::thread::scope(|scope| {
+                let handles: Vec<_> = contenders
+                    .iter()
+                    .map(|&(seed, fold_seed)| {
+                        let (dir, barrier) = (dir.clone(), barrier.clone());
+                        scope.spawn(move || {
+                            let config = Config {
+                                seeds: vec![seed],
+                                fold_seed,
+                                ..shared_scratch_config()
+                            };
+                            barrier.wait();
+                            (seed, run(&config, &dir))
+                        })
+                    })
+                    .collect();
+                handles
+                    .into_iter()
+                    .map(|handle| handle.join().unwrap())
+                    .collect()
+            });
+            let winners: Vec<(u64, &Report)> = results
+                .iter()
+                .filter_map(|(seed, result)| result.as_ref().ok().map(|report| (*seed, report)))
+                .collect();
+            let [(seed, report)] = winners.as_slice() else {
+                panic!("attempt {attempt}: {} comparisons succeeded", winners.len());
+            };
+            for error in results
+                .iter()
+                .filter_map(|(_, result)| result.as_ref().err())
+            {
+                let error = format!("{error:#}");
+                assert!(
+                    refusals.iter().any(|refusal| error.contains(refusal)),
+                    "attempt {attempt}: {error}"
+                );
+                let text = error.replace(&dir.display().to_string(), "<scratch>");
+                let hits = feat_math::transpile::lint_shipped_text(&text);
+                assert!(hits.is_empty(), "{text:?}: {hits:?}");
+            }
+            let record = &report.document.body.datasets[0];
+            let hash = &record.dataset_hash;
+            let prepared = dir.join("prepared").join(hash).join("prepared.json");
+            assert_eq!(
+                sha256_hex(&std::fs::read(prepared).unwrap()),
+                record.prepared_sha256,
+                "attempt {attempt}"
+            );
+            for slot in ["A", "B"] {
+                let output = search_output(&dir, slot, hash, *seed);
+                assert_eq!(
+                    names(output.parent().unwrap()),
+                    BTreeSet::from([format!("seed-{seed}")]),
+                    "attempt {attempt} slot {slot}"
+                );
+                let published: serde_json::Value = serde_json::from_slice(
+                    &std::fs::read(output.join("search/cut-0/search.json")).unwrap(),
+                )
+                .unwrap();
+                let m1 = &report
+                    .document
+                    .body
+                    .runs
+                    .iter()
+                    .find(|searched| searched.slot == slot)
+                    .unwrap()
+                    .metrics
+                    .m1;
+                let best = &published["best"]["observation"];
+                assert_eq!(
+                    best["rmse"].as_f64().map(f64::to_bits),
+                    Some(m1.rmse.to_bits()),
+                    "attempt {attempt} slot {slot}"
+                );
+                assert_eq!(best["genome"].as_str(), Some(m1.program.as_str()));
+                assert_eq!(published["rng_seed"].as_u64(), Some(*seed));
+            }
+            assert_eq!(
+                names(&dir),
+                set(&[KERNEL2_MARKER, "prepared", "search"]),
+                "attempt {attempt}"
+            );
+        }
+    }
+
+    /// A symbolic link to an empty directory is refused as the scratch of a comparison with a
+    /// kernel2 profile also when the path ends in `/`, which would make `symlink_metadata`
+    /// follow the link, with nothing written through it.
+    #[cfg(unix)]
+    #[test]
+    fn ablation_kernel2_refuses_a_symlinked_scratch_ending_in_a_slash() {
+        let root = scratch();
+        std::fs::create_dir(root.path().join("empty")).unwrap();
+        std::os::unix::fs::symlink("empty", root.path().join("link")).unwrap();
+        let slash = PathBuf::from(format!("{}/", root.path().join("link").display()));
+        let before = tree(root.path());
+        scratch_refusal(&shared_scratch_config(), &slash);
+        let changed = changed_entries(&before, &tree(root.path()));
+        assert!(
+            changed.is_empty(),
+            "a refused comparison changed {changed:?}"
+        );
     }
 }
