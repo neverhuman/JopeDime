@@ -205,3 +205,42 @@ fn utility_soundness_and_cost_use_actual_work_and_best_artifacts() {
         false
     );
 }
+
+#[test]
+fn utility_quality_never_counts_fault_penalty_reduction_as_predictive_lift() {
+    for (raw_b, expected_quality) in [(0.60_f64, false), (0.59, false), (0.61, true)] {
+        let mut runs = measurements();
+        for run in &mut runs {
+            let raw = if run.enabled { raw_b } else { 0.60 };
+            let objective = if run.enabled { raw_b } else { 0.58_f64 };
+            run.search["best_cv_bits"] = json!(raw.to_bits());
+            run.search["top_ten_median_bits"] = json!(raw.to_bits());
+            run.search["best_objective_bits"] = json!(objective.to_bits());
+            run.search["all_pass_faults"]["domain"] = json!(if run.enabled { 0 } else { 40 });
+        }
+        for card in utility_metrics::summarize(&runs).unwrap()["cards"]
+            .as_array()
+            .unwrap()
+        {
+            assert_eq!(card["gates"]["G-A"], expected_quality);
+            for dataset in card["datasets"].as_array().unwrap() {
+                assert_eq!(
+                    dataset["A"]["M1_best_cv_mean"],
+                    [0.60_f64; 5].iter().sum::<f64>() / 5.0
+                );
+                assert_eq!(
+                    dataset["B"]["M1_best_cv_mean"],
+                    [raw_b; 5].iter().sum::<f64>() / 5.0
+                );
+                assert_eq!(
+                    dataset["A"]["M2_top10_cv_mean"],
+                    [0.60_f64; 5].iter().sum::<f64>() / 5.0
+                );
+                assert_eq!(
+                    dataset["B"]["M2_top10_cv_mean"],
+                    [raw_b; 5].iter().sum::<f64>() / 5.0
+                );
+            }
+        }
+    }
+}
