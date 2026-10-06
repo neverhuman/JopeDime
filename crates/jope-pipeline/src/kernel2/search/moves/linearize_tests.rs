@@ -1325,6 +1325,29 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
         ));
         restore();
     }
+    // Errors the recorded line and samples cannot give (B19 wiring review 02,
+    // B19-R02-IMPOSSIBLE-ENDPOINT-RESIDUAL): one past what the evaluator's range allows, and the
+    // line moved far from every target with its small error kept.
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        fit_of(&mut m[measured]).lowered_error = Some(1e100);
+    });
+    errors.push(refused_with(
+        &path,
+        "a line error past the evaluator's range",
+        "a recorded line error exceeds what the evaluator's range allows",
+    ));
+    restore();
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        let record = fit_of(&mut m[measured]);
+        let shift = 10.0 * (record.fit.as_ref().unwrap().max_abs + record.lowered_error.unwrap());
+        record.fit.as_mut().unwrap().coefficients.as_mut().unwrap()[0] += shift + 1.0;
+    });
+    errors.push(refused_with(
+        &path,
+        "a line moved off its samples",
+        "a recorded line error is smaller than the line's residual at a sampled end",
+    ));
+    restore();
 
     // A refused line's fit hidden behind the faulting-input refusal, while the stage's other
     // subtrees keep their own records.
@@ -1425,12 +1448,12 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
     });
     publication::verify_run(&path).unwrap();
     restore();
-    // A third (review 01): an offered line's error edited to zero, under its fit's bracket, keeps
-    // the decision and is accepted; only a negative or nonfinite one is refused.
+    // A third: an offered line's error edited up to its bound, a residual its line and samples
+    // allow, keeps the decision and is accepted.
     let path = published_edit(output, &receipt, &engine, &moves, |m| {
         let record = fit_of(&mut m[measured]);
-        assert!(record.fit.as_ref().unwrap().levelled > 0.0);
-        record.lowered_error = Some(0.0);
+        assert!(record.lowered_error < record.bound);
+        record.lowered_error = record.bound;
     });
     publication::verify_run(&path).unwrap();
     restore();
