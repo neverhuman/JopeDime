@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4164,
+  "count": 4167,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -1507,12 +1507,12 @@
     }
    },
    "jainnode": {
-    "count": 82,
+    "count": 84,
     "ignored": 0,
     "binaries": {
      "jainnode": {
       "kind": "lib",
-      "count": 80,
+      "count": 82,
       "ignored": 0,
       "tests": [
        "cancellation::tests::accepted_before_start_is_durable_and_exactly_fenced",
@@ -1540,6 +1540,8 @@
        "executor::tests::cancellation_is_fenced_into_container_kill_and_no_publication",
        "executor::tests::dispatch_tests::accepted_assignment_recovers_without_duplicate_ack_and_restores_capacity",
        "executor::tests::dispatch_tests::concurrent_runtime_accepts_durable_cancellation_while_execution_runs",
+       "executor::tests::dispatch_tests::concurrent_runtime_enforces_the_signed_run_deadline",
+       "executor::tests::dispatch_tests::concurrent_runtime_enforces_the_signed_smoke_deadline",
        "executor::tests::dispatch_tests::concurrent_runtime_persists_ack_before_spawning_and_terminalizes_success",
        "executor::tests::dispatch_tests::concurrent_runtime_terminalizes_failed_execution_before_failure_frame",
        "executor::tests::dispatch_tests::failed_controller_position_commit_terminalizes_prepared_without_ack_or_launch",
@@ -3677,12 +3679,12 @@
     }
    },
    "jope-learning": {
-    "count": 210,
+    "count": 211,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
       "kind": "lib",
-      "count": 147,
+      "count": 148,
       "ignored": 0,
       "tests": [
        "canon::tests::sha256_vector",
@@ -3758,6 +3760,7 @@
        "eligibility::tests::stale_identity_missing_fold_and_reordered_rows_cannot_teach",
        "eligibility::tests::structural_receipt_without_actual_predictions_or_complete_execution_is_ineligible",
        "eligibility::tests::tampered_prediction_blob_fails_closed",
+       "eligibility::tests::teaching_fixture_root_preserves_default_and_refuses_invalid_overrides",
        "eligibility::tests::transitions::eligibility_alone_and_redelivery_never_count_as_improvement",
        "eligibility::tests::unknown_accounting_and_unbound_fitted_outputs_cannot_be_substituted",
        "encoder_receipt::tests::complete_binding_roundtrips_and_missing_provenance_fails",
@@ -6527,7 +6530,7 @@
   }
  },
  "totals": {
-  "rust": 4164,
+  "rust": 4167,
   "python": 172
  }
 }

@@ -1,0 +1,69 @@
+#!/bin/bash
+# RIGHTS-HELD-FILL, CPU side after the xbabe3 build (one-shot, no retry; never publishes, never deletes, never xbabe0):
+# wait for the 4 build units -> pull the tree -> verify (create-only receipt, .complete) -> research custody snapshot
+# (rights research-only, rights_basis formerly_rights_held, label clean, split v2) -> Dope on xbabe2 (light) ->
+# research vectors tree (a0 + dope) -> GPU plan for xbabe3 -> input + runner sync with sha256 checks. GPU runs separately.
+set -u
+R=/home/ubuntu/scratch/jopedime-dl-training-v1; B=$R/build-v2; F=$R/tmp/fill; T=$B/ROWSEL-RAW-v2-fill; RH=$B/RIGHTS-HELD-FILL-v2
+S=$F/src-20261006T110505Z; G=$RH/gpu
+for s in 0 1 2 3; do
+  until [ "$(ssh -o BatchMode=yes xbabe3 "systemctl --user is-active jopedime-dltrain-fill-xbabe3-build-s$s")" != "active" ]; do sleep 20; done
+done
+echo "build units done $(date -u +%FT%TZ)"
+rsync -a xbabe3:$T/ $T/ || { echo PULL-FAIL; exit 1; }
+rsync -a xbabe3:$F/build-s0.log xbabe3:$F/build-s1.log xbabe3:$F/build-s2.log xbabe3:$F/build-s3.log $F/ || true
+VR=$R/receipts/trainonly-v2/fill/rowsel-raw-v2-fill-verify-$(date -u +%Y%m%dT%H%M%SZ).json
+$F/fillpy.sh tools/v2_rowsel_raw_fill.py verify --out $T --split-version rowsel-raw-split-v2 --receipt $VR --complete 2>&1 | grep -v -i "warn" | tail -n 2
+[ -f $T/.complete ] || { echo "VERIFY-FAIL $VR"; exit 2; }
+echo "verify PASS $VR $(sha256sum $VR | cut -c1-64)"
+[ -e $RH ] && { echo "TARGET-EXISTS $RH"; exit 3; }
+mkdir -p $RH/custody $G/plans
+python3 - "$T" "$RH" <<'EOF' || { echo SNAPSHOT-FAIL; exit 4; }
+import json, glob, os, shutil, collections, sys
+T, RH = sys.argv[1:3]; c = collections.Counter()
+for p in sorted(glob.glob(f"{T}/shard-*/*/context.json")):
+    d = os.path.dirname(p)
+    if not os.path.exists(f"{d}/.done"): c["not_done"] += 1; continue
+    ctx = json.load(open(p))
+    if (ctx.get("rights"), ctx.get("rights_basis")) != ("research-only", "formerly_rights_held"): c["rights_other"] += 1; continue
+    if ctx.get("row_selection_leak") != ["clean"]: c["not_clean"] += 1; continue
+    if (ctx.get("rowsel") or {}).get("split", {}).get("schema") != "rowsel-raw-split-v2": c["not_split_v2"] += 1; continue
+    shutil.copytree(d, f"{RH}/custody/{d.split('/')[-2]}/{d.split('/')[-1]}"); c["snapshot"] += 1
+print("snapshot", dict(c))
+if c["not_done"] or c["rights_other"] or c["not_clean"] or c["not_split_v2"]: sys.exit(1)
+EOF
+$F/fillpy.sh tools/v2_dope_run.py --build $RH/custody --shard 0 --of 1 > $RH/dope-0.log 2>&1
+tail -n 1 $RH/dope-0.log; grep -q '"failed": 0' <(tail -n 1 $RH/dope-0.log) || { echo DOPE-FAIL; exit 5; }
+python3 - "$RH" "$G" "$VR" <<'EOF' || { echo PLAN-FAIL; exit 6; }
+import json, glob, os, shutil, hashlib, sys
+RH, G, VR = sys.argv[1:4]; DROP = {"files", "dope", "published", "utc_us"}
+vs = hashlib.sha256(open(VR, "rb").read()).hexdigest()
+OWN = ("ALL-DATA-RESEARCH + RIGHTS-HELD-FILL + GPU-BUDGET owner-decisions-20261006T102636Z.json; RAW-SPLIT-RULING (B) "
+       "owner-decisions-20261006T030322Z.json; G22-OWNER-ACK owner-decisions-20261005T214040Z.json")
+n = 0; rows = []
+for p in sorted(glob.glob(f"{RH}/custody/shard-*/*/context.json")):
+    d = os.path.dirname(p); ctx = json.load(open(p))
+    dst = f"{RH}/publish-vectors/{d.split('/')[-2]}/{d.split('/')[-1]}"; os.makedirs(dst)
+    keep = {k: v for k, v in ctx["files"].items() if k in ("a0.f32", "dope.npy")}
+    for f in keep: shutil.copy2(f"{d}/{f}", f"{dst}/{f}")
+    c2 = dict(ctx); c2["files"] = keep
+    c2["row_level_inputs_local_custody"] = {k: v for k, v in ctx["files"].items() if k in ("encoder.jtt1.gz", "teacher.jtt1.gz")}
+    open(f"{dst}/context.json", "w").write(json.dumps(c2, sort_keys=True) + "\n"); open(f"{dst}/.done", "w").write("ok\n"); n += 1
+    parent = {k: v for k, v in ctx.items() if k not in DROP}
+    parent["rowsel"] = {k: (ctx.get("rowsel") or {}).get(k) for k in ("route", "identity", "outer_split_changed")}
+    parent["rowsel"]["split_schema"] = ctx["rowsel"]["split"]["schema"]
+    rows.append({"view_id": ctx["view_id"], "encoder_path": f"{d}/encoder.jtt1.gz", "encoder_sha256": ctx["files"]["encoder.jtt1.gz"]["sha256"],
+                 "encoder_raw_sha256": ctx["files"]["encoder.jtt1.gz"]["raw_sha256"], "encoder_key": None, "encoder_version_id": None,
+                 "parent": parent, "manifest": {"local_tree": f"{RH}/custody", "rowsel_raw_v2_fill_verify_sha256": vs}, "owner_decision": OWN})
+open(f"{G}/plans/plan-xbabe3.jsonl", "w").write("".join(json.dumps(r, sort_keys=True) + "\n" for r in rows))
+open(f"{G}/plans/files-xbabe3.txt", "w").write("".join(r["encoder_path"] + "\n" for r in rows))
+open(f"{G}/plans/sums-xbabe3.txt", "w").write("".join(r["encoder_sha256"] + "  " + r["encoder_path"] + "\n" for r in rows))
+print("research vectors", n, "gpu plan xbabe3", len(rows))
+EOF
+L=$(sha256sum $S/tools/v2_gpu_encode.py | cut -c1-64)
+ssh -o BatchMode=yes xbabe3 "[ -e $RH ] && echo EXISTS-ON-XBABE3 || mkdir -p $G/plans $G/out $G/pilot $G/pilot-targetflip" | grep -q EXISTS && { echo "TARGET-EXISTS xbabe3 $RH"; exit 7; }
+rsync -a --files-from=$G/plans/files-xbabe3.txt / xbabe3:/ 2>&1 | grep -v "failed to set times\|some files/attrs"
+rsync -a $G/plans/ xbabe3:$G/plans/ || exit 7
+ssh -o BatchMode=yes xbabe3 "sha256sum -c --quiet $G/plans/sums-xbabe3.txt" || { echo "INPUT-SHA-FAIL"; exit 7; }
+[ "$(ssh -o BatchMode=yes xbabe3 "sha256sum $S/tools/v2_gpu_encode.py | cut -c1-64")" = "$L" ] || { echo "RUNNER-SHA-FAIL"; exit 7; }
+echo "CPU-SIDE-DONE $(date -u +%FT%TZ) plan=$(wc -l < $G/plans/plan-xbabe3.jsonl) runner=$L"

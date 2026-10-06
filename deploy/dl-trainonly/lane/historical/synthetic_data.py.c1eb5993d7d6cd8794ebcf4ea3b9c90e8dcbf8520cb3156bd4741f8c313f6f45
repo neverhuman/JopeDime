@@ -1,0 +1,141 @@
+"""Synthetic scale data for the P7 GPU smoke and the throughput benchmark (no real labels; PLAN §5 P7/P8 smoke).
+
+``synthetic-scale/v1`` builds a train-only ``sampler.TrainData`` whose shapes match the real corpus (P4: vocabulary
+~416-512, max_seq 160, mean program length ~52 tokens; §6.4 encoding widths; §6.1 groups of 8 over B_ctx = 32
+contexts) while every value is a pure function of the spec: draws come from ``numpy.random.default_rng`` seeded by
+the spec's sha256 (no global RNG is touched). The grammar mask allows every token except PAD and BOS, and the data is
+stamped with a ``grammar`` ref so the content hash skips per-program masks. Nothing here is a training label of the
+lane: it exists only to exercise the trainer, the GPU path, checkpointing and resume.
+"""
+from __future__ import annotations
+
+import hashlib
+import math
+from dataclasses import asdict, dataclass
+
+import numpy as np
+
+from dltrain import common
+from dltrain import labels as lbl
+from dltrain import sampler as sampler_mod
+
+SCHEMA = "jope.dl-synthetic-scale/v1"
+PAD, BOS, EOS = 0, 1, 2
+GRAMMAR_REF = "synthetic-allow-all-v1"
+
+
+@dataclass(frozen=True)
+class SyntheticSpec:
+    vocab_size: int = 512
+    max_seq: int = 160
+    mean_len: float = 52.0
+    ctx_dim: int = 640
+    n_train_families: int = 64
+    n_dev_families: int = 4
+    datasets_per_family: int = 2
+    contexts_per_dataset: int = 5
+    programs_per_context: int = 48
+    y_rows: int = 64
+    seed_tag: str = "p7-gpu-smoke"
+
+    def __post_init__(self) -> None:
+        for name in ("vocab_size", "max_seq", "ctx_dim", "n_train_families", "n_dev_families", "datasets_per_family",
+                     "contexts_per_dataset", "programs_per_context", "y_rows"):
+            v = getattr(self, name)
+            if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+                raise ValueError(f"SyntheticSpec.{name} must be an int >= 1")
+        if self.vocab_size < 8 or self.max_seq < 8 or not 4.0 <= self.mean_len <= self.max_seq:
+            raise ValueError("SyntheticSpec: vocab_size >= 8, max_seq >= 8, 4 <= mean_len <= max_seq")
+        if self.programs_per_context < 12:
+            raise ValueError("programs_per_context must be >= 12 (a full group needs 4 teacher skeletons)")
+
+    def to_json(self) -> dict:
+        return {"schema": SCHEMA, **asdict(self)}
+
+    @classmethod
+    def from_json(cls, d: dict) -> "SyntheticSpec":
+        d = dict(d)
+        if d.pop("schema", None) != SCHEMA:
+            raise ValueError(f"not a {SCHEMA} spec")
+        return cls(**d)
+
+    def sha256(self) -> str:
+        return common.sha256_bytes(common.canonical(self.to_json()))
+
+    def corpus_ref(self) -> str:
+        return f"synthetic-scale/v1:{self.sha256()}"
+
+
+def _sha(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def legal_mask_fn(vocab_size: int):
+    def legal(tokens) -> np.ndarray:
+        mask = np.ones((len(tokens) - 1, vocab_size), dtype=np.bool_)
+        mask[:, PAD] = False
+        mask[:, BOS] = False
+        return mask
+    return legal
+
+
+def build(spec: SyntheticSpec) -> sampler_mod.TrainData:
+    rng = np.random.default_rng(int(spec.sha256()[:16], 16))
+    contexts, records, encodings, assignment = [], [], {}, {}
+    n_fam = spec.n_train_families + spec.n_dev_families
+    sigma = 0.45
+    mu = math.log(spec.mean_len) - sigma * sigma / 2
+    for f in range(n_fam):
+        fam = f"syn-fam-{f:04d}"
+        assignment[fam] = "train_fit" if f < spec.n_train_families else "dev"
+        for d in range(spec.datasets_per_family):
+            ds = _sha(f"{spec.seed_tag}:dataset:{fam}:{d}")
+            for fold in range(spec.contexts_per_dataset):
+                ctx = _sha(f"{spec.seed_tag}:context:{ds}:{fold}")
+                role = "train_fit" if assignment[fam] == "train_fit" else "dev"
+                y = (rng.standard_normal(spec.y_rows) * (0.5 + rng.random()) + rng.standard_normal()).tolist()
+                contexts.append({"context_sha256": ctx, "dataset_hash": ds, "family_id": fam, "split_role": role,
+                                 "fold": fold, "frozen_fold0": fold == 0, "y_train": y})
+                encodings[ctx] = rng.standard_normal(spec.ctx_dim).astype(np.float32)
+                s_c = float(lbl.robust_scale(y))
+                base = [s_c * 1.0, s_c * 1.15]
+                for j in range(spec.programs_per_context):
+                    length = int(min(spec.max_seq, max(8, round(rng.lognormal(mu, sigma)))))
+                    body = rng.integers(3, spec.vocab_size, size=length - 2).tolist()
+                    tokens = [BOS] + body + [EOS]
+                    psha = _sha(f"{ctx}:{j}:" + ",".join(map(str, tokens)))
+                    u = rng.random()
+                    outcome = "completed" if u < 0.80 else ("failed:compile_error" if u < 0.92 else "timeout@90000ms")
+                    rec = {"context_sha256": ctx, "context_schema": SCHEMA, "dataset_hash": ds, "family_id": fam,
+                           "split_role": role, "program_sha256": psha, "skeleton_sha256": _sha(f"skel:{psha}"),
+                           "tokens": tokens, "length": length, "outcome": outcome, "rmse_j": None,
+                           "baseline_rmse_j": list(base), "cv_mean_log_ratio": None, "cv_log_ratio_sd": None,
+                           "cv_mean_ratio": None, "wall_us": None, "backend": "local", "shared_seed": False}
+                    if outcome == "completed":
+                        a = 0.8 - 1.6 * rng.random()
+                        rmse = [base[0] * math.exp(-a), base[1] * math.exp(-a + 0.02)]
+                        ratios = [rmse[0] / base[0], rmse[1] / base[1]]
+                        logs = [math.log(r) for r in ratios]
+                        rec.update(rmse_j=rmse, cv_mean_log_ratio=(logs[0] + logs[1]) / 2,
+                                   cv_mean_ratio=(ratios[0] + ratios[1]) / 2, cv_log_ratio_sd=abs(logs[0] - logs[1]) / 2,
+                                   wall_us=int(1e5 + 4e7 * rng.random()))
+                    elif outcome.startswith("failed:"):
+                        rec["wall_us"] = int(5e4 + 1e6 * rng.random())
+                    else:
+                        rec["wall_us"] = 90_000_000
+                    records.append(rec)
+    corpus = sampler_mod.Corpus.build(contexts, records, encodings, assignment)
+    return corpus
+
+
+def train_data(spec: SyntheticSpec, config: sampler_mod.SamplerConfig) -> sampler_mod.TrainData:
+    corpus = build(spec)
+    return sampler_mod.TrainData(corpus=corpus, fit=sampler_mod.fit(corpus, config), config=config,
+                                 legal_mask_fn=legal_mask_fn(spec.vocab_size), vocab_size=spec.vocab_size,
+                                 ctx_dim=spec.ctx_dim, refs=refs(spec))
+
+
+def refs(spec: SyntheticSpec) -> dict:
+    """The input identities stamped on the data (and required in the run plan): corpus and encoding name this spec."""
+    ref = spec.corpus_ref()
+    return {"corpus": ref, "encoding": ref, "grammar": GRAMMAR_REF}

@@ -264,7 +264,7 @@
         "collection/execution/deselection counts",
         "pytest results",
         "Ruff exit",
-        "DL offline subreceipt:329 collected identities,327 synthetic executions,2 exact private-metadata host exclusions, dependencies/source pins and log hash; separate from pytest"
+        "DL offline subreceipt: 515 collected identities, 477 synthetic executions, 38 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -972,7 +972,7 @@
     },
     "dl-lane-qualification": {
       "status": "deferred",
-      "reason": "Newly imported historical lane test families outside the eleven audited offline modules are not collected or executed by this source-custody PR; no pre-existing family is moved or excluded. Dependency and side-effect audit plus bounded fixtures are still required.",
+      "reason": "Newly imported historical lane test families outside the nineteen audited offline modules are not collected or executed by this source-custody PR; no pre-existing family is moved or excluded. Dependency and side-effect audit plus bounded fixtures are still required.",
       "dependencies": [
         "explicit maintained-family collection and side-effect audit",
         "pinned runtime/input/fixture closure",
@@ -993,6 +993,64 @@
         "bounded host-qualification receipt with exact two-case inventory"
       ],
       "owner_phase": "DL lane qualified host metadata; source custody alone is insufficient"
+    },
+    "dl-lane-host-private-inputs": {
+      "status": "deferred",
+      "reason": "Twenty-six preserved split-v2, split-v2-groups and split-defaults cases read pinned private xbabe2 lane inputs: the NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay, the registry port gsk.py, scale-check sources and earlier builder bytes (ed00684a, c0b989b6, fcfe3828, 28be7f98; the same bytes are retained in lane/historical/). Offline discovery does not stat/read that custody and excludes only these named identities. The preserved cases are not rewritten and no substitute inputs are created.",
+      "cases": {
+        "tests.test_v2_rowsel_build_split_v2.CodeCustody.test_summary_completes_when_recorded_bytes_are_in_custody": "summary reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2.CodeCustody.test_summary_fails_when_a_recorded_hash_cannot_be_produced": "summary reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2.Registry.test_the_default_route_builds_the_previous_builders_bytes": "loads the private-lane builder copy ed00684a (same bytes retained as lane/historical/v2_rowsel_build.py.ed00684a...); requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2.Scope.test_a_fallback_dataset_rebuilt_on_raw_is_refused": "class setup loads pinned private scale-check sources and tree-scope receipts; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2.Scope.test_the_three_trees": "class setup loads pinned private scale-check sources and tree-scope receipts; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_changed_later_repeat_is_not_reproduced": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_field_and_value_grouping_mismatch_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ambiguous_columns_need_identical_component_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_fewer_components_than_outer_folds_plan_trailing_empty_folds": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_group_values_are_canonical_float64_values": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_missing_cells_are_one_group": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_the_reproducing_column_is_found": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Summary.test_summary_of_a_v2gsplit_tree": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Supplement.test_a_context_count_short_of_the_effective_folds_is_a_problem": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Supplement.test_supplement_plan_build_and_summary": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.V2.test_the_v2_route_builds_the_bytes_c0b989b6_built": "loads the private-lane code-custody builder c0b989b6 (same bytes retained as lane/historical/v2_rowsel_build.py.c0b989b6...); requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_tied_column_never_reaches_the_union_find": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ties_are_checked_before_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+        "tests.test_split_defaults.BeforeAfter.test_v2": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+        "tests.test_split_defaults.BeforeAfter.test_v2g": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+        "tests.test_split_defaults.PortCheck.test_the_registry_replay_lineage_equals_fcfe3828s": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
+        "tests.test_split_defaults.RawDefaults.test_the_explicit_v1_replay_builds_28be7f98s_bytes": "compares against the private code-custody builder bytes 28be7f98 (same bytes retained in lane/historical/); requires qualified host custody",
+        "tests.test_split_defaults.RawDefaults.test_the_v2_path_builds_28be7f98s_bytes": "compares against the private code-custody builder bytes 28be7f98 (same bytes retained in lane/historical/); requires qualified host custody",
+        "tests.test_split_defaults.V2Path.test_v2_build_never_fits_on_every_row": "the v2 build reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody",
+        "tests.test_split_defaults.V2Path.test_v2g_build_never_fits_on_every_row": "the v2 build reads the pinned private NONRAW-SPLIT-A owner decision; requires qualified host custody"
+      },
+      "dependencies": [
+        "source-bound retained owner-decision, registry-port, scale-check and builder input closure",
+        "bounded host-qualification receipt with exact twenty-six-case inventory"
+      ],
+      "owner_phase": "DL lane qualified host inputs for the re-split builders; source custody alone is insufficient"
+    },
+    "dl-lane-subprocess-fixtures": {
+      "status": "deferred",
+      "reason": "The ten preserved tests.test_v2_provenance cases run a scratch copy of tools/v2_provenance.py as a child process against a synthetic RUN tree with a stub publisher. The offline guard refuses every subprocess launch, so the runner excludes only these named identities; the guard is not relaxed and the cases are not rewritten.",
+      "cases": {
+        "tests.test_v2_provenance.Resolver.test_custody_file_must_hash_to_its_name": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_f1_unresolved_gpu_runner_fails": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_f2_every_row_of_a_published_doc_is_scanned": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_f3_missing_hashes_are_unresolved": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_full_sha_resolves_and_passes": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_non_hex_64_chars_is_not_a_sha": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_publish_refused_before_any_client_when_unresolved": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_short_prefix_never_binds": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_summary_classification": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+        "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch"
+      },
+      "dependencies": [
+        "a bounded execution route that permits the child process without weakening the offline guard",
+        "receipt with the exact ten-case inventory"
+      ],
+      "owner_phase": "DL lane provenance fixture qualification; source custody alone is insufficient"
     }
   },
   "items": {
@@ -8062,11 +8120,11 @@
       "discovery": {
         "kind": "python-family"
       },
-      "lanes": [],
-      "dispositions": [
-        "dl-lane-qualification"
+      "lanes": [
+        "python"
       ],
-      "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_nonnumeric.py": {
       "discovery": {
@@ -8076,7 +8134,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_calibration.py": {
       "discovery": {
@@ -8126,7 +8184,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_raw_split_v2.py": {
       "discovery": {
@@ -8136,7 +8194,17 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_split_v2_groups.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py": {
       "discovery": {
@@ -8146,7 +8214,19 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_split_defaults.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [
+        "dl-lane-host-private-inputs"
+      ],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1prep.py": {
       "discovery": {
@@ -8156,7 +8236,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1raw.py": {
       "discovery": {
@@ -8166,7 +8246,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_trainonly.py": {
       "discovery": {
@@ -8176,7 +8256,39 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2g.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [
+        "dl-lane-subprocess-fixtures"
+      ],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py": {
       "discovery": {
@@ -8186,7 +8298,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build.py": {
       "discovery": {
@@ -8198,7 +8310,31 @@
       "dispositions": [
         "dl-lane-host-metadata"
       ],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [
+        "dl-lane-host-private-inputs"
+      ],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2g.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [
+        "dl-lane-host-private-inputs"
+      ],
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw.py": {
       "discovery": {
@@ -8208,7 +8344,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
       "discovery": {
@@ -8218,7 +8354,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "Explicit offline unittest selection in run_lane_offline.py:329 total identities,327 synthetic cases executed, two exact private-metadata cases excluded with a host disposition. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+      "scope": "Explicit offline unittest selection of 19 modules in run_lane_offline.py: 515 total identities, 477 synthetic cases executed, 38 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
       "discovery": {
@@ -8598,7 +8734,7 @@
         "hygiene"
       ],
       "dispositions": [],
-      "scope": "Direct15-case stdlib source-custody fixture execution: trusted producer/predecessor pins, exact restoration, byte edits, self-sidecar replacement, missing/unlisted objects, symlink escapes and malformed identity refusals; imports no staged code."
+      "scope": "Direct 30-case stdlib source-custody fixture execution: trusted producer and ordered predecessor-chain pins, supersedes links, chain truncation/reordering, abandoned unpushed stagings refused inside the chain (by sha or path, recorded by any chain manifest) and malformed abandoned records, exact restoration of every predecessor, lost current/historical versions, byte edits, self-sidecar replacement, missing/unlisted/extra objects, redundant or unreferenced supplements, symlink escapes and malformed identity refusals; imports no staged code."
     },
     "python:deploy/dl-trainonly/test_offline_guard.py": {
       "discovery": {
@@ -8608,7 +8744,7 @@
         "hygiene"
       ],
       "dispositions": [],
-      "scope": "Stdlib Python audit-guard controls: all socket events, process launches, credential/private-lane input reads, library-cache exception, and exact two-case host exclusions before private stat. No numerical work or network traffic; Python audit scope, not OS/native-extension isolation."
+      "scope": "Stdlib Python audit-guard controls: all socket events, process launches, credential/private-lane input reads, library-cache exception, and exact declared host exclusions before private stat. No numerical work or network traffic; Python audit scope, not OS/native-extension isolation."
     }
   }
 }

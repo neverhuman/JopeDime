@@ -1,0 +1,17 @@
+#!/bin/bash
+# Wait (unit state only) until no jopedime-dltrain-gpuenc-*-xbabe3-* unit is active on xbabe3 for two checks 30 s apart,
+# then launch the fill GPU chain as unit jopedime-dltrain-gpuenc-fill-xbabe3-a1 (attempt 1). Never touches other units.
+set -u
+R=/home/ubuntu/scratch/jopedime-dl-training-v1; X=$R/pydeps/tab35-xbabe3-extra-v1
+busy() { ssh -o BatchMode=yes xbabe3 "systemctl --user list-units 'jopedime-dltrain-gpuenc-*' --state=active,activating --no-legend --no-pager" | grep -q .; }
+while true; do
+  if ! busy; then sleep 30; busy || break; fi
+  sleep 30
+done
+echo "GPU units idle $(date -u +%FT%TZ)"
+ssh -o BatchMode=yes xbabe3 "systemd-run --user --collect --unit=jopedime-dltrain-gpuenc-fill-xbabe3-a1 --slice=jopedime-dltrain.slice \
+  -p RuntimeMaxSec=7200 -p MemoryMax=16G -p MemorySwapMax=0 -p CPUQuota=600% -p TasksMax=2048 -p Nice=10 -p IOSchedulingClass=idle \
+  --working-directory=$R/tmp --setenv=PYTHONPATH=$R/pydeps/tab35-runtime-v1:$X --setenv=TMPDIR=$R/tmp \
+  --setenv=CUDA_VISIBLE_DEVICES=0 --setenv=OMP_NUM_THREADS=4 --setenv=AWS_CONFIG_FILE=/dev/null --setenv=AWS_SHARED_CREDENTIALS_FILE=/dev/null \
+  --property=StandardOutput=append:$R/tmp/fill/chain-fill-xbabe3-a1.log --property=StandardError=append:$R/tmp/fill/chain-fill-xbabe3-a1.log \
+  $R/tmp/fill/chain-fill-xbabe3.sh" && echo "LAUNCHED $(date -u +%FT%TZ)"

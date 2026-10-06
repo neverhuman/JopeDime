@@ -1,0 +1,7 @@
+#!/bin/bash
+# xbabe2 lane-slice python on the frozen fill snapshot (no AWS config, no GPU, TMPDIR=RUN/tmp). Light jobs only (xbabe2 swap full).
+S=/home/ubuntu/scratch/jopedime-dl-training-v1/tmp/fill/src-20261006T110505Z
+exec systemd-run --user --scope --quiet --slice=jopedime-dltrain.slice -p CPUQuota=200% -p MemoryMax=6G -p MemorySwapMax=0 -p TasksMax=256 \
+  nice -n 10 ionice -c3 env -C "$S" PYTHONPATH="$S" PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
+  TMPDIR=/home/ubuntu/scratch/jopedime-dl-training-v1/tmp CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=2 \
+  AWS_CONFIG_FILE=/dev/null AWS_SHARED_CREDENTIALS_FILE=/dev/null /home/ubuntu/.venvs/jope-dltrain-v1/bin/python "$@"

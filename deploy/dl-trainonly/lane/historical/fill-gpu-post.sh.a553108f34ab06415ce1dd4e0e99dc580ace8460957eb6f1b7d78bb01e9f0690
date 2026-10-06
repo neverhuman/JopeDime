@@ -1,0 +1,20 @@
+#!/bin/bash
+# RIGHTS-HELD-FILL GPU post (xbabe2, one-shot): wait for unit jopedime-dltrain-gpuenc-fill-xbabe3-a1 -> pull gpu/ and the chain
+# log -> require CHAIN-DONE, 65/65 .done and both pilot PASS lines -> assemble (label_exposure + holdout_assignment) with the
+# context2048 control bound as PILOT#SHA256 -> print the counts. Never publishes, never deletes, never xbabe0.
+set -u
+R=/home/ubuntu/scratch/jopedime-dl-training-v1; F=$R/tmp/fill; S=$F/src-20261006T110505Z; G=$R/build-v2/RIGHTS-HELD-FILL-v2/gpu
+U=jopedime-dltrain-gpuenc-fill-xbabe3-a1
+until [ "$(ssh -o BatchMode=yes xbabe3 "systemctl --user is-active $U")" != "active" ]; do sleep 20; done
+echo "unit done $(date -u +%FT%TZ)"
+rsync -a xbabe3:$F/chain-fill-xbabe3-a1.log $F/ || exit 1
+grep -E "pilot PASS|FAIL|CHAIN-DONE" $F/chain-fill-xbabe3-a1.log
+grep -q CHAIN-DONE $F/chain-fill-xbabe3-a1.log || { echo CHAIN-NOT-DONE; exit 2; }
+[ "$(grep -c 'pilot PASS' $F/chain-fill-xbabe3-a1.log)" = 2 ] || { echo PILOTS-NOT-BOTH-PASS; exit 2; }
+rsync -a xbabe3:$G/ $G/ || exit 3
+rsync -a xbabe3:$R/receipts/trainonly-v2/gpu/gpu-ledger-xbabe3.jsonl $F/gpu-ledger-xbabe3.after-fill.jsonl || true
+want=$(wc -l < $G/plans/plan-xbabe3.jsonl); n=$(ls $G/out/*/.done 2>/dev/null | wc -l); echo "gpu $n/$want"; [ "$n" = "$want" ] || { echo INCOMPLETE; exit 4; }
+PIL=$(ls -t $G/pilot/pilot-*.json | head -1)
+(cd $S && $F/fillpy.sh tools/v2_gpu_assemble.py --out $G/out --pub $G/publish --ctx2048-control $PIL#$(sha256sum $PIL | cut -c1-64)) 2>&1 | grep -v -i warn | tail -n 2
+n2=$(ls $G/publish/shard-*/*/.done 2>/dev/null | wc -l); echo "assembled $n2"; [ "$n2" = "$want" ] || { echo ASSEMBLE-INCOMPLETE; exit 5; }
+echo "GPU-POST-DONE $(date -u +%FT%TZ)"

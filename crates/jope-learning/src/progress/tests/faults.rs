@@ -594,105 +594,138 @@ fn crash_at(w: &mut World, boundary: Boundary) -> String {
     )
 }
 
+// Each case owns all state, remote storage and fresh restored hosts. Overlap the
+// mandatory fsync waits without removing writes or expanding the one test's
+// original 240-second PR watchdog. Four case workers stay within the local CPU cap.
+const CASE_WORKERS: usize = 4;
+
+fn exercise_case(case: &Case) -> String {
+    let mut w = world();
+    let what = (case.inject)(&mut w);
+    w.outbox();
+    let run_id = w.r.id().to_string();
+    let found = reconstruct(&w.e.remote, &run_id, w.o.as_ref());
+    let line = match case.committed {
+        None => {
+            let err = found.expect_err("a damaged committed state reconstructed");
+            assert!(reusable(&w.e.remote, &run_id).is_err(), "{}", case.name);
+            assert!(
+                fresh_restore(&w.e.remote, &run_id).is_err(),
+                "{}: restored from a damaged graph",
+                case.name
+            );
+            let err = format!("{err:#}");
+            let defect = ["Missing", "Corrupt", "Invalid"]
+                .into_iter()
+                .find(|d| err.contains(d))
+                .unwrap_or("error");
+            format!("committed state refused ({defect}); reusable and restore refuse too")
+        }
+        Some(height) => {
+            let rec = found.unwrap_or_else(|e| panic!("{}: {e:#}", case.name));
+            assert_eq!(
+                rec.head.as_ref().map(|h| h.height),
+                Some(height),
+                "{}",
+                case.name
+            );
+            account(w.o.as_ref().unwrap(), &rec);
+            // A fresh host restores exactly the committed closure, deterministically, and
+            // nothing that exists only on the surviving host.
+            let (_a, fresh, restored) = fresh_restore(&w.e.remote, &run_id).unwrap();
+            let (_b, again, _) = fresh_restore(&w.e.remote, &run_id).unwrap();
+            assert_eq!(restored.head.height, height);
+            let restored_keys = keys(&fresh);
+            assert_eq!(
+                restored_keys,
+                keys(&again),
+                "{}: nondeterministic",
+                case.name
+            );
+            assert_eq!(
+                restored_keys.iter().cloned().collect::<BTreeSet<_>>(),
+                rec.committed,
+                "{}",
+                case.name
+            );
+            assert!(rec.local_only.iter().all(|k| !restored_keys.contains(k)));
+            let mut fresh = fresh;
+            let twice = restore(&w.e.remote, &run_id, &mut fresh).unwrap().unwrap();
+            assert_eq!(
+                (twice.appended, twice.present),
+                (0, rec.committed.len() as u64)
+            );
+            format!(
+                "committed h{height}: {} committed, {} uncommitted, {} divergent, {} \
+                 quarantined, {} local-only, {} unacknowledged, {} acknowledged-missing; \
+                 restored {} items",
+                rec.committed.len(),
+                rec.uncommitted.len(),
+                rec.divergent.len(),
+                rec.quarantined.len(),
+                rec.local_only.len(),
+                rec.unacknowledged.len(),
+                rec.acknowledged_missing.len(),
+                restored.appended
+            )
+        }
+    };
+    (case.clear)(&mut w);
+    let height = (case.resume)(&mut w);
+    let rec = reconstruct(&w.e.remote, &run_id, w.o.as_ref())
+        .unwrap_or_else(|e| panic!("{}: after recovery: {e:#}", case.name));
+    assert_eq!(rec.head.as_ref().map(|h| h.height), Some(height));
+    assert!(
+        rec.local_only.is_empty()
+            && rec.unacknowledged.is_empty()
+            && rec.acknowledged_missing.is_empty()
+            && rec.quarantined.is_empty(),
+        "{}: {rec:?}",
+        case.name
+    );
+    account(w.o.as_ref().unwrap(), &rec);
+    // A fresh host restored from the remote alone resumes the computation on the tip.
+    let (_dir, mut fresh, _) = fresh_restore(&w.e.remote, &run_id).unwrap();
+    let resumed = resume_computation(&w, &mut fresh);
+    assert_eq!(resumed, height + 1, "{}", case.name);
+    format!(
+        "fault {:<36} | {} | {line} | recovered to h{height}, restored host resumed to \
+         h{resumed}",
+        case.name,
+        what.chars().take(90).collect::<String>().replace('\n', " ")
+    )
+}
+
 #[test]
 fn every_fault_leaves_committed_state_restorable_and_every_delivery_accounted_for() {
     let cases = cases();
     let names: BTreeSet<&str> = cases.iter().map(|c| c.name).collect();
     assert_eq!(names.len(), cases.len(), "case names must be unique");
-    for case in cases {
-        let mut w = world();
-        let what = (case.inject)(&mut w);
-        w.outbox();
-        let run_id = w.r.id().to_string();
-        let found = reconstruct(&w.e.remote, &run_id, w.o.as_ref());
-        let line = match case.committed {
-            None => {
-                let err = found.expect_err("a damaged committed state reconstructed");
-                assert!(reusable(&w.e.remote, &run_id).is_err(), "{}", case.name);
-                assert!(
-                    fresh_restore(&w.e.remote, &run_id).is_err(),
-                    "{}: restored from a damaged graph",
-                    case.name
-                );
-                let err = format!("{err:#}");
-                let defect = ["Missing", "Corrupt", "Invalid"]
-                    .into_iter()
-                    .find(|d| err.contains(d))
-                    .unwrap_or("error");
-                format!("committed state refused ({defect}); reusable and restore refuse too")
-            }
-            Some(height) => {
-                let rec = found.unwrap_or_else(|e| panic!("{}: {e:#}", case.name));
-                assert_eq!(
-                    rec.head.as_ref().map(|h| h.height),
-                    Some(height),
-                    "{}",
-                    case.name
-                );
-                account(w.o.as_ref().unwrap(), &rec);
-                // A fresh host restores exactly the committed closure, deterministically, and
-                // nothing that exists only on the surviving host.
-                let (_a, fresh, restored) = fresh_restore(&w.e.remote, &run_id).unwrap();
-                let (_b, again, _) = fresh_restore(&w.e.remote, &run_id).unwrap();
-                assert_eq!(restored.head.height, height);
-                let restored_keys = keys(&fresh);
-                assert_eq!(
-                    restored_keys,
-                    keys(&again),
-                    "{}: nondeterministic",
-                    case.name
-                );
-                assert_eq!(
-                    restored_keys.iter().cloned().collect::<BTreeSet<_>>(),
-                    rec.committed,
-                    "{}",
-                    case.name
-                );
-                assert!(rec.local_only.iter().all(|k| !restored_keys.contains(k)));
-                let mut fresh = fresh;
-                let twice = restore(&w.e.remote, &run_id, &mut fresh).unwrap().unwrap();
-                assert_eq!(
-                    (twice.appended, twice.present),
-                    (0, rec.committed.len() as u64)
-                );
-                format!(
-                    "committed h{height}: {} committed, {} uncommitted, {} divergent, {} \
-                     quarantined, {} local-only, {} unacknowledged, {} acknowledged-missing; \
-                     restored {} items",
-                    rec.committed.len(),
-                    rec.uncommitted.len(),
-                    rec.divergent.len(),
-                    rec.quarantined.len(),
-                    rec.local_only.len(),
-                    rec.unacknowledged.len(),
-                    rec.acknowledged_missing.len(),
-                    restored.appended
-                )
-            }
-        };
-        (case.clear)(&mut w);
-        let height = (case.resume)(&mut w);
-        let rec = reconstruct(&w.e.remote, &run_id, w.o.as_ref())
-            .unwrap_or_else(|e| panic!("{}: after recovery: {e:#}", case.name));
-        assert_eq!(rec.head.as_ref().map(|h| h.height), Some(height));
-        assert!(
-            rec.local_only.is_empty()
-                && rec.unacknowledged.is_empty()
-                && rec.acknowledged_missing.is_empty()
-                && rec.quarantined.is_empty(),
-            "{}: {rec:?}",
-            case.name
-        );
-        account(w.o.as_ref().unwrap(), &rec);
-        // A fresh host restored from the remote alone resumes the computation on the tip.
-        let (_dir, mut fresh, _) = fresh_restore(&w.e.remote, &run_id).unwrap();
-        let resumed = resume_computation(&w, &mut fresh);
-        assert_eq!(resumed, height + 1, "{}", case.name);
-        eprintln!(
-            "fault {:<36} | {} | {line} | recovered to h{height}, restored host resumed to \
-             h{resumed}",
-            case.name,
-            what.chars().take(90).collect::<String>().replace('\n', " ")
-        );
+    assert_eq!(cases.len(), 18, "the complete fault matrix must execute");
+    let mut completed = std::thread::scope(|scope| {
+        let handles: Vec<_> = (0..CASE_WORKERS)
+            .map(|worker| {
+                let cases = &cases;
+                scope.spawn(move || {
+                    cases
+                        .iter()
+                        .enumerate()
+                        .skip(worker)
+                        .step_by(CASE_WORKERS)
+                        .map(|(index, case)| (index, exercise_case(case)))
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .flat_map(|handle| handle.join().expect("a fault case failed"))
+            .collect::<Vec<_>>()
+    });
+    completed.sort_by_key(|(index, _)| *index);
+    assert_eq!(completed.len(), cases.len(), "no case may be omitted");
+    for (expected, (index, line)) in completed.into_iter().enumerate() {
+        assert_eq!(index, expected, "each case executes exactly once");
+        eprintln!("{line}");
     }
 }

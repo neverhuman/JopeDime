@@ -1,0 +1,536 @@
+"""RIGHTS-HELD-FILL: the 36 formerly rights_held datasets (180 epoch-0 contexts) of the frozen acquisition-capped clean
+bucket, rebuilt train-only on the raw route. Owner ruling ALL-DATA-RESEARCH + RIGHTS-HELD-FILL (owner-decisions-
+20261006T102636Z.json, delegated, relayed). The LEAK RULE is unchanged.
+
+Same builder and gates as ROWSEL-RAW-v2 / its coverage tree: tools/v2_rowsel_raw.run_dataset (universe, value-free pre-cap,
+split v2, per-fold selection, both counterfactual gates, dataset-atomic .done) with the coverage tree's loader/matcher
+(tools/v2_rowsel_raw_coverage.make_loader / matcher: first content match) or, for a dataset whose first match fails with
+rows_unmatched_nonnumeric_raw, the raw builder's nonnumeric loader / matcher / text gate (CORESET-NONNUMERIC route). This
+module only supplies plan entries and inputs; it changes no gate. What differs, all recorded in every receipt:
+  rights     the rights gate is lifted for these 36 (held=set()); every dataset record and context.json carries
+             rights="research-only" (research-only/ routing, which the owner permits for formerly rights-held sets),
+             rights_basis="formerly_rights_held" and rights_decision=<ALL-DATA-RESEARCH file>#sha256=<sha>
+  raw        RUN/inputs/t1-raw-formerly-held (tools/l7a_fetch.py, the acquisition's own socrata_csv_url; fetch-run receipt
+             pinned); for the nonnumeric route the raw builder's module global RAW_DIR is pointed there in this process
+  epoch-0    `bundle` runs the unmodified scale_check.Sources + resolve_context on the lane host (xbabe2: the epoch file
+             names absolute paths under other projects' roots) into a create-only, sha-pinned bundle; `--epoch0 bundle`
+             replays it (scale_check.resolve_context and Sources replaced in this process only; every array sha256-checked
+             against the bundle index). `--epoch0 live` uses the real functions (the xbabe2 pilot for the equivalence proof).
+  hold       047d631d7f3c0e9c: registry annotated group column; the raw route has no v2-groups split (main HOLD 10:4xZ)
+  guard      `--guard xbabe3`: pause while MemAvailable < 20 % of MemTotal, 1-min load > 0.85 x cores, or / free < 300 GB
+             (the lane's cpuguard reads an xbabe2-only admission file); `--guard lane` = dltrain.cpuguard (xbabe2)
+
+Usage (PYTHONPATH = the frozen source snapshot this file sits in):
+  v2_rowsel_raw_fill.py bundle    --bundle DIR
+  v2_rowsel_raw_fill.py study     --bundle DIR --study PATH [--datasets h1,..]
+  v2_rowsel_raw_fill.py plan      --bundle DIR --study PATH --out DIR --of N --split-version rowsel-raw-split-v2
+  v2_rowsel_raw_fill.py build     --bundle DIR --out DIR --shard I --of N --split-version rowsel-raw-split-v2 [--datasets ..]
+                                  [--epoch0 bundle|live] [--guard xbabe3|lane] [--replay-match-utc JSON]
+  v2_rowsel_raw_fill.py verify    --out DIR --split-version rowsel-raw-split-v2 --receipt PATH
+No S3, GPU or git; nothing is published; network only in tools/l7a_fetch.py (a separate, logged step).
+"""
+import argparse
+import collections
+import hashlib
+import importlib.util
+import json
+import os
+import shutil
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+from dltrain import cpuguard, nonnumeric, rowsel_raw, scale_check
+
+_HERE = Path(__file__).resolve().parent
+_spec = importlib.util.spec_from_file_location("v2_rowsel_raw_coverage", _HERE / "v2_rowsel_raw_coverage.py")
+cov = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(cov)
+tool = cov.tool                                   # the v2_rowsel_raw module instance the coverage loader uses
+
+RUN = tool.RUN
+RECEIPTS = tool.RECEIPTS
+RAW_FILL = RUN / "inputs" / "t1-raw-formerly-held"
+FETCH_PLAN = RECEIPTS / "fill" / "fetch-plan-formerly-held.jsonl"
+FETCH_PLAN_SHA256 = "a7af90b2c4806335f79375ab9502e225103a87d644afa2355d5958013d5f8c00"
+FETCH_RUN = RAW_FILL / "fetch-run-20261006T104432Z.json"
+FETCH_RUN_SHA256 = "a901f1f0e83069081a015fc5ba7e35a82f34a13c653974e9170a19cc7e41c92c"
+ALLDATA = Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261006T102636Z.json")
+COV_PLAN = RUN / "build-v2" / "ROWSEL-RAW-v2-coverage" / "plan.json"
+COV_PLAN_SHA256 = "363416e85112510ea55c5dd3d91b045d29db157be7e1620fa75e2807636ff57e"
+HOLD = {"047d631d7f3c0e9c": "held_registry_group_annotation: registry annotated group column (T1 col 2 'city'); the raw route has no "
+                            "v2-groups split; HOLD per main 10:4xZ pending the owner's GROUP-UNION-B raw-route ruling"}
+CLASS = cov.CLASS                                 # acquisition_capped_frozen
+LABEL = cov.LABEL                                 # ["clean"]
+CODE_FILES = cov.CODE_FILES + ("tools/v2_rowsel_raw_fill.py",)
+PLAN_SCHEMA = "jope.dl-v2-rowsel-raw-fill-plan/v1"
+STUDY_SCHEMA = "jope.dl-v2-rowsel-raw-fill-study/v1"
+BUNDLE_SCHEMA = "jope.dl-v2-rowsel-raw-fill-epoch0-bundle/v1"
+VERIFY_SCHEMA = "jope.dl-v2-rowsel-raw-fill-verify/v1"
+GUARD_RULE_XBABE3 = "pause while MemAvailable < 20% of MemTotal, 1-min loadavg > 0.85 x cores, or / free < 300000000000 B"
+
+sha, sha_file, ref, jdump, atomic = tool.sha, tool.sha_file, tool.ref, tool.jdump, tool.atomic
+
+
+def code_shas():
+    root = _HERE.parent
+    return {f: sha((root / f).read_bytes()) for f in CODE_FILES}
+
+
+def create_only(path: Path, body: bytes, mode=0o444):
+    with open(path, "xb") as f:
+        f.write(body); f.flush(); os.fsync(f.fileno())
+    os.chmod(path, mode)
+
+
+def alldata_ref():
+    return f"{ALLDATA}#sha256={sha_file(ALLDATA)}"
+
+
+def fill_hashes():
+    if sha_file(FETCH_PLAN) != FETCH_PLAN_SHA256:
+        raise SystemExit("fetch plan drift")
+    return [json.loads(l)["dataset_hash"] for l in FETCH_PLAN.read_text().splitlines() if l.strip()]
+
+
+# --------------------------------------------------------------------------------------------------- epoch-0 bundle
+
+def bundle(a):
+    """Unmodified Sources + resolve_context over every epoch-0 context of the 36 datasets -> create-only bundle."""
+    out = Path(a.bundle)
+    out.mkdir(parents=True, exist_ok=False)
+    hs = fill_hashes()
+    src = scale_check.Sources(load_index=False)
+    cache = scale_check.DataCache(max_items=2)
+    idx = {"schema": BUNDLE_SCHEMA, "epoch": src.epoch_ref, "code_sha256": code_shas(), "utc_us": int(time.time() * 1e6),
+           "rule": "A, rows and refs exactly as scale_check.resolve_context returned them on the lane host; A stored as "
+                   "little-endian float64 C-order bytes; replay refuses any byte that differs", "datasets": {}}
+    rows_all = list(src.included())
+    for h in hs:
+        rows = sorted((r for r in rows_all if r["dataset_hash"] == h), key=lambda r: int(r["fold"]))
+        ctxs = [scale_check.resolve_context(r, src, cache) for r in rows]
+        A = np.ascontiguousarray(ctxs[0]["A"], dtype="<f8")
+        for c in ctxs[1:]:
+            if c["refs"]["data_sha256"] == ctxs[0]["refs"]["data_sha256"] and not np.array_equal(np.asarray(c["A"]), A):
+                raise SystemExit(f"{h}: two contexts on one data object with different A")
+        body = A.tobytes()
+        p = out / f"{h}.A.f8"
+        create_only(p, body)
+        idx["datasets"][h] = {"rows": rows, "refs": {r["view_id"]: {"data_sha256": c["refs"]["data_sha256"]} for r, c in zip(rows, ctxs)},
+                              "A": {"file": p.name, "sha256": sha(body), "shape": list(A.shape), "dtype": "<f8"},
+                              "sealed_context_sha256": sorted(r["context_sha256"] for r in rows if r["context_sha256"] in src.sealed_ctx)}
+    b = (json.dumps(idx, indent=1, sort_keys=True) + "\n").encode()
+    create_only(out / "index.json", b)
+    print(json.dumps({"bundle": str(out), "index_sha256": sha(b), "datasets": len(idx["datasets"]),
+                      "contexts": sum(len(d["rows"]) for d in idx["datasets"].values()),
+                      "sealed_contexts": sum(len(d["sealed_context_sha256"]) for d in idx["datasets"].values())}))
+    return 0
+
+
+class BundleSources:
+    """The two Sources members the loaders read (included(), sealed_ctx) plus epoch_ref, from the bundle."""
+
+    def __init__(self, bdir: Path):
+        self.dir = Path(bdir)
+        b = (self.dir / "index.json").read_bytes()
+        self.index_sha256 = sha(b)
+        self.idx = json.loads(b)
+        if self.idx["schema"] != BUNDLE_SCHEMA:
+            raise SystemExit("not a fill epoch-0 bundle")
+        self.epoch_ref = self.idx["epoch"]
+        self._rows = [r for d in self.idx["datasets"].values() for r in d["rows"]]
+        self.sealed_ctx = {s for d in self.idx["datasets"].values() for s in d["sealed_context_sha256"]}
+        self._A = {}
+
+    def included(self):
+        return list(self._rows)
+
+    def A(self, h):
+        if h not in self._A:
+            meta = self.idx["datasets"][h]["A"]
+            body = (self.dir / meta["file"]).read_bytes()
+            if sha(body) != meta["sha256"]:
+                raise SystemExit(f"{h}: bundle array sha256 differs from the index")
+            A = np.frombuffer(body, dtype="<f8").reshape(meta["shape"]).astype(np.float64)
+            A.setflags(write=False)
+            self._A = {h: A}                          # one dataset at a time (memory)
+        return self._A[h]
+
+    def resolve(self, row, sources=None, cache=None):
+        d = self.idx["datasets"][row["dataset_hash"]]
+        if row not in d["rows"]:
+            raise SystemExit(f"{row.get('view_id')}: row not in the bundle")
+        return {"A": self.A(row["dataset_hash"]), "refs": dict(d["refs"][row["view_id"]])}
+
+
+def epoch0(a):
+    """(src, cache, mode): live Sources, or the bundle with scale_check.resolve_context replaced in this process."""
+    if a.epoch0 == "live":
+        return scale_check.Sources(load_index=False), scale_check.DataCache(max_items=2), {"mode": "live"}
+    bs = BundleSources(a.bundle)
+    scale_check.resolve_context = bs.resolve       # read by the coverage and nonnumeric loaders at call time
+    return bs, None, {"mode": "bundle", "index": str(Path(a.bundle) / "index.json"), "index_sha256": bs.index_sha256}
+
+
+# --------------------------------------------------------------------------------------------------- study
+
+def raw_of(h):
+    fdir = RAW_FILL / h
+    fj = json.loads((fdir / "fetch.json").read_bytes())
+    p = fdir / Path(fj["file"]).name
+    got = sha_file(p)
+    if got != fj["sha256"]:
+        raise SystemExit(f"{h}: raw custody mismatch")
+    return p, fj, got
+
+
+def study(a):
+    """Per dataset: the coverage first match (t1raw), and for rows_unmatched_nonnumeric_raw the nonnumeric match. Read-only."""
+    if sha_file(FETCH_RUN) != FETCH_RUN_SHA256:
+        raise SystemExit("fetch-run receipt drift")
+    src, cache, mode = epoch0(a)
+    inv = json.loads(tool.DATASETS_INV.read_text())
+    hs = fill_hashes()
+    if a.datasets:
+        hs = [h for h in hs if h in set(a.datasets.split(","))]
+    out = []
+    for h in hs:
+        t0 = time.time()
+        rows = sorted((r for r in src.included() if r["dataset_hash"] == h), key=lambda r: int(r["fold"]))
+        A = scale_check.resolve_context(rows[0], src, cache)["A"]
+        k = inv["meta_key"][h].rsplit("/", 1)[1]
+        meta = json.loads((tool.META_DIR / f"{k}.json").read_bytes())
+        raw, fj, rsha = raw_of(h)
+        rec = {"schema": STUDY_SCHEMA, "dataset_hash": h, "raw_sha256": rsha, "raw_file": str(raw), "raw_url": fj.get("url"),
+               "t1_meta_sha256": k, "t1_rows": int(A.shape[0])}
+        try:
+            specs, got, m, trial = cov.first_match(raw, meta, A)
+            st = m["stats"]
+            rec["first"] = {"status": "matched" if m["matched"] else "unmatched",
+                            "reason": None if m["matched"] else cov._classify(st, got["report"]),
+                            "stats": {x: st[x] for x in ("rows", "matched_rows", "unmatched_rows", "ambiguous_rows", "oversubscribed_rows", "raw_rows")},
+                            "zip_member_trial": trial}
+        except rowsel_raw.RowselRawError as err:
+            rec["first"] = {"status": "unmatched", "reason": err.reason, "detail": err.detail[:300]}
+        rec["nonnumeric"] = None
+        if rec["first"]["status"] == "matched":
+            rec.update(route="first", tier=None)
+        elif rec["first"]["reason"] == "rows_unmatched_nonnumeric_raw":
+            mm = nonnumeric.match_dataset(raw, meta, A)
+            rec["nonnumeric"] = {"status": mm["status"], "reason": mm["reason"], "detail": (mm.get("detail") or "")[:300],
+                                 "stats": mm.get("stats"), "text_columns": mm.get("text_columns"),
+                                 "readings": {n: c["reading"] for n, c in (mm.get("text_columns") or {}).items()}}
+            ok = mm["status"] in tool.NN_TIERS
+            rec.update(route="nonnumeric" if ok else None, tier=mm["status"] if ok else None)
+        else:
+            rec.update(route=None, tier=None)
+        rec["seconds"] = round(time.time() - t0, 1)
+        out.append(rec)
+        print(json.dumps({"dataset": h, "first": rec["first"]["status"], "first_reason": rec["first"].get("reason"),
+                          "nonnumeric": (rec["nonnumeric"] or {}).get("status"), "route": rec["route"], "s": rec["seconds"]}), flush=True)
+    body = "".join(json.dumps(r, sort_keys=True, default=str) + "\n" for r in out).encode()
+    create_only(Path(a.study), body)
+    print(json.dumps({"study": a.study, "sha256": sha(body), "epoch0": mode,
+                      "routes": dict(collections.Counter(str(r["route"]) for r in out))}))
+    return 0
+
+
+# --------------------------------------------------------------------------------------------------- plan
+
+def plan(a):
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    if sha_file(COV_PLAN) != COV_PLAN_SHA256 or sha_file(FETCH_RUN) != FETCH_RUN_SHA256:
+        raise SystemExit("coverage plan or fetch-run receipt drift")
+    covp = json.loads(COV_PLAN.read_bytes())
+    held = {e["dataset_hash"]: e for e in covp["datasets"] if e.get("reason") == "rights_held"}
+    hs = fill_hashes()
+    if sorted(held) != sorted(hs):
+        raise SystemExit("fill datasets != coverage plan rights_held entries")
+    st_b = Path(a.study).read_bytes()
+    stud = {r["dataset_hash"]: r for r in (json.loads(l) for l in st_b.decode().splitlines() if l.strip())}
+    if sorted(stud) != sorted(hs):
+        raise SystemExit("study does not cover the 36")
+    bs = BundleSources(a.bundle)
+    rights_decision = alldata_ref()
+    entries = []
+    for h in sorted(hs):
+        c = held[h]
+        s = stud[h]
+        raw, fj, rsha = raw_of(h)
+        if rsha != s["raw_sha256"]:
+            raise SystemExit(f"{h}: raw differs from the study")
+        rows = sorted((r for r in bs.included() if r["dataset_hash"] == h), key=lambda r: int(r["fold"]))
+        if [(r["view_id"], r["context_sha256"]) for r in rows] != [(x["view_id"], x["context_sha256"]) for x in c["epoch0"]]:
+            raise SystemExit(f"{h}: bundle epoch-0 rows differ from the coverage plan")
+        extra = {"rights": "research-only", "rights_basis": "formerly_rights_held", "rights_decision": rights_decision}
+        e = {"dataset_hash": h, "class": CLASS, "cohort": "frozen", "epoch0_labels": LABEL, "epoch0": c["epoch0"],
+             "selection_markers": c.get("selection_markers"), "acq_pre_selection_rows": c.get("acq_pre_selection_rows"),
+             "rights": "research-only", "rights_basis": "formerly_rights_held", "raw_dir": str(RAW_FILL), "raw_from_held_dir": False,
+             "match_record": None, "l7a_record": None, "route": s["route"], "nonnumeric_tier": s["tier"],
+             "study": {"status": s["tier"] or (s["first"]["status"]), "reason": s["first"].get("reason"), "raw_sha256": s["raw_sha256"],
+                       "first": s["first"]["status"], "nonnumeric": (s.get("nonnumeric") or {}).get("status")},
+             "raw_rows": (s["first"].get("stats") or {}).get("raw_rows") or ((s.get("nonnumeric") or {}).get("stats") or {}).get("raw_rows") or 30000,
+             "header_width": int(bs.idx["datasets"][h]["A"]["shape"][1])}
+        if s["route"] is None:                    # the study decides first: no admitted match, nothing to build
+            nn = s.get("nonnumeric") or {}
+            e.update(disposition="not_built", reason=nn.get("reason") or nn.get("status") or s["first"].get("reason"),
+                     detail=("also " + HOLD[h]) if h in HOLD else None)
+        elif h in HOLD:
+            e.update(disposition="not_built", reason=HOLD[h].split(":")[0], detail=HOLD[h])
+        else:
+            e["disposition"] = "build"
+            if s["route"] == "nonnumeric":
+                extra.update(values_route="nonnumeric", nonnumeric_tier=s["tier"],
+                             nonnumeric_decision=f"{tool.NN_DECISION}#sha256={tool.NN_DECISION_SHA256}")
+        e["context_extra"] = extra
+        entries.append(e)
+    loads = [0.0] * a.of
+    for e in sorted((e for e in entries if e["disposition"] == "build"),
+                    key=lambda e: (-tool.est_cost({"raw_rows": e["raw_rows"], "raw_rows_with_target": e["raw_rows"], "header_width": e["header_width"]}),
+                                   e["dataset_hash"])):
+        cst = tool.est_cost({"raw_rows": e["raw_rows"], "raw_rows_with_target": e["raw_rows"], "header_width": e["header_width"]})
+        i = min(range(a.of), key=lambda k: (loads[k], k))
+        e["shard"], e["est_cpu_s"] = i, round(cst, 1)
+        loads[i] += cst
+    cnt = collections.Counter(f"{e['disposition']}:{e.get('route') if e['disposition'] == 'build' else e.get('reason')}" for e in entries)
+    doc = {"schema": PLAN_SCHEMA, "class": CLASS, "of": a.of, "datasets": entries,
+           "counts": {"datasets": len(entries), "contexts": sum(len(e["epoch0"]) for e in entries), "by": dict(sorted(cnt.items())),
+                      "build_datasets": sum(e["disposition"] == "build" for e in entries),
+                      "build_epoch0_contexts": sum(len(e["epoch0"]) for e in entries if e["disposition"] == "build")},
+           "inputs": {"owner_decision": ref(ALLDATA), "coverage_plan": ref(COV_PLAN), "fetch_plan": ref(FETCH_PLAN), "fetch_run": ref(FETCH_RUN),
+                      "study": ref(a.study), "epoch0_bundle_index": ref(Path(a.bundle) / "index.json"),
+                      "acquisition_selection": ref(tool.ACQ), "row_selection_leak": ref(tool.LEAK)},
+           "epoch": bs.epoch_ref, "shard_est_cpu_s": [round(x, 1) for x in loads], "hold": HOLD,
+           "precap_rows": rowsel_raw.PRECAP_ROWS, "outer_folds": rowsel_raw.OUTER_FOLDS, "budget": rowsel_raw.BUDGET,
+           "rights": "lifted for these 36 by ALL-DATA-RESEARCH; research-only routing kept (owner permits it); leak rule unchanged"}
+    tool.stamp_split_version(doc, a.split_version)
+    p = out / "plan.json"
+    body = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    if p.exists() and p.read_bytes() != body:
+        raise SystemExit(f"{p} exists with different content; refusing to replace a pinned plan")
+    if not p.exists():
+        atomic(p, body)
+    print(json.dumps({"plan": str(p), "sha256": sha(body), "counts": doc["counts"], "shard_est_cpu_s": doc["shard_est_cpu_s"]}))
+    return 0
+
+
+# --------------------------------------------------------------------------------------------------- build
+
+def xbabe3_check(now=None):
+    mi = {}
+    with open("/proc/meminfo") as f:
+        for line in f:
+            k, v = line.split(":", 1)
+            mi[k] = int(v.split()[0])
+    frac = mi["MemAvailable"] / mi["MemTotal"]
+    load1 = os.getloadavg()[0]
+    ncpu = os.cpu_count() or 1
+    free = shutil.disk_usage("/").free
+    reasons = []
+    if frac < 0.20:
+        reasons.append("mem_available_below_20pct")
+    if load1 > 0.85 * ncpu:
+        reasons.append("load_high")
+    if free < cpuguard.HOST_FLOOR_BYTES:
+        reasons.append("host_floor")
+    return not reasons, reasons, {"mem_available_frac": round(frac, 4), "load1": load1, "cpus": ncpu, "root_free_bytes": free}
+
+
+class ReplayClock:
+    """Pilot equivalence only: the coverage loader's match receipt carries utc_us (wall clock); replaying the reference
+    host's value makes the two hosts' receipts, view ids and contexts comparable byte for byte."""
+
+    def __init__(self, utc_us_by_dataset):
+        self.by = utc_us_by_dataset
+        self.current = None
+
+    def time(self):
+        return self.by[self.current] / 1e6 if self.current in self.by else time.time()
+
+    def __getattr__(self, name):
+        return getattr(time, name)
+
+
+def build(a):
+    cpuguard.set_threads(2)
+    out = Path(a.out)
+    pl = json.loads((out / "plan.json").read_bytes())
+    plan_sha = sha_file(out / "plan.json")
+    tool.plan_split_version(pl, a.split_version)
+    if pl["of"] != a.of:
+        raise SystemExit(f"plan is for --of {pl['of']}")
+    codes = code_shas()
+    src, cache, mode = epoch0(a)
+    inv = json.loads(tool.DATASETS_INV.read_text())
+    tool.RAW_DIR = RAW_FILL                       # nonnumeric loader: the fill's raw dir (this process only)
+    clock = None
+    if a.replay_match_utc:
+        clock = ReplayClock(json.loads(Path(a.replay_match_utc).read_bytes()))
+        cov.time = clock
+    jpath = out / (f"shard-{a.shard}.guard.jsonl" if not a.datasets else f"shard-{a.shard}.partial-{int(time.time())}.guard.jsonl")
+    guard = cpuguard.Guard(journal_path=jpath, checker=xbabe3_check if a.guard == "xbabe3" else cpuguard.check)
+    mine = [e for e in pl["datasets"] if e["disposition"] == "build" and e["shard"] == a.shard]
+    if a.datasets:
+        keep = set(a.datasets.split(","))
+        mine = [e for e in mine if e["dataset_hash"] in keep]
+    hooks = {"first": lambda: {"loader": cov.make_loader(out, codes), "matcher": cov.matcher},
+             "nonnumeric": lambda: {"loader": tool.make_nonnumeric_loader(out, codes), "matcher": tool.nonnumeric_matcher,
+                                    "post_gate": tool.nonnumeric_text_gate}}
+    t0, c0 = time.time(), tool.cpu_s()
+    results = []
+    for e in sorted(mine, key=lambda e: -e["est_cpu_s"]):
+        h = e["dataset_hash"]
+        sd = out / f"shard-{e['shard']}"
+        sd.mkdir(parents=True, exist_ok=True)
+        if tool.dataset_done(sd, h, codes):
+            results.append({"dataset_hash": h, "status": "already_done"})
+            continue
+        guard.wait()
+        if clock is not None:
+            clock.current = h
+        rec = tool.run_dataset(dict(e), sd, codes, src, cache, inv, set(), guard, split_version=a.split_version, **hooks[e["route"]]())
+        results.append({"dataset_hash": h, "route": e["route"], "status": rec["status"], "reason": rec.get("reason"),
+                        "detail": (rec.get("detail") or "")[:500], "cpu_s": rec["cpu_s"], "wall_s": rec["wall_s"], "maxrss_mb": rec["maxrss_mb"]})
+        print(json.dumps(results[-1]), flush=True)
+    gs = guard.summary()
+    if a.guard == "xbabe3":
+        gs["rule"] = GUARD_RULE_XBABE3
+    rec = {"schema": "jope.dl-v2-rowsel-raw-fill-build/v1", "shard": a.shard, "of": a.of, "plan_sha256": plan_sha,
+           "datasets_filter": a.datasets, "expected_datasets": len(mine), "results": results,
+           "counts": dict(collections.Counter(r["status"] for r in results)),
+           "complete": all(r["status"] in ("done", "already_done") for r in results) and len(results) == len(mine),
+           "cpu_s": round(tool.cpu_s() - c0, 1), "wall_s": round(time.time() - t0, 1), "maxrss_mb": tool.maxrss_mb(),
+           "guard": gs, "code_sha256": codes, "epoch0": mode, "host": os.uname().nodename, "numpy": np.__version__,
+           "python": sys.version.split()[0], "replay_match_utc": a.replay_match_utc,
+           "process_overrides": {"rights_gate": "held=set() (ALL-DATA-RESEARCH)", "v2_rowsel_raw.RAW_DIR": str(RAW_FILL),
+                                 "scale_check.resolve_context": "bundle replay" if mode["mode"] == "bundle" else None,
+                                 "coverage.time": "ReplayClock (pilot equivalence only)" if clock else None},
+           "published": False, "utc_us": int(time.time() * 1e6)}
+    name = f"shard-{a.shard}-of-{a.of}.receipt.json" if not a.datasets else f"shard-{a.shard}-of-{a.of}.partial-{int(time.time())}.receipt.json"
+    create_only(out / name, (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode(), mode=0o444)
+    print(json.dumps({k: rec[k] for k in ("shard", "expected_datasets", "counts", "complete", "cpu_s", "wall_s", "maxrss_mb")}))
+    return 0 if rec["complete"] else 1
+
+
+# --------------------------------------------------------------------------------------------------- verify + summary
+
+def verify(a):
+    """Every planned dataset accounted for; every done context complete, hash-checked, v2-split, rights-stamped, labelled."""
+    out = Path(a.out)
+    pl = json.loads((out / "plan.json").read_bytes())
+    version = tool.plan_split_version(pl, a.split_version)
+    codes = code_shas()
+    rights_decision = alldata_ref()
+    per, problems, counts = [], [], collections.Counter()
+    ctx_total = 0
+    seen_dirs = set()
+    for e in pl["datasets"]:
+        h, n0 = e["dataset_hash"], len(e["epoch0"])
+        row = {"dataset_hash": h, "epoch0_contexts": n0, "epoch0_view_ids": [c["view_id"] for c in e["epoch0"]], "route": e.get("route"),
+               "nonnumeric_tier": e.get("nonnumeric_tier")}
+        if e["disposition"] != "build":
+            row.update(status="not_built", reason=e["reason"], detail=e.get("detail"))
+        else:
+            sd = out / f"shard-{e['shard']}"
+            p = sd / "_datasets" / f"{h}.json"
+            if not p.exists():
+                row.update(status="not_built", reason="no_dataset_record")
+                problems.append(f"{h}: no dataset record")
+            else:
+                r = json.loads(p.read_bytes())
+                row.update(status=r["status"], reason=r.get("reason"), detail=(r.get("detail") or "")[:600],
+                           record={"path": str(p), "sha256": sha_file(p)}, cpu_s=r.get("cpu_s"))
+                mp = out / "_match" / f"{h}.json"
+                if mp.exists():
+                    row["match_record"] = {"path": str(mp), "sha256": sha_file(mp)}
+                if r["status"] == "done":
+                    if r["code_sha256"] != codes:
+                        problems.append(f"{h}: built with other code")
+                    if r["split"]["schema"] != version or r.get("split_version") != version:
+                        problems.append(f"{h}: split {r['split']['schema']}")
+                    if r["split"]["groups_straddling_folds"] or not r["split"]["target_check"]["target_invariant"]:
+                        problems.append(f"{h}: split checks")
+                    if (r.get("rights"), r.get("rights_basis"), r.get("rights_decision")) != ("research-only", "formerly_rights_held", rights_decision):
+                        problems.append(f"{h}: dataset record rights fields")
+                    if e["route"] == "nonnumeric" and not (r.get("post_gate") or {}).get("passed"):
+                        problems.append(f"{h}: nonnumeric text gate not passed")
+                    vids = []
+                    for c in r["contexts"]:
+                        d = sd / c["view_id"]
+                        seen_dirs.add(str(d))
+                        if not c["passed"] or not (d / ".done").exists():
+                            problems.append(f"{h}: {c['view_id']} not passed/done"); continue
+                        cj = json.loads((d / "context.json").read_bytes())
+                        if cj["rowsel"]["identity"] != c["identity"]:
+                            problems.append(f"{h}: {c['view_id']} identity")
+                        if (cj.get("rights"), cj.get("rights_basis"), cj.get("rights_decision")) != ("research-only", "formerly_rights_held", rights_decision):
+                            problems.append(f"{h}: {c['view_id']} rights fields")
+                        if e["route"] == "nonnumeric" and (cj.get("values_route"), cj.get("nonnumeric_tier")) != ("nonnumeric", e["nonnumeric_tier"]):
+                            problems.append(f"{h}: {c['view_id']} nonnumeric route fields")
+                        if cj.get("row_selection_leak") != LABEL:
+                            problems.append(f"{h}: {c['view_id']} label {cj.get('row_selection_leak')}")
+                        if (cj["rowsel"].get("split") or {}).get("sha256") != r["split"]["sha256"] or \
+                                (cj["rowsel"].get("split") or {}).get("schema") != version:
+                            problems.append(f"{h}: {c['view_id']} context split differs from the dataset record")
+                        for name, meta in cj["files"].items():
+                            if sha_file(d / name) != meta["sha256"]:
+                                problems.append(f"{h}: {c['view_id']} {name} hash")
+                        vids.append(c["view_id"])
+                    row["new_view_ids"] = vids
+                    row["cut_id"] = "trainonly-split-v2:" + r["split"]["sha256"]     # rule of the raw v2 cut index (3988f3ef)
+                    row["split"] = {k: r["split"][k] for k in ("sha256", "fold_sizes", "groups", "largest_group")}
+                    ctx_total += len(vids)
+        counts[f"{row['status']}:{row.get('reason')}"] += 1
+        per.append(row)
+    for p in sorted(out.glob("shard-*/*/context.json")):
+        if str(p.parent) not in seen_dirs:
+            problems.append(f"orphan context dir {p.parent}")
+    shards = [ref(p) for p in sorted(out.glob("shard-*-of-*.receipt.json"))]
+    doc = {"schema": VERIFY_SCHEMA, "utc_us": int(time.time() * 1e6), "tree": str(out), "split_version": version,
+           "plan": ref(out / "plan.json"), "shard_receipts": shards, "code_sha256": codes,
+           "counts": {"planned_datasets": len(pl["datasets"]), "planned_epoch0_contexts": sum(len(e["epoch0"]) for e in pl["datasets"]),
+                      "by_status_reason": dict(sorted(counts.items())), "done_datasets": sum(r["status"] == "done" for r in per),
+                      "new_contexts": ctx_total,
+                      "epoch0_contexts_replaced": sum(r["epoch0_contexts"] for r in per if r["status"] == "done"),
+                      "epoch0_contexts_not_rebuilt": sum(r["epoch0_contexts"] for r in per if r["status"] != "done")},
+           "problems": problems, "passed": not problems and all(r.get("reason") != "no_dataset_record" for r in per),
+           "datasets": per,
+           "policy": {"s3_calls": 0, "gpu": False, "git": False, "published": False, "credential_files_read": False,
+                      "network": "read-only public GETs by tools/l7a_fetch.py only (fetch-run receipt pinned in the plan)",
+                      "rights": "ALL-DATA-RESEARCH: formerly rights_held, research-only routing", "leak_rule": "unchanged"}}
+    body = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    create_only(Path(a.receipt), body)
+    if doc["passed"] and a.complete:
+        m = out / ".complete"
+        create_only(m, jdump({"schema": "jope.dl-v2-rowsel-raw-tree-complete/v1", "tree": str(out), "split_version": version,
+                              "verify": ref(a.receipt), "counts": doc["counts"], "published": False, "utc_us": int(time.time() * 1e6)}))
+    print(json.dumps({"receipt": a.receipt, "sha256": sha(body), "passed": doc["passed"], "problems": problems[:20], "counts": doc["counts"]}))
+    return 0 if doc["passed"] else 1
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("cmd", choices=("bundle", "study", "plan", "build", "verify"))
+    ap.add_argument("--bundle")
+    ap.add_argument("--study")
+    ap.add_argument("--out")
+    ap.add_argument("--of", type=int, default=1)
+    ap.add_argument("--shard", type=int, default=0)
+    ap.add_argument("--datasets")
+    ap.add_argument("--split-version", choices=tuple(tool.SPLIT_VERSIONS))
+    ap.add_argument("--epoch0", choices=("bundle", "live"), default="bundle")
+    ap.add_argument("--guard", choices=("xbabe3", "lane"), default="xbabe3")
+    ap.add_argument("--replay-match-utc")
+    ap.add_argument("--receipt")
+    ap.add_argument("--complete", action="store_true")
+    a = ap.parse_args(argv)
+    if a.cmd in ("plan", "build", "verify") and a.split_version != tool.SPLIT_V2:
+        raise SystemExit(f"--split-version {tool.SPLIT_V2} must be passed explicitly")
+    return {"bundle": bundle, "study": study, "plan": plan, "build": build, "verify": verify}[a.cmd](a)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
