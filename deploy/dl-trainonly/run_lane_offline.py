@@ -23,7 +23,7 @@ MODULES = (
     "tests.test_v2_rowsel_build_split_v2g", "tests.test_v2_nonraw_split_v2", "tests.test_v2_nonraw_split_v2g",
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
     "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
-    "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine",
+    "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "test_hwm_publish",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -70,7 +70,7 @@ HOST_CASES = {
     "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 555
+EXPECTED_COLLECTED = 574
 
 
 def case_ids(suite):
@@ -176,6 +176,10 @@ def main():
     socket.has_ipv6 = False
     custody = Path(__file__).with_name("lane")
     before = verify(custody)
+    def adapter_pins():
+        return {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+                for name in ("hwm_publish.py", "test_hwm_publish.py", "run_lane_offline.py")}
+    adapter_before = adapter_pins()
     root = custody / "src/dl_training_v1"
     os.chdir(root)
     sys.path.insert(0, str(root))
@@ -188,10 +192,12 @@ def main():
     with private_inputs_unavailable(unavailable), (out / "unittest.log").open("x") as log, contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
     after = verify(custody)
+    adapter_after = adapter_pins()
     report = {"schema": "jope.dl-offline-fixtures/v2", "start_utc": start,
               "end_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "seconds": time.monotonic() - tick,
               "argv": sys.argv, "python": sys.executable, "cwd": str(root), "dependencies": versions,
-              "handoff_sha256": before["handoff_sha256"], "source_unchanged": before == after,
+              "handoff_sha256": before["handoff_sha256"], "source_unchanged": before == after and adapter_before == adapter_after,
+              "adapter_source_sha256": adapter_before,
               "modules": list(MODULES), "case_ids": names, "collection_case_ids": collected_names,
               "collected": len(collected_names), "executed": result.testsRun,
               "excluded": len(HOST_CASES), "excluded_cases": HOST_CASES,
@@ -208,7 +214,7 @@ def main():
         json.dump(report, stream, indent=2)
         stream.write("\n")
     print(json.dumps({key: report[key] for key in ("collected", "executed", "excluded", "failed", "skipped", "seconds", "handoff_sha256", "source_unchanged")}))
-    return not (result.wasSuccessful() and not forbidden and before == after and len(collected_names) == EXPECTED_COLLECTED
+    return not (result.wasSuccessful() and not forbidden and before == after and adapter_before == adapter_after and len(collected_names) == EXPECTED_COLLECTED
                 and len(names) == result.testsRun == EXPECTED_COLLECTED - len(HOST_CASES)
                 and set(collected_names) - set(names) == set(HOST_CASES)
                 and not result.skipped and not result.expectedFailures and not result.unexpectedSuccesses)

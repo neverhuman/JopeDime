@@ -8839,6 +8839,16 @@
       ],
       "dispositions": [],
       "scope": "Test-only B11 independent pivoted-elimination oracle: frozen-mean/absolute-penalty PRESS over81designs/1296deleted-row solves, duplicate columns and widths0-8, all405prefix Schur objectives and exact factor extensions; no product/default/fixture/identity edits or utility/throughput claim."
+    },
+    "python:deploy/dl-trainonly/test_hwm_publish.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "19 synthetic offline HWM publisher fixtures, collected by run_lane_offline.py: pinned input/family/cut/program bindings, forbidden-only perturbation plus authorized control, rights and dev-scope preservation, no-selection terminal accounting, source substitutions/missing artifacts/torn and duplicated ledgers, create-only conflicts, interrupted-write recovery, exact-VersionId corruption and duplicate delivery; dry-run cannot construct AWS clients or modify the original budget. No private-data exclusion or operational training/S3 claim."
     }
   }
 }
