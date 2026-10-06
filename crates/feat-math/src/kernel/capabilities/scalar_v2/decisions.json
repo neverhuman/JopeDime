@@ -1,0 +1,288 @@
+{
+  "schema": "feat-math.scalar-capability-decisions.v1",
+  "status": "PRIVATE_MEASURED_DECISION_FINAL_AFTER_PUBLICATION_PENDING",
+  "measurement_source_sha": "c89194ef384def6e0be3aacc08a4c495047d3760",
+  "current_compiled_qualified": true,
+  "promotion_authorized": false,
+  "cards": [
+    {
+      "card": "B05",
+      "class": "experimental",
+      "decision": "keep-experimental",
+      "default_enabled": false,
+      "parser_ids_retained": true,
+      "decline_reasons": [
+        {
+          "gate": "G-A",
+          "reason": "Raw predictive-quality gate failed at unchanged thresholds.",
+          "noninferior_on_every_dataset": false,
+          "noninferiority_failures": [
+            {
+              "dataset": "pmlb-695-chatfield-4",
+              "M1_delta": -0.008021421138834639,
+              "minimum_noninferior_delta": -0.004921895946144945
+            },
+            {
+              "dataset": "pmlb-first-principles-supernovae-zg",
+              "M1_delta": -0.0024038470547516066,
+              "minimum_noninferior_delta": -0.0006447633521545359
+            }
+          ],
+          "strict_dataset_improvements": 0,
+          "minimum_strict_dataset_improvements": 2,
+          "M3_complete": true,
+          "M3_ten_percent_faster": false
+        },
+        {
+          "gate": "G-C",
+          "reason": "Actual fault, hard-reject or invalid-offspring excess failed an unchanged soundness limit.",
+          "failures": [
+            {
+              "dataset": "golden-toy-107",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.02777777777777778,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "golden-toy-911",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.019444444444444445,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "pmlb-229-pwlinear",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.04722222222222222,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "pmlb-695-chatfield-4",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.027777777777777783,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "pmlb-first-principles-supernovae-zg",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.03888888888888888,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.024999999999999994,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-stevedata-chile88",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.01666666666666667,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-wooldridge-barium",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.030555555555555558,
+              "maximum_allowed": 0.01
+            }
+          ]
+        },
+        {
+          "gate": "G-D",
+          "reason": "Actual average bloat, artifact or timing cost exceeded an unchanged promotion limit.",
+          "failures": [
+            {
+              "metric": "M7_elite_mean_nodes",
+              "mean_A": 4.745,
+              "mean_B": 4.7825,
+              "maximum_allowed_B": 4.745
+            },
+            {
+              "metric": "M7_elite_mean_depth",
+              "mean_A": 2.985,
+              "mean_B": 2.99,
+              "maximum_allowed_B": 2.985
+            }
+          ]
+        }
+      ],
+      "receipt_path": "docs/internal/gpms/receipts/b05-scalar-v2.json",
+      "receipt_sha256": "f1fa572fda994ae3a0c6f2bd588b65797af7d4dae7c3fb28f00eed39a15815d1",
+      "markdown_path": "docs/internal/gpms/receipts/b05-scalar-v2.md",
+      "markdown_sha256": "285d446d2598239c78bb1b52c71beb55928e51db85c06cdc156a03dc6bfa9175"
+    },
+    {
+      "card": "B06",
+      "class": "experimental",
+      "decision": "keep-experimental",
+      "default_enabled": false,
+      "parser_ids_retained": true,
+      "decline_reasons": [
+        {
+          "gate": "G-A",
+          "reason": "Raw predictive-quality gate failed at unchanged thresholds.",
+          "noninferior_on_every_dataset": true,
+          "noninferiority_failures": [],
+          "strict_dataset_improvements": 1,
+          "minimum_strict_dataset_improvements": 2,
+          "M3_complete": true,
+          "M3_ten_percent_faster": false
+        },
+        {
+          "gate": "G-C",
+          "reason": "Actual fault, hard-reject or invalid-offspring excess failed an unchanged soundness limit.",
+          "failures": [
+            {
+              "dataset": "golden-toy-107",
+              "metric": "M4_domain_rate",
+              "difference": 0.04186248073959938,
+              "maximum_allowed": 0.02
+            },
+            {
+              "dataset": "golden-toy-107",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.022222222222222223,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "pmlb-229-pwlinear",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.01111111111111111,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "pmlb-695-chatfield-4",
+              "metric": "M4_domain_rate",
+              "difference": 0.022187981510015407,
+              "maximum_allowed": 0.02
+            },
+            {
+              "dataset": "pmlb-695-chatfield-4",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.01666666666666667,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "pmlb-first-principles-supernovae-zg",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.02222222222222222,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+              "metric": "M4_domain_rate",
+              "difference": 0.024966294298921415,
+              "maximum_allowed": 0.02
+            },
+            {
+              "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.016666666666666663,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-stevedata-chile88",
+              "metric": "M4_domain_rate",
+              "difference": 0.021451271186440676,
+              "maximum_allowed": 0.02
+            },
+            {
+              "dataset": "rdatasets-stevedata-chile88",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.01666666666666667,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-wooldridge-barium",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.01666666666666667,
+              "maximum_allowed": 0.01
+            }
+          ]
+        }
+      ],
+      "receipt_path": "docs/internal/gpms/receipts/b06-scalar-v2.json",
+      "receipt_sha256": "9ae846623872469d12e21c66e93eec37aaf8edc3d663e203e5d7f684dbb2c43d",
+      "markdown_path": "docs/internal/gpms/receipts/b06-scalar-v2.md",
+      "markdown_sha256": "0db730be48abd647f947c238dc6638ee61ea3c2b8c11c0964fc04f96e0114878"
+    },
+    {
+      "card": "B07",
+      "class": "experimental",
+      "decision": "keep-experimental",
+      "default_enabled": false,
+      "parser_ids_retained": true,
+      "decline_reasons": [
+        {
+          "gate": "G-A",
+          "reason": "Raw predictive-quality gate failed at unchanged thresholds.",
+          "noninferior_on_every_dataset": true,
+          "noninferiority_failures": [],
+          "strict_dataset_improvements": 0,
+          "minimum_strict_dataset_improvements": 2,
+          "M3_complete": true,
+          "M3_ten_percent_faster": false
+        },
+        {
+          "gate": "G-C",
+          "reason": "Actual fault, hard-reject or invalid-offspring excess failed an unchanged soundness limit.",
+          "failures": [
+            {
+              "dataset": "rdatasets-agridat-bancroft-peanut-uniformity",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.013888888888888881,
+              "maximum_allowed": 0.01
+            },
+            {
+              "dataset": "rdatasets-wooldridge-barium",
+              "metric": "M6_invalid_offspring_rate",
+              "difference": 0.013888888888888888,
+              "maximum_allowed": 0.01
+            }
+          ]
+        },
+        {
+          "gate": "G-D",
+          "reason": "Actual average bloat, artifact or timing cost exceeded an unchanged promotion limit.",
+          "failures": [
+            {
+              "metric": "M8_best_artifact_bytes",
+              "mean_A": 59596.7,
+              "mean_B": 64668.8,
+              "maximum_allowed_B": 62576.534999999996
+            },
+            {
+              "metric": "M8_best_tokens",
+              "language": "Rust",
+              "mean_A": 3281.275,
+              "mean_B": 3625.925,
+              "maximum_allowed_B": 3445.3387500000003
+            },
+            {
+              "metric": "M8_best_tokens",
+              "language": "Python",
+              "mean_A": 2454.575,
+              "mean_B": 2676.2,
+              "maximum_allowed_B": 2577.30375
+            },
+            {
+              "metric": "M8_best_tokens",
+              "language": "Cpp17",
+              "mean_A": 5237.225,
+              "mean_B": 5564.05,
+              "maximum_allowed_B": 5499.08625
+            }
+          ]
+        }
+      ],
+      "receipt_path": "docs/internal/gpms/receipts/b07-scalar-v2.json",
+      "receipt_sha256": "d0931126d1de10ee00a757672074cfc900170820d72da44a763e59350a1abaac",
+      "markdown_path": "docs/internal/gpms/receipts/b07-scalar-v2.md",
+      "markdown_sha256": "c89a9225fc88a50d4deeded4ab880c4c13b4b5bbf5ab0b6438be8e3475a78748"
+    }
+  ],
+  "normal_compiled_qualified": true,
+  "sanitizer_qualification": "PASS",
+  "compiled_qualified_source_sha": "c89194ef384def6e0be3aacc08a4c495047d3760",
+  "qualification_scope": "retained measurement source; final card code-head after-suite and publication lifecycle pending"
+}
