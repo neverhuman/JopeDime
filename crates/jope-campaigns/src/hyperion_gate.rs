@@ -848,7 +848,6 @@ pub struct JopeHyperionTrainOnlyRegistryV1 {
 /// Legacy registry shape retained only so old authorities can be diagnosed.
 /// The gate intentionally accepts V2 exclusively because V1 has no bound
 /// cache namespace.
-
 impl JopeHyperionTrainOnlyRegistryV1 {
     pub const SCHEMA: &'static str = "JopeHyperionTrainOnlyRegistry.v1";
 
@@ -1775,7 +1774,7 @@ impl EncoderExecutionProofV2 {
             || self.observed_device != expected
             || raw_sha256(self.stdout.as_bytes()) != self.stdout_sha256
             || raw_sha256(self.stderr.as_bytes()) != self.stderr_sha256
-            || !encoder_output_proves_device(&self.stdout, &self.stderr, &expected)
+            || !encoder_output_proves_device(&self.stdout, &self.stderr, expected)
         {
             return Err("captured encoder output does not prove pinned CUDA execution".into());
         }
@@ -3825,7 +3824,7 @@ fn encoder_process_group_exists(pid: libc::pid_t) -> Result<bool, String> {
         if error.raw_os_error() == Some(libc::ESRCH) {
             return Ok(false);
         }
-        return Err(format!("probe Hyperion process group: {error}"));
+        Err(format!("probe Hyperion process group: {error}"))
     }
     #[cfg(not(unix))]
     {
@@ -4030,9 +4029,7 @@ fn run_encoder_with_timeout(
             let cleanup = terminate_encoder_group(&mut child, Duration::from_millis(250));
             let _ = stdout_reader.join();
             let _ = stderr_reader.join();
-            if let Err(error) = cleanup {
-                return Err(error);
-            }
+            cleanup?;
             return Err("fold-local Hyperion encoder timed out".into());
         }
         thread::sleep(Duration::from_millis(20));

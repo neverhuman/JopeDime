@@ -415,26 +415,6 @@ pub fn write_coverage(
     Ok(report)
 }
 
-#[cfg(test)]
-mod admission_snapshot_tests {
-    use super::*;
-
-    #[test]
-    fn input_snapshots_reject_changes_and_deletions_before_publication() {
-        let root = tempfile::tempdir().unwrap();
-        let path = root.path().join("campaign.json");
-        fs::write(&path, b"old").unwrap();
-        let mut inputs = BTreeMap::new();
-        assert_eq!(input_bytes(&path, &mut inputs).unwrap(), b"old");
-        recheck_inputs(&inputs).unwrap();
-        fs::write(&path, b"new").unwrap();
-        assert!(recheck_inputs(&inputs).is_err());
-        assert!(input_bytes(&path, &mut inputs).is_err());
-        fs::remove_file(path).unwrap();
-        assert!(recheck_inputs(&inputs).is_err());
-    }
-}
-
 /// Atomic, idempotent priority merge shared by campaign and data controllers.
 pub fn merge(root: &Path, incoming: &GpJobs) -> Result<usize> {
     fs::create_dir_all(root.join("runs"))?;
@@ -487,4 +467,24 @@ pub fn merge(root: &Path, incoming: &GpJobs) -> Result<usize> {
     }
     write_json(&path, &combined)?;
     Ok(added)
+}
+
+#[cfg(test)]
+mod admission_snapshot_tests {
+    use super::*;
+
+    #[test]
+    fn input_snapshots_reject_changes_and_deletions_before_publication() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("campaign.json");
+        fs::write(&path, b"old").unwrap();
+        let mut inputs = BTreeMap::new();
+        assert_eq!(input_bytes(&path, &mut inputs).unwrap(), b"old");
+        recheck_inputs(&inputs).unwrap();
+        fs::write(&path, b"new").unwrap();
+        assert!(recheck_inputs(&inputs).is_err());
+        assert!(input_bytes(&path, &mut inputs).is_err());
+        fs::remove_file(path).unwrap();
+        assert!(recheck_inputs(&inputs).is_err());
+    }
 }

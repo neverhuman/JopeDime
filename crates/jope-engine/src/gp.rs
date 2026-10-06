@@ -1318,8 +1318,8 @@ fn evaluate_tables(
 ) -> Result<()> {
     crate::task_contract::require_task(task)?;
     tchless_threads();
-    let (x, y) = xy(&tr);
-    let (vx, vy) = xy(&va);
+    let (x, y) = xy(tr);
+    let (vx, vy) = xy(va);
     let g = GenomeIr::parse(&fs::read_to_string(genome)?)?;
     let start = Instant::now();
     let feature_view = raw_feature_view(&hash(&csv_bytes(tr)?), preprocessing)?;
@@ -2450,9 +2450,8 @@ fn search_inner(
             };
         let recovered_metric = saved_completion.is_some();
         let begun = Instant::now();
-        let deadline_seconds = (seconds as f64 - start.elapsed().as_secs_f64() - previous_seconds)
-            .min(30.)
-            .max(0.001);
+        let deadline_seconds =
+            (seconds as f64 - start.elapsed().as_secs_f64() - previous_seconds).clamp(0.001, 30.);
         let deadline_monotonic_ns =
             crate::fit_boundary::deadline_after(Duration::from_secs_f64(deadline_seconds))?;
         let mut failure = None;

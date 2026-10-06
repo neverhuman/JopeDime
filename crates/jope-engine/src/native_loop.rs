@@ -285,7 +285,7 @@ impl Config {
                 (self.predecessor_run.is_none() && self.initial_optimizer_step == 60000)
                     || (self.predecessor_run.is_some()
                         && self.initial_optimizer_step > 60000
-                        && (self.initial_optimizer_step - 60000) % 6000 == 0)
+                        && (self.initial_optimizer_step - 60000).is_multiple_of(6000))
             }
             warm_start::LOOP_V2 => {
                 self.predecessor_run.is_none() && self.initial_optimizer_step == 60000
@@ -304,7 +304,7 @@ impl Config {
         ensure!(
             [48, 72, 96].contains(&self.workers)
                 && [64, 128, 256].contains(&self.microbatch)
-                && self.global_batch % self.microbatch == 0
+                && self.global_batch.is_multiple_of(self.microbatch)
                 && self.cuts > 0,
             "unqualified loop concurrency/batch/cut configuration"
         );
@@ -607,17 +607,13 @@ impl Loop {
                 );
                 ensure!(
                     corpus.join("index.json")
-                        == PathBuf::from(
-                            r.parameters["corpus"]["path"]
-                                .as_str()
-                                .context("corpus path")?
-                        )
+                        == *r.parameters["corpus"]["path"]
+                            .as_str()
+                            .context("corpus path")?
                         && checkpoint.join("state.json")
-                            == PathBuf::from(
-                                r.parameters["checkpoint"]["path"]
-                                    .as_str()
-                                    .context("parent path")?
-                            ),
+                            == *r.parameters["checkpoint"]["path"]
+                                .as_str()
+                                .context("parent path")?,
                     "proposal path changed"
                 );
                 let run: Value = crate::manifest::read_json(&crate::manifest::resolve(
@@ -694,17 +690,13 @@ impl Loop {
                         && *target_optimizer_step == window.target
                         && *micro == self.config.microbatch
                         && initialize.join("state.json")
-                            == PathBuf::from(
-                                r.parameters["checkpoint"]["path"]
-                                    .as_str()
-                                    .context("train parent")?
-                            )
+                            == *r.parameters["checkpoint"]["path"]
+                                .as_str()
+                                .context("train parent")?
                         && corpus.join("index.json")
-                            == PathBuf::from(
-                                r.parameters["corpus"]["path"]
-                                    .as_str()
-                                    .context("train corpus")?
-                            ),
+                            == *r.parameters["corpus"]["path"]
+                                .as_str()
+                                .context("train corpus")?,
                     "original optimizer window/corpus changed"
                 );
                 let replay: Value = crate::manifest::read_json(&crate::manifest::resolve(
@@ -1000,7 +992,7 @@ impl Loop {
             idempotency_key: IdempotencyKey::new(format!("{}/{id}", self.config.run))?,
             deadline: self.config.task_deadline,
             retry_allowance: 1,
-            resources: self.config.cpu_resources.clone(),
+            resources: self.config.cpu_resources,
             expected_receipt_id: format!("{}/{id}/complete", self.config.run),
             checkpoint_allowance_ms: None,
         };
@@ -1076,7 +1068,7 @@ impl Loop {
                     idempotency_key: IdempotencyKey::new(format!("{}/{id}", self.config.run))?,
                     deadline: self.config.task_deadline,
                     retry_allowance: 1,
-                    resources: self.config.cpu_resources.clone(),
+                    resources: self.config.cpu_resources,
                     expected_receipt_id: format!("{}/{id}/complete", self.config.run),
                     checkpoint_allowance_ms: None,
                 };
