@@ -2697,11 +2697,11 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.lock",
-      "tree_sha256": "e764410f551a73cfa1adc0b90eef91064d59bbef0ce15bb6becb63512e97fb02",
+      "tree_sha256": "e99f6eea0191a4f65cdb07eca227ae16f3f229c7c9b0d6095434e7c16865e21a",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
       "note": "byte-identical to the frozen bytes of deploy/lambda/regression/rust/Cargo.lock (that record's sha256); not a workspace lock here (its manifest is renamed), so sync-locks leaves its feat-math 0.1.0 entry as frozen, like csv/versions/rust-single-v2/rust/Cargo.lock",
-      "tree_change": "S1-FOLDS-RULING 2026-10-06T02:40Z: explicit two-fold, two wins, train-only products, required resume, proposal CI and create-only G0; frozen source identity retained"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "teacher-v2",
@@ -3211,10 +3211,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.toml",
-      "tree_sha256": "0593ec8579499d497459cdaca334f74b270e3817be6fba8b1db2ea00f23241b0",
+      "tree_sha256": "0f609a6514e8bff54f1b85586901e158bd46cbee5bfb1b0f09bc2909be2c492b",
       "custody_tarball": null,
       "reason": "Source-only S1 pilot prerequisites; synthetic conformance, no campaign admission",
-      "tree_change": "PR214 initial hosted hygiene37408085806: declare repository Apache-2.0 license on the newly CI-built proposal workspace; preserve original manifest SHA and licensing guard"
+      "tree_change": "S1-FOLDS-RULING: normal CI manifest retains the historical package name and unique proposal binary, declares Apache-2.0; historical manifest remains unchanged"
     }
   ],
   "excluded": [
