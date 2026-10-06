@@ -68,9 +68,10 @@ def make_audit(forbidden, probes, home):
     return audit
 
 
-def offline_suite(loader, modules, unavailable):
-    # Preserved host-test decorators query Path.exists at import. Offline
-    # discovery declares those inputs unavailable without touching host paths.
+@contextlib.contextmanager
+def private_inputs_unavailable(unavailable):
+    # Host decorators and optional ancestor pointers both query Path.exists.
+    # Synthetic fixtures must see the same unavailable inputs on every host.
     exists = Path.exists
 
     def offline_exists(path):
@@ -81,6 +82,11 @@ def offline_suite(loader, modules, unavailable):
         return exists(path)
 
     with mock.patch.object(Path, "exists", offline_exists):
+        yield
+
+
+def offline_suite(loader, modules, unavailable):
+    with private_inputs_unavailable(unavailable):
         suite = loader.loadTestsFromNames(modules)
 
     def cases(nested):
@@ -138,7 +144,7 @@ def main():
     names = list(case_ids(suite))
     start = datetime.datetime.now(datetime.timezone.utc).isoformat()
     tick = time.monotonic()
-    with (out / "unittest.log").open("x") as log, contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+    with private_inputs_unavailable(unavailable), (out / "unittest.log").open("x") as log, contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
     after = verify(custody)
     report = {"schema": "jope.dl-offline-fixtures/v2", "start_utc": start,
@@ -153,6 +159,7 @@ def main():
               "expected_failures": len(result.expectedFailures), "unexpected_successes": len(result.unexpectedSuccesses),
               "forbidden_attempts": forbidden, "library_cache_probes": probes,
               "offline_network": {"ipv6_capability_probe": "disabled; every socket audit event refused"},
+              "offline_private_inputs": "unavailable without stat during collection and execution; private reads refused",
               "resource_limits": {"affinity_cpus": cpus, "address_space_bytes": memory, "threads": 1},
               "log_sha256": hashlib.sha256((out / "unittest.log").read_bytes()).hexdigest(),
               "scope": "audited synthetic offline CPU fixtures; no live corpus, pilot, training, GPU, Lambda, S3 or runtime adoption"}
