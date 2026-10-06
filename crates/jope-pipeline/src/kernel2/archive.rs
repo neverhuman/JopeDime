@@ -1,5 +1,4 @@
-//! The loss × cost front of a run's measured programs, published opt-in as evidence only
-//! (laneD:B18-pareto-archive).
+//! The loss × cost front of a run's measured programs, published opt-in as evidence only.
 //!
 //! The front is built from the run's observations after the search has ended and never feeds it
 //! back: ranking, parents and the selected program are decided without it. Its inputs are the
@@ -11,11 +10,17 @@
 //! - complexity: [`program_cost`] under [`COST_VERSION`];
 //! - faulted cells and the Hard flag: from the observation's fault totals;
 //! - key: the sha256 of the program's exact codec bytes (`Program::import_legacy`, then
-//!   `to_bytes`), so two spellings of one program share a key;
+//!   `to_bytes`). The codec keeps each expression's text as written, so two spellings of one
+//!   expression (`1*c0` and `1 * c0`) are two keys; it keeps a number parameter as its value, so
+//!   two spellings of one number share one;
 //! - no age.
 //!
 //! The archive depends only on the set of admitted observations, never on their order, and
-//! `publication::verify_run` rebuilds it from the published observations and compares bytes.
+//! `publication::verify_run` rebuilds it from the published observations and compares bytes. The
+//! search never builds it: `search::run_cut` only records the selection, and publication builds
+//! and writes the front.
+
+// laneD:B18-pareto-archive
 
 use anyhow::{bail, Context, Result};
 use feat_math::{

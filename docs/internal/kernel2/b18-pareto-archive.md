@@ -1,17 +1,25 @@
 # Loss and cost front of measured programs
 
 The kernel2 profile route can publish, opt-in, the loss × cost front of every program it measured:
-the programs no other measured program beats on both the validation loss and a recorded program
-cost. Its stable id is `feat-math.front-loss-cost.v1`, built on feat-math's `kernel::pareto`
-archive. It is evidence only: ranking, parents and the selected program never read it, so with the
-archive selected every measurement, every refinement and the emitted program are unchanged.
+the programs that no other measured program dominates, that is, none is at least as good on both
+the validation loss and a recorded program cost and strictly better on one. A program of the same
+cost with a lower loss removes a member, as does a simpler one with a loss no higher. Of programs
+with equal loss and equal cost one is kept: the one with fewer faulted cells, then the lower key
+(see "What is archived"). Its stable id is `feat-math.front-loss-cost.v1`, built on feat-math's
+`kernel::pareto` archive. It is evidence only: ranking, parents and the selected program never
+read it, so with the archive selected every measurement, every refinement and the emitted program
+are unchanged.
 
 ## Switch
 
 - CLI: `jope pipeline run --search-profile <kernel2 profile> --pareto-archive`. The legacy profile
   refuses the flag, as it refuses the `--refine-*` flags. It combines with `--refine-method lm`.
 - API: `EngineSelection { archive: Some(ArchivePolicy::ArchiveOnly), .. }` through `with_engine`
-  on `Kernel2Evaluator`, the coordinator's `search::Options` or `run::Options`.
+  on `Kernel2Evaluator`, the coordinator's `search::Options` or `run::Options`. Only publication
+  builds the front (`run::run`, through `publication::publish`). `search::run_cut` with the
+  selection records it in its result's `engine` and builds and writes nothing; its search output
+  is the same with or without it (a test pins this). A caller that runs cuts itself and wants the
+  front builds it with `archive::build` from the result's observations.
 - `ArchiveOnly` is the only policy. A mode in which the front chooses the next parents is a
   separate, later opt-in with its own ablation.
 
@@ -27,7 +35,7 @@ as:
 | complexity | The program cost under `feat-math.cost.pipeline-nodes.v1` (see "Program cost") |
 | faulted cells | The observation's domain and saturation cells |
 | Hard flag | The observation's Hard flag (always false after the filter) |
-| key | The sha256 of the program's exact codec bytes (`kernel::Program::import_legacy`, then `to_bytes`), so two spellings of one program share a key |
+| key | The sha256 of the program's exact codec bytes (`kernel::Program::import_legacy`, then `to_bytes`). The codec keeps an expression's text as written, so `1*c0` and `1 * c0` are two keys; it keeps a number parameter as its value, so `lambda_frac=1e-9` and `lambda_frac=0.000000001` share one |
 | age | None |
 
 The front keeps a program when its loss is strictly lower than that of every simpler one, so it
@@ -68,7 +76,7 @@ faulted cells, which a program with a loss lower by at most the tie tolerance do
 
 Tests rehash `search.json` and the receipt after editing a member's loss, key or cost, the cost
 version, the member set, the record's id, version and digest, and the record's or the file's
-presence, and `verify_run` refuses every edit.
+presence, and `verify_run` refuses every edit, each by the check named for it.
 
 ## Default behaviour is byte-identical
 
@@ -98,6 +106,8 @@ measured with the paired protocol of `b17-damped-ls-refinement.md`.
   refused by the constructor and the reader; the original tests are unchanged.
 - jope-pipeline lib, `kernel2::archive_tests`: members non-dominated and re-derived under the
   recorded cost version, the winner's place on the front, input order and ties, the input filter
-  equal to ranking's, the cost definition, bit-identity with the archive on and off, frozen-clock
-  replay, round trip and tamper refusals, the record and the flag, and the shipped-text lint (of
-  this note too).
+  equal to ranking's, the cost definition, bit-identity with the archive on and off (through
+  `run::run`, and through `search::run_cut`, which builds nothing), frozen-clock replay, round trip
+  and tamper refusals by named check, the record and the flag (with `--refine-method lm` run and
+  verified, and the legacy refusal through the CLI's own dispatcher, before it writes anything),
+  and the shipped-text lint (of this note too).

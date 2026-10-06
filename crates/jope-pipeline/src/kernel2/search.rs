@@ -223,6 +223,8 @@ impl State {
 /// Run a cut on the same evaluation stack as the shipping legacy search.
 /// Each optimizer objective and each child measurement spend the same allowance.
 /// Cancellation returns no result; an admitted operation is nonpreemptive.
+/// It writes nothing: a selected front (`EngineSelection::archive`) is only recorded in the
+/// result's `engine`, and is built when `publication::publish` publishes the result.
 pub fn run_cut(cut: &Cut, options: &Options) -> Result<CutSearch> {
     generation::check(cut, options)?;
     crate::parallel::on_evaluation_stack(|| generation::run(cut, options))?

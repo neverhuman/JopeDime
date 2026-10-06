@@ -833,6 +833,37 @@ fn the_archive_round_trips_and_verify_refuses_every_tampered_archive_or_record()
     assert!(publication::verify_run(&path).is_err());
     restore();
     publication::verify_run(&path).unwrap();
+    // Each edit is refused by the check named for it, in the order above.
+    let rederive = "the archive does not re-derive from the observations";
+    let named = [
+        ("member loss", rederive),
+        ("member key", rederive),
+        ("member complexity", rederive),
+        (
+            "cost version",
+            "the archive's cost version disagrees with its record",
+        ),
+        ("member removed", rederive),
+        (
+            "dominated member",
+            "archived members are not their own front",
+        ),
+        ("digest", "evidence digest mismatch"),
+        ("digest dropped", "a published archive needs its digest"),
+        (
+            "record cost version",
+            "unknown archive method or cost version",
+        ),
+        ("record id", "unknown archive method or cost version"),
+        (
+            "record dropped, file kept",
+            "an archive is published without its selection",
+        ),
+    ];
+    assert_eq!(errors.len(), named.len());
+    for (error, (label, check)) in errors.iter().zip(named) {
+        assert!(error.contains(check), "{label}: {error}");
+    }
     // The refusals pass the shipped-text lint, with the run's random temporary path left out.
     let root = output.display().to_string();
     for error in errors {
@@ -954,6 +985,27 @@ fn the_flag_selects_the_archive_on_kernel2_only_and_its_text_passes_the_lint() {
         &["--pareto-archive", "--refine-method", "lm"],
         temp.path().join("lm"),
     );
+    // The combination runs: both records published, and the run verifies.
+    let combined = make(
+        &["--pareto-archive", "--refine-method", "lm"],
+        temp.path().join("lm-run"),
+    );
+    let receipt = run::run(&combined).unwrap();
+    let both = receipt.search.engine_selection.as_ref().unwrap();
+    assert!(both.damped_ls().is_some());
+    assert_eq!(
+        both.archive.as_ref().unwrap().sha256.as_deref(),
+        Some(crate::sha256_hex(&read(&combined, archive::PATH)).as_str())
+    );
+    assert!(receipt.search.objective_trials > 0);
+    assert_eq!(
+        publication::verify_run(&combined.run.output.join("receipt.json")).unwrap(),
+        receipt
+    );
+    check_front(
+        &published(&combined),
+        &derived(&combined, FaultPolicy::RejectHard),
+    );
     // The legacy profile refuses the flag before anything is written.
     let output = temp.path().join("refused");
     let (mut search, profile) = flags(&["--pareto-archive"]);
@@ -999,4 +1051,132 @@ fn the_flag_selects_the_archive_on_kernel2_only_and_its_text_passes_the_lint() {
     })
     .unwrap_err();
     lint(&format!("{record_check:#}"));
+}
+
+// Fix round 01: the selection off the publish path, the key's spellings, and the legacy refusal
+// through the CLI's own dispatcher.
+
+#[test]
+fn run_cut_records_the_archive_selection_and_its_search_is_unchanged() {
+    use super::search::{self, CutSearch};
+    let cut = data();
+    let make = |archive: bool| {
+        let mut options = crate::search::SearchOptions::new(
+            Budget {
+                evaluations: 24,
+                seconds: 120,
+            },
+            7,
+        );
+        options.clock = Clock::Frozen;
+        let options = search::Options::new(
+            options,
+            "kernel2-baseline",
+            FaultPolicy::RejectHard,
+            Refinement {
+                top_k: 1,
+                trials_per_program: 4,
+            },
+        )
+        .unwrap();
+        if archive {
+            options
+                .with_engine(selection(RefineMethod::Coordinate, true))
+                .unwrap()
+        } else {
+            options
+        }
+    };
+    let plain = search::run_cut(&cut, &make(false)).unwrap();
+    let selected = search::run_cut(&cut, &make(true)).unwrap();
+    // The selection is recorded as selected, with no digest: nothing was built or written.
+    assert!(plain.engine.is_none());
+    assert_eq!(
+        selected.engine,
+        selection(RefineMethod::Coordinate, true).record()
+    );
+    assert!(selected
+        .engine
+        .as_ref()
+        .and_then(|e| e.archive.as_ref())
+        .is_some_and(|a| a.sha256.is_none()));
+    // Every other field of the search output is the same, bit for bit.
+    let without_engine = |c: &CutSearch| {
+        let mut value = serde_json::to_value(c).unwrap();
+        value.as_object_mut().unwrap().remove("engine");
+        value
+    };
+    assert_eq!(without_engine(&plain), without_engine(&selected));
+    assert_eq!(plain.observations, selected.observations);
+    assert_eq!(plain.best, selected.best);
+    // A caller that runs cuts itself builds the front from the observations, as publication does.
+    assert_eq!(
+        archive::build(&selected.observations).unwrap(),
+        archive::build(&plain.observations).unwrap()
+    );
+}
+
+#[test]
+fn the_key_is_the_codec_bytes_so_expression_spellings_are_distinct_keys() {
+    // The codec keeps an expression's text as written.
+    let tight = "(pipe X (derive expr=\"1*c0\") (ridge))";
+    let spaced = "(pipe X (derive expr=\"1 * c0\") (ridge))";
+    assert_ne!(key(tight), key(spaced));
+    // It keeps a number parameter as its value.
+    assert_eq!(
+        key("(pipe X (ridge lambda_frac=0.000000001))"),
+        key("(pipe X (ridge lambda_frac=1e-9))")
+    );
+}
+
+#[test]
+fn the_legacy_dispatcher_refuses_each_kernel2_flag_before_writing() {
+    // `ProfileArgs::options` writes nothing either way, so the flag tests' `!output.exists()`
+    // after it cannot fail. The CLI's own dispatcher writes a run when it accepts one.
+    legacy_dispatch_refuses_before_writing("--pareto-archive");
+}
+
+/// The legacy profile refuses `flag` in the CLI's own dispatcher (`crate::cli::run`) before it
+/// writes anything, while the same command without the flag runs there and writes its run, so
+/// the check that nothing was written can fail.
+fn legacy_dispatch_refuses_before_writing(flag: &str) {
+    let temp = tempfile::tempdir().unwrap();
+    let dataset = dataset();
+    let source = "a".repeat(40);
+    let argv = |output: &Path, extra: &[&str]| -> Vec<String> {
+        let output = output.display().to_string();
+        let mut argv: Vec<String> = [
+            "jope-pipeline",
+            "run",
+            "--dataset",
+            dataset.as_str(),
+            "--output",
+            output.as_str(),
+            "--budget",
+            "evaluations=8,seconds=300",
+            "--policy",
+            "skip",
+            "--emit",
+            "rust",
+            "--rng-seed",
+            "7",
+            "--source-commit",
+            source.as_str(),
+        ]
+        .iter()
+        .map(|s| (*s).to_owned())
+        .collect();
+        argv.extend(extra.iter().map(|s| (*s).to_owned()));
+        argv
+    };
+    let refused = temp.path().join("refused");
+    let error = crate::cli::run(Cli::try_parse_from(argv(&refused, &[flag])).unwrap()).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("legacy search refuses kernel2"),
+        "{flag}: {error:#}"
+    );
+    assert!(!refused.exists(), "{flag}");
+    let ran = temp.path().join("ran");
+    crate::cli::run(Cli::try_parse_from(argv(&ran, &[])).unwrap()).unwrap();
+    assert!(ran.join("receipt.json").exists());
 }
