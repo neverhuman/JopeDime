@@ -65,16 +65,32 @@ merge that adds the guard lane; enable `jope-runner@guard.timer` only after that
 main and both hosts have been re-provisioned from the merge commit. Keep retired timers disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
 operational delivery. `--skip-image` requires an existing correctly built image.
 
-## Deploy-after-merge for runner-script digests (PR #193)
+## Deploy-after-merge for runner-file changes
 
-Changing any `JOPE_RUNNER_DEPLOYED` file changes the provenance digest. Do **not** provision
-hosts from an unmerged head: that breaks every other open PR's exact-head CI (and main's) for
-as long as the host carries the unmerged digest. Owner path: merge first, then provision both
-xbabe1 and xbabe2 from the merge commit (`provision.sh --skip-sdk --skip-image`), then enable
-`jope-runner@guard.timer` on xbabe2 only. Until that post-merge provision, PR CI may accept the
-previous main digest as a one-way transition (see `.github/actions/runner-provenance`); main
-commits still require an exact match, so a host left on the unmerged digest fails main CI on
-purpose. Remove the transition allowlist after both hosts match the new digest.
+Changing any `JOPE_RUNNER_DEPLOYED` file changes the provenance digest. **Deploy happens only
+after merge.** Never provision a host from an unmerged head, and never re-enable a lane such as
+`jope-runner@guard.timer` before its PR is on main: an unmerged digest on a host breaks main's
+exact-match runs (main-guard, full-main) and the base-bound CI of every other open PR for as long
+as it stays there.
+
+PR CI does not need the new files on the hosts. On `pull_request` the provenance action binds to
+the PR base digest (see below), so a runner-change PR goes green on hosts that still carry main's
+files. There is no per-PR digest allowlist.
+
+The post-merge cut-over is a short freeze **coordinated with ENG:watcher**:
+
+1. Before merge: independent exact-head review and the MERGE-SLOT. ENG:watcher announces the
+   freeze; other PR merges and runner changes wait.
+2. Rebase-merge with `--match-head-commit`. From here until step 4, main's push runs fail
+   provenance on purpose (they exact-match the new digest), which is why the window is short.
+3. Re-provision **both** xbabe1 and xbabe2 from the merge commit
+   (`provision.sh --skip-sdk --skip-image`), then enable any new timer the change adds (for the
+   guard lane: `jope-runner@guard.timer` on xbabe2 only). No existing timer, service or container
+   is stopped.
+4. Verify on the merge commit: main-guard and full-main pass provenance (host digest = main's
+   digest), and a new lane's job lands on its own runner (`xbabe2-guard-*` for the guard lane).
+   ENG:watcher records the result and ends the freeze.
+5. If any step fails, roll both hosts back to the previous main digest at once and record it.
 
 The provenance action binds host runner files to reviewed merged code. On `pull_request`
 events it compares the host digest (and mounted admission hooks / image entrypoint) to the
