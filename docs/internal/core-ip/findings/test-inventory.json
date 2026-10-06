@@ -2603,6 +2603,10 @@
       "role": "research",
       "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
     },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_strip_outer_test.py": {
+      "role": "research",
+      "reason": "Not a test module: the PR #224 payload-strip lane tool, whose file name matches the *_test.py family pattern; it is exercised by tests/test_payload_strip.py inside the reviewed twenty-one-module offline selection and is not executed as a test family itself."
+    },
     "python:deploy/dl-trainonly/test_verify_lane.py": {
       "role": "infrastructure",
       "reason": "Pinned DL source custody and substitution/refusal conformance; no model learning or operational promotion claim."
