@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only change for owner-assigned Clippy remediation. Frozen grammar remains byte-identical; active grammar implementation and typed receiving source are bound, with behavioral/evaluator fixtures unchanged. The rejected pre-pin-repair private drafts remain diagnostic in verified custody.",
+  "plan_reference": "docs/internal/core-ip/required-clippy-floor.md, original 51 diagnostic entries",
+  "pr_reference": "fix/required-clippy-floor",
+  "source_commit": "5bcb402a54f1b2d313c89073e50fb2448fc7f5f2",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "6c384ab631f5d7169bb421d56f20f97c31ccffe0d83335dbdc0cd5af7188e2e3",
+      "after": "75ae2ce55e1e7159b090f9f3a6e0bde43278a1d48e5c76838df3de5ceb05690b"
+    }
+  ]
+}

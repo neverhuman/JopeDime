@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.lineage-sources.v1",
-  "generated_at_sha": "27c37d27675b104e9f7bce5ada63ad68df6bbeaa",
+  "generated_at_sha": "5bcb402a54f1b2d313c89073e50fb2448fc7f5f2",
   "note": "Source files that jope-engine hashes into identities, read from the include_str!/include_bytes! lists in the named code: the teaching-store semantic_dependencies_sha256 (teaching_store.rs), the corpus scan_policy (corpus.rs) and the eval-registry query execution identity (eval_registry/query.rs execution_query_key; verify_artifacts refuses receipts whose recorded source hashes differ). Each identity also hashes the running executable (/proc/self/exe), so any change linked into that binary, every feat-math change included, mints new identities even when no listed source changes; this fixture makes the listed sources visible. A change here is announced in the PR body and rebaselined with JOPE_COMPAT_FREEZE_REGENERATE=identity in the same change.",
   "lineages": [
     {
@@ -9,23 +9,27 @@
       "sources": [
         {
           "path": "crates/jope-engine/src/corpus.rs",
-          "sha256": "aa57768283685c6d8a6b96f68306a1667e969605845a00b38f2975be315f6d73"
+          "sha256": "130bd66848d21ff67dbdceff6fc1393e58d171908e183aba1a3d343f7c9fa377"
         },
         {
           "path": "crates/jope-engine/src/grammar.rs",
           "sha256": "6a8e6aa43efb8af6aa4806fd5d403ca34c06563436d933266a7377d815625e6a"
         },
         {
+          "path": "crates/jope-engine/src/grammar/automaton.rs",
+          "sha256": "27c81a3ddc4d59c5d98bd9207e15c5f983309e153618ff35454ddb44c42dd005"
+        },
+        {
           "path": "crates/jope-engine/src/teaching_store.rs",
-          "sha256": "3d03a42789e34298e2cc5e527b5018c713f1d39d3ce8a099c153c82a8c2ab646"
+          "sha256": "6992a897e56c5d64ee2b4d6eb73692768bcce3f8e9bc8b1f077c914483991814"
         },
         {
           "path": "crates/jope-engine/src/task_contract.rs",
-          "sha256": "7bbbbd83aa8b1be7fc59e3cad50a646f20ce72be73ede4d27ac01fec1adcef2b"
+          "sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d"
         },
         {
           "path": "crates/jope-engine/src/prepare.rs",
-          "sha256": "46ed2f9db4005724f8841bd297630ed64b6f0579e84d152129d2f393c1de2034"
+          "sha256": "afafeeab11f5b67c315fd2f4fc2d17e490e25dba872c5d206af8664c8108550f"
         },
         {
           "path": "crates/jope-engine/src/encoding.rs",
@@ -37,7 +41,7 @@
         },
         {
           "path": "crates/jope-engine/src/label_admission.rs",
-          "sha256": "dcd00cb5e7e417ed336763ed74d543f9bc5fef34c913d02becb61d1e47a7c676"
+          "sha256": "2a3811211f8cdc8567acfc5746a1e63c86cee356c6acde04644108400fcb3b0b"
         },
         {
           "path": "crates/jope-engine/src/eval_registry.rs",
@@ -45,15 +49,15 @@
         },
         {
           "path": "crates/jope-engine/src/eval_registry/authority.rs",
-          "sha256": "a6435851f70cd93ca5555df69c75e1e1ef8d4b9b76cc963fdcd4e46b600b261a"
+          "sha256": "dd95fe82b894a53bbb76e5bb95859418ee224f705c6f671f3a7622659e132a19"
         },
         {
           "path": "crates/jope-engine/src/eval_registry/service.rs",
-          "sha256": "f688316bd3e0369bc3d10ab92a2dbe16277a0e9ff330be5cfe621c6ca0f73824"
+          "sha256": "9ddb9e2ae29b5f277ffb781da4ca66f1179d3950c5166a6e0266d365b76c9e52"
         },
         {
           "path": "crates/jope-engine/src/fit_boundary.rs",
-          "sha256": "ea0a40fe4d12e977ce9fc1f83728468cf733d14a6a3631f7c6bdc22f94db23d4"
+          "sha256": "6fbbe26401e1ba142e686db8be21f428661854b0e9b1635dd994a93f77b13c8f"
         }
       ]
     },
@@ -63,19 +67,23 @@
       "sources": [
         {
           "path": "crates/jope-engine/src/corpus.rs",
-          "sha256": "aa57768283685c6d8a6b96f68306a1667e969605845a00b38f2975be315f6d73"
+          "sha256": "130bd66848d21ff67dbdceff6fc1393e58d171908e183aba1a3d343f7c9fa377"
         },
         {
           "path": "crates/jope-engine/src/grammar.rs",
           "sha256": "6a8e6aa43efb8af6aa4806fd5d403ca34c06563436d933266a7377d815625e6a"
         },
         {
+          "path": "crates/jope-engine/src/grammar/automaton.rs",
+          "sha256": "27c81a3ddc4d59c5d98bd9207e15c5f983309e153618ff35454ddb44c42dd005"
+        },
+        {
           "path": "crates/jope-engine/src/task_contract.rs",
-          "sha256": "7bbbbd83aa8b1be7fc59e3cad50a646f20ce72be73ede4d27ac01fec1adcef2b"
+          "sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d"
         },
         {
           "path": "crates/jope-engine/src/prepare.rs",
-          "sha256": "46ed2f9db4005724f8841bd297630ed64b6f0579e84d152129d2f393c1de2034"
+          "sha256": "afafeeab11f5b67c315fd2f4fc2d17e490e25dba872c5d206af8664c8108550f"
         },
         {
           "path": "crates/jope-engine/src/encoding.rs",
@@ -101,7 +109,7 @@
         },
         {
           "path": "crates/jope-engine/src/prepare.rs",
-          "sha256": "46ed2f9db4005724f8841bd297630ed64b6f0579e84d152129d2f393c1de2034"
+          "sha256": "afafeeab11f5b67c315fd2f4fc2d17e490e25dba872c5d206af8664c8108550f"
         }
       ]
     }
