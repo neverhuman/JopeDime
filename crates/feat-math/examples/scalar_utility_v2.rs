@@ -57,6 +57,16 @@ fn bits(values: &Value) -> Result<Vec<f64>, String> {
         .collect()
 }
 
+fn cohort_manifest(bytes: &[u8]) -> Result<Value, Box<dyn std::error::Error>> {
+    let manifest: Value = serde_json::from_slice(&bytes)?;
+    if hash(&bytes) != "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
+        || manifest["schema"] != "feat-math.scalar-utility-common-cohort.v2"
+    {
+        return Err("unknown common utility cohort".into());
+    }
+    Ok(manifest)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().collect();
     if args.len() != 5 || args[3].len() != 40 || !args[3].bytes().all(|b| b.is_ascii_hexdigit()) {
@@ -75,12 +85,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let manifest_path = Path::new(&args[1]);
     let manifest_bytes = fs::read(manifest_path)?;
-    let manifest: Value = serde_json::from_slice(&manifest_bytes)?;
-    if hash(&manifest_bytes) != "20e247031fb140ebf1195374564be2c94d9afa4d7b7bd1c33e3635c969cbdd77"
-        || manifest["schema"] != "feat-math.scalar-utility-common-cohort.v2"
-    {
-        return Err("unknown common utility cohort".into());
-    }
+    let manifest = cohort_manifest(&manifest_bytes)?;
     let datasets = manifest["datasets"]
         .as_array()
         .ok_or("missing utility datasets")?;
@@ -302,4 +307,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         index.len()
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn committed_cohort_is_admitted_by_entrypoint_guard() {
+        let bytes = include_bytes!("../tests/fixtures/scalar_v2/utility/manifest.json");
+        let admitted = cohort_manifest(bytes).unwrap();
+        assert_eq!(
+            admitted["schema"],
+            "feat-math.scalar-utility-common-cohort.v2"
+        );
+        assert_eq!(admitted["datasets"].as_array().unwrap().len(), 8);
+        let mut changed = bytes.to_vec();
+        changed.push(b'\n');
+        assert!(cohort_manifest(&changed).is_err());
+    }
 }
