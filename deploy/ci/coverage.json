@@ -8762,6 +8762,16 @@
       ],
       "scope": "New DL lane source-custody family statically inventoried, not collected or executed in this PR; pending explicit side-effect/dependency audit and bounded qualification. No existing CI exclusion changes."
     },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_strip_outer_test.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [],
+      "dispositions": [
+        "dl-lane-qualification"
+      ],
+      "scope": "Not a test module: the PR #224 payload-strip lane tool, whose file name matches the python-family *_test.py discovery pattern. It is exercised by tests/test_payload_strip.py inside the twenty-one-module offline selection and is not collected or executed as a test family itself. No existing CI exclusion changes."
+    },
     "python:deploy/dl-trainonly/test_verify_lane.py": {
       "discovery": {
         "kind": "python-family"
