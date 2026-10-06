@@ -70,7 +70,7 @@ HOST_CASES = {
     "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 574
+EXPECTED_COLLECTED = 576
 
 
 def case_ids(suite):

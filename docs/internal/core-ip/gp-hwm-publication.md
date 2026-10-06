@@ -81,7 +81,9 @@ in-memory bucket does not survive process exit.
 
 After review and merge, the authorized DLTrain publisher uses `--real` instead
 of `--dry-run`, omits `--budget-snapshot`, and supplies a separate durable HWM
-work directory. It shares the existing guarded v2 byte budget, while its local
+work directory. Output paths containing parent traversal or symlinks are refused
+before client or ledger construction; state and receipts must remain outside
+input custody. It shares the existing guarded v2 byte budget, while its local
 object ledger is separate from the active encoding publish ledger. This command
 uses the established #224 credential path; it does not provision credentials or
 change their permissions. ROOT's implementation qualification authorizes only

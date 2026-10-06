@@ -2408,6 +2408,15 @@
         "storage"
       ]
     },
+    "python:deploy/dl-trainonly/test_hwm_publish.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "teaching",
+        "storage"
+      ]
+    },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py": {
       "role": "regression",
       "subsystems": [
