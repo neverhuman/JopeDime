@@ -25,7 +25,7 @@ you saw.
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 15 | 0 | 15 | 0 | 0 | 0 |
-| new-example | 5 | 0 | 5 | 0 | 0 | 0 |
+| new-example | 6 | 0 | 6 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **821** | **353** | **58** | **1** | **402** | **7** |
+| **total** | **822** | **353** | **59** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
