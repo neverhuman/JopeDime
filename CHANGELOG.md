@@ -12,7 +12,7 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at 5ef2e10c8, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236.
+<!-- Local release preparation at ca1f7570a, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238.
 Rebase onto final main and finalize the date before publication. GP-language #231 includes the
 maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
 binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
@@ -80,6 +80,10 @@ merged; B19 wiring is tracked separately. -->
 - Differential-compile bounded GP math and ML constructions through Python, Rust, g++ and
   clang, with native output-word comparisons and independent reference checks. Retain nested
   expression and recipe conversion witnesses and an independent ridge PRESS proof (#231).
+- Retain positive tiny tails in bounded exponential, softmax and log-sum-exp compositions,
+  and test bounded RBF constructions against independent Decimal references. Compare native
+  output and fault words across all recipe backends while preserving the direct exponential
+  guard and existing reference limits (#238).
 - Guard the protected-semantics e-graph's libm call shapes, including Tanh, with a maintained
   test that fails when the recorded unauthorized Tanh-fold mutation is applied (#231).
 
