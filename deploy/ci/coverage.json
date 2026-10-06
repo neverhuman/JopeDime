@@ -96,9 +96,9 @@
         "bash deploy/ci/test-bump.sh",
         "python3 deploy/lambda/training/teacher-v2/test_s1_budget.py",
         "python3 deploy/lambda/training/teacher-v2/qualify_s1.py --out \"$JOPE_LANE_EVIDENCE/s1-mutants\"",
-        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py",
         "python3 deploy/dl-trainonly/test_verify_lane.py",
-        "python3 deploy/dl-trainonly/test_offline_guard.py"
+        "python3 deploy/dl-trainonly/test_offline_guard.py",
+        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py"
       ]
     },
     "rust-check": {
@@ -271,7 +271,7 @@
       "result_backend": "pytest",
       "feature_selection": "not-applicable",
       "checks": [
-        "uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry",
+        "uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry --extra dl-custody",
         "uv run --no-sync ruff check .",
         "uv run --no-sync ruff format --check .",
         "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$pytest_fixtures\" --junitxml=\"$EVIDENCE/junit.xml\"",
