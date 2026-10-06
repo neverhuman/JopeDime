@@ -125,7 +125,10 @@ published evidence:
   outside the site range, and a small-allowance fallback inside it and under its minimum. A
   surrogate, failed or stopped record is a supported `derive` stage whose allowance could hold the
   minimum. A surrogate record reports the stage's literal sites and spends at most its allowance
-  less the pipeline passes. A record that ends the refinement is the last;
+  less the pipeline passes. A record that ends the refinement is the last. The parent is
+  untrusted evidence: only its pipeline form is parsed, and an expression source holding more
+  than 256 of the bytes `( + - * / ^` (`MAX_PARENT_EXPRESSION_NESTING`) is refused before the
+  recursive expression parser sees it;
 - the stages' charges sum to the refinement's evaluations and refused trials.
 
 Tests rehash `search.json` and the receipt after editing each of these counts, decisions and
