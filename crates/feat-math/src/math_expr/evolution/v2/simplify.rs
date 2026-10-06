@@ -790,14 +790,29 @@ struct Shared {
     variables: std::collections::BTreeMap<Var, (Option<(u64, u64)>, bool)>,
 }
 
-/// The fit, the line's measured error, and the refusal of a subtree without a fit.
-type SampleEvidence = (Option<LinearFit>, Option<f64>, Option<String>);
+/// The fit, the line's measured error, and the refusal of a subtree without a fit, with every
+/// number as its exact bits. A record compares with another bit for bit, NaN included: a fit
+/// refused for coefficients that are not finite is published without them and read back as NaN,
+/// which never equals itself, while two records of the same subtree hold the same bits.
+type SampleEvidence = (Option<FitBits>, Option<u64>, Option<String>);
+
+/// A fit as exact bits: its stop, coefficients, range, bracket and largest `|f|`, and its steps.
+type FitBits = (MinimaxStop, [u64; 2], [u64; 5], [usize; 2]);
+
+fn fit_bits(fit: &LinearFit) -> FitBits {
+    (
+        fit.stop,
+        fit.coefficients.map(f64::to_bits),
+        [fit.lo, fit.hi, fit.levelled, fit.max_error, fit.max_abs].map(f64::to_bits),
+        [fit.iterations, fit.steps],
+    )
+}
 
 impl Shared {
     fn check(&mut self, subtree: &Expr, var: Var, evidence: &LinearizationEvidence) -> Result<()> {
         let samples: SampleEvidence = (
-            evidence.fit,
-            evidence.lowered_error,
+            evidence.fit.as_ref().map(fit_bits),
+            evidence.lowered_error.map(f64::to_bits),
             evidence
                 .fit
                 .is_none()
@@ -924,6 +939,12 @@ fn linearize(
                 };
                 anyhow::ensure!(consistent(&fit), "a recorded fit disagrees with its stop");
                 let lowered = evidence.lowered_error;
+                // The line's error is its largest absolute residual over the samples: a recorded
+                // one that is negative, negative zero or not finite cannot have been measured.
+                anyhow::ensure!(
+                    lowered.is_none_or(|error| error.is_finite() && error.is_sign_positive()),
+                    "a recorded line error is not a finite nonnegative residual"
+                );
                 (fit, Box::new(move |_: &[f64]| lowered))
             }
         };
@@ -1032,10 +1053,10 @@ impl MathExpr {
     /// [`LinearizationEvidence`]. The subtrees, the bracket rule, the lowered line and its size,
     /// the bound, every refusal after the fit, and the admitted expression are recomputed. The
     /// fit itself and the line's measured error are taken as recorded, checked only against the
-    /// fit's stop and the evaluator's range, and against the expression's other records (a
-    /// repeated subtree records the same samples; the fits of one variable share its training
-    /// range); without the rows they cannot be recomputed. A subtree with no recorded fit keeps
-    /// its recorded refusal.
+    /// fit's stop and the evaluator's range, the error as a finite nonnegative residual, and
+    /// against the expression's other records (a repeated subtree records the same samples, bit
+    /// for bit; the fits of one variable share its training range); without the rows they cannot
+    /// be recomputed. A subtree with no recorded fit keeps its recorded refusal.
     pub fn linearize_recorded_v2(
         &self,
         profile: &SearchProfile,

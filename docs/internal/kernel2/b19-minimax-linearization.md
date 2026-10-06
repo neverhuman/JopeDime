@@ -154,8 +154,11 @@ the subtree's range, which would be a separate, versioned rule.)
   sees it), and the public linearization entries check a tree's structure before they copy it;
 - the recorded evidence agrees with itself, checked per stage expression: each fit is consistent
   with its stop and within the evaluator's range (`|lo|`, `|hi|` and `max|f|` at most 1e12, the
-  only range the sampling produces); a faulting training input refuses every subtree of its stage
-  or none; a subtree that occurs twice in one expression records the same samples both times; the
+  only range the sampling produces); each line's measured error, its largest absolute residual,
+  is finite and not negative (negative zero included); a faulting training input refuses every
+  subtree of its stage or none; a subtree that occurs twice in one expression records the same
+  samples both times, compared bit for bit (a coefficient that is not finite is published as
+  absent and read back as NaN, which compares equal to itself only that way); the
   fits of one variable in one stage share its training range; and a fit and a refusal of that
   variable's values alone (too few distinct values) do not both occur. The range bound stops an
   inflated `max|f|` only past 1e12: within it, an `exact_fit` claim still closes for a `max_error`
@@ -174,7 +177,11 @@ same decisions and is accepted (a test pins this limit). So does a refused subtr
 by the refusal "a training row faults or is not finite in the subtree", which only that subtree's
 own rows could contradict, unless the same subtree occurs twice. Neither edit can change which
 programs were measured or how they scored: an offered line's record is bound to its measured
-program, and the measurement is the native score. A fit replay needs the training rows.
+program, and the measurement is the native score. A fit replay needs the training rows. The
+line's measured error is checked only as a residual, finite and not negative: an offered line's
+error edited to another value up to the bound re-derives the same decision and is accepted, even
+under the bracket's lower end, which is no floor for it, since the lowered line's own rounding
+grows with its coefficients' conditioning.
 
 ## Default behaviour is byte-identical
 
@@ -222,9 +229,11 @@ feat-math lib, the `linearization_tests` module of `simplify.rs`:
 - a fit whose bracket did not close (`stalled`, `degenerate`, `iteration_limit`) is refused before
   any line is built, and `closed` holds for exactly the three closing stops;
 - the recorded path re-derives the live result exactly, across every refusal; recorded numbers
-  drive the bound and must agree with their stop and the evaluator's range; records of one
-  expression must agree with each other (a repeated subtree, one variable's training range, a
-  fit beside a refusal of the same values);
+  drive the bound and must agree with their stop and the evaluator's range; a recorded line
+  error that is negative, negative zero or not finite is refused; records of one expression must
+  agree with each other (a repeated subtree, bit for bit, with NaN coefficients equal to
+  themselves and other numbers still refused; one variable's training range; a fit beside a
+  refusal of the same values);
 - each check of the lowering is named in order; only one-variable subtrees where a line fits are
   considered.
 
@@ -247,10 +256,15 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
 - tamper refusals, the selection record, the flag, and the shipped-text lint (of this note too);
   among them a fit inflated past the evaluator's range, a fit hidden behind a faulting-input
   refusal beside sibling fits, a parent's group deleted, swapped with the next one, or repeated
-  after the next one, each refused by the check named for it; and the two documented limits,
-  accepted: a consistently scaled fit, and a refused line's fit hidden as an unsampled subtree
+  after the next one, each refused by the check named for it; and the three documented limits,
+  accepted: a consistently scaled fit, a refused line's fit hidden as an unsampled subtree, and
+  an offered line's error edited to zero, under its fit's bracket
   (a group for a parent the pass did not read is tested for the rewrite pass, whose records share
-  the same parent-order check);
+  the same parent-order check); a measured line's error edited to `-1` or `-0` is refused;
+- a run on a one-feature dataset whose values are subnormal (`-1e-310`, `0`, `1e-310`): the two
+  equal children of `(sin(c0)+c0)*(sin(c0)+c0)` are refused for a coefficient past the finite
+  range, published without their coefficients, and the untouched run verifies; a finite pair
+  given to one of the two is refused as a repeated subtree recording other samples;
 - with the flag off: the seeded pins, no file and no record.
 
 Not done: the three-language emitted-winner check of linearized programs. They are ordinary
