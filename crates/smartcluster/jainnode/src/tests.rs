@@ -6,7 +6,7 @@ use jain_smartcluster_fabric::{
     OutputDeclaration, ResourceLimits, SignatureAuthority, SignedWorkUnitProjection,
     VerifiedWorkUnit, WorkUnitProjection,
 };
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Notify};
 use ulid::Ulid;
 
 use super::*;
@@ -22,7 +22,11 @@ struct DockerMock {
     killed: Mutex<usize>,
     removed: Mutex<usize>,
     started: Mutex<Vec<String>>,
+    waiting: Mutex<Vec<String>>,
+    poll_wait: Notify,
+    wait_observed: Notify,
     block_wait: bool,
+    block_run_wait: bool,
     log_error: bool,
     incomplete_log: bool,
 }
@@ -74,15 +78,22 @@ impl DockerEnginePort for DockerMock {
         Ok(receiver)
     }
 
-    async fn wait(&self, _container_id: &str) -> Result<ExitStatus, DockerError> {
-        if self.block_wait {
-            pending::<()>().await;
+    async fn wait(&self, container_id: &str) -> Result<ExitStatus, DockerError> {
+        if self.block_wait || (self.block_run_wait && container_id == "container-2") {
+            loop {
+                self.waiting.lock().unwrap().push(container_id.to_owned());
+                self.wait_observed.notify_one();
+                self.poll_wait.notified().await;
+            }
         }
+        self.waiting.lock().unwrap().push(container_id.to_owned());
+        self.wait_observed.notify_one();
         Ok(self.exits.lock().unwrap().remove(0))
     }
 
     async fn kill(&self, _container_id: &str) -> Result<(), DockerError> {
         *self.killed.lock().unwrap() += 1;
+        self.wait_observed.notify_one();
         Ok(())
     }
 

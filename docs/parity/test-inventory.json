@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4164,
+  "count": 4166,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -1507,12 +1507,12 @@
     }
    },
    "jainnode": {
-    "count": 82,
+    "count": 84,
     "ignored": 0,
     "binaries": {
      "jainnode": {
       "kind": "lib",
-      "count": 80,
+      "count": 82,
       "ignored": 0,
       "tests": [
        "cancellation::tests::accepted_before_start_is_durable_and_exactly_fenced",
@@ -1540,6 +1540,8 @@
        "executor::tests::cancellation_is_fenced_into_container_kill_and_no_publication",
        "executor::tests::dispatch_tests::accepted_assignment_recovers_without_duplicate_ack_and_restores_capacity",
        "executor::tests::dispatch_tests::concurrent_runtime_accepts_durable_cancellation_while_execution_runs",
+       "executor::tests::dispatch_tests::concurrent_runtime_enforces_the_signed_run_deadline",
+       "executor::tests::dispatch_tests::concurrent_runtime_enforces_the_signed_smoke_deadline",
        "executor::tests::dispatch_tests::concurrent_runtime_persists_ack_before_spawning_and_terminalizes_success",
        "executor::tests::dispatch_tests::concurrent_runtime_terminalizes_failed_execution_before_failure_frame",
        "executor::tests::dispatch_tests::failed_controller_position_commit_terminalizes_prepared_without_ack_or_launch",
@@ -6527,7 +6529,7 @@
   }
  },
  "totals": {
-  "rust": 4164,
+  "rust": 4166,
   "python": 172
  }
 }
