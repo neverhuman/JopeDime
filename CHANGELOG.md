@@ -12,10 +12,10 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at 2e0b7723, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230.
-Rebase onto final main and finalize the date before publication. GP-language #231 (including the
-maintained Tanh mutation gate), jankurai triage and final-main qualification remain publication
-prerequisites. B18 archive evidence wiring is merged; B19/B20 wiring is tracked separately. -->
+<!-- Local release preparation at 1d0a27acb, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231.
+Rebase onto final main and finalize the date before publication. GP-language #231 includes the
+maintained Tanh mutation gate; final verifier binding, jankurai triage and final-main qualification
+remain publication prerequisites. B18 archive wiring is merged; B19/B20 wiring is tracked separately. -->
 
 ### feat-math and emitters
 
@@ -73,6 +73,11 @@ prerequisites. B18 archive evidence wiring is merged; B19/B20 wiring is tracked 
   native feature/fault comparisons and signed-zero regressions (#223). Lane A's C++17 warning
   reproduction is credited in that gate's record. Its bounded comparison contract and
   toolchain/platform limits are documented in `docs/parity/gp-emitter-determinism.md`.
+- Differential-compile bounded GP math and ML constructions through Python, Rust, g++ and
+  clang, with native output-word comparisons and independent reference checks. Retain nested
+  expression and recipe conversion witnesses and an independent ridge PRESS proof (#231).
+- Guard the protected-semantics e-graph's libm call shapes, including Tanh, with a maintained
+  test that fails when the recorded unauthorized Tanh-fold mutation is applied (#231).
 
 ### Engine and S1
 
