@@ -78,7 +78,8 @@ runc writes `memory.swap.max=0` but registers each `docker-<id>.scope` with
 listeners to swap=max and failed their next job's swap check. The launcher now records
 `MemorySwapMax=0` on the scope with `systemctl set-property --runtime` and kills a listener
 whose cap systemd does not hold. Listeners started before this deployment still need the
-drain-and-restart procedure after a reload.
+drain-and-restart procedure after a reload. This changes deployed files: provision it only after
+the PR is merged, in a post-merge freeze coordinated with ENG:watcher, never from an unmerged head.
 
 Idle listeners are not stopped by a service-start deadline: that deadline previously cut into
 accepted jobs. Each JIT listener still executes only one job. Workflows own execution timeouts;
