@@ -64,8 +64,9 @@ digest computed from the PR **base** ref, not the PR head — so runner-change P
 on current hosts, merge, then deploy in a short post-merge freeze. Push / workflow_dispatch /
 main runs still require an exact match to the commit under test. On a shallow checkout the
 action first fetches exactly the PR base commit (`provenance_bind.py ensure-base`, depth 1,
-read-only job token), so no job depends on a reused workspace already holding it; a base that
-stays unreadable fails closed. It also checks the provisioned
+read-only job token), so no job depends on a reused workspace already holding it. A `BASE_SHA`
+that is not exactly 40 lowercase hex characters is refused before git runs, the fetch is bounded
+(120 s, `JOPE_PROVENANCE_FETCH_TIMEOUT`), and a base that stays unreadable fails closed. It also checks the provisioned
 image identity and verifies immutable policy plus actual cgroup memory/CPU/swap values. It does
 not hash every image file. Never weaken provenance to make an unreviewed deployment pass.
 
