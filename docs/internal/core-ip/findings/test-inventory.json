@@ -2408,6 +2408,13 @@
         "storage"
       ]
     },
+    "python:deploy/dl-trainonly/test_gpu_manifest_cut.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
     "python:deploy/dl-trainonly/test_hwm_publish.py": {
       "role": "regression",
       "subsystems": [
