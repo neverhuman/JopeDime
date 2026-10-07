@@ -2749,37 +2749,6 @@ fn is_scq_capacity_error_for_node(error: &anyhow::Error, target_node: &str) -> b
     is_scq_capacity_error(error) || is_wrong_node_marker_capacity_error(error, target_node)
 }
 
-fn submit_or_recover(job_id: &str, spec_path: &Path, target_node: &str) -> Result<Value> {
-    let exists = scq_json(&["show", job_id])
-        .ok()
-        .and_then(|show| scq_batch::scq_job(&show, job_id).ok().map(|_| ()))
-        .is_some();
-    if !exists {
-        let result = scq_batch::command_output(
-            {
-                let mut command = Command::new(scq_binary_str());
-                command.arg("submit").arg(spec_path);
-                command
-            },
-            "submit TimeSeries42 shard",
-        );
-        match result {
-            Ok(_) => {}
-            Err(error) if is_scq_capacity_error_for_node(&error, target_node) => return Err(error),
-            Err(error) => return Err(error),
-        }
-    }
-    let show = wait_for_job(job_id)?;
-    let job = scq_batch::scq_job(&show, job_id)?;
-    if job.get("state").and_then(Value::as_str) == Some("cancelled") {
-        return Err(retryable_scq_stall_error(
-            job_id,
-            "was already cancelled and has no local shard receipt",
-        ));
-    }
-    Ok(show)
-}
-
 fn scq_check(spec: &Path, target_node: &str) -> Result<()> {
     let result = scq_batch::command_output(
         {
@@ -2916,6 +2885,8 @@ fn read_receipts(path: &Path) -> Result<Vec<EvalReceipt>> {
         .collect()
 }
 
+// Keep staged shard identities and output paths explicit.
+#[allow(clippy::too_many_arguments)]
 fn prepare_shard(
     root: &Path,
     run_id: &str,
@@ -3139,6 +3110,8 @@ fn finalize_prepared_shard(
     })
 }
 
+// Keep transaction identity, staging state and wave budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn execute_transactional_wave(
     root: &Path,
     run_id: &str,
@@ -3245,267 +3218,6 @@ fn execute_transactional_wave(
     }
 }
 
-fn execute_shard(
-    root: &Path,
-    run_id: &str,
-    campaign_sha256: &str,
-    spec: &DatasetSpec,
-    seed_sha256: &str,
-    release_sha256: &str,
-    staging: &StagingReceipt,
-    generation: usize,
-    shard: usize,
-    node_index: usize,
-    attempt: usize,
-    members: &[Member],
-) -> Result<ShardRecord> {
-    let node_name = NODES[node_index];
-    let node = staged_node(staging, node_name)?;
-    let staged = staged_dataset(staging, node_name, &spec.dataset_hash)?;
-    let authority = label_authority(generation, seed_sha256, release_sha256, campaign_sha256);
-    let protocol_sha256 = if is_forecast3_gen20(run_id) {
-        Some(dataset_protocol_sha256(spec)?)
-    } else {
-        None
-    };
-    let execution_binding =
-        is_forecast3_gen20(run_id).then_some((run_id, campaign_sha256, release_sha256));
-    let remote_manifest_value = corpus_manifest(
-        spec,
-        members,
-        (&staged.train_path, &staged.test_path, &staged.meta_path),
-        authority.clone(),
-        protocol_sha256.as_deref(),
-        execution_binding,
-    )?;
-    let local_manifest_value = corpus_manifest(
-        spec,
-        members,
-        (&spec.train_path, &spec.test_path, &spec.meta_path),
-        authority,
-        protocol_sha256.as_deref(),
-        execution_binding,
-    )?;
-    let local_manifest_bytes = canonical_json(&local_manifest_value)?;
-    let local_manifest_sha256 = sha256_bytes(&local_manifest_bytes);
-    let dataset_dir = dataset_root(root, &spec.dataset_hash);
-    let local_manifest_path = generation_root(&dataset_dir, generation)
-        .join("corpus-manifests")
-        .join(format!(
-            "shard-{shard:02}-attempt-{attempt}-{short}.v1.json",
-            short = &local_manifest_sha256[..16]
-        ));
-    immutable_or_equal(&local_manifest_path, &local_manifest_bytes)?;
-    validate_with_corpus_eval(&local_manifest_path)?;
-
-    let remote_manifest_bytes = canonical_json(&remote_manifest_value)?;
-    let remote_manifest_sha256 = sha256_bytes(&remote_manifest_bytes);
-    let remote_manifest_local = root
-        .join("jobs")
-        .join("manifests")
-        .join(format!("{remote_manifest_sha256}.json"));
-    immutable_or_equal(&remote_manifest_local, &remote_manifest_bytes)?;
-    let job_id = expected_job_id(
-        run_id,
-        &spec.dataset_hash,
-        generation,
-        shard,
-        node_name,
-        attempt,
-        &remote_manifest_sha256,
-    );
-    let remote_manifest = format!(
-        "{}/jobs/manifests/{remote_manifest_sha256}.json",
-        node.bundle_root
-    );
-    let remote_output = format!("{}/jobs/{job_id}/output", node.bundle_root);
-    let project = if is_forecast3_gen20(run_id) {
-        FORECAST3_PROJECT
-    } else {
-        LEGACY_PROJECT
-    };
-    let spec_text = scq_spec(node, &job_id, &remote_manifest, &remote_output, project)?;
-    let spec_path = root
-        .join("jobs")
-        .join("specs")
-        .join(format!("{job_id}.toml"));
-    immutable_or_equal(&spec_path, spec_text.as_bytes())?;
-
-    let receipt_path = root
-        .join("jobs")
-        .join("receipts")
-        .join(format!("{job_id}.v1.json"));
-    if !receipt_path.is_file() {
-        if is_controller_node(node_name)? {
-            copy_local_checked(&remote_manifest_local, Path::new(&remote_manifest), false)?;
-            fs::create_dir_all(&remote_output)?;
-        } else {
-            copy_remote_checked(node_name, &remote_manifest_local, &remote_manifest, false)?;
-            scq_batch::ssh_output(
-                node_name,
-                &["mkdir", "-p", &remote_output],
-                "create TimeSeries42 remote output",
-            )?;
-        }
-        scq_check(&spec_path, node_name)?;
-        let show = submit_or_recover(&job_id, &spec_path, node_name)?;
-        let show_bytes = canonical_json(&show)?;
-        let job = scq_batch::scq_job(&show, &job_id)?;
-        let state = job
-            .get("state")
-            .and_then(Value::as_str)
-            .context("SCQ job has no state")?
-            .to_string();
-        let exit_code = job
-            .get("exit_code")
-            .and_then(Value::as_i64)
-            .context("SCQ job has no exit_code")?;
-        if state != "completed" || exit_code != 0 {
-            bail!("TimeSeries42 shard {job_id} failed: state={state}, exit={exit_code}");
-        }
-        let temp = std::env::temp_dir().join(format!("jope-ts42-{}-{job_id}", std::process::id()));
-        copy_remote_output(node_name, &remote_output, &temp)?;
-        let raw = root.join("jobs").join("raw").join(&job_id);
-        if raw.exists() {
-            fs::remove_dir_all(&raw)?;
-        }
-        fs::create_dir_all(raw.parent().context("raw output has no parent")?)?;
-        fs::rename(&temp, &raw)?;
-        let worker_bytes = fs::read(raw.join("batch-worker-receipt.v1.json"))?;
-        let worker: WorkerReceipt = serde_json::from_slice(&worker_bytes)?;
-        let receipt_file = raw.join(format!("{}.receipts.jsonl", spec.dataset_hash));
-        let receipt_bytes = fs::read(&receipt_file)?;
-        if worker.schema != WORKER_SCHEMA
-            || !worker.test_adaptive
-            || worker.benchmark_valid
-            || worker.dataset_hash != spec.dataset_hash
-            || worker.manifest_sha256 != remote_manifest_sha256
-            || worker.receipt_sha256 != sha256_bytes(&receipt_bytes)
-        {
-            bail!("TimeSeries42 worker receipt mismatch for {job_id}");
-        }
-        let job_receipt = JobReceipt {
-            schema: JOB_SCHEMA.to_string(),
-            test_adaptive: true,
-            benchmark_valid: false,
-            job_id: job_id.clone(),
-            node: node_name.to_string(),
-            attempt,
-            state,
-            exit_code,
-            corpus_manifest_sha256: remote_manifest_sha256.clone(),
-            scq_spec_sha256: sha256_bytes(spec_text.as_bytes()),
-            scq_show_sha256: sha256_bytes(&show_bytes),
-            worker_receipt_sha256: sha256_bytes(&worker_bytes),
-            receipt_sha256: sha256_bytes(&receipt_bytes),
-            completed_at_unix_ms: unix_millis(),
-        };
-        write_json(&receipt_path, &job_receipt)?;
-    }
-    let raw_receipt = root
-        .join("jobs")
-        .join("raw")
-        .join(&job_id)
-        .join(format!("{}.receipts.jsonl", spec.dataset_hash));
-    let receipt_bytes = fs::read(&raw_receipt)?;
-    let copied_receipt = generation_root(&dataset_dir, generation)
-        .join("receipts")
-        .join(format!(
-            "shard-{shard:02}-attempt-{attempt}-{short}.receipts.jsonl",
-            short = &remote_manifest_sha256[..16]
-        ));
-    immutable_or_equal(&copied_receipt, &receipt_bytes)?;
-    let receipts = read_receipts(&raw_receipt)?;
-    Ok(ShardRecord {
-        generation,
-        shard,
-        node: node_name.to_string(),
-        attempt,
-        job_id,
-        corpus_manifest_file: local_manifest_path.to_string_lossy().into_owned(),
-        corpus_manifest_sha256: sha256_file(&local_manifest_path)?,
-        scq_spec_file: spec_path.to_string_lossy().into_owned(),
-        scq_spec_sha256: sha256_bytes(spec_text.as_bytes()),
-        receipt_file: copied_receipt.to_string_lossy().into_owned(),
-        receipt_sha256: sha256_bytes(&receipt_bytes),
-        valid_candidates: receipts.iter().filter(|receipt| receipt.valid).count(),
-        total_candidates: receipts.len(),
-    })
-}
-
-fn execute_shard_with_retry(
-    root: &Path,
-    run_id: &str,
-    campaign_sha256: &str,
-    spec: &DatasetSpec,
-    seed_sha256: &str,
-    release_sha256: &str,
-    staging: &StagingReceipt,
-    generation: usize,
-    shard: usize,
-    members: &[Member],
-) -> Result<ShardRecord> {
-    let primary = shard % NODES.len();
-    let mut hard_errors = Vec::new();
-    let mut retry_cycle = 0usize;
-    loop {
-        let mut saw_capacity_wait = false;
-        for offset in 0..NODES.len() {
-            let node_index = (primary + offset) % NODES.len();
-            let attempt = retry_cycle * NODES.len() + offset;
-            match execute_shard(
-                root,
-                run_id,
-                campaign_sha256,
-                spec,
-                seed_sha256,
-                release_sha256,
-                staging,
-                generation,
-                shard,
-                node_index,
-                attempt,
-                members,
-            ) {
-                Ok(record) => return Ok(record),
-                Err(error) if is_scq_capacity_error_for_node(&error, NODES[node_index]) => {
-                    eprintln!(
-                        "TimeSeries42 shard {} generation {} dataset {} node {} attempt {} is waiting for SCQ capacity; trying next staged node: {error:#}",
-                        shard, generation, spec.dataset_hash, NODES[node_index], attempt
-                    );
-                    saw_capacity_wait = true;
-                }
-                Err(error) => {
-                    eprintln!(
-                        "TimeSeries42 shard {} generation {} dataset {} node {} attempt {} failed: {error:#}",
-                        shard, generation, spec.dataset_hash, NODES[node_index], attempt
-                    );
-                    hard_errors.push(format!(
-                        "{} attempt {}: {error:#}",
-                        NODES[node_index], attempt
-                    ));
-                }
-            }
-        }
-        if saw_capacity_wait {
-            eprintln!(
-                "TimeSeries42 shard {} generation {} dataset {} found no launch-ready staged node; waiting {SCQ_CAPACITY_RETRY_SECONDS}s before retrying node pool",
-                shard, generation, spec.dataset_hash
-            );
-            retry_cycle += 1;
-            thread::sleep(std::time::Duration::from_secs(SCQ_CAPACITY_RETRY_SECONDS));
-            continue;
-        }
-        bail!(
-            "TimeSeries42 shard {} generation {} dataset {} failed on every staged node: {}",
-            shard,
-            generation,
-            spec.dataset_hash,
-            hard_errors.join(" | ")
-        )
-    }
-}
-
 fn receipt_mase(receipt: &EvalReceipt) -> Option<TimeSeriesScore> {
     if receipt.task != "timeseries" || !receipt.valid {
         return None;
@@ -3572,6 +3284,8 @@ fn rank_slots(left: &LogicalSlot, right: &LogicalSlot) -> Ordering {
     }
 }
 
+// Keep campaign identity, generation state and execution limits explicit.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_generation(
     root: &Path,
     run_id: &str,
@@ -4049,6 +3763,8 @@ fn base_campaign_status(
     }
 }
 
+// Keep result identity, provenance and measured outcome explicit.
+#[allow(clippy::too_many_arguments)]
 fn write_dataset_result(
     root: &Path,
     run_id: &str,
@@ -4171,6 +3887,8 @@ fn load_reusable_gen30_dataset_result(
     }
 }
 
+// Keep continuation provenance, generation state and measured outcome explicit.
+#[allow(clippy::too_many_arguments)]
 fn write_gen30_dataset_result(
     root: &Path,
     run_id: &str,
@@ -4257,6 +3975,8 @@ fn write_gen30_dataset_result(
     Ok(result)
 }
 
+// Keep dataset identity, campaign state and execution budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn run_dataset(
     root: &Path,
     run_id: &str,
@@ -4445,6 +4165,8 @@ fn load_reusable_winall_dataset_result(
     }
 }
 
+// Keep win-all provenance, continuation state and measured outcome explicit.
+#[allow(clippy::too_many_arguments)]
 fn write_winall_dataset_result(
     root: &Path,
     run_id: &str,
@@ -4542,6 +4264,8 @@ fn write_winall_dataset_result(
     Ok(result)
 }
 
+// Keep win-all campaign identity, source state and execution budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn run_winall_dataset(
     root: &Path,
     run_id: &str,
@@ -4746,7 +4470,6 @@ struct BaseCampaign {
     root: PathBuf,
     manifest: CampaignManifest,
     campaign_sha256: String,
-    summary: TerminalSummary,
 }
 
 fn load_base_campaign(base_run_id: &str) -> Result<BaseCampaign> {
@@ -4804,7 +4527,6 @@ fn load_base_campaign(base_run_id: &str) -> Result<BaseCampaign> {
         root,
         manifest,
         campaign_sha256,
-        summary,
     })
 }
 

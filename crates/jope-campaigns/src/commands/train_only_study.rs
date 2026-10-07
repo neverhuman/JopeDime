@@ -2171,6 +2171,8 @@ fn build_transfer_rankings(
     Ok(receipts)
 }
 
+// Keep initial population identity, folds and search budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn generation_zero(
     run_id: &str,
     entry: &CatalogEntry,
@@ -2960,6 +2962,8 @@ fn evaluate_member_split(
     ))
 }
 
+// Keep population identity, folds and search budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn score_population(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,

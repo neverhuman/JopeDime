@@ -1097,6 +1097,8 @@ struct TabArenaLane {
     started_at_unix_ms: u128,
 }
 
+// Preserve the validated local/remote artifact payload layout without changing execution.
+#[allow(clippy::large_enum_variant)]
 enum PreparedTabArenaLane {
     Finished(usize, TabArenaResult),
     Active(TabArenaLane),
@@ -1272,6 +1274,8 @@ fn finish_tabarena_lane(
     Ok(result)
 }
 
+// Preserve the validated local/remote artifact payload layout without changing execution.
+#[allow(clippy::large_enum_variant)]
 enum CompletedTabArenaGeneration {
     Finished(usize, TabArenaResult),
     Active(TabArenaLane),

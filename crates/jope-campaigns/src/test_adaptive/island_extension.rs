@@ -1231,6 +1231,8 @@ fn island_outcome_from_evaluation(
     }
 }
 
+// Keep island identity, population state and execution budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_island_generation(
     identity: &CampaignIdentity,
     registry: &Path,
@@ -2099,6 +2101,8 @@ fn replay_island_champion(
         .collect()
 }
 
+// Keep dataset identity, provenance and final generation state explicit.
+#[allow(clippy::too_many_arguments)]
 fn finalize_dataset(
     registry: &Path,
     manifest: &IslandManifest,

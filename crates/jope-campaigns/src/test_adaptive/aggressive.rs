@@ -909,6 +909,8 @@ fn next_island_population(
     Ok(next)
 }
 
+// Keep generation identity, population pools and island limits explicit.
+#[allow(clippy::too_many_arguments)]
 fn next_golden46_island_population(
     ranked: &[SlotOutcome],
     run_id: &str,
@@ -2258,6 +2260,8 @@ fn validate_preflight_receipt(receipt: &PreflightReceipt) -> Result<()> {
     Ok(())
 }
 
+// Keep the expected manifest identity and scheduling contract inputs explicit.
+#[allow(clippy::too_many_arguments)]
 fn expected_manifest(
     registry: &Path,
     run_id: &str,

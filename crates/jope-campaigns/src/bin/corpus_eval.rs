@@ -831,6 +831,8 @@ fn resolve_authority(shard: &Shard) -> Result<ResolvedAuthority> {
 // per-candidate evaluation
 // ---------------------------------------------------------------------------
 
+// Preserve the structured parse refusal returned to existing receipt callers.
+#[allow(clippy::result_large_err)]
 fn parse_canonical(candidate: &ShardCandidate) -> std::result::Result<GenomeIr, Outcome> {
     let genome = match GenomeIr::parse(&candidate.canonical_genome) {
         Ok(genome) => genome,
