@@ -8,43 +8,16 @@
  ],
  "changes_since_prior": {
   "added": {
-   "dltrain/quarantine.py": "d16d6bffce266a88153d88bb7fef49857a68934b7daf8c0aee6725e5f9855b53",
-   "dltrain/scorer_labels.py": "73aa7d2cd4a12b7d65846626557c0cb2ab6e8a4e06fa74a6b8598d8231f6e69c",
-   "tests/test_payload_strip.py": "267cb48d1f872e73a161cbdccce594a98570946cb1f65fa6076e9b5224b8ab4a",
-   "tests/test_quarantine.py": "1e15b2b76ea8928831e0c7faff6915f1dda948a647cbe4aa21c4051b9a3ce3ae",
-   "tools/s1_outer_test_scorer.py": "9ee08fbb91f8209007c12281559efc32e8ea19790e4b485238939b6a850a59c4",
-   "tools/v2_quarantine_unstripped.py": "62ba5ee95a8c7b9702cedf9136bac841a9914ee865e3e9c0c72b0b33f8eb38d0",
-   "tools/v2_strip_outer_test.py": "f2ccf2265cfa3e9182946738a31e1c9bf04be2986460ea0080f5b72e0592d3da"
+   "tests/test_admission_fail_closed.py": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
   },
   "changed": {
-   "dltrain/jtt1.py": {
-    "from": "29ab31faf57d5b92e7916a67fed3c6f53244d5eab2903f62885770f4ab781773",
-    "to": "b0fe59fa04bf8c4c024951bd8776bb12a7af62dcad36c836b340f8d7f7655ec7"
-   },
-   "dltrain/s3io.py": {
-    "from": "26740428ba3d1111b44b2a52a30002c40d885f2d3c18b2ae2be479bec8d5dbdd",
-    "to": "2f1eb1c4dad3eb1c618829a6539779372d3d49f5bca148fab2892759b87a6fd2"
-   },
-   "tests/test_v2_publish.py": {
-    "from": "4110c05dd51228b5e495f44c6febc8d596b06e49112af941271a96815e3553a8",
-    "to": "7b888ee60aee60563092ed0ec28600f3cbfd383606795fdc8c20d05e9898beca"
-   },
-   "tools/v2_publish.py": {
-    "from": "e97d74c767f5cde16464befc77a2b7afe1333e7604a720ae3cb70f305c30abb1",
-    "to": "f175f9a48f52155450a92837e0b461aec6cf7ee03afd11732c563c77fa973c7a"
-   },
-   "tools/v2_rowsel_raw_manifest.py": {
-    "from": "35ff745880dfacc39371c7ca45323e793c1839209f9701cd1bc73596e11a4dcc",
-    "to": "16b7f2631dd57f15b5ecf84c603ef6e10add7ff49fc7a789213c885c43931748"
-   },
-   "tools/v2_s1_input_list.py": {
-    "from": "89c99d3a268236383df8cb0f1ee60f89501f28e2a0328cfd7f93d01702094e0f",
-    "to": "b6302b3c8339d6beb25572dfd875894851069e77a8b1d9c779b390132822432a"
+   "dltrain/admission.py": {
+    "from": "11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58",
+    "to": "59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08"
    }
-  },
-  "removed": []
+  }
  },
- "created_utc": "2026-10-06T15:43:30Z",
+ "created_utc": "2026-10-07T07:35:16Z",
  "dependencies": {
   "Dope": "dope-kernel built from ~/dope 63696a5d into RUN/build/dope-target (bc3c4460)",
   "GPU encode": "system /usr/bin/python3.12 with torch 2.7.0+cu12x, safetensors, psutil; Codex's gpu_encoders.py ff419384 read-only from /home/ubuntu/scratch/jopedime-regression-neural-encoding-v1; lane-owned TabPFN runtime tabpfn 9.0.0 + pandas 2.3.2 + skrub 0.10.1 (manifest RUN/pydeps/tab35-runtime-v1.files.sha256 8ad8cb6e)",
@@ -107,8 +80,8 @@
    "sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c"
   },
   "src/dl_training_v1/dltrain/admission.py": {
-   "bytes": 2364,
-   "sha256": "11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58"
+   "bytes": 2714,
+   "sha256": "59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08"
   },
   "src/dl_training_v1/dltrain/analysis.py": {
    "bytes": 77,
@@ -325,6 +298,10 @@
   "src/dl_training_v1/tests/restore/test_p7_restore.py": {
    "bytes": 68600,
    "sha256": "caa9da0f4fb40ac3f2251486d18f37a42182ff1e133dc75d925a51a338841419"
+  },
+  "src/dl_training_v1/tests/test_admission_fail_closed.py": {
+   "bytes": 3951,
+   "sha256": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
   },
   "src/dl_training_v1/tests/test_common.py": {
    "bytes": 3455,
@@ -748,12 +725,8 @@
   }
  },
  "historical_added": [
-  "jtt1.py.b0fe59fa04bf8c4c024951bd8776bb12a7af62dcad36c836b340f8d7f7655ec7",
-  "quarantine.py.d16d6bffce266a88153d88bb7fef49857a68934b7daf8c0aee6725e5f9855b53",
-  "s3io.py.2f1eb1c4dad3eb1c618829a6539779372d3d49f5bca148fab2892759b87a6fd2",
-  "test_quarantine.py.1e15b2b76ea8928831e0c7faff6915f1dda948a647cbe4aa21c4051b9a3ce3ae",
-  "test_v2_publish.py.7b888ee60aee60563092ed0ec28600f3cbfd383606795fdc8c20d05e9898beca",
-  "v2_publish.py.f175f9a48f52155450a92837e0b461aec6cf7ee03afd11732c563c77fa973c7a"
+  "admission.py.59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08",
+  "test_admission_fail_closed.py.e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
  ],
  "historical_hash_map": {
   "0519ea30": "tools/v2_rowsel_manifest.py first version (rowsel-t1-clean-v1)",
@@ -794,6 +767,10 @@
   "admission.py.11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58": {
    "bytes": 2364,
    "sha256": "11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58"
+  },
+  "admission.py.59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08": {
+   "bytes": 2714,
+   "sha256": "59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08"
   },
   "analysis.py.2818fc9ad3ea16263a0cb24903bccfbcbc858fda3eac3a1d608e3b3b8eaa198c": {
    "bytes": 77,
@@ -1190,6 +1167,10 @@
   "target_linear.py.e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45": {
    "bytes": 3700,
    "sha256": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45"
+  },
+  "test_admission_fail_closed.py.e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c": {
+   "bytes": 3951,
+   "sha256": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
   },
   "test_p7_restore.py.adf52bb8d2494cce3f49c29529fe8f278b55345d70d345b854af49deea5ad050": {
    "bytes": 69350,
@@ -1908,10 +1889,11 @@
  },
  "notes": [
   "dltrain/rowsel_raw.py stays at 18eac154: its feature-byte-ordered outer split is superseded; tools/v2_rowsel_raw.py now calls dltrain/rowsel_raw_split_v2.py (contexts record rowsel.split.schema = rowsel-raw-split-v2)",
-  "commit the current tree; historical/ holds exact bytes behind every hash recorded by a published document"
+  "commit the current tree; historical/ holds exact bytes behind every hash recorded by a published document",
+  "admission fail-closed: ADMITTED_ASSIGNMENTS = train_fit/train_nonpool/dev; any other or missing assignment refuses"
  ],
  "pinned_from_custody": {},
- "ruling": "S1-FOLDS-RULING (6): the DL lane makes no commits; root204 commits these exact bytes on a branch and opens the PR; merges only via the owner sweeper as neverhumanbot (merger != author), rebase-merge, never --admin",
+ "ruling": "owner ENG:watcher 07:35Z: unknown holdout assignment must refuse; small PR with a must-fail test, Lane C reviews (opened out of the one-PR order by explicit owner instruction)",
  "s1_materials": {
   "96_seed_source": "NOT retained by the DL lane. The S1 packet draft specified seeds from the proposal-engine prior only (not v1 seed-pool / historical-seen, which were test-selected): RUN/receipts/trainonly-v2/teacher-g22-S1-packet-DRAFT.md",
   "read_only_custody_paths": [
@@ -1923,9 +1905,9 @@
   "sept29_materializer_spec": "NOT found locally by the S1 pilot agent; its findings and the engine's expected inputs are in RUN/receipts/trainonly-v2/s1-pilot/README.md and pilot-receipt.json (eb61ad68)"
  },
  "schema": "jope.dl-lane-handoff/v2",
- "source_root": "restage-20261006T153320Z/src/dl_training_v1 (copied from the git-ignored lane SRC .agent/experiments/lambda-training/local_lambda/dl_training_v1; __pycache__ excluded)",
- "supersedes": "restage-20261006T131001Z/MANIFEST.json",
- "supersedes_sha256": "23d3a8a7fd6d15f056e6d5465a9e524ae46f5b69fd9d0e6c6f4721251ce70413",
+ "source_root": "restage-20261007T073516Z/src/dl_training_v1 (lane custody copy at main cad789d9 plus the admission fail-closed fix; __pycache__ excluded)",
+ "supersedes": "restage-20261006T153320Z/MANIFEST.json",
+ "supersedes_sha256": "4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d",
  "test_commands": [
   "cd src/dl_training_v1 && python -m unittest discover -s tests -t .   # lane suites (unittest; pytest not used)",
   "python -m unittest tests.test_v2_publish tests.test_s3io tests.test_v2_rowsel_build tests.test_v2_rowsel_raw tests.test_nonnumeric tests.test_rowsel tests.test_t1raw tests.test_t1prep tests.test_trainonly",
@@ -1938,36 +1920,10 @@
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154"
  ],
  "tests_run_on_staged_copy": {
-  "cwd_and_pythonpath": "restage-20261006T153320Z/src/dl_training_v1",
-  "exit": 0,
+  "cwd_and_pythonpath": "restage-20261007T073516Z/src/dl_training_v1",
   "modules": [
-   "tests.test_rowsel_raw_split_v2",
-   "tests.test_rowsel_split_v2_groups",
-   "tests.test_v2_rowsel_raw",
-   "tests.test_v2_rowsel_raw_helper",
-   "tests.test_v2_rowsel_build",
-   "tests.test_v2_rowsel_build_split_v2",
-   "tests.test_v2_rowsel_build_split_v2g",
-   "tests.test_v2_nonraw_split_v2",
-   "tests.test_v2_nonraw_split_v2g",
-   "tests.test_v2_publish",
-   "tests.test_rowsel",
-   "tests.test_nonnumeric",
-   "tests.test_t1raw",
-   "tests.test_t1prep",
-   "tests.test_trainonly",
-   "tests.test_s3io",
-   "tests.test_split_defaults",
-   "tests.test_v2_provenance",
-   "tests.test_jtt1",
-   "tests.test_payload_strip",
-   "tests.test_quarantine"
+   "tests.test_admission_fail_closed"
   ],
-  "seconds": 609.9,
-  "summary": [
-   "Ran 555 tests in 598.508s",
-   "",
-   "OK"
-  ]
+  "note": "see the PR evidence directory for the offline lane run"
  }
 }
