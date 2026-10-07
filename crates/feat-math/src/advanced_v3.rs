@@ -12,6 +12,7 @@ mod evolution;
 mod feature_block;
 mod fitted_cpp;
 mod fitted_cpp_runtime;
+mod fitted_runtime_image;
 mod fitted_portable;
 mod grammar;
 mod heads;
