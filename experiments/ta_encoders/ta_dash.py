@@ -5,7 +5,8 @@ import datetime as dt, html, json, os
 
 HERE = os.path.dirname(os.path.abspath(__file__)); TA = os.path.join(HERE, "ta")
 MT = dt.timezone(dt.timedelta(hours=-6))
-MODELS = [("hv8", "TA_Hyperion_v8", "#f59e0b"), ("dv2", "TA_Dope_V2", "#22d3ee")]
+MODELS = [("hv8", "TA_Hyperion_v8", "#f59e0b"), ("dv2", "TA_Dope_V2", "#22d3ee"),
+          ("v8braw", "TA_Hyperion_v8b-raw", "#c084fc"), ("v8bft", "TA_Hyperion_v8b-ft", "#fb7185")]
 FOUNDATION_3REP = 0.476
 
 
@@ -87,7 +88,7 @@ def section():
                         f"<td>{prog['epoch']:.2f}</td><td>{prog['ctx_per_s']:.0f} ctx/s · {prog['epoch_min']:.1f} min/epoch</td><td>{prog['mse_ema']:.4f}</td><td>{eta.strftime('%-I:%M %p MT')}</td><td>{len(ts)}</td><td>{_mt(prog['utc'])}</td></tr>")
         elif run:
             prow.append(f"<tr><td style='color:{col}'>{name}</td><td colspan=8>started {_mt(run.get('started_utc',''))}; waiting for first progress line</td></tr>")
-    return f"""<h2>TA training · target-aware encoders (TA_Hyperion_v8, TA_Dope_V2)</h2>
+    return f"""<h2>TA training · target-aware encoders (TA_Hyperion_v8, TA_Dope_V2, v8b-raw, v8b-ft)</h2>
 <div class='card'><table><thead><tr><th>Model</th><th>Host · GPU</th><th>Step</th><th>Epoch</th><th>Throughput</th><th>Masked-y MSE (EMA)</th><th>ETA (planned steps)</th><th>Evals</th><th>Updated</th></tr></thead><tbody>{''.join(prow) or "<tr><td colspan=9 class='empty'>No TA runs yet.</td></tr>"}</tbody></table></div>
 <div class='card'>{svg}<div style='font-size:12px;color:#94a3b8'>Solid = TA embedding alone; dashed = TA + foundation; dotted = TA encoded with y shuffled inside each context (control: X→y signal removed). Reference lines are foundation and tabpfn35 scored in the same rep-0 folds (the 3-repeat foundation figure is {FOUNDATION_3REP}).</div></div>
 <div class='card'><table><thead><tr><th>Model</th><th>Arm</th><th>Step</th><th>Epoch</th><th>R²</th><th>Spearman</th><th>ΔR² vs foundation</th><th>95% CI</th><th>ΔR² vs tabpfn35</th><th>95% CI</th><th>SSL val MSE</th><th>Eval time</th></tr></thead><tbody>{''.join(rows) or "<tr><td colspan=12 class='empty'>No checkpoint evaluations yet.</td></tr>"}</tbody></table>

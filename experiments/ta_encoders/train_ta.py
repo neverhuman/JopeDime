@@ -22,22 +22,28 @@ class Store:
         self.X = np.load(os.path.join(data, "X.npy")); self.y = np.load(os.path.join(data, "y.npy")); self.miss = np.load(os.path.join(data, "miss.npy"))
         self.model, self.pcap = model, pcap
         self.pos = {r["cid"]: i for i, r in enumerate(self.idx)}
-        if model == "hv8":
+        if model in ("hv8", "hv8raw"):
             hi = json.load(open(os.path.join(data, "hv7rows_index.json")))
             self.R = np.load(os.path.join(data, "hv7rows.npy")); self.hpos = {r["cid"]: r for r in hi["contexts"]}
             self.hrec = hi["recipe"]
 
     def n(self, i):
         r = self.idx[i]
-        return self.hpos[r["cid"]]["n"] if self.model == "hv8" else r["n"]
+        if self.model in ("hv8", "hv8raw"): return self.hpos[r["cid"]]["n"]
+        if self.model == "hv8ft": return min(r["n"], 512)       # same row pool the v7 cache used (first 512 stored rows)
+        return r["n"]
 
     def get(self, i, rows):
         r = self.idx[i]; y = self.y[r["y_off"]: r["y_off"] + r["n"]][rows]
-        if self.model == "hv8":
+        X = self.X[r["x_off"]: r["x_off"] + r["n"] * r["p"]].reshape(r["n"], r["p"])
+        if self.model in ("hv8", "hv8raw"):
             h = self.hpos[r["cid"]]
-            return self.R[h["off"]: h["off"] + h["n"]][rows].astype(np.float32), y
-        X = self.X[r["x_off"]: r["x_off"] + r["n"] * r["p"]].reshape(r["n"], r["p"])[rows][:, : self.pcap].astype(np.float32)
-        return X, y, self.miss[r["m_off"]: r["m_off"] + r["p"]][: self.pcap]
+            Rr = self.R[h["off"]: h["off"] + h["n"]][rows].astype(np.float32)
+            if self.model == "hv8": return Rr, y
+            return Rr, y, X[rows][:, : C.PHV].astype(np.float32)
+        if self.model == "hv8ft":
+            return X[rows][:, : C.PHV].astype(np.float32), y
+        return X[rows][:, : self.pcap].astype(np.float32), y, self.miss[r["m_off"]: r["m_off"] + r["p"]][: self.pcap]
 
 
 def yraw_stats(y, binary):
@@ -59,11 +65,12 @@ def make_batch(S, ids, rng, torch, dev, N, qfrac, eval_mode=False, yshuf=False):
         rows = np.arange(min(n, EVAL_N)) if eval_mode else np.sort(rng.choice(n, min(n, N), replace=False))
         items.append((i, rows, S.get(i, rows)))
     Nm = max(len(it[1]) for it in items)
-    if S.model == "dv2": P = max(it[2][0].shape[1] for it in items)
-    D = 512 if S.model == "hv8" else P
+    if S.model in ("dv2", "hv8ft"): P = max(it[2][0].shape[1] for it in items)
+    if S.model == "hv8raw": P = C.PHV
+    D = 512 if S.model in ("hv8", "hv8raw") else P
     X = np.zeros((B, Nm, D), np.float32); Y = np.zeros((B, Nm), np.float32); valid = np.zeros((B, Nm), bool)
     q = np.zeros((B, Nm), bool); half = np.zeros((B, Nm), np.int8); fv = np.zeros((B, max(P, 1)), bool); miss = np.zeros((B, max(P, 1)), np.float32)
-    yst = np.zeros((B, 8), np.float32)
+    yst = np.zeros((B, 8), np.float32); Xr = np.zeros((B, Nm, C.PHV), np.float32) if S.model == "hv8raw" else np.zeros((1, 1, 1), np.float32)
     for b, (i, rows, g) in enumerate(items):
         n = len(rows); xb, yb = g[0], g[1].astype(np.float64)
         if yshuf:
@@ -71,6 +78,10 @@ def make_batch(S, ids, rng, torch, dev, N, qfrac, eval_mode=False, yshuf=False):
         X[b, :n, : xb.shape[1]] = xb; valid[b, :n] = True
         if S.model == "dv2":
             fv[b, : xb.shape[1]] = True; miss[b, : xb.shape[1]] = g[2]
+        if S.model == "hv8ft":
+            fv[b, : xb.shape[1]] = True
+        if S.model == "hv8raw":
+            Xr[b, :n, : g[2].shape[1]] = g[2]; fv[b, : g[2].shape[1]] = True
         if not eval_mode:
             nq = max(4, int(round(qfrac * n))); perm = rng.permutation(n); q[b, perm[:nq]] = True
             half[b, perm[nq::2]] = 1; half[b, perm[nq + 1::2]] = 2
@@ -81,12 +92,16 @@ def make_batch(S, ids, rng, torch, dev, N, qfrac, eval_mode=False, yshuf=False):
         Y[b, :n] = np.clip((yb - mu) / sd, -10, 10)
         yst[b] = yraw_stats(yb[sup[:n]], S.idx[i]["binary"])
     T = lambda a, dt=None: torch.from_numpy(a).to(dev)
-    return dict(X=T(X), y=T(Y), valid=T(valid), q=T(q), half=T(half), fv=T(fv), miss=T(miss), yst=T(yst))
+    return dict(X=T(X), y=T(Y), valid=T(valid), q=T(q), half=T(half), fv=T(fv), miss=T(miss), yst=T(yst), Xr=T(Xr))
 
 
-def fwd(model, kind, bt, sup):
+def fwd(model, kind, bt, sup, R=None):
     if kind == "hv8":
         return model(bt["X"], bt["y"] * sup, sup, bt["valid"])
+    if kind == "hv8raw":
+        return model(bt["X"], bt["y"] * sup, sup, bt["valid"], bt["Xr"], bt["fv"])
+    if kind == "hv8ft":
+        return model(bt["X"], bt["y"] * sup, sup, bt["valid"], bt["fv"], R=R)
     return model(bt["X"], bt["y"] * sup, sup, bt["valid"], bt["fv"], bt["miss"], bt["yst"])
 
 
@@ -106,11 +121,12 @@ def info_nce(a, b, torch, t=0.1):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", choices=["hv8", "dv2"], required=True); ap.add_argument("--data", required=True); ap.add_argument("--out", required=True)
+    ap.add_argument("--model", choices=["hv8", "dv2", "hv8raw", "hv8ft"], required=True); ap.add_argument("--k-train", type=int, default=2); ap.add_argument("--trunk-lr", type=float, default=2e-5); ap.add_argument("--eval-batch", type=int, default=32); ap.add_argument("--data", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--probe-cids", required=True); ap.add_argument("--probe-data", required=True); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--batch", type=int, default=16); ap.add_argument("--epochs", type=float, default=40); ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--eval-min", type=float, default=20); ap.add_argument("--pcap", type=int, default=128); ap.add_argument("--nmax", type=int, default=384)
     ap.add_argument("--max-hours", type=float, default=10); ap.add_argument("--probe-cache", default=""); ap.add_argument("--exclude", default="", help="json {cid: reason}: never sampled (sealed meta-test / sealed_excluded / unknown role)"); ap.add_argument("--probe-threads", type=int, default=6)
+    ap.add_argument("--guard-siblings", default="", help="comma list of --model names whose train_ta processes don't count as busy")
     a = ap.parse_args()
     import torch
     torch.manual_seed(a.seed); torch.set_num_threads(4); dev = "cuda"
@@ -130,32 +146,51 @@ def main():
     if a.model == "hv8":
         from ta_hyperion_v8 import TAHyperionV8 as M
         model = M().to(dev)
+    elif a.model == "hv8raw":
+        from ta_hyperion_v8 import TAHyperionV8Raw as M
+        model = M(raw_dim=C.PHV).to(dev)
+    elif a.model == "hv8ft":
+        sys.path.insert(0, "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/HYPERION-V7/tools")
+        import hyperion_v7_model as HV7
+        V7 = "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/HYPERION-V7/weights"
+        trunk, v7cfg, v7rep = HV7.load_v7(os.path.join(V7, "model.safetensors"), os.path.join(V7, "manifest.json"), device=dev)
+        from ta_hyperion_v8 import TAHyperionV8FT as M
+        model = M(trunk, v7cfg, k_train=a.k_train).to(dev)
     else:
         from ta_dope_v2 import TADopeV2 as M
         model = M().to(dev)
     nparam = sum(p.numel() for p in model.parameters())
     steps_per_epoch = int(math.ceil(len(train_ids) / a.batch)); total = int(a.epochs * steps_per_epoch)
-    opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=0.01, betas=(0.9, 0.98))
+    if a.model == "hv8ft":
+        model.trunk.train()
+        groups = [{"params": model.head_params(), "lr": a.lr}, {"params": model.trunk_params(), "lr": a.trunk_lr}]
+    else:
+        groups = [{"params": list(model.parameters()), "lr": a.lr}]
+    opt = torch.optim.AdamW(groups, weight_decay=0.01, betas=(0.9, 0.98))
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / 300) * (0.05 + 0.95 * 0.5 * (1 + math.cos(math.pi * min(1, s / max(1, total))))))
-    run = {"model": {"hv8": "TA_Hyperion_v8", "dv2": "TA_Dope_V2"}[a.model], "params": nparam, "gpu": C.gpu_info(), "host": os.uname().nodename,
+    run = {"model": {"hv8": "TA_Hyperion_v8", "dv2": "TA_Dope_V2", "hv8raw": "TA_Hyperion_v8b-raw", "hv8ft": "TA_Hyperion_v8b-ft"}[a.model], "params": nparam, "gpu": C.gpu_info(), "host": os.uname().nodename,
            "torch": torch.__version__, "train_contexts": int(len(train_ids)), "excluded_contexts": len(excl), "ssl_val_contexts": int(len(val_ids)), "probe_contexts": len(pidx),
            "steps_per_epoch": steps_per_epoch, "total_steps": total, "args": vars(a), "amp": "bf16 autocast",
-           "hv7_recipe": getattr(S, "hrec", None), "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+           "hv7_recipe": getattr(S, "hrec", None),
+           "trainable_params": int(sum(p.numel() for p in model.parameters() if p.requires_grad)),
+           "ft": ({"trained_blocks": model.trained_blocks, "k_train": a.k_train, "trunk_lr": a.trunk_lr, "head_lr": a.lr, "init": "pinned hyperion v7 (weights sha256 05c17edd...)",
+                   "trunk_trainable_params": int(sum(p.numel() for p in model.trunk_params()))} if a.model == "hv8ft" else None), "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     json.dump(run, open(os.path.join(a.out, "run.json"), "w"), indent=1)
     log("run", json.dumps({k: v for k, v in run.items() if k != "hv7_recipe"}))
-    guard = C.Guard(log, min_free_mib=2500)
+    guard = C.Guard(log, min_free_mib=2500, siblings=tuple(f"--model {m} " for m in a.guard_siblings.split(",") if m))
     rng = np.random.default_rng(1000 + a.seed)
     vrng_seed = 777
 
-    def encode_probe(yshuf):
-        model.eval(); out = []
+    def encode_probe_both():
+        model.eval(); out, outs = [], []
         with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
-            for s in range(0, len(pidx), 32):
-                bt = make_batch(S, pidx[s:s + 32], None, torch, dev, EVAL_N, 0, eval_mode=True, yshuf=yshuf)
-                sup = bt["valid"]
-                _, ctx, _ = fwd(model, a.model, bt, sup)
-                out.append(ctx.float().cpu().numpy())
-        model.train(); return np.concatenate(out)
+            for s in range(0, len(pidx), a.eval_batch):
+                bt = make_batch(S, pidx[s:s + a.eval_batch], None, torch, dev, EVAL_N, 0, eval_mode=True, yshuf=False)
+                bs = make_batch(S, pidx[s:s + a.eval_batch], None, torch, dev, EVAL_N, 0, eval_mode=True, yshuf=True)
+                R = model.rows_embed(bt["X"], bt["valid"], bt["fv"]) if a.model == "hv8ft" else None
+                _, ctx, _ = fwd(model, a.model, bt, bt["valid"], R=R); out.append(ctx.float().cpu().numpy())
+                _, ctx, _ = fwd(model, a.model, bs, bs["valid"], R=R); outs.append(ctx.float().cpu().numpy())
+        model.train(); return np.concatenate(out), np.concatenate(outs)
 
     def ssl_val():
         model.eval(); vr = np.random.default_rng(vrng_seed); tot, cnt = 0.0, 0
@@ -169,7 +204,7 @@ def main():
 
     def checkpoint(step, ep, tr_loss):
         t0 = time.time()
-        E = encode_probe(False); Es = encode_probe(True); vl = ssl_val()
+        E, Es = encode_probe_both(); vl = ssl_val()
         tag = f"s{step:07d}"
         np.save(os.path.join(a.out, "emb", f"E_{tag}.npy"), E.astype(np.float32)); np.save(os.path.join(a.out, "emb", f"Eys_{tag}.npy"), Es.astype(np.float32))
         torch.save({"model": model.state_dict(), "step": step, "run": run}, os.path.join(a.out, "ckpt", f"{tag}.pt"))
@@ -194,10 +229,11 @@ def main():
             bt = make_batch(S, perm[s:s + a.batch], rng, torch, dev, N, 0.25)
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 losses, ctxs = [], []
+                Rft = model.rows_embed(bt["X"], bt["valid"], bt["fv"]) if a.model == "hv8ft" else None
                 for hv in (1, 2):
                     sup = bt["valid"] & (bt["half"] == hv)
                     btv = dict(bt); btv["y"] = restandardise(bt, sup, torch)
-                    yh, ctx, _ = fwd(model, a.model, btv, sup)
+                    yh, ctx, _ = fwd(model, a.model, btv, sup, R=Rft)
                     losses.append(((yh.float() - btv["y"]) ** 2)[bt["q"]].mean()); ctxs.append(model.cproj(ctx).float())
                 mse = 0.5 * (losses[0] + losses[1]); nce = info_nce(ctxs[0], ctxs[1], torch)
                 loss = mse + 0.1 * nce

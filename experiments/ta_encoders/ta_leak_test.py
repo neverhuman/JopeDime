@@ -55,6 +55,38 @@ def main():
         ok["dv2_query_isolated"] = all(torch.equal(u, v) for u, v in zip(a, b))
         c = md(X, torch.randn_like(y), sup, valid, fv, miss, ys)
         ok["dv2_support_y_changes_output(must-differ)"] = not torch.equal(a[1], c[1])
+    # v8b variants (Jepson 2026-10-07 3:10pm MT): same query-target invariance + support-target sensitivity
+    from ta_hyperion_v8 import TAHyperionV8Raw, TAHyperionV8FT
+    mr = TAHyperionV8Raw(raw_dim=64).to(dev).eval(); Xr = torch.rand(B, N, 64, device=dev); fv64 = torch.ones(B, 64, dtype=torch.bool, device=dev); fv64[:, 40:] = False
+    with torch.no_grad():
+        a = mr(R, y, sup, valid, Xr, fv64); b = mr(R, y2, sup, valid, Xr, fv64)
+        ok["hv8raw_query_isolated"] = all(torch.equal(u, v) for u, v in zip(a, b))
+        c = mr(R, torch.randn_like(y), sup, valid, Xr, fv64)
+        ok["hv8raw_support_y_changes_output(must-differ)"] = not torch.equal(a[1], c[1])
+    if dev == "cuda" and os.path.exists("/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/HYPERION-V7/weights/model.safetensors"):
+        sys.path.insert(0, "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/HYPERION-V7/tools")
+        import hyperion_v7_model as HV7
+        V7 = "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/HYPERION-V7/weights"
+        trunk, cfg, _ = HV7.load_v7(os.path.join(V7, "model.safetensors"), os.path.join(V7, "manifest.json"), device=dev)
+        mf = TAHyperionV8FT(trunk, cfg, k_train=2).to(dev).eval()
+        Xf = torch.rand(B, N, 12, device=dev); fv12 = torch.ones(B, 12, dtype=torch.bool, device=dev)
+        with torch.no_grad():
+            a = mf(Xf, y, sup, valid, fv12); b = mf(Xf, y2, sup, valid, fv12)
+            ok["hv8ft_query_isolated"] = all(torch.equal(u, v) for u, v in zip(a, b))
+            c = mf(Xf, torch.randn_like(y), sup, valid, fv12)
+            ok["hv8ft_support_y_changes_output(must-differ)"] = not torch.equal(a[1], c[1])
+            # init parity: the in-model v7 row path reproduces the cached v7 row embeddings (same rows / features)
+            hi = json.load(open(os.path.join(data, "hv7rows_index.json"))); Rc = np.load(os.path.join(data, "hv7rows.npy"), mmap_mode="r")
+            Xall = np.load(os.path.join(data, "X.npy"), mmap_mode="r"); hpos = {r["cid"]: r for r in hi["contexts"]}; diffs = []
+            for r in idx[:5]:
+                h = hpos[r["cid"]]; n = h["n"]
+                Xc = np.asarray(Xall[r["x_off"]: r["x_off"] + r["n"] * r["p"]], dtype=np.float32).reshape(r["n"], r["p"])[:n, :64]
+                Xt = torch.from_numpy(Xc)[None].to(dev); vv = torch.ones(1, n, dtype=torch.bool, device=dev); ff = torch.ones(1, Xc.shape[1], dtype=torch.bool, device=dev)
+                with torch.autocast("cuda", dtype=torch.float16):
+                    Rm = mf.rows_embed(Xt, vv, ff)[0].float().cpu().numpy()
+                diffs.append(float(np.abs(Rm - np.asarray(Rc[h["off"]: h["off"] + n], dtype=np.float32)).max()))
+            res["hv8ft_init_parity_max_abs_diff_vs_cache"] = diffs
+            ok["hv8ft_init_parity(<0.05)"] = max(diffs) < 0.05
     res.update(ok)
     res["pass"] = (res["T1_identical"] == res["checked"] == res["T2_wrong_decoder_differs"] == res["T3_refused"] == K) and all(ok.values())
     json.dump(res, open(out, "w"), indent=1); print(json.dumps(res))

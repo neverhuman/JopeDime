@@ -74,3 +74,16 @@ The GP-HWM probe (experiments/gp_hwm_probe, 2,689 contexts, 463 families) put fo
   already above 15%.
 - `ta_common.Guard` pauses when host RAM drops below 17% or GPU free memory below 2.5 GB, and caps our duty cycle at 35%
   while another process is busy on the GPU. It never signals any other process.
+
+
+## v8b variants (owner approval 2026-10-07 3:10pm MT; run alongside hv8r2 / dv2r2, not replacing them)
+
+| run | model | what changes vs hv8r2 | trainable |
+|---|---|---|---|
+| `v8braw` | `TAHyperionV8Raw` (`--model hv8raw`) | each row token = proj(LN(v7 row emb)) + MLP([raw row values standardised with support-row stats, feature-presence mask]); raw values are the same stored, train-only, importance-ordered first 64 features the v7 cache saw | 9.34M (all) |
+| `v8bft` | `TAHyperionV8FT` (`--model hv8ft`) | the pinned v7 trunk runs inside the model on the context's rows (same 1-sweep, 6-window recipe as the cache); `blocks.10`, `blocks.11` and `emb_head` are fine-tuned at LR 2e-5 (head 3e-4), init = pinned v7 weights (sha256 05c17edd…), blocks 0–9 / val / pools / scale_emb frozen; activation checkpointing on the trainable tail; no raw values | 23.29M (head 9.24M + trunk 14.05M) of 67.70M |
+
+Leak tests (`ta_leak_test.py`, rerun before training): T1–T3 data path plus, for both new models, query-target invariance
+(changing query-row y leaves every output bit-identical) and support-target sensitivity; `v8bft` also checks init parity
+(in-model v7 row path vs the cached v7 row embeddings, max |diff| ≈ 4e-4). Guard: the v8b runs ignore each other
+(`--guard-siblings`) but still yield to the encode queue *and* to the running hv8r2 run (duty-capped while it is busy).

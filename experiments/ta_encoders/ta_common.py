@@ -99,8 +99,10 @@ class Guard:
     """Cooperative yield guard: pause while host RAM available < 17%, the GPU has < min_free_mib free, or another
     process (the encode queue) is busy on the GPU (then cap our duty cycle). Never signals any other process."""
 
-    def __init__(self, log, min_free_mib=3000, duty_when_busy=0.35):
-        self.log, self.min_free, self.duty = log, min_free_mib, duty_when_busy
+    def __init__(self, log, min_free_mib=3000, duty_when_busy=0.35, siblings=()):
+        """siblings: cmdline substrings of peer processes that do NOT count as 'busy' (e.g. the two v8b runs ignore each
+        other). Everything else on the GPU — the encode queue and the already-running hv8r2 run — keeps priority."""
+        self.log, self.min_free, self.duty, self.siblings = log, min_free_mib, duty_when_busy, tuple(siblings)
         self.t_check = 0; self.busy = False; self.paused_s = 0.0
 
     def mem_ok(self):
@@ -118,6 +120,10 @@ class Guard:
             for l in pm.splitlines():
                 f = l.split()
                 if len(f) > 4 and f[1].isdigit() and int(f[1]) != me and f[3] not in ("-",):
+                    if self.siblings:
+                        try: cl = open(f"/proc/{f[1]}/cmdline", "rb").read().replace(b"\0", b" ").decode(errors="ignore")
+                        except OSError: cl = ""
+                        if any(x in cl for x in self.siblings): continue
                     try: other = max(other, int(f[3]))
                     except ValueError: pass
             return free, other
