@@ -33,6 +33,9 @@ jobs:
         uses: ./.github/actions/cargo-target
       - name: Runner provenance and approved resources
         uses: ./.github/actions/runner-provenance
+      - name: Trusted full-lane compiler cache
+        run: |
+          python3 deploy/ci/full-main.py cache-setup --output "target/full-cpu-cache/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
       - name: Execute every declared CPU family independently
         run: |
           python3 deploy/ci/full-main.py run --output "target/full-cpu/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
@@ -40,6 +43,10 @@ jobs:
         if: always()
         run: |
           python3 deploy/ci/full-main.py summarize --output "target/full-cpu/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Retain compiler cache hits and misses
+        if: always()
+        run: |
+          python3 deploy/ci/full-main.py cache-stats --output "target/full-cpu/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/compiler-cache"
       - name: Upload fresh run evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

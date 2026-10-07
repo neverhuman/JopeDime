@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import copy
+import hashlib
+import io
 import importlib.util
 import json
 import os
@@ -207,6 +209,106 @@ sys.exit(int(a.status))
             self.assertEqual([dict(
                 filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
                 priority=100)], override)
+
+
+class CompilerCacheTests(unittest.TestCase):
+    def setUp(self):
+        (ROOT / 'target/tmp').mkdir(parents=True, exist_ok=True)
+        self.directory = tempfile.TemporaryDirectory(dir=ROOT / 'target/tmp')
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.binary = b'pinned executable'
+        self.env = dict(JOPE_RUNNER_LANE='full', GITHUB_REF='refs/heads/main',
+                        CARGO_INCREMENTAL='0', CARGO_TARGET_DIR=str(self.root),
+                        RUNNER_TEMP=str(self.root), GITHUB_ENV=str(self.root / 'env'),
+                        GITHUB_SHA='a' * 40)
+
+    def archive(self):
+        tools = self.root / 'compiler-cache-tools'
+        tools.mkdir()
+        path = tools / full.ARCHIVE
+        with tarfile.open(path, 'w:gz') as contents:
+            member = tarfile.TarInfo(full.ARCHIVE.removesuffix('.tar.gz') + '/sccache')
+            member.size = len(self.binary)
+            contents.addfile(member, io.BytesIO(self.binary))
+        return path
+
+    def test_pr_or_foreign_lane_refused_before_download_or_server(self):
+        for key, value in [('JOPE_RUNNER_LANE', 'ci'), ('GITHUB_REF', 'refs/pull/1/merge'),
+                           ('CARGO_INCREMENTAL', '1')]:
+            with self.subTest(key=key), patch.dict(os.environ, dict(self.env, **{key: value})), \
+                    patch.object(full, 'install_compiler_cache') as install:
+                with self.assertRaises(ValueError):
+                    full.setup_compiler_cache(self.root / 'evidence')
+                install.assert_not_called()
+
+    def test_tampered_archive_refused_before_executable_creation(self):
+        self.archive()
+        with self.assertRaisesRegex(ValueError, 'archive checksum'):
+            full.install_compiler_cache(self.root)
+        self.assertFalse((self.root / 'compiler-cache-tools' / f'v{full.VERSION}' / 'sccache').exists())
+
+    def test_linked_tool_directory_refused_before_download(self):
+        with patch.object(Path, 'is_symlink', return_value=True), \
+                patch.object(full.urllib.request, 'urlopen') as download:
+            with self.assertRaisesRegex(ValueError, 'unsafe compiler cache tool directory'):
+                full.install_compiler_cache(self.root)
+            download.assert_not_called()
+
+    def test_verified_install_and_cached_executable_tampering(self):
+        archive = self.archive()
+        with patch.object(full, 'ARCHIVE_SHA256', full.cache_digest(archive)), \
+                patch.object(full, 'BINARY_SHA256', hashlib.sha256(self.binary).hexdigest()), \
+                patch.object(full.urllib.request, 'urlopen') as download:
+            binary = full.install_compiler_cache(self.root)
+            self.assertEqual('sccache', binary.name)
+            self.assertEqual(self.binary, binary.read_bytes())
+            self.assertEqual(binary, full.install_compiler_cache(self.root))
+            download.assert_not_called()
+            binary.write_bytes(b'changed')
+            with self.assertRaisesRegex(ValueError, 'executable checksum'):
+                full.install_compiler_cache(self.root)
+
+    def test_setup_uses_full_target_and_own_socket_without_compiler_flags(self):
+        binary = self.root / 'sccache'
+        with patch.dict(os.environ, self.env), patch.object(full, 'install_compiler_cache', return_value=binary), \
+                patch.object(full.subprocess, 'run') as child:
+            full.setup_compiler_cache(self.root / 'evidence')
+        args, kwargs = child.call_args
+        self.assertEqual([str(binary), '--start-server'], args[0])
+        self.assertTrue(kwargs['check'])
+        generated = dict(line.split('=', 1) for line in (self.root / 'env').read_text().splitlines())
+        self.assertEqual(str(self.root / 'compiler-cache'), generated['SCCACHE_DIR'])
+        self.assertEqual(str(self.root / 'full-sccache.sock'), generated['SCCACHE_SERVER_UDS'])
+        self.assertEqual('0', generated['SCCACHE_IDLE_TIMEOUT'])
+        self.assertNotIn('RUSTFLAGS', generated)
+        self.assertNotIn('CARGO_TARGET_DIR', generated)
+        self.assertNotIn('CARGO_BUILD_JOBS', generated)
+        record = json.loads((self.root / 'evidence/setup.json').read_text())
+        self.assertEqual(self.env['GITHUB_SHA'], record['source_sha'])
+        self.assertEqual(generated, record['environment'])
+
+    def test_failed_server_does_not_publish_wrapper(self):
+        with patch.dict(os.environ, self.env), patch.object(full, 'install_compiler_cache', return_value=self.root / 'sccache'), \
+                patch.object(full.subprocess, 'run', side_effect=OSError('server failed')):
+            with self.assertRaises(OSError):
+                full.setup_compiler_cache(self.root / 'evidence')
+        self.assertFalse((self.root / 'env').exists())
+
+    def test_stats_preserve_actual_hits_and_misses_and_reject_different_source_setup(self):
+        conf = self.root / 'sccache.toml'
+        conf.write_text('[cache.disk]\n')
+        (self.root / 'setup.json').write_text(json.dumps(dict(source_sha=self.env['GITHUB_SHA'])))
+        data = dict(stats=dict(cache_hits={'Rust': 2}, cache_misses={'Rust': 3}))
+        env = dict(self.env, RUSTC_WRAPPER=str(self.root / 'sccache'), SCCACHE_CONF=str(conf))
+        with patch.dict(os.environ, env), patch.object(full, 'cache_digest', return_value=full.BINARY_SHA256), \
+                patch.object(full.subprocess, 'check_output', return_value=json.dumps(data)):
+            full.compiler_cache_stats(self.root / 'published')
+            self.assertEqual(data['stats'], json.loads((self.root / 'published/stats.json').read_text())['stats'])
+            (self.root / 'setup.json').write_text(json.dumps(dict(source_sha='b' * 40)))
+            with self.assertRaisesRegex(ValueError, 'source mismatch'):
+                full.compiler_cache_stats(self.root / 'different-source')
+            self.assertFalse((self.root / 'different-source').exists())
 
 
 if __name__ == '__main__':
