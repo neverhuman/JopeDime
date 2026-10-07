@@ -12,7 +12,7 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at ca1f7570a, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238.
+<!-- Local release preparation at 4fc1492e4, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238/#239.
 Rebase onto final main and finalize the date before publication. GP-language #231 includes the
 maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
 binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
@@ -113,6 +113,11 @@ merged; B19 wiring is tracked separately. -->
   rights-specific manifests, create-only writes, exact-version readbacks and resumable delivery.
   Omit outer-test data and scores; refuse output traversal before client or state creation.
   Local and fake-store qualification remains distinct from live S3 persistence (#236).
+- Publish raw GPU encoding manifests with cut identity inherited only from an identity-matching
+  source with a validated raw-split digest. Bind the executed adapter, frozen manifest tool and
+  transport digests in the canonical manifest; retain create-only, versioned readback and
+  malformed-cut/label-canary refusals. Source and synthetic fixture evidence remain separate
+  from live encoding publication and training qualification (#239).
 
 ### CI, build and release
 
