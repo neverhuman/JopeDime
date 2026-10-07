@@ -1,11 +1,4 @@
 {
- "abandoned_unpushed_stagings": [
-  {
-   "manifest": "restage-20261006T151436Z/MANIFEST.json",
-   "manifest_sha256": "be5e5f600a15d01d83a13c2745d37748c772c0317ee3986153e236fc0fea0d7f",
-   "reason": "unpushed-staging-be5e5f60-superseded-to-include-Codex-s3io/jtt1-quarantine-guards-and-publisher-preflight"
-  }
- ],
  "changes_since_prior": {
   "added": {
    "tests/test_admission_fail_closed.py": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
@@ -17,7 +10,7 @@
    }
   }
  },
- "created_utc": "2026-10-07T07:35:16Z",
+ "created_utc": "2026-10-07T08:07:55Z",
  "dependencies": {
   "Dope": "dope-kernel built from ~/dope 63696a5d into RUN/build/dope-target (bc3c4460)",
   "GPU encode": "system /usr/bin/python3.12 with torch 2.7.0+cu12x, safetensors, psutil; Codex's gpu_encoders.py ff419384 read-only from /home/ubuntu/scratch/jopedime-regression-neural-encoding-v1; lane-owned TabPFN runtime tabpfn 9.0.0 + pandas 2.3.2 + skrub 0.10.1 (manifest RUN/pydeps/tab35-runtime-v1.files.sha256 8ad8cb6e)",
@@ -41,22 +34,27 @@
  },
  "excluded_new_files": {
   "dltrain/exclusions.py": "901d42a9b01182fc7a46c74677f9451e81b4ab1721edb01ad1899c1cbfa195df",
-  "dltrain/policylm_main.py": "b36536b9cf4151aa619553330f66cf0042c61d5eaf6fc892b481439b1ea5a919",
-  "dltrain/s1_tail.py": "e21a950895579e3b1ceb85c8a4e755722ea5e707f4f0480ee7925c68fe7344f6",
+  "dltrain/policylm_main.py": "069451538a4213f00079a790c5aa46f01e8c3eab28aea785a92857a2498205cc",
+  "dltrain/s1_tail.py": "d1e38259252b3cab6495436dbf5798e7f241115cb54fd98c6757fccd1cb52c97",
   "dltrain/s3store.py": "a3bbf1084fedffbcd1f903c47b23ffce695156d633f51ad290f1156f1d573ef0",
+  "dltrain/syntax_cache.py": "159cbd2d0f653fe67b8279ee9057df6dee2deb0a5127a558b0e82f09bb89a3e1",
   "dltrain/synthetic_data.py": "4dac71292a6d25a4b77c256fd6fde5dd749485d615c2c459dca1328c3fc74584",
-  "dltrain/target_linear.py": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45",
   "dltrain/tranche.py": "51c0dff434cd786cf5d5535784e1a6f28dd780a228961919a15af7d274a97b8f",
+  "tests/test_gen_arm_options.py": "a0b907c8d787806cd6efd5c35c78eec8307a3f4769823e1ff9f1f3bc0553e81f",
+  "tests/test_gpu_waiver.py": "70449710833284f20c7e08cd1966c1227c1e7eb8eef652478453167a279efd25",
+  "tests/test_objective_ls05.py": "2e59cb8a086456cf875ca569565318630a9cddedfe003002f3e14ffc7d62e13c",
   "tests/test_p8_gpu_gate.py": "988f37ef0fa93a32b86c74f0a636844aa00065dcdbce73800a77ae18ab832194",
   "tests/test_p8_segment_transition.py": "a95c80cd772f01cd40fdc04411d27fab1ce89153d008028e6ac3d799281af946",
   "tests/test_p8_trainer.py": "6ac8f951c186f5ee66ac2b1ad0faa5ca898108bd03e17b8fdaa448a667056e12",
   "tests/test_p9b_microbatch_bestdev.py": "23dcd576bbe626142aeec6a8cc4dbc420746ca318fd398580c0e81cbf7fd8afa",
-  "tests/test_target_linear.py": "288ad91dbfe7a712a89477645d92df01e13d25675449d8f50b5b92cf74ca2c2f",
   "tests/test_v2_nonraw_target_linear.py": "27ec0a672a86675f1074ff17e43115cb4e82540ec36c81c1960a29e6fd06761f",
   "tests/test_v2_rowsel_build_fallback.py": "c85f4cfe5ddcd29e7fc290bc728fe4f133b1339f9a8b715d7df18526c8fb8d56",
-  "tests/test_v2_rowsel_raw_v2g.py": "64c62ee70183ab2c97c0e694dfc9a4ea48523c94f8c07ae52b227778bfc485c6",
+  "tests_p5/test_s1_join_encoding_roots.py": "c7267dfeb6a61f4eda6db93ec2c923d2302cc65acce616face8faf9f450c49d1",
   "tests_p5/test_s1_tail.py": "75b0d6cec156857e16d130a695d07540a773ea30540492d1d28d742266810a79",
-  "tools/s1_tail.py": "ea01727f5d2dc7838f49ca7e6b878ce45a2917a57885920bb425becacb74b036"
+  "tests_p5/test_s1_tail_join.py": "851bb1d1aa724e915c98c199332ef55ac7a0ee3e26f624399ee06b402fe28979",
+  "tests_p5/test_s1_tail_supersession.py": "8d24910c7eb1f47ec9135d27cd85070476571f72213f39a891f87694156ce8d8",
+  "tests_p5/test_syntax_cache.py": "fab946dcc5cfa3b132b8105642fbaee0e235ab8208abb19437ad2332a5285fe6",
+  "tools/s1_tail.py": "74aa532caaa818d99400006a8d4526320fccd1de97b1104a818108c0448b3bb0"
  },
  "files": {
   "src/dl_training_v1/README.md": {
@@ -247,6 +245,10 @@
    "bytes": 45068,
    "sha256": "000ca8cbfe0cfc17d3662d14c0484463bf430af4aabfa9a923f30856dacdbeaa"
   },
+  "src/dl_training_v1/dltrain/target_linear.py": {
+   "bytes": 3790,
+   "sha256": "f2c22410f505c3f163cec18b4bc4c3fa5233823bdf37b8cf7069a51ed5de5811"
+  },
   "src/dl_training_v1/dltrain/train.py": {
    "bytes": 54532,
    "sha256": "5e42507aaab86ab5eb46646cab43305a78678eb60cd180eb3908f883315eaf09"
@@ -360,8 +362,8 @@
    "sha256": "7d30f3402ffb818efb8ca39e23b448f8ff27176dd6ec32a1f6d58f8a51459419"
   },
   "src/dl_training_v1/tests/test_split_defaults.py": {
-   "bytes": 21920,
-   "sha256": "95b7a5a33b3800ae01b409da7bec1f692c10afa1a39262507d1f317c0fbfea50"
+   "bytes": 22462,
+   "sha256": "6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4"
   },
   "src/dl_training_v1/tests/test_t1prep.py": {
    "bytes": 17350,
@@ -370,6 +372,10 @@
   "src/dl_training_v1/tests/test_t1raw.py": {
    "bytes": 31133,
    "sha256": "bf96437098dd75ddfdde3be8673f12447b55862901834bc39f46aeff009a0931"
+  },
+  "src/dl_training_v1/tests/test_target_linear.py": {
+   "bytes": 5784,
+   "sha256": "288ad91dbfe7a712a89477645d92df01e13d25675449d8f50b5b92cf74ca2c2f"
   },
   "src/dl_training_v1/tests/test_trainonly.py": {
    "bytes": 16985,
@@ -407,9 +413,17 @@
    "bytes": 60971,
    "sha256": "7ffd45b93512bd33a60e9a7bb9d0d73dbb0d53b31de2bcdf15b8c0e3efd66822"
   },
+  "src/dl_training_v1/tests/test_v2_rowsel_raw_fold_isolation.py": {
+   "bytes": 12242,
+   "sha256": "a3480f5d13e2dd1b1a62a04b5711d97ba2a9493b015dcf0ddb35c26a102e0f44"
+  },
   "src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
    "bytes": 13214,
    "sha256": "b9e0bb43a5ee9e6261bbc4f2dea717eb181dabb3311b2a8a9ec578969d290889"
+  },
+  "src/dl_training_v1/tests/test_v2_rowsel_raw_v2g.py": {
+   "bytes": 20584,
+   "sha256": "72ae2cc1412b8e0cfe8a81a5424a543ec18282804f2aac2e69fc4b80f15a5fcc"
   },
   "src/dl_training_v1/tests_dl_d5/__init__.py": {
    "bytes": 1517,
@@ -696,8 +710,8 @@
    "sha256": "7550d29c8f959a2a9a003cbe05c08ce8705063ee9306e29dc815812713ae7baf"
   },
   "src/dl_training_v1/tools/v2_rowsel_raw.py": {
-   "bytes": 60778,
-   "sha256": "428e879a40eb6fc87402f23f446605d8afffac473c724157674a823a74544261"
+   "bytes": 90160,
+   "sha256": "48829e820336ac2d4bafe42d73a30733976d6ef12ff75854cf7fd30a73ba8622"
   },
   "src/dl_training_v1/tools/v2_rowsel_raw_coverage.py": {
    "bytes": 27548,
@@ -737,21 +751,27 @@
   "28be7f98": "tools/v2_rowsel_raw.py: split-version hook (rowsel-raw-split-v2) used by the v2 rebuild",
   "3951fabf": "tools/v2_rowsel_raw.py at the main raw build (ROWSEL-RAW-v1)",
   "40ba1c69": "tools/v2_s1_input_list.py that built s1-input-list-v2 production 4bae9a6b / research b8541bde (reconstructed byte-exact)",
+  "45dbc458": "tools/v2_rowsel_raw.py with the RAW-GROUP (a)/(b) raw-route group hook (rowsel-split-v2-groups) and the LINEAR-DETERMINED gate; built ROWSEL-RAW-v2gsplit and ROWSEL-RAW-v2gsplit-nonnumeric (RAW-GROUP-PR, owner-decisions-20261006T103543Z)",
+  "48829e82": "tools/v2_rowsel_raw.py: held-out-target isolation (PR #246 review 5437848458): target-tie per context on its own outer-train rows (v2g_fold_target_tie), LINEAR-DETERMINED refuses only its own context (context_refusal); dataset admission reads features only",
+  "6294d720": "tests/test_split_defaults.py scoped to the raw route: RawDefaults accepts the LINEAR-DETERMINED target_linear block added by name on the v2 path (v1 replay: none); BeforeAfter (non-raw) unchanged",
   "7375ef15": "tools/v2_provenance.py that built provenance-v1 6d9ca99d",
   "8c957d9b": "tools/v2_holdout_denylist.py that built holdout-denylist-v1 ee12d721 (reconstructed byte-exact)",
   "91ec3cfe": "tools/v2_superseded.py: create-only SUPERSEDED docs; reproduces superseded-raw-split-v1 766277695b02 byte-exactly",
   "97340df3": "dltrain/rowsel_raw_split_v2.py: value-free outer split (RAW-SPLIT-RULING B); duplicate groups ranked by min sha256(h NUL domain NUL partition NUL index); replaces the feature-byte-ordered split of rowsel_raw.py 18eac154",
   "9e0fb521": "dltrain/rowsel_split_v2_groups.py: GROUP-UNION-B split (exact-duplicate features OR annotated group; target never used); schema rowsel-split-v2-groups; cut_id trainonly-split-v2g:<sha>",
+  "a3480f5d": "tests/test_v2_rowsel_raw_fold_isolation.py: held-out-only y perturbations per fold (end-to-end veto flips, pattern grid) + must-fail cross-fold controls",
   "a8679b8b": "tests/test_rowsel_raw_split_v2.py: must FAIL on the 18eac154 split (outer-test feature change moves the partition)",
   "c208370f": "tools/v2_rowsel_raw_helper.py: additive helper shards (prepared, not launched)",
   "cc49c989": "tools/v2_pubset.py: create-only filtered tree copies without a local SUPERSEDED record's contexts",
   "cd51465f": "inline script that built manifests/superseded-raw-split-v1/766277695b02 (kept byte-exact; no code_sha256 field in that doc)",
   "cdde4eae": "tools/v2_publish.py: admits re-split schemas, rights licensed, v2 t1_fallback; cut guard (mutants 9/9)",
   "cfa1d899": "tools/v2_publish.py (rowsel-t1 full + gpu-clean-v1 publishes)",
+  "e2dbebba": "dltrain/target_linear.py LINEAR-DETERMINED gate (owner-decisions-20261006T112914Z)",
   "e97d74c7": "tools/v2_publish.py final: cut prefix must match the split schema (split, rowsel.split or the GPU plan's rowsel.split_schema); routing identical to cdde4eae/3b265fca on all 26 trees (publisher-equivalence receipts); mutants 13/13",
   "ed00684a": "tools/v2_rowsel_build.py current (frozen-kmeans research scope)",
   "f01fa91f": "tools/v2_rowsel_build.py that built the 1,749 incoming T1 contexts",
   "f2580ff0": "tools/v2_s1_input_list.py that built s1-input-list-v1",
+  "f2c22410": "dltrain/target_linear.py: docstring only (a REFUSE refuses this context, never another fold's); check_jtt1 unchanged",
   "f3baa74f": "tools/v2_rowsel_raw.py that built ROWSEL-RAW-v1-nonnumeric (superseded split, never published)",
   "f507af54": "tools/v2_build_local.py final (v2split/v2gsplit hooks); a53aa6c8 built the clean v2split trees",
   "fa4b411c": "tools/v2_publish.py (research, v6, 810 GPU publishes)",
@@ -932,6 +952,10 @@
    "bytes": 8758,
    "sha256": "b449ca8160deb332a53102fdf1d5cc69fac0db993d0fdb74db64eae39149ec44"
   },
+  "ledger_join.py.01e6406adbc3123df28c28e9ea1bbc4922fd2e79af7dd25f7883aa09c358aa9f": {
+   "bytes": 2606,
+   "sha256": "01e6406adbc3123df28c28e9ea1bbc4922fd2e79af7dd25f7883aa09c358aa9f"
+  },
   "live.py.f2fd34f3bad4cfd0c678815f29c4898d82d8f9a120248a3487f70f488594729f": {
    "bytes": 33818,
    "sha256": "f2fd34f3bad4cfd0c678815f29c4898d82d8f9a120248a3487f70f488594729f"
@@ -1036,13 +1060,33 @@
    "bytes": 39767,
    "sha256": "677a6edfa1868d1af5763631b86419dd01579a0f6884c050d3b7a72a38648dc6"
   },
+  "policylm_main.py.90ba585b23118eccd82e50b98a0dd842dacf67a2ce8fe704d610db95a3788ccd": {
+   "bytes": 52993,
+   "sha256": "90ba585b23118eccd82e50b98a0dd842dacf67a2ce8fe704d610db95a3788ccd"
+  },
   "policylm_main.py.b36536b9cf4151aa619553330f66cf0042c61d5eaf6fc892b481439b1ea5a919": {
    "bytes": 51757,
    "sha256": "b36536b9cf4151aa619553330f66cf0042c61d5eaf6fc892b481439b1ea5a919"
   },
+  "policylm_main.py.c56b4c9d8c00796bb3f9ee0bf0d7ac58c8eee2c5a0c591c6954afb45414bf556": {
+   "bytes": 52094,
+   "sha256": "c56b4c9d8c00796bb3f9ee0bf0d7ac58c8eee2c5a0c591c6954afb45414bf556"
+  },
   "policylm_main.py.e9ee6119515986b3acf234579315d907e6c32e2c34900fd6c035f0b2828aef78": {
    "bytes": 26978,
    "sha256": "e9ee6119515986b3acf234579315d907e6c32e2c34900fd6c035f0b2828aef78"
+  },
+  "posthoc_dev_eval.py.1b660b2263f572b381a8c7fa7fa3ad191c4ec6de8facc5c6ad00700a66dcb027": {
+   "bytes": 10191,
+   "sha256": "1b660b2263f572b381a8c7fa7fa3ad191c4ec6de8facc5c6ad00700a66dcb027"
+  },
+  "preload_spec.py.d417d5219b9f8a5ac57f460e197f49c3f1bf4cff3cfff2dadebe2e0246f5bc69": {
+   "bytes": 747,
+   "sha256": "d417d5219b9f8a5ac57f460e197f49c3f1bf4cff3cfff2dadebe2e0246f5bc69"
+  },
+  "prepare_inputs_join.py.0437103871404a0830a145506edcf83d1f469d9240ecd3a882511dac329a7c91": {
+   "bytes": 12982,
+   "sha256": "0437103871404a0830a145506edcf83d1f469d9240ecd3a882511dac329a7c91"
   },
   "programs.py.4c2f804fa2397abded840b44bb3fca01e845c9fcb53e9ecb4d80c3548ab99aa2": {
    "bytes": 101227,
@@ -1096,6 +1140,18 @@
    "bytes": 74717,
    "sha256": "2263a5eff7b73ee91611dbaf0751e315f8d962622184f37c65046e3ac08dd735"
   },
+  "s1_tail.py.84815baea79b835a5f720828b6834ec341e10a3f5f748274e36a1568824c4c85": {
+   "bytes": 6793,
+   "sha256": "84815baea79b835a5f720828b6834ec341e10a3f5f748274e36a1568824c4c85"
+  },
+  "s1_tail.py.9175dd7fe84fc9d8b44c3ab9809477084f37e654be5ca499e961c23e64b45931": {
+   "bytes": 120381,
+   "sha256": "9175dd7fe84fc9d8b44c3ab9809477084f37e654be5ca499e961c23e64b45931"
+  },
+  "s1_tail.py.bf82f8e124e85bf41947648b43b74cf54877a664d78298db9876cedcb51073de": {
+   "bytes": 116936,
+   "sha256": "bf82f8e124e85bf41947648b43b74cf54877a664d78298db9876cedcb51073de"
+  },
   "s1_tail.py.e21a950895579e3b1ceb85c8a4e755722ea5e707f4f0480ee7925c68fe7344f6": {
    "bytes": 112557,
    "sha256": "e21a950895579e3b1ceb85c8a4e755722ea5e707f4f0480ee7925c68fe7344f6"
@@ -1103,6 +1159,10 @@
   "s1_tail.py.ea01727f5d2dc7838f49ca7e6b878ce45a2917a57885920bb425becacb74b036": {
    "bytes": 6559,
    "sha256": "ea01727f5d2dc7838f49ca7e6b878ce45a2917a57885920bb425becacb74b036"
+  },
+  "s1_tail.py.orig.063788f39e1d13cc8b4195b34e0cf7e14f8caff871182eb3d0402e8ccfbadea1": {
+   "bytes": 121155,
+   "sha256": "063788f39e1d13cc8b4195b34e0cf7e14f8caff871182eb3d0402e8ccfbadea1"
   },
   "s3io.py.26740428ba3d1111b44b2a52a30002c40d885f2d3c18b2ae2be479bec8d5dbdd": {
    "bytes": 47045,
@@ -1252,9 +1312,17 @@
    "bytes": 78462,
    "sha256": "75b0d6cec156857e16d130a695d07540a773ea30540492d1d28d742266810a79"
   },
+  "test_s1_tail_join.py.851bb1d1aa724e915c98c199332ef55ac7a0ee3e26f624399ee06b402fe28979": {
+   "bytes": 6435,
+   "sha256": "851bb1d1aa724e915c98c199332ef55ac7a0ee3e26f624399ee06b402fe28979"
+  },
   "test_split_defaults.py.11049a7a887d93b6f815602fe65d0fbf269136d3753d6ef54712603403422d3a": {
    "bytes": 22673,
    "sha256": "11049a7a887d93b6f815602fe65d0fbf269136d3753d6ef54712603403422d3a"
+  },
+  "test_split_defaults.py.6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4": {
+   "bytes": 22462,
+   "sha256": "6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4"
   },
   "test_split_defaults.py.95b7a5a33b3800ae01b409da7bec1f692c10afa1a39262507d1f317c0fbfea50": {
    "bytes": 21920,
@@ -1839,7 +1907,7 @@
    "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
   },
   "dltrain/objective.py": {
-   "live_src_sha256": "b427f4b329397817037d9929f774cfe93d3056fd2ccef16ad9beb2bdd3bb7dcc",
+   "live_src_sha256": "a8587e2176bd9589f31d4a9366e271f0be510bd25e002f7ecb141629d667bb3a",
    "sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36"
   },
   "dltrain/sampler.py": {
@@ -1847,16 +1915,12 @@
    "sha256": "b030c76a3bed62b26fe4aad3910185689c817e49734eb61db1be169bc54e4b47"
   },
   "dltrain/train.py": {
-   "live_src_sha256": "b73e0c4c0b6956712901035819644dab37c40701e15b848f4f4df7cf29964bb7",
+   "live_src_sha256": "18ae597d5df6aa47fb5029f4af77eca8dd1be76a0b562ec364e5a480b83f44a7",
    "sha256": "5e42507aaab86ab5eb46646cab43305a78678eb60cd180eb3908f883315eaf09"
   },
   "tests/restore/test_p7_restore.py": {
    "live_src_sha256": "adf52bb8d2494cce3f49c29529fe8f278b55345d70d345b854af49deea5ad050",
    "sha256": "caa9da0f4fb40ac3f2251486d18f37a42182ff1e133dc75d925a51a338841419"
-  },
-  "tests/test_split_defaults.py": {
-   "live_src_sha256": "11049a7a887d93b6f815602fe65d0fbf269136d3753d6ef54712603403422d3a",
-   "sha256": "95b7a5a33b3800ae01b409da7bec1f692c10afa1a39262507d1f317c0fbfea50"
   },
   "tests/test_v2_rowsel_build_split_v2.py": {
    "live_src_sha256": "14903df3e90d1d850133f98825181b43fcf80e982b32e1796011efa8e29eabfb",
@@ -1881,10 +1945,6 @@
   "tools/v2_rowsel_build.py": {
    "live_src_sha256": "98a618af6425ab5be7652b4ae9b51f86755bde10200083cd22dad0f87c66fad0",
    "sha256": "94fcc4b1ff2b839b1127bd0e8683e38bfcb6b01703e023300b98976d08b1c35d"
-  },
-  "tools/v2_rowsel_raw.py": {
-   "live_src_sha256": "45dbc45826cf00df2c981431286ff4c6b99ee47147bfaf43761f33456896bb9c",
-   "sha256": "428e879a40eb6fc87402f23f446605d8afffac473c724157674a823a74544261"
   }
  },
  "notes": [
@@ -1892,7 +1952,12 @@
   "commit the current tree; historical/ holds exact bytes behind every hash recorded by a published document",
   "admission fail-closed: ADMITTED_ASSIGNMENTS = train_fit/train_nonpool/dev; any other or missing assignment refuses"
  ],
- "pinned_from_custody": {},
+ "pinned_from_custody": {
+  "tests/test_split_defaults.py": {
+   "live_src_sha256": "11049a7a887d93b6f815602fe65d0fbf269136d3753d6ef54712603403422d3a",
+   "sha256": "6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4"
+  }
+ },
  "ruling": "owner ENG:watcher 07:35Z: unknown holdout assignment must refuse; small PR with a must-fail test, Lane C reviews (opened out of the one-PR order by explicit owner instruction)",
  "s1_materials": {
   "96_seed_source": "NOT retained by the DL lane. The S1 packet draft specified seeds from the proposal-engine prior only (not v1 seed-pool / historical-seen, which were test-selected): RUN/receipts/trainonly-v2/teacher-g22-S1-packet-DRAFT.md",
@@ -1905,9 +1970,9 @@
   "sept29_materializer_spec": "NOT found locally by the S1 pilot agent; its findings and the engine's expected inputs are in RUN/receipts/trainonly-v2/s1-pilot/README.md and pilot-receipt.json (eb61ad68)"
  },
  "schema": "jope.dl-lane-handoff/v2",
- "source_root": "restage-20261007T073516Z/src/dl_training_v1 (lane custody copy at main cad789d9 plus the admission fail-closed fix; __pycache__ excluded)",
- "supersedes": "restage-20261006T153320Z/MANIFEST.json",
- "supersedes_sha256": "4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d",
+ "source_root": "restage-20261007T080755Z/src/dl_training_v1 (lane custody copy at main b486da45 plus the admission fail-closed fix; __pycache__ excluded)",
+ "supersedes": "restage-20261007T054519Z/MANIFEST.json",
+ "supersedes_sha256": "fb2140bc50deb66057f009f42cf6690cca20e3862e8f552199e292068d9ba754",
  "test_commands": [
   "cd src/dl_training_v1 && python -m unittest discover -s tests -t .   # lane suites (unittest; pytest not used)",
   "python -m unittest tests.test_v2_publish tests.test_s3io tests.test_v2_rowsel_build tests.test_v2_rowsel_raw tests.test_nonnumeric tests.test_rowsel tests.test_t1raw tests.test_t1prep tests.test_trainonly",
@@ -1917,10 +1982,12 @@
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
+  "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
+  "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154"
  ],
  "tests_run_on_staged_copy": {
-  "cwd_and_pythonpath": "restage-20261007T073516Z/src/dl_training_v1",
+  "cwd_and_pythonpath": "restage-20261007T080755Z/src/dl_training_v1",
   "modules": [
    "tests.test_admission_fail_closed"
   ],

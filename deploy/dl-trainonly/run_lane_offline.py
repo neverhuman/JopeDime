@@ -24,6 +24,7 @@ MODULES = (
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
     "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
     "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "tests.test_admission_fail_closed", "test_hwm_publish", "test_gpu_manifest_cut",
+    "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -68,9 +69,10 @@ HOST_CASES = {
     "tests.test_v2_provenance.Resolver.test_short_prefix_never_binds": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
     "tests.test_v2_provenance.Resolver.test_summary_classification": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
     "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 598
+EXPECTED_COLLECTED = 628
 
 
 def case_ids(suite):
