@@ -60,6 +60,28 @@ PY
       full-policy) selection=(-p jope-policy --features "testing,context-producer") ;;
       full-s3-offline) selection=(-p jope-arena --features s3) ;;
       full-neural)
+        # A lifecycle-only child exercises the real authority in a same-source
+        # default-feature image. Prebuild it outside the unchanged start deadline.
+        cargo nextest list --locked -p jope-parallel --lib --no-default-features --message-format json > "$EVIDENCE/synthetic-executor-collection.json"
+        export JOPE_SYNTHETIC_EXECUTABLE
+        JOPE_SYNTHETIC_EXECUTABLE="$(python3 - <<'PYBUILD'
+import hashlib, json, os
+from pathlib import Path
+root = Path(os.environ['JOPE_LANE_EVIDENCE'])
+collection = json.loads((root / 'synthetic-executor-collection.json').read_text())
+suite = collection['rust-suites']['jope-parallel']
+assert suite['kind'] == 'lib' and suite['package-name'] == 'jope-parallel'
+assert 'eval_registry::authority::tests::synthetic_executor' in suite['testcases']
+path = Path(suite['binary-path'])
+assert path.is_file()
+record = {'executable': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+          'features': [], 'feature_selection': 'no-default-features',
+          'source_sha': os.environ.get('JOPE_SOURCE_SHA'),
+          'scope': 'same-source synthetic child; collection only, no test execution'}
+(root / 'synthetic-executor.json').write_text(json.dumps(record, indent=2) + '\n')
+print(path)
+PYBUILD
+)"
         # Discovery receipt (never overwritten) for the unavailable or discovered SDK state.
         export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
         # SDK/runtime availability is measured independently; no GPU device/credentials.
