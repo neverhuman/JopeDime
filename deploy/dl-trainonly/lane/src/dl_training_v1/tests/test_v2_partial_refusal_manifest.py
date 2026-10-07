@@ -271,5 +271,137 @@ class Controls(unittest.TestCase):
                 self.assertEqual([d.name for d in shard.iterdir() if d.name != "_datasets"], [])
 
 
+class Resume(unittest.TestCase):
+    """Prior four-fold trees must fail closed, without rewriting .done; a new tree is the recovery route."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = Path(tempfile.mkdtemp(prefix="fold1-resume-", dir=os.environ.get("TMPDIR")))
+        cls.sources = {}
+        for route in ("t1_v2g", "l7b", "raw_v2g"):
+            src = cls.root / route / "src"
+            shard = src / "shard-0"
+            shard.mkdir(parents=True)
+            rec = cls.build(route, shard)
+            if rec["status"] != "done":
+                raise AssertionError(rec)
+            cls.sources[route] = src
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.root, ignore_errors=True)
+
+    @staticmethod
+    def build(route, shard):
+        if route == "t1_v2g":
+            return build_t1(shard, t1_matrix())
+        if route == "l7b":
+            return build_l7b(shard)
+        return build_raw(shard)
+
+    def copy(self, route):
+        root = self.root / self._testMethodName / route
+        src = root / "src"
+        shutil.copytree(self.sources[route], src)
+        return root, src, src / "shard-0"
+
+    @staticmethod
+    def context_bytes(shard):
+        return {str(p.relative_to(shard)): p.read_bytes() for d in shard.iterdir() if (d / ".done").is_file()
+                for p in d.iterdir() if p.is_file()}
+
+    @staticmethod
+    def stale(shard):
+        for d in shard.iterdir():
+            if (d / ".done").is_file():
+                p = d / "context.json"
+                c = json.loads(p.read_bytes())
+                for key in MEMBERSHIP:
+                    c["epoch0_replaced"].pop(key)
+                c["epoch0_replaced"].update(new_contexts=5, context_count_changed=True)
+                p.write_text(json.dumps(c, sort_keys=True) + "\n")
+
+    @staticmethod
+    def done(route, shard):
+        p = next((shard / "_datasets").glob("*.json"))
+        r = json.loads(p.read_bytes())
+        if route == "t1_v2g":
+            return rb.dataset_done_v2(shard, r["dataset_hash"], r["code_sha256"], r["split_version"])
+        tool = ltool if route == "l7b" else rtool
+        return tool.dataset_done(shard, r["dataset_hash"], r["code_sha256"])
+
+    def test_stale_done_is_refused_and_recovery_uses_a_new_tree(self):
+        """MUST FAIL before review 5444902657 is fixed: all three routes reported done on stale membership."""
+        for route in self.sources:
+            with self.subTest(route=route):
+                root, src, shard = self.copy(route)
+                self.stale(shard)
+                before = self.context_bytes(shard)
+                rec = self.build(route, shard)
+                self.assertEqual((rec["status"], rec["reason"]), ("failed", "done_context_replacement_differs"), rec)
+                self.assertIn("new output tree", rec["detail"])
+                self.assertEqual(self.context_bytes(shard), before)
+                with self.assertRaisesRegex(SystemExit, "builder made 5"):
+                    manifest(root, publish_copy(shard, root / "pub-stale"), src)
+                recovered = root / "recovered"
+                dest = recovered / "shard-0"
+                dest.mkdir(parents=True)
+                fixed = self.build(route, dest)        # same pinned inputs; no alteration to the stale tree
+                self.assertEqual((fixed["status"], fixed["contexts_written"]), ("done", 4), fixed)
+                rc, summary, doc = manifest(root, publish_copy(dest, root / "pub-recovered"), recovered)
+                self.assertEqual((rc, summary["published_contexts"]), (0, 4))
+                self.assertEqual(sorted(c["fold"] for c in doc["contexts"]), [0, 2, 3, 4])
+                self.assertEqual(self.context_bytes(shard), before)
+
+    def test_matching_done_is_unchanged_and_still_publishable(self):
+        for route in self.sources:
+            with self.subTest(route=route):
+                root, src, shard = self.copy(route)
+                before = self.context_bytes(shard)
+                self.assertTrue(self.done(route, shard))
+                rec = self.build(route, shard)
+                self.assertEqual((rec["status"], rec["contexts_written"], rec["contexts_already_done"]), ("done", 0, 4), rec)
+                self.assertEqual(self.context_bytes(shard), before)
+                rc, summary, _ = manifest(root, publish_copy(shard, root / "pub-matching"), src)
+                self.assertEqual((rc, summary["published_contexts"]), (0, 4))
+
+    def test_dataset_shortcut_rejects_stale_done_membership(self):
+        for route in self.sources:
+            with self.subTest(route=route):
+                _, _, shard = self.copy(route)
+                self.assertTrue(self.done(route, shard))
+                self.stale(shard)
+                self.assertFalse(self.done(route, shard))
+
+    def test_resume_cannot_publish_an_incomplete_admitted_set(self):
+        for route in self.sources:
+            with self.subTest(route=route):
+                root, src, shard = self.copy(route)
+                missing = next(d for d in shard.iterdir() if (d / ".done").is_file()
+                               and json.loads((d / "context.json").read_bytes())["fold"] == 3)
+                # Only fixture bytes are removed, to model interrupted delivery, not production recovery.
+                shutil.rmtree(missing)
+                self.assertFalse(self.done(route, shard))
+                with self.assertRaisesRegex(SystemExit, "datasets replace as a group"):
+                    manifest(root, publish_copy(shard, root / "pub-incomplete"), src)
+                rec = self.build(route, shard)
+                self.assertEqual((rec["status"], rec["contexts_written"], rec["contexts_already_done"]), ("done", 1, 3), rec)
+                rc, summary, _ = manifest(root, publish_copy(shard, root / "pub-completed"), src)
+                self.assertEqual((rc, summary["published_contexts"]), (0, 4))
+
+    def test_stale_done_is_checked_before_any_pending_context_is_written(self):
+        for route in self.sources:
+            with self.subTest(route=route):
+                _, _, shard = self.copy(route)
+                self.stale(shard)
+                missing = next(d for d in shard.iterdir() if (d / ".done").is_file())
+                shutil.rmtree(missing)
+                before = self.context_bytes(shard)
+                rec = self.build(route, shard)
+                self.assertEqual((rec["status"], rec["reason"]), ("failed", "done_context_replacement_differs"), rec)
+                self.assertFalse(missing.exists())
+                self.assertEqual(self.context_bytes(shard), before)
+
+
 if __name__ == "__main__":
     unittest.main()
