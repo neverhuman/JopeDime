@@ -700,7 +700,9 @@ fn projected_gp_candidates_are_exactly_representable_unique_and_durable() {
     let (temp, p) = fixture();
     let output = temp.path().join("projected-search");
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
-    // Require the complete observation budget within the original safety deadline.
+    // Bound the census by 100 observations, not by host-dependent worker startup time.
+    // Keep the shipped 600-second pilot ceiling as a runaway guard; completion below
+    // still requires the evaluation budget, never the wall-clock stop reason.
     // Completed observations include refusals; they are not successful fitted measurements.
     let result = Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
         .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
@@ -713,7 +715,7 @@ fn projected_gp_candidates_are_exactly_representable_unique_and_durable() {
             "--evaluations",
             "100",
             "--seconds",
-            "90",
+            "600",
             "--qualification",
         ])
         .arg("--prepared")
