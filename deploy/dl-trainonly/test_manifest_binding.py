@@ -258,6 +258,55 @@ class GpuAdditions(Trees):
         self.assert_refused(base, args, gpu_args)
 
 
+class CpuRowLevel(Trees):
+    """The same Lane B payload (a zero-test encoder with a synthetic held-out target in a training target cell) in a NON-GPU context."""
+
+    def synthetic_encoder(self, d):
+        raw = bytearray(gzip.decompress((d / "encoder.jtt1.gz").read_bytes()))
+        h = jtt1.parse_header(bytes(raw))
+        start, _ = jtt1.train_range(h)
+        raw[start + 8 * h["p"]:start + 8 * h["p"] + 8] = struct.pack("<d", 314159.0)   # row 0 target cell: synthetic held-out value
+        return gzip.compress(bytes(raw), mtime=0)
+
+    def place(self, name, forge_strip_record):
+        base, dirs, args, gpu_args = self.build("rawgroup_cpu_raw", name)
+        d = dirs[(DS, 0)]
+        c = rd(d)
+        old = dict(c["files"]["encoder.jtt1.gz"])
+        body = self.synthetic_encoder(d)
+        (d / "encoder.jtt1.gz").write_bytes(body)
+        new = {"sha256": mb.sha(body), "bytes": len(body), "raw_sha256": mb.sha(gzip.decompress(body))}
+        c["files"]["encoder.jtt1.gz"] = new
+        if forge_strip_record:   # a self-declared record that binds the synthetic file to the untouched source file
+            from dltrain import quarantine
+            c["publication_strip"] = {"key_scheme": quarantine.key_scheme(), "files": {"encoder.jtt1.gz": {
+                "original": {"sha256": old["sha256"], "raw_sha256": old.get("raw_sha256")},
+                "stripped": {"sha256": new["sha256"], "raw_sha256": new["raw_sha256"]},
+                "n_test_payload": 0, "train_rows_sha256_equal": True}}}
+        wr(d, c)
+        self.seal(base)
+        return base, args, gpu_args
+
+    def test_cpu_context_encoder_differing_from_its_source_is_refused(self):
+        # without a strip record the frozen tool's own source check already refuses ("encoder.jtt1.gz differs from the source build");
+        # the binding pre-pass now refuses first, on the recomputed training rows
+        base, args, gpu_args = self.place("cpu-synthetic", False)
+        with self.assertRaises(SystemExit) as cm:
+            self.run_binding(base, args, gpu_args)
+        self.assertRegex(str(cm.exception), "encoder.jtt1.gz (training rows are not the source build's training rows|differs from the source build)")
+        self.assertFalse((base / "out").exists())
+
+    def test_cpu_context_forged_strip_record_is_refused(self):
+        base, args, gpu_args = self.place("cpu-forged-strip", True)
+        rc, out = self.run_cut_adapter(base, args)            # the gap: the frozen tool + #239 adapter accept the forged record
+        self.assertEqual(rc, 0)
+        self.assertTrue(Path(out["local"]).exists())
+        with self.assertRaises(SystemExit) as cm:
+            self.run_binding(base, args, gpu_args)
+        self.assertIn("encoder.jtt1.gz training rows are not the source build's training rows", str(cm.exception))
+        self.assertFalse((base / "out").exists())
+
+
 class CleanAndContract(Trees):
     def test_clean_trees_of_every_kind_pass_and_bind_the_adapter(self):
         for kind, (_, _, _, _, _, gpu) in KINDS.items():

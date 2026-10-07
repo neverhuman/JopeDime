@@ -26,6 +26,11 @@ identity, rights or GPU-input mismatch):
             and bytes. Any other file (an added encoder.jtt1.gz, teacher.jtt1.gz, a0.f32 or anything else the publisher admits) has
             no binding in a GPU context and is refused (review 5440093136: the frozen tool's GPU branch skips its CPU input and
             publication-strip checks, and the publisher's n_test=0 check proves layout only, not where training cells came from).
+  4 rows    every row-level file of a NON-GPU context (encoder.jtt1.gz, teacher.jtt1.gz) has JTT1 train rows (inner-fold labels +
+            train block, dltrain.jtt1.train_rows_sha256), n_train and p equal to its source build file's, and n_test 0: the published
+            training cells are the source's training cells, so no outer-test row or target (nor a synthetic held-out value) can be
+            in them. The frozen tool accepts a self-declared publication_strip record (original/stripped sha256, n_test_payload,
+            train_rows_sha256_equal) without recomputing it; this recomputes it (review 5440093136 follow-up, CPU path).
 Values compared are identities only: no label, prediction or outer-test value is read or copied into the manifest.
 Usage (lane slice, from deploy/dl-trainonly/lane/src/dl_training_v1 like the frozen tool):
   python ../../../manifest_binding.py --build TREE --name NAME --source BUILD_TREE --summary PATH#SHA --require-cut
@@ -58,6 +63,8 @@ RULES = {
     "--source build context with the same view_id",
     "input": "gpu.input.binding equals train_rows/features_in from the source encoder JTT1 header, selection_fit outer_train_only "
     "and sha256 of its train range",
+    "rows": "non-GPU row-level files: JTT1 train rows, n_train and p equal the source build file's and n_test is 0 (recomputed, not "
+    "read from the publication_strip record)",
     "output": "a GPU context's files are exactly the runner record --gpu-out/<view_id>/context.json (same names, all .npy, same sha256 "
     "and bytes); any added or missing file refuses; required with GPU contexts",
 }
@@ -157,6 +164,25 @@ def gpu_reason(ctx, src_dir, gpu_out):
     return None
 
 
+ROW_LEVEL = ("encoder.jtt1.gz", "teacher.jtt1.gz")
+
+
+def rows_reason(ctx, tree_dir, src_dir):
+    """Recompute, for each row-level file of a non-GPU context, that its training rows are the source build file's."""
+    from dltrain import jtt1
+
+    for f in ROW_LEVEL:
+        if f not in ctx["files"]:
+            continue
+        got = gzip.decompress((Path(tree_dir) / f).read_bytes())
+        src = gzip.decompress((Path(src_dir) / f).read_bytes())
+        hg, hs = jtt1.parse_header(got), jtt1.parse_header(src)
+        if hg["n_test"] != 0 or (hg["n_train"], hg["p"]) != (hs["n_train"], hs["p"]) \
+                or jtt1.train_rows_sha256(got) != jtt1.train_rows_sha256(src):
+            return f"{f} training rows are not the source build's training rows"
+    return None
+
+
 def bind_tree(build, sources, gpu_out, cut_of, vp):
     """Refuse the first unbound context; returns (contexts bound, GPU contexts bound)."""
     plans, refused = vp.scan_build(Path(build))
@@ -176,6 +202,8 @@ def bind_tree(build, sources, gpu_out, cut_of, vp):
         if why is None and "gpu" in ctx:
             why = gpu_reason(ctx, sdir, gpu_out)
             g += 1
+        elif why is None:
+            why = rows_reason(ctx, p["dir"], sdir)
         if why:
             raise SystemExit(f"{p['view_id']}: {why}; refused before any manifest")
         n += 1
