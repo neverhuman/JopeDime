@@ -64,6 +64,7 @@ fn selection(refine: RefineMethod, archive: bool) -> EngineSelection {
         refine,
         archive: archive.then_some(ArchivePolicy::ArchiveOnly),
         simplify: false,
+        linearize: false,
     }
 }
 
@@ -831,7 +832,8 @@ fn the_archive_round_trips_and_verify_refuses_every_tampered_archive_or_record()
     }
     // The file removed under its record.
     std::fs::remove_file(output.join(archive::PATH)).unwrap();
-    assert!(publication::verify_run(&path).is_err());
+    let error = publication::verify_run(&path).unwrap_err();
+    errors.push(format!("{error:#}"));
     restore();
     publication::verify_run(&path).unwrap();
     // Each edit is refused by the check named for it, in the order above.
@@ -859,6 +861,10 @@ fn the_archive_round_trips_and_verify_refuses_every_tampered_archive_or_record()
         (
             "record dropped, file kept",
             "an archive is published without its selection",
+        ),
+        (
+            "file removed, record kept",
+            "a selected archive is not published",
         ),
     ];
     assert_eq!(errors.len(), named.len());
@@ -912,6 +918,7 @@ fn the_selection_record_round_trips_and_unknown_records_are_refused() {
         }),
         archive: Some(ArchivePolicy::ArchiveOnly),
         simplify: false,
+        linearize: false,
     };
     assert!(evaluator().with_engine(invalid).is_err());
     let e: Kernel2Evaluator = evaluator().with_engine(archived.clone()).unwrap();
@@ -1135,7 +1142,11 @@ fn the_key_is_the_codec_bytes_so_expression_spellings_are_distinct_keys() {
 fn the_legacy_dispatcher_refuses_each_kernel2_flag_before_writing() {
     // `ProfileArgs::options` writes nothing either way, so the flag tests' `!output.exists()`
     // after it cannot fail. The CLI's own dispatcher writes a run when it accepts one.
-    for flag in ["--pareto-archive", "--rewrite-simplify"] {
+    for flag in [
+        "--pareto-archive",
+        "--rewrite-simplify",
+        "--linearize-subtrees",
+    ] {
         legacy_dispatch_refuses_before_writing(flag);
     }
 }
@@ -1189,7 +1200,8 @@ fn legacy_dispatch_refuses_before_writing(flag: &str) {
 /// archived program is parsed within the trace check's bounds (B17 review 02's class): the
 /// pipeline form only, and each expression's nesting bytes counted before it is parsed. Unary plus
 /// and redundant parentheses never reach the parsed tree, so a source at the limit costs what its
-/// plain form costs; one byte more is refused unparsed.
+/// plain form costs; one byte more is refused unparsed. A closed-form program is refused by the
+/// pre-parse check's own message, so the order is observed (B17-R03-PIPELINE-GUARD-COVERAGE).
 #[test]
 fn archived_programs_are_bounded_before_they_are_parsed() {
     use super::refinement::MAX_PARENT_EXPRESSION_NESTING;
@@ -1227,5 +1239,8 @@ fn archived_programs_are_bounded_before_they_are_parsed() {
     let mut closed_form = plain.clone();
     closed_form.observation.genome = format!("(sym raw \"{}\")", plus(room + 1));
     let error = archive::build(&[closed_form]).unwrap_err();
-    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+    assert!(
+        format!("{error:#}").contains("not in the pipeline form"),
+        "{error:#}"
+    );
 }

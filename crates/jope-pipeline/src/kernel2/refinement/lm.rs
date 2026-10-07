@@ -76,13 +76,13 @@ fn expression_nesting(source: &str) -> usize {
 
 /// `text`, a pipeline program read back from evidence, parsed within the bounds the expression
 /// parser needs. Only the pipeline form, whose own parser does not recurse, is parsed: a
-/// closed-form program would reach the expression parser inside `GenomeIr::parse`. Each stage's
-/// `expr` is then refused when it holds more than [`MAX_PARENT_EXPRESSION_NESTING`] nesting bytes,
-/// before any caller parses it.
+/// closed-form program would reach the expression parser inside `GenomeIr::parse`, so it is
+/// refused unparsed, by its own message. Each stage's `expr` is then refused when it holds more
+/// than [`MAX_PARENT_EXPRESSION_NESTING`] nesting bytes, before any caller parses it.
 pub(crate) fn parse_untrusted_pipeline(text: &str) -> Result<DslExpr> {
     ensure!(
         text.trim().starts_with("(pipe"),
-        "program is not a pipeline"
+        "program is not a pipeline: not in the pipeline form, refused unparsed"
     );
     let GenomeIr::Pipeline(pipe) = GenomeIr::parse(text)? else {
         anyhow::bail!("program is not a pipeline");

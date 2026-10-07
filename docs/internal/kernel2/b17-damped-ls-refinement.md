@@ -105,8 +105,10 @@ the start's pass, and nothing was spent).
 
   Every floating-point value of a trace is stored as its f64 bits, so a replay compares them
   exactly.
-- The v4 receipt schema (`schemas/jope.pipeline-receipt.v4.schema.json`) gains these as optional
-  fields; its id is unchanged.
+- The v4 receipt schema (`schemas/jope.pipeline-receipt.v4.schema.json`) gains
+  `engine_selection` as an optional field; its id is unchanged. The trace is not part of the
+  receipt or its schema: `refinements.json` is read with its own types, where `refinement.trace`
+  is optional.
 
 `jope pipeline verify-receipt --evidence` (`publication::verify_run`) re-derives all of it from the
 published evidence:
@@ -126,9 +128,11 @@ published evidence:
   surrogate, failed or stopped record is a supported `derive` stage whose allowance could hold the
   minimum. A surrogate record reports the stage's literal sites and spends at most its allowance
   less the pipeline passes. A record that ends the refinement is the last. The parent is
-  untrusted evidence: only its pipeline form is parsed, and an expression source holding more
-  than 256 of the bytes `( + - * / ^` (`MAX_PARENT_EXPRESSION_NESTING`) is refused before the
-  recursive expression parser sees it;
+  untrusted evidence: only its pipeline form is parsed (a program in another form is refused
+  unparsed, by its own message), and an expression source holding more than 256 of the bytes
+  `( + - * / ^` (`MAX_PARENT_EXPRESSION_NESTING`) is refused before the recursive expression
+  parser sees it. A seed keeps its expression text as written, so with this method selected a
+  seed over that bound is refused by the search's option check before any cut runs;
 - the stages' charges sum to the refinement's evaluations and refused trials.
 
 Tests rehash `search.json` and the receipt after editing each of these counts, decisions and
@@ -142,8 +146,9 @@ are the absent `trace` field and the visibility of its stage refinement, which t
 The dispatch to the method is the first statement of the guarded refinement and is not taken by
 default. Tests pin:
 
-- the receipt and all seven published files byte-identical with `--refine-method coordinate` and
-  without the flag;
+- the receipt and the six other published files (`prepared.json`, `search.json`,
+  `observations.json`, `refinements.json`, `emit/model.rs` and `emit/manifest.json`)
+  byte-identical with `--refine-method coordinate` and without the flag;
 - `prepared.json`, `search.json`, `observations.json` and `refinements.json` of two default runs
   equal, by sha256, to the files measured on the parent commit of the change;
 - the default route's refinement results (40 rows of program, counts and loss bits) and its

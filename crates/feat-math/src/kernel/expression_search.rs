@@ -262,3 +262,141 @@ pub struct ExpressionSimplification {
     pub peak: usize,
 }
 // laneD:B20-rewrite-simplify end
+
+// laneD:B19-minimax-linearize begin
+/// The only degree `MathExpr::linearize_v2` fits: a subtree is replaced by a line in its one
+/// variable, `a0 + a1 x`, or not at all.
+pub const LINEARIZATION_DEGREE: usize = 1;
+
+/// Why a discrete minimax fit stopped. `max_error` and `levelled`, the two ends of a fit's error
+/// bracket, are residuals of floating-point evaluation, not certified bounds.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MinimaxStop {
+    /// The samples lie on the line to a few ulps: `max_error ≤ 4 ε max|f|`.
+    ExactFit,
+    /// The bracket closed to `1e-12 max_error`.
+    Converged,
+    /// The bracket closed to the rounding level `64 ε max|f|`, and the exchange could not move.
+    NoiseLimited,
+    /// The exchange returned its own reference with the bracket open: the best fit seen.
+    Stalled,
+    /// Too few alternating extrema, or a singular reference system: the best fit seen.
+    Degenerate,
+    /// The step cap was reached with the bracket open: the best fit seen.
+    IterationLimit,
+}
+
+impl MinimaxStop {
+    pub const ALL: [Self; 6] = [
+        Self::ExactFit,
+        Self::Converged,
+        Self::NoiseLimited,
+        Self::Stalled,
+        Self::Degenerate,
+        Self::IterationLimit,
+    ];
+
+    /// A stable snake_case name for records.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::ExactFit => "exact_fit",
+            Self::Converged => "converged",
+            Self::NoiseLimited => "noise_limited",
+            Self::Stalled => "stalled",
+            Self::Degenerate => "degenerate",
+            Self::IterationLimit => "iteration_limit",
+        }
+    }
+
+    /// Whether the bracket closed, to the stop's own tolerance, so that `max_error` is the
+    /// discrete minimax error up to rounding. A line is offered only from such a fit; the other
+    /// stops return the best fit seen, whose error need not be the minimax one.
+    pub fn closed(self) -> bool {
+        matches!(self, Self::ExactFit | Self::Converged | Self::NoiseLimited)
+    }
+}
+
+/// The degree-1 discrete minimax fit of one subtree on its sampled training rows.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LinearFit {
+    pub stop: MinimaxStop,
+    /// `[a0, a1]`: the line `a0 + a1 x` in the subtree's variable, as it is lowered.
+    pub coefficients: [f64; 2],
+    /// The smallest and largest sampled value of the variable: the training range. The error is
+    /// controlled only at the samples.
+    pub lo: f64,
+    pub hi: f64,
+    /// The lower end of the bracket, never above `max_error`.
+    pub levelled: f64,
+    /// The fit's largest error over the samples, evaluated in the fit's own basis.
+    pub max_error: f64,
+    /// The largest `|f|` over the samples, which sets the rounding level of the bound.
+    pub max_abs: f64,
+    /// The exchange step that produced the fit.
+    pub iterations: usize,
+    /// The exchange steps run.
+    pub steps: usize,
+}
+
+/// A line is refused before it is built when a training row faults in the subtree or its
+/// variable, or gives a value that is not finite.
+pub const LINEARIZE_UNSAMPLED: &str = "a training row faults or is not finite in the subtree";
+/// A caller's refusal of every subtree of an expression before any sample: the rows the
+/// expression reads could not be built without a fault (a pipeline stage's training input). The
+/// live `MathExpr::linearize_v2` never gives it, since its caller passes the rows; the recorded
+/// path takes it for a subtree without a fit, for every subtree of the expression or none.
+pub const LINEARIZE_INPUT_FAULTS: &str = "the stage's training input faults";
+/// Prefix of the refusal when the fit refuses its samples; the fit's reason follows.
+pub const LINEARIZE_FIT_REFUSED: &str = "the fit refused its samples";
+/// Prefix of the refusal when the fit's bracket did not close; the stop's name follows.
+pub const LINEARIZE_OPEN_BRACKET: &str = "the fit's bracket did not close";
+/// A coefficient of the line is not finite.
+pub const LINEARIZE_NON_FINITE: &str = "a coefficient of the line is not finite";
+/// The line has as many nodes as the subtree, or more.
+pub const LINEARIZE_NOT_SMALLER: &str = "the line is not smaller than the subtree";
+/// The line would take the expression over its node limit.
+pub const LINEARIZE_OVER_BUDGET: &str = "the line is over the expression's node budget";
+/// The line alone exceeds the expression limits.
+pub const LINEARIZE_OVER_LIMITS: &str = "the line exceeds the expression limits";
+/// The line's value leaves the evaluator's range on a training sample.
+pub const LINEARIZE_OUT_OF_RANGE: &str = "the line leaves the evaluator's range on a sample";
+/// The line's own largest error over the training samples is above the minimax bound.
+pub const LINEARIZE_MISSES_BOUND: &str = "the line misses the minimax bound on the samples";
+/// Prefix of the refusal when the profile refuses the expression with the line spliced in; the
+/// profile's reason follows.
+pub const LINEARIZE_PROFILE_REFUSED: &str = "the profile refused the linearized expression";
+
+/// One subtree `MathExpr::linearize_v2` considered, in the order it considers them.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SubtreeLinearization {
+    /// The subtree's position: child indices from the root.
+    pub path: Vec<usize>,
+    /// The subtree as it stands in the admitted expression.
+    pub subtree: MathExpr,
+    /// Its nodes, counted as the expression limits count them.
+    pub nodes: usize,
+    /// The degree-1 fit; `None` when the subtree was not sampled or the fit refused its samples.
+    pub fit: Option<LinearFit>,
+    /// The nodes of the lowered line, once it was built.
+    pub line_nodes: Option<usize>,
+    /// The lowered line's own largest error over the training samples, in its own evaluation
+    /// order, once it was measured. It is what the minimax bound holds.
+    pub lowered_error: Option<f64>,
+    /// The whole expression with the line in place of the subtree, admitted by the profile;
+    /// `None` when the line is refused.
+    pub expression: Option<MathExpr>,
+    /// Why no expression is offered.
+    pub refusal: Option<String>,
+}
+
+/// What `MathExpr::linearize_v2` measured on the training rows for one subtree, as a record
+/// keeps it. Everything else in a [`SubtreeLinearization`] re-derives from the expression and
+/// this, through `MathExpr::linearize_recorded_v2`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LinearizationEvidence {
+    pub fit: Option<LinearFit>,
+    pub lowered_error: Option<f64>,
+    /// Without a fit, why the subtree was not fitted; ignored with one.
+    pub refusal: Option<String>,
+}
+// laneD:B19-minimax-linearize end

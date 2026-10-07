@@ -6,12 +6,21 @@
 //! origin. Proposal work is not charged. Every proposal is recorded in [`PATH`]. With no move
 //! selected the search never calls this module and nothing is written.
 //!
-//! The one move is the exact rewrite pass ([`REWRITE_SATURATE`], origin [`REWRITE`]): every
+//! The first pass is the exact rewrite pass ([`REWRITE_SATURATE`], origin [`REWRITE`]): every
 //! `map` or `derive` stage's expression of each of the round's top `refinement.top_k` ranked
 //! parents with such a stage is simplified by `MathExpr::simplify_v2`, from the expression text
 //! alone. A smaller tree the profile refuses is discarded and its reason recorded, and so is a
 //! stage whose expression cannot be rewritten at all ([`NOT_RUN`]); the pass goes on either way.
-//! A later move adds its pass to [`finish_round`] and its id to the selection record.
+//!
+//! The second pass, run after the first when both are selected, is the bounded minimax
+//! linearization pass ([`MINIMAX_LINEARIZE`], origin [`LINEARIZE`]). For each of the round's top
+//! `refinement.top_k` ranked parents with a `derive` stage that has a subtree it can consider,
+//! `MathExpr::linearize_v2` fits each one-variable subtree near the root of each `derive` stage's
+//! expression by its degree-1 discrete minimax line, on that stage's training input alone, and
+//! offers the line in its place when the line is smaller, meets the fit's minimax bound on those
+//! rows, and the profile admits the result. Each offer is one child program, measured once; the
+//! measured score ranks it, never the line's error. Every considered subtree is recorded, offered
+//! or refused, with its fit, bound and reason.
 //!
 //! [`check`] re-derives the records against the published measurements. For each round and pass
 //! it ranks the measurements made before the pass, as the pass ranked them, and requires the
@@ -19,9 +28,12 @@
 //! ended in that round on its evaluations or seconds bound (exactly where the allowance ran out
 //! under an evaluations stop; under a seconds stop, where the start guard refused, which is not
 //! published). A rewrite record re-derives from its parent's text alone, and a measured rewritten
-//! program must score bit for bit as its parent.
+//! program must score bit for bit as its parent. A linearization record re-derives from its
+//! parent's text and the fit it records: the training rows are not published, so the fit, its
+//! range and the line's measured error are checked for consistency with each other and with the
+//! other records of the same stage expression, never measured again.
 
-// laneD:B20-rewrite-simplify (the module).
+// laneD:B20-rewrite-simplify (the module); laneD:B19-minimax-linearize (the second pass).
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use feat_math::{
@@ -40,12 +52,18 @@ use crate::{
         receipt::Search,
         records::{Faults, Measurement},
         refinement::parse_untrusted_pipeline,
-        EngineRecord, Kernel2Evaluator, Kernel2Observation, REWRITE, REWRITE_SATURATE,
+        EngineRecord, Kernel2Evaluator, Kernel2Observation, LINEARIZE, MINIMAX_LINEARIZE, REWRITE,
+        REWRITE_SATURATE,
     },
     prepare::Cut,
     search::{STOPPED_BY_EVALUATIONS, STOPPED_BY_SECONDS},
     sha256_hex,
 };
+
+// laneD:B19-minimax-linearize begin
+mod linearize;
+pub use linearize::{FitRecord, LinearizationRecord, PREFIX_FAULTS};
+// laneD:B19-minimax-linearize end
 
 /// Where a run publishes its move records, relative to its output directory.
 pub const PATH: &str = "search/cut-0/moves.json";
@@ -60,6 +78,12 @@ pub const DUPLICATE: &str = "duplicate";
 pub const NOT_STARTED: &str = "not_started";
 /// The admitted program was measured at `measurement`, whatever that measurement's status.
 pub const MEASURED: &str = "measured";
+// laneD:B19-minimax-linearize begin
+/// The shared allowance was spent before the admitted program could be measured; the pass ended
+/// and the run stopped on its evaluations bound. Only the linearization pass, which can offer
+/// several programs per parent, records it.
+pub const NO_ALLOWANCE: &str = "no_allowance";
+// laneD:B19-minimax-linearize end
 
 /// The stop of a stage whose expression could not be rewritten at all, because it does not parse
 /// or the profile refuses it: saturation never ran, and the stage's refusal says why.
@@ -79,7 +103,8 @@ pub struct MoveRecord {
     /// The assembled program, when a stage changed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub program: Option<String>,
-    /// One of [`UNCHANGED`], [`REFUSED`], [`DUPLICATE`], [`NOT_STARTED`] or [`MEASURED`].
+    /// One of [`UNCHANGED`], [`REFUSED`], [`DUPLICATE`], [`NOT_STARTED`], [`NO_ALLOWANCE`] or
+    /// [`MEASURED`].
     pub outcome: String,
     /// Why pipeline admission refused the assembled program.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -90,6 +115,12 @@ pub struct MoveRecord {
     /// The rewrite pass's record of each expression stage, in stage order.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rewrites: Vec<StageRewrite>,
+    // laneD:B19-minimax-linearize begin
+    /// The linearization pass's record of its one subtree; absent from the rewrite pass's
+    /// records.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub linearization: Option<LinearizationRecord>,
+    // laneD:B19-minimax-linearize end
 }
 
 /// The rewrite pass on one expression stage.
@@ -152,7 +183,9 @@ fn rewrite_stages(moves: &[MoveRecord]) -> impl Iterator<Item = &StageRewrite> {
 
 /// Whether the search runs [`finish_round`]: some move is selected.
 pub(super) fn selected(options: &Options) -> bool {
-    options.evaluator.engine().simplify
+    let engine = options.evaluator.engine();
+    // laneD:B19-minimax-linearize: or the linearization pass.
+    engine.simplify || engine.linearize
 }
 
 /// Runs the selected moves after a round's measurements and refinements, in a fixed order.
@@ -167,6 +200,11 @@ pub(super) fn finish_round(
     if options.evaluator.engine().simplify {
         simplify_round(state, cut, options, &mut may_start)?;
     }
+    // laneD:B19-minimax-linearize begin
+    if options.evaluator.engine().linearize {
+        linearize_round(state, cut, options, &mut may_start)?;
+    }
+    // laneD:B19-minimax-linearize end
     Ok(())
 }
 
@@ -201,6 +239,7 @@ fn simplify_round(
             reason: proposal.reason,
             measurement: None,
             rewrites: proposal.rewrites,
+            linearization: None,
         };
         if admitted {
             let child = record.program.clone().context("admitted proposal")?;
@@ -233,6 +272,83 @@ fn simplify_round(
     Ok(())
 }
 
+// laneD:B19-minimax-linearize begin
+/// The linearization pass over the top `refinement.top_k` ranked unique parents with a subtree it
+/// can consider. Every considered subtree of a parent is recorded, in order; each offered program
+/// not yet measured is measured once. `may_start` is checked before each parent and again before
+/// each measurement. Once it refuses, or the allowance is spent, the parent's remaining offers are
+/// recorded unmeasured and the pass ends.
+fn linearize_round(
+    state: &mut State,
+    cut: &Cut,
+    options: &Options,
+    may_start: &mut dyn FnMut() -> bool,
+) -> Result<()> {
+    let width = cut.train_x.first().map_or(0, Vec::len);
+    let parents = owned(ranked_parents(
+        &options.evaluator,
+        &state.observations,
+        MINIMAX_LINEARIZE,
+        options.refinement.top_k,
+    )?);
+    let mut ended: Option<&'static str> = None;
+    for (parent, parent_sha256) in parents {
+        if state.budget.remaining() == 0 || !may_start() {
+            break;
+        }
+        for proposal in linearize::propose(&options.evaluator, &parent, cut, width)? {
+            let mut record = MoveRecord {
+                id: MINIMAX_LINEARIZE.into(),
+                round: state.generation,
+                parent_sha256: parent_sha256.clone(),
+                program: proposal.program,
+                outcome: REFUSED.into(),
+                reason: proposal.reason,
+                measurement: None,
+                rewrites: Vec::new(),
+                linearization: Some(proposal.linearization),
+            };
+            if proposal.admitted {
+                let child = record.program.clone().context("admitted proposal")?;
+                let outcome = if state.seen.contains(&child) {
+                    DUPLICATE
+                } else if let Some(stop) = ended {
+                    stop
+                } else if state.budget.remaining() == 0 {
+                    ended = Some(NO_ALLOWANCE);
+                    NO_ALLOWANCE
+                } else if !may_start() {
+                    ended = Some(NOT_STARTED);
+                    NOT_STARTED
+                } else {
+                    let measured = options
+                        .evaluator
+                        .measure(
+                            &child,
+                            cut,
+                            state.generation,
+                            LINEARIZE,
+                            options.search.clock,
+                            &mut state.budget,
+                        )
+                        .expect("checked allowance");
+                    state.seen.insert(child);
+                    record.measurement = Some(state.observations.len());
+                    state.observations.push(measured);
+                    MEASURED
+                };
+                record.outcome = outcome.into();
+            }
+            state.moves.push(record);
+        }
+        if ended.is_some() {
+            break;
+        }
+    }
+    Ok(())
+}
+// laneD:B19-minimax-linearize end
+
 /// Whether `text` is a pipeline program with a `map` or `derive` stage. [`check`] reads the
 /// parents back from evidence, which is untrusted, so the text is parsed within
 /// [`parse_untrusted_pipeline`]'s bounds, and a program over them is not readable.
@@ -246,7 +362,8 @@ fn has_expression_stage(text: &str) -> bool {
 
 /// The parents the pass `id` reads from `observations`, the measurements made before it: the
 /// ranked programs, each at its first place, that the pass can read (an expression stage for the
-/// rewrite pass), at most `top_k`, in rank order. The search and [`check`] both call it.
+/// rewrite pass, a subtree it would consider for the linearization pass), at most `top_k`, in
+/// rank order. The search and [`check`] both call it.
 fn ranked_parents<'a>(
     evaluator: &Kernel2Evaluator,
     observations: &'a [Kernel2Observation],
@@ -263,7 +380,11 @@ fn ranked_parents<'a>(
         if !unique.insert(genome.clone()) {
             continue;
         }
-        let readable = id == REWRITE_SATURATE && has_expression_stage(genome);
+        let readable = if id == REWRITE_SATURATE {
+            has_expression_stage(genome)
+        } else {
+            linearize::offers(evaluator, genome)?
+        };
         if readable {
             parents.push(o);
         }
@@ -450,19 +571,20 @@ fn not_run_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
 ///
 /// For each round and each selected pass, in the order the search runs them, it ranks the
 /// measurements made before the pass as the pass ranked them and takes the parents the pass read
-/// (`ranked_parents`). The records must follow those parents in order, one record each: all of
-/// them, or a prefix when the pass stopped on the allowance or the start guard, which only the
-/// run's last round can do, in a run that stopped on its evaluations or seconds bound. Under an
-/// evaluations stop that prefix is exact: in the last round a parent's records start only while a
-/// measurement of the run is still to come, and a pass stops short only once every measurement is
-/// made. Under a seconds stop it is not: where the start guard refused is not published, so the
-/// last round's trailing records that measure nothing could be removed, or such records appended
-/// for the next ranked parents, without this check seeing it. Each record's proposal re-derives
-/// from its parent alone, and its outcome from the measurements: a measured child is the next
-/// measurement, of its pass's origin and round, and one whose program no earlier measurement has;
-/// a measured rewritten program scores bit for bit as its parent. Every [`REWRITE`] measurement is
-/// accounted for by exactly one record, and the selection record's pool refusal and not-run
-/// counts are counted again from the records.
+/// (`ranked_parents`). The records must follow those parents in order, one record (rewrite) or
+/// one record per considered subtree (linearization) each: all of them, or a prefix when the pass
+/// stopped on the allowance or the start guard, which only the run's last round can do, in a run
+/// that stopped on its evaluations or seconds bound. Under an evaluations stop that prefix is
+/// exact: in the last round a parent's records start only while a measurement of the run is still
+/// to come, and a pass stops short only once every measurement is made. Under a seconds stop it
+/// is not: where the start guard refused is not published, so the last round's trailing records
+/// that measure nothing could be removed, or such records appended for the next ranked parents,
+/// without this check seeing it. Each record's proposal re-derives from its parent alone (and,
+/// for a linearization record, the fit it records), and its outcome from the measurements: a
+/// measured child is the next measurement, of its pass's origin and round, and one whose program
+/// no earlier measurement has; a measured rewritten program scores bit for bit as its parent.
+/// Every [`REWRITE`] and [`LINEARIZE`] measurement is accounted for by exactly one record, and
+/// the selection record's pool refusal and not-run counts are counted again from the records.
 pub(crate) fn check(
     moves: &[MoveRecord],
     s: &Search,
@@ -510,7 +632,8 @@ pub(crate) fn check(
     for round in 0..s.generations {
         for id in &selection.ids {
             let (origin, later): (&str, &[&str]) = match id.as_str() {
-                REWRITE_SATURATE => (REWRITE, &[REWRITE]),
+                REWRITE_SATURATE => (REWRITE, &[REWRITE, LINEARIZE]),
+                MINIMAX_LINEARIZE => (LINEARIZE, &[LINEARIZE]),
                 _ => bail!("a move record names an unselected method"),
             };
             // The measurements made before the pass: every earlier round's, and this round's but
@@ -547,15 +670,62 @@ pub(crate) fn check(
                     .filter(|p| p.observation.program_sha256 == m.parent_sha256)
                     .copied()
                     .context("move records do not follow the ranked parents")?;
-                let proposal = propose(evaluator, &parent.observation.genome, width)?;
-                ensure!(
-                    proposal.rewrites == m.rewrites
-                        && proposal.program == m.program
-                        && proposal.reason == m.reason,
-                    "a move record does not re-derive from its parent"
-                );
-                accounted.outcome(m, proposal.admitted, proposal.outcome(), origin, parent)?;
-                next += 1;
+                // The records this parent accounts for, each with whether its program was
+                // admitted and the outcome it records when not.
+                let (group, expected): (&[MoveRecord], Vec<(bool, &str)>) = if m.id
+                    == REWRITE_SATURATE
+                {
+                    let proposal = propose(evaluator, &parent.observation.genome, width)?;
+                    ensure!(
+                        proposal.rewrites == m.rewrites
+                            && proposal.program == m.program
+                            && proposal.reason == m.reason
+                            && m.linearization.is_none(),
+                        "a move record does not re-derive from its parent"
+                    );
+                    (
+                        std::slice::from_ref(m),
+                        vec![(proposal.admitted, proposal.outcome())],
+                    )
+                } else {
+                    // laneD:B19-minimax-linearize begin
+                    let size = moves[next..]
+                        .iter()
+                        .take_while(|n| {
+                            n.id == m.id && n.round == m.round && n.parent_sha256 == m.parent_sha256
+                        })
+                        .count();
+                    let group = &moves[next..next + size];
+                    let recorded = group
+                        .iter()
+                        .map(|r| r.linearization.clone())
+                        .collect::<Option<Vec<_>>>()
+                        .context("a linearization move has no subtree record")?;
+                    let proposals = linearize::rederive(
+                        evaluator,
+                        &parent.observation.genome,
+                        width,
+                        &recorded,
+                    )?;
+                    ensure!(
+                        group.iter().zip(&proposals).all(|(r, p)| {
+                            r.linearization.as_ref() == Some(&p.linearization)
+                                && r.program == p.program
+                                && r.reason == p.reason
+                                && r.rewrites.is_empty()
+                        }),
+                        "a move record does not re-derive from its parent"
+                    );
+                    (
+                        group,
+                        proposals.iter().map(|p| (p.admitted, REFUSED)).collect(),
+                    )
+                    // laneD:B19-minimax-linearize end
+                };
+                for (m, (admitted, refused)) in group.iter().zip(expected) {
+                    accounted.outcome(m, admitted, refused, origin, parent)?;
+                }
+                next += group.len();
                 read += 1;
             }
             if accounted.ended || read < parents.len() {
@@ -585,7 +755,9 @@ pub(crate) fn check(
             == measurements
                 .iter()
                 .enumerate()
-                .filter(|(_, m)| m.observation.origin == REWRITE)
+                .filter(|(_, m)| {
+                    m.observation.origin == REWRITE || m.observation.origin == LINEARIZE
+                })
                 .map(|(i, _)| i)
                 .collect(),
         "move measurements do not re-derive"
@@ -624,7 +796,7 @@ struct Accounted<'a> {
     measured: BTreeSet<usize>,
     /// How many measurements had been made when the current record's pass reached it.
     known: usize,
-    /// A pass ended on its start guard; nothing is measured after it.
+    /// A pass ended on its start guard or its allowance; nothing is measured after it.
     ended: bool,
 }
 
@@ -664,6 +836,17 @@ impl Accounted<'_> {
                 );
                 self.ended = true;
             }
+            // laneD:B19-minimax-linearize
+            NO_ALLOWANCE if origin == LINEARIZE => {
+                ensure!(
+                    admitted
+                        && m.measurement.is_none()
+                        && !known
+                        && s.stopped_by == STOPPED_BY_EVALUATIONS,
+                    "a move with no allowance lacks an evaluations stop"
+                );
+                self.ended = true;
+            }
             MEASURED => {
                 let index = m.measurement.context("a measured move has no index")?;
                 let child = self
@@ -697,3 +880,7 @@ impl Accounted<'_> {
 
 #[cfg(test)]
 mod tests;
+
+// laneD:B19-minimax-linearize
+#[cfg(test)]
+mod linearize_tests;

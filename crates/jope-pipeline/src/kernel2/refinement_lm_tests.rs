@@ -34,6 +34,7 @@ fn lm_selection() -> EngineSelection {
         refine: RefineMethod::Lm(LmOptions::default()),
         archive: None,
         simplify: false,
+        linearize: false,
     }
 }
 
@@ -625,6 +626,7 @@ fn the_selection_needs_an_allowance_it_can_run_and_records_canonically() {
             }),
             archive: None,
             simplify: false,
+            linearize: false,
         })
         .is_err());
     // Round trip, and refusal of anything the selection would not write back.
@@ -636,6 +638,7 @@ fn the_selection_needs_an_allowance_it_can_run_and_records_canonically() {
             }),
             archive: None,
             simplify: false,
+            linearize: false,
         };
         let record = selection.record().unwrap();
         assert_eq!(record.selection().unwrap(), selection);
@@ -752,6 +755,7 @@ fn lm_one() -> Kernel2Evaluator {
             }),
             archive: None,
             simplify: false,
+            linearize: false,
         })
         .unwrap()
 }
@@ -1545,7 +1549,9 @@ fn extreme_surrogate_counts_are_refused_without_overflow() {
 /// evidence is untrusted, so the trace check parses only the pipeline form and counts each
 /// expression source's nesting bytes before the expression parser sees it. Unary plus and
 /// redundant parentheses never reach the parsed tree, so a source at the limit binds exactly as
-/// its plain form does; one byte more is refused unparsed.
+/// its plain form does; one byte more is refused unparsed. A closed-form parent is refused by the
+/// pre-parse check's own message (review 03, B17-R03-PIPELINE-GUARD-COVERAGE): the variant check
+/// after the parse refuses it too, but without that message, so the order is observed.
 #[test]
 fn an_untrusted_parent_expression_is_bounded_before_it_is_parsed() {
     use super::refinement::{MAX_PARENT_EXPRESSION_NESTING, SMALL_ALLOWANCE};
@@ -1585,5 +1591,8 @@ fn an_untrusted_parent_expression_is_bounded_before_it_is_parsed() {
     }
     let closed_form = format!("(sym raw \"{}\")", plus(room + 1));
     let error = trace.check(&closed_form, "sites", 60).unwrap_err();
-    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+    assert!(
+        format!("{error:#}").contains("not in the pipeline form"),
+        "{error:#}"
+    );
 }
