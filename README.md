@@ -20,13 +20,17 @@ encodings→program neural policy will ship because the product needs a router; 
 The 1.0.0 draft in [`CHANGELOG.md`](CHANGELOG.md) includes the GP language and its opt-in
 LM refinement, Pareto archive, expression rewrite and minimax subtree routes. It also records
 train-only raw-context admission and publication bindings, sealed-IPC descriptor ownership,
-compiler caching and independently collected teacher-handoff checks. Source and fixture
+compiler caching and independently collected teacher-handoff checks. The merged GP-2 HWM
+publisher binds G3 and catalog roles to pinned decisions and retains their provenance (#256).
+Source and fixture
 receipts retain their scope; these changes do not establish a live learning or transfer result.
 
 The [pending release queue](CHANGELOG.md#pending-release-queue) lists candidates awaiting
 serialized merge and receiving-main qualification. This draft is local and unpublished; final
-release notes must match the qualified merged source. It is prepared on main `df760a3ed`, whose
-full-main CPU qualification is still failing. The 1.0.0 version and local metadata checks do not
+release notes must match the qualified merged source. It is prepared on main `3d1d0819a`, whose
+receiving-main CPU run is still pending at this observation. The authority executor and
+four-thread PR fixture dispatch fix (#258) has exact-head CI and independent approval, and
+remains pending merge. The 1.0.0 version and local metadata checks do not
 establish release readiness. The current direction and landing record
 are in [`MASTER_PLAN.md`](MASTER_PLAN.md), and release verification is in
 [`docs/release/README.md`](docs/release/README.md).

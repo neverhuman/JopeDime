@@ -8,24 +8,25 @@ qualification.
 
 ### Pending release queue
 
-Local draft as of 2026-10-07 19:56 UTC, based on main `df760a3ed`. These candidates are pending, not merged release
+Local draft as of 2026-10-07 21:38 UTC, based on main `3d1d0819a`. These candidates are pending, not merged release
 capabilities. Their inclusion requires the owner's serialized merge and fresh receiving-main
 qualification. The source and test receipts for an open PR do not qualify the release.
 
 | Order | Pending change | Candidate |
 | --- | --- | --- |
-| 1 | Authority fixture executor and deterministic sequential start clock | [#258](https://github.com/neverhuman/JopeDime/pull/258), published `53eebf69`; local CI-concurrency correction `b87f97d2` still awaiting the writer's gate and push |
-| 2 | S1 HWM publication for G3 and catalog contexts from pinned P3 decisions | [#256](https://github.com/neverhuman/JopeDime/pull/256), `fc11da3d` |
-| 3 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
-| 4 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
-| 5 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
-| Owner-routed | Verify and snapshot pinned artifacts before decoding | [#259](https://github.com/neverhuman/JopeDime/pull/259), `d397470c`; not yet sequenced in the five-item merge queue |
+| 1 | Authority fixture executor, deterministic sequential start clock and four-thread PR fixture dispatch | [#258](https://github.com/neverhuman/JopeDime/pull/258), `b87f97d2`; exact-head CI and independent approval recorded, awaiting merge |
+| 2 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
+| 3 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
+| 4 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
+| Queue tail | Verify and snapshot pinned artifacts before decoding | [#259](https://github.com/neverhuman/JopeDime/pull/259), `d397470c` |
+| Queue tail | Verify corpus records through the frozen input stream | [#260](https://github.com/neverhuman/JopeDime/pull/260), `874fa112` |
+| Owner-routed | Correct feasibility allocator safety rationales | [#261](https://github.com/neverhuman/JopeDime/pull/261), `e055b63c` |
 
 Reconcile this list against the final merged source before publication; remove pending notes
 from the shipping release draft once each item has its terminal disposition.
-The owner's 19:56 UTC exception allows Lane D to merge #256 at its exact qualified head after
-21:00 UTC if #258 is still pending. It does not qualify the receiving main or this release.
-Main `df760a3ed` still has failing full-main CPU results; the release qualification remains open.
+#256 merged at `3d1d0819a` under the owner's recorded MAIN-DF-3 exception. Its receiving-main
+CPU run is still pending at this draft's observation time; the exception does not qualify the
+receiving main or this release. Prior failing main results remain historical evidence.
 
 ## [1.0.0] - 2026-10-07
 
@@ -33,9 +34,9 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Unpublished local release preparation. Source base is df760a3ed315df45f3ece18b83d94a54833047cf.
-The owner's 19:56 UTC order authorizes preparation on this base, not publication or qualification.
-#254 is now included in the source base, after preserving the prior local draft in an archive ref.
+<!-- Unpublished local release preparation. Source base is 3d1d0819ac2026d1e3b9c78cb6fbddf1b754bb77.
+The owner's 21:28 UTC order authorizes preparation on this base, not publication or qualification.
+#254 and #256 are included in the source base; prior local drafts remain in archive refs.
 Earlier merged #246/#247/#248/#250/#252/#253 are now itemized; #249 landed through
 an owner-authorized squash at 8a4b2fdfe, with the native PR subsequently closed by pointer.
 Pending queue items above are not merged. Finalize the date and notes on qualified final main
@@ -146,6 +147,10 @@ merged; its opt-in routes do not establish profile promotion or measured utility
   rights-specific manifests, create-only writes, exact-version readbacks and resumable delivery.
   Omit outer-test data and scores; refuse output traversal before client or state creation.
   Local and fake-store qualification remains distinct from live S3 persistence (#236).
+- Extend the HWM publisher to G3 and catalog contexts using header-declared ledger lanes and
+  pinned family and P3 approval decisions. Refuse missing, conflicting, unapproved or held-out
+  roles; retain the decision source and digest in admitted record provenance. The publication
+  implementation does not establish training, transfer or serving qualification (#256).
 - Publish raw GPU encoding manifests with cut identity inherited only from an identity-matching
   source with a validated raw-split digest. Bind the executed adapter, frozen manifest tool and
   transport digests in the canonical manifest; retain create-only, versioned readback and
