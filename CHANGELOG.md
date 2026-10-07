@@ -8,25 +8,24 @@ qualification.
 
 ### Pending release queue
 
-Local draft as of 2026-10-07 21:38 UTC, based on main `3d1d0819a`. These candidates are pending, not merged release
+Local draft as of 2026-10-07 21:58 UTC, based on main `024f4f040`. These candidates are pending, not merged release
 capabilities. Their inclusion requires the owner's serialized merge and fresh receiving-main
 qualification. The source and test receipts for an open PR do not qualify the release.
 
 | Order | Pending change | Candidate |
 | --- | --- | --- |
-| 1 | Authority fixture executor, deterministic sequential start clock and four-thread PR fixture dispatch | [#258](https://github.com/neverhuman/JopeDime/pull/258), `b87f97d2`; exact-head CI and independent approval recorded, awaiting merge |
-| 2 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
-| 3 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
-| 4 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
+| 1 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
+| 2 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
+| 3 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
 | Queue tail | Verify and snapshot pinned artifacts before decoding | [#259](https://github.com/neverhuman/JopeDime/pull/259), `d397470c` |
 | Queue tail | Bind score-corpus parsing to its authenticated streamed ledger | [#260](https://github.com/neverhuman/JopeDime/pull/260), `874fa112` |
 | Owner-routed | Correct feasibility allocator safety rationales | [#261](https://github.com/neverhuman/JopeDime/pull/261), `e055b63c` |
 
 Reconcile this list against the final merged source before publication; remove pending notes
 from the shipping release draft once each item has its terminal disposition.
-#256 merged at `3d1d0819a` under the owner's recorded MAIN-DF-3 exception. Its receiving-main
-CPU run is still pending at this draft's observation time; the exception does not qualify the
-receiving main or this release. Prior failing main results remain historical evidence.
+#256 merged at `3d1d0819a` under the owner's recorded MAIN-DF-3 exception; #258 merged at
+`024f4f040` under MAIN-DF-2. Receiving-main qualification and the final release proof remain
+pending for this local draft. Prior failing main results remain historical evidence.
 
 ## [1.0.0] - 2026-10-07
 
@@ -34,9 +33,9 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Unpublished local release preparation. Source base is 3d1d0819ac2026d1e3b9c78cb6fbddf1b754bb77.
+<!-- Unpublished local release preparation. Source base is 024f4f040c34f7b20e0f9980c45fb216d4439f21.
 The owner's 21:28 UTC order authorizes preparation on this base, not publication or qualification.
-#254 and #256 are included in the source base; prior local drafts remain in archive refs.
+#254, #256 and #258 are included in the source base; prior local drafts remain in archive refs.
 Earlier merged #246/#247/#248/#250/#252/#253 are now itemized; #249 landed through
 an owner-authorized squash at 8a4b2fdfe, with the native PR subsequently closed by pointer.
 Pending queue items above are not merged. Finalize the date and notes on qualified final main
@@ -170,6 +169,10 @@ merged; its opt-in routes do not establish profile promotion or measured utility
 
 ### CI, build and release
 
+- Prepare and pin the same-source, default-feature no-fit executor before authority lifecycle
+  fixtures begin their start grant. Retain the real child identity and custody fences; use the
+  existing logical clock in the sequential token fixture. Bound PR Rust fixture dispatch to
+  four test threads while retaining test inventory, assertions, profiles and deadlines (#258).
 - Import frozen standalone teacher-v2 search/worker workspaces and their Python custody record
   (#129). Refresh only the `feat-math` version entry in affected Lambda working locks for 1.0.0,
   recording their current tree hashes while retaining the original frozen snapshot hashes.
