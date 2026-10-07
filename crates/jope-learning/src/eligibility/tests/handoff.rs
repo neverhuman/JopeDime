@@ -36,81 +36,132 @@ fn tampered_in(
     evidence
 }
 
-#[test]
-fn teacher_admission_consumes_an_authenticated_w2_handoff() {
-    type Case = (&'static str, &'static str, fn(&mut HandoffParts));
-    let cases: [Case; 13] = [
-        (
-            "handed off to the accepted policy proposal worker",
-            "handed off for consumer",
-            |p| p.handoff["consumer"] = "accepted_policy_proposal".into(),
-        ),
-        (
-            "another producer executable in the release",
-            "ProducerNotAuthenticated",
-            |p| p.handoff["release"]["producer_sha256"] = sha256_hex(b"another producer").into(),
-        ),
-        ("another encoder closure", "ProducerNotAuthenticated", |p| {
-            p.handoff["release"]["encoder"]["foundation_weights"] =
-                sha256_hex(b"other weights").into()
-        }),
-        (
-            "another W2 qualification",
-            "ProducerNotAuthenticated",
-            |p| p.handoff["qualification_sha256"] = sha256_hex(b"another qualification").into(),
-        ),
-        (
-            "another transformation chain",
-            "transformation chain",
-            |p| p.handoff["transformations"][0] = "another.transformation/v1".into(),
-        ),
-        (
-            "a handoff of another context",
-            "is not the handed-off context",
-            |p| p.handoff["context_sha256"] = sha256_hex(b"another context").into(),
-        ),
-        ("a handoff scoped to another dataset", "input scope", |p| {
-            p.handoff["scope"]["training"]["dataset_sha256"] = sha256_hex(b"another dataset").into()
-        }),
-        (
-            "an unknown handoff field",
-            "not a jope.cpu-context-handoff/v1 record",
-            |p| p.handoff["issued_by"] = "the candidate".into(),
-        ),
-        (
-            "an execution of another executable",
-            "ProducerNotAuthenticated",
-            |p| {
-                p.job.command.program.sha256 = sha256_hex(b"another executable");
-                p.reseal();
-            },
-        ),
-        (
-            "a failed context execution",
-            "UnprovenContextExecution",
-            |p| p.outcome.exit_code = Some(1),
-        ),
-        (
-            "an artifact the job never wrote",
-            "UnprovenContextExecution",
-            |p| p.handoff["artifact_sha256"] = sha256_hex(b"an artifact from elsewhere").into(),
-        ),
-        (
-            "an input the job never read",
-            "UnprovenContextExecution",
-            |p| p.handoff["scope"]["input_sha256"] = sha256_hex(b"another input").into(),
-        ),
-        (
-            "an execution without the pool memory cap",
-            "UnprovenContextExecution",
-            |p| p.outcome.consumption.fit_memory_limit_bytes = None,
-        ),
-    ];
-    for (label, expected, tamper) in cases {
-        let f = fixture(Task::Regression, 5);
-        assert_refused(&f, &tampered(&f, tamper), expected, label);
-    }
+// Collect independent security cases separately. Each still creates its own durable five-fold
+// fixture and uses the unchanged nextest deadline; filesystem contention must not accumulate
+// nineteen fixtures into one test's wall-clock budget.
+fn assert_handoff_refusal(label: &str, expected: &str, tamper: impl FnOnce(&mut HandoffParts)) {
+    let f = fixture(Task::Regression, 5);
+    assert_refused(&f, &tampered(&f, tamper), expected, label);
+}
 
+#[test]
+fn teacher_handoff_refuses_another_consumer() {
+    assert_handoff_refusal(
+        "handed off to the accepted policy proposal worker",
+        "handed off for consumer",
+        |p| p.handoff["consumer"] = "accepted_policy_proposal".into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_another_producer_executable() {
+    assert_handoff_refusal(
+        "another producer executable in the release",
+        "ProducerNotAuthenticated",
+        |p| p.handoff["release"]["producer_sha256"] = sha256_hex(b"another producer").into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_another_encoder_closure() {
+    assert_handoff_refusal("another encoder closure", "ProducerNotAuthenticated", |p| {
+        p.handoff["release"]["encoder"]["foundation_weights"] = sha256_hex(b"other weights").into()
+    });
+}
+
+#[test]
+fn teacher_handoff_refuses_another_w2_qualification() {
+    assert_handoff_refusal(
+        "another W2 qualification",
+        "ProducerNotAuthenticated",
+        |p| p.handoff["qualification_sha256"] = sha256_hex(b"another qualification").into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_another_transformation_chain() {
+    assert_handoff_refusal(
+        "another transformation chain",
+        "transformation chain",
+        |p| p.handoff["transformations"][0] = "another.transformation/v1".into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_another_context_digest() {
+    assert_handoff_refusal(
+        "a handoff of another context",
+        "is not the handed-off context",
+        |p| p.handoff["context_sha256"] = sha256_hex(b"another context").into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_another_dataset_scope() {
+    assert_handoff_refusal("a handoff scoped to another dataset", "input scope", |p| {
+        p.handoff["scope"]["training"]["dataset_sha256"] = sha256_hex(b"another dataset").into()
+    });
+}
+
+#[test]
+fn teacher_handoff_refuses_unknown_fields() {
+    assert_handoff_refusal(
+        "an unknown handoff field",
+        "not a jope.cpu-context-handoff/v1 record",
+        |p| p.handoff["issued_by"] = "the candidate".into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_another_executed_program() {
+    assert_handoff_refusal(
+        "an execution of another executable",
+        "ProducerNotAuthenticated",
+        |p| {
+            p.job.command.program.sha256 = sha256_hex(b"another executable");
+            p.reseal();
+        },
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_failed_execution() {
+    assert_handoff_refusal(
+        "a failed context execution",
+        "UnprovenContextExecution",
+        |p| p.outcome.exit_code = Some(1),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_an_unwritten_artifact() {
+    assert_handoff_refusal(
+        "an artifact the job never wrote",
+        "UnprovenContextExecution",
+        |p| p.handoff["artifact_sha256"] = sha256_hex(b"an artifact from elsewhere").into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_an_unread_input() {
+    assert_handoff_refusal(
+        "an input the job never read",
+        "UnprovenContextExecution",
+        |p| p.handoff["scope"]["input_sha256"] = sha256_hex(b"another input").into(),
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_execution_without_memory_cap() {
+    assert_handoff_refusal(
+        "an execution without the pool memory cap",
+        "UnprovenContextExecution",
+        |p| p.outcome.consumption.fit_memory_limit_bytes = None,
+    );
+}
+
+#[test]
+fn teacher_handoff_refuses_execution_before_freeze() {
     // A context executed in a window that opened before the freeze preregistered its producer.
     let f = fixture(Task::Regression, 5);
     let early = ExecutionWindow {
@@ -124,7 +175,10 @@ fn teacher_admission_consumes_an_authenticated_w2_handoff() {
         "before the freeze",
         "context executed before the freeze",
     );
+}
 
+#[test]
+fn teacher_handoff_refuses_missing_handoff() {
     // No handoff at all: a self-declared encoder receipt is not a produced context.
     let f = fixture(Task::Regression, 5);
     let mut evidence = f.evidence.clone();
@@ -134,7 +188,10 @@ fn teacher_admission_consumes_an_authenticated_w2_handoff() {
         format!("{:#}", qualify(&f.state, &f.record, &evidence).unwrap_err())
             .contains("new, fully provenanced qualification")
     );
+}
 
+#[test]
+fn teacher_handoff_refuses_revoked_handoff() {
     // A revoked handoff (W12-T05) refuses the teacher that consumed it.
     let f = fixture(Task::Regression, 5);
     let handoff = f
@@ -154,28 +211,41 @@ fn teacher_admission_consumes_an_authenticated_w2_handoff() {
         &["E-context-handoff"],
     );
     assert_refused(&f, &f.evidence, "RevokedEvidence", "revoked handoff");
+}
 
-    // Positive control, for each task: the preregistered producer's handoff admits, and the
-    // qualification records the handoff it was admitted under.
-    for task in [Task::Regression, Task::Binary, Task::Multiclass] {
-        let f = fixture(task, 5);
-        assert_positive_control(&f);
-        let qualification = revalidate_qualification(&f.state, &f.record).unwrap();
-        assert_eq!(
-            qualification.context_handoff_sha256,
-            Some(
-                f.evidence
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .handoff
-                    .as_ref()
-                    .unwrap()
-                    .handoff_sha256
-                    .clone()
-            )
-        );
-    }
+fn assert_authenticated_handoff_admits(task: Task) {
+    let f = fixture(task, 5);
+    assert_positive_control(&f);
+    let qualification = revalidate_qualification(&f.state, &f.record).unwrap();
+    assert_eq!(
+        qualification.context_handoff_sha256,
+        Some(
+            f.evidence
+                .context
+                .as_ref()
+                .unwrap()
+                .handoff
+                .as_ref()
+                .unwrap()
+                .handoff_sha256
+                .clone()
+        )
+    );
+}
+
+#[test]
+fn teacher_admission_consumes_an_authenticated_w2_handoff() {
+    assert_authenticated_handoff_admits(Task::Regression);
+}
+
+#[test]
+fn teacher_admission_consumes_an_authenticated_w2_handoff_binary() {
+    assert_authenticated_handoff_admits(Task::Binary);
+}
+
+#[test]
+fn teacher_admission_consumes_an_authenticated_w2_handoff_multiclass() {
+    assert_authenticated_handoff_admits(Task::Multiclass);
 }
 
 #[test]
