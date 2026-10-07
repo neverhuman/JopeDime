@@ -14,6 +14,7 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
+from .artifact_pins import artifact_sha256, load_joblib_pinned
 from .classical import (
     PairIndex,
     RetrievalQuery,
@@ -1174,6 +1175,14 @@ def _write_bundle_manifest(
         "scorer": dict(scorer),
         "report": dict(report),
     }
+    # Bind all joblib load paths, including an optional candidate meta scorer.
+    artifact_paths = {vectorizer_artifact, *manifest["classical_models"].values()}
+    artifact_paths.update(
+        str(scorer[key]) for key in ("artifact", "candidate_meta_artifact") if scorer.get(key)
+    )
+    manifest["artifact_sha256"] = {
+        rel_path: artifact_sha256(bundle_dir / rel_path) for rel_path in sorted(artifact_paths)
+    }
     (bundle_dir / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
@@ -1582,9 +1591,9 @@ class FusedTargetEncoder:
         vectorizer_path = self._artifact_path(self.manifest["vectorizer"]["artifact"])
         if not vectorizer_path.is_file():
             raise FileNotFoundError(f"Fused vectorizer artifact is missing: {vectorizer_path}")
-        import joblib
-
-        self.vectorizer = joblib.load(vectorizer_path)
+        self.vectorizer = self._load_joblib_artifact(
+            self.manifest["vectorizer"]["artifact"], context="Fused vectorizer"
+        )
         if list(self.vectorizer.get("feature_names", [])) != self.feature_names:
             raise ValueError("Fused vectorizer feature names do not match manifest feature names")
 
@@ -1603,7 +1612,7 @@ class FusedTargetEncoder:
             path = self._artifact_path(rel_path)
             if not path.is_file():
                 raise FileNotFoundError(f"Fused classical model artifact is missing for {name}: {path}")
-            bundle = joblib.load(path)
+            bundle = self._load_joblib_artifact(rel_path, context=f"Fused classical model {name}")
             if not isinstance(bundle, Mapping) or bundle.get("model") is None:
                 raise ValueError(f"Invalid fused classical model artifact for {name}: {path}")
             self.classical_bundles[str(name)] = bundle
@@ -1617,7 +1626,13 @@ class FusedTargetEncoder:
             meta_path = self._artifact_path(str(meta_rel))
             if not meta_path.is_file():
                 raise FileNotFoundError(f"Fused meta scorer artifact is missing: {meta_path}")
-            self.meta_artifact = joblib.load(meta_path)
+            self.meta_artifact = self._load_joblib_artifact(meta_rel, context="Fused meta scorer")
+
+    def _load_joblib_artifact(self, rel_path: object, *, context: str):
+        pins = self.manifest.get("artifact_sha256", {})
+        if not isinstance(pins, Mapping):
+            raise ValueError("Fused manifest artifact SHA-256 pins must be a mapping")
+        return load_joblib_pinned(self._artifact_path(rel_path), pins.get(str(rel_path)), context=context)
 
     def _artifact_path(self, rel_path: object) -> Path:
         if rel_path is None:
