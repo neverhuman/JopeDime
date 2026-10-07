@@ -264,7 +264,7 @@
         "collection/execution/deselection counts",
         "pytest results",
         "Ruff exit",
-        "DL offline subreceipt: 628 collected identities, 589 synthetic executions, 39 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
+        "DL offline subreceipt: 701 collected identities, 662 synthetic executions, 39 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -8910,7 +8910,7 @@
         "python"
       ],
       "dispositions": [],
-      "scope": "21 synthetic offline HWM publisher fixtures, collected by run_lane_offline.py: pinned input/family/cut/program bindings, forbidden-only perturbation plus authorized control, rights and dev-scope preservation, no-selection terminal accounting, source substitutions/missing artifacts/torn and duplicated ledgers, create-only conflicts, interrupted-write recovery, exact-VersionId corruption and duplicate delivery; parent-traversal output aliases are refused before clients/state and leave input custody unchanged; dry-run cannot construct AWS clients or modify the original budget. No private-data exclusion or operational training/S3 claim."
+      "scope": "38 synthetic offline HWM publisher fixtures, collected by run_lane_offline.py: pinned input/family/cut/program bindings, the campaign-2 (G3-appended) receiving path (one research-only declared ledger, the c2 header schema, P3 family/role of appended identities from the sha-bound, owner-named G3 decision file with the pinned registry/holdout keeping precedence) and its must-fail controls (decided heldout/sealed/roleless roles, row role disagreeing with the decision, decision-file byte swap or an unnamed G3 file, family absent from the decisions, decisions on a campaign-1 header, unknown or missing declared lane), the catalog-v246 role authority (approved sha-bound decision files bound by the input list, each with its pinned Lane A/Lane C approval record; registry/holdout precedence; records name their family_source; two bound files must agree) and its must-fail controls (unknown role, dataset absent from the decisions, sealed/heldout/disagreeing role, decision byte swap, unapproved decision, missing or non-approving approval record), registry records keeping the merged payload, forbidden-only perturbation plus authorized control, rights and dev-scope preservation, no-selection terminal accounting, source substitutions/missing artifacts/torn and duplicated ledgers, create-only conflicts, interrupted-write recovery, exact-VersionId corruption and duplicate delivery; parent-traversal output aliases are refused before clients/state and leave input custody unchanged; dry-run cannot construct AWS clients or modify the original budget. No private-data exclusion or operational training/S3 claim."
     }
   }
 }
