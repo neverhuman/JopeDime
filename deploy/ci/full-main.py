@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Run independent CPU families and report every outcome without turning failures green."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
+import urllib.request
 
 import receipt
 import results
@@ -91,11 +94,105 @@ def summarize(mapping, output, expected):
             'note': 'Ignored tests and Python xbabe2-marked tests remain explicit non-execution; research scripts are not collected tests. Qualification and soak are unstarted.'}
 
 
+VERSION = '0.15.0'
+ARCHIVE = f'sccache-v{VERSION}-x86_64-unknown-linux-musl.tar.gz'
+ARCHIVE_SHA256 = '782d2b5dd7ae0a55ebe368ab258114d0928d019ac2d949ab85d5d02f3926709e'
+BINARY_SHA256 = 'fcfae9d4f44c5ad74b73953bc052d385ec08f437f3c02f3be10590b863503359'
+URL = f'https://github.com/mozilla/sccache/releases/download/v{VERSION}/{ARCHIVE}'
+
+
+def cache_digest(path):
+    with path.open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def install_compiler_cache(target):
+    tools = target / 'compiler-cache-tools'
+    version_dir = tools / f'v{VERSION}'
+    if tools.is_symlink() or version_dir.is_symlink():
+        raise ValueError('unsafe compiler cache tool directory')
+    tools.mkdir(exist_ok=True)
+    archive = tools / ARCHIVE
+    # sccache uses argv[0] to recognize its compiler-wrapper mode. Keep its name.
+    version_dir.mkdir(exist_ok=True)
+    binary = version_dir / 'sccache'
+    if not archive.exists():
+        with urllib.request.urlopen(URL, timeout=60) as response, archive.open('xb') as stream:
+            while data := response.read(1024 * 1024):
+                stream.write(data)
+    if archive.is_symlink() or cache_digest(archive) != ARCHIVE_SHA256:
+        raise ValueError('compiler cache archive checksum mismatch')
+    if not binary.exists():
+        with tarfile.open(archive) as contents:
+            member = contents.getmember(ARCHIVE.removesuffix('.tar.gz') + '/sccache')
+            if not member.isfile():
+                raise ValueError('compiler cache executable is not a regular file')
+            data = contents.extractfile(member).read()
+        if hashlib.sha256(data).hexdigest() != BINARY_SHA256:
+            raise ValueError('compiler cache executable checksum mismatch')
+        with binary.open('xb') as stream:
+            stream.write(data)
+        binary.chmod(0o755)
+    if binary.is_symlink() or cache_digest(binary) != BINARY_SHA256:
+        raise ValueError('compiler cache executable checksum mismatch')
+    return binary
+
+
+def setup_compiler_cache(output):
+    # PR and trusted-main targets are separate. Never share this cache with PRs.
+    if os.environ['JOPE_RUNNER_LANE'] != 'full' or os.environ['GITHUB_REF'] != 'refs/heads/main':
+        raise ValueError('compiler cache is restricted to the trusted full lane on main')
+    if os.environ['CARGO_INCREMENTAL'] != '0':
+        raise ValueError('compiler cache requires incremental compilation disabled')
+    target = Path(os.environ['CARGO_TARGET_DIR']).resolve(strict=True)
+    if (target / 'compiler-cache').is_symlink():
+        raise ValueError('unsafe compiler cache data directory')
+    output.mkdir(parents=True, exist_ok=False)
+    binary = install_compiler_cache(target)
+    conf = output.resolve() / 'sccache.toml'
+    conf.write_text('[cache.disk]\ndir = ' + json.dumps(str(target / 'compiler-cache')) + '\nsize = 21474836480\n')
+    environment = dict(RUSTC_WRAPPER=str(binary), SCCACHE_CONF=str(conf),
+                       SCCACHE_DIR=str(target / 'compiler-cache'), SCCACHE_CACHE_SIZE='20G',
+                       SCCACHE_IDLE_TIMEOUT='0',
+                       SCCACHE_SERVER_UDS=str(Path(os.environ['RUNNER_TEMP']) / 'full-sccache.sock'))
+    subprocess.run([str(binary), '--start-server'], env=dict(os.environ, **environment), check=True, timeout=30)
+    with Path(os.environ['GITHUB_ENV']).open('a') as stream:
+        for key, value in environment.items():
+            stream.write(f'{key}={value}\n')
+    (output / 'setup.json').write_text(json.dumps(dict(
+        source_sha=os.environ['GITHUB_SHA'], version=VERSION, archive_sha256=ARCHIVE_SHA256,
+        executable_sha256=BINARY_SHA256, environment=environment,
+        note='Library compile cache only; executable links, test execution and feature families remain unchanged.'), indent=2) + '\n')
+
+
+def compiler_cache_stats(output):
+    binary = Path(os.environ['RUSTC_WRAPPER'])
+    if binary.is_symlink() or cache_digest(binary) != BINARY_SHA256:
+        raise ValueError('compiler cache executable checksum mismatch')
+    data = json.loads(subprocess.check_output([str(binary), '--show-stats', '--stats-format=json'], text=True))
+    # Keep the existing family artifact layout intact; publish cache evidence below it.
+    setup_dir = Path(os.environ['SCCACHE_CONF']).parent
+    record = json.loads((setup_dir / 'setup.json').read_text())
+    if record['source_sha'] != os.environ['GITHUB_SHA']:
+        raise ValueError('compiler cache setup source mismatch')
+    output.mkdir(parents=True, exist_ok=False)
+    (output / 'setup.json').write_text(json.dumps(record, indent=2) + '\n')
+    (output / 'sccache.toml').write_bytes((setup_dir / 'sccache.toml').read_bytes())
+    (output / 'stats.json').write_text(json.dumps(dict(source_sha=os.environ['GITHUB_SHA'], **data), indent=2) + '\n')
+    print(json.dumps(data, indent=2))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['run', 'summarize'])
+    parser.add_argument('command', choices=['run', 'summarize', 'cache-setup', 'cache-stats'])
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    if args.command == 'cache-setup':
+        setup_compiler_cache(args.output)
+        return 0
+    if args.command == 'cache-stats':
+        compiler_cache_stats(args.output)
+        return 0
     mapping = json.loads((ROOT / 'deploy/ci/coverage.json').read_text())
     if args.command == 'run':
         return run(mapping, args.output)
