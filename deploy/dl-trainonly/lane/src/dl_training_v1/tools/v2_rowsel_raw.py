@@ -31,6 +31,8 @@ import sys
 import time
 from pathlib import Path
 
+from dltrain import replacement
+
 import numpy as np
 
 from dltrain import (cpuguard, jtt1, nonnumeric, rowsel, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check,
@@ -51,10 +53,10 @@ OWNER = {"ROWSEL-SPLIT": "/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/
 CODE_FILES = ("tools/v2_rowsel_raw.py", "dltrain/rowsel_raw.py", "dltrain/rowsel.py", "dltrain/t1raw.py", "dltrain/t1prep.py",
               "dltrain/trainonly.py", "dltrain/metafeatures.py", "dltrain/scale_check.py", "dltrain/jtt1.py", "dltrain/cpuguard.py",
               "dltrain/nonnumeric.py", "dltrain/rowsel_raw_split_v2.py", "dltrain/rowsel_split_v2_groups.py",
-              "dltrain/target_linear.py")
+              "dltrain/target_linear.py", "dltrain/replacement.py")
 LATER_CODE_FILES = frozenset({"dltrain/nonnumeric.py",       # added after ROWSEL-RAW-v1 was built; not a dependency of it
                               "dltrain/rowsel_raw_split_v2.py",    # added after the v1 trees; RAW-SPLIT-RULING
-                              "dltrain/rowsel_split_v2_groups.py", "dltrain/target_linear.py"})   # RAW-GROUP / LINEAR-DETERMINED
+                              "dltrain/rowsel_split_v2_groups.py", "dltrain/target_linear.py", "dltrain/replacement.py"})   # RAW-GROUP / LINEAR-DETERMINED
 SPLIT_V1 = rowsel_raw.SPLIT_SCHEMA               # "rowsel-raw-split-v1" (18eac154): kept to verify the v1 trees only
 SPLIT_V2 = rowsel_raw_split_v2.SPLIT_SCHEMA      # "rowsel-raw-split-v2": ROWSEL-SPLIT as written (RAW-SPLIT-RULING)
 SPLIT_V2G = rowsel_split_v2_groups.SPLIT_SCHEMA   # "rowsel-split-v2-groups": RAW-GROUP (a), per-entry group column
@@ -495,6 +497,8 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
                 old = json.loads((d / "context.json").read_bytes())
                 if old.get("rowsel", {}).get("identity") != r["identity"] or old.get("files") != crec["files"]:
                     raise rowsel_raw.RowselRawError("done_context_differs", r["view_id"])
+                if not replacement.done_context_matches(old, crec):
+                    raise rowsel_raw.RowselRawError("done_context_replacement_differs", replacement.recovery_detail(r["view_id"]))
                 continue
             pending.append((d, files, crec))
         for d, files, crec in pending:                                   # phase 1: every file of every context
@@ -522,7 +526,7 @@ def dataset_done(out_shard: Path, h: str, codes) -> bool:
         return False
     r = json.loads(p.read_bytes())
     return (r.get("status") == "done" and r.get("code_sha256") == codes
-            and all((out_shard / c["view_id"] / ".done").exists() for c in r.get("contexts", [])))
+            and replacement.dataset_done_matches(out_shard, r))
 
 
 def build(a):

@@ -70,6 +70,8 @@ import sys
 import time
 from pathlib import Path
 
+from dltrain import replacement
+
 import numpy as np
 
 from dltrain import (cpuguard, jtt1, metafeatures, rowsel, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check, t1prep,
@@ -132,9 +134,9 @@ SCOPES = {
 CODE_FILES = ("tools/v2_rowsel_build.py", "tools/v2_build_local.py", "dltrain/rowsel.py", "dltrain/t1prep.py",
               "dltrain/trainonly.py", "dltrain/metafeatures.py", "dltrain/scale_check.py", "dltrain/jtt1.py",
               "dltrain/cpuguard.py", "dltrain/rowsel_raw.py", "dltrain/rowsel_raw_split_v2.py", "dltrain/rowsel_split_v2_groups.py",
-              "dltrain/target_linear.py")
+              "dltrain/target_linear.py", "dltrain/replacement.py")
 LATER_CODE_FILES = frozenset({"dltrain/rowsel_split_v2_groups.py",    # added after the v2split trees were built
-                              "dltrain/target_linear.py"})            # LINEAR-DETERMINED gate (after the v2gsplit trees)
+                              "dltrain/target_linear.py", "dltrain/replacement.py"})            # LINEAR-DETERMINED gate (after the v2gsplit trees)
 QUOTA_RULE = ("largest remainder of budget*|F_f|/|U| over the repeat-0 parent folds (ties to the lower fold); "
               "n_train = budget - n_test; |U| <= budget keeps every row (rowsel.fold_quotas)")
 
@@ -1932,6 +1934,8 @@ def build_dataset_v2(ds, its, shard_dir: Path, codes, refs, *, budget=rowsel.DEF
                 old = json.loads((d / "context.json").read_bytes())
                 if old.get("context_sha256") != ctx["context_sha256"] or old.get("files") != ctx["files"]:
                     raise RebuildError("done_context_differs", ctx["view_id"])
+                if not replacement.done_context_matches(old, ctx):
+                    raise RebuildError("done_context_replacement_differs", replacement.recovery_detail(ctx["view_id"]))
                 continue
             pending.append((d, ctx, art))
         for d, ctx, art in pending:                                     # phase 1: every file of every context
@@ -1960,7 +1964,7 @@ def dataset_done_v2(shard_dir: Path, h: str, codes, version: str = None) -> bool
         return False
     r = json.loads(p.read_bytes())
     return (r.get("status") == "done" and r.get("code_sha256") == codes and r.get("split_version") == (version or SPLIT_V2)
-            and all(c.get("view_id") and (shard_dir / c["view_id"] / ".done").exists() for c in r.get("contexts", [])))
+            and replacement.dataset_done_matches(shard_dir, r))
 
 
 def build_v2(a) -> int:

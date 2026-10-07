@@ -100,6 +100,8 @@ import sys
 import time
 from pathlib import Path
 
+from dltrain import replacement
+
 import numpy as np
 
 from dltrain import (cpuguard, jtt1, metafeatures, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check, t1prep,
@@ -334,7 +336,7 @@ def maxrss_mb() -> int:
 
 V2_CODE_FILES = ("tools/v2_build_local.py", "dltrain/t1prep.py", "dltrain/trainonly.py", "dltrain/metafeatures.py",
                  "dltrain/scale_check.py", "dltrain/jtt1.py", "dltrain/rowsel_raw.py", "dltrain/rowsel_raw_split_v2.py",
-                 "dltrain/cpuguard.py", "dltrain/target_linear.py")     # target_linear: LINEAR-DETERMINED gate (after the built trees)
+                 "dltrain/cpuguard.py", "dltrain/target_linear.py", "dltrain/replacement.py")     # target_linear: LINEAR-DETERMINED gate (after the built trees)
 
 
 def require_split_version(version, allowed=None) -> str:
@@ -849,7 +851,7 @@ def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None, ve
 
 def write_dataset(out_shard: Path, results) -> tuple:
     """Phase 1: files + context.json of every pending context; phase 2: .done of every pending context. A .done
-    context is never rewritten; it must equal the recomputed identity and files. Returns (written, already_done)."""
+    context is never rewritten; it must equal the recomputed identity, files and replacement membership. Returns (written, already_done)."""
     pending, already = [], 0
     for vid, files, crec in results:
         d = out_shard / vid
@@ -857,6 +859,8 @@ def write_dataset(out_shard: Path, results) -> tuple:
             old = json.loads((d / "context.json").read_bytes())
             if old.get("identity") != crec["identity"] or old.get("files") != crec["files"]:
                 raise SplitV2Error("done_context_differs", vid)
+            if not replacement.done_context_matches(old, crec):
+                raise SplitV2Error("done_context_replacement_differs", replacement.recovery_detail(vid))
             already += 1
             continue
         pending.append((d, files, crec))
@@ -913,7 +917,7 @@ def dataset_done(out_shard: Path, h: str, codes) -> bool:
         return False
     r = json.loads(p.read_bytes())
     return (r.get("status") == "done" and r.get("code_sha256") == codes and len(r.get("contexts", [])) == r.get("expected_contexts", OUTER_FOLDS)
-            and all((out_shard / c["view_id"] / ".done").exists() for c in r["contexts"]))
+            and replacement.dataset_done_matches(out_shard, r))
 
 
 # ------------------------------------------------------------------------------------------- epoch-0 inputs
