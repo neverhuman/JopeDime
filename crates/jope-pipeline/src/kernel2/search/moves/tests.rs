@@ -1803,7 +1803,11 @@ fn rewrite_parents_are_bounded_before_they_are_parsed() {
     let closed_form = format!("(sym raw \"{}c0\")", "+".repeat(room + 1));
     assert!(!has_expression_stage(&closed_form));
     let error = propose(&opt.evaluator, &closed_form, 1).unwrap_err();
-    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+    // Refused before any parse, by the pre-parse check's own message.
+    assert!(
+        format!("{error:#}").contains("not in the pipeline form"),
+        "{error:#}"
+    );
 }
 
 /// Independent review 01 of the wiring PR (B20-R01-AST-FIRST): `MathExpr::simplify_v2`, the

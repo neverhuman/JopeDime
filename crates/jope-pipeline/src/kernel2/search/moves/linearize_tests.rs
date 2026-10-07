@@ -1579,7 +1579,11 @@ fn linearization_parents_are_bounded_before_they_are_parsed() {
     let closed_form = format!("(sym raw \"{}c0\")", "+".repeat(room + 1));
     assert!(!linearize::offers(&opt.evaluator, &closed_form).unwrap());
     let error = linearize::propose(&opt.evaluator, &closed_form, &cut, width).unwrap_err();
-    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+    // Refused before any parse, by the pre-parse check's own message.
+    assert!(
+        format!("{error:#}").contains("not in the pipeline form"),
+        "{error:#}"
+    );
 }
 
 // Fix round r01 (B19 wiring review 01): repeated refused subtrees through publication.

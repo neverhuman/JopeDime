@@ -75,7 +75,10 @@ faulted cells, which a program with a loss lower by at most the tie tolerance do
 - it is byte for byte the archive rebuilt from the re-derived observations. The published
   observations are untrusted, so the rebuild parses each program within the B17 trace check's
   bounds (`parse_untrusted_pipeline`): the pipeline form only, and an expression source holding
-  more than 256 of the bytes `( + - * / ^` is refused before the expression parser sees it.
+  more than 256 of the bytes `( + - * / ^` is refused before the expression parser sees it. A
+  seed keeps its expression text as written, and unary plus and redundant parentheses never reach
+  the tree, so an admitted seed can exceed that bound; with the archive selected such a seed is
+  refused by the search's option check before any cut runs, not at publication.
 
 Tests rehash `search.json` and the receipt after editing a member's loss, key or cost, the cost
 version, the member set, the record's id, version and digest, and the record's or the file's
@@ -99,9 +102,10 @@ No evaluator identity changes. The archive lives in jope-pipeline's kernel2 rout
 ## Not accuracy evidence
 
 The archive cannot change the selected program, so it cannot change M1: an equal-budget ablation
-of the archive alone must show A = B, and the ablation harness has no kernel2 profile yet
-(`ablation-protocol.md`). Any lift claim needs a later mode in which the front chooses parents,
-measured with the paired protocol of `b17-damped-ls-refinement.md`.
+of the archive alone must show A = B. The ablation harness runs kernel2 searches
+(`ablation-protocol.md`), but this change adds no archive arm and reports no such result. Any
+lift claim needs a later mode in which the front chooses parents, measured with the paired
+protocol of `b17-damped-ls-refinement.md`.
 
 ## Tests
 

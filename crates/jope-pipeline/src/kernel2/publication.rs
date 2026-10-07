@@ -454,6 +454,10 @@ fn check_archive(root: &Path, s: &Search, observations: &[Kernel2Observation]) -
         .sha256
         .as_deref()
         .context("the archive record has no digest")?;
+    ensure!(
+        std::fs::symlink_metadata(root.join(path)).is_ok(),
+        "a selected archive is not published"
+    );
     let bytes = read_file(root, path, digest)?;
     let text = std::str::from_utf8(&bytes).context("the archive is not UTF-8")?;
     let published = Archive::from_json(text).map_err(anyhow::Error::msg)?;
