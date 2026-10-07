@@ -1385,6 +1385,41 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
         "a recorded line error is smaller than the residual at the largest target",
     ));
     restore();
+    // Records the subtree's own targets at the sampled ends rule out (B19 wiring review 04): the
+    // line moved far off with `max|f|` set to its larger end, so only the residual against a
+    // sampled end's target binds; `max|f|` under those targets; and an in-range line's error
+    // erased, which the measurement could not have refused.
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        let record = fit_of(&mut m[measured]);
+        let error = record.lowered_error.unwrap();
+        let fit = record.fit.as_mut().unwrap();
+        fit.coefficients.as_mut().unwrap()[0] += 10.0 * (fit.max_abs + error) + 1.0;
+        fit.max_abs = largest_end(fit);
+    });
+    errors.push(refused_with(
+        &path,
+        "a line moved off its ends' targets",
+        "a recorded line error is smaller than the line's residual at a sampled end's target",
+    ));
+    restore();
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        fit_of(&mut m[measured]).fit.as_mut().unwrap().max_abs = 1e-300;
+    });
+    errors.push(refused_with(
+        &path,
+        "max|f| under the sampled ends' targets",
+        "a recorded fit's sampled ends give targets its samples cannot have",
+    ));
+    restore();
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        fit_of(&mut m[measured]).lowered_error = None;
+    });
+    errors.push(refused_with(
+        &path,
+        "an in-range line's error erased",
+        "a recorded line with no measured error is in the evaluator's range at both sampled ends",
+    ));
+    restore();
 
     // A refused line's fit hidden behind the faulting-input refusal, while the stage's other
     // subtrees keep their own records.
