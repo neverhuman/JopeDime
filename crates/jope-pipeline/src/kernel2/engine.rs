@@ -99,6 +99,15 @@ impl EngineSelection {
         Ok(())
     }
 
+    /// Whether verification reads published programs back within
+    /// `refinement::parse_untrusted_pipeline`'s bounds and refuses a run holding one it cannot
+    /// read: the archive rebuild reads every ranked program, and the lm trace check each refined
+    /// parent. The rewrite and linearization passes read their parents within the same bounds but
+    /// pass over one they cannot read, at search and at verification alike.
+    pub(crate) fn reads_programs_back(&self) -> bool {
+        self.archive.is_some() || matches!(self.refine, RefineMethod::Lm(_))
+    }
+
     /// The receipt record: `None` for the default, so a default receipt keeps its bytes.
     pub fn record(&self) -> Option<EngineRecord> {
         let refine = match self.refine {

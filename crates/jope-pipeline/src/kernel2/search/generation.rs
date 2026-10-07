@@ -26,9 +26,18 @@ pub(super) fn check(cut: &Cut, options: &Options) -> Result<()> {
         options.search.seeds.len() <= ELITES,
         "too many kernel2 seeds"
     );
+    // A seed keeps its expression text as written, and an admitted spelling can hold more nesting
+    // bytes than the evidence checks read (unary plus and redundant parentheses never reach the
+    // tree). With a method selected whose verification refuses a program it cannot read, such a
+    // seed is refused here, before the search, rather than at publication or verification.
+    let read_back = options.evaluator.engine().reads_programs_back();
     for seed in &options.search.seeds {
         let ir = admit_child(seed, options.evaluator.profile(), width)?;
         ensure!(ir.canonical() == *seed, "kernel2 seeds must be canonical");
+        if read_back {
+            crate::kernel2::refinement::parse_untrusted_pipeline(seed)
+                .context("a kernel2 seed must be readable back from published evidence")?;
+        }
         ensure!(seen.insert(seed.clone()), "duplicate kernel2 seed");
     }
     ensure!(
