@@ -12,7 +12,7 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at c4d018591, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238/#239/#240/#241/#242/#243.
+<!-- Local release preparation at cad789d93, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238/#239/#240/#241/#242/#243/#244.
 Rebase onto final main and finalize the date before publication. GP-language #231 includes the
 maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
 binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
@@ -135,6 +135,9 @@ merged; B19 wiring is tracked separately. -->
 - Start three existing long golden tests first in full-main families using scheduling priority,
   preserving selections, deadlines and serial family execution. Retained runs show no material
   overall wall-time saving (#242).
+- Use eight Cargo build workers for serial full-main CPU families within the existing runner
+  allocation. Preserve commands, coverage, test concurrency and deadlines; post-merge runtime
+  and throughput qualification remain separate from the passing build probe (#244).
 - Require the projected GP census to finish exactly 100 observations and report the evaluation
   budget stop reason. Raise only this fixture's safety ceiling from 90 to the shipped 600 seconds
   after retained load reproductions; preserve every uniqueness and durability assertion (#243).

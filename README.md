@@ -38,6 +38,10 @@ and differential compilation. The [emitter determinism record](docs/parity/gp-em
 describes repeated and cross-process emission, compiler checks, protected-domain behavior and
 the documented numerical comparison contract.
 
+The [capability matrix](docs/parity/capability-matrix.md) and operator receipts distinguish
+implemented kernels, admitted exports and search profiles. The linked GP records state the
+corpus and platform limits of the differential checks.
+
 After publication, check out the release tag with `git checkout v1.0.0` and install the CLI with
 `cargo install --locked --path crates/jope-cli --bin jope`. Release assets have signed checksums;
 the Git tag is annotated. Publication follows the reviewed release and its qualification gates.
