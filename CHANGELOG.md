@@ -8,20 +8,24 @@ qualification.
 
 ### Pending release queue
 
-Local draft as of 2026-10-07 17:58 UTC. These candidates are pending, not merged release
+Local draft as of 2026-10-07 19:56 UTC, based on main `df760a3ed`. These candidates are pending, not merged release
 capabilities. Their inclusion requires the owner's serialized merge and fresh receiving-main
 qualification. The source and test receipts for an open PR do not qualify the release.
 
 | Order | Pending change | Candidate |
 | --- | --- | --- |
-| 1 | Authority fixture executor and deterministic sequential start clock | Lane C `fix/authority-synthetic-executor`, `53eebf69`; PR not yet open at this snapshot |
+| 1 | Authority fixture executor and deterministic sequential start clock | [#258](https://github.com/neverhuman/JopeDime/pull/258), published `53eebf69`; local CI-concurrency correction `b87f97d2` still awaiting the writer's gate and push |
 | 2 | S1 HWM publication for G3 and catalog contexts from pinned P3 decisions | [#256](https://github.com/neverhuman/JopeDime/pull/256), `fc11da3d` |
 | 3 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
 | 4 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
 | 5 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
+| Owner-routed | Verify and snapshot pinned artifacts before decoding | [#259](https://github.com/neverhuman/JopeDime/pull/259), `d397470c`; not yet sequenced in the five-item merge queue |
 
 Reconcile this list against the final merged source before publication; remove pending notes
 from the shipping release draft once each item has its terminal disposition.
+The owner's 19:56 UTC exception allows Lane D to merge #256 at its exact qualified head after
+21:00 UTC if #258 is still pending. It does not qualify the receiving main or this release.
+Main `df760a3ed` still has failing full-main CPU results; the release qualification remains open.
 
 ## [1.0.0] - 2026-10-07
 
@@ -29,9 +33,9 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Unpublished local release preparation. Source base remains 8b7476fdfbf2c4631e5426bfdf62991020b55e0a.
-Notes reconciled through receiving main df760a3ed315df45f3ece18b83d94a54833047cf on 2026-10-07;
-#254 is merged upstream after the source base and must be included by the later rebase.
+<!-- Unpublished local release preparation. Source base is df760a3ed315df45f3ece18b83d94a54833047cf.
+The owner's 19:56 UTC order authorizes preparation on this base, not publication or qualification.
+#254 is now included in the source base, after preserving the prior local draft in an archive ref.
 Earlier merged #246/#247/#248/#250/#252/#253 are now itemized; #249 landed through
 an owner-authorized squash at 8a4b2fdfe, with the native PR subsequently closed by pointer.
 Pending queue items above are not merged. Finalize the date and notes on qualified final main

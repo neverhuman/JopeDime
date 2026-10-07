@@ -25,7 +25,9 @@ receipts retain their scope; these changes do not establish a live learning or t
 
 The [pending release queue](CHANGELOG.md#pending-release-queue) lists candidates awaiting
 serialized merge and receiving-main qualification. This draft is local and unpublished; final
-release notes must match the qualified merged source. The current direction and landing record
+release notes must match the qualified merged source. It is prepared on main `df760a3ed`, whose
+full-main CPU qualification is still failing. The 1.0.0 version and local metadata checks do not
+establish release readiness. The current direction and landing record
 are in [`MASTER_PLAN.md`](MASTER_PLAN.md), and release verification is in
 [`docs/release/README.md`](docs/release/README.md).
 
