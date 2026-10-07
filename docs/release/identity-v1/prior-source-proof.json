@@ -1,0 +1,101 @@
+{
+  "source": "adf24ba6f7d68973eaa6fdbbe00e5654863b4c03",
+  "identity_inputs_identical_to_main": "4fc1492e4755b0777134a78705feedb0a2f73d30",
+  "implementation_sha256": "bdc4b4680114f8d96aea207fc3d472cfcb9762809eb1e3bb4b26f2c6ad116b98",
+  "cargo_lock_sha256": "8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee",
+  "identity_digest": "db0af8bde9ccd66643a6986b29cafe68d349f6d94a27c559a71a7f1349d57fb8",
+  "commands": [
+    {
+      "head": "adf24ba6f7d68973eaa6fdbbe00e5654863b4c03",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "jope-dime-regressor",
+        "--bin",
+        "jope-dime-regressor",
+        "--message-format=json"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "48",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CARGO_TARGET_DIR": "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target",
+        "TMPDIR": "/home/ubuntu/JopeDime/.agent/tmp/lane_b",
+        "NEXTEST_TEST_THREADS": "2",
+        "JOPE_PARITY_STRICT": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "start_utc": "2026-10-07T01:08:42.788489+00:00",
+      "end_utc": "2026-10-07T01:09:49.814767+00:00",
+      "elapsed_s": 67.02629362884909,
+      "exit": 0,
+      "min_available_ram_fraction": 0.43573300749740973,
+      "resource_aborted": false
+    },
+    {
+      "head": "adf24ba6f7d68973eaa6fdbbe00e5654863b4c03",
+      "command": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/debug/jope-dime-regressor",
+        "--registry",
+        "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/health/owner1852/release/identity-native-pre-version/registry",
+        "--dataset",
+        "fixture",
+        "verify-evaluation-v2",
+        "--manifest",
+        "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/health/owner1852/release/identity-native-pre-version/manifest.json"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "48",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CARGO_TARGET_DIR": "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target",
+        "TMPDIR": "/home/ubuntu/JopeDime/.agent/tmp/lane_b",
+        "NEXTEST_TEST_THREADS": "2",
+        "JOPE_PARITY_STRICT": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "start_utc": "2026-10-07T01:09:49.840954+00:00",
+      "end_utc": "2026-10-07T01:09:50.842383+00:00",
+      "elapsed_s": 1.0014365930110216,
+      "exit": 0,
+      "min_available_ram_fraction": 0.4662923672667584,
+      "resource_aborted": false
+    },
+    {
+      "head": "adf24ba6f7d68973eaa6fdbbe00e5654863b4c03",
+      "command": [
+        "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/debug/jope-dime-regressor",
+        "--registry",
+        "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/health/owner1852/release/identity-native-pre-version/registry",
+        "--dataset",
+        "fixture",
+        "verify-evaluation-v2",
+        "--manifest",
+        "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/health/owner1852/release/identity-native-pre-version/manifest.json"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "48",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CARGO_TARGET_DIR": "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target",
+        "TMPDIR": "/home/ubuntu/JopeDime/.agent/tmp/lane_b",
+        "NEXTEST_TEST_THREADS": "2",
+        "JOPE_PARITY_STRICT": "1",
+        "CUDA_VISIBLE_DEVICES": ""
+      },
+      "start_utc": "2026-10-07T01:09:50.864487+00:00",
+      "end_utc": "2026-10-07T01:09:51.865733+00:00",
+      "elapsed_s": 1.0012464309111238,
+      "exit": 0,
+      "min_available_ram_fraction": 0.4635429443995067,
+      "resource_aborted": false
+    }
+  ],
+  "executable": "/home/ubuntu/JopeDime/.agent/worktrees/tanh-fold-guard/target/debug/jope-dime-regressor",
+  "executable_sha256": "53b77b1e24502ffe58d2b3e1dd80e873bb4b16198a26a544bb4a70192e3c1dc1",
+  "receipt_sha256": "a74c9b0ed8c009a5f1231a672cf563848a31b430663bcf77d4f7a707e3757ba1",
+  "twice_byte_identical": true,
+  "schema": "JopeDimeSemanticEvaluationReceipt.v2"
+}

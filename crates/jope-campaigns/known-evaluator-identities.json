@@ -17,6 +17,14 @@
       "builds": "kernel2 PR 03 (#128) from 0a9bc2d2c410b6a1ab83bd6d5466c64e074506c7, the last commit that changed an identity input, through d1a1d21f820d5b1867bb55cb90c42e18cd604a2d; no identity input differs between them",
       "receipt": "docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt.json",
       "receipt_sha256": "438b8600a8fba7c67057b618f942bcef3c7940cb40588c0d0623e000dbc98a6e"
+    },
+    {
+      "implementation_sha256": "bdc4b4680114f8d96aea207fc3d472cfcb9762809eb1e3bb4b26f2c6ad116b98",
+      "cargo_lock_sha256": "8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee",
+      "identity_digest": "db0af8bde9ccd66643a6986b29cafe68d349f6d94a27c559a71a7f1349d57fb8",
+      "builds": "Prior current identity on reviewed main 4fc1492e4755b0777134a78705feedb0a2f73d30; retained native receipt from clean adf24ba6f7d68973eaa6fdbbe00e5654863b4c03, whose complete identity inputs are byte-identical to that main.",
+      "receipt": "docs/release/identity-v1/prior-receipt.json",
+      "receipt_sha256": "a74c9b0ed8c009a5f1231a672cf563848a31b430663bcf77d4f7a707e3757ba1"
     }
   ]
 }
