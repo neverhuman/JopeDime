@@ -761,8 +761,11 @@ fn a_recorded_fit_must_agree_with_its_subtrees_targets_at_the_sampled_ends() {
     refused(&moved, target_residual);
 }
 
-/// A subtree refused before any fit names `unsampled`, or a reason the fit itself gives (B19
-/// wiring review 04's inventory): each of those is accepted, any other refused.
+/// A subtree refused before any fit names `unsampled`, a reason the fit itself gives (B19 wiring
+/// review 04's inventory), or the caller's input faults for every subtree of the expression
+/// (review 05: the pipeline's stage-prefix refusal); each of those is accepted, and any other
+/// refused, the range refusal the sampler cannot give and input faults beside another record
+/// included.
 #[test]
 fn a_refusal_before_the_fit_names_a_reason_the_fit_gives() {
     let training = rows(-0.5, 1.5, 201);
@@ -781,6 +784,7 @@ fn a_refusal_before_the_fit_names_a_reason_the_fit_gives() {
         .map(|reason| format!("{LINEARIZE_FIT_REFUSED}: {reason}"))
         .collect();
     accepted.push(LINEARIZE_UNSAMPLED.into());
+    accepted.push(LINEARIZE_INPUT_FAULTS.into());
     for refusal in &accepted {
         let out = recorded(NEAR_LINEAR, &unfitted(refusal)).unwrap();
         assert!(out
@@ -790,6 +794,7 @@ fn a_refusal_before_the_fit_names_a_reason_the_fit_gives() {
     for refusal in [
         format!("{LINEARIZE_FIT_REFUSED}: degree above the cap"),
         format!("{LINEARIZE_FIT_REFUSED}: a sample is not finite"),
+        format!("{LINEARIZE_FIT_REFUSED}: {OUTSIDE_RANGE}"),
         format!("{LINEARIZE_FIT_REFUSED}: no reason"),
         "the line was not wanted".into(),
     ] {
@@ -799,6 +804,189 @@ fn a_refusal_before_the_fit_names_a_reason_the_fit_gives() {
             "{refusal}: {error:#}"
         );
     }
+    // The caller's input faults refuse every subtree of the expression or none.
+    assert_eq!(live.len(), 2);
+    let faulted = unfitted(LINEARIZE_INPUT_FAULTS);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    let unsampled = unfitted(LINEARIZE_UNSAMPLED);
+    for mixed in [
+        vec![faulted[0].clone(), unsampled[1].clone()],
+        vec![unsampled[0].clone(), faulted[1].clone()],
+        vec![faulted[0].clone(), kept[1].clone()],
+        vec![kept[0].clone(), faulted[1].clone()],
+    ] {
+        let error = recorded(NEAR_LINEAR, &mixed).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("a faulting input refuses only some"),
+            "{error:#}"
+        );
+    }
+}
+
+/// A subtree that is zero wherever it is finite, like `(c0-c0)*(c0-c0)`, has a zero target on
+/// every sample, whatever the rows: a recorded fit of it with a nonzero `max|f|` is refused, so it
+/// cannot carry the brackets, stops, bounds or offered lines a nonzero target would allow (B19
+/// wiring review 05, B19-R05-KNOWN-ZERO-TARGET-ENVELOPE). The structural test is sufficient, and
+/// every expression it marks is zero or not finite at each probe value; the live fit and its
+/// replay are unchanged.
+#[test]
+fn a_subtree_zero_wherever_finite_records_only_zero_targets() {
+    let marked = [
+        "(c0-c0)*(c0-c0)",
+        "c0-c0",
+        "c0*0.0",
+        "(c0-c0)/c0",
+        "sin((c0-c0))*3.0",
+        "((c0+1.0)-(c0+1.0))*c0",
+        "-(c0-c0)",
+        "(c0-c0)^2.0",
+        "abs((c0-c0))+sqrt((c0-c0))",
+        "erf(log1p((c0-c0)))-sign(tanh(atan((c0-c0))))",
+        "floor((c0-c0))*round((c0-c0))",
+    ];
+    let unmarked = [
+        "c0",
+        "(c0-c0)+1.0",
+        "cos((c0-c0))",
+        "(c0-c0)^0.0",
+        "c0/(c0-c0)",
+        "(c0+1.0)-(c0+2.0)",
+        "exp((c0-c0))*c0",
+    ];
+    let probes = [
+        -1e12,
+        -3.5,
+        -1.0,
+        -f64::MIN_POSITIVE,
+        -0.0,
+        0.0,
+        5e-324,
+        1e-300,
+        0.5,
+        2.0,
+        1e6,
+        1e12,
+    ];
+    for source in marked {
+        let expression = MathExpr::parse(source).unwrap();
+        assert!(zero_wherever_finite(&expression.root), "{source}");
+        for v in probes {
+            let (f, faults) = expression.eval_row_traced(&[v, 0.25]);
+            assert!(
+                !(faults.is_empty() && f.is_finite()) || f == 0.0,
+                "{source} at {v}: {f}"
+            );
+        }
+    }
+    for source in unmarked {
+        assert!(
+            !zero_wherever_finite(&MathExpr::parse(source).unwrap().root),
+            "{source}"
+        );
+    }
+    // The literal's bits decide sameness.
+    let signed = Expr::Binary(
+        BinOp::Sub,
+        Box::new(Expr::Binary(
+            BinOp::Add,
+            Box::new(Expr::Var(Var::Col(0))),
+            Box::new(Expr::Const(0.0)),
+        )),
+        Box::new(Expr::Binary(
+            BinOp::Add,
+            Box::new(Expr::Var(Var::Col(0))),
+            Box::new(Expr::Const(-0.0)),
+        )),
+    );
+    assert!(!zero_wherever_finite(&signed));
+    // The live fit has zero targets and replays.
+    const ZERO: &str = "(c0-c0)*(c0-c0)";
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(ZERO, &training);
+    assert_eq!(live.len(), 1);
+    let fit = live[0].fit.unwrap();
+    assert_eq!((fit.max_abs, fit.stop), (0.0, MinimaxStop::ExactFit));
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(ZERO, &kept).unwrap(), live);
+    // The review's witness: a constant line `1` over targets of size 1, consistent with its stop,
+    // whose error meets every envelope bound and the minimax bound, so it was offered.
+    let nonzero = LinearizationEvidence {
+        fit: Some(LinearFit {
+            stop: MinimaxStop::Converged,
+            coefficients: [1.0, 0.0],
+            levelled: 1.0,
+            max_error: 1.0,
+            max_abs: 1.0,
+            iterations: 1,
+            steps: 1,
+            ..fit
+        }),
+        lowered_error: Some(1.0),
+        refusal: None,
+    };
+    let error = recorded(ZERO, std::slice::from_ref(&nonzero)).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("zero on every sample a nonzero target"),
+        "{error:#}"
+    );
+    // The same metadata on a subtree that is not zero everywhere is not refused for its zeros.
+    let near = recorded(
+        NEAR_LINEAR,
+        &[
+            nonzero.clone(),
+            evidence(&linearize(NEAR_LINEAR, &training)[1]),
+        ],
+    )
+    .map_err(|e| format!("{e:#}"));
+    assert!(
+        near.as_ref()
+            .err()
+            .is_none_or(|e| !e.contains("zero on every sample")),
+        "{near:?}"
+    );
+    // A nonzero `max|f|` under any stop, with the zero line, is refused too.
+    let mut zero_line = nonzero;
+    let line = zero_line.fit.as_mut().unwrap();
+    line.coefficients = [0.0, 0.0];
+    line.max_error = 0.25;
+    line.levelled = 0.25;
+    zero_line.lowered_error = None;
+    let error = recorded(ZERO, &[zero_line]).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("zero on every sample a nonzero target"),
+        "{error:#}"
+    );
+}
+
+/// The live samples read each row's variable, and the element `x` faults on every row, so a
+/// subtree of `x` has no fit: a fit recorded for one is refused (B19 wiring review 05's note
+/// B19-R05-X-FIT-APPLICABILITY), while its live refusals replay.
+#[test]
+fn a_subtree_of_the_element_x_records_no_fit() {
+    let training = rows(-0.5, 1.5, 201);
+    let element = ExpressionScope::search_profile(2, true);
+    let x = MathExpr::parse("sin((0.1*x))*3.0").unwrap();
+    let live = x.linearize_v2(&baseline(), element, &training).unwrap();
+    assert!(live
+        .iter()
+        .all(|l| l.fit.is_none() && l.refusal.as_deref() == Some(LINEARIZE_UNSAMPLED)));
+    let replay = x
+        .linearize_recorded_v2(&baseline(), element, &mut |i| Ok(evidence(&live[i])))
+        .unwrap();
+    assert_eq!(replay, live);
+    // The fits of the same expression over `c0`.
+    let copied: Vec<LinearizationEvidence> = linearize(NEAR_LINEAR, &training)
+        .iter()
+        .map(evidence)
+        .collect();
+    assert!(copied[0].fit.is_some());
+    let error = x
+        .linearize_recorded_v2(&baseline(), element, &mut |i| Ok(copied[i].clone()))
+        .unwrap_err();
+    assert!(
+        format!("{error:#}").contains("subtree of the element x"),
+        "{error:#}"
+    );
 }
 
 /// A closing stop returns the fit of the step it stops at, the iteration cap stops after the last
