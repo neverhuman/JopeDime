@@ -341,6 +341,11 @@ pub struct LinearFit {
 /// A line is refused before it is built when a training row faults in the subtree or its
 /// variable, or gives a value that is not finite.
 pub const LINEARIZE_UNSAMPLED: &str = "a training row faults or is not finite in the subtree";
+/// A caller's refusal of every subtree of an expression before any sample: the rows the
+/// expression reads could not be built without a fault (a pipeline stage's training input). The
+/// live `MathExpr::linearize_v2` never gives it, since its caller passes the rows; the recorded
+/// path takes it for a subtree without a fit, for every subtree of the expression or none.
+pub const LINEARIZE_INPUT_FAULTS: &str = "the stage's training input faults";
 /// Prefix of the refusal when the fit refuses its samples; the fit's reason follows.
 pub const LINEARIZE_FIT_REFUSED: &str = "the fit refused its samples";
 /// Prefix of the refusal when the fit's bracket did not close; the stop's name follows.

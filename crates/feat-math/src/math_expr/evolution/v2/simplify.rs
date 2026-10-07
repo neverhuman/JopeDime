@@ -44,9 +44,9 @@
 use super::*;
 use crate::kernel::expression_search::{
     LinearFit, LinearizationEvidence, MinimaxStop, SubtreeLinearization, LINEARIZATION_DEGREE,
-    LINEARIZE_FIT_REFUSED, LINEARIZE_MISSES_BOUND, LINEARIZE_NON_FINITE, LINEARIZE_NOT_SMALLER,
-    LINEARIZE_OPEN_BRACKET, LINEARIZE_OUT_OF_RANGE, LINEARIZE_OVER_BUDGET, LINEARIZE_OVER_LIMITS,
-    LINEARIZE_PROFILE_REFUSED, LINEARIZE_UNSAMPLED,
+    LINEARIZE_FIT_REFUSED, LINEARIZE_INPUT_FAULTS, LINEARIZE_MISSES_BOUND, LINEARIZE_NON_FINITE,
+    LINEARIZE_NOT_SMALLER, LINEARIZE_OPEN_BRACKET, LINEARIZE_OUT_OF_RANGE, LINEARIZE_OVER_BUDGET,
+    LINEARIZE_OVER_LIMITS, LINEARIZE_PROFILE_REFUSED, LINEARIZE_UNSAMPLED,
 };
 
 /// The largest degree fitted. What can be proposed is bounded separately, by the checks of
@@ -275,10 +275,10 @@ const SINGULAR_FIRST: &str = "singular first reference";
 /// The fit's refusal when its first fit's errors are not finite.
 const NONFINITE_ERROR: &str = "an error is not finite";
 /// Every reason the fit can refuse the samples [`samples`] gives for a line: [`prepare`]'s and
-/// [`minimax`]'s own. [`samples`] gives only finite samples, so `a sample is not finite` cannot
-/// occur, and a line's degree is under the cap.
-const FIT_REFUSALS: [&str; 6] = [
-    OUTSIDE_RANGE,
+/// [`minimax`]'s own, less three. [`samples`] gives only fault-free finite samples, and the
+/// evaluator raises a fault for every value it brings back into its range, so neither `a sample
+/// is not finite` nor [`OUTSIDE_RANGE`] occurs; and a line's degree is under the cap.
+const FIT_REFUSALS: [&str; 5] = [
     TWO_TARGETS,
     FEW_ABSCISSAE,
     EMPTY_INTERVAL,
@@ -868,13 +868,17 @@ fn consistent(fit: &LinearFit) -> bool {
 /// training range, and a fit and a refusal of those values alone ([`FEW_ABSCISSAE`],
 /// [`EMPTY_INTERVAL`]) cannot both occur. A record that disagrees with another of the same
 /// expression is refused. A refusal that one subtree's own values faulted
-/// ([`LINEARIZE_UNSAMPLED`]) has no such witness unless the same subtree occurs twice.
+/// ([`LINEARIZE_UNSAMPLED`]) has no such witness unless the same subtree occurs twice. Rows that
+/// could not be built ([`LINEARIZE_INPUT_FAULTS`]) are missing for every subtree, so that refusal
+/// is recorded for all of the expression's subtrees or none.
 #[derive(Default)]
 struct Shared {
     /// Each recorded subtree with its fit, its line's error, and its refusal when it has no fit.
     subtrees: Vec<(Expr, SampleEvidence)>,
     /// Per variable: the training range its fits record, and whether a fit refused its values.
     variables: std::collections::BTreeMap<Var, (Option<(u64, u64)>, bool)>,
+    /// Whether the expression's input rows could not be built, as its first record says.
+    input_faults: Option<bool>,
 }
 
 /// The fit, the line's measured error, and the refusal of a subtree without a fit, with every
@@ -932,7 +936,68 @@ impl Shared {
             !(range.is_some() && *refused),
             "a fit and a refusal of the same variable's values disagree"
         );
+        let faulted =
+            evidence.fit.is_none() && evidence.refusal.as_deref() == Some(LINEARIZE_INPUT_FAULTS);
+        anyhow::ensure!(
+            *self.input_faults.get_or_insert(faulted) == faulted,
+            "a faulting input refuses only some of an expression's subtrees"
+        );
         Ok(())
+    }
+}
+
+/// Whether `a` and `b` are the same tree, each literal compared by its bits.
+fn same_tree(a: &Expr, b: &Expr) -> bool {
+    match (a, b) {
+        (Expr::Const(x), Expr::Const(y)) => x.to_bits() == y.to_bits(),
+        (Expr::Var(x), Expr::Var(y)) => x == y,
+        (Expr::Unary(o, x), Expr::Unary(p, y)) => o == p && same_tree(x, y),
+        (Expr::Binary(o, x1, x2), Expr::Binary(p, y1, y2)) => {
+            o == p && same_tree(x1, y1) && same_tree(x2, y2)
+        }
+        (Expr::Call(f, xs), Expr::Call(g, ys)) => {
+            f == g && xs.len() == ys.len() && xs.iter().zip(ys).all(|(x, y)| same_tree(x, y))
+        }
+        _ => false,
+    }
+}
+
+/// Whether `expr` is zero wherever it is finite: every evaluation, on any input, gives `+0.0`,
+/// `-0.0` or a value that is not finite. The evaluator is deterministic, so `a - a` is `+0.0` for
+/// a finite `a` and NaN otherwise; zero times anything, zero over anything (a divisor near zero
+/// gives `0.0`), sums and differences of zeros, negation, a positive constant power, and the
+/// calls that keep zero (`abs`, `sqrt`, `log1p`, `sin`, `tanh`, `atan`, `erf`, `sign`, `floor`,
+/// `round`) each give zero from zero, and NaN or zero from NaN. A sample's target is finite, so
+/// such a subtree's targets are all zero on any training rows. The test is sufficient, not
+/// complete: `false` says nothing.
+fn zero_wherever_finite(expr: &Expr) -> bool {
+    match expr {
+        Expr::Const(c) => *c == 0.0,
+        Expr::Var(_) => false,
+        Expr::Unary(UnOp::Neg, a) => zero_wherever_finite(a),
+        Expr::Binary(op, a, b) => match op {
+            BinOp::Add => zero_wherever_finite(a) && zero_wherever_finite(b),
+            BinOp::Sub => same_tree(a, b) || (zero_wherever_finite(a) && zero_wherever_finite(b)),
+            BinOp::Mul => zero_wherever_finite(a) || zero_wherever_finite(b),
+            BinOp::Div => zero_wherever_finite(a),
+            BinOp::Pow => zero_wherever_finite(a) && matches!(**b, Expr::Const(c) if c > 0.0),
+        },
+        Expr::Call(func, args) => {
+            matches!(
+                func,
+                Func::Abs
+                    | Func::Sqrt
+                    | Func::Log1p
+                    | Func::Sin
+                    | Func::Tanh
+                    | Func::Atan
+                    | Func::Erf
+                    | Func::Sign
+                    | Func::Floor
+                    | Func::Round
+            ) && args.len() == 1
+                && zero_wherever_finite(&args[0])
+        }
     }
 }
 
@@ -1022,14 +1087,16 @@ fn linearize(
                         evidence.lowered_error.is_none() && evidence.refusal.is_some(),
                         "a linearization without a fit names no refusal"
                     );
-                    // The live path refuses a subtree before any fit only as unsampled, or for a
-                    // reason the fit itself gives.
+                    // The live path refuses a subtree before any fit only as unsampled, for a
+                    // reason the fit itself gives, or, from its caller, because the input rows
+                    // could not be built (every subtree of the expression or none: `Shared`).
                     let refusal = evidence.refusal.as_deref().unwrap_or_default();
                     let reason = refusal
                         .strip_prefix(LINEARIZE_FIT_REFUSED)
                         .and_then(|r| r.strip_prefix(": "));
                     anyhow::ensure!(
                         refusal == LINEARIZE_UNSAMPLED
+                            || refusal == LINEARIZE_INPUT_FAULTS
                             || reason.is_some_and(|r| FIT_REFUSALS.contains(&r)),
                         "a linearization without a fit names a refusal the fit never gives"
                     );
@@ -1038,6 +1105,19 @@ fn linearize(
                     continue;
                 };
                 anyhow::ensure!(consistent(&fit), "a recorded fit disagrees with its stop");
+                // The live samples read each row's variable, and the element `x` faults on every
+                // row, so a subtree of `x` is never sampled and has no fit.
+                anyhow::ensure!(
+                    found[0] != Var::X,
+                    "a recorded fit names a subtree of the element x, which no training row samples"
+                );
+                // A subtree that is zero wherever it is finite gives every sample a zero target,
+                // so its fit's largest `|f|` is zero, and `consistent` then holds the fit to the
+                // zero polynomial, exact at the first step.
+                anyhow::ensure!(
+                    fit.max_abs == 0.0 || !zero_wherever_finite(node),
+                    "a recorded fit gives a subtree that is zero on every sample a nonzero target"
+                );
                 // `lo` and `hi` are sampled values of the subtree's one variable, so its targets
                 // there follow from the subtree itself: fault-free, finite, and within `max|f|`.
                 let mut targets = [0.0f64; 2];
@@ -1192,8 +1272,7 @@ impl MathExpr {
     /// 1. it is sampled on `rows` as `(x, f(x))` pairs of its variable and its value; a row that
     ///    faults, or gives a value that is not finite, refuses the subtree;
     /// 2. the discrete minimax line on those samples is fitted; a fit that refuses its samples
-    ///    (fewer than three distinct values of the variable, or values outside the evaluator's
-    ///    range) refuses the subtree;
+    ///    (fewer than three distinct values of the variable, say) refuses the subtree;
     /// 3. a fit whose bracket did not close ([`MinimaxStop::closed`]) refuses it: its error need
     ///    not be the minimax error;
     /// 4. the line is lowered to ordinary nodes, `x * a1 + a0`, and refused unless it is smaller
@@ -1220,15 +1299,17 @@ impl MathExpr {
     /// [`LinearizationEvidence`]. The subtrees, the bracket rule, the lowered line and its size,
     /// the bound, every refusal after the fit, and the admitted expression are recomputed. The
     /// fit itself and the line's measured error are taken as recorded, checked only against the
-    /// fit's stop and the evaluator's range, the subtree's own targets at the sampled ends, the
-    /// error as a finite nonnegative residual within what the recorded line and samples allow (at
-    /// most `1e12 + max|f|`; for a line that can be lowered, at least its residual at either
-    /// sampled end and against that end's target, and between `max|f| - M` and `M + max|f|`, with
-    /// `M` its larger size there; present whenever such a line in range at both ends reaches the
-    /// measurement), a refusal before any fit as one the fit gives, and against the expression's
-    /// other records (a repeated subtree records the same samples, bit
-    /// for bit; the fits of one variable share its training range); without the rows they cannot
-    /// be recomputed. A subtree with no recorded fit keeps its recorded refusal.
+    /// fit's stop and the evaluator's range, the subtree's own targets at the sampled ends (and a
+    /// zero `max|f|` for a subtree that is zero wherever it is finite; no fit for a subtree of the
+    /// element `x`), the error as a finite nonnegative residual within what the recorded line and
+    /// samples allow (at most `1e12 + max|f|`; for a line that can be lowered, at least its
+    /// residual at either sampled end and against that end's target, and between `max|f| - M` and
+    /// `M + max|f|`, with `M` its larger size there; present whenever such a line in range at both
+    /// ends reaches the measurement), a refusal before any fit as unsampled, one the fit gives, or
+    /// [`LINEARIZE_INPUT_FAULTS`] for every subtree of the expression, and against the
+    /// expression's other records (a repeated subtree records the same samples, bit for bit; the
+    /// fits of one variable share its training range); without the rows they cannot be
+    /// recomputed. A subtree with no recorded fit keeps its recorded refusal.
     pub fn linearize_recorded_v2(
         &self,
         profile: &SearchProfile,

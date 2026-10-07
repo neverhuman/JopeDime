@@ -1675,3 +1675,111 @@ fn repeated_subtrees_refused_for_their_coefficients_publish_and_verify() {
     );
     lint(&error.replace(&output.display().to_string(), "<run>"));
 }
+
+// Fix round r05 (B19 wiring review 05): a faulting stage input, and a subtree whose targets are
+// zero on any rows.
+
+/// An admitted parent whose first `derive` stage faults on its training rows (`c0/0`, a domain
+/// fault the profile admits) gives its second stage no training input, so every subtree of that
+/// stage is refused as [`PREFIX_FAULTS`]. With the pass the run completes, publishes and verifies,
+/// as it does without it (B19-R05-PREFIX-FAULT-REFUSAL); a stage whose input faults for only some
+/// of its subtrees stays refused (`verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups`).
+#[test]
+fn a_faulting_stage_input_refuses_its_subtrees_and_the_run_publishes_and_verifies() {
+    let temp = tempfile::tempdir().unwrap();
+    let seed =
+        GenomeIr::parse("(pipe X (derive expr=\"c0/0\") (derive expr=\"sin(c0)*3.0\") (ridge))")
+            .unwrap()
+            .canonical();
+    let parents = Refinement {
+        top_k: 4,
+        trials_per_program: 0,
+    };
+    let mut runs = Vec::new();
+    for (name, engine) in [("off", EngineSelection::default()), ("on", linearize())] {
+        let opt = run_options(
+            &temp.path().join(name),
+            std::slice::from_ref(&seed),
+            40,
+            parents,
+            engine,
+        );
+        let receipt = run::run(&opt).unwrap();
+        let path = opt.run.output.join("receipt.json");
+        assert_eq!(publication::verify_run(&path).unwrap(), receipt, "{name}");
+        runs.push(opt);
+    }
+    let sha = crate::sha256_hex(seed.as_bytes());
+    let moves = published_moves(&runs[1]);
+    let faulted: Vec<&MoveRecord> = moves
+        .iter()
+        .filter(|m| m.parent_sha256 == sha && m.id == MINIMAX_LINEARIZE)
+        .collect();
+    assert!(!faulted.is_empty(), "the seed's stage was not read");
+    for m in faulted {
+        let record = line(m);
+        assert_eq!(record.stage, 1);
+        assert_eq!(record.refusal.as_deref(), Some(PREFIX_FAULTS));
+        assert!(record.fit.is_none() && record.lowered_error.is_none());
+        assert_eq!(m.outcome, REFUSED);
+    }
+}
+
+/// `(c0-c0)*(c0-c0)` is zero wherever it is finite, so its targets are zero on any rows
+/// (B19-R05-KNOWN-ZERO-TARGET-ENVELOPE). On the subnormal dataset its live fit is exact with zero
+/// targets and coefficients past the finite range, published without them, and the run verifies;
+/// the same records edited to a nonzero `max|f|` with a closed converged bracket and its bound,
+/// consistent with their stop, are refused by name.
+#[test]
+fn a_zero_subtree_publishes_zero_targets_and_a_nonzero_record_of_it_is_refused() {
+    let temp = tempfile::tempdir().unwrap();
+    let data = subnormal_dataset(&temp.path().join("dataset"));
+    let opt = run_options_on(
+        data,
+        temp.path(),
+        &[program("(c0-c0)*(c0-c0)")],
+        40,
+        four_parents(),
+        linearize(),
+    );
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    assert_eq!(publication::verify_run(&path).unwrap(), receipt);
+    let moves = published_moves(&opt);
+    let zero: Vec<usize> = (0..moves.len())
+        .filter(|&i| {
+            moves[i].id == MINIMAX_LINEARIZE
+                && line(&moves[i]).subtree.contains("(c0-c0)*(c0-c0)")
+                && line(&moves[i]).path.is_empty()
+        })
+        .collect();
+    assert!(!zero.is_empty(), "no record of the zero subtree");
+    for &i in &zero {
+        let fit = line(&moves[i]).fit.as_ref().unwrap();
+        assert_eq!((fit.max_abs, fit.stop.as_str()), (0.0, "exact_fit"));
+        assert!(fit.coefficients.is_none(), "{fit:?}");
+        assert_eq!(
+            line(&moves[i]).refusal.as_deref(),
+            Some(LINEARIZE_NON_FINITE)
+        );
+    }
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let edited = published_edit(output, &receipt, &engine, &moves, |m| {
+        for &i in &zero {
+            let record = m[i].linearization.as_mut().unwrap();
+            let fit = record.fit.as_mut().unwrap();
+            fit.max_abs = 1.0;
+            fit.max_error = 0.25;
+            fit.levelled = 0.25;
+            fit.stop = "converged".into();
+            record.bound = Some(bound_of(fit));
+        }
+    });
+    let error = refused_with(
+        &edited,
+        "the zero subtree's targets made nonzero",
+        "zero on every sample a nonzero target",
+    );
+    lint(&error.replace(&output.display().to_string(), "<run>"));
+}
