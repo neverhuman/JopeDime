@@ -1,0 +1,118 @@
+"""Join-aware S1 tail (generalization packet item 8): contexts registered under s1-prod/joins/ reach the tail.
+
+The S1 ledger takes later input lists (non-raw/group, fill) as JOINS under the same header (s1-prod/code/ledger_join.py):
+a create-only registration s1-prod/joins/<list>.json binding the ledger header sha and the join list sha. The tail merges
+every registered join after verifying both shas, keeps each record's own input-list sha, binds the joins into its header
+(so a tail dir can never change its joins) and refuses duplicates, tampered lists and registrations of another header.
+With no joins registered, the tail header bytes are unchanged (backward compatible with existing tail dirs).
+Reuses the production-shaped fixture of test_s1_tail.py without modifying it.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import test_s1_tail as base  # noqa: E402
+
+T = base.T
+
+
+class JoinTail(base.S1TailTest):
+    def joined(self, move=("t2",), sub="w", header_for_registration=None, tamper=False, duplicate=False):
+        """A fixture whose `move` contexts sit in a registered join list instead of the main input list."""
+        fx = self.fixture(sub)
+        main = json.loads(fx.input_list_bytes)
+        moving = {fx.ctx[n] for n in move}
+        moved = [r for r in main["admitted"] if r["context_sha256"] in moving]
+        keep = [r for r in main["admitted"] if r["context_sha256"] not in moving or duplicate]
+        mb = base.wjson(fx.prod / "input-list.json", {"schema": main["schema"], "admitted": keep, "refused": []})
+        fx.header["input_list"]["sha256"] = base.sha(mb)
+        fx.header_sha = base.sha(base.wjson(fx.prod / T.LEDGER_HEADER_NAME, fx.header))
+        for i, n in enumerate(fx.names):            # finals bind the (new) header sha
+            if base.SPECS[n][3]:
+                fx.finals[n] = fx._final(i, n)
+        jpath = fx.prod / "input-list-join-x.json"
+        jb = base.wjson(jpath, {"schema": "jope.dl-s1-prod-input-list-join/v1", "admitted": moved, "refused": []})
+        reg = {"schema": T.JOIN_SCHEMA, "header_sha256": header_for_registration or fx.header_sha,
+               "input_list": str(jpath), "sha256": base.sha(jb)}
+        base.wjson(fx.prod / "joins" / "input-list-join-x.json", reg)
+        if tamper:
+            base.wjson(jpath, {"schema": "jope.dl-s1-prod-input-list-join/v1", "admitted": moved[:0], "refused": []})
+        fx.write_ledgers()
+        return fx, base.sha(jb)
+
+    def test_join_contexts_reach_the_tail_with_their_own_input_list_sha(self):
+        fx, jsha = self.joined()
+        s, out = self.run_tail(fx)
+        self.assertEqual(s["status"], "ok")
+        emitted = {e["context_sha256"] for e in self.index(out)}
+        self.assertIn(fx.ctx["t2"], emitted)            # a join context, not in the main list
+        self.assertIn(fx.ctx["t1"], emitted)            # a main-list context still emitted
+        hdr = json.loads((out / "header.json").read_bytes())
+        self.assertEqual([j["input_list_sha256"] for j in hdr["join_input_lists"]], [jsha])
+        provs = [json.loads(p.read_bytes()) for p in sorted((out / "prov").rglob("*.json"))]
+        by = {p["context_sha256"]: p["input_list_sha256"] for p in provs}
+        self.assertEqual(by[fx.ctx["t2"]], jsha)
+        self.assertEqual(by[fx.ctx["t1"]], fx.header["input_list"]["sha256"])
+
+    def test_without_joins_the_join_context_is_refused_not_in_input_list(self):
+        fx, _ = self.joined()
+        (fx.prod / "joins" / "input-list-join-x.json").unlink()          # the pre-join world (old tail behavior)
+        s, out = self.run_tail(fx, out="out-nojoin")
+        self.assertEqual(self.refusals(out).get(fx.ctx["t2"]), "not_in_input_list")
+        self.assertNotIn("join_input_lists", json.loads((out / "header.json").read_bytes()))
+
+    def test_a_tail_dir_bound_without_joins_refuses_to_take_joins(self):
+        fx, _ = self.joined()
+        reg = fx.prod / "joins" / "input-list-join-x.json"
+        saved = reg.read_bytes()
+        reg.unlink()
+        self.run_tail(fx, out="out-fixed")
+        base.wbytes(reg, saved)                                        # joins appear later: a NEW --out is required
+        with self.assertRaises(T.S1TailError):
+            self.run_tail(fx, out="out-fixed")
+
+    def test_registration_of_another_header_is_refused(self):
+        fx, _ = self.joined(header_for_registration="0" * 64)
+        with self.assertRaises(T.S1TailError):
+            self.run_tail(fx)
+
+    def test_tampered_join_list_is_refused(self):
+        fx, _ = self.joined(tamper=True)
+        with self.assertRaises(T.S1TailError):
+            self.run_tail(fx)
+
+    def test_a_context_in_both_lists_is_refused(self):
+        fx, _ = self.joined(duplicate=True)
+        with self.assertRaises(T.S1TailError):
+            self.run_tail(fx)
+
+    def test_seed_from_reuses_identical_shards_without_fetching(self):
+        fx, _ = self.joined()
+        reg = fx.prod / "joins" / "input-list-join-x.json"
+        saved = reg.read_bytes()
+        reg.unlink()
+        _, v3 = self.run_tail(fx, out="v3")                            # the pre-join tail
+        base.wbytes(reg, saved)
+        s, v4 = self.run_tail(fx, out="v4", seed_from=v3, evaluation_roots=())   # no evaluation source at all
+        seeded = {e["context_sha256"] for e in self.index(v4)}
+        old = {e["context_sha256"]: e["sha256"] for e in self.index(v3)}
+        for c, h in old.items():                                       # every v3 shard re-emitted byte-identically
+            self.assertIn(c, seeded)
+            self.assertEqual((v4 / "shards" / c[:2] / f"{c}.json").read_bytes(), (v3 / "shards" / c[:2] / f"{c}.json").read_bytes())
+        self.assertNotIn(fx.ctx["t2"], seeded)                         # the join context needs its evaluations: not seeded
+        s2, _ = self.run_tail(fx, out="v4")                            # with evaluations it emits normally
+        self.assertIn(fx.ctx["t2"], {e["context_sha256"] for e in self.index(v4)})
+
+    def test_seed_with_other_bindings_is_refused(self):
+        fx, _ = self.joined()
+        _, v3 = self.run_tail(fx, out="v3b", max_seq=base.T.DEFAULT_MAX_SEQ - 1)
+        with self.assertRaises(T.S1TailError):
+            self.run_tail(fx, out="v4b", seed_from=v3)
+
+
+if __name__ == "__main__":
+    unittest.main()

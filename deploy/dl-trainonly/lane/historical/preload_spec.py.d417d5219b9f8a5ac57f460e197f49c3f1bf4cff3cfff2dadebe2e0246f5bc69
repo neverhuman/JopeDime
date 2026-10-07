@@ -1,0 +1,10 @@
+import json, sys, time
+from pathlib import Path
+from dltrain import admission, s1_tail, sampler
+R = Path(sys.argv[1]); t0 = time.time()
+spec = json.loads((R / "data-spec.json").read_bytes()); plan = json.loads((R / "run-plan.json").read_bytes())
+entries = json.loads(Path(spec["entries_file"]).read_bytes())["entries"]
+adm = admission.Admission(spec["denylist"], spec["denylist_sha256"], purpose="selection")
+s1_tail.train_data_for_tranche(spec, entries, adm, sampler.SamplerConfig.from_json(plan["sampler"]), receipt={})
+p = sorted((Path(spec["tail_out"]) / "tranches").glob(f"train-data-{len(entries):06d}-*.json"), key=lambda x: x.stat().st_mtime)[-1]
+print(json.dumps({"run": str(R), "receipt": str(p), "wall_s": round(time.time() - t0, 1)}))
