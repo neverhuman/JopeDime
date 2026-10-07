@@ -1373,11 +1373,15 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
         "a recorded line error exceeds what its line and samples allow",
     ));
     restore();
+    // The measured line is the sine seed's, `3 sin(0.5 c1)`, whose targets stay within 3, its
+    // bound (review 06): the far largest target is 3.
+    assert!(line(&moves[measured]).subtree.contains("sin("));
     let path = published_edit(output, &receipt, &engine, &moves, |m| {
         let record = fit_of(&mut m[measured]);
-        let far =
-            10.0 * (largest_end(record.fit.as_ref().unwrap()) + record.lowered_error.unwrap());
-        record.fit.as_mut().unwrap().max_abs = far + 10.0;
+        let error = record.lowered_error.unwrap();
+        let fit = record.fit.as_mut().unwrap();
+        assert!(3.0 - largest_end(fit) > 4.0 * error, "{fit:?}");
+        fit.max_abs = 3.0;
     });
     errors.push(refused_with(
         &path,
@@ -1393,8 +1397,12 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
         let record = fit_of(&mut m[measured]);
         let error = record.lowered_error.unwrap();
         let fit = record.fit.as_mut().unwrap();
-        fit.coefficients.as_mut().unwrap()[0] += 10.0 * (fit.max_abs + error) + 1.0;
+        // Up by the room its larger end leaves under the sine's bound of 3.
+        let shift = 3.0 - largest_end(fit);
+        assert!(shift > 4.0 * error, "{shift} {error}");
+        fit.coefficients.as_mut().unwrap()[0] += shift;
         fit.max_abs = largest_end(fit);
+        assert!(fit.max_abs <= 3.0f64.next_up(), "{fit:?}");
     });
     errors.push(refused_with(
         &path,
@@ -1780,6 +1788,117 @@ fn a_zero_subtree_publishes_zero_targets_and_a_nonzero_record_of_it_is_refused()
         &edited,
         "the zero subtree's targets made nonzero",
         "zero on every sample a nonzero target",
+    );
+    lint(&error.replace(&output.display().to_string(), "<run>"));
+}
+
+// Fix round r06 (B19 wiring review 06): a subtree with one value on every sample, and a range a
+// norm never takes.
+
+/// `(c0-c0)+1.0` takes the value 1 on every sample (B19-R06-KNOWN-TARGET-EVIDENCE). On the
+/// subnormal dataset its live fit is the exact constant fit, published without its coefficients
+/// (the conversion scales zero by infinity), and the run verifies; its records edited to a larger
+/// `max|f|`, or to a converged bracket at the constant's own size, each with its bound, are
+/// refused by name.
+#[test]
+fn a_one_value_subtree_publishes_its_exact_fit_and_edits_of_it_are_refused() {
+    let temp = tempfile::tempdir().unwrap();
+    let data = subnormal_dataset(&temp.path().join("dataset"));
+    let opt = run_options_on(
+        data,
+        temp.path(),
+        &[program("(c0-c0)+1.0")],
+        40,
+        four_parents(),
+        linearize(),
+    );
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    assert_eq!(publication::verify_run(&path).unwrap(), receipt);
+    let moves = published_moves(&opt);
+    let one: Vec<usize> = (0..moves.len())
+        .filter(|&i| {
+            moves[i].id == MINIMAX_LINEARIZE
+                && line(&moves[i]).subtree.contains("(c0-c0)+1")
+                && line(&moves[i]).path.is_empty()
+        })
+        .collect();
+    assert!(!one.is_empty(), "no record of the constant subtree");
+    for &i in &one {
+        let fit = line(&moves[i]).fit.as_ref().unwrap();
+        assert_eq!(
+            (fit.max_abs, fit.stop.as_str(), fit.iterations, fit.steps),
+            (1.0, "exact_fit", 1, 1)
+        );
+    }
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let edited = |max_abs: f64| {
+        published_edit(output, &receipt, &engine, &moves, |m| {
+            for &i in &one {
+                let record = m[i].linearization.as_mut().unwrap();
+                let fit = record.fit.as_mut().unwrap();
+                fit.max_abs = max_abs;
+                fit.max_error = 0.25;
+                fit.levelled = 0.25;
+                fit.stop = "converged".into();
+                record.bound = Some(bound_of(fit));
+            }
+        })
+    };
+    let larger = refused_with(
+        &edited(2.0),
+        "the constant's size doubled",
+        "max|f| exceeds every value its subtree can take",
+    );
+    let bracket = refused_with(
+        &edited(1.0),
+        "a converged bracket at the constant's size",
+        "is not that value's exact fit",
+    );
+    for error in [larger, bracket] {
+        lint(&error.replace(&output.display().to_string(), "<run>"));
+    }
+}
+
+/// A row's L2 norm is never negative (B19-R06-AGGREGATE-INPUT-RANGE): a run seeded with
+/// `sin((0.1*row_l2))*3.0` publishes and verifies, and its fits of the norm edited to a range with
+/// a negative end are refused by name.
+#[test]
+fn a_norms_fit_over_a_range_with_a_negative_end_is_refused() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = run_options(
+        temp.path(),
+        &[program("sin((0.1*row_l2))*3.0")],
+        40,
+        four_parents(),
+        linearize(),
+    );
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    assert_eq!(publication::verify_run(&path).unwrap(), receipt);
+    let moves = published_moves(&opt);
+    let norm: Vec<usize> = (0..moves.len())
+        .filter(|&i| {
+            moves[i].id == MINIMAX_LINEARIZE
+                && line(&moves[i]).subtree.contains("row_l2")
+                && line(&moves[i]).fit.is_some()
+        })
+        .collect();
+    assert!(!norm.is_empty(), "no fit of the norm");
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let edited = published_edit(output, &receipt, &engine, &moves, |m| {
+        for &i in &norm {
+            let fit = m[i].linearization.as_mut().unwrap().fit.as_mut().unwrap();
+            assert!(fit.lo >= 0.0);
+            fit.lo = -0.5;
+        }
+    });
+    let error = refused_with(
+        &edited,
+        "a norm's range moved under zero",
+        "range holds values its variable never takes",
     );
     lint(&error.replace(&output.display().to_string(), "<run>"));
 }

@@ -453,20 +453,27 @@ fn a_recorded_fit_must_stay_in_the_evaluators_range() {
     // At the range's edge the range check accepts max|f|. The fit's error is then within the
     // exact-fit test, so only an `ExactFit` stop is consistent, and a target that large forces
     // the line's residual up to `max|f| - M` (review 03): the record is consistent only with both,
-    // and its line then misses the bound.
-    let mut edge = kept.clone();
+    // and its line then misses the bound. A sine's targets stay within 3 (review 06), so this
+    // takes a subtree with no such bound.
+    let unbounded = linearize(UNBOUNDED, &training);
+    let mut edge: Vec<LinearizationEvidence> = unbounded.iter().map(evidence).collect();
+    assert_eq!(recorded(UNBOUNDED, &edge).unwrap(), unbounded);
     let fit = edge[0].fit.as_mut().unwrap();
     fit.max_abs = MAX_ABS;
     assert!(fit.max_error <= 4.0 * f64::EPSILON * MAX_ABS);
-    let refusal = recorded(NEAR_LINEAR, &edge).unwrap_err();
+    let refusal = recorded(UNBOUNDED, &edge).unwrap_err();
     assert!(format!("{refusal:#}").contains("a recorded fit disagrees with its stop"));
     let fit = edge[0].fit.as_mut().unwrap();
     fit.stop = MinimaxStop::ExactFit;
     let least = MAX_ABS - largest_end(fit);
     edge[0].lowered_error = Some(least);
-    let out = recorded(NEAR_LINEAR, &edge).unwrap();
+    let out = recorded(UNBOUNDED, &edge).unwrap();
     assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
 }
+
+/// A 9-node expression, nearly linear on [-0.5, 1.5], whose values have no bound short of the
+/// evaluator's range: no bounded call holds its variable.
+const UNBOUNDED: &str = "((c0*c0)*0.001)+(c0*0.3)";
 
 /// `(sin(c0)+c0)` twice: the root and two equal subtrees are considered.
 const REPEATED: &str = "(sin(c0)+c0)*(sin(c0)+c0)";
@@ -666,10 +673,11 @@ fn a_recorded_line_error_must_be_one_its_line_and_samples_allow() {
     assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
     // A largest target far past the line, with the line's small error kept: refused. At
     // `max|f| - M` the record is consistent and misses the bound; one step under it is refused.
+    // The subtree's targets stay within 3, its bound (review 06), so the target is 3.
     let mut wide = kept.clone();
-    wide[0].fit.as_mut().unwrap().max_abs = 10.0;
+    wide[0].fit.as_mut().unwrap().max_abs = 3.0;
     refused(&wide, "smaller than the residual at the largest target");
-    let least = 10.0 - largest_end(&fit);
+    let least = 3.0 - largest_end(&fit);
     assert!(least > error, "{least} <= {error}");
     wide[0].lowered_error = Some(least);
     let out = recorded(NEAR_LINEAR, &wide).unwrap();
@@ -745,11 +753,13 @@ fn a_recorded_fit_must_agree_with_its_subtrees_targets_at_the_sampled_ends() {
     refused(&short, "sampled ends give targets its samples cannot have");
     // The line moved far off with `max|f|` set to its larger end: every envelope bound holds for
     // its small error, but the subtree's target at a sampled end is far from the line. At that
-    // residual the record is consistent and misses the bound; one step under it is refused.
+    // residual the record is consistent and misses the bound; one step under it is refused. The
+    // move keeps the larger end within the subtree's bound of 3 (review 06).
     let mut moved = kept.clone();
     let line = moved[0].fit.as_mut().unwrap();
-    line.coefficients[0] += 10.0 * (fit.max_abs + error) + 1.0;
+    line.coefficients[0] += 2.0;
     line.max_abs = largest_end(line);
+    assert!(line.max_abs <= 3.0, "{line:?}");
     let least = least_error(&live[0], line);
     assert!(least > error, "{least} <= {error}");
     let target_residual = "smaller than the line's residual at a sampled end's target";
@@ -764,8 +774,8 @@ fn a_recorded_fit_must_agree_with_its_subtrees_targets_at_the_sampled_ends() {
 /// A subtree refused before any fit names `unsampled`, a reason the fit itself gives (B19 wiring
 /// review 04's inventory), or the caller's input faults for every subtree of the expression
 /// (review 05: the pipeline's stage-prefix refusal); each of those is accepted, and any other
-/// refused, the range refusal the sampler cannot give and input faults beside another record
-/// included.
+/// refused, the range and interval refusals the sampler cannot give (reviews 05 and 06) and
+/// input faults beside another record included.
 #[test]
 fn a_refusal_before_the_fit_names_a_reason_the_fit_gives() {
     let training = rows(-0.5, 1.5, 201);
@@ -795,6 +805,7 @@ fn a_refusal_before_the_fit_names_a_reason_the_fit_gives() {
         format!("{LINEARIZE_FIT_REFUSED}: degree above the cap"),
         format!("{LINEARIZE_FIT_REFUSED}: a sample is not finite"),
         format!("{LINEARIZE_FIT_REFUSED}: {OUTSIDE_RANGE}"),
+        format!("{LINEARIZE_FIT_REFUSED}: {EMPTY_INTERVAL}"),
         format!("{LINEARIZE_FIT_REFUSED}: no reason"),
         "the line was not wanted".into(),
     ] {
@@ -960,7 +971,9 @@ fn a_subtree_zero_wherever_finite_records_only_zero_targets() {
 
 /// The live samples read each row's variable, and the element `x` faults on every row, so a
 /// subtree of `x` has no fit: a fit recorded for one is refused (B19 wiring review 05's note
-/// B19-R05-X-FIT-APPLICABILITY), while its live refusals replay.
+/// B19-R05-X-FIT-APPLICABILITY), while its live refusals replay; and it is refused before any fit
+/// only as unsampled, for too few values (no rows at all), or for the caller's input faults, any
+/// other reason refused (review 06's note).
 #[test]
 fn a_subtree_of_the_element_x_records_no_fit() {
     let training = rows(-0.5, 1.5, 201);
@@ -987,6 +1000,241 @@ fn a_subtree_of_the_element_x_records_no_fit() {
         format!("{error:#}").contains("subtree of the element x"),
         "{error:#}"
     );
+    // Its refusals before any fit.
+    let refused_as = |refusal: String| {
+        x.linearize_recorded_v2(&baseline(), element, &mut |_| {
+            Ok(LinearizationEvidence {
+                fit: None,
+                lowered_error: None,
+                refusal: Some(refusal.clone()),
+            })
+        })
+    };
+    assert!(x
+        .linearize_v2(&baseline(), element, &[])
+        .unwrap()
+        .iter()
+        .all(|l| {
+            l.refusal.as_deref()
+                == Some(format!("{LINEARIZE_FIT_REFUSED}: {FEW_ABSCISSAE}").as_str())
+        }));
+    for refusal in [
+        LINEARIZE_UNSAMPLED.to_string(),
+        LINEARIZE_INPUT_FAULTS.to_string(),
+        format!("{LINEARIZE_FIT_REFUSED}: {FEW_ABSCISSAE}"),
+    ] {
+        refused_as(refusal).unwrap();
+    }
+    for reason in [SINGULAR_FIRST, NONFINITE_ERROR, TWO_TARGETS] {
+        let error = refused_as(format!("{LINEARIZE_FIT_REFUSED}: {reason}")).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("element x names a refusal its samples never give"),
+            "{reason}: {error:#}"
+        );
+    }
+}
+
+/// A subtree with one value on every sample, such as `(c0-c0)+1.0` or `step((c0-c0),1.0)`, has
+/// targets of that value's size on any rows, and the first reference's solve gives that value at
+/// once: a recorded fit of it must carry that size as `max|f|`, the first step's exact fit, that
+/// value and a zero slope, and a line error equal to its line's larger end residual (B19 wiring
+/// review 06, B19-R06-KNOWN-TARGET-EVIDENCE). The structural test is sufficient, and every finite
+/// value of an expression it marks has one size at the probe values; the live fit replays.
+#[test]
+fn a_subtree_with_one_value_records_that_values_exact_fit() {
+    let marked = [
+        "(c0-c0)+1.0",
+        "step((c0-c0),1.0)",
+        "cos((c0-c0))*2.0",
+        "sigmoid((c0*0.0))+0.25",
+        "((c0-c0)*c0)+1.5",
+        "min((c0-c0),2.0)-1.0",
+        "exp(sin((c0-c0)))*(c0-c0)",
+    ];
+    let unmarked = [
+        "c0+1.0",
+        "step(c0,1.0)",
+        "cos(c0)",
+        "(c0-c0)+c0",
+        "exp(c0)*0.5",
+        "(c0/(c0-c0))+2.0",
+    ];
+    let probes = [-1e12, -3.5, -1.0, -0.0, 0.0, 5e-324, 0.5, 2.0, 1e6, 1e12];
+    for source in marked {
+        let expression = MathExpr::parse(source).unwrap();
+        assert!(one_value_wherever_finite(&expression.root), "{source}");
+        let sizes: BTreeSet<u64> = probes
+            .iter()
+            .map(|&v| expression.eval_row_traced(&[v, 0.25]))
+            .filter(|(f, faults)| faults.is_empty() && f.is_finite())
+            .map(|(f, _)| f.abs().to_bits())
+            .collect();
+        assert!(sizes.len() <= 1, "{source}: {sizes:?}");
+    }
+    for source in unmarked {
+        let expression = MathExpr::parse(source).unwrap();
+        assert!(!one_value_wherever_finite(&expression.root), "{source}");
+    }
+    // The live fit of a constant: exact at the first step, that value and a zero slope, no error.
+    const ONE: &str = "(c0-c0)+1.0";
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(ONE, &training);
+    assert_eq!(live.len(), 1);
+    let fit = live[0].fit.unwrap();
+    assert_eq!(
+        (
+            fit.stop,
+            fit.iterations,
+            fit.steps,
+            fit.max_abs,
+            fit.max_error
+        ),
+        (MinimaxStop::ExactFit, 1, 1, 1.0, 0.0)
+    );
+    assert_eq!(fit.coefficients, [1.0, 0.0]);
+    assert!(
+        live[0].lowered_error.is_none_or(|e| e == 0.0),
+        "{:?}",
+        live[0]
+    );
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(recorded(ONE, &kept).unwrap(), live);
+    let refused = |evidence: LinearizationEvidence, source: &str, expected: &str| {
+        let error = recorded(source, std::slice::from_ref(&evidence)).unwrap_err();
+        assert!(format!("{error:#}").contains(expected), "{error:#}");
+    };
+    let not_exact = "is not that value's exact fit";
+    // The review's witness: the zero line for the constant one, offered before.
+    let zero_line = LinearizationEvidence {
+        fit: Some(LinearFit {
+            stop: MinimaxStop::Converged,
+            coefficients: [0.0, 0.0],
+            levelled: 1.0,
+            max_error: 1.0,
+            iterations: 1,
+            steps: 1,
+            ..fit
+        }),
+        lowered_error: Some(1.0),
+        refusal: None,
+    };
+    refused(zero_line, ONE, not_exact);
+    // A converged bracket at the right size, its line kept.
+    let mut bracket = kept[0].clone();
+    let edit = bracket.fit.as_mut().unwrap();
+    (edit.stop, edit.levelled, edit.max_error) = (MinimaxStop::Converged, 0.25, 0.25);
+    bracket.lowered_error = None;
+    refused(bracket, ONE, not_exact);
+    // A larger size, within the bound's slack of one ulp, is refused for that size.
+    let mut size = kept[0].clone();
+    size.fit.as_mut().unwrap().max_abs = 1.0f64.next_up();
+    refused(size, ONE, not_exact);
+    // The line's error edited within every envelope bound: not its end residual, zero.
+    let mut error = kept[0].clone();
+    error.lowered_error = Some(0.5);
+    refused(error, ONE, "not the larger end residual");
+    // `step((c0-c0),1.0)` is zero on every sample, though not by the zero test.
+    const STEP: &str = "step((c0-c0),1.0)";
+    let step = MathExpr::parse(STEP).unwrap();
+    assert!(!zero_wherever_finite(&step.root));
+    let live = linearize(STEP, &training);
+    let fit = live[0].fit.unwrap();
+    assert_eq!((fit.max_abs, fit.stop), (0.0, MinimaxStop::ExactFit));
+    assert_eq!(
+        recorded(STEP, &live.iter().map(evidence).collect::<Vec<_>>()).unwrap(),
+        live
+    );
+    let nonzero = LinearizationEvidence {
+        fit: Some(LinearFit {
+            stop: MinimaxStop::Converged,
+            coefficients: [f64::NAN; 2],
+            levelled: 0.25,
+            max_error: 0.25,
+            max_abs: 1.0,
+            iterations: 1,
+            steps: 1,
+            ..fit
+        }),
+        lowered_error: None,
+        refusal: None,
+    };
+    refused(nonzero, STEP, not_exact);
+}
+
+/// No target is larger than every value its subtree can take: `step((c0+c0),0.0)` takes only 0
+/// and 1, so a recorded `max|f|` of 2 is refused (B19 wiring review 06), while the live fit
+/// replays. The bound is sound at every probe value.
+#[test]
+fn a_recorded_fit_stays_within_what_its_subtree_can_take() {
+    // Each with the bound the analysis gives, up to its rounding up.
+    let bounded = [
+        ("step((c0+c0),0.0)", 1.0),
+        ("sin(c0)*3.0", 3.0001),
+        ("tanh(c0)+2.0", 3.0001),
+        ("abs(cos(c0))", 1.0),
+        ("(atan(c0)*2.0)-sign(c0)", 4.2),
+        ("sqrt(abs(sin(c0)))+floor(erf(c0))", 3.0001),
+        ("max(sigmoid(c0),clip(c0,-2.0,0.5))", 2.0),
+    ];
+    let unbounded = ["c0*2.0", "c0/sin(c0)", "log1p(abs(c0))", "c0^2.0"];
+    let probes = [-1e12, -3.5, -1.0, -0.0, 0.0, 5e-324, 0.5, 2.0, 1e6, 1e12];
+    for (source, at_most) in bounded {
+        let expression = MathExpr::parse(source).unwrap();
+        let bound = largest_magnitude(&expression.root);
+        assert!(bound <= at_most, "{source}: {bound}");
+        for v in probes {
+            let (f, faults) = expression.eval_row_traced(&[v, 0.25]);
+            assert!(
+                !(faults.is_empty() && f.is_finite()) || f.abs() <= bound,
+                "{source} at {v}: {f}"
+            );
+        }
+    }
+    for source in unbounded {
+        assert_eq!(
+            largest_magnitude(&MathExpr::parse(source).unwrap().root),
+            f64::INFINITY,
+            "{source}"
+        );
+    }
+    const STEP: &str = "step((c0+c0),0.0)";
+    let training = rows(-0.5, 1.5, 201);
+    let live = linearize(STEP, &training);
+    let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+    assert_eq!(live[0].fit.unwrap().max_abs, 1.0);
+    assert_eq!(recorded(STEP, &kept).unwrap(), live);
+    let mut larger = kept.clone();
+    larger[0].fit.as_mut().unwrap().max_abs = 2.0;
+    let error = recorded(STEP, &larger).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("max|f| exceeds every value its subtree can take"),
+        "{error:#}"
+    );
+}
+
+/// A row's L2 norm and standard deviation are never negative, so a recorded fit of either over a
+/// range with a negative end is refused (B19 wiring review 06, B19-R06-AGGREGATE-INPUT-RANGE),
+/// while their live fits replay.
+#[test]
+fn a_recorded_range_holds_only_values_its_variable_takes() {
+    let training = rows(-0.5, 1.5, 201);
+    let copied: Vec<LinearizationEvidence> = linearize(NEAR_LINEAR, &training)
+        .iter()
+        .map(evidence)
+        .collect();
+    assert!(copied[0].fit.unwrap().lo < 0.0);
+    for var in ["row_l2", "row_std"] {
+        let source = format!("sin((0.1*{var}))*3.0");
+        let live = linearize(&source, &training);
+        assert!(live[0].fit.unwrap().lo >= 0.0, "{var}");
+        let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
+        assert_eq!(recorded(&source, &kept).unwrap(), live, "{var}");
+        let error = recorded(&source, &copied).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("range holds values its variable never takes"),
+            "{var}: {error:#}"
+        );
+    }
 }
 
 /// A closing stop returns the fit of the step it stops at, the iteration cap stops after the last

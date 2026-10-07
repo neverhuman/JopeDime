@@ -275,16 +275,12 @@ const SINGULAR_FIRST: &str = "singular first reference";
 /// The fit's refusal when its first fit's errors are not finite.
 const NONFINITE_ERROR: &str = "an error is not finite";
 /// Every reason the fit can refuse the samples [`samples`] gives for a line: [`prepare`]'s and
-/// [`minimax`]'s own, less three. [`samples`] gives only fault-free finite samples, and the
+/// [`minimax`]'s own, less four. [`samples`] gives only fault-free finite samples, and the
 /// evaluator raises a fault for every value it brings back into its range, so neither `a sample
-/// is not finite` nor [`OUTSIDE_RANGE`] occurs; and a line's degree is under the cap.
-const FIT_REFUSALS: [&str; 5] = [
-    TWO_TARGETS,
-    FEW_ABSCISSAE,
-    EMPTY_INTERVAL,
-    SINGULAR_FIRST,
-    NONFINITE_ERROR,
-];
+/// is not finite` nor [`OUTSIDE_RANGE`] occurs; a line's degree is under the cap; and three
+/// distinct abscissae within that range span an interval that is neither empty nor overflowing,
+/// so [`EMPTY_INTERVAL`] does not occur either.
+const FIT_REFUSALS: [&str; 4] = [TWO_TARGETS, FEW_ABSCISSAE, SINGULAR_FIRST, NONFINITE_ERROR];
 /// The fit's refusal of an interval that is empty or overflows.
 const EMPTY_INTERVAL: &str = "empty or overflowing interval";
 
@@ -966,10 +962,10 @@ fn same_tree(a: &Expr, b: &Expr) -> bool {
 /// `-0.0` or a value that is not finite. The evaluator is deterministic, so `a - a` is `+0.0` for
 /// a finite `a` and NaN otherwise; zero times anything, zero over anything (a divisor near zero
 /// gives `0.0`), sums and differences of zeros, negation, a positive constant power, and the
-/// calls that keep zero (`abs`, `sqrt`, `log1p`, `sin`, `tanh`, `atan`, `erf`, `sign`, `floor`,
-/// `round`) each give zero from zero, and NaN or zero from NaN. A sample's target is finite, so
-/// such a subtree's targets are all zero on any training rows. The test is sufficient, not
-/// complete: `false` says nothing.
+/// calls that keep zero (`abs`, `sqrt`, `log1p`, `sin`, `tanh`, `atan`, `asinh`, `erf`, `sign`,
+/// `floor`, `round`) each give zero from zero, and NaN or zero from NaN. A sample's target is
+/// finite, so such a subtree's targets are all zero on any training rows. The test is
+/// sufficient, not complete: `false` says nothing.
 fn zero_wherever_finite(expr: &Expr) -> bool {
     match expr {
         Expr::Const(c) => *c == 0.0,
@@ -991,12 +987,81 @@ fn zero_wherever_finite(expr: &Expr) -> bool {
                     | Func::Sin
                     | Func::Tanh
                     | Func::Atan
+                    | Func::Asinh
                     | Func::Erf
                     | Func::Sign
                     | Func::Floor
                     | Func::Round
             ) && args.len() == 1
                 && zero_wherever_finite(&args[0])
+        }
+    }
+}
+
+/// Whether `expr` takes one value wherever it is finite, up to the sign of a zero: its literals
+/// alone, `a - a`, a subtree [`zero_wherever_finite`], or any operation or call of such values.
+/// The evaluator is deterministic, and none of its operations or calls tells `+0.0` from `-0.0`
+/// in size: each gives results of equal size from either, or faults (a divisor near zero, the
+/// logarithm, a negative power), so every finite target of such a subtree has one size, on any
+/// training rows. The test is sufficient, not complete.
+fn one_value_wherever_finite(expr: &Expr) -> bool {
+    zero_wherever_finite(expr)
+        || match expr {
+            Expr::Const(_) => true,
+            Expr::Var(_) => false,
+            Expr::Unary(UnOp::Neg, a) => one_value_wherever_finite(a),
+            Expr::Binary(op, a, b) => {
+                (*op == BinOp::Sub && same_tree(a, b))
+                    || (one_value_wherever_finite(a) && one_value_wherever_finite(b))
+            }
+            Expr::Call(_, args) => args.iter().all(one_value_wherever_finite),
+        }
+}
+
+/// An upper bound on the size of every value of `expr` that is not NaN, on any input:
+/// `+inf` when nothing smaller is known. Literals give their size, a subtree
+/// [`zero_wherever_finite`] zero, sums, differences and products their operands' bounds, each
+/// rounded up (a product with a zero factor zero), and the bounded calls their own range: `sin`,
+/// `cos`, `tanh`, `erf`, `sigmoid`, `sign` and `step` at most 1, `atan` at most `π/2`, `abs` its
+/// operand's, `sqrt` the root of its operand's, `floor` and `round` one more than their
+/// operand's, `exp` of its clamped argument, `min`, `max` and `clip` the larger of their
+/// operands' or bounds'. Quotients, powers, logarithms and `asinh` are unbounded here. A sample's
+/// target is finite, so no target of a subtree is larger than its bound, on any training rows.
+fn largest_magnitude(expr: &Expr) -> f64 {
+    let up = |v: f64| if v == 0.0 { 0.0 } else { v.next_up() };
+    if zero_wherever_finite(expr) {
+        return 0.0;
+    }
+    match expr {
+        Expr::Const(c) if c.is_nan() => f64::INFINITY,
+        Expr::Const(c) => c.abs(),
+        Expr::Var(_) => f64::INFINITY,
+        Expr::Unary(UnOp::Neg, a) => largest_magnitude(a),
+        Expr::Binary(op, a, b) => {
+            let (x, y) = (largest_magnitude(a), largest_magnitude(b));
+            match op {
+                BinOp::Add | BinOp::Sub => up(x + y),
+                // A factor of size zero makes the product zero, or NaN.
+                BinOp::Mul if x == 0.0 || y == 0.0 => 0.0,
+                BinOp::Mul => up(x * y),
+                BinOp::Div | BinOp::Pow => f64::INFINITY,
+            }
+        }
+        Expr::Call(func, args) => {
+            let bound = |i: usize| args.get(i).map_or(f64::INFINITY, largest_magnitude);
+            match func {
+                Func::Sin | Func::Cos | Func::Tanh | Func::Erf | Func::Sigmoid => 1.0,
+                Func::Sign | Func::Step => 1.0,
+                Func::Atan => std::f64::consts::FRAC_PI_2.next_up(),
+                Func::Abs => bound(0),
+                Func::Sqrt => up(bound(0).sqrt()),
+                Func::Floor | Func::Round => up(bound(0) + 1.0),
+                // The library's `exp` is within an ulp, so two ulps cover it.
+                Func::Exp => up(up(bound(0).min(30.0).exp())),
+                Func::Min | Func::Max => bound(0).max(bound(1)),
+                Func::Clip => bound(1).max(bound(2)),
+                Func::Log | Func::Log1p | Func::Asinh => f64::INFINITY,
+            }
         }
     }
 }
@@ -1100,6 +1165,15 @@ fn linearize(
                             || reason.is_some_and(|r| FIT_REFUSALS.contains(&r)),
                         "a linearization without a fit names a refusal the fit never gives"
                     );
+                    // The element `x` faults on every row, so a subtree of it is unsampled, or
+                    // has too few values when there are no rows at all.
+                    anyhow::ensure!(
+                        found[0] != Var::X
+                            || refusal == LINEARIZE_UNSAMPLED
+                            || refusal == LINEARIZE_INPUT_FAULTS
+                            || reason == Some(FEW_ABSCISSAE),
+                        "a subtree of the element x names a refusal its samples never give"
+                    );
                     record.refusal = evidence.refusal;
                     out.push(record);
                     continue;
@@ -1118,6 +1192,17 @@ fn linearize(
                     fit.max_abs == 0.0 || !zero_wherever_finite(node),
                     "a recorded fit gives a subtree that is zero on every sample a nonzero target"
                 );
+                // A row's L1 and L2 norms and its standard deviation are never negative, so a
+                // fit of one has a range that is not either.
+                anyhow::ensure!(
+                    !matches!(found[0], Var::RowL1 | Var::RowL2 | Var::RowStd) || fit.lo >= 0.0,
+                    "a recorded fit's range holds values its variable never takes"
+                );
+                // No target is larger than every value the subtree can take.
+                anyhow::ensure!(
+                    fit.max_abs <= largest_magnitude(node),
+                    "a recorded fit's max|f| exceeds every value its subtree can take"
+                );
                 // `lo` and `hi` are sampled values of the subtree's one variable, so its targets
                 // there follow from the subtree itself: fault-free, finite, and within `max|f|`.
                 let mut targets = [0.0f64; 2];
@@ -1129,6 +1214,26 @@ fn linearize(
                                 "a recorded fit's sampled ends give targets its samples cannot have"
                             )
                         })?;
+                }
+                // A subtree with one value on every sample has targets of the size its target at
+                // `lo` shows, so `max|f|` is that size. The first reference's solve, whose first
+                // column is all ones, then gives that value at once with a zero slope and no
+                // error, so the fit is exact at the first step, its coefficients that value and
+                // zero (or NaN where the conversion scales zero by infinity); a singular first
+                // solve gives no fit.
+                let one_value = one_value_wherever_finite(node);
+                if one_value {
+                    let [a0, a1] = fit.coefficients;
+                    anyhow::ensure!(
+                        fit.max_abs == targets[0].abs()
+                            && fit.stop == MinimaxStop::ExactFit
+                            && fit.iterations == 1
+                            && fit.steps == 1
+                            && fit.max_error == 0.0
+                            && (a0.is_nan() || a0 == targets[0])
+                            && (a1.is_nan() || a1 == 0.0),
+                        "a recorded fit of a subtree with one value on every sample is not that value's exact fit"
+                    );
                 }
                 let lowered = evidence.lowered_error;
                 // A line that can be lowered and is in the evaluator's range at both sampled ends
@@ -1163,7 +1268,7 @@ fn linearize(
                         "a recorded line error exceeds what the evaluator's range allows"
                     );
                     if lowerable {
-                        let mut largest_end = 0.0f64;
+                        let (mut largest_end, mut largest_residual) = (0.0f64, 0.0f64);
                         for (value, target) in ends.into_iter().zip(targets) {
                             anyhow::ensure!(
                                 value.is_finite() && value.abs() <= MAX_ABS,
@@ -1175,7 +1280,15 @@ fn linearize(
                                 "a recorded line error is smaller than the line's residual at a sampled end's target"
                             );
                             largest_end = largest_end.max(value.abs());
+                            largest_residual = largest_residual.max((value - target).abs());
                         }
+                        // Against one value, the residual of a line monotone between its ends is
+                        // largest at an end, and the measurement takes the ends: the error is
+                        // exactly the larger end residual.
+                        anyhow::ensure!(
+                            !one_value || error == largest_residual,
+                            "a recorded line error is not the larger end residual of a line against its subtree's one value"
+                        );
                         anyhow::ensure!(
                             error <= largest_end + fit.max_abs,
                             "a recorded line error exceeds what its line and samples allow"
@@ -1299,9 +1412,12 @@ impl MathExpr {
     /// [`LinearizationEvidence`]. The subtrees, the bracket rule, the lowered line and its size,
     /// the bound, every refusal after the fit, and the admitted expression are recomputed. The
     /// fit itself and the line's measured error are taken as recorded, checked only against the
-    /// fit's stop and the evaluator's range, the subtree's own targets at the sampled ends (and a
-    /// zero `max|f|` for a subtree that is zero wherever it is finite; no fit for a subtree of the
-    /// element `x`), the error as a finite nonnegative residual within what the recorded line and
+    /// fit's stop and the evaluator's range, the subtree's own targets at the sampled ends, what the
+    /// subtree's structure fixes without the rows (a `max|f|` within the subtree's bound; for a
+    /// subtree that is zero wherever it is finite, a zero `max|f|`; for one with a single value on
+    /// every sample, that value's exact first-step fit and a line error equal to the larger end
+    /// residual; a range within its variable's values; no fit, and only its own refusals, for a
+    /// subtree of the element `x`), the error as a finite nonnegative residual within what the recorded line and
     /// samples allow (at most `1e12 + max|f|`; for a line that can be lowered, at least its
     /// residual at either sampled end and against that end's target, and between `max|f| - M` and
     /// `M + max|f|`, with `M` its larger size there; present whenever such a line in range at both
