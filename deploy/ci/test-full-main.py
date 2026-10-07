@@ -211,6 +211,42 @@ sys.exit(int(a.status))
                 priority=100)], override)
 
 
+class SyntheticExecutorTests(unittest.TestCase):
+    def test_collection_binds_helper_and_refuses_missing_or_wrong_executor(self):
+        script = (ROOT / 'deploy/ci/full-lane.sh').read_text()
+        snippet = re.search(r"python3 - <<'PYBUILD'\n(.*?)\nPYBUILD", script, re.S)[1]
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            executable = root / 'executor'
+            executable.write_bytes(b'same-source fixture executable')
+            suite = {'kind': 'lib', 'package-name': 'jope-parallel',
+                     'binary-path': str(executable),
+                     'testcases': {'eval_registry::authority::tests::synthetic_executor': {}}}
+            collection = root / 'synthetic-executor-collection.json'
+            collection.write_text(json.dumps({'rust-suites': {'jope-parallel': suite}}))
+            env = dict(os.environ, JOPE_LANE_EVIDENCE=str(root), JOPE_SOURCE_SHA='a' * 40)
+            result = subprocess.run([sys.executable, '-c', snippet], env=env,
+                                    capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(str(executable), result.stdout.strip())
+            record = root / 'synthetic-executor.json'
+            self.assertEqual(dict(executable=str(executable), sha256=receipt.digest(executable),
+                                  features=[], feature_selection='no-default-features',
+                                  source_sha='a' * 40,
+                                  scope='same-source synthetic child; collection only, no test execution'),
+                             json.loads(record.read_text()))
+            record.unlink()
+            for field, value in [('kind', 'bin'), ('package-name', 'other'),
+                                 ('testcases', {}), ('binary-path', str(root / 'absent'))]:
+                with self.subTest(field=field):
+                    invalid = dict(suite, **{field: value})
+                    collection.write_text(json.dumps({'rust-suites': {'jope-parallel': invalid}}))
+                    result = subprocess.run([sys.executable, '-c', snippet], env=env,
+                                            capture_output=True, text=True)
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertFalse(record.exists())
+
+
 class CompilerCacheTests(unittest.TestCase):
     def setUp(self):
         (ROOT / 'target/tmp').mkdir(parents=True, exist_ok=True)
