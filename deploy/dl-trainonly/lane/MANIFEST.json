@@ -1,25 +1,16 @@
 {
  "changes_since_prior": {
   "added": {
-   "tests/test_v2_rowsel_raw_fold_isolation.py": "a3480f5d13e2dd1b1a62a04b5711d97ba2a9493b015dcf0ddb35c26a102e0f44"
+   "tests/test_admission_fail_closed.py": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
   },
   "changed": {
-   "dltrain/target_linear.py": {
-    "from": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45",
-    "to": "f2c22410f505c3f163cec18b4bc4c3fa5233823bdf37b8cf7069a51ed5de5811"
-   },
-   "tests/test_v2_rowsel_raw_v2g.py": {
-    "from": "64c62ee70183ab2c97c0e694dfc9a4ea48523c94f8c07ae52b227778bfc485c6",
-    "to": "72ae2cc1412b8e0cfe8a81a5424a543ec18282804f2aac2e69fc4b80f15a5fcc"
-   },
-   "tools/v2_rowsel_raw.py": {
-    "from": "45dbc45826cf00df2c981431286ff4c6b99ee47147bfaf43761f33456896bb9c",
-    "to": "48829e820336ac2d4bafe42d73a30733976d6ef12ff75854cf7fd30a73ba8622"
+   "dltrain/admission.py": {
+    "from": "11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58",
+    "to": "59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08"
    }
-  },
-  "removed": []
+  }
  },
- "created_utc": "2026-10-07T05:59:32Z",
+ "created_utc": "2026-10-07T08:07:55Z",
  "dependencies": {
   "Dope": "dope-kernel built from ~/dope 63696a5d into RUN/build/dope-target (bc3c4460)",
   "GPU encode": "system /usr/bin/python3.12 with torch 2.7.0+cu12x, safetensors, psutil; Codex's gpu_encoders.py ff419384 read-only from /home/ubuntu/scratch/jopedime-regression-neural-encoding-v1; lane-owned TabPFN runtime tabpfn 9.0.0 + pandas 2.3.2 + skrub 0.10.1 (manifest RUN/pydeps/tab35-runtime-v1.files.sha256 8ad8cb6e)",
@@ -87,8 +78,8 @@
    "sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c"
   },
   "src/dl_training_v1/dltrain/admission.py": {
-   "bytes": 2364,
-   "sha256": "11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58"
+   "bytes": 2714,
+   "sha256": "59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08"
   },
   "src/dl_training_v1/dltrain/analysis.py": {
    "bytes": 77,
@@ -309,6 +300,10 @@
   "src/dl_training_v1/tests/restore/test_p7_restore.py": {
    "bytes": 68600,
    "sha256": "caa9da0f4fb40ac3f2251486d18f37a42182ff1e133dc75d925a51a338841419"
+  },
+  "src/dl_training_v1/tests/test_admission_fail_closed.py": {
+   "bytes": 3951,
+   "sha256": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
   },
   "src/dl_training_v1/tests/test_common.py": {
    "bytes": 3455,
@@ -743,7 +738,10 @@
    "sha256": "91ec3cfee7a329b8dd62aa2dfad49f50ce46d7c141407de25ba07ae19239a4f1"
   }
  },
- "historical_added": [],
+ "historical_added": [
+  "admission.py.59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08",
+  "test_admission_fail_closed.py.e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
+ ],
  "historical_hash_map": {
   "0519ea30": "tools/v2_rowsel_manifest.py first version (rowsel-t1-clean-v1)",
   "11245250": "dltrain/admission.py (HOLDOUT-INPUTS-140 loader admission) used by denylist v1/v2 checks and S1 lists v2",
@@ -789,6 +787,10 @@
   "admission.py.11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58": {
    "bytes": 2364,
    "sha256": "11245250b8e4f93c5a2b7223975764fb1a859a5ec67c8768e5d9244877304e58"
+  },
+  "admission.py.59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08": {
+   "bytes": 2714,
+   "sha256": "59c4f10c36f1ec9b62e77e21ef469f11248fe3993700ea90192d6e54c2ac0b08"
   },
   "analysis.py.2818fc9ad3ea16263a0cb24903bccfbcbc858fda3eac3a1d608e3b3b8eaa198c": {
    "bytes": 77,
@@ -1225,6 +1227,10 @@
   "target_linear.py.e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45": {
    "bytes": 3700,
    "sha256": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45"
+  },
+  "test_admission_fail_closed.py.e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c": {
+   "bytes": 3951,
+   "sha256": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
   },
   "test_p7_restore.py.adf52bb8d2494cce3f49c29529fe8f278b55345d70d345b854af49deea5ad050": {
    "bytes": 69350,
@@ -1943,7 +1949,8 @@
  },
  "notes": [
   "dltrain/rowsel_raw.py stays at 18eac154: its feature-byte-ordered outer split is superseded; tools/v2_rowsel_raw.py now calls dltrain/rowsel_raw_split_v2.py (contexts record rowsel.split.schema = rowsel-raw-split-v2)",
-  "commit the current tree; historical/ holds exact bytes behind every hash recorded by a published document"
+  "commit the current tree; historical/ holds exact bytes behind every hash recorded by a published document",
+  "admission fail-closed: ADMITTED_ASSIGNMENTS = train_fit/train_nonpool/dev; any other or missing assignment refuses"
  ],
  "pinned_from_custody": {
   "tests/test_split_defaults.py": {
@@ -1951,7 +1958,7 @@
    "sha256": "6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4"
   }
  },
- "ruling": "S1-FOLDS-RULING (6): the DL lane makes no commits; root204 commits these exact bytes on a branch and opens the PR; merges only via the owner sweeper as neverhumanbot (merger != author), rebase-merge, never --admin",
+ "ruling": "owner ENG:watcher 07:35Z: unknown holdout assignment must refuse; small PR with a must-fail test, Lane C reviews (opened out of the one-PR order by explicit owner instruction)",
  "s1_materials": {
   "96_seed_source": "NOT retained by the DL lane. The S1 packet draft specified seeds from the proposal-engine prior only (not v1 seed-pool / historical-seen, which were test-selected): RUN/receipts/trainonly-v2/teacher-g22-S1-packet-DRAFT.md",
   "read_only_custody_paths": [
@@ -1963,9 +1970,9 @@
   "sept29_materializer_spec": "NOT found locally by the S1 pilot agent; its findings and the engine's expected inputs are in RUN/receipts/trainonly-v2/s1-pilot/README.md and pilot-receipt.json (eb61ad68)"
  },
  "schema": "jope.dl-lane-handoff/v2",
- "source_root": "restage-20261007T054519Z/src/dl_training_v1 (copied from the git-ignored lane SRC .agent/experiments/lambda-training/local_lambda/dl_training_v1; __pycache__ excluded)",
- "supersedes": "restage-20261007T034806Z/MANIFEST.json",
- "supersedes_sha256": "985cb6288a26565ae22e331f92f1d28aeb459dd2c72e31fa26a60b6e8f96dacc",
+ "source_root": "restage-20261007T080755Z/src/dl_training_v1 (lane custody copy at main b486da45 plus the admission fail-closed fix; __pycache__ excluded)",
+ "supersedes": "restage-20261007T054519Z/MANIFEST.json",
+ "supersedes_sha256": "fb2140bc50deb66057f009f42cf6690cca20e3862e8f552199e292068d9ba754",
  "test_commands": [
   "cd src/dl_training_v1 && python -m unittest discover -s tests -t .   # lane suites (unittest; pytest not used)",
   "python -m unittest tests.test_v2_publish tests.test_s3io tests.test_v2_rowsel_build tests.test_v2_rowsel_raw tests.test_nonnumeric tests.test_rowsel tests.test_t1raw tests.test_t1prep tests.test_trainonly",
@@ -1980,39 +1987,10 @@
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154"
  ],
  "tests_run_on_staged_copy": {
-  "cwd_and_pythonpath": "restage-20261007T054519Z/src/dl_training_v1",
-  "exit": 0,
+  "cwd_and_pythonpath": "restage-20261007T080755Z/src/dl_training_v1",
   "modules": [
-   "tests.test_rowsel_raw_split_v2",
-   "tests.test_rowsel_split_v2_groups",
-   "tests.test_v2_rowsel_raw",
-   "tests.test_v2_rowsel_raw_helper",
-   "tests.test_v2_rowsel_build",
-   "tests.test_v2_rowsel_build_split_v2",
-   "tests.test_v2_rowsel_build_split_v2g",
-   "tests.test_v2_nonraw_split_v2",
-   "tests.test_v2_nonraw_split_v2g",
-   "tests.test_v2_publish",
-   "tests.test_rowsel",
-   "tests.test_nonnumeric",
-   "tests.test_t1raw",
-   "tests.test_t1prep",
-   "tests.test_trainonly",
-   "tests.test_s3io",
-   "tests.test_split_defaults",
-   "tests.test_v2_provenance",
-   "tests.test_jtt1",
-   "tests.test_payload_strip",
-   "tests.test_quarantine",
-   "tests.test_v2_rowsel_raw_v2g",
-   "tests.test_target_linear",
-   "tests.test_v2_rowsel_raw_fold_isolation"
+   "tests.test_admission_fail_closed"
   ],
-  "seconds": 853.2,
-  "summary": [
-   "Ran 585 tests in 845.713s",
-   "",
-   "OK"
-  ]
+  "note": "see the PR evidence directory for the offline lane run"
  }
 }

@@ -1,8 +1,9 @@
 """Load-time admission by P3 holdout assignment (owner ruling HOLDOUT-INPUTS-140, ENG:watcher delegated 2026-10-06T01:38Z).
 
 Every trainer or data loader of the DL lane calls `Admission.check(view_id=..., key=...)` before it uses a context or an
-object. Refused: any context whose assignment is sealed_excluded or heldout (dev is allowed for selection only, train_* for
-training), and any object key listed in the production denylist. Fail closed: the denylist must exist and hash to the pinned
+object. Admitted: only the decided P3 roles train_fit and train_nonpool (training) and dev (selection only). Refused: sealed_excluded,
+heldout, and ANY other or missing assignment (unknown family, 'no_family', 'roleless_bridge', ...: fail closed, owner ENG:watcher
+07:35Z), and any object key listed in the production denylist. Fail closed: the denylist must exist and hash to the pinned
 sha256, or every check refuses. The denylist is the additive manifest written by tools/v2_holdout_denylist.py.
 """
 import hashlib
@@ -10,6 +11,7 @@ import json
 from pathlib import Path
 
 REFUSED_ASSIGNMENTS = frozenset({"sealed_excluded", "heldout"})
+ADMITTED_ASSIGNMENTS = frozenset({"train_fit", "train_nonpool", "dev"})
 
 
 class AdmissionRefused(RuntimeError):
@@ -46,6 +48,8 @@ class Admission:
             raise AdmissionRefused(f"{view_id}: no holdout assignment known (fail closed)")
         if a in REFUSED_ASSIGNMENTS:
             raise AdmissionRefused(f"{view_id}: {a}")
+        if a not in ADMITTED_ASSIGNMENTS:
+            raise AdmissionRefused(f"{view_id}: unknown holdout assignment {a!r} (fail closed)")
         if a == "dev" and self.purpose == "train":
             raise AdmissionRefused(f"{view_id}: dev is for selection only")
         return a
