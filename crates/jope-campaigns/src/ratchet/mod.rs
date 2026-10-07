@@ -1190,7 +1190,17 @@ fn seeded_temperature_score(seed: u64, semantic_sha256: &str, logit: f64) -> f64
 /// but callers must use `SeedInferenceResponseV2` for promoted authority.
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct LegacySeedInferenceV1 {
+    // Serde consumes this field when validating the v1 receipt shape.
+    #[allow(
+        dead_code,
+        reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+    )]
     pub(crate) schema: String,
+    // Preserve the complete v1 payload accepted by the compatibility reader.
+    #[allow(
+        dead_code,
+        reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+    )]
     #[serde(flatten)]
     pub(crate) fields: BTreeMap<String, Value>,
 }
@@ -1210,7 +1220,14 @@ pub(crate) fn read_seed_inference(bytes: &[u8]) -> Result<ReadableSeedInference>
 
 #[derive(Clone, Debug)]
 pub(crate) enum ReadableSeedInference {
-    V1(LegacySeedInferenceV1),
+    // Retain the typed payload used by the compatibility artifact validator.
+    V1(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        LegacySeedInferenceV1,
+    ),
     V2(SeedInferenceResponseV2),
 }
 
@@ -1266,8 +1283,22 @@ impl ModelRetentionReceiptV2 {
 
 #[derive(Clone, Debug)]
 pub(crate) enum ReadableGeneration0 {
-    Legacy(Value),
-    V3(Generation0ReceiptV3),
+    // Retain the typed payload used by the compatibility artifact validator.
+    Legacy(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        Value,
+    ),
+    // Retain the typed payload used by the compatibility artifact validator.
+    V3(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        Generation0ReceiptV3,
+    ),
 }
 
 pub(crate) fn read_generation_zero(bytes: &[u8]) -> Result<ReadableGeneration0> {
@@ -1287,8 +1318,22 @@ pub(crate) fn read_generation_zero(bytes: &[u8]) -> Result<ReadableGeneration0> 
 // Preserve the existing compatibility receipt payload and allocation layout.
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum ReadableAdmission {
-    Legacy(Value),
-    V3(AttemptAdmissionManifestV3),
+    // Retain the typed payload used by the compatibility artifact validator.
+    Legacy(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        Value,
+    ),
+    // Retain the typed payload used by the compatibility artifact validator.
+    V3(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        AttemptAdmissionManifestV3,
+    ),
 }
 
 pub(crate) fn read_admission(bytes: &[u8]) -> Result<ReadableAdmission> {
@@ -1306,8 +1351,22 @@ pub(crate) fn read_admission(bytes: &[u8]) -> Result<ReadableAdmission> {
 // Preserve the existing compatibility receipt payload and allocation layout.
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum ReadableTelemetry {
-    Legacy(Value),
-    V2(RatchetLiveTelemetryV2),
+    // Retain the typed payload used by the compatibility artifact validator.
+    Legacy(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        Value,
+    ),
+    // Retain the typed payload used by the compatibility artifact validator.
+    V2(
+        #[allow(
+            dead_code,
+            reason = "serde compatibility carrier: typed deserialization in validate_artifact_file enforces the schema; payload intentionally unread"
+        )]
+        RatchetLiveTelemetryV2,
+    ),
 }
 
 pub(crate) fn read_telemetry(bytes: &[u8]) -> Result<ReadableTelemetry> {
