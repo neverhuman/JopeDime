@@ -9,7 +9,8 @@ use feat_math::{
     kernel::{
         expression_search::{
             LinearFit, LinearizationEvidence, MinimaxStop, SubtreeLinearization,
-            LINEARIZATION_DEGREE, LINEARIZE_FIT_REFUSED, LINEARIZE_UNSAMPLED,
+            LINEARIZATION_DEGREE, LINEARIZE_FIT_REFUSED, LINEARIZE_INPUT_FAULTS,
+            LINEARIZE_UNSAMPLED,
         },
         search::admit_child,
     },
@@ -28,8 +29,9 @@ use crate::{
 };
 
 /// The refusal of every subtree of a `derive` stage whose training input could not be built
-/// without a fault: none of them is sampled.
-pub const PREFIX_FAULTS: &str = "the stage's training input faults";
+/// without a fault: none of them is sampled. It is feat-math's [`LINEARIZE_INPUT_FAULTS`], which
+/// the recorded linearization takes for every subtree of an expression or none.
+pub const PREFIX_FAULTS: &str = LINEARIZE_INPUT_FAULTS;
 
 /// The linearization pass's record of one subtree.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
