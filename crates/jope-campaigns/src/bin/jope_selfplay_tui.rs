@@ -45,7 +45,6 @@ const DEFAULT_REFRESH_MS: u64 = 250;
 const CPU_TARGET_PCT: f64 = 80.0;
 const CPU_HARD_GUARD_PCT: f64 = 95.0;
 const EVENT_TAIL_BYTES: u64 = 64 * 1024;
-const METRICS_TAIL_BYTES: u64 = 256 * 1024;
 const EXPECTED_NODES: [&str; 5] = ["xbabe1", "xbabe2", "xbabe3", "xbabe4", "xbabe5"];
 const GPU_MODEL_HINTS: [(&str, &str); 3] =
     [("xbabe1", "4090"), ("xbabe2", "3090"), ("xbabe3", "3090")];
@@ -60,7 +59,6 @@ const SLOW_PASS_DEADLINE_MS: u128 = 200;
 const MANIFEST_CACHE_MAX: usize = 64;
 const DL_HISTORY_MAX: usize = 512;
 const GENERATIONS_MAX: usize = 8;
-const GENERATIONS_BUDGET_MS: u128 = 50;
 /// Trainer generations carried on the cross-generation DL charts. The series is
 /// rebuilt from RUN DIRECTORIES on disk, never from the live job id, so a
 /// trainer completing (a-g8) and its successor appearing under a different id
@@ -453,8 +451,6 @@ struct GameplayStats {
     dl_top1: u64,
     gp_top1: u64,
     dl_slot_share_pct: f64,
-    dl_beats_incumbent: u64,
-    gp_beats_incumbent: u64,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -464,7 +460,6 @@ struct WaveProgress {
     datasets: u64,
     receipts_landed: u64,
     claims_by_state: BTreeMap<String, u64>,
-    generated_at_ms: u128,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -1407,16 +1402,6 @@ impl SlowState {
             .iter()
             .filter(|(origin, _)| *origin == Origin::DlProposal)
             .count() as u64;
-        let dl_beats = self
-            .stats_window
-            .iter()
-            .filter(|(origin, beats)| *origin == Origin::DlProposal && *beats)
-            .count() as u64;
-        let gp_beats = self
-            .stats_window
-            .iter()
-            .filter(|(origin, beats)| *origin != Origin::DlProposal && *beats)
-            .count() as u64;
         SlowView {
             gpus: self.gpus.clone(),
             trainers: self.trainers.clone(),
@@ -1431,8 +1416,6 @@ impl SlowState {
                 } else {
                     self.dl_slots as f64 * 100.0 / self.total_slots as f64
                 },
-                dl_beats_incumbent: dl_beats,
-                gp_beats_incumbent: gp_beats,
             },
             wave_progress: self.wave_progress.clone(),
             health_alarms: self.health_alarms.clone(),
@@ -2555,7 +2538,6 @@ fn refresh_wave_progress(root: &Path, state: &mut SlowState) {
         datasets,
         receipts_landed: state.newest_wave_receipts,
         claims_by_state: claims,
-        generated_at_ms: u64_at(&value, &["generated_at_ms"]).unwrap_or(0) as u128,
     });
 }
 

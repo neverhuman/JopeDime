@@ -1836,6 +1836,8 @@ fn validate_checkpoint_chain(root: &Path, run_id: &str) -> Result<Option<(Checkp
     Ok(last)
 }
 
+// Keep each receipt identity and worker contract input explicit.
+#[allow(clippy::too_many_arguments)]
 fn validate_candidate_receipt(
     receipt: &CandidateReceipt,
     root: &Path,

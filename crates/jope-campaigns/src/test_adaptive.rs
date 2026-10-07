@@ -1972,6 +1972,8 @@ fn job_id(run_id: &str, purpose: &str, generation: usize, slot: usize, attempt: 
     format!("jope-{run_id}-{compact_purpose}-g{generation:02}-s{slot:02}-a{attempt}")
 }
 
+// Keep request identity, budget and worker parameters explicit.
+#[allow(clippy::too_many_arguments)]
 fn make_request(
     identity: &CampaignIdentity,
     registry: &Path,
@@ -2148,19 +2150,6 @@ fn stage_bundle(id: &CampaignIdentity, root: &Path) -> Result<(PathBuf, StagingR
     Ok((source_binary, receipt))
 }
 
-fn remote_request_path(request: &CandidateRequest) -> PathBuf {
-    paths::legacy_tree("jope-test-adaptive")
-        .join("runs")
-        .join(&request.run_id)
-        .join("requests")
-        .join(&request.purpose)
-        .join(format!("generation-{:03}", request.generation))
-        .join(format!(
-            "slot-{:03}-attempt-{}.json",
-            request.slot, request.attempt
-        ))
-}
-
 fn parse_worker_receipt(stdout: &[u8]) -> Result<CandidateReceipt> {
     let text = std::str::from_utf8(stdout)?;
     let payload = text
@@ -2170,6 +2159,8 @@ fn parse_worker_receipt(stdout: &[u8]) -> Result<CandidateReceipt> {
     serde_json::from_str(payload).context("parse worker receipt")
 }
 
+// Keep campaign identity, candidate and execution budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_remote(
     identity: &CampaignIdentity,
     registry: &Path,
@@ -2363,6 +2354,8 @@ fn outcome_from_evaluation(
     }
 }
 
+// Keep campaign identity, generation state and execution limits explicit.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_generation(
     identity: &CampaignIdentity,
     registry: &Path,
@@ -3118,6 +3111,7 @@ fn clean_continuation_boundary(root: &Path, dataset_ids: &[String]) -> Result<us
     Ok(first_incomplete.unwrap_or(dataset_ids.len()))
 }
 
+#[cfg(test)]
 fn binary_segments(
     dataset_ids: &[String],
     boundary: usize,
@@ -4349,6 +4343,8 @@ fn extension_genome_records(
     Ok(records)
 }
 
+// Keep continuation identity, source artifacts and terminal state explicit.
+#[allow(clippy::too_many_arguments)]
 fn finalize_extension_dataset(
     base_run_id: &str,
     identity: &CampaignIdentity,

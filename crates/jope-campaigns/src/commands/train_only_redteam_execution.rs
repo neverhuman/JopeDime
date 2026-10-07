@@ -515,6 +515,8 @@ fn evaluate_candidate(
     Ok((evaluation, digest, path))
 }
 
+// Keep study identity, candidate pool, input folds and execution budget explicit.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_candidates(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
@@ -2976,6 +2978,8 @@ fn evaluations_match(left: &CandidateEvaluation, right: &CandidateEvaluation) ->
         && left.confirmatory_valid == right.confirmatory_valid
 }
 
+// Keep ranked receipt identity and the independent validation inputs explicit.
+#[allow(clippy::too_many_arguments)]
 fn validate_ranked_rows(
     rows: &[RankedCandidate],
     manifest: &TrainOnlyRedteamManifest,

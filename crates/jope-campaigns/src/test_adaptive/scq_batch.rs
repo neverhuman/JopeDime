@@ -43,6 +43,7 @@ jope_paths::once_str!(
 );
 const NODE_LEASE_SLOTS: usize = 5;
 const ISLAND_START_GENERATION: usize = 20;
+#[cfg(test)]
 const ISLAND_END_GENERATION: usize = 30;
 
 #[derive(Clone, Copy)]
@@ -219,6 +220,7 @@ impl ScqPolicy {
         }
     }
 
+    #[cfg(test)]
     pub(super) fn golden46_wave() -> Self {
         let mut policy = Self::aggressive_wave();
         policy.candidate_timeout_seconds = 0;
@@ -1303,6 +1305,8 @@ fn candidate_key(receipt: &CandidateReceipt) -> (String, usize, usize) {
     )
 }
 
+// Keep staging, campaign identity and batch scheduling inputs explicit.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn evaluate_batches(
     campaign_root: &Path,
     identity: &CampaignIdentity,
@@ -1607,6 +1611,8 @@ pub(super) fn evaluate_aggressive_wave(
         .collect()
 }
 
+// Keep aggressive scheduling limits and campaign identity explicit.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn evaluate_aggressive_batches(
     campaign_root: &Path,
     identity: &CampaignIdentity,
@@ -1628,6 +1634,8 @@ pub(super) fn evaluate_aggressive_batches(
     .context("single-dataset aggressive wave returned no evaluations")
 }
 
+// Keep replay identity, node policy and result collection inputs explicit.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn replay_across_nodes(
     campaign_root: &Path,
     identity: &CampaignIdentity,
@@ -1685,6 +1693,8 @@ pub(super) fn replay_across_nodes(
     Ok(evaluations)
 }
 
+// Keep aggressive replay policy, budget and artifact identity explicit.
+#[allow(clippy::too_many_arguments)]
 pub(super) fn replay_aggressive_across_nodes(
     campaign_root: &Path,
     identity: &CampaignIdentity,
@@ -2001,6 +2011,7 @@ pub(super) fn job_allowed_cpus() -> Result<Vec<usize>> {
     Ok(parsed)
 }
 
+#[cfg(test)]
 fn select_worker_cpus(allowed: &[usize], workers: usize) -> Result<Vec<usize>> {
     if allowed.len() < workers {
         bail!(

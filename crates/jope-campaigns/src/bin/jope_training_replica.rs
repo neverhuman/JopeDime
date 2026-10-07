@@ -686,6 +686,8 @@ struct Progress {
     bytes: u64,
 }
 
+// Keep replica content, manifest identity and progress state explicit at publication.
+#[allow(clippy::too_many_arguments)]
 fn publish(
     target: &Target,
     rroot: &str,

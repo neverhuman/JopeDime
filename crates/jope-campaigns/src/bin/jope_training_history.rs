@@ -150,6 +150,8 @@ struct Totals {
 /// Anything that is NOT a lone unterminated fragment — complete rows still
 /// missing, or a fragment too big to be one row — is deliberately not recorded,
 /// so those keep blocking.
+// Keep archive identity, source metadata and tail outcome explicit for auditability.
+#[allow(clippy::too_many_arguments)]
 fn apply_tail_policy<R: th::SourceReader>(
     archive: &Path,
     key: &th::SegmentKey,

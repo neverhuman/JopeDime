@@ -2801,6 +2801,8 @@ fn compose_dataset(
     )
 }
 
+// Keep the independently validated wave, dataset, checkpoint and proposal pools explicit.
+#[allow(clippy::too_many_arguments)]
 fn compose_dataset_with_dl(
     wave: &str,
     task: &str,

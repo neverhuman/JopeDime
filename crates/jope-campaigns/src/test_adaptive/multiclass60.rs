@@ -1133,6 +1133,7 @@ fn dataset_started_at(root: &Path, dataset_hash: &str) -> Option<u128> {
     .map(|duration| duration.as_millis())
 }
 
+#[cfg(test)]
 fn next_generation_index(root: &Path, dataset_hash: &str) -> usize {
     let directory = root.join("datasets").join(dataset_hash).join("checkpoints");
     fs::read_dir(directory)
@@ -1151,6 +1152,7 @@ fn next_generation_index(root: &Path, dataset_hash: &str) -> usize {
         .map_or(0, |generation| generation + 1)
 }
 
+#[cfg(test)]
 fn initial_budget_complete(root: &Path, dataset_hash: &str) -> bool {
     checkpoint_path(root, dataset_hash, MAX_GENERATIONS - 1).is_file()
 }
@@ -1243,6 +1245,8 @@ fn shard_manifest(
     }))
 }
 
+// Keep the worker specification inputs explicit without changing its published format.
+#[allow(clippy::too_many_arguments)]
 fn render_spec(
     root: &Path,
     dataset: &DatasetBinding,

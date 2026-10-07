@@ -19,6 +19,8 @@ mod args;
 mod commands;
 mod core;
 mod data;
+// frozen, hash-pinned module; bytes immutable until unfrozen
+#[allow(dead_code, clippy::too_many_arguments, clippy::let_and_return)]
 mod evaluation_v2;
 mod followup;
 mod genome_boost;

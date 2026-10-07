@@ -151,6 +151,7 @@ pub(crate) fn materialize(
         .context("could not capture a stable archive snapshot")
 }
 
+#[cfg(test)]
 fn read_and_materialize<F>(archive_root: &Path, output_root: &Path, after_map: F) -> Result<PathBuf>
 where
     F: FnOnce(),

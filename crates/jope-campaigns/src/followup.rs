@@ -1087,6 +1087,7 @@ fn apply_targets(registry: &Path, stage: &StageManifest) -> Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
 fn rollback_targets(registry: &Path, stage: &StageManifest, archive: &Path) -> Result<()> {
     preflight_targets(registry, stage)?;
     for kind in ["prediction", "report", "panel_ledger"] {

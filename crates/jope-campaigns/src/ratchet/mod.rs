@@ -7,6 +7,7 @@
 //! serving wave.
 
 use anyhow::{bail, Context, Result};
+#[cfg(test)]
 use feat_math::evolve::{
     crossover_canonical_pipelines, mutate_canonical_pipeline, random_canonical_pipeline,
 };
@@ -85,6 +86,7 @@ pub(crate) struct CandidateIdentityV1 {
 }
 
 impl CandidateIdentityV1 {
+    #[cfg(test)]
     pub(crate) fn from_canonical(canonical_genome: String) -> Result<Self> {
         let parsed = GenomeIr::parse(&canonical_genome).context("parse canonical genome")?;
         if parsed.canonical() != canonical_genome {
@@ -557,6 +559,7 @@ fn validate_track_history(
 
 /// Selection-clean native feature row for the Rust corrector. There is
 /// intentionally no Track-2/test-selected input in this contract.
+#[cfg(test)]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub(crate) struct NativeFitnessFeaturesV1 {
     pub(crate) schema: String,
@@ -569,6 +572,7 @@ pub(crate) struct NativeFitnessFeaturesV1 {
     pub(crate) family_shrunk_residual: f64,
 }
 
+#[cfg(test)]
 impl NativeFitnessFeaturesV1 {
     pub(crate) fn build(
         state: &DatasetLearningStateV2,
@@ -812,6 +816,7 @@ impl LearningWaveManifestV1 {
         Ok(sha256_bytes(&canonical_json(&unsigned)?))
     }
 
+    #[cfg(test)]
     pub(crate) fn seal(mut self) -> Result<Self> {
         self.publication_sha256 = self.publication_digest()?;
         Ok(self)
@@ -1279,6 +1284,8 @@ pub(crate) fn read_generation_zero(bytes: &[u8]) -> Result<ReadableGeneration0> 
 }
 
 #[derive(Clone, Debug)]
+// Preserve the existing compatibility receipt payload and allocation layout.
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum ReadableAdmission {
     Legacy(Value),
     V3(AttemptAdmissionManifestV3),
@@ -1296,6 +1303,8 @@ pub(crate) fn read_admission(bytes: &[u8]) -> Result<ReadableAdmission> {
 }
 
 #[derive(Clone, Debug)]
+// Preserve the existing compatibility receipt payload and allocation layout.
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum ReadableTelemetry {
     Legacy(Value),
     V2(RatchetLiveTelemetryV2),
@@ -1692,6 +1701,9 @@ impl Generation0ReceiptV3 {
 
 /// Deterministically builds the physical generation from already validated
 /// source pools. The fixed concatenation order is part of the Rust authority.
+// Keep each independently validated generation pool and identity binding explicit.
+#[allow(clippy::too_many_arguments)]
+#[cfg(test)]
 pub(crate) fn assemble_generation_zero_v3(
     learning_wave_sha256: String,
     dataset_state_sha256: String,
@@ -1786,6 +1798,7 @@ pub(crate) fn assemble_generation_zero_v3(
     Ok(receipt)
 }
 
+#[cfg(test)]
 fn push_generation_candidate(
     candidates: &mut Vec<GenerationCandidateV3>,
     candidate: CandidateIdentityV1,
@@ -1798,6 +1811,7 @@ fn push_generation_candidate(
     });
 }
 
+#[cfg(test)]
 pub(crate) fn deterministic_archive_32(
     state: &DatasetLearningStateV2,
     supplemental_priority: &[CandidateIdentityV1],
@@ -1892,6 +1906,7 @@ pub(crate) fn deterministic_archive_32(
     Ok(result)
 }
 
+#[cfg(test)]
 fn push_unique_identity(
     result: &mut Vec<CandidateIdentityV1>,
     seen: &mut BTreeSet<String>,
@@ -1904,6 +1919,7 @@ fn push_unique_identity(
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) struct OffspringPoolsV3 {
     pub(crate) mutation: Vec<(CandidateIdentityV1, u64, String)>,
     pub(crate) crossover: Vec<(CandidateIdentityV1, u64, String, String)>,
@@ -1912,6 +1928,7 @@ pub(crate) struct OffspringPoolsV3 {
 
 /// Existing canonical feat-math operators are used, but Rust owns parent
 /// order, seeds, semantic deduplication, quotas, and bounded failure.
+#[cfg(test)]
 pub(crate) fn build_bounded_offspring_pools(
     parents: &[CandidateIdentityV1],
     occupied_semantics: &BTreeSet<String>,
@@ -2009,6 +2026,7 @@ pub(crate) fn build_bounded_offspring_pools(
     })
 }
 
+#[cfg(test)]
 fn derived_seed(base: u64, lane: &[u8], attempt: u64) -> u64 {
     let mut digest = Sha256::new();
     digest.update(b"jope-dime/generation-zero-offspring/v3\0");
@@ -2330,6 +2348,7 @@ impl SchedulerStateV4 {
     }
 
     /// Highest positive debt wins. Deterministic enum order breaks ties.
+    #[cfg(test)]
     pub(crate) fn next_lane(&self) -> Result<SchedulerLaneV4> {
         self.validate()?;
         Ok(SchedulerLaneV4::all()
@@ -2342,6 +2361,7 @@ impl SchedulerStateV4 {
             .expect("four scheduler lanes"))
     }
 
+    #[cfg(test)]
     pub(crate) fn record_measured_cpu(
         &mut self,
         lane: SchedulerLaneV4,
@@ -2929,6 +2949,7 @@ impl RatchetStore {
     }
 
     /// Stop future admissions without modifying any frozen attempt manifest.
+    #[cfg(test)]
     pub(crate) fn stop_admissions(&self, fault_receipt_sha256: &str, at: u64) -> Result<()> {
         let _writer = WriterGuard::acquire(&self.root)?;
         validate_sha256("authority fault receipt", fault_receipt_sha256)?;
@@ -2945,6 +2966,7 @@ impl RatchetStore {
 
     /// Fault rollback only moves the authoritative pointer to an already
     /// accepted immutable ancestor. It never republishes or edits that wave.
+    #[cfg(test)]
     pub(crate) fn restore_previous_wave(&self, previous_wave_sha256: &str, at: u64) -> Result<()> {
         let _writer = WriterGuard::acquire(&self.root)?;
         validate_sha256("previous accepted wave", previous_wave_sha256)?;
