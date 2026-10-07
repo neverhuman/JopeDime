@@ -498,10 +498,17 @@ fn run_child_with_preparation_delay(
     mode: &str,
     preparation_delay: Duration,
 ) -> (Authority, VerifiedFit, StartToken, ObservedCompletion) {
-    let (mut a, f, c) = fixture.claim();
+    let mut a = fixture.open();
     let handshake = fixture._temp.path().join("start.json");
+    // The neural lane prebuilds this same-source synthetic executor without
+    // loading the multi-gigabyte neural runtime into a no-fit lifecycle fixture.
+    let executor = std::env::var_os("JOPE_SYNTHETIC_EXECUTABLE");
+    let path = executor
+        .as_ref()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::current_exe().unwrap());
     let mut child = SyntheticChild(
-        Command::new(std::env::current_exe().unwrap())
+        Command::new(path)
             .args([
                 "--exact",
                 "eval_registry::authority::tests::synthetic_executor",
@@ -536,6 +543,28 @@ fn run_child_with_preparation_delay(
         );
         std::thread::sleep(Duration::from_millis(1));
     }
+    // Bind the original token to the actual child image and mapped runtime.
+    // All verification runs through the real constructor and consume_start.
+    let f = if executor.is_some() {
+        VerifiedFit::for_executor_process(
+            child.0.id(),
+            "(pipe X (ridge))",
+            crate::eval_registry::FitInputs {
+                x: vec![vec![1.], vec![2.]],
+                y: vec![2., 3.],
+                preprocessing: b"preprocess".to_vec(),
+                feature_view: b"raw".to_vec(),
+            },
+            42,
+            &contract(),
+        )
+        .unwrap()
+    } else {
+        fit()
+    };
+    let ClaimOutcome::Claimed(c) = a.claim(&f, &request()).unwrap() else {
+        panic!("fixture claim blocked")
+    };
     let start = a
         .authorize_with_deadline(
             &f,
