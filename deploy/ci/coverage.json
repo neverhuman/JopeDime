@@ -8882,6 +8882,16 @@
       "dispositions": [],
       "scope": "17 synthetic offline fixtures for the raw-GPU manifest cut adapter, collected by run_lane_offline.py: the frozen manifest tool alone finds no cut for a GPU context without rowsel.split (the reproduced blocker); a cut is inherited only from the --source context with the same view_id and context_sha256 and only when its split is rowsel-raw-split-v2 with a lowercase 64-hex digest; a 64-character label canary, uppercase, short or non-hex digests and a wrong split schema are refused before any manifest file; context, encoder and rights mismatches are refused; outer-test fields in the source never reach the manifest; CPU contexts and own cuts are unchanged; the manifest binds the executed adapter sha256 next to the frozen tool hash and the adapter identity changes with its bytes; --publish goes through the frozen #224 transport (fake bucket) with the frozen key scheme; --local-dir is refused with --publish. No private-data exclusion or operational S3 claim."
     },
+    "python:deploy/dl-trainonly/test_manifest_binding.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "48 synthetic offline fixtures for the manifest binding adapter, collected by run_lane_offline.py: each of the 20 faults that escaped every publish gate in the 2026-10-07 gap-publish red-teams (re-labelled cut prefix/hex, another dataset's cut, another split schema, another fold's GPU output, a forged GPU input binding; raw CPU, raw nonnumeric CPU, raw GPU, research vectors and research GPU trees) is reproduced against the #239 cut adapter, which still writes a manifest, and refused by the binding adapter before any manifest file; clean trees of all five kinds pass and the manifest binds the executed adapter next to the #239 block and the frozen tool hash; GPU contexts require runner output records; a raw GPU context that inherits its cut (#239) still binds and an injected cut on it is refused; --publish goes through the frozen #224 transport (fake bucket); --local-dir is refused with --publish. No private-data exclusion or operational S3 claim."
+    },
     "python:deploy/dl-trainonly/test_hwm_publish.py": {
       "discovery": {
         "kind": "python-family"

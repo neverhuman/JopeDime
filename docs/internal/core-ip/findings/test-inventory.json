@@ -2424,6 +2424,13 @@
         "storage"
       ]
     },
+    "python:deploy/dl-trainonly/test_manifest_binding.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
     "python:deploy/dl-trainonly/test_hwm_publish.py": {
       "role": "regression",
       "subsystems": [
