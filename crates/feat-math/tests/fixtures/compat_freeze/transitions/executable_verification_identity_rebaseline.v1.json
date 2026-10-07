@@ -3,12 +3,12 @@
   "decision": "Announced identity-only successor for owner-assigned crash recovery contention correction. Reusing a verified digest only for the verifier own continuously held executing inode changes the service.rs source hash used by teaching-store semantic dependencies. The six recovery boundaries, authorization checks, deadlines, evaluator and behavioral fixtures and every earlier transition remain unchanged.",
   "plan_reference": "Owner ENG:watcher 2026-10-07 06:48Z: classify and fix crash-recovery failure under bounded load",
   "pr_reference": "fix/crash-recovery-bounded-fixture",
-  "source_commit": "a050e60964aa158fc17e985e518616a4c4127723",
+  "source_commit": "1503e08a96bac0dd1be361459e67ec8cbd5c5583",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "e26ba1c8132c7ec85c2db99b48c5b912489a52f5ada2d53db0ffd7df19b5d747",
-      "after": "db4316a36ebf418695f6fd3c5b5cc21a8e2b112d59865e0b728b5f2a037583d2"
+      "after": "200723a8f7c7808f3e70254e3e8c64b2c4d5c6fc60a01da16b999a62edffc58e"
     }
   ]
 }
