@@ -163,12 +163,20 @@ the subtree's range, which would be a separate, versioned rule.)
   coefficient is `+0.0`, and a fit whose targets are all zero is the zero polynomial, exact at
   the first step; `lo` and `hi` are sampled values of the subtree's one variable, so the
   subtree's own targets there (evaluated with that variable read as the element, the same
-  arithmetic the sampling uses) must be fault-free and within `max|f|`; a subtree that is zero
+  arithmetic the sampling uses) must be fault-free and within `max|f|`; what the subtree's
+  structure fixes on any rows holds too, by sufficient structural tests: a subtree that is zero
   wherever it is finite (`a - a`, zero times anything, zero over anything, and sums, negations,
-  positive powers and zero-keeping calls of zeros, a sufficient structural test) has zero targets
-  on any rows, so its fit's `max|f|` must be zero, which then holds it to the first step's exact
-  zero fit; a subtree of the element `x` has no fit, since `x` faults on every training row; each
-  line's measured
+  positive powers and zero-keeping calls of zeros) has `max|f|` zero, which then holds it to the
+  first step's exact zero fit; a subtree with one value on every sample (its literals alone,
+  `a - a`, a zero, or any operation or call of such values, none of which tells the sign of a
+  zero in size) has `max|f|` the size of its target at `lo`, the first step's exact fit of that
+  value with a zero slope, and a line error equal to its line's larger end residual; `max|f|` is
+  within the subtree's bound (literals, sums and products of bounds, and the bounded calls:
+  `step`, `sign`, `sin`, `cos`, `tanh`, `erf` and `sigmoid` at most 1, `atan` at most `π/2`, and
+  so on); a fit of a row's L1 or L2 norm or standard deviation has a range that is not
+  negative; and a subtree of the element `x` has no fit, and is refused before any fit only as
+  unsampled, for too few values or for its input's faults, since `x` faults on every training
+  row; each line's measured
   error, its largest absolute residual, is finite and not negative (negative zero included), at
   most `1e12 + max|f|`, and, for a line that can be lowered, at least the line's residual against
   each sampled end's own target (so also `|p| - max|f|` there), where the line must be in the
@@ -178,7 +186,8 @@ the subtree's range, which would be a separate, versioned rule.)
   measurement must carry its error, since the measurement refuses only a line that leaves the
   range at some sample; and a subtree refused before any fit names `unsampled`, a reason the fit
   itself gives for such samples (not the range refusal: the evaluator faults on every value it
-  brings back into its range), or `the stage's training input faults`. A line whose coefficients
+  brings back into its range; nor the interval refusal: three distinct values within that range
+  span a proper interval), or `the stage's training input faults`. A line whose coefficients
   are not finite is refused before any measurement, so its ends are not read. Those are the
   bounds the live measurement keeps, and rounding is monotone, so they hold exactly with no
   allowance; a faulting training input refuses every subtree of its stage or none, checked by
@@ -268,8 +277,11 @@ feat-math lib, the `linearization_tests` module of `simplify.rs`:
   the fit never gives (the range refusal included), a faulting input beside another record of
   the expression, a `-0.0` coefficient, zero-target metadata other than the first step's exact
   zero fit, a nonzero `max|f|` (with an offered nonzero line, or the zero line) for a subtree
-  that is zero wherever it is finite, and a fit for a subtree of the element `x` are refused,
-  while the structural zero test holds at every probe value and the live zero fit replays; the
+  that is zero wherever it is finite, a fit of a one-value subtree other than its value's exact
+  first-step fit or with a line error other than its end residual, a `max|f|` over the
+  subtree's bound, a norm's or standard deviation's range with a negative end, and a fit, or a
+  refusal its samples never give, for a subtree of the element `x` are refused, while the
+  structural tests hold at every probe value and the live fits replay; the
   subtree's targets read through the element equal the
   sampled ones bit for bit, for a column and an aggregate; records of one expression must
   agree with each other (a repeated subtree, bit for bit, with NaN coefficients equal to
@@ -310,7 +322,11 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
   range, published without their coefficients, and the untouched run verifies; a finite pair
   given to one of the two is refused as a repeated subtree recording other samples; on the same
   dataset the zero subtree `(c0-c0)*(c0-c0)` publishes its exact zero fit and verifies, and its
-  records edited to a nonzero `max|f|` with a converged bracket and its bound are refused;
+  records edited to a nonzero `max|f|` with a converged bracket and its bound are refused; and
+  the constant subtree `(c0-c0)+1.0` publishes its exact fit and verifies, and its records
+  edited to twice its size, or to a converged bracket at its size, are refused;
+- a run seeded with `sin((0.1*row_l2))*3.0`: its fits of the norm edited to a range with a
+  negative end are refused;
 - a parent whose first stage faults on its training rows (`c0/0`, admitted with its domain
   fault): every subtree of its second stage is refused as `the stage's training input faults`,
   and the run with the pass completes, publishes and verifies, as it does without it;
