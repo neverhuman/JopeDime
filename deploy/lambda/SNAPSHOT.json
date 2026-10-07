@@ -984,10 +984,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
-      "tree_sha256": "5393664e611d12850e9ce0df2647cb5cefa9f8b224379ed8fbd5f2a0fcf1be92",
+      "tree_sha256": "700dbae09762216b4aeb308d485543d6216dd9d0e01195fbc454fb0cb59fc980",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     },
     {
       "body": "csv",
@@ -1299,9 +1299,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/versions/rust-single-v2/rust/Cargo.lock",
-      "tree_sha256": "c479b9c02c99946e944961e5efa577c1e1e114ddb606ee12a884243058ccfb5f",
+      "tree_sha256": "7d23f9a74c2483437221e0d2d697ad299e5cf9b0da34ea7e116c15cf5ad8f838",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     },
     {
       "body": "csv",
@@ -1796,10 +1797,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression/rust/Cargo.lock",
-      "tree_sha256": "e99f6eea0191a4f65cdb07eca227ae16f3f229c7c9b0d6095434e7c16865e21a",
+      "tree_sha256": "3d877abc739e90bcd93f05459ec35e26ca5c863077e657e115a8ca995ff1bda2",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     },
     {
       "body": "regression",
@@ -2350,10 +2351,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression-ops/rust/Cargo.lock",
-      "tree_sha256": "4666a6dc199e5793bce3279d7abe453d00b496a2717e9f9f6f09e10ed45cf689",
+      "tree_sha256": "4b7f4004466d7c7faf7abb0720fc9e6b2d615c87805c836a806daed4d9add1a9",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     },
     {
       "body": "regression-ops",
@@ -2626,10 +2627,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.lock",
-      "tree_sha256": "9fbed8c0aa2f884280db54b8048d61895bcf9ba3efb050ce52298134114d0aa7",
+      "tree_sha256": "9a6320d1e688e7f179c31de1df00557f7d19b53670d29a38bbdf41ea28856d74",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.2.0, the workspace version of this release; no other package moves"
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     },
     {
       "body": "teacher-v2",
@@ -2697,10 +2698,11 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/proposal-engine/Cargo.lock",
-      "tree_sha256": "49febdcbe13d0e298703f9378bdfbb768b24504680275b305beab5f5f81b8ad5",
+      "tree_sha256": "3d877abc739e90bcd93f05459ec35e26ca5c863077e657e115a8ca995ff1bda2",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "note": "byte-identical to the frozen bytes of deploy/lambda/regression/rust/Cargo.lock (that record's sha256); not a workspace lock here (its manifest is renamed), so sync-locks leaves its feat-math 0.1.0 entry as frozen, like csv/versions/rust-single-v2/rust/Cargo.lock"
+      "note": "byte-identical to the frozen bytes of deploy/lambda/regression/rust/Cargo.lock (that record's sha256); not a workspace lock here (its manifest is renamed), so sync-locks leaves its feat-math 0.1.0 entry as frozen, like csv/versions/rust-single-v2/rust/Cargo.lock",
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     },
     {
       "body": "teacher-v2",
@@ -3227,9 +3229,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/s1-proposal/Cargo.lock",
-      "tree_sha256": "e764410f551a73cfa1adc0b90eef91064d59bbef0ce15bb6becb63512e97fb02",
+      "tree_sha256": "cfc1ec01abfd73e9117c1f9b68be130e264a0e69cbcdc7fafb809807c53500ed",
       "custody_tarball": null,
-      "reason": "new workspace lock with current feat-math0.2 and unique package; historical proposal lock retained separately"
+      "reason": "new workspace lock with current feat-math0.2 and unique package; historical proposal lock retained separately",
+      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
     }
   ],
   "excluded": [
