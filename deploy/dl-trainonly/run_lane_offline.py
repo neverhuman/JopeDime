@@ -23,7 +23,7 @@ MODULES = (
     "tests.test_v2_rowsel_build_split_v2g", "tests.test_v2_nonraw_split_v2", "tests.test_v2_nonraw_split_v2g",
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
     "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
-    "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "test_hwm_publish", "test_gpu_manifest_cut",
+    "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "tests.test_admission_fail_closed", "test_hwm_publish", "test_gpu_manifest_cut",
     "test_manifest_binding",
     "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
 )
@@ -73,7 +73,7 @@ HOST_CASES = {
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 679
+EXPECTED_COLLECTED = 684
 
 
 def case_ids(suite):

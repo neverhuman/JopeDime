@@ -7,6 +7,7 @@ step(){ printf '\n== %s\n' "$*"; }
 step "cargo metadata --locked"; cargo metadata --locked --format-version 1 --no-deps > /dev/null
 step "Rust formatting"; if ! cargo fmt --all --check; then fail=1; fi
 step "explicit coverage mapping (static, not collection or execution)"; if ! cargo run -q --locked -p jope-records -- coverage validate; then fail=1; fi
+step "trusted compiler cache boundaries"; if ! python3 deploy/ci/test-full-main.py; then fail=1; fi
 step "S1 fixed-equal attempt contracts (CPU only)"; if ! python3 deploy/lambda/training/teacher-v2/test_s1_budget.py; then fail=1; fi
 step "exactly one rustls crypto provider in the workspace graph"
 rustls_err=$(mktemp); rustls_tree=""

@@ -454,6 +454,10 @@ fn check_archive(root: &Path, s: &Search, observations: &[Kernel2Observation]) -
         .sha256
         .as_deref()
         .context("the archive record has no digest")?;
+    ensure!(
+        std::fs::symlink_metadata(root.join(path)).is_ok(),
+        "a selected archive is not published"
+    );
     let bytes = read_file(root, path, digest)?;
     let text = std::str::from_utf8(&bytes).context("the archive is not UTF-8")?;
     let published = Archive::from_json(text).map_err(anyhow::Error::msg)?;
@@ -487,9 +491,11 @@ fn check_moves(
     let Some(record) = s.engine_selection.as_ref().and_then(|e| e.moves.as_ref()) else {
         ensure!(
             std::fs::symlink_metadata(root.join(path)).is_err()
-                && measurements
-                    .iter()
-                    .all(|m| m.observation.origin != super::REWRITE),
+                && measurements.iter().all(|m| {
+                    // laneD:B19-minimax-linearize: the linearization pass's origin too.
+                    m.observation.origin != super::REWRITE
+                        && m.observation.origin != super::LINEARIZE
+                }),
             "move evidence is published without its selection"
         );
         return Ok(());

@@ -492,6 +492,7 @@ fn rewrite_runs_replay_every_file_with_a_frozen_clock_and_verify() {
                 refine: lm,
                 archive: Some(ArchivePolicy::ArchiveOnly),
                 simplify: true,
+                linearize: false,
             },
             Refinement {
                 top_k: 4,
@@ -844,6 +845,7 @@ fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
         refine: RefineMethod::Lm(LmOptions::default()),
         archive: Some(ArchivePolicy::ArchiveOnly),
         simplify: true,
+        linearize: false,
     };
     let record = all.record().unwrap();
     assert!(record.damped_ls().is_some() && record.archive.is_some() && record.moves.is_some());
@@ -1087,6 +1089,10 @@ fn the_pool_refusal_count_of_fixed_parents_is_pinned() {
     // The count is what publication writes and `verify_run` counts again.
     let ids = [REWRITE_SATURATE.to_owned()];
     assert_eq!(pool_count(&ids, &state.moves), Some(4));
+    assert_eq!(
+        pool_count(&[MINIMAX_LINEARIZE.to_owned()], &state.moves),
+        None
+    );
     // A stage the rewrite cannot read is refused, not counted.
     let unreadable = propose(
         &opt.evaluator,
@@ -1290,6 +1296,7 @@ fn verify_refuses_records_off_the_ranked_parents_and_inexact_children() {
             reason: None,
             measurement: None,
             rewrites: Vec::new(),
+            linearization: None,
         },
     );
     let bytes = serde_json::to_vec_pretty(&edited).unwrap();
@@ -1429,6 +1436,7 @@ fn an_unstarted_record_ends_its_pass() {
             reason: None,
             measurement: None,
             rewrites: proposal.rewrites,
+            linearization: None,
         }
     };
     let engine = receipt.search.engine_selection.clone().unwrap();
@@ -1561,6 +1569,7 @@ fn under_an_evaluations_stop_the_last_round_stops_where_the_allowance_ran_out() 
         reason: proposal.reason,
         measurement: None,
         rewrites: proposal.rewrites,
+        linearization: None,
     });
     let path = publish_recounted(output, &receipt, &engine, &appended);
     errors.push(refusal_of(
@@ -1794,7 +1803,11 @@ fn rewrite_parents_are_bounded_before_they_are_parsed() {
     let closed_form = format!("(sym raw \"{}c0\")", "+".repeat(room + 1));
     assert!(!has_expression_stage(&closed_form));
     let error = propose(&opt.evaluator, &closed_form, 1).unwrap_err();
-    assert!(format!("{error:#}").contains("not a pipeline"), "{error:#}");
+    // Refused before any parse, by the pre-parse check's own message.
+    assert!(
+        format!("{error:#}").contains("not in the pipeline form"),
+        "{error:#}"
+    );
 }
 
 /// Independent review 01 of the wiring PR (B20-R01-AST-FIRST): `MathExpr::simplify_v2`, the

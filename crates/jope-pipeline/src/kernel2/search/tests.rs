@@ -247,6 +247,66 @@ fn seed_scope_duplicates_and_insufficient_allowance_fail_before_measurement() {
     assert!(run_cut(&cut, &o).is_err());
 }
 
+/// B18 review 01 (B18-O-SOURCE-BOUND-SEED-SPELLINGS): a seed keeps its expression text as
+/// written, and unary plus never reaches the tree, so an admitted seed can hold more nesting bytes
+/// than the evidence checks read. With the archive or lm refinement selected, whose verification
+/// refuses a program it cannot read, such a seed is refused before the search; at the limit, and
+/// with neither selected (the default, or a rewrite or linearization pass alone, which pass over an
+/// unreadable parent), the seed check is unchanged.
+#[test]
+fn seeds_the_evidence_checks_cannot_read_are_refused_when_they_would_read_them() {
+    use crate::kernel2::{
+        refinement::MAX_PARENT_EXPRESSION_NESTING, ArchivePolicy, EngineSelection, RefineMethod,
+    };
+    use feat_math::kernel::expression_search::LmOptions;
+    let body = "sin(0.5*c0)";
+    let padded = |n: usize| {
+        let text = seed().replace(body, &format!("{}{body}", "+".repeat(n)));
+        let canonical = GenomeIr::parse(&text).unwrap().canonical();
+        assert_eq!(
+            canonical, text,
+            "the canonical form keeps the expression text"
+        );
+        canonical
+    };
+    // `(` and `*`.
+    let room = MAX_PARENT_EXPRESSION_NESTING - 2;
+    let checked = |engine: EngineSelection, n: usize| {
+        let mut o = options(8).with_engine(engine).unwrap();
+        o.search.seeds = vec![padded(n)];
+        generation::check(&data(), &o)
+    };
+    let off = EngineSelection::default();
+    let passes = EngineSelection {
+        simplify: true,
+        linearize: true,
+        ..EngineSelection::default()
+    };
+    for engine in [off, passes] {
+        for n in [room, room + 1] {
+            checked(engine.clone(), n).unwrap();
+        }
+    }
+    let archive = EngineSelection {
+        archive: Some(ArchivePolicy::ArchiveOnly),
+        ..EngineSelection::default()
+    };
+    let lm = EngineSelection {
+        refine: RefineMethod::Lm(LmOptions::default()),
+        ..EngineSelection::default()
+    };
+    for engine in [archive, lm] {
+        checked(engine.clone(), room).unwrap();
+        let error = checked(engine, room + 1).unwrap_err();
+        let text = format!("{error:#}");
+        assert!(
+            text.contains("readable back from published evidence")
+                && text.contains("nests too deeply"),
+            "{text}"
+        );
+    }
+}
+
 #[test]
 fn hard_refusals_spend_slots_and_never_become_parents() {
     let o = options(5);
