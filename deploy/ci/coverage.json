@@ -7599,6 +7599,17 @@
       "dispositions": [],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
     },
+    "python:python/tests/test_target_artifact_pins.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Tiny CPU fixtures for required artifact pins, verified-snapshot loading and producer report/manifest pin emission; no model training, real checkpoint loading or producer-authentication qualification."
+    },
     "python:python/tests/test_training_comparison.py": {
       "discovery": {
         "kind": "python-family"

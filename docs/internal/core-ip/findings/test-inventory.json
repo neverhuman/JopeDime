@@ -332,6 +332,13 @@
         "training"
       ]
     },
+    "python:python/tests/test_target_artifact_pins.py": {
+      "role": "regression",
+      "subsystems": [
+        "encoders",
+        "storage"
+      ]
+    },
     "python:python/tests/test_training_comparison.py": {
       "role": "regression",
       "subsystems": [

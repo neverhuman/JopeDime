@@ -107,6 +107,31 @@ class PanelTests(unittest.TestCase):
         self.assertEqual(result, {"kind": "values", "data": [6.0, 6.0, 6.0]})
         self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
 
+    def test_replay_good_pin_loads_and_mismatch_refuses_before_pickle(self):
+        data = request("regression")
+        result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
+        with patch.object(_panel.pickle, "loads", wraps=pickle.loads) as loader:
+            self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
+            loader.assert_called_once()
+        for pin in ("0" * 64, None, "not-a-sha256"):
+            with self.subTest(pin=pin), patch.object(_panel.pickle, "loads") as loader:
+                with self.assertRaisesRegex(ValueError, "checksum|SHA-256 pin"):
+                    _panel.replay(artifact, pin, data["predict"]["features"])
+                loader.assert_not_called()
+
+    def test_replay_deserializes_verified_snapshot_of_mutable_buffer(self):
+        data = request("regression")
+        result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
+        buffer = bytearray(artifact)
+        original_loads = pickle.loads
+
+        def mutate_then_load(snapshot):
+            buffer[:] = b"replaced"
+            return original_loads(snapshot)
+
+        with patch.object(_panel.pickle, "loads", side_effect=mutate_then_load):
+            self.assertEqual(_panel.replay(buffer, checksum, data["predict"]["features"]), result)
+
     def test_leaked_labels_unknown_fields_and_missing_classes_are_refused(self):
         for mutate in (lambda r: r["predict"].update(targets=["leak"]),
                        lambda r: r.update(heldout_targets=["leak"]),

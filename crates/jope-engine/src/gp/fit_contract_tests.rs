@@ -992,6 +992,20 @@ fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_
             &json!({"schema":"parallel.seed_experiment.v2"}),
         )
         .unwrap();
+        // Keep numerical work bounded while testing the recovery protocol.
+        // Three distinct recipes still require three original fit keys; deadline
+        // refusal and bootstrap generation have separate contracts.
+        let seeds = root.join("recovery-seeds.json");
+        seed_population(
+            &prepared,
+            &seeds,
+            &[
+                PROGRAM,
+                "(pipe X (standardize) (ridge))",
+                "(pipe X (robust_scale) (ridge))",
+            ],
+            |_| None,
+        );
         let output = experiment.join("search");
         let command = || {
             let mut c = authority.command();
@@ -1010,6 +1024,8 @@ fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_
                 .arg(&prepared)
                 .arg("--output")
                 .arg(&output)
+                .arg("--seeds")
+                .arg(&seeds)
                 .env("JOPE_EXPERIMENT_DIR", &experiment);
             c
         };

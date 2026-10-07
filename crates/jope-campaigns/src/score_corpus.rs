@@ -2,14 +2,13 @@ use anyhow::{bail, Context, Result};
 use feat_math::dsl::{DslExpr, ParamValue, Stage};
 use feat_math::math_expr::MathExpr;
 use feat_math::GenomeIr;
-use memmap2::MmapOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::fs::{self, File, OpenOptions};
-use std::io::Write;
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Component, Path, PathBuf};
 
 const ARCHIVE_MANIFEST: &str = "archive-manifest.v1.json";
@@ -17,6 +16,34 @@ const CORPUS_SCHEMA: &str = "jope-dime.score-corpus.v1";
 const GENE_SCHEMA: &str = "jope-dime.gene-schema.v1";
 const EXAMPLE_SCHEMA: &str = "jope-dime.score-example.v1";
 const MAX_SNAPSHOT_ATTEMPTS: usize = 8;
+
+// Hash the owned buffers delivered to the parser, rather than revisiting mutable
+// file-backed memory after a separate digest check.
+struct HashingReader<R> {
+    inner: R,
+    digest: Sha256,
+}
+
+impl<R: Read> HashingReader<R> {
+    fn new(inner: R) -> Self {
+        Self {
+            inner,
+            digest: Sha256::new(),
+        }
+    }
+
+    fn into_sha256(self) -> String {
+        hex::encode(self.digest.finalize())
+    }
+}
+
+impl<R: Read> Read for HashingReader<R> {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        let count = self.inner.read(buffer)?;
+        self.digest.update(&buffer[..count]);
+        Ok(count)
+    }
+}
 
 #[derive(Debug)]
 struct ArchiveChanged(&'static str);
@@ -152,18 +179,22 @@ pub(crate) fn materialize(
 }
 
 #[cfg(test)]
-fn read_and_materialize<F>(archive_root: &Path, output_root: &Path, after_map: F) -> Result<PathBuf>
+fn read_and_materialize<F>(
+    archive_root: &Path,
+    output_root: &Path,
+    after_open: F,
+) -> Result<PathBuf>
 where
     F: FnOnce(),
 {
-    read_and_materialize_filtered(archive_root, output_root, None, after_map)
+    read_and_materialize_filtered(archive_root, output_root, None, after_open)
 }
 
 fn read_and_materialize_filtered<F>(
     archive_root: &Path,
     output_root: &Path,
     cohort: Option<&str>,
-    after_map: F,
+    after_open: F,
 ) -> Result<PathBuf>
 where
     F: FnOnce(),
@@ -184,15 +215,19 @@ where
     let ledger_path = archive_root.join(relative);
     let ledger_file =
         File::open(&ledger_path).with_context(|| format!("open {}", ledger_path.display()))?;
-    let mapped = unsafe { MmapOptions::new().map(&ledger_file) }
-        .with_context(|| format!("memory-map {}", ledger_path.display()))?;
-    after_map();
+    let mut ledger = BufReader::new(HashingReader::new(ledger_file));
+    after_open();
 
-    let actual_ledger_sha256 = sha256_bytes(&mapped);
+    let aggregated = aggregate_records(&mut ledger);
+    // Complete the digest even after a parse error: changed input remains
+    // retryable, while malformed input with a matching pin remains fatal.
+    io::copy(&mut ledger, &mut io::sink())
+        .with_context(|| format!("finish reading {}", ledger_path.display()))?;
+    let actual_ledger_sha256 = ledger.into_inner().into_sha256();
     if actual_ledger_sha256 != manifest.all_evaluations_jsonl_sha256 {
         return Err(ArchiveChanged("master JSONL digest differs from manifest").into());
     }
-    let (mut aggregates, _, record_count) = aggregate_records(&mapped)?;
+    let (mut aggregates, _, record_count) = aggregated?;
     if record_count != manifest.evaluation_records {
         return Err(ArchiveChanged("master JSONL record count differs from manifest").into());
     }
@@ -221,19 +256,20 @@ where
     )
 }
 
-fn aggregate_records(
-    bytes: &[u8],
+fn aggregate_records<R: BufRead>(
+    reader: &mut R,
 ) -> Result<(BTreeMap<ExampleKey, Aggregate>, ObservedSchema, usize)> {
     let mut aggregates = BTreeMap::<ExampleKey, Aggregate>::new();
     let mut observed = ObservedSchema::default();
     let mut records = 0usize;
-    for (index, raw) in bytes.split(|byte| *byte == b'\n').enumerate() {
+    for (index, raw) in reader.split(b'\n').enumerate() {
+        let line = index + 1;
+        let raw = raw.with_context(|| format!("read archive record at line {line}"))?;
         if raw.is_empty() {
             continue;
         }
         records += 1;
-        let line = index + 1;
-        let record: Value = serde_json::from_slice(raw)
+        let record: Value = serde_json::from_slice(&raw)
             .with_context(|| format!("malformed archive record at line {line}"))?;
         let object = record
             .as_object()
@@ -1161,6 +1197,108 @@ mod tests {
         fs::write(archive.join("all-evaluations.jsonl"), b"{bad\n").unwrap();
         let error = read_and_materialize(&archive, &temp.path().join("out"), || {}).unwrap_err();
         assert!(error.downcast_ref::<ArchiveChanged>().is_some());
+    }
+
+    #[test]
+    fn truncated_ledger_after_open_requests_retry_without_publication() {
+        let temp = TempDir::new().unwrap();
+        let archive = temp.path().join("archive");
+        fixture_archive(
+            &archive,
+            &[record("d", "(pipe X (ridge))", true, Some(1.0), None, 1.0)],
+        );
+        let output = temp.path().join("out");
+        let error = read_and_materialize(&archive, &output, || {
+            fs::write(archive.join("all-evaluations.jsonl"), b"").unwrap();
+        })
+        .unwrap_err();
+        assert!(error.downcast_ref::<ArchiveChanged>().is_some());
+        assert!(!output.exists());
+    }
+
+    #[test]
+    fn same_size_ledger_rewrite_requests_retry_without_publication() {
+        let temp = TempDir::new().unwrap();
+        let archive = temp.path().join("archive");
+        fixture_archive(
+            &archive,
+            &[record("d", "(pipe X (ridge))", true, Some(1.0), None, 1.0)],
+        );
+        let path = archive.join("all-evaluations.jsonl");
+        let before = fs::read_to_string(&path).unwrap();
+        let changed = before.replace("\"rmse\":1.0", "\"rmse\":9.0");
+        assert_ne!(changed, before);
+        assert_eq!(changed.len(), before.len());
+        let output = temp.path().join("out");
+        let error = read_and_materialize(&archive, &output, || {
+            fs::write(&path, changed).unwrap();
+        })
+        .unwrap_err();
+        assert!(error.downcast_ref::<ArchiveChanged>().is_some());
+        assert!(!output.exists());
+    }
+
+    #[test]
+    fn buffered_parser_input_stays_bound_to_its_digest_after_file_rewrite() {
+        let temp = TempDir::new().unwrap();
+        let archive = temp.path().join("archive");
+        fixture_archive(
+            &archive,
+            &[record("d", "(pipe X (ridge))", true, Some(1.0), None, 1.0)],
+        );
+        let path = archive.join("all-evaluations.jsonl");
+        let before = fs::read_to_string(&path).unwrap();
+        let changed = before.replace("\"rmse\":1.0", "\"rmse\":9.0");
+        assert_ne!(changed, before);
+        let mut ledger = BufReader::new(HashingReader::new(File::open(&path).unwrap()));
+        assert_eq!(ledger.fill_buf().unwrap(), before.as_bytes());
+        fs::write(&path, changed.as_bytes()).unwrap();
+        let (aggregates, _, records) = aggregate_records(&mut ledger).unwrap();
+        io::copy(&mut ledger, &mut io::sink()).unwrap();
+        assert_eq!(
+            ledger.into_inner().into_sha256(),
+            sha256_bytes(before.as_bytes())
+        );
+        assert_eq!(records, 1);
+        assert_eq!(aggregates.values().next().unwrap().valid_rmse, Some(1.0));
+        assert_eq!(fs::read_to_string(path).unwrap(), changed);
+    }
+
+    #[test]
+    fn early_parse_error_checks_the_full_ledger_digest_before_deciding_retry() {
+        // The unread tail exceeds BufReader's capacity, so only draining the
+        // stream can distinguish a matching pin from changed malformed input.
+        for pin_matches in [true, false] {
+            let temp = TempDir::new().unwrap();
+            let archive = temp.path().join("archive");
+            fixture_archive(
+                &archive,
+                &[record("d", "(pipe X (ridge))", true, Some(1.0), None, 1.0)],
+            );
+            let mut bytes = b"{bad\n".to_vec();
+            bytes.extend(vec![b' '; 16 * 1024]);
+            bytes.push(b'\n');
+            fs::write(archive.join("all-evaluations.jsonl"), &bytes).unwrap();
+            if pin_matches {
+                let path = archive.join(ARCHIVE_MANIFEST);
+                let mut manifest: Value =
+                    serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+                manifest["all_evaluations_jsonl_sha256"] = json!(sha256_bytes(&bytes));
+                fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+            }
+            let output = temp.path().join("out");
+            let error = read_and_materialize(&archive, &output, || {}).unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<ArchiveChanged>().is_none(),
+                pin_matches
+            );
+            if pin_matches {
+                assert!(error
+                    .to_string()
+                    .contains("malformed archive record at line 1"));
+            }
+            assert!(!output.exists());
+        }
     }
 
     #[test]

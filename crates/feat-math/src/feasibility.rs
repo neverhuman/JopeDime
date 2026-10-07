@@ -448,8 +448,13 @@ mod tests {
             });
         }
         pub struct Counting;
+        // SAFETY: every allocation and pointer/layout pair is forwarded unchanged
+        // to System. Accounting uses const-initialized Cells, saturating arithmetic
+        // and try_with, so it neither allocates nor unwinds during TLS teardown.
         unsafe impl GlobalAlloc for Counting {
             unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+                // SAFETY: GlobalAlloc's caller supplies a valid nonzero layout;
+                // System receives that layout and its pointer is returned unchanged.
                 let pointer = unsafe { System.alloc(layout) };
                 if !pointer.is_null() {
                     track(layout.size(), 0);
@@ -457,6 +462,8 @@ mod tests {
                 pointer
             }
             unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+                // SAFETY: GlobalAlloc's caller supplies a valid nonzero layout;
+                // System owns the allocation and initializes all requested bytes.
                 let pointer = unsafe { System.alloc_zeroed(layout) };
                 if !pointer.is_null() {
                     track(layout.size(), 0);
@@ -464,10 +471,15 @@ mod tests {
                 pointer
             }
             unsafe fn dealloc(&self, pointer: *mut u8, layout: Layout) {
+                // SAFETY: allocations come from System. GlobalAlloc's caller
+                // supplies the live pointer and its current allocation layout.
                 unsafe { System.dealloc(pointer, layout) };
                 track(0, layout.size());
             }
             unsafe fn realloc(&self, pointer: *mut u8, layout: Layout, size: usize) -> *mut u8 {
+                // SAFETY: GlobalAlloc's caller supplies a live System allocation,
+                // its current layout and a nonzero size within the isize::MAX limit.
+                // System's returned pointer (or null on failure) is forwarded unchanged.
                 let moved = unsafe { System.realloc(pointer, layout, size) };
                 if !moved.is_null() {
                     // Old and new buffers may coexist while the data is copied.

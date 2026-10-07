@@ -178,6 +178,11 @@ def predictions(model, x, task, classes):
 
 def replay(artifact_bytes, expected_sha256, rows):
     """Replay a private artifact only after verifying its caller-supplied complete digest."""
+    if (not isinstance(expected_sha256, str) or len(expected_sha256) != 64
+            or any(c not in "0123456789abcdef" for c in expected_sha256)):
+        raise ValueError("fitted artifact SHA-256 pin is missing or invalid")
+    # Snapshot mutable byte buffers before hashing and deserializing the same bytes.
+    artifact_bytes = bytes(artifact_bytes)
     if hashlib.sha256(artifact_bytes).hexdigest() != expected_sha256:
         raise ValueError("fitted artifact checksum mismatch")
     state = pickle.loads(artifact_bytes)

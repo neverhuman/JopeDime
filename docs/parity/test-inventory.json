@@ -6263,10 +6263,10 @@
  "python": {
   "mode": "static-scan",
   "command": "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution",
-  "count": 172,
+  "count": 182,
   "packages": {
    "jope": {
-    "count": 172,
+    "count": 182,
     "files": {
      "tests/test_context_proposals.py": {
       "count": 6,
@@ -6437,6 +6437,21 @@
        "tests/test_selfplay_controller.py::test_production_controller_owns_deterministic_post_training_phases"
       ]
      },
+     "tests/test_target_artifact_pins.py": {
+      "count": 10,
+      "tests": [
+       "tests/test_target_artifact_pins.py::test_classical_ensemble_good_pin_loads_model",
+       "tests/test_target_artifact_pins.py::test_classical_ensemble_mismatch_rejected_before_deserialization",
+       "tests/test_target_artifact_pins.py::test_classical_ensemble_missing_or_malformed_pin_rejected",
+       "tests/test_target_artifact_pins.py::test_classical_producer_reports_pins_and_ensemble_enforces_them",
+       "tests/test_target_artifact_pins.py::test_fused_candidate_meta_pin_is_required",
+       "tests/test_target_artifact_pins.py::test_fused_good_pin_loads_artifact",
+       "tests/test_target_artifact_pins.py::test_fused_mismatch_rejected_before_deserialization",
+       "tests/test_target_artifact_pins.py::test_fused_missing_or_malformed_pin_rejected_before_deserialization",
+       "tests/test_target_artifact_pins.py::test_joblib_load_uses_verified_snapshot_if_path_replaced",
+       "tests/test_target_artifact_pins.py::test_manifest_producer_pins_all_joblib_paths"
+      ]
+     },
      "tests/test_test_exact_campaign.py": {
       "count": 25,
       "tests": [
@@ -6536,6 +6551,6 @@
  },
  "totals": {
   "rust": 4168,
-  "python": 172
+  "python": 182
  }
 }
