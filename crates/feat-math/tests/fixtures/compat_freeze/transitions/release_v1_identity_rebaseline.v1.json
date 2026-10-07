@@ -1,0 +1,20 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced v1.0.0 version-metadata transition: only the campaigns manifest version and workspace member lock versions move evaluator input hashes. The prior current identity is retained in the append-only known table with a twice-produced native receipt. Historical and behavioral fixtures, DSL ABI, evaluator source and lineage source pins are unchanged.",
+  "plan_reference": ".agent/MAJOR_RELEASE_PLAN.md section 5 (authorized product version bump), docs/release/identity-v1/README.md, ADR-0004",
+  "pr_reference": "release/v1.0.0 (local preparation; publication held by criteria 1-6)",
+  "source_commit": "09281209677080f2a5b48feebe9a55f95d4b1c9f",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "6a2bc59e723675be8bed0621258f4fadbfdaa6686c9321de111900249e7cba39",
+      "after": "dee660deee18da3ba65ab88ff9386225debb15bffc5a80f0a330c4bb8999d804"
+    }
+  ],
+  "changed_identity_inputs": [
+    "crates/jope-campaigns/Cargo.toml",
+    "Cargo.lock"
+  ],
+  "prior_native_receipt": "docs/release/identity-v1/prior-receipt.json",
+  "prior_native_receipt_sha256": "a74c9b0ed8c009a5f1231a672cf563848a31b430663bcf77d4f7a707e3757ba1"
+}

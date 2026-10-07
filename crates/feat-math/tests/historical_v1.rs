@@ -428,6 +428,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/fitted_runtime_sealed_identity_rebaseline.v1.json");
     assert_eq!(sealed_runtime["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(sealed_runtime["fixtures"][0]["path"], changed_fixtures[0]);
+    // Release version metadata mints an announced evaluator identity; old pins stay strict.
+    let release_v1 = old_fixture("transitions/release_v1_identity_rebaseline.v1.json");
+    assert_eq!(release_v1["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(release_v1["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -442,6 +446,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         corpus_bounds,
         executable_cache,
         sealed_runtime,
+        release_v1,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
