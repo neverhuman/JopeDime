@@ -2517,6 +2517,42 @@
         "storage"
       ]
     },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_target_linear.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_build_local_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_fold_isolation.py": {
       "role": "regression",
       "subsystems": [

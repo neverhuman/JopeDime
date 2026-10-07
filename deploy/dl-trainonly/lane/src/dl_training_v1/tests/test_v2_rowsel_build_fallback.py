@@ -1,0 +1,202 @@
+"""DRIFTED-T1-FALLBACK and LINEAR-DETERMINED on the T1 builder (tools/v2_rowsel_build.py).
+
+  Linear     build_dataset_v2: an exactly linear target refuses the dataset (target_linear_in_features, nothing
+             written); near-linear is built and flagged; every new context records the gate result
+  OptIn      the drifted fallback scope runs only with the pinned t1_fallback record: refused without it (function and
+             CLI), refused with other bytes, refused on any other tree; no default tree selects it
+  Select     select_drifted admits frozen ["clean"] contexts with a reduced acquisition record of the drifted list
+             only, as acquisition_cap; anything else is refused
+  Inputs     content-addressed registry split objects are sha256-verified at use
+  Pilot      (lane data, read-only) the real record gives 23 datasets / 115 contexts; the pilot plan builds 22 on split
+             v2 with the t1_fallback record and holds the registry-group-annotated 047d631d for the v2g decision
+"""
+import argparse
+import gzip
+import hashlib
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import numpy as np
+
+from dltrain import target_linear as tl
+from tests import test_v2_rowsel_build as tb
+from tests import test_v2_rowsel_build_split_v2 as t2
+
+rb = tb.rb
+H = tb.H
+
+
+def linear_matrix(noise=0.0):
+    m = tb.fixture_matrix()
+    m[:, 5] = 0.5 * m[:, 1] + 0.2 * m[:, 0] + 0.05 + (np.random.default_rng(4).normal(0, noise, len(m)) if noise else 0.0)
+    return tb._r9(m)
+
+
+class Base(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="rowsel-fallback-", dir=os.environ.get("TMPDIR")))
+        self.shard = self.dir / "shard-0"; self.shard.mkdir()
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def build(self, m, shard=None, **kw):
+        ds = tb.dataset(m, folds=t2.REGISTRY_FOLDS)
+        return rb.build_dataset_v2(ds, tb.items(H, "clean", folds=range(4)), shard or self.shard, tb.CODES, dict(tb.REFS),
+                                   budget=tb.BUDGET, extra={"registry_grouping": {"registry_grouped_by_feature_column": False}}, **kw)
+
+
+class Linear(Base):
+    def test_an_exactly_linear_target_refuses_the_dataset(self):
+        rec = self.build(linear_matrix())
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", tl.REFUSE), rec.get("detail"))
+        self.assertEqual([d for d in self.shard.iterdir() if d.name != "_datasets"], [])
+        self.assertTrue(all(c["target_linear"]["verdict"] == tl.REFUSE for c in rec["contexts"]))
+
+    def test_near_linear_is_flagged_and_ordinary_targets_pass(self):
+        rec = self.build(linear_matrix(noise=2e-5))
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        self.assertEqual({c["target_linear"]["verdict"] for c in rec["contexts"]}, {tl.REVIEW})
+        ok = self.build(tb.fixture_matrix(), shard=self.dir / "ok")
+        self.assertEqual(ok["status"], "done", ok.get("detail"))
+        for c in ok["contexts"]:
+            ctx = json.loads((self.dir / "ok" / c["view_id"] / "context.json").read_bytes())
+            self.assertIsNone(ctx["target_linear"]["verdict"])
+            enc = gzip.decompress((self.dir / "ok" / c["view_id"] / "encoder.jtt1.gz").read_bytes())
+            self.assertEqual(ctx["target_linear"], tl.check_jtt1(enc))           # computed on the ENCODER payload
+            self.assertEqual(ctx["target_linear"]["decoded"], "jtt1.train_view (outer-train rows only)")
+
+
+class SummaryCounts(Base):
+    def test_group_annotation_dropped_counts_only_built_datasets(self):
+        """A registry-annotated dataset HELD as not_built has no contexts, so nothing of it is 'dropped': it is listed as
+        registry_group_annotated_not_built instead (correction of the 20261006T143625Z summary)."""
+        tree = self.dir / "tree"; (tree / "shard-0").mkdir(parents=True)
+        e0 = [{"view_id": r["view_id"], "context_sha256": r["context_sha256"], "fold": r["fold"]} for r in tb.epoch_rows(H, range(4))]
+        rg = {"registry_grouped_by_feature_column": True, "registry_group_columns": [2]}
+        built = {"dataset_hash": H, "label": "clean", "epoch0": e0, "shard": 0, "est_cpu_s": 1.0, "registry_grouping": rg}
+        held = dict(built, dataset_hash="0" * 16, disposition="not_built", reason="registry_group_annotated_awaiting_v2g_decision")
+        (tree / "plan.json").write_text(json.dumps({"of": 1, "tree": "kmeans-clean", "split_version": rb.SPLIT_V2,
+                                                    "counts": {"datasets": 2, "epoch0_contexts": 8}, "inputs": {}, "datasets": [built, held]}))
+        rec = rb.build_dataset_v2(tb.dataset(t2.M), tb.items(H, "clean", folds=range(4)), tree / "shard-0", tb.CODES, dict(tb.REFS),
+                                  budget=tb.BUDGET, extra={"registry_grouping": rg})
+        self.assertEqual(rec["status"], "done", rec.get("detail"))
+        (tree / "shard-0-of-1.receipt.json").write_text(json.dumps({"expected_datasets": 1, "done": 1, "complete": True, "cpu_s": 1,
+                                                                    "elapsed_s": 1, "guard_pauses": 0}))
+        log = self.dir / "t.log"; log.write_text("OK\n")
+        mut = self.dir / "m.json"; mut.write_text("{\"totals\": {}}")
+        a = argparse.Namespace(out=str(tree), tree="kmeans-clean", tests_log=str(log), mutants=str(mut), pilot=None,
+                               receipt=str(self.dir / "s.json"), code_custody=None, code_why=None)
+        with mock.patch.object(rb, "code_custody_check", lambda *x, **k: {"ok": True, "files": {}}), mock.patch("builtins.print"):
+            self.assertEqual(rb.summarize_v2(a), 0)
+        c = json.loads((self.dir / "s.json").read_bytes())["counts"]
+        self.assertEqual((c["group_annotation_dropped_datasets"], c["registry_group_annotated_not_built"], c["expected_datasets"]),
+                         ([H], ["0" * 16], 1))
+
+
+class OptIn(Base):
+    def test_the_record_is_required_and_pinned(self):
+        with self.assertRaises(rb.RebuildError) as cm:
+            rb.drifted_fallback_record(None)
+        self.assertEqual(cm.exception.reason, "t1_fallback_record_required")
+        other = self.dir / "other.json"; other.write_text("{\"drifted\": []}")
+        with self.assertRaises(rb.RebuildError) as cm:
+            rb.drifted_fallback_record(other)
+        self.assertEqual(cm.exception.reason, "t1_fallback_record_drift")
+        with self.assertRaises(rb.RebuildError) as cm:
+            rb.load_scope([], scope="frozen-capped-drifted")
+        self.assertEqual(cm.exception.reason, "t1_fallback_record_required")
+        with self.assertRaises(rb.RebuildError) as cm:
+            rb.load_tree_scope([], "frozen-capped-drifted-fallback")
+        self.assertEqual(cm.exception.reason, "t1_fallback_record_required")
+
+    def test_the_cli_requires_the_record_and_only_on_that_tree(self):
+        for argv in (["--split-version", rb.SPLIT_V2, "--tree", "frozen-capped-drifted-fallback", "--of", "1", "--plan"],
+                     ["--split-version", rb.SPLIT_V2, "--tree", "kmeans-clean", "--of", "1", "--plan", "--t1-fallback-record", str(rb.DRIFTED_RECORD)]):
+            with mock.patch.object(rb, "plan_v2", side_effect=AssertionError("ran")), mock.patch("sys.stderr"):
+                with self.assertRaises(SystemExit) as cm:
+                    rb.main(argv)
+                self.assertEqual(cm.exception.code, 2)
+        seen = []
+        with mock.patch.object(rb, "plan_v2", lambda a: seen.append(a.t1_fallback_record) or 0):
+            rb.main(["--split-version", rb.SPLIT_V2, "--tree", "frozen-capped-drifted-fallback", "--of", "1", "--plan",
+                     "--out", str(self.dir), "--t1-fallback-record", str(rb.DRIFTED_RECORD)])
+        self.assertEqual(seen, [str(rb.DRIFTED_RECORD)])
+
+    def test_every_tree_has_a_summary_stem(self):
+        import inspect
+        src = inspect.getsource(rb.summarize_v2)
+        for t in list(rb.TREES) + list(rb.TREES_V2G):
+            self.assertIn(f'"{t}":', src, t)
+
+    def test_no_default_tree_selects_it(self):
+        defaults = [t for t in rb.TREES if not rb.TREES[t].get("opt_in")]
+        self.assertNotIn("frozen-capped-drifted-fallback", defaults)
+        self.assertEqual({rb.TREES[t]["scope"] for t in defaults} & {"frozen-capped-drifted"}, set())
+        self.assertEqual(rb.TREES["frozen-capped-drifted-fallback"]["opt_in"], "--t1-fallback-record")
+
+
+class Select(unittest.TestCase):
+    def rows(self, label=("clean",), reduced=True, markers=("row_policy:stratified_cap_to_final_max",), cls="clean", h="ab" * 8):
+        rows = [{"view_id": f"{h}__r0__f{f}", "dataset_hash": h, "fold": f, "cohort": "frozen"} for f in range(2)]
+        leak = {r["view_id"]: {"cohort": "frozen", "row_selection_leak": list(label), "dataset_hash": h, "fold": r["fold"]} for r in rows}
+        acq = {h: {"cohort": "frozen", "class": cls, "reduced": reduced, "selection_markers": list(markers)}}
+        return rows, leak, acq
+
+    def test_admitted_as_acquisition_cap(self):
+        rows, leak, acq = self.rows()
+        got = rb.select_drifted(rows, leak, acq, {"ab" * 8: {}})
+        self.assertEqual([lab for _, lab, _ in got], ["acquisition_cap"] * 2)
+        self.assertEqual(rb.select_drifted(rows, leak, acq, {"cd" * 8: {}}), [])           # not in the drifted list
+
+    def test_anything_else_is_refused(self):
+        for kw, reason in (({"label": ("kmeans",)}, "scope_label_mismatch"), ({"reduced": False}, "scope_acquisition_record"),
+                           ({"markers": ()}, "scope_acquisition_record"), ({"cls": "kmeans"}, "scope_acquisition_record")):
+            rows, leak, acq = self.rows(**kw)
+            with self.subTest(kw=kw), self.assertRaises(rb.RebuildError) as cm:
+                rb.select_drifted(rows, leak, acq, {"ab" * 8: {}})
+            self.assertEqual(cm.exception.reason, reason)
+
+
+class Inputs(Base):
+    def test_content_addressed_split_is_verified(self):
+        body = b"{\"split\": 1}"
+        h = hashlib.sha256(body).hexdigest()
+        (self.dir / h).write_bytes(body)
+        got, src = rb.content_addressed_split("frozen", H, {"sha256": h, "bytes": len(body)}, split_dir=self.dir)
+        self.assertEqual((got, src["path"]), (body, str(self.dir / h)))
+        (self.dir / ("0" * 64)).write_bytes(body)
+        with self.assertRaises(Exception):
+            rb.content_addressed_split("frozen", H, {"sha256": "0" * 64}, split_dir=self.dir)
+
+
+class Pilot(Base):
+    """Read-only on this lane's pinned inputs (no fetch, nothing under build-v2 written)."""
+
+    def test_the_real_record_and_the_pilot_plan(self):
+        if not rb.DRIFTED_RECORD.is_file():
+            self.skipTest("lane record not present")
+        rec = rb.drifted_fallback_record(rb.DRIFTED_RECORD)
+        self.assertEqual(len(rec["datasets"]), 23)
+        out = self.dir / "plan"
+        with mock.patch("builtins.print"):
+            self.assertEqual(rb.plan_v2(argparse.Namespace(out=str(out), tree="frozen-capped-drifted-fallback", of=1,
+                                                           t1_fallback_record=str(rb.DRIFTED_RECORD))), 0)
+        pl = json.loads((out / "plan.json").read_bytes())
+        self.assertEqual((pl["counts"], pl["expected_new_contexts"]), ({"datasets": 23, "epoch0_contexts": 115}, 110))
+        held = [e for e in pl["datasets"] if e.get("disposition") == "not_built"]
+        self.assertEqual([(e["dataset_hash"], e["reason"]) for e in held], [("047d631d7f3c0e9c", "registry_group_annotated_awaiting_v2g_decision")])
+        for e in pl["datasets"]:
+            self.assertEqual((e["label"], e["t1_fallback"]["ruling"]["key"], e["t1_fallback"]["source_sha256"]),
+                             ("acquisition_cap", "DRIFTED-T1-FALLBACK", rb.DRIFTED_RECORD_SHA256))
+        self.assertEqual(pl["inputs"]["context_extra"]["rights"], "research-only")
+        self.assertTrue(pl["inputs"]["context_extra"]["rights_decision"].endswith(rb.ALL_DATA_RESEARCH_SHA256))
+
+
+if __name__ == "__main__":
+    unittest.main()

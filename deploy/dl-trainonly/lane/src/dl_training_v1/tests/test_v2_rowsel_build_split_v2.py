@@ -407,8 +407,9 @@ class Scope(unittest.TestCase):
         cls.rows = scale_check.Sources(load_index=False).included()
 
     def test_the_three_trees(self):
-        got = {t: rb.load_tree_scope(self.rows, t)[2] for t in rb.TREES}
-        self.assertEqual(got, {t: rb.TREES[t]["expected"] for t in rb.TREES})
+        trees = [t for t in rb.TREES if not rb.TREES[t].get("opt_in")]        # the drifted T1 fallback is an explicit opt-in
+        got = {t: rb.load_tree_scope(self.rows, t)[2] for t in trees}
+        self.assertEqual(got, {t: rb.TREES[t]["expected"] for t in trees})
         fb, refs, _ = rb.load_tree_scope(self.rows, "kmeans-fallback")
         raw = {e["dataset_hash"] for e in json.loads(rb.RAW_V2_PLAN.read_bytes())["datasets"]}
         self.assertFalse(set(fb) & raw)
