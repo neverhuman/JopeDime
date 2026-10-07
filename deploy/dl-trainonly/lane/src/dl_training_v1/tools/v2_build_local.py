@@ -517,6 +517,16 @@ def t1_group_values(A, index: int) -> list:
     return [col[i:i + 1].tobytes() for i in range(col.shape[0])]
 
 
+def replacement_membership(built_folds, admitted, refusals) -> dict:
+    """The replacement record's fold membership after context-specific refusals (FOLD-1; PR #251 review 5441124504):
+    new_contexts counts the WRITTEN contexts and the record names the built folds, the admitted (written) folds and each
+    refused fold with its own reason, so the manifest publishes exactly the admitted set and a refused fold never blocks
+    the others. Set only when a fold is refused; without refusals the record is unchanged (new_contexts = every built fold)."""
+    return {"new_contexts": len(admitted), "built_folds": sorted(int(f) for f in built_folds),
+            "admitted_folds": sorted(int(f) for f in admitted),
+            "refused_folds": sorted(({"fold": int(c["fold"]), "reason": c["refused"]} for c in refusals), key=lambda x: x["fold"])}
+
+
 def context_refusal(tlg) -> str | None:
     """The refusal reason of ONE context from its own LINEAR-DETERMINED report (outer-train rows only), else None. Never
     aggregated across folds (FOLD-1, owner 07:22Z; PR #246 review 5437848458)."""
@@ -823,6 +833,12 @@ def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None, ve
     gone = {c["fold"] for c in out.get("refused_contexts", [])}
     out["results"] = [r for r in out["results"] if r[2]["fold"] not in gone]
     out["contexts"] = [c for c in out["contexts"] if c["fold"] not in gone]
+    if gone and out["results"]:                                         # the written contexts name the admitted set
+        admitted = [c["fold"] for c in out["contexts"]]
+        e0.update(replacement_membership(sorted(set(admitted) | gone), admitted, out["refused_contexts"]))
+        e0["context_count_changed"] = len(e["epoch0"]) != e0["new_contexts"]
+        for _, _, crec in out["results"]:
+            crec["epoch0_replaced"] = e0
     if gone and not out["results"]:                                     # every context refused: nothing is written
         reasons = sorted({c["refused"] for c in out["refused_contexts"]})
         raise SplitV2Error(reasons[0] if len(reasons) == 1 else "all_contexts_refused",
@@ -1385,9 +1401,12 @@ def verify_tree(out: Path, pl, codes) -> dict:
         if r["split"]["groups_straddling_folds"] or not r["split"]["target_invariant"] or not r["split"]["value_check_invariant"]:
             problems.append(f"{h}: split gate")
         empty = r["split"].get("empty_folds") or []
-        if len(r["contexts"]) != OUTER_FOLDS - len(empty) or (empty and not (version == SPLIT_V2G and r["split"].get("effective_folds")
-                                                                              == OUTER_FOLDS - len(empty))):
-            problems.append(f"{h}: {len(r['contexts'])} contexts, empty folds {empty}")
+        refused_n = len(r.get("refused_contexts") or [])                # FOLD-1: context-specific refusals count as decided
+        if refused_n:
+            counts["refused_contexts"] += refused_n
+        if len(r["contexts"]) + refused_n != OUTER_FOLDS - len(empty) or (empty and not (version == SPLIT_V2G and r["split"].get("effective_folds")
+                                                                                         == OUTER_FOLDS - len(empty))):
+            problems.append(f"{h}: {len(r['contexts'])} contexts + {refused_n} refused, empty folds {empty}")
         for c in r["contexts"]:
             d = sd / c["view_id"]
             ctx_dirs.add(str(d))

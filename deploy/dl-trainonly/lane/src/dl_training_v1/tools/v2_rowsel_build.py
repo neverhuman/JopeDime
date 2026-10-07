@@ -1544,6 +1544,16 @@ GROUP_SOURCE_A = ("registry annotation not available in local pinned objects (th
                   "blobs and the T1 meta; no annotations reference); nothing fetched")
 
 
+def replacement_membership(built_folds, admitted, refusals) -> dict:
+    """The replacement record's fold membership after context-specific refusals (FOLD-1; PR #251 review 5441124504):
+    new_contexts counts the WRITTEN contexts and the record names the built folds, the admitted (written) folds and each
+    refused fold with its own reason, so the manifest publishes exactly the admitted set and a refused fold never blocks
+    the others. Set only when a fold is refused; without refusals the record is unchanged (new_contexts = every built fold)."""
+    return {"new_contexts": len(admitted), "built_folds": sorted(int(f) for f in built_folds),
+            "admitted_folds": sorted(int(f) for f in admitted),
+            "refused_folds": sorted(({"fold": int(c["fold"]), "reason": c["refused"]} for c in refusals), key=lambda x: x["fold"])}
+
+
 def context_refusal(tlg) -> str | None:
     """The refusal reason of ONE context from its own LINEAR-DETERMINED report (outer-train rows only), else None. Never
     aggregated across folds (FOLD-1, owner 07:22Z; PR #246 review 5437848458)."""
@@ -1911,6 +1921,10 @@ def build_dataset_v2(ds, its, shard_dir: Path, codes, refs, *, budget=rowsel.DEF
         if refused:
             rec["refused_contexts"] = refused
             contexts = [c for c in contexts if not c.get("refused")]
+            e0.update(replacement_membership(built_folds, [ctx["fold"] for ctx, _ in results], refused))
+            e0["context_count_changed"] = len(rows) != e0["new_contexts"]
+            for ctx, _ in results:                                       # every written context names the admitted set
+                ctx["epoch0_replaced"] = e0
         pending = []
         for ctx, art in results:
             d = shard_dir / ctx["view_id"]

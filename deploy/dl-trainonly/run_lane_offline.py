@@ -27,6 +27,7 @@ MODULES = (
     "test_manifest_binding",
     "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
     "tests.test_v2_nonraw_target_linear", "tests.test_v2_rowsel_build_fallback", "tests.test_v2_rowsel_build_fold_isolation", "tests.test_v2_build_local_fold_isolation",
+    "tests.test_v2_partial_refusal_manifest",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -76,7 +77,7 @@ HOST_CASES = {
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 730
+EXPECTED_COLLECTED = 741
 
 
 def case_ids(suite):
