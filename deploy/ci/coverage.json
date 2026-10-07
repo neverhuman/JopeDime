@@ -369,7 +369,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -409,7 +409,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -453,7 +453,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -501,7 +501,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -541,7 +541,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -586,7 +586,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -631,7 +631,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -673,7 +673,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -718,7 +718,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -758,7 +758,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
@@ -798,7 +798,7 @@
       "environment": {
         "CARGO_INCREMENTAL": "0",
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        "CARGO_BUILD_JOBS": "4",
+        "CARGO_BUILD_JOBS": "8",
         "CARGO_TARGET_DIR": "job-scoped trusted-main persistent target",
         "JOPE_PARITY_STRICT": "1",
         "OMP_NUM_THREADS": "1",
