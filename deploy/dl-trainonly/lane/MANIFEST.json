@@ -1,30 +1,25 @@
 {
- "abandoned_unpushed_stagings": [
-  {
-   "manifest": "restage-20261007T032743Z/MANIFEST.json",
-   "manifest_sha256": "0388e6a75c0f54038661c61f35e18e1225f1386a2b40abbb43b2ff25b3381987",
-   "reason": "restage-20261007T032743Z (0388e6a7): staged tests failed 1/578 (tests/test_split_defaults.py kept at prior bytes rejects the raw v2 target_linear block); never pushed"
-  }
- ],
  "changes_since_prior": {
   "added": {
-   "dltrain/target_linear.py": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45",
-   "tests/test_target_linear.py": "288ad91dbfe7a712a89477645d92df01e13d25675449d8f50b5b92cf74ca2c2f",
-   "tests/test_v2_rowsel_raw_v2g.py": "64c62ee70183ab2c97c0e694dfc9a4ea48523c94f8c07ae52b227778bfc485c6"
+   "tests/test_v2_rowsel_raw_fold_isolation.py": "a3480f5d13e2dd1b1a62a04b5711d97ba2a9493b015dcf0ddb35c26a102e0f44"
   },
   "changed": {
-   "tests/test_split_defaults.py": {
-    "from": "95b7a5a33b3800ae01b409da7bec1f692c10afa1a39262507d1f317c0fbfea50",
-    "to": "6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4"
+   "dltrain/target_linear.py": {
+    "from": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45",
+    "to": "f2c22410f505c3f163cec18b4bc4c3fa5233823bdf37b8cf7069a51ed5de5811"
+   },
+   "tests/test_v2_rowsel_raw_v2g.py": {
+    "from": "64c62ee70183ab2c97c0e694dfc9a4ea48523c94f8c07ae52b227778bfc485c6",
+    "to": "72ae2cc1412b8e0cfe8a81a5424a543ec18282804f2aac2e69fc4b80f15a5fcc"
    },
    "tools/v2_rowsel_raw.py": {
-    "from": "428e879a40eb6fc87402f23f446605d8afffac473c724157674a823a74544261",
-    "to": "45dbc45826cf00df2c981431286ff4c6b99ee47147bfaf43761f33456896bb9c"
+    "from": "45dbc45826cf00df2c981431286ff4c6b99ee47147bfaf43761f33456896bb9c",
+    "to": "48829e820336ac2d4bafe42d73a30733976d6ef12ff75854cf7fd30a73ba8622"
    }
   },
   "removed": []
  },
- "created_utc": "2026-10-07T04:00:17Z",
+ "created_utc": "2026-10-07T05:59:32Z",
  "dependencies": {
   "Dope": "dope-kernel built from ~/dope 63696a5d into RUN/build/dope-target (bc3c4460)",
   "GPU encode": "system /usr/bin/python3.12 with torch 2.7.0+cu12x, safetensors, psutil; Codex's gpu_encoders.py ff419384 read-only from /home/ubuntu/scratch/jopedime-regression-neural-encoding-v1; lane-owned TabPFN runtime tabpfn 9.0.0 + pandas 2.3.2 + skrub 0.10.1 (manifest RUN/pydeps/tab35-runtime-v1.files.sha256 8ad8cb6e)",
@@ -260,8 +255,8 @@
    "sha256": "000ca8cbfe0cfc17d3662d14c0484463bf430af4aabfa9a923f30856dacdbeaa"
   },
   "src/dl_training_v1/dltrain/target_linear.py": {
-   "bytes": 3700,
-   "sha256": "e2dbebba58439c5ded2da15d1ff77689b07f620947df51e81fe3dd3a6ddffe45"
+   "bytes": 3790,
+   "sha256": "f2c22410f505c3f163cec18b4bc4c3fa5233823bdf37b8cf7069a51ed5de5811"
   },
   "src/dl_training_v1/dltrain/train.py": {
    "bytes": 54532,
@@ -423,13 +418,17 @@
    "bytes": 60971,
    "sha256": "7ffd45b93512bd33a60e9a7bb9d0d73dbb0d53b31de2bcdf15b8c0e3efd66822"
   },
+  "src/dl_training_v1/tests/test_v2_rowsel_raw_fold_isolation.py": {
+   "bytes": 12242,
+   "sha256": "a3480f5d13e2dd1b1a62a04b5711d97ba2a9493b015dcf0ddb35c26a102e0f44"
+  },
   "src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
    "bytes": 13214,
    "sha256": "b9e0bb43a5ee9e6261bbc4f2dea717eb181dabb3311b2a8a9ec578969d290889"
   },
   "src/dl_training_v1/tests/test_v2_rowsel_raw_v2g.py": {
-   "bytes": 20400,
-   "sha256": "64c62ee70183ab2c97c0e694dfc9a4ea48523c94f8c07ae52b227778bfc485c6"
+   "bytes": 20584,
+   "sha256": "72ae2cc1412b8e0cfe8a81a5424a543ec18282804f2aac2e69fc4b80f15a5fcc"
   },
   "src/dl_training_v1/tests_dl_d5/__init__.py": {
    "bytes": 1517,
@@ -716,8 +715,8 @@
    "sha256": "7550d29c8f959a2a9a003cbe05c08ce8705063ee9306e29dc815812713ae7baf"
   },
   "src/dl_training_v1/tools/v2_rowsel_raw.py": {
-   "bytes": 87088,
-   "sha256": "45dbc45826cf00df2c981431286ff4c6b99ee47147bfaf43761f33456896bb9c"
+   "bytes": 90160,
+   "sha256": "48829e820336ac2d4bafe42d73a30733976d6ef12ff75854cf7fd30a73ba8622"
   },
   "src/dl_training_v1/tools/v2_rowsel_raw_coverage.py": {
    "bytes": 27548,
@@ -744,9 +743,7 @@
    "sha256": "91ec3cfee7a329b8dd62aa2dfad49f50ce46d7c141407de25ba07ae19239a4f1"
   }
  },
- "historical_added": [
-  "test_split_defaults.py.6294d720f7386618e20c3c08db0d5093014302b30e187975f2e8eef05cd714c4"
- ],
+ "historical_added": [],
  "historical_hash_map": {
   "0519ea30": "tools/v2_rowsel_manifest.py first version (rowsel-t1-clean-v1)",
   "11245250": "dltrain/admission.py (HOLDOUT-INPUTS-140 loader admission) used by denylist v1/v2 checks and S1 lists v2",
@@ -757,12 +754,14 @@
   "3951fabf": "tools/v2_rowsel_raw.py at the main raw build (ROWSEL-RAW-v1)",
   "40ba1c69": "tools/v2_s1_input_list.py that built s1-input-list-v2 production 4bae9a6b / research b8541bde (reconstructed byte-exact)",
   "45dbc458": "tools/v2_rowsel_raw.py with the RAW-GROUP (a)/(b) raw-route group hook (rowsel-split-v2-groups) and the LINEAR-DETERMINED gate; built ROWSEL-RAW-v2gsplit and ROWSEL-RAW-v2gsplit-nonnumeric (RAW-GROUP-PR, owner-decisions-20261006T103543Z)",
+  "48829e82": "tools/v2_rowsel_raw.py: held-out-target isolation (PR #246 review 5437848458): target-tie per context on its own outer-train rows (v2g_fold_target_tie), LINEAR-DETERMINED refuses only its own context (context_refusal); dataset admission reads features only",
   "6294d720": "tests/test_split_defaults.py scoped to the raw route: RawDefaults accepts the LINEAR-DETERMINED target_linear block added by name on the v2 path (v1 replay: none); BeforeAfter (non-raw) unchanged",
   "7375ef15": "tools/v2_provenance.py that built provenance-v1 6d9ca99d",
   "8c957d9b": "tools/v2_holdout_denylist.py that built holdout-denylist-v1 ee12d721 (reconstructed byte-exact)",
   "91ec3cfe": "tools/v2_superseded.py: create-only SUPERSEDED docs; reproduces superseded-raw-split-v1 766277695b02 byte-exactly",
   "97340df3": "dltrain/rowsel_raw_split_v2.py: value-free outer split (RAW-SPLIT-RULING B); duplicate groups ranked by min sha256(h NUL domain NUL partition NUL index); replaces the feature-byte-ordered split of rowsel_raw.py 18eac154",
   "9e0fb521": "dltrain/rowsel_split_v2_groups.py: GROUP-UNION-B split (exact-duplicate features OR annotated group; target never used); schema rowsel-split-v2-groups; cut_id trainonly-split-v2g:<sha>",
+  "a3480f5d": "tests/test_v2_rowsel_raw_fold_isolation.py: held-out-only y perturbations per fold (end-to-end veto flips, pattern grid) + must-fail cross-fold controls",
   "a8679b8b": "tests/test_rowsel_raw_split_v2.py: must FAIL on the 18eac154 split (outer-test feature change moves the partition)",
   "c208370f": "tools/v2_rowsel_raw_helper.py: additive helper shards (prepared, not launched)",
   "cc49c989": "tools/v2_pubset.py: create-only filtered tree copies without a local SUPERSEDED record's contexts",
@@ -774,6 +773,7 @@
   "ed00684a": "tools/v2_rowsel_build.py current (frozen-kmeans research scope)",
   "f01fa91f": "tools/v2_rowsel_build.py that built the 1,749 incoming T1 contexts",
   "f2580ff0": "tools/v2_s1_input_list.py that built s1-input-list-v1",
+  "f2c22410": "dltrain/target_linear.py: docstring only (a REFUSE refuses this context, never another fold's); check_jtt1 unchanged",
   "f3baa74f": "tools/v2_rowsel_raw.py that built ROWSEL-RAW-v1-nonnumeric (superseded split, never published)",
   "f507af54": "tools/v2_build_local.py final (v2split/v2gsplit hooks); a53aa6c8 built the clean v2split trees",
   "fa4b411c": "tools/v2_publish.py (research, v6, 810 GPU publishes)",
@@ -1963,9 +1963,9 @@
   "sept29_materializer_spec": "NOT found locally by the S1 pilot agent; its findings and the engine's expected inputs are in RUN/receipts/trainonly-v2/s1-pilot/README.md and pilot-receipt.json (eb61ad68)"
  },
  "schema": "jope.dl-lane-handoff/v2",
- "source_root": "restage-20261007T034806Z/src/dl_training_v1 (copied from the git-ignored lane SRC .agent/experiments/lambda-training/local_lambda/dl_training_v1; __pycache__ excluded)",
- "supersedes": "restage-20261006T153320Z/MANIFEST.json",
- "supersedes_sha256": "4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d",
+ "source_root": "restage-20261007T054519Z/src/dl_training_v1 (copied from the git-ignored lane SRC .agent/experiments/lambda-training/local_lambda/dl_training_v1; __pycache__ excluded)",
+ "supersedes": "restage-20261007T034806Z/MANIFEST.json",
+ "supersedes_sha256": "985cb6288a26565ae22e331f92f1d28aeb459dd2c72e31fa26a60b6e8f96dacc",
  "test_commands": [
   "cd src/dl_training_v1 && python -m unittest discover -s tests -t .   # lane suites (unittest; pytest not used)",
   "python -m unittest tests.test_v2_publish tests.test_s3io tests.test_v2_rowsel_build tests.test_v2_rowsel_raw tests.test_nonnumeric tests.test_rowsel tests.test_t1raw tests.test_t1prep tests.test_trainonly",
@@ -1976,10 +1976,11 @@
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
+  "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154",
   "python -m unittest tests.test_rowsel_raw_split_v2   # split v2; must-fail on 18eac154"
  ],
  "tests_run_on_staged_copy": {
-  "cwd_and_pythonpath": "restage-20261007T034806Z/src/dl_training_v1",
+  "cwd_and_pythonpath": "restage-20261007T054519Z/src/dl_training_v1",
   "exit": 0,
   "modules": [
    "tests.test_rowsel_raw_split_v2",
@@ -2004,11 +2005,12 @@
    "tests.test_payload_strip",
    "tests.test_quarantine",
    "tests.test_v2_rowsel_raw_v2g",
-   "tests.test_target_linear"
+   "tests.test_target_linear",
+   "tests.test_v2_rowsel_raw_fold_isolation"
   ],
-  "seconds": 730.7,
+  "seconds": 853.2,
   "summary": [
-   "Ran 578 tests in 718.555s",
+   "Ran 585 tests in 845.713s",
    "",
    "OK"
   ]

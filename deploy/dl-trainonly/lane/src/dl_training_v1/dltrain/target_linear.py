@@ -6,9 +6,10 @@
             feature or target are dropped; when there are more than p + 2 rows and std(y) > 0, y is fitted by OLS on
             [X, 1] (numpy.linalg.lstsq, rcond=None); rel_rmse = RMSE / std(y) (population std). Otherwise rel_rmse is
             None (no verdict).
-  verdict   rel_rmse < 1e-8 -> 'target_linear_in_features': the context is REFUSED (its builder writes no context of
-            the dataset); 1e-8 <= rel_rmse < 1e-3 -> 'target_linear_near_review': built, flagged for review
-            (training kept, listed in release notes); otherwise None.
+  verdict   rel_rmse < 1e-8 -> 'target_linear_in_features': THIS context is REFUSED (its builder does not write it; the
+            verdict of one context never refuses another fold's context, PR #246 review 5437848458);
+            1e-8 <= rel_rmse < 1e-3 -> 'target_linear_near_review': built, flagged for review (training kept, listed in
+            release notes); otherwise None.
 This extends the single-column target-copy rule (t1prep.target_copy_columns, TARGET-COPY-36) to multi-column linear
 combinations. It reads outer-train targets only, which the leak rule allows; it is shared by every builder route.
 """

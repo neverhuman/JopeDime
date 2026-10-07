@@ -438,6 +438,11 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
         for f in built_folds:
             guard.wait()
             tf, cf = time.time(), cpu_s()
+            if split_version == SPLIT_V2G:                               # target-tie: fold f's OWN outer-train rows only
+                tie = v2g_fold_target_tie(e, prep, folds, f)
+                if any(tie.values()):
+                    contexts.append({"fold": f, "refused": "group_column_tied_to_target", "target_tie": tie})
+                    continue
             kw = {} if select_fn is None else {"select_fn": select_fn}
             r = rowsel_raw.build_fold(prep, folds, f, universe_ref, split_ref, **kw)
             files = rowsel_raw.context_files(r)
@@ -446,24 +451,33 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
             if split_version != SPLIT_V1 and r["passed"]:                 # LINEAR-DETERMINED gate (v1 is a byte-identical replay)
                 tlg = target_linear.check_jtt1(r["artifacts"]["encoder_raw"])
                 crec["target_linear"] = tlg
-            results.append((r, files, crec))
+            refused = context_refusal(tlg)                              # this context's own verdict, never another fold's
+            if refused is None:
+                results.append((r, files, crec))
             contexts.append({"fold": f, "view_id": r["view_id"], "identity": r["identity"], "passed": r["passed"],
                              "failures": r["failures"], "quotas": list(r["view"].quotas), "n_train": crec["n_train"],
                              "n_test": crec["n_test"], "context_sha256": crec["context_sha256"],
                              "cpu_s": round(cpu_s() - cf, 2), "wall_s": round(time.time() - tf, 2)}
-                            | ({"target_linear": {"verdict": tlg["verdict"], "ols_rel_rmse": tlg["ols_rel_rmse"]}} if tlg else {}))
+                            | ({"target_linear": {"verdict": tlg["verdict"], "ols_rel_rmse": tlg["ols_rel_rmse"]}} if tlg else {})
+                            | ({"refused": refused} if refused else {}))
             log(json.dumps({"dataset": h, "fold": f, "passed": r["passed"], "failures": r["failures"],
                             "cpu_s": contexts[-1]["cpu_s"], "maxrss_mb": maxrss_mb()}))
             if not r["passed"]:
                 break                                                    # the dataset cannot be admitted any more
-        rec["contexts"] = contexts
-        failed = [c for c in contexts if not c["passed"]]
+        failed = [c for c in contexts if not c.get("refused") and not c["passed"]]
         if failed:
+            rec["contexts"] = contexts
             raise rowsel_raw.RowselRawError("counterfactual_failed", json.dumps({c["fold"]: c["failures"] for c in failed}))
-        lin = {c["fold"]: c["target_linear"]["ols_rel_rmse"] for c in contexts
-               if (c.get("target_linear") or {}).get("verdict") == target_linear.REFUSE}
-        if lin:                                                          # refused: no context of the dataset is written
-            raise rowsel_raw.RowselRawError(target_linear.REFUSE, json.dumps(lin))
+        refusals = [c for c in contexts if c.get("refused")]
+        if refusals and not results:                                     # every context refused on its own rows: nothing written
+            rec["contexts"] = contexts
+            reasons = sorted({c["refused"] for c in refusals})
+            raise rowsel_raw.RowselRawError(reasons[0] if len(reasons) == 1 else "all_contexts_refused",
+                                            json.dumps({c["fold"]: (c.get("target_linear") or {}).get("ols_rel_rmse", c.get("target_tie"))
+                                                        for c in refusals}))
+        rec["contexts"] = [c for c in contexts if not c.get("refused")]
+        if refusals:                                                     # context-specific exclusions (LINEAR-DETERMINED ruling)
+            rec["refused_contexts"] = refusals
         if post_gate is not None:
             guard.wait()
             g = post_gate(inp, prep, folds, universe_ref, split_ref, results)
@@ -853,7 +867,9 @@ def nonnumeric_text_gate(inp, prep, folds, universe_ref, split_ref, results, fol
     rank_cols = sorted(n for n in text if readings.get(n) == nonnumeric.RANK)
     if not rank_cols:
         return {"passed": True, "skipped": "no_rank_text_columns", "control_fails_as_required": None}
-    base = results[fold][0]
+    kept = [r for r, _, _ in results]                                # refused contexts are not in results (context-specific)
+    base = next((r for r in kept if r["fold"] == fold), kept[0])
+    fold = base["fold"]
     F = [int(p) for p in folds[fold]]
     R = base["train_order"]
     text2 = {n: list(c) for n, c in text.items()}
@@ -1006,8 +1022,9 @@ def summarize_nonnumeric(a):
 #       training/S1 and are excluded from every headline outer-test number.
 # Group value of a universe row = canonical '<f8' bytes of its value in the group column (the T1 column's raw reading,
 # spec index); NaN or t1raw.MISSING_CODE = the one missing group (as the fill receipt's carry/straddle scan keyed it).
-# Admission BEFORE any split or union-find: rowsel_split_v2_groups.target_tied_group for EVERY candidate column first;
-# then (ambiguous registry columns) every candidate must give the identical component structure; lowest index taken.
+# Admission BEFORE any split, features only: (ambiguous registry columns) every candidate must give the identical component
+# structure; lowest index taken. The target-tie guard (rowsel_split_v2_groups.target_tied_group) runs PER CONTEXT on that
+# context's own outer-train rows and refuses only that context; LINEAR-DETERMINED likewise refuses only its own context.
 # Gates after the split: no duplicate or annotated group straddles folds, the target never moves the split, group- and
 # duplicate-preserving outer-test changes never move it, empty folds only trailing and only below 5 components (the
 # lane-wide convention), equal to the plan's. LINEAR-DETERMINED applies as on every non-v1 route.
@@ -1064,22 +1081,24 @@ def v2g_functions(e) -> tuple:
     return split_fn, report_fn
 
 
-def v2g_admission(e, prep) -> dict:
-    """Dataset-level admission BEFORE any split or union-find (PR #218 finding 8 order): target_tied_group on EVERY
-    candidate column first; only when none is tied, the component structures of the candidates (ambiguous registry
-    columns) must be identical."""
+def v2g_candidates(e) -> tuple:
     gc = e["group_column"]
     cands = [int(c) for c in e.get("group_candidates") or [gc["index"]]]
     names = list(e.get("group_candidate_names") or [gc["name"]])
     if len(names) != len(cands) or int(gc["index"]) != min(cands) or names[cands.index(int(gc["index"]))] != gc["name"]:
         raise rowsel_raw.RowselRawError("group_candidates_inconsistent", json.dumps({"candidates": cands, "names": names, "group_column": gc}))
-    y = prep.values[:, -1]
+    return cands, names
+
+
+def v2g_admission(e, prep) -> dict:
+    """Dataset-level admission BEFORE any split, reading features only (never y): the candidate columns must be
+    consistent and, for ambiguous registry columns, give the identical component structure. The target-tie guard is NOT
+    dataset-level: it runs per context on that context's own outer-train rows (v2g_fold_target_tie; PR #246 review
+    5437848458), so no fold's held-out targets and no other fold's decision can admit or refuse a context."""
+    cands, names = v2g_candidates(e)
     gvs = {c: raw_group_values(prep.values, prep.specs, c, n) for c, n in zip(cands, names)}
-    ties = {str(c): rowsel_split_v2_groups.target_tied_group(gvs[c], y) for c in cands}      # FIRST, for every candidate
-    if any(ties.values()):
-        raise rowsel_raw.RowselRawError("group_column_tied_to_target", json.dumps({c: t for c, t in ties.items() if t}))
-    rep = {"candidates": cands, "names": names, "target_tie": ties, "rule": "target_tied_group first for every candidate; "
-           "then identical component structure across candidates; lowest index is the group column"}
+    rep = {"candidates": cands, "names": names, "target_tie": "per context on its own outer-train rows (v2g_fold_target_tie)",
+           "rule": "features only: identical component structure across candidates; lowest index is the group column"}
     if len(cands) > 1:
         pos = prep.positions.tolist()
         fb = rowsel_raw.feature_bytes(prep.values, prep.specs)
@@ -1088,6 +1107,24 @@ def v2g_admission(e, prep) -> dict:
         if len(set(structures.values())) != 1:
             raise rowsel_raw.RowselRawError("ambiguous_group_columns_with_different_components", json.dumps(structures))
     return rep
+
+
+def v2g_fold_target_tie(e, prep, folds, f: int) -> dict:
+    """Target-tie admission of context f: rowsel_split_v2_groups.target_tied_group of every candidate column over fold f's
+    OWN outer-train rows (every universe row not in fold f); no outer-test row and no other fold's decision enters. A tied
+    column refuses this context only. The split itself never receives y (split_target_check)."""
+    cands, names = v2g_candidates(e)
+    test = {int(p) for p in folds[f]}
+    rows = prep.rows_of([p for p in prep.positions.tolist() if p not in test])
+    V = prep.values[rows]
+    y = V[:, -1]
+    return {str(c): rowsel_split_v2_groups.target_tied_group(raw_group_values(V, prep.specs, c, n), y) for c, n in zip(cands, names)}
+
+
+def context_refusal(tlg) -> str | None:
+    """The refusal reason of ONE context from its own LINEAR-DETERMINED report (outer-train rows only), else None. Never
+    aggregated across folds: another fold's verdict cannot refuse this context (PR #246 review 5437848458)."""
+    return target_linear.REFUSE if (tlg or {}).get("verdict") == target_linear.REFUSE else None
 
 
 def v2g_group_value_check(split_fn, prep, j: int, fold: int = 0) -> dict:
@@ -1252,7 +1289,7 @@ def summarize_v2g(a) -> int:
     pl, plan_sha = load_plan(out)
     plan_split_version(pl, SPLIT_V2G)
     codes = code_shas()
-    rows, problems, ctx_dirs, superseded, review = [], [], set(), [], []
+    rows, problems, ctx_dirs, superseded, review, refused_ctx = [], [], set(), [], [], []
     for e in pl["datasets"]:
         h = e["dataset_hash"]
         sd = out / f"shard-{e['shard']}"
@@ -1269,8 +1306,11 @@ def summarize_v2g(a) -> int:
                 problems.append({"dataset": h, "problem": "code_not_current"})
             if (r.get("split") or {}).get("schema") != SPLIT_V2G or r.get("split_version") != SPLIT_V2G:
                 problems.append({"dataset": h, "problem": "split_version"})
-            if len(r["contexts"]) != e["effective_folds"]:
-                problems.append({"dataset": h, "problem": "context_count", "contexts": len(r["contexts"])})
+            if len(r["contexts"]) + len(r.get("refused_contexts") or []) != e["effective_folds"]:
+                problems.append({"dataset": h, "problem": "context_count", "contexts": len(r["contexts"]),
+                                 "refused_contexts": len(r.get("refused_contexts") or [])})
+            for c in r.get("refused_contexts") or []:
+                refused_ctx.append({"dataset_hash": h, "fold": c["fold"], "reason": c["refused"], "view_id": c.get("view_id")})
             ids = []
             for c in r["contexts"]:
                 d = sd / c["view_id"]
@@ -1293,13 +1333,16 @@ def summarize_v2g(a) -> int:
               "failed_by_reason": dict(collections.Counter(x.get("reason") for x in rows if x["status"] == "failed")),
               "expected_new_contexts": sum(x["effective_folds"] for x in rows), "done_new_contexts": sum(len(x["new_view_ids"]) for x in done),
               "superseded_v2_contexts": sum(len(s["superseded_view_ids"]) for s in superseded),
-              "target_linear_near_review_contexts": len(review), "verification_problems": len(problems), "orphan_context_dirs": len(orphans)}
+              "target_linear_near_review_contexts": len(review), "refused_contexts": len(refused_ctx),
+              "refused_contexts_by_reason": dict(collections.Counter(c["reason"] for c in refused_ctx)),
+              "verification_problems": len(problems), "orphan_context_dirs": len(orphans)}
     shard_recs = [ref(q) for q in sorted(out.glob(f"shard-*-of-{pl['of']}.receipt.json"))]
     mut = json.loads(Path(a.mutants).read_bytes())
     dropped_p = out / "group-annotation-dropped.json"
     doc = {"schema": V2G_SUMMARY_SCHEMA, "utc_us": int(time.time() * 1e6), "out": str(out), "route": pl["route"], "split_version": SPLIT_V2G,
            "plan": {"path": str(out / "plan.json"), "sha256": plan_sha, "counts": pl["counts"]}, "counts": counts, "datasets": rows,
            "problems": problems[:100], "orphans": orphans[:50], "shard_receipts": shard_recs, "target_linear_near_review": review,
+           "refused_contexts": refused_ctx,
            "group_annotation_dropped": ref(dropped_p) if dropped_p.exists() else None, "decision": pl["decision"],
            "tests": {"log": ref(a.tests_log), "tail": Path(a.tests_log).read_text().strip().splitlines()[-3:]},
            "mutants": {"path": a.mutants, "sha256": sha_file(a.mutants), "totals": mut.get("totals")}, "code_sha256": codes,
