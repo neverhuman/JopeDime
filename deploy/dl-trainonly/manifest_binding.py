@@ -21,8 +21,11 @@ identity, rights or GPU-input mismatch):
   2 input   a GPU context's gpu.input.binding equals the runner's binding recomputed from the source encoder JTT1: train_rows and
             features_in from its header, selection_fit "outer_train_only" and train_block_sha256 = sha256 of the train range
             (dltrain.jtt1.train_range; the outer-test range is never decoded);
-  3 output  with GPU contexts, --gpu-out DIR (tools/v2_gpu_encode.py OUT, repeatable) is required, and each context's GPU files
-            (name, sha256, bytes) equal the runner's own record OUT/<view_id>/context.json (with .done).
+  3 output  with GPU contexts, --gpu-out DIR (tools/v2_gpu_encode.py OUT, repeatable) is required, and a GPU context's files are
+            EXACTLY the runner's own record OUT/<view_id>/context.json (with .done): the same names, each .npy with the same sha256
+            and bytes. Any other file (an added encoder.jtt1.gz, teacher.jtt1.gz, a0.f32 or anything else the publisher admits) has
+            no binding in a GPU context and is refused (review 5440093136: the frozen tool's GPU branch skips its CPU input and
+            publication-strip checks, and the publisher's n_test=0 check proves layout only, not where training cells came from).
 Values compared are identities only: no label, prediction or outer-test value is read or copied into the manifest.
 Usage (lane slice, from deploy/dl-trainonly/lane/src/dl_training_v1 like the frozen tool):
   python ../../../manifest_binding.py --build TREE --name NAME --source BUILD_TREE --summary PATH#SHA --require-cut
@@ -55,7 +58,8 @@ RULES = {
     "--source build context with the same view_id",
     "input": "gpu.input.binding equals train_rows/features_in from the source encoder JTT1 header, selection_fit outer_train_only "
     "and sha256 of its train range",
-    "output": "every GPU file (name, sha256, bytes) equals the runner record --gpu-out/<view_id>/context.json; required with GPU contexts",
+    "output": "a GPU context's files are exactly the runner record --gpu-out/<view_id>/context.json (same names, all .npy, same sha256 "
+    "and bytes); any added or missing file refuses; required with GPU contexts",
 }
 
 
@@ -143,9 +147,12 @@ def gpu_reason(ctx, src_dir, gpu_out):
     if rec is None:
         return "no runner output record under --gpu-out"
     rf = json.loads((rec / "context.json").read_bytes()).get("files") or {}
-    mine = {n: m for n, m in ctx["files"].items() if n.endswith(".npy")}
-    if not mine or any({k: rf.get(n, {}).get(k) for k in ("sha256", "bytes")} != {k: m.get(k) for k in ("sha256", "bytes")}
-                       for n, m in mine.items()):
+    files = ctx["files"]
+    if not rf or any(not n.endswith(".npy") for n in rf):
+        return "runner output record is empty or lists a non-NPY file"
+    if set(files) != set(rf):
+        return f"GPU context files {sorted(set(files) ^ set(rf))} are not the runner's output record (added or missing file)"
+    if any({k: rf[n].get(k) for k in ("sha256", "bytes")} != {k: m.get(k) for k in ("sha256", "bytes")} for n, m in files.items()):
         return "GPU files differ from the runner's output record"
     return None
 

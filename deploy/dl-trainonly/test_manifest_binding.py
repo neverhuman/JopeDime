@@ -8,6 +8,7 @@ import importlib.util
 import io
 import json
 import shutil
+import struct
 import sys
 import tempfile
 import unittest
@@ -201,6 +202,60 @@ for _kind, _names in ESCAPES.items():
         _rep, _ref = _escape_tests(_kind, _name)
         setattr(Escapes, f"test_{_kind}__{_name}__passes_the_current_gates", _rep)
         setattr(Escapes, f"test_{_kind}__{_name}__refused_by_binding", _ref)
+
+
+class GpuAdditions(Trees):
+    """Review 5440093136 [P1]: a GPU context may carry only the runner's outputs. Each added file below has no source, strip or runner
+    binding; it must refuse before any manifest file while the runner's own vector is unchanged."""
+
+    def add(self, kind, name, body, seal=True):
+        base, dirs, args, gpu_args = self.build(kind, f"{kind}-add-{name}")
+        d = dirs[(DS, 0)]
+        (d / name).write_bytes(body)
+        c = rd(d)
+        c["files"][name] = {"sha256": mb.sha(body), "bytes": len(body)}
+        if name.endswith(".jtt1.gz"):
+            c["files"][name]["raw_sha256"] = mb.sha(gzip.decompress(body))
+        wr(d, c)
+        if seal:
+            self.seal(base)
+        return base, args, gpu_args
+
+    def assert_refused(self, base, args, gpu_args, why="refused before any manifest"):
+        with self.assertRaises(SystemExit) as cm:
+            self.run_binding(base, args, gpu_args)
+        self.assertIn(why, str(cm.exception))
+        self.assertFalse((base / "out").exists())
+
+    def test_zero_test_encoder_with_synthetic_heldout_target_is_refused(self):
+        # Lane B's retained reproducer: n_train=10/n_test=0/p=2 encoder, an unrelated synthetic held-out target written into a
+        # purported training target cell, files sha/bytes updated, normal verified ledger sealed; previously exit 0 + manifest entry
+        raw = bytearray(gzip.decompress(jtt_gz(n_train=10, n_test=0, p=2)))
+        h = jtt1.parse_header(bytes(raw))
+        start, _ = jtt1.train_range(h)
+        cell = start + 8 * (h["p"] + 1) * 0 + 8 * h["p"]          # row 0, target column
+        raw[cell:cell + 8] = struct.pack("<d", 314159.0)          # synthetic held-out target, not derivable from the train rows
+        self.assert_refused(*self.add("rawgroup_gpu", "encoder.jtt1.gz", gzip.compress(bytes(raw), mtime=0)))
+
+    def test_added_row_level_and_a0_files_are_refused_in_every_gpu_kind(self):
+        for kind in ("rawgroup_gpu", "g3_gpu"):
+            research = KINDS[kind][4]
+            for name, body in (("encoder.jtt1.gz", jtt_gz(n_train=10, n_test=0, p=2)), ("teacher.jtt1.gz", jtt_gz(n_train=10, n_test=0)),
+                               ("a0.f32", b"a0-not-from-the-runner")):
+                row_level = name.endswith(".jtt1.gz")
+                with self.subTest(kind=kind, name=name):
+                    # research rights: the publisher scan already refuses row-level files (rights_row_data); the adapter still refuses
+                    # before any manifest. Production rights: the new binding rule refuses.
+                    self.assert_refused(*self.add(kind, name, body, seal=not (research and row_level)),
+                                        why="refused by the publisher scan" if research and row_level else "refused before any manifest")
+
+    def test_a_gpu_context_missing_a_runner_output_is_refused(self):
+        base, dirs, args, gpu_args = self.build("g3_gpu", "missing-output")
+        rec = Path(gpu_args[1]) / dirs[(DS, 0)].name / "context.json"
+        doc = json.loads(rec.read_bytes())
+        doc["files"]["foundation.npy"] = {"sha256": "0" * 64, "bytes": 8}
+        rec.write_text(json.dumps(doc) + "\n")
+        self.assert_refused(base, args, gpu_args)
 
 
 class CleanAndContract(Trees):
