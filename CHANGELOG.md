@@ -12,7 +12,7 @@ The GP language release: versioned expression kernels, protected numerical seman
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at 4fc1492e4, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238/#239.
+<!-- Local release preparation at c4d018591, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238/#239/#240/#241/#242/#243.
 Rebase onto final main and finalize the date before publication. GP-language #231 includes the
 maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
 binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
@@ -130,6 +130,14 @@ merged; B19 wiring is tracked separately. -->
 - Fix manifest hash comparison and record an identity-only lineage transition (#212).
 - Repair inherited Clippy findings in receiving libraries, alongside earlier behavior-preserving
   lint fixes (#209, #219).
+- Close required workspace Clippy findings with scoped lint repairs and retained behavior and
+  coverage; preserve the separate full-audit findings and release limitations (#240, #241).
+- Start three existing long golden tests first in full-main families using scheduling priority,
+  preserving selections, deadlines and serial family execution. Retained runs show no material
+  overall wall-time saving (#242).
+- Require the projected GP census to finish exactly 100 observations and report the evaluation
+  budget stop reason. Raise only this fixture's safety ceiling from 90 to the shipped 600 seconds
+  after retained load reproductions; preserve every uniqueness and durability assertion (#243).
 - Remove the disabled duplicate final-CV loop and retain its positional input under an unused
   parameter name so strict warning checks pass. Active scoring and retained tests are unchanged
   (#233).
