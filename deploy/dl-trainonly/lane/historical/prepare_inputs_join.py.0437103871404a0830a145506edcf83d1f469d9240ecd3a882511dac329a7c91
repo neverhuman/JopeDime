@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+"""S1 JOIN input list (non-raw / group contexts after #218 merged): same rules as the S1-RAW-NOW list, written create-only.
+
+Owner ruling S1-RAW-NOW point 4 ("The non-raw/group contexts join the same ledger when #218 merges"); #218 rebase-merged
+at a403e931 (main fdbdf682). Differences from prepare_inputs.py: TREES are the #218 non-raw/group build trees; the cut is
+validated from each context's own cut block (cut_id == prefix(split.schema) + split.sha256, comparable_with_replaced False)
+instead of the raw cut index; contexts in the pinned superseded-local group-drop record (12e8752e: "never put in an S1
+list") are refused; production trees refuse research-only rights; contexts already in the main input list are refused as
+duplicates. Admission, P3 pins, JTT1 bounds and the outer-test target strip rule are unchanged.
+
+Original docstring follows.
+S1-RAW-NOW input list: the raw-route v2 contexts, admitted or refused, written create-only before any attempt.
+
+Owner ruling S1-RAW-NOW (owner-decisions-20261006T102636Z.json), bounded by S1-UNDER-G22, S1-UNBLOCKED-204(+ADDENDUM),
+S1-FOLDS-RULING and S1-BUDGET-18. For every context of the three raw-route v2 trees:
+  * teacher.jtt1.gz is sha-checked (gz sha256 + bytes, raw sha256) against the context's own context.json;
+  * the cut_id comes from the pinned raw-v2 cut index and must equal 'trainonly-split-v2:' + rowsel.split.sha256;
+  * the P3 assignment (holdout.json + families/g2/registry.json, both pinned) is passed EXPLICITLY to
+    dltrain.admission.Admission(denylist v2, purpose='teacher'): sealed_excluded and heldout are refused; dev is admitted
+    for the teacher search but tagged use=selection_only (S1 rulings refuse only sealed/heldout; dev never trains);
+  * the JTT1 shape must satisfy the pinned worker/materializer S1 bounds (k=2, n_train>=50, n_test>=10, 1<=p<=512,
+    (n_train+n_test)*p<=16e6, exact byte count, fold membership {0,1} with >=2 rows each, finite training block);
+  * the S1 selection input is the teacher JTT1 with every outer-test TARGET cell overwritten by +0.0 without decoding it
+    (S1-UNBLOCKED-204-ADDENDUM "strip them"); header, fold bytes, training block and outer-test features stay byte-equal.
+    Its sha256 is recorded here and re-derived and checked on the execution host before the first attempt.
+Research (RIGHTS-RESEARCH-raw-v2/custody) rows go to the separate research ledger (S1-FOLDS-RULING).
+Writes nothing but the create-only list. No network, S3, Git or /tmp.
+"""
+import gzip
+import hashlib
+import json
+import math
+import os
+import struct
+import sys
+from pathlib import Path
+
+RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+SRC = Path("/home/ubuntu/JopeDime/.agent/experiments/lambda-training/local_lambda/dl_training_v1")
+OUT = RUN / "receipts/trainonly-v2/s1-prod"
+TREES = [("L7a-v2split", "production"), ("L7b-v2split", "production"), ("L7a-v2gsplit", "production"),
+         ("L7b-v2gsplit", "production"), ("ROWSEL-T1-kmeans-v2split", "production"), ("ROWSEL-T1-kmeans-v2gsplit", "production"),
+         ("ROWSEL-T1-fallback-v2split", "production"), ("ROWSEL-T1-fallback-v2gsplit", "production"),
+         ("RIGHTS-RESEARCH-clean-v2split", "research"), ("RIGHTS-RESEARCH-clean-v2gsplit", "research"),
+         ("ROWSEL-T1-frozen-kmeans-research-v2split", "research"), ("ROWSEL-T1-frozen-kmeans-research-v2gsplit", "research")]
+SUPERSEDED = (RUN / "receipts/trainonly-v2/build/superseded-local-groupdrop-v2split-20261006T071327Z.json", "12e8752e3dc8")
+MAIN_LIST = (OUT / "input-list.json", "821b336c60af074c533a8fb195dde80ca70a766d6a5f56a3900546e999f14efe")
+CUT_PREFIX = {"rowsel-raw-split-v2": "trainonly-split-v2:", "rowsel-split-v2-groups": "trainonly-split-v2g:"}
+DENYLIST = (RUN / "receipts/trainonly-v2/publish/v2-holdout-denylist-holdout-denylist-v2-1503ca7a7654.json",
+            "1503ca7a7654abf8c4f25a11dc226cbd145f70d9b6f3b41dd877e26e14a7796a")
+CUT_INDEX = (RUN / "receipts/trainonly-v2/build/rowsel-raw-v2-cut-index-20261006T054741Z.json",
+             "3988f3efefe41d9eb31e6d872772c85fa09de5b5f6fb8be1ca0cd7b82b1890a6")
+CUT_INDEX_ROWS_SHA = "815e17fdd034eef80a5680c10fddb2bd22e3d36d9147ed0e7f46878e777cc2c6"
+HOLDOUT_SHA = "5b2ecc63732319debc0aba8e17c7d6c17a7316290f811393079bb73851fa908d"
+REGISTRY_SHA = "1a4f1d419d781452a37711210e9e80cf4cda1d8f2095ac6a4f0430a01bda93ca"
+STRIP_RULE = "outer-test target cell i := +0.0 (struct '<d'), written without decoding the original; all other bytes equal"
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def strip_targets(raw):
+    """Return (stripped bytes, shape dict) or raise ValueError with a shape reason. Never decodes outer-test cells."""
+    if len(raw) < 17 or raw[:4] != b"JTT1":
+        raise ValueError("invalid_jtt1_header")
+    nt, nq, p = struct.unpack_from("<III", raw, 4)
+    k = raw[16]
+    if k != 2:
+        raise ValueError(f"inner_folds_{k}_not_2")
+    if nt < 50 or nq < 10 or not 1 <= p <= 512 or (nt + nq) * p > 16_000_000:
+        raise ValueError(f"shape_outside_s1_bounds nt={nt} nq={nq} p={p}")
+    row = (p + 1) * 8
+    end = 17 + nt + nt * row
+    if len(raw) != end + nq * row:
+        raise ValueError("jtt1_byte_count_mismatch")
+    folds = raw[17:17 + nt]
+    if any(f >= 2 for f in folds) or folds.count(0) < 2 or folds.count(1) < 2:
+        raise ValueError("fold_membership_mismatch")
+    train = struct.unpack_from(f"<{nt * (p + 1)}d", raw, 17 + nt)
+    if not all(math.isfinite(v) for v in train):
+        raise ValueError("nonfinite_training_value")
+    out = bytearray(raw)
+    zero = struct.pack("<d", 0.0)
+    for i in range(nq):
+        o = end + i * row + p * 8
+        out[o:o + 8] = zero
+    out = bytes(out)
+    assert out[:end] == raw[:end]
+    for i in range(nq):
+        b = end + i * row
+        assert out[b:b + p * 8] == raw[b:b + p * 8]
+    return out, {"n_train": nt, "n_test": nq, "p": p, "k": k, "fold_sizes": [folds.count(0), folds.count(1)],
+                 "training_block_sha256": sha(raw[:end])}
+
+
+def main():
+    import time
+    target = OUT / f"input-list-join-nonraw-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
+    if target.exists():
+        raise SystemExit(f"refusing to overwrite {target}")
+    sys.path.insert(0, str(SRC))
+    from dltrain.admission import Admission, AdmissionRefused
+    adm = Admission(DENYLIST[0], DENYLIST[1], purpose="teacher")
+    if not adm.ok:
+        raise SystemExit(f"admission fail-closed: {adm.reason}")
+    hb = (RUN / "holdout/holdout.json").read_bytes()
+    rb = (RUN / "families/g2/registry.json").read_bytes()
+    assert sha(hb) == HOLDOUT_SHA and sha(rb) == REGISTRY_SHA, "P3 pins"
+    assign = json.loads(hb)["assignment"]
+    ds2fam = {m["dataset_hash"]: fid for fid, f in json.loads(rb)["families"].items()
+              for m in (f.get("members") or []) if m.get("dataset_hash")}
+    sb = SUPERSEDED[0].read_bytes()
+    assert sha(sb).startswith(SUPERSEDED[1]), "superseded record pin"
+    superseded = {r["context_sha256"] for r in json.loads(sb)["rows"]}
+    mb = MAIN_LIST[0].read_bytes()
+    assert sha(mb) == MAIN_LIST[1], "main input list pin"
+    main_l = json.loads(mb)
+    in_main = {r["context_sha256"] for r in main_l["admitted"] + main_l["refused"]}
+    admitted, refused = [], []
+    for tree, ledger in TREES:
+        dirs = sorted(p.parent for p in (RUN / "build-v2" / tree).glob("shard-*/*/context.json"))
+        for d in dirs:
+            cb = (d / "context.json").read_bytes()
+            ctx = json.loads(cb)
+            base = {"set": tree, "ledger": ledger, "view_id": ctx["view_id"], "dataset_hash": ctx["dataset_hash"],
+                    "fold": ctx["fold"], "context_sha256": ctx["context_sha256"], "context_dir": str(d),
+                    "context_json_sha256": sha(cb)}
+            fam = ds2fam.get(ctx["dataset_hash"])
+            a = assign.get(fam, "no_family")
+            base["p3"] = {"family_id": fam, "assignment": a}
+            if not (d / ".done").exists():
+                refused.append({**base, "reason": "build_not_done"})
+                continue
+            if ctx["context_sha256"] in superseded:
+                refused.append({**base, "reason": "superseded_local_groupdrop"})
+                continue
+            if ctx["context_sha256"] in in_main:
+                refused.append({**base, "reason": "duplicate_of_main_input_list"})
+                continue
+            if ledger == "production" and ctx.get("rights") not in (None, "licensed"):
+                refused.append({**base, "reason": "rights_not_production", "detail": str(ctx.get("rights"))})
+                continue
+            sp = ctx.get("split") or (ctx.get("rowsel") or {}).get("split") or {}
+            cut = ctx.get("cut") or {}
+            pre = CUT_PREFIX.get(sp.get("schema"))
+            mine = pre + sp["sha256"] if pre and sp.get("sha256") else None
+            if mine is None or cut.get("cut_id") != mine or cut.get("comparable_with_replaced") is not False:
+                refused.append({**base, "reason": "cut_mismatch"})
+                continue
+            base["cut_id"] = mine
+            try:
+                adm.check(ctx["view_id"], assignment=a)
+            except AdmissionRefused as e:
+                refused.append({**base, "reason": "admission", "detail": str(e)[:200]})
+                continue
+            gzb = (d / "teacher.jtt1.gz").read_bytes()
+            rec = ctx["files"]["teacher.jtt1.gz"]
+            if sha(gzb) != rec["sha256"] or len(gzb) != rec["bytes"]:
+                refused.append({**base, "reason": "teacher_gz_identity"})
+                continue
+            raw = gzip.decompress(gzb)
+            if sha(raw) != rec["raw_sha256"]:
+                refused.append({**base, "reason": "teacher_raw_identity"})
+                continue
+            try:
+                stripped, shape = strip_targets(raw)
+            except ValueError as e:
+                refused.append({**base, "reason": "shape", "detail": str(e)})
+                continue
+            admitted.append({**base, "use": "selection_only" if a == "dev" else "train_teacher",
+                             "teacher": {"path": str(d / "teacher.jtt1.gz"), "gz_sha256": rec["sha256"],
+                                         "gz_bytes": rec["bytes"], "raw_sha256": rec["raw_sha256"], "raw_bytes": len(raw)},
+                             "shape": shape,
+                             "s1_input": {"sha256": sha(stripped), "bytes": len(stripped), "rule": STRIP_RULE},
+                             "cost_proxy": shape["n_train"] * shape["p"]})
+    counts = {"admitted": {}, "refused": {}}
+    for r in admitted:
+        key = f"{r['set']}|{r['p3']['assignment']}"
+        counts["admitted"][key] = counts["admitted"].get(key, 0) + 1
+    for r in refused:
+        key = f"{r['set']}|{r['reason']}|{r['p3']['assignment']}"
+        counts["refused"][key] = counts["refused"].get(key, 0) + 1
+    doc = {
+        "schema": "jope.dl-s1-prod-input-list-join/v1",
+        "ruling": {"key": "S1-RAW-NOW point 4 (non-raw/group join after #218)", "file": str(Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/"
+                                                           "owner-decisions-20261006T102636Z.json")), "pr218_merge": "a403e931 rebase-merged (main fdbdf682)"},
+        "join_of": {"path": str(MAIN_LIST[0]), "sha256": MAIN_LIST[1]},
+        "superseded_local": {"path": str(SUPERSEDED[0]), "sha256_prefix": SUPERSEDED[1]},
+        "trees": [t for t, _ in TREES],
+        "denylist": {"path": str(DENYLIST[0]), "sha256": DENYLIST[1], "admission": "dltrain.admission.Admission(purpose='teacher')",
+                     "admission_sha256": sha((SRC / "dltrain/admission.py").read_bytes())},
+        "p3": {"holdout": str(RUN / "holdout/holdout.json"), "holdout_sha256": HOLDOUT_SHA,
+               "registry": str(RUN / "families/g2/registry.json"), "registry_sha256": REGISTRY_SHA,
+               "assignment_passed_explicitly": True},
+        "cut_rule": "cut_id == prefix(split.schema) + split.sha256 from the context's own split/cut blocks; prefixes " + json.dumps(CUT_PREFIX),
+        "dev_rule": "dev admitted to the S1 teacher search (S1 rulings refuse only sealed_excluded/heldout); tagged use=selection_only: its teacher outputs may serve DL selection, never DL training",
+        "strip_rule": STRIP_RULE,
+        "counts": counts, "admitted_total": len(admitted), "refused_total": len(refused),
+        "admitted": admitted, "refused": refused,
+        "code_sha256": sha(Path(__file__).read_bytes()),
+    }
+    body = json.dumps(doc, sort_keys=True, indent=1).encode() + b"\n"
+    fd = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o444)
+    with os.fdopen(fd, "wb") as f:
+        f.write(body)
+        f.flush()
+        os.fsync(f.fileno())
+    print(json.dumps({"input_list": str(target), "sha256": sha(body), "admitted": len(admitted), "refused": len(refused),
+                      "counts": counts}, indent=1, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

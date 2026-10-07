@@ -1,0 +1,872 @@
+"""PolicyLM launch entrypoint for the P7 GPU smoke, the throughput benchmark and (P8/P9) admitted runs.
+
+``python -m dltrain.policylm_main bench --out-dir DIR --size S|M --width W --steps N`` builds a ``synthetic-scale/v1``
+TrainData, a create-only run plan (``run_seed = os.urandom(32)``) and runs ``train.run`` on the plan's device with
+local commits only, recording per-step wall time, CUDA memory and the CPU cost of draw+collate. It never writes S3.
+The GPU path uses the deterministic CUDA mode of ``model.configure_determinism`` (CUBLAS_WORKSPACE_CONFIG must be set
+in the environment before CUDA initialisation).
+
+``plan`` writes a run directory's create-only ``run-plan.json`` (+ ``data-spec.json``). ``run`` is one launch of
+that plan (§5 P8 launch envelope, §6.8), inside a fixed ``jopedime-dltrain-*`` unit started by ``dltrain.launch``:
+
+1. admission before CUDA initialisation (``gpu_gate.admission_probe``; REFUSE exits 3 and writes nothing else);
+2. a create-only, self-declared launch receipt ``<run>/launch/<launch>.json`` (host, unit, INVOCATION_ID, pid,
+   starttick, cwd, executable/argv sha256, run-plan sha256, admission sha256, source identities, GPU uuid);
+3. data (the plan's refs must equal the data's), the store (none, the real create-only S3 store under
+   ``research-only/models/policylm-v1/`` or its ``smoke/`` sub-prefix, or the guarded fake), the live producer
+   (``<run>/launches/<launch>/live.json`` and ``<run>/live.json``, every <= 3 s; never ``claude/live.json``) and
+   create-only update receipts under ``<run>/updates/``;
+4. fresh, ``--resume`` (``train.resume_from_store``: §6.8 at-resume rules, CPU-only before any training step) or
+   ``--resume-local``; before the first step the memory reserve is taken (free <= ceiling MiB) and the intake
+   signals are re-checked; a watchdog thread runs ``continuation_probe`` at least every 15 s and the trainer checks
+   its latest verdict before every optimizer step (YIELD/STOP/ABORT -> the §6.8 yield sequence; PAUSE blocks);
+   the per-launch STOP file ``<run>/launches/<launch>/STOP`` yields too (never deleted; a resume is a new launch);
+5. a create-only ``result.json`` per launch.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import socket
+import statistics
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import torch
+
+from dltrain import common, live
+from dltrain import model as model_mod
+from dltrain import objective as objective_mod
+from dltrain import sampler as sampler_mod
+from dltrain import synthetic_data
+from dltrain import train
+
+BENCH_SCHEMA = "jope.dl-p7-gpu-bench/v1"
+
+
+def _nvidia_smi(query: str) -> str:
+    return subprocess.run(["nvidia-smi", f"--query-{query}", "--format=csv,noheader,nounits"], capture_output=True,
+                          text=True, timeout=15, check=True).stdout
+
+
+def foreign_compute_apps(self_pid: int) -> list[str]:
+    """nvidia-smi compute apps whose pid is not this process (read-only; process_name is nvidia-smi's column)."""
+    rows = [r.strip() for r in _nvidia_smi("compute-apps=pid,process_name,used_memory").splitlines() if r.strip()]
+    return [r for r in rows if r.split(",")[0].strip() != str(self_pid)]
+
+
+def smoke_configs(size: str, width: int, *, steps: int, commit_every: int, b_ctx: int = 32, dropout: float = 0.1,
+                  spec_kw: dict | None = None, autocast: str | None = "bfloat16", publish_every: int | None = None):
+    spec = synthetic_data.SyntheticSpec(ctx_dim=width, **(spec_kw or {}))
+    scfg = sampler_mod.SamplerConfig(b_ctx=b_ctx)
+    mcfg = model_mod.size_config(size, vocab_size=spec.vocab_size, ctx_dim=width, max_seq=spec.max_seq,
+                                 dropout=dropout)
+    tcfg = train.TrainConfig(lr=3e-4, lr_min=3e-5, warmup=min(1000, max(1, steps // 10)), commit_every_updates=commit_every,
+                             commit_every_seconds=1200.0, eval_every_epochs=None, autocast_dtype=autocast,
+                             num_threads=4, ctx_drop_prob=0.0, ctx_noise_std=0.0, publish_every_updates=publish_every)
+    return spec, scfg, mcfg, tcfg
+
+
+def bench(args) -> int:
+    t_start = time.monotonic()
+    out = Path(args.out_dir)
+    out.mkdir(parents=True, exist_ok=False)
+    device = "cuda" if args.device == "cuda" else "cpu"
+    pre = foreign_compute_apps(os.getpid()) if device == "cuda" else []
+    if pre:
+        common.immutable_write(out / "refused.json", common.canonical({"refused": "foreign compute apps", "apps": pre}))
+        print(json.dumps({"refused": "foreign compute apps", "apps": pre}), flush=True)
+        return 3
+    spec, scfg, mcfg, tcfg = smoke_configs(args.size, args.width, steps=args.steps, commit_every=args.commit_every,
+                                           b_ctx=args.b_ctx, spec_kw=json.loads(args.spec_json or "{}"),
+                                           autocast="bfloat16" if device == "cuda" else None)
+    t0 = time.monotonic()
+    data = synthetic_data.train_data(spec, scfg)
+    build_s = time.monotonic() - t0
+    plan = train.make_run_plan(run_id=args.run_id, run_seed=os.urandom(32), arm=f"synthetic-W{args.width}",
+                               objective="successor-v1", model=mcfg, sampler=scfg, train=tcfg,
+                               max_updates=args.steps, storage_cap_bytes=None, refs=synthetic_data.refs(spec),
+                               device=device)
+    plan_res = train.write_run_plan(out / "run-plan.json", plan)
+    common.immutable_write(out / "data-spec.json", common.canonical(spec.to_json()))
+    # CPU cost of the pure draw+collate for a few future steps (no global RNG; the sampler is counter-based).
+    probe = sampler_mod.MacroSampler(data.fit, bytes.fromhex(plan["run_seed_hex"]), scfg)
+    collate_s, seqs, toks = [], [], []
+    for k in range(1, 6):
+        c0 = time.monotonic()
+        b = sampler_mod.collate(probe.draw(10_000 + k), data)
+        collate_s.append(time.monotonic() - c0)
+        seqs.append(int(b.tokens.shape[0]))
+        toks.append(int(b.n_tokens))
+    times: list[float] = []
+    mem: list[int] = []
+
+    def after_step(step: int) -> None:
+        if device == "cuda":
+            mem.append(int(torch.cuda.max_memory_allocated()))
+        times.append(time.monotonic())
+
+    t0 = time.monotonic()
+    times.append(t0)
+    res = train.run(plan, data, out / "work", hooks=train.TrainHooks(after_step=after_step))
+    wall = time.monotonic() - t0
+    dts = [b - a for a, b in zip(times, times[1:])]
+    steady = dts[min(10, len(dts) // 4):] if dts else []
+    med = statistics.median(steady) if steady else None
+    gpu = None
+    if device == "cuda":
+        props = torch.cuda.get_device_properties(0)
+        gpu = {"name": props.name, "total_mib": props.total_memory // 2**20,
+               "max_memory_allocated_mib": torch.cuda.max_memory_allocated() / 2**20,
+               "max_memory_reserved_mib": torch.cuda.max_memory_reserved() / 2**20,
+               "nvidia_smi_after": _nvidia_smi("gpu=memory.used,memory.total,utilization.gpu,temperature.gpu").strip()}
+    mean_seqs, mean_toks = statistics.mean(seqs), statistics.mean(toks)
+    doc = {"schema": BENCH_SCHEMA, "host": socket.gethostname(), "utc_us": common.utc_us(), "run_id": args.run_id,
+           "device": device, "size": args.size, "width": args.width, "b_ctx": args.b_ctx,
+           "parameters": sum(p.numel() for p in model_mod.PolicyLM(mcfg).parameters()),
+           "spec": spec.to_json(), "spec_sha256": spec.sha256(), "data_build_s": build_s,
+           "run_plan": plan_res, "result": res.to_json(), "wall_s": wall, "steps": len(dts),
+           "step_s_median_steady": med, "step_s_mean_all": statistics.mean(dts) if dts else None,
+           "steps_per_s": (1.0 / med) if med else None,
+           "collate_s_median": statistics.median(collate_s), "sequences_per_step_mean": mean_seqs,
+           "tokens_per_step_mean": mean_toks,
+           "tokens_per_s": (mean_toks / med) if med else None, "sequences_per_s": (mean_seqs / med) if med else None,
+           "gpu": gpu, "max_rss_kib": __import__("resource").getrusage(__import__("resource").RUSAGE_SELF).ru_maxrss,
+           "process_wall_s": time.monotonic() - t_start, "step_times_s": [round(x, 5) for x in dts]}
+    common.immutable_write(out / "bench.json", common.canonical(doc))
+    print(json.dumps({k: doc[k] for k in ("run_id", "size", "width", "steps", "step_s_median_steady", "steps_per_s",
+                                           "tokens_per_s", "collate_s_median", "parameters")} | {"gpu": gpu,
+                                                                                               "status": res.status}),
+          flush=True)
+    return 0 if res.status == "COMPLETED" else 1
+
+
+RUN_ROOT = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
+LAUNCH_RECEIPT_SCHEMA = "jope.dl-launch-receipt/v1"
+LAUNCH_RESULT_SCHEMA = "jope.dl-launch-result/v1"
+MIRROR_ROOTS = (RUN_ROOT / "build-v2" / "P7" / "runs", RUN_ROOT / "build-v2" / "P8" / "runs")
+_LAUNCH_RE = __import__("re").compile(r"a[1-9][0-9]{0,3}(-r[0-9]{1,4})?")
+
+
+def export_mirror_file(commit_dir: Path, run_dir: Path) -> dict:
+    """The single-file, mirror-visible copy of a local commit (owner ENG:watcher 4:47am MT): a deterministic,
+    uncompressed tar at ``<run_dir>/ckpt_<step:010d>.ckpt`` holding every closure file of the commit except the
+    journal (model, optimizer, scheduler, CPU+CUDA RNG, sampler cursor, commit.json), a ``journal-index.json``
+    (chunk sha256s of ckpt.JOURNAL_CHUNK_LINES lines, total sha256/bytes/lines) and the journal chunks that no earlier
+    mirror file of this run dir holds: chunk i covers journal lines [i*K, (i+1)*K), so every chunk index >= the
+    previous mirror file's step // K is included. Restore: untar the target and every earlier mirror file of the run,
+    concatenate the chunks named by the target's index (verified against it) as journal.jsonl, then
+    ``ckpt.open_commit`` verifies the commit strictly. Written under a temporary name that matches none of the
+    mirror's patterns, fsynced and renamed into place; never replaced."""
+    import io
+    import re as re_mod
+    import tarfile
+    from dltrain import ckpt
+    commit_dir, run_dir = Path(commit_dir), Path(run_dir)
+    step = int(commit_dir.name)
+    final = run_dir / f"ckpt_{step:010d}.ckpt"
+    if final.exists():
+        raise FileExistsError(f"{final} exists; mirror files are never replaced")
+    earlier = [int(m.group(1)) for p in run_dir.iterdir()
+               if (m := re_mod.fullmatch(r"ckpt_(\d{10})\.ckpt", p.name)) and int(m.group(1)) < step]
+    prev = max(earlier) if earlier else 0
+    journal = (commit_dir / "journal.jsonl").read_bytes()
+    chunks = ckpt.journal_chunks(journal)
+    k = ckpt.JOURNAL_CHUNK_LINES
+    index = {"schema": "jope.dl-mirror-journal-index/v1", "chunk_lines": k, "lines": journal.count(b"\n"),
+             "journal_sha256": common.sha256_bytes(journal), "journal_bytes": len(journal),
+             "chunks": [{"sha256": common.sha256_bytes(c), "bytes": len(c)} for c in chunks],
+             "included_from_chunk": prev // k, "previous_mirror_step": prev if earlier else None}
+    members = [(f"{commit_dir.name}/{p.name}", p.read_bytes()) for p in sorted(commit_dir.iterdir())
+               if p.name != "journal.jsonl"]
+    members.append((f"{commit_dir.name}/journal-index.json", common.canonical(index)))
+    members += [(f"{commit_dir.name}/journal-chunks/{common.sha256_bytes(c)}.jsonl", c)
+                for c in chunks[prev // k:]]
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+        for name, data in members:
+            info = tarfile.TarInfo(name)
+            info.size, info.mtime, info.mode, info.uid, info.gid = len(data), 0, 0o444, 0, 0
+            info.uname = info.gname = ""
+            tar.addfile(info, io.BytesIO(data))
+    body = buf.getvalue()
+    tmp = final.with_name(f".{final.name}.partial-{os.urandom(4).hex()}")
+    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
+    with os.fdopen(fd, "wb") as f:
+        f.write(body)
+        f.flush()
+        os.fsync(f.fileno())
+    if final.exists():
+        raise FileExistsError(f"{final} appeared; mirror files are never replaced")
+    os.rename(tmp, final)
+    return {"path": str(final), "sha256": common.sha256_bytes(body), "bytes": len(body), "step": step,
+            "journal_chunks_included": len(chunks) - prev // k}
+
+
+def restore_mirror_commit(run_dir: Path, step: int, dest_commits: Path) -> Path:
+    """Rebuild a local commit from the run dir's mirror files (the target plus earlier ones for journal chunks) into
+    ``dest_commits/<step:010d>/`` and strictly verify it with ckpt.open_commit."""
+    import io
+    import re as re_mod
+    import tarfile
+    from dltrain import ckpt
+    run_dir, dest_commits = Path(run_dir), Path(dest_commits)
+    chunk_bodies: dict[str, bytes] = {}
+    target_files: dict[str, bytes] = {}
+    for p in sorted(run_dir.iterdir()):
+        m = re_mod.fullmatch(r"ckpt_(\d{10})\.ckpt", p.name)
+        if not m or int(m.group(1)) > step:
+            continue
+        with tarfile.open(fileobj=io.BytesIO(p.read_bytes()), mode="r") as tar:
+            for info in tar.getmembers():
+                data = tar.extractfile(info).read()
+                parts = info.name.split("/")
+                if len(parts) == 3 and parts[1] == "journal-chunks":
+                    chunk_bodies[parts[2][:-len(".jsonl")]] = data
+                elif int(m.group(1)) == step and len(parts) == 2:
+                    target_files[parts[1]] = data
+    index = json.loads(target_files.pop("journal-index.json"))
+    journal = b"".join(chunk_bodies[c["sha256"]] for c in index["chunks"])
+    if common.sha256_bytes(journal) != index["journal_sha256"]:
+        raise ckpt.CheckpointRefused("mirror journal chunks do not reassemble the indexed journal")
+    target_files["journal.jsonl"] = journal
+    out = dest_commits / f"{step:010d}"
+    out.mkdir(parents=True, exist_ok=False)
+    for name, data in target_files.items():
+        common.immutable_write(out / name, data)
+    ckpt.open_commit(out)
+    return out
+
+
+def cmd_plan(args) -> int:
+    run_dir = Path(args.run_dir)
+    live.assert_outside_claude(run_dir, "run dir")
+    run_dir.mkdir(parents=True, exist_ok=True)
+    spec, scfg, mcfg, tcfg = smoke_configs(args.size, args.width, steps=args.steps, commit_every=args.commit_every,
+                                           b_ctx=args.b_ctx, dropout=args.dropout,
+                                           spec_kw=json.loads(args.spec_json or "{}"),
+                                           autocast="bfloat16" if args.device == "cuda" else None,
+                                           publish_every=args.publish_every)
+    deadline = common.utc_us() + int(args.deadline_h * 3600e6) if args.deadline_h else None
+    plan = train.make_run_plan(run_id=args.run_id, run_seed=os.urandom(32), arm=f"synthetic-W{args.width}",
+                               objective="successor-v1", model=mcfg, sampler=scfg, train=tcfg,
+                               max_updates=args.steps, deadline_utc_us=deadline,
+                               storage_cap_bytes=int(args.storage_cap_gib * 2**30), refs=synthetic_data.refs(spec),
+                               device=args.device, experiment_id=args.experiment_id)
+    res = train.write_run_plan(run_dir / "run-plan.json", plan)
+    spec_res = common.immutable_write(run_dir / "data-spec.json", common.canonical(spec.to_json()))
+    common.immutable_write(run_dir / "config.json", common.canonical({"run_plan": plan, "data_spec": spec.to_json()}))
+    print(json.dumps({"run_plan": res, "data_spec": spec_res, "run_plan_sha256": train.plan_sha256(plan)}), flush=True)
+    return 0
+
+
+TRANCHE_SCHEMA = "jope.dl-tranche/v1"
+DATA_KINDS = ("synthetic-scale/v1", "synthetic-tranche/v1", "s1-tranche/v1")
+
+
+def plan_dir_of(run_dir: Path, segment: int | None) -> Path:
+    """Segment 0 (and unsegmented runs) live in the run dir; segment k >= 1 in ``<run>/segments/<k>/``."""
+    return run_dir if not segment else run_dir / "segments" / str(segment)
+
+
+def load_tranche_entries(run_dir: Path, k: int) -> list[dict]:
+    doc = json.loads((run_dir / "tranches" / f"T{k}.json").read_bytes())
+    if doc.get("schema") != TRANCHE_SCHEMA or doc.get("index") != k:
+        raise ValueError(f"tranche file T{k} is not a {TRANCHE_SCHEMA} document for index {k}")
+    if train.corpus_manifest_sha256(doc["entries"]) != doc["corpus_manifest_sha256"]:
+        raise ValueError(f"tranche T{k} entries do not hash to its corpus_manifest_sha256")
+    return doc["entries"]
+
+
+def load_data(plan_dir: Path, plan: dict):
+    """The plan's training data from ``<plan_dir>/data-spec.json``: synthetic-scale/v1 (smoke), synthetic-tranche/v1
+    (segment dry runs) or s1-tranche/v1 (S1 inner-CV labels through the S1-tail shards; every label path and record
+    passes dltrain.tranche guards and every context dltrain.admission). The data's refs must equal the plan's, and a
+    tranche's entries must hash to the plan's segment.corpus_manifest_sha256."""
+    raw = json.loads((plan_dir / "data-spec.json").read_bytes())
+    scfg = sampler_mod.SamplerConfig.from_json(plan["sampler"])
+    kind = raw.get("kind", raw.get("schema"))
+    if kind == synthetic_data.SCHEMA:
+        spec = synthetic_data.SyntheticSpec.from_json(raw)
+        want = synthetic_data.refs(spec)
+        if any(plan["refs"].get(k) != v for k, v in want.items()):
+            raise ValueError("run plan refs differ from data-spec.json")
+        return synthetic_data.train_data(spec, scfg), None
+    if kind == "synthetic-tranche/v1":
+        data, entries = synthetic_data.tranche(synthetic_data.SyntheticSpec.from_json(raw["spec"]), scfg,
+                                               raw["n_contexts"])
+    elif kind == "s1-tranche/v1":
+        from dltrain import s1_tail, tranche   # the S1-tail builder's loader (separate packet)
+        from dltrain import admission as admission_mod
+        tranche.assert_label_path(raw["tail_out"])
+        adm = admission_mod.Admission(raw["denylist"], raw["denylist_sha256"], purpose="selection")
+        entries = json.loads(Path(raw["entries_file"]).read_bytes())["entries"]
+        seg = plan.get("segment")
+        if seg is None or train.corpus_manifest_sha256(entries) != seg["corpus_manifest_sha256"]:
+            raise ValueError("the tranche file's entries do not hash to the plan's segment.corpus_manifest_sha256")
+        data = s1_tail.train_data_for_tranche(raw, entries, adm, scfg)
+    else:
+        raise ValueError(f"unknown data-spec kind {kind!r}; expected one of {DATA_KINDS}")
+    seg = plan.get("segment")
+    if seg is None or train.corpus_manifest_sha256(entries) != seg["corpus_manifest_sha256"]:
+        raise ValueError("tranche data does not match the plan's segment.corpus_manifest_sha256")
+    if any(plan["refs"].get(k) != v for k, v in (data.refs or {}).items()):
+        raise ValueError("run plan refs differ from the tranche data's refs")
+    return data, entries
+
+
+def run_seed_of(args) -> bytes:
+    """The tranche-0 run seed: --run-seed-hex (64 hex chars; paired arms share it) or fresh os.urandom(32)."""
+    if args.run_seed_hex is None:
+        return os.urandom(32)
+    if len(args.run_seed_hex) != 64:
+        raise SystemExit("--run-seed-hex must be 64 hex characters")
+    return bytes.fromhex(args.run_seed_hex)
+
+
+def cmd_tranche(args) -> int:
+    if args.index >= 1 and (args.ctx_drop_prob or args.run_seed_hex is not None):
+        raise SystemExit("--ctx-drop-prob / --run-seed-hex bind tranche 0 only; segment plans cannot change them")
+    """Write tranche k (create-only ``<run>/tranches/T<k>.json``) and its segment plan.
+
+    k = 0: a fresh run plan with segment 0 (``make_run_plan(corpus_manifest_sha256=...)``) in the run dir.
+    k >= 1: ``make_segment_plan`` from segment k-1's plan, continuing from the CURRENT resume pointer target (read
+    only, exact versions) at its step; the new manifest must extend T(k-1) as an exact prefix. Nothing is trained."""
+    run_dir = Path(args.run_dir)
+    live.assert_outside_claude(run_dir, "run dir")
+    k = args.index
+    parent_plan = train.load_run_plan(plan_dir_of(run_dir, k - 1) / "run-plan.json") if k >= 1 else None
+    scfg = (sampler_mod.SamplerConfig.from_json(parent_plan["sampler"]) if parent_plan
+            else sampler_mod.SamplerConfig(b_ctx=args.b_ctx,
+                                           group_mode=(sampler_mod.SUCCESSOR_V1
+                                                       if args.objective == objective_mod.SUCCESSOR_V1_LS05
+                                                       else args.objective)))
+    extra_receipt, holdout_ref = {}, {}
+    if args.kind == "synthetic-tranche/v1":
+        spec = synthetic_data.SyntheticSpec(ctx_dim=args.width, **json.loads(args.spec_json or "{}"))
+        spec_doc = {"kind": "synthetic-tranche/v1", "spec": spec.to_json(), "n_contexts": args.n_contexts}
+        data, entries = synthetic_data.tranche(spec, scfg, args.n_contexts)
+        arm, max_seq = f"synthetic-W{args.width}", spec.max_seq
+    else:
+        from dltrain import admission as admission_mod
+        from dltrain import exclusions, s1_tail
+        from dltrain import tranche as tranche_mod
+        tail_out = tranche_mod.assert_label_path(args.tail_out)
+        comps = [c for c in args.components.split(",") if c]
+        entries = s1_tail.tranche_entries(tail_out, upto=args.n_contexts or None)
+        excl = exclusions.load(args.exclusion, args.exclusion_sha256)
+        refs_doc = s1_tail.data_refs(tail_out, comps)
+        parent_spec = (json.loads((plan_dir_of(run_dir, k - 1) / "data-spec.json").read_bytes()) if k >= 1 else None)
+        spec_doc = {"kind": "s1-tranche/v1", "tail_out": str(tail_out),
+                    "entries_file": str(run_dir / "tranches" / f"T{k}.json"), "components": comps,
+                    "exclusion": {"path": excl.path, "sha256": excl.sha256},
+                    "denylist": args.denylist, "denylist_sha256": args.denylist_sha256,
+                    "grammar": parent_spec["grammar"] if parent_spec else None,
+                    "vocab_sha256": refs_doc["vocab_sha256"], "max_seq": refs_doc["max_seq"],
+                    "encoding_sets": (parent_spec.get("encoding_sets") if parent_spec
+                                      else json.loads(args.encoding_sets or "[]"))}
+        adm = admission_mod.Admission(args.denylist, args.denylist_sha256, purpose="selection")
+        data = s1_tail.train_data_for_tranche(spec_doc, entries, adm, scfg)
+        if k == 0:
+            spec_doc["grammar"] = s1_tail.grammar_binding(data)     # {path, sha256} written by the loader
+        extra_receipt = {"exclusion": excl.receipt(), "data_refs": refs_doc,
+                         "loader_receipt": s1_tail.tranche_receipt(tail_out, len(entries))}
+        arm, max_seq = "A1-" + "+".join(comps), int(refs_doc["max_seq"])
+        hdr = json.loads((tail_out / "header.json").read_bytes())
+        holdout_ref = {"holdout_binding": "holdout:" + hdr["p3"]["holdout_sha256"]}
+    if k == 0:
+        mcfg = model_mod.size_config(args.size, vocab_size=data.vocab_size, ctx_dim=data.ctx_dim,
+                                     max_seq=max_seq, dropout=args.dropout,
+                                     context_free_head=args.objective == "baseline-v1")
+        # dev validation about every eval_every_steps updates at the expected full-corpus size (the epoch grows with
+        # each tranche; segment plans cannot change the train config)
+        epoch = max(1, -(-args.expected_train_contexts // scfg.b_ctx))
+        tcfg = train.TrainConfig(lr=3e-4, lr_min=3e-5, warmup=min(1000, max(1, args.steps // 2)),
+                                 commit_every_updates=args.commit_every, commit_every_seconds=1200.0,
+                                 eval_every_epochs=max(1, round(args.eval_every_steps / epoch)),
+                                 autocast_dtype="bfloat16" if args.device == "cuda" else None, num_threads=4,
+                                 ctx_drop_prob=args.ctx_drop_prob, ctx_noise_std=0.0,
+                                 publish_every_updates=args.publish_every or None,
+                                 micro_batch_tokens=args.micro_batch_tokens or None,
+                                 eval_every_updates=args.eval_every_updates or None, best_dev=bool(args.best_dev),
+                                 early_stop_patience=args.early_stop_patience or None,
+                                 early_stop_min_updates=args.early_stop_min_updates)
+    sha = train.corpus_manifest_sha256(entries)
+    if k >= 1:
+        train.check_tranche_prefix(load_tranche_entries(run_dir, k - 1), entries)
+    tdoc = {"schema": TRANCHE_SCHEMA, "index": k, "corpus_manifest_sha256": sha, "entries": entries,
+            "n_entries": len(entries), "data_spec": spec_doc, "receipt": extra_receipt, "utc_us": common.utc_us()}
+    t_res = common.immutable_write(run_dir / "tranches" / f"T{k}.json", common.canonical(tdoc))
+    if k == 0:
+        deadline = common.utc_us() + int(args.deadline_h * 3600e6) if args.deadline_h else None
+        plan = train.make_run_plan(run_id=args.run_id, run_seed=run_seed_of(args), arm=arm,
+                                   objective=args.objective, model=mcfg, sampler=scfg, train=tcfg,
+                                   max_updates=args.steps, deadline_utc_us=deadline,
+                                   storage_cap_bytes=int(args.storage_cap_gib * 2**30),
+                                   device=args.device, experiment_id=args.experiment_id, corpus_manifest_sha256=sha,
+                                   refs=dict(data.refs, **holdout_ref))
+    else:
+        store, prefix, ledger = open_store(args.store, parent_plan["run_id"], f"tranche{k}")
+        try:
+            found = __import__("dltrain.ckpt", fromlist=["ckpt"])._current_pointer(store, prefix, parent_plan["run_id"])
+            if found is None:
+                raise SystemExit("refused: no resume pointer to continue from")
+            _cur, pdoc = found
+            from dltrain import ckpt as ckpt_mod
+            manifest = ckpt_mod._fetch_manifest(store, prefix, parent_plan["run_id"], pdoc["target_manifest_sha256"],
+                                                pdoc["target_version_id"])
+        finally:
+            if ledger is not None:
+                ledger.close()
+        plan = train.make_segment_plan(parent_plan, refs={k2: data.refs[k2] for k2 in ("corpus", "encoding")},
+                                       corpus_manifest_sha256=sha, start_step=manifest["step"],
+                                       parent_checkpoint_manifest_sha256=pdoc["target_manifest_sha256"])
+    pdir = plan_dir_of(run_dir, k)
+    pdir.mkdir(parents=True, exist_ok=True)
+    p_res = train.write_run_plan(pdir / "run-plan.json", plan)
+    common.immutable_write(pdir / "data-spec.json", common.canonical(spec_doc))
+    if k == 0:
+        common.immutable_write(run_dir / "config.json", common.canonical({"run_plan": plan, "data_spec": spec_doc}))
+    print(json.dumps({"tranche": t_res, "segment": plan.get("segment"), "run_plan": p_res,
+                      "run_plan_sha256": train.plan_sha256(plan), "n_entries": len(entries)}), flush=True)
+    return 0
+
+
+def open_store(kind: str, run_id: str, launch_tag: str):
+    """(store, prefix, publish_ledger) for --store none | s3-smoke | s3 | fake:<dir>."""
+    if kind == "none":
+        return None, "", None
+    from dltrain import s3store
+    if kind in ("s3-smoke", "s3"):
+        prefix = s3store.SMOKE_PREFIX_KEY if kind == "s3-smoke" else s3store.POLICYLM_PREFIX_KEY
+        store, ledger = s3store.open_real(prefix_key=prefix, view_id=run_id,
+                                          ledger_path=RUN_ROOT / "receipts/trainonly-v2/policylm" / run_id
+                                          / "publish-ledger.jsonl")
+        return store, prefix, ledger
+    if kind.startswith("fake:"):
+        root = Path(kind[5:])
+        store, ledger, _bucket = s3store.open_fake(prefix_key=s3store.SMOKE_PREFIX_KEY, view_id=run_id,
+                                                   ledger_path=root / f"publish-ledger-{launch_tag}.jsonl",
+                                                   budget_ledger_path=root / "budget-ledger.jsonl",
+                                                   disk_root=root / "bucket")
+        return store, s3store.SMOKE_PREFIX_KEY, ledger
+    raise ValueError(f"unknown --store {kind!r}")
+
+
+def _gpu_uuid() -> str | None:
+    try:
+        return _nvidia_smi("gpu=index,uuid").strip().splitlines()[0].split(",")[1].strip()
+    except Exception:  # noqa: BLE001 - recorded as unknown
+        return None
+
+
+class Gate:
+    """Admission, memory reserve and the continuation watchdog around one launch (§6.8)."""
+
+    def __init__(self, args, ldir: Path, device: str):
+        self.args, self.ldir, self.device = args, ldir, device
+        self.enabled = args.gate == "on"
+        self.reserve = None
+        self.reserve_bytes = 0
+        self.watchdog = None
+        self.events: list[dict] = []
+        self.first = True
+        self.first_step = 0
+        self.reserve_done = False
+        if self.enabled:
+            from dltrain import gpu_gate
+            self.gg = gpu_gate
+
+    def admit(self, device: str) -> dict:
+        if device != "cuda":
+            return {"mode": "admit", "decision": "ADMIT", "gate": "cpu-plan-no-gpu-admission", "reasons": []}
+        if not self.enabled:
+            apps = foreign_compute_apps(os.getpid())
+            return {"mode": "admit", "decision": "REFUSE" if apps else "ADMIT", "gate": "minimal-foreign-apps-only",
+                    "reasons": [f"foreign compute app: {a}" for a in apps]}
+        return self.gg.admission_probe(self_pids=(os.getpid(),)).to_dict()
+
+    def _intake_recheck(self) -> list[str]:
+        if self.device != "cuda":
+            return []
+        if not self.enabled:
+            return [f"foreign compute app: {a}" for a in foreign_compute_apps(os.getpid())]
+        v = self.gg.continuation_probe(os.getpid(), state=self.gg.ContinuationState())
+        return [] if v.decision == "CONTINUE" else [f"{v.decision}: {r}" for r in v.reasons]
+
+    def before_step(self, step: int):
+        if self.first:
+            self.first = False
+            self.first_step = step
+            reasons = self._intake_recheck()
+            self.events.append({"event": "post_reserve_recheck", "step": step, "reasons": reasons,
+                                "utc_us": common.utc_us()})
+            if reasons:
+                return "YIELDED_TO_INTAKE", "post_reserve_recheck: " + "; ".join(reasons)[:400]
+            if self.enabled and self.device == "cuda":
+                # §6.8: exit within 60 s of an intake signal: detection (<= interval) + hard exit after detection.
+                self.watchdog = self.gg.Watchdog(os.getpid(), interval_s=self.args.watchdog_interval_s,
+                                                 hard_exit_s=max(1.0, 60.0 - self.args.watchdog_interval_s))
+                self.watchdog.start()
+        if self.reserve is None and not self.reserve_done and torch.cuda.is_initialized() \
+                and self.args.reserve_ceiling_mib > 0 and step >= self.first_step + self.args.reserve_after_steps:
+            self._take_reserve(step)
+        if self.watchdog is not None:
+            v = self.watchdog.latest
+            while v is not None and v.decision == "PAUSE" and not self.watchdog.yield_requested.is_set():
+                time.sleep(1.0)
+                v = self.watchdog.latest
+            if self.watchdog.yield_requested.is_set():
+                v = self.watchdog.latest
+                decision = v.decision if v is not None else "YIELD"
+                status = {"STOP": "STOPPED_BUDGET", "ABORT_GATE": "FAILED"}.get(decision, "YIELDED_TO_INTAKE")
+                return status, f"gate {decision}: " + "; ".join(v.reasons if v is not None else ())[:400]
+        return None
+
+    def _take_reserve(self, step: int) -> None:
+        """§6.8 memory reserve, sized after the first steps: the trainer then holds (allocator cache + reserve) so that
+        nvidia-smi free stays <= ceiling, while its own later growth comes out of the free pool (an up-front reserve of
+        free-minus-ceiling starved real-length batches; P8 real-data smoke 12:24Z). Before it is taken, admission
+        (pre-launch) and the 15 s continuation watchdog cover the intake race."""
+        self.reserve_done = True
+        free, total = torch.cuda.mem_get_info()
+        ceiling = self.args.reserve_ceiling_mib * 2**20
+        self.reserve_bytes = max(0, int(free - ceiling))
+        if self.reserve_bytes:
+            self.reserve = torch.empty(self.reserve_bytes, dtype=torch.uint8, device="cuda")
+        free_after, _ = torch.cuda.mem_get_info()
+        self.events.append({"event": "memory_reserve", "step": step, "reserve_mib": self.reserve_bytes / 2**20,
+                            "free_before_mib": free / 2**20, "free_after_mib": free_after / 2**20,
+                            "allocator_reserved_mib": torch.cuda.memory_reserved() / 2**20,
+                            "ceiling_mib": self.args.reserve_ceiling_mib, "utc_us": common.utc_us()})
+
+    def close(self) -> None:
+        if self.watchdog is not None:
+            self.watchdog.disarm()
+        self.reserve = None
+
+
+STATUS_SCHEMA = "jope.dl-status/v1"
+STATUS_DIR = RUN_ROOT / "status"
+
+
+def _atomic_json(path: Path, doc: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    tmp.write_bytes(json.dumps(doc, indent=1, sort_keys=True).encode())
+    os.replace(tmp, path)
+
+
+def write_lane_status(status_dir: Path = STATUS_DIR) -> dict:
+    """RUN/status/dl_status.json: every per-run status file of this host's status dir (dl_status-<run>.json),
+    plus copies pulled from other hosts by tools (dl_status-<run>@<host>.json), in one document."""
+    runs = []
+    for f in sorted(status_dir.glob("dl_status-*.json")):
+        try:
+            runs.append(json.loads(f.read_bytes()))
+        except (OSError, ValueError):
+            continue
+    doc = {"schema": STATUS_SCHEMA + "#lane", "host": socket.gethostname(), "utc_us": common.utc_us(), "runs": runs}
+    _atomic_json(status_dir / "dl_status.json", doc)
+    return doc
+
+
+class StatusWriter:
+    """dl_status.json (owner ask 07:59 MT): progress % of max_updates, ETA, step, steps/s, best dev CE and step,
+    patience counter and state; written atomically at least every ``interval_s`` (30 s) to the run dir and to
+    RUN/status/dl_status-<run_id>.json, and merged into RUN/status/dl_status.json."""
+
+    def __init__(self, run_dir: Path, run_id: str, unit: str | None, launch: str, interval_s: float = 30.0):
+        self.run_dir, self.run_id, self.unit, self.launch = run_dir, run_id, unit, launch
+        self.interval_s, self.last_t, self.marks = interval_s, None, []
+        self.state = "STARTING"
+        self.latest: dict = {}
+
+    def doc(self) -> dict:
+        st = self.latest
+        step, max_updates = st.get("step"), st.get("max_updates")
+        rate = None
+        if len(self.marks) >= 2 and self.marks[-1][0] > self.marks[0][0]:
+            rate = (self.marks[-1][1] - self.marks[0][1]) / (self.marks[-1][0] - self.marks[0][0])
+        eta = None
+        if rate and step is not None and max_updates:
+            eta = common.utc_us() + int((max_updates - step) / rate * 1e6)
+        es = st.get("early_stop") or {}
+        return {"schema": STATUS_SCHEMA, "run_id": self.run_id, "host": socket.gethostname(), "unit": self.unit,
+                "launch": self.launch, "state": self.state, "step": step, "max_updates": max_updates,
+                "progress_pct": round(100.0 * step / max_updates, 2) if step is not None and max_updates else None,
+                "steps_per_s": rate, "eta_utc_us_at_max_updates": eta,
+                "eta_note": "ETA to max_updates; early stopping may end the run sooner",
+                "best_dev_ce": es.get("best_value"), "best_dev_step": es.get("best_step"),
+                "best_dev_published_manifest": es.get("best_manifest_sha256"),
+                "patience": {"since_improvement": es.get("since"), "patience": st.get("early_stop_patience"),
+                             "min_updates": st.get("early_stop_min_updates"), "stop_due": st.get("early_stop_due")},
+                "last_eval": st.get("last_eval"), "train_loss": st.get("loss"), "lr": st.get("lr"),
+                "utc_us": common.utc_us()}
+
+    def write(self) -> None:
+        d = self.doc()
+        _atomic_json(self.run_dir / "dl_status.json", d)
+        _atomic_json(STATUS_DIR / f"dl_status-{self.run_id}.json", d)
+        write_lane_status()
+
+    def __call__(self, st: dict) -> None:
+        now = time.monotonic()
+        self.latest = st
+        self.state = "TRAINING"
+        self.marks.append((now, st["step"]))
+        self.marks = [m for m in self.marks if now - m[0] <= 120.0] or self.marks[-1:]
+        if self.last_t is None or now - self.last_t >= self.interval_s:
+            self.last_t = now
+            try:
+                self.write()
+            except OSError:
+                pass
+
+
+def cmd_run(args) -> int:
+    t_start = time.monotonic()
+    run_dir = Path(args.run_dir)
+    live.assert_outside_claude(run_dir, "run dir")
+    if _LAUNCH_RE.fullmatch(args.launch) is None:
+        raise ValueError(f"--launch must look like a1 or a2-r1, got {args.launch!r}")
+    plan_dir = plan_dir_of(run_dir, args.segment)
+    plan_path = plan_dir / "run-plan.json"
+    plan = train.load_run_plan(plan_path)
+    plan_sha = common.sha256_file(plan_path)
+    ldir = run_dir / "launches" / args.launch
+    ldir.mkdir(parents=True, exist_ok=False)
+    gate = Gate(args, ldir, plan["determinism"].get("device", "cpu"))
+    admission = gate.admit(plan["determinism"].get("device", "cpu"))
+    adm_res = common.immutable_write(ldir / "admission.json", common.canonical(admission))
+    if admission["decision"] != "ADMIT":
+        print(json.dumps({"refused": admission}), flush=True)
+        return 3
+    native = live.native_process_identity()
+    receipt = {"schema": LAUNCH_RECEIPT_SCHEMA, "host": native["host"], "unit": args.unit,
+               "invocation_id": os.environ.get("INVOCATION_ID"), "main_pid": native["pid"],
+               "starttick": native["starttick"], "cwd": native["cwd"], "executable_sha256": native["executable_sha256"],
+               "argv_sha256": native["argv_sha256"], "argv": sys.argv, "run_plan_path": str(plan_path),
+               "run_plan_sha256": plan_sha, "admission_sha256": adm_res["sha256"], "launch": args.launch,
+               "mode": "resume-store" if args.resume else "resume-local" if args.resume_local else "fresh",
+               "source_tree_sha256": train.source_tree_sha256(), "source_tree_files": train.source_tree_files(),
+               "launcher_sha256": common.sha256_file(Path(__file__)), "src_root": str(Path(__file__).resolve().parents[1]),
+               "gpu_uuid": _gpu_uuid() if plan["determinism"].get("device") == "cuda" else None,
+               "store": args.store, "segment": plan.get("segment"), "transition": bool(args.transition),
+               "utc_us": common.utc_us()}
+    lr_res = common.immutable_write(run_dir / "launch" / f"{args.launch}.json", common.canonical(receipt))
+    launch_ref = {"path": lr_res["path"], "bytes": lr_res["bytes"], "sha256": lr_res["sha256"]}
+    data, entries = load_data(plan_dir, plan)
+    transition = None
+    if args.transition:
+        k = (plan.get("segment") or {}).get("index", 0)
+        if not args.resume or k < 1:
+            raise SystemExit("refused: --transition needs --resume and a segment plan with index >= 1")
+        transition = train.Transition(parent_plan=train.load_run_plan(plan_dir_of(run_dir, k - 1) / "run-plan.json"),
+                                      parent_manifest=load_tranche_entries(run_dir, k - 1),
+                                      manifest=load_tranche_entries(run_dir, k))
+        if transition.manifest != entries:
+            raise SystemExit("refused: the loaded tranche differs from its tranche file")
+    store, prefix, ledger = open_store(args.store, plan["run_id"], args.launch)
+    writer = None
+    if args.live == "on":
+        schema, _schema_sha = live.load_schema()
+        base = live.trainer_base_from_audit(json.loads((live.CLAUDE_DIR / "live.json").read_bytes()))
+        writer = live.LiveWriter(ldir / "live.json", schema=schema, base=base, interval_s=3.0)
+    times: list[float] = [time.monotonic()]
+    mem: list[int] = []
+
+    def after_step(step: int) -> None:
+        times.append(time.monotonic())
+        if args.stop_at_step is not None and step == args.stop_at_step:
+            # The plan's stop mechanism: the STOP file; this only times its creation (the yield happens before the
+            # next step, through the same check an operator's touch would trigger).
+            (ldir / "STOP").touch(exist_ok=True)
+        if torch.cuda.is_initialized() and step % 25 == 0:
+            mem.append(int(torch.cuda.max_memory_allocated()))
+        if writer is not None and writer.last is not None and step % 50 == 0:
+            try:
+                common.atomic_write(run_dir / "live.json", Path(writer.last["path"]).read_bytes())
+            except OSError:
+                pass
+
+    mirror_files: list[dict] = []
+    mirror_skipped: list[dict] = []
+    pending: list = []          # at most one non-selected commit, exported once it can no longer be published
+
+    def flush_pending(published_steps: set) -> None:
+        while pending:
+            c = pending.pop()
+            if c.step in published_steps:      # published at its own step (a yield/final right after the commit)
+                mirror_skipped.append({"step": c.step, "reason": "published to the lane prefix"})
+            else:
+                mirror_files.append(export_mirror_file(c.dir, run_dir))
+
+    def after_commit(local, will_publish: bool = False) -> None:
+        """Owner S3 BUDGET ruling: the lane prefix keeps only selected checkpoints and the owner's mirror the
+        periodic ones; a closure is never in both. A commit going to the lane store is never written as a mirror
+        file; a non-selected commit becomes a mirror file at the next commit or at exit, unless it was published
+        at its own step in between (§6.8 terminal publish)."""
+        if args.mirror != "on":
+            return
+        flush_pending(set())
+        if will_publish:
+            mirror_skipped.append({"step": local.step, "reason": "selected for the lane prefix"})
+        else:
+            pending.append(local)
+
+    status = StatusWriter(run_dir, plan["run_id"], args.unit, args.launch)
+    hooks = train.TrainHooks(after_step=after_step, before_step=gate.before_step, after_commit=after_commit,
+                             status=status)
+    kw = dict(stop_file=ldir / "STOP", live_writer=writer, update_dir=run_dir / "updates", training_admitted=True,
+              hooks=hooks, launch_receipt_ref=launch_ref)
+    work = ldir / "work"
+    try:
+        if args.resume:
+            prev = Path(args.local_commits) if args.local_commits else None
+            res = train.resume_from_store(plan, data, store, work, store_prefix=prefix, local_commits=prev,
+                                          transition=transition, **kw)
+        elif args.resume_local:
+            res = train.resume_from_commit(plan, data, Path(args.resume_local), work, **kw)
+        else:
+            res = train.run(plan, data, work, store=store, store_prefix=prefix, **kw)
+    finally:
+        gate.close()
+        if ledger is not None:
+            ledger.close()
+    published_steps = {json.loads(line).get("step") for line in (work / "events.jsonl").read_bytes().splitlines()
+                       if line.strip() and json.loads(line).get("event") == "published"} \
+        if (work / "events.jsonl").exists() else set()
+    flush_pending(published_steps)
+    if writer is not None and writer.last is not None:
+        common.atomic_write(run_dir / "live.json", Path(writer.last["path"]).read_bytes())
+    stop_reason = res.reason or ("max_updates" if res.status == "COMPLETED" else res.status.lower())
+    status.state = f"{res.status}:{stop_reason}"
+    status.latest = dict(status.latest, step=res.step)
+    try:
+        status.write()
+    except OSError:
+        pass
+    dts = [b - a for a, b in zip(times, times[1:])]
+    steady = dts[min(10, len(dts) // 4):]
+    doc = {"schema": LAUNCH_RESULT_SCHEMA, "run_id": plan["run_id"], "launch": args.launch, "stop_reason": stop_reason,
+           "launch_receipt": launch_ref, "result": res.to_json(), "steps_this_launch": len(dts),
+           "step_s_median_steady": statistics.median(steady) if steady else None,
+           "max_memory_allocated_mib": torch.cuda.max_memory_allocated() / 2**20 if torch.cuda.is_initialized() else None,
+           "max_memory_reserved_mib": torch.cuda.max_memory_reserved() / 2**20 if torch.cuda.is_initialized() else None,
+           "gate_events": gate.events, "store_stats": getattr(store, "stats", None), "store_prefix": prefix or None,
+           "mirror_files": mirror_files, "mirror_skipped": mirror_skipped,
+           "mirror_rule": "lane-prefix checkpoints (publish cadence, yield, final) are never mirror files",
+           "live_writes": writer.writes if writer is not None else None,
+           "live_writer_error": repr(writer.error) if writer is not None and writer.error else None,
+           "process_wall_s": time.monotonic() - t_start, "utc_us": common.utc_us()}
+    common.immutable_write(ldir / "result.json", common.canonical(doc))
+    print(json.dumps({k: doc[k] for k in ("run_id", "launch", "steps_this_launch", "step_s_median_steady")}
+                     | {"status": res.status, "reason": res.reason, "step": res.step,
+                        "parameter_sha256": res.parameter_sha256, "journal_sha256": res.journal_sha256}), flush=True)
+    return 0 if res.status in ("COMPLETED", "YIELDED_TO_INTAKE") else 1
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(prog="dltrain.policylm_main")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    b = sub.add_parser("bench", help="synthetic GPU smoke/throughput benchmark (local commits only, no S3)")
+    b.add_argument("--out-dir", required=True)
+    b.add_argument("--run-id", required=True)
+    b.add_argument("--size", choices=sorted(model_mod.SIZES), default="S")
+    b.add_argument("--width", type=int, default=640)
+    b.add_argument("--steps", type=int, default=200)
+    b.add_argument("--commit-every", type=int, default=100)
+    b.add_argument("--b-ctx", type=int, default=32)
+    b.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
+    b.add_argument("--spec-json", default=None, help="SyntheticSpec overrides as JSON")
+    p = sub.add_parser("plan", help="write a create-only run plan + data spec into a run directory")
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--size", choices=sorted(model_mod.SIZES), default="S")
+    p.add_argument("--width", type=int, default=640)
+    p.add_argument("--steps", type=int, required=True)
+    p.add_argument("--commit-every", type=int, default=500)
+    p.add_argument("--b-ctx", type=int, default=32)
+    p.add_argument("--dropout", type=float, default=0.1)
+    p.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
+    p.add_argument("--deadline-h", type=float, default=None)
+    p.add_argument("--storage-cap-gib", type=float, default=20.0)
+    p.add_argument("--experiment-id", default="gp-policy-dl-v2-policylm-v1")
+    p.add_argument("--spec-json", default=None)
+    p.add_argument("--publish-every", type=int, default=None, help="lane-prefix publish cadence (None = every commit)")
+    r = sub.add_parser("run", help="one launch of a run plan (fresh or resume)")
+    r.add_argument("--run-dir", required=True)
+    r.add_argument("--launch", required=True, help="attempt/resume label, e.g. a1 or a1-r1")
+    r.add_argument("--unit", default=None, help="the fixed systemd unit name of this launch")
+    r.add_argument("--store", default="none", help="none | s3-smoke | s3 | fake:<dir>")
+    r.add_argument("--resume", action="store_true", help="resume_from_store (§6.8 at-resume rules)")
+    r.add_argument("--local-commits", default=None, help="previous launch's work/commits (omit to restore from S3)")
+    r.add_argument("--resume-local", default=None, help="resume from this local commit dir without a store")
+    r.add_argument("--gate", choices=("on", "minimal"), default="on")
+    r.add_argument("--live", choices=("on", "off"), default="on")
+    r.add_argument("--reserve-ceiling-mib", type=int, default=12000)
+    r.add_argument("--reserve-after-steps", type=int, default=10, help="take the memory reserve after this many steps")
+    r.add_argument("--watchdog-interval-s", type=float, default=15.0)
+    r.add_argument("--segment", type=int, default=None, help="segment k >= 1 plan in <run>/segments/<k>/")
+    r.add_argument("--transition", action="store_true", help="first launch of segment k: resume with a Transition")
+    r.add_argument("--mirror", choices=("on", "off"), default="on",
+                   help="write <run>/ckpt_<step>.ckpt per commit for the owner's checkpoint mirror")
+    r.add_argument("--stop-at-step", type=int, default=None, help="create this launch's STOP file right after this step")
+    t = sub.add_parser("tranche", help="write tranche k and its segment plan (k=0: new run; k>=1: from the pointer)")
+    t.add_argument("--run-dir", required=True)
+    t.add_argument("--index", type=int, required=True)
+    t.add_argument("--kind", default="synthetic-tranche/v1", choices=("synthetic-tranche/v1", "s1-tranche/v1"))
+    t.add_argument("--n-contexts", type=int, default=0, help="synthetic: contexts; s1: index lines (0 = all)")
+    t.add_argument("--tail-out", default=None)
+    t.add_argument("--components", default="a0,hyperion_v6all")
+    t.add_argument("--denylist", default=None)
+    t.add_argument("--denylist-sha256", default=None)
+    t.add_argument("--exclusion", default=str(Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/"
+                                                  "build/linear-determined-exclusion-v1-d16f9ffbe6df.json")))
+    t.add_argument("--exclusion-sha256", default="d16f9ffbe6dfb40bce7ed45214814aa23441c9628b563989929a6ad48ac5284f")
+    t.add_argument("--publish-every", type=int, default=2000)
+    t.add_argument("--eval-every-steps", type=int, default=250)
+    t.add_argument("--expected-train-contexts", type=int, default=2000)
+    t.add_argument("--micro-batch-tokens", type=int, default=0, help="padded tokens per micro-batch (0 = no split)")
+    t.add_argument("--eval-every-updates", type=int, default=0, help="dev validation cadence in updates (0 = epochs)")
+    t.add_argument("--best-dev", action="store_true", help="maintain the best-dev pointer (PLAN §6.6)")
+    t.add_argument("--early-stop-patience", type=int, default=0, help="dev evals without improvement (0 = off)")
+    t.add_argument("--early-stop-min-updates", type=int, default=0)
+    t.add_argument("--objective", default="successor-v1",
+                   choices=("successor-v1", "baseline-v1", objective_mod.SUCCESSOR_V1_LS05))
+    t.add_argument("--encoding-sets", default=None,
+                   help='JSON list of pinned assembled encoding sets [{"tree","receipt","sha256"}] (k=0; inherited)')
+    t.add_argument("--store", default="none")
+    t.add_argument("--run-id", default=None)
+    t.add_argument("--size", choices=sorted(model_mod.SIZES), default="S")
+    t.add_argument("--width", type=int, default=640)
+    t.add_argument("--steps", type=int, default=0)
+    t.add_argument("--commit-every", type=int, default=2000)
+    t.add_argument("--b-ctx", type=int, default=32)
+    t.add_argument("--dropout", type=float, default=0.1)
+    t.add_argument("--ctx-drop-prob", type=float, default=0.0,
+                   help="train-step context drop probability (k=0; generalization arm G1 uses 0.10)")
+    t.add_argument("--run-seed-hex", default=None, help="64 hex chars: shared run seed for paired arms (k=0; default random)")
+    t.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
+    t.add_argument("--deadline-h", type=float, default=None)
+    t.add_argument("--storage-cap-gib", type=float, default=20.0)
+    t.add_argument("--experiment-id", default="gp-policy-dl-v2-policylm-v1")
+    t.add_argument("--spec-json", default=None)
+    args = ap.parse_args(argv)
+    if args.cmd == "tranche":
+        return cmd_tranche(args)
+    if args.cmd == "bench":
+        return bench(args)
+    if args.cmd == "plan":
+        return cmd_plan(args)
+    if args.cmd == "run":
+        return cmd_run(args)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
