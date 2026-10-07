@@ -1861,6 +1861,57 @@ fn a_one_value_subtree_publishes_its_exact_fit_and_edits_of_it_are_refused() {
     }
 }
 
+/// The constant `(c1-c1)+1.0` on the default dataset's range (`c1` takes three values; `c0` two,
+/// too few for a fit): the conversion's pair is finite there, `[1, 0]`, and the published record
+/// keeps it; the same records published with the pair absent (read back as NaN) and the
+/// non-finite refusal are refused by name (Lane B's review of #247). The subnormal run above keeps
+/// its legitimately absent pair.
+#[test]
+fn a_constant_subtrees_finite_line_cannot_be_published_as_absent() {
+    let temp = tempfile::tempdir().unwrap();
+    let opt = run_options(
+        temp.path(),
+        &[program("(c1-c1)+1.0")],
+        40,
+        four_parents(),
+        linearize(),
+    );
+    let receipt = run::run(&opt).unwrap();
+    let output = &opt.run.output;
+    let path = output.join("receipt.json");
+    assert_eq!(publication::verify_run(&path).unwrap(), receipt);
+    let moves = published_moves(&opt);
+    let one: Vec<usize> = (0..moves.len())
+        .filter(|&i| {
+            moves[i].id == MINIMAX_LINEARIZE
+                && line(&moves[i]).subtree.contains("(c1-c1)+1")
+                && line(&moves[i]).path.is_empty()
+        })
+        .collect();
+    assert!(!one.is_empty(), "no record of the constant subtree");
+    for &i in &one {
+        let fit = line(&moves[i]).fit.as_ref().unwrap();
+        assert_eq!(fit.coefficients, Some([1.0, 0.0]), "{fit:?}");
+    }
+    let engine = receipt.search.engine_selection.clone().unwrap();
+    let edited = published_edit(output, &receipt, &engine, &moves, |m| {
+        for &i in &one {
+            let record = m[i].linearization.as_mut().unwrap();
+            record.fit.as_mut().unwrap().coefficients = None;
+            record.line_nodes = None;
+            record.lowered_error = None;
+            record.expression = None;
+            record.refusal = Some(LINEARIZE_NON_FINITE.into());
+        }
+    });
+    let error = refused_with(
+        &edited,
+        "a constant's finite line published as absent",
+        "is not that value's exact fit",
+    );
+    lint(&error.replace(&output.display().to_string(), "<run>"));
+}
+
 /// A row's L2 norm is never negative (B19-R06-AGGREGATE-INPUT-RANGE): a run seeded with
 /// `sin((0.1*row_l2))*3.0` publishes and verifies, and its fits of the norm edited to a range with
 /// a negative end are refused by name.

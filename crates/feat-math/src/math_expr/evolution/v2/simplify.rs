@@ -835,13 +835,13 @@ fn consistent(fit: &LinearFit) -> bool {
         .iter()
         .all(|c| *c != 0.0 || c.is_sign_positive());
     // With every target zero the first solve gives the zero polynomial, whose fit is exact at the
-    // first step; its coefficients are zero, or NaN where the conversion scales zero by infinity.
+    // first step; its coefficients are the zero line's on the range, as the conversion gives them.
     let zero_targets = fit.max_abs != 0.0
         || (fit.stop == MinimaxStop::ExactFit
             && fit.iterations == 1
             && fit.steps == 1
             && fit.max_error == 0.0
-            && fit.coefficients.iter().all(|c| c.is_nan() || *c == 0.0));
+            && constant_line_recorded(fit.coefficients, 0.0, fit.lo, fit.hi));
     finite
         && in_range
         && signed
@@ -856,6 +856,43 @@ fn consistent(fit: &LinearFit) -> bool {
         && fit.iterations <= fit.steps
         && fit.steps <= MAX_ITERATIONS
         && closing
+}
+
+/// The monomial pair [`Minimax::monomial`] gives a fit whose Chebyshev coefficients are `value`
+/// and zero on `[lo, hi]`: the line of a first solve over constant targets (the reference
+/// system's first column is all ones, so elimination leaves the other unknowns a zero right-hand
+/// side). The conversion's own code, in its own order: `value` itself (`+0.0` for a zero), and a
+/// zero slope, each NaN where the conversion scales zero by an infinite `α` or `β`. A zero slope's
+/// sign never shows in the sums, which add it to `+0.0` or to `value`.
+fn constant_line(value: f64, lo: f64, hi: f64) -> [f64; 2] {
+    let line = Minimax {
+        lo,
+        hi,
+        chebyshev: vec![value, 0.0],
+        levelled: 0.0,
+        max_error: 0.0,
+        iterations: 1,
+        steps: 1,
+        stop: Stop::ExactFit,
+        reference: Vec::new(),
+    }
+    .monomial();
+    [line[0], line[1]]
+}
+
+/// Whether recorded coefficients are the constant line's on `[lo, hi]`: bit for bit, a NaN where
+/// the conversion gives one; or both NaN where it gives a NaN, as a published record keeps a pair
+/// with any coefficient that is not finite (as absent, read back as NaN).
+fn constant_line_recorded(coefficients: [f64; 2], value: f64, lo: f64, hi: f64) -> bool {
+    let expected = constant_line(value, lo, hi);
+    let exact = coefficients.iter().zip(expected).all(|(c, e)| {
+        if e.is_nan() {
+            c.is_nan()
+        } else {
+            c.to_bits() == e.to_bits()
+        }
+    });
+    exact || (expected.iter().any(|e| e.is_nan()) && coefficients.iter().all(|c| c.is_nan()))
 }
 
 /// What the recorded subtrees of one expression say about the samples they share. The same
@@ -1218,20 +1255,18 @@ fn linearize(
                 // A subtree with one value on every sample has targets of the size its target at
                 // `lo` shows, so `max|f|` is that size. The first reference's solve, whose first
                 // column is all ones, then gives that value at once with a zero slope and no
-                // error, so the fit is exact at the first step, its coefficients that value and
-                // zero (or NaN where the conversion scales zero by infinity); a singular first
-                // solve gives no fit.
+                // error, so the fit is exact at the first step, its coefficients the conversion
+                // of that line on the recorded range, exactly ([`constant_line`]); a singular
+                // first solve gives no fit.
                 let one_value = one_value_wherever_finite(node);
                 if one_value {
-                    let [a0, a1] = fit.coefficients;
                     anyhow::ensure!(
                         fit.max_abs == targets[0].abs()
                             && fit.stop == MinimaxStop::ExactFit
                             && fit.iterations == 1
                             && fit.steps == 1
                             && fit.max_error == 0.0
-                            && (a0.is_nan() || a0 == targets[0])
-                            && (a1.is_nan() || a1 == 0.0),
+                            && constant_line_recorded(fit.coefficients, targets[0], fit.lo, fit.hi),
                         "a recorded fit of a subtree with one value on every sample is not that value's exact fit"
                     );
                 }
