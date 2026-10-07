@@ -2496,6 +2496,15 @@
         "storage"
       ]
     },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
       "role": "research",
       "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."

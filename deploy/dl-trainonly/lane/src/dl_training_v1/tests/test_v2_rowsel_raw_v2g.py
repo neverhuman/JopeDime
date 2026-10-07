@@ -3,8 +3,8 @@ Every invariance check is paired with a control that MUST FAIL it.
 
   Build       groups never straddle; split sha binds the group spec; cut 'trainonly-split-v2g:' replaces the as-built v2
               contexts; new view ids; the split ignoring the group (plain v2) straddles and is refused
-  Admission   target_tied_group runs FIRST, before any split or union-find (spy); ambiguous candidates with different
-              component structures are refused, identical ones admitted (lowest index)
+  Admission   features only before the split: ambiguous candidates with different component structures are refused,
+              identical ones admitted (lowest index); target_tied_group runs PER CONTEXT on its own outer-train rows
   Gates       targets never move the split; group-preserving outer-test changes never move it and a content-ranked split
               is refused; empty folds only trailing below 5 components and equal to the plan's
   Linear      exactly linear y refused (target_linear_in_features, nothing written); near-linear flagged; v1 replay untouched
@@ -131,19 +131,19 @@ class Build(Base):
 
 
 class Admission(Base):
-    def test_a_tied_column_is_refused_before_any_split_or_union_find(self):
-        """MUST FAIL if the split or the union-find ever sees a target-binned group column."""
+    def test_a_tied_column_refuses_every_context_on_its_own_train_rows(self):
+        """A target-binned group column: every context's OWN outer-train rows show the tie, so every context is refused
+        (group_column_tied_to_target) and nothing is written. The guard reads only that context's outer-train targets
+        (tests.test_v2_rowsel_raw_fold_isolation; PR #246 review 5437848458); the split never receives y."""
         V = np.array(VALUES, copy=True)
         codes = sorted({c for c in V[:, 3].tolist() if c != t1raw.MISSING_CODE})
         V[:, 3] = np.asarray(codes)[np.clip(np.digitize(V[:, 4], np.quantile(V[:, 4], [0.2, 0.4, 0.6, 0.8])), 0, 4)]
-        boom = mock.Mock(side_effect=AssertionError("union-find on a tied column"))
-        with mock.patch.object(tool.rowsel_split_v2_groups, "split", boom), \
-                mock.patch.object(tool.rowsel_split_v2_groups, "components", boom), \
-                mock.patch.object(tool.rowsel_split_v2_groups, "component_partition", boom):
-            rec = self.run_ds(V=V)
+        rec = self.run_ds(V=V)
         self.assert_refused(rec, "group_column_tied_to_target")
         self.assertIn("group_is_binned_target", rec["detail"])
-        boom.assert_not_called()
+        self.assertEqual([(c["fold"], c["refused"]) for c in rec["contexts"]],
+                         [(f, "group_column_tied_to_target") for f in range(5)])
+        self.assertIn("per context", rec["group_admission"]["target_tie"])       # no dataset-level, all-y tie decision
 
     def test_ambiguous_candidates_need_identical_structure(self):
         V = np.array(VALUES, copy=True)
