@@ -1,0 +1,383 @@
+"""PR #218 findings 3 and 10: no default selects the registry split or split v1, and the v1-port lineage check (a v1
+sampler fit over every universe row, i.e. every row's target) runs only on the explicit registry replay.
+
+  RawDefaults       tools/v2_rowsel_raw.py and its coverage route default to rowsel-raw-split-v2; v1 only explicitly;
+                    the explicit v1 and v2 paths build the bytes the custody version 28be7f98 built
+  BuilderDefaults   tools/v2_rowsel_build.py refuses to run without --split-version; 'registry' only when passed
+  PortCheck         load_dataset refuses v1_port_check=None; only True runs sampler_select over all universe positions
+                    (must-fail spy); the registry replay's lineage equals fcfe3828's
+  V2Path            build_v2 (v2 and v2g) never fits the sampler over all universe positions (spy)
+  BeforeAfter       a v2 and a v2g build before (custody fcfe3828) and after the change: view ids, context_sha256,
+                    files, cut and every gate unchanged; only port_reproduces_v1_selection / port_fit_cpu_s differ
+                    (plus the reason key added next to them)
+"""
+import argparse
+import gzip
+import hashlib
+import importlib.machinery
+import importlib.util
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import numpy as np
+
+from dltrain import rowsel
+from tests import test_v2_rowsel_build as tb
+from tests import test_v2_rowsel_build_split_v2 as t2
+from tests import test_v2_rowsel_build_split_v2g as tg
+from tests import test_v2_rowsel_raw as traw
+
+rb = tb.rb
+H = tb.H
+CUSTODY = Path("/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/code-custody")
+BUILD_BEFORE = CUSTODY / "v2_rowsel_build.py.fcfe38285df6d628faae7b87bdd4105eb35abf3d58987472f955250c5e2e428e"
+RAW_BEFORE = CUSTODY / "v2_rowsel_raw.py.28be7f98ae0ae1bbf1f093d1120717216ac872d80dfb68d8b38a84fa462ca88f"
+PORT_FIELDS = ("port_reproduces_v1_selection", "port_fit_cpu_s")          # the only lineage fields that change
+REASON_KEY = "port_reproduces_v1_selection_not_run"                      # added next to them on the v2/v2g path
+LINEAR_KEY = "target_linear"            # LINEAR-DETERMINED gate result, added (by name) to every new v2/v2g context
+VOLATILE = ("utc_us", "cpu_s", "wall_s", "maxrss_mb", "build_cpu_s", "load_cpu_s")
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def load_custody(path, name):
+    assert sha(path.read_bytes()) == path.name.rsplit(".", 1)[1], path
+    loader = importlib.machinery.SourceFileLoader(name, str(path))
+    mod = importlib.util.module_from_spec(importlib.util.spec_from_loader(name, loader))
+    loader.exec_module(mod)
+    return mod
+
+
+def strip(d, keys=VOLATILE):
+    return {k: v for k, v in d.items() if k not in keys}
+
+
+class DiskDataset:
+    """The on-disk inputs load_dataset reads (manifest, T1 blobs, registry split, membership, T1 meta) for a fixture
+    matrix, with the I/O routing functions patched on the given builder module(s)."""
+
+    def __init__(self, root: Path, m, folds=None):
+        self.root = root
+        ls = tb.lines_of(m)
+        self.tr, self.te = b"\n".join(ls[:tb.NTR]) + b"\n", b"\n".join(ls[tb.NTR:]) + b"\n"
+        n = len(ls)
+        folds = folds or t2.REGISTRY_FOLDS
+        blob = root / "blobs"; blob.mkdir(parents=True)
+        for b in (self.tr, self.te):
+            (blob / sha(b)).write_bytes(b)
+        self.blob = blob
+        split = {"schema": rb.SPLIT_SCHEMA, "method": rb.SPLIT_METHOD, "effective_folds": 5,
+                 "source": {"dataset_hash": H, "train_sha256": sha(self.tr), "test_sha256": sha(self.te),
+                            "train_rows": tb.NTR, "test_rows": n - tb.NTR},
+                 "folds": [{"repeat": 0, "fold": f, "seed": 1, "test_indices": sorted(folds[f])} for f in range(5)]}
+        self.split_body = json.dumps(split).encode()
+        memb = {"ordered_source_row_ids": rowsel.t1_v1_source_row_ids(H, self.tr, self.te),
+                "folds": [{"repeat": 0, "fold": f, "test_indices": sorted(folds[f])} for f in range(5)]}
+        mg = gzip.compress(json.dumps(memb).encode(), mtime=0)
+        (root / "membership.json.gz").write_bytes(mg)
+        manifest = {"dataset_hash": H,
+                    "source": {"train": {"sha256": sha(self.tr), "bytes": len(self.tr)}, "test": {"sha256": sha(self.te), "bytes": len(self.te)},
+                               "split": {"sha256": sha(self.split_body), "version_id": "fixture", "key": "fixture"}},
+                    "split_policy": {"parent_split": {"sha256": sha(self.split_body)}}, "shape": {"columns": 6, "source_rows": n},
+                    "objects": {"membership": {"sha256": sha(mg), "bytes": len(mg)}},
+                    "selected_source_indices_sha256": rowsel.selected_source_indices_sha256(list(range(n)))}
+        mb = json.dumps(manifest).encode()
+        (root / "manifest.json").write_bytes(mb)
+        self.refs = {"manifest_sha256": sha(mb), "membership_sha256": sha(mg), "data_sha256": "f" * 64}
+        meta = json.dumps(tb.META).encode()
+        self.meta_dir = root / "meta"; self.meta_dir.mkdir()
+        (self.meta_dir / f"{sha(meta)}.json").write_bytes(meta)
+        self.inv = {"meta_key": {H: f"blobs/sha256/{sha(meta)}"}}
+        self.rows = tb.epoch_rows(H, range(4))
+
+    def patches(self, mod):
+        return [mock.patch.object(mod.scale_check, "resolve_context", lambda r, src, cache: {"refs": dict(self.refs)}),
+                mock.patch.object(mod, "lineage_route", lambda cohort, row, msha, memb: (self.root / "manifest.json", self.blob,
+                                                                                         self.root / "membership.json.gz")),
+                mock.patch.object(mod, "load_split", lambda cohort, h, sref: (self.split_body, {"path": "fixture", "source": "fixture"})),
+                mock.patch.object(mod, "META_DIR", self.meta_dir)]
+
+    def load(self, mod, **kw):
+        ps = self.patches(mod)
+        for p in ps:
+            p.start()
+        try:
+            return mod.load_dataset(H, self.rows, None, None, self.inv, **kw)
+        finally:
+            for p in ps:
+                p.stop()
+
+
+class Spy:
+    """rowsel.sampler_select wrapper recording whether a call fitted on every universe position; raise_on_all makes
+    such a call fail (the must-fail control)."""
+
+    def __init__(self, raise_on_all=False):
+        self.orig, self.calls, self.raise_on_all = rowsel.sampler_select, [], raise_on_all
+
+    def __call__(self, universe, positions, *a, **k):
+        allpos = sorted(int(p) for p in positions) == sorted(int(p) for p in universe.positions)
+        self.calls.append(allpos)
+        if allpos and self.raise_on_all:
+            raise AssertionError("sampler_select fitted on every universe position (all-row targets)")
+        return self.orig(universe, positions, *a, **k)
+
+    def all_position_calls(self):
+        return sum(self.calls)
+
+
+class Base(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="split-defaults-", dir=os.environ.get("TMPDIR")))
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+
+# ------------------------------------------------------------------------------------------------------- finding 10
+
+class RawDefaults(Base):
+    def test_the_raw_cli_defaults_to_split_v2(self):
+        seen = []
+        for cmd, fn in (("plan", "plan"), ("summarize", "summarize")):
+            with mock.patch.object(traw.tool, fn, lambda a: seen.append(a.split_version) or 0):
+                traw.tool.main([cmd, "--out", str(self.dir)])
+        with mock.patch.object(traw.tool, "build", lambda a: seen.append(a.split_version) or 0):
+            traw.tool.main(["build", "--out", str(self.dir), "--shard", "0"])
+        with mock.patch.object(traw.tool, "plan", lambda a: seen.append(a.split_version) or 0):
+            traw.tool.main(["plan", "--out", str(self.dir), "--split-version", traw.tool.SPLIT_V1])
+        self.assertEqual(seen, [traw.tool.SPLIT_V2] * 3 + [traw.tool.SPLIT_V1])
+
+    def test_the_coverage_cli_defaults_to_split_v2(self):
+        seen = []
+        with mock.patch.object(traw.cov, "plan", lambda a: seen.append((a.split_version, a.out)) or 0):
+            traw.cov.main(["plan"])
+        self.assertEqual(seen, [(traw.tool.SPLIT_V2, str(traw.cov.OUT_V2))])
+
+    def run_both(self, e, explicit):
+        old = load_custody(RAW_BEFORE, "v2_rowsel_raw_28be7f98")
+        outs = {}
+        for name, mod, kw in (("old", old, {}), ("new", traw.tool, {"split_version": explicit})):
+            shard = self.dir / name / "shard-0"; shard.mkdir(parents=True)
+            with mock.patch.object(mod, "load_inputs", traw.fake_inputs), mock.patch.object(mod, "rematch", traw.fake_rematch):
+                outs[name] = (mod.run_dataset(dict(e), shard, {"tools/v2_rowsel_raw.py": "1" * 64}, None, None, None, set(),
+                                              traw._Guard(), log=lambda s: None, **kw), shard)
+        return outs
+
+    def assert_same_build(self, outs, linear_gate):
+        """Byte-identical except, on the v2 path, the LINEAR-DETERMINED result added by name (v1 replay: nothing added)."""
+        (a, sa), (b, sb) = outs["old"], outs["new"]
+        self.assertEqual(a["status"], "done", a.get("detail"))
+        self.assertEqual(strip(a, VOLATILE + ("contexts",)), strip(b, VOLATILE + ("contexts",)))
+        self.assertEqual([LINEAR_KEY in c for c in b["contexts"]], [linear_gate] * len(b["contexts"]))
+        self.assertEqual([strip(c) for c in a["contexts"]], [strip(c, VOLATILE + (LINEAR_KEY,)) for c in b["contexts"]])
+        for c in a["contexts"]:
+            da, db = sa / c["view_id"], sb / c["view_id"]
+            self.assertEqual(sorted(x.name for x in da.iterdir()), sorted(x.name for x in db.iterdir()))
+            for f in da.iterdir():
+                if f.name == "context.json":
+                    cb = json.loads((db / f.name).read_bytes())
+                    self.assertEqual(LINEAR_KEY in cb, linear_gate)
+                    self.assertEqual(strip(json.loads(f.read_bytes())), strip(cb, VOLATILE + (LINEAR_KEY,)))
+                else:
+                    self.assertEqual(f.read_bytes(), (db / f.name).read_bytes(), f.name)
+
+    def test_the_explicit_v1_replay_builds_28be7f98s_bytes(self):
+        self.assert_same_build(self.run_both(traw.plan_entry(), traw.tool.SPLIT_V1), linear_gate=False)
+
+    def test_the_v2_path_builds_28be7f98s_bytes(self):
+        e = dict(traw.plan_entry(), split_version=traw.tool.SPLIT_V2)
+        self.assert_same_build(self.run_both(e, traw.tool.SPLIT_V2), linear_gate=True)
+
+
+class BuilderDefaults(Base):
+    def test_no_split_version_no_run(self):
+        for argv in (["--of", "1", "--out", str(self.dir), "--shard", "0"], ["--of", "1", "--summarize", "--out", str(self.dir)]):
+            with mock.patch.object(rb, "build", side_effect=AssertionError("ran without --split-version")), \
+                    mock.patch.object(rb, "summarize", side_effect=AssertionError("ran without --split-version")), \
+                    mock.patch("sys.stderr"):
+                with self.assertRaises(SystemExit) as cm:
+                    rb.main(argv)
+                self.assertEqual(cm.exception.code, 2)
+
+    def test_registry_only_when_passed(self):
+        seen = []
+        with mock.patch.object(rb, "build", lambda a: seen.append(a.split_version) or 0):
+            rb.main(["--split-version", "registry", "--of", "1", "--out", str(self.dir), "--shard", "0"])
+        with mock.patch.object(rb, "build_v2", lambda a: seen.append(a.split_version) or 0):
+            rb.main(["--split-version", rb.SPLIT_V2, "--tree", "kmeans-clean", "--of", "1", "--shard", "0"])
+        self.assertEqual(seen, ["registry", rb.SPLIT_V2])
+
+
+# -------------------------------------------------------------------------------------------------------- finding 3
+
+class PortCheck(Base):
+    def test_v1_port_check_must_be_given(self):
+        """Refused before any read (not a lineage RebuildError further in), and nothing is fitted."""
+        disk = DiskDataset(self.dir / "in", tb.fixture_matrix())
+        spy = Spy()
+        for kw in ({}, {"v1_port_check": None}):
+            with mock.patch.object(rowsel, "sampler_select", spy), \
+                    mock.patch.object(rb.scale_check, "resolve_context", side_effect=AssertionError("read before the check")):
+                with self.assertRaises(ValueError) as cm:
+                    rb.load_dataset(H, disk.rows, None, None, disk.inv, **kw)
+            self.assertIs(type(cm.exception), ValueError)
+            self.assertIn("v1_port_check must be given", str(cm.exception))
+        self.assertEqual(spy.calls, [])
+
+    def test_the_registry_replay_passes_v1_port_check_true(self):
+        """build() of --split-version registry hands build_shard a loader that runs the v1 port; build_v2 does not."""
+        loaders, kws = [], []
+        src = mock.Mock(); src.included.return_value = []
+        inv = self.dir / "inv.json"; inv.write_text("{}")
+        shard_rec = {k: 0 for k in ("shard", "expected", "built_now", "already_done", "done", "done_by_label", "failed_by_reason",
+                                    "cpu_s", "elapsed_s")} | {"complete": True}
+        with mock.patch.object(rb.scale_check, "Sources", lambda load_index: src), \
+                mock.patch.object(rb.scale_check, "DataCache", lambda max_items: None), mock.patch.object(rb, "DATASETS_INV", inv), \
+                mock.patch.object(rb, "load_scope", lambda rows, scope: ([], {}, {})), mock.patch.object(rb, "input_refs", lambda r: {}), \
+                mock.patch.object(rb, "build_shard", lambda out, shard, of, scope, loader, codes, refs: loaders.append(loader) or shard_rec), \
+                mock.patch("builtins.print"):
+            rc = rb.build(argparse.Namespace(out=str(self.dir), shard=0, of=1, scope="incoming-kmeans", datasets=None))
+        self.assertEqual((rc, len(loaders)), (0, 1))
+        with mock.patch.object(rb, "load_dataset", lambda *a, **k: kws.append(k) or {}):
+            loaders[0](H, [])
+        self.assertEqual(kws, [{"v1_port_check": True}])
+
+    def test_only_the_registry_replay_fits_the_sampler_on_every_row(self):
+        disk = DiskDataset(self.dir / "in", tb.fixture_matrix())
+        spy = Spy()
+        with mock.patch.object(rowsel, "sampler_select", spy):
+            ds = disk.load(rb, v1_port_check=False)
+        self.assertEqual(spy.all_position_calls(), 0)
+        self.assertEqual({k: ds["lineage"][k] for k in PORT_FIELDS + (REASON_KEY,)},
+                         {"port_reproduces_v1_selection": None, "port_fit_cpu_s": None, REASON_KEY: rb.PORT_NOT_RUN})
+        self.assertEqual(rb.PORT_NOT_RUN, "not run: registry replay only (all-row targets; #218 finding 3)")
+        with mock.patch.object(rowsel, "sampler_select", spy):
+            ds = disk.load(rb, v1_port_check=True)
+        self.assertEqual(spy.all_position_calls(), 1)
+        self.assertIsInstance(ds["lineage"]["port_reproduces_v1_selection"], bool)
+        self.assertNotIn(REASON_KEY, ds["lineage"])
+
+    def test_the_spy_catches_an_all_row_fit(self):
+        """MUST FAIL (control): the raising spy stops the registry replay's all-row fit, and does not stop v2/v2g loads."""
+        disk = DiskDataset(self.dir / "in", tb.fixture_matrix())
+        with mock.patch.object(rowsel, "sampler_select", Spy(raise_on_all=True)):
+            with self.assertRaises(AssertionError):
+                disk.load(rb, v1_port_check=True)
+            disk.load(rb, v1_port_check=False)
+
+    def test_the_registry_replay_lineage_equals_fcfe3828s(self):
+        old = load_custody(BUILD_BEFORE, "v2_rowsel_build_fcfe3828")
+        disk = DiskDataset(self.dir / "in", tb.fixture_matrix())
+        a, b = disk.load(old), disk.load(rb, v1_port_check=True)
+        self.assertEqual(strip(a["lineage"], ("port_fit_cpu_s",)), strip(b["lineage"], ("port_fit_cpu_s",)))   # cpu time only
+        self.assertEqual(a["folds"], b["folds"]); self.assertEqual(a["split"], b["split"])
+
+
+class V2Path(Base):
+    """build_v2 end to end (scope, guard and inventory stubbed; load_dataset real on disk inputs): no sampler fit over
+    every universe position on the v2 or the v2g path."""
+
+    def run_build_v2(self, tree, entry_extra, m):
+        out = self.dir / tree; out.mkdir()
+        e0 = [{"view_id": r["view_id"], "context_sha256": r["context_sha256"], "fold": r["fold"]} for r in tb.epoch_rows(H, range(4))]
+        e = dict({"dataset_hash": H, "label": "clean", "epoch0": e0, "shard": 0, "est_cpu_s": 1.0,
+                  "registry_grouping": {"registry_grouped_by_feature_column": bool(entry_extra)}}, **entry_extra)
+        version = rb.tree_cfg(tree)["version"]
+        (out / "plan.json").write_text(json.dumps({"of": 1, "tree": tree, "split_version": version, "counts": {"datasets": 1},
+                                                   "owner_line": "fixture", "datasets": [e]}))
+        disk = DiskDataset(self.dir / f"in-{tree}", m)
+        inv = self.dir / f"inv-{tree}.json"; inv.write_text(json.dumps(disk.inv))
+        its = tb.items(H, "clean", folds=range(4))
+        src = mock.Mock(); src.included.return_value = []
+        loads = []
+        real = rb.load_dataset
+
+        def spy_load(*a, **k):
+            loads.append(k.get("v1_port_check"))
+            return real(*a, **k)
+        spy = Spy(raise_on_all=True)
+        ps = disk.patches(rb) + [mock.patch.object(rb.scale_check, "Sources", lambda load_index: src),
+                                 mock.patch.object(rb.scale_check, "DataCache", lambda max_items: None),
+                                 mock.patch.object(rb, "DATASETS_INV", inv),
+                                 mock.patch.object(rb, "load_tree_scope", lambda rows, t: ({H: its}, {}, {"datasets": 1})),
+                                 mock.patch.object(rb, "input_refs", lambda r: dict(tb.REFS)),
+                                 mock.patch.object(rb, "guard", lambda: 0), mock.patch.object(rb, "check_cap_label", lambda ds, acq: None),
+                                 mock.patch.object(rb, "load_dataset", spy_load), mock.patch.object(rowsel, "sampler_select", spy)]
+        for p in ps:
+            p.start()
+        try:
+            rc = rb.build_v2(argparse.Namespace(out=str(out), tree=tree, of=1, shard=0, split_version=version, datasets=None))
+        finally:
+            for p in ps:
+                p.stop()
+        rec = json.loads((out / "shard-0" / "_datasets" / f"{H}.json").read_bytes())
+        return rc, rec, loads, spy
+
+    def test_v2_build_never_fits_on_every_row(self):
+        rc, rec, loads, spy = self.run_build_v2("kmeans-clean", {}, tb.fixture_matrix())
+        self.assertEqual((rc, rec["status"], loads, spy.all_position_calls()), (0, "done", [False], 0), rec.get("detail"))
+        self.assertGreater(len(spy.calls), 0)                              # the per-fold selector did run (on fit rows)
+        self.assertEqual((rec["lineage"]["port_reproduces_v1_selection"], rec["lineage"][REASON_KEY]), (None, rb.PORT_NOT_RUN))
+
+    def test_v2g_build_never_fits_on_every_row(self):
+        extra = {"disposition": "build", "group_column": tg.SPEC, "group_source": "fixture", "replaces_v2split": tg.REPL,
+                 "group_evidence": {"reproducing": [tg.GCOL]}, "empty_folds": [], "effective_folds": 5}
+        rc, rec, loads, spy = self.run_build_v2("kmeans-clean-groups", extra, tg.M)
+        self.assertEqual((rc, rec["status"], loads, spy.all_position_calls()), (0, "done", [False], 0), rec.get("detail"))
+        self.assertIsNone(rec["group_target_tie"])
+
+
+class BeforeAfter(Base):
+    """The same disk inputs built by custody fcfe3828 (before) and by this version (after)."""
+
+    def build(self, mod, ds, prof, shard):
+        shard.mkdir(parents=True)
+        its = tb.items(H, "clean", folds=range(4))
+        return mod.build_dataset_v2(ds, its, shard, tb.CODES, dict(tb.REFS), budget=tb.BUDGET, profile=prof,
+                                    extra={"registry_grouping": {"registry_grouped_by_feature_column": True}})
+
+    def compare(self, m, prof_of):
+        old = load_custody(BUILD_BEFORE, "v2_rowsel_build_fcfe3828")
+        disk = DiskDataset(self.dir / "in", m)
+        ds_old, ds_new = disk.load(old), disk.load(rb, v1_port_check=False)
+        a = self.build(old, ds_old, prof_of(old), self.dir / "before")
+        b = self.build(rb, ds_new, prof_of(rb), self.dir / "after")
+        self.assertEqual((a["status"], b["status"]), ("done", "done"), (a.get("detail"), b.get("detail")))
+        self.assertEqual([(c["view_id"], c["context_sha256"]) for c in a["contexts"]], [(c["view_id"], c["context_sha256"]) for c in b["contexts"]])
+        self.assertEqual((a["cut"], a["split"]), (b["cut"], b["split"]))                    # cut_id and every gate
+        la, lb = dict(a["lineage"]), dict(b["lineage"])
+        self.assertEqual(lb.pop(REASON_KEY), rb.PORT_NOT_RUN)
+        self.assertEqual({k: lb[k] for k in PORT_FIELDS}, {"port_reproduces_v1_selection": None, "port_fit_cpu_s": None})
+        self.assertIsInstance(la["port_reproduces_v1_selection"], bool)
+        self.assertEqual(strip(la, PORT_FIELDS), strip(lb, PORT_FIELDS))
+        rec_keys = VOLATILE + ("contexts", "lineage", "group_target_tie")
+        self.assertEqual(strip(a, rec_keys), strip(b, rec_keys))
+        self.assertIsNone(b.get("group_target_tie"))
+        for c in a["contexts"]:
+            da, db = self.dir / "before" / c["view_id"], self.dir / "after" / c["view_id"]
+            for f in ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32", ".done"):
+                self.assertEqual((da / f).read_bytes(), (db / f).read_bytes(), f)
+            ca, cb = (json.loads((x / "context.json").read_bytes()) for x in (da, db))
+            lca, lcb = ca["rowsel"].pop("lineage"), cb["rowsel"].pop("lineage")
+            self.assertEqual(lcb.pop(REASON_KEY), rb.PORT_NOT_RUN)
+            self.assertEqual((lcb["port_reproduces_v1_selection"], type(lca["port_reproduces_v1_selection"])), (None, bool))
+            self.assertEqual(strip(lca, PORT_FIELDS), strip(lcb, PORT_FIELDS))
+            self.assertEqual(strip(ca), strip(cb))
+
+    def test_v2(self):
+        self.compare(tb.fixture_matrix(), lambda mod: mod.PROFILE_V2)
+
+    def test_v2g(self):
+        self.compare(tg.M, lambda mod: mod.profile_v2g(tg.GCOL, tg.GNAME, tg.REPL))
+
+
+if __name__ == "__main__":
+    unittest.main()

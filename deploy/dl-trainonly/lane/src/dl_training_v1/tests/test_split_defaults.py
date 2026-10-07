@@ -39,6 +39,7 @@ BUILD_BEFORE = CUSTODY / "v2_rowsel_build.py.fcfe38285df6d628faae7b87bdd4105eb35
 RAW_BEFORE = CUSTODY / "v2_rowsel_raw.py.28be7f98ae0ae1bbf1f093d1120717216ac872d80dfb68d8b38a84fa462ca88f"
 PORT_FIELDS = ("port_reproduces_v1_selection", "port_fit_cpu_s")          # the only lineage fields that change
 REASON_KEY = "port_reproduces_v1_selection_not_run"                      # added next to them on the v2/v2g path
+LINEAR_KEY = "target_linear"            # LINEAR-DETERMINED gate result, added (by name) to every new v2/v2g context
 VOLATILE = ("utc_us", "cpu_s", "wall_s", "maxrss_mb", "build_cpu_s", "load_cpu_s")
 
 
@@ -170,26 +171,30 @@ class RawDefaults(Base):
                                               traw._Guard(), log=lambda s: None, **kw), shard)
         return outs
 
-    def assert_same_build(self, outs):
+    def assert_same_build(self, outs, linear_gate):
+        """Byte-identical except, on the v2 path, the LINEAR-DETERMINED result added by name (v1 replay: nothing added)."""
         (a, sa), (b, sb) = outs["old"], outs["new"]
         self.assertEqual(a["status"], "done", a.get("detail"))
         self.assertEqual(strip(a, VOLATILE + ("contexts",)), strip(b, VOLATILE + ("contexts",)))
-        self.assertEqual([strip(c) for c in a["contexts"]], [strip(c) for c in b["contexts"]])
+        self.assertEqual([LINEAR_KEY in c for c in b["contexts"]], [linear_gate] * len(b["contexts"]))
+        self.assertEqual([strip(c) for c in a["contexts"]], [strip(c, VOLATILE + (LINEAR_KEY,)) for c in b["contexts"]])
         for c in a["contexts"]:
             da, db = sa / c["view_id"], sb / c["view_id"]
             self.assertEqual(sorted(x.name for x in da.iterdir()), sorted(x.name for x in db.iterdir()))
             for f in da.iterdir():
                 if f.name == "context.json":
-                    self.assertEqual(strip(json.loads(f.read_bytes())), strip(json.loads((db / f.name).read_bytes())))
+                    cb = json.loads((db / f.name).read_bytes())
+                    self.assertEqual(LINEAR_KEY in cb, linear_gate)
+                    self.assertEqual(strip(json.loads(f.read_bytes())), strip(cb, VOLATILE + (LINEAR_KEY,)))
                 else:
                     self.assertEqual(f.read_bytes(), (db / f.name).read_bytes(), f.name)
 
     def test_the_explicit_v1_replay_builds_28be7f98s_bytes(self):
-        self.assert_same_build(self.run_both(traw.plan_entry(), traw.tool.SPLIT_V1))
+        self.assert_same_build(self.run_both(traw.plan_entry(), traw.tool.SPLIT_V1), linear_gate=False)
 
     def test_the_v2_path_builds_28be7f98s_bytes(self):
         e = dict(traw.plan_entry(), split_version=traw.tool.SPLIT_V2)
-        self.assert_same_build(self.run_both(e, traw.tool.SPLIT_V2))
+        self.assert_same_build(self.run_both(e, traw.tool.SPLIT_V2), linear_gate=True)
 
 
 class BuilderDefaults(Base):

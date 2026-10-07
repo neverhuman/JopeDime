@@ -33,7 +33,8 @@ from pathlib import Path
 
 import numpy as np
 
-from dltrain import cpuguard, jtt1, nonnumeric, rowsel, rowsel_raw, rowsel_raw_split_v2, scale_check, t1raw
+from dltrain import (cpuguard, jtt1, nonnumeric, rowsel, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check,
+                     t1raw, target_linear)
 
 RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
 META_DIR = RUN / "inputs" / "t1-meta"
@@ -49,13 +50,17 @@ OWNER = {"ROWSEL-SPLIT": "/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/
          "ROWSEL-TRAINONLY": "/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261005T203324Z.json"}
 CODE_FILES = ("tools/v2_rowsel_raw.py", "dltrain/rowsel_raw.py", "dltrain/rowsel.py", "dltrain/t1raw.py", "dltrain/t1prep.py",
               "dltrain/trainonly.py", "dltrain/metafeatures.py", "dltrain/scale_check.py", "dltrain/jtt1.py", "dltrain/cpuguard.py",
-              "dltrain/nonnumeric.py", "dltrain/rowsel_raw_split_v2.py")
+              "dltrain/nonnumeric.py", "dltrain/rowsel_raw_split_v2.py", "dltrain/rowsel_split_v2_groups.py",
+              "dltrain/target_linear.py")
 LATER_CODE_FILES = frozenset({"dltrain/nonnumeric.py",       # added after ROWSEL-RAW-v1 was built; not a dependency of it
-                              "dltrain/rowsel_raw_split_v2.py"})   # added after the v1 trees; RAW-SPLIT-RULING
+                              "dltrain/rowsel_raw_split_v2.py",    # added after the v1 trees; RAW-SPLIT-RULING
+                              "dltrain/rowsel_split_v2_groups.py", "dltrain/target_linear.py"})   # RAW-GROUP / LINEAR-DETERMINED
 SPLIT_V1 = rowsel_raw.SPLIT_SCHEMA               # "rowsel-raw-split-v1" (18eac154): kept to verify the v1 trees only
 SPLIT_V2 = rowsel_raw_split_v2.SPLIT_SCHEMA      # "rowsel-raw-split-v2": ROWSEL-SPLIT as written (RAW-SPLIT-RULING)
+SPLIT_V2G = rowsel_split_v2_groups.SPLIT_SCHEMA   # "rowsel-split-v2-groups": RAW-GROUP (a), per-entry group column
 SPLIT_VERSIONS = {SPLIT_V1: (rowsel_raw.outer_split, rowsel_raw.split_report),
-                  SPLIT_V2: (rowsel_raw_split_v2.outer_split, rowsel_raw_split_v2.split_report)}
+                  SPLIT_V2: (rowsel_raw_split_v2.outer_split, rowsel_raw_split_v2.split_report),
+                  SPLIT_V2G: (None, None)}            # built per entry by v2g_functions (the entry names its group column)
 CLASSES = ("all_rows_coreset", "acquisition_capped")
 LABEL_OF = {"all_rows_coreset": ["all_rows_coreset"], "acquisition_capped": ["kmeans"]}
 PLAN_SCHEMA = "jope.dl-v2-rowsel-raw-plan/v1"
@@ -112,6 +117,8 @@ def split_functions(e, split_version: str | None = None) -> tuple:
         raise rowsel_raw.RowselRawError("split_version_mismatch", f"entry {v!r} != requested {split_version!r}")
     if v not in SPLIT_VERSIONS:
         raise rowsel_raw.RowselRawError("unknown_split_version", repr(v))
+    if v == SPLIT_V2G:
+        return (v, *v2g_functions(e))
     return (v, *SPLIT_VERSIONS[v])
 
 
@@ -142,7 +149,9 @@ def plan_split_version(pl: dict, declared: str | None = None) -> str:
 
 def default_out(route: str, version: str) -> Path:
     trees = {("l7a", SPLIT_V1): OUT, ("nonnumeric", SPLIT_V1): OUT_NONNUMERIC,
-             ("l7a", SPLIT_V2): RUN / "build-v2" / "ROWSEL-RAW-v2", ("nonnumeric", SPLIT_V2): RUN / "build-v2" / "ROWSEL-RAW-v2-nonnumeric"}
+             ("l7a", SPLIT_V2): RUN / "build-v2" / "ROWSEL-RAW-v2", ("nonnumeric", SPLIT_V2): RUN / "build-v2" / "ROWSEL-RAW-v2-nonnumeric",
+             ("l7a", SPLIT_V2G): RUN / "build-v2" / "ROWSEL-RAW-v2gsplit",
+             ("nonnumeric", SPLIT_V2G): RUN / "build-v2" / "ROWSEL-RAW-v2gsplit-nonnumeric"}
     return trees[(route, version)]
 
 
@@ -386,14 +395,21 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
         del values
         inp["A"] = None
         rec["universe"] = prep.report
+        if split_version == SPLIT_V2G:                                   # dataset-level admission BEFORE any split
+            rec["group_admission"] = v2g_admission(e, prep)
         folds = split_fn(h, prep.positions, prep.values, specs)
         srep = split_report_fn(prep, folds)
         srep["target_check"] = rowsel_raw.split_target_check(split_fn, prep)
+        if split_version == SPLIT_V2G:
+            srep["group_value_check_fold0"] = v2g_group_value_check(split_fn, prep, e["group_column"]["index"])
         rec["split"] = srep
         if srep["groups_straddling_folds"] or not srep["target_check"]["target_invariant"]:
             raise rowsel_raw.RowselRawError("split_check_failed", json.dumps(srep["target_check"]))
-        if min(srep["fold_sizes"]) == 0:
+        if split_version == SPLIT_V2G:
+            v2g_gates(srep, e)
+        elif min(srep["fold_sizes"]) == 0:
             raise rowsel_raw.RowselRawError("empty_outer_fold", json.dumps(srep["fold_sizes"]))
+        built_folds = [f for f in range(rowsel_raw.OUTER_FOLDS) if srep["fold_sizes"][f]]      # v2g: trailing empty folds
         mrec = e["match_record"]
         universe_ref = {"raw_sha256s": [inp["raw_ref"]["sha256"]], "match_receipt_sha256": mrec["sha256"],
                         "match_receipt": mrec["path"], "partition": rowsel_raw.PARTITION,
@@ -403,9 +419,11 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
                         "cleanup": {k: prep.report["cleanup"][k] for k in ("no_target", "unmapped_category_with_target")}}
         split_ref = {k: srep[k] for k in ("schema", "sha256", "fold_sizes", "groups", "largest_group", "groups_straddling_folds",
                                           "domain", "rule")} | {"target_invariant": srep["target_check"]["target_invariant"]}
+        if split_version == SPLIT_V2G:
+            split_ref |= {k: srep[k] for k in V2G_SPLIT_KEYS} | {"group_value_invariant": srep["group_value_check_fold0"]["invariant"]}
         e0 = {"level": "dataset", "contexts": e["epoch0"], "count": len(e["epoch0"]),
               "fold_correspondence": "none: a new value-free outer split (ROWSEL-SPLIT); new fold f is not epoch-0 fold f",
-              "new_contexts": rowsel_raw.OUTER_FOLDS, "context_count_changed": len(e["epoch0"]) != rowsel_raw.OUTER_FOLDS,
+              "new_contexts": len(built_folds), "context_count_changed": len(e["epoch0"]) != len(built_folds),
               "epoch0_sealed_contexts": inp["sealed"]}
         rec["epoch0_replaced"] = e0
         common = {"t1_meta_sha256": inp["meta_sha256"], "data_sha256": inp["record"]["data_sha256"], "raw_source": inp["raw_ref"],
@@ -413,19 +431,27 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
                   "cohort": e["cohort"], "epoch0_row_selection_leak": e["epoch0_labels"], "epoch0_replaced": e0,
                   "code_sha256": codes, "rowsel_universe": universe_ref, "rowsel_split": split_ref}
         common.update(e.get("context_extra") or {})
+        if split_version == SPLIT_V2G:
+            common["cut"] = v2g_cut(srep, e)
+            common["split_version"] = SPLIT_V2G
         results = []
-        for f in range(rowsel_raw.OUTER_FOLDS):
+        for f in built_folds:
             guard.wait()
             tf, cf = time.time(), cpu_s()
             kw = {} if select_fn is None else {"select_fn": select_fn}
             r = rowsel_raw.build_fold(prep, folds, f, universe_ref, split_ref, **kw)
             files = rowsel_raw.context_files(r)
             crec = rowsel_raw.context_record(r, prep, files, common)
+            tlg = None
+            if split_version != SPLIT_V1 and r["passed"]:                 # LINEAR-DETERMINED gate (v1 is a byte-identical replay)
+                tlg = target_linear.check_jtt1(r["artifacts"]["encoder_raw"])
+                crec["target_linear"] = tlg
             results.append((r, files, crec))
             contexts.append({"fold": f, "view_id": r["view_id"], "identity": r["identity"], "passed": r["passed"],
                              "failures": r["failures"], "quotas": list(r["view"].quotas), "n_train": crec["n_train"],
                              "n_test": crec["n_test"], "context_sha256": crec["context_sha256"],
-                             "cpu_s": round(cpu_s() - cf, 2), "wall_s": round(time.time() - tf, 2)})
+                             "cpu_s": round(cpu_s() - cf, 2), "wall_s": round(time.time() - tf, 2)}
+                            | ({"target_linear": {"verdict": tlg["verdict"], "ols_rel_rmse": tlg["ols_rel_rmse"]}} if tlg else {}))
             log(json.dumps({"dataset": h, "fold": f, "passed": r["passed"], "failures": r["failures"],
                             "cpu_s": contexts[-1]["cpu_s"], "maxrss_mb": maxrss_mb()}))
             if not r["passed"]:
@@ -434,6 +460,10 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
         failed = [c for c in contexts if not c["passed"]]
         if failed:
             raise rowsel_raw.RowselRawError("counterfactual_failed", json.dumps({c["fold"]: c["failures"] for c in failed}))
+        lin = {c["fold"]: c["target_linear"]["ols_rel_rmse"] for c in contexts
+               if (c.get("target_linear") or {}).get("verdict") == target_linear.REFUSE}
+        if lin:                                                          # refused: no context of the dataset is written
+            raise rowsel_raw.RowselRawError(target_linear.REFUSE, json.dumps(lin))
         if post_gate is not None:
             guard.wait()
             g = post_gate(inp, prep, folds, universe_ref, split_ref, results)
@@ -963,6 +993,336 @@ def summarize_nonnumeric(a):
     return 0
 
 
+# --------------------------------------------------------------------------------------------------- split v2-groups (RAW-GROUP)
+#
+# Owner ruling RAW-GROUP (owner-decisions-20261006T103543Z.json; relay DELEGATED-RELAY-raw-group-20261006T103543Z.txt):
+#   (a) the raw-route datasets whose registry group column carries EXACTLY from T1 onto the raw universe (fill receipt
+#       raw-route-group-annotated-20261006T105200Z.json, carry verdict 'yes') are rebuilt on rowsel-split-v2-groups
+#       (dltrain/rowsel_split_v2_groups.py: union of exact-duplicate feature rows and equal group values; same v2 ranking
+#       and greedy placement) into new create-only trees, under new cut_ids 'trainonly-split-v2g:' + split sha256;
+#       cut.replaces_cut names the as-built plain-v2 contexts, which are superseded locally (nothing deleted);
+#   (b) where the group does not carry exactly (verdict 'near'): plain split v2 is kept and the as-built contexts are
+#       flagged group_annotation_dropped BY REFERENCE in a create-only record (contexts are never rewritten): they stay in
+#       training/S1 and are excluded from every headline outer-test number.
+# Group value of a universe row = canonical '<f8' bytes of its value in the group column (the T1 column's raw reading,
+# spec index); NaN or t1raw.MISSING_CODE = the one missing group (as the fill receipt's carry/straddle scan keyed it).
+# Admission BEFORE any split or union-find: rowsel_split_v2_groups.target_tied_group for EVERY candidate column first;
+# then (ambiguous registry columns) every candidate must give the identical component structure; lowest index taken.
+# Gates after the split: no duplicate or annotated group straddles folds, the target never moves the split, group- and
+# duplicate-preserving outer-test changes never move it, empty folds only trailing and only below 5 components (the
+# lane-wide convention), equal to the plan's. LINEAR-DETERMINED applies as on every non-v1 route.
+
+RAW_GROUP_SOURCE = RECEIPTS / "fill" / "raw-route-group-annotated-20261006T105200Z.json"
+RAW_GROUP_SOURCE_SHA256 = "7ac257708f15e9139c84276d296a9b9226662343c9ab7a57b72c1d1864fbba95"
+RAW_GROUP_DECISION = Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261006T103543Z.json")
+RAW_GROUP_DECISION_SHA256 = "f2e13f9263b386cac223f4dbe1c9206be49cfef79588ceccdedfa661218e3778"
+RAW_GROUP_RELAY = RUN / "receipts" / "owner-relays" / "DELEGATED-RELAY-raw-group-20261006T103543Z.txt"
+V2G_PLAN_SCHEMA = "jope.dl-v2-rowsel-raw-v2gsplit-plan/v1"
+V2G_SUMMARY_SCHEMA = "jope.dl-v2-rowsel-raw-v2gsplit-summary/v1"
+V2G_DROPPED_SCHEMA = "jope.dl-v2-rowsel-raw-group-annotation-dropped/v1"
+V2G_SUPERSEDED_SCHEMA = "jope.dl-v2-rowsel-raw-v2-superseded-by-v2g/v1"
+V2G_SPLIT_KEYS = ("partition", "group_column", "components", "annotation_groups", "annotation_groups_straddling_folds",
+                  "empty_folds", "effective_folds")
+RAW_MISSING_GROUP = b"\x00missing-cell"        # not 8 bytes: never read as a numeric '<f8' group value
+
+
+def raw_group_values(values, specs, j: int, name: str) -> list:
+    """Group value per universe row from T1 column j's raw reading (specs[j]; never the target)."""
+    j = int(j)
+    if not 0 <= j < len(specs) - 1:
+        raise rowsel_raw.RowselRawError("group_column_not_a_feature", f"{j} of {len(specs) - 1} features")
+    if specs[j].get("name") != name:
+        raise rowsel_raw.RowselRawError("group_column_name_mismatch", f"spec {j} is {specs[j].get('name')!r}, plan says {name!r}")
+    col = np.asarray(values, dtype=np.float64)[:, specs[j]["index"]]
+    return [RAW_MISSING_GROUP if (np.isnan(x) or x == t1raw.MISSING_CODE) else np.float64(x + 0.0).tobytes() for x in col.tolist()]
+
+
+def v2g_functions(e) -> tuple:
+    """(split_fn, split_report_fn) of a v2-groups entry: its group column {index, name}."""
+    gc = e.get("group_column") or {}
+    if gc.get("index") is None or not gc.get("name"):
+        raise rowsel_raw.RowselRawError("group_column_not_given", "a rowsel-split-v2-groups entry must name its group column")
+    j, name = int(gc["index"]), str(gc["name"])
+    spec = rowsel_split_v2_groups.group_spec(j, name)
+
+    def split_fn(h, positions, values, specs, folds=rowsel_raw.OUTER_FOLDS):
+        return rowsel_split_v2_groups.split(h, [int(p) for p in np.asarray(positions).tolist()], rowsel_raw.feature_bytes(values, specs),
+                                            raw_group_values(values, specs, j, name), rowsel_raw.PARTITION, folds)
+
+    def report_fn(prep, folds):
+        rep = rowsel_raw.split_report(prep, folds)
+        pos = prep.positions.tolist()
+        gv = raw_group_values(prep.values, prep.specs, j, name)
+        comps = rowsel_split_v2_groups.components(pos, rowsel_raw.feature_bytes(prep.values, prep.specs), gv)
+        empty = [f for f, n in enumerate(rep["fold_sizes"]) if n == 0]
+        rep.update(schema=SPLIT_V2G, sha256=rowsel_split_v2_groups.split_sha256(prep.dataset_hash, rowsel_raw.PARTITION, spec, folds),
+                   domain=rowsel_split_v2_groups.SPLIT_DOMAIN, rule=rowsel_split_v2_groups.RULE, partition=rowsel_raw.PARTITION,
+                   group_column=spec, components=len(comps), annotation_groups=len(set(gv)),
+                   annotation_groups_straddling_folds=rowsel_split_v2_groups.straddling_groups(folds, pos, gv),
+                   empty_folds=empty, effective_folds=len(rep["fold_sizes"]) - len(empty))
+        return rep
+    return split_fn, report_fn
+
+
+def v2g_admission(e, prep) -> dict:
+    """Dataset-level admission BEFORE any split or union-find (PR #218 finding 8 order): target_tied_group on EVERY
+    candidate column first; only when none is tied, the component structures of the candidates (ambiguous registry
+    columns) must be identical."""
+    gc = e["group_column"]
+    cands = [int(c) for c in e.get("group_candidates") or [gc["index"]]]
+    names = list(e.get("group_candidate_names") or [gc["name"]])
+    if len(names) != len(cands) or int(gc["index"]) != min(cands) or names[cands.index(int(gc["index"]))] != gc["name"]:
+        raise rowsel_raw.RowselRawError("group_candidates_inconsistent", json.dumps({"candidates": cands, "names": names, "group_column": gc}))
+    y = prep.values[:, -1]
+    gvs = {c: raw_group_values(prep.values, prep.specs, c, n) for c, n in zip(cands, names)}
+    ties = {str(c): rowsel_split_v2_groups.target_tied_group(gvs[c], y) for c in cands}      # FIRST, for every candidate
+    if any(ties.values()):
+        raise rowsel_raw.RowselRawError("group_column_tied_to_target", json.dumps({c: t for c, t in ties.items() if t}))
+    rep = {"candidates": cands, "names": names, "target_tie": ties, "rule": "target_tied_group first for every candidate; "
+           "then identical component structure across candidates; lowest index is the group column"}
+    if len(cands) > 1:
+        pos = prep.positions.tolist()
+        fb = rowsel_raw.feature_bytes(prep.values, prep.specs)
+        structures = {str(c): sha(json.dumps(rowsel_split_v2_groups.component_partition(pos, fb, gvs[c])).encode()) for c in cands}
+        rep["component_structure_sha256"] = structures
+        if len(set(structures.values())) != 1:
+            raise rowsel_raw.RowselRawError("ambiguous_group_columns_with_different_components", json.dumps(structures))
+    return rep
+
+
+def v2g_group_value_check(split_fn, prep, j: int, fold: int = 0) -> dict:
+    """The fold assignment must not move when one outer-test fold's features (the group column included: remapped to
+    fresh values), text and targets change; validity = the component structure (duplicates UNION groups) unchanged."""
+    h, pos = prep.dataset_hash, prep.positions
+    name = prep.specs[int(j)]["name"]
+    base = split_fn(h, pos, prep.values, prep.specs)
+    rows = prep.rows_of(base[fold]) if len(base[fold]) else np.zeros(0, dtype=np.int64)
+    part0 = rowsel_split_v2_groups.component_partition(pos.tolist(), rowsel_raw.feature_bytes(prep.values, prep.specs),
+                                                       raw_group_values(prep.values, prep.specs, j, name))
+    fold_of = {p: f for f, v in base.items() for p in v}
+    cases = {}
+    for kind in rowsel_raw_split_v2.CF_KINDS:
+        V2, s2 = rowsel_raw_split_v2.perturb_fold_values(prep.values, prep.specs, rows, kind)
+        part = rowsel_split_v2_groups.component_partition(pos.tolist(), rowsel_raw.feature_bytes(V2, s2), raw_group_values(V2, s2, j, name))
+        got = split_fn(h, pos, V2, s2)
+        moved = sum(1 for f, v in got.items() for p in v if fold_of[p] != f)
+        cases[kind] = {"valid": part == part0, "split_identical": moved == 0, "rows_moved": int(moved)}
+    return {"fold": int(fold), "cases": cases, "valid": all(c["valid"] for c in cases.values()),
+            "invariant": all(c["valid"] and c["split_identical"] for c in cases.values())}
+
+
+def v2g_empty_folds_allowed(rep: dict) -> bool:
+    """Lane-wide convention: with c < 5 components the 5-fold greedy fill leaves exactly folds c..4 empty (c >= 2)."""
+    c, sizes = rep.get("components"), rep["fold_sizes"]
+    return c is not None and 2 <= c < len(sizes) and [f for f, n in enumerate(sizes) if n == 0] == list(range(c, len(sizes)))
+
+
+def v2g_gates(srep: dict, e) -> None:
+    if srep["annotation_groups_straddling_folds"]:
+        raise rowsel_raw.RowselRawError("annotation_groups_straddle_folds", str(srep["annotation_groups_straddling_folds"]))
+    gvc = srep["group_value_check_fold0"]
+    if not (gvc["valid"] and gvc["invariant"]):
+        raise rowsel_raw.RowselRawError("split_moves_under_group_preserving_changes", json.dumps(gvc["cases"]))
+    if srep["empty_folds"] and not v2g_empty_folds_allowed(srep):
+        raise rowsel_raw.RowselRawError("empty_outer_fold", json.dumps(srep["fold_sizes"]))
+    if e.get("empty_folds") is not None and srep["empty_folds"] != list(e["empty_folds"]):
+        raise rowsel_raw.RowselRawError("empty_folds_differ_from_plan", f"{srep['empty_folds']} != {e['empty_folds']}")
+
+
+def v2g_cut(srep: dict, e) -> dict:
+    rv = e["replaces_v2"]
+    return {"cut_id": rowsel_split_v2_groups.cut_id(srep["sha256"]), "schema": SPLIT_V2G, "comparable_with_replaced": False,
+            "group_column": srep["group_column"], "folds": len(srep["fold_sizes"]), "empty_folds": srep["empty_folds"],
+            "effective_folds": srep["effective_folds"],
+            "replaces_cut": [{"kind": "rowsel-raw-split-v2 (as built, superseded; no cut_id was recorded)", "tree": rv["tree"],
+                              "split_sha256": rv["split_sha256"], "view_ids": list(rv["view_ids"]), "dataset_record": rv["dataset_record"]}],
+            "rule": "cut_id = 'trainonly-split-v2g:' + rowsel_split_v2_groups.split_sha256(h, 'raw', group_column, the 5-fold "
+                    "assignment incl. empty folds); never compared with the replaced as-built v2 split"}
+
+
+def plan_v2g(a) -> int:
+    """The v2gsplit plan of one raw route: the fill receipt's 'yes' datasets of the route's v2 tree, each the base v2 plan
+    entry with split v2-groups, its group column (all reproducing candidates), the as-built v2 contexts it supersedes
+    and the expected trailing empty folds; plus the create-only group-annotation-dropped record of the 'near' datasets."""
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    base_out = default_out(a.route, SPLIT_V2)
+    base_pl, base_sha = load_plan(base_out)
+    if plan_split_version(base_pl, SPLIT_V2) != SPLIT_V2:
+        raise SystemExit("base plan is not split v2")
+    base = {e["dataset_hash"]: e for e in base_pl["datasets"]}
+    srcb = RAW_GROUP_SOURCE.read_bytes()
+    if sha(srcb) != RAW_GROUP_SOURCE_SHA256:
+        raise SystemExit("raw-route group source receipt drift")
+    entries, dropped, skipped = [], [], []
+    for x in json.loads(srcb)["datasets"]:
+        if x.get("tree") != base_out.name:
+            continue
+        h = x["dataset_hash"]
+        verdict = ((x.get("carry") or {}).get("verdict") or "").split(":")[0]
+        rec_ref = x.get("dataset_record") or {}
+        if x.get("status") != "built" or rec_ref.get("status") != "done":
+            skipped.append({"dataset_hash": h, "reason": x.get("reason") or "not built as v2"})
+            continue
+        if sha_file(rec_ref["path"]) != rec_ref["sha256"]:
+            raise SystemExit(f"{h}: as-built v2 record drift")
+        replaces = {"tree": str(base_out), "dataset_record": {"path": rec_ref["path"], "sha256": rec_ref["sha256"]},
+                    "view_ids": list(x["view_ids"]), "split_sha256": x["recorded_split"]["sha256"]}
+        if verdict == "near":
+            dropped.append({"dataset_hash": h, "flag": "group_annotation_dropped", "as_built": replaces,
+                            "carry_verdict": x["carry"]["verdict"], "registry_group_column": {k: v for k, v in x["registry_group_column"].items() if k != "evidence"},
+                            "training": "included (training/S1)", "headline_outer_test": "excluded from every headline outer-test number"})
+            continue
+        if verdict != "yes":
+            skipped.append({"dataset_hash": h, "reason": f"carry verdict {verdict!r}"})
+            continue
+        rg = x["registry_group_column"]
+        cands = [int(c) for c in rg["candidates_reproducing"]]
+        names = list(rg["t1_name"])
+        c = min(cands)
+        groups = {s["t1_index"]: s["groups"] for s in x["as_built_group_straddling"]}[c]
+        e = dict(base[h])
+        e.update(split_version=SPLIT_V2G, group_column={"index": c, "name": names[cands.index(c)]}, group_candidates=cands,
+                 group_candidate_names=names, empty_folds=list(range(groups, rowsel_raw.OUTER_FOLDS)) if groups < rowsel_raw.OUTER_FOLDS else [],
+                 replaces_v2=replaces, group_evidence={"source": {"path": str(RAW_GROUP_SOURCE), "sha256": RAW_GROUP_SOURCE_SHA256},
+                                                       "carry": x["carry"], "ambiguous": bool(rg.get("ambiguous")),
+                                                       "as_built_group_straddling": x["as_built_group_straddling"]})
+        e["effective_folds"] = rowsel_raw.OUTER_FOLDS - len(e["empty_folds"])
+        entries.append(e)
+    loads = [0.0] * a.of
+    for e in sorted(entries, key=lambda e: (-float(e.get("est_cpu_s") or 1.0), e["dataset_hash"])):
+        i = min(range(a.of), key=lambda k: (loads[k], k))
+        e["shard"] = i
+        loads[i] += float(e.get("est_cpu_s") or 1.0)
+    entries.sort(key=lambda e: e["dataset_hash"])
+    decision = {"owner_decisions": {"path": str(RAW_GROUP_DECISION), "sha256": RAW_GROUP_DECISION_SHA256}, "relay": str(RAW_GROUP_RELAY),
+                "keys": ["RAW-GROUP", "RAW-GROUP-PR", "S1-RAW-GROUP"]}
+    doc = {"schema": V2G_PLAN_SCHEMA, "route": a.route, "of": a.of, "base_tree": str(base_out), "base_plan_sha256": base_sha,
+           "datasets": entries, "counts": {"datasets": len(entries), "expected_new_contexts": sum(e["effective_folds"] for e in entries),
+                                           "replaced_v2_contexts": sum(len(e["replaces_v2"]["view_ids"]) for e in entries),
+                                           "group_annotation_dropped_datasets": len(dropped), "skipped": len(skipped)},
+           "skipped": skipped, "shard_est_cpu_s": [round(x, 1) for x in loads], "decision": decision,
+           "inputs": {"raw_group_source": {"path": str(RAW_GROUP_SOURCE), "sha256": RAW_GROUP_SOURCE_SHA256}} | base_pl.get("inputs", {}),
+           "precap_rows": rowsel_raw.PRECAP_ROWS, "outer_folds": rowsel_raw.OUTER_FOLDS, "budget": rowsel_raw.BUDGET}
+    stamp_split_version(doc, SPLIT_V2G)
+    drop = {"schema": V2G_DROPPED_SCHEMA, "route": a.route, "datasets": dropped, "count": len(dropped),
+            "contexts": sum(len(d["as_built"]["view_ids"]) for d in dropped), "decision": decision,
+            "rule": "RAW-GROUP (b): plain split v2 kept; flag group_annotation_dropped by reference (contexts are never rewritten); "
+                    "included in training/S1; excluded from every headline outer-test number"}
+    for name, body in (("plan.json", doc), ("group-annotation-dropped.json", drop)):
+        data = (json.dumps(body, indent=1, sort_keys=True) + "\n").encode()
+        p = out / name
+        if p.exists() and p.read_bytes() != data:
+            raise SystemExit(f"{p} exists with different content; refusing to replace a pinned record")
+        if not p.exists():
+            atomic(p, data)
+    print(json.dumps({"plan": str(out / "plan.json"), "counts": doc["counts"], "shard_est_cpu_s": doc["shard_est_cpu_s"]}))
+    return 0
+
+
+def verify_v2g_context(d: Path, e, r) -> list:
+    """Problems of one built v2-groups context directory against its dataset record and plan entry."""
+    p = []
+    cj = json.loads((d / "context.json").read_bytes()) if (d / ".done").exists() else None
+    if cj is None:
+        return ["no .done"]
+    for name, meta in cj.get("files", {}).items():
+        if not (d / name).is_file() or sha_file(d / name) != meta["sha256"]:
+            p.append(f"file:{name}")
+    cut, sref = cj.get("cut") or {}, (cj.get("rowsel") or {}).get("split") or {}
+    if (cj.get("split_version") != SPLIT_V2G or sref.get("schema") != SPLIT_V2G or cut.get("cut_id") != rowsel_split_v2_groups.cut_id(sref.get("sha256", ""))
+            or cut.get("comparable_with_replaced") is not False or cut.get("group_column") != e["group_column"]
+            or [x.get("view_ids") for x in cut.get("replaces_cut") or []] != [e["replaces_v2"]["view_ids"]]):
+        p.append("cut")
+    if sref.get("annotation_groups_straddling_folds") != 0 or not sref.get("group_value_invariant") or not sref.get("target_invariant"):
+        p.append("split_gates")
+    if sref.get("empty_folds") != e["empty_folds"] or cj["fold"] in e["empty_folds"]:
+        p.append("empty_folds")
+    if (cj.get("target_linear") or {}).get("verdict") == target_linear.REFUSE or "target_linear" not in cj:
+        p.append("target_linear")
+    if cj["view_id"] in e["replaces_v2"]["view_ids"]:
+        p.append("view_id_reused")
+    return p
+
+
+def summarize_v2g(a) -> int:
+    """Verify a v2gsplit tree; write its summary receipt, the create-only superseded record (as-built v2 contexts ->
+    their v2g replacements, for the publisher's denylist/superseded flow) and, when complete, .complete."""
+    out = Path(a.out)
+    pl, plan_sha = load_plan(out)
+    plan_split_version(pl, SPLIT_V2G)
+    codes = code_shas()
+    rows, problems, ctx_dirs, superseded, review = [], [], set(), [], []
+    for e in pl["datasets"]:
+        h = e["dataset_hash"]
+        sd = out / f"shard-{e['shard']}"
+        p = sd / "_datasets" / f"{h}.json"
+        row = {"dataset_hash": h, "class": e["class"], "group_column": e["group_column"], "effective_folds": e["effective_folds"],
+               "empty_folds": e["empty_folds"], "replaced_v2_view_ids": e["replaces_v2"]["view_ids"]}
+        if not p.exists():
+            rows.append(row | {"status": "missing_record"})
+            continue
+        r = json.loads(p.read_bytes())
+        row.update(status=r["status"], reason=r.get("reason"), detail=(r.get("detail") or "")[:400], record={"path": str(p), "sha256": sha_file(p)})
+        if r["status"] == "done":
+            if not code_known(r.get("code_sha256"), codes):
+                problems.append({"dataset": h, "problem": "code_not_current"})
+            if (r.get("split") or {}).get("schema") != SPLIT_V2G or r.get("split_version") != SPLIT_V2G:
+                problems.append({"dataset": h, "problem": "split_version"})
+            if len(r["contexts"]) != e["effective_folds"]:
+                problems.append({"dataset": h, "problem": "context_count", "contexts": len(r["contexts"])})
+            ids = []
+            for c in r["contexts"]:
+                d = sd / c["view_id"]
+                ctx_dirs.add(str(d))
+                pr = verify_v2g_context(d, e, r)
+                if pr:
+                    problems.append({"dir": str(d), "problems": pr})
+                ids.append(c["view_id"])
+                if (c.get("target_linear") or {}).get("verdict") == target_linear.REVIEW:
+                    review.append({"view_id": c["view_id"], "ols_rel_rmse": c["target_linear"]["ols_rel_rmse"]})
+            row.update(new_view_ids=ids, cut_id=rowsel_split_v2_groups.cut_id(r["split"]["sha256"]))
+            superseded.append({"dataset_hash": h, "superseded_view_ids": e["replaces_v2"]["view_ids"], "superseded_by": ids,
+                               "cut_id": row["cut_id"], "as_built_record": e["replaces_v2"]["dataset_record"]})
+        rows.append(row)
+    orphans = [str(d) for sd in out.glob("shard-*") if sd.is_dir() for d in sd.iterdir()
+               if d.is_dir() and d.name != "_datasets" and str(d) not in ctx_dirs]
+    done = [x for x in rows if x["status"] == "done"]
+    counts = {"expected_datasets": len(rows), "done_datasets": len(done), "failed_datasets": sum(x["status"] == "failed" for x in rows),
+              "missing_records": sum(x["status"] == "missing_record" for x in rows),
+              "failed_by_reason": dict(collections.Counter(x.get("reason") for x in rows if x["status"] == "failed")),
+              "expected_new_contexts": sum(x["effective_folds"] for x in rows), "done_new_contexts": sum(len(x["new_view_ids"]) for x in done),
+              "superseded_v2_contexts": sum(len(s["superseded_view_ids"]) for s in superseded),
+              "target_linear_near_review_contexts": len(review), "verification_problems": len(problems), "orphan_context_dirs": len(orphans)}
+    shard_recs = [ref(q) for q in sorted(out.glob(f"shard-*-of-{pl['of']}.receipt.json"))]
+    mut = json.loads(Path(a.mutants).read_bytes())
+    dropped_p = out / "group-annotation-dropped.json"
+    doc = {"schema": V2G_SUMMARY_SCHEMA, "utc_us": int(time.time() * 1e6), "out": str(out), "route": pl["route"], "split_version": SPLIT_V2G,
+           "plan": {"path": str(out / "plan.json"), "sha256": plan_sha, "counts": pl["counts"]}, "counts": counts, "datasets": rows,
+           "problems": problems[:100], "orphans": orphans[:50], "shard_receipts": shard_recs, "target_linear_near_review": review,
+           "group_annotation_dropped": ref(dropped_p) if dropped_p.exists() else None, "decision": pl["decision"],
+           "tests": {"log": ref(a.tests_log), "tail": Path(a.tests_log).read_text().strip().splitlines()[-3:]},
+           "mutants": {"path": a.mutants, "sha256": sha_file(a.mutants), "totals": mut.get("totals")}, "code_sha256": codes,
+           "policy": {"s3_calls": 0, "network": False, "gpu": False, "git": False, "published": False}}
+    rp = Path(a.receipt) if a.receipt else RECEIPTS / "build" / f"rowsel-raw-v2gsplit-{pl['route']}-summary-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
+    data = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
+    with open(rp, "xb") as fh:
+        fh.write(data)
+    complete = counts["missing_records"] == 0 and not problems and not orphans and len(shard_recs) == pl["of"]
+    marker = None
+    if complete:
+        sup = (json.dumps({"schema": V2G_SUPERSEDED_SCHEMA, "tree": str(out), "summary": {"path": str(rp), "sha256": sha(data)},
+                           "datasets": superseded, "count": len(superseded), "contexts": counts["superseded_v2_contexts"],
+                           "rule": "the as-built plain-v2 contexts listed are superseded locally by their v2g replacements; nothing is deleted"},
+                          indent=1, sort_keys=True) + "\n").encode()
+        sp = out / "superseded-v2.json"
+        if not sp.exists():
+            atomic(sp, sup)
+        marker = write_complete(out, rp, counts, SPLIT_V2G) if not (out / ".complete").exists() else None
+    print(json.dumps({"receipt": str(rp), "sha256": sha(data), "complete": complete, "marker": str(marker) if marker else None, "counts": counts}))
+    return 0 if complete else 1
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=("plan", "build", "summarize"))
@@ -981,8 +1341,12 @@ def main(argv=None):
     if a.out is None:
         a.out = str(default_out(a.route, a.split_version))
     if a.cmd == "plan":
+        if a.split_version == SPLIT_V2G:
+            return plan_v2g(a)
         return plan_nonnumeric(a) if a.route == "nonnumeric" else plan(a)
     if a.cmd == "summarize":
+        if a.split_version == SPLIT_V2G:
+            return summarize_v2g(a)
         return summarize_nonnumeric(a) if a.route == "nonnumeric" else summarize(a)
     if a.shard is None:
         ap.error("--shard is required for build")

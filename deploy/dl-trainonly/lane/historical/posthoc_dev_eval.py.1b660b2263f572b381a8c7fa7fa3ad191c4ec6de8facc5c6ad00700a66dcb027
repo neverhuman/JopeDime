@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""Generalization measurements E (retraining-directive-v3): post-hoc, read-only evaluation of one local checkpoint.
+
+No optimizer, no writes besides the create-only receipt, CPU only, never heldout/sealed (only contexts whose tail role
+is dev, plus a fixed train_fit probe). Data: the run's frozen tranche entries are prefix-checked against the tail index
+exactly as load_tranche does; then ONLY the dev contexts and a deterministic train_fit probe (every k-th fit entry) are
+read through the same per-shard checks (shard sha256, schema, validate_train_record, exclusion, tranche.admit_contexts,
+compose_encoding with the pinned sets), the run's pinned grammar (run_grammar), syntax_masks and sampler.Corpus.build.
+Per-context labels/teacher plans are per-context, so dev values equal those of the full corpus.
+Metrics (model.eval(), torch.no_grad(), legal-masked unsmoothed NLL via evaluate._forward_programs):
+  standard      evaluate.dev_metrics (the in-training metric: CE family->context macro, token micro, pairwise accuracy)
+  hierarchical  CE family -> dataset -> context macro, per family / dataset / fold
+  zero_context  dev teacher CE with every dev context vector replaced by zeros
+  shuffled      dev teacher CE with dev context vectors rotated by one position over the sorted dev contexts
+  train_probe   the same teacher CE on the fixed train_fit probe (comparable unsmoothed train-side value)
+Usage: posthoc_dev_eval.py RUN_DIR COMMIT_DIR OUT.json [--probe K]
+"""
+import argparse, json, math, os, sys, time
+from collections import defaultdict
+from pathlib import Path
+
+SNAP = Path(os.environ.get("SNAP", "/home/ubuntu/scratch/jopedime-dl-training-v1/build/p8-src/8a6bc25c2ef4"))
+sys.path.insert(0, str(SNAP))
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+from dltrain import (admission as admission_mod, ckpt, dsl_tokenizer, evaluate, exclusions, model as model_mod,  # noqa: E402
+                     s1_tail, sampler, tranche)
+
+
+def load_selected(out_dir, all_entries, keep, spec, adm):
+    index, _ = s1_tail.read_index(out_dir)
+    have = [{"context_sha256": e["context_sha256"], "shard_sha256": e["sha256"]} for e in index[:len(all_entries)]]
+    if have != [dict(e) for e in all_entries]:
+        raise SystemExit("tranche entries are not an exact prefix of the tail index")
+    excl = exclusions.load(spec["exclusion"]["path"], spec["exclusion"]["sha256"])
+    sets = [s1_tail.PinnedEncodingSet(x["tree"], x["receipt"], x["sha256"]) for x in (spec.get("encoding_sets") or [])]
+    resolver = s1_tail.EncodingResolver(s1_tail.DEFAULT_ENCODING_TREES)
+    by = {ix["context_sha256"]: ix for ix in index}
+    shards = []
+    for e in all_entries:
+        if e["context_sha256"] not in keep:
+            continue
+        ix = by[e["context_sha256"]]
+        body = s1_tail.guarded_read(Path(out_dir) / ix["shard"])
+        if s1_tail._sha(body) != e["shard_sha256"]:
+            raise SystemExit(f"shard {ix['shard']} sha256 differs from its tranche entry")
+        sh = json.loads(body)
+        if sh.get("schema") != s1_tail.SHARD_SCHEMA or sh["context"]["context_sha256"] != e["context_sha256"]:
+            raise SystemExit("shard identity")
+        for rec in sh["records"]:
+            s1_tail.validate_train_record(rec)
+        shards.append(sh)
+    exclusions.assert_none_excluded([s["context"]["view_id"] for s in shards], excl)
+    rows = tranche.admit_contexts([s["context"] for s in shards], adm)
+    contexts, records, enc, assignment = [], [], {}, {}
+    for row, sh in zip(rows, shards):
+        used = {}
+        vec = s1_tail.compose_encoding(sh, list(spec["components"]), resolver=resolver, used=used, pinned=sets)
+        if vec is None:
+            continue
+        enc[row["context_sha256"]] = vec
+        assignment.setdefault(row["family_id"], row["assignment"])
+        contexts.append(row)
+        records.extend(sh["records"])
+    return contexts, records, enc, assignment
+
+
+def teacher_ce(model, data, ctxs):
+    """Per context: teacher-token NLL sum and count over the context's CE teachers (as dev_metrics)."""
+    out = {}
+    for c in ctxs:
+        plan = sampler.context_plan(data.corpus, c, data.config)
+        progs = list(plan.teachers) if plan.stream == "group" else []
+        if not progs:
+            continue
+        res = evaluate._forward_programs(model, data, c, progs)
+        terms = [x for p in progs for x in res[p][0]]
+        out[c] = (math.fsum(terms), sum(res[p][2] for p in progs))
+    return out
+
+
+def macro(per_ctx, rows, levels):
+    def agg(keys, depth):
+        if depth == len(levels):
+            vals = [per_ctx[k][0] / per_ctx[k][1] for k in keys]
+            return sum(vals) / len(vals)
+        groups = defaultdict(list)
+        for k in keys:
+            groups[rows[k][levels[depth]]].append(k)
+        sub = [agg(v, depth + 1) for v in groups.values()]
+        return sum(sub) / len(sub)
+    keys = [k for k in per_ctx if per_ctx[k][1]]
+    return agg(keys, 0) if keys else None
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("run_dir"); ap.add_argument("commit_dir"); ap.add_argument("out")
+    ap.add_argument("--probe", type=int, default=64)
+    a = ap.parse_args()
+    t0 = time.time()
+    torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "4")))
+    run = Path(a.run_dir)
+    plan = json.loads((run / "run-plan.json").read_bytes())
+    spec = json.loads((run / "data-spec.json").read_bytes())
+    entries = json.loads((run / "tranches" / "T0.json").read_bytes())["entries"]
+    out_dir = Path(spec["tail_out"])
+    role = {}
+    with open(out_dir / "index.jsonl", "rb") as f:
+        for line in f:
+            e = json.loads(line); role[e["context_sha256"]] = e["split_role"]
+    dev = [e["context_sha256"] for e in entries if role[e["context_sha256"]] == "dev"]
+    fit = [e["context_sha256"] for e in entries if role[e["context_sha256"]] == "train_fit"]
+    probe = [fit[int(i * len(fit) / a.probe)] for i in range(min(a.probe, len(fit)))]
+    adm = admission_mod.Admission(spec["denylist"], spec["denylist_sha256"], purpose="selection")
+    contexts, records, enc, assignment = load_selected(out_dir, entries, set(dev) | set(probe), spec, adm)
+    base = dsl_tokenizer.Vocab.from_names({})
+    grammar, gsha, _ = s1_tail.run_grammar(out_dir, spec["grammar"], base, int(spec["max_seq"]))
+    kept, dropped, mask_fn = s1_tail.syntax_masks(grammar, records)
+    corpus = sampler.Corpus.build(contexts, kept, enc, assignment)
+    cfg = sampler.SamplerConfig.from_json(plan["sampler"])
+    fitted = sampler.fit(corpus, cfg)
+    data = sampler.TrainData(corpus=corpus, fit=fitted, config=cfg, legal_mask_fn=mask_fn, vocab_size=base.size,
+                             ctx_dim=int(corpus.encoding_dim), refs={})
+    model = model_mod.PolicyLM(model_mod.PolicyConfig.from_json(plan["model"]))
+    closure = ckpt.read_commit(Path(a.commit_dir))
+    if closure.run_id != plan["run_id"]:
+        raise SystemExit("commit belongs to another run")
+    ckpt._apply_model(closure, model)
+    model.eval()
+    rows = {c["context_sha256"]: c for c in contexts}
+    dev_ok = sorted(c for c in dev if c in rows)
+    probe_ok = [c for c in probe if c in rows]
+    res = {"standard": evaluate.dev_metrics(model, data)}
+    with torch.no_grad():
+        d = teacher_ce(model, data, dev_ok)
+        res["hierarchical"] = {"ce_family_dataset_context_macro": macro(d, rows, ["family_id", "dataset_hash"]),
+                               "ce_family_context_macro": macro(d, rows, ["family_id"]),
+                               "ce_token_micro": math.fsum(v[0] for v in d.values()) / sum(v[1] for v in d.values())}
+        per = defaultdict(lambda: [0.0, 0])
+        for c, (s, n) in d.items():
+            for key in (("family", rows[c]["family_id"]), ("dataset", rows[c]["dataset_hash"]), ("fold", str(rows[c].get("fold")))):
+                per[key][0] += s; per[key][1] += n
+        res["per_group_token_ce"] = {f"{k}:{v}": round(s / n, 6) for (k, v), (s, n) in sorted(per.items())}
+        saved = {c: corpus.encodings[c] for c in dev_ok}
+        try:
+            for c in dev_ok:
+                corpus.encodings[c] = np.zeros_like(np.asarray(saved[c]))
+            z = teacher_ce(model, data, dev_ok)
+            res["zero_context"] = {"ce_family_context_macro": macro(z, rows, ["family_id"]), "ce_family_dataset_context_macro": macro(z, rows, ["family_id", "dataset_hash"])}
+            for i, c in enumerate(dev_ok):
+                corpus.encodings[c] = saved[dev_ok[(i + 1) % len(dev_ok)]]
+            s_ = teacher_ce(model, data, dev_ok)
+            res["shuffled_context"] = {"ce_family_context_macro": macro(s_, rows, ["family_id"]), "ce_family_dataset_context_macro": macro(s_, rows, ["family_id", "dataset_hash"]), "rule": "rotate by one over sorted dev contexts"}
+        finally:
+            for c in dev_ok:
+                corpus.encodings[c] = saved[c]
+        p = teacher_ce(model, data, probe_ok)
+        res["train_probe"] = {"contexts": len(p), "ce_family_context_macro": macro(p, rows, ["family_id"]),
+                              "ce_token_micro": math.fsum(v[0] for v in p.values()) / max(1, sum(v[1] for v in p.values()))}
+    doc = {"schema": "jope.dl-posthoc-dev-eval/v1", "run_id": plan["run_id"], "step": closure.step, "commit_dir": str(a.commit_dir),
+           "parameter_sha256": closure.parameter_sha256 if hasattr(closure, "parameter_sha256") else None,
+           "snapshot": str(SNAP), "device": "cpu", "dev_contexts": len(dev_ok), "probe_contexts": len(probe_ok),
+           "syntax_dropped": len(dropped), "grammar_sha256": gsha, "results": res, "wall_s": round(time.time() - t0, 1),
+           "scope": "dev (training_validation) and a fixed train_fit probe only; no heldout/sealed; CPU float32 (in-training eval ran on GPU, so tiny numeric differences are expected)"}
+    fd = os.open(a.out, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o444)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+    print(json.dumps({k: doc[k] for k in ("run_id", "step", "dev_contexts", "probe_contexts", "wall_s")}), json.dumps(res)[:1500])
+
+
+if __name__ == "__main__":
+    main()

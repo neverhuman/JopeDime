@@ -2,9 +2,10 @@
 
 This directory retains the DL lane's 2026-10-06 source handoff for review and reproducible offline fixtures. It does not install, dispatch, adopt or authorize the staged entrypoints.
 
-`lane/MANIFEST.json` is the exact producer manifest `4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d` (restage `20261006T153320Z`, PR #224 payload strip): 165 current files and 262 historical versions. Its predecessor chain is retained byte for byte under `lane/predecessor/`, newest first:
+`lane/MANIFEST.json` is the exact producer manifest `985cb6288a26565ae22e331f92f1d28aeb459dd2c72e31fa26a60b6e8f96dacc` (restage `20261007T034806Z`, RAW-GROUP-PR raw-route group hook): 168 current files and 274 historical versions. Its predecessor chain is retained byte for byte under `lane/predecessor/`, newest first:
 
-- `restage-20261006T131001Z/MANIFEST.json` (`23d3a8a7fd6d15f056e6d5465a9e524ae46f5b69fd9d0e6c6f4721251ce70413`), PR #218's merged handoff and the manifest this directory carried before;
+- `restage-20261006T153320Z/MANIFEST.json` (`4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d`), PR #224's payload-strip handoff and the manifest this directory carried before;
+- `restage-20261006T131001Z/MANIFEST.json` (`23d3a8a7fd6d15f056e6d5465a9e524ae46f5b69fd9d0e6c6f4721251ce70413`), PR #218's merged handoff;
 - `restage-20261006T114844Z/MANIFEST.json` (`253e593b7537cdecf75a89be24a83804bc63d7e2596e02cc0c28d780a50f2b9e`);
 - `restage-20261006T082918Z/MANIFEST.json` (`365ec3cecab4e647a160c1f5c2a6baec1f45c5ea102e3180922173ed463f628f`);
 - `restage-20261006T073946Z/MANIFEST.json` (`6314ef6f33f01878a149cdb36823a78c96d6ae3e2c45cf409d756711c71d6619`);
@@ -19,13 +20,15 @@ Three predecessor current files that no later manifest retains are preserved the
 - the `00953203` version of `test_v2_publish.py` (`bbb8e5de`), which is also the original's;
 - the `00953203` version of `test_v2_rowsel_raw.py` (`f33f3d2b`).
 
-The latter two come from the retained `restage-20261006T035515Z` staging and equal the blobs committed here at that time. Every current file of all six predecessors can be restored from the verifier's per-manifest reconstruction map. All 204, 190, 88, 79, 58 and 46 of their historical payloads remain available.
+The latter two come from the retained `restage-20261006T035515Z` staging and equal the blobs committed here at that time. Every current file of all seven predecessors can be restored from the verifier's per-manifest reconstruction map. All 262, 204, 190, 88, 79, 58 and 46 of their historical payloads remain available.
 
-The predecessor manifest `253e593b` records `restage-20261006T113426Z` under `abandoned_unpushed_stagings` (`e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5`). That staging was never pushed because it picked up the out-of-scope P8 file `dltrain/exclusions.py`. It is not in `lane/`, and the verifier refuses any abandoned staging that appears in the chain, by manifest sha or by path.
+The predecessor manifest `253e593b` records `restage-20261006T113426Z` under `abandoned_unpushed_stagings` (`e1ca4e355a5092bc8a7d97a90352ffd35c5d96f1a902c7a411ddca23c9a57ca5`). That staging was never pushed because it picked up the out-of-scope P8 file `dltrain/exclusions.py`. It is not in `lane/`, and the verifier refuses any abandoned staging that appears in the chain, by manifest sha or by path. The current manifest likewise records `restage-20261007T032743Z` (`0388e6a75c0f54038661c61f35e18e1225f1386a2b40abbb43b2ff25b3381987`): its staged tests failed 1 of 578 because `tests/test_split_defaults.py` was kept at prior bytes and rejects the raw v2 `target_linear` block; it was never pushed.
 
-The producer staging kept history at a shared `../historical/` path. This import normalizes exactly the manifest-listed history into `lane/historical/`; it does not rename historical results into current evidence. The producer's README inside `lane/` is the `20261006T131001Z` restage note and describes the original staging location. Current and historical source files and all six producer manifests are unchanged.
+The producer staging kept history at a shared `../historical/` path. This import normalizes exactly the manifest-listed history into `lane/historical/`; it does not rename historical results into current evidence. The producer's README inside `lane/` is the `20261006T131001Z` restage note and describes the original staging location. Current and historical source files and all seven producer manifests are unchanged.
 
-This handoff carries the owner rulings NONRAW-SPLIT-A and GROUP-UNION-B, the publisher hardening, and the fixes for the PR #218 review findings. Hashes are listed in the table below.
+This handoff carries the owner rulings NONRAW-SPLIT-A and GROUP-UNION-B, the publisher hardening, and the fixes for the PR #218 review findings.
+
+The `20261007T034806Z` restage adds only the raw-route group hook (owner RAW-GROUP-PR, owner-decisions-20261006T103543Z): `tools/v2_rowsel_raw.py` `45dbc458` (rowsel-split-v2-groups on the raw route with the target-tie admission and empty-fold gates, and the LINEAR-DETERMINED gate), the new `dltrain/target_linear.py` `e2dbebba`, the new `tests/test_v2_rowsel_raw_v2g.py` and `tests/test_target_linear.py`, and `tests/test_split_defaults.py` `6294d720` scoped to the raw route. These are the bytes the `rowsel-raw-v2gsplit` build receipts pin. The other 15 changed lane files are kept at their prior bytes (`kept_prior_bytes`) and 22 new lane files are excluded (`excluded_new_files`); 12 code-custody versions are new in `lane/historical/` (the manifest's `historical_added` lists 1, because the abandoned staging had already copied the other 11 into the shared producer store). Hashes are listed in the table below.
 
 | file | sha256 | role |
 | --- | --- | --- |

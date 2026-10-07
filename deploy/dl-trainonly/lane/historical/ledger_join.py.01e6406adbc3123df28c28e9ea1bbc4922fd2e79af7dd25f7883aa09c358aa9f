@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""S1 ledger JOIN wrapper (non-raw/group contexts after #218): runs ledger.py's commands UNCHANGED against a sha-pinned join
+input list instead of input-list.json, under the SAME header, ledgers and shared 6,081,504-attempt ceiling.
+
+Usage: ledger_join.py --join PATH#SHA256 <ledger.py subcommand ...>   (assign | defer | deploy | collect | status)
+The first use registers the join create-only at s1-prod/joins/<list basename>.json (binds header sha, list path + sha, ruling)
+and appends one {"event": "join"} row to each ledger. assign then charges join contexts exactly as ledger.py does (1,248 per
+context, refused past the ceiling). Nothing in ledger.py, the header or the main input list changes.
+"""
+import hashlib, importlib.util, json, sys, time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("ledger", HERE / "ledger.py")
+L = importlib.util.module_from_spec(spec); spec.loader.exec_module(L)
+RULING = "S1-RAW-NOW point 4 (owner-decisions-20261006T102636Z): the non-raw/group contexts join the same ledger when #218 merges; #218 rebase-merged at a403e931 (main fdbdf682)"
+
+def main():
+    if len(sys.argv) < 4 or sys.argv[1] != "--join":
+        raise SystemExit(__doc__)
+    path, want = sys.argv[2].split("#", 1)
+    b = Path(path).read_bytes()
+    if hashlib.sha256(b).hexdigest() != want:
+        raise SystemExit(f"join list {path} does not hash to {want}")
+    doc = json.loads(b)
+    assert doc.get("schema") == "jope.dl-s1-prod-input-list-join/v1", doc.get("schema")
+    reg = L.P / "joins" / f"{Path(path).name}"
+    if not reg.exists():
+        reg.parent.mkdir(exist_ok=True)
+        rec = {"schema": "jope.dl-s1-prod-join/v1", "header_sha256": L.header_sha(), "input_list": path, "sha256": want,
+               "admitted": doc["admitted_total"], "refused": doc["refused_total"], "ruling": RULING,
+               "wrapper_sha256": hashlib.sha256((HERE / "ledger_join.py").read_bytes()).hexdigest(), "utc": L.utc()}
+        L.create(reg, json.dumps(rec, sort_keys=True, indent=1).encode() + b"\n")
+        for name in L.LEDGERS:
+            L.append(name, [{"event": "join", "join_record": str(reg), "join_record_sha256": L.fsha(reg),
+                             "input_list_sha256": want, "utc": L.utc()}])
+    else:
+        r = json.loads(reg.read_bytes())
+        assert r["sha256"] == want and r["header_sha256"] == L.header_sha(), "join registration mismatch"
+    L.input_list = lambda: (doc, want)
+    sys.argv = [sys.argv[0]] + sys.argv[3:]
+    L.main()
+
+if __name__ == "__main__":
+    main()
