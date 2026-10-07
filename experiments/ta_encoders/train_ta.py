@@ -110,7 +110,7 @@ def main():
     ap.add_argument("--probe-cids", required=True); ap.add_argument("--probe-data", required=True); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--batch", type=int, default=16); ap.add_argument("--epochs", type=float, default=40); ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--eval-min", type=float, default=20); ap.add_argument("--pcap", type=int, default=128); ap.add_argument("--nmax", type=int, default=384)
-    ap.add_argument("--max-hours", type=float, default=10); ap.add_argument("--probe-cache", default=""); ap.add_argument("--probe-threads", type=int, default=6)
+    ap.add_argument("--max-hours", type=float, default=10); ap.add_argument("--probe-cache", default=""); ap.add_argument("--exclude", default="", help="json {cid: reason}: never sampled (sealed meta-test / sealed_excluded / unknown role)"); ap.add_argument("--probe-threads", type=int, default=6)
     a = ap.parse_args()
     import torch
     torch.manual_seed(a.seed); torch.set_num_threads(4); dev = "cuda"
@@ -121,8 +121,12 @@ def main():
     if missing: raise SystemExit(f"{len(missing)} probe contexts have no prepped row data")
     pidx = [S.pos[c] for c in probe]
     # SSL validation split (objective monitoring only): 4% of datasets by hash, never trained on
+    excl = json.load(open(a.exclude)) if a.exclude else {}
+    bad = [c for c in probe if c in excl]
+    if bad: raise SystemExit(f"{len(bad)} probe contexts are in the exclusion list")
     vds = {r["dataset_hash"] for r in S.idx if zlib.crc32(r["dataset_hash"].encode()) % 25 == 0}
-    train_ids = np.array([i for i, r in enumerate(S.idx) if r["dataset_hash"] not in vds]); val_ids = np.array([i for i, r in enumerate(S.idx) if r["dataset_hash"] in vds])
+    train_ids = np.array([i for i, r in enumerate(S.idx) if r["dataset_hash"] not in vds and r["cid"] not in excl])
+    val_ids = np.array([i for i, r in enumerate(S.idx) if r["dataset_hash"] in vds and r["cid"] not in excl])
     if a.model == "hv8":
         from ta_hyperion_v8 import TAHyperionV8 as M
         model = M().to(dev)
@@ -134,7 +138,7 @@ def main():
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=0.01, betas=(0.9, 0.98))
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / 300) * (0.05 + 0.95 * 0.5 * (1 + math.cos(math.pi * min(1, s / max(1, total))))))
     run = {"model": {"hv8": "TA_Hyperion_v8", "dv2": "TA_Dope_V2"}[a.model], "params": nparam, "gpu": C.gpu_info(), "host": os.uname().nodename,
-           "torch": torch.__version__, "train_contexts": int(len(train_ids)), "ssl_val_contexts": int(len(val_ids)), "probe_contexts": len(pidx),
+           "torch": torch.__version__, "train_contexts": int(len(train_ids)), "excluded_contexts": len(excl), "ssl_val_contexts": int(len(val_ids)), "probe_contexts": len(pidx),
            "steps_per_epoch": steps_per_epoch, "total_steps": total, "args": vars(a), "amp": "bf16 autocast",
            "hv7_recipe": getattr(S, "hrec", None), "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     json.dump(run, open(os.path.join(a.out, "run.json"), "w"), indent=1)
