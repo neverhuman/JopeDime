@@ -170,7 +170,10 @@ the subtree's range, which would be a separate, versioned rule.)
   first step's exact zero fit; a subtree with one value on every sample (its literals alone,
   `a - a`, a zero, or any operation or call of such values, none of which tells the sign of a
   zero in size) has `max|f|` the size of its target at `lo`, the first step's exact fit of that
-  value with a zero slope, and a line error equal to its line's larger end residual; `max|f|` is
+  value with a zero slope, its coefficients exactly the conversion's pair for that line on the
+  recorded range (bit for bit, or both NaN where the conversion gives a NaN, as a published
+  record keeps such a pair; the same holds for the zero line of any fit whose targets are all
+  zero), and a line error equal to its line's larger end residual; `max|f|` is
   within the subtree's bound (literals, sums and products of bounds, and the bounded calls:
   `step`, `sign`, `sin`, `cos`, `tanh`, `erf` and `sigmoid` at most 1, `atan` at most `π/2`, and
   so on); a fit of a row's L1 or L2 norm or standard deviation has a range that is not
@@ -324,7 +327,9 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
   dataset the zero subtree `(c0-c0)*(c0-c0)` publishes its exact zero fit and verifies, and its
   records edited to a nonzero `max|f|` with a converged bracket and its bound are refused; and
   the constant subtree `(c0-c0)+1.0` publishes its exact fit and verifies, and its records
-  edited to twice its size, or to a converged bracket at its size, are refused;
+  edited to twice its size, or to a converged bracket at its size, are refused; on the default
+  dataset the constant `(c1-c1)+1.0` keeps its finite pair, and its records republished with the
+  pair absent are refused;
 - a run seeded with `sin((0.1*row_l2))*3.0`: its fits of the norm edited to a range with a
   negative end are refused;
 - a parent whose first stage faults on its training rows (`c0/0`, admitted with its domain

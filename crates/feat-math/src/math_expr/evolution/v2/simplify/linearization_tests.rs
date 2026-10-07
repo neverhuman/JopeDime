@@ -919,6 +919,16 @@ fn a_subtree_zero_wherever_finite_records_only_zero_targets() {
     assert_eq!((fit.max_abs, fit.stop), (0.0, MinimaxStop::ExactFit));
     let kept: Vec<LinearizationEvidence> = live.iter().map(evidence).collect();
     assert_eq!(recorded(ZERO, &kept).unwrap(), live);
+    // The zero line's pair on this finite range is finite (`+0.0`, `+0.0`), so an absent pair is
+    // refused here, as for any subtree whose targets are all zero (Lane B's review of #247).
+    assert_eq!(fit.coefficients.map(f64::to_bits), [0.0f64.to_bits(); 2]);
+    let mut absent = kept.clone();
+    absent[0].fit.as_mut().unwrap().coefficients = [f64::NAN; 2];
+    let error = recorded(ZERO, &absent).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("a recorded fit disagrees with its stop"),
+        "{error:#}"
+    );
     // The review's witness: a constant line `1` over targets of size 1, consistent with its stop,
     // whose error meets every envelope bound and the minimax bound, so it was offered.
     let nonzero = LinearizationEvidence {
@@ -1133,6 +1143,31 @@ fn a_subtree_with_one_value_records_that_values_exact_fit() {
     let mut error = kept[0].clone();
     error.lowered_error = Some(0.5);
     refused(error, ONE, "not the larger end residual");
+    // On this finite range the conversion's pair is finite, so an absent pair (NaN, as a published
+    // record reads one back) is refused (Lane B's review of #247), as is any other finite pair.
+    assert_eq!(constant_line(1.0, fit.lo, fit.hi), [1.0, 0.0]);
+    for pair in [
+        [f64::NAN; 2],
+        [1.0, f64::NAN],
+        [f64::NAN, 0.0],
+        [1.0f64.next_up(), 0.0],
+    ] {
+        let mut absent = kept[0].clone();
+        absent.fit.as_mut().unwrap().coefficients = pair;
+        absent.lowered_error = None;
+        refused(absent, ONE, not_exact);
+    }
+    // On a subnormal range the conversion scales the zero slope by an infinite `α`: the live pair
+    // holds a NaN, and both its own pair and its published read-back (both NaN) replay.
+    let tiny = [vec![-1e-310, 0.25], vec![0.0, 0.25], vec![1e-310, 0.25]];
+    let live_tiny = linearize(ONE, &tiny);
+    let tiny_fit = live_tiny[0].fit.unwrap();
+    assert_eq!(tiny_fit.coefficients[0], 1.0);
+    assert!(tiny_fit.coefficients[1].is_nan(), "{tiny_fit:?}");
+    recorded(ONE, &[evidence(&live_tiny[0])]).unwrap();
+    let mut read_back = evidence(&live_tiny[0]);
+    read_back.fit.as_mut().unwrap().coefficients = [f64::NAN; 2];
+    recorded(ONE, &[read_back]).unwrap();
     // `step((c0-c0),1.0)` is zero on every sample, though not by the zero test.
     const STEP: &str = "step((c0-c0),1.0)";
     let step = MathExpr::parse(STEP).unwrap();
