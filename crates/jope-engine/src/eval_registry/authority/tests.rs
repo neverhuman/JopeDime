@@ -327,6 +327,9 @@ fn synthetic_clock_preserves_original_start_deadline_and_thread_isolation() {
 fn sequential_foreign_and_inherited_tokens_are_fenced() {
     let fixture = Fixture::new(true);
     let (mut a, f, c) = fixture.claim();
+    // Isolate token identity and single consumption from SDK hash cost, using
+    // the same original logical deadline as the concurrent arbitration fixture.
+    let _clock = SyntheticClock::frozen();
     let token = a
         .authorize(&f, &c, &ProcessIdentity::current().unwrap())
         .unwrap();
