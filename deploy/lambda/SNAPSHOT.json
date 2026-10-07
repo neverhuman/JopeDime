@@ -987,7 +987,7 @@
       "tree_sha256": "700dbae09762216b4aeb308d485543d6216dd9d0e01195fbc454fb0cb59fc980",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
+      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
     },
     {
       "body": "csv",
@@ -1800,7 +1800,7 @@
       "tree_sha256": "3d877abc739e90bcd93f05459ec35e26ca5c863077e657e115a8ca995ff1bda2",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
+      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
     },
     {
       "body": "regression",
@@ -2354,7 +2354,7 @@
       "tree_sha256": "4b7f4004466d7c7faf7abb0720fc9e6b2d615c87805c836a806daed4d9add1a9",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
+      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
     },
     {
       "body": "regression-ops",
@@ -2630,7 +2630,7 @@
       "tree_sha256": "9a6320d1e688e7f179c31de1df00557f7d19b53670d29a38bbdf41ea28856d74",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
+      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
     },
     {
       "body": "teacher-v2",
@@ -3232,7 +3232,7 @@
       "tree_sha256": "cfc1ec01abfd73e9117c1f9b68be130e264a0e69cbcdc7fafb809807c53500ed",
       "custody_tarball": null,
       "reason": "new workspace lock with current feat-math0.2 and unique package; historical proposal lock retained separately",
-      "tree_change": "cargo metadata --offline with owning manifest: refresh feat-math path-package version/dependencies for sealed runtime libc; all other package records unchanged; frozen original sha256 retained"
+      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
     }
   ],
   "excluded": [
