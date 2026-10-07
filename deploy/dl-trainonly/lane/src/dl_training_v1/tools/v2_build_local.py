@@ -102,7 +102,8 @@ from pathlib import Path
 
 import numpy as np
 
-from dltrain import cpuguard, jtt1, metafeatures, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check, t1prep, trainonly
+from dltrain import (cpuguard, jtt1, metafeatures, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check, t1prep,
+                     target_linear, trainonly)
 
 RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
 META_DIR = RUN / "inputs" / "t1-meta"
@@ -333,7 +334,7 @@ def maxrss_mb() -> int:
 
 V2_CODE_FILES = ("tools/v2_build_local.py", "dltrain/t1prep.py", "dltrain/trainonly.py", "dltrain/metafeatures.py",
                  "dltrain/scale_check.py", "dltrain/jtt1.py", "dltrain/rowsel_raw.py", "dltrain/rowsel_raw_split_v2.py",
-                 "dltrain/cpuguard.py")
+                 "dltrain/cpuguard.py", "dltrain/target_linear.py")     # target_linear: LINEAR-DETERMINED gate (after the built trees)
 
 
 def require_split_version(version, allowed=None) -> str:
@@ -476,6 +477,8 @@ def split_gate_v2g(srep) -> list:
         bad.append("empty_outer_fold")
     if srep["annotated_groups_straddling_folds"]:
         bad.append("annotated_groups_straddle_folds")
+    if (srep.get("components") or 0) < 2:                              # features only: a context would have no train rows
+        bad.append("fewer_than_two_components")
     return bad
 
 
@@ -498,7 +501,7 @@ def cut_block_v2g(srep, e) -> dict:
                             "canonical JSON {schema, dataset_hash, partition, group_column {index, name}, folds}"}
 
 
-GROUP_TARGET_TIE = ("rowsel_split_v2_groups.target_tied_group(group values, A[:, -1]) over every row of A: refuses a group "
+GROUP_TARGET_TIE = ("rowsel_split_v2_groups.target_tied_group(group values, A[R, -1]) over each context's OWN outer-train rows R: refuses that context's group "
                     "column whose '<f8' bytes equal the T1 target, that is an affine copy of it, or that determines it "
                     "(PR #218 finding 8). Dataset-level admission only: split() and components() never receive y.")
 
@@ -511,11 +514,21 @@ def t1_group_values(A, index: int) -> list:
     if not 0 <= int(index) < A.shape[1] - 1:
         raise SplitV2Error("group_column_not_a_feature", f"{index} of {A.shape[1]} columns (the last is the target)")
     col = np.ascontiguousarray(A[:, int(index)] + 0.0, dtype="<f8")
-    values = [col[i:i + 1].tobytes() for i in range(col.shape[0])]
-    tie = rowsel_split_v2_groups.target_tied_group(values, A[:, -1])
-    if tie is not None:
-        raise SplitV2Error("group_column_target_tied", f"{tie}: T1 column {int(index)}")
-    return values
+    return [col[i:i + 1].tobytes() for i in range(col.shape[0])]
+
+
+def context_refusal(tlg) -> str | None:
+    """The refusal reason of ONE context from its own LINEAR-DETERMINED report (outer-train rows only), else None. Never
+    aggregated across folds (FOLD-1, owner 07:22Z; PR #246 review 5437848458)."""
+    return target_linear.REFUSE if (tlg or {}).get("verdict") == target_linear.REFUSE else None
+
+
+def fold_target_tie(group_values, y, R) -> str | None:
+    """Target-tie admission of one context (FOLD-1, owner 07:22Z): target_tied_group over the context's OWN outer-train
+    rows R only (group values and the target of the data object A that the group values come from); no outer-test row
+    and no other fold's decision enters. A tie refuses this context only."""
+    y = np.asarray(y, dtype=np.float64)
+    return rowsel_split_v2_groups.target_tied_group([group_values[i] for i in R], y[np.asarray(R, dtype=np.int64)])
 
 
 def attach_groups(inp: dict, e, A) -> dict:
@@ -531,10 +544,11 @@ def attach_groups(inp: dict, e, A) -> dict:
         gc = dict(res, evidence=dict(gc["evidence"], **res["evidence"]))
         e["group_column"] = gc
     inp["group_values"] = t1_group_values(A, gc["spec"]["index"])
+    inp["group_tie_y"] = np.asarray(A, dtype=np.float64)[:, -1]       # read per context on its own outer-train rows only
     inp["universe"] = dict(inp["universe"], group_column=gc["spec"], annotated_groups=len(set(inp["group_values"])),
                            group_value_basis="exact float64 bytes of T1 column group_column.index of the epoch-0 data object A "
                                              "(the bytes the registry grouped on); universe row i is A row i",
-                           group_target_tie={"result": "admit", "rule": GROUP_TARGET_TIE,
+                           group_target_tie={"result": "per context on its own outer-train rows (fold_target_tie)", "rule": GROUP_TARGET_TIE,
                                              "rel_tol": rowsel_split_v2_groups.AFFINE_REL_RMSE,
                                              "reasons_checked": list(rowsel_split_v2_groups.TARGET_TIE_REASONS)})
     return inp
@@ -743,6 +757,14 @@ def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None, ve
             guard.wait()
         tf, cf0 = time.time(), cpu_s()
         R, T = fold_rows(folds, f, n)
+        tie_rec = None
+        if version == SPLIT_V2G:                                        # target-tie: fold f's OWN outer-train rows only
+            tie = fold_target_tie(inp["group_values"], inp["group_tie_y"], R)
+            if tie:
+                out.setdefault("refused_contexts", []).append({"fold": f, "refused": "group_column_target_tied", "target_tie": tie})
+                continue
+            tie_rec = {"result": "admit", "rows": "this context's own outer-train rows R", "rule": "FOLD-1", "n_rows": len(R),
+                       "reasons_checked": list(rowsel_split_v2_groups.TARGET_TIE_REASONS)}
         art = inp["build"](R, T)
         hdr = jtt1.parse_header(art["encoder_raw"])
         if (hdr["n_train"], hdr["n_test"]) != (len(R), len(T)):
@@ -779,18 +801,32 @@ def compute_dataset(e, inp, mode: str, existing, codes, guard=None, log=None, ve
                                "differing": {k: v for k, v in cf["cases"].items() if v}, "train_side": cf["train_side"]},
             "code_sha256": dict(codes)})
         if version == SPLIT_V2G:
-            crec.update(group_union=True, group_column=e["group_column"], v2split_superseded=e["v2split"])
+            crec.update(group_union=True, group_column=e["group_column"], v2split_superseded=e["v2split"], group_target_tie=tie_rec)
+        tlg = target_linear.check_jtt1(art["encoder_raw"])             # LINEAR-DETERMINED: outer-train rows only (jtt1.train_view)
+        crec["target_linear"] = tlg
         out["results"].append((vid, files, crec))
         out["contexts"].append({"fold": f, "view_id": vid, "identity": identity, "context_sha256": crec["context_sha256"],
                                 "n_train": len(R), "n_test": len(T), "passed": bool(cf["train_side_invariant"]),
                                 "failures": sorted(k for k, v in cf["cases"].items() if v)
                                 + ([] if cf["base_equals_written"] else ["counterfactual_base_differs"]),
-                                "cpu_s": round(cpu_s() - cf0, 2), "wall_s": round(time.time() - tf, 2)})
+                                "cpu_s": round(cpu_s() - cf0, 2), "wall_s": round(time.time() - tf, 2),
+                                "target_linear": {"verdict": tlg["verdict"], "ols_rel_rmse": tlg["ols_rel_rmse"]}})
         if log:
             log(json.dumps({"dataset": h, "fold": f, "passed": cf["train_side_invariant"], "cpu_s": out["contexts"][-1]["cpu_s"],
                             "maxrss_mb": maxrss_mb()}))
         if not cf["train_side_invariant"]:
             raise SplitV2Error("counterfactual_failed", json.dumps(out["contexts"][-1]))
+    for c in out["contexts"]:                                          # LINEAR-DETERMINED: this context's own verdict only
+        r = context_refusal(c["target_linear"])
+        if r:
+            out.setdefault("refused_contexts", []).append(dict(c, refused=r))
+    gone = {c["fold"] for c in out.get("refused_contexts", [])}
+    out["results"] = [r for r in out["results"] if r[2]["fold"] not in gone]
+    out["contexts"] = [c for c in out["contexts"] if c["fold"] not in gone]
+    if gone and not out["results"]:                                     # every context refused: nothing is written
+        reasons = sorted({c["refused"] for c in out["refused_contexts"]})
+        raise SplitV2Error(reasons[0] if len(reasons) == 1 else "all_contexts_refused",
+                           json.dumps({c["fold"]: (c.get("target_linear") or {}).get("ols_rel_rmse", c.get("target_tie")) for c in out["refused_contexts"]}))
     out["passed"] = True
     return out
 
@@ -836,6 +872,8 @@ def run_dataset_v2(e, out_shard: Path, mode: str, loader, existing, codes, guard
             rec["v2split_superseded"] = e["v2split"]
         res = compute_dataset(e, inp, mode, existing, codes, guard, log, version=version)
         rec.update(split=res["split"], cut=res["cut"], epoch0_replaced=res["epoch0_replaced"], contexts=res["contexts"])
+        if res.get("refused_contexts"):
+            rec["refused_contexts"] = res["refused_contexts"]
         written, already = write_dataset(out_shard, res["results"])
         rec.update(status="done", reason=None, contexts_written=written, contexts_already_done=already,
                    expected_contexts=len(res["results"]))
@@ -1375,7 +1413,10 @@ def verify_tree(out: Path, pl, codes) -> dict:
                       "files": all(sha_file(d / n) == m["sha256"] and (d / n).stat().st_size == m["bytes"]
                                    for n, m in cj["files"].items()),
                       "jtt1": jtt1.parse_header(gzip.decompress((d / "encoder.jtt1.gz").read_bytes()))["n_train"] == cj["n_train"],
-                      "published_false": cj["published"] is False}
+                      "published_false": cj["published"] is False,
+                      "target_linear": "target_linear" in cj and cj["target_linear"].get("verdict") != target_linear.REFUSE}
+            if (cj.get("target_linear") or {}).get("verdict") == target_linear.REVIEW:
+                counts["target_linear_near_review_contexts"] += 1
             bad = sorted(k for k, ok in checks.items() if not ok)
             if bad:
                 problems.append(f"{c['view_id']}: {bad}")

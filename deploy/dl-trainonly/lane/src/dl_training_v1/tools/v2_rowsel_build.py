@@ -72,7 +72,8 @@ from pathlib import Path
 
 import numpy as np
 
-from dltrain import cpuguard, jtt1, metafeatures, rowsel, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check, t1prep, trainonly
+from dltrain import (cpuguard, jtt1, metafeatures, rowsel, rowsel_raw, rowsel_raw_split_v2, rowsel_split_v2_groups, scale_check, t1prep,
+                     target_linear, trainonly)
 
 RUN = Path("/home/ubuntu/scratch/jopedime-dl-training-v1")
 META_DIR = RUN / "inputs" / "t1-meta"
@@ -122,11 +123,18 @@ SCOPES = {
     "frozen-kmeans-research": {"cohort": "frozen", "owner_line": "ROWSEL-TRAINONLY+RIGHTS-RESEARCH",
                                "expected": {"datasets": 42, "contexts": 209, "clean": 209, "acquisition_cap": 0},
                                "rights": "research-only"},
+    # DRIFTED-T1-FALLBACK (owner-decisions-20261006T112914Z.json): an EXPLICIT opt-in scope, never a default. Selected
+    # only with the t1_fallback record (rights-held fill completion 3aae3100, its 'drifted' list) passed by the caller.
+    "frozen-capped-drifted": {"cohort": "frozen", "owner_line": "ROWSEL-TRAINONLY+DRIFTED-T1-FALLBACK",
+                              "expected": {"datasets": 23, "contexts": 115, "clean": 0, "acquisition_cap": 115},
+                              "rights": "research-only", "selector": "drifted"},
 }
 CODE_FILES = ("tools/v2_rowsel_build.py", "tools/v2_build_local.py", "dltrain/rowsel.py", "dltrain/t1prep.py",
               "dltrain/trainonly.py", "dltrain/metafeatures.py", "dltrain/scale_check.py", "dltrain/jtt1.py",
-              "dltrain/cpuguard.py", "dltrain/rowsel_raw.py", "dltrain/rowsel_raw_split_v2.py", "dltrain/rowsel_split_v2_groups.py")
-LATER_CODE_FILES = frozenset({"dltrain/rowsel_split_v2_groups.py"})   # added after the v2split trees were built
+              "dltrain/cpuguard.py", "dltrain/rowsel_raw.py", "dltrain/rowsel_raw_split_v2.py", "dltrain/rowsel_split_v2_groups.py",
+              "dltrain/target_linear.py")
+LATER_CODE_FILES = frozenset({"dltrain/rowsel_split_v2_groups.py",    # added after the v2split trees were built
+                              "dltrain/target_linear.py"})            # LINEAR-DETERMINED gate (after the v2gsplit trees)
 QUOTA_RULE = ("largest remainder of budget*|F_f|/|U| over the repeat-0 parent folds (ties to the lower fold); "
               "n_train = budget - n_test; |U| <= budget keeps every row (rowsel.fold_quotas)")
 
@@ -186,6 +194,62 @@ def cpu_s() -> float:
 
 # ------------------------------------------------------------------------------------------------- scope
 
+DRIFTED_RECORD = RECEIPTS / "fill" / "rights-held-fill-completion-20261006T114619Z.json"
+DRIFTED_RECORD_SHA256 = "3aae31003bdba6719a9d03802b872d789e40b6541d267df5d4a0054d30d03fd2"
+DRIFTED_RULING = Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261006T112914Z.json")
+DRIFTED_RULING_SHA256 = "e413a92d9493d996ee571ebe7047e2b6a0229de15ba252c132b55e647ab1b61f"
+ALL_DATA_RESEARCH = Path("/home/ubuntu/scratch/jopedime-dltrain-audit-v1/claude/receipts/owner-decisions-20261006T102636Z.json")
+ALL_DATA_RESEARCH_SHA256 = "c7ab09322a8f4bb762083716c5f5dba210b7989eb49fc95a007dd16a8903d94c"
+CONTENT_SPLIT_DIR = Path("/home/ubuntu/scratch/jopedime-regression-neural-encoding-v1/source-objects")
+
+
+def drifted_fallback_record(path) -> dict:
+    """The explicit t1_fallback record of DRIFTED-T1-FALLBACK: the 'drifted' list of the rights-held fill completion,
+    sha256-pinned. Refused when not given (the fallback is never a default) or when its bytes differ."""
+    if path is None:
+        raise RebuildError("t1_fallback_record_required", "the drifted T1 fallback runs only with --t1-fallback-record")
+    body = Path(path).read_bytes()
+    if sha(body) != DRIFTED_RECORD_SHA256:
+        raise RebuildError("t1_fallback_record_drift", f"{path} sha256 {sha(body)} != {DRIFTED_RECORD_SHA256}")
+    ruling = DRIFTED_RULING.read_bytes()
+    if sha(ruling) != DRIFTED_RULING_SHA256 or "DRIFTED-T1-FALLBACK" not in json.loads(ruling)["decisions"]:
+        raise RebuildError("t1_fallback_ruling_drift", str(DRIFTED_RULING))
+    drifted = {x["dataset_hash"]: x for x in json.loads(body)["drifted"]}
+    ref_ = {"path": str(path), "sha256": DRIFTED_RECORD_SHA256}
+    ruling_ref = {"path": str(DRIFTED_RULING), "sha256": DRIFTED_RULING_SHA256, "key": "DRIFTED-T1-FALLBACK"}
+    reasons = {h: {"reason": x["raw_route_reason"], "why": "drifted: the raw content match fails against today's live source",
+                   "detail": json.dumps(x.get("study"), sort_keys=True)[:600], "disposition": x.get("disposition"),
+                   "ruling": ruling_ref} for h, x in drifted.items()}
+    return {"datasets": drifted, "ref": ref_, "reasons": reasons, "ruling": ruling_ref}
+
+
+def all_data_research_ref() -> str:
+    body = ALL_DATA_RESEARCH.read_bytes()
+    if sha(body) != ALL_DATA_RESEARCH_SHA256:
+        raise RebuildError("rights_decision_drift", str(ALL_DATA_RESEARCH))
+    return f"{ALL_DATA_RESEARCH}#sha256={ALL_DATA_RESEARCH_SHA256}"
+
+
+def select_drifted(rows, leak: dict, acq: dict, drifted) -> list:
+    """(epoch-0 row, 'acquisition_cap', acquisition record) of the drifted datasets only: frozen contexts labelled
+    ["clean"] whose acquisition record is class clean, reduced (capped at acquisition, with its selection markers)."""
+    out = []
+    for r in rows:
+        if r.get("dataset_hash") not in drifted:
+            continue
+        lab = leak.get(r["view_id"])
+        if lab is None:
+            raise RebuildError("scope_unlabelled", r["view_id"])
+        if lab["cohort"] != "frozen" or lab["row_selection_leak"] != ["clean"] or r.get("cohort") != "frozen" \
+                or (lab["dataset_hash"], int(lab["fold"])) != (r["dataset_hash"], int(r["fold"])):
+            raise RebuildError("scope_label_mismatch", r["view_id"])
+        a = acq.get(r["dataset_hash"])
+        if a is None or (a.get("cohort"), a.get("class")) != ("frozen", "clean") or not a.get("reduced") or not a.get("selection_markers"):
+            raise RebuildError("scope_acquisition_record", r["dataset_hash"])
+        out.append((r, "acquisition_cap", a))
+    return sorted(out, key=lambda t: (t[0]["dataset_hash"], int(t[0]["fold"])))
+
+
 def select_scope(rows, leak: dict, acq: dict, cohort: str = "incoming", datasets=None) -> list:
     """(epoch-0 row, label, acquisition record) for the admitted class only: contexts of `cohort` whose
     row-selection-leak-v2 label is exactly ["kmeans"] and, when `datasets` is given, whose dataset is in it. The label
@@ -235,8 +299,10 @@ def rights_decision_ref(path=RIGHTS_DECISION, digest=RIGHTS_DECISION_SHA256) -> 
     return f"{path}#sha256={digest}"
 
 
-def load_scope(rows, leak_path=LEAK, acq_path=ACQ, expected="scope", scope="incoming-kmeans"):
+def load_scope(rows, leak_path=LEAK, acq_path=ACQ, expected="scope", scope="incoming-kmeans", fallback_record=None):
     cfg = SCOPES[scope]
+    if cfg.get("selector") == "drifted":
+        return load_drifted_scope(rows, leak_path, acq_path, expected, scope, fallback_record)
     if expected == "scope":
         expected = cfg["expected"]
     lb, ab = Path(leak_path).read_bytes(), Path(acq_path).read_bytes()
@@ -269,6 +335,38 @@ def load_scope(rows, leak_path=LEAK, acq_path=ACQ, expected="scope", scope="inco
     if extra:
         refs["context_extra"] = extra
     return selected, refs, counts
+
+
+def load_drifted_scope(rows, leak_path, acq_path, expected, scope, fallback_record):
+    cfg = SCOPES[scope]
+    rec = drifted_fallback_record(fallback_record)                    # explicit opt-in: refused without the record
+    if expected == "scope":
+        expected = cfg["expected"]
+    lb, ab = Path(leak_path).read_bytes(), Path(acq_path).read_bytes()
+    if sha(lb) != LEAK_SHA256 or sha(ab) != ACQ_SHA256:
+        raise RebuildError("scope_input_drift", f"leak {sha(lb)} acq {sha(ab)}")
+    leak = {}
+    for line in lb.decode().splitlines():
+        if line.strip():
+            r = json.loads(line)
+            leak[r["view_id"]] = r
+    selected = select_drifted(rows, leak, json.loads(ab), rec["datasets"])
+    counts = scope_counts(selected)
+    if expected is not None and counts != expected:
+        raise RebuildError("scope_counts", f"{counts} != {expected}")
+    extra = {"rights": cfg["rights"], "rights_decision": all_data_research_ref()}
+    refs = {"scope": scope, "row_selection_leak": {"path": str(leak_path), "sha256": sha(lb), "rows": len(leak)},
+            "acq_selection": {"path": str(acq_path), "sha256": sha(ab)}, "t1_fallback_record": rec["ref"],
+            "t1_fallback_ruling": rec["ruling"], "context_extra": extra, "rights_decision": extra["rights_decision"],
+            "t1_fallback_reasons": rec["reasons"]}
+    return selected, refs, counts
+
+
+def content_addressed_split(cohort: str, h: str, sref: dict, split_dir=CONTENT_SPLIT_DIR):
+    """The registry split object by its sha256 from a local content-addressed object directory (verified at use; no
+    fetch). Used only by the drifted T1 fallback, whose objects are not in the frozen split-fetch receipt."""
+    path = Path(split_dir) / sref["sha256"]
+    return read_verified(path, sref["sha256"], sref.get("bytes")), {"path": str(path), "source": "content-addressed local object (sha256 verified)"}
 
 
 # ------------------------------------------------------------------------------------------------- universe and lineage
@@ -380,7 +478,7 @@ PORT_NOT_RUN = "not run: registry replay only (all-row targets; #218 finding 3)"
 
 
 def load_dataset(h: str, ctx_rows: list, src, cache, inv: dict, budget: int = rowsel.DEFAULT_BUDGET, *,
-                 v1_port_check: bool | None = None) -> dict:
+                 v1_port_check: bool | None = None, split_loader=None) -> dict:
     """Every input of one dataset, each sha256-verified, plus the dataset-level lineage checks.
 
     v1_port_check (required; None is refused): True ONLY for the explicit registry replay (--split-version registry).
@@ -414,7 +512,7 @@ def load_dataset(h: str, ctx_rows: list, src, cache, inv: dict, budget: int = ro
     bodies = {p: read_verified(blob_dir / src_ref[p]["sha256"], src_ref[p]["sha256"], src_ref[p].get("bytes"))
               for p in ("train", "test")}
     sref = src_ref["split"]
-    split_body, split_src = load_split(cohort, h, sref)
+    split_body, split_src = (split_loader or load_split)(cohort, h, sref)
     split = json.loads(split_body)
     s_src = split.get("source") or {}
     bad = [k for k, ok in {
@@ -1068,6 +1166,10 @@ TREES = {
                                "v1_tree": RUN / "build-v2" / "ROWSEL-T1-frozen-kmeans-research-v1",
                                "expected": {"datasets": 42, "epoch0_contexts": 209}},
 }
+TREES["frozen-capped-drifted-fallback"] = {
+    "scope": "frozen-capped-drifted", "label": "acquisition_cap", "fallback": True, "fallback_kind": "drifted", "content_split": True,
+    "opt_in": "--t1-fallback-record", "out": RUN / "build-v2" / "ROWSEL-T1-frozen-capped-fallback-v2split",
+    "v1_tree": RUN / "build-v2" / "ROWSEL-T1-frozen-capped-fallback-has-no-v1-tree", "expected": {"datasets": 23, "epoch0_contexts": 115}}
 SPLIT_V2_PARTITION_RULE = ("partition 't1': position = concatenation index of U (T1 train lines then test lines, "
                            "materialize.py); row rank sha256(h NUL 'trainonly-rowsel-split-v1' NUL 't1' NUL decimal(position))")
 
@@ -1174,12 +1276,16 @@ def fallback_datasets(path=FALLBACK_SOURCE, digest=FALLBACK_SOURCE_SHA256, raw_p
     return {"datasets": nb, "ref": {"path": str(path), "sha256": digest, "raw_v2_plan": file_ref(Path(raw_plan))}}
 
 
-def load_tree_scope(rows, tree: str) -> tuple:
-    """(dataset_hash -> [(epoch-0 row, label, acquisition record)], refs, counts) of one v2split tree."""
+def load_tree_scope(rows, tree: str, fallback_record=None) -> tuple:
+    """(dataset_hash -> [(epoch-0 row, label, acquisition record)], refs, counts) of one v2split tree. The drifted T1
+    fallback tree (an explicit opt-in) needs the t1_fallback record; every other tree ignores it."""
     t = TREES[tree]
-    selected, refs, _ = load_scope(rows, scope=t["scope"])
+    if t.get("fallback_kind") == "drifted":
+        selected, refs, _ = load_scope(rows, scope=t["scope"], fallback_record=fallback_record)
+    else:
+        selected, refs, _ = load_scope(rows, scope=t["scope"])
     sel = [it for it in selected if it[1] == t["label"]]
-    if t["fallback"]:
+    if t["fallback"] and t.get("fallback_kind") != "drifted":
         fb = fallback_datasets()
         sel = [it for it in sel if it[0]["dataset_hash"] in fb["datasets"]]
         refs["t1_fallback_source"] = fb["ref"]
@@ -1214,7 +1320,7 @@ def plan_v2(a) -> int:
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     src = scale_check.Sources(load_index=False)
-    groups, refs, counts = load_tree_scope(src.included(), a.tree)
+    groups, refs, counts = load_tree_scope(src.included(), a.tree, getattr(a, "t1_fallback_record", None))
     census = census_index()
     cost = v1_cost(a.tree)
     t = TREES[a.tree]
@@ -1223,19 +1329,30 @@ def plan_v2(a) -> int:
         e = {"dataset_hash": h, "label": t["label"], "cohort": its[0][0]["cohort"], "acquisition": its[0][2],
              "epoch0": [{"view_id": r["view_id"], "context_sha256": r["context_sha256"], "fold": int(r["fold"])} for r, _, _ in its],
              "est_cpu_s": round(cost.get(h, 60.0), 1), "registry_grouping": census.get(h)}
-        if t["fallback"]:
+        if t["fallback"] and t.get("fallback_kind") == "drifted":
+            e["t1_fallback"] = dict(refs["t1_fallback_reasons"][h], rule="DRIFTED-T1-FALLBACK: raw content match fails against "
+                                    "today's live source; rebuilt on the frozen T1 (acquisition-capped) data keeping acquisition_cap, "
+                                    "research-only, split v2, train-only", source=refs["t1_fallback_record"]["path"],
+                                    source_sha256=refs["t1_fallback_record"]["sha256"])
+            if (census.get(h) or {}).get("registry_grouped_by_feature_column"):
+                e.update(disposition="not_built", reason="registry_group_annotated_awaiting_v2g_decision",
+                         detail="the registry split grouped rows by a feature column (GROUP-UNION-B); on T1 the group maps exactly, so "
+                                "it belongs on rowsel-split-v2-groups (or plain v2 flagged group_annotation_dropped): owner/coordinator call")
+        elif t["fallback"]:
             e["t1_fallback"] = dict(refs["t1_fallback_reasons"][h], rule="ROWSEL-SPLIT: raw source unmatched; rebuilt on T1 "
                                     "keeping acquisition_cap", source=refs["t1_fallback_source"]["path"],
                                     source_sha256=refs["t1_fallback_source"]["sha256"])
         entries.append(e)
     loads = [0.0] * a.of
-    for e in sorted(entries, key=lambda e: (-e["est_cpu_s"], e["dataset_hash"])):     # LPT, deterministic
+    for e in sorted((x for x in entries if x.get("disposition", "build") == "build"),
+                    key=lambda e: (-e["est_cpu_s"], e["dataset_hash"])):     # LPT, deterministic
         i = min(range(a.of), key=lambda k: (loads[k], k))
         e["shard"] = i
         loads[i] += e["est_cpu_s"]
     entries.sort(key=lambda e: e["dataset_hash"])
     doc = {"schema": PLAN_SCHEMA_V2, "tree": a.tree, "split_version": SPLIT_V2, "of": a.of, "datasets": entries, "counts": counts,
-           "expected_new_contexts": rowsel_raw.OUTER_FOLDS * counts["datasets"], "shard_est_cpu_s": [round(x, 1) for x in loads],
+           "expected_new_contexts": rowsel_raw.OUTER_FOLDS * sum(1 for x in entries if x.get("disposition", "build") == "build"),
+           "shard_est_cpu_s": [round(x, 1) for x in loads],
            "inputs": {k: v for k, v in refs.items() if k != "t1_fallback_reasons"} | {"census": {"path": str(CENSUS), "sha256": CENSUS_SHA256},
                       "owner_decision": file_ref(NONRAW_DECISION), "epoch0": {"path": str(EPOCH0), "sha256": EPOCH0_SHA256}},
            "owner_line": SCOPES[t["scope"]]["owner_line"] + "+NONRAW-SPLIT-A", "budget": rowsel.DEFAULT_BUDGET}
@@ -1350,14 +1467,18 @@ def profile_v2g(index: int, name: str, replaced_v2split: dict, expected_empty_fo
                 "annotation_groups": len({x for x in gv if x is not None}),
                 "annotation_groups_straddling_folds": rowsel_split_v2_groups.straddling_groups(folds, prep.positions.tolist(), gv)}
 
-    def target_tie(prep):
-        """Dataset-level admissibility (PR #218 finding 8): the group column must not copy or determine the target.
-        Reads y only to refuse the whole dataset; the split itself never receives y."""
+    def fold_target_tie(prep, folds, f):
+        """Target-tie admission of context f (PR #246 review 5437848458 fold isolation): the group column must not copy or
+        determine the target on fold f's OWN outer-train rows (every universe row not in fold f); no outer-test row and no
+        other fold's decision enters. A tie refuses this context only; the split itself never receives y."""
         if int(index) >= len(prep.specs) - 1:
             raise RebuildError("group_column_is_not_a_feature", f"{index} of {len(prep.specs) - 1} features")
-        return rowsel_split_v2_groups.target_tied_group(t1_group_values(prep.values, index), prep.values[:, -1])
+        test = {int(p) for p in folds[f]}
+        rows = prep.rows_of([p for p in prep.positions.tolist() if p not in test])
+        V = prep.values[rows]
+        return rowsel_split_v2_groups.target_tied_group(t1_group_values(V, index), V[:, -1])
 
-    return {"version": SPLIT_V2G, "split_fn": split_fn, "target_tie_fn": target_tie,
+    return {"version": SPLIT_V2G, "split_fn": split_fn, "fold_target_tie_fn": fold_target_tie,
             "sha_fn": lambda h, folds: rowsel_split_v2_groups.split_sha256(h, T1_PARTITION, spec, folds),
             "rule": rowsel_split_v2_groups.RULE, "view_tag": VIEW_TAG_V2G, "group_column": spec, "group_report": group_report,
             "group_value_check": lambda fn, prep, fold: group_value_check(fn, prep, index, fold),
@@ -1379,9 +1500,8 @@ def registry_group_evidence(h: str, U: rowsel.Universe, split_body: bytes, train
     """Which candidate group columns reproduce EVERY repeat/fold of the registry split object (registry split port, as
     the census ran it: its own line split and field parser, base seed = the split's first fold seed), and whether all
     reproducing candidates give the identical v2g component structure on this universe.
-    Order (PR #218 finding 8, red-team 6016730510): rowsel_split_v2_groups.target_tied_group runs FIRST for every
-    candidate. A tied column gets only its tie reason and the registry-port fields; no union-find (component_partition /
-    components) runs on its group values and no component count or structure hash is computed or stored for it."""
+    Fold isolation (PR #246 review 5437848458): the census reads features only; the target-tie guard is not decided here
+    but per context at build, over that context's own outer-train rows (TIE_PER_CONTEXT)."""
     gsk = load_gsk()
     split = json.loads(split_body)
     if split["source"]["dataset_hash"] != h or (split["source"]["train_sha256"], split["source"]["test_sha256"]) != (sha(train_body), sha(test_body)):
@@ -1401,16 +1521,12 @@ def registry_group_evidence(h: str, U: rowsel.Universe, split_body: bytes, train
             continue
         k, got, _ = gsk.generate_folds(keys, base_seed, groups=[r[int(c)] for r in rows])
         gv = t1_group_values(np.column_stack([U.X, U.y]), int(c))
-        tie = rowsel_split_v2_groups.target_tied_group(gv, U.y)        # FIRST: before any union-find on these values
         row = {"reproduces_registry": k == int(split["effective_folds"]) and got == want, "effective_folds": k,
-               "missing_cells": sum(1 for x in gv if x == MISSING_GROUP), "distinct_values": len(set(gv)), "target_tie": tie}
-        if tie:
-            row.update(field_bytes_equals_value_grouping=None, v2g_components=None, component_structure_sha256=None,
-                       not_computed=TIE_NOT_COMPUTED)
-        else:
-            comps = rowsel_split_v2_groups.component_partition(pos, fb, gv)
-            row.update(field_bytes_equals_value_grouping=group_partition([r[int(c)] for r in rows]) == group_partition(gv),
-                       v2g_components=len(comps), component_structure_sha256=sha(json.dumps(comps).encode()))
+               "missing_cells": sum(1 for x in gv if x == MISSING_GROUP), "distinct_values": len(set(gv)),
+               "target_tie": TIE_PER_CONTEXT}                            # never decided here: no y is read (fold isolation)
+        comps = rowsel_split_v2_groups.component_partition(pos, fb, gv)
+        row.update(field_bytes_equals_value_grouping=group_partition([r[int(c)] for r in rows]) == group_partition(gv),
+                   v2g_components=len(comps), component_structure_sha256=sha(json.dumps(comps).encode()))
         per[str(c)] = row
     repro = [int(c) for c in candidates if per[str(c)].get("reproduces_registry")]
     unstructured = [c for c in repro if per[str(c)].get("component_structure_sha256") is None]
@@ -1422,22 +1538,27 @@ def registry_group_evidence(h: str, U: rowsel.Universe, split_body: bytes, train
 
 
 TIE_NOT_COMPUTED = "target_tied_group refused before partition"
+TIE_PER_CONTEXT = ("target_tied_group runs per context at build, over that context's own outer-train rows only "
+                   "(profile fold_target_tie_fn); the census reads features only")
 GROUP_SOURCE_A = ("registry annotation not available in local pinned objects (the split objects pin only the train/test "
                   "blobs and the T1 meta; no annotations reference); nothing fetched")
 
 
+def context_refusal(tlg) -> str | None:
+    """The refusal reason of ONE context from its own LINEAR-DETERMINED report (outer-train rows only), else None. Never
+    aggregated across folds (FOLD-1, owner 07:22Z; PR #246 review 5437848458)."""
+    return target_linear.REFUSE if (tlg or {}).get("verdict") == target_linear.REFUSE else None
+
+
 def group_disposition(ev: dict, names: list) -> dict:
-    """Build only with exactly one group structure: some column reproduces the registry split, no reproducing column is
-    tied to the target (checked FIRST; such a column never had a structure computed), every reproducing column
+    """Build only with exactly one group structure: some column reproduces the registry split, every reproducing column
     gives the identical v2g component structure (then the lowest index is the spec), its value grouping is the
     registry's field-bytes grouping, and it has at least 2 components. With c < OUTER_FOLDS components the 5-fold split
-    leaves folds c.. empty (empty_folds_allowed); the entry pins them. Otherwise not built, with the reason."""
+    leaves folds c.. empty (empty_folds_allowed); the entry pins them. Otherwise not built, with the reason.
+    FOLD-1 (owner 07:22Z, supersedes #218 finding 8): planning reads features only; the target-tie guard is never a
+    dataset-level disposition but runs per context at build, over that context's own outer-train rows."""
     if not ev["reproducing"]:
         return {"disposition": "not_built", "reason": "no_group_column_reproduces_registry"}
-    ties = {str(c): ev["per_candidate"][str(c)].get("target_tie") for c in ev["reproducing"]}
-    if any(ties.values()):                     # FIRST (finding 8): any reproducing column copying/determining/binning y
-        return {"disposition": "not_built", "reason": "group_column_tied_to_target",
-                "detail": {c: t for c, t in ties.items() if t}}
     if ev["identical_components_across_reproducing"] is not True:       # None (no structure) is never identical
         return {"disposition": "not_built", "reason": "ambiguous_group_columns_with_different_components"}
     if not all(ev["per_candidate"][str(c)]["field_bytes_equals_value_grouping"] for c in ev["reproducing"]):
@@ -1712,11 +1833,8 @@ def build_dataset_v2(ds, its, shard_dir: Path, codes, refs, *, budget=rowsel.DEF
     contexts = []
     try:
         prep = t1_prep(U)
-        if prof.get("target_tie_fn"):                                   # dataset-level refusal, before any split
-            tie = prof["target_tie_fn"](prep)
-            rec["group_target_tie"] = tie
-            if tie:
-                raise RebuildError("group_column_tied_to_target", tie)
+        if prof.get("fold_target_tie_fn"):                              # never dataset-level: per context, own train rows
+            rec["group_target_tie"] = "per context on its own outer-train rows (fold_target_tie_fn)"
         folds = split_fn(h, prep.positions, prep.values, prep.specs)
         rep = rowsel_raw.split_report(prep, folds)
         rep.update(schema=version, sha256=prof["sha_fn"](h, folds), domain=rowsel_raw_split_v2.SPLIT_DOMAIN,
@@ -1744,6 +1862,14 @@ def build_dataset_v2(ds, its, shard_dir: Path, codes, refs, *, budget=rowsel.DEF
         results = []
         for f in built_folds:
             tf = time.process_time()
+            tie_rec = None
+            if prof.get("fold_target_tie_fn"):                          # target-tie: fold f's OWN outer-train rows only
+                tie = prof["fold_target_tie_fn"](prep, folds, f)
+                if tie:
+                    contexts.append({"fold": f, "refused": "group_column_tied_to_target", "target_tie": tie})
+                    continue
+                tie_rec = {"result": "admit", "rows": "this context's own outer-train rows", "rule": "FOLD-1",
+                           "reasons_checked": list(rowsel_split_v2_groups.TARGET_TIE_REASONS)}
             view = select_fn(U, folds, f, budget, None, quotas=None)
             cf = rowsel.counterfactual_report(select_fn, U, folds, f, budget)
             failures = []
@@ -1761,13 +1887,30 @@ def build_dataset_v2(ds, its, shard_dir: Path, codes, refs, *, budget=rowsel.DEF
                 else:
                     ctx = compose_context_v2(ds, f, label, acq_rec, view, cf, dcf, built, codes, refs, budget, folds, rep, cut, e0, extra,
                                              profile=prof)
+                    ctx["target_linear"] = target_linear.check_jtt1(built["art"]["split"]["jtt1"])    # outer-train rows only
+                    if tie_rec is not None:
+                        ctx["group_target_tie"] = tie_rec
                     ctx["build_cpu_s"] = round(time.process_time() - tf, 3)
                     results.append((ctx, built["art"]))
             contexts.append({"fold": f, "view_id": ctx["view_id"] if ctx else None, "context_sha256": ctx["context_sha256"] if ctx else None,
                              "passed": not failures, "failures": failures, "quotas": list(view.quotas),
-                             "cpu_s": round(time.process_time() - tf, 2)})
+                             "cpu_s": round(time.process_time() - tf, 2)}
+                            | ({"target_linear": {k: ctx["target_linear"][k] for k in ("verdict", "ols_rel_rmse")}} if ctx else {}))
             if failures:
                 raise RebuildError("fold_gate_failed", json.dumps({f: failures}))
+        for c in contexts:                                               # LINEAR-DETERMINED: this context's own verdict only
+            r = context_refusal(c.get("target_linear"))
+            if r and not c.get("refused"):
+                c["refused"] = r
+        refused = [c for c in contexts if c.get("refused")]
+        results = [(ctx, art) for ctx, art in results if ctx["fold"] not in {c["fold"] for c in refused}]
+        if refused and not results:                                      # every context refused on its own rows
+            reasons = sorted({c["refused"] for c in refused})
+            raise RebuildError(reasons[0] if len(reasons) == 1 else "all_contexts_refused",
+                               json.dumps({c["fold"]: (c.get("target_linear") or {}).get("ols_rel_rmse", c.get("target_tie")) for c in refused}))
+        if refused:
+            rec["refused_contexts"] = refused
+            contexts = [c for c in contexts if not c.get("refused")]
         pending = []
         for ctx, art in results:
             d = shard_dir / ctx["view_id"]
@@ -1826,7 +1969,8 @@ def build_v2(a) -> int:
     src = scale_check.Sources(load_index=False)
     cache = scale_check.DataCache(max_items=4)
     inv = json.loads(DATASETS_INV.read_text())
-    groups, refs, counts = load_tree_scope(src.included(), tc["scope_tree"])
+    groups, refs, counts = load_tree_scope(src.included(), tc["scope_tree"], getattr(a, "t1_fallback_record", None))
+    split_loader = content_addressed_split if TREES[tc["scope_tree"]].get("content_split") else None
     if version == SPLIT_V2 and counts != plan["counts"]:
         raise SystemExit(f"scope {counts} != plan {plan['counts']}")
     if version == SPLIT_V2G and not {e["dataset_hash"] for e in plan["datasets"]} <= set(groups):  # (supplements too)
@@ -1850,7 +1994,8 @@ def build_v2(a) -> int:
         if [(it[0]["view_id"], it[0]["context_sha256"]) for it in its] != [(c["view_id"], c["context_sha256"]) for c in e["epoch0"]]:
             raise SystemExit(f"{h}: epoch-0 contexts differ from the plan")
         try:
-            ds = load_dataset(h, [it[0] for it in its], src, cache, inv, v1_port_check=False)     # no all-row v1 port
+            ds = load_dataset(h, [it[0] for it in its], src, cache, inv, v1_port_check=False,      # no all-row v1 port
+                              split_loader=split_loader)
             check_cap_label(ds, its[0][2])
         except Exception as err:
             rec = {"schema": DATASET_SCHEMA_V2, "dataset_hash": h, "split_version": version, "status": "failed",
@@ -1986,6 +2131,8 @@ def summarize_v2(a) -> int:
     want_extra = {}
     if TREES[tc["scope_tree"]]["scope"] == "frozen-kmeans-research":
         want_extra = {"rights": "research-only", "rights_decision": rights_decision_ref()}
+    elif TREES[tc["scope_tree"]]["scope"] == "frozen-capped-drifted":
+        want_extra = {"rights": "research-only", "rights_decision": all_data_research_ref()}
     sups = []                                                            # create-only supplements of plan.json
     for sp in sorted(out.glob("plan-supplement-*.json")):
         d = json.loads(sp.read_bytes())
@@ -2015,10 +2162,10 @@ def summarize_v2(a) -> int:
                                        "identical_components_across_reproducing": ev["identical_components_across_reproducing"],
                                        "registry_folds_compared": ev["registry_folds_compared"], "base_seed": ev["base_seed"]},
                        replaces_v2split_cut=e["replaces_v2split"]["cut_id"])
-            if e.get("disposition") != "build":
-                row.update(status="not_built", reason=e.get("reason"))
-                rows.append(row)
-                continue
+        if e.get("disposition", "build") != "build":
+            row.update(status="not_built", reason=e.get("reason"))
+            rows.append(row)
+            continue
         sd = out / f"shard-{e['_tag']}{e['shard']}"
         p = sd / "_datasets" / f"{h}.json"
         if not p.exists():
@@ -2048,6 +2195,11 @@ def summarize_v2(a) -> int:
                         problems.append({"dir": str(d), "problems": ["t1_fallback"]})
                     if v["context"]["row_selection_leak"] != [e["label"]]:
                         problems.append({"dir": str(d), "problems": ["label"]})
+                    tlv = (v["context"].get("target_linear") or {}).get("verdict")
+                    if tlv == target_linear.REFUSE:
+                        problems.append({"dir": str(d), "problems": ["target_linear_in_features"]})
+                    elif tlv == target_linear.REVIEW:
+                        row.setdefault("target_linear_near_review", []).append(c["view_id"])
                     if v["context"].get("split_version") != version:
                         problems.append({"dir": str(d), "problems": ["split_version"]})
                     if version == SPLIT_V2G:
@@ -2057,7 +2209,7 @@ def summarize_v2(a) -> int:
                                 or c["view_id"] in e["replaces_v2split"]["view_ids"]):
                             problems.append({"dir": str(d), "problems": ["replaces_cut_or_group_column"]})
                     ctx_dirs.add(str(d)); ids.append(c["view_id"])
-                if len(ids) != row["effective_folds"] or len(r["contexts"]) != row["effective_folds"]:
+                if len(ids) + len(r.get("refused_contexts") or []) != row["effective_folds"] or len(r["contexts"]) != len(ids):
                     problems.append({"dataset": h, "problems": ["context_count"], "contexts": len(ids), "planned": row["effective_folds"]})
                 if version == SPLIT_V2G and r["split"].get("empty_folds", []) != row["empty_folds"]:
                     problems.append({"dataset": h, "problems": ["empty_folds_differ_from_plan"]})
@@ -2085,7 +2237,9 @@ def summarize_v2(a) -> int:
               "failed_datasets": sum(r["status"] == "failed" for r in rows), "missing_records": sum(r["status"] == "missing_record" for r in rows),
               "failed_by_reason": dict(collections.Counter(r.get("reason") for r in rows if r["status"] == "failed")),
               "registry_grouped_by_feature_column_datasets": sum(1 for r in rows if r.get("registry_grouped_by_feature_column")),
-              "group_annotation_dropped_datasets": sorted(r["dataset_hash"] for r in rows if r["group_annotation_dropped"]),
+              "group_annotation_dropped_datasets": sorted(r["dataset_hash"] for r in rows if r["group_annotation_dropped"] and r["status"] == "done"),
+              "registry_group_annotated_not_built": sorted(r["dataset_hash"] for r in rows
+                                                           if r.get("registry_grouped_by_feature_column") and r["status"] == "not_built"),
               "verification_problems": len(problems), "orphan_context_dirs": len(orphans)}
     rec_names = [f"shard-{i}-of-{plan['of']}.receipt.json" for i in range(plan["of"])]
     rec_names += [f"shard-{d['shard_tag']}{i}-of-{d['of']}.receipt.json" for _, d in sups for i in range(d["of"])]
@@ -2121,7 +2275,8 @@ def summarize_v2(a) -> int:
     stem = {"kmeans-clean": "rowsel-t1-kmeans-v2split-summary", "kmeans-fallback": "rowsel-t1-fallback-v2split-summary",
             "frozen-kmeans-research": "rowsel-t1-frozen-kmeans-research-v2split-summary",
             "kmeans-clean-groups": "rowsel-t1-kmeans-v2gsplit-summary", "kmeans-fallback-groups": "rowsel-t1-fallback-v2gsplit-summary",
-            "frozen-kmeans-research-groups": "rowsel-t1-frozen-kmeans-research-v2gsplit-summary"}[a.tree]
+            "frozen-kmeans-research-groups": "rowsel-t1-frozen-kmeans-research-v2gsplit-summary",
+            "frozen-capped-drifted-fallback": "rowsel-t1-frozen-capped-fallback-v2split-summary"}[a.tree]
     rp = Path(a.receipt) if a.receipt else RECEIPTS / "build" / f"{stem}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
     data = (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
     with open(rp, "xb") as fh:
@@ -2153,6 +2308,8 @@ def main(argv=None):
     ap.add_argument("--plan", action="store_true", help="v2split: write the tree's pinned plan.json")
     ap.add_argument("--plan-supplement", action="store_true", help="v2gsplit: write the empty-folds supplement of plan.json")
     ap.add_argument("--plan-file", help="v2gsplit build: plan file in the tree (default plan.json; a supplement's name)")
+    ap.add_argument("--t1-fallback-record", help="REQUIRED (and only allowed) for the opt-in drifted T1 fallback tree: the "
+                                                 "rights-held fill completion record whose 'drifted' list it builds")
     ap.add_argument("--shard", type=int)
     ap.add_argument("--of", type=int, required=True)
     ap.add_argument("--datasets", help="comma-separated dataset hashes (pilot only)")
@@ -2174,6 +2331,11 @@ def main(argv=None):
         tc = tree_cfg(a.tree)
         if tc["version"] != a.split_version:
             ap.error(f"tree {a.tree} is a {tc['version']} tree")
+        opt_in = TREES.get(tc["scope_tree"], {}).get("fallback_kind") == "drifted"
+        if opt_in and not a.t1_fallback_record:
+            ap.error(f"tree {a.tree} is an explicit opt-in: --t1-fallback-record is required")
+        if a.t1_fallback_record and not opt_in:
+            ap.error("--t1-fallback-record belongs to the drifted T1 fallback tree only")
         if a.out is None:
             a.out = str(tc["out"])
         if a.overlay:
