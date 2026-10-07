@@ -208,7 +208,8 @@ if [ -f "$junit" ]; then mv "$junit" "$EVIDENCE"/prior-junit.xml; fi
 cargo run -q --locked -p jope-ci -- cargo-artifact nextest-config --output "$EVIDENCE"/nextest.toml
 cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context" --message-format json > "$EVIDENCE/collection.json"
 touch "$EVIDENCE"/nextest-started
-cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context"
+# Bound simultaneous compiler fixtures while retaining their original deadlines.
+cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context" --test-threads 4
 python3 deploy/ci/training-proof.py rust --collection "$EVIDENCE/collection.json" --junit "$junit"
     ;;
   e2e-smoke)
