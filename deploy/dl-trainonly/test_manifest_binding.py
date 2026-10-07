@@ -307,6 +307,62 @@ class CpuRowLevel(Trees):
         self.assertFalse((base / "out").exists())
 
 
+class PartitionIdentity(Trees):
+    """Review 5440969832 [P1]: a context carrying another fold's partition identity, with --source, view_id, fold, context_sha256,
+    cut, split, payload and runner record unchanged, refuses before any manifest (Lane B's reproducer, every kind)."""
+
+    def relabel(self, kind, fields, name):
+        base, dirs, args, gpu_args = self.build(kind, name)
+        d, other = dirs[(DS, 0)], rd(dirs[(DS, 1)])
+        c = rd(d)
+        for f in fields:   # another fold's value; where the synthetic folds share one (inner_labels_sha256), a different hash
+            c[f] = other[f] if other[f] != c[f] else "e" * 64
+        wr(d, c)
+        self.seal(base)
+        return base, args, gpu_args
+
+    def assert_refused(self, base, args, gpu_args, why):
+        with self.assertRaises(SystemExit) as cm:
+            self.run_binding(base, args, gpu_args)
+        self.assertIn(why, str(cm.exception))
+        self.assertIn("refused before any manifest", str(cm.exception))
+        self.assertFalse((base / "out").exists())
+
+    def test_other_folds_outer_index_hashes_are_refused(self):
+        for kind in KINDS:
+            for fields in (("outer_train_indices_sha256",), ("outer_test_indices_sha256",),
+                           ("outer_train_indices_sha256", "outer_test_indices_sha256")):
+                with self.subTest(kind=kind, fields=fields):
+                    self.assert_refused(*self.relabel(kind, fields, f"{kind}-{'-'.join(f[:9] for f in fields)}"),
+                                        f"{fields[0]} differs from the source build")
+
+    def test_other_partition_identities_are_refused(self):
+        for kind in ("rawgroup_cpu_raw", "g3_gpu"):
+            for f in ("inner_labels_sha256", "scaler_sha256"):
+                with self.subTest(kind=kind, field=f):
+                    self.assert_refused(*self.relabel(kind, (f,), f"{kind}-{f}"), f"{f} differs from the source build")
+
+    def test_rowsel_relabels_and_one_sided_absence_are_refused(self):
+        base, dirs, args, gpu_args = self.build("rawgroup_cpu_raw", "rowsel-positions")
+        c = rd(dirs[(DS, 0)])
+        c["rowsel"]["selected_positions_sha256"] = "1" * 64            # a position hash the source does not carry
+        wr(dirs[(DS, 0)], c)
+        self.seal(base)
+        self.assert_refused(base, args, gpu_args, "rowsel block differs from the source build")
+        base, dirs, args, gpu_args = self.build("g3_gpu", "slim-rowsel")
+        c = rd(dirs[(DS, 0)])
+        c["rowsel"]["identity"] = rd(dirs[(OTHER, 0)])["rowsel"]["identity"]
+        wr(dirs[(DS, 0)], c)
+        self.seal(base)
+        self.assert_refused(base, args, gpu_args, "rowsel identity differs from the source build")
+        base, dirs, args, gpu_args = self.build("g3_vectors", "absent-test-index")
+        c = rd(dirs[(DS, 0)])
+        del c["outer_test_indices_sha256"]
+        wr(dirs[(DS, 0)], c)
+        self.seal(base)
+        self.assert_refused(base, args, gpu_args, "outer_test_indices_sha256 differs from the source build")
+
+
 class CleanAndContract(Trees):
     def test_clean_trees_of_every_kind_pass_and_bind_the_adapter(self):
         for kind, (_, _, _, _, _, gpu) in KINDS.items():

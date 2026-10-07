@@ -17,7 +17,10 @@ block. For each context of the tree and its --source build context (same view_id
 identity, rights or GPU-input mismatch):
   1 split   the cut block, the cut_id (the #239 source-bound cut_of on both sides, so a raw GPU context that inherits its cut is
             compared on the inherited value), the split block, rowsel.split_schema, split_version, fold and dataset_hash equal the
-            source's;
+            source's; so does every partition identity (review 5440969832): outer_train_indices_sha256, outer_test_indices_sha256,
+            inner_labels_sha256, scaler_sha256, indices_basis and repeat (present on both sides with equal values, or absent on
+            both), and the whole rowsel block (train/test positions, selected/draw/position hashes, seed, view identity, ...); a
+            #239 slim GPU parent (rowsel.split_schema without rowsel.split) must carry only source values;
   2 input   a GPU context's gpu.input.binding equals the runner's binding recomputed from the source encoder JTT1: train_rows and
             features_in from its header, selection_fit "outer_train_only" and train_block_sha256 = sha256 of the train range
             (dltrain.jtt1.train_range; the outer-test range is never decoded);
@@ -59,8 +62,9 @@ CUT_ADAPTER = (
 BINDING_SCHEMA = "jope.dl-manifest-binding-adapter/v1"
 SELECTION_FIT = "outer_train_only"
 RULES = {
-    "split": "cut block, source-bound cut_id, split block, rowsel.split_schema, split_version, fold and dataset_hash equal the "
-    "--source build context with the same view_id",
+    "split": "cut block, source-bound cut_id, split block, rowsel.split_schema, split_version, fold, dataset_hash, every partition "
+    "identity (outer_train/test_indices_sha256, inner_labels_sha256, scaler_sha256, indices_basis, repeat; a one-sided absence refuses) "
+    "and the rowsel block equal the --source build context with the same view_id",
     "input": "gpu.input.binding equals train_rows/features_in from the source encoder JTT1 header, selection_fit outer_train_only "
     "and sha256 of its train range",
     "rows": "non-GPU row-level files: JTT1 train rows, n_train and p equal the source build file's and n_test is 0 (recomputed, not "
@@ -110,6 +114,10 @@ def split_of(ctx):
     return ctx.get("split") or (ctx.get("rowsel") or {}).get("split")
 
 
+PARTITION_KEYS = ("outer_train_indices_sha256", "outer_test_indices_sha256", "inner_labels_sha256", "scaler_sha256", "indices_basis",
+                  "repeat")
+
+
 def split_reason(ctx, sc, cut_of):
     if (ctx.get("cut") or {}) != (sc.get("cut") or {}):
         return "cut block differs from the source build"
@@ -124,6 +132,18 @@ def split_reason(ctx, sc, cut_of):
     for k in ("split_version", "fold", "dataset_hash"):
         if ctx.get(k) != sc.get(k):
             return f"{k} differs from the source build"
+    for k in PARTITION_KEYS:
+        if (k in ctx) != (k in sc) or ctx.get(k) != sc.get(k):
+            return f"{k} differs from the source build"
+    rs, srs = ctx.get("rowsel"), sc.get("rowsel")
+    if (rs is None) != (srs is None):
+        return "rowsel block present on one side only"
+    if rs is not None:
+        if "split_schema" in rs and "split" not in rs:   # #239 slim GPU parent: every field it carries is the source's
+            if any(k != "split_schema" and (k not in srs or rs[k] != srs[k]) for k in rs):
+                return "rowsel identity differs from the source build"
+        elif rs != srs:
+            return "rowsel block differs from the source build"
     return None
 
 
