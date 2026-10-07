@@ -7,10 +7,12 @@ by its degree-1 discrete minimax line, and replaced by the line only when the li
 minimax bound on those rows and the profile admits the result. Each offered program is measured
 as a new program, and its measured score decides where it ranks.
 
-It is degree 1 only. Under the kernel2 caps (15 nodes, depth 4) a polynomial of degree `n` lowered
-in Horner form over its variable has depth `2n + 1`, so no higher degree fits an admissible
-expression. This is a linearization, not a general polynomial or rational compression; the
-higher-degree case is held (see the last section but one).
+It is degree 1 only, by the owner's ruling. Under the kernel2 caps (15 nodes, depth 4) a dense
+polynomial of degree `n` (every coefficient nonzero) lowered in Horner form over its variable has
+depth `2n + 1`, so no dense higher degree fits an admissible expression; a sparse one can be
+shallower (the lowering skips zero coefficients, so `2 x²` lowers to `c0*(c0*2)`, depth 3), but it
+is not built either. This is a linearization, not a general polynomial or rational compression;
+the higher-degree case is held (see the last section but one).
 
 Its stable id is `feat-math.minimax-linearize.v1`, built on feat-math's `MathExpr::linearize_v2`.
 The pass draws from no random stream, and with it off nothing calls it, so receipts and every
@@ -154,15 +156,18 @@ the subtree's range, which would be a separate, versioned rule.)
   sees it), and the public linearization entries check a tree's structure before they copy it;
 - the recorded evidence agrees with itself, checked per stage expression: each fit is consistent
   with its stop and within the evaluator's range (`|lo|`, `|hi|` and `max|f|` at most 1e12, the
-  only range the sampling produces), with its bracket's ends and `max|f|` of positive sign, and
-  a closing stop records the fit of its own step (the iteration cap, the last step); each line's
-  measured error, its largest absolute residual, is finite and not negative (negative zero
-  included), at most `1e12 + max|f|`, and at least the recorded line's residual at either
-  sampled end, `lo` or `hi` (`|p| - max|f|`), where the line must be in the evaluator's range
-  (a line whose coefficients are not finite is refused before any measurement, so its ends are
-  not read).
-  Those are the bounds the live measurement keeps, and rounding is monotone, so they hold
-  exactly with no allowance; a faulting training input refuses every
+  only range the sampling produces), over a range that holds three distinct abscissae (a line's
+  fit needs three), with its bracket's ends and `max|f|` of positive sign; a closing stop
+  records the fit of its own step (the iteration cap, the last step), and only `exact_fit` is
+  within the exact-fit test, which the fit applies before any other stop; each line's measured
+  error, its largest absolute residual, is finite and not negative (negative zero included), at
+  most `1e12 + max|f|`, and, for a line that can be lowered, at least the line's residual at
+  either sampled end, `lo` or `hi` (`|p| - max|f|`), where the line must be in the evaluator's
+  range, at most `M + max|f|`, and at least `max|f| - M`, with `M` the line's larger size at the
+  two ends (its computed values are monotone between them, and some sample attains `max|f|`).
+  A line whose coefficients are not finite is refused before any measurement, so its ends are
+  not read. Those are the bounds the live measurement keeps, and rounding is monotone, so they
+  hold exactly with no allowance; a faulting training input refuses every
   subtree of its stage or none; a subtree that occurs twice in one expression records the same
   samples both times, compared bit for bit (a coefficient that is not finite is published as
   absent and read back as NaN, which compares equal to itself only that way); the
@@ -178,7 +183,8 @@ the subtree's range, which would be a separate, versioned rule.)
 What verification cannot prove. Without the training rows, `verify_run` checks each record's
 internal consistency and re-derives the line, the program and the outcome from it; it does not
 re-measure the fit. The fit, its training range, `max|f|` and the line's measured error are taken
-as recorded. So an edit that keeps those numbers consistent passes: for example, a closed fit's
+as recorded. So an edit that keeps those numbers consistent, meeting every check above, passes:
+for example, a closed fit's
 `max_error` and `levelled` scaled up together, with the bound recomputed to match, re-derives the
 same decisions and is accepted (a test pins this limit). So does a refused subtree's fit replaced
 by the refusal "a training row faults or is not finite in the subtree", which only that subtree's
@@ -217,8 +223,9 @@ has the `kernel2-baseline` and `kernel2-experimental` profiles (PR-0, #221;
 
 ## Held follow-up: degree above 1
 
-Held, not built. Degree 2 lowers to depth 5 in Horner form and degree `n` to `2n + 1`, over the
-kernel2 depth limit of 4, and the plan forbids raising the caps. A higher-degree move would need
+Held, not built. A dense degree 2 lowers to depth 5 in Horner form and a dense degree `n` to
+`2n + 1`, over the kernel2 depth limit of 4, and the plan forbids raising the caps; only sparse
+higher-degree polynomials (zero coefficients skipped) can be shallower. A higher-degree move would need
 one of: a profile with deeper caps, a lowering that is not Horner over ordinary nodes (a power node
 has unspecified precision), or a rational form `P(x)/Q(x)`, which also needs the pole-free
 certificate (`certify` in `simplify.rs`, compiled for its tests only). It would be a separate
@@ -237,10 +244,11 @@ feat-math lib, the `linearization_tests` module of `simplify.rs`:
   any line is built, and `closed` holds for exactly the three closing stops;
 - the recorded path re-derives the live result exactly, across every refusal; recorded numbers
   drive the bound and must agree with their stop and the evaluator's range, with their own step
-  and positive zeros; a recorded line error that is negative, negative zero or not finite is
-  refused, and so is one its line and samples cannot give (past `1e12 + max|f|`, smaller than the
-  line's residual at a sampled end, or for a line outside the range there), each accepted at its
-  exact bound; records of one expression must
+  and positive zeros, an exact fit under its own stop only, and a range of three distinct
+  abscissae; a recorded line error that is negative, negative zero or not finite is refused, and
+  so is one its line and samples cannot give (past `1e12 + max|f|`, smaller than the line's
+  residual at a sampled end, for a line outside the range there, past `M + max|f|`, or under
+  `max|f| - M`), each accepted at its exact bound; records of one expression must
   agree with each other (a repeated subtree, bit for bit, with NaN coefficients equal to
   themselves and other numbers still refused; one variable's training range; a fit beside a
   refusal of the same values);
@@ -270,8 +278,9 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
   accepted: a consistently scaled fit, a refused line's fit hidden as an unsampled subtree, and
   an offered line's error edited up to its bound
   (a group for a parent the pass did not read is tested for the rewrite pass, whose records share
-  the same parent-order check); a measured line's error edited to `-1`, `-0` or `1e100`, or kept
-  while its line moves off its samples, is refused;
+  the same parent-order check); a measured line's error edited to `-1`, `-0` or `1e100`, or past
+  its line's size, or kept while its line moves off its samples or under a largest target far
+  past the line, is refused;
 - a run on a one-feature dataset whose values are subnormal (`-1e-310`, `0`, `1e-310`): the two
   equal children of `(sin(c0)+c0)*(sin(c0)+c0)` are refused for a coefficient past the finite
   range, published without their coefficients, and the untouched run verifies; a finite pair

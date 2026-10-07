@@ -279,10 +279,12 @@ fn recorded_numbers_drive_the_bound_and_must_agree_with_their_stop() {
     let out = recorded(NEAR_LINEAR, &missing).unwrap();
     assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_OUT_OF_RANGE));
     // Changed coefficients change the line, and so the admitted expression. The samples' largest
-    // |f| is widened past the moved line, so that its recorded error stays one the line allows.
+    // |f| is set to the moved line's larger end, so that its small recorded error stays one the
+    // line and its samples allow (reviews 02 and 03).
     let mut moved = kept.clone();
-    moved[0].fit.as_mut().unwrap().coefficients[0] += 0.5;
-    moved[0].fit.as_mut().unwrap().max_abs += 1.0;
+    let line = moved[0].fit.as_mut().unwrap();
+    line.coefficients[0] += 0.5;
+    line.max_abs = largest_end(line);
     let out = recorded(NEAR_LINEAR, &moved).unwrap();
     assert_ne!(out[0].expression, live[0].expression);
     // Non-finite coefficients are refused by name.
@@ -436,12 +438,22 @@ fn a_recorded_fit_must_stay_in_the_evaluators_range() {
         }
         refused(&bad);
     }
-    // At the range's edge a consistent record is accepted: its bound grows with max|f|, which
-    // is the limit of checking a record without its rows.
+    // At the range's edge the range check accepts max|f|. The fit's error is then within the
+    // exact-fit test, so only an `ExactFit` stop is consistent, and a target that large forces
+    // the line's residual up to `max|f| - M` (review 03): the record is consistent only with both,
+    // and its line then misses the bound.
     let mut edge = kept.clone();
-    edge[0].fit.as_mut().unwrap().max_abs = MAX_ABS;
+    let fit = edge[0].fit.as_mut().unwrap();
+    fit.max_abs = MAX_ABS;
+    assert!(fit.max_error <= 4.0 * f64::EPSILON * MAX_ABS);
+    let refusal = recorded(NEAR_LINEAR, &edge).unwrap_err();
+    assert!(format!("{refusal:#}").contains("a recorded fit disagrees with its stop"));
+    let fit = edge[0].fit.as_mut().unwrap();
+    fit.stop = MinimaxStop::ExactFit;
+    let least = MAX_ABS - largest_end(fit);
+    edge[0].lowered_error = Some(least);
     let out = recorded(NEAR_LINEAR, &edge).unwrap();
-    assert!(out[0].expression.is_some());
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
 }
 
 /// `(sin(c0)+c0)` twice: the root and two equal subtrees are considered.
@@ -576,20 +588,33 @@ fn a_recorded_line_error_must_be_a_finite_nonnegative_residual() {
         .is_some());
 }
 
+/// The larger size of a recorded line at its sampled ends, `M`: between the samples the computed
+/// line lies between its values there.
+fn largest_end(fit: &LinearFit) -> f64 {
+    [fit.lo, fit.hi]
+        .map(|end| horner(&fit.coefficients, end).abs())
+        .into_iter()
+        .fold(0.0, f64::max)
+}
+
 /// The least residual a recorded line can have on its own record: at either sampled end, its
-/// value's distance from `max|f|`, and never under zero.
+/// value's distance from `max|f|`; at the largest target, `max|f| - M`; and never under zero.
 fn residual_floor(fit: &LinearFit) -> f64 {
     [fit.lo, fit.hi]
         .map(|end| horner(&fit.coefficients, end).abs() - fit.max_abs)
         .into_iter()
-        .fold(0.0, f64::max)
+        .fold(fit.max_abs - largest_end(fit), f64::max)
+        .max(0.0)
 }
 
 /// The live measurement keeps a line only while it is in the evaluator's range at every sample,
 /// and `lo` and `hi` are samples whose targets are within `max|f|` (B19 wiring review 02,
 /// B19-R02-IMPOSSIBLE-ENDPOINT-RESIDUAL). So a recorded line error is at most
 /// `MAX_ABS + max|f|`, the line is in range at both ends, and the error is at least the line's
-/// residual there. Each bound is exact, and a record at it is accepted.
+/// residual there. The computed line is monotone between its ends, and some sample attains
+/// `max|f|` (review 03, B19-R03-LINE-ENVELOPE-RESIDUAL), so the error is also at most
+/// `M + max|f|` and at least `max|f| - M`, with `M` the line's larger size at the ends. Each bound
+/// is exact, and a record at it is accepted.
 #[test]
 fn a_recorded_line_error_must_be_one_its_line_and_samples_allow() {
     let training = rows(-0.5, 1.5, 201);
@@ -602,16 +627,36 @@ fn a_recorded_line_error_must_be_one_its_line_and_samples_allow() {
         let refusal = recorded(NEAR_LINEAR, bad).unwrap_err();
         assert!(format!("{refusal:#}").contains(expected), "{refusal:#}");
     };
-    // Past what the evaluator's range allows; at it, the error only misses the bound.
+    // Past what the evaluator's range allows.
     for over in [(MAX_ABS + fit.max_abs).next_up(), 1e100] {
         let mut bad = kept.clone();
         bad[0].lowered_error = Some(over);
         refused(&bad, "exceeds what the evaluator's range allows");
     }
+    // Past what the line and its samples allow, `M + max|f|`, though within the evaluator's
+    // range; at it, the error only misses the bound.
+    let ceiling = largest_end(&fit) + fit.max_abs;
+    for over in [ceiling.next_up(), MAX_ABS + fit.max_abs] {
+        let mut bad = kept.clone();
+        bad[0].lowered_error = Some(over);
+        refused(&bad, "exceeds what its line and samples allow");
+    }
     let mut at = kept.clone();
-    at[0].lowered_error = Some(MAX_ABS + fit.max_abs);
+    at[0].lowered_error = Some(ceiling);
     let out = recorded(NEAR_LINEAR, &at).unwrap();
     assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    // A largest target far past the line, with the line's small error kept: refused. At
+    // `max|f| - M` the record is consistent and misses the bound; one step under it is refused.
+    let mut wide = kept.clone();
+    wide[0].fit.as_mut().unwrap().max_abs = 10.0;
+    refused(&wide, "smaller than the residual at the largest target");
+    let least = 10.0 - largest_end(&fit);
+    assert!(least > error, "{least} <= {error}");
+    wide[0].lowered_error = Some(least);
+    let out = recorded(NEAR_LINEAR, &wide).unwrap();
+    assert_eq!(out[0].refusal.as_deref(), Some(LINEARIZE_MISSES_BOUND));
+    wide[0].lowered_error = Some(least.next_down());
+    refused(&wide, "smaller than the residual at the largest target");
     // The line moved far from every target keeps its small recorded error: refused. At the
     // moved line's own floor the record is consistent and misses the bound; one step under it
     // is refused.
@@ -641,7 +686,8 @@ fn a_recorded_line_error_must_be_one_its_line_and_samples_allow() {
 
 /// A closing stop returns the fit of the step it stops at, the iteration cap stops after the last
 /// step, and the fit's residuals and `max|f|` are maxima of absolute values from `+0.0`, never
-/// `-0.0` (B19 wiring review 02's two notes).
+/// `-0.0` (B19 wiring review 02's two notes); an exact fit is never recorded under another stop,
+/// and a line's fit spans three distinct abscissae (review 03's two notes).
 #[test]
 fn a_recorded_fit_must_carry_its_stops_step_and_positive_zeros() {
     let disagrees = "a recorded fit disagrees with its stop";
@@ -691,6 +737,48 @@ fn a_recorded_fit_must_carry_its_stops_step_and_positive_zeros() {
         let error = recorded(zero, &bad).unwrap_err();
         assert!(format!("{error:#}").contains(disagrees), "{error:#}");
     }
+    // `minimax` returns `ExactFit` at the first fit within its test (review 03,
+    // B19-R03-EXACT-STOP-PRIORITY): the zero subtree's exact fit under any other stop is refused.
+    for stop in [
+        MinimaxStop::Converged,
+        MinimaxStop::NoiseLimited,
+        MinimaxStop::Stalled,
+        MinimaxStop::Degenerate,
+        MinimaxStop::IterationLimit,
+    ] {
+        let mut bad = kept.clone();
+        let exact = bad[at].fit.as_mut().unwrap();
+        assert_eq!(exact.stop, MinimaxStop::ExactFit);
+        exact.stop = stop;
+        if stop == MinimaxStop::IterationLimit {
+            exact.steps = MAX_ITERATIONS;
+        }
+        let error = recorded(zero, &bad).unwrap_err();
+        assert!(
+            format!("{error:#}").contains(disagrees),
+            "{stop:?}: {error:#}"
+        );
+    }
+    // A line's fit needs three distinct abscissae (review 03, B19-R03-RANGE-CARDINALITY), so its
+    // range holds a value strictly between its ends; -0 and +0 are one value.
+    let tiny = f64::from_bits(1);
+    let holds = |lo: f64, hi: f64| consistent(&LinearFit { lo, hi, ..fit });
+    assert!(holds(-tiny, tiny));
+    assert!(holds(fit.lo, fit.hi));
+    for (lo, hi) in [(0.0, tiny), (-0.0, tiny), (-tiny, 0.0), (-tiny, -0.0)] {
+        assert!(!holds(lo, hi), "{lo:e} {hi:e}");
+    }
+    let mut narrow: Vec<LinearizationEvidence> = linearize(NEAR_LINEAR, &training)
+        .iter()
+        .map(evidence)
+        .collect();
+    for e in &mut narrow {
+        if let Some(f) = e.fit.as_mut() {
+            (f.lo, f.hi) = (0.0, tiny);
+        }
+    }
+    let error = recorded(NEAR_LINEAR, &narrow).unwrap_err();
+    assert!(format!("{error:#}").contains(disagrees), "{error:#}");
 }
 
 /// A fit refused for a coefficient past the finite range is published without its coefficients
