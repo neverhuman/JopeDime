@@ -1215,6 +1215,16 @@ fn bound_of(fit: &FitRecord) -> f64 {
     fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * fit.max_abs
 }
 
+/// The larger size of a recorded line at its sampled ends, as the lowered line computes it: the
+/// product by the slope, then the intercept added.
+fn largest_end(fit: &FitRecord) -> f64 {
+    let [a0, a1] = fit.coefficients.unwrap();
+    [fit.lo, fit.hi]
+        .map(|v| (v * a1 + a0).abs())
+        .into_iter()
+        .fold(0.0, f64::max)
+}
+
 /// The records `edit` leaves, published under a rehashed digest.
 fn published_edit(
     output: &Path,
@@ -1348,6 +1358,33 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
         "a recorded line error is smaller than the line's residual at a sampled end",
     ));
     restore();
+    // Errors the line's own size rules out (B19 wiring review 03,
+    // B19-R03-LINE-ENVELOPE-RESIDUAL): one past `M + max|f|`, though within the evaluator's
+    // range, and the line's small error kept under a largest target far past the line.
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        let record = fit_of(&mut m[measured]);
+        let fit = record.fit.as_ref().unwrap();
+        let ceiling = largest_end(fit) + fit.max_abs;
+        record.lowered_error = Some(2.0 * ceiling + 1.0);
+    });
+    errors.push(refused_with(
+        &path,
+        "a line error past its line's size",
+        "a recorded line error exceeds what its line and samples allow",
+    ));
+    restore();
+    let path = published_edit(output, &receipt, &engine, &moves, |m| {
+        let record = fit_of(&mut m[measured]);
+        let far =
+            10.0 * (largest_end(record.fit.as_ref().unwrap()) + record.lowered_error.unwrap());
+        record.fit.as_mut().unwrap().max_abs = far + 10.0;
+    });
+    errors.push(refused_with(
+        &path,
+        "a largest target far past the line",
+        "a recorded line error is smaller than the residual at the largest target",
+    ));
+    restore();
 
     // A refused line's fit hidden behind the faulting-input refusal, while the stage's other
     // subtrees keep their own records.
@@ -1431,14 +1468,18 @@ fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {
     restore();
 
     // The documented limits: without the training rows, a closed fit scaled consistently (its
-    // errors and max|f| ten times over, the bound recomputed) and a refused line's fit hidden as
+    // bracket ten times over, the bound recomputed; `max|f|` stays, since a target ten times
+    // larger would force a residual the record does not have) and a refused line's fit hidden as
     // an unsampled subtree both re-derive the same decisions and are accepted.
     let path = published_edit(output, &receipt, &engine, &moves, |m| {
         let record = fit_of(&mut m[measured]);
         let fit = record.fit.as_mut().unwrap();
+        assert_eq!(
+            fit.stop, "converged",
+            "the scaled bracket keeps a converged stop closed"
+        );
         fit.max_error *= 10.0;
         fit.levelled *= 10.0;
-        fit.max_abs *= 10.0;
         record.bound = Some(bound_of(fit));
     });
     publication::verify_run(&path).unwrap();

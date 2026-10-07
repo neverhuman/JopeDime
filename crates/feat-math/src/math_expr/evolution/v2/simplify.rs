@@ -741,16 +741,18 @@ enum Source<'a> {
 
 /// Whether a recorded fit agrees with its stop's own definition, as far as its recorded numbers
 /// show: finite, a training range and largest `|f|` within the evaluator's range (`MAX_ABS`, the
-/// only range [`samples`] produces), a bracket that does not invert, with its two ends and `max|f|`
-/// of positive sign (each is a maximum of absolute values from `+0.0`), steps within the cap, the
-/// stop's own step (a closing stop returns the fit of the step it stops at, the cap stops after
-/// the last step), and the stop's closing test (`ExactFit`, `Converged` and `NoiseLimited` are
-/// tested as [`minimax`] tests them). The range bound stops `max_abs` only past 1e12: an inflated `max_abs` within it still
-/// meets the `ExactFit` test for a `max_error` up to `4 ε 1e12` (about 8.9e-4) and the
-/// `NoiseLimited` test for a bracket up to `64 ε 1e12` (about 0.014), and widens the bound with it.
-/// It cannot tell a consistent record from the fit the training rows give: without the rows, an
-/// edit that keeps every number consistent (say, a larger `max_error` and `levelled` with a closed
-/// bracket) passes.
+/// only range [`samples`] produces), a range holding at least three distinct abscissae (a line's
+/// fit needs three), a bracket that does not invert, with its two ends and `max|f|` of positive
+/// sign (each is a maximum of absolute values from `+0.0`), steps within the cap, the stop's own
+/// step (a closing stop returns the fit of the step it stops at, the cap stops after the last
+/// step), and the stop's closing test (`ExactFit`, `Converged` and `NoiseLimited` are tested as
+/// [`minimax`] tests them). [`minimax`] returns `ExactFit` at the first fit within its test, so a
+/// fit with any other stop, the current one or the best seen, is outside it. The range bound
+/// stops `max_abs` only past 1e12: an inflated `max_abs` within it still meets the `ExactFit` test
+/// for a `max_error` up to `4 ε 1e12` (about 8.9e-4) and the `NoiseLimited` test for a bracket up
+/// to `64 ε 1e12` (about 0.014), and widens the bound with it. It cannot tell a consistent record
+/// from the fit the training rows give: without the rows, an edit that keeps every number
+/// consistent (say, a larger `max_error` and `levelled` with a closed bracket) passes.
 fn consistent(fit: &LinearFit) -> bool {
     let finite = [fit.lo, fit.hi, fit.levelled, fit.max_error, fit.max_abs]
         .iter()
@@ -759,11 +761,12 @@ fn consistent(fit: &LinearFit) -> bool {
         .iter()
         .all(|v| v.abs() <= MAX_ABS);
     let width = fit.max_error - fit.levelled;
+    let exact = fit.max_error <= 4.0 * f64::EPSILON * fit.max_abs;
     let closing = match fit.stop {
-        MinimaxStop::ExactFit => fit.max_error <= 4.0 * f64::EPSILON * fit.max_abs,
-        MinimaxStop::Converged => width <= TOLERANCE * fit.max_error,
-        MinimaxStop::NoiseLimited => width <= 64.0 * f64::EPSILON * fit.max_abs,
-        MinimaxStop::Stalled | MinimaxStop::Degenerate | MinimaxStop::IterationLimit => true,
+        MinimaxStop::ExactFit => exact,
+        MinimaxStop::Converged => !exact && width <= TOLERANCE * fit.max_error,
+        MinimaxStop::NoiseLimited => !exact && width <= 64.0 * f64::EPSILON * fit.max_abs,
+        MinimaxStop::Stalled | MinimaxStop::Degenerate | MinimaxStop::IterationLimit => !exact,
     };
     let signed = [fit.levelled, fit.max_error, fit.max_abs]
         .iter()
@@ -779,7 +782,7 @@ fn consistent(fit: &LinearFit) -> bool {
         && in_range
         && signed
         && stepped
-        && fit.lo < fit.hi
+        && fit.lo.next_up() < fit.hi
         && 0.0 <= fit.levelled
         && fit.levelled <= fit.max_error
         && fit.max_abs >= 0.0
@@ -962,25 +965,41 @@ fn linearize(
                 if let Some(error) = lowered {
                     // The live measurement keeps a line only while it is in the evaluator's range
                     // at every sample, `lo` and `hi` are samples, and every target is within
-                    // `max|f|`. So every residual is at most `MAX_ABS + max|f|`, and the one at
-                    // either end at least `|p| - max|f|`. Rounding is monotone, so both bounds hold
-                    // for the computed values exactly, with no allowance. A line whose
-                    // coefficients are not finite is refused before it is measured, as for every
-                    // refusal before the measurement, so its ends are not read.
+                    // `max|f|`, which one of them attains. So every residual is at most
+                    // `MAX_ABS + max|f|`, and the one at either end at least `|p| - max|f|`. The
+                    // line's computed value, a rounded product by the slope and then a rounded sum
+                    // with the intercept, is monotone in the abscissa, so between the samples it
+                    // lies between its values at the ends: with `M` the larger of their sizes,
+                    // every residual is at most `M + max|f|`, and the one at the largest target at
+                    // least `max|f| - M`. Rounding is monotone, so each bound holds for the
+                    // computed values exactly, with no allowance. A line whose coefficients are
+                    // not finite is refused before it is measured, as for every refusal before the
+                    // measurement, so its ends are not read.
                     anyhow::ensure!(
                         error <= MAX_ABS + fit.max_abs,
                         "a recorded line error exceeds what the evaluator's range allows"
                     );
-                    let lowerable = fit.coefficients.iter().all(|c| c.is_finite());
-                    for end in [fit.lo, fit.hi].into_iter().filter(|_| lowerable) {
-                        let value = horner(&fit.coefficients, end);
+                    if fit.coefficients.iter().all(|c| c.is_finite()) {
+                        let mut largest_end = 0.0f64;
+                        for end in [fit.lo, fit.hi] {
+                            let value = horner(&fit.coefficients, end);
+                            anyhow::ensure!(
+                                value.is_finite() && value.abs() <= MAX_ABS,
+                                "a recorded line error names a line outside the evaluator's range at a sampled end"
+                            );
+                            anyhow::ensure!(
+                                error >= value.abs() - fit.max_abs,
+                                "a recorded line error is smaller than the line's residual at a sampled end"
+                            );
+                            largest_end = largest_end.max(value.abs());
+                        }
                         anyhow::ensure!(
-                            value.is_finite() && value.abs() <= MAX_ABS,
-                            "a recorded line error names a line outside the evaluator's range at a sampled end"
+                            error <= largest_end + fit.max_abs,
+                            "a recorded line error exceeds what its line and samples allow"
                         );
                         anyhow::ensure!(
-                            error >= value.abs() - fit.max_abs,
-                            "a recorded line error is smaller than the line's residual at a sampled end"
+                            error >= fit.max_abs - largest_end,
+                            "a recorded line error is smaller than the residual at the largest target"
                         );
                     }
                 }
@@ -1093,8 +1112,9 @@ impl MathExpr {
     /// the bound, every refusal after the fit, and the admitted expression are recomputed. The
     /// fit itself and the line's measured error are taken as recorded, checked only against the
     /// fit's stop and the evaluator's range, the error as a finite nonnegative residual within
-    /// what the recorded line and samples allow (at most `1e12 + max|f|`, and at least the line's
-    /// residual at either sampled end), and against the expression's other records (a repeated subtree records the same samples, bit
+    /// what the recorded line and samples allow (at most `1e12 + max|f|`; for a line that can be
+    /// lowered, at least its residual at either sampled end, and between `max|f| - M` and
+    /// `M + max|f|`, with `M` its larger size there), and against the expression's other records (a repeated subtree records the same samples, bit
     /// for bit; the fits of one variable share its training range); without the rows they cannot
     /// be recomputed. A subtree with no recorded fit keeps its recorded refusal.
     pub fn linearize_recorded_v2(
