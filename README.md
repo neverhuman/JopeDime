@@ -22,8 +22,8 @@ LM refinement, Pareto archive, expression rewrite and minimax subtree routes. It
 train-only raw-context admission and publication bindings, sealed-IPC descriptor ownership,
 compiler caching and independently collected teacher-handoff checks. The merged GP-2 HWM
 publisher binds G3 and catalog roles to pinned decisions and retains their provenance (#256).
-Source and fixture
-receipts retain their scope; these changes do not establish a live learning or transfer result.
+Source and fixture receipts retain their scope; these changes do not establish a live learning
+or transfer result.
 
 The [pending release queue](CHANGELOG.md#pending-release-queue) lists candidates awaiting
 serialized merge and receiving-main qualification. This draft is local and unpublished; final

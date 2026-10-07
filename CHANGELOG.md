@@ -19,7 +19,7 @@ qualification. The source and test receipts for an open PR do not qualify the re
 | 3 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
 | 4 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
 | Queue tail | Verify and snapshot pinned artifacts before decoding | [#259](https://github.com/neverhuman/JopeDime/pull/259), `d397470c` |
-| Queue tail | Verify corpus records through the frozen input stream | [#260](https://github.com/neverhuman/JopeDime/pull/260), `874fa112` |
+| Queue tail | Bind score-corpus parsing to its authenticated streamed ledger | [#260](https://github.com/neverhuman/JopeDime/pull/260), `874fa112` |
 | Owner-routed | Correct feasibility allocator safety rationales | [#261](https://github.com/neverhuman/JopeDime/pull/261), `e055b63c` |
 
 Reconcile this list against the final merged source before publication; remove pending notes
