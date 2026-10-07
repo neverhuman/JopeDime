@@ -78,7 +78,15 @@ path = root / 'nextest.toml'
 text = path.read_text()
 needle = 'path = "junit-main.xml"'
 assert text.count(needle) == 1
-path.write_text(text.replace(needle, 'path = ' + json.dumps(str(root / 'junit.xml'))))
+text = text.replace(needle, 'path = ' + json.dumps(str(root / 'junit.xml')))
+# Start the long golden tail first, retaining every test and its original deadline.
+# Only this run's full-main profile changes; the checked-in PR/default profiles do not.
+text += '''
+[[profile.main.overrides]]
+filter = "package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))"
+priority = 100
+'''
+path.write_text(text)
 PY
     cargo nextest list --config-file "$EVIDENCE/nextest.toml" -P main --locked "${selection[@]}" --message-format json > "$EVIDENCE/collection.json"
     case $lane in

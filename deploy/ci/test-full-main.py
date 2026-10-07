@@ -187,6 +187,27 @@ sys.exit(int(a.status))
         # The family must leave the existing per-test deadline intact, plus 300s setup.
         self.assertGreaterEqual(family_seconds, test_seconds + 300)
 
+    def test_full_config_changes_only_junit_path_and_golden_priority(self):
+        script = (ROOT/'deploy/ci/full-lane.sh').read_text()
+        snippets = re.findall(r"python3 - <<'PY'\n(.*?)\nPY", script, re.S)
+        configure = next(text for text in snippets if 'junit-main.xml' in text)
+        original = (ROOT/'.config/nextest.toml').read_text()
+        expected = tomllib.loads(original)
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            (root/'nextest.toml').write_text(original)
+            subprocess.run([sys.executable, '-c', configure],
+                           env=dict(os.environ, JOPE_LANE_EVIDENCE=str(root)), check=True)
+            actual = tomllib.loads((root/'nextest.toml').read_text())
+            expected['profile']['main']['junit']['path'] = str(root/'junit.xml')
+            # No filter/timeout/retry/worker or failure policy may change: priority
+            # only schedules the same tests sooner, including every other golden.
+            override = actual['profile']['main'].pop('overrides')
+            self.assertEqual(expected, actual)
+            self.assertEqual([dict(
+                filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
+                priority=100)], override)
+
 
 if __name__ == '__main__':
     unittest.main()
