@@ -2,9 +2,12 @@
 //! lowered to ordinary AST nodes, and the bounded minimax linearization built on it.
 //!
 //! The one caller outside the tests is [`MathExpr::linearize_v2`]: a bounded minimax
-//! linearization, degree 1 only. Under the kernel2 caps (15 nodes, depth 4) a Horner tree of
-//! degree `n` has depth `2n + 1`, so no higher degree can be lowered into an admissible
-//! expression; this is not a general polynomial or rational compression. A line is only a
+//! linearization, degree 1 only, by the owner's ruling. Under the kernel2 caps (15 nodes, depth
+//! 4) a dense Horner tree of degree `n` (every coefficient nonzero) has depth at least `2n + 1`
+//! (a negative leading literal adds a unary minus), so no dense higher degree can be lowered into
+//! an admissible expression; [`lower`] skips zero coefficients, so a sparse one can be shallower
+//! (`[0, 0, 2]` lowers to `c0*(c0*2)`, depth 3), but none is built. This is not a general
+//! polynomial or rational compression. A line is only a
 //! proposal: it is offered when its fit's bracket closed, it is smaller than the subtree, its own
 //! error on the training samples meets the minimax bound ([`assess`]), and the profile admits the
 //! whole expression with it in place. The native protected re-score of the whole program then
@@ -47,8 +50,9 @@ use crate::kernel::expression_search::{
 };
 
 /// The largest degree fitted. What can be proposed is bounded separately, by the checks of
-/// [`assess`]: a Horner tree over a variable leaf has depth `2n + 1`, so under the expression
-/// depth limit of 16 the largest degree that lowers is 7.
+/// [`assess`]: a dense Horner tree over a variable leaf has depth at least `2n + 1`, so under the
+/// expression depth limit of 16 the largest dense degree that lowers is 7 (a sparse one, its zero
+/// coefficients skipped, can be shallower).
 const MAX_DEGREE: usize = 12;
 /// The exchange stops after this many steps.
 const MAX_ITERATIONS: usize = 32;
@@ -239,7 +243,7 @@ fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
         .iter()
         .any(|(v, f)| v.abs() > MAX_ABS || f.abs() > MAX_ABS)
     {
-        return Err("a sample is outside the evaluator's range");
+        return Err(OUTSIDE_RANGE);
     }
     let mut sorted = samples.to_vec();
     sorted.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)));
@@ -250,7 +254,7 @@ fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
             // subtree gives f(-0.0) = -0.0). The sort keeps the first of a merged pair.
             Some(&(lv, lf)) if lv == v => {
                 if lf != f {
-                    return Err("one abscissa has two targets");
+                    return Err(TWO_TARGETS);
                 }
             }
             _ => unique.push((v, f)),
@@ -262,6 +266,25 @@ fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
 /// The fit's refusal of too few distinct abscissae. With [`EMPTY_INTERVAL`], it depends on the
 /// variable's values alone, never on the subtree's.
 const FEW_ABSCISSAE: &str = "fewer than degree + 2 distinct abscissae";
+/// [`prepare`]'s refusal of a sample past the evaluator's range.
+const OUTSIDE_RANGE: &str = "a sample is outside the evaluator's range";
+/// [`prepare`]'s refusal of one abscissa with two targets (merged signed zeros that differ).
+const TWO_TARGETS: &str = "one abscissa has two targets";
+/// The fit's refusal when its first reference system is singular.
+const SINGULAR_FIRST: &str = "singular first reference";
+/// The fit's refusal when its first fit's errors are not finite.
+const NONFINITE_ERROR: &str = "an error is not finite";
+/// Every reason the fit can refuse the samples [`samples`] gives for a line: [`prepare`]'s and
+/// [`minimax`]'s own. [`samples`] gives only finite samples, so `a sample is not finite` cannot
+/// occur, and a line's degree is under the cap.
+const FIT_REFUSALS: [&str; 6] = [
+    OUTSIDE_RANGE,
+    TWO_TARGETS,
+    FEW_ABSCISSAE,
+    EMPTY_INTERVAL,
+    SINGULAR_FIRST,
+    NONFINITE_ERROR,
+];
 /// The fit's refusal of an interval that is empty or overflows.
 const EMPTY_INTERVAL: &str = "empty or overflowing interval";
 
@@ -323,7 +346,7 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
             .collect();
         let rhs: Vec<f64> = reference.iter().map(|&r| f[r]).collect();
         let Some(x) = solve(rows, rhs) else {
-            return ending(best, Stop::Degenerate, iteration).ok_or("singular first reference");
+            return ending(best, Stop::Degenerate, iteration).ok_or(SINGULAR_FIRST);
         };
         let (chebyshev, h) = (x[..=n].to_vec(), x[n + 1].abs());
         let errors: Vec<f64> = (0..count)
@@ -332,7 +355,7 @@ fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static st
         // Overflow in the polynomial leaves no usable error, and a NaN would slip past the
         // maximum below.
         if errors.iter().any(|e| !e.is_finite()) {
-            return ending(best, Stop::Degenerate, iteration).ok_or("an error is not finite");
+            return ending(best, Stop::Degenerate, iteration).ok_or(NONFINITE_ERROR);
         }
         let (mut global, mut max_error) = (0usize, 0.0f64);
         for (i, e) in errors.iter().enumerate() {
@@ -710,6 +733,35 @@ fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec<(f64, f64)
     Some((var, out))
 }
 
+/// The target of `subtree`, which reads only `var`, where `var` reads the sampled value `v`: the
+/// target [`samples`] records at such a row. A fault-free read of a finite value passes it on
+/// unchanged, so the subtree with `var` read as the element `x` computes the same target from
+/// `v`. `None` when that evaluation faults or is not finite, which no sampled row allows.
+fn target_at(subtree: &Expr, var: Var, v: f64) -> Option<f64> {
+    let mut tree = subtree.clone();
+    read_as_element(&mut tree, var);
+    let (f, faults) = MathExpr::from_ast(tree).ok()?.eval_element_traced(v, &[]);
+    (faults.is_empty() && f.is_finite()).then_some(f)
+}
+
+/// `expr` with each read of `var` made a read of the element `x`.
+fn read_as_element(expr: &mut Expr, var: Var) {
+    match expr {
+        Expr::Var(v) => {
+            if *v == var {
+                *v = Var::X;
+            }
+        }
+        Expr::Const(_) => {}
+        Expr::Unary(_, a) => read_as_element(a, var),
+        Expr::Binary(_, a, b) => {
+            read_as_element(a, var);
+            read_as_element(b, var);
+        }
+        Expr::Call(_, args) => args.iter_mut().for_each(|a| read_as_element(a, var)),
+    }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Bounded minimax linearization (laneD:B19-minimax-linearize).
 
@@ -747,7 +799,9 @@ enum Source<'a> {
 /// step (a closing stop returns the fit of the step it stops at, the cap stops after the last
 /// step), and the stop's closing test (`ExactFit`, `Converged` and `NoiseLimited` are tested as
 /// [`minimax`] tests them). [`minimax`] returns `ExactFit` at the first fit within its test, so a
-/// fit with any other stop, the current one or the best seen, is outside it. The range bound
+/// fit with any other stop, the current one or the best seen, is outside it. A finite zero
+/// coefficient is `+0.0`, and a fit whose targets are all zero is the zero polynomial, exact at
+/// the first step. The range bound
 /// stops `max_abs` only past 1e12: an inflated `max_abs` within it still meets the `ExactFit` test
 /// for a `max_error` up to `4 ε 1e12` (about 8.9e-4) and the `NoiseLimited` test for a bracket up
 /// to `64 ε 1e12` (about 0.014), and widens the bound with it. It cannot tell a consistent record
@@ -778,10 +832,26 @@ fn consistent(fit: &LinearFit) -> bool {
         MinimaxStop::IterationLimit => fit.steps == MAX_ITERATIONS,
         MinimaxStop::Stalled | MinimaxStop::Degenerate => true,
     };
+    // The monomial conversion adds rounded products to `+0.0`, so a finite zero coefficient is
+    // `+0.0`: an exact cancellation rounds to `+0.0` too.
+    let positive_zeros = fit
+        .coefficients
+        .iter()
+        .all(|c| *c != 0.0 || c.is_sign_positive());
+    // With every target zero the first solve gives the zero polynomial, whose fit is exact at the
+    // first step; its coefficients are zero, or NaN where the conversion scales zero by infinity.
+    let zero_targets = fit.max_abs != 0.0
+        || (fit.stop == MinimaxStop::ExactFit
+            && fit.iterations == 1
+            && fit.steps == 1
+            && fit.max_error == 0.0
+            && fit.coefficients.iter().all(|c| c.is_nan() || *c == 0.0));
     finite
         && in_range
         && signed
         && stepped
+        && positive_zeros
+        && zero_targets
         && fit.lo.next_up() < fit.hi
         && 0.0 <= fit.levelled
         && fit.levelled <= fit.max_error
@@ -908,6 +978,8 @@ fn linearize(
             expression: None,
             refusal: None,
         };
+        // A recorded line in the evaluator's range at both sampled ends, with no measured error.
+        let mut unmeasured_in_range = false;
         // The fit, and how the line's own error over the samples is measured.
         let (fit, measured): (LinearFit, Measure) = match &mut source {
             Source::Rows(rows) => {
@@ -950,12 +1022,42 @@ fn linearize(
                         evidence.lowered_error.is_none() && evidence.refusal.is_some(),
                         "a linearization without a fit names no refusal"
                     );
+                    // The live path refuses a subtree before any fit only as unsampled, or for a
+                    // reason the fit itself gives.
+                    let refusal = evidence.refusal.as_deref().unwrap_or_default();
+                    let reason = refusal
+                        .strip_prefix(LINEARIZE_FIT_REFUSED)
+                        .and_then(|r| r.strip_prefix(": "));
+                    anyhow::ensure!(
+                        refusal == LINEARIZE_UNSAMPLED
+                            || reason.is_some_and(|r| FIT_REFUSALS.contains(&r)),
+                        "a linearization without a fit names a refusal the fit never gives"
+                    );
                     record.refusal = evidence.refusal;
                     out.push(record);
                     continue;
                 };
                 anyhow::ensure!(consistent(&fit), "a recorded fit disagrees with its stop");
+                // `lo` and `hi` are sampled values of the subtree's one variable, so its targets
+                // there follow from the subtree itself: fault-free, finite, and within `max|f|`.
+                let mut targets = [0.0f64; 2];
+                for (target, end) in targets.iter_mut().zip([fit.lo, fit.hi]) {
+                    *target = target_at(node, found[0], end)
+                        .filter(|f| f.abs() <= fit.max_abs)
+                        .ok_or_else(|| {
+                            anyhow::anyhow!(
+                                "a recorded fit's sampled ends give targets its samples cannot have"
+                            )
+                        })?;
+                }
                 let lowered = evidence.lowered_error;
+                // A line that can be lowered and is in the evaluator's range at both sampled ends
+                // is in it at every sample between them, so the live measurement gives its error.
+                let lowerable = fit.coefficients.iter().all(|c| c.is_finite());
+                let ends = [fit.lo, fit.hi].map(|end| horner(&fit.coefficients, end));
+                unmeasured_in_range = lowered.is_none()
+                    && lowerable
+                    && ends.iter().all(|v| v.is_finite() && v.abs() <= MAX_ABS);
                 // The line's error is its largest absolute residual over the samples: a recorded
                 // one that is negative, negative zero or not finite cannot have been measured.
                 anyhow::ensure!(
@@ -966,30 +1068,31 @@ fn linearize(
                     // The live measurement keeps a line only while it is in the evaluator's range
                     // at every sample, `lo` and `hi` are samples, and every target is within
                     // `max|f|`, which one of them attains. So every residual is at most
-                    // `MAX_ABS + max|f|`, and the one at either end at least `|p| - max|f|`. The
-                    // line's computed value, a rounded product by the slope and then a rounded sum
-                    // with the intercept, is monotone in the abscissa, so between the samples it
-                    // lies between its values at the ends: with `M` the larger of their sizes,
-                    // every residual is at most `M + max|f|`, and the one at the largest target at
-                    // least `max|f| - M`. Rounding is monotone, so each bound holds for the
-                    // computed values exactly, with no allowance. A line whose coefficients are
-                    // not finite is refused before it is measured, as for every refusal before the
-                    // measurement, so its ends are not read.
+                    // `MAX_ABS + max|f|`, and the one at either end is `|p - f|` against that
+                    // end's own target, which is within `max|f|`, so it is also at least
+                    // `|p| - max|f|`. The line's computed value, a rounded product by the slope
+                    // and then a rounded sum with the intercept, is monotone in the abscissa, so
+                    // between the samples it lies between its values at the ends: with `M` the
+                    // larger of their sizes, every residual is at most `M + max|f|`, and the one
+                    // at the largest target at least `max|f| - M`. Rounding is monotone, so each
+                    // bound holds for the computed values exactly, with no allowance. A line whose
+                    // coefficients are not finite is refused before it is measured, as for every
+                    // refusal before the measurement, so its ends are not read.
                     anyhow::ensure!(
                         error <= MAX_ABS + fit.max_abs,
                         "a recorded line error exceeds what the evaluator's range allows"
                     );
-                    if fit.coefficients.iter().all(|c| c.is_finite()) {
+                    if lowerable {
                         let mut largest_end = 0.0f64;
-                        for end in [fit.lo, fit.hi] {
-                            let value = horner(&fit.coefficients, end);
+                        for (value, target) in ends.into_iter().zip(targets) {
                             anyhow::ensure!(
                                 value.is_finite() && value.abs() <= MAX_ABS,
                                 "a recorded line error names a line outside the evaluator's range at a sampled end"
                             );
+                            // The residual at the sampled end itself, as the measurement takes it.
                             anyhow::ensure!(
-                                error >= value.abs() - fit.max_abs,
-                                "a recorded line error is smaller than the line's residual at a sampled end"
+                                error >= (value - target).abs(),
+                                "a recorded line error is smaller than the line's residual at a sampled end's target"
                             );
                             largest_end = largest_end.max(value.abs());
                         }
@@ -1024,6 +1127,12 @@ fn linearize(
             measured,
         ) {
             Err(refused) => {
+                // The measurement refuses a line as out of range only when some sample leaves the
+                // range, which a line in range at both sampled ends cannot.
+                anyhow::ensure!(
+                    !(unmeasured_in_range && refused.reason == LINEARIZE_OUT_OF_RANGE),
+                    "a recorded line with no measured error is in the evaluator's range at both sampled ends"
+                );
                 record.line_nodes = refused.nodes;
                 record.lowered_error = refused.lowered_error;
                 record.refusal = Some(refused.reason.into());
@@ -1111,10 +1220,13 @@ impl MathExpr {
     /// [`LinearizationEvidence`]. The subtrees, the bracket rule, the lowered line and its size,
     /// the bound, every refusal after the fit, and the admitted expression are recomputed. The
     /// fit itself and the line's measured error are taken as recorded, checked only against the
-    /// fit's stop and the evaluator's range, the error as a finite nonnegative residual within
-    /// what the recorded line and samples allow (at most `1e12 + max|f|`; for a line that can be
-    /// lowered, at least its residual at either sampled end, and between `max|f| - M` and
-    /// `M + max|f|`, with `M` its larger size there), and against the expression's other records (a repeated subtree records the same samples, bit
+    /// fit's stop and the evaluator's range, the subtree's own targets at the sampled ends, the
+    /// error as a finite nonnegative residual within what the recorded line and samples allow (at
+    /// most `1e12 + max|f|`; for a line that can be lowered, at least its residual at either
+    /// sampled end and against that end's target, and between `max|f| - M` and `M + max|f|`, with
+    /// `M` its larger size there; present whenever such a line in range at both ends reaches the
+    /// measurement), a refusal before any fit as one the fit gives, and against the expression's
+    /// other records (a repeated subtree records the same samples, bit
     /// for bit; the fits of one variable share its training range); without the rows they cannot
     /// be recomputed. A subtree with no recorded fit keeps its recorded refusal.
     pub fn linearize_recorded_v2(
