@@ -90,6 +90,10 @@ def build_one(item, blobs, role, codes, shard):
         results.append((ctx, built["art"]))
     if refused and not results:
         return {"status": "failed", "reason": "target_linear_in_features", "refused_contexts": refused}
+    if refused:                                                          # the written contexts name the admitted set
+        e0.update(B.replacement_membership(built_folds, [c["fold"] for c, _ in results], refused))
+        for ctx, _ in results:
+            ctx["epoch0_replaced"] = e0
     for ctx, art in results:
         d = shard / ctx["view_id"]
         d.mkdir(parents=True, exist_ok=False)

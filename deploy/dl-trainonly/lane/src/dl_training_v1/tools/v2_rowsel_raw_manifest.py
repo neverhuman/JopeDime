@@ -2,7 +2,11 @@
 
 A raw rebuild draws a new value-free outer split, so a dataset's epoch-0 contexts are replaced as a group
 (context.json `epoch0_replaced`, level "dataset"; new fold f is not epoch-0 fold f). A dataset is published only if ALL its
-new contexts are in the tree (the builder's `new_contexts` count) and each one's inputs match the build tree it came from:
+new contexts are in the tree (the builder's `new_contexts` count) and each one's inputs match the build tree it came from.
+FOLD-1 partial refusal (PR #251 review 5441124504): when the builder refused some folds on their own outer-train rows, the
+record also lists built_folds, admitted_folds and refused_folds (fold, reason); the tree must then hold exactly the admitted
+folds, the record must equal each context's source build-tree record, and the source tree must hold no context of a refused
+fold. A refused fold therefore never blocks the admitted ones, and a missing admitted context still refuses the dataset:
   CPU trees  encoder/teacher/A0 sha256 equal the build-tree context.json (which may differ only by the Dope additions); a
              PAYLOAD-STRIP-PUBLISH copy (tools/v2_strip_outer_test.py) instead binds through its publication_strip record:
              original sha256/raw_sha256 = the build-tree file, stripped sha256 = the published file, n_test 0, train rows equal
@@ -55,6 +59,24 @@ def cut_of(ctx):
     return None
 
 
+MEMBERSHIP = ("built_folds", "admitted_folds", "refused_folds")
+
+
+def membership_problem(h, folds, rep):
+    """None when the folds in the tree are exactly the replacement record's written set, else the refusal message."""
+    if len(folds) != rep["new_contexts"]:
+        return f"{h}: {len(folds)} contexts in tree, builder made {rep['new_contexts']}; datasets replace as a group"
+    if not any(k in rep for k in MEMBERSHIP):
+        return None                                            # no refusal: every built fold is a new context
+    built, adm = sorted(int(f) for f in rep.get("built_folds") or []), sorted(int(f) for f in rep.get("admitted_folds") or [])
+    ref = sorted(int(r["fold"]) for r in rep.get("refused_folds") or [])
+    if (sorted(folds) != adm or len(adm) != rep["new_contexts"] or not ref or set(adm) & set(ref) or sorted(adm + ref) != built
+            or any(not r.get("reason") for r in rep.get("refused_folds") or [])):
+        return (f"{h}: folds in tree {sorted(folds)} are not the admitted folds {adm} (refused {ref}, built {built}); "
+                "datasets replace as a group")
+    return None
+
+
 def source_ctx(src_tree: Path):
     out = {}
     for p in glob.glob(f"{src_tree}/shard-*/*/context.json"):
@@ -104,14 +126,20 @@ def main(argv=None):
         rep = ps[0]["ctx"]["epoch0_replaced"]
         if any(p["ctx"]["epoch0_replaced"] != rep for p in ps):
             raise SystemExit(f"{h}: contexts disagree on epoch0_replaced")
-        if len(ps) != rep["new_contexts"]:
-            raise SystemExit(f"{h}: {len(ps)} contexts in tree, builder made {rep['new_contexts']}; datasets replace as a group")
+        bad = membership_problem(h, [int(p["ctx"]["fold"]) for p in ps], rep)
+        if bad:
+            raise SystemExit(bad)
+        refused_folds = {int(r["fold"]) for r in rep.get("refused_folds") or []}
+        if any(c.get("dataset_hash") == h and int(c.get("fold", -1)) in refused_folds for c in src.values()):
+            raise SystemExit(f"{h}: the source build tree holds a context of a refused fold")
         for p in ps:
             ctx, sc = p["ctx"], src.get(p["view_id"])
             if sc is None:
                 raise SystemExit(f"{p['view_id']}: not found in the source build tree")
             if ctx["context_sha256"] != sc["context_sha256"] or ctx.get("rights") != sc.get("rights"):
                 raise SystemExit(f"{p['view_id']}: identity or rights differ from the source build")
+            if ctx["epoch0_replaced"] != sc.get("epoch0_replaced"):
+                raise SystemExit(f"{p['view_id']}: epoch0_replaced (the replaced and admitted/refused membership) differs from the source build")
             if "gpu" in ctx:
                 if (ctx["gpu"].get("input") or {}).get("encoder_jtt1_sha256") != sc["files"]["encoder.jtt1.gz"]["sha256"]:
                     raise SystemExit(f"{p['view_id']}: GPU input differs from the source encoder")

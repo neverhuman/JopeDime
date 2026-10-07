@@ -478,6 +478,10 @@ def run_dataset(e, out_shard: Path, codes, src, cache, inv, held, guard, select_
         rec["contexts"] = [c for c in contexts if not c.get("refused")]
         if refusals:                                                     # context-specific exclusions (LINEAR-DETERMINED ruling)
             rec["refused_contexts"] = refusals
+            e0.update(replacement_membership(built_folds, [r["fold"] for r, _, _ in results], refusals))
+            e0["context_count_changed"] = len(e["epoch0"]) != e0["new_contexts"]
+            for _, _, crec in results:                                   # every written context names the admitted set
+                crec["epoch0_replaced"] = e0
         if post_gate is not None:
             guard.wait()
             g = post_gate(inp, prep, folds, universe_ref, split_ref, results)
@@ -1119,6 +1123,16 @@ def v2g_fold_target_tie(e, prep, folds, f: int) -> dict:
     V = prep.values[rows]
     y = V[:, -1]
     return {str(c): rowsel_split_v2_groups.target_tied_group(raw_group_values(V, prep.specs, c, n), y) for c, n in zip(cands, names)}
+
+
+def replacement_membership(built_folds, admitted, refusals) -> dict:
+    """The replacement record's fold membership after context-specific refusals (FOLD-1; PR #251 review 5441124504):
+    new_contexts counts the WRITTEN contexts and the record names the built folds, the admitted (written) folds and each
+    refused fold with its own reason, so the manifest publishes exactly the admitted set and a refused fold never blocks
+    the others. Set only when a fold is refused; without refusals the record is unchanged (new_contexts = every built fold)."""
+    return {"new_contexts": len(admitted), "built_folds": sorted(int(f) for f in built_folds),
+            "admitted_folds": sorted(int(f) for f in admitted),
+            "refused_folds": sorted(({"fold": int(c["fold"]), "reason": c["refused"]} for c in refusals), key=lambda x: x["fold"])}
 
 
 def context_refusal(tlg) -> str | None:
