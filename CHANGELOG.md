@@ -6,17 +6,39 @@ qualification.
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-10-06
+### Pending release queue
+
+Local draft as of 2026-10-07 17:58 UTC. These candidates are pending, not merged release
+capabilities. Their inclusion requires the owner's serialized merge and fresh receiving-main
+qualification. The source and test receipts for an open PR do not qualify the release.
+
+| Order | Pending change | Candidate |
+| --- | --- | --- |
+| 1 | Authority fixture executor and deterministic sequential start clock | Lane C `fix/authority-synthetic-executor`, `53eebf69`; PR not yet open at this snapshot |
+| 2 | S1 HWM publication for G3 and catalog contexts from pinned P3 decisions | [#256](https://github.com/neverhuman/JopeDime/pull/256), `fc11da3d` |
+| 3 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
+| 4 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
+| 5 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
+
+Reconcile this list against the final merged source before publication; remove pending notes
+from the shipping release draft once each item has its terminal disposition.
+
+## [1.0.0] - 2026-10-07
 
 The GP language release: versioned expression kernels, protected numerical semantics, explicit
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Local release preparation at cad789d93, including merged #221/#223/#224/#225/#226/#227/#228/#229/#230/#231/#232/#233/#234/#236/#238/#239/#240/#241/#242/#243/#244.
-Rebase onto final main and finalize the date before publication. GP-language #231 includes the
-maintained Tanh mutation gate; audit dispositions are merged and linked below. Final verifier
-binding, main qualification and owner dispositions remain prerequisites. B17/B18/B20 wiring is
-merged; B19 wiring is tracked separately. -->
+<!-- Unpublished local release preparation. Source base remains 8b7476fdfbf2c4631e5426bfdf62991020b55e0a.
+Notes reconciled through receiving main df760a3ed315df45f3ece18b83d94a54833047cf on 2026-10-07;
+#254 is merged upstream after the source base and must be included by the later rebase.
+Earlier merged #246/#247/#248/#250/#252/#253 are now itemized; #249 landed through
+an owner-authorized squash at 8a4b2fdfe, with the native PR subsequently closed by pointer.
+Pending queue items above are not merged. Finalize the date and notes on qualified final main
+before publishing. GP-language #231 includes the maintained Tanh mutation gate; audit
+rationale remains limited to its pinned failing audit. Final source/protocol/verifier binding,
+main qualification and owner dispositions remain prerequisites. B17/B18/B19/B20 wiring is
+merged; its opt-in routes do not establish profile promotion or measured utility. -->
 
 ### feat-math and emitters
 
@@ -63,6 +85,13 @@ merged; B19 wiring is tracked separately. -->
 - Offer deterministic protected-semantics expression rewrites for ranked parents with opt-in
   `--rewrite-simplify`. Admit and measure each new rewritten program within the shared evaluation
   allowance; publish the proposal records for receipt replay and retain profile refusals (#232).
+- Offer opt-in bounded minimax linearization of one-variable subtrees with
+  `--linearize-subtrees`. Check the subtree's own range and targets, bound parent parsing,
+  charge proposed children to the existing allowance and retain exact constant behavior.
+  This adds no default-selection change or certified utility claim (#247).
+- Give pre-parse pipeline refusals and missing archive files explicit errors. Refuse seeds that
+  the selected archive or LM evidence verifier cannot read before search starts; retain the
+  existing default and rewrite/linearization-only seed behavior (#252).
 - Route profile-aware pipelines through bounded search and refinement, caller-controlled trial
   limits, fitted C++ export and manifest-bound recipe artifacts. Refined children publish under
   their own observations (#155-#165, #208).
@@ -119,6 +148,17 @@ merged; B19 wiring is tracked separately. -->
   malformed-cut/label-canary refusals. Source and synthetic fixture evidence remain separate
   from live encoding publication and training qualification (#239).
 
+- Add the raw-route group split and per-context LINEAR-DETERMINED admission using only each
+  context's own outer-train rows. Preserve prior completed trees and source-custody history;
+  this entry describes the merged raw route, not the pending all-route change (#246).
+- Refuse unknown or missing P3 holdout assignments before training, selection or teaching
+  admission. Retain the decided train/dev roles and sealed-family exclusions (#249, landed
+  through the owner's recorded squash at `8a4b2fdfe`).
+- Bind publication to the source context's outer split, the GPU runner's recomputed training
+  input record and its exact output inventory. Refuse relabelled cuts, forged input bindings
+  and substituted GPU files before manifest or client creation; retain the frozen transport
+  and cut adapter (#250).
+
 ### CI, build and release
 
 - Import frozen standalone teacher-v2 search/worker workspaces and their Python custody record
@@ -153,6 +193,16 @@ merged; B19 wiring is tracked separately. -->
   Production authentication and runner behavior retain their existing contracts.
 - Set CI evidence retention to seven days and align product workspace and Python metadata at
   1.0.0; vendored SmartCluster versions and frozen source/history pins remain unchanged (#179).
+
+- Cache trusted full-main library compilations with checksum-pinned sccache and a bounded
+  20 GiB cache. Keep PR storage separate and preserve all eleven serial families, selections,
+  flags and deadlines. Local warm compilation proofs are separate from whole-job gains (#248).
+- Own every received sealed-IPC descriptor before validating its marker and ancillary shape.
+  Refusals close all installed copies; an admitted single descriptor retains one owner and
+  close-on-exec. Preserve existing valid-transfer checks and evaluator inputs (#253).
+- Collect all nineteen authenticated teacher-handoff refusal and positive-control cases
+  independently, each with a fresh durable fixture. Preserve every original assertion,
+  expected refusal, timeout and persistence rule; retain both other handoff tests (#254).
 
 ### Documentation
 

@@ -17,8 +17,16 @@ SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. 
 encodings→program neural policy will ship because the product needs a router; it is
 **not** a held-out SOTA claim.
 
-What changed in 1.0.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
-record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
+The 1.0.0 draft in [`CHANGELOG.md`](CHANGELOG.md) includes the GP language and its opt-in
+LM refinement, Pareto archive, expression rewrite and minimax subtree routes. It also records
+train-only raw-context admission and publication bindings, sealed-IPC descriptor ownership,
+compiler caching and independently collected teacher-handoff checks. Source and fixture
+receipts retain their scope; these changes do not establish a live learning or transfer result.
+
+The [pending release queue](CHANGELOG.md#pending-release-queue) lists candidates awaiting
+serialized merge and receiving-main qualification. This draft is local and unpublished; final
+release notes must match the qualified merged source. The current direction and landing record
+are in [`MASTER_PLAN.md`](MASTER_PLAN.md), and release verification is in
 [`docs/release/README.md`](docs/release/README.md).
 
 Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this repository.
