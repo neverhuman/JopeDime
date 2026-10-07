@@ -159,15 +159,22 @@ the subtree's range, which would be a separate, versioned rule.)
   only range the sampling produces), over a range that holds three distinct abscissae (a line's
   fit needs three), with its bracket's ends and `max|f|` of positive sign; a closing stop
   records the fit of its own step (the iteration cap, the last step), and only `exact_fit` is
-  within the exact-fit test, which the fit applies before any other stop; each line's measured
+  within the exact-fit test, which the fit applies before any other stop; a finite zero
+  coefficient is `+0.0`, and a fit whose targets are all zero is the zero polynomial, exact at
+  the first step; `lo` and `hi` are sampled values of the subtree's one variable, so the
+  subtree's own targets there (evaluated with that variable read as the element, the same
+  arithmetic the sampling uses) must be fault-free and within `max|f|`; each line's measured
   error, its largest absolute residual, is finite and not negative (negative zero included), at
-  most `1e12 + max|f|`, and, for a line that can be lowered, at least the line's residual at
-  either sampled end, `lo` or `hi` (`|p| - max|f|`), where the line must be in the evaluator's
-  range, at most `M + max|f|`, and at least `max|f| - M`, with `M` the line's larger size at the
-  two ends (its computed values are monotone between them, and some sample attains `max|f|`).
-  A line whose coefficients are not finite is refused before any measurement, so its ends are
-  not read. Those are the bounds the live measurement keeps, and rounding is monotone, so they
-  hold exactly with no allowance; a faulting training input refuses every
+  most `1e12 + max|f|`, and, for a line that can be lowered, at least the line's residual against
+  each sampled end's own target (so also `|p| - max|f|` there), where the line must be in the
+  evaluator's range, at most `M + max|f|`, and at least `max|f| - M`, with `M` the
+  line's larger size at the two ends (its computed values are monotone between them, and some
+  sample attains `max|f|`); a line that can be lowered, is in range at both ends and reaches the
+  measurement must carry its error, since the measurement refuses only a line that leaves the
+  range at some sample; and a subtree refused before any fit names `unsampled` or a reason the
+  fit itself gives. A line whose coefficients are not finite is refused before any measurement,
+  so its ends are not read. Those are the bounds the live measurement keeps, and rounding is
+  monotone, so they hold exactly with no allowance; a faulting training input refuses every
   subtree of its stage or none; a subtree that occurs twice in one expression records the same
   samples both times, compared bit for bit (a coefficient that is not finite is published as
   absent and read back as NaN, which compares equal to itself only that way); the
@@ -247,8 +254,12 @@ feat-math lib, the `linearization_tests` module of `simplify.rs`:
   and positive zeros, an exact fit under its own stop only, and a range of three distinct
   abscissae; a recorded line error that is negative, negative zero or not finite is refused, and
   so is one its line and samples cannot give (past `1e12 + max|f|`, smaller than the line's
-  residual at a sampled end, for a line outside the range there, past `M + max|f|`, or under
-  `max|f| - M`), each accepted at its exact bound; records of one expression must
+  residual against a sampled end's target, for a line outside the range there,
+  past `M + max|f|`, or under `max|f| - M`), each accepted at its exact bound; an in-range
+  line's missing error, a `max|f|` under a sampled end's target, a refusal before the fit that
+  the fit never gives, a `-0.0` coefficient, and zero-target metadata other than the first
+  step's exact zero fit are refused; the subtree's targets read through the element equal the
+  sampled ones bit for bit, for a column and an aggregate; records of one expression must
   agree with each other (a repeated subtree, bit for bit, with NaN coefficients equal to
   themselves and other numbers still refused; one variable's training range; a fit beside a
   refusal of the same values);
@@ -279,8 +290,9 @@ jope-pipeline lib, `kernel2::search::moves::linearize_tests`:
   an offered line's error edited up to its bound
   (a group for a parent the pass did not read is tested for the rewrite pass, whose records share
   the same parent-order check); a measured line's error edited to `-1`, `-0` or `1e100`, or past
-  its line's size, or kept while its line moves off its samples or under a largest target far
-  past the line, is refused;
+  its line's size, or kept while its line moves off its samples or its ends' targets or under a
+  largest target far past the line, or erased for an in-range line, is refused, as is a `max|f|`
+  under the sampled ends' targets;
 - a run on a one-feature dataset whose values are subnormal (`-1e-310`, `0`, `1e-310`): the two
   equal children of `(sin(c0)+c0)*(sin(c0)+c0)` are refused for a coefficient past the finite
   range, published without their coefficients, and the untouched run verifies; a finite pair
