@@ -1758,17 +1758,57 @@ fn connect_approved_until(
     remaining_request(deadline)?;
     Ok((stream, identity))
 }
-// Kernel-held executing files cannot be rewritten in place. Cache their content
-// only while the original process incarnation and actual executable inode match.
+// Kernel-held executing files cannot be rewritten in place. Share a digest only
+// for our own executing inode, which stays held for this cache's entire lifetime.
 fn verified_executable(process: &ProcessIdentity) -> Result<String> {
     static CACHE: std::sync::OnceLock<Mutex<BTreeMap<String, String>>> = std::sync::OnceLock::new();
+    verified_executable_cached(process, CACHE.get_or_init(|| Mutex::new(BTreeMap::new())))
+}
+fn verified_executable_cached(
+    process: &ProcessIdentity,
+    cache: &Mutex<BTreeMap<String, String>>,
+) -> Result<String> {
     ensure!(
         ProcessIdentity::read(process.pid)? == *process,
         "executable owner changed"
     );
     let path = format!("/proc/{}/exe", process.pid);
     let meta = fs::metadata(&path)?;
-    let key = format!(
+    let key = executable_cache_key(process, &meta)?;
+    let mut cache = lock(cache)?;
+    let cached = cache.get(&key).cloned();
+    let digest = match &cached {
+        Some(digest) => digest.clone(),
+        None => sha(&fs::read(&path)?),
+    };
+    let after = fs::metadata(path)?;
+    ensure!(
+        key == executable_cache_key(process, &after)?
+            && ProcessIdentity::read(process.pid)? == *process,
+        "executing file changed while verifying"
+    );
+    if cached.is_none() {
+        if cache.len() >= 128 {
+            cache.clear();
+        }
+        cache.insert(key, digest.clone());
+    }
+    Ok(digest)
+}
+fn executable_cache_key(process: &ProcessIdentity, meta: &fs::Metadata) -> Result<String> {
+    let own = fs::metadata("/proc/self/exe")?;
+    if (meta.dev(), meta.ino(), meta.len()) == (own.dev(), own.ino(), own.len()) {
+        return Ok(format!(
+            "{}:self:{}:{}:{}",
+            process.boot_id,
+            meta.dev(),
+            meta.ino(),
+            meta.len()
+        ));
+    }
+    // A foreign image may stop being held and be rewritten. Retain its original
+    // process-bound key; file timestamps cannot prove continuous immutability.
+    Ok(format!(
         "{}:{}:{}:{}:{}:{}",
         process.boot_id,
         process.pid,
@@ -1776,23 +1816,7 @@ fn verified_executable(process: &ProcessIdentity) -> Result<String> {
         meta.dev(),
         meta.ino(),
         meta.len()
-    );
-    let mut cache = lock(CACHE.get_or_init(|| Mutex::new(BTreeMap::new())))?;
-    if let Some(digest) = cache.get(&key) {
-        return Ok(digest.clone());
-    }
-    let digest = sha(&fs::read(&path)?);
-    let after = fs::metadata(path)?;
-    ensure!(
-        (meta.dev(), meta.ino(), meta.len()) == (after.dev(), after.ino(), after.len())
-            && ProcessIdentity::read(process.pid)? == *process,
-        "executing file changed while verifying"
-    );
-    if cache.len() >= 128 {
-        cache.clear();
-    }
-    cache.insert(key, digest.clone());
-    Ok(digest)
+    ))
 }
 fn identity_path(socket: &Path) -> PathBuf {
     let mut name = socket.as_os_str().to_os_string();
