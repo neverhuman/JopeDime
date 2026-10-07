@@ -24,6 +24,7 @@ MODULES = (
     "tests.test_v2_publish", "tests.test_rowsel", "tests.test_nonnumeric", "tests.test_t1raw",
     "tests.test_t1prep", "tests.test_trainonly", "tests.test_s3io", "tests.test_split_defaults", "tests.test_v2_provenance",
     "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "tests.test_admission_fail_closed", "test_hwm_publish", "test_gpu_manifest_cut",
+    "test_manifest_binding",
     "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
 )
 PRIVATE_INPUT_ROOTS = (
@@ -72,7 +73,7 @@ HOST_CASES = {
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 628
+EXPECTED_COLLECTED = 684
 
 
 def case_ids(suite):
@@ -180,7 +181,8 @@ def main():
     before = verify(custody)
     def adapter_pins():
         return {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                for name in ("hwm_publish.py", "test_hwm_publish.py", "gpu_manifest_cut.py", "test_gpu_manifest_cut.py", "run_lane_offline.py")}
+                for name in ("hwm_publish.py", "test_hwm_publish.py", "gpu_manifest_cut.py", "test_gpu_manifest_cut.py",
+                             "manifest_binding.py", "test_manifest_binding.py", "run_lane_offline.py")}
     adapter_before = adapter_pins()
     root = custody / "src/dl_training_v1"
     os.chdir(root)
