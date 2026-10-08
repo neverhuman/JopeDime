@@ -45,6 +45,31 @@ def ranknet(mu, y, npairs=2048):
     mu, y = mu[m], y[m]; i = torch.randint(0, len(y), (npairs,), device=y.device); j = torch.randint(0, len(y), (npairs,), device=y.device)
     s = torch.sign(y[i] - y[j]); k = s != 0
     return F.softplus(-s[k] * (mu[i] - mu[j])[k]).mean() if k.any() else mu.sum() * 0
+def b10rank(logit, y, npairs=2048):
+    """pairwise logistic AUC surrogate on the beat10 logit: positives should outrank negatives (sweep knob w_b10rank, default off)."""
+    m = torch.isfinite(y)
+    if m.sum() < 4: return logit.sum() * 0
+    logit, y = logit[m], y[m]; pos = torch.where(y > 0.5)[0]; neg = torch.where(y <= 0.5)[0]
+    if len(pos) == 0 or len(neg) == 0: return logit.sum() * 0
+    i = pos[torch.randint(0, len(pos), (npairs,), device=y.device)]; j = neg[torch.randint(0, len(neg), (npairs,), device=y.device)]
+    return F.softplus(-(logit[i] - logit[j])).mean()
+def huber_mean(mu, y, delta):
+    m = torch.isfinite(y); y = torch.where(m, y, torch.zeros_like(y))
+    return (F.smooth_l1_loss(mu, y, reduction="none", beta=delta) * m).sum() / m.sum().clamp(min=1)
+class Lion(torch.optim.Optimizer):
+    """Lion (Chen et al. 2023): sign of an interpolated momentum, decoupled weight decay."""
+    def __init__(s, params, lr=1e-4, betas=(0.9, 0.99), weight_decay=0.0):
+        super().__init__(params, dict(lr=lr, betas=betas, weight_decay=weight_decay))
+    @torch.no_grad()
+    def step(s):
+        for g in s.param_groups:
+            b1, b2 = g["betas"]
+            for p in g["params"]:
+                if p.grad is None: continue
+                st = s.state[p]
+                if not st: st["m"] = torch.zeros_like(p)
+                m = st["m"]; p.mul_(1 - g["lr"] * g["weight_decay"])
+                p.add_(torch.sign(m * b1 + p.grad * (1 - b1)), alpha=-g["lr"]); m.mul_(b2).add_(p.grad, alpha=1 - b2)
 GATES = []
 MASK_KEYS = {"block_weight", "weight", "mode", "kept", "keep", "n_pcs", "note", "score", "dims_total", "raw_dims", "kept_dims", "pca_fit"}
 def parse_mask(path, blocks, force_mode="", unlisted_policy="keep"):
@@ -125,6 +150,8 @@ def group_folds(groups, k, seed):
 CFG = {"blockformer": dict(lr=5e-4, wd=0.05, bs=256, epochs=200, patience=30, kw={}),
        "resmlp": dict(lr=1e-3, wd=0.05, bs=256, epochs=250, patience=35, kw={}),
        "gatedset": dict(lr=7e-4, wd=0.05, bs=256, epochs=250, patience=35, kw={})}
+# sweep knobs (dlhwm/d-sweep); defaults reproduce the frozen d796edc trainer exactly. All selection (early stopping, SWA accept) uses inner-validation rows only.
+SWEEP_DEFAULTS = dict(loss="bnll", huber_delta=1.0, w_gap=0.5, w_b10=1.0, w_rank=0.2, w_b10rank=0.0, opt="adamw", ema=0.995, swa_k=0)
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--data", required=True); ap.add_argument("--arch", required=True); ap.add_argument("--run-id", required=True)
     ap.add_argument("--out", required=True); ap.add_argument("--repeats", default="0"); ap.add_argument("--folds", default="0,1,2,3,4")
@@ -141,7 +168,8 @@ def main():
     ap.add_argument("--kw", default="{}", help="JSON overrides for the model constructor"); ap.add_argument("--cfg", default="{}", help="JSON overrides for lr/wd/bs/epochs/patience")
     a = ap.parse_args(); out = f"{a.out}/{a.run_id}"; os.makedirs(out, exist_ok=True); cfg = CFG[a.arch]
     if a.epochs: cfg["epochs"] = a.epochs
-    cfg = {**cfg, **json.loads(a.cfg)}; cfg["kw"] = {**cfg["kw"], **json.loads(a.kw)}
+    cfg = {**SWEEP_DEFAULTS, **cfg, **json.loads(a.cfg)}; cfg["kw"] = {**cfg["kw"], **json.loads(a.kw)}
+    if cfg["loss"] not in ("bnll", "huber") or cfg["opt"] not in ("adamw", "lion"): raise SystemExit(f"--cfg: unknown loss/opt {cfg['loss']!r}/{cfg['opt']!r}")
     torch.backends.cuda.matmul.allow_tf32 = True; dev = "cuda" if torch.cuda.is_available() else "cpu"
     torch.set_num_threads(int(os.environ.get("DLHWM_TORCH_THREADS", "3")))   # fixed small CPU footprint; all tensors live on the GPU
     if a.s3 and len(a.git_sha) != 40: raise SystemExit("--s3 requires --git-sha <full 40-hex commit> of the code being run")
@@ -211,8 +239,8 @@ def main():
             gXL, gML, gXe, gMe, gANC = G(XL), G(ML), [G(x) for x in Xe], G(Me), G(ANC); gYf, gYg, gYb = G(Yf.astype(np.float32)), G(Yg.astype(np.float32)), G(ybb.astype(np.float32))
             torch.manual_seed(a.seed * 100 + r * 10 + k); np.random.seed(a.seed * 100 + r * 10 + k)
             model = ARCH[a.arch](XL.shape[1], [x.shape[1] for x in Xe], **cfg["kw"]).to(dev)
-            ema = torch.optim.swa_utils.AveragedModel(model, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.995))
-            opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["wd"], betas=(0.9, 0.98))
+            ema = torch.optim.swa_utils.AveragedModel(model, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(cfg["ema"]))
+            opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["wd"], betas=(0.9, 0.98)) if cfg["opt"] == "adamw" else Lion(model.parameters(), lr=cfg["lr"], weight_decay=cfg["wd"])
             spe = math.ceil(len(tr) / cfg["bs"]); tot = cfg["epochs"] * spe; warm = max(1, int(0.05 * tot))
             sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1, s / tot))))
             def anch(o, ii):
@@ -223,8 +251,13 @@ def main():
             def loss_of(o, idx):
                 ii = G(idx); yfi, ygi, ybi = gYf[ii], gYg[ii], gYb[ii]; mb = torch.isfinite(ybi)
                 lb = F.binary_cross_entropy_with_logits(o["b10"][mb].float(), (ybi[mb] * 0.95 + 0.025)) if mb.any() else o["b10"].sum() * 0
-                parts = {"fit": bnll(o["fit_mu"].float(), o["fit_ls"].float(), yfi), "gap": bnll(o["gap_mu"].float(), o["gap_ls"].float(), ygi), "b10": lb, "rank": ranknet(o["fit_mu"].float(), yfi)}
-                return parts["fit"] + 0.5 * parts["gap"] + parts["b10"] + 0.2 * parts["rank"], parts
+                if cfg["loss"] == "huber":   # mean-only robust regression; the log-scale heads are left untrained (unused for scoring)
+                    lf, lg = huber_mean(o["fit_mu"].float(), yfi, cfg["huber_delta"]), huber_mean(o["gap_mu"].float(), ygi, cfg["huber_delta"])
+                else: lf, lg = bnll(o["fit_mu"].float(), o["fit_ls"].float(), yfi), bnll(o["gap_mu"].float(), o["gap_ls"].float(), ygi)
+                parts = {"fit": lf, "gap": lg, "b10": lb, "rank": ranknet(o["fit_mu"].float(), yfi)}
+                tot_ = parts["fit"] + cfg["w_gap"] * parts["gap"] + cfg["w_b10"] * parts["b10"] + cfg["w_rank"] * parts["rank"]
+                if cfg["w_b10rank"]: parts["b10rank"] = b10rank(o["b10"].float(), ybi); tot_ = tot_ + cfg["w_b10rank"] * parts["b10rank"]
+                return tot_, parts
             @torch.no_grad()
             def predict(m, idx, me_override=None):
                 m.eval(); outs = []; GATES.clear()
@@ -238,7 +271,7 @@ def main():
                 return np.concatenate(outs)
             def score(P, idx):
                 pf = P[:, 0] * fs + fm; return r2(yf[idx], pf), auc(ybb[idx], P[:, 4])
-            hist = []; best = (-1e9, -1, None); bad = 0; step = 0
+            hist = []; best = (-1e9, -1, None); bad = 0; step = 0; topk_snap = []; swa_rec = None
             for ep in range(cfg["epochs"]):
                 model.train(); perm = np.random.permutation(tr); tl = []
                 for s in range(0, len(perm), cfg["bs"]):
@@ -256,11 +289,18 @@ def main():
                     vl = sum(vo) / len(va)
                 Pv = predict(ema.module, va); vr2, vauc = score(Pv, va); crit = vr2 + (vauc if np.isfinite(vauc) else 0)
                 hist.append({"ep": ep, "train_loss": float(np.mean(tl)), "val_loss": vl, "val_r2": vr2, "val_auc": vauc, "lr": sched.get_last_lr()[0], "gn": float(gn)})
+                if cfg["swa_k"]:
+                    topk_snap.append((crit, ep, {k_: v.detach().clone() for k_, v in ema.module.state_dict().items()})); topk_snap.sort(key=lambda t: -t[0]); del topk_snap[cfg["swa_k"]:]
                 if crit > best[0]: best = (crit, ep, {k_: v.detach().clone() for k_, v in ema.module.state_dict().items()}); bad = 0
                 else: bad += 1
                 if ep % 10 == 0: log(a.arch, f"r{r}f{k} ep{ep} tl {np.mean(tl):.4f} vl {vl:.4f} vR2 {vr2:.4f} vAUC {vauc:.4f}")
                 json.dump(hist, open(f"{out}/hist_r{r}f{k}.json", "w"))
                 if bad >= cfg["patience"]: break
+            if cfg["swa_k"] and len(topk_snap) > 1:   # SWA over the k best inner-val EMA snapshots; kept only if it beats the best single snapshot on inner-val
+                avg = {k_: (torch.stack([t[2][k_].float() for t in topk_snap]).mean(0).to(best[2][k_].dtype) if best[2][k_].is_floating_point() else best[2][k_]) for k_ in best[2]}
+                ema.module.load_state_dict(avg); Pv = predict(ema.module, va); vr2, vauc = score(Pv, va); c_ = vr2 + (vauc if np.isfinite(vauc) else 0)
+                swa_rec = {"k": len(topk_snap), "eps": [t[1] for t in topk_snap], "val_crit": float(c_), "best_single": float(best[0]), "used": bool(c_ > best[0])}
+                if c_ > best[0]: best = (c_, best[1], avg)
             ema.module.load_state_dict(best[2]); m = ema.module
             P = predict(m, te); oof[te] = P; oofraw[te, 0] = P[:, 0] * fs + fm; oofraw[te, 1] = P[:, 2] * gs + gm; tr2, tauc = score(P, te)
             # block ablation at inference (representation usefulness): mark one block missing at a time; L ablated via all-missing mask
@@ -275,7 +315,7 @@ def main():
             if a.arch == "gatedset":
                 GATES.clear(); predict(m, te); gates = dict(zip(["L"] + (blocks if gMe.shape[1] else []), np.concatenate(GATES).mean(0).round(4).tolist()))
             fold_rec = {"best_val_crit": float(best[0]), "topk_features": sel_names, "r": r, "k": k, "n_tr": len(tr), "n_va": len(va), "n_te": len(te), "best_ep": best[1], "epochs_run": len(hist), "test_r2": tr2, "test_auc": tauc,
-                        "secs": time.time() - t0, "ablation": abl, "gates": gates, "target_norm": [fm, fs, gm, gs]}
+                        "secs": time.time() - t0, "swa": swa_rec, "ablation": abl, "gates": gates, "target_norm": [fm, fs, gm, gs]}
             buf = io.BytesIO(); torch.save({"state_dict": best[2], "arch": a.arch, "kw": cfg["kw"], "dL": XL.shape[1], "dims": [x.shape[1] for x in Xe], "blocks": blocks,
                         "L_cols": Lc, "QL": QL, "target_norm": [fm, fs, gm, gs], "fold": [r, k], "run_id": a.run_id, "git_sha": git}, buf)
             ck = buf.getvalue(); open(f"{out}/model_r{r}f{k}.pt", "wb").write(ck); fold_rec["ckpt_sha256"] = sha256b(ck)
