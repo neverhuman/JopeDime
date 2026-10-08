@@ -47,10 +47,6 @@ PY
     python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
   full-inputs)
-    # Build the two input-check harnesses in one Cargo invocation: their links
-    # can overlap instead of consuming the 300s family budget in serial builds.
-    # The fast lane still executes both original filters and both fixture checks.
-    cargo test --locked -p jope-dime-regressor --lib --bin jope-dime-regressor --no-run
     bash deploy/ci/fast-lane.sh inputs
     ;;
   full-e2e)
@@ -121,12 +117,17 @@ if os.environ.get('JOPE_FULL_FAMILY') == 'full-neural':
     # Run the three-control receipt first, alone, rather than as a contended tail.
     text += '''
 [test-groups.full-neural-runtime-proof]
-max-threads = 8
+max-threads = 12
 
 [[profile.main.overrides]]
 filter = "package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)"
 priority = 100
 threads-required = "num-test-threads"
+test-group = "full-neural-runtime-proof"
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(=teaching_store::admission_tests::native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes))"
+priority = 95
 test-group = "full-neural-runtime-proof"
 
 [[profile.main.overrides]]

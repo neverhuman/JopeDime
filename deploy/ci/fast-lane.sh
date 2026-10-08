@@ -148,6 +148,11 @@ rustup show active-toolchain
 cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/synthetic
     # Generator reproduces the committed fixtures
 cargo run --locked --bin jope -- generate-fixtures --check --json --output datasets/synthetic
+if [ "${JOPE_FULL_FAMILY:-}" = full-inputs ]; then
+    # Preserve the original CLI-before-tests feature graph order. Build both
+    # test harnesses together so their links can overlap in the full family.
+    cargo test --locked -p jope-dime-regressor --lib --bin jope-dime-regressor --no-run
+fi
     # Check both migrated renderer trees and the Python policy copy against Rust.
     # Keep the narrow library harness separate from deferred campaign execution.
 python3 deploy/ci/receipt.py --lane inputs --backend rust --output "$EVIDENCE/campaign-spec-policy" -- cargo test --locked -p jope-dime-regressor --lib spec_drift::tests -- --test-threads=1
