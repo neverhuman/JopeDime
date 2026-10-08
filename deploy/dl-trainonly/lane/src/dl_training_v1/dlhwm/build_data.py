@@ -19,6 +19,22 @@ def group_folds(groups, k, seed):   # identical to w4_lib.group_folds / w10_buil
     for gi in order:
         f = int(np.argmin(load_ + rng.random(k) * 1e-6)); gf[ug[gi]] = f; load_[f] += cnt[gi]
     return np.array([gf[g] for g in groups])
+def fetch_type(t, stems, refused, threads):
+    """All views for one encoder type (own process: boto3 is GIL-bound). stem already = <dataset>/f<fold>/<code12 stem>."""
+    import dlhwm.common as C; C._S3 = None   # boto3 clients are not fork-safe: fresh client per process
+    ext = ".f32" if t == "a0" else ".npy"
+    def one(i):
+        key = f"{PFX}encodings/{t}/{stems[i]}{ext}"
+        if key in refused: return i, None, "refused"
+        try: b = get(key)
+        except Exception: return i, None, "missing"
+        x = np.frombuffer(b, "<f4") if ext == ".f32" else np.load(io.BytesIO(b)); return i, np.asarray(x, np.float32).ravel(), sha256b(b)
+    got, hh, mm = {}, {}, Co.Counter()
+    with cf.ThreadPoolExecutor(threads) as ex:
+        for i, x, h in ex.map(one, range(len(stems))):
+            if x is None: mm[h] += 1
+            else: got[i] = x; hh[i] = h
+    return got, hh, dict(mm)
 def walk(o, acc):
     if isinstance(o, dict):
         for k, v in o.items():
@@ -62,20 +78,13 @@ def main():
                  program_sha256=sel["program"]["program_sha256"], program_dsl=sel["program"]["dsl"]); keep.append(v)
     log("kept", len(keep), dict(why)); V = keep; n = len(V); cids = [v["context_sha256"] for v in V]
     # 2) encodings
-    def get_enc(job):
-        i, t = job; ext = ".f32" if t == "a0" else ".npy"; key = f"{PFX}encodings/{t}/{V[i]['dataset_hash']}/f{V[i]['fold']}/{V[i]['stem']}{ext}"
-        if key in refused: return i, t, None, "refused", key
-        try: b = get(key)
-        except Exception as e: return i, t, None, "missing", key
-        x = np.frombuffer(b, "<f4") if ext == ".f32" else np.load(io.BytesIO(b)); return i, t, np.asarray(x, np.float32).ravel(), sha256b(b), key
-    E = {t: {} for t in ENC}; ehash = {t: {} for t in ENC}; miss = Co.Counter()
-    jobs = [(i, t) for i in range(n) for t in ENC]
-    with cf.ThreadPoolExecutor(a.threads) as ex:
-        for k, (i, t, x, h, key) in enumerate(ex.map(get_enc, jobs)):
-            if x is None: miss[(t, h)] += 1
-            else: E[t][i] = x; ehash[t][cids[i]] = h
-            if k % 10000 == 0: log("enc", k, len(jobs), dict(miss))
-    log("encodings missing", {f"{t}:{h}": c for (t, h), c in miss.items()})
+    E, ehash, miss = {}, {}, Co.Counter()
+    with cf.ProcessPoolExecutor(len(ENC), mp_context=__import__("multiprocessing").get_context("fork")) as px:
+        futs = {t: px.submit(fetch_type, t, [v["stem"] for v in V], refused, max(4, a.threads // 2)) for t in ENC}
+        for t, fu in futs.items():
+            got, hh, mm = fu.result(); E[t] = got; ehash[t] = {cids[i]: h for i, h in hh.items()}
+            for k_, c_ in mm.items(): miss[(t, k_)] += c_
+            log("enc", t, "have", len(got), "missing", dict(mm))
     dims = {}
     for t in ENC:
         dm = Co.Counter(len(x) for x in E[t].values()).most_common(1)[0][0]; A = np.full((n, dm), np.nan, np.float32)
