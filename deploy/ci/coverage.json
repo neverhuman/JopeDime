@@ -264,7 +264,7 @@
         "collection/execution/deselection counts",
         "pytest results",
         "Ruff exit",
-        "DL offline subreceipt: 701 collected identities, 662 synthetic executions, 39 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
+        "DL offline subreceipt: 708 collected identities, 669 synthetic executions, 39 exact named host-input/subprocess exclusions, dependencies/source pins and log hash; separate from pytest"
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
