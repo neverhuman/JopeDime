@@ -480,6 +480,9 @@ impl CacheKeyLock {
             .open(&path)
             .with_context(|| format!("open cache-key lock: {key}"))?;
         loop {
+            // SAFETY: `file` owns the live FD, retained in `Self` on success; FD/LOCK_EX are c_int.
+            // flock borrows the FD without pointers or ownership transfer. Zero acquires the lock;
+            // below, only EINTR is retried; every other error is propagated before cache-key use.
             let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
             if status == 0 {
                 break;
@@ -500,6 +503,9 @@ impl Drop for CacheKeyLock {
         // The inode is deliberately retained. Unlinking a flock file permits a
         // racing process to create and lock a different inode for the same key.
         // The kernel releases this advisory lock even after SIGKILL or node loss.
+        // SAFETY: `self.file` owns the live FD until after this Drop body; FD/LOCK_UN are c_int.
+        // flock borrows it without pointers or ownership transfer. Unlock errors are ignored:
+        // File drop closes/releases the lock; its path stays linked, preserving the inode.
         let _ = unsafe { libc::flock(self.file.as_raw_fd(), libc::LOCK_UN) };
     }
 }

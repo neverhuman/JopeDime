@@ -185,6 +185,9 @@ impl SupplyIntentHistoryV2 {
             .read(true)
             .append(true)
             .open(&self.path)?;
+        // SAFETY: `file` owns the live FD through append/sync; FD/LOCK_EX use libc's c_int ABI.
+        // flock borrows it without pointers or ownership transfer. Nonzero results are refused
+        // before history/intent changes, dropping and closing `file` on that error path.
         let lock_result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
         ensure!(lock_result == 0, "lock supply-intent history failed");
         let result = (|| -> Result<()> {
@@ -210,6 +213,9 @@ impl SupplyIntentHistoryV2 {
             *intent = transitioned;
             Ok(())
         })();
+        // SAFETY: `file` still owns the live FD after either outcome; FD/LOCK_UN are c_int.
+        // flock only borrows it. Unlock errors are ignored, preserving `result`; returning
+        // drops/closes `file` and releases its advisory lock.
         unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_UN) };
         result
     }
