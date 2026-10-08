@@ -145,6 +145,10 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "python:deploy/dl-trainonly/research/dlhwm/tests/test_dlhwm_guards.py": {
+      "role": "research",
+      "reason": "research DL wave guard tests (clean-license refusal, create-only S3 stub, lineage-pure folds, mask and anchor fail-closed); outside the maintained product surface"
+    },
     "python:deploy/dl-trainonly/test_contracts.py": {
       "role": "infrastructure",
       "reason": "CPU-only offline GPU budget and output custody control conformance; no regression learning or live hardware/storage qualification"
