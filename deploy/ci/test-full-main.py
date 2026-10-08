@@ -211,10 +211,12 @@ sys.exit(int(a.status))
                     filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
                     priority=100), golden)
                 if family == 'full-neural':
-                    self.assertEqual({'full-neural-runtime-proof': {'max-threads': 8}}, actual.pop('test-groups'))
+                    self.assertEqual({'full-neural-runtime-proof': {'max-threads': 12}}, actual.pop('test-groups'))
                     self.assertEqual([
                         dict(filter='package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)',
                              priority=100, **{'threads-required': 'num-test-threads', 'test-group': 'full-neural-runtime-proof'}),
+                        dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(=teaching_store::admission_tests::native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes))',
+                             priority=95, **{'test-group': 'full-neural-runtime-proof'}),
                         dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::) | test(eval_registry::authority::) | test(eval_registry::witness::))',
                              priority=90, **{'test-group': 'full-neural-runtime-proof'})], override)
                 else:
@@ -227,7 +229,7 @@ class InputBuildTests(unittest.TestCase):
         scratch_root = ROOT / 'target' / 'tmp'
         scratch_root.mkdir(parents=True, exist_ok=True)
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-        for failure in ('none', 'build', 'policy', 'elo'):
+        for failure in ('none', 'verify', 'generate', 'build', 'policy', 'elo'):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory(dir=scratch_root) as scratch:
                 root = Path(scratch)
                 cargo = root / 'cargo'
@@ -236,7 +238,7 @@ import json, os, sys
 args = sys.argv[1:]
 with open(os.environ['CALLS'], 'a') as out:
     out.write(json.dumps(args) + '\\n')
-stage = 'build' if '--no-run' in args else 'policy' if '--lib' in args else 'elo' if args[0] == 'test' else 'fixture'
+stage = 'build' if '--no-run' in args else 'policy' if '--lib' in args else 'elo' if args[0] == 'test' else 'verify' if 'verify-inputs' in args else 'generate'
 if os.environ['FAILURE'] == stage:
     sys.exit(7)
 if stage in ('policy', 'elo'):
@@ -254,15 +256,17 @@ if stage in ('policy', 'elo'):
                                                  GITHUB_RUN_ID='1', GITHUB_RUN_ATTEMPT='1'),
                                         capture_output=True, text=True)
                 executed = [json.loads(line) for line in calls.read_text().splitlines()]
-                self.assertEqual(['test', '--locked', '-p', 'jope-dime-regressor', '--lib', '--bin',
-                                  'jope-dime-regressor', '--no-run'], executed[0])
+                self.assertEqual(['run', '--locked', '--bin', 'jope', '--', 'verify-inputs', '--offline', '--json',
+                                  '--root', 'datasets/synthetic'], executed[0])
                 self.assertEqual(0 if failure == 'none' else 7, result.returncode, result.stdout+result.stderr)
-                self.assertEqual({'build': 1, 'policy': 4, 'elo': 5, 'none': 5}[failure], len(executed))
-                if failure != 'build':
-                    self.assertEqual(['run', '--locked', '--bin', 'jope', '--', 'verify-inputs', '--offline', '--json',
-                                      '--root', 'datasets/synthetic'], executed[1])
+                self.assertEqual({'verify': 1, 'generate': 2, 'build': 3, 'policy': 4, 'elo': 5, 'none': 5}[failure], len(executed))
+                if failure != 'verify':
                     self.assertEqual(['run', '--locked', '--bin', 'jope', '--', 'generate-fixtures', '--check', '--json',
-                                      '--output', 'datasets/synthetic'], executed[2])
+                                      '--output', 'datasets/synthetic'], executed[1])
+                if failure not in ('verify', 'generate'):
+                    self.assertEqual(['test', '--locked', '-p', 'jope-dime-regressor', '--lib', '--bin',
+                                      'jope-dime-regressor', '--no-run'], executed[2])
+                if failure in ('none', 'policy', 'elo'):
                     self.assertEqual(['test', '--locked', '-p', 'jope-dime-regressor', '--lib',
                                       'spec_drift::tests', '--', '--test-threads=1'], executed[3])
                 if failure in ('none', 'elo'):
