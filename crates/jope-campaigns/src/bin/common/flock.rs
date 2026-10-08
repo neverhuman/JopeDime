@@ -12,10 +12,9 @@ pub fn exclusive(fd: BorrowedFd<'_>, blocking: bool) -> io::Result<()> {
     } else {
         libc::LOCK_EX | libc::LOCK_NB
     };
-    // SAFETY: BorrowedFd keeps the caller's live descriptor borrowed for this
-    // call. Its raw value and these libc lock flags have the required c_int ABI.
-    // flock takes no pointers, neither closes nor transfers the descriptor, and
-    // returns synchronously; the owning File remains responsible for its lifetime.
+    // SAFETY: BorrowedFd borrows the caller's live File for this synchronous call.
+    // RawFd and the libc flags have the c_int ABI; flock takes no pointers and
+    // neither closes nor transfers the descriptor. File retains its ownership.
     let status = unsafe { libc::flock(fd.as_raw_fd(), operation) };
     if status != 0 {
         Err(io::Error::last_os_error())
