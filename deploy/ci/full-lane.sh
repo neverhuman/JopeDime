@@ -67,6 +67,12 @@ PY
       full-policy) selection=(-p jope-policy --features "testing,context-producer") ;;
       full-s3-offline) selection=(-p jope-arena --features s3) ;;
       full-neural)
+        # Discover the SDK before either build so its CXX setting is stable:
+        # changing it between collections rebuilds feat-math and its dependants.
+        # SDK/runtime availability is measured independently; no GPU device/credentials.
+        export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
+        # shellcheck disable=SC1091
+        source deploy/ci/neural-env.sh || { echo 'unavailable: neural SDK environment'; exit 78; }
         # A lifecycle-only child exercises the real authority in a same-source
         # default-feature image. Prebuild it outside the unchanged start deadline.
         cargo nextest list --locked -p jope-parallel --lib --no-default-features --message-format json > "$EVIDENCE/synthetic-executor-collection.json"
@@ -89,11 +95,6 @@ record = {'executable': str(path), 'sha256': hashlib.sha256(path.read_bytes()).h
 print(path)
 PYBUILD
 )"
-        # Discovery receipt (never overwritten) for the unavailable or discovered SDK state.
-        export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
-        # SDK/runtime availability is measured independently; no GPU device/credentials.
-        # shellcheck disable=SC1091
-        source deploy/ci/neural-env.sh || { echo 'unavailable: neural SDK environment'; exit 78; }
         selection=(-p jope-parallel --features neural)
         ;;
     esac
