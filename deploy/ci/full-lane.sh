@@ -121,7 +121,7 @@ if os.environ.get('JOPE_FULL_FAMILY') == 'full-neural':
     # Run the three-control receipt first, alone, rather than as a contended tail.
     text += '''
 [test-groups.full-neural-runtime-proof]
-max-threads = 4
+max-threads = 8
 
 [[profile.main.overrides]]
 filter = "package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)"
