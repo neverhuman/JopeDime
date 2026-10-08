@@ -1,0 +1,515 @@
+{
+  "schema": "jope.dl-wave3-plan/v1",
+  "state": "planned_not_launched",
+  "launch_allowed": false,
+  "bundle_sha256": "d65397f13bb610b02693b675d6690440b203be029c3eb64e766ffa9590b22ccd",
+  "reference_source_sha": "d796edc31c7251252f402492fd21bcbee3dec057",
+  "qualified_source_sha": null,
+  "rows": 7087,
+  "lineages": 1065,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "repeats": [
+    0,
+    1,
+    2
+  ],
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "arms": [
+    {
+      "id": "A",
+      "host": "xbabe2",
+      "compare_to": "wave2_RMLP",
+      "hypothesis": "Instrumentation/exhaustive-row control; legacy loss and checkpoint.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "beta_nll",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.2
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "fitness_r2_plus_beat10_auc",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": true,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "B",
+      "host": "xbabe2",
+      "compare_to": "A",
+      "hypothesis": "Select checkpoints for equal-lineage regression quality.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "beta_nll",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.2
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": true,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "C",
+      "host": "xbabe2",
+      "compare_to": "B",
+      "hypothesis": "Remove learned-variance weighting; retain auxiliary and ranking losses.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "mse",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.2
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "D",
+      "host": "xbabe2",
+      "compare_to": "C",
+      "hypothesis": "Remove RankNet competition; directly fit standardized mean targets.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "mse",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.0
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "E",
+      "host": "xbabe2",
+      "compare_to": "D",
+      "hypothesis": "Measure auxiliary-task negative transfer; fitness-only regression.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "mse",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.0,
+          "beat10": 0.0,
+          "rank": 0.0
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "F",
+      "host": "xbabe3",
+      "compare_to": "D",
+      "hypothesis": "Robust-regression test; Huber delta1 standardized target units.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "huber",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.0
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "G",
+      "host": "xbabe3",
+      "compare_to": "D",
+      "hypothesis": "Train-only feature bottleneck; all blocks contribute candidate PCs.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 32,
+        "topk": 50,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "mse",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.0
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "H",
+      "host": "xbabe2",
+      "compare_to": "D",
+      "hypothesis": "Equal-lineage training loss while retaining exhaustive row exposure.",
+      "configuration": {
+        "arch": "resmlp",
+        "kw": {
+          "k": 16,
+          "w": 128,
+          "depth": 2,
+          "drop": 0.4,
+          "bdrop": 0.5
+        },
+        "cfg": {
+          "lr": 0.001,
+          "wd": 0.15,
+          "bs": 256,
+          "epochs": 250,
+          "patience": 35
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "mse",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.0
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "lineage",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    },
+    {
+      "id": "I",
+      "host": "xbabe3",
+      "compare_to": "D",
+      "hypothesis": "Compact transformer architecture package under the same mean-only multitask objective.",
+      "configuration": {
+        "arch": "blockformer",
+        "kw": {
+          "d": 64,
+          "L": 2,
+          "heads": 4,
+          "ntok": 1,
+          "drop": 0.1,
+          "bdrop": 0.2
+        },
+        "cfg": {
+          "lr": 0.0005,
+          "wd": 0.05,
+          "bs": 256,
+          "epochs": 200,
+          "patience": 30
+        },
+        "enc": "all",
+        "pca": 0,
+        "topk": 0,
+        "lgroups": "V21,TL,ZL,V3,V4,Z",
+        "regression_loss": "mse",
+        "huber_delta": 1.0,
+        "head_weights": {
+          "fitness": 1.0,
+          "gap": 0.5,
+          "beat10": 1.0,
+          "rank": 0.0
+        },
+        "label_smoothing": 0.05,
+        "checkpoint": "lineage_macro_fitness_mse",
+        "sample_weight": "uniform",
+        "ema": 0.995,
+        "beta": 0.5,
+        "min_delta": 0.0001,
+        "active_heads": [
+          "fitness",
+          "gap",
+          "beat10"
+        ],
+        "uncertainty_trained": false,
+        "huber_scale": 2.0
+      }
+    }
+  ],
+  "fold_fits": 405,
+  "provisional_scaling_focus": "I",
+  "launch_dependencies": [
+    "complete_wave2_evidence_verified_9_of_9",
+    "reviewed_and_qualified_wave3_source",
+    "verified_owner_claim_and_queue_drain",
+    "bundle_and_label_preflight",
+    "immutable_campaign_run_ids_limits_deadline",
+    "pinned_baseline_owner_provenance_or_reproduction"
+  ],
+  "limits": {
+    "hosts": [
+      "xbabe2",
+      "xbabe3"
+    ],
+    "new_gpu_children_per_host": 1,
+    "cpu_quota_percent": 200,
+    "memory_max_gib": 6,
+    "nice": 10,
+    "max_load1": 112,
+    "min_mem_gib": 12,
+    "min_mem_fraction": 0.2,
+    "max_memory_full_avg60": 0.5,
+    "min_gpu_free_mib": 8192,
+    "run_timeout_seconds": 5400,
+    "admission_window_seconds": 28800,
+    "service_runtime_seconds": 32400,
+    "retry": false
+  },
+  "excluded": [
+    "global_label_ranked_mask",
+    "existing_leaky_inner_anchor",
+    "new_xbabe1_compute",
+    "new_xbabe0_compute",
+    "new_model_grid",
+    "test_based_label_clipping",
+    "new_auxiliary_target_grid"
+  ],
+  "common_changes": [
+    "exhaustive_uniform_shuffle_no_dropped_tail",
+    "separate_rng_for_evaluation_and_training",
+    "per_head_support_and_loss_logging",
+    "fixed_ema_evaluation_train_and_validation_panels",
+    "preprocessor_checkpoint_roundtrip",
+    "atomic_histories_and_oof",
+    "create_only_run_and_fold_manifests",
+    "all_eligible_training_row_exposure_receipts"
+  ],
+  "source_owner_integration": {
+    "owner": "Grok/DL",
+    "checkout": "/home/ubuntu/JopeDime/.agent/worktrees/dlhwm-sweep",
+    "branch": "dlhwm/d-sweep",
+    "observed_head": "a4e31d4710e127b558d3eb17f7857f2f888afdd3",
+    "state": "local_unpushed_unreviewed; owner requested proposal patches/tests via wave2_codex; no direct checkout edits"
+  }
+}
