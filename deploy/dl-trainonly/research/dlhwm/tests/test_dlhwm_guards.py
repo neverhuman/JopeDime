@@ -54,3 +54,13 @@ def test_anchor_refuses_misaligned_folds(tmp_path):
     AN, prov = load_anchor(str(tmp_path), 0, 0, n, FO, Y, "abc"); assert np.isfinite(AN).all()
     with pytest.raises(SystemExit): load_anchor(str(tmp_path), 0, 0, n, FO, Y, "other-bundle")
     with pytest.raises(SystemExit): load_anchor(str(tmp_path), 0, 0, n, np.array([(np.arange(n) + 1) % 5]), Y, "abc")
+def test_gatedset_without_encoder_blocks_uses_L():
+    """--enc none / --topk give GatedSet zero encoder blocks; the L token must still reach the heads (not a constant)."""
+    torch = pytest.importorskip("torch")
+    from dlhwm.models import GatedSet
+    torch.manual_seed(0); m = GatedSet(10, []).eval(); torch.nn.init.normal_(m.h.o.weight)   # heads start at zero; randomise to see input dependence
+    B = 5; me = torch.zeros(B, 0); mL = torch.zeros(B, 10)
+    with torch.no_grad():
+        a = m(torch.randn(B, 10), mL, [], me)["fit_mu"]; b = m(torch.randn(B, 10), mL, [], me)["fit_mu"]
+    assert m.last_gate.shape == (B, 1)
+    assert not torch.allclose(a, b)
