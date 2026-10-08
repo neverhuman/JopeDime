@@ -189,26 +189,90 @@ sys.exit(int(a.status))
         # The family must leave the existing per-test deadline intact, plus 300s setup.
         self.assertGreaterEqual(family_seconds, test_seconds + 300)
 
-    def test_full_config_changes_only_junit_path_and_golden_priority(self):
+    def test_full_config_preserves_selection_deadlines_and_failure_policy(self):
         script = (ROOT/'deploy/ci/full-lane.sh').read_text()
         snippets = re.findall(r"python3 - <<'PY'\n(.*?)\nPY", script, re.S)
         configure = next(text for text in snippets if 'junit-main.xml' in text)
         original = (ROOT/'.config/nextest.toml').read_text()
         expected = tomllib.loads(original)
-        with tempfile.TemporaryDirectory() as scratch:
-            root = Path(scratch)
-            (root/'nextest.toml').write_text(original)
-            subprocess.run([sys.executable, '-c', configure],
-                           env=dict(os.environ, JOPE_LANE_EVIDENCE=str(root)), check=True)
-            actual = tomllib.loads((root/'nextest.toml').read_text())
-            expected['profile']['main']['junit']['path'] = str(root/'junit.xml')
-            # No filter/timeout/retry/worker or failure policy may change: priority
-            # only schedules the same tests sooner, including every other golden.
-            override = actual['profile']['main'].pop('overrides')
-            self.assertEqual(expected, actual)
-            self.assertEqual([dict(
-                filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
-                priority=100)], override)
+        for family in ('full-default', 'full-scratch', 'full-policy', 'full-s3-offline', 'full-neural'):
+            with self.subTest(family=family), tempfile.TemporaryDirectory() as scratch:
+                root = Path(scratch)
+                (root/'nextest.toml').write_text(original)
+                subprocess.run([sys.executable, '-c', configure],
+                               env=dict(os.environ, JOPE_LANE_EVIDENCE=str(root), JOPE_FULL_FAMILY=family), check=True)
+                actual = tomllib.loads((root/'nextest.toml').read_text())
+                expected['profile']['main']['junit']['path'] = str(root/'junit.xml')
+                # Only scheduling may change. No default filter, timeout, retry,
+                # fail-fast, or checked-in profile changes are permitted.
+                override = actual['profile']['main'].pop('overrides')
+                golden = override.pop(0)
+                self.assertEqual(dict(
+                    filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
+                    priority=100), golden)
+                if family == 'full-neural':
+                    self.assertEqual({'full-neural-admission': {'max-threads': 4}}, actual.pop('test-groups'))
+                    self.assertEqual([
+                        dict(filter='package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)',
+                             priority=100, **{'test-group': 'full-neural-admission'}),
+                        dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::))',
+                             priority=90, **{'test-group': 'full-neural-admission'})], override)
+                else:
+                    self.assertEqual([], override)
+                self.assertEqual(expected, actual)
+
+
+class InputBuildTests(unittest.TestCase):
+    def test_joint_build_keeps_both_checks_and_fails_closed(self):
+        scratch_root = ROOT / 'target' / 'tmp'
+        scratch_root.mkdir(parents=True, exist_ok=True)
+        head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+        for failure in ('none', 'build', 'policy', 'elo'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory(dir=scratch_root) as scratch:
+                root = Path(scratch)
+                cargo = root / 'cargo'
+                cargo.write_text('''#!/usr/bin/env python3
+import json, os, sys
+args = sys.argv[1:]
+with open(os.environ['CALLS'], 'a') as out:
+    out.write(json.dumps(args) + '\\n')
+stage = 'build' if '--no-run' in args else 'policy' if '--lib' in args else 'elo' if args[0] == 'test' else 'fixture'
+if os.environ['FAILURE'] == stage:
+    sys.exit(7)
+if stage in ('policy', 'elo'):
+    passed = 13 if stage == 'policy' else 2
+    print(f'test result: ok. {passed} passed; 0 failed; 0 ignored; 0 measured; 0 filtered out')
+''')
+                cargo.chmod(0o755)
+                evidence = root / 'evidence'
+                evidence.mkdir()
+                calls = root / 'calls.jsonl'
+                result = subprocess.run(['bash', str(ROOT/'deploy/ci/full-lane.sh'), 'full-inputs'],
+                                        env=dict(os.environ, PATH=str(root)+os.pathsep+os.environ['PATH'],
+                                                 CALLS=str(calls), FAILURE=failure, JOPE_LANE_EVIDENCE=str(evidence),
+                                                 JOPE_SOURCE_SHA=head, GITHUB_SHA=head, GITHUB_EVENT_NAME='local-proof',
+                                                 GITHUB_RUN_ID='1', GITHUB_RUN_ATTEMPT='1'),
+                                        capture_output=True, text=True)
+                executed = [json.loads(line) for line in calls.read_text().splitlines()]
+                self.assertEqual(['test', '--locked', '-p', 'jope-dime-regressor', '--lib', '--bin',
+                                  'jope-dime-regressor', '--no-run'], executed[0])
+                self.assertEqual(0 if failure == 'none' else 7, result.returncode, result.stdout+result.stderr)
+                self.assertEqual({'build': 1, 'policy': 4, 'elo': 5, 'none': 5}[failure], len(executed))
+                if failure != 'build':
+                    self.assertEqual(['run', '--locked', '--bin', 'jope', '--', 'verify-inputs', '--offline', '--json',
+                                      '--root', 'datasets/synthetic'], executed[1])
+                    self.assertEqual(['run', '--locked', '--bin', 'jope', '--', 'generate-fixtures', '--check', '--json',
+                                      '--output', 'datasets/synthetic'], executed[2])
+                    self.assertEqual(['test', '--locked', '-p', 'jope-dime-regressor', '--lib',
+                                      'spec_drift::tests', '--', '--test-threads=1'], executed[3])
+                if failure in ('none', 'elo'):
+                    self.assertEqual(['test', '--locked', '-p', 'jope-dime-regressor', '--bin', 'jope-dime-regressor',
+                                      'commands::train_only_redteam::tests::bradley_terry', '--', '--test-threads=1'], executed[4])
+                if failure == 'none':
+                    for name, passed in [('campaign-spec-policy', 13), ('campaign-elo', 2)]:
+                        data = json.loads((evidence/name/'receipt.json').read_text())
+                        self.assertEqual(passed, data['counts']['passed'])
+                        self.assertEqual(0, data['exit_status'])
 
 
 class SyntheticExecutorTests(unittest.TestCase):

@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 EVIDENCE=${JOPE_LANE_EVIDENCE:?fresh receipt directory required}
 lane=${1:?family required}
+export JOPE_FULL_FAMILY=$lane
 # Repeat the host reserve check between families; running out of disk is a failure.
 available=$(df -B1 --output=avail "$EVIDENCE" | tail -1)
 (( available >= 50000000000 )) || { echo 'unavailable: less than 50 GB disk reserve'; exit 78; }
@@ -45,9 +46,15 @@ PY
     (cd python && bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q -m 'not xbabe2' -p no:cacheprovider "${families[@]}")
     python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
-  full-inputs|full-e2e|full-emitters)
+  full-inputs)
+    # Build the two input-check harnesses in one Cargo invocation: their links
+    # can overlap instead of consuming the 300s family budget in serial builds.
+    # The fast lane still executes both original filters and both fixture checks.
+    cargo test --locked -p jope-dime-regressor --lib --bin jope-dime-regressor --no-run
+    bash deploy/ci/fast-lane.sh inputs
+    ;;
+  full-e2e|full-emitters)
     case $lane in
-      full-inputs) fast=inputs ;;
       full-e2e) fast=e2e-smoke ;;
       full-emitters) fast=emitters ;;
     esac
@@ -107,6 +114,24 @@ text += '''
 [[profile.main.overrides]]
 filter = "package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))"
 priority = 100
+'''
+if os.environ.get('JOPE_FULL_FAMILY') == 'full-neural':
+    # These fixtures copy/hash the neural harness and execute authority children.
+    # Partition their concurrency without filtering any test out of the run.
+    # Start the three-control receipt test first rather than leave it as a tail.
+    text += '''
+[test-groups.full-neural-admission]
+max-threads = 4
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)"
+priority = 100
+test-group = "full-neural-admission"
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::))"
+priority = 90
+test-group = "full-neural-admission"
 '''
 path.write_text(text)
 PY
