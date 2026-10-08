@@ -78,8 +78,8 @@ HOST_CASES = {
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
 EXPECTED_COLLECTED = 753
-# The strict lane runs as disjoint module shards, each under its own `timeout 900s` in deploy/ci/fast-lane.sh (the budget
-# is unchanged), then --combine proves the shards cover MODULES exactly and add up to the pinned totals above. Balanced by
+# The strict lane runs as disjoint module shards plus --combine, all under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh;
+# the budget is unchanged), and --combine proves the shards cover MODULES exactly and add up to the pinned totals above. Balanced by
 # measured per-module time; each shard's collected count is pinned from the same real offline collection.
 SHARDS = (
     (
@@ -199,7 +199,7 @@ def offline_suite(loader, modules, unavailable, host_cases=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--shard", help="I/N: run only module shard I of the pinned N (CI runs each under its own timeout)")
+    parser.add_argument("--shard", help="I/N: run only module shard I of the pinned N (CI runs all N plus --combine under one common deadline)")
     parser.add_argument("--combine", action="store_true", help="verify OUTPUT/shard-1..N receipts and write OUTPUT/receipt.json")
     args = parser.parse_args()
     check_shards()
