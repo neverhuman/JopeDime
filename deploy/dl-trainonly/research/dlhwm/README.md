@@ -32,3 +32,20 @@ Owner: ENG:watcher (DL_FINAL, 2026-10-08). Design: `DL_FINAL_DESIGN.md` (ofm-202
 | `lgb_baseline.py` | external LV4 LightGBM baseline on the same folds (wave-5 `head_lgb` vendored; sees L only, so lift = DL(L+enc) vs LGB(L)) |
 | `tests/` | guard refusal, create-only S3 stub, lineage-pure folds, fail-closed mask parser |
 | `report.py` | per-fold loss curves, dashboard, paired lineage-cluster bootstrap lift vs LightGBM |
+
+## Feature-subset wave (`dlsub-*`)
+
+PURE resmlp, same lineage-grouped folds (5x3, seeds 10100+r) and 3 seeds per arm as wave 0. Only the inputs change:
+
+| arm | flags |
+|---|---|
+| S0 all clean | `--enc all` |
+| S1 LV4 only | `--enc none` |
+| S2 LV4 minus Z/ZL | `--enc none --lgroups V21,TL,V3,V4` |
+| S3-<enc> LV4 + one encoder | `--enc <enc>` (kumo_tabular_l, kumo_tabular_s, tabicl2, mitra_v2, tabdpt13) |
+| S4 all minus TabDPT | `--enc <all clean except tabdpt13>` |
+| S5-K50 / S5-K150 | `--topk K`: candidates = L cols + 32 fold-fit PCs per encoder, ranked by LightGBM TreeSHAP on inner-train rows only |
+| S5-auto | built by `subsets.py`: K picked per outer fold by inner-validation `best_val_crit` only |
+| S6 mask | `--mask encoder_mask_final.json` (optimistic: mask search saw all folds) |
+
+`subsets.py` groups runs by `summary.subset`, makes 3-seed ensembles and writes `subsets_report.json` and `dashboard_subsets.png` with paired lineage-bootstrap CIs vs S0 and vs the LightGBM yardstick on the same rows. Run dirs and metrics are additive only. Existing wave-0 and wave-1 paths and schemas do not change.

@@ -18,6 +18,7 @@ class BlockProj(nn.Module):
         super().__init__(); s.p = nn.ModuleList([nn.Sequential(nn.Dropout(p), nn.Linear(d, k), nn.GELU(), nn.Linear(k, k)) for d in dims])
         s.miss = nn.Parameter(torch.zeros(len(dims), k))
     def forward(s, xe, me):
+        if not s.p: return me.new_zeros(me.shape[0], 0, s.miss.shape[1])   # feature-subset arms with no encoder block
         out = []
         for b, (x, f) in enumerate(zip(xe, me.unbind(1))):
             h = s.p[b](x); f = f[:, None]; out.append(h * (1 - f) + s.miss[b] * f)
