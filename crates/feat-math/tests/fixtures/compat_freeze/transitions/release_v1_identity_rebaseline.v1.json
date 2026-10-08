@@ -1,14 +1,14 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced v1.0.0 version-metadata transition: only the campaigns manifest version and workspace member lock versions move evaluator input hashes. The prior current identity is retained in the append-only known table with a twice-produced native receipt. Historical and behavioral fixtures, DSL ABI, evaluator source and lineage source pins are unchanged.",
+  "decision": "Announced v1.0.0 version-only evaluator transition from qualified receiving main aa18ebfbf38c23d6f708b8fbd803ddb93b627db3. Only campaigns manifest and workspace lock product versions change identity inputs. The earlier 4fc1492e4 receipt-backed known pair is preserved as historical evidence. No speculative receiving-main identity row is appended. DSL ABI, product/evaluator source and behavioral/historical fixtures stay unchanged; inherited libc integration and identity successor ledgers are retained.",
   "plan_reference": ".agent/MAJOR_RELEASE_PLAN.md section 5 (authorized product version bump), docs/release/identity-v1/README.md, ADR-0004",
   "pr_reference": "release/v1.0.0 (local preparation; publication held by criteria 1-6)",
-  "source_commit": "09281209677080f2a5b48feebe9a55f95d4b1c9f",
+  "source_commit": "8b3111e7fb47d9c842c23358c0f93a53590e2dae",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "6a2bc59e723675be8bed0621258f4fadbfdaa6686c9321de111900249e7cba39",
-      "after": "dee660deee18da3ba65ab88ff9386225debb15bffc5a80f0a330c4bb8999d804"
+      "before": "07017a2f976353fea940a2f52347f4d23d53fd333bbf48c781b40d2e0c45d8c6",
+      "after": "471ab3f92ec6a5add399e86a58a1c9420f748711c832ef9a57a9d3a5859ab6e4"
     }
   ],
   "changed_identity_inputs": [
@@ -16,5 +16,17 @@
     "Cargo.lock"
   ],
   "prior_native_receipt": "docs/release/identity-v1/prior-receipt.json",
-  "prior_native_receipt_sha256": "a74c9b0ed8c009a5f1231a672cf563848a31b430663bcf77d4f7a707e3757ba1"
+  "prior_native_receipt_sha256": "a74c9b0ed8c009a5f1231a672cf563848a31b430663bcf77d4f7a707e3757ba1",
+  "identity_input_hashes": [
+    {
+      "path": "crates/jope-campaigns/Cargo.toml",
+      "old": "06955340d10a2c70ce71717b52c5f984224c49a37c394191bd85896b2b09c9c0",
+      "new": "355a7a154e5ec0b763f015eaa0233823e5e35202b2dadbe979390186fc41e32e"
+    },
+    {
+      "path": "Cargo.lock",
+      "old": "211457420a679d8b3be5a96f84879cb47fa400a3ce885780c15ac077f319348d",
+      "new": "02a993e813e0206cce1c35bc5c1cf49513576fc27d238f500642b86406c691f2"
+    }
+  ]
 }

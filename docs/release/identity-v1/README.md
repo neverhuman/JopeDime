@@ -1,15 +1,43 @@
 # v1.0.0 evaluator identity transition
 
-The authorized product version bump changes the hashed `crates/jope-campaigns/Cargo.toml` and workspace `Cargo.lock`. These are version fields only; no evaluator source, DSL ABI, behavioral fixture, historical snapshot or original receipt changes.
+Local release preparation on qualified receiving main
+`aa18ebfbf38c23d6f708b8fbd803ddb93b627db3`. The authorized product version bump changes
+only version fields in hashed `crates/jope-campaigns/Cargo.toml` and workspace `Cargo.lock`.
+The sealed-runtime libc dependency and all receiving identity successor ledgers are retained.
+Evaluator source, DSL ABI, behavioral fixtures and original history/source snapshots do not change.
 
-| Identity field | Prior main 4fc1492e4 | Version-bumped source c195666e |
+| Identity field | Receiving main aa18ebfbf | Version-bumped source 8b3111e7 |
 | --- | --- | --- |
-| implementation_sha256 | bdc4b4680114f8d96aea207fc3d472cfcb9762809eb1e3bb4b26f2c6ad116b98 | 0baac311b86e9d76df9004953ee6d925fc3bb2b5e23520ef75c1127c856d3373 |
-| cargo_lock_sha256 | 8ecdd1fc461f5700897e2e65dac13e3a05200bfcd2226e3b62d39bbe772c1fee | c9d7a9e5dbc6df8f9e888437bf2301c65ccff891d2064a3b896db9f1d257b3bd |
-| identity_digest | db0af8bde9ccd66643a6986b29cafe68d349f6d94a27c559a71a7f1349d57fb8 | 00b1699ae383057ba63be50abaf24bd4de29359b85fc8674af28eef7a312e522 |
+| implementation_sha256 | c18d66a0504d892ca1bb41e5222f987efce18185eb1ed1ac8017d095f12b110a | b2f5222e2c97d29f86baa224cda5f80cce898e90a3996edb1692af2a438bf715 |
+| cargo_lock_sha256 | 211457420a679d8b3be5a96f84879cb47fa400a3ce885780c15ac077f319348d | 02a993e813e0206cce1c35bc5c1cf49513576fc27d238f500642b86406c691f2 |
+| identity_digest | e767781cec10739eafa8242bd0c74885ecdf376b363a918f251e567fe4926bd0 | 214451a6ddf1262e1a30c95339c91c918be555aa72eaa73eb683bd5ff95f616a |
 
-[ADR-0004](../../adr/ADR-0004-evaluator-identity-known-table.md) requires an actual receipt before accepting a historical identity. [prior-receipt.json](prior-receipt.json) was produced twice, byte-identically, by a fresh Cargo-resolved native binary at clean `adf24ba6f7d68973eaa6fdbbe00e5654863b4c03`. Every hashed input is byte-identical to reviewed main `4fc1492e4755b0777134a78705feedb0a2f73d30`. [prior-source-proof.json](prior-source-proof.json) retains exact commands, executable and receipt hashes, source, environment, elapsed time and exits. The command uses only the adjacent synthetic manifest and twelve-row training CSV, copied byte-for-byte from the existing proof fixture. It is local fixture evidence, not a learning-store or live training claim.
+| Changed identity input | Old SHA-256 | New SHA-256 |
+| --- | --- | --- |
+| `crates/jope-campaigns/Cargo.toml` | 06955340d10a2c70ce71717b52c5f984224c49a37c394191bd85896b2b09c9c0 | 355a7a154e5ec0b763f015eaa0233823e5e35202b2dadbe979390186fc41e32e |
+| `Cargo.lock` | 211457420a679d8b3be5a96f84879cb47fa400a3ce885780c15ac077f319348d | 02a993e813e0206cce1c35bc5c1cf49513576fc27d238f500642b86406c691f2 |
 
-The known table appends only this receipt-backed prior pair and preserves both existing rows. The new pair is current, so needs no speculative historical row. The current evaluator fixture must be refreshed with the maintained identity-only mode after the source commit, with the old/new fixture digests bound in a named transition. The complete frozen suite and the unchanged NOREGRESS_V1 protocol must then pass at the final local candidate. This announcement and preparation do not authorize opening the release PR or tagging it before the remaining release gates hold.
+The maintained identity-only generator ran at committed source
+`8b3111e7fb47d9c842c23358c0f93a53590e2dae` on xbabe3 under MemoryMax 24 GB:
+13 compatibility tests passed, zero failures or skips. Its recorded fixture is produced by
+that maintained generator; the lineage fixture's header-only write was restored, so only the
+announced evaluator fixture changes. The named release transition follows the receiving
+sealed-runtime successor and binds both fixture hashes. Existing historical assertions and
+all value/model/emission/source pins remain strict. Final compare-mode results are recorded
+separately from generation.
 
-The maintained identity-only mode ran at committed source `09281209677080f2a5b48feebe9a55f95d4b1c9f`: 13/13 compatibility tests passed, zero failures/skips. Only `evaluator_identity.v1.json` differs after restoring the unchanged lineage header; the transition records its exact prior/new SHA-256. The historical test adds this one named evaluator-fixture successor and preserves all original manifest, source count, value and hash assertions. The initial version-bumped NOREGRESS refresh retained 15/16 frozen passes and the identity failure before this correction; final compare-mode execution remains separately recorded.
+[ADR-0004](../../adr/ADR-0004-evaluator-identity-known-table.md) requires an actual receipt
+before appending a known identity. [prior-receipt.json](prior-receipt.json) remains the original
+twice-produced, byte-identical native receipt at clean
+`adf24ba6f7d68973eaa6fdbbe00e5654863b4c03`, whose complete identity inputs match historical
+main `4fc1492e4755b0777134a78705feedb0a2f73d30`.
+[prior-source-proof.json](prior-source-proof.json) retains its commands, source, binary and
+receipt hashes. Its twelve-row training CSV and manifest are synthetic fixture inputs.
+The known table retains both receiving rows and appends only this earlier receipt-backed pair;
+that row is not relabeled as the latest receiving identity.
+
+Before release publication, retain an actual receipt-backed aa18 receiving identity if its
+receipts must be accepted as historical identities after the version transition. No row may
+be guessed from this fixture. Final RC no-regression controls, non-author verification,
+exact-head hosted evidence and the release lifecycle remain open. This announcement does not
+authorize a push, tag, signing, asset publication or a live training claim.
