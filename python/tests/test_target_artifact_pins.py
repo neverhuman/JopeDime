@@ -36,6 +36,14 @@ class _ToyModel:
         return np.column_stack([1 - scores, scores])
 
 
+TRUSTED_MANIFEST_PINS = {}
+
+
+def _trusted_manifest_pin(directory):
+    # Trusted fixture producer approval, retained outside the bundle under test.
+    return TRUSTED_MANIFEST_PINS[directory]
+
+
 @pytest.fixture
 def bundle(tmp_path):
     EXECUTED.clear()
@@ -66,18 +74,21 @@ def bundle(tmp_path):
         },
     }
     _write_manifest(tmp_path, manifest)
+    classical._record_local_model_pin(tmp_path / "model.joblib")
     return tmp_path, manifest
 
 
 def _write_manifest(directory, manifest):
     (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    TRUSTED_MANIFEST_PINS[directory] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
 
 
 @pytest.mark.parametrize("artifact", ["vectorizer.joblib", "model.joblib", "meta.joblib"])
 def test_fused_good_pin_loads_artifact(bundle, artifact):
     directory, _ = bundle
     with patch.object(fused, "load_encoder", return_value="neural-fixture"):
-        encoder = fused.FusedTargetEncoder(directory, device="cpu")
+        encoder = fused.FusedTargetEncoder(directory, device="cpu",
+                                          trusted_manifest_sha256=_trusted_manifest_pin(directory))
     assert artifact in EXECUTED
     assert encoder.vectorizer == {"feature_names": ["length"]}
     assert encoder.classical_bundles["toy"]["model"] == "fitted-model"
@@ -91,7 +102,8 @@ def test_fused_mismatch_rejected_before_deserialization(bundle, artifact):
     joblib.dump(_Artifact(artifact, {"model": "replacement"}), directory / artifact)
     with patch.object(fused, "load_encoder", return_value="neural-fixture"):
         with pytest.raises(ValueError, match=r"SHA-256 mismatch.*" + artifact):
-            fused.FusedTargetEncoder(directory, device="cpu")
+            fused.FusedTargetEncoder(directory, device="cpu",
+                                     trusted_manifest_sha256=_trusted_manifest_pin(directory))
     assert artifact not in EXECUTED
 
 
@@ -106,7 +118,8 @@ def test_fused_missing_or_malformed_pin_rejected_before_deserialization(bundle, 
     _write_manifest(directory, manifest)
     with patch.object(fused, "load_encoder", return_value="neural-fixture"):
         with pytest.raises(ValueError, match="SHA-256 pin"):
-            fused.FusedTargetEncoder(directory, device="cpu")
+            fused.FusedTargetEncoder(directory, device="cpu",
+                                     trusted_manifest_sha256=_trusted_manifest_pin(directory))
     assert artifact not in EXECUTED
 
 
@@ -115,13 +128,15 @@ def test_fused_candidate_meta_pin_is_required(bundle):
     manifest["scorer"] = {"candidate_meta_artifact": "meta.joblib"}
     _write_manifest(directory, manifest)
     with patch.object(fused, "load_encoder", return_value="neural-fixture"):
-        encoder = fused.FusedTargetEncoder(directory, device="cpu")
+        encoder = fused.FusedTargetEncoder(directory, device="cpu",
+                                          trusted_manifest_sha256=_trusted_manifest_pin(directory))
     assert encoder.meta_artifact["model"] == "fitted-meta"
     EXECUTED.clear()
     joblib.dump(_Artifact("meta.joblib", {"model": "replacement"}), directory / "meta.joblib")
     with patch.object(fused, "load_encoder", return_value="neural-fixture"):
         with pytest.raises(ValueError, match="SHA-256 mismatch"):
-            fused.FusedTargetEncoder(directory, device="cpu")
+            fused.FusedTargetEncoder(directory, device="cpu",
+                                     trusted_manifest_sha256=_trusted_manifest_pin(directory))
     assert "meta.joblib" not in EXECUTED
 
 
@@ -212,18 +227,20 @@ def test_classical_producer_reports_pins_and_ensemble_enforces_them(
 
 
 def test_joblib_load_uses_verified_snapshot_if_path_replaced(bundle):
-    from jope.target_maker.artifact_pins import load_joblib_pinned
+    from jope.target_maker.artifact_pins import load_joblib_pinned, read_trusted_producer_manifest
 
     directory, manifest = bundle
     path = directory / "model.joblib"
     original_load = joblib.load
+    _, authority = read_trusted_producer_manifest(directory / "manifest.json", _trusted_manifest_pin(directory))
 
     def replace_then_load(stream):
         joblib.dump(_Artifact("replacement", {"model": "replacement"}), path)
         return original_load(stream)
 
     with patch.object(joblib, "load", side_effect=replace_then_load):
-        result = load_joblib_pinned(path, manifest["artifact_sha256"]["model.joblib"], context="test model")
+        result = load_joblib_pinned(path, manifest["artifact_sha256"]["model.joblib"], context="test model",
+                                    producer_authority=authority)
     assert result["model"] == "fitted-model"
     assert EXECUTED == ["model.joblib"]
 
@@ -245,10 +262,118 @@ def test_manifest_producer_pins_all_joblib_paths(bundle):
         report={},
     )
     manifest = json.loads((directory / "manifest.json").read_text())
+    # This write is the trusted producer under test; approve its completed snapshot.
+    TRUSTED_MANIFEST_PINS[directory] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
     assert manifest["artifact_sha256"] == {
         name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
         for name in ("vectorizer.joblib", "model.joblib", "meta.joblib")
     }
     with patch.object(fused, "load_encoder", return_value="neural-fixture"):
-        encoder = fused.FusedTargetEncoder(directory, device="cpu")
+        encoder = fused.FusedTargetEncoder(directory, device="cpu",
+                                          trusted_manifest_sha256=_trusted_manifest_pin(directory))
     assert encoder.meta_artifact["model"] == "fitted-meta"
+
+
+@pytest.mark.parametrize("authority", [None, {"pins": ["self-reported"]}])
+def test_matching_joblib_pin_without_producer_authority_refuses_before_load(bundle, authority):
+    from jope.target_maker.artifact_pins import load_joblib_pinned
+
+    directory, manifest = bundle
+    with patch.object(joblib, "load") as loader:
+        with pytest.raises(ValueError, match="trusted producer authority"):
+            load_joblib_pinned(directory / "model.joblib", manifest["artifact_sha256"]["model.joblib"],
+                                context="foreign caller", producer_authority=authority)
+        loader.assert_not_called()
+    assert EXECUTED == []
+
+
+@pytest.mark.parametrize("pin", [None, "malformed", "0" * 64])
+def test_fused_missing_or_wrong_trusted_manifest_refuses_before_any_model_load(bundle, pin):
+    directory, _ = bundle
+    with patch.object(joblib, "load") as loader, patch.object(fused, "load_encoder") as neural:
+        with pytest.raises(ValueError, match="Trusted producer manifest"):
+            fused.FusedTargetEncoder(directory, device="cpu", trusted_manifest_sha256=pin)
+        loader.assert_not_called()
+        neural.assert_not_called()
+    assert EXECUTED == []
+
+
+@pytest.mark.parametrize("artifact", ["vectorizer.joblib", "model.joblib", "meta.joblib"])
+def test_fused_recomputed_artifact_and_manifest_pins_cannot_change_trusted_root(bundle, artifact):
+    directory, manifest = bundle
+    trusted_root = _trusted_manifest_pin(directory)
+    joblib.dump(_Artifact("foreign producer", {"model": "foreign"}), directory / artifact)
+    manifest["artifact_sha256"][artifact] = hashlib.sha256((directory / artifact).read_bytes()).hexdigest()
+    # Attacker writes directly; it cannot update the separate fixture approval record.
+    (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with patch.object(joblib, "load") as loader, patch.object(fused, "load_encoder") as neural:
+        with pytest.raises(ValueError, match="Trusted producer manifest: SHA-256 mismatch"):
+            fused.FusedTargetEncoder(directory, device="cpu", trusted_manifest_sha256=trusted_root)
+        loader.assert_not_called()
+        neural.assert_not_called()
+    assert EXECUTED == []
+
+
+def test_classical_self_reported_foreign_pin_refuses_before_load(bundle):
+    directory, _ = bundle
+    path = directory / "foreign.joblib"
+    joblib.dump(_Artifact("foreign producer", {"model": "foreign"}), path)
+    report = {"model_path": path, "model_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    with patch.object(joblib, "load") as loader:
+        with pytest.raises(ValueError, match="trusted producer authority"):
+            classical._reload_ensemble_model(report)
+        loader.assert_not_called()
+    assert EXECUTED == []
+
+
+def test_verified_manifest_uses_same_snapshot_if_path_changes_before_json_parse(bundle):
+    from jope.target_maker.artifact_pins import read_trusted_producer_manifest
+
+    directory, manifest = bundle
+    original_loads = json.loads
+
+    def replace_then_parse(snapshot):
+        (directory / "manifest.json").write_text('{"artifact_sha256": {}}', encoding="utf-8")
+        return original_loads(snapshot)
+
+    with patch.object(json, "loads", side_effect=replace_then_parse):
+        actual, authority = read_trusted_producer_manifest(directory / "manifest.json",
+                                                          _trusted_manifest_pin(directory))
+    assert actual == manifest
+    assert manifest["artifact_sha256"]["model.joblib"] in authority.pins
+
+
+@pytest.mark.parametrize("manifest", [[], {"artifact_sha256": []}])
+def test_approved_malformed_manifest_refuses_before_any_model_load(tmp_path, manifest):
+    _write_manifest(tmp_path, manifest)
+    with patch.object(joblib, "load") as loader, patch.object(fused, "load_encoder") as neural:
+        with pytest.raises(ValueError, match="must be a mapping"):
+            fused.FusedTargetEncoder(tmp_path, device="cpu",
+                                     trusted_manifest_sha256=_trusted_manifest_pin(tmp_path))
+        loader.assert_not_called()
+        neural.assert_not_called()
+
+
+def test_public_fused_wrappers_forward_the_separate_trusted_manifest_pin(bundle):
+    directory, _ = bundle
+    pin = _trusted_manifest_pin(directory)
+    calls = [
+        lambda: fused.encode_values_fused(directory, [1, 2], "regression", trusted_manifest_sha256=pin),
+        lambda: fused.encode_values_fused([1, 2], "regression", bundle_dir=directory,
+                                          trusted_manifest_sha256=pin),
+        lambda: fused.score_values_fused(directory, [1], "regression", [2], "regression",
+                                         trusted_manifest_sha256=pin),
+        lambda: fused.score_values_fused([1], "regression", [2], "regression", bundle_dir=directory,
+                                         trusted_manifest_sha256=pin),
+        lambda: fused.encode_fused_file(directory, directory / "values", "regression",
+                                        trusted_manifest_sha256=pin),
+        lambda: fused.score_fused_files(directory, directory / "left", "regression",
+                                        directory / "right", "regression", trusted_manifest_sha256=pin),
+        lambda: fused.evaluate_fused_bundle_on_windows(directory, {}, {}, [], trusted_manifest_sha256=pin),
+    ]
+    for call in calls:
+        with patch.object(fused, "load_fused_encoder", side_effect=RuntimeError("reached loader")) as loader:
+            with patch.object(fused, "read_target_input", return_value=np.array([1.0, 2.0])):
+                with pytest.raises(RuntimeError, match="reached loader"):
+                    call()
+            loader.assert_called_once_with(directory, device=None, trusted_manifest_sha256=pin)

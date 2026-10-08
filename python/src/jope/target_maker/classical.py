@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .artifact_pins import artifact_sha256, load_joblib_pinned
+from .artifact_pins import _authorize_local_artifact, load_joblib_pinned
 from .data import (
     TASK_BINARY,
     TASK_NAMES,
@@ -21,11 +21,23 @@ from .data import (
 )
 
 
+_LOCAL_MODEL_AUTHORITIES = {}
+
+
+def _record_local_model_pin(path: Path):
+    pin, authority = _authorize_local_artifact(path)
+    _LOCAL_MODEL_AUTHORITIES[pin] = authority
+    return pin
+
+
 def _reload_ensemble_model(report: Mapping[str, object]):
     path = report.get("model_path")
     if not path:
         raise ValueError("Classical ensemble model artifact path is missing")
-    return load_joblib_pinned(path, report.get("model_sha256"), context="Classical ensemble model")["model"]
+    pin = report.get("model_sha256")
+    authority = _LOCAL_MODEL_AUTHORITIES.get(pin) if isinstance(pin, str) else None
+    return load_joblib_pinned(path, pin, context="Classical ensemble model",
+                              producer_authority=authority)["model"]
 
 
 @dataclass
@@ -1059,7 +1071,7 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
                 "retrieval": retrieval,
                 "top_features": _top_features(model, selected_pair_names),
                 "model_path": str(model_path),
-                "model_sha256": artifact_sha256(model_path),
+                "model_sha256": _record_local_model_pin(model_path),
             }
             fitted[model_name] = model
         if include_ensemble:
@@ -1096,7 +1108,7 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
                     "member_names": member_names,
                     "weights": weights.tolist(),
                     "model_path": str(model_path),
-                    "model_sha256": artifact_sha256(model_path),
+                    "model_sha256": _record_local_model_pin(model_path),
                 }
         return reports
 
@@ -1167,7 +1179,7 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
                     "member_names": member_names,
                     "weights": weights.tolist(),
                     "model_path": str(model_path),
-                    "model_sha256": artifact_sha256(model_path),
+                    "model_sha256": _record_local_model_pin(model_path),
                 }
 
     no_length_names = [name for name in base_requested if name not in {"dummy", "length_only"}]

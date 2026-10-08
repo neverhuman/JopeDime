@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-from .artifact_pins import artifact_sha256, load_joblib_pinned
+from .artifact_pins import artifact_sha256, load_joblib_pinned, read_trusted_producer_manifest
 from .classical import (
     PairIndex,
     RetrievalQuery,
@@ -1568,12 +1568,14 @@ def train_fusion(cfg: FusedTrainingConfig) -> dict[str, object]:
 
 
 class FusedTargetEncoder:
-    def __init__(self, bundle_dir: Path, device: torch.device | str | None = None) -> None:
+    def __init__(self, bundle_dir: Path, device: torch.device | str | None = None, *,
+                 trusted_manifest_sha256: str | None = None) -> None:
         self.bundle_dir = Path(bundle_dir).expanduser().resolve()
         manifest_path = self.bundle_dir / "manifest.json"
         if not manifest_path.is_file():
             raise FileNotFoundError(f"Fused bundle manifest is missing: {manifest_path}")
-        self.manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.manifest, self._producer_authority = read_trusted_producer_manifest(
+            manifest_path, trusted_manifest_sha256)
         if self.manifest.get("format") != BUNDLE_FORMAT:
             raise ValueError(f"Incompatible fused bundle format: {self.manifest.get('format')!r}")
         if int(self.manifest.get("version", -1)) != BUNDLE_VERSION:
@@ -1632,7 +1634,8 @@ class FusedTargetEncoder:
         pins = self.manifest.get("artifact_sha256", {})
         if not isinstance(pins, Mapping):
             raise ValueError("Fused manifest artifact SHA-256 pins must be a mapping")
-        return load_joblib_pinned(self._artifact_path(rel_path), pins.get(str(rel_path)), context=context)
+        return load_joblib_pinned(self._artifact_path(rel_path), pins.get(str(rel_path)), context=context,
+                                  producer_authority=self._producer_authority)
 
     def _artifact_path(self, rel_path: object) -> Path:
         if rel_path is None:
@@ -1835,8 +1838,10 @@ def _transform_single_signature(
     return _component_pad(reduced, component_dim)
 
 
-def load_fused_encoder(bundle_dir: Path, device: torch.device | str | None = None) -> FusedTargetEncoder:
-    return FusedTargetEncoder(bundle_dir, device=device)
+def load_fused_encoder(bundle_dir: Path, device: torch.device | str | None = None, *,
+                       trusted_manifest_sha256: str | None = None) -> FusedTargetEncoder:
+    return FusedTargetEncoder(bundle_dir, device=device,
+                             trusted_manifest_sha256=trusted_manifest_sha256)
 
 
 def encode_values_fused(
@@ -1844,17 +1849,20 @@ def encode_values_fused(
     bundle_dir: Path | str | None = None,
     device: torch.device | str | None = None,
     seed: int | None = None,
+    trusted_manifest_sha256: str | None = None,
 ) -> np.ndarray:
     if len(args) == 3:
         encoder_or_bundle, values, task = args
         encoder = (
             encoder_or_bundle
             if isinstance(encoder_or_bundle, FusedTargetEncoder)
-            else load_fused_encoder(Path(str(encoder_or_bundle)), device=device)
+            else load_fused_encoder(Path(str(encoder_or_bundle)), device=device,
+                                    trusted_manifest_sha256=trusted_manifest_sha256)
         )
     elif len(args) == 2 and bundle_dir is not None:
         values, task = args
-        encoder = load_fused_encoder(Path(bundle_dir), device=device)
+        encoder = load_fused_encoder(Path(bundle_dir), device=device,
+                                     trusted_manifest_sha256=trusted_manifest_sha256)
     else:
         raise TypeError(
             "encode_values_fused expects (encoder_or_bundle, values, task) or (values, task, bundle_dir=...)"
@@ -1867,17 +1875,20 @@ def score_values_fused(
     bundle_dir: Path | str | None = None,
     device: torch.device | str | None = None,
     seed: int | None = None,
+    trusted_manifest_sha256: str | None = None,
 ) -> float:
     if len(args) == 5:
         encoder_or_bundle, left_values, left_task, right_values, right_task = args
         encoder = (
             encoder_or_bundle
             if isinstance(encoder_or_bundle, FusedTargetEncoder)
-            else load_fused_encoder(Path(str(encoder_or_bundle)), device=device)
+            else load_fused_encoder(Path(str(encoder_or_bundle)), device=device,
+                                    trusted_manifest_sha256=trusted_manifest_sha256)
         )
     elif len(args) == 4 and bundle_dir is not None:
         left_values, left_task, right_values, right_task = args
-        encoder = load_fused_encoder(Path(bundle_dir), device=device)
+        encoder = load_fused_encoder(Path(bundle_dir), device=device,
+                                     trusted_manifest_sha256=trusted_manifest_sha256)
     else:
         raise TypeError(
             "score_values_fused expects (encoder_or_bundle, left_values, left_task, right_values, right_task) "
@@ -1894,9 +1905,11 @@ def encode_fused_file(
     output_path: Path | None = None,
     seed: int = 17,
     device: str | None = None,
+    trusted_manifest_sha256: str | None = None,
 ) -> np.ndarray:
     target = deterministic_shuffle(read_target_input(input_path), str(Path(input_path).resolve()), seed)
-    encoder = load_fused_encoder(bundle_dir, device=device)
+    encoder = load_fused_encoder(bundle_dir, device=device,
+                                 trusted_manifest_sha256=trusted_manifest_sha256)
     embedding = encoder.encode_values(target, task, seed=seed)
     if output_path is not None:
         output_path = Path(output_path)
@@ -1917,10 +1930,12 @@ def score_fused_files(
     *,
     seed: int = 17,
     device: str | None = None,
+    trusted_manifest_sha256: str | None = None,
 ) -> float:
     left = deterministic_shuffle(read_target_input(left_input), str(Path(left_input).resolve()), seed)
     right = deterministic_shuffle(read_target_input(right_input), str(Path(right_input).resolve()), seed)
-    encoder = load_fused_encoder(bundle_dir, device=device)
+    encoder = load_fused_encoder(bundle_dir, device=device,
+                                 trusted_manifest_sha256=trusted_manifest_sha256)
     return encoder.score_values(left, left_task, right, right_task, seed=seed)
 
 
@@ -1932,8 +1947,10 @@ def evaluate_fused_bundle_on_windows(
     *,
     device: str | None = None,
     batch_size: int = 512,
+    trusted_manifest_sha256: str | None = None,
 ) -> dict[str, object]:
-    encoder = load_fused_encoder(bundle_dir, device=device)
+    encoder = load_fused_encoder(bundle_dir, device=device,
+                                 trusted_manifest_sha256=trusted_manifest_sha256)
     val_batch = encoder.encode_window_batch(sampled["val"], batch_size=batch_size)
     test_batch = encoder.encode_window_batch(sampled["test"], batch_size=batch_size)
     y_val = np.asarray([pair.label for pair in pair_indices["val"]], dtype=np.int64)
