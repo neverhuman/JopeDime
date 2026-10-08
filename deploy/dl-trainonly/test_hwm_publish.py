@@ -15,6 +15,8 @@ C2_SCHEMA = "jope.dl-s1-prod-c2-ledger-header/v1"
 G3_SCHEMA = "jope.dl-family-g3-decisions/v1"
 CAT_V1_SCHEMA = "jope.dl-family-catalog-v246-decisions/v1"
 CAT_V2_SCHEMA = "jope.dl-family-catalog-v246-decisions/v2"
+CAT_V3_SCHEMA = "jope.dl-family-catalog-v246-decisions/v3-outliers"
+ONE_HOLDOUT_SCHEMA = "jope.dltrain-one-holdout-role-map/v1"
 
 
 class PublisherTests(unittest.TestCase):
@@ -112,8 +114,15 @@ class PublisherTests(unittest.TestCase):
         # registry/holdout and the input list binds approved catalog-v246 decision file(s). cat_role is the DECIDED role.
         self.catalog_mode, self.cat_bind, self.cat_role, self.cat_family, self.cat_ds = False, True, None, None, None
         self.cat_v2, self.cat_reviewer, self.cat_approves, self.cat_holdout_role = None, "Lane A (laneA)", True, None
-        pins = (getattr(h, "G3_DECISIONS_SHA256", None), getattr(h, "APPROVED_P3_DECISIONS", None))  # absent on older adapters
-        self.addCleanup(lambda: setattr(h, "G3_DECISIONS_SHA256", pins[0]) or setattr(h, "APPROVED_P3_DECISIONS", pins[1]))
+        self.cat_v2_schema = CAT_V2_SCHEMA
+        # ONE-HOLDOUT mode (Jepson 2026-10-07 5:10pm MT): the input list binds a pinned role map naming P3 heldout contexts as
+        # training data. oh_listed: the map names this context; oh_p3: the P3 the map records (default: the row's); oh_pin: the
+        # map's sha is pinned in the adapter.
+        self.oh_mode, self.oh_listed, self.oh_p3, self.oh_pin = False, True, None, True
+        pins = (getattr(h, "G3_DECISIONS_SHA256", None), getattr(h, "APPROVED_P3_DECISIONS", None),
+                getattr(h, "ONE_HOLDOUT_ROLE_MAPS", None))  # absent on older adapters
+        self.addCleanup(lambda: setattr(h, "G3_DECISIONS_SHA256", pins[0]) or setattr(h, "APPROVED_P3_DECISIONS", pins[1])
+                        or setattr(h, "ONE_HOLDOUT_ROLE_MAPS", pins[2]))
         self.emit()
 
     def write(self, path, doc):
@@ -133,6 +142,8 @@ class PublisherTests(unittest.TestCase):
         listdoc = {"admitted": [self.input]}
         if self.catalog_mode and self.cat_bind:
             listdoc["catalog_p3"] = self.emit_catalog()
+        if self.oh_mode:
+            listdoc["one_holdout"] = {"role_map_sha256": self.emit_role_map()}
         ih = self.write(il, listdoc)
         dp = self.source / "deny.json"
         dh = self.write(
@@ -230,7 +241,7 @@ class PublisherTests(unittest.TestCase):
         approved = {self.cat_sha: {"approval": str(a1), "approval_sha256": a1sha, "reviewer": "lane a"}}
         ref = {"decision": str(p1), "sha256": self.cat_sha}
         if self.cat_v2 is not None:
-            d2 = {"schema": CAT_V2_SCHEMA, "per_dataset": [{"dataset_hash": ds, **self.cat_v2}]}
+            d2 = {"schema": self.cat_v2_schema, "per_dataset": [{"dataset_hash": ds, **self.cat_v2}]}
             p2, a2 = self.source / "catalog-v2.json", self.source / "approval-v2.json"
             self.cat_sha_v2 = self.write(p2, d2)
             a2sha = self.write(a2, {"candidate_sha256": self.cat_sha_v2, "verdict": "APPROVE", "reviewer": "Lane C, independent"})
@@ -238,6 +249,16 @@ class PublisherTests(unittest.TestCase):
             ref.update(decision_v2=str(p2), sha256_v2=self.cat_sha_v2)
         h.APPROVED_P3_DECISIONS = approved
         return ref
+
+    def emit_role_map(self):
+        """Write the ONE-HOLDOUT role map fixture; pin it unless oh_pin is False; return its sha256."""
+        listed = [{"context_sha256": self.cid, "view_id": self.input["view_id"],
+                   "p3": copy.deepcopy(self.oh_p3 or self.input["p3"])}] if self.oh_listed else []
+        rm = self.source / "role-map.json"
+        self.oh_sha = self.write(rm, {"schema": ONE_HOLDOUT_SCHEMA, "newly_training": {"heldout_non_g3": listed,
+                                                                                      "catalog_heldout_p3v1": []}})
+        h.ONE_HOLDOUT_ROLE_MAPS = {self.oh_sha: str(rm)} if self.oh_pin else {}
+        return self.oh_sha
 
     def freeze(self):
         plan = self.root / "plan.json"
@@ -729,6 +750,85 @@ class PublisherTests(unittest.TestCase):
         h.G3_DECISIONS_SHA256 = "0" * 64
         with self.assertRaisesRegex(h.Refused, "owner-named G3 decision file"):
             h.inventory(self.source, self.header_sha)
+
+    def use_one_holdout(self, role, **knobs):
+        self.oh_mode, self.role = True, role
+        for name, value in knobs.items():
+            setattr(self, name, value)
+        self.emit()
+
+    def test_one_holdout_heldout_publishes_as_training_with_role_source(self):
+        self.use_one_holdout("heldout")
+        plan, objects = h.inventory(self.source, self.header_sha)
+        body = objects[0]["body"]
+        self.assertEqual(body["family"], {"family_id": self.family, "assignment": "heldout"})
+        self.assertEqual(body["scope"], "train_teacher")
+        self.assertEqual(body["provenance"]["role_source"], {"path": str(self.source / "role-map.json"), "sha256": self.oh_sha})
+        self.assertIn(str(self.source / "role-map.json"), {r["path"] for r in plan["sources"]})
+        result, bucket = self.publish()
+        self.assertEqual(result["completed"], 1)
+
+    def test_one_holdout_bound_list_leaves_other_roles_unchanged(self):
+        # CONTROL: a bound role map changes nothing for the already-admitted roles (no role_source on them).
+        for role in ("train_fit", "train_nonpool", "dev"):
+            with self.subTest(role=role):
+                self.use_one_holdout(role)
+                body = h.inventory(self.source, self.header_sha)[1][0]["body"]
+                self.assertEqual(body["family"]["assignment"], role)
+                self.assertNotIn("role_source", body["provenance"])
+
+    def test_one_holdout_heldout_without_binding_refused(self):
+        # MUST-FAIL: without a bound role map, heldout stays refused exactly as before ONE-HOLDOUT.
+        self.role = "heldout"
+        self.emit()
+        with self.assertRaisesRegex(h.Refused, "unadmitted family/input"):
+            h.inventory(self.source, self.header_sha)
+
+    def test_one_holdout_unpinned_or_tampered_role_map_refused(self):
+        self.use_one_holdout("heldout", oh_pin=False)
+        with self.assertRaisesRegex(h.Refused, "not an approved role source"):
+            h.inventory(self.source, self.header_sha)
+        self.use_one_holdout("heldout", oh_pin=True)
+        h.inventory(self.source, self.header_sha)
+        self.write(self.source / "role-map.json", {"schema": ONE_HOLDOUT_SCHEMA, "newly_training": {"x": []}})
+        with self.assertRaisesRegex(h.Refused, "source hash mismatch"):
+            h.inventory(self.source, self.header_sha)
+
+    def test_one_holdout_unlisted_or_wrong_p3_refused(self):
+        self.use_one_holdout("heldout", oh_listed=False)
+        with self.assertRaisesRegex(h.Refused, "unadmitted family/input"):
+            h.inventory(self.source, self.header_sha)
+        self.use_one_holdout("heldout", oh_listed=True, oh_p3={"family_id": "fam-" + "9" * 64, "assignment": "heldout"})
+        with self.assertRaisesRegex(h.Refused, "unadmitted family/input"):
+            h.inventory(self.source, self.header_sha)
+
+    def test_one_holdout_never_admits_sealed_or_scope_escalation(self):
+        # MUST-FAIL: the one holdout (sealed_excluded) stays refused even when a bound, pinned map lists the context.
+        self.use_one_holdout("sealed_excluded", oh_p3=None)
+        with self.assertRaisesRegex(h.Refused, "unadmitted family/input"):
+            h.inventory(self.source, self.header_sha)
+        self.use_one_holdout("heldout")
+        self.input["use"] = self.final["use"] = "selection_only"
+        self.event["use"] = "selection_only"
+        self.write(self.source / "inputs.json", {"admitted": [self.input], "one_holdout": {"role_map_sha256": self.oh_sha}})
+        with self.assertRaises(h.Refused):
+            h.inventory(self.source, self.header_sha)
+
+    def test_catalog_v3_outliers_pin_and_schema(self):
+        pin = h.APPROVED_P3_DECISIONS["c846aa5dbb9c03ce815cebffe4284b42be2731d94fbe41e6bf64cd9e371545f0"]
+        self.assertEqual((pin["approval_sha256"], pin["reviewer"]),
+                         ("2288883b323f86370a28089a90ae035f2f18db14ab12a4437e9b45e9bad2c5ed", "lane c"))
+        self.cat_v2_schema = CAT_V3_SCHEMA
+        self.use_catalog("train_fit", cat_v2={"family_id": self.family, "role": "train_fit"})
+        self.input["p3_source"] = "catalog-decisions " + self.cat_sha_v2[:12]
+        self.emit()
+        body = h.inventory(self.source, self.header_sha)[1][0]["body"]
+        self.assertEqual(body["provenance"]["family_source"]["sha256"], self.cat_sha_v2)
+        self.cat_v2_schema = "jope.dl-family-catalog-v246-decisions/v4"
+        self.emit()
+        with self.assertRaisesRegex(h.Refused, "unsupported catalog decisions schema"):
+            h.inventory(self.source, self.header_sha)
+
 
 if __name__ == "__main__":
     unittest.main()

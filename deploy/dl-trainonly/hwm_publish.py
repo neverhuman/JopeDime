@@ -46,6 +46,7 @@ G3_DECISIONS_SHA256 = "796e27247b92dcac54c5fec586ee7f8b69aff4d02bd3783d1157c9cd3
 CATALOG_DECISIONS_SCHEMAS = (
     "jope.dl-family-catalog-v246-decisions/v1",
     "jope.dl-family-catalog-v246-decisions/v2",
+    "jope.dl-family-catalog-v246-decisions/v3-outliers",
 )
 APPROVED_P3_DECISIONS = {
     "cb3e6079364d984c26a2719bc22985c89a69b280093c8f5dce75456bb4608d36": {
@@ -59,6 +60,22 @@ APPROVED_P3_DECISIONS = {
         "approval_sha256": "7f38d5283805eb8f02cb7aa2a50887f2d8850696152bdd82509a811ed58575a1",
         "reviewer": "lane c",
     },
+    # P3 v3 (the 40 Wave-2 Group B outliers, batch w2-B-b06): Lane C APPROVE 2026-10-07T14:56:19Z under the owner's 14:36Z
+    # partitioned-screen method approval (owner record 750d3041).
+    "c846aa5dbb9c03ce815cebffe4284b42be2731d94fbe41e6bf64cd9e371545f0": {
+        "approval": "/home/ubuntu/jope-evidence/kernel2/bt/P3_V3_REVIEW/laneC-20261007/approval-record.json",
+        "approval_sha256": "2288883b323f86370a28089a90ae035f2f18db14ab12a4437e9b45e9bad2c5ed",
+        "reviewer": "lane c",
+    },
+}
+# ONE-HOLDOUT (Jepson, 2026-10-07 5:10pm MT, via OWNER ENG:watcher; rulings 23:18Z): the sealed meta-test group is the only holdout;
+# P3 heldout contexts are training data. A heldout final publishes only when its input list binds ("one_holdout":
+# {"role_map_sha256"}) one of these sha-pinned role maps and that map names the context, with the same P3 family and role, as newly
+# training. Every other role rule is unchanged: sealed_excluded and unknown roles stay refused.
+ONE_HOLDOUT_SCHEMA = "jope.dltrain-one-holdout-role-map/v1"
+ONE_HOLDOUT_ROLE_MAPS = {
+    "3b9caf36a3cde3f12d0337ebfc633b55a1e989a3f53410df578f6fc9a7aa0109": "/home/ubuntu/scratch/jopedime-dl-training-v1/"
+    "receipts/owner-relays/one-holdout-role-map-v1-20261007T231936Z.json",
 }
 PLAN_SCHEMA = "jope.gp-hwm-publish-plan/v1"
 OBJECT_SCHEMA = "jope.gp-hwm-evidence/v1"
@@ -228,6 +245,26 @@ def catalog_roles(src, ref):
     return merged
 
 
+def one_holdout(src, ref):
+    """An input list's ONE-HOLDOUT binding: ({context: P3} the pinned role map names as newly training, the map's source ref)."""
+    require(isinstance(ref, dict) and isinstance(ref.get("role_map_sha256"), str), "invalid ONE-HOLDOUT pin")
+    sha = sha_field(ref["role_map_sha256"])
+    path = ONE_HOLDOUT_ROLE_MAPS.get(sha)
+    require(path is not None, "ONE-HOLDOUT role map is not an approved role source")
+    doc = src.doc(path, sha)
+    require(doc.get("schema") == ONE_HOLDOUT_SCHEMA, "unsupported ONE-HOLDOUT role map schema")
+    groups = doc.get("newly_training")
+    require(isinstance(groups, dict) and groups, "ONE-HOLDOUT role map names no training contexts")
+    training = {}
+    for rows in groups.values():
+        require(isinstance(rows, list), "invalid ONE-HOLDOUT group")
+        for item in rows:
+            cid = sha_field(item.get("context_sha256"))
+            require(cid not in training, "ambiguous ONE-HOLDOUT context")
+            training[cid] = item.get("p3")
+    return training, {"path": str(Path(path).absolute()), "sha256": sha}
+
+
 def finite(value):
     require(
         type(value) in (int, float) and math.isfinite(value), "invalid measured loss"
@@ -255,7 +292,7 @@ def clean_output(obj):
     common.canonical(obj)  # rejects nonfinite values at every serialized boundary
 
 
-def selected_payload(final, row, event, header, header_sha, final_sha, family_source=None):
+def selected_payload(final, row, event, header, header_sha, final_sha, family_source=None, role_source=None):
     fields = (
         "context_sha256",
         "cut_id",
@@ -366,6 +403,9 @@ def selected_payload(final, row, event, header, header_sha, final_sha, family_so
         # A family/role decided outside the header-pinned registry/holdout names its decision file. Registry-sourced records stay
         # byte-identical to the merged publisher (their source is already bound through provenance.header_sha256).
         obj["provenance"]["family_source"] = family_source
+    if role_source is not None:
+        # ONE-HOLDOUT: a P3 heldout context published as training names the pinned role map that made it training data.
+        obj["provenance"]["role_source"] = role_source
     # Status names are the only free keys admitted to the sanitized payload.
     require(
         all(re.fullmatch(r"[a-z_]{1,64}", k) for k in attempts["by_status"]),
@@ -540,9 +580,10 @@ def inventory(source, header_sha, ledger_pins=None):
             )
             ds_family.setdefault(ds, fid)
             assignment.setdefault(fid, ROLELESS.get(role, role))
-    admitted, catalog_of = {}, {}
+    admitted, catalog_of, training_of = {}, {}, {}
     for doc in lists:
         catalog = catalog_roles(src, doc["catalog_p3"]) if "catalog_p3" in doc else None
+        training, role_source = one_holdout(src, doc["one_holdout"]) if "one_holdout" in doc else (None, None)
         for row in doc["admitted"]:
             cid = sha_field(row["context_sha256"])
             require(
@@ -552,6 +593,8 @@ def inventory(source, header_sha, ledger_pins=None):
             admitted[cid] = row
             if catalog is not None:
                 catalog_of[cid] = catalog
+            if training is not None and cid in training:
+                training_of[cid] = (training[cid], role_source)
     objects, counts, seen = [], collections.Counter(), set()
     for lane, rows in ledger_rows.items():
         assigned = {}
@@ -592,9 +635,11 @@ def inventory(source, header_sha, ledger_pins=None):
                 isinstance(family, str) and re.fullmatch(r"fam-[0-9a-f]{64}", family),
                 "invalid family identity",
             )
+            # ONE-HOLDOUT: heldout is a training role only for a context its list's pinned role map names, with this P3.
+            heldout_training = role == "heldout" and cid in training_of and training_of[cid][0] == row["p3"]
             require(
                 row["p3"] == {"family_id": family, "assignment": role}
-                and role in ("train_fit", "train_nonpool", "dev")
+                and (role in ("train_fit", "train_nonpool", "dev") or heldout_training)
                 and row["view_id"] not in refused,
                 "unadmitted family/input",
             )
@@ -615,7 +660,8 @@ def inventory(source, header_sha, ledger_pins=None):
                 source / "contexts" / cid / "summary.tar.gz", event["summary_sha256"]
             )
             require(len(summary) == final["summary_bytes"], "wrong summary size")
-            obj = selected_payload(final, row, event, header, header_sha, digest(data), family_source)
+            obj = selected_payload(final, row, event, header, header_sha, digest(data), family_source,
+                                   training_of[cid][1] if heldout_training else None)
             body = common.canonical(obj)
             outcome = obj["outcome"]
             counts[outcome] += 1
