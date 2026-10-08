@@ -2,7 +2,7 @@
 """Assemble the DL_FINAL training bundle (labelled one-holdout GP-HWM views x clean features), purge-before-split.
 Inputs (all read-only): views_labeled.json (one-holdout target after exclusion layers v4, selection_reached, denylist v5 and sealed
 contexts removed), the role map (sealed families), GP-HWM evidence objects (S3 GET by VersionId, sha256-verified), clean encodings
-(S3 main tree, stem = the plan's code12 stem; refused object keys skipped), LV4 stats JSONs (stats_v2.1 seeded / v3 / v4, train rows only).
+(S3 main tree, key = encodings/<type>/<stem> where stem = <dataset>/f<fold>/<code12 stem>; refused object keys skipped), LV4 stats JSONs (stats_v2.1 seeded / v3 / v4, train rows only).
 Outputs DIR/: blocks_<name>.npy (float32), targets.npz, meta.json, folds.npy, MANIFEST.json. GP labels go only to targets.npz.
 Lineage groups: union-find over wave-10 lineage components, dataset_hash, family_id, catalog display name, and the wave-10
 pre-registered stats_v2.1 fingerprint rule (tau = 0.5 * median cross-group NN RMS distance). Folds = group_folds(comp, 5, 10100+r)."""
@@ -10,7 +10,8 @@ import argparse, collections as Co, concurrent.futures as cf, io, json, os, re, 
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dlhwm.common import PFX, CLEAN_ENCODERS, get, log, sha256b, sha256f
-ENC = ["kumo_tabular_l", "kumo_tabular_s", "mitra_v2", "tabdpt13", "tabicl2", "a0", "dope", "hyperion_v6all"]
+ENC = list(CLEAN_ENCODERS)
+if ENC != ["kumo_tabular_l", "kumo_tabular_s", "mitra_v2", "tabdpt13", "tabicl2", "a0", "dope", "hyperion_v6all"]: raise SystemExit("clean encoder list changed: review build_data")
 Z_FROM = ["kumo_tabular_l", "mitra_v2", "tabdpt13", "tabicl2"]
 LMC = ["lm_ridge", "lm_knn10", "lm_1nn", "lm_stump", "lm_tree3", "lm_tree6", "lm_best"]
 def group_folds(groups, k, seed):   # identical to w4_lib.group_folds / w10_build
@@ -50,18 +51,29 @@ def main():
     ap.add_argument("--stats-dirs", required=True, help="comma list of dirs each holding v21/ v3r/ v4r/ subdirs of <cid>.json")
     ap.add_argument("--cols", required=True, help="wave-10 cols.json (V21/V3R/V4R column order)")
     ap.add_argument("--w10-meta", required=True); ap.add_argument("--catalog", required=True); ap.add_argument("--tabdpt-overlap", required=True)
+    ap.add_argument("--plan", default="", help="plan_full.jsonl (context_sha256 -> dataset_hash) so sealed/heldout cids also purge their whole dataset")
     ap.add_argument("--evidence-cache", required=True); ap.add_argument("--out", required=True); ap.add_argument("--threads", type=int, default=32)
     a = ap.parse_args(); os.makedirs(a.out, exist_ok=True)
     V = json.load(open(a.views)); refused = set(json.load(open(a.refused_keys)))
     rm = json.load(open(a.rolemap)); sealed = {"ctx": set(rm), "fam": set(), "ds": set()}   # meta/exclude_sealed.json: {cid: role}; every listed cid is out
     if isinstance(rm, dict) and "sealed" in rm: walk(rm["sealed"], sealed)
-    log("views", len(V), "sealed ctx/fam/ds", {k: len(v) for k, v in sealed.items()})
+    hard = {c for c, role in (rm.items() if isinstance(rm, dict) else []) if isinstance(role, str) and role in ("sealed_excluded", "heldout", "sealed", "lockbox")}
+    if a.plan:
+        for l in open(a.plan):
+            x = json.loads(l)
+            if x.get("context_sha256") in hard and x.get("dataset_hash"): sealed["ds"].add(x["dataset_hash"])
+    log("views", len(V), "sealed ctx/fam/ds", {k: len(v) for k, v in sealed.items()}, "hard-role cids", len(hard))
     # 1) evidence
     ev = {}
-    if os.path.exists(a.evidence_cache):
-        for l in open(a.evidence_cache): d = json.loads(l); ev[d["context_sha256"]] = d
+    want = {v["context_sha256"]: v["sha"] for v in V}
+    if os.path.exists(a.evidence_cache):   # cached lines carry the sha256 of the verified S3 bytes; reused only if it matches this views file
+        for l in open(a.evidence_cache):
+            d = json.loads(l); c = d.get("context_sha256")
+            if c in want and d.get("_evidence_sha256") == want[c]: ev[c] = d
     def get_ev(v):
-        b = get(v["key"], v["vid"]); assert sha256b(b) == v["sha"], v["key"]; return json.loads(b)
+        b = get(v["key"], v["vid"])
+        if sha256b(b) != v["sha"]: raise RuntimeError(f"evidence sha256 mismatch {v['key']}")
+        d = json.loads(b); d["_evidence_sha256"] = v["sha"]; return d
     todo = [v for v in V if v["context_sha256"] not in ev]
     with cf.ThreadPoolExecutor(a.threads) as ex, open(a.evidence_cache, "a") as fo:
         for i, d in enumerate(ex.map(get_ev, todo)):

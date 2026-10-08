@@ -15,7 +15,7 @@ for f, m in PINS.items():
     if got != m: raise SystemExit(f"pin mismatch {f}: {got} != {m}")
 import ta_common, stats_v3, stats_v2, stats_v4   # order matters: later modules find these in sys.modules
 for mod in (ta_common, stats_v3, stats_v2, stats_v4):
-    assert os.path.dirname(os.path.abspath(mod.__file__)) == HERE, mod.__file__
+    if os.path.dirname(os.path.abspath(mod.__file__)) != HERE: raise SystemExit(f"module from wrong dir: {mod.__file__}")
 W = "/home/ubuntu/jopedime_probe_exp/ofm-20261008"
 A = None; PLAN = {}; M = None
 def go(c):
