@@ -77,7 +77,7 @@ HOST_CASES = {
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 746
+EXPECTED_COLLECTED = 753
 
 
 def case_ids(suite):
