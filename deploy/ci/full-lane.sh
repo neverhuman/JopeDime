@@ -53,12 +53,11 @@ PY
     cargo test --locked -p jope-dime-regressor --lib --bin jope-dime-regressor --no-run
     bash deploy/ci/fast-lane.sh inputs
     ;;
-  full-e2e|full-emitters)
-    case $lane in
-      full-e2e) fast=e2e-smoke ;;
-      full-emitters) fast=emitters ;;
-    esac
-    bash deploy/ci/fast-lane.sh "$fast"
+  full-e2e)
+    bash deploy/ci/fast-lane.sh e2e-smoke
+    ;;
+  full-emitters)
+    JOPE_FULL_EMITTERS_PARALLEL=1 bash deploy/ci/fast-lane.sh emitters
     ;;
   full-default|full-scratch|full-policy|full-s3-offline|full-neural)
     case $lane in
@@ -117,22 +116,23 @@ filter = "package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_h
 priority = 100
 '''
 if os.environ.get('JOPE_FULL_FAMILY') == 'full-neural':
-    # These fixtures copy/hash the neural harness and execute authority children.
-    # Partition their concurrency without filtering any test out of the run.
-    # Start the three-control receipt test first rather than leave it as a tail.
+    # Authority checks hash all mapped neural libraries at each start. Limit
+    # competing full-runtime reads, retaining every verification and test.
+    # Run the three-control receipt first, alone, rather than as a contended tail.
     text += '''
-[test-groups.full-neural-admission]
+[test-groups.full-neural-runtime-proof]
 max-threads = 4
 
 [[profile.main.overrides]]
 filter = "package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)"
 priority = 100
-test-group = "full-neural-admission"
+threads-required = "num-test-threads"
+test-group = "full-neural-runtime-proof"
 
 [[profile.main.overrides]]
-filter = "package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::))"
+filter = "package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::) | test(eval_registry::authority::) | test(eval_registry::witness::))"
 priority = 90
-test-group = "full-neural-admission"
+test-group = "full-neural-runtime-proof"
 '''
 path.write_text(text)
 PY
