@@ -68,7 +68,7 @@ class GatedSet(nn.Module):
     def forward(s, xL, mL, xe, me):
         me = block_drop(me, s.bdrop, s.training); B = xL.shape[0]
         toks = torch.cat([s.lp(torch.cat([xL * (1 - mL), mL], 1))[:, None], s.bp(xe, me)], 1) + s.bid      # [B, nb+1, d]
-        g = torch.sigmoid(s.gate(toks)).squeeze(-1); mfull = torch.cat([torch.zeros_like(me[:, :1]), me], 1)
+        g = torch.sigmoid(s.gate(toks)).squeeze(-1); mfull = torch.cat([me.new_zeros(me.shape[0], 1), me], 1)   # L token always present (also with 0 encoder blocks)
         g = g * (1 - mfull) + 1e-4; s.last_gate = g.detach()
         kv = s.nx(toks * g[..., None]); lat, _ = s.xa(s.lat.expand(B, -1, -1), kv, kv, key_padding_mask=mfull.bool())
         h = s.sa(torch.cat([lat, toks * g[..., None]], 1)); return s.h(h[:, :lat.shape[1]].mean(1))
