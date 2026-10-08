@@ -181,11 +181,18 @@ impl LandlockRuleset {
             requested_access & !(ACCESS_READ_DIR | ACCESS_REMOVE_DIR | ACCESS_MAKE_DIR)
         };
         let c_path = CString::new(path.as_os_str().as_bytes())?;
+        // SAFETY: c_path is a live, NUL-terminated CString for this synchronous
+        // call. The flags use the c_int ABI and request neither O_CREAT nor
+        // O_TMPFILE, so open needs no variadic mode argument. It retains no path
+        // pointer; a negative result is handled before taking ownership below.
         let path_fd = unsafe { libc::open(c_path.as_ptr(), libc::O_PATH | libc::O_CLOEXEC) };
         if path_fd < 0 {
             return Err(std::io::Error::last_os_error())
                 .with_context(|| format!("open Landlock path {}", path.display()));
         }
+        // SAFETY: successful open returned a new nonnegative descriptor owned
+        // only here. It has not been closed or wrapped elsewhere; this transfers
+        // ownership exactly once to OwnedFd, which closes it after add_rule.
         let path_fd = unsafe { OwnedFd::from_raw_fd(path_fd) };
         let attr = LandlockPathBeneathAttr {
             allowed_access: access,

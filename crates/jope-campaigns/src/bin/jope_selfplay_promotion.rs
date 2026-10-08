@@ -30,11 +30,14 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::{Read, Write};
+use std::os::fd::AsFd;
 use std::os::unix::fs::OpenOptionsExt;
-use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+#[path = "common/flock.rs"]
+mod flock;
 
 jope_paths::once_str!(
     fn root_str => paths::flywheel_root()
@@ -2617,13 +2620,8 @@ fn handle_run_checkpoint_gate(request: &Value, root: &Path) -> Result<Value> {
 }
 
 fn flock_exclusive(file: &fs::File, blocking: bool) -> Result<()> {
-    let mut operation = libc::LOCK_EX;
-    if !blocking {
-        operation |= libc::LOCK_NB;
-    }
-    let status = unsafe { libc::flock(file.as_raw_fd(), operation) };
-    if status != 0 {
-        bail!("flock failed: {}", std::io::Error::last_os_error());
+    if let Err(error) = flock::exclusive(file.as_fd(), blocking) {
+        bail!("flock failed: {}", error);
     }
     Ok(())
 }

@@ -16,12 +16,15 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::fd::AsRawFd;
+use std::os::fd::AsFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
+
+#[path = "common/flock.rs"]
+mod flock;
 
 const PROJECT: &str = "jope-selfplay-train";
 const TRAINER_SPEC_CONTRACT: &str = "packed-v4-minimum-cpu";
@@ -488,8 +491,7 @@ impl ProcessLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if result != 0 {
+        if flock::exclusive(file.as_fd(), false).is_err() {
             bail!("another trainer watchdog owns {}", path.display());
         }
         Ok(Self { _file: file })

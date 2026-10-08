@@ -33,7 +33,7 @@ use clap::Parser;
 use serde_json::{json, Map, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::fd::AsRawFd;
+use std::os::fd::AsFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -42,6 +42,9 @@ use jope_dime_regressor::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, sha256_file,
 };
 use jope_dime_regressor::spec_policy::PROPOSE;
+
+#[path = "common/flock.rs"]
+mod flock;
 
 jope_paths::once_str!(
     fn scripts_str => paths::research_scripts_root()
@@ -185,8 +188,7 @@ fn try_lock(path: &Path) -> Result<Option<File>> {
         .write(true)
         .truncate(false)
         .open(path)?;
-    let status = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-    if status != 0 {
+    if flock::exclusive(file.as_fd(), false).is_err() {
         return Ok(None);
     }
     Ok(Some(file))

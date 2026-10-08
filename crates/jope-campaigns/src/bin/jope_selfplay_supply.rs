@@ -24,12 +24,15 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::os::fd::AsRawFd;
+use std::os::fd::AsFd;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
+
+#[path = "common/flock.rs"]
+mod flock;
 
 const MICRO_WAVE_KIND: &str = "deterministic_128_dataset_micro_wave";
 const WAVE_SCHEMA: &str = "JopeRealtimeSelfplayWave.v1";
@@ -922,8 +925,7 @@ impl SingleInstanceLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
-        let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if result != 0 {
+        if flock::exclusive(file.as_fd(), false).is_err() {
             bail!(
                 "another micro-wave supply supervisor owns {}",
                 path.display()
