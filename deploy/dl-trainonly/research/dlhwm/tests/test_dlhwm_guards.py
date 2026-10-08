@@ -64,3 +64,12 @@ def test_gatedset_without_encoder_blocks_uses_L():
         a = m(torch.randn(B, 10), mL, [], me)["fit_mu"]; b = m(torch.randn(B, 10), mL, [], me)["fit_mu"]
     assert m.last_gate.shape == (B, 1)
     assert not torch.allclose(a, b)
+def test_sweep_knobs_lion_and_b10rank():
+    torch = pytest.importorskip("torch")
+    from dlhwm.train import Lion, b10rank, huber_mean, SWEEP_DEFAULTS
+    assert SWEEP_DEFAULTS["loss"] == "bnll" and SWEEP_DEFAULTS["w_rank"] == 0.2 and SWEEP_DEFAULTS["w_gap"] == 0.5 and SWEEP_DEFAULTS["ema"] == 0.995 and not SWEEP_DEFAULTS["swa_k"]
+    w = torch.nn.Parameter(torch.tensor([1.0, -1.0])); opt = Lion([w], lr=0.1); (w ** 2).sum().backward(); opt.step()
+    assert torch.allclose(w.detach(), torch.tensor([0.9, -0.9]))
+    torch.manual_seed(0); y = torch.tensor([1.0, 0.0, 1.0, 0.0, float("nan")]); good = torch.tensor([3.0, -3.0, 3.0, -3.0, 0.0])
+    assert b10rank(good, y) < b10rank(-good, y)
+    assert float(huber_mean(torch.zeros(3), torch.tensor([0.0, 2.0, float("nan")]), 1.0)) == pytest.approx(0.75)
