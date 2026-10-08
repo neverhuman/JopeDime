@@ -4,15 +4,45 @@ import torch
 from dlhwm.train import rankgauss_fit, rankgauss_apply
 
 
+PCA_PROJECTION = {'rows': 32, 'allow_tf32': False}
+
+
+def project_pca(z, center, components):
+    """Use identical IEEE-float32 GEMM shapes for corpus and feature-only inference.
+
+    TF32 and shape-dependent GEMM selection can change bf16 model predictions on
+    reload. Padding also keeps singleton/tail requests on the same numerical path.
+    This changes numerical execution only; fitting and selected columns stay inner-fit.
+    """
+    size = PCA_PROJECTION['rows']
+    result = z.new_empty((len(z), components.shape[1]))
+    previous = torch.backends.cuda.matmul.allow_tf32
+    try:
+        torch.backends.cuda.matmul.allow_tf32 = False
+        for offset in range(0, len(z), size):
+            part = z[offset:offset + size]
+            count = len(part)
+            padded = z.new_zeros((size, z.shape[1]))
+            padded[:count] = part
+            result[offset:offset + count] = ((padded - center) @ components)[:count]
+    finally:
+        torch.backends.cuda.matmul.allow_tf32 = previous
+    return result
+
+
 def prepare(raw_l, raw_e, blocks, columns, overlap, fit, spec, device, seed, state=None, fit_targets=None):
     """Reload needs raw features and overlap flags only, never labels or a fitting split."""
     fitting = state is None
     if fitting:
-        state = {'schema': 'jope.wave3-preprocessor/v1', 'blocks': blocks, 'columns': columns,
+        state = {'schema': 'jope.wave3-preprocessor/v2', 'blocks': blocks, 'columns': columns,
                  'encoder': {}, 'fit_rows': np.asarray(fit), 'tabdpt_policy': 'overlap_missing'}
+        if spec['pca']:
+            state['pca_projection'] = dict(PCA_PROJECTION)
     else:
         if state['blocks'] != blocks or state['columns'] != columns:
             raise ValueError('inference feature order mismatch')
+        if spec['pca'] and state.get('pca_projection') != PCA_PROJECTION:
+            raise ValueError('incompatible PCA numerical policy; use matching checkpoint source')
     ll = np.array(raw_l, dtype=np.float64, copy=True)
     tc = [i for i, c in enumerate(columns) if c.startswith('Z:tabdpt13') or c == 'ZL:2']
     ll[np.ix_(np.asarray(overlap, bool), tc)] = np.nan
@@ -56,9 +86,10 @@ def prepare(raw_l, raw_e, blocks, columns, overlap, fit, spec, device, seed, sta
                     _, _, v = torch.pca_lowrank(z[rows] - center, q=nk, center=False, niter=4)
                 sign = torch.sign(v.gather(0, v.abs().argmax(0, keepdim=True))).squeeze(0)
                 v = v * sign
-                ps = ((z[rows] - center) @ v).std(0).clamp(min=1e-6)
+                ps = project_pca(z[rows], center, v).std(0).clamp(min=1e-6)
                 es.update(center=center.cpu().numpy(), components=v.cpu().numpy(), pc_scale=ps.cpu().numpy())
-            z = ((z - torch.as_tensor(es['center'], device=device)) @ torch.as_tensor(es['components'], device=device)) / torch.as_tensor(es['pc_scale'], device=device)
+            z = project_pca(z, torch.as_tensor(es['center'], device=device),
+                            torch.as_tensor(es['components'], device=device)) / torch.as_tensor(es['pc_scale'], device=device)
             z = z.clamp(-8, 8)
         z[miss] = 0
         xe.append(z); misses.append(miss.float())

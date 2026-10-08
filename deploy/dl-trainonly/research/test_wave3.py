@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from dlhwm.models import ARCH
 from dlhwm.wave3_objectives import objective, lineage_weights, metrics
-from dlhwm.wave3_preprocessing import prepare
+from dlhwm.wave3_preprocessing import prepare, project_pca, PCA_PROJECTION
 from dlhwm.wave3_train import exposure, infer_checkpoint, mask_outputs
 
 torch.set_num_threads(1)
@@ -110,5 +110,29 @@ class TestWave3(unittest.TestCase):
             loss,_,_ = objective(out, yy, spec); opt.zero_grad(); loss.backward()
             self.assertTrue(torch.isfinite(loss)); self.assertTrue(all(torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None))
             opt.step(); self.assertFalse(torch.equal(before, model.h.o.weight))
+
+    def test_pca_projection_subset_tail_and_backend_restore(self):
+        for device in (['cpu', 'cuda'] if torch.cuda.is_available() else ['cpu']):
+            torch.manual_seed(27)
+            z = torch.randn(137, 257, device=device)
+            center = torch.randn(257, device=device)
+            v = torch.randn(257, 17, device=device)
+            old = torch.backends.cuda.matmul.allow_tf32
+            try:
+                torch.backends.cuda.matmul.allow_tf32 = True
+                whole = project_pca(z, center, v)
+                self.assertTrue(torch.backends.cuda.matmul.allow_tf32)
+                for count in (1, 7, 32, 53):
+                    rows = torch.randperm(len(z), device=device)[:count]
+                    subset = project_pca(z[rows], center, v)
+                    self.assertTrue(torch.equal(subset, whole[rows]))
+            finally:
+                torch.backends.cuda.matmul.allow_tf32 = old
+
+    def test_pca_legacy_policy_refused(self):
+        spec = self.spec('G')
+        with self.assertRaisesRegex(ValueError, 'PCA numerical policy'):
+            prepare(None, None, [], [], None, None, spec, 'cpu', 0,
+                    state={'blocks': [], 'columns': []})
 
 if __name__ == '__main__': unittest.main()
