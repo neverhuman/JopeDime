@@ -183,9 +183,14 @@ bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q tests ../benchma
 )
 python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     # The exact DL source handoff has its own offline unittest receipt; pytest totals stay separate.
+    # It runs as the pinned module shards in sequence, each under the unchanged 900 s budget,
+    # then --combine fails unless together they are exactly the full strict lane.
 (
 cd python
-timeout 900s uv run --no-sync python ../deploy/dl-trainonly/run_lane_offline.py --output "$EVIDENCE/dl-lane-offline"
+for shard in 1/3 2/3 3/3; do
+    timeout 900s uv run --no-sync python ../deploy/dl-trainonly/run_lane_offline.py --shard "$shard" --output "$EVIDENCE/dl-lane-offline/shard-${shard%/*}"
+done
+uv run --no-sync python ../deploy/dl-trainonly/run_lane_offline.py --combine --output "$EVIDENCE/dl-lane-offline"
 )
     ;;
   rust-test)
