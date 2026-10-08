@@ -115,6 +115,8 @@ if os.environ.get('JOPE_FULL_FAMILY') == 'full-neural':
     # Authority checks hash all mapped neural libraries at each start. Limit
     # competing full-runtime reads, retaining every verification and test.
     # Run the three-control receipt first, alone, rather than as a contended tail.
+    # Start the 100-observation projected-candidates proof early in the same
+    # bounded group so its existing work does not become the final serial tail.
     text += '''
 [test-groups.full-neural-runtime-proof]
 max-threads = 12
@@ -123,6 +125,11 @@ max-threads = 12
 filter = "package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)"
 priority = 100
 threads-required = "num-test-threads"
+test-group = "full-neural-runtime-proof"
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & binary(=view_contracts) & test(=projected_gp_candidates_are_exactly_representable_unique_and_durable)"
+priority = 96
 test-group = "full-neural-runtime-proof"
 
 [[profile.main.overrides]]

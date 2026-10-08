@@ -215,6 +215,8 @@ sys.exit(int(a.status))
                     self.assertEqual([
                         dict(filter='package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)',
                              priority=100, **{'threads-required': 'num-test-threads', 'test-group': 'full-neural-runtime-proof'}),
+                        dict(filter='package(jope-parallel) & binary(=view_contracts) & test(=projected_gp_candidates_are_exactly_representable_unique_and_durable)',
+                             priority=96, **{'test-group': 'full-neural-runtime-proof'}),
                         dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(=teaching_store::admission_tests::native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes))',
                              priority=95, **{'test-group': 'full-neural-runtime-proof'}),
                         dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::) | test(eval_registry::authority::) | test(eval_registry::witness::))',
