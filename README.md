@@ -20,6 +20,34 @@ record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 
 Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this repository.
 
+## Major release 1.0.0 — local draft
+
+The planned major release adds versioned GP expression and ordered-axis kernels,
+protected numerical semantics, and deterministic source generation by the internal
+Python, Rust and C++17 emitters. GP trees are converted by code; no LLM generates
+these artifacts. The `cpp20` target compiles the same C++17 source as C++20.
+Profile and capability admission determine which routes are supported.
+
+Opt-in LM constant refinement, measured loss/cost Pareto archives, protected
+expression rewrites and bounded minimax subtree proposals retain their shared
+search budgets and documented limits. Train-only split and publication bindings,
+checked GPU dimensions, sealed descriptor ownership, artifact integrity checks
+and durable recovery fixtures are recorded separately from live qualification.
+
+The [draft changelog](CHANGELOG.md#100---unreleased) and
+[complete PR inventory](docs/release/major-release-pr-list.md) cover all 127 PRs
+merged since `v0.2.0` through `a3aeb34fa`, plus the owner-authorized #249 squash.
+[Queued #251, #263, #257 and #265](CHANGELOG.md#pending-release-queue) remain
+pending until their merges are verified. The
+[version-bump plan](docs/release/major-version-bump-list.md) lists every package
+manifest and distinguishes direct edits, inherited versions and retained imports.
+
+This is an unpublished preparation. Receiving-main CI, the open release blockers
+and the final release qualification still gate publication. Source and fixture
+coverage does not establish a live-learning, transfer or held-out performance
+result. The 0.2.0 inventory and generated benchmark records below retain their
+original identities; no new runtime test counts are claimed here.
+
 ## At a glance
 
 | What | 0.2.0 |
