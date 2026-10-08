@@ -24,3 +24,19 @@ def test_put_create_only_never_overwrites(monkeypatch):
     assert common.put_create_only("k", b"abc")["status"] == "existed"
     with pytest.raises(RuntimeError): common.put_create_only("k", b"xyz")
     assert st.o["k"] == b"abc"
+def test_group_folds_lineage_pure():
+    from dlhwm.lgb_baseline import group_folds
+    g = np.repeat(np.arange(200), np.random.default_rng(0).integers(1, 9, 200)); f = group_folds(g, 5, 10100)
+    for u in np.unique(g): assert len(set(f[g == u])) == 1
+    assert set(f) == set(range(5))
+def test_mask_parser_fails_closed(tmp_path):
+    pytest.importorskip("torch")
+    from dlhwm.train import parse_mask
+    blocks = ["kumo_tabular_l", "mitra_v2"]
+    p = tmp_path / "m.json"
+    p.write_text(json.dumps({"encoders": {"kumo_tabular_l": {"block_weight": 0.5, "mode": "pcs", "n_pcs": 32, "kept": [0, 3, 31]}, "mitra_v2": {"block_weight": 0}}}))
+    m = parse_mask(str(p), blocks); assert m["kumo_tabular_l"]["kept"] == [0, 3, 31] and m["mitra_v2"]["weight"] == 0
+    for bad in ({"encoders": {"foundation": {"kept": [1]}}}, {"encoders": {"mitra_v2": {"mode": "magic", "kept": [1]}}},
+                {"encoders": {"mitra_v2": {"mode": "pcs", "n_pcs": 32, "kept": [32]}}}, {"encoders": {"mitra_v2": {"kept": [1], "surprise": 1}}}, {"nothing": {}}):
+        p.write_text(json.dumps(bad))
+        with pytest.raises(SystemExit): parse_mask(str(p), blocks)
