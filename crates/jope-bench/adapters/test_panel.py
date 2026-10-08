@@ -8,6 +8,7 @@ import tempfile
 from unittest.mock import patch
 import hashlib
 import pickle
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -22,6 +23,19 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _panel
+
+
+FOREIGN_LOADS = []
+
+
+def _record_foreign_load():
+    FOREIGN_LOADS.append("executable pickle ran")
+    return {"schema": "foreign artifact"}
+
+
+class ForeignArtifact:
+    def __reduce__(self):
+        return _record_foreign_load, ()
 
 
 class ToyRegressor:
@@ -131,6 +145,56 @@ class PanelTests(unittest.TestCase):
 
         with patch.object(_panel.pickle, "loads", side_effect=mutate_then_load):
             self.assertEqual(_panel.replay(buffer, checksum, data["predict"]["features"]), result)
+
+    def test_matching_foreign_pin_refuses_before_executable_pickle(self):
+        FOREIGN_LOADS.clear()
+        artifact = pickle.dumps(ForeignArtifact(), protocol=5)
+        pin = hashlib.sha256(artifact).hexdigest()
+        with patch.object(_panel.pickle, "loads", wraps=pickle.loads) as loader:
+            with self.assertRaisesRegex(ValueError, "not produced by this adapter process"):
+                _panel.replay(artifact, pin, request()["predict"]["features"])
+            loader.assert_not_called()
+        self.assertEqual(FOREIGN_LOADS, [])
+
+    def test_recomputed_pin_for_changed_valid_model_has_no_producer_authority(self):
+        data = request("regression")
+        _, artifact, _ = _panel.fit(data, lambda _: ToyRegressor(), "trusted local factory")
+        state = pickle.loads(artifact)
+        state["engine_version"] = "foreign producer with otherwise valid model"
+        foreign = pickle.dumps(state, protocol=5)
+        pin = hashlib.sha256(foreign).hexdigest()
+        with patch.object(_panel.pickle, "loads") as loader:
+            with self.assertRaisesRegex(ValueError, "not produced by this adapter process"):
+                _panel.replay(foreign, pin, data["predict"]["features"])
+            loader.assert_not_called()
+
+    def test_local_producer_authority_does_not_survive_process_restart(self):
+        data = request("regression")
+        _, artifact, pin = _panel.fit(data, lambda _: ToyRegressor(), "trusted local factory")
+        probe = '''
+import sys
+from unittest.mock import patch
+import _panel
+with patch.object(_panel.pickle, "loads") as loader:
+    try:
+        _panel.replay(bytes.fromhex(sys.argv[1]), sys.argv[2], [])
+    except ValueError as error:
+        assert "not produced by this adapter process" in str(error), str(error)
+    else:
+        raise AssertionError("foreign process admitted persisted executable artifact")
+    loader.assert_not_called()
+'''
+        child = subprocess.run([sys.executable, "-c", probe, artifact.hex(), pin],
+                               cwd=Path(__file__).resolve().parent, capture_output=True, text=True)
+        self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
+
+    def test_failed_fit_reload_does_not_issue_new_producer_authority(self):
+        data = request("regression")
+        pins_before = set(_panel._LOCALLY_PRODUCED_PINS)
+        with patch.object(_panel, "replay", side_effect=ValueError("refused local replay")):
+            with self.assertRaisesRegex(ValueError, "refused local replay"):
+                _panel.fit(data, lambda _: ToyRegressor(), "new refused local producer")
+        self.assertEqual(_panel._LOCALLY_PRODUCED_PINS, pins_before)
 
     def test_leaked_labels_unknown_fields_and_missing_classes_are_refused(self):
         for mutate in (lambda r: r["predict"].update(targets=["leak"]),

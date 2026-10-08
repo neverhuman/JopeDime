@@ -3,7 +3,8 @@
 The caller supplies training labels and prediction features only. Median imputation,
 missing indicators and capped one-hot dictionaries are fitted on training rows. The
 complete estimator and preprocessing state are retained in a checksummed private
-pickle; never load a pickle obtained from an untrusted source.
+pickle. Replay admits only artifacts produced by this module's trusted model
+factory in the current process; a supplied checksum is not producer authority.
 """
 import hashlib
 import json
@@ -18,6 +19,9 @@ ARTIFACT = "jope.panel-fitted-python/v1"
 INPUT_POLICY = "median-onehot256-indicator/v1"
 MAX_ONEHOT = 256
 MAX_REQUEST_BYTES = 128 * 1024 * 1024
+# Process-local producer authority, never populated from an artifact or manifest.
+# Model factories are trusted adapter code; untrusted input is validated raw data.
+_LOCALLY_PRODUCED_PINS = set()
 
 
 def _keys(value, expected, where):
@@ -177,7 +181,11 @@ def predictions(model, x, task, classes):
 
 
 def replay(artifact_bytes, expected_sha256, rows):
-    """Replay a private artifact only after verifying its caller-supplied complete digest."""
+    """Replay only a locally produced artifact with its verified complete digest.
+
+    Persisted artifacts from another process require a separate authenticated
+    producer route; their self-reported checksum cannot admit executable pickle.
+    """
     if (not isinstance(expected_sha256, str) or len(expected_sha256) != 64
             or any(c not in "0123456789abcdef" for c in expected_sha256)):
         raise ValueError("fitted artifact SHA-256 pin is missing or invalid")
@@ -185,6 +193,8 @@ def replay(artifact_bytes, expected_sha256, rows):
     artifact_bytes = bytes(artifact_bytes)
     if hashlib.sha256(artifact_bytes).hexdigest() != expected_sha256:
         raise ValueError("fitted artifact checksum mismatch")
+    if expected_sha256 not in _LOCALLY_PRODUCED_PINS:
+        raise ValueError("fitted artifact was not produced by this adapter process")
     state = pickle.loads(artifact_bytes)
     if state["schema"] != ARTIFACT:
         raise ValueError("unsupported fitted artifact")
@@ -213,8 +223,15 @@ def fit(request, create_model, engine_version):
                              "task": request["task"], "classes": list(classes),
                              "preprocessing": preprocessing, "model": model}, protocol=5)
     checksum = hashlib.sha256(artifact).hexdigest()
-    if replay(artifact, checksum, request["predict"]["features"]) != output:
-        raise ValueError("fitted artifact reload changed predictions")
+    previously_issued = checksum in _LOCALLY_PRODUCED_PINS
+    _LOCALLY_PRODUCED_PINS.add(checksum)
+    try:
+        if replay(artifact, checksum, request["predict"]["features"]) != output:
+            raise ValueError("fitted artifact reload changed predictions")
+    except BaseException:
+        if not previously_issued:
+            _LOCALLY_PRODUCED_PINS.discard(checksum)
+        raise
     return output, artifact, checksum
 
 
