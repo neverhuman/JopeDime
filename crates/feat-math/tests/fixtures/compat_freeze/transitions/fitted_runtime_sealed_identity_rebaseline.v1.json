@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for the owner-assigned fitted runtime pin and sealed-image correction. The root Cargo.lock and advanced_v3 module bytes change the ADR-0004 evaluator identity. All behavior fixtures, lineage identity, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "Owner Criterion 4 Jankurai hard findings 65-81; Lane B PR #262",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/262",
+  "source_commit": "c8a0c93111fee50f4c67c7e6b0ea6f19842c9e08",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "6a2bc59e723675be8bed0621258f4fadbfdaa6686c9321de111900249e7cba39",
+      "after": "07017a2f976353fea940a2f52347f4d23d53fd333bbf48c781b40d2e0c45d8c6"
+    }
+  ]
+}

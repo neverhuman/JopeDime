@@ -13,6 +13,7 @@ mod feature_block;
 mod fitted_cpp;
 mod fitted_cpp_runtime;
 mod fitted_portable;
+mod fitted_runtime_image;
 mod grammar;
 mod heads;
 mod input;
