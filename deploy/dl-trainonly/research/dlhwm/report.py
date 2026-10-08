@@ -67,7 +67,7 @@ def main():
     for run in rep["arms"]:
         S = json.load(open(f"{a.runs}/{run}/summary.json"))
         if not os.path.exists(f"{a.runs}/{run}/oofraw_r{r}.npy"): continue
-        key = f"{S['arch']}{'-anchored' if S.get('gbm_anchor') else ''}{'-noTabDPT' if S.get('no_tabdpt') else ''}{'-yshuf' if S.get('yshuffle', -1) >= 0 else ''}{('-mask' + S['mask_sha256'][:8] + '-optimistic') if S.get('mask_sha256') else ''}{'-pca' + str(S['pca']) if S.get('pca') else ''}"
+        key = f"{(S.get('subset') + ':') if S.get('subset') else ''}{S['arch']}{'-anchored' if S.get('gbm_anchor') else ''}{'-noTabDPT' if S.get('no_tabdpt') else ''}{'-yshuf' if S.get('yshuffle', -1) >= 0 else ''}{('-mask' + S['mask_sha256'][:8] + '-optimistic') if S.get('mask_sha256') else ''}{'-pca' + str(S['pca']) if S.get('pca') else ''}"
         grp.setdefault(key, []).append(run)
     rep["ensembles"] = {}
     for key, runs in grp.items():
