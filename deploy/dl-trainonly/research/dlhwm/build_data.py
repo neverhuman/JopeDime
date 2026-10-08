@@ -58,6 +58,7 @@ def main():
     rm = json.load(open(a.rolemap)); sealed = {"ctx": set(rm), "fam": set(), "ds": set()}   # meta/exclude_sealed.json: {cid: role}; every listed cid is out
     if isinstance(rm, dict) and "sealed" in rm: walk(rm["sealed"], sealed)
     hard = {c for c, role in (rm.items() if isinstance(rm, dict) else []) if isinstance(role, str) and role in ("sealed_excluded", "heldout", "sealed", "lockbox")}
+    if hard and not a.plan: raise SystemExit(f"{len(hard)} sealed/heldout cids in the role map: --plan is required so their datasets are purged too")
     if a.plan:
         for l in open(a.plan):
             x = json.loads(l)
