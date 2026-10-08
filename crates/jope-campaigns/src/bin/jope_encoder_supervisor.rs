@@ -181,10 +181,9 @@ impl LandlockRuleset {
             requested_access & !(ACCESS_READ_DIR | ACCESS_REMOVE_DIR | ACCESS_MAKE_DIR)
         };
         let c_path = CString::new(path.as_os_str().as_bytes())?;
-        // SAFETY: c_path is a live, NUL-terminated CString for this synchronous
-        // call. The flags use the c_int ABI and request neither O_CREAT nor
-        // O_TMPFILE, so open needs no variadic mode argument. It retains no path
-        // pointer; a negative result is handled before taking ownership below.
+        // SAFETY: c_path is a live NUL-terminated CString borrowed for this call.
+        // The c_int flags request neither O_CREAT nor O_TMPFILE (no mode argument).
+        // open retains no pointer; negative results are checked before FD ownership.
         let path_fd = unsafe { libc::open(c_path.as_ptr(), libc::O_PATH | libc::O_CLOEXEC) };
         if path_fd < 0 {
             return Err(std::io::Error::last_os_error())
