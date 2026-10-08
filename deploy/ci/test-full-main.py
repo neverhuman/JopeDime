@@ -211,12 +211,12 @@ sys.exit(int(a.status))
                     filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
                     priority=100), golden)
                 if family == 'full-neural':
-                    self.assertEqual({'full-neural-admission': {'max-threads': 4}}, actual.pop('test-groups'))
+                    self.assertEqual({'full-neural-runtime-proof': {'max-threads': 4}}, actual.pop('test-groups'))
                     self.assertEqual([
                         dict(filter='package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)',
-                             priority=100, **{'test-group': 'full-neural-admission'}),
-                        dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::))',
-                             priority=90, **{'test-group': 'full-neural-admission'})], override)
+                             priority=100, **{'threads-required': 'num-test-threads', 'test-group': 'full-neural-runtime-proof'}),
+                        dict(filter='package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::) | test(eval_registry::authority::) | test(eval_registry::witness::))',
+                             priority=90, **{'test-group': 'full-neural-runtime-proof'})], override)
                 else:
                     self.assertEqual([], override)
                 self.assertEqual(expected, actual)
@@ -273,6 +273,65 @@ if stage in ('policy', 'elo'):
                         data = json.loads((evidence/name/'receipt.json').read_text())
                         self.assertEqual(passed, data['counts']['passed'])
                         self.assertEqual(0, data['exit_status'])
+
+
+class FittedMatrixTests(unittest.TestCase):
+    def test_parallel_matrices_both_finish_and_fail_closed(self):
+        script = (ROOT/'deploy/ci/fast-lane.sh').read_text()
+        block = re.search(r'(if \[ "\$\{JOPE_FULL_EMITTERS_PARALLEL:-0\}".*?\nfi)\n    ;;', script, re.S)[1]
+        scratch_root = ROOT/'target/tmp'
+        scratch_root.mkdir(parents=True, exist_ok=True)
+        for parallel, failure in [(True, 'none'), (True, 'build'),
+                                  (True, 'sanitizer'), (True, 'cxx20'), (False, 'none')]:
+            with self.subTest(parallel=parallel, failure=failure), tempfile.TemporaryDirectory(dir=scratch_root) as scratch:
+                root = Path(scratch)
+                cargo = root/'cargo'
+                cargo.write_text('''#!/usr/bin/env python3
+import json, os, pathlib, sys, time
+root = pathlib.Path(os.environ['MATRIX_ROOT'])
+args = sys.argv[1:]
+if '--no-run' in args:
+    (root/'build.json').write_text(json.dumps(args))
+    sys.exit(7 if os.environ['FAILURE'] == 'build' else 0)
+mode = 'sanitizer' if os.environ.get('JOPE_FITTED_CPP_SANITIZER') else 'cxx20'
+(root/(mode+'.json')).write_text(json.dumps(args))
+if os.environ['JOPE_FULL_EMITTERS_PARALLEL'] == '1':
+    assert (root/'build.json').exists()
+    (root/(mode+'.started')).touch()
+    other = 'cxx20' if mode == 'sanitizer' else 'sanitizer'
+    deadline = time.monotonic() + 5
+    while not (root/(other+'.started')).exists():
+        assert time.monotonic() < deadline, 'matrices did not overlap'
+        time.sleep(0.01)
+(root/(mode+'.finished')).touch()
+print(mode+' completed', flush=True)
+sys.exit(7 if os.environ['FAILURE'] == mode else 0)
+''')
+                cargo.chmod(0o755)
+                env = dict(os.environ, PATH=str(root)+os.pathsep+os.environ['PATH'],
+                           MATRIX_ROOT=str(root), EVIDENCE=str(root), FAILURE=failure,
+                           JOPE_FULL_EMITTERS_PARALLEL='1' if parallel else '0')
+                env.pop('JOPE_FITTED_CPP_SANITIZER', None)
+                env.pop('JOPE_CPP_STD', None)
+                result = subprocess.run(['bash', '-euo', 'pipefail', '-c', block],
+                                        cwd=ROOT, env=env, capture_output=True, text=True, timeout=15)
+                self.assertEqual(0 if failure == 'none' else 7, result.returncode, result.stderr)
+                if failure == 'build':
+                    self.assertFalse((root/'sanitizer.json').exists())
+                    self.assertFalse((root/'cxx20.json').exists())
+                    continue
+                original = ['test', '-p', 'feat-math', '--locked', '--test', 'advanced_v3_fitted_cpp']
+                expected = original+['--', '--test-threads=4'] if parallel else original
+                for mode in ('sanitizer', 'cxx20'):
+                    self.assertEqual(expected, json.loads((root/(mode+'.json')).read_text()))
+                    self.assertTrue((root/(mode+'.finished')).exists())
+                    self.assertIn(mode+' completed', result.stdout)
+                if parallel:
+                    self.assertEqual(original+['--no-run'], json.loads((root/'build.json').read_text()))
+                    for name in ('fitted-sanitizer.log', 'fitted-cxx20.log'):
+                        self.assertTrue((root/name).is_file())
+                else:
+                    self.assertFalse((root/'build.json').exists())
 
 
 class SyntheticExecutorTests(unittest.TestCase):

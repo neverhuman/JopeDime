@@ -121,9 +121,25 @@ case ${TMPDIR:-/tmp} in
   /tmp | /tmp/*) export TMPDIR=${CARGO_TARGET_DIR:-$PWD/target}/fitted-cpp-tmp; mkdir -p -- "$TMPDIR" ;;
 esac
     # Fitted C++17 under AddressSanitizer and UndefinedBehaviorSanitizer (kernel2 X3): every advanced_v3_fitted_cpp test
-JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --test advanced_v3_fitted_cpp
+if [ "${JOPE_FULL_EMITTERS_PARALLEL:-0}" = 1 ]; then
+    # Build once, then overlap the two independent matrices. Each test owns its
+    # tempdir; four workers per matrix bound the concurrent compiler footprint.
+    cargo test -p feat-math --locked --test advanced_v3_fitted_cpp --no-run
+    JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --test advanced_v3_fitted_cpp -- --test-threads=4 > "$EVIDENCE/fitted-sanitizer.log" 2>&1 &
+    sanitizer_pid=$!
+    JOPE_CPP_STD=20 cargo test -p feat-math --locked --test advanced_v3_fitted_cpp -- --test-threads=4 > "$EVIDENCE/fitted-cxx20.log" 2>&1 &
+    cxx20_pid=$!
+    sanitizer_status=0; wait "$sanitizer_pid" || sanitizer_status=$?
+    cxx20_status=0; wait "$cxx20_pid" || cxx20_status=$?
+    cat "$EVIDENCE/fitted-sanitizer.log" "$EVIDENCE/fitted-cxx20.log"
+    # Both matrices finish and publish their complete logs, including failures.
+    (( sanitizer_status == 0 )) || exit "$sanitizer_status"
+    (( cxx20_status == 0 )) || exit "$cxx20_status"
+else
+    JOPE_FITTED_CPP_SANITIZER=address,undefined cargo test -p feat-math --locked --test advanced_v3_fitted_cpp
     # Fitted C++ at -std=c++20 with g++ (fitted model compilation requires g++ 13.3, so clang++ is out of scope)
-JOPE_CPP_STD=20 cargo test -p feat-math --locked --test advanced_v3_fitted_cpp
+    JOPE_CPP_STD=20 cargo test -p feat-math --locked --test advanced_v3_fitted_cpp
+fi
     ;;
   inputs)
     # Toolchain (from rust-toolchain.toml)
