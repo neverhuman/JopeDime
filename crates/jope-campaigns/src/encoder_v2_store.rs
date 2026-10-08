@@ -503,9 +503,9 @@ impl Drop for CacheKeyLock {
         // The inode is deliberately retained. Unlinking a flock file permits a
         // racing process to create and lock a different inode for the same key.
         // The kernel releases this advisory lock even after SIGKILL or node loss.
-        // SAFETY: `self.file` owns the live FD until after this Drop body; FD/LOCK_UN are c_int.
-        // flock borrows it without pointers or ownership transfer. Unlock errors are ignored:
-        // File drop closes/releases the lock; its path stays linked, preserving the inode.
+        // SAFETY: `self.file` owns the live FD during Drop; FD/LOCK_UN use libc's c_int ABI.
+        // flock only borrows it. Unlock errors are ignored; File drop closes this descriptor,
+        // releasing the lock on the final open-file-description close. The inode is retained.
         let _ = unsafe { libc::flock(self.file.as_raw_fd(), libc::LOCK_UN) };
     }
 }

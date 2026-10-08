@@ -213,9 +213,9 @@ impl SupplyIntentHistoryV2 {
             *intent = transitioned;
             Ok(())
         })();
-        // SAFETY: `file` still owns the live FD after either outcome; FD/LOCK_UN are c_int.
-        // flock only borrows it. Unlock errors are ignored, preserving `result`; returning
-        // drops/closes `file` and releases its advisory lock.
+        // SAFETY: `file` owns the live FD after either outcome; FD/LOCK_UN use libc's c_int ABI.
+        // flock only borrows it. Unlock errors leave `result` unchanged; return closes `file`,
+        // releasing any remaining lock when the final open-file-description reference closes.
         unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_UN) };
         result
     }
