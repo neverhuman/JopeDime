@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 EVIDENCE=${JOPE_LANE_EVIDENCE:?fresh receipt directory required}
 lane=${1:?family required}
+export JOPE_FULL_FAMILY=$lane
 # Repeat the host reserve check between families; running out of disk is a failure.
 available=$(df -B1 --output=avail "$EVIDENCE" | tail -1)
 (( available >= 50000000000 )) || { echo 'unavailable: less than 50 GB disk reserve'; exit 78; }
@@ -45,13 +46,14 @@ PY
     (cd python && bash ../deploy/ci/pytest-evidence.sh uv run --no-sync pytest -q -m 'not xbabe2' -p no:cacheprovider "${families[@]}")
     python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     ;;
-  full-inputs|full-e2e|full-emitters)
-    case $lane in
-      full-inputs) fast=inputs ;;
-      full-e2e) fast=e2e-smoke ;;
-      full-emitters) fast=emitters ;;
-    esac
-    bash deploy/ci/fast-lane.sh "$fast"
+  full-inputs)
+    bash deploy/ci/fast-lane.sh inputs
+    ;;
+  full-e2e)
+    bash deploy/ci/fast-lane.sh e2e-smoke
+    ;;
+  full-emitters)
+    JOPE_FULL_EMITTERS_PARALLEL=1 bash deploy/ci/fast-lane.sh emitters
     ;;
   full-default|full-scratch|full-policy|full-s3-offline|full-neural)
     case $lane in
@@ -60,6 +62,12 @@ PY
       full-policy) selection=(-p jope-policy --features "testing,context-producer") ;;
       full-s3-offline) selection=(-p jope-arena --features s3) ;;
       full-neural)
+        # Discover the SDK before either build so its CXX setting is stable:
+        # changing it between collections rebuilds feat-math and its dependants.
+        # SDK/runtime availability is measured independently; no GPU device/credentials.
+        export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
+        # shellcheck disable=SC1091
+        source deploy/ci/neural-env.sh || { echo 'unavailable: neural SDK environment'; exit 78; }
         # A lifecycle-only child exercises the real authority in a same-source
         # default-feature image. Prebuild it outside the unchanged start deadline.
         cargo nextest list --locked -p jope-parallel --lib --no-default-features --message-format json > "$EVIDENCE/synthetic-executor-collection.json"
@@ -82,11 +90,6 @@ record = {'executable': str(path), 'sha256': hashlib.sha256(path.read_bytes()).h
 print(path)
 PYBUILD
 )"
-        # Discovery receipt (never overwritten) for the unavailable or discovered SDK state.
-        export JOPE_NEURAL_ENV_RECEIPT="$EVIDENCE/neural-discovery.json"
-        # SDK/runtime availability is measured independently; no GPU device/credentials.
-        # shellcheck disable=SC1091
-        source deploy/ci/neural-env.sh || { echo 'unavailable: neural SDK environment'; exit 78; }
         selection=(-p jope-parallel --features neural)
         ;;
     esac
@@ -107,6 +110,37 @@ text += '''
 [[profile.main.overrides]]
 filter = "package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))"
 priority = 100
+'''
+if os.environ.get('JOPE_FULL_FAMILY') == 'full-neural':
+    # Authority checks hash all mapped neural libraries at each start. Limit
+    # competing full-runtime reads, retaining every verification and test.
+    # Run the three-control receipt first, alone, rather than as a contended tail.
+    # Start the 100-observation projected-candidates proof early in the same
+    # bounded group so its existing work does not become the final serial tail.
+    text += '''
+[test-groups.full-neural-runtime-proof]
+max-threads = 12
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)"
+priority = 100
+threads-required = "num-test-threads"
+test-group = "full-neural-runtime-proof"
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & binary(=view_contracts) & test(=projected_gp_candidates_are_exactly_representable_unique_and_durable)"
+priority = 96
+test-group = "full-neural-runtime-proof"
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(=teaching_store::admission_tests::native_strict_admission_quarantines_conflicts_before_dedup_and_keeps_outcomes))"
+priority = 95
+test-group = "full-neural-runtime-proof"
+
+[[profile.main.overrides]]
+filter = "package(jope-parallel) & (test(teaching_store::read_once_tests::) | test(teaching_store::admission_tests::) | test(eval_registry::authority::) | test(eval_registry::witness::))"
+priority = 90
+test-group = "full-neural-runtime-proof"
 '''
 path.write_text(text)
 PY

@@ -57,7 +57,7 @@ LANE = HERE / "lane/src/dl_training_v1"
 sys.path.insert(0, str(LANE))  # the frozen tools import dltrain from the lane root, as in gpu_manifest_cut.py
 CUT_ADAPTER = (
     HERE / "gpu_manifest_cut.py",
-    "0d0037db8cd040fe0508661d86fa27b5888d6d1a49d7538b16ce9b7616e126a7",
+    "9951962b1143b5f5174aa07a1e4aa868be6cce9c25cb07adaa40889cea357827",  # #239 adapter as updated by PR #251 (its frozen-tool pin follows the FOLD-1 partial-refusal check)
 )
 BINDING_SCHEMA = "jope.dl-manifest-binding-adapter/v1"
 SELECTION_FIT = "outer_train_only"

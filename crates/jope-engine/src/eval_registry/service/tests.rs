@@ -4,7 +4,7 @@ use std::sync::Barrier;
 struct ExecutablePeer(Option<std::process::Child>);
 impl ExecutablePeer {
     fn start(path: &Path) -> Self {
-        Self(Some(
+        let mut peer = Self(Some(
             Command::new(path)
                 .arg("30")
                 .stdin(Stdio::null())
@@ -12,7 +12,26 @@ impl ExecutablePeer {
                 .stderr(Stdio::null())
                 .spawn()
                 .unwrap(),
-        ))
+        ));
+        // A spawned child can still be completing exec when /proc is sampled.
+        // Begin the cache assertions only once it holds the requested inode.
+        let expected = fs::metadata(path).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            let child = peer.0.as_mut().unwrap();
+            assert!(
+                child.try_wait().unwrap().is_none(),
+                "executable peer exited"
+            );
+            if fs::metadata(format!("/proc/{}/exe", child.id())).is_ok_and(|actual| {
+                (actual.dev(), actual.ino()) == (expected.dev(), expected.ino())
+            }) {
+                break;
+            }
+            assert!(Instant::now() < deadline, "executable peer did not exec");
+            std::thread::yield_now();
+        }
+        peer
     }
     fn identity(&self) -> ProcessIdentity {
         ProcessIdentity::read(self.0.as_ref().unwrap().id()).unwrap()

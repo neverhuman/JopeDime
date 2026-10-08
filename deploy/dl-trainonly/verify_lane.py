@@ -7,9 +7,11 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 
-HANDOFF_SHA = "f7caed54a6d78a1a7da92b61db3c47bc79e86e15d5ce50e1228aa6396a747f43"
+HANDOFF_SHA = "cc9609693ada637ed1cc3308c514ecb52de9d35aa8ed1d45a17103c432a76414"
 # Ordered newest to oldest: each manifest's supersedes_sha256 names the next pin; the oldest names none.
 PREDECESSORS = (
+    ("predecessor/root-pr251-resume-20261007T1640Z/MANIFEST.json", "e88de3c63c574a133b0742f7c179a217f26f2dee5cffc14f7b82189c63a06143"),
+    ("predecessor/restage-20261007T080755Z/MANIFEST.json", "f7caed54a6d78a1a7da92b61db3c47bc79e86e15d5ce50e1228aa6396a747f43"),
     ("predecessor/restage-20261007T054519Z/MANIFEST.json", "fb2140bc50deb66057f009f42cf6690cca20e3862e8f552199e292068d9ba754"),
     ("predecessor/restage-20261007T034806Z/MANIFEST.json", "985cb6288a26565ae22e331f92f1d28aeb459dd2c72e31fa26a60b6e8f96dacc"),
     ("predecessor/restage-20261006T153320Z/MANIFEST.json", "4419ff430ec81a079829e67b935da8b16633e238c76887bd209c6ca9c4d0712d"),

@@ -26,6 +26,8 @@ MODULES = (
     "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "tests.test_admission_fail_closed", "test_hwm_publish", "test_gpu_manifest_cut",
     "test_manifest_binding",
     "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
+    "tests.test_v2_nonraw_target_linear", "tests.test_v2_rowsel_build_fallback", "tests.test_v2_rowsel_build_fold_isolation", "tests.test_v2_build_local_fold_isolation",
+    "tests.test_v2_partial_refusal_manifest",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -50,9 +52,9 @@ HOST_CASES = {
     "tests.test_v2_rowsel_build_split_v2g.Supplement.test_a_context_count_short_of_the_effective_folds_is_a_problem": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
     "tests.test_v2_rowsel_build_split_v2g.Supplement.test_supplement_plan_build_and_summary": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
     "tests.test_v2_rowsel_build_split_v2g.V2.test_the_v2_route_builds_the_bytes_c0b989b6_built": "loads the private-lane code-custody builder c0b989b6 (same bytes retained as lane/historical/v2_rowsel_build.py.c0b989b6...); requires qualified host custody",
-    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
-    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_tied_column_never_reaches_the_union_find": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
-    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ties_are_checked_before_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused_per_context_at_build": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_the_census_reads_no_target_with_the_registry_port": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_planning_never_decides_on_a_tie_with_the_registry_port_fields": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
     "tests.test_split_defaults.BeforeAfter.test_v2": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
     "tests.test_split_defaults.BeforeAfter.test_v2g": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
     "tests.test_split_defaults.PortCheck.test_the_registry_replay_lineage_equals_fcfe3828s": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
@@ -70,10 +72,12 @@ HOST_CASES = {
     "tests.test_v2_provenance.Resolver.test_short_prefix_never_binds": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
     "tests.test_v2_provenance.Resolver.test_summary_classification": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
     "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_rowsel_build_fallback.Pilot.test_the_real_record_and_the_pilot_plan": "reads the pinned private drifted-fallback lane record (rb.DRIFTED_RECORD) and plans from it; requires qualified host custody",
+    "tests.test_v2_rowsel_build_fallback.SummaryCounts.test_group_annotation_dropped_counts_only_built_datasets": "summarize_v2 hashes the pinned private owner-decision/plan inputs (sha_file under the private roots); requires qualified host custody",
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 708
+EXPECTED_COLLECTED = 753
 
 
 def case_ids(suite):
