@@ -334,8 +334,10 @@ fn a_search_receipt_is_validated_from_the_bytes_its_ledger_commits() {
         receipt["final_tests_opened"] = json!(true);
         serde_json::to_vec(&receipt).unwrap()
     };
-    // Positive control: nothing replaced.
+    // All three controls use the same immutable completions, but independent
+    // output databases. Restore the input receipt before each replacement.
     let s = strict();
+    // Positive control: nothing replaced.
     let search = s.f.ledger("family-a").with_file_name("search.json");
     let valid = fs::read(&search).unwrap();
     let (digest, labels) = family_a_state(&publish(&s, "control"));
@@ -344,13 +346,10 @@ fn a_search_receipt_is_validated_from_the_bytes_its_ledger_commits() {
 
     // The committed receipt opened final tests; a valid receipt replaces it
     // after its digest was taken. No label may be admitted under it.
-    let s = strict();
-    let search = s.f.ledger("family-a").with_file_name("search.json");
-    let valid = fs::read(&search).unwrap();
     let committed = opened(&valid);
     fs::write(&search, &committed).unwrap();
     let db = {
-        let _hook = replace_on_verification(&search, valid);
+        let _hook = replace_on_verification(&search, valid.clone());
         publish(&s, "opened")
     };
     let (digest, labels) = family_a_state(&db);
@@ -362,9 +361,7 @@ fn a_search_receipt_is_validated_from_the_bytes_its_ledger_commits() {
 
     // The other direction: a valid committed receipt replaced by one that
     // opened final tests. The committed receipt decides.
-    let s = strict();
-    let search = s.f.ledger("family-a").with_file_name("search.json");
-    let valid = fs::read(&search).unwrap();
+    fs::write(&search, &valid).unwrap();
     let db = {
         let _hook = replace_on_verification(&search, opened(&valid));
         publish(&s, "valid")

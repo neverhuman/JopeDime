@@ -211,7 +211,7 @@ sys.exit(int(a.status))
                     filter='package(feat-math) & binary(=golden) & (test(=fast_profile_portfolio_head) | test(=golden_ridge_gcv_screen_wide) | test(=golden_portfolio_core))',
                     priority=100), golden)
                 if family == 'full-neural':
-                    self.assertEqual({'full-neural-runtime-proof': {'max-threads': 4}}, actual.pop('test-groups'))
+                    self.assertEqual({'full-neural-runtime-proof': {'max-threads': 8}}, actual.pop('test-groups'))
                     self.assertEqual([
                         dict(filter='package(jope-parallel) & test(=teaching_store::read_once_tests::a_search_receipt_is_validated_from_the_bytes_its_ledger_commits)',
                              priority=100, **{'threads-required': 'num-test-threads', 'test-group': 'full-neural-runtime-proof'}),
