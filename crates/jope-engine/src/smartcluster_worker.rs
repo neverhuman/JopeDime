@@ -473,14 +473,32 @@ fn current_job(
 }
 
 fn retain_control_descriptor(descriptor: i32) -> Result<UnixStream> {
+    retain_control_descriptor_with(descriptor, |descriptor| {
+        // fcntl borrows the inherited live descriptor; its arguments and result use c_int.
+        unsafe { libc::fcntl(descriptor, libc::F_SETFD, libc::FD_CLOEXEC) }
+    })
+}
+
+fn retain_control_descriptor_with(
+    descriptor: i32,
+    protect: impl FnOnce(libc::c_int) -> libc::c_int,
+) -> Result<UnixStream> {
+    // Failure creates no descriptor; the inherited descriptor stays owned by the caller.
     let duplicate = unsafe { libc::fcntl(descriptor, libc::F_DUPFD_CLOEXEC, 3) };
     ensure!(duplicate >= 0, "cannot retain control descriptor");
+    // SAFETY: successful F_DUPFD_CLOEXEC creates a fresh, exclusively owned descriptor.
+    // Acquire custody before protection can fail; refusal or unwind closes this duplicate.
+    let retained = unsafe { UnixStream::from_raw_fd(duplicate) };
     ensure!(
-        unsafe { libc::fcntl(descriptor, libc::F_SETFD, libc::FD_CLOEXEC) } == 0,
+        protect(descriptor) == 0,
         "cannot protect inherited control descriptor"
     );
-    Ok(unsafe { UnixStream::from_raw_fd(duplicate) })
+    Ok(retained)
 }
+
+#[cfg(test)]
+#[path = "smartcluster_worker/control_descriptor_tests.rs"]
+mod control_descriptor_tests;
 
 fn authenticate(policy: WorkerPolicy, path: &Path, sha: &str) -> Result<Allocation> {
     let descriptor: i32 = std::env::var("SCQ_CONTROL_FD")
