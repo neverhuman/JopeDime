@@ -145,6 +145,21 @@ This must fail with `invalid signature`.
 
 ## Cutting a release (operator)
 
+### Current local 1.0.0 draft
+
+The owner selected receiving main `aa18ebfbf38c23d6f708b8fbd803ddb93b627db3` on
+2026-10-08. Its main-guard and full-main-cpu passed, and the maintained GP-language corpus
+passed at that exact source on xbabe3 under MemoryMax 24 GB. The private `release/v1.0.0`
+branch rebases the preserved release preparation onto that source. Its workspace, explicit
+product manifests and Python metadata read 1.0.0; standalone working locks retain the sealed
+runtime's locked libc dependency and their original snapshot identities.
+
+The version fields mint a separate, announced evaluator identity; see
+[the identity transition](identity-v1/README.md). Receiving-main receipts do not qualify this
+version-bumped branch. Final RC controls, non-author verification, audit/custody dispositions
+and release PR lifecycle remain required. This is local preparation: no push, tag, signing,
+asset publication or live learning qualification has taken place.
+
 The release PR must first merge to `main`. It carries `docs/release/signing.pub` and:
 
 - bumps the `[workspace.package]` version in `Cargo.toml` and the explicit versions in

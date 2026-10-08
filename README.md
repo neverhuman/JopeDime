@@ -29,10 +29,14 @@ or transfer result.
 
 The [pending release queue](CHANGELOG.md#pending-release-queue) lists candidates awaiting
 serialized merge and receiving-main qualification. This draft is local and unpublished; final
-release notes must match the qualified merged source. It is prepared on main `024f4f040`, which
-includes #256 and #258. Receiving-main qualification and the final release proof remain pending
-for this draft. The 1.0.0 version and local metadata checks do not
-establish release readiness. The current direction and landing record
+release notes must match the qualified merged source. This local version draft is based on
+`aa18ebfbf38c23d6f708b8fbd803ddb93b627db3`, including the per-fold decision bindings (#251),
+verified artifact/ledger parsing (#259/#260), sealed fitted runtime (#262) and CPU margin
+repair (#266). Main-guard and all eleven full-main CPU families passed on that receiving SHA;
+the maintained GP-language corpus also passed there under a 24 GB cap on xbabe3. These results
+do not qualify the version-bumped draft or a later source. Final RC no-regression controls,
+non-author verification, audit/custody disposition and the reviewed release lifecycle remain
+pending. The 1.0.0 version and local metadata checks do not establish release readiness. The current direction and landing record
 are in [`MASTER_PLAN.md`](MASTER_PLAN.md), and release verification is in
 [`docs/release/README.md`](docs/release/README.md).
 

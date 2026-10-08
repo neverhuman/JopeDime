@@ -8,41 +8,36 @@ qualification.
 
 ### Pending release queue
 
-Local draft as of 2026-10-07 21:58 UTC, based on main `024f4f040`. These candidates are pending, not merged release
-capabilities. Their inclusion requires the owner's serialized merge and fresh receiving-main
-qualification. The source and test receipts for an open PR do not qualify the release.
+Local draft as of 2026-10-08, based on qualified main
+`aa18ebfbf38c23d6f708b8fbd803ddb93b627db3`. These candidates remain outside this source:
 
 | Order | Pending change | Candidate |
 | --- | --- | --- |
-| 1 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), `9103c932` |
-| 2 | Bounded crash-recovery fixture and held executable-digest reuse | [#255](https://github.com/neverhuman/JopeDime/pull/255), `ae7f0082` |
-| 3 | Per-fold target-tie/LINEAR decisions and immutable completed-context resume | [#251](https://github.com/neverhuman/JopeDime/pull/251), `88758662` |
-| Queue tail | Verify and snapshot pinned artifacts before decoding | [#259](https://github.com/neverhuman/JopeDime/pull/259), `d397470c` |
-| Queue tail | Bind score-corpus parsing to its authenticated streamed ledger | [#260](https://github.com/neverhuman/JopeDime/pull/260), `874fa112` |
-| Owner-routed | Correct feasibility allocator safety rationales | [#261](https://github.com/neverhuman/JopeDime/pull/261), `e055b63c` |
+| 1 | ONE-HOLDOUT catalog-role publication | [#267](https://github.com/neverhuman/JopeDime/pull/267), `d5ddb75230dbde1d354d2a26720a75fc106229b1` (linear replacement for #263) |
+| 2 | Outer-train feature reduction for fixed-width consumers | [#257](https://github.com/neverhuman/JopeDime/pull/257), owner rebase required |
+| 3 | Shared campaign binary flock safety boundary | [#265](https://github.com/neverhuman/JopeDime/pull/265), `aaa2724e528345ecb20bf91047aa9dbcccdde7e7` |
+| Owner-routed | Library flock safety documentation | [#264](https://github.com/neverhuman/JopeDime/pull/264), `ba48fb484e5e2a8c2dc9581e4c4024dd70fb39f1` |
 
-Reconcile this list against the final merged source before publication; remove pending notes
-from the shipping release draft once each item has its terminal disposition.
-#256 merged at `3d1d0819a` under the owner's recorded MAIN-DF-3 exception; #258 merged at
-`024f4f040` under MAIN-DF-2. Receiving-main qualification and the final release proof remain
-pending for this local draft. Prior failing main results remain historical evidence.
+The selected receiving main passed main-guard `37768020428/a1` and full-main-cpu
+`37768020470/a1`. The maintained GP-language corpus passed at that exact source on xbabe3.
+Those receipts qualify the receiving source, not this version-bumped local draft or a later
+main. Final RC no-regression controls, non-author verification, audit/custody dispositions and
+release lifecycle remain open. Reconcile this list and finalize the date on qualified final
+main before publication. No tag or release has been created.
 
-## [1.0.0] - 2026-10-07
+## [1.0.0] - 2026-10-08
 
 The GP language release: versioned expression kernels, protected numerical semantics, explicit
 search profiles and internally generated Python, Rust and C++17 artifacts. C++20 compiles the
 C++17 artifact. The capability manifest and each operator's receipt define its admitted routes.
 
-<!-- Unpublished local release preparation. Source base is 024f4f040c34f7b20e0f9980c45fb216d4439f21.
-The owner's 21:28 UTC order authorizes preparation on this base, not publication or qualification.
-#254, #256 and #258 are included in the source base; prior local drafts remain in archive refs.
-Earlier merged #246/#247/#248/#250/#252/#253 are now itemized; #249 landed through
-an owner-authorized squash at 8a4b2fdfe, with the native PR subsequently closed by pointer.
-Pending queue items above are not merged. Finalize the date and notes on qualified final main
-before publishing. GP-language #231 includes the maintained Tanh mutation gate; audit
-rationale remains limited to its pinned failing audit. Final source/protocol/verifier binding,
-main qualification and owner dispositions remain prerequisites. B17/B18/B19/B20 wiring is
-merged; its opt-in routes do not establish profile promotion or measured utility. -->
+<!-- Unpublished local release preparation on aa18ebfbf38c23d6f708b8fbd803ddb93b627db3.
+Owner 2026-10-08 11:28 UTC authorized this local docs/version refresh after receiving CPU PASS.
+#251/#255/#259/#260/#261/#262/#266 are merged and itemized. Prior drafts remain archived.
+Source-bound main and C2 receipts do not qualify this version-bumped draft, C5 controls or
+final non-author VERIFY. GP-language #231 retains the maintained Tanh mutation gate; audit
+rationales remain limited to their pinned findings. B17/B18/B19/B20 opt-in wiring does not
+establish profile promotion, measured utility or live training. -->
 
 ### feat-math and emitters
 
@@ -122,6 +117,9 @@ merged; its opt-in routes do not establish profile promotion or measured utility
 
 ### Engine and S1
 
+- Bind target-tie and LINEAR admission decisions to their individual training folds and verify
+  strict completed-context membership before resuming immutable raw contexts. Retain raw-split
+  pins and train-only decisions; this is not a held-out utility or live training claim (#251).
 - Make S1 teacher selection independent of test scores, cap each attempt, restore two-fold
   teacher search and materialize a fresh G0 (#204, #214).
 - Synchronize fit fixture identity with served readiness and make synthetic authority races
@@ -135,6 +133,9 @@ merged; its opt-in routes do not establish profile promotion or measured utility
 
 ### DL lane
 
+- Verify artifact pins before benchmark or target-maker executable artifact loading, and bind
+  score-corpus parsing to the authenticated streamed ledger bytes. Pin verification does not
+  make arbitrary pickle/joblib input safe or qualify a live campaign (#259, #260).
 - Preserve pinned train-only builder source custody and add non-raw re-split, group-split,
   publisher and publish-tool custody. These source and fixture records retain the train-only
   boundary and do not establish a new live training qualification (#216, #218).
@@ -169,6 +170,18 @@ merged; its opt-in routes do not establish profile promotion or measured utility
 
 ### CI, build and release
 
+- Hold verified executable artifacts in a build-keyed cache for crash-recovery fixtures and
+  retain source/custody validation on each acquisition. Serial fixture preparation and existing
+  recovery fences remain enforced (#255).
+- Snapshot the fitted runtime into a sealed anonymous image before loading it; retain pathname,
+  descriptor and mutation refusals. The existing locked libc dependency is added to the
+  feat-math lock entries through an announced evaluator identity transition (#262).
+- Improve full-main family margin through bounded fixture scheduling, immutable teaching-fixture
+  reuse and bounded fitted-emitter overlap. Preserve every selection, assertion, golden and
+  deadline. On receiving aa18, neural took 438/900 seconds, inputs 62/300 and emitters 115/300;
+  these are one observed run's margins, not a universal throughput guarantee (#266).
+- Correct the feasibility allocator's item-level safety rationales without changing its
+  allocation or refusal behavior (#261).
 - Prepare and pin the same-source, default-feature no-fit executor before authority lifecycle
   fixtures begin their start grant. Retain the real child identity and custody fences; use the
   existing logical clock in the sequential token fixture. Bound PR Rust fixture dispatch to
