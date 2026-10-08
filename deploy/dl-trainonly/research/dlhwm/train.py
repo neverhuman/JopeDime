@@ -92,6 +92,16 @@ def pca_gpu(Z, tr, k, dev):
     X = torch.as_tensor(Z, device=dev); mu = X[torch.as_tensor(tr, device=dev)].mean(0); k = min(k, len(tr) - 1, X.shape[1])
     U, S, V = torch.pca_lowrank(X[torch.as_tensor(tr, device=dev)] - mu, q=k, center=False, niter=4); P = (X - mu) @ V
     P = P / P[torch.as_tensor(tr, device=dev)].std(0).clamp(min=1e-6); return P.clamp(-8, 8).cpu().numpy().astype(np.float32)
+def shap_rank(X, yf, yb, seed):
+    """mean |TreeSHAP| of a small LightGBM per target (fitness, beat10) on the given (inner-train) rows; shares averaged over the two targets."""
+    import lightgbm as lgb
+    out = np.zeros(X.shape[1])
+    for y in (yf, yb):
+        m = np.isfinite(y)
+        g = lgb.LGBMRegressor(n_estimators=300, learning_rate=0.05, num_leaves=15, min_child_samples=20, colsample_bytree=0.5, subsample=0.8, subsample_freq=1,
+                              n_jobs=3, random_state=seed, verbose=-1).fit(X[m], y[m])
+        c = np.abs(g.booster_.predict(X[m], pred_contrib=True)[:, :-1]).mean(0); out += c / max(c.sum(), 1e-12)
+    return out / 2
 def load_anchor(d, r, k, n, FO, Y, bundle_sha):
     """LightGBM anchor for outer fold (r,k). Fails closed unless the npz rows match THIS bundle's folds exactly (te = outer-test rows,
     ti = outer-train rows with a finite target) and, when present, the npz bundle sha equals this bundle's MANIFEST sha. Rows without an
@@ -124,6 +134,10 @@ def main():
     ap.add_argument("--mask-unlisted", default="keep", choices=["keep", "drop"], help="encoders absent from the mask: keep whole (default) or drop")
     ap.add_argument("--pca", type=int, default=0, help="wave-1: per-block PCA (fit on inner-train rows) to K comps before the model")
     ap.add_argument("--anchor", default="", help="wave-1 matched GBM-anchored twin: lgb_baseline dir; outputs = LightGBM cross-fitted pred + learned residual, GBM preds also as inputs")
+    ap.add_argument("--enc", default="all", help="feature-subset wave: comma list of clean encoder blocks to use, 'all' or 'none'")
+    ap.add_argument("--lgroups", default="V21,TL,ZL,V3,V4,Z", help="feature-subset wave: LV4 column groups kept in block L")
+    ap.add_argument("--topk", type=int, default=0, help="feature-subset wave: keep the top-K of [L cols + 32 fold-fit PCs per used encoder], ranked per fold by LightGBM TreeSHAP on inner-train rows only")
+    ap.add_argument("--subset", default="", help="subset tag recorded in summary (e.g. S1)")
     ap.add_argument("--kw", default="{}", help="JSON overrides for the model constructor"); ap.add_argument("--cfg", default="{}", help="JSON overrides for lr/wd/bs/epochs/patience")
     a = ap.parse_args(); out = f"{a.out}/{a.run_id}"; os.makedirs(out, exist_ok=True); cfg = CFG[a.arch]
     if a.epochs: cfg["epochs"] = a.epochs
@@ -137,6 +151,14 @@ def main():
     tov = np.array(meta["tabdpt_overlap"]); tcols = [j for j, c in enumerate(Lc) if c.startswith("Z:tabdpt13") or c == "ZL:2"]
     if a.no_tabdpt: keep = [j for j in range(L.shape[1]) if j not in tcols]; L = L[:, keep]; Lc = [Lc[j] for j in keep]
     else: L[np.ix_(tov, tcols)] = np.nan          # TabDPT pretraining-overlap rows: TabDPT features marked missing
+    if a.enc != "all":
+        want = [] if a.enc == "none" else a.enc.split(",")
+        bad = [b for b in want if b not in blocks]
+        if bad: raise SystemExit(f"--enc: unknown/refused/unavailable blocks {bad}")
+        blocks = [b for b in blocks if b in want]
+    LG = set(a.lgroups.split(",")); kl = [j for j, c in enumerate(Lc) if c.split(":")[0] in LG]
+    if not kl: raise SystemExit("--lgroups keeps no L columns")
+    L = L[:, kl]; Lc = [Lc[j] for j in kl]
     E = {b: np.load(f"{a.data}/blocks_{b}.npy") for b in blocks}
     if "tabdpt13" in E: E["tabdpt13"][tov] = np.nan
     MASK = parse_mask(a.mask, blocks, a.mask_mode, a.mask_unlisted) if a.mask else {}
@@ -145,7 +167,7 @@ def main():
     reps = [int(r) for r in a.repeats.split(",")]; folds = [int(k) for k in a.folds.split(",")]
     git = a.git_sha; summary = {"run_id": a.run_id, "arch": a.arch, "pure": not a.anchor, "gbm_anchor": bool(a.anchor), "distill": False, "gbm_input": bool(a.anchor), "pca": a.pca,
         "blocks": ["L"] + blocks, "no_tabdpt": a.no_tabdpt, "yshuffle": a.yshuffle, "git_sha": git, "host": host(), "cfg": cfg, "mask": a.mask or "all-dims-fallback", "mask_sha256": sha256b(open(a.mask, "rb").read()) if a.mask else None,
-        "mask_spec": MASK, "optimistic": bool(a.mask),   # the mask is chosen on outer-fold OOS scores (owner-accepted overfit): mask arms are optimistic
+        "mask_spec": MASK, "optimistic": bool(a.mask), "subset": a.subset, "enc": a.enc, "lgroups": a.lgroups, "topk": a.topk, "n_L_cols": len(Lc),   # the mask is chosen on outer-fold OOS scores (owner-accepted overfit): mask arms are optimistic
         "data_manifest_sha256": sha256b(open(f"{a.data}/MANIFEST.json", "rb").read()), "folds": {}, "s3": []}
     for r in reps:
         oof = np.full((n, 5), np.nan); oofraw = np.full((n, 2), np.nan)
@@ -166,7 +188,15 @@ def main():
                 if spec: Z = Z * np.float32(spec["weight"])
                 Z[miss] = 0
                 Xe.append(Z); Me.append(miss)
-            Me = np.stack(Me, 1).astype(np.float32)
+            Me = np.stack(Me, 1).astype(np.float32) if Me else np.zeros((n, 0), np.float32)
+            sel_names = None
+            if a.topk:   # rank [L cols + 32 PCs per used encoder] on inner-train rows only; the model then sees only the top-K columns (as block L)
+                cand = [XL]; cm = [ML]; names = list(Lc)
+                for b, Z0, mi in zip(blocks, Xe, Me.T.astype(bool)):
+                    P = Z0 if a.pca or MASK.get(b) else pca_gpu(Z0, tr[~mi[tr]], 32, dev); P[mi] = 0; cand.append(P); cm.append(np.repeat(mi[:, None], P.shape[1], 1).astype(np.float32)); names += [f"{b}:pc{i}" for i in range(P.shape[1])]
+                C = np.concatenate(cand, 1).astype(np.float32); CM = np.concatenate(cm, 1)
+                imp = shap_rank(C[tr], yf[tr], ybb[tr], a.seed * 100 + r * 10 + k); sel = np.argsort(-imp)[:a.topk]
+                XL, ML = C[:, sel], CM[:, sel]; sel_names = [names[i] for i in sel]; Xe, Me = [], np.zeros((n, 0), np.float32)
             if a.anchor:
                 AN, aprov = load_anchor(a.anchor, r, k, n, FO, {"fitness": yfit, "gap": ygap, "beat10": yb}, summary["data_manifest_sha256"])   # outer-train rows = inner cross-fitted OOF; test rows = test preds
                 summary.setdefault("anchor_provenance", {})[f"r{r}f{k}"] = aprov
@@ -235,7 +265,7 @@ def main():
             P = predict(m, te); oof[te] = P; oofraw[te, 0] = P[:, 0] * fs + fm; oofraw[te, 1] = P[:, 2] * gs + gm; tr2, tauc = score(P, te)
             # block ablation at inference (representation usefulness): mark one block missing at a time; L ablated via all-missing mask
             abl = {}
-            for bi, b in enumerate(["L"] + blocks):
+            for bi, b in enumerate(["L"] + (blocks if gMe.shape[1] else [])):
                 if b == "L":
                     f_ = lambda me: me; f_.dropL = True
                 else:
@@ -243,8 +273,8 @@ def main():
                 Pa = predict(m, te, f_); ar2, aauc = score(Pa, te); abl[b] = {"d_r2": tr2 - ar2, "d_auc": tauc - aauc}
             gates = None
             if a.arch == "gatedset":
-                GATES.clear(); predict(m, te); gates = dict(zip(["L"] + blocks, np.concatenate(GATES).mean(0).round(4).tolist()))
-            fold_rec = {"r": r, "k": k, "n_tr": len(tr), "n_va": len(va), "n_te": len(te), "best_ep": best[1], "epochs_run": len(hist), "test_r2": tr2, "test_auc": tauc,
+                GATES.clear(); predict(m, te); gates = dict(zip(["L"] + (blocks if gMe.shape[1] else []), np.concatenate(GATES).mean(0).round(4).tolist()))
+            fold_rec = {"best_val_crit": float(best[0]), "topk_features": sel_names, "r": r, "k": k, "n_tr": len(tr), "n_va": len(va), "n_te": len(te), "best_ep": best[1], "epochs_run": len(hist), "test_r2": tr2, "test_auc": tauc,
                         "secs": time.time() - t0, "ablation": abl, "gates": gates, "target_norm": [fm, fs, gm, gs]}
             buf = io.BytesIO(); torch.save({"state_dict": best[2], "arch": a.arch, "kw": cfg["kw"], "dL": XL.shape[1], "dims": [x.shape[1] for x in Xe], "blocks": blocks,
                         "L_cols": Lc, "QL": QL, "target_norm": [fm, fs, gm, gs], "fold": [r, k], "run_id": a.run_id, "git_sha": git}, buf)
