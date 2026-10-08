@@ -39,18 +39,22 @@ def head_lgb(X, y, ti, te, ig, seed):
     m = lgb.LGBMRegressor(n_estimators=itf, **base, **g).fit(X[ti], y[ti]); return m.predict(X[te]), sc, {**g, "n_estimators": itf}, oof
 def run(t):
     tgt, r, f = t.split(":"); r, f = int(r), int(f); fn = f"{A.out}/{tgt}_r{r}_f{f}.npz"
-    if os.path.exists(fn): return t, "skip"
+    if os.path.exists(fn):
+        z = np.load(fn); te_exp = np.where(FO[r] == f)[0]
+        if not np.array_equal(z["te"], te_exp) or ("bundle_sha256" in z.files and str(z["bundle_sha256"]) != BSHA): raise SystemExit(f"{fn}: existing result is from another bundle/folds")
+        return t, "skip"
     t0 = time.time(); y = T[tgt].astype(float); tr = (FO[r] != f) & np.isfinite(y); ti = np.where(tr)[0]; te = np.where(FO[r] == f)[0]
     X = stdz(XL, FO[r] != f)[0]; seed0 = 20261008 + 1000 * r + 10 * f + zlib.crc32((tgt + "lgb").encode()) % 97; P, O, prm = [], [], []
     for k in range(A.K):
         s = seed0 + 7919 * k; ig = group_folds(GID[ti], 3, s); p, sc, pr, oof = head_lgb(X, y, ti, te, ig, s); P.append(p); O.append(oof); prm.append({**pr, "seed": s, "inner": float(sc)})
-    np.savez(fn + ".tmp.npz", te=te, ti=ti, P=np.array(P), OOF=np.array(O), params=json.dumps(prm, default=float), secs=time.time() - t0); os.replace(fn + ".tmp.npz", fn)
+    np.savez(fn + ".tmp.npz", bundle_sha256=BSHA, te=te, ti=ti, P=np.array(P), OOF=np.array(O), params=json.dumps(prm, default=float), secs=time.time() - t0); os.replace(fn + ".tmp.npz", fn)
     return t, f"ok {time.time() - t0:.0f}s"
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--data", required=True); ap.add_argument("--out", required=True); ap.add_argument("--tasks", required=True)
     ap.add_argument("--K", type=int, default=3); ap.add_argument("--workers", type=int, default=4); ap.add_argument("--threads", type=int, default=4); A = ap.parse_args()
     NT = A.threads; GID = np.load(f"{A.data}/gid.npy"); FO = np.load(f"{A.data}/folds.npy"); T = dict(np.load(f"{A.data}/targets.npz"))
     XL = np.load(f"{A.data}/blocks_L.npy").astype(np.float64); os.makedirs(A.out, exist_ok=True)
+    import hashlib; BSHA = hashlib.sha256(open(f"{A.data}/MANIFEST.json", "rb").read()).hexdigest()
     TK = A.tasks.split(","); print(time.strftime("%H:%M:%S"), "tasks", len(TK), "NT", NT, flush=True)
     import multiprocessing as mp
     with mp.get_context("fork").Pool(A.workers, maxtasksperchild=2) as pool:

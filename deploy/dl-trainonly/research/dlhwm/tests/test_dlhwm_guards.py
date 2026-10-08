@@ -36,7 +36,21 @@ def test_mask_parser_fails_closed(tmp_path):
     p = tmp_path / "m.json"
     p.write_text(json.dumps({"encoders": {"kumo_tabular_l": {"block_weight": 0.5, "mode": "pcs", "n_pcs": 32, "kept": [0, 3, 31]}, "mitra_v2": {"block_weight": 0}}}))
     m = parse_mask(str(p), blocks); assert m["kumo_tabular_l"]["kept"] == [0, 3, 31] and m["mitra_v2"]["weight"] == 0
+    p.write_text(json.dumps({"encoders": {"kumo_tabular_l": {"mode": "pcs", "n_pcs": 32, "kept": [1]}}}))
+    assert parse_mask(str(p), blocks)["_unlisted"] == {"policy": "keep", "encoders": ["mitra_v2"]}
+    assert parse_mask(str(p), blocks, unlisted_policy="drop")["mitra_v2"]["weight"] == 0.0
     for bad in ({"encoders": {"foundation": {"kept": [1]}}}, {"encoders": {"mitra_v2": {"mode": "magic", "kept": [1]}}},
-                {"encoders": {"mitra_v2": {"mode": "pcs", "n_pcs": 32, "kept": [32]}}}, {"encoders": {"mitra_v2": {"kept": [1], "surprise": 1}}}, {"nothing": {}}):
+                {"encoders": {"mitra_v2": {"mode": "pcs", "n_pcs": 32, "kept": [32]}}}, {"encoders": {"mitra_v2": {"kept": [1], "surprise": 1}}}, {"nothing": {}}, {"encoders": {"mitra_v2": {"kept": [1]}}, "blocks": {}}):
         p.write_text(json.dumps(bad))
         with pytest.raises(SystemExit): parse_mask(str(p), blocks)
+
+def test_anchor_refuses_misaligned_folds(tmp_path):
+    pytest.importorskip("torch")
+    from dlhwm.train import load_anchor
+    n = 50; FO = np.array([np.arange(n) % 5]); Y = {t: np.zeros(n) for t in ("fitness", "gap", "beat10")}
+    for t in Y:
+        te = np.where(FO[0] == 0)[0]; ti = np.where(FO[0] != 0)[0]
+        np.savez(tmp_path / f"{t}_r0_f0.npz", te=te, ti=ti, P=np.zeros((1, len(te))), OOF=np.zeros((1, len(ti))), bundle_sha256="abc")
+    AN, prov = load_anchor(str(tmp_path), 0, 0, n, FO, Y, "abc"); assert np.isfinite(AN).all()
+    with pytest.raises(SystemExit): load_anchor(str(tmp_path), 0, 0, n, FO, Y, "other-bundle")
+    with pytest.raises(SystemExit): load_anchor(str(tmp_path), 0, 0, n, np.array([(np.arange(n) + 1) % 5]), Y, "abc")
