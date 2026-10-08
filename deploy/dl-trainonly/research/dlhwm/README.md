@@ -18,7 +18,7 @@ Owner: ENG:watcher (DL_FINAL, 2026-10-08). Design: `DL_FINAL_DESIGN.md` (ofm-202
   (or the short form `{"blocks": {enc: {"weight", "keep"}}}`). PCs are fit per fold on outer-train rows only (exact SVD, variance order, deterministic
   sign) after the robust scaling; `--mask-mode` forces the PC or raw-dim lists. Fails closed on unknown encoders/keys/modes; the mask sha256 is recorded
   and mask arms are tagged `optimistic` (the mask is selected on outer-fold OOS scores).
-* **Wave 1:** three new proposals, including a matched GBM-anchored/distilled twin of the best wave-0 architecture.
+* **Wave 1:** three new proposals, including a matched GBM-anchored twin of the best wave-0 architecture (`--anchor`: output = LightGBM cross-fitted prediction + learned residual, GBM predictions also as inputs; no distillation term is implemented). The anchor fails closed unless its te/ti rows match the bundle's folds.
 * **Checkpoints:** create-only to `s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/models/hwm-dlwave/<run_id>/`
   with sha256 read-back (`common.put_create_only`), never a fake store.
 

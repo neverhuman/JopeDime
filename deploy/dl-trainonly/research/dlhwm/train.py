@@ -47,11 +47,13 @@ def ranknet(mu, y, npairs=2048):
     return F.softplus(-s[k] * (mu[i] - mu[j])[k]).mean() if k.any() else mu.sum() * 0
 GATES = []
 MASK_KEYS = {"block_weight", "weight", "mode", "kept", "keep", "n_pcs", "note", "score", "dims_total", "raw_dims", "kept_dims", "pca_fit"}
-def parse_mask(path, blocks, force_mode=""):
+def parse_mask(path, blocks, force_mode="", unlisted_policy="keep"):
     """encoder_mask_final.json -> {enc: {weight, mode: dims|pcs, kept, n_pcs}}. Accepts the DL_FINAL_DESIGN schema
     {"encoders": {enc: {"block_weight", "mode": "dims"|"pcs", "kept": [...], "n_pcs": 32}}} and the short form {"blocks": {enc: {"weight", "keep"}}}.
     Fails closed on unknown encoders, keys or modes. PCs are fit per fold on outer-train rows only (exact SVD, variance order)."""
-    J = json.load(open(path)); top = J.get("encoders", J.get("blocks"))
+    J = json.load(open(path))
+    if "encoders" in J and "blocks" in J: raise SystemExit(f"mask {path}: both 'encoders' and 'blocks' present (ambiguous)")
+    top = J.get("encoders", J.get("blocks"))
     if not isinstance(top, dict) or not top: raise SystemExit(f"mask {path}: no 'encoders'/'blocks' map")
     out = {}
     for enc, sp in top.items():
@@ -66,6 +68,11 @@ def parse_mask(path, blocks, force_mode=""):
         npc = int(sp.get("n_pcs", 32)) if mode == "pcs" else None
         if mode == "pcs" and w > 0 and max(kept) >= npc: raise SystemExit(f"mask {path}: PC index >= n_pcs for {enc}")
         if enc in blocks: out[enc] = {"weight": w, "mode": mode, "kept": sorted(set(kept or [])), "n_pcs": npc}
+    unlisted = [b for b in blocks if b not in top]   # explicit policy (--mask-unlisted), recorded in summary.mask_spec._unlisted
+    if unlisted_policy == "drop":
+        for b in unlisted: out[b] = {"weight": 0.0, "mode": "dims", "kept": [], "n_pcs": None}
+    elif unlisted_policy != "keep": raise SystemExit(f"--mask-unlisted {unlisted_policy!r}")
+    out["_unlisted"] = {"policy": unlisted_policy, "encoders": unlisted}
     return out
 def pca_exact_gpu(Z, rows, k, dev):
     """exact SVD PCA fit on `rows` (outer-train only), components in variance order with a deterministic sign (largest |loading| > 0), scores standardised on rows."""
@@ -85,11 +92,20 @@ def pca_gpu(Z, tr, k, dev):
     X = torch.as_tensor(Z, device=dev); mu = X[torch.as_tensor(tr, device=dev)].mean(0); k = min(k, len(tr) - 1, X.shape[1])
     U, S, V = torch.pca_lowrank(X[torch.as_tensor(tr, device=dev)] - mu, q=k, center=False, niter=4); P = (X - mu) @ V
     P = P / P[torch.as_tensor(tr, device=dev)].std(0).clamp(min=1e-6); return P.clamp(-8, 8).cpu().numpy().astype(np.float32)
-def load_anchor(d, r, k, n):
-    AN = np.full((n, 3), np.nan)
+def load_anchor(d, r, k, n, FO, Y, bundle_sha):
+    """LightGBM anchor for outer fold (r,k). Fails closed unless the npz rows match THIS bundle's folds exactly (te = outer-test rows,
+    ti = outer-train rows with a finite target) and, when present, the npz bundle sha equals this bundle's MANIFEST sha. Rows without an
+    anchor (non-finite target on outer-train) get the outer-train mean prediction. Returns (AN [n,3], provenance)."""
+    AN = np.full((n, 3), np.nan); prov = {}
+    te_exp = np.where(FO[r] == k)[0]
     for j, t in enumerate(("fitness", "gap", "beat10")):
-        z = np.load(f"{d}/{t}_r{r}_f{k}.npz"); AN[z["te"], j] = z["P"].mean(0); AN[z["ti"], j] = z["OOF"].mean(0)
-    assert np.isfinite(AN).all(), "anchor has missing rows"; return AN
+        p = f"{d}/{t}_r{r}_f{k}.npz"; z = np.load(p); ti_exp = np.where((FO[r] != k) & np.isfinite(Y[t]))[0]
+        if not (np.array_equal(z["te"], te_exp) and np.array_equal(z["ti"], ti_exp)): raise SystemExit(f"anchor {p}: te/ti do not match this bundle's folds (r{r} f{k})")
+        if "bundle_sha256" in z.files and str(z["bundle_sha256"]) != bundle_sha: raise SystemExit(f"anchor {p}: built on another bundle")
+        AN[z["te"], j] = z["P"].mean(0); AN[z["ti"], j] = z["OOF"].mean(0)
+        miss = ~np.isfinite(AN[:, j]); AN[miss, j] = np.nanmean(AN[z["ti"], j])
+        prov[t] = {"file": os.path.abspath(p), "sha256": sha256b(open(p, "rb").read()), "K": int(z["P"].shape[0]), "bundle_sha256": str(z["bundle_sha256"]) if "bundle_sha256" in z.files else None, "filled": int(miss.sum())}
+    return AN, prov
 def group_folds(groups, k, seed):
     rng = np.random.default_rng(seed); ug, cnt = np.unique(groups, return_counts=True); order = rng.permutation(len(ug))
     order = order[np.argsort(-cnt[order], kind="stable")]; load_ = np.zeros(k); gf = {}
@@ -105,6 +121,7 @@ def main():
     ap.add_argument("--no-tabdpt", action="store_true"); ap.add_argument("--yshuffle", type=int, default=-1); ap.add_argument("--s3", action="store_true")
     ap.add_argument("--seed", type=int, default=0); ap.add_argument("--git-sha", default=""); ap.add_argument("--mask", default="")
     ap.add_argument("--epochs", type=int, default=0); ap.add_argument("--mask-mode", default="", choices=["", "dims", "pcs"], help="force the mask's PC or raw-dim lists")
+    ap.add_argument("--mask-unlisted", default="keep", choices=["keep", "drop"], help="encoders absent from the mask: keep whole (default) or drop")
     ap.add_argument("--pca", type=int, default=0, help="wave-1: per-block PCA (fit on inner-train rows) to K comps before the model")
     ap.add_argument("--anchor", default="", help="wave-1 matched GBM-anchored twin: lgb_baseline dir; outputs = LightGBM cross-fitted pred + learned residual, GBM preds also as inputs")
     ap.add_argument("--kw", default="{}", help="JSON overrides for the model constructor"); ap.add_argument("--cfg", default="{}", help="JSON overrides for lr/wd/bs/epochs/patience")
@@ -122,7 +139,7 @@ def main():
     else: L[np.ix_(tov, tcols)] = np.nan          # TabDPT pretraining-overlap rows: TabDPT features marked missing
     E = {b: np.load(f"{a.data}/blocks_{b}.npy") for b in blocks}
     if "tabdpt13" in E: E["tabdpt13"][tov] = np.nan
-    MASK = parse_mask(a.mask, blocks, a.mask_mode) if a.mask else {}
+    MASK = parse_mask(a.mask, blocks, a.mask_mode, a.mask_unlisted) if a.mask else {}
     for b in [b for b in blocks if MASK.get(b, {}).get("weight", 1.0) == 0.0]: del E[b]; blocks.remove(b)
     n = L.shape[0]; yfit = T["fitness"].astype(np.float64); ygap = T["gap"].astype(np.float64); yb = T["beat10"].astype(np.float64)
     reps = [int(r) for r in a.repeats.split(",")]; folds = [int(k) for k in a.folds.split(",")]
@@ -138,6 +155,7 @@ def main():
             yf, yg, ybb = yfit.copy(), ygap.copy(), yb.copy()
             if a.yshuffle >= 0:
                 p = np.random.default_rng(a.yshuffle * 1000 + r * 10 + k).permutation(tr_all); yf[tr_all], yg[tr_all], ybb[tr_all] = yfit[p], ygap[p], yb[p]
+            torch.manual_seed(a.seed * 100 + r * 10 + k); np.random.seed(a.seed * 100 + r * 10 + k)
             QL = rankgauss_fit(L[tr]); XL = rankgauss_apply(L, QL); ML = (~np.isfinite(L)).astype(np.float32)
             Xe, Me = [], []
             for b in blocks:
@@ -150,7 +168,8 @@ def main():
                 Xe.append(Z); Me.append(miss)
             Me = np.stack(Me, 1).astype(np.float32)
             if a.anchor:
-                AN = load_anchor(a.anchor, r, k, n)   # cols: fitness, gap, beat10 (outer-train rows = inner cross-fitted OOF; test rows = test preds)
+                AN, aprov = load_anchor(a.anchor, r, k, n, FO, {"fitness": yfit, "gap": ygap, "beat10": yb}, summary["data_manifest_sha256"])   # outer-train rows = inner cross-fitted OOF; test rows = test preds
+                summary.setdefault("anchor_provenance", {})[f"r{r}f{k}"] = aprov
                 if a.yshuffle >= 0: raise SystemExit("anchor + yshuffle not supported (the GBM anchor was fit on real labels)")
             fm, fs = np.nanmedian(yf[tr]), np.nanstd(yf[tr]); gm, gs = np.nanmedian(yg[tr]), np.nanstd(yg[tr])
             Yf = (yf - fm) / fs; Yg = (yg - gm) / gs

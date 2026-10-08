@@ -46,16 +46,17 @@ def main():
                 ax[0, j].set_title(f"{S['arch']} r{r} f{k}"); ax[0, j].legend(fontsize=7); ax[0, j].set_xlabel("epoch")
                 ax[1, j].plot(e, [x["val_r2"] for x in H], label="val fitness R2"); ax[1, j].plot(e, [x["val_auc"] for x in H], label="val beat10 AUC"); ax[1, j].legend(fontsize=7); ax[1, j].set_ylim(0, 1)
             fig.suptitle(f"{run}  (PURE DL: no GBM anchor/distill/input)" if S.get("pure") else run); fig.tight_layout(); fig.savefig(f"{a.figs}/loss_{run}.png", dpi=90); plt.close(fig)
-        rec = {"arch": S["arch"], "pure": S.get("pure"), "no_tabdpt": S.get("no_tabdpt"), "yshuffle": S.get("yshuffle"), "folds_done": sorted(S["folds"]),
+        rec = {"arch": S["arch"], "pure": S.get("pure"), "optimistic": S.get("optimistic", False), "mask_sha256": S.get("mask_sha256"), "gbm_anchor": S.get("gbm_anchor", False), "no_tabdpt": S.get("no_tabdpt"), "yshuffle": S.get("yshuffle"), "folds_done": sorted(S["folds"]),
                "fold_test": {k: [v["test_r2"], v["test_auc"]] for k, v in S["folds"].items()}}
         if os.path.exists(f"{d}/oofraw_r{r}.npy"):
             Pf = np.load(f"{d}/oofraw_r{r}.npy")[:, 0]; Pb = np.load(f"{d}/oof_r{r}.npy")[:, 4]; done = np.isfinite(Pf)
             rec["oof_rows"] = int(done.sum()); rec["fit_r2"] = r2(yf[done], Pf[done]); rec["b10_auc"] = auc(yb[done], Pb[done])
-            rec["lgb_same_rows"] = {"fit_r2": r2(yf[done], Lf[done]), "b10_auc": auc(yb[done], Lb[done])}
+            rec["lgb_same_rows"] = {"fit_r2": r2(yf[done], Lf[done]) if np.isfinite(Lf[done]).sum() > 100 else None, "b10_auc": auc(yb[done], Lb[done]) if np.isfinite(Lb[done]).sum() > 100 else None}
             ok = done & np.isfinite(Lf)
             if ok.sum() > 100:
-                rec["lift_fit_r2"] = boot(yf[ok], Pf[ok], Lf[ok], gid[ok], r2); ok2 = ok & np.isfinite(Lb)
-                rec["lift_b10_auc"] = boot(yb[ok2], Pb[ok2], Lb[ok2], gid[ok2], auc, B=1000)
+                rec["lift_fit_r2"] = boot(yf[ok], Pf[ok], Lf[ok], gid[ok], r2)
+            ok2 = done & np.isfinite(Lb)
+            if ok2.sum() > 100: rec["lift_b10_auc"] = boot(yb[ok2], Pb[ok2], Lb[ok2], gid[ok2], auc, B=1000)
         ab = [v["ablation"] for v in S["folds"].values() if v.get("ablation")]
         if ab: rec["block_ablation"] = {b: {"d_r2": float(np.mean([x[b]["d_r2"] for x in ab])), "d_auc": float(np.nanmean([x[b]["d_auc"] for x in ab]))} for b in ab[0]}
         gt = [v["gates"] for v in S["folds"].values() if v.get("gates")]
@@ -66,23 +67,24 @@ def main():
     for run in rep["arms"]:
         S = json.load(open(f"{a.runs}/{run}/summary.json"))
         if not os.path.exists(f"{a.runs}/{run}/oofraw_r{r}.npy"): continue
-        key = f"{S['arch']}{'-anchored' if S.get('gbm_anchor') else ''}{'-noTabDPT' if S.get('no_tabdpt') else ''}{'-yshuf' if S.get('yshuffle', -1) >= 0 else ''}{'-mask' if S.get('mask_sha256') else ''}{'-pca' + str(S['pca']) if S.get('pca') else ''}"
+        key = f"{S['arch']}{'-anchored' if S.get('gbm_anchor') else ''}{'-noTabDPT' if S.get('no_tabdpt') else ''}{'-yshuf' if S.get('yshuffle', -1) >= 0 else ''}{('-mask' + S['mask_sha256'][:8] + '-optimistic') if S.get('mask_sha256') else ''}{'-pca' + str(S['pca']) if S.get('pca') else ''}"
         grp.setdefault(key, []).append(run)
     rep["ensembles"] = {}
     for key, runs in grp.items():
         F = np.stack([np.load(f"{a.runs}/{x}/oofraw_r{r}.npy")[:, 0] for x in runs]); Bb = np.stack([np.load(f"{a.runs}/{x}/oof_r{r}.npy")[:, 4] for x in runs])
         done = np.isfinite(F).all(0); Pf, Pb = F.mean(0), Bb.mean(0); e = {"members": runs, "n_seeds": len(runs), "oof_rows": int(done.sum())}
         if done.sum() > 100:
-            e["fit_r2"] = r2(yf[done], Pf[done]); e["b10_auc"] = auc(yb[done], Pb[done]); ok = done & np.isfinite(Lf) & np.isfinite(Lb)
-            e["lgb_same_rows"] = {"fit_r2": r2(yf[ok], Lf[ok]), "b10_auc": auc(yb[ok], Lb[ok])}
-            if ok.sum() > 100: e["lift_fit_r2"] = boot(yf[ok], Pf[ok], Lf[ok], gid[ok], r2); e["lift_b10_auc"] = boot(yb[ok], Pb[ok], Lb[ok], gid[ok], auc, B=1000)
+            e["fit_r2"] = r2(yf[done], Pf[done]); e["b10_auc"] = auc(yb[done], Pb[done]); ok = done & np.isfinite(Lf); ok2 = done & np.isfinite(Lb)
+            if ok.sum() > 100: e["lgb_fit_r2_same_rows"] = r2(yf[ok], Lf[ok]); e["lift_fit_r2"] = boot(yf[ok], Pf[ok], Lf[ok], gid[ok], r2)
+            if ok2.sum() > 100: e["lgb_b10_auc_same_rows"] = auc(yb[ok2], Lb[ok2]); e["lift_b10_auc"] = boot(yb[ok2], Pb[ok2], Lb[ok2], gid[ok2], auc, B=1000)
         rep["ensembles"][f"ENS:{key}"] = e
     json.dump(rep, open(f"{a.figs}/{a.tag}_report.json", "w"), indent=1, default=float)
     # dashboard: lift bars + ablation heatmap
     ALL = {**rep["arms"], **rep["ensembles"]}; A = [k for k, v in ALL.items() if "lift_fit_r2" in v]
+    nan = {"delta": np.nan, "lo": np.nan, "hi": np.nan}
     fig, ax = plt.subplots(1, 3, figsize=(19, 5.5))
     for i, (key, lab) in enumerate((("lift_fit_r2", "fitness R2 lift: DL(L+enc) vs LightGBM(L)"), ("lift_b10_auc", "beat10 AUC lift: DL(L+enc) vs LightGBM(L)"))):
-        v = [ALL[k][key] for k in A]; x = np.arange(len(A))
+        v = [ALL[k].get(key, nan) for k in A]; x = np.arange(len(A))
         ax[i].bar(x, [z["delta"] for z in v], yerr=[[z["delta"] - z["lo"] for z in v], [z["hi"] - z["delta"] for z in v]], capsize=4, color=["C2" if z["lo"] > 0 else "C3" if z["hi"] < 0 else "C7" for z in v])
         ax[i].axhline(0, color="k", lw=1); ax[i].set_xticks(x); ax[i].set_xticklabels(A, rotation=30, ha="right", fontsize=7); ax[i].set_title(lab + " (95% lineage-cluster bootstrap)")
     bl = [k for k in rep["arms"] if "block_ablation" in rep["arms"][k]]
