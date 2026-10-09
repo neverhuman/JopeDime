@@ -18,7 +18,7 @@
 <div class="card"><div class="label">New flywheel GP results in S3</div><span class="value" id="gpTotal">—</span><div class="note" id="gpSupport">Actual exact-context program executions</div></div>
 </section>
 
-<section class="columns"><div class="panel"><div class="eyebrow">Current model</div><h2>Training vs validation loss</h2><p class="note" id="axisDescription">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis" role="group" aria-label="Loss horizontal axis"><span class="controls-label">X axis</span><button type="button" class="on" data-axis="batch" aria-pressed="true">Batches</button><button type="button" data-axis="epoch" aria-pressed="false">Epochs</button><button type="button" data-axis="unique_data_runs_seen" aria-pressed="false">Unique data runs</button><button type="button" data-axis="total_presentations" aria-pressed="false" disabled>Total presentations</button></div><div class="controls" id="lossScale" role="group" aria-label="Loss vertical scale"><span class="controls-label">Loss Y scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear</button><button type="button" data-scale="log" aria-pressed="false">Log</button></div><p class="note" id="lossScaleNote" role="status" aria-live="polite">Linear loss scale.</p><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
+<section class="columns"><div class="panel"><div class="eyebrow">Current model</div><h2>Training vs validation loss</h2><p class="note" id="axisDescription">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis" role="group" aria-label="Loss horizontal axis"><span class="controls-label">X axis</span><button type="button" class="on" data-axis="batch" aria-pressed="true">Batches</button><button type="button" data-axis="epoch" aria-pressed="false">Epochs</button><button type="button" data-axis="unique_data_runs_seen" aria-pressed="false">Unique data runs</button><button type="button" data-axis="total_presentations" aria-pressed="false" disabled>Total presentations</button></div><div class="controls" id="lossXScale" role="group" aria-label="Training horizontal scale"><span class="controls-label">X scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear X</button><button type="button" data-scale="log" aria-pressed="false">Log X</button></div><div class="controls" id="lossScale" role="group" aria-label="Loss vertical scale"><span class="controls-label">Y scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear Y</button><button type="button" data-scale="log" aria-pressed="false">Log Y</button></div><p class="note" id="lossScaleNote" role="status" aria-live="polite">Linear loss scale.</p><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
 <div class="panel"><div class="eyebrow">Live pipeline</div><h2>What is actually running</h2><div id="workState"><p>Awaiting source status.</p></div><div class="metrics"><div class="metric"><span class="note">New GP executions</span><strong id="executions">—</strong></div><div class="metric"><span class="note">Reused cached GP results</span><strong id="cacheHits">—</strong></div><div class="metric"><span class="note">Failed GP attempts</span><strong id="failures">—</strong></div></div><p class="note" id="gpCampaign">No program campaign observed.</p><div class="bar"><div id="gpBar" class="fill" style="width:0"></div></div><p class="note">An emitted program becomes a result only after native execution, emitted Rust parity, and S3 readback.</p></div></section>
 <section class="panel"><div class="eyebrow">No stage hidden</div><h2>From new data to a trained batch</h2><div class="stages">
 <div class="stage"><h3>1. Fuzz &amp; publish</h3><span id="made" class="count">—</span><p id="generationState">Source and transform JSON travel with every variant.</p></div>
@@ -38,6 +38,9 @@ const el=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString(),ns='h
 const scaleStorageKey='jopedime.paper.loss-y-scale.v1';
 function readLossScale(){try{return localStorage.getItem(scaleStorageKey)==='log'?'log':'linear'}catch{return 'linear'}}
 let lossScale=readLossScale();
+const xScaleStorageKey='jopedime.paper.loss-x-scale.v1';
+function readXScale(){try{return localStorage.getItem(xScaleStorageKey)==='log'?'log':'linear'}catch{return 'linear'}}
+let lossXScale=readXScale();
 const finiteNumber=v=>typeof v==='number'&&Number.isFinite(v);
 function text(id,value){el(id).textContent=value}
 function stateName(s){return ({completed_bounded_qualification:'initial training segment complete',running:'training',staged:'staged, awaiting checks',observing:'checking next GP',publishing:'publishing measured GP',running_partial:'running with recorded failures',measurement_finished:'measurements finished',custody_failed:'evidence archive failed',failed:'stopped with an error',partial:'stopped with unfinished work',completed_session:'training segment complete',snapshot_qualified:'data checks passed'})[s]||String(s||'unobserved').replaceAll('_',' ')}function node(tag,attrs){const n=document.createElementNS(ns,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);return n}
@@ -75,12 +78,12 @@ function coverageContinuation(rows,unique,batches){
  if(!first||!Number.isSafeInteger(first.batch)||!Number.isSafeInteger(batches)||batches<first.batch)return '';
  return ' First loss reading at current coverage: batch '+fmt(first.batch)+'; '+fmt(batches-first.batch)+' later optimizer updates are shown under Batches / Total presentations.';
 }
-function seriesSegments(points,key,valueKey,scale){
+function seriesSegments(points,key,valueKey,scale,xScale='linear'){
  const segments=[];let segment=null;
  for(const {row,breakBefore}of points){
   const y=row[valueKey];
   if(breakBefore)segment=null;
-  if(!finiteNumber(row[key])||!finiteNumber(y)||(scale==='log'&&y<=0)){segment=null;continue}
+  if(!finiteNumber(row[key])||!finiteNumber(y)||(scale==='log'&&y<=0)||(xScale==='log'&&row[key]<=0)){segment=null;continue}
   if(!segment){segment=[];segments.push(segment)}segment.push(row);
  }
  return segments;
@@ -90,26 +93,29 @@ function lossTooltip(row,valueKey){
  return 'Batch '+known(row.batch)+' · epoch '+known(row.epoch)+' · '+known(row.unique_data_runs_seen)+' unique data runs'+(finiteNumber(row.total_presentations)?' · '+fmt(row.total_presentations)+' total presentations':'')+' · '+valueKey+': '+String(row[valueKey]);
 }
 function plot(id,rows,series,key,dual){
- const target=el(id),isLoss=id==='lossPlot',scale=isLoss?lossScale:'linear';
- const points=chartRows(rows,key),validRows=points.map(p=>p.row).filter(r=>finiteNumber(r[key]));
+ const target=el(id),isLoss=id==='lossPlot',scale=isLoss?lossScale:'linear',xScale=isLoss?lossXScale:'linear';
+ const points=chartRows(rows,key),allXRows=points.map(p=>p.row).filter(r=>finiteNumber(r[key]));
+ const excludedX=xScale==='log'?allXRows.filter(r=>r[key]<=0).length:0;
+ const validRows=allXRows.filter(r=>xScale!=='log'||r[key]>0);
  const rawValues=validRows.flatMap(r=>series.map(s=>r[s.key])).filter(finiteNumber);
  const unavailable=scale==='log'?rawValues.filter(v=>v<=0).length:0;
  const values=rawValues.filter(v=>scale!=='log'||v>0);
- if(isLoss)text('lossScaleNote',scale==='log'?'Log loss scale · equal distances represent equal ratios. '+(unavailable?unavailable+' nonpositive loss observation'+(unavailable===1?' is':'s are')+' unavailable on log scale; no replacement values. Choose Linear to view them.':'All displayed losses are positive.'):'Linear loss scale · equal distances represent equal loss differences.');
- if(!validRows.length||!values.length){target.className='empty';target.textContent=isLoss?(unavailable?'Log scale unavailable: no positive loss observations. Choose Linear.':'No recorded loss observations for this axis.'):'Waiting for recorded observations.';return}
+ if(isLoss){const notes=[(xScale==='log'?'Log X':'Linear X')+' · '+(scale==='log'?'Log Y':'Linear Y')+'. Log axes show ratios; labels retain raw values.'];if(excludedX)notes.push(excludedX+' observation'+(excludedX===1?' has':'s have')+' zero or negative X and cannot appear on Log X. Choose Linear X to see '+(excludedX===1?'it':'them')+'.');if(unavailable)notes.push(unavailable+' nonpositive loss observation'+(unavailable===1?' is':'s are')+' unavailable on Log Y. Choose Linear Y to see '+(unavailable===1?'it':'them')+'.');text('lossScaleNote',notes.join(' '))}
+ if(!validRows.length||!values.length){target.className='empty';target.textContent=isLoss?(!validRows.length&&excludedX?'Log X unavailable: no positive X observations. Choose Linear X.':unavailable?'Log Y unavailable: no positive loss observations. Choose Linear Y.':'No recorded loss observations for this axis.'):'Waiting for recorded observations.';return}
  const w=650,h=250,pad={l:58,r:20,t:32,b:35},xs=validRows.map(r=>r[key]);
  const transform=v=>scale==='log'?Math.log10(v):v,inverse=v=>scale==='log'?10**v:v;
- let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=transform(Math.min(...values)),ymax=transform(Math.max(...values));
+ const xTransform=v=>xScale==='log'?Math.log10(v):v,xInverse=v=>xScale==='log'?10**v:v;
+ let xmin=xTransform(Math.min(...xs)),xmax=xTransform(Math.max(...xs)),ymin=transform(Math.min(...values)),ymax=transform(Math.max(...values));
  if(isLoss){const margin=Math.max(scale==='log'?.1:.01,(ymax-ymin)*.12);ymin=scale==='linear'&&ymin>=0?Math.max(0,ymin-margin):ymin-margin;ymax+=margin}else ymin=Math.min(0,ymin);
  if(xmin===xmax)xmax=xmin+1;if(ymin===ymax)ymax=ymin+1;
- const sx=x=>pad.l+(x-xmin)/(xmax-xmin)*(w-pad.l-pad.r),sy=y=>h-pad.b-(transform(y)-ymin)/(ymax-ymin)*(h-pad.t-pad.b);
- const svg=node('svg',{viewBox:'0 0 '+w+' '+h,class:'plot',role:'img','aria-label':isLoss?'Observed training and validation loss, '+scale+' scale, '+key.replaceAll('_',' ')+' axis':'Observed data and GP library growth'});
+ const sx=x=>pad.l+(xTransform(x)-xmin)/(xmax-xmin)*(w-pad.l-pad.r),sy=y=>h-pad.b-(transform(y)-ymin)/(ymax-ymin)*(h-pad.t-pad.b);
+ const svg=node('svg',{viewBox:'0 0 '+w+' '+h,class:'plot',role:'img','aria-label':isLoss?'Observed training and validation loss, '+xScale+' X and '+scale+' Y scale, '+key.replaceAll('_',' ')+' axis':'Observed data and GP library growth'});
  for(let i=0;i<=4;i++){const y=inverse(ymin+(ymax-ymin)*i/4);svg.append(node('line',{x1:pad.l,x2:w-pad.r,y1:sy(y),y2:sy(y),stroke:'#28414c'}));const t=node('text',{x:pad.l-8,y:sy(y)+4,'text-anchor':'end'});t.textContent=scale==='log'?(Math.abs(y)<.001||Math.abs(y)>=1e6?y.toExponential(2):Number(y.toPrecision(4)).toLocaleString(undefined,{maximumSignificantDigits:4})):(ymax>10?Math.round(y).toLocaleString():y.toFixed(3));svg.append(t)}
  const unique=[...new Set(xs)].sort((a,b)=>a-b);
- const ticks=key==='at'?Array.from({length:5},(_,i)=>xmin+(xmax-xmin)*i/4):unique.length<=5?unique:[...new Set(Array.from({length:5},(_,i)=>unique[Math.round(i*(unique.length-1)/4)]))];
+ const ticks=xScale==='log'?unique.length<=5?unique:[...new Set(Array.from({length:5},(_,i)=>{const desired=xInverse(xmin+(xmax-xmin)*i/4);return unique.reduce((best,x)=>Math.abs(xTransform(x)-xTransform(desired))<Math.abs(xTransform(best)-xTransform(desired))?x:best,unique[0])}))]:key==='at'?Array.from({length:5},(_,i)=>xmin+(xmax-xmin)*i/4):unique.length<=5?unique:[...new Set(Array.from({length:5},(_,i)=>unique[Math.round(i*(unique.length-1)/4)]))];
  for(const x of ticks){const t=node('text',{x:sx(x),y:h-10,'text-anchor':'middle'});t.textContent=key==='at'?new Date(x*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):fmt(x);svg.append(t);if(dual){const r=validRows.find(r=>r[key]===x);const q=node('text',{x:sx(x),y:16,'text-anchor':'middle'});q.textContent=finiteNumber(r.unique_data_runs_seen)?fmt(r.unique_data_runs_seen):'—';svg.append(q)}}
  for(const s of series){
-  const segments=seriesSegments(points,key,s.key,scale),d=segments.map(segment=>segment.map((r,i)=>(i?'L':'M')+sx(r[key])+','+sy(r[s.key])).join(' ')).join(' ');
+  const segments=seriesSegments(points,key,s.key,scale,xScale),d=segments.map(segment=>segment.map((r,i)=>(i?'L':'M')+sx(r[key])+','+sy(r[s.key])).join(' ')).join(' ');
   svg.append(node('path',{d,fill:'none',stroke:s.color,'stroke-width':2.5,'data-series':s.key}));
   if(isLoss)for(const segment of segments)for(const r of segment){const label=lossTooltip(r,s.key),dot=node('circle',{cx:sx(r[key]),cy:sy(r[s.key]),r:3,fill:s.color,tabindex:0,'aria-label':label,'data-batch':r.batch});const title=node('title',{});title.textContent=label;dot.append(title);svg.append(dot)}
  }
@@ -224,8 +230,9 @@ function render(s){
  text('foot','Observed '+new Date(s.at*1000).toLocaleString()+' · '+errors+' collector errors. Source stages retain their own timestamps and receipts.');
 }
 async function refresh(){try{const r=await fetch('/api/paper-evidence',{cache:'no-store'});if(!r.ok)throw Error(r.status);render(await r.json())}catch(e){text('connection','Connection unavailable; retained observations')}}
-function syncControls(){for(const [id,field,value]of [['axis','axis',axis],['lossScale','scale',lossScale]])for(const b of el(id).querySelectorAll('button')){const selected=b.dataset[field]===value;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected))}}
+function syncControls(){for(const [id,field,value]of [['axis','axis',axis],['lossXScale','scale',lossXScale],['lossScale','scale',lossScale]])for(const b of el(id).querySelectorAll('button')){const selected=b.dataset[field]===value;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected))}}
 for(const b of el('axis').querySelectorAll('button'))b.onclick=()=>{axis=b.dataset.axis;syncControls();if(current)render(current)};
+for(const b of el('lossXScale').querySelectorAll('button'))b.onclick=()=>{lossXScale=b.dataset.scale;try{localStorage.setItem(xScaleStorageKey,lossXScale)}catch{}syncControls();if(current)render(current)};
 for(const b of el('lossScale').querySelectorAll('button'))b.onclick=()=>{lossScale=b.dataset.scale;try{localStorage.setItem(scaleStorageKey,lossScale)}catch{}syncControls();if(current)render(current)};
 syncControls();refresh();setInterval(refresh,10000);
 </script></html>
