@@ -265,7 +265,8 @@
         "collection/execution/deselection counts",
         "pytest results",
         "Ruff exit",
-        "DL offline subreceipts: 3 pinned module shards plus --combine under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh), combined to 753 collected identities, 712 synthetic executions, 41 exact named host-input/subprocess exclusions, dependencies/source pins and log hashes; separate from pytest"
+        "DL offline subreceipts: 3 pinned module shards plus --combine under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh), combined to 753 collected identities, 712 synthetic executions, 41 exact named host-input/subprocess exclusions, dependencies/source pins and log hashes; separate from pytest",
+        "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed."
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -277,7 +278,8 @@
         "uv run --no-sync ruff format --check .",
         "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$pytest_fixtures\" --junitxml=\"$EVIDENCE/junit.xml\"",
         "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\"",
-        "bash ../deploy/ci/dl-offline-group.sh 900 \"$EVIDENCE/dl-lane-offline\""
+        "bash ../deploy/ci/dl-offline-group.sh 900 \"$EVIDENCE/dl-lane-offline\"",
+        "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\""
       ]
     },
     "e2e-smoke": {
@@ -9027,6 +9029,26 @@
       ],
       "dispositions": [],
       "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_pr1.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Data-free additive research fixtures via run_rlfw_offline.py; no deployed policy, corpus, service or evaluator inputs."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Data-free additive research fixtures via run_rlfw_offline.py; no deployed policy, corpus, service or evaluator inputs."
     }
   }
 }

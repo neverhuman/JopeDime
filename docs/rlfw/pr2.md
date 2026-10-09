@@ -81,7 +81,9 @@ The CLI accepts `--device cpu|cuda`, default `cpu`; it must match the frozen
 sequences. Every checkpoint needs passed CPU/CUDA parity for total/per-token
 likelihood, q, completion probability and log1p runtime at `1e-6`. The
 byte-bound file is either that PR1 receipt or `{"receipts": [receipt, ...]}`.
-Unavailable CUDA or incomplete parity fails; CPU fixture work can continue.
+Unavailable CUDA or incomplete parity fails. D3 authorizes deterministic CPU
+inference for this campaign; CUDA is unqualified under the unchanged tolerance.
+Every executed game still needs its actual runtime qualification.
 
 The policy qualification facade, itself byte-pinned by the game, is:
 
@@ -100,9 +102,8 @@ replace that evidence. Every selected checkpoint needs its own qualification.
 
 ## L0 baseline commands after reviewed merge
 
-Set `BENCH` to the campaign directory, `DEVICE=cuda` on the verified xbabe1
-replica with `cache/device-parity.json` from actual CPU/CUDA replay (the
-default `DEVICE=cpu` remains available for fixtures), and run from the reviewed main checkout
+Set `BENCH` to the campaign directory and `DEVICE=cpu` under D3 on the verified xbabe1
+CPU replica. Run from the reviewed main checkout
 with `PYTHONPATH=deploy/dl-flywheel/pipelines`. After L0 freezes the adapter and
 L1 provides `cache/policy-qualification.json`, prepare score-free specifications:
 
@@ -130,7 +131,12 @@ arms = (ArmSpec("hwm", None, *common), ArmSpec("uniform_trie", None, *common),
         ArmSpec("trie_sample:current_latest", manifest["parameter_sha256"], *common))
 dependencies = ("l0/arena_binding.py", "l0/execute_one.py", "l0/bench_binding.py",
                 "evaluator_pin/MANIFEST.sha256", "evaluator_pin/config.json",
-                "cache/INPUT_MANIFEST.sha256")
+                "cache/INPUT_MANIFEST.sha256", "l0/cpu_policy.py",
+                "cache/dev-normalized.npy", "cache/dev-normalized.json",
+                "cache/arena-core54.json", "cache/dev-contexts.json",
+                "cache/arena-contexts.json", "cache/dev-hwm-programs.json",
+                "l0/CAMPAIGN_D3.json", "prompts/D3_GPU_PARITY_CPU_INFERENCE.md",
+                "cache/policy-qualification.json", "replica-inputs/MAP_D1v2.json")
 runtime_files = tuple((name, pin(b / name)) for name in dependencies)
 if parity is not None:
     runtime_files += ((str(parity.relative_to(b)), pin(parity)),)
@@ -143,8 +149,12 @@ rng.shuffle(eligible)
 smoke = tuple(c for lineage in eligible[:10]
               for c in rng.sample(sorted(grouped[lineage], key=lambda c: c.context_id), 2))
 assert len(smoke) == 20
+core_rows = json.loads((b / "cache/arena-core54.json").read_text())["contexts"]
+core = tuple(ContextSpec(**{k: row[k] for k in keys}) for row in core_rows)
+assert len(core) == 54 and len({c.lineage_id for c in core}) == 54
+assert all(c in contexts for c in core)
 (b / "state/game_specs").mkdir(exist_ok=True)
-for name, roster in (("baseline_T0", smoke), ("baseline_T1", contexts)):
+for name, roster in (("baseline_T0", smoke), ("baseline_T1", core)):
     spec = GameSpec(name, str(b), str(b / "runs" / name),
         str(b / "state" / (name + "-outbox.sqlite")), roster, arms, (1,),
         "3b9caf36a3cde3f12d0337ebfc633b55a1e989a3f53410df578f6fc9a7aa0109",
@@ -165,7 +175,7 @@ PY
 L0 starts these commands only after its health baseline qualifies and its U1
 pool scope is no longer active. Under D1, while the protected service is
 owner-stopped, its rate guard is N/A and both-host memory guards still apply.
-The example uses the byte-verified xbabe1 CUDA replica; L0 owns placement and
+The example uses the byte-verified xbabe1 CPU replica; L0 owns placement and
 cross-host evaluator parity. The unit belongs to L0's existing kill switch:
 
 ```sh
@@ -178,14 +188,19 @@ systemd-run --user --scope --unit=rlfw-l0-bench-pool \
   --runtime-binding "$BENCH/l0/arena_binding.py" \
   --policy-code-root "$BENCH/code_pin" \
   --policy-qualification "$BENCH/cache/policy-qualification.json" \
-  --device cuda --device-parity "$BENCH/cache/device-parity.json" \
+  --device cpu \
   --pool-workers 4 --checkpoint-report-every 20
 ```
 
-For the core, use the same command with `baseline_T1.json` and
-`--max-contexts 54`. The frozen order covers one context from each lineage first.
-To extend toward the whole panel, resume the same spec/outbox without
-`--max-contexts`; the checkpoint identity, seeds, cache and deadline stay frozen.
+For the core, use the same command with `baseline_T1.json`. D3's score-free
+roster contains one original context in each of all 54 lineages. The other 209
+contexts remain unscored. A whole-panel extension requires a separately frozen
+roster before execution; it cannot change the core game's identity on resume.
+Label these results **dev panel, directional; CPU inference**.
+The source-host 1,000-draw proof used Torch 2.14; the replica uses Torch 2.7.
+Retain that distinction and qualify the actual runtime before a live baseline.
+The current native parity STOP prevents game launch; D3 changes device placement
+and does not clear that later STOP.
 Parent sampling can be preregistered as an additional arm only after that
 checkpoint's qualification, before any score is exposed.
 

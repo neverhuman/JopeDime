@@ -2768,6 +2768,24 @@
         "evidence",
         "orchestration"
       ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_pr1.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "teaching",
+        "storage"
+      ],
+      "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "teaching",
+        "storage"
+      ],
+      "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability."
     }
   },
   "baseline_triage": [
