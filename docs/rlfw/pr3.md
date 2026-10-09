@@ -67,13 +67,15 @@ CPU/CUDA likelihood and head parity certificate. The injected binding must expos
 `score_heads(context_id, arm_name, complete_token_rows)`.
 
 ```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
 "$RLFW_PYTHON" -m rlfw.bench_cli arena --spec "$B/runs/rerank_T1/spec.json" \
   --runtime-binding "$B/l0/arena_binding_source_cpu.py" --policy-code-root "$B/code_pin" \
   --policy-qualification "$B/runs/l0-source-cpu-qualification-v5/qualification.json" \
   --device cpu --reuse-hwm-from "$B/runs/baseline_T1" --pool-workers 4
 ```
 
-Set `RLFW_PYTHON` to the qualified source interpreter (Torch 2.14.0+cu130).
+Run from the reviewed checkout and set `RLFW_PYTHON` to the qualified source
+interpreter (Torch 2.14.0+cu130).
 The source route verifies its sealed V5 facade and immutable CPU1000 receipt;
 plain system Python (Torch 2.7.0) and the original writable facade are refused.
 
