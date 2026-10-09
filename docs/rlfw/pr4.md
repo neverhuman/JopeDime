@@ -52,7 +52,8 @@ just required
 Registered synthetic fixtures cover eligibility, native identities, seeded
 parent balance, mixed selection, probabilities/propensities, packet replay,
 empty-arena admission, first-label CAS, failure NULLs, role changes, missing
-closure, strict yield boundaries and partial/unknown costs. Their evaluator,
+closure, strict yield boundaries, the renewed deadline and partial/unknown costs.
+Their evaluator,
 artifacts and probabilities are synthetic. They establish source behavior;
 hosted exact-head CI and independent approval remain required.
 
@@ -71,7 +72,10 @@ interpreter and exact Torch runtime.
 The CLI accepts `--device cpu|cuda`, default CPU. CUDA requires the complete
 identical-pin likelihood/head parity certificate. All executions require the
 bounded campaign scope, current health/memory guards, same-pin 1000-draw policy
-qualification, pinned runtime dependencies and fixed 2026-10-09 13:00 UTC deadline.
+qualification, pinned runtime dependencies and fixed 2026-10-10 05:00 UTC deadline
+authorized by D5. The schema refuses any other cutoff, and the oracle refuses
+execution at or after that cutoff. A synthetic CLI wave also verifies admission
+after the superseded 18:00 UTC deadline.
 
 The sealed `build_bootstrap(spec, device=...)` runtime supplies the complete
 catalog, sample/sample_many, score_heads, coverage_probabilities, fresh role/input

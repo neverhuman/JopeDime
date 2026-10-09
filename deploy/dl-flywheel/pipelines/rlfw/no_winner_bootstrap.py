@@ -185,7 +185,7 @@ class BootstrapSpec:
         if (
             self.device not in ("cpu", "cuda")
             or not math.isfinite(self.deadline_unix)
-            or self.deadline_unix != 1791550800.0
+            or self.deadline_unix != 1791608400.0
         ):
             raise ValueError("explicit device and fixed deadline required")
         if self.cache_snapshot_sha256 != digest({}):

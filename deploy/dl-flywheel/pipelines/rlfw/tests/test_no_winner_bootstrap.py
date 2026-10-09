@@ -58,7 +58,7 @@ class BootstrapTests(unittest.TestCase):
             SHA,
             SHA,
             pins,
-            1791550800.0,
+            1791608400.0,
             previously_labeled_parents=("parent0",),
         )
         self.catalog = [
@@ -254,6 +254,22 @@ class BootstrapTests(unittest.TestCase):
         self.assertTrue(all(c.fold == 0 for c in wave))
         self.assertEqual(BootstrapSpec.from_dict(self.spec.to_dict()), self.spec)
 
+    def test_d5_fixed_deadline_and_expired_execution_refused(self):
+        for deadline in (1791550800.0, 1791568800.0, 1791608399.0, 1791608401.0):
+            with self.subTest(deadline=deadline), self.assertRaises(ValueError):
+                replace(self.spec, deadline_unix=deadline)
+        for now in (1791608400.0, 1791608401.0):
+            with (
+                self.subTest(now=now),
+                mock.patch("rlfw.arena.oracle.time.time", return_value=now),
+            ):
+                value = self.scheduler()
+                with self.assertRaisesRegex(RuntimeError, "deadline"):
+                    value.run(max_contexts=1)
+                self.assertEqual(self.calls, [])
+                self.assertEqual(value.rows(), [])
+                value.close()
+
     def test_coverage_probabilities_drive_five_exploit_two_explore_one_audit(self):
         packet = self.arms().prepare_slate(self.contexts[0], self.arm, 20261009)
         self.assertEqual(len(packet.selected), 8)
@@ -438,7 +454,7 @@ class BootstrapTests(unittest.TestCase):
                 }
             )
 
-    @mock.patch("rlfw.arena.oracle.time.time", return_value=1791540000.0)
+    @mock.patch("rlfw.arena.oracle.time.time", return_value=1791572400.0)
     @mock.patch("rlfw.policy_binding.verify_manifest")
     @mock.patch("rlfw.bench_cli.verify_runtime_scope")
     def test_enabled_cli_executes_synthetic_authorized_wave_and_reports(
