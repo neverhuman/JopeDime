@@ -8150,7 +8150,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/restore/test_p7_restore.py": {
       "discovery": {
@@ -9059,6 +9059,26 @@
       ],
       "dispositions": [],
       "scope": "Registered data-free best-of-32 fixtures: exact leaf membership, all raw draws, predicted-only ranking, fixed feasibility fallback, durable restart and eight blind charges. No live evaluator, checkpoint or performance qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_exit_targets.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free measured-tilt/trie-loss/offline-trainer mechanics via run_rlfw_offline.py. Synthetic tensors/optimizer steps only, no corpus/native evaluations/live sealed-model training. Actual pinned L6 parity is a separate source-byte-bound acceptance receipt."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_exit_training.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free measured-tilt/trie-loss/offline-trainer mechanics via run_rlfw_offline.py. Synthetic tensors/optimizer steps only, no corpus/native evaluations/live sealed-model training. Actual pinned L6 parity is a separate source-byte-bound acceptance receipt."
     }
   }
 }

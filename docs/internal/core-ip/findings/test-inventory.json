@@ -2794,6 +2794,26 @@
         "evidence",
         "orchestration"
       ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_exit_targets.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_exit_training.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
     }
   },
   "baseline_triage": [
