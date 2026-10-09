@@ -6,8 +6,8 @@ import importlib.util
 import json
 import math
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 
 from .arena.arms import BaselineArms, pr1_trace_sink
 from .arena.game_spec import GameSpec, canonical, local_path
@@ -185,12 +185,15 @@ def arena(args):
     verify_device(spec, args.device, args.device_parity)
     if spec.policy_code_manifest_sha256 is None:
         raise ValueError("live games require a pinned policy-code manifest")
-    from .policy_binding import verify_manifest
     from .decision_trace import DecisionTrace
+    from .policy_binding import verify_manifest
 
     root = local_path(spec.bench_root, args.policy_code_root)
     verify_manifest(root, expected_sha256=spec.policy_code_manifest_sha256)
-    if any(a.name.startswith("trie_sample:") for a in spec.arms):
+    policy_arms = tuple(
+        a for a in spec.arms if a.name.startswith(("trie_sample:", "rerank32:"))
+    )
+    if policy_arms:
         receipt_path = local_path(spec.bench_root, args.policy_qualification)
         if (
             hashlib.sha256(receipt_path.read_bytes()).hexdigest()
@@ -207,22 +210,27 @@ def arena(args):
         if not 0 <= qualification.get("maximum_logprob_error", float("inf")) <= 1e-6:
             raise ValueError("deployed likelihood tolerance is 1e-6")
         parameters = set(qualification.get("checkpoint_parameter_sha256s", ()))
-        if any(
-            a.checkpoint_sha256 not in parameters
-            for a in spec.arms
-            if a.name.startswith("trie_sample:")
-        ):
+        if any(a.checkpoint_sha256 not in parameters for a in policy_arms):
             raise ValueError("each policy checkpoint requires its own qualification")
-    if any(
-        a.name.startswith("trie_sample:") and a.temperature != 1.0 for a in spec.arms
-    ):
-        raise ValueError("baseline trie samples use preregistered temperature 1.0")
+    if any(a.temperature != 1.0 for a in policy_arms):
+        raise ValueError("policy samples use preregistered temperature 1.0")
     spec.freeze()
     runtime = load_binding(spec, args.runtime_binding, device=args.device)
     cache = runtime["frozen_cache"]
-    arms = runtime.get("arms") or BaselineArms(
-        runtime["catalog"], runtime["hwm_programs"], runtime["sample"]
-    )
+    if any(a.name.startswith("rerank32:") for a in spec.arms):
+        from .slate import RerankArms
+
+        arms = RerankArms(
+            runtime["catalog"],
+            runtime["hwm_programs"],
+            runtime["sample"],
+            runtime["sample_many"],
+            runtime["score_heads"],
+        )
+    else:
+        arms = runtime.get("arms") or BaselineArms(
+            runtime["catalog"], runtime["hwm_programs"], runtime["sample"]
+        )
     oracle = BlindOracle(spec, runtime["evaluate"], runtime["role_check"], cache)
     trace = DecisionTrace(spec.out_dir, runs_root=Path(spec.bench_root) / "runs")
     scheduler = ArenaScheduler(
