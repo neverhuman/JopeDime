@@ -87,13 +87,18 @@ From the reviewed checkout:
 export TMPDIR="$HOME/.cache/jope-test-tmp/rlfw-l2"
 mkdir -p "$TMPDIR"
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
-  nice -n 19 ionice -c3 python3 -B -m unittest \
+  nice -n 19 ionice -c3 uv run --project python --no-sync python3 -B -m unittest \
   rlfw.tests.test_exit_targets rlfw.tests.test_exit_training -v
 ```
 
 The two training suites are registered in `run_rlfw_offline.py`. Run the actual
 offline runner as the acceptance command; it collects all 92 PR1, arena and
-training fixtures with no skips. The training suites contain 27 fixtures.
+training fixtures with no skips. Both the local required hook and hosted Python
+lane use the already synced, locked CPU environment through
+`uv run --project python --no-sync`; the tensor fixtures require its declared
+Torch and safetensors dependencies. This fixture environment is separate from
+the source certificate interpreter used for a live challenger. The training
+suites contain 27 fixtures.
 The fixture log `logs/l2/exit-trainer-identity-final.log` records those 27 passing tests with no
 skips. It includes measured tilt derivative/variance, set versus iid weighting,
 exact full-trie KL and gradients, KL-estimator gradient, default-zero equality,
@@ -114,7 +119,8 @@ compute the source bundle identity in the same checkout:
 
 ```sh
 export PYTHONPATH=deploy/dl-flywheel/pipelines
-SOURCE_SHA=$(python3 -B - <<'PY'
+CPU_PYTHON=/home/ubuntu/JopeDime/.agent/worktrees/bt-implementation/python/.venv/bin/python
+SOURCE_SHA=$("$CPU_PYTHON" -B - <<'PY'
 import hashlib, pathlib
 from rlfw.arena.game_spec import digest
 import rlfw.exit_offline_train as training
@@ -123,12 +129,12 @@ print(digest({str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest
               for p in sorted(root.rglob("*.py"))}))
 PY
 )
-TARGET_SHA=$(python3 -B -c 'import json,os; print(json.load(open(os.environ["BENCH"]+"/runs/exit_targets.json"))["target_sha256"])')
+TARGET_SHA=$("$CPU_PYTHON" -B -c 'import json,sys; print(json.load(open(sys.argv[1]))["target_sha256"])' "$BENCH/runs/exit_targets.json")
 systemd-run --user --scope --unit=rlfw-l2-shadow \
   -p CPUQuota=400% -p MemoryMax=6G -p MemorySwapMax=0 -p TasksMax=96 \
   env PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
   MKL_NUM_THREADS=1 nice -n 10 ionice -c3 \
-  python3 -B -m rlfw.exit_offline_train \
+  "$CPU_PYTHON" -B -m rlfw.exit_offline_train \
   --bench-root "$BENCH" --out "$BENCH/ckpt/challenger_exit_v1" \
   --policy-code-root "$BENCH/code_pin" \
   --checkpoint-dir "$BENCH/ckpt/current_latest" \
@@ -140,12 +146,15 @@ systemd-run --user --scope --unit=rlfw-l2-shadow \
   --lambda-pi 0.25 --lambda-kl 0.02
 ```
 
-The CPU default supports fixtures and explicitly authorized CPU runs. The current
+The CPU default supports fixtures and explicitly authorized CPU runs. Verify
+the actual imported `torch.__version__` matches the source CPU certificate
+(2.14.0+cu130 for this campaign); distribution metadata omits the local suffix
+and cannot establish that runtime identity. The current
 campaign's device placement still follows the owner's ruling. CUDA needs a
 byte-bound passed same-pin CPU/CUDA receipt and `--device-parity FILE`; absence
 or failed parity refuses execution. The command does not imply that those live
 inputs or CUDA qualification already exist. The benchmark adapter `l2/training_binding.py` now has a concrete pinned
-artifact-verifier and mixed-batch implementation, with static checks only. It
+artifact-verifier and mixed-batch implementation, with static and isolated admission checks only. It
 requires a sealed training manifest, existing qualified train artifact closures
 and exactly 64 train probes. Actual challenger execution remains unavailable:
 those inputs are absent and the campaign native parity STOP is active.

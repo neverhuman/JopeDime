@@ -191,8 +191,8 @@ cd python
 unset DL_OFFLINE_RUNNER
 bash ../deploy/ci/dl-offline-group.sh 900 "$EVIDENCE/dl-lane-offline"
 )
-    # Additive research fixtures use stdlib fake policies; no deployed imports or checkpoint inputs.
-python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json"
+    # Additive fixtures use the already synced locked CPU environment, including tensor tests.
+uv run --project python --no-sync python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json"
     ;;
   rust-test)
     status=0

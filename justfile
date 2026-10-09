@@ -50,7 +50,7 @@ test-real-corpus custody:
 
 python-check:
     cd python && uv run ruff check . && uv run ruff format --check . && uv run pytest -q -m "not xbabe2"
-    python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py
+    uv run --project python --no-sync python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py
 
 # ADR-0003: no absolute home paths in code or units (python/src is informational until WP6 lands)
 lint-paths:
