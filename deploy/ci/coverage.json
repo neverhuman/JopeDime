@@ -9357,6 +9357,16 @@
       ],
       "dispositions": [],
       "scope": "20 CPU telemetry custody fixtures via run_telemetry_offline.py invoked by run_offline.py; exact roster/no skips/no cloud/GPU/GP/optimizer activity. Positive publication, unknown no-retry, partial closure, historical prefix/gap/version/hash/deadline/budget boundaries."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "37 isolated CPU fresh32 encoder fixtures via run_fresh32_offline.py, invoked additively by run_offline.py after every prior455 identity. Source/runtime and qualification preservation, exact-version custody, cross-host ownership/held-failure exclusion, fixed scope/deadline, atomic progress rename refusal, source-row CAS and safe copy-script execution. No live GP, S3, GPU, optimizer or production DB activity."
     }
   }
 }

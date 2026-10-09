@@ -2904,6 +2904,74 @@
     "python:deploy/dl-flywheel/run_telemetry_offline.py": {
       "role": "research",
       "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts."
+    },
+    "python:deploy/dl-flywheel/run_fresh32_offline.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/generic_worker_dfba7d52.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_intake.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_commit.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/campaign.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_timing.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_transport.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/prepare_config.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_queue.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_publish.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/pilot_publish_core.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet_authority.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_io.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_controller.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/provenance/production2a_worker_cedc828f.py": {
+      "role": "research",
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
     }
   },
   "baseline_triage": [
