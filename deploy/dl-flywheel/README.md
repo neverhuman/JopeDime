@@ -2,7 +2,7 @@
 
 This package joins real-data augmentation, encoder preparation, native GP measurement, immutable S3 results, training admission and measured neural updates. It fixes the operational distinction between original catalog coverage, new variants, unique optimizer exposure and repeated presentations.
 
-This is a release candidate. The completed live qualification used 13 training and 3 validation contexts. Full-corpus admission and throughput changes are under development. No serving promotion, whole-corpus training claim or encoder-mask lift follows from this source import.
+This is a release candidate. The initial historical live qualification used 13 training and 3 validation contexts. The current checkpoint-preserving continuation has physically consumed 6,859 unique training contexts; additional measured expansion remains held until epoch-boundary admission. Missing corpus joins and throughput improvements remain under development. No serving promotion, whole-corpus training claim or encoder-mask lift follows from this source import.
 
 ## Layout
 
@@ -22,7 +22,7 @@ Native PolicyLM modules remain in the repository at `deploy/dl-trainonly/lane/sr
 
 ## Offline checks
 
-Run from the repository root in the existing qualified Python environment. CI uses `run_offline.py --output <fresh-evidence-directory>` to require 226 original cases plus74 native/growth cases in an isolated640-token interpreter (300 total) and write a separate receipt:
+Run from the repository root in the existing qualified Python environment. CI uses `run_offline.py --output <fresh-evidence-directory>` to require 394 cases: 226 original, 74 native/growth, 26 HPC, 17 continuous and 51 prepared/transfer/custody cases in isolated interpreters. Each suite retains a separate receipt:
 
 ```sh
 rtk proxy env PYTHONPATH=deploy/dl-flywheel:deploy/dl-trainonly/lane/src/dl_training_v1 JOPE_POLICYLM_SOURCE=deploy/dl-trainonly/lane/src/dl_training_v1 python3 -B -m unittest discover -s deploy/dl-flywheel/tests -v
@@ -53,3 +53,5 @@ Full-corpus and growth follow-up source lives in `pipelines/native/` and `pipeli
 HPC instrumentation and the original-context scored-program consumer live in `pipelines/hpc/`. Three additional offline modules add 26 tests (326 total), including immutable cache identity/corruption handling, native input masking, and log-chain/S3 archival. See [measured HPC findings](docs/hpc-bottlenecks-and-timing.md). Host GPU samples are distinct from CUDA execution timers. The cache result is a matched two-GP verification benchmark, not a full pipeline speedup.
 
 Checkpoint-preserving continued research training is isolated in `pipelines/continuous/`, including the exact qualified consumer and runtime imports. The `tests_continuous/` CPU fixtures execute in a separate interpreter and add17 cases (343 total). They prove optimizer/RNG continuity, membership bans, supported-only objectives, deadline and interrupted-write handling; they are not live GPU or target-improvement evidence. The frozen runtime pin file is dated provenance and never an automatic deployment authorization.
+
+See [prepared admission and checkpoint transfer](docs/prepared-admission-and-transfer.md) for the measured expansion, exact resume custody, acceptance evidence and remaining variant proposal adapter.

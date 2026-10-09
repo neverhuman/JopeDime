@@ -44,6 +44,11 @@ def main():
   continuous=json.loads((a.output/'continuous/receipt.json').read_bytes())
   success=child.returncode==0 and continuous['passed'] is True
   receipt['continuous_suite']=continuous;receipt['combined_collected']+=continuous['collected'];receipt['combined_executed']+=continuous['executed'];receipt['passed']=success
+ if success:
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_successor_offline.py'),'--output',str(a.output/'successor')],check=False)
+  successor=json.loads((a.output/'successor/receipt.json').read_bytes())
+  success=child.returncode==0 and successor['passed'] is True
+  receipt['successor_suite']=successor;receipt['combined_collected']+=successor['collected'];receipt['combined_executed']+=successor['executed'];receipt['passed']=success
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)
