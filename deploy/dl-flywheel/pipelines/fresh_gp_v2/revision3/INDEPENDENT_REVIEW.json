@@ -1,0 +1,313 @@
+{
+  "actions": [
+    "Read local files and existing receipts, checked hashes/AST/import closure and exact deltas; wrote only this new review receipt."
+  ],
+  "limitations": [
+    "The eight programs are a fixed label coverage panel, not PolicyLM-generated proposals, RL updates, win-rate evidence or generalization lift. New measured labels remain a scored research pool; no automatic training admission.",
+    "Current new timing spans report wall nanoseconds and RSS. They do not provide all requested user/system/child CPU or native-fit/emit/Rust-compile/execute stage attribution. Do not represent configured CPUs or wall spans as measured CPU execution time. Any instrumentation extension is a separately reviewed cold packet.",
+    "Supplied21 new SQLite fixtures exercise deletion/replacement/in-place rollback, changed materialized/body/started state, unknown event kinds, missing custody/queue and permanent never-started holds. They do not execute GP/native/Rust/S3/GPU or qualify real remote launch state."
+  ],
+  "not_performed": [
+    "No tests rerun, SSH/network/S3, GP/Rust/GPU/model execution, process controls, staging, source edits, Git or GitHub approval."
+  ],
+  "resolved_blockers": [
+    "Permanent broker constructor cannot create a missing database: create-once explicitly authorized bootstrap uses exclusive new directory/files, stable device/inode/type pins for directory/database/lock, schema/application/journal/config pins and existing-only SQLite mode=rw thereafter.",
+    "Every reservation/proof verifies the whole event chain and reconstructs config, epochs, reserved context/variant/role rows event by event, checking all intermediate state digests against materialized state in a SQL snapshot.",
+    "Exact hash-bound latest prior head is retained outside the permanent broker root and bound through inventory, history, fence and epoch. In-place DB/local-anchor rewind cannot qualify against that retained authority. SQL commit without create-only fsynced event custody remains held and refuses reopening; no automatic reconstruction.",
+    "All prior permanent contexts remain whole-context holds, including never-started shards. Every prior reserved shard requires the actual queue and full unchanged verifier; missing attempt registries, queues or unresolved output refuse. Prior failure/pending/unknown queue aliases and existing outcome files augment original18 queues plus both outboxes.",
+    "Pinned final pre-native hook rechecks actual running job/token/body/attempt/deadline, source/input replay, current roles, exact owned context, canonical history and short ownership lease immediately before fit. Durable permanent native intent occurs before native execution; no unknown or failed attempt replay."
+  ],
+  "reviewed_at_unix": 1791561857.583647,
+  "reviewed_source_pins": [
+    {
+      "bytes": 4220,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/readonly_snapshot.py",
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
+    },
+    {
+      "bytes": 4724,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/execution_boundary.py",
+      "sha256": "9c338a6a5d22ed2073f5c14d62f40e73bac14ad3c162a2d9a81766ff720522ba"
+    },
+    {
+      "bytes": 759,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/fencing-handoff.template.json",
+      "sha256": "b88eebfa2d3d34869e14674360a677aac9591f305126fbe83ab6378ab4312ab6"
+    },
+    {
+      "bytes": 1309,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/native_runtime.py",
+      "sha256": "becc627b3e0cf78aae8d3514874c88ccdf3107a05e859302c5e29ba47afff3dd"
+    },
+    {
+      "bytes": 7746,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/receipt_gate.py",
+      "sha256": "6afb749eaa65c291d0165d4462d160665103773c19cafaec018c72011c5554c3"
+    },
+    {
+      "bytes": 4708,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/transport.py",
+      "sha256": "6f450bc96743da53242c7df670b2690bcb53393a136faab6db116dff28c8ae2f"
+    },
+    {
+      "bytes": 13769,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/neural_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    {
+      "bytes": 12281,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/history_collect.py",
+      "sha256": "9161e7f6fcdc6426fca4b48d3c2176cead7f05364928f8e30add34f471d725fe"
+    },
+    {
+      "bytes": 12813,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/test_permanent_broker.py",
+      "sha256": "53a13b4f853a6b64ce1cbf9f385a9f4c2e4499efac7581fd1eecc721f9812673"
+    },
+    {
+      "bytes": 14097,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/global_attempts.py",
+      "sha256": "862569c5d71d34641d899bd44e7a897703c285e20f921448e65cd125da688087"
+    },
+    {
+      "bytes": 16572,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/README.md",
+      "sha256": "dca47aba9d1e9abc77278705dc026457513ed9a86b2e2d40f6adc65469073ae7"
+    },
+    {
+      "bytes": 16976,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/campaign_custody.py",
+      "sha256": "ab03821b3073c60a10d9d821fc06c4250b22ae48fdba25448862a40308ff9f40"
+    },
+    {
+      "bytes": 2291,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/common.py",
+      "sha256": "0d8b7c6d44c24423db840f3b80fd2320e839ee8b83a8ab317c8eafb9ee0e7f92"
+    },
+    {
+      "bytes": 7197,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/epoch.py",
+      "sha256": "1f86080c5b8c6fc80f1a9606b9ef0f4707c4f0d9d31841022d15a2c1f439d2ab"
+    },
+    {
+      "bytes": 2828,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/authority_lease.py",
+      "sha256": "d16f87827b3efd5db2718c73b60b6e09c7acec1d55a1337cca9f6bb6d0c9773e"
+    },
+    {
+      "bytes": 11787,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/staged_inputs.py",
+      "sha256": "069a9c007db1e145476c2f3bffe13983daaf11f3ac5bc6d2db5763f43119971c"
+    },
+    {
+      "bytes": 12418,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/permanent_broker.py",
+      "sha256": "b6f34016ca1b82377990dd575150d251b54582cba29d1b8e2e022af458d4e84c"
+    },
+    {
+      "bytes": 9521,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/label_campaign.py",
+      "sha256": "564f25581f8ce4e3e912e5b04a321235d887d050e5f20786c97fa8e52eb10b2f"
+    },
+    {
+      "bytes": 2472,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/resources.py",
+      "sha256": "b8e0135776446fbd24bfa49615987fbb2fdc6a0d9e280603ba4416c894563b40"
+    },
+    {
+      "bytes": 639,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/epoch-request.template.json",
+      "sha256": "7561d5aee04c134cc33ceda3048aa99c9e34d70f3af02184b5f9663a45a08adf"
+    },
+    {
+      "bytes": 25679,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/native_global_guard.py",
+      "sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b"
+    },
+    {
+      "bytes": 5629,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/broker.py",
+      "sha256": "85052181cfaa5be33b737e10af584077aff3b6a95112523d292e250ad8cf5da4"
+    },
+    {
+      "bytes": 5258,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/fresh_gp.py",
+      "sha256": "32e5f4abafe89e6298c0709f7420cd4ba6fe85147f1b53874c95d0159ba85d64"
+    },
+    {
+      "bytes": 9446,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/broker_history.py",
+      "sha256": "0d4722b71773fcea947219fd0d7126f05b5389cb17fc90ea94baf54655394ed1"
+    },
+    {
+      "bytes": 9013,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/prepare.py",
+      "sha256": "38bfeb93ce2fc9fb0d1eca349dc2ff458bb777e5fb4cafde4bbfff1c8e5a7306"
+    },
+    {
+      "bytes": 7599,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/make_requests.py",
+      "sha256": "40eab37210ad9573807541f7a3cde8544043d389b76f85f4eb22ac291f76da59"
+    },
+    {
+      "bytes": 15305,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/executor.py",
+      "sha256": "3cbe2061fe5ce6147c2fd14a94d4c3fed1e0a32604ecb503c99de72bc9f9b36c"
+    },
+    {
+      "bytes": 1952,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/role_authority.py",
+      "sha256": "45726833221f73f7005c495f2b0f74d3e308b33b51d1ee2cb60504df100ad6b5"
+    },
+    {
+      "bytes": 4124,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/borrowed/protocol.json",
+      "sha256": "6436ee62fd0dec8924b40466a93ff9e4b6389e61a2768580baf027fbd377d4e0"
+    },
+    {
+      "bytes": 16505,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/borrowed/program_worker_original.py",
+      "sha256": "71fd7385c31e90cba5240b7361fe757deb19814e890cb49a7362c3c9dab86dc8"
+    },
+    {
+      "bytes": 13448,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/queue.py",
+      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
+    },
+    {
+      "bytes": 9259,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/program_inputs.py",
+      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
+    },
+    {
+      "bytes": 6035,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/program_observer.py",
+      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211"
+    },
+    {
+      "bytes": 4178,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/s3_library.py",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
+    },
+    {
+      "bytes": 9341,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "bytes": 11160,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "bytes": 5835,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "bytes": 95,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "bytes": 17414,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/program_worker.py",
+      "sha256": "3d8cf29ae337b467c249e183c2dde33c9da503d17ea424a994ddbf8753ed484a"
+    },
+    {
+      "bytes": 16420,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "bytes": 4827,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "bytes": 9974,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "bytes": 6171,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/runtime/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    }
+  ],
+  "reviewer": "/root/successor_review",
+  "runtime_conditions": [
+    "Root retains original revision2 HOLD and all old failed/source packets. No revision2 launch or prior program replay.",
+    "Use create-only exact reviewed source/package on xbabe2 and xbabe3 with physically qualified Python/NumPy and native toolchain; no active-module hotpatch or copied writable source journal.",
+    "Root explicitly authorizes bootstrap once, supplies a latest independently retained external head, complete current writer/unit/controller inventories, exact native-only compatibility pins and cooperating cross-host fence. Missing custody requires separate reconciliation, never empty reconstruction.",
+    "Actual cold collections must prove all named legacy writers/controllers closed and original18 queues/both outboxes plus every prior broker shard complete. Current native-only sources must be context-disjoint; every future variant launcher uses the broker.",
+    "Before freeze/launch recheck current lineage roles, all128 raw/target/fold replays and exact-version raw/Kumo closure; no validation reward/optimizer admission. Source/config/protocol/objective identities remain unchanged.",
+    "Root separately reviews the actual frozen epoch, relay, real cgroups/resource reservations, one-use launcher/preflight receipts and remaining wall/monotonic/global budgets. At most explicitly authorized1\u201316 CPU1/RAM4GiB workers, with24GiB foreign reserve and all owned future reservations; no foreign job controls.",
+    "Every new actual score requires existing native/emitted Rust parity and full exact-version artifact closure. Failed/unknown outcomes stay nonnumeric permanent holds. No automatic lease/window reset or retry.",
+    "Preserve closed broker head externally before any successor, and retain full source/attempt/outcome evidence."
+  ],
+  "schema": "jope.independent-operational-source-review/v1",
+  "scientific_limits": {
+    "BLAS_threads": 1,
+    "CPUQuota_per_worker": "100%",
+    "CUDA_VISIBLE_DEVICES": "",
+    "MemoryMax_per_worker": "4GiB",
+    "MemorySwapMax": 0,
+    "TasksMax": 64,
+    "captured_role_counts": {
+      "training": 118,
+      "validation": 10
+    },
+    "contexts": 128,
+    "contexts_per_shard": 8,
+    "custody_seconds": 300,
+    "global_deadline_unix": 1791592146.380285,
+    "max_final_custody_PUT_attempts_per_shard": 2,
+    "max_fit_attempts_per_shard": 64,
+    "max_result_PUT_attempts_per_shard": 512,
+    "maximum_slots": 1024,
+    "native_Rust_parity_tolerance_unchanged": 1e-09,
+    "programs_per_context": 8,
+    "required_encoder": "Kumo Small2051 only",
+    "shards": 16,
+    "slots_per_shard": 64,
+    "weight_sha256": "fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423",
+    "window_seconds": 1800,
+    "work_seconds": 1500
+  },
+  "scope": "Exact cold revision3 source, payload/import closure, README/templates and existing qualification receipt. This is not a live launch, actual remote source/cgroup qualification, native GitHub approval, CI, training admission or GP result claim.",
+  "source_delta": {
+    "bytes": 105627,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/source-delta.json",
+    "sha256": "611eb04d72456bf0fb972d62403463cb8212ef9efc7bae8f7236454506369c33"
+  },
+  "source_packet": {
+    "bytes": 12195,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/SOURCE_PACKET.json",
+    "sha256": "d512604093cdae042af9344be7b0eef8c36eced11af294831e28b289a353788c"
+  },
+  "source_payload_manifest": {
+    "bytes": 7660,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/review-payload/source-manifest.json",
+    "sha256": "4a9f318cd35ac16fea278fdaca411af5e07fd89d5b116de68e0d0f927e90b8d3"
+  },
+  "state": "passed",
+  "validation": {
+    "bytes": 6848,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/validation.json",
+    "sha256": "439ccb926e27d1302c6e521d144f0d8c71a5ac9a5437fca1cafa7ab138eb7934"
+  },
+  "verification": {
+    "Python_ASTs_parsed": 39,
+    "delta_hashes_and_both_source_sides_checked": true,
+    "new_test_identifiers_unique": 21,
+    "new_tests_passed_in_supplied_receipt": 21,
+    "packet_files_hash_bytes_checked": 43,
+    "payload_Python_files_checked": 37,
+    "payload_actual_Python_set_equals_manifest": true,
+    "payload_original_source_bytes_equal": true,
+    "prior49_tests_rerun": false,
+    "reviewer_test_execution": 0,
+    "runtime_numeric_and_fixed_parity_modules_byte_identical_to_revision2": true
+  }
+}

@@ -103,6 +103,15 @@ def main():
   receipt['rl_math_suite']=rl_math;receipt['combined_collected']+=rl_math['collected'];receipt['combined_executed']+=rl_math['executed'];receipt['passed']=success
  if success and (receipt['combined_collected']!=617 or receipt['combined_executed']!=617):
   raise ValueError('All617 wired offline identities must complete')
+ if success:
+  if receipt['combined_collected']!=617 or receipt['combined_executed']!=617:
+   raise ValueError('Prior617 offline identities must remain independently complete')
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_fresh_gp_offline.py'),'--output',str(a.output/'fresh_gp')],check=False)
+  fresh_gp=json.loads((a.output/'fresh_gp/receipt.json').read_bytes())
+  success=child.returncode==0 and fresh_gp['passed']is True and fresh_gp['collected']==fresh_gp['executed']==70
+  receipt['fresh_gp_suite']=fresh_gp;receipt['combined_collected']+=fresh_gp['collected'];receipt['combined_executed']+=fresh_gp['executed'];receipt['passed']=success
+ if success and(receipt['combined_collected']!=687 or receipt['combined_executed']!=687):
+  raise ValueError('All687 wired offline identities must complete')
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

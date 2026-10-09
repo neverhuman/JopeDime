@@ -40,7 +40,17 @@ fit beneath it. Local trace writers on all hosts remain active and untouched.
 - `validation.json`:
   `a85c8b4cbf0e732d07d60eaa0f2cd037b6c89d8dbf4c565e93c6c1986de15ab0`.
 - `metadata-audit.json`, `test-result.json`, `test_trace_recovery_v2.py`,
-  `tests.log`, `prepare_config.py`.
+  `tests-log-custody.json`, `prepare_config.py`.
+
+`tests-log-custody.json` preserves the exact historical 2,045-byte test output
+as base64, with its original SHA-256
+`ca552343a0b81cbf64114ed13626f0a2f34847b871304a599531dded9f27016d`
+and the unchanged 13-test qualification identity. Decode `content_base64` and
+check `original.bytes` and `original.sha256` to recover `tests.log` byte for byte.
+This source representation change did not rerun tests. Historical validation
+and independent-review receipts retain their original paths and hashes; the
+tracked raw `.log` is replaced by this JSON to satisfy `repo-layout` without
+an allowlist exception.
 
 `read_prior.py` is an unused read-only capture helper prepared before root
 supplied the authoritative capture. **Do not run another capture merely to

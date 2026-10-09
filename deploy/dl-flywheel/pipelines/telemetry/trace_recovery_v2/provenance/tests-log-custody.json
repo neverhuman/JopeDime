@@ -1,0 +1,48 @@
+{
+  "content_base64": "dGVzdF9jb21wbGV0ZWRfcHJvZ3Jlc3NfY2Fubm90X2hpZGVfdW5rbm93bl90YWlsICh0ZXN0X3RyYWNlX3JlY292ZXJ5X3YyLkNvbGRUZXN0cy50ZXN0X2NvbXBsZXRlZF9wcm9ncmVzc19jYW5ub3RfaGlkZV91bmtub3duX3RhaWwpIC4uLiBvawp0ZXN0X2V2ZW50X2NoYWluX2NvcnJ1cHRpb25fcmVmdXNlZCAodGVzdF90cmFjZV9yZWNvdmVyeV92Mi5Db2xkVGVzdHMudGVzdF9ldmVudF9jaGFpbl9jb3JydXB0aW9uX3JlZnVzZWQpIC4uLiBvawp0ZXN0X2V4cGlyZWRfbW9ub3RvbmljX2RlYWRsaW5lX2Jsb2Nrc19ldmVuX2JhY2t3YXJkX3dhbGxfY2xvY2sgKHRlc3RfdHJhY2VfcmVjb3ZlcnlfdjIuQ29sZFRlc3RzLnRlc3RfZXhwaXJlZF9tb25vdG9uaWNfZGVhZGxpbmVfYmxvY2tzX2V2ZW5fYmFja3dhcmRfd2FsbF9jbG9jaykgLi4uIG9rCnRlc3RfZnJlc2hfY29uc3RydWN0b3JfZG9lc19ub3RfcmVjcmVhdGVfb2xkMTUzX2F0dGVtcHRfb3JfcmVzZXRfY291bnQgKHRlc3RfdHJhY2VfcmVjb3ZlcnlfdjIuQ29sZFRlc3RzLnRlc3RfZnJlc2hfY29uc3RydWN0b3JfZG9lc19ub3RfcmVjcmVhdGVfb2xkMTUzX2F0dGVtcHRfb3JfcmVzZXRfY291bnQpIC4uLiBvawp0ZXN0X2ZyZXNoX3N1Y2Nlc3NfY3JlYXRlc19vbmx5X25ld19yZWNlaXB0X3dpdGhfZXhhY3RfdmVyc2lvbnMgKHRlc3RfdHJhY2VfcmVjb3ZlcnlfdjIuQ29sZFRlc3RzLnRlc3RfZnJlc2hfc3VjY2Vzc19jcmVhdGVzX29ubHlfbmV3X3JlY2VpcHRfd2l0aF9leGFjdF92ZXJzaW9ucykgLi4uIG9rCnRlc3RfZnVsbF9jb2xkX3ByZWZpeF9wcmVzZXJ2ZXNfb3JpZ2luYWxfZ2FwX2FuZF9nbG9iYWxfYnVkZ2V0ICh0ZXN0X3RyYWNlX3JlY292ZXJ5X3YyLkNvbGRUZXN0cy50ZXN0X2Z1bGxfY29sZF9wcmVmaXhfcHJlc2VydmVzX29yaWdpbmFsX2dhcF9hbmRfZ2xvYmFsX2J1ZGdldCkgLi4uIG9rCnRlc3RfbGl2ZV9wcmlvcl9waWRfcmVmdXNlZCAodGVzdF90cmFjZV9yZWNvdmVyeV92Mi5Db2xkVGVzdHMudGVzdF9saXZlX3ByaW9yX3BpZF9yZWZ1c2VkKSAuLi4gb2sKdGVzdF9taXNzaW5nX2F0dGVtcHRfYnJlYWtzX3ByaW9yX251bWJlcmluZyAodGVzdF90cmFjZV9yZWNvdmVyeV92Mi5Db2xkVGVzdHMudGVzdF9taXNzaW5nX2F0dGVtcHRfYnJlYWtzX3ByaW9yX251bWJlcmluZykgLi4uIG9rCnRlc3RfcGFpcl9idWRnZXRfcmVmdXNlc19iZWZvcmVfYW55X3NpbmdsZV9vYmplY3RfYXR0ZW1wdCAodGVzdF90cmFjZV9yZWNvdmVyeV92Mi5Db2xkVGVzdHMudGVzdF9wYWlyX2J1ZGdldF9yZWZ1c2VzX2JlZm9yZV9hbnlfc2luZ2xlX29iamVjdF9hdHRlbXB0KSAuLi4gb2sKdGVzdF9waHlzaWNhbF9yZWNlaXB0X2NoYW5nZV9hZnRlcl9zbmFwc2hvdF9yZWZ1c2VkICh0ZXN0X3RyYWNlX3JlY292ZXJ5X3YyLkNvbGRUZXN0cy50ZXN0X3BoeXNpY2FsX3JlY2VpcHRfY2hhbmdlX2FmdGVyX3NuYXBzaG90X3JlZnVzZWQpIC4uLiBvawp0ZXN0X3JlY2VpcHRfdmVyc2lvbl9tdXN0X21hdGNoX2FjdHVhbF92ZXJpZmllZF9vYmplY3QgKHRlc3RfdHJhY2VfcmVjb3ZlcnlfdjIuQ29sZFRlc3RzLnRlc3RfcmVjZWlwdF92ZXJzaW9uX211c3RfbWF0Y2hfYWN0dWFsX3ZlcmlmaWVkX29iamVjdCkgLi4uIG9rCnRlc3RfdHdvX2F0dGVtcHRfdW5yZWNlaXB0ZWRfdGFpbF9pc19uZXZlcl9yZXBsYXllZCAodGVzdF90cmFjZV9yZWNvdmVyeV92Mi5Db2xkVGVzdHMudGVzdF90d29fYXR0ZW1wdF91bnJlY2VpcHRlZF90YWlsX2lzX25ldmVyX3JlcGxheWVkKSAuLi4gb2sKdGVzdF91bmtub3duX2ludGVudF9za2lwc19lbnRpcmVfcGFydF9hbmRfY2hhcmdlc19nbG9iYWxfYnVkZ2V0ICh0ZXN0X3RyYWNlX3JlY292ZXJ5X3YyLkNvbGRUZXN0cy50ZXN0X3Vua25vd25faW50ZW50X3NraXBzX2VudGlyZV9wYXJ0X2FuZF9jaGFyZ2VzX2dsb2JhbF9idWRnZXQpIC4uLiBvawoKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpSYW4gMTMgdGVzdHMgaW4gMS4wOTRzCgpPSwo=",
+  "encoding": "base64",
+  "historical_qualification": {
+    "identity": {
+      "count": 13,
+      "identities": [
+        "test_trace_recovery_v2.ColdTests.test_completed_progress_cannot_hide_unknown_tail",
+        "test_trace_recovery_v2.ColdTests.test_event_chain_corruption_refused",
+        "test_trace_recovery_v2.ColdTests.test_expired_monotonic_deadline_blocks_even_backward_wall_clock",
+        "test_trace_recovery_v2.ColdTests.test_fresh_constructor_does_not_recreate_old153_attempt_or_reset_count",
+        "test_trace_recovery_v2.ColdTests.test_fresh_success_creates_only_new_receipt_with_exact_versions",
+        "test_trace_recovery_v2.ColdTests.test_full_cold_prefix_preserves_original_gap_and_global_budget",
+        "test_trace_recovery_v2.ColdTests.test_live_prior_pid_refused",
+        "test_trace_recovery_v2.ColdTests.test_missing_attempt_breaks_prior_numbering",
+        "test_trace_recovery_v2.ColdTests.test_pair_budget_refuses_before_any_single_object_attempt",
+        "test_trace_recovery_v2.ColdTests.test_physical_receipt_change_after_snapshot_refused",
+        "test_trace_recovery_v2.ColdTests.test_receipt_version_must_match_actual_verified_object",
+        "test_trace_recovery_v2.ColdTests.test_two_attempt_unreceipted_tail_is_never_replayed",
+        "test_trace_recovery_v2.ColdTests.test_unknown_intent_skips_entire_part_and_charges_global_budget"
+      ],
+      "old21_tests_rerun": 0,
+      "source_sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22",
+      "state": "passed",
+      "test_log_sha256": "ca552343a0b81cbf64114ed13626f0a2f34847b871304a599531dded9f27016d",
+      "tests_sha256": "f8d2ee0bac9f392c0c59250fc39ae6a9c1b3527ee8ff2841f49cf40d8e21baad"
+    },
+    "log_reported_elapsed_seconds": 1.094,
+    "test_result": {
+      "bytes": 1471,
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/test-result.json",
+      "sha256": "16f5d8de58c6ddc86dbc742b49548776582cbcb806558cb8f9896df851b9de24"
+    },
+    "validation": {
+      "bytes": 2683,
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/validation.json",
+      "sha256": "a85c8b4cbf0e732d07d60eaa0f2cd037b6c89d8dbf4c565e93c6c1986de15ab0"
+    }
+  },
+  "interpretation": "Exact historical qualification output, represented losslessly for the repository layout rule. No test was rerun or new execution result inferred during this source-only correction. Historical validation and independent-review receipts remain unchanged; their original tests.log references resolve to original.path and the decoded bytes here.",
+  "original": {
+    "bytes": 2045,
+    "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/tests.log",
+    "sha256": "ca552343a0b81cbf64114ed13626f0a2f34847b871304a599531dded9f27016d"
+  },
+  "schema": "jope.historical-test-log-custody/v1",
+  "source_commit": "bd37122bd41a348d57fd8ee1d432f2353fa57405"
+}

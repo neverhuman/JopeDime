@@ -1,0 +1,16 @@
+{
+  "all_future_variant_launchers_require_broker": null,
+  "authorized_at_unix": null,
+  "broker_bootstrap": null,
+  "broker_head_anchor": null,
+  "broker_lock": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-fresh-context-broker-20261009-v1/epoch.lock",
+  "broker_root": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-fresh-context-broker-20261009-v1",
+  "candidate_inventory_sha256": "71f0d5129f02f95a6a9821caff080cbb9b3426c4eab844db1bbcca3ed8712030",
+  "compatible_native_writers": null,
+  "foreign_variant_writers_released": null,
+  "global_deadline_unix": 1791592146.380285,
+  "history_collection_sha256": [],
+  "root_authorization": null,
+  "schema": "jope.fresh128-variant-writer-fence/v2",
+  "state": "UNQUALIFIED_TEMPLATE_NOT_LAUNCHABLE"
+}

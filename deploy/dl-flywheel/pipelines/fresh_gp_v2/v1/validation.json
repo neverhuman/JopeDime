@@ -1,0 +1,94 @@
+{
+  "schema": "jope.fresh128-gp-local-validation/v1",
+  "state": "stopped_pending_cold_global_qualification",
+  "prepared_at_unix": 1791557830.565789,
+  "source_manifest": {
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/source-manifest.json",
+    "sha256": "9a1a15f54c81f0cd37f15655169138d4eaa02ce757904f3673ba4b4a0b401eb3",
+    "bytes": 5507
+  },
+  "test_command": "rtk proxy python3 work/heartbeat-20261009-1203/fresh128-gp-v1/test_fresh128.py -v",
+  "test_result": {
+    "exit_code": 0,
+    "tests_run": 25,
+    "failures": 0,
+    "errors": 0,
+    "reported_runtime_seconds": 0.357,
+    "tests": [
+      "test_actual_worker_hook_prevents_native_command_after_replay",
+      "test_all_historical_states_are_holds_and_unresolved_alias_blocks",
+      "test_authority_expired_between_preparation_and_fit_is_held",
+      "test_cached_bad_measurement_never_falls_through_to_fit",
+      "test_context_role_not_reassigned_or_optimizer_admitted",
+      "test_context_target_difference_yields_distinct_native_identity",
+      "test_current_receipt_role_is_validation_not_admission",
+      "test_exact_roster_validation_and_stale_support",
+      "test_exact_version_read_wrong_version_and_tampered_cache_refused",
+      "test_full_evaluate_body_diff_only_execution_boundary_and_deadline",
+      "test_global_work_and_monotonic_minimum",
+      "test_history_rehash_and_full_unfiltered_census",
+      "test_job_body_token_or_source_change_refuses_before_fit",
+      "test_lease_expiry_during_costly_input_preparation_zero_intent",
+      "test_null_key_canonical_historical_alias_is_permanent_hold",
+      "test_numerical_and_parity_functions_identical",
+      "test_ownership_excludes_active_other_variant_and_expiry",
+      "test_parallel_duplicate_key_native_callback_only_once",
+      "test_registry_manual_state_change_rejected",
+      "test_residual_encoder_and_gp_reservations_are_charged",
+      "test_single_key_cannot_invoke_twice_even_other_owner_or_reopen",
+      "test_unqualified_actual_template_cannot_be_launched",
+      "test_whole_context_duplicate_launch_and_alias_refused",
+      "test_worker_requires_boundary_for_new_schema",
+      "test_wrong_versions_targets_weights_qualification_and_roster_fail"
+    ],
+    "provenance": "Observed actual tool invocation in this task; structured summary, not a fabricated raw process log."
+  },
+  "source_proofs": {
+    "unchanged_runtime_modules": [
+      "__init__.py",
+      "augmentation.py",
+      "evergreen.py",
+      "program_gate.py",
+      "program_inputs.py",
+      "program_io.py",
+      "program_observer.py",
+      "protocol.py",
+      "queue.py",
+      "s3_library.py",
+      "score_join.py",
+      "target_noise.py"
+    ],
+    "unchanged_runtime_count": 12,
+    "all_top_level_worker_numeric_functions_AST_identical": true,
+    "worker_resolve_and_once_AST_identical": true,
+    "worker_evaluate_AST_identical_after_explicit_guard_and_deadline_removal": true,
+    "fixed_parity_tolerance": 1e-09,
+    "original_worker_sha256": "71fd7385c31e90cba5240b7361fe757deb19814e890cb49a7362c3c9dab86dc8",
+    "new_guarded_worker_sha256": "3d8cf29ae337b467c249e183c2dde33c9da503d17ea424a994ddbf8753ed484a"
+  },
+  "actual_inventory": {
+    "contexts_metadata": 128,
+    "distinct_parent_lineages": 128,
+    "partition_train": 118,
+    "partition_validation": 10,
+    "native_contexts_replayed": 0,
+    "fresh_S3_readbacks": 0,
+    "cold_history_captures": 0
+  },
+  "capabilities_used": {
+    "remote_reads": 0,
+    "remote_writes": 0,
+    "S3_requests": 0,
+    "native_GP_executions": 0,
+    "GPU_executions": 0,
+    "live_queue_claims": 0,
+    "Git_mutations": 0
+  },
+  "limitations": [
+    "Current receipt tests are synthetic source-conformance fixtures, not actual S3 qualification.",
+    "No cross-host ownership certificate producer/lease is implemented or captured in this packet.",
+    "No integrated executable scoring campaign CLI/deployer is provided.",
+    "All context/receipt/current-role/history/resource live gates remain explicitly incomplete.",
+    "Independent review and actual CPU-only qualification are required before any execution."
+  ]
+}
