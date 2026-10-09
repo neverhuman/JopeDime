@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "189b6d050b2aa92e45076343d6473dddf53e1aa344cf7cfa29f17ba655a01a38"
+      "sha256": "46037552c4cada7756a87a912fbe1121fc8cf82ff1ab7096ed700b0eb442348b"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -5263,7 +5263,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "38918a8783f742b05586291b1245d8c259f43c4f60fb935903f4d37c196cfe59"
+      "sha256": "851173f2e63279529d2c234803210516e9417964da686cd4e0c13fb47d298650"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
