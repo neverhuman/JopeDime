@@ -1,10 +1,10 @@
 """Precommitted iid whole-program draws; no measured scores reach arm code."""
 
-from bisect import bisect_left
-from dataclasses import dataclass
 import hashlib
 import math
 import random
+from bisect import bisect_left
+from dataclasses import dataclass
 
 from .game_spec import digest, require_sha
 
@@ -60,8 +60,23 @@ class Candidate:
     propensity: float | None
     selection_rule: str
     batch_protocol_sha256: str | None = None
+    predicted: dict | None = None
 
     def __post_init__(self):
+        if type(self.draw_seed) is not int or not 0 <= self.draw_seed < 2**63:
+            raise ValueError("bounded integer draw seed required")
+        if self.predicted is not None:
+            if set(self.predicted) != {"q", "p_complete", "runtime_seconds"} or any(
+                type(v) not in (int, float) or not math.isfinite(v)
+                for v in self.predicted.values()
+            ):
+                raise ValueError("complete finite predicted head fields required")
+            if (
+                not 0 <= self.predicted["p_complete"] <= 1
+                or self.predicted["runtime_seconds"] <= 0
+            ):
+                raise ValueError("invalid predicted completion or runtime")
+            object.__setattr__(self, "predicted", dict(self.predicted))
         if self.total_logprob is not None:
             if len(self.per_token_logprob) != len(self.program.tokens) - 1:
                 raise ValueError("EOS-inclusive per-token trace required")
@@ -76,6 +91,25 @@ class Candidate:
             raise ValueError("unknown propensity must be null")
         if self.batch_protocol_sha256 is not None:
             require_sha(self.batch_protocol_sha256, "decoder batch protocol")
+
+    def to_dict(self):
+        return {
+            "program": self.program.to_dict(),
+            "draw_seed": self.draw_seed,
+            "total_logprob": self.total_logprob,
+            "per_token_logprob": list(self.per_token_logprob),
+            "propensity": self.propensity,
+            "selection_rule": self.selection_rule,
+            "batch_protocol_sha256": self.batch_protocol_sha256,
+            "predicted": self.predicted,
+        }
+
+    @classmethod
+    def from_dict(cls, value):
+        d = dict(value)
+        d["program"] = Program.from_dict(d["program"])
+        d["per_token_logprob"] = tuple(d["per_token_logprob"])
+        return cls(**d)
 
 
 def draw_seed(context_id, arm, seed, slot):
@@ -102,6 +136,32 @@ class BaselineArms:
         self.sample = sample
         self.sorted_tokens = sorted(p.tokens for p in self.catalog)
         self.sentinel = max(t for p in self.catalog for t in p.tokens) + 1
+
+    def policy_candidate(self, row, arm, seed):
+        p = Program.from_dict({**row["program"], "tokens": row["tokens"]})
+        if self.by_sha.get(p.program_sha256) != p:
+            raise ValueError("sampled program is not an exact catalog leaf")
+        if (
+            row.get("trie_sha256") != arm.trie_sha256
+            or row.get("checkpoint_parameter_sha256") != arm.checkpoint_sha256
+            or row.get("decoder_seed", seed) != seed
+        ):
+            raise ValueError("sample checkpoint/support/seed identity mismatch")
+        if (
+            row.get("logprob_support") != "trie_children"
+            or row.get("logprob_aggregation") != "sum_including_eos"
+        ):
+            raise ValueError("grammar or mean-token likelihood refused")
+        total = row["total_logprob"]
+        return Candidate(
+            p,
+            seed,
+            total,
+            tuple(row["per_token_logprob"]),
+            math.exp(total) or None,
+            "iid_trie_sample",
+            row.get("batch_protocol_sha256"),
+        )
 
     def uniform_logprob(self, tokens):
         # Lexical prefix ranges count whole leaves, avoiding a second large trie.
@@ -153,30 +213,7 @@ class BaselineArms:
                 )
             elif arm.name.startswith("trie_sample:"):
                 row = self.sample(context.context_id, arm.name, s)
-                p = Program.from_dict({**row["program"], "tokens": row["tokens"]})
-                if self.by_sha.get(p.program_sha256) != p:
-                    raise ValueError("sampled program is not an exact catalog leaf")
-                if (
-                    row.get("trie_sha256") != arm.trie_sha256
-                    or row.get("checkpoint_parameter_sha256") != arm.checkpoint_sha256
-                ):
-                    raise ValueError("sample checkpoint/support identity mismatch")
-                if (
-                    row.get("logprob_support") != "trie_children"
-                    or row.get("logprob_aggregation") != "sum_including_eos"
-                ):
-                    raise ValueError("grammar or mean-token likelihood refused")
-                per_token = tuple(row["per_token_logprob"])
-                total = row["total_logprob"]
-                c = Candidate(
-                    p,
-                    s,
-                    total,
-                    per_token,
-                    math.exp(total) or None,
-                    "iid_trie_sample",
-                    row.get("batch_protocol_sha256"),
-                )
+                c = self.policy_candidate(row, arm, s)
             else:
                 raise ValueError(f"unsupported arena arm: {arm.name}")
             candidates.append(c)
@@ -207,7 +244,7 @@ def decision_value(spec, context, arm, seed, slot, candidate, kind):
         "slate_id": group,
         "selection_rule": candidate.selection_rule,
         "propensity": candidate.propensity,
-        "predicted": {},
+        "predicted": dict(candidate.predicted or {}),
         "execution_key": None,
         "outcome_class": None,
         "game_spec_sha256": spec.sha256,

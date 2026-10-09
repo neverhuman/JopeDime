@@ -1,0 +1,42 @@
+{
+  "actions": {
+    "imports": 0,
+    "remote": 0,
+    "source_edits": 0,
+    "tests": 0
+  },
+  "checks": {
+    "callback_union": 55,
+    "closed_python_roots": true,
+    "compatibility_sibling_imports_resolve": true,
+    "exact_counts": [
+      37,
+      7,
+      11,
+      8
+    ],
+    "fresh_subprocess_per_group": true,
+    "frozen_callback_packages_byte_exact": true,
+    "group_source_counts": [
+      22,
+      24,
+      27,
+      17
+    ],
+    "pre_post_bytecode_refusal": true,
+    "revision2_two_duplicate_configuration_ids_excluded": true,
+    "source_pins_verified": 90,
+    "unique": 63
+  },
+  "limitations": [
+    "Static wrapper and fixture-interface review only, not executed integration harness qualification.",
+    "Operational helper sources are outside this wrapper review.",
+    "Live source qualification and resource/admission gates remain separate."
+  ],
+  "recorded_at": "2026-10-09T19:49:36.291253+00:00",
+  "reviewer": "/root/generalization_design/review_guard",
+  "roster_sha256": "b54c059aebd34e750da06f0617469ee47e629da82bf79f00e08177c3abd03874",
+  "schema": "jope.callback-integration-wrapper-static-review/v1",
+  "state": "passed_static_only",
+  "wrapper_sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
+}

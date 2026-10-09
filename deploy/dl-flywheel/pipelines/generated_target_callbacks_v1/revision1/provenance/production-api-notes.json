@@ -1,0 +1,219 @@
+{
+  "all128_authority_join": {
+    "adoption_refs": "executor.campaign_config == training_config; executor.prepared_candidate.prepared == prepared ref; adoption schema jope.prepared-epoch-adoption/v1, adoption.snapshot_sha256==prepared.extension_sha256 and adoption.manifest_sha256==digest(prepared.batch_manifest). Prepared rawSHA/config/adoption refs are external custody inputs, not inferred by replay.",
+    "phase_safety": "All128 validation and train descendants are validated without relabeling. Only actual parent partition train can be selected as targets; validation remains validation and is only census evidence for exporter. Outbox phase must be training/validation corresponding to inherited role, with exact emitted_train_data_run_ids or validation_data_run_ids membership; exporter already binds these.",
+    "required_loop": "Check all128 unique prepared descriptor context IDs and unique variant identities, exact equality with request.admitted_descriptors and predecessor tasks. For EACH call describe(d.variant_identity); require context.identity == cid == d.context_id and asdict(context)==d.context, actual.parent_lineage_sha256==d.parent_lineage_sha256 and actual.partition==d.partition; actual.dataset_s3.receipt==d.dataset_publication. Preserve d.encoder_publication exactly from independently pinned prepared artifact/extension. Collect roles from actual parents, never from request echo.",
+    "source_model": "variant_dispatch.py:121\u2013131 binds training/execution/prepared/adoption refs and exact128 unique variants; :156\u2013166 only describes one example. variant_outbox.py:99\u2013120 supplies the full per-emission descriptor join.",
+    "target_contract": "Independently bind exact objective/normalizer raw bytes, original native train roster SHA from trusted native snapshot/preprocessing, labels/compose source pins, fixed Kumo2051 contract and exact weight fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423. Successful registry replay alone does not prove these target contracts."
+  },
+  "at_utc": "2026-10-09T18:53:56.266642+00:00",
+  "current_role_authority": {
+    "api": "program_inputs.current_roles(generator) -> (eligible_view_set, protected_context_set, protected_view_set), lines16\u201333; local reads only.",
+    "closure": "generator.authority_pins is a LIST of exact local refs. Bound every file; exactly one path containing /gp-target-one-holdout-after-layers-; target.registry.path must be present among pins; every registry.layers[] path and exact bytes must be present. Latest target and exclusion registry are chosen from their physical sibling directories by mtime. No cached role decisions.",
+    "freshness_boundary": "A copied immutable role closure establishes historical pin membership, not current physical latest authority. Fresh live claim requires reading the authoritative directories on xbabe2 (or a separately qualified fresh proof); no-network is possible there using local files. Do not relabel a replayed old proof with a new timestamp. Recheck after the full128 loop so changes during replay refuse.",
+    "helper_physical_root": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts; target latest under gp-hwm-index/gp-target-one-holdout-after-layers-v*.json and registry latest under exclusions/TRAINING-EXCLUSION-LAYERS-v*.json; helper rejects symlinks and applies 4MiB/file,16MiB aggregate bounds. Latest helper tie-break is (mtime_ns,name), while current_roles uses mtime only.",
+    "not_reusable": "pipelines/programs/authority.py is a fixed112 train-only CLI; it is not the all128 mixed-role API and cannot be used unchanged for this callback.",
+    "per_parent": "parent.view_id in eligible; parent.view_id not in protected views; no retained_lineage_context_sha256 intersection with protected contexts; evergreen.source additionally verifies deterministic original lineage partition and prepared/research metadata.",
+    "stronger_existing_helper": "pipelines/continuous/native_corpus_authority.check(spec), lines17\u201346, uses authority_pins MAP containing target/role/layers and every layer. It explicitly joins target.registry path+SHA to layers pin, target.inputs[role.path] to role.sha, every layer path+SHA, allowed layer schemas and exact target counts. program_inputs.current_roles alone lacks these explicit target\u2192registry/role SHA checks. Preserve exact authoritative source closure and add these joins or invoke the pinned helper."
+  },
+  "exporter_callback_contract": {
+    "authority_args": "authority(copy_of_request)->dict with exactly the 11 keys listed in authority_keys.",
+    "authority_keys": [
+      "schema",
+      "state",
+      "request_sha256",
+      "checked_at_unix",
+      "source_pins",
+      "descriptors",
+      "parent_roles",
+      "objective_sha256",
+      "normalizer_sha256",
+      "native_train_context_ids_sha256",
+      "roster"
+    ],
+    "expected": "schema jope.generated-target-current-authority/v1; state passed; request SHA exact; current nonfuture age<=60s; exact authority_source_pins/admitted_descriptors/objective/normalizer/native fit-roster/roster; parent_roles exact complete lineage set and partitions. Called before selection and immediately before output. Proof equality is a contract, not implementation of authoritative reads.",
+    "lines": [
+      188,
+      204
+    ]
+  },
+  "findings": [
+    "Full128 replay must be explicit; existing variant preflight proves only one executable example.",
+    "Offline exact-version store and authoritative current role paths must be supplied; current source default describe performs S3 reads.",
+    "Current-role target/registry/role joins and final recheck require explicit closure beyond request echo.",
+    "Existing NativeTools output cap is post-capture and omits stderr; use a bounded wrapper if claiming hard subprocess output limits."
+  ],
+  "live_claims": false,
+  "native_canonicalizer": {
+    "api": "program_io.NativeTools(ref,deadline), lines130\u2013158. No GP evaluation API is called by its two canonicalization methods.",
+    "binary_qualification": "Python wrapper source is audited. No native binary was run or remote executable fetched, and no Rust implementation of these modes was present under the audited deploy snapshot.",
+    "bounded_wrapper_gap": "subprocess.run(capture_output=True) collects stdout/stderr before checking stdout cap and never caps stderr. If new adapter promises hard bounded output/memory, wrap the same exact modes with streaming dual-stream limits and owned process-group cleanup. No worker/emitter/Rust compilation/evaluation argv belongs here.",
+    "json_argv": [
+      "<exact pinned native_canonicalizer.path>",
+      "--canonical-json"
+    ],
+    "json_stdin": "protocol.canonical(value): UTF8 JSON sort_keys=true,separators=(comma,colon),ensure_ascii=false,allow_nan=false; no appended newline. Native stdout must end with newline; returned body removes exactly one newline and json.loads(body)==value.",
+    "limits": "NativeTools calls only these two mode strings; binds binary bytes before+after; input<=2MiB; timeout=min(5,remaining(deadline)); rc0, terminal newline, stdout<=2MiB after completion. tick uses wall deadline and optional global campaign monotonic bound.",
+    "program_argv": [
+      "<exact pinned native_canonicalizer.path>",
+      "--canonical-program"
+    ],
+    "program_stdin": "protocol.canonical({dsl:text}); nonempty str text UTF8 <=32768bytes.",
+    "program_stdout": "JSON object containing dsl and program_sha256 followed by newline; verify sha256(dsl.encode())==program_sha256 and return dsl. Existing method does not enforce an exact return key set."
+  },
+  "registered_inputs": {
+    "api": "jope_flywheel.program_inputs.RegisteredInputs(config, registry, native, client, deadline); describe(identity) -> (protocol.Context, raw JTT1 bytes, jope.flywheel-program-input/v1 descriptor).",
+    "caller_config_refs": [
+      "worker.registry bound before construction",
+      "worker.native_canonicalizer bound before NativeTools construction",
+      "worker.generator_config",
+      "generator.parent_registry",
+      "generator.source_pins[]",
+      "generator.authority_pins[]",
+      "generator.out"
+    ],
+    "config_fields_read": [
+      "generator_config {path,sha256[,bytes]}",
+      "protocol_descriptor",
+      "vocabulary_descriptor",
+      "worker {path,sha256[,bytes]}"
+    ],
+    "constructor_lines": [
+      68,
+      82
+    ],
+    "describe_checks": "Lines100\u2013143 bind source/config/parent pins every use; current role/eligible view and retained lineage exclusions; exact local generator.out/variants/identity/name path; compare three local files with exact published versions; generation and parent metadata/content joins; deterministic evergreen source/generate replay including fit-only target noise; research/outer_test_rows=0; dataset publication object closure. Lines144\u2013158 derive protocol/vocabulary/cut using native canonical JSON, exact Context and descriptor.",
+    "no_network_route": "Use a pinned local manifest store exposing get_version(ref)->(bytes,ref.version_id) through dataset_read/version_cache adapter, or exact get_object response adapter. Keep namespace/version/length/hash checks in dataset_object. Passing client=None without an adapter fails; normal describe calls S3. Never use enable_version_cache with a real client as evidence of zero network; first read is still network.",
+    "not_covered": "describe does not read or qualify encoder_publication/Kumo vector/weight. Preserve and independently bind the already admitted prepared/extension descriptor and approved exact Kumo contract; do not describe its dataset replay as encoder requalification.",
+    "registry_contract": "schema jope.flywheel-program-inputs/v1; generator_config_sha256 == worker.generator_config.sha256; research_only=true; teaching_eligible=false; unique inputs[].identity; constructor accepts 1..128, so callback must require exactly128 for this fixed admitted campaign; full parent registry must contain exactly1068 unique parent_lineage_sha256 values.",
+    "registry_row_fields": [
+      "identity",
+      "parent",
+      "sequence",
+      "ordinal",
+      "metadata_sha",
+      "content_sha",
+      "files.{encoder.jtt1.gz,metadata.json,generation.json} exact local refs",
+      "s3.{encoder.jtt1.gz,metadata.json,generation.json,receipt} exact version refs"
+    ],
+    "runtime_dependencies": [
+      "jope_flywheel package",
+      "program_inputs",
+      "program_io",
+      "protocol",
+      "evergreen",
+      "augmentation",
+      "target_noise",
+      "NumPy exact compatible runtime; metadata includes NumPy version and replay is byte-exact"
+    ]
+  },
+  "reviewer": "/root/generalization_design/review_guard",
+  "schema": "jope.generated-target-production-callback-api-review/v1",
+  "scope": "Read-only source API audit; no implementation review or live authority/native binary qualification. No tests, production imports, remote/network, services, GP execution or source edits.",
+  "source_pins": [
+    {
+      "bytes": 95,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "bytes": 10734,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/program_inputs.py",
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    {
+      "bytes": 6171,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "bytes": 9974,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "bytes": 9341,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "bytes": 11160,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "bytes": 5835,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "bytes": 16420,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "bytes": 4827,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "bytes": 12572,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/variant_outbox.py",
+      "sha256": "e3c3d1e74ac508f858c1aa7641cf9447bf1eae03ce8b329a7b4cacd1d453a60e"
+    },
+    {
+      "bytes": 20129,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/native_variant_snapshot.py",
+      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+    },
+    {
+      "bytes": 37518,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/jope_flywheel/training_snapshot_kumos.py",
+      "sha256": "df13a8645eb74a4a360c46bb1e04e260199f87ff13a226782dad5eb7e83def43"
+    },
+    {
+      "bytes": 16607,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/pipelines/variants/variant_dispatch.py",
+      "sha256": "ad5c6caf1a3a86d8651b5766e7677ea565243b90ffdea943487d4da21cc5360b"
+    },
+    {
+      "bytes": 3879,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/pipelines/continuous/native_corpus_authority.py",
+      "sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9"
+    },
+    {
+      "bytes": 2449,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/pipelines/programs/authority.py",
+      "sha256": "5663ea3c12ca736c2a967da20a01a627ef303d02f669725da21c267f2243e3c0"
+    },
+    {
+      "bytes": 7249,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/pipelines/prepared/prepared_snapshot.py",
+      "sha256": "d7afd3c424d26eb940ddfddfec25dab1fa843f79678b781aa2758cccbf099561"
+    },
+    {
+      "bytes": 24595,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/files/deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    }
+  ],
+  "verifier_api": {
+    "call": "program_gate.verified_measurement(store, Context(**descriptor.context), canonical_dsl, wrapper_dict), lines43\u201395; no GP subprocess/DB/network unless supplied store or nativecanonical_json callback performs them.",
+    "closure": "Unchanged seven-role object read and semantic checks: input/program/evaluation/rust_source/rust_executable/rust_parity/score_records; exact Context and request key; observed native two-fold predictions and RMSE; stored executed parity/provenance; canonical native score rows. Verifies stored execution evidence, does not execute GP or emitted Rust.",
+    "forbidden_constructors": "Do not instantiate ProgramGate (creates gp_observations table), Queue, ProgramObserver, ProgramWorker, Outbox, or call variant_dispatch.preflight/main. Those introduce DB writes/claims/network or evaluation scope.",
+    "return_keys": [
+      "evaluation_key",
+      "program_sha256",
+      "context_id",
+      "measurement",
+      "status",
+      "inner_fold_rmse",
+      "evaluation_sha256",
+      "artifact_versions",
+      "canonical_score_row_sha256",
+      "teaching_eligible"
+    ],
+    "return_qualification": "teaching_eligible remains false. No q, labels, target tensor or admission result is returned. Source modules: program_gate, score_join, augmentation, protocol, NumPy, NativeTools/program_io for required native canonical JSON.",
+    "store": "get_version(ref)->(exact bytes,returned VersionId) and nativecanonical_json callable. Enforce frozen bucket/key prefixes and full bucket/key/version/SHA/bytes local manifest identity, unknown/missing fail closed. No lookup/HEAD is needed when wrapper ref is already pinned."
+  }
+}

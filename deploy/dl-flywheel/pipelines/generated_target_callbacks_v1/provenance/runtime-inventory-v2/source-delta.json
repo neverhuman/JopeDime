@@ -1,0 +1,23 @@
+{
+  "schema": "jope.generated-target-runtime-inventory-successor/v1",
+  "previous_inventory_completed_preserved": true,
+  "previous_inventory_sha256": "46fb5303666a669913d7a1b89c7c4f3f91261d9512e749f588138e117b171fdf",
+  "new_source_sha256": "794c9a45bcc8877e4d04f131e02407f5c3ae38bb5d7d9c6b673d2d07e5511c0d",
+  "change": "Additionally pin actual imported SDK/module origin trees and import known lazy s3transfer.compat, not merely distribution-selected paths",
+  "same_bounds": {
+    "files": 4096,
+    "bytes": 268435456,
+    "per_file": 67108864,
+    "CPU": 1,
+    "memory_bytes": 536870912,
+    "swap": 0,
+    "wall_seconds": 60
+  },
+  "network": 0,
+  "GP": 0,
+  "optimizer": 0,
+  "runtime_install": false,
+  "live_launch": false,
+  "failed_qualifier_v2_config": "f0ea865b674c07ace3a73e87e12086fdef0eb83a38a6f3839516af091a3bb3d6",
+  "failed_qualifier_v2_result": "1a9b6ec5b14687e03492a4d118ab55589e44fbaa9469ca377fcf7dc5d5147ddb"
+}

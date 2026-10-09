@@ -1,11 +1,11 @@
 {
   "files": [
     {
-      "normalization": "Additive classifications only; every previous item/lane/disposition and metadata preserved.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
-      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
+      "normalization": "Append exact one main metadata row without altering head values.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/metadata-main-head-base.json",
+      "origin_sha256": "2d22e6fb4c2a6e0e5d6d85761baa02e73ab9f4ebafa868830ce6ede20689d633",
       "path": "deploy/ci/coverage.json",
-      "sha256": "e38da7e9a9801e0c1ee8025561e99cd1ce8b17249b197e61ada4fa6b2a40b855"
+      "sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -15,11 +15,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Additive classifications only; every previous item/lane/disposition and metadata preserved.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
-      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
+      "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "6c412ea016d53acfc03acc8da16694eb99236462d1984539d4ba06116aa2412b"
+      "sha256": "ed253f19bd830867825be8ca94ef9a340bfa88c5ca9f87b9ba97fc6cccf06697"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -2600,6 +2600,986 @@
       "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
     },
     {
+      "normalization": "New integration/operational boundary documentation; frozen author docs retained.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/assemble_local.py",
+      "origin_sha256": "b0d9ffc6256dcaa5f86f78449d92d83429b4a3b7dba434e259862dce0d6ec121",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/README.md",
+      "sha256": "9b2e6560d93cbf57b9c632e829c796c0e61669b1564d10c925d281fb7f872301"
+    },
+    {
+      "normalization": "Explicit isolated revision37/7/11 and compatibility8 roster; duplicate2 revision2 configuration IDs omitted.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/assemble_local.py",
+      "origin_sha256": "b0d9ffc6256dcaa5f86f78449d92d83429b4a3b7dba434e259862dce0d6ec121",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/integration-fixtures.json",
+      "sha256": "b54c059aebd34e750da06f0617469ee47e629da82bf79f00e08177c3abd03874"
+    },
+    {
+      "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory/inventory.py",
+      "origin_sha256": "cc2d32cc758f2431906475b14d574d7e71b1c25af827503577317b6a0a9a191c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory.py",
+      "sha256": "cc2d32cc758f2431906475b14d574d7e71b1c25af827503577317b6a0a9a191c"
+    },
+    {
+      "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/inventory.py",
+      "origin_sha256": "794c9a45bcc8877e4d04f131e02407f5c3ae38bb5d7d9c6b673d2d07e5511c0d",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory_v2.py",
+      "sha256": "794c9a45bcc8877e4d04f131e02407f5c3ae38bb5d7d9c6b673d2d07e5511c0d"
+    },
+    {
+      "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/inventory-bounded.py",
+      "origin_sha256": "3ccd0c87291801e075669a3095758c27973d8b62236ebdaa6f0323ce2be34726",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory_v2_bounded.py",
+      "sha256": "3ccd0c87291801e075669a3095758c27973d8b62236ebdaa6f0323ce2be34726"
+    },
+    {
+      "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v2/controller.py",
+      "origin_sha256": "04c68a13f903733858568f66b227bbac944e38ce31cac7aab1b5b10b8622f852",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_attempt2_controller.py",
+      "sha256": "04c68a13f903733858568f66b227bbac944e38ce31cac7aab1b5b10b8622f852"
+    },
+    {
+      "normalization": "Exact frozen controller/review bytes.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v3/controller.py",
+      "origin_sha256": "88345b38ae755a488319e099786b9290d709b09a6e6d8c071374800c8c4d6adc",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_attempt3_controller.py",
+      "sha256": "88345b38ae755a488319e099786b9290d709b09a6e6d8c071374800c8c4d6adc"
+    },
+    {
+      "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification/controller.py",
+      "origin_sha256": "b06a80687477d80bdfde170ef3bf9e27d8a5e76c5584e94eb806e0a0c92d4c92",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_controller_v1_held.py",
+      "sha256": "b06a80687477d80bdfde170ef3bf9e27d8a5e76c5584e94eb806e0a0c92d4c92"
+    },
+    {
+      "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification/controller-v2.py",
+      "origin_sha256": "25fbf9a3a367e7d4f82d8c661e62dc181175beeedd2c586f66a240cd28099082",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_controller_v2.py",
+      "sha256": "25fbf9a3a367e7d4f82d8c661e62dc181175beeedd2c586f66a240cd28099082"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/PROTOCOL_REVIEW.md",
+      "origin_sha256": "b9dd3f3e6d7bf2818d42ce8505fca6e96487ce948aacd167971ff5d00579d279",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/PROTOCOL_REVIEW.md",
+      "sha256": "b9dd3f3e6d7bf2818d42ce8505fca6e96487ce948aacd167971ff5d00579d279"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/controller-v1-held-review.json",
+      "origin_sha256": "a78bf4e10eef48e79ee65562715ca3735605fbf58207ac101ead7423e67d4300",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/controller-v1-held-review.json",
+      "sha256": "a78bf4e10eef48e79ee65562715ca3735605fbf58207ac101ead7423e67d4300"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/controller-v2-review.json",
+      "origin_sha256": "7bda69f548f3457ef4cd7a86f422c6fd50a09a2ac2584ccc715379cc121a03be",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/controller-v2-review.json",
+      "sha256": "7bda69f548f3457ef4cd7a86f422c6fd50a09a2ac2584ccc715379cc121a03be"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/frozen-v1-source-review.json",
+      "origin_sha256": "54e1848a1955cb8ad0681bc0807c3ff25bcbc2140b415138ba8d62774db47a82",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/frozen-v1-source-review.json",
+      "sha256": "54e1848a1955cb8ad0681bc0807c3ff25bcbc2140b415138ba8d62774db47a82"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/protocol-review.json",
+      "origin_sha256": "0dfb19afccccd5953a01551b999a688b390341cf22a14b78a64c92030b105133",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/protocol-review.json",
+      "sha256": "0dfb19afccccd5953a01551b999a688b390341cf22a14b78a64c92030b105133"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/revision2-source-review.json",
+      "origin_sha256": "8b4a3121adc0e642df51ea57a7b23c95f2a0459879a3ceffc19d0f3e961a33e6",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/revision2-source-review.json",
+      "sha256": "8b4a3121adc0e642df51ea57a7b23c95f2a0459879a3ceffc19d0f3e961a33e6"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/revision3/fresh-selected-v2-review.json",
+      "origin_sha256": "d46d877264b01cd1628569c3c17b13a10cb223e0ca467aecf1ae25bc52a95527",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/revision3/fresh-selected-v2-review.json",
+      "sha256": "d46d877264b01cd1628569c3c17b13a10cb223e0ca467aecf1ae25bc52a95527"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/revision3/source-review.json",
+      "origin_sha256": "213c0723f01912b06916f7ebc8d24679204e24061a2aa488519505dcae5a5dab",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/revision3/source-review.json",
+      "sha256": "213c0723f01912b06916f7ebc8d24679204e24061a2aa488519505dcae5a5dab"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/runtime-inventory-review.json",
+      "origin_sha256": "30ffd1a6e969596dc7e2aecee124528acf7dce840c709c0ebd87ecba52ec4ef5",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/runtime-inventory-review.json",
+      "sha256": "30ffd1a6e969596dc7e2aecee124528acf7dce840c709c0ebd87ecba52ec4ef5"
+    },
+    {
+      "normalization": "Exact dated source review; its conditions and holds remain historical, not current live qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/selected-config-draft-review.json",
+      "origin_sha256": "07a7a9746598873c2c60fd041a05ec7f49e8ed7df470f45305727edf122ccfbf",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/selected-config-draft-review.json",
+      "sha256": "07a7a9746598873c2c60fd041a05ec7f49e8ed7df470f45305727edf122ccfbf"
+    },
+    {
+      "normalization": "Hash-bound observed inventory completion or metadata-union provenance; no live action by assembler.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-merged-main/assemble_merged.py",
+      "origin_sha256": "8acdfe1a0eb5fc27565b4f52abfb996c4513e5db170f3d681bffcd36afacb257",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/integration/merged-main-metadata-proof.json",
+      "sha256": "0382b2460f06f03ca26173e3795cad32082770a2f799bd1baeff6541c4d33596"
+    },
+    {
+      "normalization": "Static wrapper review or hash-bound owner failure summary; not a live success or target admission.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/review-notes/selected-qualification-v2-failure-summary.json",
+      "origin_sha256": "b8a897a4598519a2b0a758364f419a5e01696a9a65b2a43b0fe9004043702fce",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/integration/selected-qualification-v2-failure-summary.json",
+      "sha256": "b8a897a4598519a2b0a758364f419a5e01696a9a65b2a43b0fe9004043702fce"
+    },
+    {
+      "normalization": "Static wrapper review or hash-bound owner failure summary; not a live success or target admission.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/review-notes/wrapper-independent-review.json",
+      "origin_sha256": "85e8d8c0e8296530b67f06ce8c1451b053b796159981719dd86bc5ba9252dc7a",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/integration/wrapper-independent-review.json",
+      "sha256": "85e8d8c0e8296530b67f06ce8c1451b053b796159981719dd86bc5ba9252dc7a"
+    },
+    {
+      "normalization": "Exact metadata-only inventory bytes.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/inventory-result.json",
+      "origin_sha256": "c7e823e6cfbdc067f099bdee9f6397a0f8243d7b58f536bb0106b23d49b7fec0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/runtime-inventory-v2/completed-inventory-result.json",
+      "sha256": "c7e823e6cfbdc067f099bdee9f6397a0f8243d7b58f536bb0106b23d49b7fec0"
+    },
+    {
+      "normalization": "Exact reviewed metadata-only inventory successor; no actual runtime qualification claim.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/independent-bound-addendum.json",
+      "origin_sha256": "b2c011aa76f6abb9d464f186c072fe0da43b692f91f7ab3e630993b0d1929fea",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/runtime-inventory-v2/independent-bound-addendum.json",
+      "sha256": "b2c011aa76f6abb9d464f186c072fe0da43b692f91f7ab3e630993b0d1929fea"
+    },
+    {
+      "normalization": "Exact reviewed metadata-only inventory successor; no actual runtime qualification claim.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/independent-review.json",
+      "origin_sha256": "9b39f8e0d4ba3859e0a6435f6062016b713aa6b5bb70274c50ec18e07ed9757a",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/runtime-inventory-v2/independent-review.json",
+      "sha256": "9b39f8e0d4ba3859e0a6435f6062016b713aa6b5bb70274c50ec18e07ed9757a"
+    },
+    {
+      "normalization": "Hash-bound observed inventory completion or metadata-union provenance; no live action by assembler.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-merged-main/assemble_merged.py",
+      "origin_sha256": "8acdfe1a0eb5fc27565b4f52abfb996c4513e5db170f3d681bffcd36afacb257",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/runtime-inventory-v2/physical-completion-summary.json",
+      "sha256": "2b218202ae7416f20f33e42c3a7d4294c9c0578959424674830e134efb4d338f"
+    },
+    {
+      "normalization": "Exact reviewed metadata-only inventory successor; no actual runtime qualification claim.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/source-delta.json",
+      "origin_sha256": "7fd3413e55949df1085526b6a296d3a36f812c41dde9f6324427b2b7ae9656a9",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/runtime-inventory-v2/source-delta.json",
+      "sha256": "7fd3413e55949df1085526b6a296d3a36f812c41dde9f6324427b2b7ae9656a9"
+    },
+    {
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
+      "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/selected-qualification-v3/actual-readback-summary.json",
+      "sha256": "75fa5a97b9febe6bca59b2d4ee1de49e3fcb6353408f223441fad1e9f923929d"
+    },
+    {
+      "normalization": "Exact frozen controller/review bytes.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-independent-review/revision3/fresh-selected-v3-review.json",
+      "origin_sha256": "690972e84638df67f0654d127feccd4026af10112f2f915964de6d666f1c5a2c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/selected-qualification-v3/independent-cold-source-review.json",
+      "sha256": "690972e84638df67f0654d127feccd4026af10112f2f915964de6d666f1c5a2c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/README.md",
+      "origin_sha256": "0230e75ce8dff163a0d33334badd75d7a25dfcd675adf799f7bd0ab1977f8c07",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/README.md",
+      "sha256": "0230e75ce8dff163a0d33334badd75d7a25dfcd675adf799f7bd0ab1977f8c07"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/SOURCE_PACKET.json",
+      "origin_sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/SOURCE_PACKET.json",
+      "sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/config-template.json",
+      "origin_sha256": "7d9aea6937626bb871ab72b78be43523a954aec4d80d1b7d151c192f5d4f1435",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/config-template.json",
+      "sha256": "7d9aea6937626bb871ab72b78be43523a954aec4d80d1b7d151c192f5d4f1435"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/FIXTURES.json",
+      "origin_sha256": "421836f671df18ace62a91d1dc3a1dc594b5c7b93bcea5c3ab3d1f60bbe16471",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/FIXTURES.json",
+      "sha256": "421836f671df18ace62a91d1dc3a1dc594b5c7b93bcea5c3ab3d1f60bbe16471"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/SOURCE_PINS.json",
+      "origin_sha256": "f5b213ca0b0152aa3a8e362ff75bfabd05846de28f70aa6ad79d1b49f1e5403b",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/SOURCE_PINS.json",
+      "sha256": "f5b213ca0b0152aa3a8e362ff75bfabd05846de28f70aa6ad79d1b49f1e5403b"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/VENDOR_PINS.json",
+      "origin_sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/VENDOR_PINS.json",
+      "sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/__init__.py",
+      "origin_sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/__init__.py",
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/bindings.py",
+      "origin_sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/bindings.py",
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/callbacks.py",
+      "origin_sha256": "dfc0f289f51ed55c0a6b4a0d4b1ecd241d11ea31311403747ae6e2df035133d4",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/callbacks.py",
+      "sha256": "dfc0f289f51ed55c0a6b4a0d4b1ecd241d11ea31311403747ae6e2df035133d4"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/cli.py",
+      "origin_sha256": "821d67a76e54edee15141fc4b310ea39ed73759f34afc8e0815bae03ec29a8f9",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/cli.py",
+      "sha256": "821d67a76e54edee15141fc4b310ea39ed73759f34afc8e0815bae03ec29a8f9"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/fixtures/actual-publication-ref-shape.json",
+      "origin_sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/fixtures/actual-publication-ref-shape.json",
+      "sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/readonly_io.py",
+      "origin_sha256": "5dcffa36026053bdaa1850e9eda8338e451d59934ff349c5948f6c7c9876529b",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py",
+      "sha256": "5dcffa36026053bdaa1850e9eda8338e451d59934ff349c5948f6c7c9876529b"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/run_offline.py",
+      "origin_sha256": "60efdee6aedebccb6c40da6f77b15f6ac6b928c784b99ce3d4af162b0581404d",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/run_offline.py",
+      "sha256": "60efdee6aedebccb6c40da6f77b15f6ac6b928c784b99ce3d4af162b0581404d"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/tests_contracts.py",
+      "origin_sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py",
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/tests_io.py",
+      "origin_sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py",
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/tests_semantics.py",
+      "origin_sha256": "e688d2408246813d13d662fb05a38c0a6dd8e078e09a22c8c0b50ee37683a147",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py",
+      "sha256": "e688d2408246813d13d662fb05a38c0a6dd8e078e09a22c8c0b50ee37683a147"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/__init__.py",
+      "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/augmentation.py",
+      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/evergreen.py",
+      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/program_gate.py",
+      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/program_inputs.py",
+      "origin_sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/program_inputs.py",
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/score_join.py",
+      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/package/vendor/target_noise.py",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/provenance/attempt1-fixtures/tests_contracts.py",
+      "origin_sha256": "3f1ee13e03c98fcf2377496dcbb7fefb14e0df0c36f3a3031bf7b0597ada0f2d",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/attempt1-fixtures/tests_contracts.py",
+      "sha256": "3f1ee13e03c98fcf2377496dcbb7fefb14e0df0c36f3a3031bf7b0597ada0f2d"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/provenance/attempt1-fixtures/tests_semantics.py",
+      "origin_sha256": "846a192054006e6a6582c7f65833f77765a91d8642d481ac0bc4a9d885f084b7",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/attempt1-fixtures/tests_semantics.py",
+      "sha256": "846a192054006e6a6582c7f65833f77765a91d8642d481ac0bc4a9d885f084b7"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/provenance/draft-review-history.json",
+      "origin_sha256": "99176f88d4568699c506a88ac4efb67de388d344949db374a48c33bb23128d14",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/draft-review-history.json",
+      "sha256": "99176f88d4568699c506a88ac4efb67de388d344949db374a48c33bb23128d14"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/provenance/production-api-notes.json",
+      "origin_sha256": "b09c6e220e8ce5299c9d1c348e80985bdac9c89d68be615c4ecc3ce076c2ff02",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/production-api-notes.json",
+      "sha256": "b09c6e220e8ce5299c9d1c348e80985bdac9c89d68be615c4ecc3ce076c2ff02"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/qualification-attempt1.json",
+      "origin_sha256": "b24bb1ff5a30f99d05b2de2668564681ea0c391a5637121a74010a60c1daf97b",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/qualification-attempt1.json",
+      "sha256": "b24bb1ff5a30f99d05b2de2668564681ea0c391a5637121a74010a60c1daf97b"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/qualification-attempt2.json",
+      "origin_sha256": "533d4c9e55aceeac1915b8715e14819e20754bf2367e81c20f5e5890bb7d0226",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/qualification-attempt2.json",
+      "sha256": "533d4c9e55aceeac1915b8715e14819e20754bf2367e81c20f5e5890bb7d0226"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/qualification-final.json",
+      "origin_sha256": "5e09d079295bf2160e5da127b5944bd9bc0781205d78da2fdc7eadee6293bb72",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/qualification-final.json",
+      "sha256": "5e09d079295bf2160e5da127b5944bd9bc0781205d78da2fdc7eadee6293bb72"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/README.md",
+      "origin_sha256": "064cd5fe2cd66c3ac327cbb143641665890e2e6631add98af713d6466f2ede5c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/README.md",
+      "sha256": "064cd5fe2cd66c3ac327cbb143641665890e2e6631add98af713d6466f2ede5c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/SOURCE_PACKET.json",
+      "origin_sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/SOURCE_PACKET.json",
+      "sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/config-template.json",
+      "origin_sha256": "78d1a799c464d0ca953548448b13eda9cd10dcd06788e8a9fc37a2163774012f",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/config-template.json",
+      "sha256": "78d1a799c464d0ca953548448b13eda9cd10dcd06788e8a9fc37a2163774012f"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/FIXTURES.json",
+      "origin_sha256": "daa20422c82e88ae5a3c3538abdf89e81f8bacbad05cb2519a642ad73de3a670",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/FIXTURES.json",
+      "sha256": "daa20422c82e88ae5a3c3538abdf89e81f8bacbad05cb2519a642ad73de3a670"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/SOURCE_PINS.json",
+      "origin_sha256": "a94191229fadf3b1b0f04477370ab6e55ea9483852536b6a869bbdd9b739b8e0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/SOURCE_PINS.json",
+      "sha256": "a94191229fadf3b1b0f04477370ab6e55ea9483852536b6a869bbdd9b739b8e0"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/VENDOR_PINS.json",
+      "origin_sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/VENDOR_PINS.json",
+      "sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/__init__.py",
+      "origin_sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/__init__.py",
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/bindings.py",
+      "origin_sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py",
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/callbacks.py",
+      "origin_sha256": "37935e0cba6ac645dddb3fc4158c14b2c418e379d6ed71eab7b7dea131ceae9f",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/callbacks.py",
+      "sha256": "37935e0cba6ac645dddb3fc4158c14b2c418e379d6ed71eab7b7dea131ceae9f"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/cli.py",
+      "origin_sha256": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/cli.py",
+      "sha256": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/durable.py",
+      "origin_sha256": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/durable.py",
+      "sha256": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/fixtures/actual-publication-ref-shape.json",
+      "origin_sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/fixtures/actual-publication-ref-shape.json",
+      "sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/readonly_io.py",
+      "origin_sha256": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/readonly_io.py",
+      "sha256": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/run_offline.py",
+      "origin_sha256": "5c4888c40410e741a0303545f1411be10d4450db37a25ca11fc5444589dc2289",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/run_offline.py",
+      "sha256": "5c4888c40410e741a0303545f1411be10d4450db37a25ca11fc5444589dc2289"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/tests_contracts.py",
+      "origin_sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_contracts.py",
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/tests_custody.py",
+      "origin_sha256": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py",
+      "sha256": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/tests_io.py",
+      "origin_sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py",
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/tests_semantics.py",
+      "origin_sha256": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_semantics.py",
+      "sha256": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/__init__.py",
+      "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/augmentation.py",
+      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/evergreen.py",
+      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/program_gate.py",
+      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/program_inputs.py",
+      "origin_sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/program_inputs.py",
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/score_join.py",
+      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/package/vendor/target_noise.py",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/provenance/predecessor-37-qualification.json",
+      "origin_sha256": "5e09d079295bf2160e5da127b5944bd9bc0781205d78da2fdc7eadee6293bb72",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/provenance/predecessor-37-qualification.json",
+      "sha256": "5e09d079295bf2160e5da127b5944bd9bc0781205d78da2fdc7eadee6293bb72"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/provenance/predecessor-README.md",
+      "origin_sha256": "0230e75ce8dff163a0d33334badd75d7a25dfcd675adf799f7bd0ab1977f8c07",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/provenance/predecessor-README.md",
+      "sha256": "0230e75ce8dff163a0d33334badd75d7a25dfcd675adf799f7bd0ab1977f8c07"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/provenance/predecessor-SOURCE_PACKET.json",
+      "origin_sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/provenance/predecessor-SOURCE_PACKET.json",
+      "sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/provenance/predecessor-hold.json",
+      "origin_sha256": "fe7df027a10501702708273a14c52b9792d8a6f443244256539290aa8a872931",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/provenance/predecessor-hold.json",
+      "sha256": "fe7df027a10501702708273a14c52b9792d8a6f443244256539290aa8a872931"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/qualification.json",
+      "origin_sha256": "0a37d0ff60eed6d5e3e16c76285d1977bba1a84abfe518cda36be04e2144ec3c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/qualification.json",
+      "sha256": "0a37d0ff60eed6d5e3e16c76285d1977bba1a84abfe518cda36be04e2144ec3c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/README.md",
+      "origin_sha256": "9ad4b6f98deeb8d100de0b22795ab6fc56aa71f4b680d0a733daceafb3c0e955",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/README.md",
+      "sha256": "9ad4b6f98deeb8d100de0b22795ab6fc56aa71f4b680d0a733daceafb3c0e955"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/SOURCE_PACKET.json",
+      "origin_sha256": "df096047eaad81e34aec4813277744b01b61fb4b794a5e937cdbc9371328789f",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/SOURCE_PACKET.json",
+      "sha256": "df096047eaad81e34aec4813277744b01b61fb4b794a5e937cdbc9371328789f"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/config-template.json",
+      "origin_sha256": "2c48501f172eae4d74257ca3a8e6bced45a1ff360e8c0fd627bab91f364edcf1",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/config-template.json",
+      "sha256": "2c48501f172eae4d74257ca3a8e6bced45a1ff360e8c0fd627bab91f364edcf1"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/FIXTURES.json",
+      "origin_sha256": "19c3dc19cc7bdabe68c3b6cd973c6900ae6a9bdd0f2ec6f851fda7238def2e75",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/FIXTURES.json",
+      "sha256": "19c3dc19cc7bdabe68c3b6cd973c6900ae6a9bdd0f2ec6f851fda7238def2e75"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/SOURCE_PINS.json",
+      "origin_sha256": "2717971b89a84e361e5cfa3681f0e9a14b9e1deb0f785d8f83aec792019b116a",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/SOURCE_PINS.json",
+      "sha256": "2717971b89a84e361e5cfa3681f0e9a14b9e1deb0f785d8f83aec792019b116a"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/VENDOR_PINS.json",
+      "origin_sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/VENDOR_PINS.json",
+      "sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/__init__.py",
+      "origin_sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/__init__.py",
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/bindings.py",
+      "origin_sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py",
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/callbacks.py",
+      "origin_sha256": "5e8b17daee58da4f66f1e4bf2bce4c62b5e5bc7889ae3150b4f52a159141e014",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/callbacks.py",
+      "sha256": "5e8b17daee58da4f66f1e4bf2bce4c62b5e5bc7889ae3150b4f52a159141e014"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/cli.py",
+      "origin_sha256": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/cli.py",
+      "sha256": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/durable.py",
+      "origin_sha256": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/durable.py",
+      "sha256": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/fixtures/actual-parent-pin-shape.json",
+      "origin_sha256": "59205a102b6287eaa58af7f698fbaf5a78d3557757fb199eb7340a7ce54ecae3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/fixtures/actual-parent-pin-shape.json",
+      "sha256": "59205a102b6287eaa58af7f698fbaf5a78d3557757fb199eb7340a7ce54ecae3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/fixtures/actual-publication-ref-shape.json",
+      "origin_sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/fixtures/actual-publication-ref-shape.json",
+      "sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/parent_encoder.py",
+      "origin_sha256": "f017dde5d183002bfbc3e5109b6cb29c6f4f8b230209371b127b7290225bb685",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/parent_encoder.py",
+      "sha256": "f017dde5d183002bfbc3e5109b6cb29c6f4f8b230209371b127b7290225bb685"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/readonly_io.py",
+      "origin_sha256": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/readonly_io.py",
+      "sha256": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/run_offline.py",
+      "origin_sha256": "68e35a39fa6db89d3b279a8e54cdce67b3efdc1474bfb3c430fd74922be34066",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/run_offline.py",
+      "sha256": "68e35a39fa6db89d3b279a8e54cdce67b3efdc1474bfb3c430fd74922be34066"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/tests_contracts.py",
+      "origin_sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_contracts.py",
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/tests_custody.py",
+      "origin_sha256": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_custody.py",
+      "sha256": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/tests_io.py",
+      "origin_sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py",
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/tests_parent_encoder.py",
+      "origin_sha256": "c24eb7772afd398f7d7883e649a67b75ecbbabab1f1c20f556a464259d326560",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_parent_encoder.py",
+      "sha256": "c24eb7772afd398f7d7883e649a67b75ecbbabab1f1c20f556a464259d326560"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/tests_semantics.py",
+      "origin_sha256": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_semantics.py",
+      "sha256": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/__init__.py",
+      "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/augmentation.py",
+      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/evergreen.py",
+      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/program_gate.py",
+      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/program_inputs.py",
+      "origin_sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/program_inputs.py",
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/score_join.py",
+      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/package/vendor/target_noise.py",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/provenance/actual-local-pin-schema-audit.json",
+      "origin_sha256": "59205a102b6287eaa58af7f698fbaf5a78d3557757fb199eb7340a7ce54ecae3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/provenance/actual-local-pin-schema-audit.json",
+      "sha256": "59205a102b6287eaa58af7f698fbaf5a78d3557757fb199eb7340a7ce54ecae3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/provenance/independent-source-review.json",
+      "origin_sha256": "f800d35498485f4a78de952949ad715967409489a75881483d783ad7aa78e6d0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/provenance/independent-source-review.json",
+      "sha256": "f800d35498485f4a78de952949ad715967409489a75881483d783ad7aa78e6d0"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/provenance/preserved-attempt-and-packets.json",
+      "origin_sha256": "29c3d72314d4bc73e6752327c8384741ffc26b2c0a864ed440de26d8c59ba726",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/provenance/preserved-attempt-and-packets.json",
+      "sha256": "29c3d72314d4bc73e6752327c8384741ffc26b2c0a864ed440de26d8c59ba726"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/provenance/revision2-README.md",
+      "origin_sha256": "064cd5fe2cd66c3ac327cbb143641665890e2e6631add98af713d6466f2ede5c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/provenance/revision2-README.md",
+      "sha256": "064cd5fe2cd66c3ac327cbb143641665890e2e6631add98af713d6466f2ede5c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/provenance/revision2-SOURCE_PACKET.json",
+      "origin_sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/provenance/revision2-SOURCE_PACKET.json",
+      "sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/provenance/revision2-qualification.json",
+      "origin_sha256": "0a37d0ff60eed6d5e3e16c76285d1977bba1a84abfe518cda36be04e2144ec3c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/provenance/revision2-qualification.json",
+      "sha256": "0a37d0ff60eed6d5e3e16c76285d1977bba1a84abfe518cda36be04e2144ec3c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/qualification.json",
+      "origin_sha256": "ef6b57aa4d58610af41eafd7cd5a7a3c108537400997e919c4b69b77cfdb0f80",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/qualification.json",
+      "sha256": "ef6b57aa4d58610af41eafd7cd5a7a3c108537400997e919c4b69b77cfdb0f80"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/README.md",
+      "origin_sha256": "38df5db8cab2324b64c7446de2a012ee86e1df17320438c2364ace58bc0e25c3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/README.md",
+      "sha256": "38df5db8cab2324b64c7446de2a012ee86e1df17320438c2364ace58bc0e25c3"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/SOURCE_PINS.json",
+      "origin_sha256": "88d1555ef8f9d8c7e49ef0c9218e8b75bbda4e32878cf9ab4857f4d2b969c0d0",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/SOURCE_PINS.json",
+      "sha256": "88d1555ef8f9d8c7e49ef0c9218e8b75bbda4e32878cf9ab4857f4d2b969c0d0"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/__init__.py",
+      "origin_sha256": "22e645ec0647a1193375e92a5baf3a678f39f7925b7437d9a652472eed1fb97e",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/__init__.py",
+      "sha256": "22e645ec0647a1193375e92a5baf3a678f39f7925b7437d9a652472eed1fb97e"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/export_verified.py",
+      "origin_sha256": "c03a5b3b79704f52ff6f50457709f329b1efb2eba18d2f709a906bf7e5946471",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/export_verified.py",
+      "sha256": "c03a5b3b79704f52ff6f50457709f329b1efb2eba18d2f709a906bf7e5946471"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/author-packet.json",
+      "origin_sha256": "65bc5a1876f6be22c69d85d53e784907d05942ce96e00d520cc1185262ed167c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/provenance/author-packet.json",
+      "sha256": "65bc5a1876f6be22c69d85d53e784907d05942ce96e00d520cc1185262ed167c"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2-independent-review/independent-review.json",
+      "origin_sha256": "e11bf6a061f3934fcea792fd64fbca151910259c01224355463648f505abb614",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/provenance/independent-review.json",
+      "sha256": "e11bf6a061f3934fcea792fd64fbca151910259c01224355463648f505abb614"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2-independent-review/independent-review.md",
+      "origin_sha256": "bf453467877e87e8cbb2bbd6e0fd1d144323f9fbf5e21c296c691be1723ce259",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/provenance/independent-review.md",
+      "sha256": "bf453467877e87e8cbb2bbd6e0fd1d144323f9fbf5e21c296c691be1723ce259"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/provenance/qualification-attempt1.json",
+      "origin_sha256": "c11a9ed9a196d8d06f264338154150f472052e43bfce3e6c76f75b8539201adb",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/provenance/qualification-attempt1.json",
+      "sha256": "c11a9ed9a196d8d06f264338154150f472052e43bfce3e6c76f75b8539201adb"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/publication_reference.py",
+      "origin_sha256": "d66dc4c03aaa907b844f43828b8c3663eb2777a2481a2002af2570c56ef8fc18",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/publication_reference.py",
+      "sha256": "d66dc4c03aaa907b844f43828b8c3663eb2777a2481a2002af2570c56ef8fc18"
+    },
+    {
+      "normalization": "Exact frozen bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/test_compatibility.py",
+      "origin_sha256": "b6878eded89db617d3823070af77448e32ad9c971982f8d7f98102f0aa3541f7",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py",
+      "sha256": "b6878eded89db617d3823070af77448e32ad9c971982f8d7f98102f0aa3541f7"
+    },
+    {
       "origin": "work/flywheel-20261008/proposals/growth-pipeline-v2/growth_pipeline.py",
       "origin_sha256": "c2860c98163f55df6b5c018a780c89b58201cc4f9d718f7288354e5c85d40bf5",
       "path": "deploy/dl-flywheel/pipelines/growth/growth_pipeline.py",
@@ -3961,6 +4941,13 @@
       "sha256": "ad5c6caf1a3a86d8651b5766e7677ea565243b90ffdea943487d4da21cc5360b"
     },
     {
+      "normalization": "New external isolated child runner. Frozen package runners and Python roots unchanged; no tests executed during assembly.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/runner_template.py",
+      "origin_sha256": "133ff6039591b7714c177e9d83c4030fd40f6120a516323966975d3f103b672a",
+      "path": "deploy/dl-flywheel/run_callback_targets_offline.py",
+      "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
+    },
+    {
       "origin": "continuous follow-up authored packaging",
       "origin_sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032",
       "path": "deploy/dl-flywheel/run_continuous_offline.py",
@@ -4015,11 +5002,11 @@
       "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6"
     },
     {
-      "normalization": "Append corrected 28-fixture reference-export suite after unchanged prior721; original prefix/suffix retained. Full suite not rerun.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/run_offline.py",
-      "origin_sha256": "bd6d58004a8b7401ea7de787e9035657d1e539a941d34d80d9d99b8f24bb88ea",
+      "normalization": "Append isolated callback/reference63 after unchanged749 prefix/suffix. Full suite not rerun.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/run_offline.py",
+      "origin_sha256": "89917ac6d15ee6fd9a12a631f7b16c8437f2f0128c28dfba3a76893aa08454e9",
       "path": "deploy/dl-flywheel/run_offline.py",
-      "sha256": "89917ac6d15ee6fd9a12a631f7b16c8437f2f0128c28dfba3a76893aa08454e9"
+      "sha256": "bd75be69227f5014503344656ac0c5d744f1c8af2cd2021db56043a825d91a51"
     },
     {
       "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved.",
@@ -4258,11 +5245,11 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Additive classifications only; every previous item/lane/disposition and metadata preserved.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
-      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
+      "normalization": "Append exact one main metadata row without altering head values.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/metadata-main-head-base.json",
+      "origin_sha256": "2d22e6fb4c2a6e0e5d6d85761baa02e73ab9f4ebafa868830ce6ede20689d633",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "7282624f1c3706990098ce45434a63f605ec4c1a01596e3222f71613012f6701"
+      "sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

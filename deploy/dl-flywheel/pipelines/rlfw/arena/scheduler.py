@@ -1,17 +1,19 @@
 """Context-major, durable isolated outbox; slates precede all score disclosure."""
 
-from concurrent.futures import ThreadPoolExecutor
-from collections import defaultdict
 import fcntl
 import json
-from pathlib import Path
+import os
 import random
 import sqlite3
+import tempfile
 import threading
 import time
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
-from .arms import Candidate, Program, decision_value
-from .game_spec import canonical, local_path
+from .arms import Candidate, decision_value, draw_seed
+from .game_spec import canonical, digest, local_path
 from .kpi import SlotResult
 
 
@@ -28,22 +30,11 @@ def context_order(spec):
 
 
 def candidate_value(c):
-    return {
-        "program": c.program.to_dict(),
-        "draw_seed": c.draw_seed,
-        "total_logprob": c.total_logprob,
-        "per_token_logprob": list(c.per_token_logprob),
-        "propensity": c.propensity,
-        "selection_rule": c.selection_rule,
-        "batch_protocol_sha256": c.batch_protocol_sha256,
-    }
+    return c.to_dict()
 
 
 def load_candidate(value):
-    d = dict(value)
-    d["program"] = Program.from_dict(d["program"])
-    d["per_token_logprob"] = tuple(d["per_token_logprob"])
-    return Candidate(**d)
+    return Candidate.from_dict(value)
 
 
 class ArenaScheduler:
@@ -78,6 +69,8 @@ class ArenaScheduler:
             CREATE TABLE IF NOT EXISTS attempts(context TEXT, arm TEXT, seed INTEGER, slot INTEGER, number INTEGER,
                 result TEXT, PRIMARY KEY(context,arm,seed,slot,number));
             CREATE TABLE IF NOT EXISTS slate_costs(context TEXT, arm TEXT, seed INTEGER, wall_seconds REAL NOT NULL,
+                PRIMARY KEY(context,arm,seed));
+            CREATE TABLE IF NOT EXISTS prepared_slates(context TEXT, arm TEXT, seed INTEGER, payload TEXT NOT NULL,
                 PRIMARY KEY(context,arm,seed));
         """)
         self.mutex = threading.RLock()
@@ -210,6 +203,8 @@ class ArenaScheduler:
 
     def slate(self, context, arm, seed):
         key = (context.context_id, arm.name, seed)
+        if arm.name.startswith("rerank32:"):
+            return self.prepared_slate(context, arm, seed)
         value = self.db.execute(
             "SELECT payload FROM slates WHERE context=? AND arm=? AND seed=?", key
         ).fetchone()
@@ -232,6 +227,90 @@ class ArenaScheduler:
             self.db.execute("INSERT INTO slate_costs VALUES(?,?,?,?)", (*key, elapsed))
         return slate
 
+    def prepared_slate(self, context, arm, seed):
+        from ..slate import PreparedSlate
+
+        if self.spec.slate_k != 32:
+            raise ValueError("rerank GameSpec requires fixed K=32")
+        key = (context.context_id, arm.name, seed)
+        value = self.db.execute(
+            "SELECT payload FROM prepared_slates WHERE context=? AND arm=? AND seed=?",
+            key,
+        ).fetchone()
+        if value:
+            packet = PreparedSlate.from_dict(json.loads(value[0]))
+        else:
+            start = time.monotonic()
+            packet = self.arms.prepare_slate(context, arm, seed)
+            elapsed = time.monotonic() - start
+            # Save raw draws, all predictions and shortfalls even when B is unavailable.
+            with self.db:
+                self.db.execute(
+                    "INSERT INTO prepared_slates VALUES(?,?,?,?)",
+                    (*key, canonical(packet.to_dict())),
+                )
+                self.db.execute(
+                    "INSERT INTO slates VALUES(?,?,?,?)",
+                    (*key, canonical([candidate_value(c) for c in packet.selected])),
+                )
+                self.db.execute(
+                    "INSERT INTO slate_costs VALUES(?,?,?,?)", (*key, elapsed)
+                )
+        # The inspectable packet and all raw decisions precede score disclosure.
+        payload = (
+            canonical(
+                {
+                    "spec_sha256": self.spec.sha256,
+                    "context_id": context.context_id,
+                    "arm": arm.name,
+                    "seed": seed,
+                    "packet": packet.to_dict(),
+                }
+            )
+            + "\n"
+        )
+        path = local_path(
+            self.spec.bench_root,
+            Path(self.spec.out_dir) / "slates" / (digest(key) + ".json"),
+            "runs",
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        staged = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", dir=path.parent, prefix=".slate-", delete=False
+            ) as f:
+                staged = Path(f.name)
+                f.write(payload)
+                f.flush()
+                os.fsync(f.fileno())
+            try:
+                os.link(staged, path)
+            except FileExistsError:
+                if path.read_text() != payload:
+                    raise ValueError("conflicting prepared slate replay")
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            if staged is not None:
+                staged.unlink()
+        for index, c in enumerate(packet.raw_draws, 1):
+            if self.arms.by_sha.get(c.program.program_sha256) != c.program:
+                raise ValueError("replayed raw draw is not an exact trie leaf")
+            if c.draw_seed != draw_seed(context.context_id, arm.name, seed, index):
+                raise ValueError("replayed raw draw seed identity changed")
+            self.decision_sink(
+                decision_value(self.spec, context, arm, seed, index, c, "raw_draw")
+            )
+        if len(packet.selected) != self.spec.budget:
+            raise ValueError(
+                "512 raw draws yielded fewer than eight distinct programs; no evaluations authorized"
+            )
+        return packet.selected
+
     def _run_context(self, context):
         self.oracle.check_role(context)
         jobs = []
@@ -245,7 +324,7 @@ class ArenaScheduler:
                     duplicate = candidate.program.program_sha256 in seen
                     seen.add(candidate.program.program_sha256)
                     jobs.append((arm, seed, slot, candidate, duplicate))
-                    if arm.name != "hwm":
+                    if arm.name != "hwm" and not arm.name.startswith("rerank32:"):
                         self.decision_sink(
                             decision_value(
                                 self.spec,

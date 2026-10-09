@@ -1619,6 +1619,542 @@
       },
       "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
     },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory.py": {
+      "bytes": 2495,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "cc2d32cc758f2431906475b14d574d7e71b1c25af827503577317b6a0a9a191c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory_v2.py": {
+      "bytes": 3257,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "794c9a45bcc8877e4d04f131e02407f5c3ae38bb5d7d9c6b673d2d07e5511c0d"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory_v2_bounded.py": {
+      "bytes": 3336,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "3ccd0c87291801e075669a3095758c27973d8b62236ebdaa6f0323ce2be34726"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_attempt2_controller.py": {
+      "bytes": 5580,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "04c68a13f903733858568f66b227bbac944e38ce31cac7aab1b5b10b8622f852"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_attempt3_controller.py": {
+      "bytes": 5580,
+      "classification": {
+        "reason": "Exact reviewed one-use selected GET/canonicalization qualification controller for historical attempt3. No fixture family, GP, PUT, target export or optimizer admission; old fixed unit/path/deadline is retained as provenance, not reusable launch authority.",
+        "role": "research"
+      },
+      "sha256": "88345b38ae755a488319e099786b9290d709b09a6e6d8c071374800c8c4d6adc"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_controller_v1_held.py": {
+      "bytes": 4117,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "b06a80687477d80bdfde170ef3bf9e27d8a5e76c5584e94eb806e0a0c92d4c92"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_controller_v2.py": {
+      "bytes": 5580,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "25fbf9a3a367e7d4f82d8c661e62dc181175beeedd2c586f66a240cd28099082"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/__init__.py": {
+      "bytes": 76,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/bindings.py": {
+      "bytes": 8039,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/callbacks.py": {
+      "bytes": 22109,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "dfc0f289f51ed55c0a6b4a0d4b1ecd241d11ea31311403747ae6e2df035133d4"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/cli.py": {
+      "bytes": 2755,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "821d67a76e54edee15141fc4b310ea39ed73759f34afc8e0815bae03ec29a8f9"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py": {
+      "bytes": 10473,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "5dcffa36026053bdaa1850e9eda8338e451d59934ff349c5948f6c7c9876529b"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/run_offline.py": {
+      "bytes": 7000,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "60efdee6aedebccb6c40da6f77b15f6ac6b928c784b99ce3d4af162b0581404d"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/__init__.py": {
+      "bytes": 95,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/augmentation.py": {
+      "bytes": 11160,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/evergreen.py": {
+      "bytes": 16420,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/program_gate.py": {
+      "bytes": 9974,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/program_inputs.py": {
+      "bytes": 10734,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/program_io.py": {
+      "bytes": 6171,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/protocol.py": {
+      "bytes": 9341,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/score_join.py": {
+      "bytes": 4827,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/target_noise.py": {
+      "bytes": 5835,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/attempt1-fixtures/tests_contracts.py": {
+      "bytes": 3518,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "3f1ee13e03c98fcf2377496dcbb7fefb14e0df0c36f3a3031bf7b0597ada0f2d"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/attempt1-fixtures/tests_semantics.py": {
+      "bytes": 11763,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "846a192054006e6a6582c7f65833f77765a91d8642d481ac0bc4a9d885f084b7"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/__init__.py": {
+      "bytes": 76,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py": {
+      "bytes": 8039,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/callbacks.py": {
+      "bytes": 24028,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "37935e0cba6ac645dddb3fc4158c14b2c418e379d6ed71eab7b7dea131ceae9f"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/cli.py": {
+      "bytes": 2556,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/durable.py": {
+      "bytes": 2758,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/readonly_io.py": {
+      "bytes": 11042,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/run_offline.py": {
+      "bytes": 4683,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "5c4888c40410e741a0303545f1411be10d4450db37a25ca11fc5444589dc2289"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_contracts.py": {
+      "bytes": 3528,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py": {
+      "bytes": 13583,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_semantics.py": {
+      "bytes": 13969,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/__init__.py": {
+      "bytes": 95,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/augmentation.py": {
+      "bytes": 11160,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/evergreen.py": {
+      "bytes": 16420,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/program_gate.py": {
+      "bytes": 9974,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/program_inputs.py": {
+      "bytes": 10734,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/program_io.py": {
+      "bytes": 6171,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/protocol.py": {
+      "bytes": 9341,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/score_join.py": {
+      "bytes": 4827,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/target_noise.py": {
+      "bytes": 5835,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/__init__.py": {
+      "bytes": 76,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py": {
+      "bytes": 8039,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/callbacks.py": {
+      "bytes": 24516,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "5e8b17daee58da4f66f1e4bf2bce4c62b5e5bc7889ae3150b4f52a159141e014"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/cli.py": {
+      "bytes": 2556,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/durable.py": {
+      "bytes": 2758,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/parent_encoder.py": {
+      "bytes": 1898,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "f017dde5d183002bfbc3e5109b6cb29c6f4f8b230209371b127b7290225bb685"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/readonly_io.py": {
+      "bytes": 11042,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/run_offline.py": {
+      "bytes": 5019,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "68e35a39fa6db89d3b279a8e54cdce67b3efdc1474bfb3c430fd74922be34066"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_contracts.py": {
+      "bytes": 3528,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_custody.py": {
+      "bytes": 5799,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py": {
+      "bytes": 13583,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_semantics.py": {
+      "bytes": 13969,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/__init__.py": {
+      "bytes": 95,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/augmentation.py": {
+      "bytes": 11160,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/evergreen.py": {
+      "bytes": 16420,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/program_gate.py": {
+      "bytes": 9974,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/program_inputs.py": {
+      "bytes": 10734,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/program_io.py": {
+      "bytes": 6171,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/protocol.py": {
+      "bytes": 9341,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/score_join.py": {
+      "bytes": 4827,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/target_noise.py": {
+      "bytes": 5835,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/__init__.py": {
+      "bytes": 68,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "22e645ec0647a1193375e92a5baf3a678f39f7925b7437d9a652472eed1fb97e"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/export_verified.py": {
+      "bytes": 24981,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "c03a5b3b79704f52ff6f50457709f329b1efb2eba18d2f709a906bf7e5946471"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/publication_reference.py": {
+      "bytes": 905,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "d66dc4c03aaa907b844f43828b8c3663eb2777a2481a2002af2570c56ef8fc18"
+    },
     "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/native_build.py": {
       "bytes": 4459,
       "classification": {
@@ -2063,6 +2599,14 @@
         "role": "research"
       },
       "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
+    },
+    "python:deploy/dl-flywheel/run_callback_targets_offline.py": {
+      "bytes": 8370,
+      "classification": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
+        "role": "research"
+      },
+      "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
     },
     "python:deploy/dl-flywheel/run_fresh32_offline.py": {
       "bytes": 3392,

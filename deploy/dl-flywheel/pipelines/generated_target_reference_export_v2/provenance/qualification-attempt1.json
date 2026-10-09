@@ -1,0 +1,16 @@
+{
+  "ended_at_unix_ns": 1791573139032285000,
+  "errors": 0,
+  "expected_failures": 0,
+  "failures": 0,
+  "gp_executions": 0,
+  "monotonic_elapsed_ns": 98148959,
+  "old_test_methods_run": 0,
+  "optimizer_updates": 0,
+  "s3_writes": 0,
+  "schema": "jope.generated-target-reference-compatibility-fixtures/v2",
+  "skipped": 0,
+  "started_at_unix_ns": 1791573138934134000,
+  "tests_run": 8,
+  "unexpected_successes": 0
+}

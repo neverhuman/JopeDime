@@ -1,0 +1,222 @@
+{
+  "actions": {
+    "database_mutations": 0,
+    "gp_executions": 0,
+    "module_imports": 0,
+    "remote_actions": 0,
+    "s3_requests": 0,
+    "source_edits": 0,
+    "tests_run": 0
+  },
+  "blockers": [
+    {
+      "files": [
+        "package/cli.py:40",
+        "package/callbacks.py:166",
+        "package/callbacks.py:213",
+        "package/readonly_io.py:89",
+        "package/readonly_io.py:94"
+      ],
+      "finding": "All detailed Window timing and charged GET/byte counters exist only in memory and are emitted only on success. CLI exception JSON omits them. Configure can perform selected dataset/encoder GETs before assigning _STATE, so even a future exception handler using _STATE cannot recover setup stages. External OOM/deadline termination loses the complete in-memory trace. This conflicts with user-required detailed exact timing/failure evidence for HPC analysis.",
+      "id": "FAILURE-TIMING-CUSTODY",
+      "priority": "P1_for_live_qualification",
+      "requested_change": "Preserve this frozen packet and all qualifications; produce separate cold version with an own-output durable event/attempt sink initialized before replay/network work, retention of configure/verification failures and exception counters, plus explicit external terminal custody. It must not expose credentials/raw data, add network writes/GP/DB mutations or auto-retry. Own local evidence writes must be distinguished from zero S3/DB/optimizer writes.",
+      "validation_required": "Meaningful fresh fixtures: failure after actual first streamed read during configure retains charged attempt/actual bytes and completed nanosecond spans; canonicalizer/verification failure after configured state retains spans; refusal/timeout partial event sink survives terminal close. Do not rerun prior28 exporter suites or old live packets."
+    }
+  ],
+  "conditions_after_blocker_fix": [
+    "Complete exact source packet review for cold successor, preserve v1 HOLD and original clocks/qualifications.",
+    "Resolve template placeholders, actual interpreter3.12 and full transitive import closure/current executor refs; freeze fresh window once under original global deadline; independently review exact final config/launcher/resource ownership.",
+    "First actual run preferably one selected existing successful training row with explicit bounded GET/time/RAM; no tests/GP/scoring expansion or automatic failed rerun.",
+    "Full128 setup and full cutoff/export remain separately held for annotated-reference compatibility and full memory/index throughput qualification. Do not pair dated candidate metadata and different event heads as one snapshot.",
+    "Review compatibility patch separately; this source deliberately refuses actual annotated predecessor in authority(), so selected PASS cannot enable full export."
+  ],
+  "created_utc": "2026-10-09T19:14:32.841591+00:00",
+  "qualification": {
+    "exact_source_and_fixture_roster": true,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/qualification-final.json",
+    "scope": "Supplied actual author receipt read only; reviewer did not execute. Python3.14.6 synthetic transport/native boundaries. Linux3.12/S3/native serde_json/current actual replay/runtime/RAM not qualified.",
+    "sha256": "5e09d079295bf2160e5da127b5944bd9bc0781205d78da2fdc7eadee6293bb72",
+    "tests_run": 37
+  },
+  "reviewed_correctly": [
+    "Vendor source manifest fixedc41b and exact9 reviewed scientific/transformation copies; new31-file packet exacthash and complete37 fixture roster. Prior failed Mac-temp-path fixtures preserved without weakening production guard.",
+    "Configure once from source/config/runtime pins, no caller clients/functions installed. Python is explicitly trusted code, not a sandbox; source/runtime/helper import closure and actual qualification remain required.",
+    "Exact program/dataset namespace VersionId+ContentLength+SHA+byte bounded GET; charge attempted bytes before dispatch, no cache/missing fallback/HEAD/PUT/retries; client3/5second timeouts and total_max_attempts1.",
+    "Native invocation limited canonical-json/program with5second/2MiBoutput/64KiBstderr/fixed global wall+monotonic bounds; no evaluator/emitter/compiler/GP fit or Rust executable calls.",
+    "Seven-body local store has nativecanonical_json and exact body/reference closure; pure original verified_measurement reconstructs fold targets/RMSE and canonical rows; additional source6bf/build4bb provenance joins.",
+    "Full128 descriptor/parent registry/source/adoption/normalizer/licensedKumo roster checked. Selected registered input replay precedes score verification. Raw program/emission ID/ordered train phase membership/canonical key measured success validated; unknown and validation not accepted as train targets.",
+    "Actual publication field parent_lineage_sha256 is fixed. Annotated task reference projection accepts only known annotations, compares identity with normalized descriptors and preserves raw prior refs. Actual full-export refusal intentional until separately reviewed compatibility.",
+    "Current CLI does not produce full event/ACK or optimizer-commit proof, numerical targets, CE/RL actor training or epoch admission. README/templates clearly keep actual live/runtime/cutoff/RAM qualification unavailable.",
+    "Selected source ceilings\u22644rows/64GET/128MiBattempts/180s/GLOBAL; CLI requiresCPU1/RAM512MiB/swap0/CUDAempty/BLAS1. These are maximum envelopes, not shared-host reservation or a RAM qualification."
+  ],
+  "reviewer": "successor_review",
+  "schema": "jope.independent-generated-target-callback-source-review/v1",
+  "scope": "Independent local source/config-template/protocol review only; no deployment, actual live qualification, compatibility patch, full cutoff/export, GitHub approval or resource authority.",
+  "source_files": [
+    {
+      "bytes": 10942,
+      "path": "README.md",
+      "sha256": "0230e75ce8dff163a0d33334badd75d7a25dfcd675adf799f7bd0ab1977f8c07"
+    },
+    {
+      "bytes": 11778,
+      "path": "config-template.json",
+      "sha256": "7d9aea6937626bb871ab72b78be43523a954aec4d80d1b7d151c192f5d4f1435"
+    },
+    {
+      "bytes": 3256,
+      "path": "package/FIXTURES.json",
+      "sha256": "421836f671df18ace62a91d1dc3a1dc594b5c7b93bcea5c3ab3d1f60bbe16471"
+    },
+    {
+      "bytes": 1928,
+      "path": "package/SOURCE_PINS.json",
+      "sha256": "f5b213ca0b0152aa3a8e362ff75bfabd05846de28f70aa6ad79d1b49f1e5403b"
+    },
+    {
+      "bytes": 854,
+      "path": "package/VENDOR_PINS.json",
+      "sha256": "c41b3f9a4eaaea998a9e7f60f66e47fc80e62fabaed2aff977fa4849facca697"
+    },
+    {
+      "bytes": 76,
+      "path": "package/__init__.py",
+      "sha256": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0"
+    },
+    {
+      "bytes": 8039,
+      "path": "package/bindings.py",
+      "sha256": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3"
+    },
+    {
+      "bytes": 22109,
+      "path": "package/callbacks.py",
+      "sha256": "dfc0f289f51ed55c0a6b4a0d4b1ecd241d11ea31311403747ae6e2df035133d4"
+    },
+    {
+      "bytes": 2755,
+      "path": "package/cli.py",
+      "sha256": "821d67a76e54edee15141fc4b310ea39ed73759f34afc8e0815bae03ec29a8f9"
+    },
+    {
+      "bytes": 2168,
+      "path": "package/fixtures/actual-publication-ref-shape.json",
+      "sha256": "010f69a24b9889e1bf3b8c77073b1dae0e282251752372d62042b57c713aac80"
+    },
+    {
+      "bytes": 10473,
+      "path": "package/readonly_io.py",
+      "sha256": "5dcffa36026053bdaa1850e9eda8338e451d59934ff349c5948f6c7c9876529b"
+    },
+    {
+      "bytes": 7000,
+      "path": "package/run_offline.py",
+      "sha256": "60efdee6aedebccb6c40da6f77b15f6ac6b928c784b99ce3d4af162b0581404d"
+    },
+    {
+      "bytes": 3528,
+      "path": "package/tests_contracts.py",
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    {
+      "bytes": 13583,
+      "path": "package/tests_io.py",
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    {
+      "bytes": 13907,
+      "path": "package/tests_semantics.py",
+      "sha256": "e688d2408246813d13d662fb05a38c0a6dd8e078e09a22c8c0b50ee37683a147"
+    },
+    {
+      "bytes": 95,
+      "path": "package/vendor/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "bytes": 11160,
+      "path": "package/vendor/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "bytes": 16420,
+      "path": "package/vendor/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "bytes": 9974,
+      "path": "package/vendor/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "bytes": 10734,
+      "path": "package/vendor/program_inputs.py",
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    {
+      "bytes": 6171,
+      "path": "package/vendor/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "bytes": 9341,
+      "path": "package/vendor/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "bytes": 4827,
+      "path": "package/vendor/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "bytes": 5835,
+      "path": "package/vendor/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "bytes": 3518,
+      "path": "provenance/attempt1-fixtures/tests_contracts.py",
+      "sha256": "3f1ee13e03c98fcf2377496dcbb7fefb14e0df0c36f3a3031bf7b0597ada0f2d"
+    },
+    {
+      "bytes": 11763,
+      "path": "provenance/attempt1-fixtures/tests_semantics.py",
+      "sha256": "846a192054006e6a6582c7f65833f77765a91d8642d481ac0bc4a9d885f084b7"
+    },
+    {
+      "bytes": 1550,
+      "path": "provenance/draft-review-history.json",
+      "sha256": "99176f88d4568699c506a88ac4efb67de388d344949db374a48c33bb23128d14"
+    },
+    {
+      "bytes": 17739,
+      "path": "provenance/production-api-notes.json",
+      "sha256": "b09c6e220e8ce5299c9d1c348e80985bdac9c89d68be615c4ecc3ce076c2ff02"
+    },
+    {
+      "bytes": 31156,
+      "path": "qualification-attempt1.json",
+      "sha256": "b24bb1ff5a30f99d05b2de2668564681ea0c391a5637121a74010a60c1daf97b"
+    },
+    {
+      "bytes": 16139,
+      "path": "qualification-attempt2.json",
+      "sha256": "533d4c9e55aceeac1915b8715e14819e20754bf2367e81c20f5e5890bb7d0226"
+    },
+    {
+      "bytes": 16515,
+      "path": "qualification-final.json",
+      "sha256": "5e09d079295bf2160e5da127b5944bd9bc0781205d78da2fdc7eadee6293bb72"
+    }
+  ],
+  "source_packet": {
+    "bytes": 6249,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-callbacks-v1/SOURCE_PACKET.json",
+    "sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223"
+  },
+  "state": "held",
+  "static_ast_files": 20,
+  "verified_bytes": 285333,
+  "verified_files": 31
+}

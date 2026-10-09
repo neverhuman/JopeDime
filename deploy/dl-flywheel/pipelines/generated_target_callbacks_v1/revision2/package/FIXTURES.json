@@ -1,0 +1,11 @@
+[
+  "tests_custody.CustodyTests.test_event_bound_failure_retains_prior_hash_chain",
+  "tests_custody.CustodyTests.test_existing_output_cannot_be_overwritten_or_resumed",
+  "tests_custody.CustodyTests.test_get_attempt_is_fsynced_before_transport_failure",
+  "tests_custody.CustodyTests.test_hard_exit_retains_attempt_without_invented_completion",
+  "tests_custody.CustodyTests.test_native_attempt_and_timing_are_durable_on_nonzero_exit",
+  "tests_custody.CustodyTests.test_partial_read_counts_survive_known_failure",
+  "tests_custody.CustodyTests.test_real_configure_failure_has_durable_attempt_and_final_receipt",
+  "tests_semantics.SemanticTests.test_configuration_exact_source_normalizer_and_clock_are_fixed",
+  "tests_semantics.SemanticTests.test_production_config_wrong_canonicalizer_refused_without_execution"
+]

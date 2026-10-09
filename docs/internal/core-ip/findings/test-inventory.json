@@ -522,6 +522,30 @@
       "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_parent_encoder.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py": {
       "reason": "21 isolated native-pool orchestration or finite-action math fixtures. Additive to prior587; mathematical examples and simulated dispatch are not deployed actor learning, live resource or native scoring qualification.",
       "role": "research"
@@ -602,6 +626,14 @@
         "policy",
         "teaching",
         "storage"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
       ]
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
