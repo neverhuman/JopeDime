@@ -91,6 +91,12 @@ is tested on the selected sampling device. CPU and CUDA samples may differ
 because their float32 kernels round differently, so cross-device comparison
 uses identical token rows. GPU evidence is required before using GPU readouts.
 
+An owner-scoped evaluator STOP can permit CPU-only inference with the explicit
+`--evaluator-stop-sha256` flag. It accepts only the exact bytes of the known
+evaluator parity STOP; a changed STOP, any other reason, or CUDA still stops
+the replay. The flag defaults off and the receipt retains its hash. It neither
+executes evaluators nor changes their STOP file.
+
 U4 archive ranking is L0-owned. Records without emitted Rust parity remain an
 unqualified archive diagnostic and cannot populate rewards, game comparators
 or this ledger. The qualified ranking result remains pending; the final receipt

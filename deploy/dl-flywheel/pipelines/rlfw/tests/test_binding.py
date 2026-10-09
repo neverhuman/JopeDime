@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import sys
 import tempfile
@@ -10,7 +11,7 @@ from unittest.mock import patch
 from rlfw.policy_binding import verify_manifest, verify_policy_origins
 from rlfw.run_rlfw_offline import source_identity
 from rlfw.trie_logprob import TrieLogProb
-from rlfw.verify_checkpoint import compare_readouts
+from rlfw.verify_checkpoint import compare_readouts, policy_stop_active
 
 
 class BindingTests(unittest.TestCase):
@@ -124,3 +125,43 @@ class BindingTests(unittest.TestCase):
         self.assertTrue(all(value == 0.0 for value in zero.values()))
         changed = compare_readouts(Readout(), Readout(1e-4), [None], [(1, 3, 2)])
         self.assertTrue(all(value > 1e-6 for value in changed.values()))
+
+    def test_explicit_evaluator_stop_exception_is_exact_and_cpu_only(self):
+        stop = self.root / "STOP.json"
+        stop.write_text(
+            json.dumps(
+                {
+                    "schema": "rlfw-campaign-stop/v1",
+                    "reason": "D1_native_Rust_parity_smoke_mismatch",
+                }
+            )
+        )
+        pin = hashlib.sha256(stop.read_bytes()).hexdigest()
+        self.assertTrue(policy_stop_active(stop, device="cpu"))
+        self.assertFalse(
+            policy_stop_active(stop, device="cpu", evaluator_stop_sha256=pin)
+        )
+        for device, comparison in (("cuda", None), ("cpu", "cuda")):
+            self.assertTrue(
+                policy_stop_active(
+                    stop,
+                    device=device,
+                    compare_device=comparison,
+                    evaluator_stop_sha256=pin,
+                )
+            )
+        self.assertTrue(
+            policy_stop_active(stop, device="cpu", evaluator_stop_sha256="b" * 64)
+        )
+        stop.write_text(
+            json.dumps({"schema": "rlfw-campaign-stop/v1", "reason": "memory_guard"})
+        )
+        changed = hashlib.sha256(stop.read_bytes()).hexdigest()
+        self.assertTrue(
+            policy_stop_active(stop, device="cpu", evaluator_stop_sha256=changed)
+        )
+        stop.write_bytes(b"not-json")
+        changed = hashlib.sha256(stop.read_bytes()).hexdigest()
+        self.assertTrue(
+            policy_stop_active(stop, device="cpu", evaluator_stop_sha256=changed)
+        )

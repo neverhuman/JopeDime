@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .decision_trace import DecisionRecord, DecisionTrace
 from .policy_binding import PinnedPolicy
-from .research_hwm import canonical_bytes
+from .research_hwm import canonical_bytes, is_sha
 from .trie_logprob import TrieLogProb
 
 
@@ -52,6 +52,31 @@ def compare_readouts(reference, candidate, contexts, token_rows):
     return errors
 
 
+def policy_stop_active(
+    path, *, device, compare_device=None, evaluator_stop_sha256=None
+):
+    """An explicit exact evaluator-only STOP exception permits CPU inference only."""
+    if not path.exists():
+        return False
+    raw = path.read_bytes()
+    if (
+        evaluator_stop_sha256 is None
+        or device != "cpu"
+        or compare_device not in (None, "cpu")
+        or hashlib.sha256(raw).hexdigest() != evaluator_stop_sha256
+    ):
+        return True
+    try:
+        stop = json.loads(raw)
+        return not (
+            isinstance(stop, dict)
+            and stop.get("schema") == "rlfw-campaign-stop/v1"
+            and stop.get("reason") == "D1_native_Rust_parity_smoke_mismatch"
+        )
+    except (ValueError, UnicodeDecodeError):
+        return True
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy-code-root", type=Path, required=True)
@@ -64,7 +89,19 @@ def main():
     parser.add_argument("--seconds", type=int, default=2700)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--compare-device", choices=("cpu", "cuda"))
+    parser.add_argument(
+        "--evaluator-stop-sha256",
+        help="explicit exact evaluator-only STOP exception for CPU inference",
+    )
     args = parser.parse_args()
+    if args.evaluator_stop_sha256 is not None and (
+        not is_sha(args.evaluator_stop_sha256)
+        or args.device != "cpu"
+        or args.compare_device not in (None, "cpu")
+    ):
+        raise ValueError(
+            "evaluator-only STOP exception requires full SHA and CPU-only inference"
+        )
     bench = args.bench_root.resolve()
     if not args.policy_code_root.resolve().is_relative_to(
         bench
@@ -139,7 +176,15 @@ def main():
     identical = 0
     parity_errors = {}
     for start in range(0, args.draws, args.batch_size):
-        if (bench / "state/STOP.json").exists() or time.time() >= deadline:
+        if (
+            policy_stop_active(
+                bench / "state/STOP.json",
+                device=args.device,
+                compare_device=args.compare_device,
+                evaluator_stop_sha256=args.evaluator_stop_sha256,
+            )
+            or time.time() >= deadline
+        ):
             raise RuntimeError(
                 "benchmark stop or deadline; acceptance remains incomplete"
             )
@@ -246,6 +291,7 @@ def main():
             "device": args.device,
             "torch_threads": 1,
         },
+        "evaluator_stop_exception_sha256": args.evaluator_stop_sha256,
         "environment": {
             key: os.environ.get(key)
             for key in (
