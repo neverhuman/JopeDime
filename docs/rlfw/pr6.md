@@ -141,6 +141,7 @@ The caller can preserve this report create-only under `BENCH/runs`, with its
 source, command and input receipt inventory. Qualified train pairs and fresh
 refit artifacts are runtime inputs; the synthetic fixtures do not provide them.
 The additive package and its explicit APIs leave all existing default paths
-unchanged. Register both fixture families in `run_rlfw_offline.py` after the
-reviewed runner dependency lands; full exact-head CI and independent LR approval
-remain required.
+unchanged. Both fixture families are registered in `run_rlfw_offline.py`, which
+runs the complete additive fixture collection and writes source-bound identities,
+counts and outcomes. Use that runner and `just required` for acceptance; full
+exact-head CI and independent LR approval remain required.

@@ -19,6 +19,8 @@ MODULES = (
     "rlfw.tests.test_slate",
     "rlfw.tests.test_exit_targets",
     "rlfw.tests.test_exit_training",
+    "rlfw.tests.test_promotion_gate",
+    "rlfw.tests.test_teacher_dry_run",
 )
 
 
