@@ -3128,6 +3128,270 @@
     "python:deploy/dl-flywheel/run_native_v5_offline.py": {
       "role": "research",
       "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/_successor_fixture_runner.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/build_packet.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/freeze_next128.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/campaign.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet_authority.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/generic_worker_dfba7d52.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_commit.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_controller.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_intake.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_io.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_publish.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_queue.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_timing.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_transport.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet0/pilot_publish_core.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/campaign.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet_authority.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/generic_worker_dfba7d52.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_commit.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_controller.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_intake.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_io.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_publish.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_queue.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_timing.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_transport.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet1/pilot_publish_core.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/campaign.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet_authority.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/generic_worker_dfba7d52.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_commit.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_controller.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_intake.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_io.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_publish.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_queue.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_timing.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_transport.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet2/pilot_publish_core.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/campaign.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet_authority.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/generic_worker_dfba7d52.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_commit.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_controller.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_intake.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_io.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_publish.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_queue.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_timing.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_transport.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/packet3/pilot_publish_core.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/read_selection.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prepare_config.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/read_prior.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/test_trace_recovery_v2.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/run_next128_offline.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/run_trace_v2_offline.py": {
+      "role": "research",
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
     }
   },
   "baseline_triage": [

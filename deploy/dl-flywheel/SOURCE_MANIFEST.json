@@ -1213,8 +1213,8 @@
       "path": "deploy/dl-flywheel/run_offline.py",
       "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
       "origin_sha256": "a6e9e5e35820522fd2ce63b451824aba8b601d605c911bd447dbbb8e77df263f",
-      "sha256": "a99b0924b3d83edb8c164081bb058421cf44f172774c57c1f9081e9bd61e685f",
-      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+      "sha256": "2932348e79b40a5b2ebb125e841005d198aa7676e18e0c0f2929ba050b3e24dd",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner. Additive next12825 + trace-v213 source integration on225d7115, preserving prior540 identities and all prior metadata entries; no old test rerun claim."
     },
     {
       "path": "deploy/dl-flywheel/run_successor_offline.py",
@@ -1449,8 +1449,8 @@
       "path": "deploy/ci/coverage.json",
       "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
       "origin_sha256": "4ed6730c702f12e8da778b3e10260fba6eb46ce69cc2dd831949cda8f54da7e3",
-      "sha256": "60438c5cb86d2fedf6526ca35b57d16df4c9ea2daf7e2f23061a99057c7d314e",
-      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+      "sha256": "be8f4ee05023051fffffe0b307587368b16ff47097988ed596705eaffc858722",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner. Additive next12825 + trace-v213 source integration on225d7115, preserving prior540 identities and all prior metadata entries; no old test rerun claim."
     },
     {
       "path": "deploy/dl-flywheel/docs/fresh32-encoder.md",
@@ -1652,8 +1652,8 @@
       "path": "docs/internal/core-ip/findings/test-inventory.json",
       "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
       "origin_sha256": "0d7396618bbf16d557563d6295541645ad4047dd9b96d93b41cc651a8f7ea7e0",
-      "sha256": "c4fd7af1c398e95f25c3ab1dfc33333d8f9f2ba3b2e6b90cd5adc94ad99ef28d",
-      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+      "sha256": "b692bc9968ea2824376be12abf8ea36fb23a4dfbcc9a86f0475374abfd7665b0",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner. Additive next12825 + trace-v213 source integration on225d7115, preserving prior540 identities and all prior metadata entries; no old test rerun claim."
     },
     {
       "path": "deploy/dl-flywheel/docs/native-successor-v5.md",
@@ -1997,6 +1997,720 @@
       "origin_sha256": "545c03d414397c6b242e92b37255b3d51a3b4aeaf72c97b8abd9ba52eac31a85",
       "sha256": "545c03d414397c6b242e92b37255b3d51a3b4aeaf72c97b8abd9ba52eac31a85",
       "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/_successor_fixture_runner.py",
+      "origin": "New additive isolated fixture runner/documentation on PR277@225d7115aeba812dc2ba411f2026f32c43a12538",
+      "origin_sha256": "d8c7dbf9c9a0033271d65711f6395cec95186ce906e37ce3b305d2fef667f822",
+      "sha256": "d8c7dbf9c9a0033271d65711f6395cec95186ce906e37ce3b305d2fef667f822",
+      "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/next128-and-trace-v2.md",
+      "origin": "New additive isolated fixture runner/documentation on PR277@225d7115aeba812dc2ba411f2026f32c43a12538",
+      "origin_sha256": "7fa90269eb2bd6fa0307a59a9d25be725ff2050915d18746a18ffebcc838ff8d",
+      "sha256": "7fa90269eb2bd6fa0307a59a9d25be725ff2050915d18746a18ffebcc838ff8d",
+      "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/build_packet.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/build_packet.py",
+      "origin_sha256": "a40744ae6da567fe38ce21a947ddac22cf03a61111593a01d5f2bfb5df5c72ff",
+      "sha256": "a40744ae6da567fe38ce21a947ddac22cf03a61111593a01d5f2bfb5df5c72ff",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/config.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/config.template.json",
+      "origin_sha256": "ec0e27b35498121091e85c9d7214233ec9c713588e5e755d1a75e73cce66f5e7",
+      "sha256": "ec0e27b35498121091e85c9d7214233ec9c713588e5e755d1a75e73cce66f5e7",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/freeze_next128.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/freeze_next128.py",
+      "origin_sha256": "409de712113eeb57a854c24a837ab81d488e8580a0f68e4e1a57457087f4a621",
+      "sha256": "409de712113eeb57a854c24a837ab81d488e8580a0f68e4e1a57457087f4a621",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/origin-pins.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/origin-pins.json",
+      "origin_sha256": "39aded87d99739cb31bf77d9c24f287e0ab703da19722589577816f5b395b309",
+      "sha256": "39aded87d99739cb31bf77d9c24f287e0ab703da19722589577816f5b395b309",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/campaign.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/campaign.py",
+      "origin_sha256": "3e45fa2885c82e81ea925e6794ac975d5253b0514731e169c116543d17536e88",
+      "sha256": "3e45fa2885c82e81ea925e6794ac975d5253b0514731e169c116543d17536e88",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/config.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/config.template.json",
+      "origin_sha256": "3a0d6068d5344254dcd1baff14ab93043a4e41c375462933059e2cdadca7cbce",
+      "sha256": "3a0d6068d5344254dcd1baff14ab93043a4e41c375462933059e2cdadca7cbce",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/evergreen_kumos_packet.py",
+      "origin_sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet_authority.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/evergreen_kumos_packet_authority.py",
+      "origin_sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/generic_worker_dfba7d52.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/generic_worker_dfba7d52.py",
+      "origin_sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_commit.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_commit.py",
+      "origin_sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_controller.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_controller.py",
+      "origin_sha256": "99ef195802099e4050f97b968b950fd95efc43dbdd6c44da16c152e48fe5a0f2",
+      "sha256": "99ef195802099e4050f97b968b950fd95efc43dbdd6c44da16c152e48fe5a0f2",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_intake.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_intake.py",
+      "origin_sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_io.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_io.py",
+      "origin_sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_publish.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_publish.py",
+      "origin_sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_queue.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_queue.py",
+      "origin_sha256": "8b741bfa6f3afd238c1eacfadaab15078ec24f7aeacef0fb365e863e393fa932",
+      "sha256": "8b741bfa6f3afd238c1eacfadaab15078ec24f7aeacef0fb365e863e393fa932",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_timing.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_timing.py",
+      "origin_sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_transport.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_transport.py",
+      "origin_sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/pilot_publish_core.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/pilot_publish_core.py",
+      "origin_sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/runtime_kumos_xbabe3.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/runtime_kumos_xbabe3.json",
+      "origin_sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/selection.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/selection.json",
+      "origin_sha256": "4b4946c7e7b0889099ad98bde679b60d28cba04421d4df9925ac9f0ae062f3dd",
+      "sha256": "4b4946c7e7b0889099ad98bde679b60d28cba04421d4df9925ac9f0ae062f3dd",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet0/template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/template.json",
+      "origin_sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/campaign.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/campaign.py",
+      "origin_sha256": "a651eab6b5237d07a5bf372ea014eeff23fea227441d8e351d331c8f11de75d3",
+      "sha256": "a651eab6b5237d07a5bf372ea014eeff23fea227441d8e351d331c8f11de75d3",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/config.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/config.template.json",
+      "origin_sha256": "6d1a5d012160c9c4aa82aa429d91ee7655de3695ed0f82d5011791f96a23a252",
+      "sha256": "6d1a5d012160c9c4aa82aa429d91ee7655de3695ed0f82d5011791f96a23a252",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/evergreen_kumos_packet.py",
+      "origin_sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet_authority.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/evergreen_kumos_packet_authority.py",
+      "origin_sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/generic_worker_dfba7d52.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/generic_worker_dfba7d52.py",
+      "origin_sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_commit.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_commit.py",
+      "origin_sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_controller.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_controller.py",
+      "origin_sha256": "5b87f119def2b41a574b37bf68531533fc148201b6e1d26bbfe0a80862bcdbab",
+      "sha256": "5b87f119def2b41a574b37bf68531533fc148201b6e1d26bbfe0a80862bcdbab",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_intake.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_intake.py",
+      "origin_sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_io.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_io.py",
+      "origin_sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_publish.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_publish.py",
+      "origin_sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_queue.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_queue.py",
+      "origin_sha256": "7cd2f6a63e85bc4c2cb886672cfaefcd2ae00d06eb8799ef87bf7a57390f48bb",
+      "sha256": "7cd2f6a63e85bc4c2cb886672cfaefcd2ae00d06eb8799ef87bf7a57390f48bb",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_timing.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_timing.py",
+      "origin_sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_transport.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_transport.py",
+      "origin_sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/pilot_publish_core.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/pilot_publish_core.py",
+      "origin_sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/runtime_kumos_xbabe3.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/runtime_kumos_xbabe3.json",
+      "origin_sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/selection.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/selection.json",
+      "origin_sha256": "48d750d74d1640ce9599dcc79d45cc96507c05c1740f032eaca0541e9afa2706",
+      "sha256": "48d750d74d1640ce9599dcc79d45cc96507c05c1740f032eaca0541e9afa2706",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet1/template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/template.json",
+      "origin_sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/campaign.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/campaign.py",
+      "origin_sha256": "896e0417c862501cd00074d736746b5de5db26e8dec03bbe6902427f55310266",
+      "sha256": "896e0417c862501cd00074d736746b5de5db26e8dec03bbe6902427f55310266",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/config.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/config.template.json",
+      "origin_sha256": "20bd1feaf048c7f6ec86ce737ec4048c326942e5299b1d150ea4022575257848",
+      "sha256": "20bd1feaf048c7f6ec86ce737ec4048c326942e5299b1d150ea4022575257848",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/evergreen_kumos_packet.py",
+      "origin_sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet_authority.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/evergreen_kumos_packet_authority.py",
+      "origin_sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/generic_worker_dfba7d52.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/generic_worker_dfba7d52.py",
+      "origin_sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_commit.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_commit.py",
+      "origin_sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_controller.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_controller.py",
+      "origin_sha256": "1df9aff894ceae3e5c824d456539ddc3f65e3161ffe3960ef0c91bbf3996dd7a",
+      "sha256": "1df9aff894ceae3e5c824d456539ddc3f65e3161ffe3960ef0c91bbf3996dd7a",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_intake.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_intake.py",
+      "origin_sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_io.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_io.py",
+      "origin_sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_publish.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_publish.py",
+      "origin_sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_queue.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_queue.py",
+      "origin_sha256": "fa57d92763241d136c6f2313061be9296bfde8daf45163dd66e649fec1332f11",
+      "sha256": "fa57d92763241d136c6f2313061be9296bfde8daf45163dd66e649fec1332f11",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_timing.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_timing.py",
+      "origin_sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_transport.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_transport.py",
+      "origin_sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/pilot_publish_core.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/pilot_publish_core.py",
+      "origin_sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/runtime_kumos_xbabe3.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/runtime_kumos_xbabe3.json",
+      "origin_sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/selection.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/selection.json",
+      "origin_sha256": "a6e795576135f696c75d7de4d457cf51150ad0a28dc2bfdfaa5bae6a0a1f59d5",
+      "sha256": "a6e795576135f696c75d7de4d457cf51150ad0a28dc2bfdfaa5bae6a0a1f59d5",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet2/template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/template.json",
+      "origin_sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/campaign.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/campaign.py",
+      "origin_sha256": "836ebf9a84e6dfe93c5191895833415aa77ee7622d181caac7a1ec01197f01dd",
+      "sha256": "836ebf9a84e6dfe93c5191895833415aa77ee7622d181caac7a1ec01197f01dd",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/config.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/config.template.json",
+      "origin_sha256": "bb199d0b6b29d3f74a1d5cd7c13b97a0226aeae91c7eb469455eed93be5f398b",
+      "sha256": "bb199d0b6b29d3f74a1d5cd7c13b97a0226aeae91c7eb469455eed93be5f398b",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/evergreen_kumos_packet.py",
+      "origin_sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet_authority.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/evergreen_kumos_packet_authority.py",
+      "origin_sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/generic_worker_dfba7d52.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/generic_worker_dfba7d52.py",
+      "origin_sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_commit.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_commit.py",
+      "origin_sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_controller.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_controller.py",
+      "origin_sha256": "05775bfd1e8698fbe2ea358665e6f7ea483a21506b6cbacbf05c70755156c9cf",
+      "sha256": "05775bfd1e8698fbe2ea358665e6f7ea483a21506b6cbacbf05c70755156c9cf",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_intake.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_intake.py",
+      "origin_sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_io.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_io.py",
+      "origin_sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_publish.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_publish.py",
+      "origin_sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_queue.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_queue.py",
+      "origin_sha256": "f7851924bd903116f8901aab27dba4a1009e53330535940458df3c632c545f7a",
+      "sha256": "f7851924bd903116f8901aab27dba4a1009e53330535940458df3c632c545f7a",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_timing.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_timing.py",
+      "origin_sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_transport.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_transport.py",
+      "origin_sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/pilot_publish_core.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/pilot_publish_core.py",
+      "origin_sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/runtime_kumos_xbabe3.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/runtime_kumos_xbabe3.json",
+      "origin_sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/selection.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/selection.json",
+      "origin_sha256": "9ca4b5b51a2307b685bd9bb82a8260bb112e3201d98bfc6d6d459e9ee88b14bb",
+      "sha256": "9ca4b5b51a2307b685bd9bb82a8260bb112e3201d98bfc6d6d459e9ee88b14bb",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/packet3/template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/template.json",
+      "origin_sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/provenance/README.md",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/README.md",
+      "origin_sha256": "816cefc4f5aca0019580d3f746503a924315054d4363412c3c257b8186675d62",
+      "sha256": "816cefc4f5aca0019580d3f746503a924315054d4363412c3c257b8186675d62",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/provenance/independent-review.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/independent-review.json",
+      "origin_sha256": "857b2fa238cf7bd247d5fd85509581ce07fa3973603352b14cf3c1a520b4009d",
+      "sha256": "857b2fa238cf7bd247d5fd85509581ce07fa3973603352b14cf3c1a520b4009d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/provenance/original23-template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/config.template.json",
+      "origin_sha256": "6bf9df3f59d5633944e1c04c7335ebb3b1ab622ffeada87df6e71b9dcabe11be",
+      "sha256": "6bf9df3f59d5633944e1c04c7335ebb3b1ab622ffeada87df6e71b9dcabe11be",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/provenance/original23-validation.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/validation.json",
+      "origin_sha256": "4de8be70e90051a8154c3d0f73ae5c4c6dcee20ee19b1ac37e86cd0fb169837b",
+      "sha256": "4de8be70e90051a8154c3d0f73ae5c4c6dcee20ee19b1ac37e86cd0fb169837b",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/provenance/revision2.diff",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/revision2.diff",
+      "origin_sha256": "35ff7c91594c5453826d4314f38b5e786074cecf7d277328ee35b131b3e7752d",
+      "sha256": "35ff7c91594c5453826d4314f38b5e786074cecf7d277328ee35b131b3e7752d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/provenance/validation.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/validation.json",
+      "origin_sha256": "52a0c2a647362157b0c701c80fbe346065a039b3205054fe7db33f464a5331c0",
+      "sha256": "52a0c2a647362157b0c701c80fbe346065a039b3205054fe7db33f464a5331c0",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/read_selection.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/read_selection.py",
+      "origin_sha256": "3a34eb29c4baac83ace6da526ccba9e1836ff76b9dffe91a5124324bf1aedc6d",
+      "sha256": "3a34eb29c4baac83ace6da526ccba9e1836ff76b9dffe91a5124324bf1aedc6d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/run_next128.py",
+      "origin_sha256": "cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7",
+      "sha256": "cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/selection-readonly.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/selection-readonly.json",
+      "origin_sha256": "947ff1dd0269b82dfa2cf4e3a53ceb052fa4c498b327429410529012499fbd5b",
+      "sha256": "947ff1dd0269b82dfa2cf4e3a53ceb052fa4c498b327429410529012499fbd5b",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/test-identities.json",
+      "origin": "New additive isolated fixture runner/documentation on PR277@225d7115aeba812dc2ba411f2026f32c43a12538",
+      "origin_sha256": "7642acc38543e40143ae809cef65a0d07012575005b46c2a441a372b16f43cb1",
+      "sha256": "7642acc38543e40143ae809cef65a0d07012575005b46c2a441a372b16f43cb1",
+      "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/test_next128.py",
+      "origin_sha256": "4ed3d3a41f1b70d9726ea85921f76f2f3344f2a3932e24ea75c643342ace1be2",
+      "sha256": "4ed3d3a41f1b70d9726ea85921f76f2f3344f2a3932e24ea75c643342ace1be2",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/config.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/config.template.json",
+      "origin_sha256": "5aa2fe2054406ffe05b0ee193afa2efcc35ade93f5be5ce62d08e7b25849d94a",
+      "sha256": "5aa2fe2054406ffe05b0ee193afa2efcc35ade93f5be5ce62d08e7b25849d94a",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/launch_v2.py",
+      "origin_sha256": "88495db8b75290103e26a69bc0afd382d9e198d29977eb04a68d4436a92de95a",
+      "sha256": "88495db8b75290103e26a69bc0afd382d9e198d29977eb04a68d4436a92de95a",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prepare_config.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/prepare_config.py",
+      "origin_sha256": "345baae54ac798542c151fa7a20f869ad8279436884b066e83def324215144e7",
+      "sha256": "345baae54ac798542c151fa7a20f869ad8279436884b066e83def324215144e7",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/prior-capture.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/prior-capture.json",
+      "origin_sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4",
+      "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/README.md",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/README.md",
+      "origin_sha256": "10150225ed0585e32aff815f6f4872ea7edcfbf775aff5894b1409569ab7738f",
+      "sha256": "10150225ed0585e32aff815f6f4872ea7edcfbf775aff5894b1409569ab7738f",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/independent-review.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/independent-review.json",
+      "origin_sha256": "5618d392d79260efb6999e51ce1668c04177e8c73b119054d86f56c6cafd86d8",
+      "sha256": "5618d392d79260efb6999e51ce1668c04177e8c73b119054d86f56c6cafd86d8",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/metadata-audit.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/metadata-audit.json",
+      "origin_sha256": "303278fa975f70e6363b6e7dfac78df0d5cd1b778eb9d6e83029c0f15cb0d82f",
+      "sha256": "303278fa975f70e6363b6e7dfac78df0d5cd1b778eb9d6e83029c0f15cb0d82f",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/test-result.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/test-result.json",
+      "origin_sha256": "16f5d8de58c6ddc86dbc742b49548776582cbcb806558cb8f9896df851b9de24",
+      "sha256": "16f5d8de58c6ddc86dbc742b49548776582cbcb806558cb8f9896df851b9de24",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/tests.log",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/tests.log",
+      "origin_sha256": "ca552343a0b81cbf64114ed13626f0a2f34847b871304a599531dded9f27016d",
+      "sha256": "ca552343a0b81cbf64114ed13626f0a2f34847b871304a599531dded9f27016d",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/validation.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/validation.json",
+      "origin_sha256": "a85c8b4cbf0e732d07d60eaa0f2cd037b6c89d8dbf4c565e93c6c1986de15ab0",
+      "sha256": "a85c8b4cbf0e732d07d60eaa0f2cd037b6c89d8dbf4c565e93c6c1986de15ab0",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/read_prior.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/read_prior.py",
+      "origin_sha256": "e2a89841496d672713831c430462902230b2157398ea4048dd3145024980ab08",
+      "sha256": "e2a89841496d672713831c430462902230b2157398ea4048dd3145024980ab08",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/test-identities.json",
+      "origin": "New additive isolated fixture runner/documentation on PR277@225d7115aeba812dc2ba411f2026f32c43a12538",
+      "origin_sha256": "460e236e13bfcf61a8a4e4d055f8e72f1021587cab0124885f1d2e5bbdc215da",
+      "sha256": "460e236e13bfcf61a8a4e4d055f8e72f1021587cab0124885f1d2e5bbdc215da",
+      "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/test_trace_recovery_v2.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/test_trace_recovery_v2.py",
+      "origin_sha256": "f8d2ee0bac9f392c0c59250fc39ae6a9c1b3527ee8ff2841f49cf40d8e21baad",
+      "sha256": "f8d2ee0bac9f392c0c59250fc39ae6a9c1b3527ee8ff2841f49cf40d8e21baad",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/trace_archive_v1_c8a13033.py",
+      "origin_sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/trace_recovery_v2.py",
+      "origin_sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22",
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority."
+    },
+    {
+      "path": "deploy/dl-flywheel/run_next128_offline.py",
+      "origin": "New additive isolated fixture runner/documentation on PR277@225d7115aeba812dc2ba411f2026f32c43a12538",
+      "origin_sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6",
+      "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6",
+      "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
+    },
+    {
+      "path": "deploy/dl-flywheel/run_trace_v2_offline.py",
+      "origin": "New additive isolated fixture runner/documentation on PR277@225d7115aeba812dc2ba411f2026f32c43a12538",
+      "origin_sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556",
+      "sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556",
+      "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
     }
   ]
 }

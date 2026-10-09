@@ -9397,6 +9397,26 @@
       ],
       "dispositions": [],
       "scope": "12 isolated native-v5 CPU fixtures via run_native_v5_offline.py, invoked only after all prior492 identities. Read-only physical SQLite snapshots, global canonical no-replay custody, exact census and source identity, short live claim CAS, physical legacy closure and bounded create-only operational planning. No real GP, S3, GPU, optimizer, systemd or production queue actions."
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "25 isolated new CPU fixtures via run_next128_offline.py, additively invoked after all prior540 identities. Private temporary source copies and derived local fixture JSON refs, fixed disclosed fixture time1791550000; unchanged production Python/deadlines. No live GPU/GP/S3/systemd/optimizer or production queue action."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/test_trace_recovery_v2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "13 isolated new CPU fixtures via run_trace_v2_offline.py, additively invoked after all prior540 identities. Private temporary source copies and derived local fixture JSON refs, fixed disclosed fixture time1791550000; unchanged production Python/deadlines. No live GPU/GP/S3/systemd/optimizer or production queue action."
     }
   }
 }

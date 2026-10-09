@@ -1,0 +1,18 @@
+test_completed_progress_cannot_hide_unknown_tail (test_trace_recovery_v2.ColdTests.test_completed_progress_cannot_hide_unknown_tail) ... ok
+test_event_chain_corruption_refused (test_trace_recovery_v2.ColdTests.test_event_chain_corruption_refused) ... ok
+test_expired_monotonic_deadline_blocks_even_backward_wall_clock (test_trace_recovery_v2.ColdTests.test_expired_monotonic_deadline_blocks_even_backward_wall_clock) ... ok
+test_fresh_constructor_does_not_recreate_old153_attempt_or_reset_count (test_trace_recovery_v2.ColdTests.test_fresh_constructor_does_not_recreate_old153_attempt_or_reset_count) ... ok
+test_fresh_success_creates_only_new_receipt_with_exact_versions (test_trace_recovery_v2.ColdTests.test_fresh_success_creates_only_new_receipt_with_exact_versions) ... ok
+test_full_cold_prefix_preserves_original_gap_and_global_budget (test_trace_recovery_v2.ColdTests.test_full_cold_prefix_preserves_original_gap_and_global_budget) ... ok
+test_live_prior_pid_refused (test_trace_recovery_v2.ColdTests.test_live_prior_pid_refused) ... ok
+test_missing_attempt_breaks_prior_numbering (test_trace_recovery_v2.ColdTests.test_missing_attempt_breaks_prior_numbering) ... ok
+test_pair_budget_refuses_before_any_single_object_attempt (test_trace_recovery_v2.ColdTests.test_pair_budget_refuses_before_any_single_object_attempt) ... ok
+test_physical_receipt_change_after_snapshot_refused (test_trace_recovery_v2.ColdTests.test_physical_receipt_change_after_snapshot_refused) ... ok
+test_receipt_version_must_match_actual_verified_object (test_trace_recovery_v2.ColdTests.test_receipt_version_must_match_actual_verified_object) ... ok
+test_two_attempt_unreceipted_tail_is_never_replayed (test_trace_recovery_v2.ColdTests.test_two_attempt_unreceipted_tail_is_never_replayed) ... ok
+test_unknown_intent_skips_entire_part_and_charges_global_budget (test_trace_recovery_v2.ColdTests.test_unknown_intent_skips_entire_part_and_charges_global_budget) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.094s
+
+OK

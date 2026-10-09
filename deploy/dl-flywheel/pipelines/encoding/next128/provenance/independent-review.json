@@ -1,0 +1,439 @@
+{
+  "child_source_pins": [
+    {
+      "bytes": 741,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/campaign.py",
+      "sha256": "3e45fa2885c82e81ea925e6794ac975d5253b0514731e169c116543d17536e88"
+    },
+    {
+      "bytes": 10027,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_queue.py",
+      "sha256": "8b741bfa6f3afd238c1eacfadaab15078ec24f7aeacef0fb365e863e393fa932"
+    },
+    {
+      "bytes": 11428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_intake.py",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d"
+    },
+    {
+      "bytes": 5185,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_commit.py",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973"
+    },
+    {
+      "bytes": 14016,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_controller.py",
+      "sha256": "99ef195802099e4050f97b968b950fd95efc43dbdd6c44da16c152e48fe5a0f2"
+    },
+    {
+      "bytes": 3466,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_transport.py",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f"
+    },
+    {
+      "bytes": 3072,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_io.py",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54"
+    },
+    {
+      "bytes": 5105,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_timing.py",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19"
+    },
+    {
+      "bytes": 4694,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/evergreen_kumos_packet_authority.py",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936"
+    },
+    {
+      "bytes": 43792,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/evergreen_kumos_packet.py",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42"
+    },
+    {
+      "bytes": 43605,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/generic_worker_dfba7d52.py",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e"
+    },
+    {
+      "bytes": 23985,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/template.json",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4"
+    },
+    {
+      "bytes": 36960,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/runtime_kumos_xbabe3.json",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe"
+    },
+    {
+      "bytes": 18428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/pilot_publish_core.py",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
+    },
+    {
+      "bytes": 19029,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/kumo_publish.py",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4"
+    },
+    {
+      "bytes": 13266,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/selection.json",
+      "sha256": "4b4946c7e7b0889099ad98bde679b60d28cba04421d4df9925ac9f0ae062f3dd"
+    },
+    {
+      "bytes": 741,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/campaign.py",
+      "sha256": "a651eab6b5237d07a5bf372ea014eeff23fea227441d8e351d331c8f11de75d3"
+    },
+    {
+      "bytes": 10028,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_queue.py",
+      "sha256": "7cd2f6a63e85bc4c2cb886672cfaefcd2ae00d06eb8799ef87bf7a57390f48bb"
+    },
+    {
+      "bytes": 11428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_intake.py",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d"
+    },
+    {
+      "bytes": 5185,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_commit.py",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973"
+    },
+    {
+      "bytes": 14016,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_controller.py",
+      "sha256": "5b87f119def2b41a574b37bf68531533fc148201b6e1d26bbfe0a80862bcdbab"
+    },
+    {
+      "bytes": 3466,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_transport.py",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f"
+    },
+    {
+      "bytes": 3072,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_io.py",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54"
+    },
+    {
+      "bytes": 5105,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_timing.py",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19"
+    },
+    {
+      "bytes": 4694,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/evergreen_kumos_packet_authority.py",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936"
+    },
+    {
+      "bytes": 43792,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/evergreen_kumos_packet.py",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42"
+    },
+    {
+      "bytes": 43605,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/generic_worker_dfba7d52.py",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e"
+    },
+    {
+      "bytes": 23985,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/template.json",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4"
+    },
+    {
+      "bytes": 36960,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/runtime_kumos_xbabe3.json",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe"
+    },
+    {
+      "bytes": 18428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/pilot_publish_core.py",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
+    },
+    {
+      "bytes": 19029,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/kumo_publish.py",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4"
+    },
+    {
+      "bytes": 13268,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/selection.json",
+      "sha256": "48d750d74d1640ce9599dcc79d45cc96507c05c1740f032eaca0541e9afa2706"
+    },
+    {
+      "bytes": 741,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/campaign.py",
+      "sha256": "896e0417c862501cd00074d736746b5de5db26e8dec03bbe6902427f55310266"
+    },
+    {
+      "bytes": 10029,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_queue.py",
+      "sha256": "fa57d92763241d136c6f2313061be9296bfde8daf45163dd66e649fec1332f11"
+    },
+    {
+      "bytes": 11428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_intake.py",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d"
+    },
+    {
+      "bytes": 5185,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_commit.py",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973"
+    },
+    {
+      "bytes": 14016,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_controller.py",
+      "sha256": "1df9aff894ceae3e5c824d456539ddc3f65e3161ffe3960ef0c91bbf3996dd7a"
+    },
+    {
+      "bytes": 3466,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_transport.py",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f"
+    },
+    {
+      "bytes": 3072,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_io.py",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54"
+    },
+    {
+      "bytes": 5105,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_timing.py",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19"
+    },
+    {
+      "bytes": 4694,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/evergreen_kumos_packet_authority.py",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936"
+    },
+    {
+      "bytes": 43792,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/evergreen_kumos_packet.py",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42"
+    },
+    {
+      "bytes": 43605,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/generic_worker_dfba7d52.py",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e"
+    },
+    {
+      "bytes": 23985,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/template.json",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4"
+    },
+    {
+      "bytes": 36960,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/runtime_kumos_xbabe3.json",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe"
+    },
+    {
+      "bytes": 18428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/pilot_publish_core.py",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
+    },
+    {
+      "bytes": 19029,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/kumo_publish.py",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4"
+    },
+    {
+      "bytes": 13296,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/selection.json",
+      "sha256": "a6e795576135f696c75d7de4d457cf51150ad0a28dc2bfdfaa5bae6a0a1f59d5"
+    },
+    {
+      "bytes": 741,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/campaign.py",
+      "sha256": "836ebf9a84e6dfe93c5191895833415aa77ee7622d181caac7a1ec01197f01dd"
+    },
+    {
+      "bytes": 10029,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_queue.py",
+      "sha256": "f7851924bd903116f8901aab27dba4a1009e53330535940458df3c632c545f7a"
+    },
+    {
+      "bytes": 11428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_intake.py",
+      "sha256": "1fe766ea1f6067aab9de309256817a97ab81306bf0d511a8c5edfcf5f5ecee8d"
+    },
+    {
+      "bytes": 5185,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_commit.py",
+      "sha256": "cf408f4e187a3914cde1d603ebc7cf0e206f8cb54481f4f4e1609b591ad91973"
+    },
+    {
+      "bytes": 14016,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_controller.py",
+      "sha256": "05775bfd1e8698fbe2ea358665e6f7ea483a21506b6cbacbf05c70755156c9cf"
+    },
+    {
+      "bytes": 3466,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_transport.py",
+      "sha256": "d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f"
+    },
+    {
+      "bytes": 3072,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_io.py",
+      "sha256": "beff98d5cae4e4376dae6fa7e581e15c29a2bdb54ece8f201a410ba9e34e9d54"
+    },
+    {
+      "bytes": 5105,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_timing.py",
+      "sha256": "7fe97dd8ae03682e1c038ee20bbb3c2ea0cf4a04445cd9f8bd148d11b7095c19"
+    },
+    {
+      "bytes": 4694,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/evergreen_kumos_packet_authority.py",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936"
+    },
+    {
+      "bytes": 43792,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/evergreen_kumos_packet.py",
+      "sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42"
+    },
+    {
+      "bytes": 43605,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/generic_worker_dfba7d52.py",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e"
+    },
+    {
+      "bytes": 23985,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/template.json",
+      "sha256": "2fe8bd0f708a53fa9775cc2dfcbf53f540b0cc6e64b469888b60e67e30c5bfa4"
+    },
+    {
+      "bytes": 36960,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/runtime_kumos_xbabe3.json",
+      "sha256": "9f3c91d049536216d79cfcfe059e2dc529fdda8d934613db374d13093858fabe"
+    },
+    {
+      "bytes": 18428,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/pilot_publish_core.py",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
+    },
+    {
+      "bytes": 19029,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/kumo_publish.py",
+      "sha256": "ea20237851304603e76cf9aae2796e731eccce87bfaee7e7cad0e5223faf7ed4"
+    },
+    {
+      "bytes": 13294,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/selection.json",
+      "sha256": "9ca4b5b51a2307b685bd9bb82a8260bb112e3201d98bfc6d6d459e9ee88b14bb"
+    }
+  ],
+  "child_templates": [
+    {
+      "bytes": 11166,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet0/config.template.json",
+      "sha256": "3a0d6068d5344254dcd1baff14ab93043a4e41c375462933059e2cdadca7cbce"
+    },
+    {
+      "bytes": 11166,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet1/config.template.json",
+      "sha256": "6d1a5d012160c9c4aa82aa429d91ee7655de3695ed0f82d5011791f96a23a252"
+    },
+    {
+      "bytes": 11166,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet2/config.template.json",
+      "sha256": "20bd1feaf048c7f6ec86ce737ec4048c326942e5299b1d150ea4022575257848"
+    },
+    {
+      "bytes": 11166,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/packet3/config.template.json",
+      "sha256": "bb199d0b6b29d3f74a1d5cd7c13b97a0226aeae91c7eb469455eed93be5f398b"
+    }
+  ],
+  "conditions": [
+    "Root must refresh physical resources and coordinate exact source/ownership scope with Grok before the sole freeze and each actual CUDA admission. Preserve all foreign jobs.",
+    "Only this new128 campaign may use these four distinct identities; old failed held32/19 vectors, completed fresh32 and production2a original128 budget remain unchanged.",
+    "Freeze once on the same local clock host, pass exact receipt/template hashes and launch only reviewed unchanged sources. No deadline/reset/resume/retry of uncertain child.",
+    "Per-child fresh lineage role, dataset source/version/hash/replay, CPU preflight, unchanged full six-check/four-call GPU qualification and exact-version64-object publication/stage-CAS all remain mandatory.",
+    "Stop on first refusal, failure, missing proof, expiry or unknown; report completed subset and preserved outstanding claims honestly.",
+    "Encoding and publication do not make these128 training-ready or trained; measured GP joins and epoch-boundary admission remain separate."
+  ],
+  "limits": {
+    "cpu_stage_cpu_quota_percent": 100,
+    "cpu_stage_memory_bytes": 536870912,
+    "first_sequence": 938,
+    "frozen_weight_sha256": "fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423",
+    "global_deadline_unix": 1791592146.380285,
+    "gpu_worker_cpu_quota_percent": 800,
+    "gpu_worker_memory_bytes": 12884901888,
+    "gpu_worker_swap_bytes": 0,
+    "last_sequence": 1065,
+    "minimum_actual_claim_remaining_seconds": 660,
+    "new_variants": 128,
+    "no_retries": true,
+    "only_encoder": "Kumo Small",
+    "packets": 4,
+    "per_packet": 32,
+    "publication_reserve_seconds": 600,
+    "shared_monotonic_seconds": 1800,
+    "shared_wall_seconds": 1800,
+    "values": 2051
+  },
+  "live_execution_claim": false,
+  "local_qualification": {
+    "executed_fixture_count": 25,
+    "fresh32_37_rerun": false,
+    "old23_packet_preserved": true,
+    "reviewer_executed_tests": 0,
+    "skipped": 0
+  },
+  "method": "Read-only exact-source/diff/hash/AST and existing CPU receipt review; no tests or remote actions.",
+  "native_github_approval": false,
+  "recorded_at_unix": 1791553438.956982,
+  "resolved_blocker": "660-second reserve now checked immediately before actual intake dispatch and again in the producer BEGIN transaction before packet/item INSERT. Delayed role/resource regression receipts show zero ownership mutation/intake.",
+  "reviewer": "/root/successor_review",
+  "revision_diff": {
+    "bytes": 8825,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/revision2.diff",
+    "sha256": "35ff7c91594c5453826d4314f38b5e786074cecf7d277328ee35b131b3e7752d"
+  },
+  "schema": "jope.kumos-next128-independent-review/v2",
+  "source_pins": [
+    {
+      "bytes": 14924,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/run_next128.py",
+      "sha256": "cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7"
+    },
+    {
+      "bytes": 2753,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/freeze_next128.py",
+      "sha256": "409de712113eeb57a854c24a837ab81d488e8580a0f68e4e1a57457087f4a621"
+    },
+    {
+      "bytes": 5898,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/build_packet.py",
+      "sha256": "a40744ae6da567fe38ce21a947ddac22cf03a61111593a01d5f2bfb5df5c72ff"
+    },
+    {
+      "bytes": 7170,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/read_selection.py",
+      "sha256": "3a34eb29c4baac83ace6da526ccba9e1836ff76b9dffe91a5124324bf1aedc6d"
+    },
+    {
+      "bytes": 15881,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/origin-pins.json",
+      "sha256": "39aded87d99739cb31bf77d9c24f287e0ab703da19722589577816f5b395b309"
+    },
+    {
+      "bytes": 16783,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/test_next128.py",
+      "sha256": "4ed3d3a41f1b70d9726ea85921f76f2f3344f2a3932e24ea75c643342ace1be2"
+    }
+  ],
+  "state": "passed",
+  "template": {
+    "bytes": 5518,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/config.template.json",
+    "sha256": "ec0e27b35498121091e85c9d7214233ec9c713588e5e755d1a75e73cce66f5e7"
+  },
+  "template_sha256": "ec0e27b35498121091e85c9d7214233ec9c713588e5e755d1a75e73cce66f5e7",
+  "validation": {
+    "bytes": 6161,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/kumo-xbabe3-next128/revision2/validation.json",
+    "sha256": "52a0c2a647362157b0c701c80fbe346065a039b3205054fe7db33f464a5331c0"
+  },
+  "worker_sha256": "0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42"
+}

@@ -1,0 +1,790 @@
+{
+  "cuda_initialized": false,
+  "executable": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/venv/bin/python",
+  "files": [
+    {
+      "bytes": 1290,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/__init__.py",
+      "sha256": "9727c6eaf7a4a17672d11b2f7b440669a92fa8fe289af7168c1275935a71d5a4"
+    },
+    {
+      "bytes": 236,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_constants.py",
+      "sha256": "fd4354bc8b8ea44e272e173bbeafb73f7d0438f798cc6e9103adc23385036d52"
+    },
+    {
+      "bytes": 1381,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_inference.py",
+      "sha256": "430db990308ffd52958f270e8bc26003be93b6881f3e36d94fa79ba91b3c4987"
+    },
+    {
+      "bytes": 320,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_kernels/__init__.py",
+      "sha256": "3b3abd76c6bfac446be2929d5a3f3076f4daf0f862cce583a1519e730002bbb0"
+    },
+    {
+      "bytes": 3052,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_kernels/rmsnorm_cast.py",
+      "sha256": "96832f244def0534ed82db08e5756c04763e9d745014129187fec9ca56aa2fe8"
+    },
+    {
+      "bytes": 3656,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_kernels/segment_multi_reduce.py",
+      "sha256": "4b2de0e6a2e01e10f9fa5239847aaa285564c91c293701531eec23a11f7db414"
+    },
+    {
+      "bytes": 247,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_kernels/triton/__init__.py",
+      "sha256": "2e2d6c40016b6f22cb1a7b8b287c90373b4ef660de9e6c1d60b746f212189def"
+    },
+    {
+      "bytes": 4046,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_kernels/triton/rmsnorm_cast.py",
+      "sha256": "41539da21df45bf2ed077e45ad318c9a244ddc87b5eaa6e523645a506de80b8d"
+    },
+    {
+      "bytes": 5230,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_kernels/triton/segment_multi_reduce.py",
+      "sha256": "63a2f439d40ab9b57ad1d6b030799c62dc1049d9ebf1a2326f3083cdb1ac7980"
+    },
+    {
+      "bytes": 1324,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_memory.py",
+      "sha256": "2582749e73b4567619cb829938203739755dc4baa8fd692b81258b1b1ab99746"
+    },
+    {
+      "bytes": 738,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/_warnings.py",
+      "sha256": "d517a34640dcff6e7f429b7fbf971a86d4e5a07edd72c7f9ac7ed00fb91be919"
+    },
+    {
+      "bytes": 5041,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/cache.py",
+      "sha256": "02d317612c97a7a88f1d6c3b15fd65de56401c73068279cd677b75e4654f92ef"
+    },
+    {
+      "bytes": 17014,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/ensemble.py",
+      "sha256": "d678c423306936bb15aed66d3ee2b28353c94d35513abdc79dd8413a1c3a388e"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/evaluation/__init__.py",
+      "sha256": "e821f757cc730116180ca78c8c4402cfb44622eac0cd0a125090856bc3794ecf"
+    },
+    {
+      "bytes": 6951,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/evaluation/classification.py",
+      "sha256": "f8c2c871d33b7d68a8c86b8809be5cc7daccf07f7406c6b55be9d143b0101010"
+    },
+    {
+      "bytes": 350,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/explain/__init__.py",
+      "sha256": "1a8d6c9598f0f3c51a3f97a4e0095eb2207abe3f916d0b47268edf8cfc53457b"
+    },
+    {
+      "bytes": 3668,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/explain/base.py",
+      "sha256": "c48aecc98940e5af2d60b1ff4f4c74270ac47dc84c049fb414bea55022b0ebd1"
+    },
+    {
+      "bytes": 3839,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/explain/gradient.py",
+      "sha256": "89881a32f2790b58f7853b7c53a1de8c3aba9c2b4643128b98d2d299e83b7be0"
+    },
+    {
+      "bytes": 486,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/__init__.py",
+      "sha256": "9c4f74be53f6fc2a95a8ee614e90ea8064edc5caa4939f4a22540c121393aaef"
+    },
+    {
+      "bytes": 1880,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/_huggingface.py",
+      "sha256": "271ff59eadc33c27df71cfe8e47bc496a5fea284f034d9f7f68463339f6a5e07"
+    },
+    {
+      "bytes": 37631,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/base.py",
+      "sha256": "ff4ea4822b79cd4f3b24f3c99d318a8198085c655ce03b8212095d4167ea1d5f"
+    },
+    {
+      "bytes": 3455,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/callback.py",
+      "sha256": "cc8f8089ffa794cc36b5afefa516d3ad39750ebd0da2f6e67f882b4ad591786c"
+    },
+    {
+      "bytes": 7748,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/ecoc.py",
+      "sha256": "c04d5f8ea5888b06e9f1b748c6effbd82fd5ac81e28c8858184b4b91981012e4"
+    },
+    {
+      "bytes": 328,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/__init__.py",
+      "sha256": "9312ad45b054a66faf8508f54b27351bccfee653d969bf4bff47fc10910881f9"
+    },
+    {
+      "bytes": 261,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/relational/__init__.py",
+      "sha256": "31a9b6d0e7e9f6ff207c2740760ba71c8bfd1bbed6af60dd7951bfaab83072dc"
+    },
+    {
+      "bytes": 3392,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/relational/graph.py",
+      "sha256": "b56fc7d67da23f868594fcf96414a3d22375ff6f63dbd698b6df705ac009125f"
+    },
+    {
+      "bytes": 3895,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/relational/invariant_gnn.py",
+      "sha256": "e60d7b3cdf6aa8eab26dd74be8bf4b394b59bcc4a6d99ecbc9f683ea63aa8085"
+    },
+    {
+      "bytes": 22220,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/relational/model.py",
+      "sha256": "ddc31b8a3edce54bcd9486d809879c275e7509e7e2c9c6983913d8dcdf33339d"
+    },
+    {
+      "bytes": 579,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/relational/recipe.py",
+      "sha256": "0f4e0b6d73a4b7abc867643527f6059a4645ea47b1ebe21413043f6dbfc19ee3"
+    },
+    {
+      "bytes": 3917,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/relational/task.py",
+      "sha256": "3932272bbeae56e4be710fa46bd40abf1643cbe6ed4fd841c557a62b046ca56e"
+    },
+    {
+      "bytes": 425,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/__init__.py",
+      "sha256": "21e2ce688d9c0e07b23a5c69ba012152e39f5f4cf4f619edf3a42b3e372ac6a2"
+    },
+    {
+      "bytes": 4968,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/batching.py",
+      "sha256": "4b9eded8f1b3fbc175a2d1e3ccf964c2a368378b15abd3e17ca48b51a19c31af"
+    },
+    {
+      "bytes": 3228,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/block.py",
+      "sha256": "9bf91778fb7c1a01e2e07541d937e0f348bbe4ab9c7f5a9ff8c265731e3d2176"
+    },
+    {
+      "bytes": 2501,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/cell_embedding.py",
+      "sha256": "2c31abf7ca97adca08979a4f446373438be95af9430f0d07a723b4037e832676"
+    },
+    {
+      "bytes": 4783,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/icl.py",
+      "sha256": "631cec43f2d6c759603da232f3fae69fc8506f05b3d27b5c31c33daf59697f7b"
+    },
+    {
+      "bytes": 10723,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/model.py",
+      "sha256": "1bdc0ebb4ed74d4025cd64412d6235bde236fb9e49e890e5fa8830c0a9b0e281"
+    },
+    {
+      "bytes": 2210,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/recipe.py",
+      "sha256": "ffe99ae9e7bc884efd0b2dea96a365c59ad9eb6d023e9fa941aad2aebbb81046"
+    },
+    {
+      "bytes": 7221,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/tabular/row_embedding.py",
+      "sha256": "c3409abf12862174eee67b1cbac89faae0722e3dfb803975673fa628fa13de49"
+    },
+    {
+      "bytes": 180,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/timeseries/__init__.py",
+      "sha256": "cff9c8b25c7aa8c0fc5cf59f357f194e205f88561959e0365edd788016140fab"
+    },
+    {
+      "bytes": 198,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/timeseries/anomaly/__init__.py",
+      "sha256": "c636e2b9b1ea4901133035a74b19f60933a7acda617022c7d20d3465d7f9dedb"
+    },
+    {
+      "bytes": 192,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/kumo/timeseries/forecasting/__init__.py",
+      "sha256": "356505fd779e4014b6a2a831b11ad0f2ff0ef9627b17a7734e754db80726b720"
+    },
+    {
+      "bytes": 223,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/__init__.py",
+      "sha256": "579c8ce920a7e05ac18eede43f7373eccb3769ca6e7c9aee2ba89830563d8cec"
+    },
+    {
+      "bytes": 3289,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/block.py",
+      "sha256": "8b394c48915a83b4cd48b3f17fc489675b13c0ab6b23db949e61f8bd5f00fda3"
+    },
+    {
+      "bytes": 7981,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/cell_embedding.py",
+      "sha256": "a65e2f8a10e720e9136a8988a4c9bf4da5c662e2a83efa3b6acf8180eaa12c4d"
+    },
+    {
+      "bytes": 8361,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/ckpt.py",
+      "sha256": "d30dd156a347485ecf61c0eeb740d7550ae001191075e8513b64297d29eb5e8f"
+    },
+    {
+      "bytes": 3741,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/icl.py",
+      "sha256": "349ae594fa319fc5efc74f163543f37b06451ed795efe51ba31eb6dc675c0f96"
+    },
+    {
+      "bytes": 9631,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/model.py",
+      "sha256": "36ac1eae6ce2760c13085269f12f3208a14bdc16076afbbc88a803deabac5301"
+    },
+    {
+      "bytes": 1478,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/recipe.py",
+      "sha256": "79d7e2815586d9340c83c18296c091123f7ca53c145be32194faf88926bf3332"
+    },
+    {
+      "bytes": 8397,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabfm/row_embedding.py",
+      "sha256": "555fbfc3416023616f4e20b008f495f8eaedeaf3fef98862f81006584a758d92"
+    },
+    {
+      "bytes": 235,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/__init__.py",
+      "sha256": "2eecf924dd730cbe395a14e8d2eeaeb301acd75a98725298a0d19e2120a5ebd6"
+    },
+    {
+      "bytes": 2535,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/block.py",
+      "sha256": "28d560888220daef6ff129114ca48024dc133a8e67b13e784ea5953a744fc46b"
+    },
+    {
+      "bytes": 4835,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/ckpt.py",
+      "sha256": "5115423cc3d6b17a66a2af37cc8043925e3d065e70c3595dc6dd3d89c7d8c6b5"
+    },
+    {
+      "bytes": 14125,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/icl.py",
+      "sha256": "3505df78f1f3ce0c38f7bb18991a1de444f4cfa1fa3e177f732f9c998400c999"
+    },
+    {
+      "bytes": 10625,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/model.py",
+      "sha256": "bfb42729c7ae1ef7071234a5fc764e7cbd4955dfb357ed740b3d5b7f95365e09"
+    },
+    {
+      "bytes": 1496,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/recipe.py",
+      "sha256": "2d47a340bb646985f8b0a4893bbbc61ee0a89fc0a14894177c7cac9ab8df9b63"
+    },
+    {
+      "bytes": 9173,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/tabiclv2/row_embedding.py",
+      "sha256": "dcf1c3ddd699b486fafccf5fb88ec0f58b84b9c996f203395e9958d14b00ec45"
+    },
+    {
+      "bytes": 234,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/timesfm3/__init__.py",
+      "sha256": "20496d0a1f938ee1476ad732174f99e048d3caf1e2d7f443b60aaed9789d48c5"
+    },
+    {
+      "bytes": 1588,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/timesfm3/block.py",
+      "sha256": "d866d06b3d6f450dff4715c0963db9c00a013e648f5f2cc0ea925bb90b02a3fe"
+    },
+    {
+      "bytes": 10296,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/timesfm3/model.py",
+      "sha256": "1488b13f28ce815be3ebbba3d14dde8f9843ddad5a27a31b9ad485bd2b1e99ea"
+    },
+    {
+      "bytes": 285,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/timesfm3/recipe.py",
+      "sha256": "6964835175590e8d352cb136b6f766de058f8f85264b0713359aba4cc3ad444e"
+    },
+    {
+      "bytes": 6736,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/models/timesfm3/util.py",
+      "sha256": "ce40fa7a57ba760d66856962a27e0277177a5988a8696275d62adb4a85a6913a"
+    },
+    {
+      "bytes": 786,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/__init__.py",
+      "sha256": "4414a91ba6bfb9113a46b1b8fbcd3013fc7e9f5d07a30f1cafc1b9f376d373a1"
+    },
+    {
+      "bytes": 3002,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/_buffer.py",
+      "sha256": "dd7b616548a9657be7e642990155c22f2b68b36c6974ccc46712410ea8ffd3ff"
+    },
+    {
+      "bytes": 31161,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/attention.py",
+      "sha256": "33b36693091c9114fb0ddae336420cd781452acd3cc0d077ff7287d3af8d0353"
+    },
+    {
+      "bytes": 2486,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/glu.py",
+      "sha256": "beb35424d806b38d4f8889977b4db002b39551ac701a774ee0b7c8433f718ffa"
+    },
+    {
+      "bytes": 1307,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/linear.py",
+      "sha256": "f65049112d371baddf8b665c1e6e9b52e87bb0f8ea466a4ce703e8b6452f344d"
+    },
+    {
+      "bytes": 2234,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/rms_norm.py",
+      "sha256": "dc630390c68a205bf0111efb450c4bdfb6ab1c0c7151e133afe0c7e173df8444"
+    },
+    {
+      "bytes": 3882,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/rope.py",
+      "sha256": "ccee70028b245cb1099329f4098ddd66efc81213ebe3756af3cbe749e428083e"
+    },
+    {
+      "bytes": 8759,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/scaling.py",
+      "sha256": "73c6cd0e25e8e7b6f12a9851cef8828a70749e3f5c42ad0f27544c07ab17b1e2"
+    },
+    {
+      "bytes": 6264,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/set_transformer.py",
+      "sha256": "2df169f1e4a6bb2f9f9e307a3442d1bdb3c216688ef13929cfc9b54570e5278d"
+    },
+    {
+      "bytes": 2086,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/nn/softplus.py",
+      "sha256": "03145e8212ea801e1b325659cab121a015cf0399e241a3697673d7dbe3cdf79a"
+    },
+    {
+      "bytes": 2093,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/__init__.py",
+      "sha256": "945fc9bdea0e9f76c9559a573a18a19e7d73c4aff5f9518de016468ff18730bb"
+    },
+    {
+      "bytes": 7906,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/base.py",
+      "sha256": "fcfca82f12526e6a7eb68658c5fd304bbbb016ca5deb42c0646dbddd4b42d935"
+    },
+    {
+      "bytes": 536,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/categorical/__init__.py",
+      "sha256": "395f000b6f44588770309fea6833777b7a1b75daa8a83bbddfdec249b94f02c0"
+    },
+    {
+      "bytes": 2138,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/categorical/_categorical.py",
+      "sha256": "667248acca86d34853bcb30675370608cc2a9f52ddc2e02f263b77081c51f931"
+    },
+    {
+      "bytes": 19793,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/categorical/align.py",
+      "sha256": "93ed278d1083e6f2f23dd5a8d12a9d6b9fbcaaa5c51dee4dfc62b16b40058c7f"
+    },
+    {
+      "bytes": 4532,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/categorical/count.py",
+      "sha256": "fbcefb2807e8a4161070ec069ba4e9c358023380ec40aca68e30dc4a56d2867f"
+    },
+    {
+      "bytes": 3856,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/categorical/impute.py",
+      "sha256": "315f66a5eb731e4308b437863f10be96204bfc6343a6821a5349b8ea96171f5b"
+    },
+    {
+      "bytes": 7791,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/categorical/shuffle.py",
+      "sha256": "dea21f2be2d0f72fc2bd758a0818d0e9f563367dcaac88bf9fafee59b6053720"
+    },
+    {
+      "bytes": 1080,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/__init__.py",
+      "sha256": "ef50ff1c8f85b6f144a218342ce8c34e8c396a990749bf5f2ea99c952d073c6f"
+    },
+    {
+      "bytes": 904,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/callable.py",
+      "sha256": "3372ac92573b4d53216b480b45e8d103336778e2fb47989d5dad18f3353821c3"
+    },
+    {
+      "bytes": 6486,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/choice.py",
+      "sha256": "3f761baa7f3f34befa59caf29cb99671a7f283f532be062ad450cfa10d3eeebd"
+    },
+    {
+      "bytes": 942,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/drop.py",
+      "sha256": "25921f3aea50373c2ee1a1cce4ea98e92d176a50a1c555dc230383903a24d080"
+    },
+    {
+      "bytes": 7217,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/ensemble.py",
+      "sha256": "60354fde815622b0fd542742f64bcc846656679a82686dc501fe28da56cd9e2f"
+    },
+    {
+      "bytes": 548,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/identity.py",
+      "sha256": "8fb98b49a5be3dc9ae1069b1cc264494c2f4f2d0e2f019b061387183784d6b82"
+    },
+    {
+      "bytes": 4055,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/select.py",
+      "sha256": "0b21741a440bb26629e5f6256f22af4db21e8c2a785af4104cff55f1fbf8cee9"
+    },
+    {
+      "bytes": 4868,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/sequential.py",
+      "sha256": "6985e55c55ea6e7a71b8163a40a4f7f938c0e0eb6737029fa7ea35ee52973649"
+    },
+    {
+      "bytes": 7258,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/shuffle.py",
+      "sha256": "a8fd1a80f933fdce65d12cd061c60e444a55281eca4659b5569ea0a162bbd02d"
+    },
+    {
+      "bytes": 7137,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/stype.py",
+      "sha256": "e7fc570ff5b4483c18af37b2faf75c16349e58486cc8ef8ca8bb8017ff000e70"
+    },
+    {
+      "bytes": 4042,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/table.py",
+      "sha256": "7274fd0447af70b7509bbe0b732b303eae5b3d95ad45654728c5692d5b467118"
+    },
+    {
+      "bytes": 4324,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/task.py",
+      "sha256": "4c7a95e732b57e6b802986b2caf3a7104521aa5e4717174b243dd27de326ebcd"
+    },
+    {
+      "bytes": 2073,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/common/to_numerical.py",
+      "sha256": "6a26db070129b91f1041266c80438e14f837e2b68fd203a4541aed586f13a2a6"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/datetime/__init__.py",
+      "sha256": "e0a10bc6a29aa8e71853844f8cf004fe913b96d3aff3773566479baf5ea89885"
+    },
+    {
+      "bytes": 6732,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/datetime/calendar.py",
+      "sha256": "84abc9475ec894fc3d1f15bbddf35057605e651aeb1bf01a8a1ffdfe448c38a3"
+    },
+    {
+      "bytes": 6432,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/ensemble.py",
+      "sha256": "abf7928be0fe0ad5556a320102b5429d9f90f2868c0ada9e9a2f2626126fb8a1"
+    },
+    {
+      "bytes": 15646,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/execution.py",
+      "sha256": "f6fc393cc089d1a10a3a6e2ef8edc08de38cf94d578f7f4405246cfbbe873e75"
+    },
+    {
+      "bytes": 1352,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/__init__.py",
+      "sha256": "7a73225cda9ccd4053fcd691af427fa78d8c8568e047886858131c72001c25c1"
+    },
+    {
+      "bytes": 849,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/_stats.py",
+      "sha256": "a2b9812f22c2e44bbc30b0c3266fed0d03f7d41484a6c1466abaf58a58b92973"
+    },
+    {
+      "bytes": 1113,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/cast.py",
+      "sha256": "4f7d202879b15d4d00811000071ac1d1d35e3f53179d251b23328414d94c62c1"
+    },
+    {
+      "bytes": 1506,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/clip.py",
+      "sha256": "af7f6e6bb69e9b2bfc37a0460b761bace9ed57b91a15f1327c2e55450e624029"
+    },
+    {
+      "bytes": 1830,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/clip_soft.py",
+      "sha256": "dd486c1a23b591a280e1b8278cc9e121c9dbadaf639d5829a8f713eb375ed655"
+    },
+    {
+      "bytes": 8592,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/constant.py",
+      "sha256": "2563ef6fb53e366f6f630dd63db1594e0a2d95aa3cb1d3795cd0cea65ab74d7f"
+    },
+    {
+      "bytes": 2600,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/flip_sign.py",
+      "sha256": "1a306cc84bf8db69483b37bf79d42f8b43bc022f4cce78b866b84c3cea0be4b0"
+    },
+    {
+      "bytes": 1584,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/impute.py",
+      "sha256": "6b5833369d0991274a60939ece991e0ed39e2f57544dd12a0f9e3374319d8845"
+    },
+    {
+      "bytes": 1868,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/pca.py",
+      "sha256": "d3ed2af189649fe006310d077038dc488c5b90628d1ea307a3b8d8da44542347"
+    },
+    {
+      "bytes": 10923,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/power.py",
+      "sha256": "b9dbda02b5628971a285a81473929ee2e642d2126ae6f46f55b72c11451eab78"
+    },
+    {
+      "bytes": 10509,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/quantile.py",
+      "sha256": "fe55a1b07284a1887abd60c342be36dac0f919e3a8c3f870015dee3d9b2fa5b0"
+    },
+    {
+      "bytes": 1979,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/quantile_clip.py",
+      "sha256": "5de5db2bf43a94d790a78e909feea126170ccfca6b2499b3ffe08d43f6457af2"
+    },
+    {
+      "bytes": 2750,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/random_projection.py",
+      "sha256": "421c3bacbccc9d1875edae51a9bba09a69e8df732551a3a662c6f2839e0c7a77"
+    },
+    {
+      "bytes": 7096,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/rank_gaussian.py",
+      "sha256": "e327fe92cf55b971e5f4e9d498e9227aa404d5d3b722cab206a42548ec6dc1d5"
+    },
+    {
+      "bytes": 3283,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/robust_scale.py",
+      "sha256": "17f018fa30ad65f7a0843b3c4118c78a36e7000758049aec3c2a8fb3a5a5ac2a"
+    },
+    {
+      "bytes": 4523,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/sigma_clip.py",
+      "sha256": "fce9461d99aaa9481456536c5dca875f8fedacc8bdc2fb2c769052cab430d1ba"
+    },
+    {
+      "bytes": 2412,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/numerical/standardize.py",
+      "sha256": "e964ac3a06fa7d814f0c7b327aebf1f8d14848fd54067a5e8d9f503e06b4b4c3"
+    },
+    {
+      "bytes": 418,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/output/__init__.py",
+      "sha256": "61eb270de179d4d55df2432bf7b1b0391f9d14f3aee8d93ff43fc84426746992"
+    },
+    {
+      "bytes": 2736,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/output/reduce.py",
+      "sha256": "70dd20113ec69b52320c9587c94662f81d260b9c3efd263950adb281ff3aacb8"
+    },
+    {
+      "bytes": 1513,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/output/softmax.py",
+      "sha256": "21ed912e159125e9968522356b9a67d168b7bb8ab499091f0444713132ff24c8"
+    },
+    {
+      "bytes": 553,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/output/sort.py",
+      "sha256": "93adf6e44212a9f2075130c3e051fa21c35317bba7993cf5fde421b5421f7a38"
+    },
+    {
+      "bytes": 5633,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/recipe.py",
+      "sha256": "18643e1b9b754d57dcf7d0333f20ba4c0be738af55388a2401a538236bdb5b3d"
+    },
+    {
+      "bytes": 335,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/text/__init__.py",
+      "sha256": "9fdf19183e3928447d85fc141c489beb13bca14dec67bddf19e62f55a1bfd4f0"
+    },
+    {
+      "bytes": 15876,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/text/sentence_transformer.py",
+      "sha256": "09e2321f50845718f89a18a1924d518b468fc7e9cba8d218825ed4b8bb9d27c1"
+    },
+    {
+      "bytes": 17512,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/processing/text/tfidf.py",
+      "sha256": "5d16eb572ff7a4906fc350a967ff29de21d227ea4960f06b67d73ea668790c52"
+    },
+    {
+      "bytes": 463,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/__init__.py",
+      "sha256": "884363fc658786f0e26a579f95ddf642532e0360f6816b325db91edc8543ab85"
+    },
+    {
+      "bytes": 417,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/backend/__init__.py",
+      "sha256": "ef823522f3aadc9f0dab18f02dee159ac5bffcb3b50782ea660224c1ec146371"
+    },
+    {
+      "bytes": 18932,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/backend/_cugraph.py",
+      "sha256": "5e85f13db9ee48707fc56f23bee8e6943cb5bbeaf65e30798e2042c39c8e4466"
+    },
+    {
+      "bytes": 6464,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/backend/_pyg_lib.py",
+      "sha256": "f7cee237fdf70437d1baf8b990c1412f615544ddc443a32317737fdd312b7d73"
+    },
+    {
+      "bytes": 13404,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/data.py",
+      "sha256": "1f8bea5039de93acc8db1b0d941d8d21e68453b43aa99821b587225ea5f489e7"
+    },
+    {
+      "bytes": 5514,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/join.py",
+      "sha256": "a460adb2e55887c0f51aaa5c69b535daa1ffa886e7c8726f8dd17b7dc09492c1"
+    },
+    {
+      "bytes": 9231,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/sampler.py",
+      "sha256": "1051be4e842ec14797eb14dbc9500ff816c40e51fdfdac4e5957baaca10a5136"
+    },
+    {
+      "bytes": 15341,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/relational/task.py",
+      "sha256": "c93cddea442cc511cfb570f8657bcbf11b85de0adf54c0fd743953405c85fdde"
+    },
+    {
+      "bytes": 12473,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/stype.py",
+      "sha256": "6ce7d95fce570121c4756e609444f8b2c81a770b7dc459d3d349f46387b9e025"
+    },
+    {
+      "bytes": 1486,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/task.py",
+      "sha256": "cea94cc395a67a5ed792c9fa344d26172e7f5e8c8d458b83d014a7cb7d59b754"
+    },
+    {
+      "bytes": 592,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/__init__.py",
+      "sha256": "4b636b75e788238fa44bb89f24cabde72e0be6e47bb63df597d46180481a5266"
+    },
+    {
+      "bytes": 29221,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/categorical.py",
+      "sha256": "08362053ae3837e7efb5959d3d3c6e72fc8bed364afd8e3ebd5b6afea1436798"
+    },
+    {
+      "bytes": 33337,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/columnar.py",
+      "sha256": "02bc5e17affad60c5c0a1b1a1d14e8501f7ac529f19e754e493bef06e6adbfb6"
+    },
+    {
+      "bytes": 538,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/io/__init__.py",
+      "sha256": "83197942d9c2761ebfb6052e95665bd482fd9751ac75662c4c1a458f02e73856"
+    },
+    {
+      "bytes": 3625,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/io/arrow.py",
+      "sha256": "1912136a400f28ac701870bb1363c3251475b8cfac07ef5231317fb15aa5eb3a"
+    },
+    {
+      "bytes": 1382,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/io/cudf.py",
+      "sha256": "7a321e2f03a90b57a293e5d5a2806d51530ca70229ed549b38a21b5cff65adc9"
+    },
+    {
+      "bytes": 4149,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/mixin.py",
+      "sha256": "a4ab829b91381a1b5ac61e2044f975ce8ab0f28742c2da4f08dabfb56ede189f"
+    },
+    {
+      "bytes": 28126,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/nullable.py",
+      "sha256": "0ed78b600b3218fe7cf21c3afb38a0c2a881b144c59bd4d7ef601e459552563a"
+    },
+    {
+      "bytes": 17685,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/string.py",
+      "sha256": "a64897f8eb4adfbd13ddbd287b785b862a8f691f4a5a9d2526e64eb03c534211"
+    },
+    {
+      "bytes": 67656,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/table.py",
+      "sha256": "acef22a4ffd3acf20d6bbe09fba48555e97f41346aef035d09fd5fe19c70a646"
+    },
+    {
+      "bytes": 45581,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/tensor/var_len.py",
+      "sha256": "fff6c3ecab8d49f31400dd4047b8f7110f65d936c33fc19322b04d088a14b409"
+    },
+    {
+      "bytes": 325,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/testing/__init__.py",
+      "sha256": "f66864398f6da3dcec44bf88a0e75db8b114443f553b78ad53cd5aded8942262"
+    },
+    {
+      "bytes": 1555,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/testing/decorators.py",
+      "sha256": "8593fb020cf05b70ecc4c5b039fd79c8281d4b44d43d299198614b787eb99686"
+    },
+    {
+      "bytes": 2991,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm/testing/memory.py",
+      "sha256": "2dc8f73ee71d38fd2008bd2bde526a4e74c2d338120b6aebc60e9da82afc494f"
+    },
+    {
+      "bytes": 8666,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/code/ofm_core.py",
+      "sha256": "fcfd6e80e5f2b376c2304836a6320f946eb32824fc9b74f226996c2c2ca00d70"
+    },
+    {
+      "bytes": 13649,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/code/ofm_models.py",
+      "sha256": "4a877f66231fdfd558a51421f1589511b80a09afda99291d6de8e52a1f8926f8"
+    },
+    {
+      "bytes": 8299,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/code/ta_code/ta_common.py",
+      "sha256": "0907934bde679ab33b7922cd59d398800ca27b23b6fb17dee3b2f6c0efd7b6e5"
+    }
+  ],
+  "modules": {
+    "numpy": {
+      "origin": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/venv/lib/python3.12/site-packages/numpy/__init__.py",
+      "origin_sha256": "22cd1535fa14d74ef6f457cca149ffdc80875f460be313b8f895273f78bc402e",
+      "version": "1.26.4"
+    },
+    "omegaconf": {
+      "origin": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/venv/lib/python3.12/site-packages/omegaconf/__init__.py",
+      "origin_sha256": "9729f08831c414120732aac13771d18742897afcc86a9e8cc942c53643269417",
+      "version": "2.3.1"
+    },
+    "psutil": {
+      "origin": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/venv/lib/python3.12/site-packages/psutil/__init__.py",
+      "origin_sha256": "d138a5786b163b56ba86ea0b2d5589dfca37e1bcdf8de1057fe1e933d6ab808a",
+      "version": "7.2.2"
+    },
+    "safetensors": {
+      "origin": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/venv/lib/python3.12/site-packages/safetensors/__init__.py",
+      "origin_sha256": "92c988289b8c225a92f25e487ad5d7a1eb7e326eec0fedfc6b75e6f04d85e32f",
+      "version": "0.8.0"
+    },
+    "sklearn": {
+      "origin": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/venv/lib/python3.12/site-packages/sklearn/__init__.py",
+      "origin_sha256": "66a78bb27706626c4cc8ef424a5479f6301204baacd85986e8002c16b751fef1",
+      "version": "1.9.1"
+    },
+    "torch": {
+      "cuda": "12.8",
+      "origin": "/usr/lib/python3/dist-packages/torch/__init__.py",
+      "origin_sha256": "9801e75447c7f585545f989f8a21940b60e0c4cc888effb2f08e739664b4b904",
+      "version": "2.7.0"
+    },
+    "xgboost": {
+      "origin": "/home/ubuntu/.local/lib/python3.12/site-packages/xgboost/__init__.py",
+      "origin_sha256": "3d6f2f79c9a85f6743d7a99abe206d602f6e6c2ebd798bb6a34793395a77d05e",
+      "version": "2.1.4"
+    }
+  },
+  "python": "3.12.3",
+  "schema": "jope.kumos-runtime-inventory/v1",
+  "scope": "KumoS-only actual runtime and forward source; reused verified core bytes. No other model weights.",
+  "source_roots": [
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/sdm"
+  ]
+}
