@@ -1,10 +1,14 @@
 import hashlib
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import ModuleType
+from unittest.mock import patch
 
-from rlfw.policy_binding import verify_manifest
+from rlfw.policy_binding import verify_manifest, verify_policy_origins
+from rlfw.run_rlfw_offline import source_identity
 
 
 class BindingTests(unittest.TestCase):
@@ -60,3 +64,31 @@ class BindingTests(unittest.TestCase):
         self.assertNotIn("torch", sys.modules)
         self.assertNotIn("continuous", sys.modules)
         self.assertNotIn("neural_decode", sys.modules)
+
+    def test_directory_symlink_and_unlisted_binary_refused(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "unpinned.py").write_text("# not declared\n")
+        (self.root / "consumer").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "directory links"):
+            verify_manifest(self.root, expected_sha256=self.pin)
+        (self.root / "consumer").unlink()
+        with self.assertRaisesRegex(ValueError, "unmanifested"):
+            verify_manifest(self.root)
+
+    def test_imported_module_origin_and_package_path_refused(self):
+        module = ModuleType("neural_decode")
+        module.__file__ = str(self.root.parent / "outside.py")
+        with patch.dict(sys.modules, {"neural_decode": module}):
+            with self.assertRaisesRegex(ValueError, "mixed policy"):
+                verify_policy_origins(self.root)
+            module.__file__ = str(self.source)
+            module.__path__ = [str(self.root.parent)]
+            with self.assertRaisesRegex(ValueError, "search path"):
+                verify_policy_origins(self.root)
+
+    def test_source_head_is_distinct_from_synthetic_checkout(self):
+        with patch.dict(
+            os.environ, {"JOPE_SOURCE_SHA": "a" * 40, "GITHUB_SHA": "b" * 40}
+        ):
+            self.assertEqual(source_identity(), ("a" * 40, "b" * 40))

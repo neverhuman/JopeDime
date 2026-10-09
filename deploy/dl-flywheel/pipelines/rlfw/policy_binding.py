@@ -13,6 +13,9 @@ from .trie_logprob import TrieLogProb, child_logprob
 
 def verify_manifest(root, *, expected_sha256=None):
     root = Path(root).resolve()
+    entries = list(root.rglob("*"))
+    if any(path.is_symlink() for path in entries):
+        raise ValueError("file and directory links are forbidden in a pin")
     manifest = root / "MANIFEST.sha256"
     raw = manifest.read_bytes()
     digest = hashlib.sha256(raw).hexdigest()
@@ -36,9 +39,30 @@ def verify_manifest(root, *, expected_sha256=None):
             raise ValueError(f"pinned bytes mismatch: {relative}")
     if not listed:
         raise ValueError("empty pin manifest")
-    if any(str(p.relative_to(root)) not in listed for p in root.rglob("*.py")):
-        raise ValueError("unmanifested Python code in pin")
+    if any(
+        str(p.relative_to(root)) not in listed | {"MANIFEST.sha256"}
+        for p in entries
+        if p.is_file()
+    ):
+        raise ValueError("unmanifested file in pin")
     return digest
+
+
+def verify_policy_origins(root):
+    """Check both cached modules and newly imported policy dependencies."""
+    root = Path(root).resolve()
+    for name, module in tuple(sys.modules.items()):
+        if name in ("neural_decode", "dltrain", "jope_flywheel") or name.startswith(
+            ("dltrain.", "jope_flywheel.")
+        ):
+            source = getattr(module, "__file__", None)
+            if source is None or not Path(source).resolve().is_relative_to(root):
+                raise ValueError("mixed policy code roots; use an isolated interpreter")
+            if any(
+                not Path(path).resolve().is_relative_to(root)
+                for path in getattr(module, "__path__", ())
+            ):
+                raise ValueError("policy package search path escapes its pin")
 
 
 class PinnedPolicy:
@@ -59,18 +83,7 @@ class PinnedPolicy:
             root, expected_sha256=code_manifest_sha256
         )
         self.checkpoint_manifest_sha256 = verify_manifest(checkpoint)
-        for name, module in tuple(sys.modules.items()):
-            if (
-                name == "neural_decode"
-                or name == "dltrain"
-                or name == "jope_flywheel"
-                or name.startswith(("dltrain.", "jope_flywheel."))
-            ):
-                source = getattr(module, "__file__", None)
-                if source and not Path(source).resolve().is_relative_to(root):
-                    raise ValueError(
-                        "mixed policy code roots; use an isolated interpreter"
-                    )
+        verify_policy_origins(root)
         sys.dont_write_bytecode = True
         paths = [str(root), str(root / "consumer"), str(root / "runtime")]
         original = sys.path[:]
@@ -81,6 +94,7 @@ class PinnedPolicy:
             tokenizer = importlib.import_module("dltrain.dsl_tokenizer")
             decode = importlib.import_module("neural_decode")
             safetensors = importlib.import_module("safetensors.torch")
+            verify_policy_origins(root)
         finally:
             sys.path[:] = original
         manifest = json.loads((checkpoint / "manifest.json").read_bytes())
