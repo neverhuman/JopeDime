@@ -648,6 +648,14 @@
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
       "sha256": "cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7"
     },
+    "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/operations/cold_prepare_controller.py": {
+      "bytes": 5299,
+      "classification": {
+        "reason": "Reviewed operational CPU/GET-only cold-preparation controller, separate from immutable fresh-GP revision3 runtime. At most512MiB/oneCPU/noGPU, exact own-unit pressure retirement and source/input/Python guards. No GP, program/broker/epoch claims, S3PUT, optimizer admission or shared host reservation. Resource/OOM failures remain failures; existing pool/4GiB HOLD remains.",
+        "role": "research"
+      },
+      "sha256": "448bfafc4696261d2f7b420e5030f5f131390f2b8e5004205c45c80e9d49ca9e"
+    },
     "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/authority_lease.py": {
       "bytes": 2828,
       "classification": {
@@ -1944,6 +1952,46 @@
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
       "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
     },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/launch_v3.py": {
+      "bytes": 5941,
+      "classification": {
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+        "role": "research"
+      },
+      "sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c"
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/prepare_config.py": {
+      "bytes": 2731,
+      "classification": {
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+        "role": "research"
+      },
+      "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py": {
+      "bytes": 17268,
+      "classification": {
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+        "role": "research"
+      },
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py": {
+      "bytes": 20376,
+      "classification": {
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+        "role": "research"
+      },
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v3.py": {
+      "bytes": 20806,
+      "classification": {
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+        "role": "research"
+      },
+      "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
+    },
     "python:deploy/dl-flywheel/run_fresh32_offline.py": {
       "bytes": 3392,
       "classification": {
@@ -2015,6 +2063,14 @@
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
       "sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556"
+    },
+    "python:deploy/dl-flywheel/run_trace_v3_offline.py": {
+      "bytes": 5415,
+      "classification": {
+        "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+        "role": "research"
+      },
+      "sha256": "60b23b47ca4b1c78d8a5ca63c9a4651e51b8bcdecdeaaf27ad894b14760e14fa"
     },
     "python:deploy/dl-flywheel/verify_source_inventory.py": {
       "bytes": 4100,

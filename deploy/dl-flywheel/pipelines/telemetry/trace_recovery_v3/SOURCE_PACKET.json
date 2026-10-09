@@ -1,0 +1,95 @@
+{
+  "changed_production_files": [
+    "trace_recovery_v3.py",
+    "prepare_config.py",
+    "launch_v3.py"
+  ],
+  "clock_frozen": false,
+  "exact_old_source_copies": [
+    "trace_recovery_v2.py",
+    "trace_archive_v1_c8a13033.py"
+  ],
+  "files": {
+    "README.md": {
+      "bytes": 9510,
+      "sha256": "8f7f83ffb4e234f40a82536b50e75b3c8016686357a8ddaa4ee21f1cb6a7e20b"
+    },
+    "config.template.json": {
+      "bytes": 1894,
+      "sha256": "12086a0f31fac152481d4648018731bb49301bc59f5093e2c75f5d98063aa676"
+    },
+    "custody-inputs.json": {
+      "bytes": 1098,
+      "sha256": "4ce34db400596e390e56a92e1812198a3541a9b0f9683073133a01cf9f7f2bfc"
+    },
+    "launch_v3.py": {
+      "bytes": 5941,
+      "sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c"
+    },
+    "prepare_config.py": {
+      "bytes": 2731,
+      "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
+    },
+    "prior1-capture.json": {
+      "bytes": 2837433,
+      "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4"
+    },
+    "prior2-capture.json": {
+      "bytes": 2630301,
+      "sha256": "048e97db6131b4c76090eafbf60372bf3143da5d873ead079e32412639ad180d"
+    },
+    "source-delta.json": {
+      "bytes": 55535,
+      "sha256": "25283c1c48ee119cc3a6f3be50c2a73b9d321c77b2bff68e1f11f6f5757512ef"
+    },
+    "terminal-proof.json": {
+      "bytes": 2832,
+      "sha256": "3300d26a4ceaaea69095e38539a13b706af1545965068738126e0309d5342a21"
+    },
+    "test-output.json": {
+      "bytes": 630,
+      "sha256": "5ea06d2cd737cf394fc5db500208c9f7021575ae8069ad42462bc351d8384e78"
+    },
+    "test_trace_recovery_v3.py": {
+      "bytes": 21875,
+      "sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3"
+    },
+    "trace_archive_v1_c8a13033.py": {
+      "bytes": 17268,
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+    },
+    "trace_recovery_v2.py": {
+      "bytes": 20376,
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
+    },
+    "trace_recovery_v3.py": {
+      "bytes": 20806,
+      "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
+    },
+    "validation.json": {
+      "bytes": 5340,
+      "sha256": "5b4114fbf50d5d29f3c70065324f20a6b6bcec1adeff92b6c1242c8562991e8d"
+    }
+  },
+  "full_prior_attempts": 1213,
+  "new_first_part": 607,
+  "new_fixture_count": 34,
+  "new_release_only": true,
+  "old_suites_rerun": false,
+  "portable_exclude": [
+    "prior1-capture.json",
+    "prior2-capture.json",
+    "terminal-proof.json"
+  ],
+  "production_global_deadline_unix": 1791592146.380285,
+  "remaining_put_attempts": 3787,
+  "remote_actions": 0,
+  "root_remote": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3",
+  "runtime_qualified": false,
+  "schema": "jope.trace-recovery3-source-packet/v1",
+  "state": "local_tests_passed_independent_review_pending",
+  "unit": "jopedime-hpc-archive-recovery-20261009-v3",
+  "unknown_parts_preserved": [
+    153
+  ]
+}

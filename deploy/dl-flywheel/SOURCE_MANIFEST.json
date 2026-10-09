@@ -1,11 +1,11 @@
 {
   "files": [
     {
-      "normalization": "Portable isolated21 new fixtures and additive metadata/docs. Prior617+49 identities preserved;70 fresh-GP identities collected, only21 executed for revision3 packaging. No runtime/scientific/production-clock changes.",
-      "origin": "FreshGP additive permanent-registry source integration after PR277@bd37122 and trace-log correctionf01825da",
-      "origin_sha256": "0386b18483f6ffad8888537a5b15e9001375f89dceb3f89e87c32e2b6ef931e2",
+      "normalization": "Add one coverage family; all611 prior rows, lanes/dispositions and other metadata retained.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
+      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
       "path": "deploy/ci/coverage.json",
-      "sha256": "0386b18483f6ffad8888537a5b15e9001375f89dceb3f89e87c32e2b6ef931e2"
+      "sha256": "3fd1cf4025cfab6a497a48aa697488305c06d712dbaa534b5fef3b5fa51127f9"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -15,11 +15,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Portable isolated21 new fixtures and additive metadata/docs. Prior617+49 identities preserved;70 fresh-GP identities collected, only21 executed for revision3 packaging. No runtime/scientific/production-clock changes.",
-      "origin": "FreshGP additive permanent-registry source integration after PR277@bd37122 and trace-log correctionf01825da",
-      "origin_sha256": "f535f98e068ceaecadccab44d86259e87e4f37804b84b295f856702e4a486763",
+      "normalization": "Add only seven production/helper research classifications; all225 previous classification rows remain byte-value identical.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
+      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "f535f98e068ceaecadccab44d86259e87e4f37804b84b295f856702e4a486763"
+      "sha256": "5af2c671528f2e5a9a87c548d16f55fce74f1260b17a393c6eb2a78ca5134d00"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -246,6 +246,13 @@
       "origin_sha256": "0893344e35fd825375bf89f9a54231ddfb5873460de36c5c954d2ddb91123429",
       "path": "deploy/dl-flywheel/docs/trace-archive-recovery.md",
       "sha256": "8a49142177e412ee058d06cfac3f4b3ed1c700725b64eaebec7d50ddc4ef193f"
+    },
+    {
+      "normalization": "New source-boundary documentation; no operational execution claim.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
+      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
+      "path": "deploy/dl-flywheel/docs/trace-recovery-v3-source.md",
+      "sha256": "cad7426e6d32a20a52a3f9982cc5d1fcddd5b670f0e0f57c790ab55730c1f95c"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/__init__.py",
@@ -1443,6 +1450,20 @@
       "origin_sha256": "bbd3230459a9bea9871c97055a6d2ec5a7655dcff7f41b57c9866a3fc86354d6",
       "path": "deploy/dl-flywheel/pipelines/encoding/pilot_ofm_encode.py",
       "sha256": "bbd3230459a9bea9871c97055a6d2ec5a7655dcff7f41b57c9866a3fc86354d6"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/fresh128-stage/prepare_controller.py",
+      "origin_sha256": "448bfafc4696261d2f7b420e5030f5f131390f2b8e5004205c45c80e9d49ca9e",
+      "path": "deploy/dl-flywheel/pipelines/fresh_gp_v2/operations/cold_prepare_controller.py",
+      "sha256": "448bfafc4696261d2f7b420e5030f5f131390f2b8e5004205c45c80e9d49ca9e"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/fresh128-stage/independent-prepare-controller-review.json",
+      "origin_sha256": "910259028611461d2aab36bbf5a6a707be9fe52812ad83d4c903465711220e06",
+      "path": "deploy/dl-flywheel/pipelines/fresh_gp_v2/operations/provenance/cold-prepare-controller-review.json",
+      "sha256": "910259028611461d2aab36bbf5a6a707be9fe52812ad83d4c903465711220e06"
     },
     {
       "normalization": "Byte-exact frozen source/provenance",
@@ -3611,6 +3632,118 @@
       "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
     },
     {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/README.md",
+      "origin_sha256": "8f7f83ffb4e234f40a82536b50e75b3c8016686357a8ddaa4ee21f1cb6a7e20b",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/README.md",
+      "sha256": "8f7f83ffb4e234f40a82536b50e75b3c8016686357a8ddaa4ee21f1cb6a7e20b"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/SOURCE_PACKET.json",
+      "origin_sha256": "bb87853d974aed1df6eaae22e3aa4ed3a77a3d15631994113cb498c12fda65da",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/SOURCE_PACKET.json",
+      "sha256": "bb87853d974aed1df6eaae22e3aa4ed3a77a3d15631994113cb498c12fda65da"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/config.template.json",
+      "origin_sha256": "12086a0f31fac152481d4648018731bb49301bc59f5093e2c75f5d98063aa676",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/config.template.json",
+      "sha256": "12086a0f31fac152481d4648018731bb49301bc59f5093e2c75f5d98063aa676"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/custody-inputs.json",
+      "origin_sha256": "4ce34db400596e390e56a92e1812198a3541a9b0f9683073133a01cf9f7f2bfc",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/custody-inputs.json",
+      "sha256": "4ce34db400596e390e56a92e1812198a3541a9b0f9683073133a01cf9f7f2bfc"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/launch_v3.py",
+      "origin_sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/launch_v3.py",
+      "sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/prepare_config.py",
+      "origin_sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/prepare_config.py",
+      "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
+    },
+    {
+      "normalization": "Exact passed independent source review, added after immutable author source packet; no source or fixture edits.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/independent-review.json",
+      "origin_sha256": "d3455290bb1f455015a0d8f2263ed1b3753315f10269e84bf5a200d0110c715d",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/provenance/independent-review.json",
+      "sha256": "d3455290bb1f455015a0d8f2263ed1b3753315f10269e84bf5a200d0110c715d"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/reviewer/runner-review.json",
+      "origin_sha256": "c9426282b4338b047f6f53b40896d0383b7973526c4249c9c1febabb8da37ff5",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/provenance/runner-review.json",
+      "sha256": "c9426282b4338b047f6f53b40896d0383b7973526c4249c9c1febabb8da37ff5"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/source-delta.json",
+      "origin_sha256": "25283c1c48ee119cc3a6f3be50c2a73b9d321c77b2bff68e1f11f6f5757512ef",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/source-delta.json",
+      "sha256": "25283c1c48ee119cc3a6f3be50c2a73b9d321c77b2bff68e1f11f6f5757512ef"
+    },
+    {
+      "normalization": "Exact 34 author-qualified fixture identities; extracted from pinned validation.json without importing or running tests.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
+      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/test-identities.json",
+      "sha256": "fc5fac06ac8b4c2e9e1f4da955d09d6958c0c395d8259cf12c12b337accbcdaa"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/test-output.json",
+      "origin_sha256": "5ea06d2cd737cf394fc5db500208c9f7021575ae8069ad42462bc351d8384e78",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/test-output.json",
+      "sha256": "5ea06d2cd737cf394fc5db500208c9f7021575ae8069ad42462bc351d8384e78"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/test_trace_recovery_v3.py",
+      "origin_sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/test_trace_recovery_v3.py",
+      "sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/trace_archive_v1_c8a13033.py",
+      "origin_sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/trace_recovery_v2.py",
+      "origin_sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py",
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/trace_recovery_v3.py",
+      "origin_sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v3.py",
+      "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
+    },
+    {
+      "normalization": "Exact frozen source bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/validation.json",
+      "origin_sha256": "5b4114fbf50d5d29f3c70065324f20a6b6bcec1adeff92b6c1242c8562991e8d",
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/validation.json",
+      "sha256": "5b4114fbf50d5d29f3c70065324f20a6b6bcec1adeff92b6c1242c8562991e8d"
+    },
+    {
       "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring.",
       "origin": "Codex heartbeat20261009-1109 scoped verified-byte cache successor from PR277@a5376f09caa90e39cc8e41c8a59faef5665de939",
       "origin_sha256": "164c6db760a140337a8971558564613840fd47d45b8ce2572bc514836bcdc601",
@@ -3672,11 +3805,11 @@
       "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6"
     },
     {
-      "normalization": "Portable isolated21 new fixtures and additive metadata/docs. Prior617+49 identities preserved;70 fresh-GP identities collected, only21 executed for revision3 packaging. No runtime/scientific/production-clock changes.",
-      "origin": "FreshGP additive permanent-registry source integration after PR277@bd37122 and trace-log correctionf01825da",
+      "normalization": "Additive dispatch of 34 new trace-v3 fixtures only after unchanged prior687 runner prefix; original suffix preserved. 721 wired identities is not a full-suite execution claim.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/baseline/deploy/dl-flywheel/run_offline.py",
       "origin_sha256": "07f471a7f741c0b50fc5b6b6c06b6875a8ba0f848f7c289dfe41d479dac8df94",
       "path": "deploy/dl-flywheel/run_offline.py",
-      "sha256": "07f471a7f741c0b50fc5b6b6c06b6875a8ba0f848f7c289dfe41d479dac8df94"
+      "sha256": "bd6d58004a8b7401ea7de787e9035657d1e539a941d34d80d9d99b8f24bb88ea"
     },
     {
       "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved.",
@@ -3705,6 +3838,13 @@
       "origin_sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556",
       "path": "deploy/dl-flywheel/run_trace_v2_offline.py",
       "sha256": "0e0cc1f68eed9a1666cd775b09ac7627bc6901c0166f414475b8e94ab6959556"
+    },
+    {
+      "normalization": "New isolated fixture-only runner. Temporary exact source copy, fixed time.time only, real monotonic/time_ns, import origin/hash checks; no production clock edit.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/run_trace_v3_offline.py",
+      "origin_sha256": "60b23b47ca4b1c78d8a5ca63c9a4651e51b8bcdecdeaaf27ad894b14760e14fa",
+      "path": "deploy/dl-flywheel/run_trace_v3_offline.py",
+      "sha256": "60b23b47ca4b1c78d8a5ca63c9a4651e51b8bcdecdeaaf27ad894b14760e14fa"
     },
     {
       "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring.",
@@ -3908,11 +4048,11 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Portable isolated21 new fixtures and additive metadata/docs. Prior617+49 identities preserved;70 fresh-GP identities collected, only21 executed for revision3 packaging. No runtime/scientific/production-clock changes.",
-      "origin": "FreshGP additive permanent-registry source integration after PR277@bd37122 and trace-log correctionf01825da",
-      "origin_sha256": "3366a3a0ba881606eaa41c6e3260f6ccd260a712661a6139f36a95a4706c5895",
+      "normalization": "Add one research test family only; all502 prior rows and non-items metadata retained.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
+      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "3366a3a0ba881606eaa41c6e3260f6ccd260a712661a6139f36a95a4706c5895"
+      "sha256": "243f732f23e50dd9e59352a793c6d73d095df296f1177445ce1babd453a215e5"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

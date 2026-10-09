@@ -1572,6 +1572,16 @@
       ],
       "scope": "13 isolated new CPU fixtures via run_trace_v2_offline.py, additively invoked after all prior540 identities. Private temporary source copies and derived local fixture JSON refs, fixed disclosed fixture time1791550000; unchanged production Python/deadlines. No live GPU/GP/S3/systemd/optimizer or production queue action."
     },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/test_trace_recovery_v3.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "34 isolated synthetic CPU fixtures via run_trace_v3_offline.py after unchanged prior687 identities. Exact frozen source in owned temporary copy; time.time fixed to1791564000 only; mocked launcher/S3/subprocess and injected prior1 ColdJoin result. Full physical historical verification remains a live preflight requirement. No actual S3, GP/GPU, service launch, data admission or resource-grant claim."
+    },
     "python:deploy/dl-flywheel/tests/test_augmentation.py": {
       "discovery": {
         "kind": "python-family"

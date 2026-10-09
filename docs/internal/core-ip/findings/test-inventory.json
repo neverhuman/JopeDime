@@ -604,6 +604,10 @@
       "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/test_trace_recovery_v3.py": {
+      "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/tests/test_augmentation.py": {
       "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
       "role": "research"
