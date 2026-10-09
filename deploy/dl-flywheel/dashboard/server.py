@@ -13,6 +13,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url=self.path.split('?')[0]
         files={'/DL_CONTINUAL_MODEL_V1.md':'DL_CONTINUAL_MODEL_V1.md','/DL_FLYWHEEL_CORRECTION_PLAN.md':'DL_FLYWHEEL_CORRECTION_PLAN.md','/DL_FLYWHEEL_KUMOS_ROSTER_AUDIT.md':'DL_FLYWHEEL_KUMOS_ROSTER_AUDIT.md','/DL_FLYWHEEL_EVERGREEN_IMPLEMENTATION.md':'DL_FLYWHEEL_EVERGREEN_IMPLEMENTATION.md','/DL_PAPER_S3_CUSTODY.md':'DL_PAPER_S3_CUSTODY.md','/DL_FLYWHEEL_ENCODER_PUBLICATION.md':'DL_FLYWHEEL_ENCODER_PUBLICATION.md','/api/wave4-full-comparison':'DL_wave4_full_comparison.json','/DL_wave4_full_comparison.md':'DL_wave4_full_comparison.md','/':'index.html','/paper/':'DL_paper_dashboard.html','/api/paper-evidence':'DL_paper_evidence_snapshot.json','/DL_WHITE_PAPER_TRACKING.md':'DL_WHITE_PAPER_TRACKING.md','/DL_FLYWHEEL_PLAN.md':'DL_FLYWHEEL_PLAN.md','/DL_FLYWHEEL_INTEGRATION_AUDIT.md':'DL_FLYWHEEL_INTEGRATION_AUDIT.md','/full/':'DL_wave4_full_dashboard.html','/api/wave4-full-data':'DL_wave4_full_data_snapshot.json','/DL_wave4_full_data_report.md':'DL_wave4_full_data_report.md','/DL_wave4_full_data_audit.md':'DL_wave4_full_data_audit.md','/app.js':'app.js','/style.css':'style.css','/api/metrics':'snapshot.json','/DL_wave4_v1.0.0.md':'DL_wave4_v1.0.0.md','/DL_wave4_full_report.md':'DL_wave4_full_report.md','/api/wave4-report':'DL_wave4_full_report.json'}
+        files.update({'/DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md': 'DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md', '/DL_ENCODER_MASK_NEXT_TESTS.md': 'DL_ENCODER_MASK_NEXT_TESTS.md', '/DL_FLYWHEEL_GROWTH_AND_INFERENCE_V2.md': 'DL_FLYWHEEL_GROWTH_AND_INFERENCE_V2.md', '/DL_HPC_BOTTLENECKS_AND_TIMING.md': 'DL_HPC_BOTTLENECKS_AND_TIMING.md'})
         filename=None
         if url in ['/export.html','/export.csv']:
             p=HERE/'snapshot.json'
@@ -50,6 +51,7 @@ class Handler(BaseHTTPRequestHandler):
             b=p.read_bytes();mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.md':'text/markdown; charset=utf-8'}[p.suffix]
         else:self.send_error(404);return
         if url in ('/DL_CONTINUAL_MODEL_V1.md','/DL_FLYWHEEL_CORRECTION_PLAN.md','/DL_FLYWHEEL_KUMOS_ROSTER_AUDIT.md','/DL_FLYWHEEL_EVERGREEN_IMPLEMENTATION.md','/DL_PAPER_S3_CUSTODY.md','/DL_FLYWHEEL_ENCODER_PUBLICATION.md','/DL_wave4_full_comparison.md','/DL_WHITE_PAPER_TRACKING.md','/DL_FLYWHEEL_PLAN.md','/DL_FLYWHEEL_INTEGRATION_AUDIT.md','/DL_wave4_v1.0.0.md','/DL_wave4_full_report.md','/DL_wave4_full_data_report.md','/DL_wave4_full_data_audit.md'):filename=url.lstrip('/')
+        if url in ('/DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md', '/DL_ENCODER_MASK_NEXT_TESTS.md', '/DL_FLYWHEEL_GROWTH_AND_INFERENCE_V2.md', '/DL_HPC_BOTTLENECKS_AND_TIMING.md'):filename=url.lstrip('/')
         self.send_response(200);self.send_header('Content-Type',mime);self.send_header('Content-Length',str(len(b)));self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff')
         if filename:self.send_header('Content-Disposition','attachment; filename="'+filename+'"')
         self.end_headers();self.wfile.write(b)

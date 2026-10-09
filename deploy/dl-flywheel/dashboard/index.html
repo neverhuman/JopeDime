@@ -1,8 +1,8 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JopeDime · Continuous learning</title>
 <style>
-:root{color-scheme:dark;--bg:#091319;--card:#10232c;--edge:#29404b;--text:#eef5f6;--muted:#9db4be;--green:#70e2b2;--blue:#80baff;--gold:#f2c576}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 95% 0,#143639 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.5 system-ui}main{max-width:1440px;margin:auto;padding:28px 32px 70px}nav{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:24px;border-bottom:1px solid var(--edge)}a{color:var(--green)}nav a{margin-left:20px;text-decoration:none;font-size:13px}.brand{font-weight:750;letter-spacing:.12em;font-size:13px}.eyebrow{color:var(--green);font:12px ui-monospace;letter-spacing:.13em;text-transform:uppercase}h1{font-size:clamp(36px,5vw,60px);line-height:1.07;letter-spacing:-.045em;margin:16px 0}h2{font-size:21px;margin:0 0 8px;letter-spacing:-.02em}h3{font-size:15px;margin:0 0 6px}p{margin:8px 0;color:var(--muted)}.hero{display:flex;justify-content:space-between;gap:40px;align-items:end;margin:38px 0 25px}.hero p{max-width:750px}.stamp{font-size:12px;color:var(--muted);text-align:right;min-width:230px}.dot{display:inline-block;background:var(--green);width:7px;height:7px;border-radius:50%;margin-right:7px}.alert{border:1px solid #665638;background:#2b261b;color:var(--gold);border-radius:10px;padding:14px 18px;margin-bottom:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{border:1px solid var(--edge);background:linear-gradient(140deg,#142a34,#0e1e27);border-radius:13px;padding:22px}.value{display:block;font-size:42px;line-height:1.15;letter-spacing:-.045em;font-weight:740;margin:12px 0}.label{font-size:12px;color:var(--muted);letter-spacing:.065em;text-transform:uppercase}.note{color:var(--muted);font-size:12px}.panel{margin-top:20px}.columns{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.controls{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}button{border:1px solid #38525f;color:var(--muted);background:transparent;border-radius:6px;padding:6px 11px;cursor:pointer}button.on{color:var(--text);background:#254251;border-color:#5b8795}.plot{width:100%;height:250px;display:block}.empty{min-height:242px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed #324a56;border-radius:8px;background:repeating-linear-gradient(0deg,transparent,transparent 47px,#17303a 48px)}.empty b{font-size:18px}.empty p{max-width:410px;padding:0 14px}.legend{display:flex;gap:20px;font-size:12px;color:var(--muted)}.legend i{width:18px;height:3px;display:inline-block;margin:0 7px 3px 0}.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.stage{border:1px solid var(--edge);padding:15px;border-radius:8px;min-height:144px}.stage .count{display:block;font-size:25px;font-weight:700;margin:9px 0}.stage p{font-size:12px}.accent{color:var(--green)}.warn{color:var(--gold)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.metric{border-left:2px solid #426a76;padding:0 14px}.metric strong{display:block;font-size:28px;margin:7px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--edge)}th{color:var(--muted);font-weight:500}.hostrow{display:flex;gap:14px;flex-wrap:wrap}.host{flex:1;min-width:250px}.bar{height:7px;background:#28414c;border-radius:8px;margin:12px 0;overflow:hidden}.fill{height:100%;background:var(--green)}details{margin-top:24px;padding-top:18px;border-top:1px solid var(--edge)}summary{cursor:pointer;color:var(--muted)}code{font-size:12px;overflow-wrap:anywhere}footer{margin-top:32px;font-size:12px;color:var(--muted)}.tag{font:11px ui-monospace;padding:3px 6px;background:#203e49;border-radius:4px}svg text{font:11px system-ui;fill:#9db4be}@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{display:block}.stamp{text-align:left;margin-top:20px}.stages{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){main{padding:20px 15px}.cards,.metrics{grid-template-columns:1fr}nav{align-items:start}nav a{display:block;margin:5px 0}.value{font-size:36px}}
+:root{color-scheme:dark;--bg:#091319;--card:#10232c;--edge:#29404b;--text:#eef5f6;--muted:#9db4be;--green:#70e2b2;--blue:#80baff;--gold:#f2c576}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 95% 0,#143639 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.5 system-ui}main{max-width:1440px;margin:auto;padding:28px 32px 70px}nav{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:24px;border-bottom:1px solid var(--edge)}a{color:var(--green)}nav a{margin-left:20px;text-decoration:none;font-size:13px}.brand{font-weight:750;letter-spacing:.12em;font-size:13px}.eyebrow{color:var(--green);font:12px ui-monospace;letter-spacing:.13em;text-transform:uppercase}h1{font-size:clamp(36px,5vw,60px);line-height:1.07;letter-spacing:-.045em;margin:16px 0}h2{font-size:21px;margin:0 0 8px;letter-spacing:-.02em}h3{font-size:15px;margin:0 0 6px}p{margin:8px 0;color:var(--muted)}.hero{display:flex;justify-content:space-between;gap:40px;align-items:end;margin:38px 0 25px}.hero p{max-width:750px}.stamp{font-size:12px;color:var(--muted);text-align:right;min-width:230px}.dot{display:inline-block;background:var(--green);width:7px;height:7px;border-radius:50%;margin-right:7px}.alert{border:1px solid #665638;background:#2b261b;color:var(--gold);border-radius:10px;padding:14px 18px;margin-bottom:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{border:1px solid var(--edge);background:linear-gradient(140deg,#142a34,#0e1e27);border-radius:13px;padding:22px}.value{display:block;font-size:42px;line-height:1.15;letter-spacing:-.045em;font-weight:740;margin:12px 0}.label{font-size:12px;color:var(--muted);letter-spacing:.065em;text-transform:uppercase}.note{color:var(--muted);font-size:12px}.panel{margin-top:20px}.columns{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.controls{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}button{border:1px solid #38525f;color:var(--muted);background:transparent;border-radius:6px;padding:6px 11px;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}.controls-label{align-self:center;color:var(--muted);font-size:12px;margin-right:3px}button.on{color:var(--text);background:#254251;border-color:#5b8795}.plot{width:100%;height:250px;display:block}.empty{min-height:242px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed #324a56;border-radius:8px;background:repeating-linear-gradient(0deg,transparent,transparent 47px,#17303a 48px)}.empty b{font-size:18px}.empty p{max-width:410px;padding:0 14px}.legend{display:flex;gap:20px;font-size:12px;color:var(--muted)}.legend i{width:18px;height:3px;display:inline-block;margin:0 7px 3px 0}.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.stage{border:1px solid var(--edge);padding:15px;border-radius:8px;min-height:144px}.stage .count{display:block;font-size:25px;font-weight:700;margin:9px 0}.stage p{font-size:12px}.accent{color:var(--green)}.warn{color:var(--gold)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.metric{border-left:2px solid #426a76;padding:0 14px}.metric strong{display:block;font-size:28px;margin:7px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--edge)}th{color:var(--muted);font-weight:500}.hostrow{display:flex;gap:14px;flex-wrap:wrap}.host{flex:1;min-width:250px}.bar{height:7px;background:#28414c;border-radius:8px;margin:12px 0;overflow:hidden}.fill{height:100%;background:var(--green)}details{margin-top:24px;padding-top:18px;border-top:1px solid var(--edge)}summary{cursor:pointer;color:var(--muted)}code{font-size:12px;overflow-wrap:anywhere}footer{margin-top:32px;font-size:12px;color:var(--muted)}.tag{font:11px ui-monospace;padding:3px 6px;background:#203e49;border-radius:4px}svg text{font:11px system-ui;fill:#9db4be}@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{display:block}.stamp{text-align:left;margin-top:20px}.stages{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){main{padding:20px 15px}.cards,.metrics{grid-template-columns:1fr}nav{align-items:start}nav a{display:block;margin:5px 0}.value{font-size:36px}}
 </style><main>
-<nav><span class="brand">JOPEDIME / CONTINUOUS LEARNING</span><div><a href="/DL_CONTINUAL_MODEL_V1.md">Current model specification</a><a href="/DL_WHITE_PAPER_TRACKING.md">Evidence log</a><a href="/DL_ENCODER_MASK_NEXT_TESTS.md">Encoder and mask experiments</a><a href="/full/">Previous model experiments</a></div></nav>
+<nav><span class="brand">JOPEDIME / CONTINUOUS LEARNING</span><div><a href="/DL_CONTINUAL_MODEL_V1.md">Current model specification</a><a href="/DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md">Technical review</a><a href="/DL_WHITE_PAPER_TRACKING.md">Evidence log</a><a href="/DL_ENCODER_MASK_NEXT_TESTS.md">Encoder and mask experiments</a><a href="/full/">Previous model experiments</a></div></nav>
 <section class="hero"><div><div class="eyebrow">One growing corpus. One current training run.</div><h1>Data in. Programs out.<br>Measured results.</h1><p>A <strong>data run</strong> is one regression dataset version with one exact split definition. A new split is a new data run. Counts below track the growing corpus and its actual use by the current model.</p></div><div class="stamp"><span class="dot"></span><span id="connection">Connecting to source records</span><br><span id="updated">No observation yet</span></div></section>
 <div id="trainingStatus" class="alert">New continual training is not connected yet. Completed historical model experiments are available separately.</div>
 <section class="cards" style="margin-bottom:16px">
@@ -18,7 +18,7 @@
 <div class="card"><div class="label">New flywheel GP results in S3</div><span class="value" id="gpTotal">—</span><div class="note" id="gpSupport">Actual exact-context program executions</div></div>
 </section>
 
-<section class="columns"><div class="panel"><div class="eyebrow">Current model</div><h2>Training vs validation loss</h2><p class="note">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis"><button class="on" data-axis="batch">Batches</button><button data-axis="epoch">Epochs</button><button data-axis="unique_data_runs_seen">Unique data runs</button></div><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
+<section class="columns"><div class="panel"><div class="eyebrow">Current model</div><h2>Training vs validation loss</h2><p class="note" id="axisDescription">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis" role="group" aria-label="Loss horizontal axis"><span class="controls-label">X axis</span><button type="button" class="on" data-axis="batch" aria-pressed="true">Batches</button><button type="button" data-axis="epoch" aria-pressed="false">Epochs</button><button type="button" data-axis="unique_data_runs_seen" aria-pressed="false">Unique data runs</button><button type="button" data-axis="total_presentations" aria-pressed="false" disabled>Total presentations</button></div><div class="controls" id="lossScale" role="group" aria-label="Loss vertical scale"><span class="controls-label">Loss Y scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear</button><button type="button" data-scale="log" aria-pressed="false">Log</button></div><p class="note" id="lossScaleNote" role="status" aria-live="polite">Linear loss scale.</p><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
 <div class="panel"><div class="eyebrow">Live pipeline</div><h2>What is actually running</h2><div id="workState"><p>Awaiting source status.</p></div><div class="metrics"><div class="metric"><span class="note">New GP executions</span><strong id="executions">—</strong></div><div class="metric"><span class="note">Reused cached GP results</span><strong id="cacheHits">—</strong></div><div class="metric"><span class="note">Failed GP attempts</span><strong id="failures">—</strong></div></div><p class="note" id="gpCampaign">No program campaign observed.</p><div class="bar"><div id="gpBar" class="fill" style="width:0"></div></div><p class="note">An emitted program becomes a result only after native execution, emitted Rust parity, and S3 readback.</p></div></section>
 <section class="panel"><div class="eyebrow">No stage hidden</div><h2>From new data to a trained batch</h2><div class="stages">
 <div class="stage"><h3>1. Fuzz &amp; publish</h3><span id="made" class="count">—</span><p id="generationState">Source and transform JSON travel with every variant.</p></div>
@@ -35,32 +35,91 @@
 <footer id="foot">Telemetry observations do not constitute optimizer exposure. Missing results remain missing.</footer>
 </main><script>
 const el=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString(),ns='http://www.w3.org/2000/svg';let current=null,axis='batch';
+const scaleStorageKey='jopedime.paper.loss-y-scale.v1';
+function readLossScale(){try{return localStorage.getItem(scaleStorageKey)==='log'?'log':'linear'}catch{return 'linear'}}
+let lossScale=readLossScale();
+const finiteNumber=v=>typeof v==='number'&&Number.isFinite(v);
 function text(id,value){el(id).textContent=value}
 function stateName(s){return ({completed_bounded_qualification:'initial training segment complete',running:'training',staged:'staged, awaiting checks',observing:'checking next GP',publishing:'publishing measured GP',running_partial:'running with recorded failures',measurement_finished:'measurements finished',custody_failed:'evidence archive failed',failed:'stopped with an error',partial:'stopped with unfinished work',completed_session:'training segment complete',snapshot_qualified:'data checks passed'})[s]||String(s||'unobserved').replaceAll('_',' ')}function node(tag,attrs){const n=document.createElementNS(ns,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);return n}
-function plot(id,rows,series,key,dual){
- const target=el(id);if(!rows.length)return;
+// Map only the source's complete contiguous optimizer suffix; never infer exposures from unique coverage.
+function presentationHistory(n){
+ const rows=n?.loss_history||[],history=n?.optimizer_history||[],resume=n?.resumed_from?.absolute_optimizer_step,total=n?.total_train_presentations,end=n?.completed_batches;
+ const unavailable=reason=>({available:false,rows,note:'Total presentations unavailable: '+reason});
+ if(resume!==429||n?.resumed_from?.planner_head?.committed_batches!==429)return unavailable('verified batch-429 resume boundary missing.');
+ if(!Number.isSafeInteger(total)||!Number.isSafeInteger(end)||end<resume||history.length!==end-resume)return unavailable('complete optimizer suffix missing.');
+ let count=0;
+ for(let i=0;i<history.length;i++){const r=history[i];if(r.batch!==resume+i+1||!Number.isSafeInteger(r.context_count)||r.context_count<=0)return unavailable('optimizer batch/count continuity failed.');count+=r.context_count;if(!Number.isSafeInteger(count))return unavailable('presentation count exceeds exact integer range.');}
+ const base=total-count;
+ if(base!==6857)return unavailable('presentation offset differs from the verified 6,857-row first pass.');
+ const totals=new Map([[resume,base]]);let sum=base;for(const r of history){sum+=r.context_count;totals.set(r.batch,sum)}
+ const mapped=rows.map(r=>totals.has(r.batch)?{...r,total_presentations:totals.get(r.batch)}:{...r,total_presentations:undefined});
+ if(mapped.filter(r=>finiteNumber(r.total_presentations)).length<2)return unavailable('fewer than two matched loss observations.');
+ return {available:true,rows:mapped,note:'Total presentations uses recorded context counts from batch 429 onward. Earlier per-batch presentation history is unavailable; those loss points are not plotted on this axis.'};
+}
+// Show the first loss at each coverage count; carry gaps across skipped reuse and epoch boundaries.
+function chartRows(rows,key){
  if(key==='epoch')rows=[...new Map(rows.map(r=>[r.epoch,r])).values()];
- if(key==='unique_data_runs_seen'){const first=new Map();for(const r of rows)if(!first.has(r[key]))first.set(r[key],r);rows=[...first.values()]}
- const w=650,h=250,pad={l:50,r:20,t:32,b:35};
- const xs=rows.map(r=>Number(r[key])),values=rows.flatMap(r=>series.map(s=>r[s.key])).filter(v=>typeof v==='number'&&Number.isFinite(v));
- if(!values.length)return;
- let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...values),ymax=Math.max(...values);
- if(id==='lossPlot'){const margin=Math.max(.01,(ymax-ymin)*.12);ymin=Math.max(0,ymin-margin);ymax+=margin}else ymin=Math.min(0,ymin);
+ if(key!=='unique_data_runs_seen')return rows.map(row=>({row,breakBefore:false}));
+ const points=[],seen=new Set();let previous=null,pendingBreak=false;
+ for(const row of rows){
+  const x=row[key],stalled=previous&&finiteNumber(previous[key])&&finiteNumber(x)&&x<=previous[key];
+  const changedEpoch=previous&&finiteNumber(previous.epoch)&&finiteNumber(row.epoch)&&row.epoch!==previous.epoch;
+  if(stalled||changedEpoch||!finiteNumber(x))pendingBreak=true;
+  if(seen.has(x)){pendingBreak=true;previous=row;continue}
+  points.push({row,breakBefore:pendingBreak});pendingBreak=false;seen.add(x);previous=row;
+ }
+ return points;
+}
+function coverageContinuation(rows,unique,batches){
+ const first=rows.find(r=>r.unique_data_runs_seen===unique);
+ if(!first||!Number.isSafeInteger(first.batch)||!Number.isSafeInteger(batches)||batches<first.batch)return '';
+ return ' First loss reading at current coverage: batch '+fmt(first.batch)+'; '+fmt(batches-first.batch)+' later optimizer updates are shown under Batches / Total presentations.';
+}
+function seriesSegments(points,key,valueKey,scale){
+ const segments=[];let segment=null;
+ for(const {row,breakBefore}of points){
+  const y=row[valueKey];
+  if(breakBefore)segment=null;
+  if(!finiteNumber(row[key])||!finiteNumber(y)||(scale==='log'&&y<=0)){segment=null;continue}
+  if(!segment){segment=[];segments.push(segment)}segment.push(row);
+ }
+ return segments;
+}
+function lossTooltip(row,valueKey){
+ const known=v=>finiteNumber(v)?fmt(v):'unavailable';
+ return 'Batch '+known(row.batch)+' · epoch '+known(row.epoch)+' · '+known(row.unique_data_runs_seen)+' unique data runs'+(finiteNumber(row.total_presentations)?' · '+fmt(row.total_presentations)+' total presentations':'')+' · '+valueKey+': '+String(row[valueKey]);
+}
+function plot(id,rows,series,key,dual){
+ const target=el(id),isLoss=id==='lossPlot',scale=isLoss?lossScale:'linear';
+ const points=chartRows(rows,key),validRows=points.map(p=>p.row).filter(r=>finiteNumber(r[key]));
+ const rawValues=validRows.flatMap(r=>series.map(s=>r[s.key])).filter(finiteNumber);
+ const unavailable=scale==='log'?rawValues.filter(v=>v<=0).length:0;
+ const values=rawValues.filter(v=>scale!=='log'||v>0);
+ if(isLoss)text('lossScaleNote',scale==='log'?'Log loss scale · equal distances represent equal ratios. '+(unavailable?unavailable+' nonpositive loss observation'+(unavailable===1?' is':'s are')+' unavailable on log scale; no replacement values. Choose Linear to view them.':'All displayed losses are positive.'):'Linear loss scale · equal distances represent equal loss differences.');
+ if(!validRows.length||!values.length){target.className='empty';target.textContent=isLoss?(unavailable?'Log scale unavailable: no positive loss observations. Choose Linear.':'No recorded loss observations for this axis.'):'Waiting for recorded observations.';return}
+ const w=650,h=250,pad={l:58,r:20,t:32,b:35},xs=validRows.map(r=>r[key]);
+ const transform=v=>scale==='log'?Math.log10(v):v,inverse=v=>scale==='log'?10**v:v;
+ let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=transform(Math.min(...values)),ymax=transform(Math.max(...values));
+ if(isLoss){const margin=Math.max(scale==='log'?.1:.01,(ymax-ymin)*.12);ymin=scale==='linear'&&ymin>=0?Math.max(0,ymin-margin):ymin-margin;ymax+=margin}else ymin=Math.min(0,ymin);
  if(xmin===xmax)xmax=xmin+1;if(ymin===ymax)ymax=ymin+1;
- const sx=x=>pad.l+(x-xmin)/(xmax-xmin)*(w-pad.l-pad.r),sy=y=>h-pad.b-(y-ymin)/(ymax-ymin)*(h-pad.t-pad.b);
- const svg=node('svg',{viewBox:'0 0 '+w+' '+h,class:'plot',role:'img','aria-label':id==='lossPlot'?'Observed training and validation loss':'Observed data and GP library growth'});
- for(let i=0;i<=4;i++){const y=ymin+(ymax-ymin)*i/4;svg.append(node('line',{x1:pad.l,x2:w-pad.r,y1:sy(y),y2:sy(y),stroke:'#28414c'}));const t=node('text',{x:pad.l-8,y:sy(y)+4,'text-anchor':'end'});t.textContent=ymax>10?Math.round(y).toLocaleString():y.toFixed(3);svg.append(t)}
+ const sx=x=>pad.l+(x-xmin)/(xmax-xmin)*(w-pad.l-pad.r),sy=y=>h-pad.b-(transform(y)-ymin)/(ymax-ymin)*(h-pad.t-pad.b);
+ const svg=node('svg',{viewBox:'0 0 '+w+' '+h,class:'plot',role:'img','aria-label':isLoss?'Observed training and validation loss, '+scale+' scale, '+key.replaceAll('_',' ')+' axis':'Observed data and GP library growth'});
+ for(let i=0;i<=4;i++){const y=inverse(ymin+(ymax-ymin)*i/4);svg.append(node('line',{x1:pad.l,x2:w-pad.r,y1:sy(y),y2:sy(y),stroke:'#28414c'}));const t=node('text',{x:pad.l-8,y:sy(y)+4,'text-anchor':'end'});t.textContent=scale==='log'?(Math.abs(y)<.001||Math.abs(y)>=1e6?y.toExponential(2):Number(y.toPrecision(4)).toLocaleString(undefined,{maximumSignificantDigits:4})):(ymax>10?Math.round(y).toLocaleString():y.toFixed(3));svg.append(t)}
  const unique=[...new Set(xs)].sort((a,b)=>a-b);
- const ticks=key==='at'?Array.from({length:5},(_,i)=>xmin+(xmax-xmin)*i/4):unique.length<=5?unique:Array.from({length:5},(_,i)=>unique[Math.round(i*(unique.length-1)/4)]);
- for(const x of ticks){const t=node('text',{x:sx(x),y:h-10,'text-anchor':'middle'});t.textContent=key==='at'?new Date(x*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):fmt(x);svg.append(t);if(dual){const r=rows.find(r=>r[key]===x);const q=node('text',{x:sx(x),y:16,'text-anchor':'middle'});q.textContent=fmt(r.unique_data_runs_seen);svg.append(q)}}
- for(const s of series){let d='',open=false;for(const r of rows){const y=r[s.key];if(typeof y!=='number'||!Number.isFinite(y)){open=false;continue}d+=(open?'L':'M')+sx(r[key])+','+sy(y)+' ';open=true}svg.append(node('path',{d,fill:'none',stroke:s.color,'stroke-width':2.5}));
- if(id==='lossPlot')for(const r of rows){if(typeof r[s.key]!=='number')continue;const dot=node('circle',{cx:sx(r[key]),cy:sy(r[s.key]),r:3,fill:s.color});const title=node('title',{});title.textContent='Batch '+r.batch+' · epoch '+r.epoch+' · '+r.unique_data_runs_seen+' unique data runs · '+s.key+': '+r[s.key].toFixed(6);dot.append(title);svg.append(dot)}}
- target.className='';target.replaceChildren(svg)
+ const ticks=key==='at'?Array.from({length:5},(_,i)=>xmin+(xmax-xmin)*i/4):unique.length<=5?unique:[...new Set(Array.from({length:5},(_,i)=>unique[Math.round(i*(unique.length-1)/4)]))];
+ for(const x of ticks){const t=node('text',{x:sx(x),y:h-10,'text-anchor':'middle'});t.textContent=key==='at'?new Date(x*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):fmt(x);svg.append(t);if(dual){const r=validRows.find(r=>r[key]===x);const q=node('text',{x:sx(x),y:16,'text-anchor':'middle'});q.textContent=finiteNumber(r.unique_data_runs_seen)?fmt(r.unique_data_runs_seen):'—';svg.append(q)}}
+ for(const s of series){
+  const segments=seriesSegments(points,key,s.key,scale),d=segments.map(segment=>segment.map((r,i)=>(i?'L':'M')+sx(r[key])+','+sy(r[s.key])).join(' ')).join(' ');
+  svg.append(node('path',{d,fill:'none',stroke:s.color,'stroke-width':2.5,'data-series':s.key}));
+  if(isLoss)for(const segment of segments)for(const r of segment){const label=lossTooltip(r,s.key),dot=node('circle',{cx:sx(r[key]),cy:sy(r[s.key]),r:3,fill:s.color,tabindex:0,'aria-label':label,'data-batch':r.batch});const title=node('title',{});title.textContent=label;dot.append(title);svg.append(dot)}
+ }
+ target.className='';target.replaceChildren(svg);
 }
 function render(s){
  current=s;
  const hs=s.hosts||[],h=hs.find(x=>x.host==='xbabe2')||{},g=h.evergreen||{},
  c=h.gp_label_campaign||{},cc=c.counts||{},f=h.gp_fill_campaign||{},fc=f.counts||{},n=h.neural_training||null;
+ const exposure=presentationHistory(n),presentationButton=el('axis').querySelector('[data-axis="total_presentations"]');presentationButton.disabled=!exposure.available;presentationButton.title=exposure.note;
  const expansion=hs.flatMap(x=>x.gp_expansion_campaigns||[]),extra=k=>expansion.reduce((t,x)=>t+(x.counts?.[k]||0),0);
  const inventory=h.full_corpus;
  if(inventory){
@@ -83,7 +142,8 @@ function render(s){
  text('seen',failedRead?'Unavailable':fmt(n?.unique_train_data_runs_seen||0));
  const unique=n?.unique_train_data_runs_seen||0,presentations=n?.total_train_presentations||0;
  text('presentations',fmt(presentations));
- text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'This view shows the first loss reading at each coverage total; later updates at unchanged coverage remain in Batches/Epochs.':'The upper axis counts unique coverage; it stays flat while already-seen data is reused.'));
+ text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'Training continues at fixed coverage. This view keeps the first loss reading at each unique count; lines break across reuse and epoch changes.'+coverageContinuation(n?.loss_history||[],unique,n?.completed_batches):axis==='total_presentations'?exposure.note:'Unique coverage stays flat while already-seen data is reused.'));
+ text('axisDescription',(axis==='batch'?'Raw batches on the lower axis; unique data runs seen on the upper axis.':axis==='epoch'?'Epochs on the horizontal axis; latest recorded loss readout in each epoch.':axis==='total_presentations'?'Cumulative training presentations on the horizontal axis, including repeated data runs.':'Unique data runs on the horizontal axis; first loss reading at each count. Later repeated training is shown on the other axes.')+' Validation uses reserved parent lineages.');
  text('batches',failedRead?'Unavailable':fmt(n?.completed_batches||0));
  text('epoch','Completed epochs: '+(n?.completed_epochs??0)+' · presentations: '+fmt(n?.total_train_presentations||0));
  text('gpTotal',fmt(gp));
@@ -128,10 +188,10 @@ function render(s){
  text('priorAttempt',prior?'Previous GP expansion attempt closed before execution: '+prior.worker_guard_refusals+' worker-limit refusals, zero native GP executions and zero GP result writes. Evidence preserved; the corrected workers use new queues.':'Prior attempt evidence remains available in the source log.');
  const td=n?.training_data;
  text('corpusDetails','Current growing corpus: '+(g.published||0)+' data runs. Qualified parent pool: '+(h.parents?.parents??'—')+' lineages. '+(td?'Current frozen run: '+td.eligible_train_contexts+' eligible train contexts and '+td.dev_contexts+' validation contexts. ':'')+(h.neural_native_corpus?'Original base: 6,857 training contexts and 263 reserved validation contexts. The continuation retains the same model and comparable fixed panels. ':'')+'Inner CV scoring passes do not create new input identities. New augmented contexts enter at epoch boundaries after measured GP admission; raw or unscored variants are not counted as trained.');
- plot('lossPlot',n?.loss_history||[],[{key:'train_loss',color:'#70e2b2'},{key:'validation_loss',color:'#80baff'}],axis,axis==='batch');
+ plot('lossPlot',exposure.available?exposure.rows:(axis==='total_presentations'?[]:n?.loss_history||[]),[{key:'train_loss',color:'#70e2b2'},{key:'validation_loss',color:'#80baff'}],axis,axis==='batch');
  const lh=n?.loss_history||[];
  if(lh.length){const a=lh[0],b=lh[lh.length-1],change=k=>a[k]===0?'':(' ('+((b[k]/a[k]-1)*100).toFixed(1)+'%)');
- text('lossSummary','Train '+a.train_loss.toFixed(4)+' → '+b.train_loss.toFixed(4)+change('train_loss')+' · validation '+a.validation_loss.toFixed(4)+' → '+b.validation_loss.toFixed(4)+change('validation_loss')+'. Lower is better; fixed panels, dropout off. Epoch view shows the latest readout per epoch.');}
+ text('lossSummary','Full recorded history: train '+a.train_loss.toFixed(4)+' → '+b.train_loss.toFixed(4)+change('train_loss')+' · validation '+a.validation_loss.toFixed(4)+' → '+b.validation_loss.toFixed(4)+change('validation_loss')+'. Lower is better; fixed panels, dropout off. Epoch view shows the latest readout per epoch.');}
 
  text('winRandom',n?.winrate_vs_random==null?'—':(100*n.winrate_vs_random).toFixed(1)+'%');
  text('winWinner',n?.winrate_vs_winner==null?'—':(100*n.winrate_vs_winner).toFixed(1)+'%');
@@ -164,5 +224,8 @@ function render(s){
  text('foot','Observed '+new Date(s.at*1000).toLocaleString()+' · '+errors+' collector errors. Source stages retain their own timestamps and receipts.');
 }
 async function refresh(){try{const r=await fetch('/api/paper-evidence',{cache:'no-store'});if(!r.ok)throw Error(r.status);render(await r.json())}catch(e){text('connection','Connection unavailable; retained observations')}}
-for(const b of el('axis').querySelectorAll('button'))b.onclick=()=>{axis=b.dataset.axis;for(const x of el('axis').querySelectorAll('button'))x.classList.toggle('on',x===b);if(current)render(current)};refresh();setInterval(refresh,10000);
+function syncControls(){for(const [id,field,value]of [['axis','axis',axis],['lossScale','scale',lossScale]])for(const b of el(id).querySelectorAll('button')){const selected=b.dataset[field]===value;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected))}}
+for(const b of el('axis').querySelectorAll('button'))b.onclick=()=>{axis=b.dataset.axis;syncControls();if(current)render(current)};
+for(const b of el('lossScale').querySelectorAll('button'))b.onclick=()=>{lossScale=b.dataset.scale;try{localStorage.setItem(scaleStorageKey,lossScale)}catch{}syncControls();if(current)render(current)};
+syncControls();refresh();setInterval(refresh,10000);
 </script></html>

@@ -17,16 +17,16 @@
     {
       "path": "deploy/dl-flywheel/dashboard/index.html",
       "origin": "outputs/DL_paper_dashboard.html",
-      "origin_sha256": "43e6d6bd14b9bf7b85e5a0c29ed52c03ddcffe90b2455aeb100067939e417199",
-      "sha256": "cea6c8a4b88bc51f092ccf0b5246fe2c397bc209684e9366eb5e3758f24b1a48",
-      "normalization": "Removed one whitespace-only HTML line for git diff --check; runtime logic unchanged.",
-      "original_sha256": "43e6d6bd14b9bf7b85e5a0c29ed52c03ddcffe90b2455aeb100067939e417199"
+      "origin_sha256": "3bfdd5a3f11af214f69c09ce68182dcd1fa14ddf396928ddaea048cdafd9f3c6",
+      "sha256": "3bfdd5a3f11af214f69c09ce68182dcd1fa14ddf396928ddaea048cdafd9f3c6"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/server.py",
-      "origin": "outputs/dlhwm_dashboard/server.py",
-      "origin_sha256": "23cf83d78b14e6d39c3c0f82593afe82e50e2167b6a234b3fc389252073e7aa3",
-      "sha256": "23cf83d78b14e6d39c3c0f82593afe82e50e2167b6a234b3fc389252073e7aa3"
+      "origin": "work/dashboard-review-20261009/server.py",
+      "origin_sha256": "9b4c419119c62df161eb2401fa0fd20ce65aa4621d08f02029571910b12dbffe",
+      "sha256": "74629e1b1d15f08635a0bde267b989de8076a114365942999392a81d6d714959",
+      "normalization": "Removed one blank line at EOF for git diff --check; deployed source remains unchanged.",
+      "original_sha256": "9b4c419119c62df161eb2401fa0fd20ce65aa4621d08f02029571910b12dbffe"
     },
     {
       "path": "deploy/dl-flywheel/docs/continuous-independent-review-20261009.json",
@@ -117,6 +117,12 @@
       "origin": "continuous follow-up authored packaging",
       "origin_sha256": "469192988dfded1e7d74f856d24b4aa0eef4c571bd67bf36b963daa304fd698f",
       "sha256": "469192988dfded1e7d74f856d24b4aa0eef4c571bd67bf36b963daa304fd698f"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/technical-review.md",
+      "origin": "outputs/DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md",
+      "origin_sha256": "1a994821583c42024562119162019102bccb7d4fb6e600705095c4f6d1d004b9",
+      "sha256": "1a994821583c42024562119162019102bccb7d4fb6e600705095c4f6d1d004b9"
     },
     {
       "path": "deploy/dl-flywheel/jope_flywheel/__init__.py",
