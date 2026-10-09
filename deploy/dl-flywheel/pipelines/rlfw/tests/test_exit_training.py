@@ -323,6 +323,12 @@ class TrainingTests(unittest.TestCase):
 
 class TrainerTests(unittest.TestCase):
     def setUp(self):
+        # Campaign execution has a fixed end; fixtures must remain runnable later.
+        campaign_clock = mock.patch(
+            "rlfw.exit_offline_train.time.time", return_value=1791536400.0
+        )
+        campaign_clock.start()
+        self.addCleanup(campaign_clock.stop)
         import torch
 
         self.torch = torch
