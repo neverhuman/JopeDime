@@ -9277,6 +9277,66 @@
       ],
       "dispositions": [],
       "scope": "17 offline continuation cases in run_continuous_offline.py; exact optimizer/RNG and journal fixtures, no GPU/S3/live data calls."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v4/test_live_snapshot.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v4/test_native_failure.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_prepared_snapshot.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_resume_transfer.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_transfer_watch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
     }
   }
 }
