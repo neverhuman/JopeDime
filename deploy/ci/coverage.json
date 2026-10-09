@@ -1412,56 +1412,6 @@
       ],
       "scope": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified."
     },
-    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python"
-      ],
-      "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python"
-      ],
-      "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python"
-      ],
-      "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python"
-      ],
-      "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
-    },
-    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_parent_encoder.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python"
-      ],
-      "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
-    },
     "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py": {
       "discovery": {
         "kind": "python-family"
@@ -1671,6 +1621,16 @@
         "python"
       ],
       "scope": "34 isolated synthetic CPU fixtures via run_trace_v3_offline.py after unchanged prior687 identities. Exact frozen source in owned temporary copy; time.time fixed to1791564000 only; mocked launcher/S3/subprocess and injected prior1 ColdJoin result. Full physical historical verification remains a live preflight requirement. No actual S3, GP/GPU, service launch, data admission or resource-grant claim."
+    },
+    "python:deploy/dl-flywheel/test_callback_targets.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Executable adapter for the unchanged pinned generated-target callback runner: 37 revision1 + 7 new revision2 + 11 revision3 + 8 reference-compatibility fixtures in four isolated children. No new fixture identities; aggregate remains 812. Preserves source/proofs/roles and performs no GP, S3 PUT, numeric construction or optimizer admission."
     },
     "python:deploy/dl-flywheel/tests/test_augmentation.py": {
       "discovery": {

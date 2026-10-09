@@ -133,7 +133,7 @@ def main():
  if success:
   if receipt['combined_collected']!=749 or receipt['combined_executed']!=749:
    raise ValueError('Prior749 offline identities must remain independently complete')
-  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_callback_targets_offline.py'),'--output',str(a.output/'callback_targets')],check=False)
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'test_callback_targets.py'),'--output',str(a.output/'callback_targets')],check=False)
   callback_targets=json.loads((a.output/'callback_targets/receipt.json').read_bytes())
   success=child.returncode==0 and callback_targets['passed']is True and callback_targets['collected']==callback_targets['executed']==63 and len(callback_targets['identities'])==len(set(callback_targets['identities']))==63
   receipt['callback_targets_suite']=callback_targets;receipt['combined_collected']+=callback_targets['collected'];receipt['combined_executed']+=callback_targets['executed'];receipt['passed']=success
