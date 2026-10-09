@@ -1,0 +1,69 @@
+{
+  "blockers": [],
+  "checks": [
+    "Specific four-field parent.encoder schema accepted only through a registry-derived role map whose exact lineage set equals replayed selected contexts. Unknown fields, transferred parent role and generic annotated refs refuse.",
+    "Compressed SHA/bytes are checked using unchanged strict generic read_bound; raw annotation equals pinned parent raw_payload_sha256 and bounded decompressed SHA. Compressed/raw caps16MiB each match original evergreen raw source cap.",
+    "Full ref retains raw_sha256; no annotation stripped from predecessor. All generic 2/3-field pins, bindings, nine vendors, Kumo/normalizer/objective/roles/source and durable GET/native custody remain unchanged.",
+    "11 exact new roster tests exercise compressed/raw tamper, corrupt/oversize gzip, registry/lineage/role mismatch, strict generic shape and real physical routing. Frozen prior fixture files and receipts remain unchanged; no completed tests rerun by reviewer.",
+    "Prior r1 and r2 packet manifests and all31 files each independently hash-checked unchanged. Actual failed selected qualifier remains failed despite unloaded unit Result=success."
+  ],
+  "conditions": [
+    "New never-started owned proposal/config/output and genuinely fresh immutable<=180s clock under global1791592146.380285. Only ONE successful training observation,16GET/64MiB; no old failure/config/clock/output replacement or retry.",
+    "Exact22 Python package pins and staged source/runtime/licenses must match; use reviewed immutable actor/normalizer/source/adoption refs and fresh resource/owner gates.",
+    "CPU1/512MiB/swap0/noGPU/BLAS1/noRestart; source-support qualification is not held pool expansion or a resource reservation.",
+    "Accept only complete config-bound durable attempt/terminal result chain and actual physical terminal proof; incomplete/OOM/source/schema/GET failures stay refused or unknown with custody.",
+    "This shape correction covers captured selected parent, not all128 parent schemas; other schema deviations must refuse and remain held.",
+    "Full cutoff, reference compatibility/export, numeric targets, CE/RL/admission, GP/PUT and repeated boundary training remain held. Separate actual selected qualification still pending."
+  ],
+  "qualification": {
+    "author_reported_pass": true,
+    "live_runtime_qualified": false,
+    "new_fixtures": 11,
+    "prior_unaffected_fixtures_rerun": 0,
+    "python": "3.14.6",
+    "receipt_sha256": "ef6b57aa4d58610af41eafd7cd5a7a3c108537400997e919c4b69b77cfdb0f80",
+    "reviewer_tests_run": 0
+  },
+  "retained_actual_failure": {
+    "bytes": 788233,
+    "config_sha256": "f8d933a54ff528d280475f3cca42f768f2d97ea5d76da5d38761a9258d7e22a4",
+    "custody_path": "work/heartbeat-20261009-1843/callback-live-qualification/physical-terminal-custody.json",
+    "db_writes": 0,
+    "durable_events": 32,
+    "durable_head_sha256": "f7e160b03d53a37616de5dcead231bf30eb5976fa540f31541b3b6224172a8a0",
+    "exact_gets": 5,
+    "gp": 0,
+    "journal_hash_chain_verified": true,
+    "message": "closed local pin",
+    "optimizer_updates": 0,
+    "prior_window_never_restarted": true,
+    "result_sha256": "6579ab2280538f0913cbbe2b07aa108344ca9e85c59effbec39bb6a59c086560",
+    "s3_writes": 0,
+    "sha256": "f21031b41d19e868c6363c9b37896a72bce3cca60f39a493449fc426de41f7ab",
+    "state": "failed"
+  },
+  "reviewed_at_utc_ns": 1791575091543653000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-callback-source-review/v3",
+  "source_changes": {
+    "callbacks.py": "5e8b17daee58da4f66f1e4bf2bce4c62b5e5bc7889ae3150b4f52a159141e014",
+    "parent_encoder.py": "f017dde5d183002bfbc3e5109b6cb29c6f4f8b230209371b127b7290225bb685",
+    "run_offline.py": "68e35a39fa6db89d3b279a8e54cdce67b3efdc1474bfb3c430fd74922be34066"
+  },
+  "source_packet": {
+    "bytes": 225664,
+    "files": 36,
+    "path": "work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision3/SOURCE_PACKET.json",
+    "sha256": "df096047eaad81e34aec4813277744b01b61fb4b794a5e937cdbc9371328789f",
+    "static_ast_python": 22
+  },
+  "source_pins_sha256": "2717971b89a84e361e5cfa3681f0e9a14b9e1deb0f785d8f83aec792019b116a",
+  "state": "passed_source_only_with_fresh_selected_qualification_conditions"
+}

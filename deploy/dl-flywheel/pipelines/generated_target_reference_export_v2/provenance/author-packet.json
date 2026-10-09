@@ -1,0 +1,47 @@
+{
+  "admission": false,
+  "files": {
+    "README.md": {
+      "bytes": 1522,
+      "sha256": "38df5db8cab2324b64c7446de2a012ee86e1df17320438c2364ace58bc0e25c3"
+    },
+    "SOURCE_PINS.json": {
+      "bytes": 475,
+      "sha256": "88d1555ef8f9d8c7e49ef0c9218e8b75bbda4e32878cf9ab4857f4d2b969c0d0"
+    },
+    "__init__.py": {
+      "bytes": 68,
+      "sha256": "22e645ec0647a1193375e92a5baf3a678f39f7925b7437d9a652472eed1fb97e"
+    },
+    "export_verified.py": {
+      "bytes": 24981,
+      "sha256": "c03a5b3b79704f52ff6f50457709f329b1efb2eba18d2f709a906bf7e5946471"
+    },
+    "provenance/qualification-attempt1.json": {
+      "bytes": 415,
+      "sha256": "c11a9ed9a196d8d06f264338154150f472052e43bfce3e6c76f75b8539201adb"
+    },
+    "publication_reference.py": {
+      "bytes": 905,
+      "sha256": "d66dc4c03aaa907b844f43828b8c3663eb2777a2481a2002af2570c56ef8fc18"
+    },
+    "test_compatibility.py": {
+      "bytes": 5773,
+      "sha256": "b6878eded89db617d3823070af77448e32ad9c971982f8d7f98102f0aa3541f7"
+    }
+  },
+  "frozen_v1_exporter_sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda",
+  "mutations": {
+    "active_runtime": 0,
+    "gp": 0,
+    "optimizer": 0,
+    "s3": 0
+  },
+  "new_fixtures_pass": 8,
+  "new_scope": "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2",
+  "numeric_targets": false,
+  "old_test_methods_run": 0,
+  "prior_source_unchanged": true,
+  "production_cutoff_export": false,
+  "schema": "jope.generated-target-reference-export-author-packet/v2"
+}

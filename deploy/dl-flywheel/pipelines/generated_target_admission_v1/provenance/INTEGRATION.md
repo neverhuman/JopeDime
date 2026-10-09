@@ -1,0 +1,5 @@
+# Repository integration
+
+The frozen author README retains its historical one-family integration wording. The actual corrected package has two test families: tests/test_export.py and tests/test_runner.py. Both receive additive native test-inventory classifications and Python coverage mappings. All 503 prior test-family classifications, 612 coverage items and prior lanes/dispositions remain unchanged. The global runner preserves all 721 prior identities and appends the corrected 28 identities once, for 749 wired identities. Only the new family has been executed; the full 749 suite has not been rerun. The package runner accepts --receipt and reports tests_run; the wrapper consumes that exact interface.
+
+This is a reference exporter, not a numerical target builder, teacher promotion, optimizer admission or RL implementation. Production callback dependency closure, Python 3.12 runtime, live cutoff/export, numerical preparation and repeatable immutable epoch-boundary consumption remain unqualified. The active recovery5 trainer remains unchanged and its one-shot prepared128 adoption does not poll these exports.

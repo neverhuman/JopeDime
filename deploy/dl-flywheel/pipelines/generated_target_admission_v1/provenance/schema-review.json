@@ -1,0 +1,146 @@
+{
+  "actions": {
+    "live_database_reads": 0,
+    "network_calls": 0,
+    "production_imports": 0,
+    "remote_calls": 0,
+    "review_note_writes": 1,
+    "source_edits": 0,
+    "tests_executed": 0
+  },
+  "actual_schema": {
+    "config": {
+      "fields": [
+        "model_origin_sha256",
+        "max_pending",
+        "max_rows",
+        "max_payload_bytes"
+      ],
+      "schema": "jope.flywheel-neural-outbox/v1"
+    },
+    "cutoff_proof": "Outbox.verify returns summary fields plus events (integer count) and head_sha256; no head.seq wrapper and no resolution timestamp.",
+    "emission_body_keys": [
+      "schema",
+      "model_origin_sha256",
+      "batch",
+      "ordinal",
+      "emission"
+    ],
+    "exact_reference_keys": [
+      "bucket",
+      "key",
+      "version_id",
+      "sha256",
+      "bytes"
+    ],
+    "lines": "pipelines/continuous/neural_outbox.py:10-11,20-39,46-62,90-103,107-128",
+    "nonnumeric_states": [
+      "recorded",
+      "leased",
+      "pending_unsupported",
+      "unknown_attempt",
+      "failure_custody_verified"
+    ],
+    "outcome_keys": [
+      "state",
+      "evaluation_key",
+      "record_ref",
+      "attempt_custody_ref",
+      "error"
+    ],
+    "successful_states": [
+      "cached_verified",
+      "published_verified"
+    ],
+    "tables": {
+      "batches": "id, body, ack",
+      "config": "body BLOB; constructor requires one exact canonical config",
+      "emissions": "id, batch_id, ordinal, body, state, lease, outcome",
+      "events": "seq, kind, body, previous, sha"
+    }
+  },
+  "pending": "Frozen exporter API/source and fixtures await independent adversarial review. These notes do not assert implementation conformance.",
+  "requirements": [
+    {
+      "advice": "Accept only a physically complete, separately pinned snapshot image with bounded exact bytes/SHA, absolute nonsymlink regular-file path and stable inode/stat. Reject WAL, SHM and rollback-journal sidecars; do not open the live database with immutable=1. Open the supplied immutable image read-only/query-only, or deserialize independently hash-checked immutable bytes into owned memory. Recheck custody before/after reading and immediately before publication. A cutoff is a dated snapshot, never proof of the latest live head. A plain copy of a running WAL main file is not a complete physical snapshot.",
+      "id": "immutable_copy",
+      "lines": "neural_outbox.py:24-33; hpc_verified_v5/readonly_snapshot.py:16-62"
+    },
+    {
+      "advice": "Use the unchanged verifier on an object created via __new__ with only a read-only/private connection. Never call Outbox.__init__, which sets WAL PRAGMAs, creates tables and may insert config. Never add indexes to the supplied image; any performance index belongs only to private memory. verify() owns BEGIN/COMMIT, so respect its no-open-transaction precondition.",
+      "id": "no_constructor",
+      "lines": "neural_outbox.py:24-41,109-131"
+    },
+    {
+      "advice": "Verify the complete event/ACK/materialized state, not only SQL-filtered training successes. Require exactly one config row matching the pinned config and exact expected verifier proof/head. Pin the image SHA as well as the event head: the event chain does not cover config. Refuse malformed/extra schema state and preserve a complete census of selected, duplicate and excluded rows/reasons. Keep SQL/read/JSON/file/row/output bounds and finite wall plus monotonic deadline.",
+      "id": "complete_cutoff",
+      "lines": "neural_outbox.py:34-39,109-128"
+    },
+    {
+      "advice": "Outbox.verify checks chain linkage and materialized agreement but does not replay record_batch or finish schema validation. Independently enforce their closed keys/types/ID derivation for selected rows: config/model origin; batch ID/campaign/checkpoint/manifest/global step; ordinal/emission ID and batch embedding; emitted training subset and disjoint validation membership; raw program SHA; success outcome fields/exact wrapper ref/error=None. Reject duplicate JSON keys and bool-as-int where integer identities/bounds are required.",
+      "id": "verifier_limits",
+      "lines": "neural_outbox.py:46-63,90-98,109-128"
+    },
+    {
+      "advice": "Require phase=training, source_kind=flywheel_variant, input descriptor Context identity and current inherited partition=train, exact parent lineage and admitted descriptor, context membership in both train_data_run_ids and emitted_train_data_run_ids, and exclusion from validation_data_run_ids. Join these to a separately pinned authoritative admitted manifest/role proof rather than trusting a copied emission field. Skip validation/native/pending/unknown/failed rows without numeric substitutes; a completed failure-custody row is not success.",
+      "id": "train_only",
+      "lines": "variant_outbox.py:99-127; neural_outbox.py:50-63"
+    },
+    {
+      "advice": "Pin actual verifier implementation/dependency closure and canonicalizer identity; checking only a callable code filename or a truthy returned passed flag is insufficient. Structured return must bind the selected body/outcome, exact wrapper VersionId/SHA/bytes, Context, canonical program SHA and evaluation key, and all seven named artifact refs/verified bytes with native/Rust parity and canonical score-row closure. Keep raw emitted-program hash and canonical program hash distinct; request_identity uses canonical DSL. Do not resolve mutable latest references or replace missing artifacts by running GP.",
+      "id": "external_semantic_verifier",
+      "lines": "variant_outbox.py:121-127,157-168; program_gate.py:15-19,25-40,43-95"
+    },
+    {
+      "advice": "Emit exact verified program-result wrapper refs for later pinned compose, plus source cutoff and per-emission provenance. Do not synthesize q, rank, weights or CE eligibility. program_gate.verified_measurement returns teaching_eligible=False; native_variant_snapshot.compose performs the later verified mean-baseline label conversion and still disables variant CE. Export receipt should explicitly retain optimizer_updates=0, optimizer_admission=false, teacher_promotion=false.",
+      "id": "reference_manifest_only",
+      "lines": "program_gate.py:91-95; native_variant_snapshot.py:119-123,149-169"
+    },
+    {
+      "advice": "Deduplicate by full Context/evaluation key/canonical program identity, not raw program text or emission ID. Repeated cached/published aliases should carry one result ref while retaining every contributing emission/batch/phase/cutoff provenance. Conflicting wrapper refs or mismatched semantic verifier results must fail closed unless an explicit version-equivalence policy is supplied; never silently choose newest or count a cache hit as a fresh evaluation.",
+      "id": "canonical_duplicates",
+      "lines": "variant_outbox.py:125-127,137-148; program_gate.py:25-29"
+    },
+    {
+      "advice": "A source batch outbox ACK is durable before forward/backward/optimizer and before planner commit. Outbox-only export may correctly name the generation checkpoint and proposal event, but cannot certify the originating optimizer batch committed. Keep rows unadmitted and defer that proof join, or require a separately pinned committed batch/planner census. Do not equate exported references, published measurements, admission, or later physical target consumption.",
+      "id": "no_optimizer_commit_claim",
+      "lines": "prepared/continuous_runner.py:185-196; neural_outbox.py:73-75"
+    },
+    {
+      "advice": "Do not reject a historically successful resolved result merely because its old lease expires before export now, and do not retry historical leased/unknown work. The source events contain no resolved_at field, so do not claim independent timestamp proof of resolution within lease; retain original lease and exact successful cutoff as historical custody.",
+      "id": "historical_time_semantics",
+      "lines": "neural_outbox.py:79-103,118-128"
+    }
+  ],
+  "reviewed_at_utc": "2026-10-09T17:54:24.212006+00:00",
+  "reviewer": "/root/generalization_design/review_guard",
+  "schema": "jope.generated-target-export-schema-review/v1",
+  "scope": "Static existing outbox/cutoff/result-reference advice before exporter source review. No approval of an implementation or live target admission.",
+  "source_refs": {
+    "jope_flywheel/native_variant_snapshot.py": {
+      "bytes": 20129,
+      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+    },
+    "jope_flywheel/program_gate.py": {
+      "bytes": 9974,
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    "jope_flywheel/variant_outbox.py": {
+      "bytes": 12572,
+      "sha256": "e3c3d1e74ac508f858c1aa7641cf9447bf1eae03ce8b329a7b4cacd1d453a60e"
+    },
+    "pipelines/continuous/neural_outbox.py": {
+      "bytes": 13769,
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    "pipelines/hpc_verified_v5/readonly_snapshot.py": {
+      "bytes": 4220,
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
+    },
+    "pipelines/prepared/continuous_runner.py": {
+      "bytes": 23503,
+      "sha256": "10cbf4ea960600a6445730d06ad3b442dd03da1681c94536d018e71ea0c58f29"
+    }
+  },
+  "source_root": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel"
+}

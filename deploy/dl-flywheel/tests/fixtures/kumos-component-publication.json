@@ -1,0 +1,186 @@
+{
+  "task": {
+    "variant_identity": "3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd"
+  },
+  "publication": {
+    "encoder_records": {
+      "kumo_tabular_s": {
+        "qualification": {
+          "body": {
+            "component_info": {
+              "dimension": 2051,
+              "gpu_uuid": "GPU-2857566c-23c5-293a-df02-7c66a7571ac4",
+              "host": "xbabe3",
+              "layout": [
+                [
+                  "pooled_states_mean_std_p10_p90",
+                  0,
+                  2048
+                ],
+                [
+                  "scalars_query_r2_mean_spread_log_spread",
+                  2048,
+                  2051
+                ]
+              ],
+              "peak_bytes": 163310080,
+              "recipe": {
+                "doc": "NVIDIA Kumo-Tabular regressor (OpenMDW-1.1 weights, Apache-2.0 code). Native prep approximates sdm's default\n    recipe member 0 (standardize on context, clip 100, sigma soft-clip 4; NaN kept -> model's own context-mean impute +\n    missingness projection). Single estimator, no column shuffle / sign flip. fp16 autocast (model card). States = input of\n    icl_block.norm (last ICL layer output, query rows only).",
+                "rows": "sampling seed 20260707: nc=min(768,max(1,3n//4),n-1) context rows with y, nq=min(256,n-nc) disjoint query rows (outer-train only)",
+                "scaling": "min/max fit on the context's stored outer-train rows; y z-scored on context rows"
+              },
+              "rows": {
+                "nc": 72,
+                "nq": 25,
+                "p": 35
+              },
+              "seconds": 0.0466,
+              "state_dim": 512
+            },
+            "passed": true,
+            "selection": {
+              "cap": 100,
+              "fit": "outer_train_only",
+              "max_depth": 4,
+              "method": "none (p <= cap)",
+              "p_after_target_copy_drop": 35,
+              "p_selected": 35,
+              "rounds": 60,
+              "row_subsample": {
+                "nstore": 2048,
+                "seed": "int(context_sha256[:16],16) ^ 20261007"
+              },
+              "rows_fit": 97,
+              "seed": 20261007,
+              "selected_columns": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34
+              ],
+              "selected_columns_sha256": "91e0ad11df72d85f3ee3c75371e2fa52bd50ec2f23412d0e6d7de75ce365c538"
+            },
+            "tests": {
+              "full_vector_repeat": true,
+              "production_refuses_protected_payload": true,
+              "protected_full_vector": true,
+              "protected_selection": true,
+              "target_changes_full_vector": true,
+              "target_changes_hidden": true
+            }
+          },
+          "ref": {
+            "bytes": 1650,
+            "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_encode16_20261009/runs/xbabe3/ofm/variants/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/kumo_tabular_s.qualification.json",
+            "sha256": "6cd309ecfc520cbd6c8db30820ad76666e2e70b60cb5024bd317e0d6d7611fd4"
+          }
+        },
+        "record": {
+          "component": "kumo_tabular_s",
+          "dimension": 2051,
+          "features": 35,
+          "host": "xbabe3",
+          "input_raw_sha256": "6697de5d11deb3efe3eb0960f7b0a8af1f674854b140de515238452817528574",
+          "label_exposure": "Task training rows and targets enter supervised encoders/diagnostics; not GP-inner-fit-only. No outer-test rows. Prepared source acquisition and development partition caveats inherited.",
+          "lift_eligible": false,
+          "manifest_sha256": "e561d42d83fa655e1d3391747183b87587ee20be0291ef04db6d6116d26dabc9",
+          "new_gp_labels": 0,
+          "outer_test_rows": 0,
+          "output": {
+            "bytes": 8332,
+            "path": "variants/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/kumo_tabular_s.npy",
+            "sha256": "1e582b0345c7e2bb817cc10368822e23e36e22c4da87d4a40e229946459442a4"
+          },
+          "parent_lineage_sha256": "93d7bfdce9c9bc218223561e5b5ef1ec638f588dbe5e8dca827f3e9c0426b155",
+          "partition": "train",
+          "phase": "ofm",
+          "pretraining_overlap": "Unknown; not proof of unseen data",
+          "producer": {
+            "runtime_inventory": {
+              "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_ofm_pilot_20261009/pilot_ofm_runtime_xbabe3.json",
+              "sha256": "88e45ed90e735a6e5ca27ecdb875216ff75974a9c96f2b9c019bcac8e268f26f"
+            },
+            "weight": {
+              "file": "small/regressor.pt",
+              "license": "OpenMDW-1.1 (weights) / Apache-2.0 (code)",
+              "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/models/nvidia__Kumo-Tabular/small/regressor.pt",
+              "repo": "nvidia/Kumo-Tabular",
+              "revision": "3c3e10bbdb590ace29e7026847f92db3c603096d",
+              "sha256": "fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423"
+            }
+          },
+          "qualification": {
+            "bytes": 1650,
+            "path": "variants/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/kumo_tabular_s.qualification.json",
+            "sha256": "6cd309ecfc520cbd6c8db30820ad76666e2e70b60cb5024bd317e0d6d7611fd4"
+          },
+          "rows": 97,
+          "schema": "jope.flywheel-evergreen-encode/v1",
+          "source_input": {
+            "bytes": 23002,
+            "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_encode16_20261009/inputs/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/encoder.jtt1.gz",
+            "sha256": "05b6d2e098a9277f0acc29c55e6e9238b882b02df9940e58e250029d55ae486f"
+          },
+          "source_metadata": {
+            "bytes": 17147,
+            "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_encode16_20261009/inputs/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/metadata.json",
+            "sha256": "a902b7bad754a4fd7cffc623ed1822b50cfdc457921c35afbeb08dd6baa62cc2"
+          },
+          "source_target_sha256": "f649727727b87dbccef29ad09f79b1af5e02e21efc8753cb06a5661d94c5e891",
+          "target_sha256": "f649727727b87dbccef29ad09f79b1af5e02e21efc8753cb06a5661d94c5e891",
+          "teaching_eligible": false,
+          "variant_identity": "3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd"
+        },
+        "record_ref": {
+          "bytes": 2638,
+          "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_encode16_20261009/runs/xbabe3/ofm/variants/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/kumo_tabular_s.json",
+          "sha256": "258a03190567c224e84c8baf8632a5920c72a34f1056aeb1cfd1c9a6928e9180"
+        },
+        "vector_ref": {
+          "bytes": 8332,
+          "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_encode16_20261009/runs/xbabe3/ofm/variants/3179c30ba10de6956d76bb5ce41336ba4d7c1e3599b2ed1f2e0ff3ce511c74bd/kumo_tabular_s.npy",
+          "sha256": "1e582b0345c7e2bb817cc10368822e23e36e22c4da87d4a40e229946459442a4"
+        }
+      }
+    },
+    "source_proof": {
+      "source_release": {
+        "out": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_encode16_20261009/runs/xbabe3",
+        "release": "original-xbabe3",
+        "source_sha256": "8886894f4771d1e12344fed6559e544c09c1b702d88084801adeaa9b8d47e362"
+      },
+      "source_sha256": "8886894f4771d1e12344fed6559e544c09c1b702d88084801adeaa9b8d47e362"
+    }
+  }
+}

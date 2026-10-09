@@ -1,0 +1,9 @@
+{
+  "python_sha256": {
+    "__init__.py": "22e645ec0647a1193375e92a5baf3a678f39f7925b7437d9a652472eed1fb97e",
+    "export_verified.py": "c03a5b3b79704f52ff6f50457709f329b1efb2eba18d2f709a906bf7e5946471",
+    "publication_reference.py": "d66dc4c03aaa907b844f43828b8c3663eb2777a2481a2002af2570c56ef8fc18",
+    "test_compatibility.py": "b6878eded89db617d3823070af77448e32ad9c971982f8d7f98102f0aa3541f7"
+  },
+  "schema": "jope.generated-target-reference-export-source-pins/v2"
+}

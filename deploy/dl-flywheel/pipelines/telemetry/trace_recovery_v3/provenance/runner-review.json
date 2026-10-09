@@ -1,0 +1,73 @@
+{
+  "actions": {
+    "network_calls": 0,
+    "production_modules_imported": 0,
+    "receipt_writes": 1,
+    "remote_calls": 0,
+    "service_actions": 0,
+    "source_edits": 0,
+    "tests_executed": 0
+  },
+  "author_qualification_record": "Author validation reports34 passed synthetic fixtures and explicitly says ColdJoin injects the already-verified prior1 return; full old-verifier/physical-chain replay remains required during actual cold preflight. This review did not rerun or expand that qualification.",
+  "author_test_source": {
+    "bytes": 21875,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/test_trace_recovery_v3.py",
+    "sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3"
+  },
+  "author_validation": {
+    "bytes": 5340,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/validation.json",
+    "sha256": "5b4114fbf50d5d29f3c70065324f20a6b6bcec1adeff92b6c1242c8562991e8d"
+  },
+  "prior_observations_resolved": [
+    "prepare_config and launch_v3 now participate in both the clean-module guard and exact private-copy origin/hash checks.",
+    "Clock disclosure explicitly identifies time.time-only freezing and real time.time_ns/monotonic/CPU clocks."
+  ],
+  "remaining_integration_checks": [
+    "At this review the packaged trace_recovery_v3 family directory/test-identities.json is not yet present. Final payload review must verify its six source bytes and exact34 roster before running the isolated runner.",
+    "Final source manifest, aggregate count/prefix preservation, classification and current-head gates are outside this runner-only receipt.",
+    "The receipt is not production source approval, live cold qualification, archive upload or runtime authorization."
+  ],
+  "reviewed_at_utc": "2026-10-09T17:01:56.452699+00:00",
+  "reviewed_checks": {
+    "author_AST_roster_matches_validation_exactly": 34,
+    "author_source_pins_verified": 6,
+    "clean_module_guard_includes": [
+      "trace_recovery_v3",
+      "trace_recovery_v2_frozen",
+      "test_trace_recovery_v3",
+      "prepare_config",
+      "launch_v3"
+    ],
+    "collect_only_claims_zero_execution_and_no_pass": true,
+    "collected_names_must_equal_sorted_exact_roster": true,
+    "execution_pass_requires_all34_no_skips_no_expected_failures": true,
+    "expected_count": 34,
+    "fixed_time_time": 1791564000.0,
+    "fixture_copy_is_owned_temporary_tree": true,
+    "optimized_Python_rejected_before_import": true,
+    "original_packaged_source_hash_inventory_checked_before_and_after": true,
+    "original_suites_not_invoked": true,
+    "private_copy_import_path_and_hash_checks": [
+      "trace_recovery_v3.py",
+      "trace_recovery_v2.py",
+      "trace_archive_v1_c8a13033.py",
+      "prepare_config.py",
+      "launch_v3.py"
+    ],
+    "production_GLOBAL_and_source_bytes_not_rewritten": true,
+    "receipt_start_end_use_saved_real_time_ns": true,
+    "test_import_path_checked": true,
+    "tests_log_hash_recorded": true,
+    "time_time_ns_monotonic_and_CPU_clocks_real_and_disclosed": true
+  },
+  "reviewer": "/root/generalization_design/review_guard",
+  "runner": {
+    "bytes": 5415,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/run_trace_v3_offline.py",
+    "sha256": "60b23b47ca4b1c78d8a5ca63c9a4651e51b8bcdecdeaaf27ad894b14760e14fa"
+  },
+  "schema": "jope.trace-v3-independent-runner-review/v1",
+  "scope": "Static isolated offline runner/import/clock/custody/identity review only. Production archive semantics remain with the separately assigned source reviewer.",
+  "state": "bounded_no_runner_findings"
+}

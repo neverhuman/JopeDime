@@ -1,0 +1,44 @@
+{
+  "blockers": [
+    {
+      "file": "work/heartbeat-20261009-1843/callback-live-qualification/controller.py",
+      "lines": [
+        13,
+        17,
+        20,
+        29,
+        31,
+        36
+      ],
+      "problem": "RuntimeMax duration is sampled before package hash/physical unit/resource/intent work and applied only at later systemd dispatch. This can extend external service cap beyond fixed deadline.",
+      "required": "Refresh remaining after preflight/intent/output preparation immediately before dispatch; retain actual dispatched remaining and wall/monotonic origin; refuse expired or insufficient window without launch. No original clock reset."
+    }
+  ],
+  "configuration_draft_sha256": "964e26062ad0e04a6aced5d78b55817a04ee72bf6afb3aebf89ffe2d6e4a08c9",
+  "controller": {
+    "bytes": 4117,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification/controller.py",
+    "sha256": "b06a80687477d80bdfde170ef3bf9e27d8a5e76c5584e94eb806e0a0c92d4c92"
+  },
+  "nonblocking_limits": [
+    "stdout/stderr limits are sampled watchdog thresholds, not hard byte writers; report actual sizes and preserve overshoot/unknown termination honestly. Primary fsynced local event/result custody is independent.",
+    "The 26GiB free-memory threshold is a guard, not a shared-host allocation reservation; fresh parent resource admission remains required.",
+    "Launching a venv path is safe only if the exact interpreter origin and import inventory match pinned runtime; CLI will refuse mismatch before network work."
+  ],
+  "reviewed_at_utc_ns": 1791574016090483000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-selected-qualification-launch-review/v1",
+  "scope_no_change": [
+    "One selected training observation;16GET/64MiB/CPU1/512MiB/swap0/noGPU/noRestart.",
+    "No GP/PUT/DB/outbox/optimizer/full-cutoff/export/admission.",
+    "One create-only fsynced launch intent, new unit absence/PID0/empty cgroup, fresh output, no foreign signals."
+  ],
+  "state": "held"
+}

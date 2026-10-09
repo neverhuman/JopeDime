@@ -1,0 +1,289 @@
+{
+  "actions": {
+    "GP_executions": 0,
+    "Git_operations": 0,
+    "S3_requests": 0,
+    "module_imports": 0,
+    "remote_actions": 0,
+    "review_metadata_writes": 2,
+    "service_actions": 0,
+    "source_edits": 0,
+    "tests": 0
+  },
+  "actual_AST_findings": {
+    "copied_legacy_source_and_provenance_byte_identical": true,
+    "four_exact_descriptor_comparisons_normalized": true,
+    "one_new_helper_import": true,
+    "remaining_exporter_AST_identical_after_docstrings_removed": true,
+    "three_existing_imports_relocated_to_frozen_sibling": true,
+    "two_publication_validation_calls_changed": true
+  },
+  "author_packet": {
+    "bytes": 1521,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/author-packet.json",
+    "sha256": "65bc5a1876f6be22c69d85d53e784907d05942ce96e00d520cc1185262ed167c"
+  },
+  "conditions": [
+    "The author-described c961 live predecessor cardinalities were not independently re-read in this local source review; actual pinned input compatibility/physical authority remain cold runtime qualification gates.",
+    "Annotation text is accepted format, not independent proof of cloud verification. Reviewed production callbacks must still bind actual published exact-version custody/current roles and loaded artifacts.",
+    "Use a new cold namespace/runtime with pinned new helper/exporter and unchanged sibling dependencies. Do not hotpatch a live admission or exporter process.",
+    "This reference export does not authorize numeric targets, CE-teacher promotion, optimizer state changes, GP execution, S3 writes or a live cutoff/export."
+  ],
+  "findings": [
+    {
+      "result": "Exact closed5 identity fields or closed7 containing both state=created and verification=exact VersionId GET + SHA256 accepted. Partial/unknown annotation fields and other state/verification values refuse; inherited reference() independently validates VersionId, SHA256 and positive bounded integer bytes.",
+      "severity": "none"
+    },
+    {
+      "result": "Projection constructs a new five-field dictionary and never alters the predecessor. Export deep-copies predecessor; unchanged transition guard preserves all task fields, raw annotations and ordered old program_results prefix.",
+      "severity": "none"
+    },
+    {
+      "result": "Only dataset_publication and encoder_publication validation/comparison call sites changed. Program result/outcome/custody/artifact references still use unchanged strict5 reference(), and exact artifact VersionId/bytes/hash checks remain unchanged.",
+      "severity": "none"
+    },
+    {
+      "result": "Cutoff census, current authority before/after, inherited training/validation roles, canonical duplicates, native-context pending behavior, KumoSmall weight2051 roster, normalizer/objective/source pins, bounded reads/work and numeric/admission=false outputs are AST-unchanged.",
+      "severity": "none"
+    },
+    {
+      "result": "Eight new fixtures are meaningful: annotated append preservation, frozenv1 refusal, incomplete/unknown annotations, failed/unverified annotations, exact-identity mismatch, validation exclusion before artifact reads, forbidden annotated program-result ref, and transition refusal of annotation replacement. Fixture class imports legacy setup/helpers without inheriting/collecting legacy test methods.",
+      "severity": "none"
+    }
+  ],
+  "qualification": {
+    "author_receipt": {
+      "bytes": 415,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/qualification-attempt1.json",
+      "sha256": "c11a9ed9a196d8d06f264338154150f472052e43bfce3e6c76f75b8539201adb"
+    },
+    "author_reported_result": {
+      "ended_at_unix_ns": 1791573139032285000,
+      "errors": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "gp_executions": 0,
+      "monotonic_elapsed_ns": 98148959,
+      "old_test_methods_run": 0,
+      "optimizer_updates": 0,
+      "s3_writes": 0,
+      "schema": "jope.generated-target-reference-compatibility-fixtures/v2",
+      "skipped": 0,
+      "started_at_unix_ns": 1791573138934134000,
+      "tests_run": 8,
+      "unexpected_successes": 0
+    },
+    "new_fixture_ids": [
+      "CompatibilityTests.test_actual_seven_field_receipts_preserve_all_old_fields_and_refs",
+      "CompatibilityTests.test_frozen_v1_still_refuses_actual_annotated_receipt",
+      "CompatibilityTests.test_unknown_or_partial_publication_annotations_refused",
+      "CompatibilityTests.test_failed_unknown_or_unverified_annotation_refused",
+      "CompatibilityTests.test_normalized_descriptor_exact_identity_mismatch_refused",
+      "CompatibilityTests.test_validation_annotation_never_creates_training_target",
+      "CompatibilityTests.test_annotated_program_result_ref_remains_forbidden",
+      "CompatibilityTests.test_transition_does_not_normalize_or_replace_old_annotations"
+    ],
+    "prior_test_methods_executed_by_reviewer": 0,
+    "production_qualification": false,
+    "reviewer_tests_executed": 0
+  },
+  "reviewed_at_utc": "2026-10-09T19:14:38.902291+00:00",
+  "reviewed_files": {
+    "README.md": {
+      "bytes": 1522,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/README.md",
+      "sha256": "38df5db8cab2324b64c7446de2a012ee86e1df17320438c2364ace58bc0e25c3"
+    },
+    "SOURCE_PINS.json": {
+      "bytes": 475,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/SOURCE_PINS.json",
+      "sha256": "88d1555ef8f9d8c7e49ef0c9218e8b75bbda4e32878cf9ab4857f4d2b969c0d0"
+    },
+    "__init__.py": {
+      "bytes": 68,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/__init__.py",
+      "sha256": "22e645ec0647a1193375e92a5baf3a678f39f7925b7437d9a652472eed1fb97e"
+    },
+    "export_verified.py": {
+      "bytes": 24981,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/export_verified.py",
+      "sha256": "c03a5b3b79704f52ff6f50457709f329b1efb2eba18d2f709a906bf7e5946471"
+    },
+    "provenance/qualification-attempt1.json": {
+      "bytes": 415,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/provenance/qualification-attempt1.json",
+      "sha256": "c11a9ed9a196d8d06f264338154150f472052e43bfce3e6c76f75b8539201adb"
+    },
+    "publication_reference.py": {
+      "bytes": 905,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/publication_reference.py",
+      "sha256": "d66dc4c03aaa907b844f43828b8c3663eb2777a2481a2002af2570c56ef8fc18"
+    },
+    "test_compatibility.py": {
+      "bytes": 5773,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_reference_export_v2/test_compatibility.py",
+      "sha256": "b6878eded89db617d3823070af77448e32ad9c971982f8d7f98102f0aa3541f7"
+    }
+  },
+  "reviewer": "/root/coverage_audit",
+  "schema": "jope.generated-target-reference-export-independent-review/v1",
+  "scope": "Local read-only source/AST/fixture-definition review. No test execution, module import, live cutoff/export, cloud read/write, numerical target materialization, optimizer admission or GP.",
+  "state": "passed",
+  "unchanged_sibling": {
+    "files_byte_identical": 30,
+    "original": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1",
+    "original_pins": {
+      "README.md": {
+        "bytes": 13855,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+        "sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d"
+      },
+      "SOURCE_PINS.json": {
+        "bytes": 5794,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+        "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c"
+      },
+      "__init__.py": {
+        "bytes": 77,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py",
+        "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006"
+      },
+      "common.py": {
+        "bytes": 4948,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+        "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+      },
+      "cutoff.py": {
+        "bytes": 10540,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+        "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+      },
+      "export_verified.py": {
+        "bytes": 24595,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+        "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+      },
+      "provenance/INTEGRATION.md": {
+        "bytes": 1123,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/INTEGRATION.md",
+        "sha256": "de9e18220107473f67b79ffcaeb0be97442f0856fd3af2fd793f7168d99198e2"
+      },
+      "provenance/draft-source-review.json": {
+        "bytes": 3992,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json",
+        "sha256": "71be856675ac48cd80924e46c3aaba67066e1705219be3a7118f66cc0d9cfed2"
+      },
+      "provenance/independent-source-review.json": {
+        "bytes": 9120,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json",
+        "sha256": "f64d7e0c075f36d90f1f976dcd0789c237ef7beb9b868463856c6e86904ee2db"
+      },
+      "provenance/independent-v2-source-review.json": {
+        "bytes": 8643,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json",
+        "sha256": "86c68a448dafe4595ae96447bd1bb1e27ec247e35cd670cadfb241ebccec3cc9"
+      },
+      "provenance/qualification-addendum.json": {
+        "bytes": 2825,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json",
+        "sha256": "7ab3565fa8335a95b8dfe4d1b76f4a6a72c705c9ef181166f36f88f05a84ee24"
+      },
+      "provenance/qualification-attempt1.json": {
+        "bytes": 48521,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json",
+        "sha256": "fd98df93c8002d907886d030fa9bb6ba2d8078c7ea628e8cdf8e7cbc0d2d4a36"
+      },
+      "provenance/qualification-attempt2.json": {
+        "bytes": 9762,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json",
+        "sha256": "91488f3e5a9ffd775b5bd2b654df46a39b4f6e287e257974f7dd29dd41c4c18c"
+      },
+      "provenance/qualification-summary.json": {
+        "bytes": 6194,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json",
+        "sha256": "a35ca4b966134300ed67a6b6507b66de28f63417c7383dc60c3d4e0475cfc8d2"
+      },
+      "provenance/qualification-v2-final.json": {
+        "bytes": 11475,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json",
+        "sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735"
+      },
+      "provenance/qualification-v2-summary.json": {
+        "bytes": 5131,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json",
+        "sha256": "2ae134ecd2ff098183f7e9f4d0560c72f1267f8524245edf72a9e0777a4ec051"
+      },
+      "provenance/revision2-delta.json": {
+        "bytes": 22276,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json",
+        "sha256": "d4251be6ded0646bbd53b99cb19bcc05a17b6cf04f5202d34a06374a2e5488d9"
+      },
+      "provenance/schema-review.json": {
+        "bytes": 9394,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json",
+        "sha256": "0e8e6f57377401881dd31aa7dae6f12073bdaf091fd3f1eba8c78da479e306c2"
+      },
+      "provenance/source-origins.json": {
+        "bytes": 3126,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json",
+        "sha256": "b1a70a87339c962074b3236fe8102902c4ee011be0eb2b1c38b53e1f308c3593"
+      },
+      "provenance/v1-SOURCE_PACKET.json": {
+        "bytes": 11536,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+        "sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412"
+      },
+      "provenance/v1-hold.json": {
+        "bytes": 770,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+        "sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48"
+      },
+      "provenance/v2-SOURCE_PACKET.json": {
+        "bytes": 15418,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v2-SOURCE_PACKET.json",
+        "sha256": "343b3e555f11e0f48d5a2f44adac3d45e710847543135c2399c353944f73d436"
+      },
+      "provenance/v2-root-independent-review.json": {
+        "bytes": 17886,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v2-root-independent-review.json",
+        "sha256": "9d82a432b411949212fc66b2c9a36e736eb5bba9902eaaa2428f40cdb5ec6345"
+      },
+      "run_offline.py": {
+        "bytes": 11024,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py",
+        "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a"
+      },
+      "tests/__init__.py": {
+        "bytes": 55,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py",
+        "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f"
+      },
+      "tests/fixture_callbacks.py": {
+        "bytes": 2810,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py",
+        "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66"
+      },
+      "tests/reference_outbox.py": {
+        "bytes": 13769,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py",
+        "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+      },
+      "tests/test_export.py": {
+        "bytes": 23779,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py",
+        "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13"
+      },
+      "tests/test_runner.py": {
+        "bytes": 2907,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py",
+        "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3"
+      },
+      "transition.py": {
+        "bytes": 905,
+        "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
+        "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+      }
+    },
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/generated-target-reference-export-v2/tree/pipelines/generated_target_admission_v1"
+  }
+}

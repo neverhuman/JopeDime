@@ -1,0 +1,127 @@
+{
+  "checks": [
+    "Actual captured receipt has source.pin and no source.plan_sha256.",
+    "Captured six-field plan serializes to exact1119 bytes SHA7b200996636f3b8eead135dee30ca90339e9b5ca384299f64bc45c95c917346c; production verifier uniquely finds and hashes original raw plan bytes through source_pins.",
+    "Closed duplicate-free plan binds source_commit and all five descriptors; plan-recorded path/SHA/count cannot change or disappear. Template-added counts are permitted only where historically absent.",
+    "Original bounded readers independently hash receipt and executable files before shared verifier in both callers. Receipt source plus honest-worker/proposal SHA and available size joins remain required. Receipt control-copy paths may differ from configured prod-copy paths.",
+    "Every template staged source ref matches local revision2 bytes and includes native_build.py. New staging root and unit namespace preserve prepared reference and permanent registry path.",
+    "Actual evaluator provenance expression still uses config source_build_plan_sha256; evaluator, global guard, private snapshot, failure custody and census sources are byte-identical to frozen v5."
+  ],
+  "independent_tests": {
+    "affected_launch_tests": 12,
+    "affected_native_contract_tests": 1,
+    "command": "rtk proxy python3 -B -m unittest -v test_native_build test_operations_launch test_native_successor.SuccessorTests.test_evaluator_config_contract_and_exact_build_plan",
+    "errors": 0,
+    "exit_code": 0,
+    "failures": 0,
+    "new_build_tests": 9,
+    "reported_elapsed_seconds": 0.445,
+    "skipped": 0,
+    "tests": 22,
+    "working_directory": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2"
+  },
+  "limitations": [
+    "No live SSH/systemd/network/GP/Rust/S3 operation or queue mutation was performed.",
+    "No old full fixture suite was repeated.",
+    "Captured receipt body is not claimed to reproduce its original raw bytes or SHA. Production cold validation must reread the original exact receipt and plan.",
+    "This is a source/fixture verdict, not a physical census, successful launch, or runtime closure proof.",
+    "Historical copied validation/source-packet receipts are not evidence for revision2 changed bytes; the reviewed REVISION2_VALIDATION.json and pins above identify this review scope."
+  ],
+  "python_diff": {
+    "all_other_existing_python_bytes_unchanged": true,
+    "changed": [
+      "native_dispatch.py",
+      "operations_launch.py",
+      "test_native_successor.py",
+      "test_operations_launch.py"
+    ],
+    "new": [
+      "native_build.py",
+      "test_native_build.py"
+    ]
+  },
+  "reviewed_at_utc": "2026-10-09T14:12:36.399428+00:00",
+  "reviewed_changes": [
+    {
+      "bytes": 4459,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/native_build.py",
+      "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
+    },
+    {
+      "bytes": 16856,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/native_dispatch.py",
+      "sha256": "e6f37b7c8d8998a0c78128726b129e284f974fe4690e3304892b74083197a998"
+    },
+    {
+      "bytes": 26630,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/operations_launch.py",
+      "sha256": "4288808ff82fee80f9c59c9233e8c7315c83cfd67fbeb51bac8ad0fc7eeabfeb"
+    },
+    {
+      "bytes": 7244,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/test_native_build.py",
+      "sha256": "32bf2aa07e7964c0a935ca9894113f1a512ceff3325a1c3db3016e80ba59d2e3"
+    },
+    {
+      "bytes": 22981,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/test_native_successor.py",
+      "sha256": "bbe5f5d729fea568226e4387fb911486983dc72e3fb5dcb2e0fb4708860c0d90"
+    },
+    {
+      "bytes": 15291,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/test_operations_launch.py",
+      "sha256": "d326be2130f6ec5871823867ef3f352bf2aa579a655e86eb3552324c4e805c68"
+    },
+    {
+      "bytes": 77951,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/fixtures/actual-native-build-and-plan.json",
+      "sha256": "ca42643f8e14a1398f2c67adc912cee292418f92a4184480c5f6882dc4a2c629"
+    },
+    {
+      "bytes": 12930,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/operations.launch.template.json",
+      "sha256": "0721a9fb0910ea48a08d41c0bb2dba7ec3cb90cde8f8f21dd900bcba97050bee"
+    },
+    {
+      "bytes": 2885,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/REVISION2.md",
+      "sha256": "9f383e8f9233a9a6a55204f4312462f838e5fa761df363a6d61f9a4be1fe1b95"
+    }
+  ],
+  "reviewed_validation": {
+    "bytes": 4976,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/REVISION2_VALIDATION.json",
+    "sha256": "39e6186091caf0700657aa67732a293414f5967af7352072dbc1cbe654ffa5b9"
+  },
+  "reviewer": "review_guard",
+  "schema": "jope.native-v5-revision2-independent-review/v1",
+  "scope": "Independent read-only review of actual-schema correction, source diff, staged source template and affected CPU fixtures. Only this additive receipt was written.",
+  "unchanged_scientific_and_guard_sources": [
+    {
+      "bytes": 13913,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/native_evaluate.py",
+      "sha256": "b0a230bdf7a28ac1e04fef5e7dd6a038523ed20c421d1bef6ae112f4c67a6c86"
+    },
+    {
+      "bytes": 25679,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/native_global_guard.py",
+      "sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b"
+    },
+    {
+      "bytes": 4220,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/readonly_snapshot.py",
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
+    },
+    {
+      "bytes": 10462,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/native_failure.py",
+      "sha256": "41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99"
+    },
+    {
+      "bytes": 23004,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/operations_census.py",
+      "sha256": "846acc4cc331be0e41dee97a89fc188f0a5fddc946bb44dae700f554db55c0e2"
+    }
+  ],
+  "verdict": "PASS_NO_CONCRETE_BLOCKER_WITHIN_NARROW_LOCAL_SCOPE"
+}

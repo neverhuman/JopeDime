@@ -1,0 +1,150 @@
+{
+  "schema": "jope.hpc-cache-matched-ab/v1",
+  "at": 1791521071.3716583,
+  "config_sha256": "8da82b98e963947c7916fda1e3473f721723ae67d77ebe82fb1bf9947ad620c7",
+  "trials": [
+    {
+      "mode": "uncached",
+      "repeat": 0,
+      "finished_utc_ns": 1791521065266015188,
+      "wall_seconds": 2.793742347,
+      "cpu_user_seconds": 0.257,
+      "cpu_system_seconds": 0.164668,
+      "child_cpu_user_seconds": 0.0,
+      "child_cpu_system_seconds": 0.030414999999999994,
+      "requests": {
+        "get_object": 18,
+        "head_object": 0
+      },
+      "identical_verified_measurements": true,
+      "cache_stats": null,
+      "native_cache_stats": null
+    },
+    {
+      "mode": "uncached",
+      "repeat": 1,
+      "finished_utc_ns": 1791521067910042788,
+      "wall_seconds": 2.644011339,
+      "cpu_user_seconds": 0.238491,
+      "cpu_system_seconds": 0.15531899999999998,
+      "child_cpu_user_seconds": 0.004708,
+      "child_cpu_system_seconds": 0.030696000000000008,
+      "requests": {
+        "get_object": 18,
+        "head_object": 0
+      },
+      "identical_verified_measurements": true,
+      "cache_stats": null,
+      "native_cache_stats": null
+    },
+    {
+      "mode": "cached",
+      "repeat": 0,
+      "finished_utc_ns": 1791521071222563987,
+      "wall_seconds": 3.184726534,
+      "cpu_user_seconds": 0.2784000000000001,
+      "cpu_system_seconds": 0.17582999999999993,
+      "child_cpu_user_seconds": 0.004546,
+      "child_cpu_system_seconds": 0.016380000000000006,
+      "requests": {
+        "get_object": 16,
+        "head_object": 0
+      },
+      "identical_verified_measurements": true,
+      "cache_stats": {
+        "schema": "jope.verified-version-cache/v1",
+        "hits": 2,
+        "misses": 16,
+        "evictions": 0,
+        "uncached_oversize": 0,
+        "integrity_failures": 0,
+        "backend_failures": 0,
+        "backend_calls": 16,
+        "backend_bytes": 9566179,
+        "bytes_served_from_cache": 365,
+        "backend_seconds": 2.8569574374705553,
+        "integrity_seconds": 1.669209450483322e-05,
+        "entries": 16,
+        "charged_bytes": 9572932,
+        "max_bytes": 134217728,
+        "max_entries": 4096
+      },
+      "native_cache_stats": {
+        "schema": "jope.native-canonical-cache/v1",
+        "canonicalizer_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "source_check_seconds": 0.08983210101723671,
+        "hits": 6,
+        "misses": 12,
+        "evictions": 0,
+        "uncached_oversize": 0,
+        "integrity_failures": 0,
+        "backend_failures": 0,
+        "backend_calls": 12,
+        "backend_bytes": 10603,
+        "bytes_served_from_cache": 8794,
+        "backend_seconds": 0.1520187216810882,
+        "integrity_seconds": 4.408275708556175e-05,
+        "entries": 12,
+        "charged_bytes": 23884,
+        "max_bytes": 8388608,
+        "max_entries": 8192
+      }
+    },
+    {
+      "mode": "cached",
+      "repeat": 1,
+      "finished_utc_ns": 1791521071371637727,
+      "wall_seconds": 0.149040147,
+      "cpu_user_seconds": 0.10536199999999996,
+      "cpu_system_seconds": 0.04362699999999997,
+      "child_cpu_user_seconds": 0.0,
+      "child_cpu_system_seconds": 0.0,
+      "requests": {
+        "get_object": 0,
+        "head_object": 0
+      },
+      "identical_verified_measurements": true,
+      "cache_stats": {
+        "schema": "jope.verified-version-cache/v1",
+        "hits": 20,
+        "misses": 16,
+        "evictions": 0,
+        "uncached_oversize": 0,
+        "integrity_failures": 0,
+        "backend_failures": 0,
+        "backend_calls": 16,
+        "backend_bytes": 9566179,
+        "bytes_served_from_cache": 9566909,
+        "backend_seconds": 2.8569574374705553,
+        "integrity_seconds": 0.004915530327707529,
+        "entries": 16,
+        "charged_bytes": 9572932,
+        "max_bytes": 134217728,
+        "max_entries": 4096
+      },
+      "native_cache_stats": {
+        "schema": "jope.native-canonical-cache/v1",
+        "canonicalizer_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "source_check_seconds": 0.16811762284487486,
+        "hits": 24,
+        "misses": 12,
+        "evictions": 0,
+        "uncached_oversize": 0,
+        "integrity_failures": 0,
+        "backend_failures": 0,
+        "backend_calls": 12,
+        "backend_bytes": 10603,
+        "bytes_served_from_cache": 28191,
+        "backend_seconds": 0.1520187216810882,
+        "integrity_seconds": 0.00014817388728260994,
+        "entries": 12,
+        "charged_bytes": 23884,
+        "max_bytes": 8388608,
+        "max_entries": 8192
+      }
+    }
+  ],
+  "context_count": 2,
+  "read_only": true,
+  "scope": "Matched complete immutable result verification, not end-to-end fresh execution throughput; sequential cold/warm pairs, not randomized multi-run inference."
+}

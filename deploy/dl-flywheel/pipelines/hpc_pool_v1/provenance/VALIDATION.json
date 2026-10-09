@@ -1,0 +1,171 @@
+{
+  "RL_files_modified": false,
+  "affected_final_ordering_check": {
+    "elapsed_seconds": 0.678,
+    "exit_code": 0,
+    "reason": "Move resource sample after new-unit checks and refresh before each queued preflight; no numeric or worker changes",
+    "test_identities": [
+      "test_pool.PoolTests.test_resource_observation_occurs_after_slow_closure_and_each_start",
+      "test_pool.PoolTests.test_24_workers_parallel_preflight_is_bounded_and_joined"
+    ],
+    "tests_run": 2
+  },
+  "at_unix": 1791557561.415933,
+  "attachment_read": {
+    "bytes": 52796,
+    "path": "/Users/bentaylor/.codex/attachments/e065e641-cf36-4c34-8a8d-ab21ced3e4e5/Pasted text.txt",
+    "sha256": "c0103ef73437f45e50b3d49b9644478a780a9d8a677eba031351f798039f9217"
+  },
+  "baseline": [
+    {
+      "bytes": 26630,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/operations_launch.py",
+      "sha256": "4288808ff82fee80f9c59c9233e8c7315c83cfd67fbeb51bac8ad0fc7eeabfeb"
+    },
+    {
+      "bytes": 4459,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5-revision2/native_build.py",
+      "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
+    }
+  ],
+  "cardinality": [
+    8,
+    12,
+    24
+  ],
+  "cardinality_amendment": {
+    "affected_tests": 3,
+    "authorization": "Root requested explicit8 under measured headroom; no silent fallback",
+    "execution_batches": [
+      {
+        "elapsed_seconds": 0.219,
+        "exit_code": 0,
+        "tests": 2
+      },
+      {
+        "exit_code": 0,
+        "tests": 1
+      }
+    ],
+    "prior_review": {
+      "bytes": 6553,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_REVIEW.json",
+      "sha256": "f19933a2a34ad6be35e32ccc5309f93b0c1119e7a93dbd1ed68e370196383fac"
+    },
+    "scientific_worker_changes": 0
+  },
+  "command": "rtk proxy python3 -B -m unittest test_pool -v",
+  "current_test_identities": [
+    "test_pool.PoolTests.test_dry_is_readonly_and_count_is_explicit_8_12_or_24",
+    "test_pool.PoolTests.test_same_registry_inode_and_scope_required",
+    "test_pool.PoolTests.test_copy_of_registry_cannot_replace_physical_authority",
+    "test_pool.PoolTests.test_parent_source_and_guard_changes_rejected",
+    "test_pool.PoolTests.test_stage_and_freeze_do_not_reset_unknowns_or_parent_clock",
+    "test_pool.PoolTests.test_original_deadline_refuses_fresh_window",
+    "test_pool.PoolTests.test_resource_gate_conservatively_reserves_parent_full_caps_and_learner",
+    "test_pool.PoolTests.test_owned_command_drift_cannot_reduce_reserved_memory",
+    "test_pool.PoolTests.test_small_active_owned_allocation_exact_caps_and_full_reservation",
+    "test_pool.PoolTests.test_all_preflights_and_python312_precede_native_starts",
+    "test_pool.PoolTests.test_wrong_physical_python_fails_before_native_preflight",
+    "test_pool.PoolTests.test_preflight_registry_census_mismatch_blocks_all_starts",
+    "test_pool.PoolTests.test_partial_launch_never_retries_or_resets",
+    "test_pool.PoolTests.test_24_workers_parallel_preflight_is_bounded_and_joined",
+    "test_pool.PoolTests.test_explicit8_launch_has_exact8_and_never_downsizes_other_counts",
+    "test_pool.PoolTests.test_inactive_learner_keeps_full_reserve_and_cpu_disk_hold",
+    "test_pool.PoolTests.test_python_probe_checks_actual_binary_identity_not_version_alone",
+    "test_pool.PoolTests.test_registry_replacement_during_preflight_prevents_every_native_start",
+    "test_pool.PoolTests.test_registry_replaced_after_first_start_prevents_next_start",
+    "test_pool.PoolTests.test_stale_resource_probe_blocks_preflight",
+    "test_pool.PoolTests.test_resource_observation_occurs_after_slow_closure_and_each_start"
+  ],
+  "execution_receipt": {
+    "elapsed_seconds": 2.747,
+    "exit_code": 0,
+    "reported_from": "actual unified-exec completion",
+    "skipped": 0,
+    "tests_run": 19,
+    "tool_session_id": 76284
+  },
+  "global_deadline_unix": 1791592146.380285,
+  "independent_review_pending": true,
+  "not_performed": [
+    "remote reads/writes",
+    "queue claims",
+    "GP executions",
+    "S3 PUT",
+    "Git/PR writes",
+    "old historical test suite reruns"
+  ],
+  "per_worker": {
+    "CPUQuota": "100%",
+    "MemoryMax": "1G",
+    "TasksMax": 32,
+    "gpu": false,
+    "max_emissions": 128
+  },
+  "prior_full19_source_sha256": "8ffdf40aa4adffc8dd1f6d497b94a6d7816990ac982d7de5d991223a14b1395e",
+  "schema": "jope.native-pool-local-validation/v1",
+  "scientific_worker_edits": 0,
+  "scope": "local only; no actual systemd/SSH/S3/native GP execution",
+  "small_allocation_amendment": {
+    "affected_tests": 3,
+    "authorization": "Root requires actual CPU25%/RAM128MiB publisher and other small owned allocations in complete inventory",
+    "elapsed_seconds": 0.097,
+    "exactcpu_final_check": {
+      "affected_tests": 3,
+      "exit_code": 0
+    },
+    "exit_code": 0,
+    "learner_cpu_percent": 800,
+    "learner_memory_min_bytes": 8589934592,
+    "other_owned_cpu_min_percent": 1,
+    "other_owned_memory_min_bytes": 33554432,
+    "physical_cpu_cap": "Exact observed quota/period equals declared percentage; not <= upperbound",
+    "prior_cardinality_review": {
+      "bytes": 4367,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_CARDINALITY_ADDENDUM.json",
+      "sha256": "c5fa80482f2077c0a3110902667e8f772e6a51a2efdd8db50da91e02a122b25a"
+    },
+    "worker_limits_unchanged": true
+  },
+  "source_pins": [
+    {
+      "bytes": 41357,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
+      "sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2"
+    },
+    {
+      "bytes": 4459,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/native_build.py",
+      "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
+    },
+    {
+      "bytes": 25034,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/test_pool.py",
+      "sha256": "a5cd50ae1eaba1ca917033dd1bbfcda2b7a8e169d12f8dda0eb4658aa326bcdf"
+    }
+  ],
+  "staged_worker_copies_per_process": 34,
+  "state": "passed_local_tests_independent_review_pending",
+  "test_identities": [
+    "test_pool.PoolTests.test_dry_is_readonly_and_count_is_explicit_12_or_24",
+    "test_pool.PoolTests.test_same_registry_inode_and_scope_required",
+    "test_pool.PoolTests.test_copy_of_registry_cannot_replace_physical_authority",
+    "test_pool.PoolTests.test_parent_source_and_guard_changes_rejected",
+    "test_pool.PoolTests.test_stage_and_freeze_do_not_reset_unknowns_or_parent_clock",
+    "test_pool.PoolTests.test_original_deadline_refuses_fresh_window",
+    "test_pool.PoolTests.test_resource_gate_conservatively_reserves_parent_full_caps_and_learner",
+    "test_pool.PoolTests.test_owned_command_drift_cannot_reduce_reserved_memory",
+    "test_pool.PoolTests.test_all_preflights_and_python312_precede_native_starts",
+    "test_pool.PoolTests.test_wrong_physical_python_fails_before_native_preflight",
+    "test_pool.PoolTests.test_preflight_registry_census_mismatch_blocks_all_starts",
+    "test_pool.PoolTests.test_partial_launch_never_retries_or_resets",
+    "test_pool.PoolTests.test_24_workers_parallel_preflight_is_bounded_and_joined",
+    "test_pool.PoolTests.test_inactive_learner_keeps_full_reserve_and_cpu_disk_hold",
+    "test_pool.PoolTests.test_python_probe_checks_actual_binary_identity_not_version_alone",
+    "test_pool.PoolTests.test_registry_replacement_during_preflight_prevents_every_native_start",
+    "test_pool.PoolTests.test_registry_replaced_after_first_start_prevents_next_start",
+    "test_pool.PoolTests.test_stale_resource_probe_blocks_preflight",
+    "test_pool.PoolTests.test_resource_observation_occurs_after_slow_closure_and_each_start"
+  ]
+}

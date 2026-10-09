@@ -1,0 +1,72 @@
+{
+  "schema": "jope.continuous-neural-independent-review/v1",
+  "observed_at": "2026-10-09T04:56:07.953618+00:00",
+  "verdict": "PASS_SOURCE_AND_CPU_TESTS",
+  "config_sha256": "fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed",
+  "sources": [
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_state.py",
+      "sha256": "6f920ee26fbfbbd719365d79b1fe638d8bceae61585ced436f94e11943f332ca",
+      "bytes": 6953
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_runner.py",
+      "sha256": "add98aa1ebcb66868b1594eb47f859f457be75627289f1548d9f7772320c1ab0",
+      "bytes": 19904
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_cli.py",
+      "sha256": "a282ab11a4a7247fd9ce1a514192a71153e18b5cf5a34533eb7edcdb2edd6e3a",
+      "bytes": 11255
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_deploy.py",
+      "sha256": "4119fcdafac015ba07ba5c791d6ec31b0c7a69177fb03e1ef0851a83bc4f7bf3",
+      "bytes": 4658
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_native_stream.py",
+      "sha256": "0dc1022f8132fbfb4b0b04aab1840369e0b799b3fd9c06a8fbd29b7c878754c4",
+      "bytes": 26414
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_native_train.py",
+      "sha256": "e73567dcffde3989c7ac33bdfc9ae2df99dc6c29f8e83baf519ba1b9eac29280",
+      "bytes": 19746
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/test_continuous_state_review.py",
+      "sha256": "b25da38bd7e4c3a51b3a7260307034cfa3e8b20ed195667448cc292f574922ae",
+      "bytes": 6907
+    },
+    {
+      "path": "work/flywheel-20261008/proposals/neural-continuous-v1/test_continuous_runner.py",
+      "sha256": "ef492a43214a2e236ff28ab8a250b39738208b100a0e20860239220ab84e7f15",
+      "bytes": 10115
+    }
+  ],
+  "all_owned_source_pins_match": true,
+  "tests": {
+    "passed": 17,
+    "failed": 0,
+    "seconds": 0.779,
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<proposal>:<proposal>/consumer:<proposal>/runtime python3 -B -m unittest discover -s <proposal> -p test_continuous*.py -v"
+  },
+  "verified": [
+    "Resumed CPU dropout update matches uninterrupted loss, parameters, every AdamW tensor and RNG; malformed optimizer/RNG refusal",
+    "Exact read-only completed parent planner head; current epoch completion; no orphan ancestry or inherited batch fingerprint reuse",
+    "Fresh shuffled epochs with distinct parent lineages per batch and frozen Kumo-only normalizer",
+    "Variant CE false; actual supported q/feas/runtime allowed; pending generated outcomes never enter gradients",
+    "Mandatory durable GP outbox before optimizer; count and payload capacity waits before reserve",
+    "Pre-optimizer deadline gate; physical-state-write and post-commit cleanup failures preserve correct committed/uncertain distinction",
+    "Fixed original validation panel/full263 validation; expanded validation separately labeled; best since continuation and LR/plateau control bound physical checkpoint",
+    "Create-only owned root; CPU8/RAM8GiB/oneGPU; inherited1791592146.380285 deadline; output24GiB; working checkpoint retention last2+best2+epochs"
+  ],
+  "remaining_operational_gates": [
+    "Fresh deployment resource checks and actual resumed CUDA preflight before optimizer",
+    "This review does not claim an actual resumed CUDA execution",
+    "Growth10 publication schema requires a separately reviewed compatibility version; initial extension is measured3",
+    "Any future manual resume must apply optimizer-control.json together with physical checkpoint, since validation can change LR afterward"
+  ],
+  "no_source_or_remote_mutations_by_reviewer": true
+}

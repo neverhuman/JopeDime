@@ -1,0 +1,172 @@
+{
+  "schema": "jope.fresh128-gp-local-source-manifest/v1",
+  "source_only": true,
+  "launch_authorized": false,
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "da9f044227ead1e29cb3c4dcac60e03a40e06503d1c504e62380f58c2285198d",
+      "bytes": 8970
+    },
+    {
+      "path": "authority.py",
+      "sha256": "2e11135ed3cb50e37f8b4a18b56e4493b42b83f97574545a3b5ae9ec0b48e4f9",
+      "bytes": 2513
+    },
+    {
+      "path": "authority_lease.py",
+      "sha256": "d16f87827b3efd5db2718c73b60b6e09c7acec1d55a1337cca9f6bb6d0c9773e",
+      "bytes": 2828
+    },
+    {
+      "path": "cold_config.py",
+      "sha256": "90f6db8f5669f57bdfc84769669c23da839a518d780b527d176206de0168c0d3",
+      "bytes": 4256
+    },
+    {
+      "path": "config.template.json",
+      "sha256": "d12f8ca6b4a358290c5287d28abb3843423a9354b8a4ea6cbe502a82d3af6c46",
+      "bytes": 37061
+    },
+    {
+      "path": "execution_boundary.py",
+      "sha256": "fffe16b5b3da7a374258439f44ba8c3da04f02303990dbebcc0c854aecb75fff",
+      "bytes": 4531
+    },
+    {
+      "path": "global_attempts.py",
+      "sha256": "a81093b665470c6af957e433328d2a0e09fa6a66f6d65d632b695b0b809e54d1",
+      "bytes": 13697
+    },
+    {
+      "path": "operational-only.diff",
+      "sha256": "6e32d909cedf68d9f985a0e872a4ab33e4cfec7f898ea06d5fd71b70fbdbeff1",
+      "bytes": 12177
+    },
+    {
+      "path": "provenance/authority.py",
+      "sha256": "5663ea3c12ca736c2a967da20a01a627ef303d02f669725da21c267f2243e3c0",
+      "bytes": 2449
+    },
+    {
+      "path": "provenance/campaign_custody.py",
+      "sha256": "ab03821b3073c60a10d9d821fc06c4250b22ae48fdba25448862a40308ff9f40",
+      "bytes": 16976
+    },
+    {
+      "path": "provenance/label_campaign.py",
+      "sha256": "564f25581f8ce4e3e912e5b04a321235d887d050e5f20786c97fa8e52eb10b2f",
+      "bytes": 9521
+    },
+    {
+      "path": "provenance/native-closure.json",
+      "sha256": "288b003778c993c48fc064e916056d354f621a5f430413812ede22094a2f01f5",
+      "bytes": 36438
+    },
+    {
+      "path": "provenance/prepared-protocol-and-programs.json",
+      "sha256": "6436ee62fd0dec8924b40466a93ff9e4b6389e61a2768580baf027fbd377d4e0",
+      "bytes": 4124
+    },
+    {
+      "path": "provenance/program_worker.py",
+      "sha256": "71fd7385c31e90cba5240b7361fe757deb19814e890cb49a7362c3c9dab86dc8",
+      "bytes": 16505
+    },
+    {
+      "path": "provenance/source-copies.json",
+      "sha256": "561aa110d0d2fc9ed43b56e64cc4d56f276b50faff9188e203477bf7457286f8",
+      "bytes": 8919
+    },
+    {
+      "path": "provenance/staged_inputs.py",
+      "sha256": "0796684b93d760504c0a1dac19a84bb9e05e1c9974dbb3064f66f5264a55b481",
+      "bytes": 13045
+    },
+    {
+      "path": "receipt_gate.py",
+      "sha256": "6afb749eaa65c291d0165d4462d160665103773c19cafaec018c72011c5554c3",
+      "bytes": 7746
+    },
+    {
+      "path": "runtime/jope_flywheel/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "bytes": 95
+    },
+    {
+      "path": "runtime/jope_flywheel/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "bytes": 11160
+    },
+    {
+      "path": "runtime/jope_flywheel/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "bytes": 16420
+    },
+    {
+      "path": "runtime/jope_flywheel/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "bytes": 9974
+    },
+    {
+      "path": "runtime/jope_flywheel/program_inputs.py",
+      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
+      "bytes": 9259
+    },
+    {
+      "path": "runtime/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "bytes": 6171
+    },
+    {
+      "path": "runtime/jope_flywheel/program_observer.py",
+      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
+      "bytes": 6035
+    },
+    {
+      "path": "runtime/jope_flywheel/program_worker.py",
+      "sha256": "3d8cf29ae337b467c249e183c2dde33c9da503d17ea424a994ddbf8753ed484a",
+      "bytes": 17414
+    },
+    {
+      "path": "runtime/jope_flywheel/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "bytes": 9341
+    },
+    {
+      "path": "runtime/jope_flywheel/queue.py",
+      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
+      "bytes": 13448
+    },
+    {
+      "path": "runtime/jope_flywheel/s3_library.py",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
+      "bytes": 4178
+    },
+    {
+      "path": "runtime/jope_flywheel/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "bytes": 4827
+    },
+    {
+      "path": "runtime/jope_flywheel/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "bytes": 5835
+    },
+    {
+      "path": "staged_inputs.py",
+      "sha256": "bb18a7b21fd5c58e833b1d829532b579747b47819d77186986167d23b4227ea5",
+      "bytes": 11743
+    },
+    {
+      "path": "staging-candidates.json",
+      "sha256": "c6be76fd8f20f8123bc197b39bbf1ec8e2cb2b6178b25913834de62d3da57cce",
+      "bytes": 466441
+    },
+    {
+      "path": "test_fresh128.py",
+      "sha256": "ca980805841ff856d4ee3d8b274516ef6ea1bbe94ccee4684a1c56e6e960e289",
+      "bytes": 25787
+    }
+  ]
+}

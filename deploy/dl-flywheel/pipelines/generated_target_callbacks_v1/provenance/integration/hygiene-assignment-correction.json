@@ -1,0 +1,164 @@
+{
+  "actions": {
+    "fixtures_executed": 0,
+    "git": 0,
+    "native_commands": 0,
+    "network": 0,
+    "services": 0,
+    "source_imports": 0
+  },
+  "ci_attempt": 1,
+  "ci_run_id": "37986051721",
+  "counts": {
+    "added_test_identities": 0,
+    "callback_and_compatibility_identities_unchanged": 63,
+    "coverage_items_after": 617,
+    "coverage_items_before": 621,
+    "test_families_after": 508,
+    "test_families_before": 512,
+    "wired_identities_unchanged": 812
+  },
+  "failed_ci_checkout": "16e253141e6060b71ac94fafa653d33ddd0c20f1",
+  "failure_capture": {
+    "bytes": 207805,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/claude-plans-and-hygiene-logs.json",
+    "sha256": "d3d7a6b6e83873775f90fc3e9072d8f7ddc047820faf74d5998d566d231bea91"
+  },
+  "fixture_roster": {
+    "bytes": 21288,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/integration-fixtures.json",
+    "sha256": "b54c059aebd34e750da06f0617469ee47e629da82bf79f00e08177c3abd03874"
+  },
+  "fixture_runner": {
+    "bytes": 8370,
+    "path": "deploy/dl-flywheel/run_callback_targets_offline.py",
+    "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
+  },
+  "frozen_test_sources": {
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py": {
+      "bytes": 3528,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py",
+      "sha256": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py": {
+      "bytes": 13583,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py",
+      "sha256": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py": {
+      "bytes": 13907,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py",
+      "sha256": "e688d2408246813d13d662fb05a38c0a6dd8e078e09a22c8c0b50ee37683a147"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py": {
+      "bytes": 5799,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py",
+      "sha256": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_parent_encoder.py": {
+      "bytes": 5634,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_parent_encoder.py",
+      "sha256": "c24eb7772afd398f7d7883e649a67b75ecbbabab1f1c20f556a464259d326560"
+    }
+  },
+  "new_executing_family": "python:deploy/dl-flywheel/test_callback_targets.py",
+  "old_assignment_rows_verbatim": {
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py": {
+      "deploy/ci/coverage.json": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [],
+        "lanes": [
+          "python"
+        ],
+        "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
+      },
+      "docs/internal/core-ip/findings/test-inventory.json": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+        "role": "research"
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py": {
+      "deploy/ci/coverage.json": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [],
+        "lanes": [
+          "python"
+        ],
+        "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
+      },
+      "docs/internal/core-ip/findings/test-inventory.json": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+        "role": "research"
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py": {
+      "deploy/ci/coverage.json": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [],
+        "lanes": [
+          "python"
+        ],
+        "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
+      },
+      "docs/internal/core-ip/findings/test-inventory.json": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+        "role": "research"
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py": {
+      "deploy/ci/coverage.json": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [],
+        "lanes": [
+          "python"
+        ],
+        "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
+      },
+      "docs/internal/core-ip/findings/test-inventory.json": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+        "role": "research"
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_parent_encoder.py": {
+      "deploy/ci/coverage.json": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [],
+        "lanes": [
+          "python"
+        ],
+        "scope": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun."
+      },
+      "docs/internal/core-ip/findings/test-inventory.json": {
+        "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+        "role": "research"
+      }
+    }
+  },
+  "preserved": [
+    "All other coverage/test-inventory items byte-value-equivalent",
+    "All lane commands/checks/evidence and dispositions unchanged",
+    "All frozen package/source/fixture/proof bytes and paths unchanged",
+    "All 309 research source classifications byte-exact",
+    "Original integration runner and roster byte-exact"
+  ],
+  "previous_frozen_candidate": {
+    "bytes": 41125,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/update-manifest.json",
+    "sha256": "f17a6ca20ff525302f66e4972114fd52a2261461ddf3729bc2c3384dae8e2d2a"
+  },
+  "qualification": "Static correction candidate only; owner must run required native coverage and exact-head CI. No live qualification implied.",
+  "reason": "Native coverage discovery accepts test_*, test-*, or *_test.py. Original tests_* modules are deliberately unchanged inside closed roots. New top-level adapter is invoked by the global runner and delegates to the original four isolated fixture children.",
+  "schema": "jope.coverage-assignment-correction-custody/v1",
+  "scope": "Five newly introduced incorrect discovery aliases moved to one actually executing adapter; original source files, fixture identities and provenance remain immutable.",
+  "source_head": "147d87fd77d5a6059966669ba1c7ba9e81ca77e7"
+}

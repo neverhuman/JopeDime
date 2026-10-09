@@ -1,0 +1,93 @@
+{
+  "schema": "jope.native-v5-census-inventory/v1",
+  "host": "xbabe2",
+  "native_roots": [
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v1",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v2",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v3",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v4",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v5",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v6",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v7",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v8",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v9",
+      "exists": null,
+      "configs": []
+    },
+    {
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_drain_20261009_v10",
+      "exists": null,
+      "configs": []
+    }
+  ],
+  "queues": [
+    "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-variant-outbox-20261009-v1/revision3/queue.sqlite",
+    "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-variant-outbox-20261009-v2/queue.sqlite",
+    "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-variant-outbox-20261009-v3/queue.sqlite",
+    "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-variant-outbox-20261009-v4/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_hpc_growth10_20261009/growth10-qualification/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_hpc_growth10_20261009/growth10-worker1/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_hpc_growth10_20261009/growth10-worker2/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_hpc_growth10_20261009/growth10-worker3/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_20261009_v1/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuation1_recovery1_20261009/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_inference_first_20261009_v1/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_bridge_20261009_v1/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_fill3_20261009_v1/data/queue.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label16_20261009_v1/data/queue.sqlite"
+  ],
+  "legacy_units": [
+    "FILL_ALL_CONFIGURED_LEGACY_WRITER_UNITS_BEFORE_QUALIFICATION"
+  ],
+  "canonicalizer": {
+    "path": "/FILL/pinned-canonicalizer",
+    "sha256": "FILL_EXACT_SHA",
+    "bytes": 0
+  },
+  "historical_census": {
+    "path": "/FILL/inputs/historical-census-after-v4.json",
+    "sha256": "b47ec5cd968267a4659a735b793a4276c6cabd0f8caf7fbf5233e783f1539ed1",
+    "bytes": 168771
+  },
+  "extra_evidence": [
+    {
+      "path": "/FILL/inputs/completed-v4-sql.json",
+      "sha256": "e8469fee708a80644532d64fa5b6edbf4c2d267e87fc2694c780d4f5e2701af4",
+      "bytes": 127922
+    }
+  ],
+  "maximum_seconds": 600
+}

@@ -1,0 +1,46 @@
+{
+  "blockers": [],
+  "checks": [
+    "New configuration changes only fresh owned output_root and exact22Python source pins for reviewed revision3. No JSON/source-manifest pins pollute the exact Python map.",
+    "All651 runtime inventory refs, candidate result, source/licenses, original normalizer/adoption/executor/campaign/worker/authority pins and16GET/64MiB remain identical to reviewed olddraft.",
+    "Controller changes only fixed cold root/unit v1->v2. Recomputed wall/monotonic dispatch deadline,5s closure margin, one-use fsynced intents, exact configSHA transient-unit guardian and CPU1/512MiB/swap0/noGPU/Restartno are preserved.",
+    "Selected result remains one previously successful TRAIN observation with admitted train role. This repeats read-only custody qualification after a source/schema correction; it never retries an unknown GP or old qualification window.",
+    "Local bad draft/metadata failure files remain preserved; only corrected draft-r2 is reviewed."
+  ],
+  "conditions": [
+    "Only genuinely fresh two clocks may materialize in corrected draft-r2: created<=now<deadline<=created+180s<=global1791592146.380285. Exact finalraw configsha must bind controller argv/source/evidence.",
+    "Fresh shared-resource and source-support ownership gate, never-started v2 unit, nonexistent own output/launch/dispatch files, current source/runtime/license authority and no foreign controls. The reviewed memory-floor guard does not create a reservation or expand held pools.",
+    "Dispatch-intent actual capped duration is authoritative; initial sampled runtime is context only. Do not reset any failed v1 clock or state.",
+    "No retries or output reuse after any failure/unknown. Complete durable journal/result plus actual physical closure are required for qualification acceptance; hard death/partial tails leave unavailable counters.",
+    "Full cutoff, all128 schema/live qualification, exporter compatibility, numeric target creation, CE/RL/admission, GP/PUT/DB/outbox/optimizer remain held."
+  ],
+  "configuration": {
+    "bytes": 169524,
+    "created_unix": null,
+    "deadline_unix": null,
+    "launchable": false,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification-v2/configuration-draft-r2.json",
+    "sha256": "40e18632fedbae8d4df4bbd12ef8f9fdee51262f981945ad78fb3bcbab9be2a6"
+  },
+  "controller": {
+    "bytes": 5580,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification-v2/controller.py",
+    "sha256": "04c68a13f903733858568f66b227bbac944e38ce31cac7aab1b5b10b8622f852"
+  },
+  "prior_config_review_sha256": "07a7a9746598873c2c60fd041a05ec7f49e8ed7df470f45305727edf122ccfbf",
+  "prior_controller_review_sha256": "7bda69f548f3457ef4cd7a86f422c6fd50a09a2ac2584ccc715379cc121a03be",
+  "reviewed_at_utc_ns": 1791575147136181000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "launches": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-fresh-selected-qualification-review/v2",
+  "source_packet_sha256": "df096047eaad81e34aec4813277744b01b61fb4b794a5e937cdbc9371328789f",
+  "source_review_sha256": "213c0723f01912b06916f7ebc8d24679204e24061a2aa488519505dcae5a5dab",
+  "state": "passed_unclocked_config_and_controller_with_launch_conditions"
+}

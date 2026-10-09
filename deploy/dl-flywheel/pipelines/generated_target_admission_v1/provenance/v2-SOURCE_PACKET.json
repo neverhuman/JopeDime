@@ -1,0 +1,251 @@
+{
+  "at_utc": "2026-10-09T18:18:48.954411+00:00",
+  "bytes": 267823,
+  "candidate_additive_identity_total_if_root_integrates": 749,
+  "credentials_or_real_data_included": false,
+  "existing_source_manifest_or_runner_changes": 0,
+  "file_count": 27,
+  "files": [
+    {
+      "bytes": 13855,
+      "kind": "documentation",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+      "sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md"
+    },
+    {
+      "bytes": 5794,
+      "kind": "qualification_pin_manifest",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+      "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json"
+    },
+    {
+      "bytes": 77,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py",
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py"
+    },
+    {
+      "bytes": 4948,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py"
+    },
+    {
+      "bytes": 10540,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py"
+    },
+    {
+      "bytes": 24595,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py"
+    },
+    {
+      "bytes": 3992,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json",
+      "sha256": "71be856675ac48cd80924e46c3aaba67066e1705219be3a7118f66cc0d9cfed2",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json"
+    },
+    {
+      "bytes": 9120,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json",
+      "sha256": "f64d7e0c075f36d90f1f976dcd0789c237ef7beb9b868463856c6e86904ee2db",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json"
+    },
+    {
+      "bytes": 8643,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json",
+      "sha256": "86c68a448dafe4595ae96447bd1bb1e27ec247e35cd670cadfb241ebccec3cc9",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json"
+    },
+    {
+      "bytes": 2825,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json",
+      "sha256": "7ab3565fa8335a95b8dfe4d1b76f4a6a72c705c9ef181166f36f88f05a84ee24",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json"
+    },
+    {
+      "bytes": 48521,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json",
+      "sha256": "fd98df93c8002d907886d030fa9bb6ba2d8078c7ea628e8cdf8e7cbc0d2d4a36",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json"
+    },
+    {
+      "bytes": 9762,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json",
+      "sha256": "91488f3e5a9ffd775b5bd2b654df46a39b4f6e287e257974f7dd29dd41c4c18c",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json"
+    },
+    {
+      "bytes": 6194,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json",
+      "sha256": "a35ca4b966134300ed67a6b6507b66de28f63417c7383dc60c3d4e0475cfc8d2",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json"
+    },
+    {
+      "bytes": 11475,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json",
+      "sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json"
+    },
+    {
+      "bytes": 5131,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json",
+      "sha256": "2ae134ecd2ff098183f7e9f4d0560c72f1267f8524245edf72a9e0777a4ec051",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json"
+    },
+    {
+      "bytes": 22276,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json",
+      "sha256": "d4251be6ded0646bbd53b99cb19bcc05a17b6cf04f5202d34a06374a2e5488d9",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json"
+    },
+    {
+      "bytes": 9394,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json",
+      "sha256": "0e8e6f57377401881dd31aa7dae6f12073bdaf091fd3f1eba8c78da479e306c2",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json"
+    },
+    {
+      "bytes": 3126,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json",
+      "sha256": "b1a70a87339c962074b3236fe8102902c4ee011be0eb2b1c38b53e1f308c3593",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json"
+    },
+    {
+      "bytes": 11536,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+      "sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json"
+    },
+    {
+      "bytes": 770,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+      "sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json"
+    },
+    {
+      "bytes": 11024,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py",
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py"
+    },
+    {
+      "bytes": 55,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py",
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py"
+    },
+    {
+      "bytes": 2810,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py",
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py"
+    },
+    {
+      "bytes": 13769,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py"
+    },
+    {
+      "bytes": 23779,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py",
+      "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py"
+    },
+    {
+      "bytes": 2907,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py",
+      "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py"
+    },
+    {
+      "bytes": 905,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py"
+    }
+  ],
+  "fixture_count": 28,
+  "fixture_ids": [
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_artifact_budget_exhaustion_and_deadline_refuse_partial_manifest",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_bare_verifier_success_and_wrong_identity_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_callback_source_and_dependency_drift",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_canonical_alias_dedup_after_selection_cap",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_complete_pending_refusal_validation_census",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_conflicting_alias_ref_refused_even_after_cap",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_duplicate_weight_in_predecessor_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_loaded_callback_code_must_match_current_pinned_file",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_missing_version_and_missing_object_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_new_unique_limit_retains_complete_pending_denominator",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_no_sql_network_subprocess_or_source_mutation_during_export",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_normalizer_roster_drift_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_old_ref_retained_and_existing_alias_not_double_weighted",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_old_reference_removal_reordering_and_replacement_rejected",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_parity_rejection_no_target_manifest",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_event_and_materialized_ack_tampering",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_no_mutation_and_exact_head",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_sidecars_hash_config_and_row_bounds",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_stale_role_proof_wrong_objective_and_drift_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_stale_version_and_corrupt_bytes_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_success_all_seven_and_no_numerical_or_admission_claim",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_valid_but_unapproved_kumo_weight_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_validation_alias_cannot_claim_training_role",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_wrong_objective_and_normalizer_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_wrong_wrapper_context_program_and_protocol_refused",
+    "generated_target_admission_v1.tests.test_runner.RunnerTests.test_expected_and_unexpected_failures_skips_and_counts_are_not_passes",
+    "generated_target_admission_v1.tests.test_runner.RunnerTests.test_missing_extra_duplicate_replaced_or_reordered_fixtures_refused",
+    "generated_target_admission_v1.tests.test_runner.RunnerTests.test_source_pin_and_import_origin_tampering_refused"
+  ],
+  "held_predecessor_packet_sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412",
+  "limits": [
+    "No original 721 test suites executed. Only corrected local family run once.",
+    "No production callback/runtime qualification or live cutoff/export.",
+    "No numerical targets, CE promotion, optimizer admission, GP execution, S3/DB writes or remote/Git actions.",
+    "Existing objective/normalizer/aliases/cutoff semantics preserved; Kumo only exact fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423."
+  ],
+  "note_counts": "28 total new family identities, replacing the unintegrated held24 family. Do not count24+28. Root owns actual global wiring.",
+  "ordered_roster_sha256": "5abae9181fe6e114f2d7dcf1b1c902b38f445027332426912d774fb8c67cdef8",
+  "predecessor_all_listed_files_unchanged": true,
+  "prior_suite_identities_untouched": 721,
+  "qualification_sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735",
+  "qualification_summary_sha256": "2ae134ecd2ff098183f7e9f4d0560c72f1267f8524245edf72a9e0777a4ec051",
+  "remote_git_live_actions": 0,
+  "review_sha256": "86c68a448dafe4595ae96447bd1bb1e27ec247e35cd670cadfb241ebccec3cc9",
+  "schema": "jope.generated-target-export-source-packet/v2",
+  "source_pin_manifest_sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c",
+  "source_py_files": 11,
+  "source_revision": 2,
+  "state": "source_only_independently_reviewed_pending_root_integration",
+  "target_family": "deploy/dl-flywheel/pipelines/generated_target_admission_v1"
+}

@@ -1,0 +1,96 @@
+{
+  "affected_test_execution": {
+    "command": "rtk proxy python3 -B -m unittest -v test_pool.PoolTests.test_small_active_owned_allocation_exact_caps_and_full_reservation test_pool.PoolTests.test_resource_gate_conservatively_reserves_parent_full_caps_and_learner test_pool.PoolTests.test_inactive_learner_keeps_full_reserve_and_cpu_disk_hold",
+    "errors": 0,
+    "exit_code": 0,
+    "failures": 0,
+    "reported_elapsed_seconds": 0.099,
+    "skipped": 0,
+    "test_identities": [
+      "test_pool.PoolTests.test_small_active_owned_allocation_exact_caps_and_full_reservation",
+      "test_pool.PoolTests.test_resource_gate_conservatively_reserves_parent_full_caps_and_learner",
+      "test_pool.PoolTests.test_inactive_learner_keeps_full_reserve_and_cpu_disk_hold"
+    ],
+    "tests_run": 3,
+    "working_directory": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1"
+  },
+  "all_packet_runtime_and_support_refs_reverified": true,
+  "final_packet": {
+    "bytes": 2056,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/PACKET.json",
+    "sha256": "d0a043e194f74d7d275b06dd697a358f5d49e69f12620907c129d5dffd50298e"
+  },
+  "final_runtime_and_test_pins": [
+    {
+      "bytes": 41357,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
+      "sha256": "a93a855c77bb644a2b17b5cf6d238876c677f7f2109ea7372c442267659bae9b"
+    },
+    {
+      "bytes": 4459,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/native_build.py",
+      "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
+    },
+    {
+      "bytes": 24630,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/test_pool.py",
+      "sha256": "365b72fde7593a5a835e035e48cc239a6a8a2851fd56bd601f4c4d009c445abe"
+    }
+  ],
+  "prior_reviews": [
+    {
+      "bytes": 6553,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_REVIEW.json",
+      "sha256": "f19933a2a34ad6be35e32ccc5309f93b0c1119e7a93dbd1ed68e370196383fac"
+    },
+    {
+      "bytes": 4367,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_CARDINALITY_ADDENDUM.json",
+      "sha256": "c5fa80482f2077c0a3110902667e8f772e6a51a2efdd8db50da91e02a122b25a"
+    }
+  ],
+  "qualification": "Prior independent19 full pass, cardinality3 affected passes, and current3 affected passes; full21 not rerun. Narrow source/test reverse-hash checks preserve the prior qualification scope.",
+  "reviewed_at_utc": "2026-10-09T14:58:33.495331+00:00",
+  "reviewed_behavior": {
+    "active_unit_command_and_physical_caps_checks_preserved": true,
+    "all_other_owned_full_memory_reservations_preserved_when_inactive": true,
+    "below_minimum_memory_cpu_and_learner400_rejected": true,
+    "learner_cpu_percent_exact": 800,
+    "learner_memory_min_bytes": 8589934592,
+    "native_worker_caps_unchanged": {
+      "cpu_percent": 100,
+      "memory_bytes": 1073741824
+    },
+    "other_owned_cpu_percent_inclusive": [
+      1,
+      3200
+    ],
+    "other_owned_memory_bytes_inclusive": [
+      33554432,
+      34359738368
+    ],
+    "publisher_fixture": {
+      "cpu_percent": 25,
+      "entire_cap_added_to_required_available_memory": true,
+      "insufficient_headroom_rejected": true,
+      "memory_bytes": 134217728
+    }
+  },
+  "reviewer": "/root/generalization_design/review_guard",
+  "schema": "jope.native-pool-independent-small-allocation-addendum/v1",
+  "scope": "Local read-only source review and CPU fixtures only, plus this additive receipt. No implementation edits, remote/systemd/SSH/GP/S3 operations. Prior review limitations remain; no live resource, launch or runtime completion claim.",
+  "source_delta_verification": {
+    "matched": true,
+    "method": "Reverse only three bound expressions in memory and compare SHA256 to prior source",
+    "other_runtime_bytes_changed": false,
+    "prior_exact_source_sha256": "843faade7e50f5b0a2cbc864448a3baac0a749a545889211efc18a408d2575e4"
+  },
+  "state": "bounded_no_findings",
+  "test_delta_verification": {
+    "current_identities": 21,
+    "matched": true,
+    "method": "Remove sole added small-allocation test in memory and compare SHA256 to prior test file",
+    "prior20_identities_unchanged": true,
+    "prior_exact_test_sha256": "10777bc99e05cf0001e2de70d464b1db323af6ed260c0389b05237872ea80dd2"
+  }
+}

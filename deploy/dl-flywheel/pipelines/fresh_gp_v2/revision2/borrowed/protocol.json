@@ -1,0 +1,91 @@
+{
+  "source": {
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/outputs/DL_FLYWHEEL_PROGRAM_LABEL16_CONFIG.json",
+    "sha256": "c26ea0088211b23ba18407a8136efb8fbcebc89dfadb57c622ab18429ae19e3c",
+    "bytes": 28693
+  },
+  "protocol_descriptor": {
+    "direction": "lower",
+    "evaluation_source_build_plan_sha256": "4bb10409dde5a686da91fb96501113a0e5dd1efcde6429cab1024d4270302632",
+    "fold_protocol": "jope.s1-two-fold/v1",
+    "inner_fold_fit_rule": "train labels != fold, validate labels == fold, original relative order",
+    "input_semantics": "unscaled_fit_rows_v1",
+    "input_target_units": "prepared_synthetic_target_units",
+    "metric": "rmse",
+    "outer_test_payload_rows": 0,
+    "prediction_parity_tolerance": 1e-09,
+    "scaling": "minmax_fitted_on_fit_rows_v1",
+    "schema": "jope.flywheel-native-evaluation-protocol/v1",
+    "scope": "registered new prepared variants only; research-only, not native HWM context admission"
+  },
+  "vocabulary_descriptor": {
+    "canonical_conventions": "GenomeIr::parse followed by GenomeIr::canonical",
+    "canonicalizer_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+    "genome_source_sha256": "f6db05df29345f508d7ef8270a81dc64e09fd2951e648906f31da91bf99473b7",
+    "schema": "jope.flywheel-native-dsl-identity/v1",
+    "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835"
+  },
+  "programs": [
+    {
+      "dsl": "(pipe X (ridge))",
+      "name": "ridge",
+      "program_sha256": "beeee67c8c273bb5fc87168752e6cc2df381904f498d42f49b30b8df10037e02"
+    },
+    {
+      "dsl": "(pipe X (standardize) (ridge lambda=1))",
+      "name": "standardized_ridge",
+      "program_sha256": "e2ff2a41a56fdc9edb0f00eeb3f335015772800d321aad6bd85ccb7831aeedcf"
+    },
+    {
+      "dsl": "(pipe X (robust_scale) (ridge lambda=0.1))",
+      "name": "robust_ridge",
+      "program_sha256": "c7655fdaa0ae179072fefc095cfd46012c07966d2f752920e1df6896ddbb63e3"
+    },
+    {
+      "dsl": "(pipe X (rank) (ridge lambda=0.1))",
+      "name": "rank_ridge",
+      "program_sha256": "d4a814e2efc7d0bb98bf35deb2d79649d0f3256765b799663951262a9c5ae7c8"
+    },
+    {
+      "dsl": "(pipe X (rff_cos append=false gamma=0.7 n=16 seed=5) (ridge lambda=0.1))",
+      "name": "rff_ridge",
+      "program_sha256": "f915c3e023b9f93c1b424ff004fbfe750cc53c9581f0565ea16e32f514b1896d"
+    },
+    {
+      "dsl": "(pipe X (rand_proj append=false k=8 seed=7) (ridge lambda=0.1))",
+      "name": "projected_ridge",
+      "program_sha256": "f86f8fa93e82ee331bd21169cb57bbd6f5ab0202a98e8ee48f98f65b5687be35"
+    },
+    {
+      "dsl": "(pipe X (row_stats append=false) (ridge lambda=0.1))",
+      "name": "row_stats_ridge",
+      "program_sha256": "b378389a172e945b010d5c76af0e7af62c11d12889be65002ae297bc2cd986d5"
+    },
+    {
+      "dsl": "(pipe X (elasticnet alpha=0.01 l1_ratio=0.3 sweeps=20))",
+      "name": "elastic_net",
+      "program_sha256": "b3d486cd7156c56ef88a351cbd92b0f3ceba326008ef0d170e805f45c508a733"
+    }
+  ],
+  "source_build_plan_sha256": "4bb10409dde5a686da91fb96501113a0e5dd1efcde6429cab1024d4270302632",
+  "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835",
+  "worker": {
+    "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_s1_runtime_b8098ea5f9b2/cargo-target/s1flywheel/bootstrap",
+    "sha256": "626d93a5cd11830e1b7cd43bf46f3fbde42c06273e750faa6d64b69a0c037526"
+  },
+  "emitter": {
+    "bytes": 1225984,
+    "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_s1_runtime_b8098ea5f9b2/cargo-target/s1flywheel/jope-flywheel-emit",
+    "sha256": "c2dd505644d3dccfced7c42ffe26482f82eb374ce47f853b1a525e55114f0daa"
+  },
+  "rustc": {
+    "bytes": 645000,
+    "path": "/home/ubuntu/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+    "sha256": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea"
+  },
+  "native_canonicalizer": {
+    "bytes": 3689280,
+    "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/jope-s1-proposal.s1main",
+    "sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1"
+  }
+}

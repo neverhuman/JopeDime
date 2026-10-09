@@ -1,0 +1,20 @@
+{
+  "bytes": 98,
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "work/heartbeat-20261009-1633/trace-recovery3",
+    "-p",
+    "test_trace_recovery_v3.py",
+    "-q"
+  ],
+  "raw_base64": "LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpSYW4gMzQgdGVzdHMgaW4gMC45MzBzCgpPSwo=",
+  "returncode": 0,
+  "schema": "jope.local-test-output/v1",
+  "sha256": "7d5306c4a4c83c6473bde6aae04dc2c99552577587dbc3be605626de634808be",
+  "source": "exact final unittest output, functions exec chunk3fd25b; tool wall0.920077291s; unittest reported0.930s"
+}

@@ -1,0 +1,73 @@
+{
+  "S3_PUTs": 0,
+  "actual_broker_epoch": "not frozen/not reserved",
+  "actual_candidate128_metadata_builder": "PASS; all4 Kumo manifests and20 source identities staged locally",
+  "actual_fresh_context_derivation": "pending live cold prepare CLI",
+  "actual_history_capture": "pending live cold collect CLI",
+  "actual_run": "not launched",
+  "at_unix": 1791560153.2622359,
+  "errors": 0,
+  "failures": 0,
+  "fixture_wall_unix": 1791558000.0,
+  "guarded_worker": {
+    "bytes": 17414,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/program_worker.py",
+    "sha256": "3d8cf29ae337b467c249e183c2dde33c9da503d17ea424a994ddbf8753ed484a"
+  },
+  "last_run_seconds": 0.317,
+  "limitations": [
+    "No full actual128 S3/replay/native derivation is claimed by local fixtures.",
+    "Root must declare and enforce cooperative launch fencing, provide fresh closed-writer inventory and current compatible native-only dispatcher refs.",
+    "History template is intentionally blocked until exact coordination receipt is bound.",
+    "Systemd resource/runtime envelope and root concurrency controller remain deployment gates."
+  ],
+  "native_fits": 0,
+  "original_numeric_worker": {
+    "bytes": 16505,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/borrowed/program_worker_original.py",
+    "sha256": "71fd7385c31e90cba5240b7361fe757deb19814e890cb49a7362c3c9dab86dc8"
+  },
+  "prepare_request": {
+    "bytes": 7275,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/review-payload/prepare-request.json",
+    "sha256": "3fc22a2ad25bb99ebffdc8326cd2f018e8078ebbdfb7899946a2edc90046a9c5"
+  },
+  "production_global_deadline_unix": 1791592146.380285,
+  "remote_actions": 0,
+  "schema": "jope.fresh128-operational-validation/v2",
+  "source_manifest": {
+    "bytes": 7257,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/review-payload/source-manifest.json",
+    "sha256": "091ea91051345b242d719b4390de07408e85e5216182077f9fc5bddaf3e91443"
+  },
+  "status": "LOCAL_TESTS_PASS_LIVE_QUALIFICATION_PENDING",
+  "test_command": "rtk proxy python3 -m unittest discover -s work/heartbeat-20261009-1203/fresh128-gp-v1/revision2 -p test_*.py -v",
+  "tests": 24,
+  "tests_refs": [
+    {
+      "bytes": 17583,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/test_operational.py",
+      "sha256": "9fe2ee034d330a6888147ed337025b27d78bdeaf1fb6d70246aaad5002f733be"
+    },
+    {
+      "bytes": 6034,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/test_receipt_operational.py",
+      "sha256": "1cf97c8e04d0a53a7a3d35304a0603b0bec97132069c9c6b80c832af23f3d4c2"
+    }
+  ],
+  "unchanged_v1_runtime_modules": [
+    "__init__.py",
+    "augmentation.py",
+    "evergreen.py",
+    "program_gate.py",
+    "program_inputs.py",
+    "program_io.py",
+    "program_observer.py",
+    "program_worker.py",
+    "protocol.py",
+    "queue.py",
+    "s3_library.py",
+    "score_join.py",
+    "target_noise.py"
+  ]
+}

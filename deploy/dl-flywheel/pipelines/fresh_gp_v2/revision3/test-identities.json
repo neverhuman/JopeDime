@@ -1,0 +1,23 @@
+[
+  "test_permanent_broker.Cases.test_bootstrap_once_refuses_even_when_database_removed",
+  "test_permanent_broker.Cases.test_changed_epoch_body_refused",
+  "test_permanent_broker.Cases.test_changed_materialized_row_refused",
+  "test_permanent_broker.Cases.test_cold_inventory_rejects_local_commit_as_external_authority",
+  "test_permanent_broker.Cases.test_cold_inventory_requires_exact_retained_head",
+  "test_permanent_broker.Cases.test_deleted_commit_custody_refused",
+  "test_permanent_broker.Cases.test_existing_only_open_refuses_missing_database",
+  "test_permanent_broker.Cases.test_inplace_rewind_and_deleted_local_commits_still_refused_by_external_head",
+  "test_permanent_broker.Cases.test_inplace_rewind_refused_by_external_exact_head",
+  "test_permanent_broker.Cases.test_missing_database_after_reservation_refuses_and_never_recreates",
+  "test_permanent_broker.Cases.test_never_started_prior_contexts_are_still_whole_context_holds",
+  "test_permanent_broker.Cases.test_new_epoch_duplicate_context_rolls_back_without_reassignment",
+  "test_permanent_broker.Cases.test_new_prior_queue_failure_is_included_beyond_original18",
+  "test_permanent_broker.Cases.test_prior_reserved_missing_queue_refuses_all_new_qualification",
+  "test_permanent_broker.Cases.test_replaced_database_identical_bytes_refused_before_proof",
+  "test_permanent_broker.Cases.test_replaced_lock_refused_before_proof",
+  "test_permanent_broker.Cases.test_self_consistent_materialized_rewrite_cannot_change_event_ownership",
+  "test_permanent_broker.Cases.test_self_consistent_started_rewrite_cannot_change_event_replay",
+  "test_permanent_broker.Cases.test_unanchored_transaction_is_retained_and_blocks_reopen",
+  "test_permanent_broker.Cases.test_unknown_event_kind_refused_even_with_self_consistent_chain",
+  "test_permanent_broker.Cases.test_wrong_journal_or_schema_configuration_refused"
+]

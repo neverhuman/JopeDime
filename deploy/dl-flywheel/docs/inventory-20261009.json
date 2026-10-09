@@ -1,0 +1,365 @@
+{
+  "schema": "jope.flywheel-full-corpus-inventory/v1",
+  "observed_at": "2026-10-09T03:23:54.910458+00:00",
+  "source_host": "xbabe2",
+  "counts": {
+    "all": {
+      "contexts": 14987,
+      "dataset_hashes": 3003,
+      "dataset_fold_pairs": 14987,
+      "fold_counts": {
+        "0": 3003,
+        "1": 3003,
+        "2": 3003,
+        "3": 2998,
+        "4": 2980
+      },
+      "published": {
+        "selection_reached": 8439,
+        "g0_not_ready": 5330,
+        "none": 1218
+      },
+      "has_final": 14653
+    },
+    "current_eligible": {
+      "contexts": 12581,
+      "dataset_hashes": 2573,
+      "dataset_fold_pairs": 12581,
+      "fold_counts": {
+        "0": 2524,
+        "1": 2516,
+        "2": 2526,
+        "3": 2521,
+        "4": 2494
+      },
+      "published": {
+        "selection_reached": 7120,
+        "g0_not_ready": 4581,
+        "none": 880
+      },
+      "has_final": 12581
+    },
+    "excluded": {
+      "contexts": 2406,
+      "dataset_hashes": 537,
+      "dataset_fold_pairs": 2406,
+      "fold_counts": {
+        "0": 479,
+        "1": 487,
+        "2": 477,
+        "3": 477,
+        "4": 486
+      },
+      "published": {
+        "selection_reached": 1319,
+        "none": 338,
+        "g0_not_ready": 749
+      },
+      "has_final": 2072
+    }
+  },
+  "unit": "Unique current native view_id = dataset hash/version \u00d7 outer fold; no raw S3 object counting; not independent datasets",
+  "current_authority": {
+    "role_counts": {
+      "g3_heldout_no_s1": 40,
+      "g3_out_pending_rights": 1565,
+      "invalid_data": 1,
+      "newly_training_catalog_heldout_p3v1": 135,
+      "newly_training_heldout_non_g3": 179,
+      "newly_training_wide_shape_gate_k512": 5,
+      "sealed_catalog": 470,
+      "sealed_production": 293
+    },
+    "role_rule": {
+      "*": "REFUSED: any other or missing role (fail closed)",
+      "dev": "TRAINING (selection-only until 2026-10-07 23:10Z)",
+      "heldout": "TRAINING (holdout until 2026-10-07 23:10Z)",
+      "sealed_excluded": "HOLDOUT (the only one): refused everywhere, never trained; leaves the GP-HWM target; scored once in the final evaluation",
+      "train_fit": "TRAINING",
+      "train_nonpool": "TRAINING"
+    },
+    "model_selection": "family-grouped inner CV on training families; no separate dev holdout; training families stay disjoint from the sealed group",
+    "exclusion_steps": [
+      {
+        "layer": "ofm-r3-sealed-copies",
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r3-v1-20261008T070216Z.json",
+        "sha256": "d3bde306c40378edfcd8c4c5a50cb8b26268dd51c0fb7c3730e194b33d2e6d22",
+        "removed_from_target": 174,
+        "remaining": 12954
+      },
+      {
+        "layer": "ofm-r3b-affine-near-copies",
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r3b-v1-20261008T072806Z.json",
+        "sha256": "f3ea9af87ccc4c9201ca0cf5bc95bb007d248ae80664f5d565e15e4f1560e799",
+        "removed_from_target": 2,
+        "remaining": 12952
+      },
+      {
+        "layer": "ofm-r3c-unknown-role-resolution",
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r3c-v1-20261008T074538Z.json",
+        "sha256": "75cec49392bd19b86f55a7cf127a2f3e99703282a86bd5f0d3da412ac202a538",
+        "removed_from_target": 25,
+        "remaining": 12927
+      },
+      {
+        "layer": "ofm-r4-xonly-row-signature",
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r4-v1-20261008T075246Z.json",
+        "sha256": "74bcde95416d45222db0925445005b82357f3d0320bdaf8c0e2d025623cf020a",
+        "removed_from_target": 346,
+        "remaining": 12581
+      }
+    ],
+    "protected_catalog_470_already_outside14987": true
+  },
+  "kumo_s_availability": {
+    "reported": {
+      "type": "kumo_tabular_s",
+      "owner": "ENG:watcher ofm-20261008",
+      "gating": false,
+      "expected": 14987,
+      "verified_main_s3": 14987,
+      "gap": 0,
+      "pct": 100.0,
+      "eta": "ofm-20261008 (ENG:watcher); gap = universe contexts without a main-tree foundation key yet (the 200 B-b06)",
+      "secondary_ofm_plan": {
+        "expected": 18449,
+        "verified_s3": 18420,
+        "pct_verified": 99.8
+      },
+      "error": null
+    },
+    "as_of": "2026-10-09T02:58:05Z",
+    "source": {
+      "path": "/home/ubuntu/vp_dashboard/dl_status_manual.json",
+      "sha256": "9e8ea9f4e7fd99926021b91c8c50c334a2a6b7314ff78e21467558710e93725c",
+      "bytes": 118980,
+      "observed_at": 1791516135.9243102
+    },
+    "verification": "Read existing owner completeness proof and exact code: paired main-tree vector+receipt listing joined through exact-GET foundation view mapping. This audit did not freshly GET or validate all14,987 vectors. Frozen7,120 Kumo array separately checked finite/dimension/hashes in ORIGINAL7120_COVERAGE receipt.",
+    "new_training_roster": "KumoS2051 only; historical other encoders are not active inputs"
+  },
+  "gp_source": {
+    "eligible_final_contexts": 12581,
+    "final_outcomes": {
+      "selection_reached": 7545,
+      "g0_not_ready": 5036
+    },
+    "charged_attempts_by_outcome": {
+      "selection_reached": 9416160,
+      "g0_not_ready": 483456
+    },
+    "completed_attempts_by_outcome": {
+      "selection_reached": 9416138,
+      "g0_not_ready": 483456
+    },
+    "unique_program_count": null,
+    "supervised_quality_record_count": null,
+    "warning": "Attempts are repeated evaluations, NOT distinct programs or admitted labels. Detailed program DSL/fold RMSE/baseline/input provenance has not yet been verified for the full corpus. Terminal final records are not numeric regression labels."
+  },
+  "actual_training": {
+    "original_native_contexts_admitted_to_new_policy": 0,
+    "original_native_contexts_consumed": 0,
+    "all_original_current_eligible_pending_adapter": 12581,
+    "separate_augmented_pool": {
+      "dataset_variants": 138,
+      "first_model_unique_training_contexts": 13,
+      "first_model_validation_contexts": 3,
+      "note": "Counts refer to first verified model; later continuation may update exposure. Augmented variants are separate from native14,987."
+    }
+  },
+  "sources": [
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-v6all-v2/plans/plan-rawgroup.jsonl",
+      "sha256": "8a97448f06b9236025f74774fd879cb9b4e15e0d6f212daebd602b9c9bef9bce",
+      "bytes": 4122459
+    },
+    {
+      "path": "/home/ubuntu/vp_dashboard/dl_inventory.json",
+      "sha256": "a8f5be07e5a36b19befe7554e8487434a8f6bda9e485f8af276fe69d7a42ca13",
+      "bytes": 4799905
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-v6all-v2/plans/plan-g3.jsonl",
+      "sha256": "690263bcf366242230156cdd2f3cc7d873aaeeeff4bbabaec97669890d84ab0b",
+      "bytes": 27912853
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/catalog-waves/p3-sealed-excluded-catalog-v1b-20261007T080246Z.json",
+      "sha256": "b24eccdb2abea543620709e031b474afb64abb25805554817ac8f4dc3dc3e6c5",
+      "bytes": 52279
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w0.jsonl",
+      "sha256": "4cb527359beaf39e971b9c503525a3166a3e393e6f176fe4a6d1b90949812255",
+      "bytes": 5130378
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b01.jsonl",
+      "sha256": "78f75e4f3f66af45ca3a827b29824dae2b0bcc872b9cb6fdc76f04ae6f26be09",
+      "bytes": 8461488
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b02.jsonl",
+      "sha256": "c37bc9155ea4437670ddd37c0b53c91a8fdff1747851ca7e471a7278c69fc843",
+      "bytes": 7960965
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b03.jsonl",
+      "sha256": "f27d6e4f3908b05a77c6bddef3a183c48464da46015fed84d975c0240537fd7a",
+      "bytes": 8342769
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b04.jsonl",
+      "sha256": "973662f9de789f3facff220083c11213bbc35c0d8acdd5a0fee74f265ce55165",
+      "bytes": 8175862
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b05.jsonl",
+      "sha256": "2c16c5c0c7b1c28ed63d6f846b9734ddd0c746793a97dcd88b43bf02c8261d04",
+      "bytes": 8034900
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b06.jsonl",
+      "sha256": "11b882f5afbdd6a16013842862d5a2fa5ed12cdc53cf4f54cf952fd2ee487a47",
+      "bytes": 8311671
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b07.jsonl",
+      "sha256": "437405e377c5357bd26f0168d3037e4b8ff3ee685388459f8abbeaa4f12d217b",
+      "bytes": 8212860
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b08.jsonl",
+      "sha256": "7d8a0a0548597d64adca9f8886f6b93abc14fed6029e7bbf0659a503c4b1cb91",
+      "bytes": 8262459
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b09.jsonl",
+      "sha256": "42b1f3f0e987cc9cbe28deb3cecf0e6fbabdf18e3112f4e7310256db91861143",
+      "bytes": 8272744
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w1-b10.jsonl",
+      "sha256": "9cc838a8c7a94889ceaeabe85670f7eb0fbcf955cccc22b74e5d11a580129e32",
+      "bytes": 4238068
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-A-b01.jsonl",
+      "sha256": "9318bb151c8a97f98bb511de1ed1bba68cafa29a06ecb99990ffefe9a168c44b",
+      "bytes": 9818051
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-A-b02.jsonl",
+      "sha256": "6f0aa08a2381df6a099d1bab092299c4655c48df1695d957dd63ccc97f30685a",
+      "bytes": 10137029
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-A-b03.jsonl",
+      "sha256": "2c927d1f739f3c94c3d5c3c94b3ba210c2fbf366185905360a76b7272ecb35fd",
+      "bytes": 10101686
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-A-b04.jsonl",
+      "sha256": "6535b8ec65b9abdac9ccd2ea9f00711d712befb8081b49dfe572d45469b379a4",
+      "bytes": 10104841
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-A-b05.jsonl",
+      "sha256": "e54e99f5d40a23e090a62d1e2e55525ca5e7554705a25acfc309c8a9927b7822",
+      "bytes": 2065199
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-A-b06.jsonl",
+      "sha256": "36b291aeec14701475bca34c800009911c8144c994bf640078d08041d04a0a33",
+      "bytes": 1657950
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-B-b01.jsonl",
+      "sha256": "440fa601d6d6a29a4968b11a0607f6c5b33f6e1e5fee4cfe2820c0f9d2abf324",
+      "bytes": 10202404
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-B-b02.jsonl",
+      "sha256": "83e8800ae2531debb0dcd8ff06467a9a14c3096babbf90170b96370e8b1a3db6",
+      "bytes": 10245988
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-B-b03.jsonl",
+      "sha256": "9161f5ac6f26b5504f78d8fd26cabf274556d9dd366f277d4d19cc36665aa116",
+      "bytes": 10346083
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-B-b04.jsonl",
+      "sha256": "efecee9980401365485d6b50ea15070ec5fe1e62ddb277907225dcc58fd226a5",
+      "bytes": 1867669
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-B-b05.jsonl",
+      "sha256": "a4222573970070425d3f6f94c911942d18b6bd98068f62d935d5d3af88260f61",
+      "bytes": 7121112
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-B-b06.jsonl",
+      "sha256": "a92d80c0afc60e3530ebeef4c9d58a2197340567634f8ccd3127e84f7d65e85b",
+      "bytes": 5687777
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/GPU-catalog-v246/plans/plan-w2-C-b01.jsonl",
+      "sha256": "caaa8b7ab91dca60c8089464006935518cd2c3f752457d0008f1211591eb0433",
+      "bytes": 2562741
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/gp-hwm-index/gp-target-one-holdout-after-layers-v4-20261008T080549Z.json",
+      "sha256": "8732a29403a84edd3e77d0243a1ff768c068405fba5960500f289a46b1a3e960",
+      "bytes": 675350
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/owner-relays/one-holdout-role-map-v1-20261007T231936Z.json",
+      "sha256": "3b9caf36a3cde3f12d0337ebfc633b55a1e989a3f53410df578f6fc9a7aa0109",
+      "bytes": 721777
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/TRAINING-EXCLUSION-LAYERS-v4-20261008T075246Z.json",
+      "sha256": "53989656b455446353f6854bee48cc870f44a1fddb8697445c6ddc9db296abe4",
+      "bytes": 3857
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/gp-hwm-index/gp-hwm-index-350420b68283.json",
+      "sha256": "350420b682834f372ac2763f59f0fe5daeb61e9ce7ef8c04db680fba8875064a",
+      "bytes": 15631305
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/ledger-production.jsonl",
+      "sha256": "8157b9307678665fc3a07e43b531796c8154b131a217e2e2dafebf92f84e567c",
+      "bytes": 8177230
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/ledger-research.jsonl",
+      "sha256": "96a4ac8e042c8f6f1937e85587b6b5eb0ebd8c0013a1079b3b4175fd279cbe70",
+      "bytes": 18365583
+    },
+    {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod-c2/ledger-research.jsonl",
+      "sha256": "83d43f43cd71c77c37fffea20c75ddaf2a58aca67c0a7f71399dc2c72c9b667c",
+      "bytes": 2664687
+    }
+  ],
+  "local_inventory": {
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/full-corpus-20261009/inventory-audit.json",
+    "sha256": "95df3013a01d80e6e45170e00c86a2d2a9217f826389858df159b76cee9edceb",
+    "bytes": 29587559
+  },
+  "reproduction": {
+    "script": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/full-corpus-20261009/audit_inventory_remote.py",
+    "script_sha256": "3d8afdb1b1313396cc113fef324dc57730318f19a2568d07d1929c6bf10c88ee",
+    "operation": "Read-only Python script over pinned metadata on xbabe2;512MiB address-space cap,85-second checks,512MiB read ceiling. No datasets, vectors, models or GPU work read/launched.",
+    "source_read_bytes": 258449979,
+    "seconds": 2.4855614346452057
+  },
+  "limits": [
+    "Native dataset hashes are dataset versions, not confirmed unique underlying source lineages.",
+    "14,987 is the reconciled current train-only universe, not every historical object/version anywhere in S3.",
+    "Current eligible roles permit research training/model selection; a new95/5 lineage split is not a pristine unseen holdout.",
+    "No all-corpus optimizer admission or exposure claim."
+  ]
+}

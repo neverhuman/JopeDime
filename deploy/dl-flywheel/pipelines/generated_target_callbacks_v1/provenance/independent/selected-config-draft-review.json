@@ -1,0 +1,94 @@
+{
+  "blockers": [],
+  "checks": [
+    "The 20 exact Python package hashes match revision2 template and frozen source.",
+    "Worker source/plan/protocol/vocabulary/registry/generator and all physical authority pins equal the reviewed template.",
+    "Actual interpreter/module/import roster equals the fresh metadata-only inventory exactly: 651 distinct paths/64,296,767 bytes, Python3.12.3, NumPy1.26.4, boto3 1.35.49, botocore1.35.99.",
+    "Prepared/adoption/original normalizer/logical campaign/executor/source/license hashes remain fixed; candidate dd741e20 is dated metadata and explicitly not a full cutoff.",
+    "Chosen row is published_verified with no error, training phase and train descriptor; exact wrapper result reference remains fixed.",
+    "Fresh output path is restricted to the cold owned proposal. No active source, journal, dataset, prior attempt or GP artifact rewrite is exposed."
+  ],
+  "conditions_before_any_actual_GET": [
+    "Materialize ONLY the two null clocks with genuinely fresh created time and immutable deadline <=created+180s <=original global. Bind exact final raw config SHA, source and cold installation paths in create-only launch evidence.",
+    "Refresh shared-host resource/ownership checks; source-support envelope does not release any held scoring, archive or GPU pool. No source review creates a reservation.",
+    "Launch a new never-started owned unit only, pinned interpreter argv -B, CPU100%, RAM512MiB, swap0, Nice19, Tasks24, BLAS1/CUDAempty/Restartno, RuntimeMax no later than fixed config deadline.",
+    "Verify staged candidate/license/audit/source/runtime files and nonexistent output before execution; all physical current authority/origin checks remain active and must refuse drift.",
+    "SDK lazy import absent from the inventory, artifact mismatch, GET failure, clock expiry or memory cap is an honest refused/incomplete qualification. Preserve evidence and do not restart/retry it.",
+    "Accept only full parsed final result plus matching fsynced complete event chain, known local output hashes, exact source/config refs and terminal physical owner proof; partial result or event tail is not success.",
+    "No full cutoff/export/numerical targets/CE/RL/admission claim or changed trust schema follows. A later source/config/launcher change needs separate scoped review."
+  ],
+  "configuration_draft": {
+    "bytes": 169331,
+    "created_unix": null,
+    "deadline_unix": null,
+    "launchable": false,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification/configuration-draft.json",
+    "sha256": "964e26062ad0e04a6aced5d78b55817a04ee72bf6afb3aebf89ffe2d6e4a08c9"
+  },
+  "reviewed_at_utc_ns": 1791573854307577000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "gp": 0,
+    "implementation_edits": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "runtime_inventory_evidence": {
+    "inventory-result.json": {
+      "path": "work/heartbeat-20261009-1843/callback-runtime-inventory/inventory-result.json",
+      "sha256": "46fb5303666a669913d7a1b89c7c4f3f91261d9512e749f588138e117b171fdf"
+    },
+    "launch-intent.json": {
+      "path": "work/heartbeat-20261009-1843/callback-runtime-inventory/launch-intent.json",
+      "sha256": "9d51032be012e58578803c68097be7fc59378cc5b0de2e006aca2ff101d4fe1b"
+    },
+    "physical-closure-source-refs.json": {
+      "path": "work/heartbeat-20261009-1843/callback-runtime-inventory/physical-closure-source-refs.json",
+      "sha256": "31ed224405df6ea536473733d3294e42a9c9a78c0a4211011ddb48fd6e765d80"
+    },
+    "physical-prelaunch.json": {
+      "path": "work/heartbeat-20261009-1843/callback-runtime-inventory/physical-prelaunch.json",
+      "sha256": "082bd5141a62d2aa341d0e8ff51aa4bbd698b3335972e95828e8df8f3b509a36"
+    }
+  },
+  "runtime_inventory_observed": {
+    "closure_from_root_receipt": "unit auto-unloaded/not-found/PID0/empty cgroup/Result success; not independently queried",
+    "database_writes": 0,
+    "gp_executions": 0,
+    "monotonic_elapsed_ns": 4031043525,
+    "optimizer_updates": 0,
+    "s3_requests": 0
+  },
+  "schema": "jope.independent-selected-qualification-config-review/v1",
+  "scope": {
+    "admission": false,
+    "authoritative_partition": "train",
+    "context_id": "7f281db391fca27500d281050c5752ae387fdc742bc410824297180bec66f699",
+    "cpu_max": 1,
+    "database_mutation": false,
+    "fresh_duration_max_seconds": 180,
+    "full_cutoff": false,
+    "global_deadline_unix": 1791592146.380285,
+    "gp_execution": false,
+    "gpu": false,
+    "max_attempted_and_actual_read_bytes": 67108864,
+    "max_gets": 16,
+    "memory_max_bytes": 536870912,
+    "mode": "selected-qualification",
+    "optimizer_mutation": false,
+    "outbox_mutation": false,
+    "phase": "training",
+    "program_key": "4fa859343a8280e43587f5f79df4504795ac5f0442d8b423de5665d03ffb78b9",
+    "reference_export": false,
+    "s3_put": false,
+    "selected_emission_ids": [
+      "01f9ebd4d7aca0ca93b5e601f1f974579de09f95a7418290dfa0cc50976b8502"
+    ],
+    "swap_max_bytes": 0
+  },
+  "source_packet_sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b",
+  "source_review_sha256": "8b4a3121adc0e642df51ea57a7b23c95f2a0459879a3ceffc19d0f3e961a33e6",
+  "state": "passed_draft_with_exact_launch_conditions"
+}

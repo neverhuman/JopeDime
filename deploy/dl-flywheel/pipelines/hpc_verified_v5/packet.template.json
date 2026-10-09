@@ -1,0 +1,71 @@
+{
+  "schema": "jope.native-original-successor/v5",
+  "created_unix": null,
+  "deadline_unix": null,
+  "global_deadline_unix": 1791592146.380285,
+  "global_guard": {
+    "schema": "jope.native-global-execution-guard/v1",
+    "registry_path": "REQUIRES_ONE_SHARED_NEW_OWNED_ABSOLUTE_REGISTRY_PATH",
+    "scope_sha256": null,
+    "canonicalizer_sha256": null,
+    "global_deadline_unix": 1791592146.380285,
+    "sources": [
+      {
+        "path": "REQUIRES_ORIGINAL_OR_CONTINUATION_OUTBOX_ABSOLUTE_PATH",
+        "kind": "outbox",
+        "config": null
+      }
+    ],
+    "census": {
+      "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+      "sha256": null,
+      "bytes": null
+    },
+    "max_snapshot_bytes": 268435456
+  },
+  "input_lists": [],
+  "maximum_emissions": 128,
+  "native_build_receipt": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "native_canonicalizer": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "out": "REQUIRES_NEW_REVIEWED_WORKER_ROOT",
+  "outbox_config": null,
+  "outbox_path": "REQUIRES_ORIGINAL_OR_CONTINUATION_OUTBOX_ABSOLUTE_PATH",
+  "snapshot": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "source_commit": null,
+  "source_pins": [],
+  "threads": 1,
+  "training_config": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "worker": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "emitter": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "rustc": {
+    "path": "REQUIRES_REVIEWED_ABSOLUTE_PATH",
+    "sha256": null,
+    "bytes": null
+  },
+  "worker_id": "REQUIRES_UNIQUE_FRESH_WORKER_ID",
+  "source_build_plan_sha256": "REQUIRED_EXACT_SOURCE_PLAN_SHA256"
+}

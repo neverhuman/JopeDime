@@ -1,0 +1,9 @@
+{
+  "predecessor_source_packet_sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223",
+  "previous_files_unchanged": true,
+  "reason": "No durable preconfigure/GET/native attempt custody; runtime existed only after configure.",
+  "remote_actions": 0,
+  "resolution": "new immutable revision2 source, owned fsynced pre-work event sink",
+  "schema": "jope.generated-target-callback-revision-hold/v1",
+  "state": "held-before-live-qualification"
+}

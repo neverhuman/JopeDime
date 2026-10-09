@@ -1,0 +1,134 @@
+{
+  "schema": "jope.hpc-bottleneck-profile/v1",
+  "observed_at": 1791520188.2663238,
+  "neural": {
+    "config_sha256": "3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4",
+    "completed_batches": 429,
+    "unique_train_data_runs": 6857,
+    "full_validation_contexts": 263,
+    "wall_seconds": 844.3024634500034,
+    "input_seconds": 309.41191098978743,
+    "decode_seconds": 252.63733281195164,
+    "optimizer_seconds": 29.02857193350792,
+    "other_seconds": 253.22464771475643,
+    "performance": {
+      "cuda_peak_allocated_bytes": 534312448,
+      "cuda_peak_reserved_bytes": 679477248,
+      "decode_seconds": 252.63733281195164,
+      "input_seconds": 309.41191098978743,
+      "optimizer_seconds": 29.02857193350792,
+      "optimizer_steps_per_compute_second": 14.778543050021753,
+      "optimizer_steps_per_wall_second": 0.5081117473553408,
+      "proposals_per_decode_second": 3.396172649743119,
+      "training_contexts_per_input_second": 22.16139636662638
+    },
+    "scope": "Existing aggregate monotonic stage timers. Other includes checkpointing, validation, authority checks and orchestration, not individually separated in this run."
+  },
+  "gp": {
+    "programs": 80,
+    "groups": {
+      "growth10-qualification": {
+        "programs": 16,
+        "first_command_at": 1791517294.9132428,
+        "last_command_at": 1791517538.6984172,
+        "elapsed_first_to_last_command_s": 243.785174369812,
+        "sum_command_wall_s": 14.831010103225708,
+        "by_command_sum_s": {
+          "compile": 10.898022890090942,
+          "emit": 1.935582160949707,
+          "execute0": 0.4062056541442871,
+          "execute1": 0.47715187072753906,
+          "lambda": 1.1140475273132324
+        }
+      },
+      "growth10-worker1": {
+        "programs": 16,
+        "first_command_at": 1791517556.0612826,
+        "last_command_at": 1791517834.517199,
+        "elapsed_first_to_last_command_s": 278.4559164047241,
+        "sum_command_wall_s": 20.964080095291138,
+        "by_command_sum_s": {
+          "compile": 8.144510269165039,
+          "emit": 6.954135417938232,
+          "execute0": 1.381695032119751,
+          "execute1": 1.112168788909912,
+          "lambda": 3.371570587158203
+        }
+      },
+      "growth10-worker2": {
+        "programs": 24,
+        "first_command_at": 1791517555.8193038,
+        "last_command_at": 1791517920.5551379,
+        "elapsed_first_to_last_command_s": 364.7358341217041,
+        "sum_command_wall_s": 22.551517009735107,
+        "by_command_sum_s": {
+          "compile": 11.627981424331665,
+          "emit": 5.251861572265625,
+          "execute0": 1.5237677097320557,
+          "execute1": 1.0868351459503174,
+          "lambda": 3.0610711574554443
+        }
+      },
+      "growth10-worker3": {
+        "programs": 24,
+        "first_command_at": 1791517555.8465393,
+        "last_command_at": 1791517931.1633177,
+        "elapsed_first_to_last_command_s": 375.316778421402,
+        "sum_command_wall_s": 22.15899395942688,
+        "by_command_sum_s": {
+          "compile": 13.880743503570557,
+          "emit": 3.971284866333008,
+          "execute0": 0.7511913776397705,
+          "execute1": 1.1036028861999512,
+          "lambda": 2.4521713256835938
+        }
+      }
+    },
+    "commands": {
+      "compile": {
+        "n": 80,
+        "sum_s": 44.5512580871582,
+        "mean_s": 0.5568907260894775,
+        "p50_s": 0.44093990325927734,
+        "p95_s": 0.770923376083374,
+        "max_s": 4.378180742263794
+      },
+      "emit": {
+        "n": 80,
+        "sum_s": 18.112864017486572,
+        "mean_s": 0.22641080021858215,
+        "p50_s": 0.08370757102966309,
+        "p95_s": 1.2254178524017334,
+        "max_s": 1.632486343383789
+      },
+      "execute0": {
+        "n": 80,
+        "sum_s": 4.062859773635864,
+        "mean_s": 0.0507857471704483,
+        "p50_s": 0.01912379264831543,
+        "p95_s": 0.24085783958435059,
+        "max_s": 0.3377816677093506
+      },
+      "execute1": {
+        "n": 80,
+        "sum_s": 3.7797586917877197,
+        "mean_s": 0.047246983647346495,
+        "p50_s": 0.01685190200805664,
+        "p95_s": 0.21902775764465332,
+        "max_s": 0.3409879207611084
+      },
+      "lambda": {
+        "n": 80,
+        "sum_s": 9.998860597610474,
+        "mean_s": 0.12498575747013092,
+        "p50_s": 0.05443108081817627,
+        "p95_s": 0.599252462387085,
+        "max_s": 0.9783766269683838
+      }
+    },
+    "sum_worker_active_wall_s": 1262.2937033176422,
+    "sum_command_wall_s": 80.50560116767883,
+    "scope": "Command wall receipts, not CPU times; worker windows overlap across concurrent workers. Gaps include S3, proof checks and orchestration; individual causes require new spans.",
+    "outside_commands_fraction": 0.936222765782568
+  }
+}
