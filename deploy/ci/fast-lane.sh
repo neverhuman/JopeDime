@@ -190,6 +190,7 @@ python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
 cd python
 unset DL_OFFLINE_RUNNER
 bash ../deploy/ci/dl-offline-group.sh 900 "$EVIDENCE/dl-lane-offline"
+timeout 300s uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output "$EVIDENCE/flywheel-offline"
 )
     ;;
   rust-test)

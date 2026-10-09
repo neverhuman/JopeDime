@@ -1,0 +1,426 @@
+{
+  "schema": "jope.flywheel-source-map/v1",
+  "scope": "Source import, not live deployment or serving promotion. Runtime pins remain immutable.",
+  "files": [
+    {
+      "path": "deploy/dl-flywheel/dashboard/collect.py",
+      "origin": "work/flywheel-20261008/paper_publish.py",
+      "origin_sha256": "fba0d68ef6e5ce4faa31b0edeefbc26f713422a8ad9f8816ed16a19b7d8bf9ce",
+      "sha256": "fba0d68ef6e5ce4faa31b0edeefbc26f713422a8ad9f8816ed16a19b7d8bf9ce"
+    },
+    {
+      "path": "deploy/dl-flywheel/dashboard/index.html",
+      "origin": "outputs/DL_paper_dashboard.html",
+      "origin_sha256": "5808d8e2c246f6ffc4b9c67a4f7bc6b1fd6d02bb38d413b7e9f5ae3d1a614b6c",
+      "sha256": "5808d8e2c246f6ffc4b9c67a4f7bc6b1fd6d02bb38d413b7e9f5ae3d1a614b6c"
+    },
+    {
+      "path": "deploy/dl-flywheel/dashboard/server.py",
+      "origin": "outputs/dlhwm_dashboard/server.py",
+      "origin_sha256": "23cf83d78b14e6d39c3c0f82593afe82e50e2167b6a234b3fc389252073e7aa3",
+      "sha256": "23cf83d78b14e6d39c3c0f82593afe82e50e2167b6a234b3fc389252073e7aa3"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/correction-plan.md",
+      "origin": "outputs/DL_FLYWHEEL_CORRECTION_PLAN.md",
+      "origin_sha256": "45413379e4c737b81edd0ceac899a6fe5b84620abd474840bc1082c06ed29ab7",
+      "sha256": "45413379e4c737b81edd0ceac899a6fe5b84620abd474840bc1082c06ed29ab7"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/evergreen.md",
+      "origin": "outputs/DL_FLYWHEEL_EVERGREEN_IMPLEMENTATION.md",
+      "origin_sha256": "17d74f648ed3f3e65e2e60e439b891756ae8ab1af28880f9cb40f16caa76980e",
+      "sha256": "17d74f648ed3f3e65e2e60e439b891756ae8ab1af28880f9cb40f16caa76980e"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/evidence.md",
+      "origin": "outputs/DL_WHITE_PAPER_TRACKING.md",
+      "origin_sha256": "dd3f98ec42d68802d9e1de8088ba87669933925dfef3949aa189e2c24718abae",
+      "sha256": "dd3f98ec42d68802d9e1de8088ba87669933925dfef3949aa189e2c24718abae"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/inventory-20261009.json",
+      "origin": "outputs/DL_FLYWHEEL_FULL_CORPUS_INVENTORY.json",
+      "origin_sha256": "1f27e0455f14a5f9c1e2644d73e1a9c8d4362d6ac5b34452ae7b1ab8b1f362a3",
+      "sha256": "1f27e0455f14a5f9c1e2644d73e1a9c8d4362d6ac5b34452ae7b1ab8b1f362a3"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/model.md",
+      "origin": "outputs/DL_CONTINUAL_MODEL_V1.md",
+      "origin_sha256": "e65adda9e4ff0dd3faa43c01dda10d7474c302956d3d872c7c950d7242e949dd",
+      "sha256": "e65adda9e4ff0dd3faa43c01dda10d7474c302956d3d872c7c950d7242e949dd"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/__init__.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/__init__.py",
+      "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/augmentation.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/augmentation.py",
+      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/batch_stream.py",
+      "origin_sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
+      "sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/evergreen.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evergreen.py",
+      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/evidence.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
+      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
+      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/paper_archive.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/paper_archive.py",
+      "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
+      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/program_gate.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_gate.py",
+      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/program_inputs.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_inputs.py",
+      "origin_sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
+      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/program_io.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/program_observer.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_observer.py",
+      "origin_sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
+      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/program_worker.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_worker.py",
+      "origin_sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1",
+      "sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/protocol.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/queue.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/queue.py",
+      "origin_sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
+      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/s3_library.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/s3_library.py",
+      "origin_sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/score_join.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/score_join.py",
+      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/target_noise.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/target_noise.py",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/training_admission.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_admission.py",
+      "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
+      "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
+      "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
+      "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/training_snapshot_kumos.py",
+      "origin": "work/flywheel-20261008/kumos-snapshot-recovery3/runtime/jope_flywheel/training_snapshot_kumos.py",
+      "origin_sha256": "df13a8645eb74a4a360c46bb1e04e260199f87ff13a226782dad5eb7e83def43",
+      "sha256": "df13a8645eb74a4a360c46bb1e04e260199f87ff13a226782dad5eb7e83def43"
+    },
+    {
+      "path": "deploy/dl-flywheel/operations/evergreen_deploy.py",
+      "origin": "work/flywheel-20261008/evergreen_deploy.py",
+      "origin_sha256": "e3ba77f08580bf71d7debc1f480cb8176098d63a781899764430cc8ba95e6241",
+      "sha256": "e3ba77f08580bf71d7debc1f480cb8176098d63a781899764430cc8ba95e6241"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/admission/flywheel_training_admission.py",
+      "origin": "outputs/flywheel_training_admission.py",
+      "origin_sha256": "db10a4252b5c295ac86ac55fc3934f65853f4aeac0d44395651abadae04d0a7c",
+      "sha256": "db10a4252b5c295ac86ac55fc3934f65853f4aeac0d44395651abadae04d0a7c"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/archive/neural_paper_archive.py",
+      "origin": "work/flywheel-20261008/neural_paper_archive.py",
+      "origin_sha256": "f98d02e6df6561e811590f753be7d5c5f904a7562ef4949e42961bd41df26da1",
+      "sha256": "f98d02e6df6561e811590f753be7d5c5f904a7562ef4949e42961bd41df26da1"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/archive/neural_paper_continuation_archive.py",
+      "origin": "work/flywheel-20261008/neural_paper_continuation_archive_recovery1.py",
+      "origin_sha256": "eed0638fb323deabcefb27d57b60a9336f4f0084f31245cffc5cfc030993c3a4",
+      "sha256": "eed0638fb323deabcefb27d57b60a9336f4f0084f31245cffc5cfc030993c3a4"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/archive/paper_backup_core.py",
+      "origin": "work/flywheel-20261008/paper_backup_core.py",
+      "origin_sha256": "3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429",
+      "sha256": "3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/evergreen_kumos_packet.py",
+      "origin": "outputs/evergreen_kumos_packet.py",
+      "origin_sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/evergreen_kumos_packet_authority.py",
+      "origin": "outputs/evergreen_kumos_packet_authority.py",
+      "origin_sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936",
+      "sha256": "bb633b6b2b46768380df0687deeb9155042953e3ddb3dd922c06f784a9f5b936"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/encoding/pilot_ofm_encode.py",
+      "origin": "outputs/pilot_ofm_encode.py",
+      "origin_sha256": "bbd3230459a9bea9871c97055a6d2ec5a7655dcff7f41b57c9866a3fc86354d6",
+      "sha256": "bbd3230459a9bea9871c97055a6d2ec5a7655dcff7f41b57c9866a3fc86354d6"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/campaign_custody.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/campaign_custody.py",
+      "origin_sha256": "f89596e363ab8d90e4bbe688b3d2c9f19f283aecfb516eda0bff9208fb289ae3",
+      "sha256": "f89596e363ab8d90e4bbe688b3d2c9f19f283aecfb516eda0bff9208fb289ae3"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/flywheel_kumos_snapshot.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/flywheel_kumos_snapshot.py",
+      "origin_sha256": "60341d6721226629d81fb3ad0dc1fc3b79fbb94a174d1bae861e242ce0d98bd6",
+      "sha256": "60341d6721226629d81fb3ad0dc1fc3b79fbb94a174d1bae861e242ce0d98bd6"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_admission.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/neural_admission.py",
+      "origin_sha256": "0f730750e69232d3772c840c612d7702750f375c74cfb55358ffd3b3353d2a43",
+      "sha256": "0f730750e69232d3772c840c612d7702750f375c74cfb55358ffd3b3353d2a43"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_cli.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/neural_cli.py",
+      "origin_sha256": "ee897ec0ded0f659c445c62917dc60c7ca8061d6d2643299d3ee5330cd55d8bb",
+      "sha256": "ee897ec0ded0f659c445c62917dc60c7ca8061d6d2643299d3ee5330cd55d8bb"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_core.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/neural_core.py",
+      "origin_sha256": "5ef0e7c6b13b5233c6fb76d467a878e5907d193c7333618ffc6f928c05afce1d",
+      "sha256": "5ef0e7c6b13b5233c6fb76d467a878e5907d193c7333618ffc6f928c05afce1d"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_gpu_preflight.py",
+      "origin": "work/flywheel-20261008/proposals/neural-loop/neural_gpu_preflight.py",
+      "origin_sha256": "b7c1f1bb97e9fccfbce7b9038e19df68888510688267549849e1191a138b91a5",
+      "sha256": "b7c1f1bb97e9fccfbce7b9038e19df68888510688267549849e1191a138b91a5"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_loop.py",
+      "origin": "work/flywheel-20261008/proposals/neural-loop/neural_loop.py",
+      "origin_sha256": "4ca5979223659af88c8cfd6fc8691f5ff0c03e64768446c175ced906110256cc",
+      "sha256": "4ca5979223659af88c8cfd6fc8691f5ff0c03e64768446c175ced906110256cc"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_resume.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/neural_resume.py",
+      "origin_sha256": "945118005917c62f053556f41fcd6ae2a03e03a6e2b00461197425e40c164c6a",
+      "sha256": "945118005917c62f053556f41fcd6ae2a03e03a6e2b00461197425e40c164c6a"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/neural_session.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/neural_session.py",
+      "origin_sha256": "60c61d3f44e6fd79de5fd55b043dcb4b6c20c28a4332f7f4800cbf4ce6594b38",
+      "sha256": "60c61d3f44e6fd79de5fd55b043dcb4b6c20c28a4332f7f4800cbf4ce6594b38"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/resume_gate.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/resume_gate.py",
+      "origin_sha256": "4acd70149eb289df2f2369a5d377522952a5f78955fd00b3d9bc9baafaa54993",
+      "sha256": "4acd70149eb289df2f2369a5d377522952a5f78955fd00b3d9bc9baafaa54993"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/neural/snapshot_cache.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuation-recovery1/snapshot_cache.py",
+      "origin_sha256": "7c5b12ff3ffbc0151b4f9ee8cbbe4af69e6b6f5fe0b8c63b96c47f4de7e6d805",
+      "sha256": "7c5b12ff3ffbc0151b4f9ee8cbbe4af69e6b6f5fe0b8c63b96c47f4de7e6d805"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/programs/authority.py",
+      "origin": "work/flywheel-20261008/proposals/program-label112-recovery1/authority.py",
+      "origin_sha256": "5663ea3c12ca736c2a967da20a01a627ef303d02f669725da21c267f2243e3c0",
+      "sha256": "5663ea3c12ca736c2a967da20a01a627ef303d02f669725da21c267f2243e3c0"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/programs/campaign_custody.py",
+      "origin": "work/flywheel-20261008/proposals/program-label112-recovery1/campaign_custody.py",
+      "origin_sha256": "ab03821b3073c60a10d9d821fc06c4250b22ae48fdba25448862a40308ff9f40",
+      "sha256": "ab03821b3073c60a10d9d821fc06c4250b22ae48fdba25448862a40308ff9f40"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/programs/label_campaign.py",
+      "origin": "work/flywheel-20261008/proposals/program-label112-recovery1/label_campaign.py",
+      "origin_sha256": "61a0d48d4f3485e191324f29551eff8db3dc2354df1845a140da16bcc583d469",
+      "sha256": "61a0d48d4f3485e191324f29551eff8db3dc2354df1845a140da16bcc583d469"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/programs/label_campaign_cli.py",
+      "origin": "work/flywheel-20261008/proposals/program-label112-recovery1/label_campaign_cli.py",
+      "origin_sha256": "8e06ad8bf8e19f2665ec998d5543430dec6227ce8b5fad96d05708cf0437111c",
+      "sha256": "8e06ad8bf8e19f2665ec998d5543430dec6227ce8b5fad96d05708cf0437111c"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/programs/preflight.py",
+      "origin": "work/flywheel-20261008/proposals/program-label112-recovery1/preflight.py",
+      "origin_sha256": "1acab6120b44af264dfc2730a48223780bd572fb6b5db8333a306ed6887920a5",
+      "sha256": "1acab6120b44af264dfc2730a48223780bd572fb6b5db8333a306ed6887920a5"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/programs/staged_inputs.py",
+      "origin": "work/flywheel-20261008/proposals/program-label112-recovery1/staged_inputs.py",
+      "origin_sha256": "0796684b93d760504c0a1dac19a84bb9e05e1c9974dbb3064f66f5264a55b481",
+      "sha256": "0796684b93d760504c0a1dac19a84bb9e05e1c9974dbb3064f66f5264a55b481"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/publication/evergreen_packet_publish.py",
+      "origin": "outputs/evergreen_packet_publish.py",
+      "origin_sha256": "37d7f1aaff58a674cc3e3f8697dd05969ea62fdc297faa8e14ba0ba6189b9bdb",
+      "sha256": "37d7f1aaff58a674cc3e3f8697dd05969ea62fdc297faa8e14ba0ba6189b9bdb"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/publication/pilot_publish_core.py",
+      "origin": "work/flywheel-20261008/pilot_publish_core.py",
+      "origin_sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965",
+      "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/fixtures/kumos-component-publication.json",
+      "origin": "work/flywheel-release-20261009/kumos-component-publication.json",
+      "origin_sha256": "d6e322ab84edfbbf3ef880014fce8cc0bc98f0cef30d7fae1fc2697b2a19da51",
+      "sha256": "d6e322ab84edfbbf3ef880014fce8cc0bc98f0cef30d7fae1fc2697b2a19da51"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_augmentation.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_augmentation.py",
+      "origin_sha256": "ca1956d3eceb649629a62ef9b10c1e3bcde10c8f1276127b5fc37a327e62cbfa",
+      "sha256": "ca1956d3eceb649629a62ef9b10c1e3bcde10c8f1276127b5fc37a327e62cbfa"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_batch_stream.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_batch_stream.py",
+      "origin_sha256": "efc61b102e921d356bd89f991081fa52bbcb6f91c372d9c1bde7b65a7993608b",
+      "sha256": "efc61b102e921d356bd89f991081fa52bbcb6f91c372d9c1bde7b65a7993608b"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_evergreen.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_evergreen.py",
+      "origin_sha256": "9bfc3419ead663b02a734cddea10ad6667cd858d93cda9025d5a4c84eda0b631",
+      "sha256": "1d3a7534873a9bd3f22289f3497b4f2824563e15f9867b03071d8d9156561ee6"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_evidence.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_evidence.py",
+      "origin_sha256": "e82a23f62a5fe4aaa0322261397efe578deeebcf8e778f10114d94c7d73e659c",
+      "sha256": "e82a23f62a5fe4aaa0322261397efe578deeebcf8e778f10114d94c7d73e659c"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_paper_archive.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_paper_archive.py",
+      "origin_sha256": "58ff8b6541555087a5283af7396f4a923c3d38a90b19c180eda178f39b956eb0",
+      "sha256": "58ff8b6541555087a5283af7396f4a923c3d38a90b19c180eda178f39b956eb0"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_program_bridge.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_program_bridge.py",
+      "origin_sha256": "9a592ff97739fc7ec5a36e2badc3b2f3d116b4d7a078dfd5219cc0ff2089af5c",
+      "sha256": "9a592ff97739fc7ec5a36e2badc3b2f3d116b4d7a078dfd5219cc0ff2089af5c"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_program_gate.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_program_gate.py",
+      "origin_sha256": "2374d26c4f83facf3efe8f93a93ebbdb5ef6ef702132bffdd2fb6e71b6de7bb5",
+      "sha256": "2374d26c4f83facf3efe8f93a93ebbdb5ef6ef702132bffdd2fb6e71b6de7bb5"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_protocol.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_protocol.py",
+      "origin_sha256": "77250f7e465ab1b7be1f3addf1539f7879e1800a7b2cc0748ba2ae5bcb7b9237",
+      "sha256": "77250f7e465ab1b7be1f3addf1539f7879e1800a7b2cc0748ba2ae5bcb7b9237"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_queue.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_queue.py",
+      "origin_sha256": "71bdc732e93a0f6a0ba84baf5b810dfd16147dbb1004143f1b0cfe5790a97382",
+      "sha256": "71bdc732e93a0f6a0ba84baf5b810dfd16147dbb1004143f1b0cfe5790a97382"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_s3_library.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_s3_library.py",
+      "origin_sha256": "2a28361b3d43a5b70259f95c9411e61d440800104c9b8ccf45fa3a64c1668de5",
+      "sha256": "de328d2ab2f9b447058aa074efd07f72da283c88a983771a09bd3e3039a562fe"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_score_join.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_score_join.py",
+      "origin_sha256": "b0674afb9026d043967542bf5ab8080bce77fae9b5bbc5370d845c8294f3e325",
+      "sha256": "b0674afb9026d043967542bf5ab8080bce77fae9b5bbc5370d845c8294f3e325"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_target_noise.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_target_noise.py",
+      "origin_sha256": "eb0763023c0347fa4577e99603ba23e95076205927a790603bd1013b7cce470e",
+      "sha256": "eb0763023c0347fa4577e99603ba23e95076205927a790603bd1013b7cce470e"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_training_admission.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_training_admission.py",
+      "origin_sha256": "990ca6346011c1598a5ec93d8b2edb15ad7f9ad630410272ba9e1bae0881c94c",
+      "sha256": "990ca6346011c1598a5ec93d8b2edb15ad7f9ad630410272ba9e1bae0881c94c"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_training_snapshot.py",
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_training_snapshot.py",
+      "origin_sha256": "d2f3089115921b5076d0860a926bc6e2aa8a2a8eee9b0a65c2c4ec457fbaeff7",
+      "sha256": "d2f3089115921b5076d0860a926bc6e2aa8a2a8eee9b0a65c2c4ec457fbaeff7"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests/test_training_snapshot_kumos.py",
+      "origin": "work/flywheel-release-20261009/test_training_snapshot_kumos.py",
+      "origin_sha256": "c9584821932528d61d9f0fa60bb529b75b74bb45e682a1dc32194a380bcc285d",
+      "sha256": "c9584821932528d61d9f0fa60bb529b75b74bb45e682a1dc32194a380bcc285d"
+    }
+  ]
+}

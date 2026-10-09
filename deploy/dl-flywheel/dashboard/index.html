@@ -1,0 +1,155 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JopeDime · Continuous learning</title>
+<style>
+:root{color-scheme:dark;--bg:#091319;--card:#10232c;--edge:#29404b;--text:#eef5f6;--muted:#9db4be;--green:#70e2b2;--blue:#80baff;--gold:#f2c576}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 95% 0,#143639 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.5 system-ui}main{max-width:1440px;margin:auto;padding:28px 32px 70px}nav{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:24px;border-bottom:1px solid var(--edge)}a{color:var(--green)}nav a{margin-left:20px;text-decoration:none;font-size:13px}.brand{font-weight:750;letter-spacing:.12em;font-size:13px}.eyebrow{color:var(--green);font:12px ui-monospace;letter-spacing:.13em;text-transform:uppercase}h1{font-size:clamp(36px,5vw,60px);line-height:1.07;letter-spacing:-.045em;margin:16px 0}h2{font-size:21px;margin:0 0 8px;letter-spacing:-.02em}h3{font-size:15px;margin:0 0 6px}p{margin:8px 0;color:var(--muted)}.hero{display:flex;justify-content:space-between;gap:40px;align-items:end;margin:38px 0 25px}.hero p{max-width:750px}.stamp{font-size:12px;color:var(--muted);text-align:right;min-width:230px}.dot{display:inline-block;background:var(--green);width:7px;height:7px;border-radius:50%;margin-right:7px}.alert{border:1px solid #665638;background:#2b261b;color:var(--gold);border-radius:10px;padding:14px 18px;margin-bottom:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{border:1px solid var(--edge);background:linear-gradient(140deg,#142a34,#0e1e27);border-radius:13px;padding:22px}.value{display:block;font-size:42px;line-height:1.15;letter-spacing:-.045em;font-weight:740;margin:12px 0}.label{font-size:12px;color:var(--muted);letter-spacing:.065em;text-transform:uppercase}.note{color:var(--muted);font-size:12px}.panel{margin-top:20px}.columns{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.controls{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}button{border:1px solid #38525f;color:var(--muted);background:transparent;border-radius:6px;padding:6px 11px;cursor:pointer}button.on{color:var(--text);background:#254251;border-color:#5b8795}.plot{width:100%;height:250px;display:block}.empty{min-height:242px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed #324a56;border-radius:8px;background:repeating-linear-gradient(0deg,transparent,transparent 47px,#17303a 48px)}.empty b{font-size:18px}.empty p{max-width:410px;padding:0 14px}.legend{display:flex;gap:20px;font-size:12px;color:var(--muted)}.legend i{width:18px;height:3px;display:inline-block;margin:0 7px 3px 0}.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.stage{border:1px solid var(--edge);padding:15px;border-radius:8px;min-height:144px}.stage .count{display:block;font-size:25px;font-weight:700;margin:9px 0}.stage p{font-size:12px}.accent{color:var(--green)}.warn{color:var(--gold)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.metric{border-left:2px solid #426a76;padding:0 14px}.metric strong{display:block;font-size:28px;margin:7px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--edge)}th{color:var(--muted);font-weight:500}.hostrow{display:flex;gap:14px;flex-wrap:wrap}.host{flex:1;min-width:250px}.bar{height:7px;background:#28414c;border-radius:8px;margin:12px 0;overflow:hidden}.fill{height:100%;background:var(--green)}details{margin-top:24px;padding-top:18px;border-top:1px solid var(--edge)}summary{cursor:pointer;color:var(--muted)}code{font-size:12px;overflow-wrap:anywhere}footer{margin-top:32px;font-size:12px;color:var(--muted)}.tag{font:11px ui-monospace;padding:3px 6px;background:#203e49;border-radius:4px}svg text{font:11px system-ui;fill:#9db4be}@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{display:block}.stamp{text-align:left;margin-top:20px}.stages{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){main{padding:20px 15px}.cards,.metrics{grid-template-columns:1fr}nav{align-items:start}nav a{display:block;margin:5px 0}.value{font-size:36px}}
+</style><main>
+<nav><span class="brand">JOPEDIME / CONTINUOUS LEARNING</span><div><a href="/DL_CONTINUAL_MODEL_V1.md">Current model specification</a><a href="/DL_WHITE_PAPER_TRACKING.md">Evidence log</a><a href="/full/">Previous model experiments</a></div></nav>
+<section class="hero"><div><div class="eyebrow">One growing corpus. One current training run.</div><h1>Data in. Programs out.<br>Measured results.</h1><p>A <strong>data run</strong> is one regression dataset version with one exact split definition. A new split is a new data run. Counts below track the growing corpus and its actual use by the current model.</p></div><div class="stamp"><span class="dot"></span><span id="connection">Connecting to source records</span><br><span id="updated">No observation yet</span></div></section>
+<div id="trainingStatus" class="alert">New continual training is not connected yet. Completed historical model experiments are available separately.</div>
+<section class="cards" style="margin-bottom:16px">
+<div class="card"><div class="label">Original catalog · data runs</div><span class="value" id="originalRuns">—</span><div class="note" id="originalSupport">Reconciling exact dataset × split identities</div></div>
+<div class="card"><div class="label">Eligible original data runs</div><span class="value" id="eligibleRuns">—</span><div class="note" id="eligibleSupport">Current role and exclusion authority</div></div>
+<div class="card"><div class="label">Published winner-label contexts</div><span class="value" id="winnerLabels">—</span><div class="note" id="labelSupport">Terminal records are shown separately</div></div>
+<div class="card"><div class="label">Original runs seen by this policy</div><span class="value" id="originalSeen">—</span><div class="note">Older outcome-prediction experiments are separate models</div></div>
+</section><div class="alert" id="fullCorpusStatus">Awaiting pinned full-corpus inventory.</div>
+<section class="cards">
+<div class="card"><div class="label">New augmented data runs in S3</div><span class="value" id="pool">—</span><div class="note" id="poolSupport">New variants only. Original S3 corpus is being reconciled below.</div></div>
+<div class="card"><div class="label">Unique training data runs · this policy</div><span class="value" id="seen">—</span><div class="note">Counted only after a completed optimizer update</div></div>
+<div class="card"><div class="label">Raw training batches</div><span class="value" id="batches">—</span><div class="note" id="epoch">Completed epochs: unavailable</div></div>
+<div class="card"><div class="label">New flywheel GP results in S3</div><span class="value" id="gpTotal">—</span><div class="note" id="gpSupport">Actual exact-context program executions</div></div>
+</section>
+
+<section class="columns"><div class="panel"><div class="eyebrow">Current model</div><h2>Training vs validation loss</h2><p class="note">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis"><button class="on" data-axis="batch">Batches</button><button data-axis="epoch">Epochs</button><button data-axis="unique_data_runs_seen">Unique data runs</button></div><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
+<div class="panel"><div class="eyebrow">Live pipeline</div><h2>What is actually running</h2><div id="workState"><p>Awaiting source status.</p></div><div class="metrics"><div class="metric"><span class="note">New GP executions</span><strong id="executions">—</strong></div><div class="metric"><span class="note">Reused cached GP results</span><strong id="cacheHits">—</strong></div><div class="metric"><span class="note">Failed GP attempts</span><strong id="failures">—</strong></div></div><p class="note" id="gpCampaign">No program campaign observed.</p><div class="bar"><div id="gpBar" class="fill" style="width:0"></div></div><p class="note">An emitted program becomes a result only after native execution, emitted Rust parity, and S3 readback.</p></div></section>
+<section class="panel"><div class="eyebrow">No stage hidden</div><h2>From new data to a trained batch</h2><div class="stages">
+<div class="stage"><h3>1. Fuzz &amp; publish</h3><span id="made" class="count">—</span><p id="generationState">Source and transform JSON travel with every variant.</p></div>
+<div class="stage"><h3>2. Required encoding</h3><span id="encoded" class="count">—</span><p id="encodingState">Kumo Small only:2,051 values. Historical extra blocks are retained.</p></div>
+<div class="stage"><h3>3. Execute GPs</h3><span id="scored" class="count">—</span><p id="scoredState">Fresh labels on the exact dataset and split.</p></div>
+<div class="stage"><h3>4. Train</h3><span id="trained" class="count">—</span><p>Distinct parent datasets within each batch; persistent batch-membership deduplication.</p></div>
+<div class="stage"><h3>5. Validate</h3><span id="validated" class="count">—</span><p id="validationState">About 5% of source lineages reserved; all descendants inherit that role.</p></div></div><p class="note" id="intakeNote">Generation waits when downstream capacity is full. Published, encoded, scored and trained are separate counts.</p></section>
+<section class="columns"><div class="panel"><h2>Measured validation comparisons</h2><p>Same data run, same evaluation protocol, frozen opponents. Scores below use validation proposals only; a tie counts as half a win.</p><div class="metrics"><div class="metric"><span class="note">Score vs random panel GP</span><strong id="winRandom">—</strong></div><div class="metric"><span class="note">Score vs best panel GP</span><strong id="winWinner">—</strong></div><div class="metric"><span class="note">Validation Elo</span><strong id="elo">—</strong></div></div><p id="winSupport" class="note">No scored neural proposals yet. The fixed GP panel is building labels and opponents, not a model win-rate result.</p></div>
+<div class="panel"><h2>Growing usable data</h2><p class="note">Observed counts over time. Flat lines mean no completed work at that stage.</p><div id="growthPlot" class="empty"><b>Waiting for time-series observations</b><p>Only actual recorded counts will appear here.</p></div><div class="legend"><span><i style="background:var(--green)"></i>New augmented data runs in S3</span><span><i style="background:var(--blue)"></i>Measured GP results</span></div></div></section>
+<section class="panel"><h2>Latest actual program work</h2><p class="note" id="origin">Program origin is shown explicitly; fixed candidates and neural proposals are separate.</p><div class="scroll"><table><thead><tr><th>Data run</th><th>Program</th><th>Origin</th><th>Role</th><th>State</th><th>Inner CV RMSE · both folds</th></tr></thead><tbody id="programRows"><tr><td colspan="6">No current campaign observed.</td></tr></tbody></table></div></section>
+<section class="panel"><h2>Compute</h2><div class="hostrow" id="hosts">Awaiting direct host observations.</div></section>
+<details><summary>Corpus, storage, normalization and historical evidence</summary><p id="priorAttempt">Prior attempt evidence remains available in the source log.</p><p id="corpusDetails">The growing corpus is shown separately from the original 7,120-view experiment and the 100-variant single-parent pilot.</p><p>Every S3 dataset record keeps its source lineage, source checksum, split, recipe, seed, added/dropped columns, target-noise level, target identity and input checksum. GP cache keys bind the canonical program to the exact data, target, split and evaluator. Changing any of those requires a new measurement.</p><p><strong>Normalization:</strong> retain raw RMSE and a same-split baseline. The existing mean-baseline objective and the proposed fixed CatBoost-relative objective have separate identities; their targets are never mixed. CatBoost comparisons will appear only after its baseline has actually run.</p><p><a href="/DL_FLYWHEEL_CORRECTION_PLAN.md">Correction and implementation plan</a> · <a href="/DL_FLYWHEEL_EVERGREEN_IMPLEMENTATION.md">Detailed protocol and S3 layout</a> · <a href="/DL_FLYWHEEL_PLAN.md">Loss and comparison decisions</a> · <a href="/full/">Previous training curves</a> · <a href="/">Previous architecture experiments</a></p></details>
+<footer id="foot">Telemetry observations do not constitute optimizer exposure. Missing results remain missing.</footer>
+</main><script>
+const el=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString(),ns='http://www.w3.org/2000/svg';let current=null,axis='batch';
+function text(id,value){el(id).textContent=value}
+function stateName(s){return ({completed_bounded_qualification:'initial training segment complete',running:'training',staged:'staged, awaiting checks',observing:'checking next GP',publishing:'publishing measured GP',running_partial:'running with recorded failures',measurement_finished:'measurements finished',custody_failed:'evidence archive failed',failed:'stopped with an error',partial:'stopped with unfinished work',completed_session:'training segment complete',snapshot_qualified:'data checks passed'})[s]||String(s||'unobserved').replaceAll('_',' ')}function node(tag,attrs){const n=document.createElementNS(ns,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);return n}
+function plot(id,rows,series,key,dual){
+ const target=el(id);if(!rows.length)return;
+ if(key==='epoch')rows=[...new Map(rows.map(r=>[r.epoch,r])).values()];
+ if(key==='unique_data_runs_seen'){const first=new Map();for(const r of rows)if(!first.has(r[key]))first.set(r[key],r);rows=[...first.values()]}
+ const w=650,h=250,pad={l:50,r:20,t:32,b:35};
+ const xs=rows.map(r=>Number(r[key])),values=rows.flatMap(r=>series.map(s=>r[s.key])).filter(v=>typeof v==='number'&&Number.isFinite(v));
+ if(!values.length)return;
+ let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...values),ymax=Math.max(...values);
+ if(id==='lossPlot'){const margin=Math.max(.01,(ymax-ymin)*.12);ymin=Math.max(0,ymin-margin);ymax+=margin}else ymin=Math.min(0,ymin);
+ if(xmin===xmax)xmax=xmin+1;if(ymin===ymax)ymax=ymin+1;
+ const sx=x=>pad.l+(x-xmin)/(xmax-xmin)*(w-pad.l-pad.r),sy=y=>h-pad.b-(y-ymin)/(ymax-ymin)*(h-pad.t-pad.b);
+ const svg=node('svg',{viewBox:'0 0 '+w+' '+h,class:'plot',role:'img','aria-label':id==='lossPlot'?'Observed training and validation loss':'Observed data and GP library growth'});
+ for(let i=0;i<=4;i++){const y=ymin+(ymax-ymin)*i/4;svg.append(node('line',{x1:pad.l,x2:w-pad.r,y1:sy(y),y2:sy(y),stroke:'#28414c'}));const t=node('text',{x:pad.l-8,y:sy(y)+4,'text-anchor':'end'});t.textContent=ymax>10?Math.round(y).toLocaleString():y.toFixed(3);svg.append(t)}
+ const unique=[...new Set(xs)].sort((a,b)=>a-b);
+ const ticks=key==='at'?Array.from({length:5},(_,i)=>xmin+(xmax-xmin)*i/4):unique.length<=5?unique:Array.from({length:5},(_,i)=>unique[Math.round(i*(unique.length-1)/4)]);
+ for(const x of ticks){const t=node('text',{x:sx(x),y:h-10,'text-anchor':'middle'});t.textContent=key==='at'?new Date(x*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):fmt(x);svg.append(t);if(dual){const r=rows.find(r=>r[key]===x);const q=node('text',{x:sx(x),y:16,'text-anchor':'middle'});q.textContent=fmt(r.unique_data_runs_seen);svg.append(q)}}
+ for(const s of series){let d='',open=false;for(const r of rows){const y=r[s.key];if(typeof y!=='number'||!Number.isFinite(y)){open=false;continue}d+=(open?'L':'M')+sx(r[key])+','+sy(y)+' ';open=true}svg.append(node('path',{d,fill:'none',stroke:s.color,'stroke-width':2.5}));
+ if(id==='lossPlot')for(const r of rows){if(typeof r[s.key]!=='number')continue;const dot=node('circle',{cx:sx(r[key]),cy:sy(r[s.key]),r:3,fill:s.color});const title=node('title',{});title.textContent='Batch '+r.batch+' · epoch '+r.epoch+' · '+r.unique_data_runs_seen+' unique data runs · '+s.key+': '+r[s.key].toFixed(6);dot.append(title);svg.append(dot)}}
+ target.className='';target.replaceChildren(svg)
+}
+function render(s){
+ current=s;
+ const hs=s.hosts||[],h=hs.find(x=>x.host==='xbabe2')||{},g=h.evergreen||{},
+ c=h.gp_label_campaign||{},cc=c.counts||{},f=h.gp_fill_campaign||{},fc=f.counts||{},n=h.neural_training||null;
+ const expansion=hs.flatMap(x=>x.gp_expansion_campaigns||[]),extra=k=>expansion.reduce((t,x)=>t+(x.counts?.[k]||0),0);
+ const inventory=h.full_corpus;
+ if(inventory){
+ const all=inventory.counts.all,e=inventory.counts.current_eligible;
+ text('originalRuns',fmt(all.contexts));text('originalSupport',fmt(all.dataset_hashes)+' dataset versions × their actual splits');
+ text('eligibleRuns',fmt(e.contexts));text('eligibleSupport',fmt(e.dataset_hashes)+' dataset versions · '+fmt(inventory.counts.excluded.contexts)+' excluded contexts');
+ text('winnerLabels',fmt(e.published.selection_reached));text('labelSupport',fmt(e.published.g0_not_ready)+' terminal records without winner labels · '+fmt(e.published.none)+' unpublished finals');
+ text('originalSeen',fmt(inventory.actual_training.original_native_contexts_consumed));
+ text('fullCorpusStatus','Inventory reconciled '+new Date(inventory.observed_at).toLocaleString()+'. Kumo Small coverage: '+fmt(inventory.kumo_s_availability.reported.verified_main_s3)+' contexts in the owner’s '+new Date(inventory.kumo_s_availability.as_of).toLocaleString()+' S3 completeness receipt. This refresh joined catalog metadata; it did not re-download every vector. Full-corpus policy admission remains in progress. New augmented data and current-model exposure are below.');
+ }
+ const failedRead=(h.errors||[]).some(x=>x.startsWith('Neural training:'));
+ const isFresh=Date.now()/1000-s.at<90,published=g.published;
+ const base=(h.gp_qualification?.qualified_program_count||0)+(h.gp_bridge?.actual_evaluations||0),
+ fixed=(cc.completed_publications||0)+(fc.completed_publications||0)+extra('completed_publications'),
+ gp=base+fixed+(n?.published_results||0);
+ text('connection',isFresh?'Live source observations':'Stale source observations');
+ text('updated',new Date(s.at*1000).toLocaleString());
+ text('pool',published===undefined?'—':fmt(published));
+ text('poolSupport','New variants only · '+fmt(g.generated??0)+' generated · '+fmt(Math.max(0,(g.generated??0)-(g.published??0)))+' awaiting S3 publication');
+ text('seen',failedRead?'Unavailable':fmt(n?.unique_train_data_runs_seen||0));
+ const unique=n?.unique_train_data_runs_seen||0,presentations=n?.total_train_presentations||0;
+ text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'This view shows the first loss reading at each coverage total; later updates at unchanged coverage remain in Batches/Epochs.':'The upper axis counts unique coverage; it stays flat while already-seen data is reused.'));
+ text('batches',failedRead?'Unavailable':fmt(n?.completed_batches||0));
+ text('epoch','Completed epochs: '+(n?.completed_epochs??0)+' · presentations: '+fmt(n?.total_train_presentations||0));
+ text('gpTotal',fmt(gp));
+ text('gpSupport',fixed+' fixed-panel + '+(n?.published_results||0)+' new model-proposed + '+base+' qualified control results');
+ let training=n?'Current model: '+stateName(n.state)+' · '+fmt(n.completed_batches||0)+' completed batches':
+   h.neural_service?'Trainer is checking the frozen data and source files. No optimizer update observed yet.':
+   'New continual training has not started. GP labels are being prepared; the Kumo Small-only trainer is being connected.';
+ if(h.neural_transition)training='Resuming the same model after '+h.neural_transition.from_completed_batches+' batches; verifying checkpoint and data. Previous measured curves retained.';
+ if(h.neural_terminal)training+=' · final evidence: '+stateName(h.neural_terminal.state)+(h.neural_terminal.error?' · '+h.neural_terminal.error:'');
+ if(h.neural_unfinished_stop)training+=' · service stopped without a final receipt';
+ if(failedRead)training='Training telemetry unavailable: source verification failed. No zero-progress inference is made.';
+ text('trainingStatus',training);
+ text('executions',fmt((cc.completed_actual_executions||0)+(fc.completed_actual_executions||0)+(n?.novel_programs_executed||0)+extra('completed_actual_executions')));
+ text('cacheHits',fmt((cc.initial_cache_hits||0)+(fc.initial_cache_hits||0)+(n?.cache_hits||0)+extra('initial_cache_hits')));
+ text('failures',fmt((cc.failed_slots||0)+(fc.failed_slots||0)+(n?.failed_programs||0)+extra('failed_slots')));
+ const panelFinished=(cc.finished_slots||0)+(fc.finished_slots||0);
+ text('gpCampaign','Initial panel '+panelFinished+'/128; expansion '+extra('finished_slots')+'/896 measured slots. Model proposals: '+(n?.model_generated_programs||0)+'.');
+ el('gpBar').style.width=Math.min(100,100*(panelFinished+extra('finished_slots'))/(expansion.length?1024:128))+'%';
+ el('workState').replaceChildren();
+ for(const line of [
+   'GP scoring: '+(expansion.length?expansion.map(x=>'worker '+(Number(x.shard)+1)+' '+stateName(x.state)+' ('+(x.counts?.finished_slots||0)+'/448)').join('; '):(f.state?'fill '+f.state:(c.state||'unobserved'))),
+   'Required encoder: Kumo Small only · 2,051 values',
+   n?'DL optimizer: '+stateName(n.state):'DL optimizer: '+(h.neural_service?'preflight':'not connected'),
+   g.state==='downstream_backpressure_or_target'?'Data generation: waiting for downstream capacity':'Data generation: '+(g.state||'unobserved')
+ ]){const p=document.createElement('p');p.textContent=line;el('workState').append(p)}
+ text('made',fmt(g.published||0));
+ text('generationState',(g.generated||0)+' generated and '+(g.published||0)+' S3-published. Original + transforms recorded.');
+ const enc=hs.reduce((t,x)=>t+(x.evergreen_encoding_publication?.completed_variants||0)+(x.kumos_publication?.completed_variants||0),0);
+ text('encoded',fmt(enc)+' in S3');
+ const kr=hs.filter(x=>x.kumos_encoding).map(x=>({host:x.host,...x.kumos_encoding}));
+ text('encodingState','Kumo Small only. '+(kr.length?kr.map(x=>x.host+': '+x.state+' '+(x.observed_completed_components??x.completed_variant_components??0)+'/56 local vectors').join('; '):'Waiting for worker observations.')+' S3 count requires publication readback.');
+ text('scored',fmt((c.data_runs_with_scores??0)+expansion.reduce((t,x)=>t+(x.data_runs_with_scores||0),0))+' data runs');
+ text('scoredState',fixed+' measured panel program results; '+(n?.published_results||0)+' additional model-proposed results.');
+ text('trained',fmt(n?.unique_train_data_runs_seen||0)+' seen');
+ text('validated',fmt(n?.unique_validation_data_runs_scored||0)+' scored');
+ text('intakeNote','Generation target '+fmt(g.target||100000)+'; pending limit '+(g.backlog_limit??'—')+'. '+(g.admitted||0)+' data runs released capacity after verified training/validation exposure; '+Math.max(0,(g.generated||0)-(g.published||0))+' newly generated inputs await S3 publication. The historical pilot is excluded.');
+ text('validationState','About 5% reserved by source lineage. '+(h.parents?.partitions?.validation??54)+' of '+(h.parents?.parents??1068)+' qualified parent lineages are validation.');
+ const prior=hs.find(x=>x.gp_expansion_previous_attempt)?.gp_expansion_previous_attempt;
+ text('priorAttempt',prior?'Previous GP expansion attempt closed before execution: '+prior.worker_guard_refusals+' worker-limit refusals, zero native GP executions and zero GP result writes. Evidence preserved; the corrected workers use new queues.':'Prior attempt evidence remains available in the source log.');
+ const td=n?.training_data;
+ text('corpusDetails','Current growing corpus: '+(g.published||0)+' data runs. Qualified parent pool: '+(h.parents?.parents??'—')+' lineages. '+(td?'Current frozen run: '+td.eligible_train_contexts+' eligible train contexts and '+td.dev_contexts+' validation contexts. ':'')+'Inner CV scoring passes do not create new input identities. The original 7,120 views are not yet all admitted to this new model.');
+ plot('lossPlot',n?.loss_history||[],[{key:'train_loss',color:'#70e2b2'},{key:'validation_loss',color:'#80baff'}],axis,axis==='batch');
+ const lh=n?.loss_history||[];
+ if(lh.length){const a=lh[0],b=lh[lh.length-1],change=k=>a[k]===0?'':(' ('+((b[k]/a[k]-1)*100).toFixed(1)+'%)');
+ text('lossSummary','Train '+a.train_loss.toFixed(4)+' → '+b.train_loss.toFixed(4)+change('train_loss')+' · validation '+a.validation_loss.toFixed(4)+' → '+b.validation_loss.toFixed(4)+change('validation_loss')+'. Lower is better; fixed panels, dropout off. Epoch view shows the latest readout per epoch.');}
+
+ text('winRandom',n?.winrate_vs_random==null?'—':(100*n.winrate_vs_random).toFixed(1)+'%');
+ text('winWinner',n?.winrate_vs_winner==null?'—':(100*n.winrate_vs_winner).toFixed(1)+'%');
+ text('elo',n?.elo==null?'—':Number(n.elo).toFixed(0));
+ const vs=n?.comparison_summary?.best_fixed_panel?.validation;
+ text('winSupport',vs?.games?vs.games+' validation proposals across '+vs.contexts+' distinct contexts · '+vs.wins+' wins / '+vs.ties+' ties / '+vs.losses+' losses vs panel best. Elo starts 1,500, K=16. Small qualification sample; panel best is not the global S3 winner.':'No scored neural validation proposals yet. Fixed candidates build labels and opponents; they do not count as model wins.');
+ plot('growthPlot',s.flywheel_history||[],[{key:'data_runs_published',color:'#70e2b2'},{key:'gp_results_published',color:'#80baff'}],'at',false);
+ el('programRows').replaceChildren();
+ const nr=n?.resolver_outcomes||[];
+ const neuralRows=nr.map(r=>({...r,origin:'Model proposal',observed_at:n.at||0}));
+ const panelRows=[{...c,origin:'Initial panel'},{...f,origin:'Initial panel'},...expansion.map(x=>({...x,origin:'Expansion panel'}))].flatMap(x=>(x.outcomes||[]).map(r=>({...r,origin:x.origin,observed_at:x.at||0})));
+ const rows=[...neuralRows,...panelRows].reverse().sort((a,b)=>b.observed_at-a.observed_at).slice(0,12);
+ if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent='Waiting for current program observations.';tr.append(td);el('programRows').append(tr)}
+ for(const r of rows){const tr=document.createElement('tr');for(const value of [
+   (r.variant_identity||'').slice(0,10),r.program_name||(r.program_sha256||'').slice(0,12),
+   r.origin,r.partition||r.phase,r.state,r.measurement?.inner_fold_rmse?.map(x=>x.toPrecision(5)).join(' / ')||'Not measured'
+ ]){const td=document.createElement('td');td.textContent=value;tr.append(td)}el('programRows').append(tr)}
+ text('origin','Latest observed work. Model proposals come from the current policy; expansion-panel programs build measured labels for new data runs. Every uncached model proposal must be executed and published before its batch updates.');
+ el('hosts').replaceChildren();
+ for(const host of hs){const d=document.createElement('div');d.className='host';const b=document.createElement('h3');b.textContent=host.host;const p=document.createElement('p');p.textContent='CPU load '+host.load[0].toFixed(1)+' / '+host.cpu_count+' · '+(host.memory.MemAvailable/2**30).toFixed(1)+' GiB available';d.append(b,p);for(const gpu of host.gpus||[]){const q=document.createElement('p');q.className='note';q.textContent=gpu.name+' · GPU '+gpu.utilization_percent+'% · '+gpu.memory_used_mib+' / '+gpu.memory_total_mib+' MiB used';d.append(q)}if(host.workload_note){const note=document.createElement('p');note.className='note';note.textContent=host.workload_note;d.append(note)}el('hosts').append(d)}
+ const errors=(s.errors||[]).length+hs.reduce((t,h)=>t+(h.errors||[]).length,0);
+ text('foot','Observed '+new Date(s.at*1000).toLocaleString()+' · '+errors+' collector errors. Source stages retain their own timestamps and receipts.');
+}
+async function refresh(){try{const r=await fetch('/api/paper-evidence',{cache:'no-store'});if(!r.ok)throw Error(r.status);render(await r.json())}catch(e){text('connection','Connection unavailable; retained observations')}}
+for(const b of el('axis').querySelectorAll('button'))b.onclick=()=>{axis=b.dataset.axis;for(const x of el('axis').querySelectorAll('button'))x.classList.toggle('on',x===b);if(current)render(current)};refresh();setInterval(refresh,10000);
+</script></html>
