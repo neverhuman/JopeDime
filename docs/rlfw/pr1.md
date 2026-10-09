@@ -74,13 +74,36 @@ PYTHONPATH=deploy/dl-flywheel/pipelines PYTHONDONTWRITEBYTECODE=1 \
   --policy-code-root /home/ubuntu/jopedime_probe_exp/rlfw-20261009/code_pin \
   --checkpoint-dir /home/ubuntu/jopedime_probe_exp/rlfw-20261009/ckpt/current_latest \
   --bench-root /home/ubuntu/jopedime_probe_exp/rlfw-20261009 \
-  --out /home/ubuntu/jopedime_probe_exp/rlfw-20261009/runs/l1-pr1-device-1000 \
-  --draws 1000 --batch-size 8 --seconds 2700 --device cpu
+  --out /home/ubuntu/jopedime_probe_exp/rlfw-20261009/runs/l1-pr1-device-v2-1000 \
+  --draws 1000 --batch-size 8 --seconds 2700 --device cpu \
+  --evaluator-stop-sha256 cca6b127fb83901031145fdcb879aefd10cc43d94462626c81872f73802d60a3
 ```
 
 The host invocation is additionally bounded by an owned scope with CPU 200%,
-MemoryMax 2 GiB and no swap, at nice 19 and idle I/O priority. The final replay
-receipt and local required-gate outcome will be recorded here before review.
+MemoryMax 2 GiB and no swap, at nice 19 and idle I/O priority. The completed CPU
+replay passed at `dfee372766540b290d7b9ed29149c0a59bbf3424`: all 1,000 same-seed
+replays produced identical tokens; maximum summed log-probability error was
+`1.7763568394002505e-15` and maximum per-token error was
+`8.881784197001252e-16`, within the fixed `1e-6` tolerance. Elapsed time was
+992.151 seconds. The sealed trace contains 1,000 decisions.
+
+The final receipt is `runs/l1-pr1-device-v2-1000/receipt.json` under the benchmark
+root, SHA `05a81f0a5f662a52b437ee01b5e31ae3b980b64a134ecd40954ede1a3e1c7a52`.
+The read-only `qualification.json` alongside it certifies only this checkpoint's
+CPU sampler; its SHA is
+`61af26db7a6030240cee7d170f931a95a718c3c846c1072a5731a9f127439bba`.
+Source hashes in the receipt bind all executable modules; this documentation
+update leaves those bytes unchanged.
+
+Local `just required` completed with exit 0: 2,620 Rust tests passed, 34 configured
+PR-profile exclusions; 252 Python tests passed, two host-specific deselections;
+and all 29 additive fixtures passed with zero skips. Ruff, formatting, Clippy
+and hygiene passed. Evidence is `logs/l1/required-v2-exit.json`, its full log and
+JUnit copy. The command began at `36ee2f86` and ended at `dfee3727`: only the
+replay CLI, its tests and this note changed; Rust and CI sources stayed identical,
+the final Python step executed the new fixtures, and a fresh exact-head hygiene
+check passed separately (`logs/l1/hygiene-dfee-exit.json`). Hosted CI and
+independent exact-head approval remain separate merge requirements.
 
 `--device cpu|cuda` defaults to CPU. Add `--compare-device cuda` to compare the
 same complete sampled token rows on CUDA with CPU likelihoods and heads. The
@@ -99,8 +122,10 @@ executes evaluators nor changes their STOP file.
 
 U4 archive ranking is L0-owned. Records without emitted Rust parity remain an
 unqualified archive diagnostic and cannot populate rewards, game comparators
-or this ledger. The qualified ranking result remains pending; the final receipt
-will distinguish its available coverage from the diagnostic.
+or this ledger. The qualified ranking result remains pending. L0's initial
+eight-row CPU/CUDA proofs exceeded the fixed `1e-6` likelihood tolerance. Those
+receipts do not qualify GPU readouts; a subsequent proof must bind its own
+declared execution geometry.
 
 Claim label for panel results: **Lane A, task-label-aware inner-CV search,
 dev panel L=54, directional**. This PR's likelihood checks are numerical
