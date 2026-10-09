@@ -34,6 +34,7 @@ class DecisionRecord:
     execution_key: str | None = None
     outcome_class: str | None = None
     game_spec_sha256: str | None = None
+    batch_protocol_sha256: str | None = None
 
     def to_dict(self):
         if not isinstance(self.logprob, TrieLogProb):
@@ -64,6 +65,9 @@ class DecisionRecord:
                 raise ValueError(
                     "full parameter/support/normalizer/tokenizer pins required"
                 )
+        for pin in (self.game_spec_sha256, self.batch_protocol_sha256):
+            if pin is not None and not is_sha(pin):
+                raise ValueError("full game/batch protocol SHA required when supplied")
         if type(self.seed) is not int or not 0 <= self.seed < 2**63:
             raise ValueError("bounded integer decoder seed required")
         if not math.isfinite(self.temperature) or self.temperature <= 0:

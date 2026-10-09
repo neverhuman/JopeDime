@@ -301,6 +301,7 @@ class TraceTests(unittest.TestCase):
         for record in (
             replace(decision(), logprob=-0.5),
             replace(decision(), predicted={"q_grid": 2}),
+            replace(decision(), batch_protocol_sha256="short-pin"),
             replace(decision(), logprob=TrieLogProb(-0.5, (-0.5,))),
         ):
             with self.assertRaises((ValueError, TypeError)):

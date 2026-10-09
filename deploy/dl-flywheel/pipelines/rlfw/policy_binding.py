@@ -63,6 +63,7 @@ class PinnedPolicy:
             if (
                 name == "neural_decode"
                 or name == "dltrain"
+                or name == "jope_flywheel"
                 or name.startswith(("dltrain.", "jope_flywheel."))
             ):
                 source = getattr(module, "__file__", None)
