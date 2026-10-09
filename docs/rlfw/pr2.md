@@ -103,31 +103,34 @@ replace that evidence. Every selected checkpoint needs its own qualification.
 ## L0 baseline commands after reviewed merge
 
 Set `BENCH` to the campaign directory. D3 authorizes CPU inference; the source
-route has the full 1,000-draw Torch 2.14 certificate. The replica route must have
+route has the full 1,000-draw Torch 2.14.0+cu130 certificate. The replica route must have
 its own full certificate matching its actual Torch version. The two routes use
 different wrappers and cannot share a mismatched certificate. All native parity
 and campaign STOP guards remain active.
 
-L0's sealed `l0/CPU_ARENA_PREPARATION_V4.json` records the helper hashes, including
+L0's sealed `l0/CPU_ARENA_PREPARATION_V5.json` records the helper hashes, including
 the corrected observed-slot denominator. Read the latest `INTEGRATION_DELTA.md`
 before freezing a game. Older preparation manifests describe historical bytes.
 After reviewed PR1/PR2 merge, L0 creates an immutable merged-package copy, then
 freezes both score-free specifications using the explicit CPU route:
 
 ```sh
-python3 -B "$BENCH/l0/pin_merged_package.py" --commit "$MERGED_FULL_SHA"
+CPU_PYTHON=/home/ubuntu/JopeDime/.agent/worktrees/bt-implementation/python/.venv/bin/python
+"$CPU_PYTHON" -B "$BENCH/l0/pin_merged_package.py" --commit "$MERGED_FULL_SHA"
 PACKAGE_ROOT="$BENCH/merged/$MERGED_FULL_SHA"
-QUALIFICATION_FILE="$BENCH/runs/l1-pr1-device-v2-1000/qualification.json"
-QUALIFICATION_SHA256=$(sha256sum "$QUALIFICATION_FILE" | cut -d ' ' -f 1)
-python3 -B "$BENCH/l0/prepare_games.py" \
+QUALIFICATION_FILE="$BENCH/runs/l0-source-cpu-qualification-v5/qualification.json"
+QUALIFICATION_SHA256=0af037cc256e1ad8c4a2ff888768313145c23f582d1cdc30b08bb6350da2db15
+"$CPU_PYTHON" -B "$BENCH/l0/prepare_games.py" \
   --package-root "$PACKAGE_ROOT" --cpu-route source \
   --qualification "$QUALIFICATION_FILE" \
   --qualification-sha256 "$QUALIFICATION_SHA256"
 ```
 
 `MERGED_FULL_SHA` must be verified in fetched `origin/main`; `QUALIFICATION_FILE`
-is L1's complete CPU receipt beneath `BENCH/runs`, and `QUALIFICATION_SHA256`
-is its byte hash. Preparation verifies those identities and pins the chosen
+is L0's immutable facade for L1's complete CPU receipt, and
+`QUALIFICATION_SHA256` is its pinned byte hash. The source interpreter must report
+Torch 2.14.0+cu130, exactly matching that certificate; the default system Python
+and a CPU-only 2.14.0 wheel do not satisfy this identity. Preparation verifies those identities and pins the chosen
 route, shared helpers, original inputs, normalization, code and qualification.
 It refuses an existing specification with different bytes. No private candidate
 package can become an official game through this command.
