@@ -9,9 +9,12 @@ comparison identity, accepts measured integer `q_grid` in millionths, and uses a
 SQLite WAL transaction with a version compare-and-swap. Its append-only event
 history distinguishes `first_label`, strict `improvement`, ties, losses and
 refusals. A fresh role callback runs inside each transaction. The caller must
-verify the seven artifact versions using the pinned evaluator before publishing;
+verify the seven artifacts using the pinned evaluator before publishing;
 artifact references by themselves do not qualify a result. State belongs under
 the explicitly supplied benchmark `state/` directory.
+Remote references retain their exact object version. The pinned local evaluator's
+`path`, `sha256`, `bytes` references are accepted only beneath the sibling `runs/`
+directory, with all seven byte hashes and lengths checked and no symbolic links.
 
 The [likelihood API](../../deploy/dl-flywheel/pipelines/rlfw/trie_logprob.py) sums
 token log-probabilities through EOS, normalizes only over sorted trie children,
@@ -71,13 +74,22 @@ PYTHONPATH=deploy/dl-flywheel/pipelines PYTHONDONTWRITEBYTECODE=1 \
   --policy-code-root /home/ubuntu/jopedime_probe_exp/rlfw-20261009/code_pin \
   --checkpoint-dir /home/ubuntu/jopedime_probe_exp/rlfw-20261009/ckpt/current_latest \
   --bench-root /home/ubuntu/jopedime_probe_exp/rlfw-20261009 \
-  --out /home/ubuntu/jopedime_probe_exp/rlfw-20261009/runs/l1-pr1-frozen-1000 \
-  --draws 1000 --batch-size 8 --seconds 2700
+  --out /home/ubuntu/jopedime_probe_exp/rlfw-20261009/runs/l1-pr1-device-1000 \
+  --draws 1000 --batch-size 8 --seconds 2700 --device cpu
 ```
 
 The host invocation is additionally bounded by an owned scope with CPU 200%,
 MemoryMax 2 GiB and no swap, at nice 19 and idle I/O priority. The final replay
 receipt and local required-gate outcome will be recorded here before review.
+
+`--device cpu|cuda` defaults to CPU. Add `--compare-device cuda` to compare the
+same complete sampled token rows on CUDA with CPU likelihoods and heads. The
+receipt includes maximum absolute error in summed and per-token likelihood,
+q, completion probability, and log1p runtime after the declared floor. All must
+be within `1e-6`; unavailable CUDA fails instead of skipping. Same-seed replay
+is tested on the selected sampling device. CPU and CUDA samples may differ
+because their float32 kernels round differently, so cross-device comparison
+uses identical token rows. GPU evidence is required before using GPU readouts.
 
 U4 archive ranking is L0-owned. Records without emitted Rust parity remain an
 unqualified archive diagnostic and cannot populate rewards, game comparators

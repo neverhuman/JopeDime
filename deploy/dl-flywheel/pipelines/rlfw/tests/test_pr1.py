@@ -176,6 +176,35 @@ class LedgerTests(unittest.TestCase):
         )
         self.assertEqual([r["q_grid"] for r in results], [100, 100, 100, 101])
 
+    def test_local_evaluator_refs_require_owned_exact_bytes(self):
+        root = self.state.parent / "runs" / "measured"
+        root.mkdir(parents=True)
+        refs = {}
+        for role in ARTIFACT_ROLES:
+            path = root / role
+            body = (role + " executed fixture").encode()
+            path.write_bytes(body)
+            refs[role] = {
+                "path": str(path),
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "bytes": len(body),
+            }
+        result = replace(publication(), artifacts=refs)
+        self.assertEqual(self.publish(result)["event"], "first_label")
+        (root / "rust_parity").write_text("changed")
+        self.assertEqual(self.publish(result)["reason"], "missing_closure")
+        outside = self.state.parent / "outside"
+        outside.write_bytes(b"outside")
+        refs["rust_parity"] = {
+            "path": str(outside),
+            "sha256": hashlib.sha256(b"outside").hexdigest(),
+            "bytes": 7,
+        }
+        self.assertEqual(self.publish(result)["reason"], "missing_closure")
+        (root / "link").symlink_to(outside)
+        refs["rust_parity"]["path"] = str(root / "link")
+        self.assertEqual(self.publish(result)["reason"], "missing_closure")
+
     def test_refusal_reasons_never_create_score(self):
         cases = [
             (replace(publication(), source="fitness_only"), "fitness_only"),

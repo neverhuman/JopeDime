@@ -17,6 +17,41 @@ from .research_hwm import canonical_bytes
 from .trie_logprob import TrieLogProb
 
 
+def compare_readouts(reference, candidate, contexts, token_rows):
+    """Compare the same complete sequences, not independently sampled slates."""
+    left = reference.logprobs_many(contexts, token_rows)
+    right = candidate.logprobs_many(contexts, token_rows)
+    if len(left) != len(token_rows) or len(right) != len(token_rows):
+        raise ValueError("parity requires every requested likelihood row")
+    errors = {
+        "total_logprob": 0.0,
+        "token_logprob": 0.0,
+        "q": 0.0,
+        "p_complete": 0.0,
+        "runtime_log1p": 0.0,
+    }
+    for a, b in zip(left, right):
+        if len(a.per_token) != len(b.per_token):
+            raise ValueError("parity likelihood token inventory differs")
+        errors["total_logprob"] = max(errors["total_logprob"], abs(a.total - b.total))
+        errors["token_logprob"] = max(
+            errors["token_logprob"],
+            max(abs(x - y) for x, y in zip(a.per_token, b.per_token)),
+        )
+    left = reference.score_heads(contexts, token_rows)
+    right = candidate.score_heads(contexts, token_rows)
+    if len(left) != len(token_rows) or len(right) != len(token_rows):
+        raise ValueError("parity requires every requested head row")
+    for a, b in zip(left, right):
+        for name in ("q", "p_complete", "runtime_log1p"):
+            x = math.log1p(a["runtime_seconds"]) if name == "runtime_log1p" else a[name]
+            y = math.log1p(b["runtime_seconds"]) if name == "runtime_log1p" else b[name]
+            if not math.isfinite(x) or not math.isfinite(y):
+                raise ValueError("finite head readouts required")
+            errors[name] = max(errors[name], abs(x - y))
+    return errors
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy-code-root", type=Path, required=True)
@@ -27,6 +62,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--seed", type=int, default=20261009)
     parser.add_argument("--seconds", type=int, default=2700)
+    parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument("--compare-device", choices=("cpu", "cuda"))
     args = parser.parse_args()
     bench = args.bench_root.resolve()
     if not args.policy_code_root.resolve().is_relative_to(
@@ -65,7 +102,17 @@ def main():
         args.checkpoint_dir,
         code_manifest_sha256=code_sha,
         parameter_sha256=manifest["parameter_sha256"],
+        device=args.device,
     )
+    comparison = None
+    if args.compare_device:
+        comparison = PinnedPolicy(
+            args.policy_code_root,
+            args.checkpoint_dir,
+            code_manifest_sha256=code_sha,
+            parameter_sha256=manifest["parameter_sha256"],
+            device=args.compare_device,
+        )
     policy.torch.set_num_threads(1)
     policy.torch.set_num_interop_threads(1)
     # Load only the pinned original snapshot and read-only authority check.
@@ -90,6 +137,7 @@ def main():
     max_error = 0.0
     max_token_error = 0.0
     identical = 0
+    parity_errors = {}
     for start in range(0, args.draws, args.batch_size):
         if (bench / "state/STOP.json").exists() or time.time() >= deadline:
             raise RuntimeError(
@@ -104,6 +152,12 @@ def main():
         rows, _info = policy.sample_many(contexts, seeds=seeds, deadline=deadline)
         repeated, _ = policy.sample_many(contexts, seeds=seeds, deadline=deadline)
         scores = policy.logprobs_many(contexts, [row["tokens"] for row in rows])
+        if comparison is not None:
+            errors = compare_readouts(
+                policy, comparison, contexts, [row["tokens"] for row in rows]
+            )
+            for name, error in errors.items():
+                parity_errors[name] = max(parity_errors.get(name, 0.0), error)
         for offset, (cid, row, replay, score) in enumerate(
             zip(ids, rows, repeated, scores)
         ):
@@ -169,13 +223,27 @@ def main():
         "max_total_error": max_error,
         "max_token_error": max_token_error,
         "tolerance": 1e-6,
-        "passed": identical == args.draws and max_error <= 1e-6,
+        "passed": identical == args.draws
+        and max_error <= 1e-6
+        and all(error <= 1e-6 for error in parity_errors.values()),
+        "device_parity": {
+            "reference_device": args.device,
+            "candidate_device": args.compare_device,
+            "executed": comparison is not None,
+            "rows": identical if comparison is not None else 0,
+            "maximum_absolute_errors": parity_errors,
+            "tolerance": 1e-6,
+            "passed": all(error <= 1e-6 for error in parity_errors.values())
+            if comparison is not None
+            else None,
+            "runtime_semantics": "log1p(seconds) after declared 0.001 second floor",
+        },
         "source_commit": source_commit,
         "source_sha256": source_hashes,
         "command": sys.argv,
         "resource_budget": {
             "seconds": args.seconds,
-            "device": "cpu",
+            "device": args.device,
             "torch_threads": 1,
         },
         "environment": {
@@ -186,6 +254,7 @@ def main():
                 "MKL_NUM_THREADS",
                 "TMPDIR",
                 "PYTHONDONTWRITEBYTECODE",
+                "CUBLAS_WORKSPACE_CONFIG",
             )
         },
         "torch_version": str(policy.torch.__version__),
