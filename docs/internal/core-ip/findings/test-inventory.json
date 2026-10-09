@@ -2794,6 +2794,14 @@
         "evidence",
         "orchestration"
       ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_no_winner_bootstrap.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
     }
   },
   "baseline_triage": [

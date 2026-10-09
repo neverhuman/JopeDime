@@ -9059,6 +9059,16 @@
       ],
       "dispositions": [],
       "scope": "Registered data-free best-of-32 fixtures: exact leaf membership, all raw draws, predicted-only ranking, fixed feasibility fallback, durable restart and eight blind charges. No live evaluator, checkpoint or performance qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_no_winner_bootstrap.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Registered synthetic train-only bootstrap fixtures: original identity, protected roles, fixed mixed coverage, reserved empty arena, measured-only research first labels, nullable failures, durable restart and honest yield/cost reporting. No native/model/optimizer/teacher or live calibration qualification."
     }
   }
 }
