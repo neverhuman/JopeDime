@@ -9227,6 +9227,36 @@
       ],
       "dispositions": [],
       "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_verified_cache.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "26 offline HPC cases executed by run_hpc_offline.py within run_offline.py. No live CPU/GPU/S3 proof inferred from fixtures."
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_native_inputs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "26 offline HPC cases executed by run_hpc_offline.py within run_offline.py. No live CPU/GPU/S3 proof inferred from fixtures."
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_archive_trace.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "26 offline HPC cases executed by run_hpc_offline.py within run_offline.py. No live CPU/GPU/S3 proof inferred from fixtures."
     }
   }
 }

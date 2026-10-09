@@ -4,21 +4,22 @@
   "files": [
     {
       "path": "deploy/dl-flywheel/README.md",
-      "origin": "followup integration",
-      "origin_sha256": "a15b3c1d4d876b8ec712325e7ba96b174394ea8f220091f72e2ac092d63eb292",
-      "sha256": "a15b3c1d4d876b8ec712325e7ba96b174394ea8f220091f72e2ac092d63eb292"
+      "origin": "HPC source integration",
+      "origin_sha256": "55611a31f441e1f528905164c66da15f8cc209ddd52944bf36e1075237e853a7",
+      "sha256": "55611a31f441e1f528905164c66da15f8cc209ddd52944bf36e1075237e853a7"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/collect.py",
       "origin": "work/flywheel-20261008/paper_publish.py",
-      "origin_sha256": "6e285a94c17f9b5918b9afebece7d70baadf8974a907197a76165672e7d058a9",
-      "sha256": "6e285a94c17f9b5918b9afebece7d70baadf8974a907197a76165672e7d058a9"
+      "origin_sha256": "9ffb96acdc375588af653b1176ec35e715625c0a0bf6c58f2654211d97845b83",
+      "sha256": "9ffb96acdc375588af653b1176ec35e715625c0a0bf6c58f2654211d97845b83"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/index.html",
       "origin": "outputs/DL_paper_dashboard.html",
-      "origin_sha256": "ca6eb86a2b7ad11afd61ce350e57f61dc21aced0b6f863627f14ff144d345985",
-      "sha256": "ca6eb86a2b7ad11afd61ce350e57f61dc21aced0b6f863627f14ff144d345985"
+      "origin_sha256": "ca6081527ce75a23d0d416faa76e0e52ca03cd9e6836a6ecf5c977f0901e99ca",
+      "sha256": "c428daaeb0ec40f268a505037c4caf164e52e4da0f909aa6e9b4cc972c402e1d",
+      "normalization": "Trailing whitespace and blank EOF only; runtime original preserved"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/server.py",
@@ -57,6 +58,24 @@
       "sha256": "b4eb3a3aa5e85ff9af0eab29101c21dec74018826e3244ee9b5103caa47d5e78"
     },
     {
+      "path": "deploy/dl-flywheel/docs/hpc-bottlenecks-and-timing.md",
+      "origin": "outputs/DL_HPC_BOTTLENECKS_AND_TIMING.md",
+      "origin_sha256": "be6e251e86dbd3fe3b11c05c0d48cd6264de1e4c5c3c0c495c82e0bedeabb7dd",
+      "sha256": "be6e251e86dbd3fe3b11c05c0d48cd6264de1e4c5c3c0c495c82e0bedeabb7dd"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/hpc-cache-ab-20261009.json",
+      "origin": "outputs/DL_FLYWHEEL_HPC_CACHE_MATCHED_AB.json",
+      "origin_sha256": "2083b0a6fb5170d7f367ef6a84f5dd66eb5b030cb4317567c5cce680342da056",
+      "sha256": "2083b0a6fb5170d7f367ef6a84f5dd66eb5b030cb4317567c5cce680342da056"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/hpc-profile-20261009.json",
+      "origin": "outputs/DL_FLYWHEEL_HPC_BOTTLENECK_PROFILE.json",
+      "origin_sha256": "89762b2d867ee0acd67bd6527a8046a104bcafe1e832b7f34bb1804164742894",
+      "sha256": "89762b2d867ee0acd67bd6527a8046a104bcafe1e832b7f34bb1804164742894"
+    },
+    {
       "path": "deploy/dl-flywheel/docs/inventory-20261009.json",
       "origin": "outputs/DL_FLYWHEEL_FULL_CORPUS_INVENTORY.json",
       "origin_sha256": "1f27e0455f14a5f9c1e2644d73e1a9c8d4362d6ac5b34452ae7b1ab8b1f362a3",
@@ -67,6 +86,12 @@
       "origin": "outputs/DL_CONTINUAL_MODEL_V1.md",
       "origin_sha256": "e65adda9e4ff0dd3faa43c01dda10d7474c302956d3d872c7c950d7242e949dd",
       "sha256": "e65adda9e4ff0dd3faa43c01dda10d7474c302956d3d872c7c950d7242e949dd"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/native-dispatch-qualification-20261009.json",
+      "origin": "outputs/DL_FLYWHEEL_NATIVE_DISPATCH_R3_COMPLETE.json",
+      "origin_sha256": "6c803d0931762c5a22369577f8a25661393db2afc9508270dd66fdfe36c0959c",
+      "sha256": "6c803d0931762c5a22369577f8a25661393db2afc9508270dd66fdfe36c0959c"
     },
     {
       "path": "deploy/dl-flywheel/docs/native-runtime-pins-20261009.json",
@@ -183,6 +208,12 @@
       "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
     },
     {
+      "path": "deploy/dl-flywheel/jope_flywheel/timing.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/timing.py",
+      "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c"
+    },
+    {
       "path": "deploy/dl-flywheel/jope_flywheel/training_admission.py",
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_admission.py",
       "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
@@ -259,6 +290,55 @@
       "origin": "work/flywheel-20261008/proposals/growth-pipeline-v2/growth_pipeline.py",
       "origin_sha256": "c2860c98163f55df6b5c018a780c89b58201cc4f9d718f7288354e5c85d40bf5",
       "sha256": "c2860c98163f55df6b5c018a780c89b58201cc4f9d718f7288354e5c85d40bf5"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/archive_trace.py",
+      "origin": "work/flywheel-hpc-20261009/archive_trace.py",
+      "origin_sha256": "07892b8f6e606d9703525533ac52de49942512ea0c7ab268a4249d5b24c5d8cc",
+      "sha256": "07892b8f6e606d9703525533ac52de49942512ea0c7ab268a4249d5b24c5d8cc"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/cache_ab.py",
+      "origin": "work/flywheel-hpc-20261009/cache_ab.py",
+      "origin_sha256": "817d0e0d7a5ea2cec750dce1bc58644092cf17d099b2225dcff1a9eb4f8b11d8",
+      "sha256": "817d0e0d7a5ea2cec750dce1bc58644092cf17d099b2225dcff1a9eb4f8b11d8"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/host_trace.py",
+      "origin": "work/flywheel-hpc-20261009/host_trace.py",
+      "origin_sha256": "b181c4881521ca1630ca29ccbad69ce3a23470940424708dd56e5807375c31ed",
+      "sha256": "b181c4881521ca1630ca29ccbad69ce3a23470940424708dd56e5807375c31ed"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/native_dispatch.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/native_dispatch.py",
+      "origin_sha256": "137f99c2bbe336fdc9db5310869b01dd214f875574240adfe6e1e30f6990d0d5",
+      "sha256": "137f99c2bbe336fdc9db5310869b01dd214f875574240adfe6e1e30f6990d0d5"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/native_evaluate.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/native_evaluate.py",
+      "origin_sha256": "e7a7c1fa035feb05d3a9b4dd0974823cd82edfba9b8069ec1c1cafb8ab9c3d01",
+      "sha256": "d005f24f2d6cc134fdc2f46f7182cb1156bcf30f265b3c0243d078803e8c250f",
+      "normalization": "Trailing whitespace and blank EOF only; runtime original preserved"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/native_inputs.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/native_inputs.py",
+      "origin_sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+      "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/timing.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/timing.py",
+      "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc/verified_cache.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/verified_cache.py",
+      "origin_sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
+      "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288"
     },
     {
       "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/__init__.py",
@@ -477,6 +557,12 @@
       "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
     },
     {
+      "path": "deploy/dl-flywheel/run_hpc_offline.py",
+      "origin": "HPC source integration",
+      "origin_sha256": "233c8c159e3f90a7de6b21f2f1a8d587ee3ec166d95de23dbd6f31654dd5dbd4",
+      "sha256": "233c8c159e3f90a7de6b21f2f1a8d587ee3ec166d95de23dbd6f31654dd5dbd4"
+    },
+    {
       "path": "deploy/dl-flywheel/run_native_offline.py",
       "origin": "followup integration",
       "origin_sha256": "f2222c8a95c8e132b1bdf8431edab26751e7bdee4f0b08a53dbc27f3c3f3b417",
@@ -484,9 +570,9 @@
     },
     {
       "path": "deploy/dl-flywheel/run_offline.py",
-      "origin": "followup integration",
-      "origin_sha256": "6d1b087a509a47a820247985ea610dc24453763fe0a250c4da59886b5a691031",
-      "sha256": "6d1b087a509a47a820247985ea610dc24453763fe0a250c4da59886b5a691031"
+      "origin": "HPC source integration",
+      "origin_sha256": "0bb64c28a8ff1de56dc9d7a3c24c66a9de459d97f37d57dd86a66daae16c24b7",
+      "sha256": "0bb64c28a8ff1de56dc9d7a3c24c66a9de459d97f37d57dd86a66daae16c24b7"
     },
     {
       "path": "deploy/dl-flywheel/tests/fixtures/kumos-component-publication.json",
@@ -583,6 +669,24 @@
       "origin": "work/flywheel-release-20261009/test_training_snapshot_kumos.py",
       "origin_sha256": "c9584821932528d61d9f0fa60bb529b75b74bb45e682a1dc32194a380bcc285d",
       "sha256": "c9584821932528d61d9f0fa60bb529b75b74bb45e682a1dc32194a380bcc285d"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests_hpc/test_archive_trace.py",
+      "origin": "work/flywheel-hpc-20261009/test_archive_trace.py",
+      "origin_sha256": "66306152ce751cfb85ccd8a9ce766485a744bec6bc6940af5a44f76976bf3c39",
+      "sha256": "66306152ce751cfb85ccd8a9ce766485a744bec6bc6940af5a44f76976bf3c39"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests_hpc/test_native_inputs.py",
+      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/test_native_inputs.py",
+      "origin_sha256": "763db0db29d60bc2643123dce38ae858a06fd326242e5b31a8d7d96193944c47",
+      "sha256": "763db0db29d60bc2643123dce38ae858a06fd326242e5b31a8d7d96193944c47"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests_hpc/test_verified_cache.py",
+      "origin": "work/flywheel-20261008/proposals/hpc-cache-v1/test_verified_cache.py",
+      "origin_sha256": "a6a540ba1b98ef22488f6a51ceec942c1fd3e2e0e619f1d78ceb26082ca285da",
+      "sha256": "a6a540ba1b98ef22488f6a51ceec942c1fd3e2e0e619f1d78ceb26082ca285da"
     },
     {
       "path": "deploy/dl-flywheel/tests_native/native_test_fixture.py",

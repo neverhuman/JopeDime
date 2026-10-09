@@ -49,6 +49,21 @@ try:
 except FileNotFoundError:pass
 except Exception as e:out['errors'].append('xb1 GP scoring: '+type(e).__name__)
 
+
+try:
+ root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/hpc_trace_20261009_v1')
+ if hashlib.sha256((root/'host_trace.py').read_bytes()).hexdigest()!='b181c4881521ca1630ca29ccbad69ce3a23470940424708dd56e5807375c31ed':raise ValueError('trace source')
+ for field,filename,schema in [('hpc_trace','logs/status.json','jope.hpc-host-status/v1'),('hpc_archive','logs/archive-v1/status.json','jope.hpc-archive-status/v1')]:
+  p=root/filename
+  if not p.exists():continue
+  raw=p.read_bytes()
+  if p.is_symlink()or len(raw)>65536:raise ValueError('HPC status bounds')
+  v=json.loads(raw)
+  if v['schema']!=schema or v['host']!=out['host']:raise ValueError('HPC status host/schema')
+  out[field]=v
+except FileNotFoundError:pass
+except Exception as e:out['errors'].append('HPC telemetry: '+type(e).__name__)
+
 cpu1=[int(v)for v in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
 delta=sum(cpu1)-sum(cpu0);idle=(cpu1[3]+cpu1[4])-(cpu0[3]+cpu0[4]);out['cpu_utilization_percent']=max(0,min(100,100*(delta-idle)/delta))if delta>0 else None
 print(json.dumps(out,allow_nan=False))
@@ -387,6 +402,17 @@ if HOST=='xbabe3':
   out['gp_expansion_previous_attempt']={'state':'closed_before_execution','worker_guard_refusals':895,'native_attempts':0,'result_puts':0,'custody_verified':True}
  except FileNotFoundError:pass
  except Exception as e:out['errors'].append('GP112 previous attempt: '+type(e).__name__)
+
+if HOST=='xbabe2':
+ for key,name,pin in [('hpc_profile','DL_FLYWHEEL_HPC_BOTTLENECK_PROFILE.json','89762b2d867ee0acd67bd6527a8046a104bcafe1e832b7f34bb1804164742894'),('inference_first','DL_FLYWHEEL_INFERENCE_FIRST_COMPLETE.json','3898f8a83b12fd4f8a5df9d466a6ae054708378427a00094f7c1a0543d4c0373')]:
+  try:
+   p=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/paper_observer_addfba0176a7')/name;raw=p.read_bytes()
+   if p.is_symlink()or len(raw)>2097152 or hashlib.sha256(raw).hexdigest()!=pin:raise ValueError('evidence pin')
+   v=json.loads(raw)
+   if key=='inference_first':v={k:v[k]for k in ('at','status','timing_events','timing_stage_summary','decode','all_expected_record_versions_and_seven_artifacts_verified')}
+   out[key]=v
+  except Exception as e:out['errors'].append(key+': '+type(e).__name__)
+
 attempts=[('initial','runs/'+HOST,'e561d42d83fa655e1d3391747183b87587ee20be0291ef04db6d6116d26dabc9')]
 if HOST=='xbabe2':attempts.append(('recovery1','runs/recovery1/'+HOST,'b3d448a20668f6ae16c5369e589600ff1ffb9f1f642a3c43e5d179b0f72e35ee'))
 for label,folder,pin in attempts:
@@ -413,6 +439,21 @@ for x in ENTRIES:
   if s['host']!=HOST or s['manifest_sha256']!=x['manifest_sha256']:raise ValueError('identity mismatch')
   s['archive_root']=x['archive'];s['observer_unit']=x['unit'];out['archives'].append(s)
  except Exception as e:out['errors'].append(x['label']+': '+type(e).__name__)
+
+try:
+ root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/hpc_trace_20261009_v1')
+ if hashlib.sha256((root/'host_trace.py').read_bytes()).hexdigest()!='b181c4881521ca1630ca29ccbad69ce3a23470940424708dd56e5807375c31ed':raise ValueError('trace source')
+ for field,filename,schema in [('hpc_trace','logs/status.json','jope.hpc-host-status/v1'),('hpc_archive','logs/archive-v1/status.json','jope.hpc-archive-status/v1')]:
+  p=root/filename
+  if not p.exists():continue
+  raw=p.read_bytes()
+  if p.is_symlink()or len(raw)>65536:raise ValueError('HPC status bounds')
+  v=json.loads(raw)
+  if v['schema']!=schema or v['host']!=out['host']:raise ValueError('HPC status host/schema')
+  out[field]=v
+except FileNotFoundError:pass
+except Exception as e:out['errors'].append('HPC telemetry: '+type(e).__name__)
+
 cpu1=[int(v)for v in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
 delta=sum(cpu1)-sum(cpu0);idle=(cpu1[3]+cpu1[4])-(cpu0[3]+cpu0[4]);out['cpu_utilization_percent']=max(0,min(100,100*(delta-idle)/delta))if delta>0 else None
 print(json.dumps(out,allow_nan=False))

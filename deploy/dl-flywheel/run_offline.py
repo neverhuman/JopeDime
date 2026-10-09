@@ -34,6 +34,11 @@ def main():
   success=child.returncode==0 and follow['passed'] is True
   receipt['native_suite']=follow
   receipt['combined_collected']=count+follow['collected'];receipt['combined_executed']=result.testsRun+follow['executed'];receipt['passed']=success
+ if success:
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_hpc_offline.py'),'--output',str(a.output/'hpc')],check=False)
+  hpc=json.loads((a.output/'hpc/receipt.json').read_bytes())
+  success=child.returncode==0 and hpc['passed'] is True
+  receipt['hpc_suite']=hpc;receipt['combined_collected']+=hpc['collected'];receipt['combined_executed']+=hpc['executed'];receipt['passed']=success
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

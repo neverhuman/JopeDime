@@ -49,3 +49,5 @@ The active roster is Kumo Small, 2,051 values. The expanded encoder/mask proposa
 7. Mask searches use inner development evidence. No searched mask is called an out-of-sample improvement without independent outer evaluation.
 
 Full-corpus and growth follow-up source lives in `pipelines/native/` and `pipelines/growth/`. Runtime pins are dated evidence, not automatic launch authorization. `native_variant_snapshot.py` prepares a new boundary snapshot; input-ready vectors do not imply measured GP labels or training admission. Unpromoted variant CE is disabled. The normalizer remains frozen on the original training subset. See [growth and inference](docs/growth-and-inference-v2.md).
+
+HPC instrumentation and the original-context scored-program consumer live in `pipelines/hpc/`. Three additional offline modules add 26 tests (326 total), including immutable cache identity/corruption handling, native input masking, and log-chain/S3 archival. See [measured HPC findings](docs/hpc-bottlenecks-and-timing.md). Host GPU samples are distinct from CUDA execution timers. The cache result is a matched two-GP verification benchmark, not a full pipeline speedup.

@@ -2752,6 +2752,110 @@
         "gp",
         "export"
       ]
+    },
+    "python:deploy/dl-flywheel/tests/test_augmentation.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_batch_stream.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_evergreen.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_evidence.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_paper_archive.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_program_bridge.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_program_gate.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_protocol.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_queue.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_s3_library.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_score_join.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_target_noise.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_training_admission.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_training_snapshot.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests/test_training_snapshot_kumos.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_decode.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_outbox.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_batch.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_train.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_growth_pipeline.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_native_variant_snapshot.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_training_snapshot_native.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_cli.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_verified_cache.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_native_inputs.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_archive_trace.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
     }
   },
   "baseline_triage": [
