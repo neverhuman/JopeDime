@@ -15,7 +15,7 @@ FILTERS = {
     "rust": rf"^(crates/|benchmarks/|schemas/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)",
     "emitters": rf"^(crates/feat-math/|datasets/test/|deploy/ci/emitters|{COMMON})",
     "inputs": rf"^(datasets/synthetic/|crates/(jope-cli|jope-campaigns|jope-arena)/|python/src/jope/research/|{COMMON})",
-    "python": rf"^(python/|benchmarks/|crates/jope-bench/adapters/|deploy/systemd/|{IMAGE}|\.github/workflows/ci\.yml$)",
+    "python": rf"^(python/|benchmarks/|crates/jope-bench/adapters/|deploy/systemd/|deploy/dl-flywheel/pipelines/rlfw/|{IMAGE}|\.github/workflows/ci\.yml$)",
     "e2e": rf"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|{COMMON})",
 }
 GATES = {"rust-check": "rust", "rust-test": "rust", "emitters": "emitters", "inputs": "inputs", "python": "python", "e2e-smoke": "e2e"}
