@@ -59,7 +59,7 @@ class TrainConfig:
             or any(
                 not math.isfinite(x) or x < 0 for x in (self.lambda_pi, self.lambda_kl)
             )
-            or not time.time() < self.deadline_unix <= 1791550800.0
+            or not time.time() < self.deadline_unix <= 1791568800.0
         ):
             raise ValueError("invalid bounded shadow training configuration")
         if not isinstance(self.runtime_files, tuple) or len(

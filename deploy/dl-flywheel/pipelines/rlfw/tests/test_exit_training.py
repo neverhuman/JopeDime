@@ -554,8 +554,15 @@ class TrainerTests(unittest.TestCase):
         ):
             with self.assertRaises(RuntimeError):
                 train_updates(self.cfg, self.runtime, self.targets)
-        with self.assertRaises(ValueError):
-            replace(self.cfg, deadline_unix=1791550801.0)
+        # The owner corrected the campaign cutoff from 13:00 to 18:00 UTC.
+        with mock.patch("rlfw.exit_offline_train.time.time", return_value=1791554400.0):
+            resumed = replace(self.cfg, deadline_unix=1791568800.0)
+            self.assertEqual(resumed.deadline_unix, 1791568800.0)
+            with self.assertRaises(ValueError):
+                replace(self.cfg, deadline_unix=1791568801.0)
+        with mock.patch("rlfw.exit_offline_train.time.time", return_value=1791568800.0):
+            with self.assertRaises(ValueError):
+                replace(self.cfg, deadline_unix=1791568800.0)
 
     def test_probe_64_requirement_and_output_escape_are_refused(self):
         self.runtime["probe_contexts"] = self.runtime["probe_contexts"][:63]

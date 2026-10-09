@@ -141,10 +141,14 @@ systemd-run --user --scope --unit=rlfw-l2-shadow \
   --targets "$BENCH/runs/exit_targets.json" --target-sha256 "$TARGET_SHA" \
   --runtime-binding "$BENCH/l2/training_binding.py" \
   --runtime-files "$BENCH/cache/training-runtime-files.json" \
-  --source-sha256 "$SOURCE_SHA" --deadline-unix 1791550800 \
+  --source-sha256 "$SOURCE_SHA" --deadline-unix 1791568800 \
   --device cpu --max-updates 500 --learning-rate 0.0001 \
   --lambda-pi 0.25 --lambda-kl 0.02
 ```
+
+The owner corrected the campaign cutoff to 2026-10-09 18:00 UTC (12:00 MT).
+The trainer refuses a deadline beyond that cutoff or a deadline already reached;
+the correction does not reset individual completed or interrupted attempts.
 
 The CPU default supports fixtures and explicitly authorized CPU runs. Verify
 the actual imported `torch.__version__` matches the source CPU certificate
