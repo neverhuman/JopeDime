@@ -2752,6 +2752,22 @@
         "gp",
         "export"
       ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
     }
   },
   "baseline_triage": [

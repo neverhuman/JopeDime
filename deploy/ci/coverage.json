@@ -8995,6 +8995,38 @@
       ],
       "dispositions": [],
       "scope": "Explicit offline unittest selection of 33 modules in run_lane_offline.py: 729 total identities, 688 synthetic cases executed, 41 exact named cases excluded with host-input or subprocess dispositions. Own subreceipt is separate from pytest; unexpected missing/duplicate identities, skips, exclusions or forbidden input reads fail. No live corpus/pilot/training/GPU/Lambda/S3 or operational adoption."
+    },
+    "benchmark:deploy/dl-flywheel/pipelines/rlfw/bench_cli.py": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [
+        "benchmark"
+      ],
+      "scope": "Opt-in benchmark-local arena/compare CLI. Synthetic compare and live-scope refusal fixtures run via run_rlfw_offline.py; no native execution or performance proof in CI."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
     }
   }
 }
