@@ -91,7 +91,10 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
   rlfw.tests.test_exit_targets rlfw.tests.test_exit_training -v
 ```
 
-The fixture log `logs/l2/exit-trainer-identity-final.log` records 27 passing tests with no
+The two training suites are registered in `run_rlfw_offline.py`. Run the actual
+offline runner as the acceptance command; it collects all 92 PR1, arena and
+training fixtures with no skips. The training suites contain 27 fixtures.
+The fixture log `logs/l2/exit-trainer-identity-final.log` records those 27 passing tests with no
 skips. It includes measured tilt derivative/variance, set versus iid weighting,
 exact full-trie KL and gradients, KL-estimator gradient, default-zero equality,
 dev refusal, two synthetic optimizer updates with an unchanged anchor, the
@@ -141,8 +144,11 @@ The CPU default supports fixtures and explicitly authorized CPU runs. The curren
 campaign's device placement still follows the owner's ruling. CUDA needs a
 byte-bound passed same-pin CPU/CUDA receipt and `--device-parity FILE`; absence
 or failed parity refuses execution. The command does not imply that those live
-inputs or CUDA qualification already exist. Actual challenger execution remains
-unavailable until qualified train targets and the runtime adapter are provided.
+inputs or CUDA qualification already exist. The benchmark adapter `l2/training_binding.py` now has a concrete pinned
+artifact-verifier and mixed-batch implementation, with static checks only. It
+requires a sealed training manifest, existing qualified train artifact closures
+and exactly 64 train probes. Actual challenger execution remains unavailable:
+those inputs are absent and the campaign native parity STOP is active.
 
 A trained checkpoint still needs its own sampler/device qualification and a
 paired arena against the baseline under [PR2](pr2.md). Promotion is a separate

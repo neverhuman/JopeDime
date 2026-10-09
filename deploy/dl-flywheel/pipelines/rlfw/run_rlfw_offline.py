@@ -17,6 +17,8 @@ MODULES = (
     "rlfw.tests.test_arena_kpi",
     "rlfw.tests.test_arena_scheduler",
     "rlfw.tests.test_slate",
+    "rlfw.tests.test_exit_targets",
+    "rlfw.tests.test_exit_training",
 )
 
 
