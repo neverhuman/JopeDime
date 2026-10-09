@@ -19,6 +19,7 @@ validation of a launch manifest; other modes expect manifest/stage/plan in order
 Full 1800 seconds must remain before the original global deadline at freeze.
 """
 from pathlib import Path, PurePosixPath
+from native_build import verify_native_build
 import argparse
 import hashlib
 import json
@@ -159,9 +160,7 @@ def inputs(manifest_ref):
         for ref in template[key]:read(ref)
     need(template['native_canonicalizer']['sha256']==p['canonicalizer_sha256'],'same prepared canonicalizer')
     build=json.loads(read(template['native_build_receipt']))
-    need(build['source']['pin']==template['source_commit'] and
-         build['source']['plan_sha256']==template['source_build_plan_sha256'] and
-         build['binaries']['worker_honest']['sha256']==template['worker']['sha256'],'same exact native build')
+    verify_native_build(template,build,read)
     read(m['python']);need(os.access(m['python']['path'],os.X_OK),'pinned executable Python')
     files=m['source_files'];need(type(files) is list and 1<=len(files)<=128,'bounded staged file set')
     names=[];total=0
@@ -172,7 +171,7 @@ def inputs(manifest_ref):
              name.endswith('.py') and all(re.fullmatch('[A-Za-z0-9_.-]+',part) for part in rel.parts),'safe Python source path')
         total+=len(read(item['ref']));names.append(name)
     need(total<=CAP and names==sorted(set(names)) and
-         {'native_dispatch.py','native_global_guard.py','readonly_snapshot.py','neural_outbox.py',
+         {'native_dispatch.py','native_build.py','native_global_guard.py','readonly_snapshot.py','neural_outbox.py',
           'native_evaluate.py','native_inputs.py','native_failure.py','verified_cache.py',
           'native_corpus_authority.py','jope_flywheel/__init__.py'}<=set(names),'complete bounded staged source names')
     return m,p,template

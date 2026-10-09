@@ -1,3 +1,4 @@
+from native_build import verify_native_build
 """Drain mandatory original-context emissions with native measured S3 closure."""
 from pathlib import Path
 import argparse,concurrent.futures,hashlib,json,os,sqlite3,sys,threading,time
@@ -83,8 +84,7 @@ def validate_packet(c):
   'one process, one thread, bounded emission count')
 
 def validate_build(c,build):
- need(type(c['source_build_plan_sha256'])is str and len(c['source_build_plan_sha256'])==64 and all(x in '0123456789abcdef'for x in c['source_build_plan_sha256']),'exact source build plan SHA')
- need(build['source']['pin']==c['source_commit'] and build['source']['plan_sha256']==c['source_build_plan_sha256'] and build['binaries']['worker_honest']['sha256']==c['worker']['sha256'],'native binary/source/build-plan receipt')
+ return verify_native_build(c,build,bound)
 
 def preflight(c):
  validate_packet(c)

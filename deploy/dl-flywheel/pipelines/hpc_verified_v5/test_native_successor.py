@@ -297,11 +297,13 @@ class SuccessorTests(unittest.TestCase):
               n.value.value.id=='self' and n.value.attr=='config' and isinstance(n.slice,ast.Constant)}
         self.assertLessEqual(keys,PACKET_FIELDS)
         self.assertIn('source_build_plan_sha256',keys)
-        c=dict(source_commit='a'*40,source_build_plan_sha256='b'*64,worker={'sha256':'c'*64})
-        build=dict(source={'pin':'a'*40,'plan_sha256':'b'*64},binaries={'worker_honest':{'sha256':'c'*64}})
-        validate_build(c,build)
-        for changed in ('0'*64,None,'short'):
-            with self.assertRaises(ValueError):validate_build({**c,'source_build_plan_sha256':changed},build)
+        from test_native_build import actual_fixture
+        from unittest.mock import patch
+        c,build,reader=actual_fixture()
+        with patch('native_dispatch.bound',side_effect=reader):
+            validate_build(c,build)
+            for changed in ('0'*64,None,'short'):
+                with self.assertRaises(ValueError):validate_build({**c,'source_build_plan_sha256':changed},build)
 
     def test_current_lease_cannot_authorize_a_different_program(self):
         self.emit();current=self.claim();g=self.guard();calls=[]

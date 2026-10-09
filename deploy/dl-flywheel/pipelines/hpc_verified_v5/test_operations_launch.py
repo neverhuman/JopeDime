@@ -31,12 +31,16 @@ class LaunchTests(unittest.TestCase):
         artifact=self.save('artifact',b'fixture input')
         worker=self.save('worker',b'fixture worker')
         canonicalizer=self.save('canonicalizer',b'fixture canonicalizer')
-        build=self.save('build.json',op.canonical({'source':{'pin':'a'*40,'plan_sha256':'b'*64},
-             'binaries':{'worker_honest':{'sha256':worker['sha256']}}}))
+        build=self.save('build.json',op.canonical({'schema':'jope.dl-s1-control-receipt/v1','source':{'pin':'a'*40},
+             'binaries':{'worker_honest':{'sha256':worker['sha256'],'bytes':worker['bytes']},
+                         'proposal':{'sha256':canonicalizer['sha256'],'bytes':canonicalizer['bytes']}}}))
         template={key:None for key in op.PACKET_FIELDS}
         template.update(schema='jope.native-original-drain/v4',input_lists=[artifact],source_pins=[artifact],
           native_build_receipt=build,native_canonicalizer=canonicalizer,snapshot=artifact,training_config=artifact,
           source_commit='a'*40,source_build_plan_sha256='b'*64,worker=worker,emitter=artifact,rustc=artifact)
+        plan=self.save('build-plan.json',op.canonical({k:template[k] for k in
+            ('source_commit','native_build_receipt','worker','emitter','native_canonicalizer','rustc')}))
+        template['source_build_plan_sha256']=plan['sha256'];template['source_pins'].append(plan)
         self.template=self.save('template.json',op.canonical(template))
         sources=[{'path':str(path),'kind':'outbox','config':self.conf} for path in (self.original,self.continuation)]
         sources.sort(key=lambda x:x['path'])
@@ -47,7 +51,7 @@ class LaunchTests(unittest.TestCase):
           'legacy_closure_refs':[self.save('closure.json',b'{}')],
           'legacy_units':[{'host':'xbabe2','unit':'old-native.service'},{'host':'xbabe3','unit':'old-gp.service'}]}
         self.prepared=self.save('prepared.json',op.canonical(prepared))
-        names=['native_dispatch.py','native_global_guard.py','readonly_snapshot.py','neural_outbox.py',
+        names=['native_dispatch.py','native_build.py','native_global_guard.py','readonly_snapshot.py','neural_outbox.py',
           'native_evaluate.py','native_inputs.py','native_failure.py','verified_cache.py',
           'native_corpus_authority.py','jope_flywheel/__init__.py']
         files=[{'relative_path':name,'ref':self.save('source'+str(i)+'.py',b'# inert fixture\n')}

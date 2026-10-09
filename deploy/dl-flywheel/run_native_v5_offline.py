@@ -1,4 +1,4 @@
-"""Isolated48 new native-v5 CPU fixtures; preserve prior492 wired identities.
+"""Isolated57 native-v5 CPU fixtures: original48 plus nine cold-build checks.
 
 Only this test process uses a fixed fixture wallclock before source imports, so
 clock-bound historical policies remain testable after their real deadline. Real
@@ -25,7 +25,7 @@ sys.dont_write_bytecode=True
 os.environ['PYTHONDONTWRITEBYTECODE']='1'
 os.environ['CUDA_VISIBLE_DEVICES']=''
 sys.path.insert(0,str(SOURCE))
-MODULES=('test_native_successor','test_operations_census','test_operations_launch')
+MODULES=('test_native_successor','test_operations_census','test_operations_launch','test_native_build')
 
 
 def identities(suite):
@@ -40,8 +40,8 @@ def main():
     if any(n in sys.modules for n in MODULES):raise ValueError('v5 suite requires clean isolated imports')
     suite=unittest.defaultTestLoader.loadTestsFromNames(MODULES);names=sorted(identities(suite))
     expected=json.loads((SOURCE/'test-identities.json').read_bytes())
-    if names!=expected or len(set(names))!=len(names) or len(names)!=48:raise ValueError('exact48 additive identities differ')
-    for n in (*MODULES,'native_dispatch','native_global_guard','readonly_snapshot','operations_census','operations_launch','neural_outbox','jope_flywheel'):
+    if names!=expected or len(set(names))!=len(names) or len(names)!=57:raise ValueError('exact57 native-v5 identities differ')
+    for n in (*MODULES,'native_dispatch','native_build','native_global_guard','readonly_snapshot','operations_census','operations_launch','neural_outbox','jope_flywheel'):
         # Dispatcher is imported by its fixture methods, so force its inert import now.
         if n=='native_dispatch':__import__(n)
         mod=sys.modules.get(n)
@@ -56,7 +56,7 @@ def main():
     else:
         with(a.output/'tests.log').open('x')as log:result=unittest.TextTestRunner(stream=log,verbosity=2).run(suite)
         receipt.update(executed=result.testsRun,failures=len(result.failures),errors=len(result.errors),skipped=len(result.skipped),expected_failures=len(result.expectedFailures),
-          passed=result.wasSuccessful()and result.testsRun==48 and not result.skipped and not result.expectedFailures,
+          passed=result.wasSuccessful()and result.testsRun==57 and not result.skipped and not result.expectedFailures,
           execution_state='executed',log_sha256=hashlib.sha256((a.output/'tests.log').read_bytes()).hexdigest())
     receipt['finished_utc_ns']=_REAL_TIME_NS();(a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print(json.dumps({k:v for k,v in receipt.items()if k not in ('identities','sources')}))

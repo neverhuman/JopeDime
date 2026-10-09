@@ -71,22 +71,24 @@ def main():
    raise ValueError('Prior492 offline identities must remain independently complete')
   child=subprocess.run([sys.executable,'-B',str(ROOT/'run_native_v5_offline.py'),'--output',str(a.output/'native_v5')],check=False)
   native_v5=json.loads((a.output/'native_v5/receipt.json').read_bytes())
-  success=child.returncode==0 and native_v5['passed'] is True and native_v5['collected']==native_v5['executed']==48
+  success=child.returncode==0 and native_v5['passed'] is True and native_v5['collected']==native_v5['executed']==57
   receipt['native_v5_suite']=native_v5;receipt['combined_collected']+=native_v5['collected'];receipt['combined_executed']+=native_v5['executed'];receipt['passed']=success
  if success:
-  if receipt['combined_collected']!=540 or receipt['combined_executed']!=540:
-   raise ValueError('Prior540 offline identities must remain independently complete')
+  if receipt['combined_collected']!=549 or receipt['combined_executed']!=549:
+   raise ValueError('Prior549 offline identities must remain independently complete')
   child=subprocess.run([sys.executable,'-B',str(ROOT/'run_next128_offline.py'),'--output',str(a.output/'next128')],check=False)
   next128=json.loads((a.output/'next128/receipt.json').read_bytes())
   success=child.returncode==0 and next128['passed'] is True and next128['collected']==next128['executed']==25
   receipt['next128_suite']=next128;receipt['combined_collected']+=next128['collected'];receipt['combined_executed']+=next128['executed'];receipt['passed']=success
  if success:
-  if receipt['combined_collected']!=565 or receipt['combined_executed']!=565:
-   raise ValueError('Prior565 offline identities must remain independently complete')
+  if receipt['combined_collected']!=574 or receipt['combined_executed']!=574:
+   raise ValueError('Prior574 offline identities must remain independently complete')
   child=subprocess.run([sys.executable,'-B',str(ROOT/'run_trace_v2_offline.py'),'--output',str(a.output/'trace_v2')],check=False)
   trace_v2=json.loads((a.output/'trace_v2/receipt.json').read_bytes())
   success=child.returncode==0 and trace_v2['passed'] is True and trace_v2['collected']==trace_v2['executed']==13
   receipt['trace_v2_suite']=trace_v2;receipt['combined_collected']+=trace_v2['collected'];receipt['combined_executed']+=trace_v2['executed'];receipt['passed']=success
+ if success and (receipt['combined_collected']!=587 or receipt['combined_executed']!=587):
+  raise ValueError('All587 wired offline identities must complete')
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

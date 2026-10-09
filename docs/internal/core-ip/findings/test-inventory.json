@@ -3392,6 +3392,14 @@
     "python:deploy/dl-flywheel/run_trace_v2_offline.py": {
       "role": "research",
       "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_build.py": {
+      "role": "research",
+      "reason": "Native-v5 cold-build revision2 shared actual-schema binding and nine additional portable CPU fixtures. No scientific objective/parity or global guard change; actual source/build/physical closure and deployment require separate runtime receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py": {
+      "role": "research",
+      "reason": "Native-v5 cold-build revision2 shared actual-schema binding and nine additional portable CPU fixtures. No scientific objective/parity or global guard change; actual source/build/physical closure and deployment require separate runtime receipts."
     }
   },
   "baseline_triage": [

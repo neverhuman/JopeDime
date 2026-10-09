@@ -9417,6 +9417,16 @@
       ],
       "dispositions": [],
       "scope": "13 isolated new CPU fixtures via run_trace_v2_offline.py, additively invoked after all prior540 identities. Private temporary source copies and derived local fixture JSON refs, fixed disclosed fixture time1791550000; unchanged production Python/deadlines. No live GPU/GP/S3/systemd/optimizer or production queue action."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "9 isolated cold-build schema fixtures via run_native_v5_offline.py. Exact actual six-field build-plan raw bytes and receipt source/worker/proposal joins; corruption, optional byte counts, closed keys and real evaluator metadata expression. No GP, Rust compilation, network, GPU or live database operations."
     }
   }
 }
