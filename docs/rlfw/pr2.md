@@ -207,6 +207,10 @@ python3 -B -m rlfw.bench_cli compare \
 
 Paired runs must share the exact roster/order, seeds, budget, margin, cache,
 support, evaluator, protocol and qualified incumbent values. The comparison
+also binds device placement. Each checkpoint's sampler/device qualification is
+bound to its full game SHA; those arm-specific certificate hashes are excluded
+from the shared pairing identity. Execution helper and code pins remain shared.
+The comparison
 refuses missing counterparts and writes create-only. A later challenger can
 reuse comparator receipts with `--reuse-hwm-from` only after identical family
 identity and full original evidence validation. Promotion and teacher changes
