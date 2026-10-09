@@ -1,0 +1,35 @@
+{
+  "actual_failed_attempt": {
+    "bytes": 54011,
+    "custody_path": "work/heartbeat-20261009-1843/callback-live-qualification/physical-terminal-custody.json",
+    "durable_event_head": {
+      "bytes": 25812,
+      "config_sha256": "f8d933a54ff528d280475f3cca42f768f2d97ea5d76da5d38761a9258d7e22a4",
+      "events": 32,
+      "head_sha256": "f7e160b03d53a37616de5dcead231bf30eb5976fa540f31541b3b6224172a8a0"
+    },
+    "gp_executions": 0,
+    "message": "closed local pin",
+    "optimizer_updates": 0,
+    "result_sha256": "6579ab2280538f0913cbbe2b07aa108344ca9e85c59effbec39bb6a59c086560",
+    "s3_writes": 0,
+    "sha256": "f21031b41d19e868c6363c9b37896a72bce3cca60f39a493449fc426de41f7ab",
+    "state": "failed",
+    "verified_bytes": 788233,
+    "verified_gets": 5
+  },
+  "prior_packets": [
+    {
+      "files_verified_unchanged": 31,
+      "packet_path": "work/heartbeat-20261009-1843/generated-target-callbacks-v1/SOURCE_PACKET.json",
+      "sha256": "e1ea1963fa88f9f862058d6556ed080add7c8745ee7eade07d1dbff90c34d223"
+    },
+    {
+      "files_verified_unchanged": 31,
+      "packet_path": "work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/SOURCE_PACKET.json",
+      "sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b"
+    }
+  ],
+  "remote_actions_in_this_revision": false,
+  "schema": "jope.callback-parent-pin-correction-provenance/v1"
+}

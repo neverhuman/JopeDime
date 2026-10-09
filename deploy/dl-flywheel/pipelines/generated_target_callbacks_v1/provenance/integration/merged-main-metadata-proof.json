@@ -1,0 +1,74 @@
+{
+  "common_base": "586c4ae7abad47d1c578fc5b07a0497385865ddc",
+  "foreign_main_source_handling": "Owner private-index two-parent history merge must inherit all eight main source files byte-exact; this local overlay contains no foreign RLFW code and adds no RLFW SOURCE_MANIFEST pin.",
+  "git_actions": 0,
+  "global_runner_wired": 812,
+  "head": "4f9fcf771883bdc9926e38ed4192b96be47eae19",
+  "imports": 0,
+  "main": "1aea2c1041aa8d859ec9b475a28d73d1cc2c1e04",
+  "main_rlfw_family_is_separate_lane": true,
+  "maps": {
+    "deploy/ci/coverage.json": {
+      "added_exact_main_value": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [],
+        "lanes": [
+          "python"
+        ],
+        "scope": "Registered data-free best-of-32 fixtures: exact leaf membership, all raw draws, predicted-only ranking, fixed feasibility fallback, durable restart and eight blind charges. No live evaluator, checkpoint or performance qualification."
+      },
+      "captured_raw_hashes": {
+        "base": "d7bec8233de55053cfa7c3e244e8fbd5b8b36b3741191da5427383e5173a4159",
+        "head": "e38da7e9a9801e0c1ee8025561e99cd1ce8b17249b197e61ada4fa6b2a40b855",
+        "main": "bf91df23dd917a0b015c187ee86ace29c850661d8556d93a8d881bae478bbea9"
+      },
+      "head_all_values_and_lanes_preserved": true,
+      "main_deletions": [],
+      "main_existing_item_changes": [],
+      "main_new_items": [
+        "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py"
+      ],
+      "merged_items": 621,
+      "old_candidate_all_values_preserved": true,
+      "prior_candidate_items": 620
+    },
+    "docs/internal/core-ip/findings/test-inventory.json": {
+      "added_exact_main_value": {
+        "role": "regression",
+        "subsystems": [
+          "evaluation",
+          "evidence",
+          "orchestration"
+        ]
+      },
+      "captured_raw_hashes": {
+        "base": "f9ff1e2aa82323d02f95142e9707d8cf05a565a8ab0c99f7bda5704a9de4f6b3",
+        "head": "7282624f1c3706990098ce45434a63f605ec4c1a01596e3222f71613012f6701",
+        "main": "02754d64dd231b0cef72bbc0f00773e92a0860d62630f36015bdff4b2b3ec20c"
+      },
+      "head_all_values_and_lanes_preserved": true,
+      "main_deletions": [],
+      "main_existing_item_changes": [],
+      "main_new_items": [
+        "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py"
+      ],
+      "merged_items": 512,
+      "old_candidate_all_values_preserved": true,
+      "prior_candidate_items": 511
+    }
+  },
+  "prior_candidate_manifest": {
+    "bytes": 38604,
+    "sha256": "d955f0202c86156d895d293028b404b82dc832ad87fe1963f4aa125d64f44874"
+  },
+  "remote_actions": 0,
+  "schema": "jope.callback-source-main-metadata-union/v1",
+  "source_capture": {
+    "bytes": 1636538,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/metadata-main-head-base.json",
+    "sha256": "2d22e6fb4c2a6e0e5d6d85761baa02e73ab9f4ebafa868830ce6ede20689d633"
+  },
+  "tests_run": 0
+}

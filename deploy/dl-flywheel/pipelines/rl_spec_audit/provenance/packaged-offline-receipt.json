@@ -1,0 +1,38 @@
+{
+  "schema": "jope.rl_spec_audit-offline-tests/v1",
+  "started_utc_ns": 1791559054575625000,
+  "source_sha": null,
+  "collected": 9,
+  "identities": [
+    "test_audit_math.MathAuditTests.test_cli_portable_and_create_only_matches_retained_numerical_cases",
+    "test_audit_math.MathAuditTests.test_conditional_quality_is_not_unconditional_failure_utility",
+    "test_audit_math.MathAuditTests.test_dense_rloo_four",
+    "test_audit_math.MathAuditTests.test_dense_rloo_two",
+    "test_audit_math.MathAuditTests.test_marginal_best_of_four",
+    "test_audit_math.MathAuditTests.test_marginal_best_of_one",
+    "test_audit_math.MathAuditTests.test_marginal_best_of_two",
+    "test_audit_math.MathAuditTests.test_raw_incumbent_and_clipped_sample_can_erase_gradient",
+    "test_audit_math.MathAuditTests.test_stale_best_of_group_needs_joint_not_item_weight"
+  ],
+  "sources": {
+    "pipelines/rl_spec_audit/audit_math.py": "ed3cf280dcf0565970266f90646b47aa1f25678a7675f5498cef38a86689eaf0",
+    "pipelines/rl_spec_audit/provenance/math-audit.json": "33a603b88cc6d4becf12b6625c85df88306465d573a764b7d8080f67aa1c8f13",
+    "pipelines/rl_spec_audit/provenance/origin-audit_math.py.txt": "330c256117a0411eba0aa97dfa9284f267cd2ae950224ee27b4b861d7b96d6d0",
+    "pipelines/rl_spec_audit/test-identities.json": "14d426704724ef0981c18b051f33e38750a7483e9b1acf86c2a061b660cbb08e",
+    "pipelines/rl_spec_audit/test_audit_math.py": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92"
+  },
+  "gp_executions": 0,
+  "s3_requests": 0,
+  "gpu_execution": false,
+  "production_queue_mutations": 0,
+  "scope": "Offline CPU fixtures only. Mathematical audit and launcher qualification do not establish actor learning, resources, launch or GP outcomes.",
+  "executed": 9,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "expected_failures": 0,
+  "passed": true,
+  "execution_state": "executed",
+  "log_sha256": "44baea09c86fe4fb96cbe41a66fed1627c7948e5afd373cd17de65706837bf76",
+  "finished_utc_ns": 1791559054664836000
+}

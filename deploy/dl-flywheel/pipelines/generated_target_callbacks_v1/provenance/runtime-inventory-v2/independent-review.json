@@ -1,0 +1,56 @@
+{
+  "blockers": [],
+  "checks": [
+    "No Session/client/get_object/HEAD/PUT/database/broker/GP/model/Rust/evaluator API call is introduced; imports, metadata file reads/hashes and stdout only.",
+    "Python3.12.3, CPUquota<=1/RAM512MiB/swap0/CUDAempty checks retained. Exact current interpreter/modules and source files are observations, not guessed approved versions.",
+    "Source closures limited4096files,64MiB each,256MiB total and known package origin roots. Source-only stdout can still exceed configured wrapper limit or fail due honestOOM/clock; do not claim guaranteed success.",
+    "Metadata scans and imports occur within external bounded source-support envelope; no held scoring/archive/GPU pool or source installation changes."
+  ],
+  "delta": [
+    "Adds actual import-origin tree enumeration for7already-existing packages, separate from potentially parallel distribution metadata.",
+    "Pure import of known lazy s3transfer.compat ensures actual system-origin module is included.",
+    "Reports actual_package_origins alongside pinned import_files; no runtime installation or SDK/credential source edit."
+  ],
+  "failed_qualification_retained": {
+    "bytes": 788233,
+    "controller_inner_returncode": 1,
+    "controller_outer_returncode": 0,
+    "custody_sha256": "ac115e0d943bbe88983e8e2007a8adb5e6739ee30f19590d690c9c52ae1f0d90",
+    "db_writes": 0,
+    "error": "unlisted imported external source:/usr/lib/python3/dist-packages/s3transfer/compat.py",
+    "events": 32,
+    "gp": 0,
+    "optimizer": 0,
+    "outer_returncode_does_not_overrule_failed_result": true,
+    "result_sha256": "1a9b6ec5b14687e03492a4d118ab55589e44fbaa9469ca377fcf7dc5d5147ddb",
+    "s3_writes": 0,
+    "state": "failed",
+    "verified_gets": 5
+  },
+  "launch_conditions": [
+    "Fresh one-use metadata-only userunit under originalglobal1791592146.380285: RuntimeMax60s,CPU100%,RAM512MiB,swap0,Nice19,Tasks24,Restartno,BLAS1,CUDAempty/assertions enabled. Fresh actual host-resource and source-support ownership gates; no allocation/pool expansion.",
+    "Use exact existing qualified Python3.12 interpreter/environment; validate observed NumPy/boto/botocore versions and origins against standing runtime. No SDK patch/install/credentials/config changes.",
+    "Bound external stdout to1MiB before reading/buffering and preserve actual bytes/truncation/failure evidence; helper has no internal1MiB or60s guard.",
+    "Capture own intent/source/argv/physical unit terminal evidence before accepting whole parsed inventory. Timeout/OOM/import/cap failure remains incomplete/refused; preserve all prior qualifier/config/window state, no automatic retry.",
+    "Any subsequent selected GET-only qualification needs a new reviewed immutable config/runtime map/cold unit/window; this source inventory PASS alone does not release qualification/fullcutoff/export/numeric/admission/GP scopes."
+  ],
+  "previous_review_sha256": "30ffd1a6e969596dc7e2aecee124528acf7dce840c709c0ebd87ecba52ec4ef5",
+  "previous_source_sha256": "cc2d32cc758f2431906475b14d574d7e71b1c25af827503577317b6a0a9a191c",
+  "reviewed_at_utc_ns": 1791575474329355000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "launches": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-runtime-inventory-source-review/v2",
+  "source": {
+    "bytes": 3257,
+    "path": "work/heartbeat-20261009-1843/callback-runtime-inventory-v2/inventory.py",
+    "sha256": "794c9a45bcc8877e4d04f131e02407f5c3ae38bb5d7d9c6b673d2d07e5511c0d"
+  },
+  "state": "passed_metadata_source_with_bounded_launch_conditions"
+}

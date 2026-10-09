@@ -1,0 +1,38 @@
+{
+  "normalized_descriptor_refs": {
+    "dataset_publication": {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 3071,
+      "key": "experiments/gp-policy-dl/v2-trainonly/receipts/flywheel-datasets/v1/16f4bbf42c195d234a3616a73d8f8472aee8b21f9f3c99d618f15b3db9cdae77/c70c458c499073a5952d8e9fb351782530a9946f6e9daf900b1d01f4aa1bea85.json",
+      "sha256": "c70c458c499073a5952d8e9fb351782530a9946f6e9daf900b1d01f4aa1bea85",
+      "version_id": "WDhtcDBMSWZaM1W7jGyX4g5Kt1YxdqLo"
+    },
+    "encoder_publication": {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 83775,
+      "key": "experiments/gp-policy-dl/v2-trainonly/receipts/flywheel-datasets/v1/16f4bbf42c195d234a3616a73d8f8472aee8b21f9f3c99d618f15b3db9cdae77/95b55034d692cdea2244a1e6e32a59fe73cb4b5a05c4444309947e292720edd8.json",
+      "sha256": "95b55034d692cdea2244a1e6e32a59fe73cb4b5a05c4444309947e292720edd8",
+      "version_id": "BNSjKjbe.8GFYMJo1JbEowvF3Iz_QO5S"
+    }
+  },
+  "source_kind": "read-only actual prepared metadata capture; not a live qualification",
+  "source_sha256": "1e7a6c9c01dd72fb82b786f4c7cf1d6eaae12d8c072df632779f0fc2d970dc6b",
+  "task_refs": {
+    "dataset_publication": {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 3071,
+      "key": "experiments/gp-policy-dl/v2-trainonly/receipts/flywheel-datasets/v1/16f4bbf42c195d234a3616a73d8f8472aee8b21f9f3c99d618f15b3db9cdae77/c70c458c499073a5952d8e9fb351782530a9946f6e9daf900b1d01f4aa1bea85.json",
+      "sha256": "c70c458c499073a5952d8e9fb351782530a9946f6e9daf900b1d01f4aa1bea85",
+      "version_id": "WDhtcDBMSWZaM1W7jGyX4g5Kt1YxdqLo"
+    },
+    "encoder_publication": {
+      "bucket": "veox-jopedime-learning-use2",
+      "bytes": 83775,
+      "key": "experiments/gp-policy-dl/v2-trainonly/receipts/flywheel-datasets/v1/16f4bbf42c195d234a3616a73d8f8472aee8b21f9f3c99d618f15b3db9cdae77/95b55034d692cdea2244a1e6e32a59fe73cb4b5a05c4444309947e292720edd8.json",
+      "sha256": "95b55034d692cdea2244a1e6e32a59fe73cb4b5a05c4444309947e292720edd8",
+      "state": "created",
+      "verification": "exact VersionId GET + SHA256",
+      "version_id": "BNSjKjbe.8GFYMJo1JbEowvF3Iz_QO5S"
+    }
+  }
+}

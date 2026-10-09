@@ -1,0 +1,31 @@
+{
+  "findings": [
+    {
+      "draft_sha256": "6ab92bff (reported prefix)",
+      "issue": "parent_lineage field differed from actual parent_lineage_sha256",
+      "resolution": "current encoder binding uses exact parent_lineage_sha256; no alias accepted",
+      "source": "independent parent reviewer"
+    },
+    {
+      "issue": "actual c961 predecessor encoder reference has state/verification metadata; admitted descriptor has five identity fields",
+      "resolution": "strict five-identity projection only in selected qualification; source reference retained; frozen exporter unchanged and actual full export held",
+      "source": "independent parent reviewer"
+    },
+    {
+      "issue": "Mac temporary /var directory is a symlink; seven fixture branches refused before reaching intended paths",
+      "receipt_sha256": "b24bb1ff5a30f99d05b2de2668564681ea0c391a5637121a74010a60c1daf97b",
+      "resolution": "only fixture temp roots resolved to physical paths; production nonsymlink guard unchanged",
+      "source": "offline attempt1"
+    },
+    {
+      "issue": "qualified evaluator source/plan and vendor manifest must be explicit constants",
+      "resolution": "fixed before final37 run; preserved earlier36 success receipt and added configuration-corruption fixture",
+      "source": "final source hardening"
+    }
+  ],
+  "frozen_exporter_modified": false,
+  "initial_draft_not_sealed": true,
+  "live_qualification": false,
+  "observed_at_unix": 1791573132.470109,
+  "schema": "jope.generated-target-callback-draft-review-history/v1"
+}

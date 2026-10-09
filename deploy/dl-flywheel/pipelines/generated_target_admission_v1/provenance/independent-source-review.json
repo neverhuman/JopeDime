@@ -1,0 +1,151 @@
+{
+  "actions": {
+    "live_database_reads": 0,
+    "network_calls": 0,
+    "production_imports": 0,
+    "remote_calls": 0,
+    "review_receipt_writes": 1,
+    "service_actions": 0,
+    "source_edits": 0,
+    "tests_executed": 0
+  },
+  "documentation": {
+    "bytes": 13001,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+    "sha256": "6abc82c94c5b9cb680bb654b8130731fac2b95cdf394e0379a9232490d99b397"
+  },
+  "qualification": {
+    "addendum_wall_seconds": 0.06608370831236243,
+    "all_10_python_sources_AST_parse": true,
+    "all_final_python_pins_match_addendum": true,
+    "base_author_executed": 24,
+    "base_failed_errors_skipped": 0,
+    "base_receipt": {
+      "bytes": 9762,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/qualification-attempt2.json",
+      "sha256": "91488f3e5a9ffd775b5bd2b654df46a39b4f6e287e257974f7dd29dd41c4c18c"
+    },
+    "base_wall_seconds": 0.3864167081192136,
+    "distinct_fixture_identities": 24,
+    "distinct_new_identities_added_by_addendum": 0,
+    "final_affected_author_reexecuted": 2,
+    "final_changed_return_shape_addendum": {
+      "bytes": 2825,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/qualification-addendum.json",
+      "sha256": "7ab3565fa8335a95b8dfe4d1b76f4a6a72c705c9ef181166f36f88f05a84ee24"
+    },
+    "final_changes_after_full_family_run": [
+      "export_verified.py",
+      "tests/fixture_callbacks.py",
+      "tests/test_export.py"
+    ],
+    "python_reported": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "retained_failed_attempt": {
+      "bytes": 48521,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/qualification-attempt1.json",
+      "sha256": "fd98df93c8002d907886d030fa9bb6ba2d8078c7ea628e8cdf8e7cbc0d2d4a36"
+    },
+    "reviewer_tests_executed": 0,
+    "static_AST_roster_matches_base_24": true
+  },
+  "qualification_limits": [
+    "Production artifact reader, canonicalizer, semantic program gate and role-authority adapters are absent and unqualified; fixture callbacks intentionally use fake bodies and must never serve live requests.",
+    "Function-body structural comparison and declared file hashes do not sandbox callbacks or attest arbitrary module globals, loaded dependency/native execution state or external services. Production source/runtime qualification remains mandatory.",
+    "Cooperative in-process deadlines do not interrupt hung callbacks. External hard deadline/memory bounds and bounded adapter I/O remain required for any later production execution.",
+    "Physical live SQLite snapshot capture/provenance is a separately qualified prerequisite; this review read no live database and did not establish actual source/outbox head.",
+    "No live export, numeric target materialization, tensor preparation, CE promotion, repeated epoch admission, checkpoint transfer, native overlay, optimizer update, RL behavior or learning gain was qualified or executed.",
+    "Author receipts qualify this local Python 3.14.6 environment. No independent execution or target-host Python/runtime qualification is claimed. Source integration/current-head CI remain separate gates."
+  ],
+  "reference_outbox": {
+    "byte_exact": true,
+    "fixture": {
+      "bytes": 13769,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    "historical_source": {
+      "bytes": 13769,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    }
+  },
+  "resolved_findings": [
+    {
+      "id": "loaded_callback_source_identity",
+      "resolution": "Loaded function code must structurally equal a code object compiled from pinned source bytes with the matching qualified name. Defaults/closures are refused. New stale-loaded-function negative fixture covers the original disk/source mismatch.",
+      "source": "common.py:99-123"
+    },
+    {
+      "id": "selection_limit_hides_alias_conflict",
+      "resolution": "Canonical accepted/prior-key duplicate and conflicting-ref checks precede unique-target caps; duplicate source emission IDs are retained. Dedicated cap/alias/conflict fixtures cover this.",
+      "source": "export_verified.py:259-273"
+    },
+    {
+      "id": "reader_callback_unpinned",
+      "resolution": "read_version participates in the same source/loaded-function checks as canonicalize, verify and authority.",
+      "source": "export_verified.py:128-130,212"
+    },
+    {
+      "id": "extra_verifier_target_fields",
+      "resolution": "Structured result requires exactly the current verified_measurement ten-field shape. Final affected fixture rejects an invented q_opt field; success fixture rerun.",
+      "source": "export_verified.py:281-290"
+    }
+  ],
+  "reviewed_at_utc": "2026-10-09T18:09:17.141742+00:00",
+  "reviewed_contracts": [
+    "Cutoff uses a separately supplied immutable database image, exact file SHA/config/event counts/head and complete materialized state/ACK joins. It rejects WAL/SHM/rollback journal and opens mode=ro/immutable=1/query_only; no constructor or source index writes.",
+    "Closed selected-emission identities preserve exact model/batch/campaign/phase/Context/program ancestry; successful train-role variant rows alone may append refs. Native overlay, validation, unresolved and failed states remain nonnumeric excluded census entries.",
+    "Each new appended result joins an exact wrapper plus seven artifact roles by version/hash/bytes and a structured semantic verifier return. Existing prior refs are preserved; prior wrapper/program reads build duplicate identity only, not full old artifact requalification.",
+    "Transition validation preserves all non-task extension fields, task order/count and each prior ordered result-reference prefix; duplicate result refs are refused.",
+    "Fixed objective/preprocessing/fit roster/source pins and before/after authoritative parent-role proof joins remain intact; no new numeric target formula or CE teacher promotion is present.",
+    "Output is a canonical byte manifest with explicit unadmitted/no optimizer/no source optimizer-commit verification fields. Outbox ACK is not equated with a committed optimizer batch.",
+    "Fixtures are synthetic, use an exact frozen outbox copy, and include both successful reference export and meaningful integrity/alias/role/source/limit refusal paths. Runner limits execution to this new package and records module origins, pins, identities and logs."
+  ],
+  "reviewer": "/root/generalization_design/review_guard",
+  "schema": "jope.generated-target-export-independent-source-review/v1",
+  "scope": "Independent static final source, fixture, runner, README and qualification-receipt review of local reference-export-only packet. No independent test execution, production imports or runtime qualification.",
+  "source_pins": {
+    "__init__.py": {
+      "bytes": 77,
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006"
+    },
+    "common.py": {
+      "bytes": 4948,
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    "cutoff.py": {
+      "bytes": 10540,
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+    },
+    "export_verified.py": {
+      "bytes": 24476,
+      "sha256": "9fcfb64c304011fc6cd4c84ddb03d64e55d744b3f936d17aa60cf55871fdf86a"
+    },
+    "run_offline.py": {
+      "bytes": 3969,
+      "sha256": "ad84fe7d6cdb6fbf1c2bce067a107fb62d3ead281c1b98605c50abb4705eb968"
+    },
+    "tests/__init__.py": {
+      "bytes": 55,
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f"
+    },
+    "tests/fixture_callbacks.py": {
+      "bytes": 2810,
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66"
+    },
+    "tests/reference_outbox.py": {
+      "bytes": 13769,
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    "tests/test_export.py": {
+      "bytes": 23404,
+      "sha256": "21de296615adedbe4b8c652f6423420e2ade28f3109227101e76ef032e6bf161"
+    },
+    "transition.py": {
+      "bytes": 905,
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+    }
+  },
+  "source_root": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/deploy/dl-flywheel/pipelines/generated_target_admission_v1",
+  "state": "bounded_no_blocking_findings"
+}

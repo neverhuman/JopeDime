@@ -1,0 +1,236 @@
+{
+  "actions": {
+    "gp_executions": 0,
+    "implementation_edits": 0,
+    "module_imports": 0,
+    "qualification_runs": 0,
+    "remote_calls": 0,
+    "s3_requests": 0,
+    "sqlite_mutations": 0
+  },
+  "created_utc": "2026-10-09T19:05:01.589891+00:00",
+  "draft_caveat": "Draft files may have changed after inspection; findings bind stated read hashes. Wait for immutable source packet for final review.",
+  "draft_source_as_read": {
+    "bindings.py": "28ddbe125082775c89cc372745db0f9a2a245eae8a5cc136b0e3316f8b6ac085",
+    "callbacks.py": "6ab92bffa7b82c34f702904d226e914c8a4e0957d4406220ea3f989f0be7ab63",
+    "readonly_io.py": "5dcffa36026053bdaa1850e9eda8338e451d59934ff349c5948f6c7c9876529b"
+  },
+  "evidence_pins": [
+    {
+      "bytes": 23647,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/live-export-input-metadata.json",
+      "sha256": "cfe022d24a8cd5096e4dc5aeec057b64d4396d2357ec974401e06c00459aaab7"
+    },
+    {
+      "bytes": 457,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/live-outbox-size-census.json",
+      "sha256": "9cc7fdae6942ff2916cf248ea0f4a2527381c6d31fa5dfc0307f9ce2b3a2ff26"
+    },
+    {
+      "bytes": 13200,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/variant-v4-runtime-contract.json",
+      "sha256": "64eda671c2937743b874d076352179d5691a7599606a714748b7edf0f3f0158f"
+    },
+    {
+      "bytes": 19979,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/prepared-origin-contract.json",
+      "sha256": "1e7a6c9c01dd72fb82b786f4c7cf1d6eaae12d8c072df632779f0fc2d970dc6b"
+    },
+    {
+      "bytes": 26325,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/successful-training-reference-candidates.json",
+      "sha256": "dd741e203df73948c6e6bb41a5067f8ff475d9f7130f8803125123c7745759c2"
+    },
+    {
+      "bytes": 405,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/native-snapshot-contract-metadata.json",
+      "sha256": "c56c060c1fc981ab73399858d1de28293b13c589ba0852a238057dd3190e61a5"
+    },
+    {
+      "bytes": 179,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/xbabe2-resource-sample.json",
+      "sha256": "d9fab448670bd48a36aaaf10a506520db5aa03be28787e1c27803acfe010485f"
+    },
+    {
+      "bytes": 13158,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/git-current-before-write.json",
+      "sha256": "d48204b17105170b2d153cad12a9456f5facb2061e6219c1f5040fa0fcdd6197"
+    },
+    {
+      "bytes": 4948,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    {
+      "bytes": 10540,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+    },
+    {
+      "bytes": 24595,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    },
+    {
+      "bytes": 9974,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "bytes": 10734,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/program_inputs.py",
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66"
+    },
+    {
+      "bytes": 6171,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "bytes": 4827,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "bytes": 9341,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "bytes": 4178,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/s3_library.py",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
+    },
+    {
+      "bytes": 20129,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/jope_flywheel/native_variant_snapshot.py",
+      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+    },
+    {
+      "bytes": 13769,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    {
+      "bytes": 7249,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/prepared/prepared_snapshot.py",
+      "sha256": "d7afd3c424d26eb940ddfddfec25dab1fa843f79678b781aa2758cccbf099561"
+    },
+    {
+      "bytes": 43605,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/tree/deploy/dl-flywheel/pipelines/encoding/evergreen_kumos_packet.py",
+      "sha256": "dfba7d520b9c87c124555a29c58210698344180b51fa31a2092e11e05db4621e"
+    }
+  ],
+  "findings": [
+    {
+      "fact": "Actual first predecessor task encoder_publication contains state and verification annotations in addition to five exact identity fields. Current composer normalizes descriptor refs to five fields. Raw predecessor reference acceptance and direct equality in both adapter and frozen exporter therefore refuse the actual shape.",
+      "id": "ACTUAL-ANNOTATED-PREDECESSOR",
+      "required": "Preserve original c961 predecessor bytes and ordered old references; independently review a cold compatibility version that compares normalized identity while retaining annotations. Do not silently normalize the historical predecessor or modify frozen v2.",
+      "severity": "blocker_for_full_export_and_draft_configuration",
+      "source": [
+        "bindings.py:93 (draft as read)",
+        "export_verified.py:169",
+        "export_verified.py:184"
+      ]
+    },
+    {
+      "fact": "Draft _encoder_binding reads parent_lineage; qualified publication carries parent_lineage_sha256. Actual result record outer_test_rows and teaching_eligible fields do exist.",
+      "id": "ENCODER-PARENT-FIELD",
+      "required": "Use actual producer schema and qualify with an actual version/hash/bytes bound publication; no synthesized alias.",
+      "severity": "blocker_for_draft_live_configuration",
+      "source": [
+        "callbacks.py:140 (draft as read)",
+        "native_variant_snapshot.py:77",
+        "evergreen_kumos_packet.py:333"
+      ]
+    },
+    {
+      "fact": "14,365 per-batch queries against 28,730 emissions, without batch_id index in frozen schema. About 412,706,450 row examinations if planner uses full scans. No actual timing measured by reviewer.",
+      "id": "UNINDEXED-CUTOFF-LOOKUPS",
+      "required": "Use a separately reviewed disk-only private backup/index or streaming complete verification, preserving source transaction and semantic custody. No live DDL, no memory backup under unqualified512MiB, no partial census sold as complete.",
+      "severity": "throughput_and_deadline_hold",
+      "source": [
+        "cutoff.py:131",
+        "neural_outbox.py:30-33"
+      ]
+    },
+    {
+      "fact": "103,445,627 bytes emission BLOBs plus parsed Python dictionaries, indexes and canonical JSON copies coexist; 256MiB input/output bound is not an RSS bound. Real standalone backup estimate 200,683,520 bytes is within256MiB but exceeds default128MiB.",
+      "id": "FULL-JSON-RSS",
+      "required": "Do not claim full512MiB qualification. First qualify one measured training context callback; separately prove complete cutoff/export memory and deadlines or implement reviewed bounded streaming/disk protocol. Preserve OOM/timeout attempts and no partial accepted manifest.",
+      "severity": "resource_qualification_hold",
+      "source": [
+        "cutoff.py:151",
+        "cutoff.py:157",
+        "common.py:48-49",
+        "export_verified.py:206"
+      ]
+    },
+    {
+      "fact": "Samples have different UTC instants and head counts:14,355 batches/28,710 observations vs14,365/28,730; candidate snapshot headseq18,296 is later. Cannot pair oldest head with later backup.",
+      "id": "SAMPLES-ARE-NOT-ONE-CUTOFF",
+      "required": "Owner must capture image, exact control/head/counts/candidate rows in one read-only physical transaction, then independently seal/refuse sidecars. Small candidate observation remains explicitly not full-cutoff/optimizer proof.",
+      "severity": "protocol_requirement",
+      "source": [
+        "live-export-input-metadata.json",
+        "live-outbox-size-census.json",
+        "successful-training-reference-candidates.json"
+      ]
+    }
+  ],
+  "protocol": {
+    "completion_criteria": "Exact pinned live selected callback receipt, physical owned-unit closure, measured RAM/CPU/GET/time and zero forbidden mutations. Full reference export/admission remain HELD until separate complete-cutoff/resource compatibility qualification.",
+    "initial_proposed_limits": {
+      "cpu_cores": 1,
+      "global_deadline_unix": 1791592146.380285,
+      "gpu": 0,
+      "maximum_attempted_get_bytes": 67108864,
+      "maximum_gets": 16,
+      "maximum_selected_successes": 1,
+      "maximum_wall_seconds": 180,
+      "memory_bytes": 536870912,
+      "network_retries": 0,
+      "resource_grant": "conditional existing authorized review envelope only; root must freshly resolve concurrent caps",
+      "swap_bytes": 0
+    },
+    "later_full_export_requirements": [
+      "Every emission assigned once to appended/duplicates/validation/pending/refused; retained failures/unknowns never numeric/retried",
+      "Both source phase=training AND independently inherited parent role=train",
+      "Canonical alias equality against actual same-context existing results; conflicting same-key versions stop, old ordered refs retained",
+      "Expanded max_context/max_rows selection is pending with honest denominator; no native overlay or validation target",
+      "Export flags stay numeric_targets_materializedFalse/source_optimizer_commit_verifiedFalse/optimizer_updates0/admissionFalse until later actual numerical preparation and boundary consumer"
+    ],
+    "non_goals": [
+      "No GP reevaluation, Rust compilation/execution, new encoding or scoring",
+      "No S3 PUT/HEAD/delete; exact-version GET only",
+      "No live Outbox/Queue/ProgramGate constructor, mutation, lease or optimizer update",
+      "No numerical targets, CE/RL promotion, epoch adoption or new resource grant",
+      "No repeated28 exporter fixtures"
+    ],
+    "objective": "Qualify existing successful train-variant read-only canonicalization/measurement/authority callbacks before a full reference export.",
+    "ordered_steps": [
+      "Fix actual-schema blockers in a new reviewed source version, retaining frozen exporter and failed/draft evidence. Freeze complete source/config/native interpreter/runtime dependency closure before staging.",
+      "Owner selects one already published training-model result from a single physically read-only candidate snapshot. Pin image/transaction head, row body and outcome/ref; verify raw DSL SHA, emitted ordinal and training membership. Selection is qualification only, not a full census or optimizer commitment proof.",
+      "Derive128 unchanged descriptors and predecessor extension bytes from exact b851 prepared plus e909 adoption and current executor/campaign refs. Join all inherited parent roles to8fe4 original registry; re-read current target/role/layers and exclude protected lineage. Bind original4f093 normalizer/fit roster, bf02 objective, exact frozen licensedfc672 Kumo2051 roster.",
+      "Qualify exact Python3.12.3 interpreter, NumPy1.26.4/boto3 1.35.49 and transitive imported files/origins. Use no CUDA, BLAS1, one-shot external CPU/RAM/swap/time limits and fresh host cap evidence; no generic broker/pool hold release.",
+      "Use RegisteredInputs.describe only for selected context: four exact dataset GETs, local deterministic transformation replay, Context/parent/role/full dataset publication joins. Encoder publication must use actual fields and exact approved release/weight/license bindings; old admitted vector is not recomputed.",
+      "Read successful wrapper at existing exact VersionId and all7 role artifacts (typically8 GETs). Charge attempts before network, require returnedVersion/contentLength/hash/bytes, bound stream before buffering, explicit connect/read timeouts and total_max_attempts1. Existing qualified client5/20 max_attempts0 already forbids retries. Pin namespace; wrapper key uses evaluation_key, role objects are content-addressedobjects/SHA/role.",
+      "Canonicalize only with pinned699 native binary --canonical-program and --canonical-json. Pass Context(**ctx) and exact7 fetched bodies through a local store whose nativecanonical_json attribute points to native canonical JSON. Invoke only pure verified_measurement; no ProgramGate/Queue/Outbox construction or .ensure/.lookup/evaluate/emit.",
+      "Require exact10-field measurement result: context/program/evaluation keys, seven actual versions, measured two-fold RMSE reconstructed from exact targets, fixed producer Rust parity, native canonical score row hashes, teaching_eligibleFalse. Do not rerun native fits or Rust to recheck old parity; preserve approved producer7closure.",
+      "Re-read current authority/source/role/normalizer/objective/licensed roster after work. Preserve per-stage UTC-nanoseconds/monotonic/own+childCPU, exact GET counts/attemptbytes/elapsed/actualpeakRAM and all exceptions. No fabricatedCUDA utilization time. External OOM/timeout must retain durable partial timing/failure evidence.",
+      "After qualifying selected callbacks, separately review full128 authority replay budget and complete-cutoff capture/index/export. Require whole denominator states, validation exclusion and all unknown/failed custody; selected4 observation is never sufficient full export authority."
+    ],
+    "stop_conditions": [
+      "Any alias/ref/objective/role/source/runtime drift",
+      "Any missing or failed exact GET, timing/RAM/time/cap exhaustion",
+      "Any unexpected native mode, S3 write, SQLite mutation or executable evaluation",
+      "Any false/unknown fixed parity or unknown canonical outcome",
+      "Any current resource hold unresolved"
+    ]
+  },
+  "reviewer": "successor_review",
+  "schema": "jope.independent-generated-target-live-protocol-review/v1",
+  "scope": "Local read-only protocol/source inspection before author packet freeze. Not final callback source/config PASS or native GitHub approval.",
+  "state": "held_for_full_export; provisional_protocol_only"
+}

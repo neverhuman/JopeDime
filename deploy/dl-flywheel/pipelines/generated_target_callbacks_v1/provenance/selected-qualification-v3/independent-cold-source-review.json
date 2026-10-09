@@ -1,0 +1,74 @@
+{
+  "blockers": [],
+  "checks": [
+    "Config diff from correctedv2 restricted to fresh output root and runtime.import_files.22reviewed revision3Python files and all scientific/source/authority/data/license/selected-result/GET-size pins unchanged.",
+    "679unique exact runtime refs/64,751,684 bytes equal the fresh metadata inventory; all old651 refs remain byte/hash/path-identical. Added28actual system-origin SDK/dateutil/urllib3 files; absent lazy imports still refuse.",
+    "Controller differs only owned root/unitv2->v3. Paired monotonic/wall ends, refreshed dispatch margin5s, exact configSHA owned-transient guardian, create-onlyfsynced one-use intents and configured resources unchanged.",
+    "Prior qualifier-v1/v2 attempts/results/configs/clocks remain immutable failures. Same successful historicalGP reference is read/canonicalized only, never evaluated or retried."
+  ],
+  "conditions": [
+    "Final raw config must change only the two null clocks, genuinely fresh immutable interval<=180s belowglobal. Bind final exactSHA to source/staging/controller argv/intent/ownoutput evidence.",
+    "Fresh actual shared-resource/source-support ownership, exact current source/import/runtime/license/authority checks, new never-startedv3unit and nonexistent ownoutput/launch/dispatch files are mandatory. No held-pool expansion or resource reservation.",
+    "Reported cap is dispatch-intent actual remaining minus5s, not initial sampled duration. No failed earlier window/output reuse or implicit retries.",
+    "Qualifier callback result/journal is authoritative; outercontroller/service returncode0 must not override innerfailedresult. Complete terminal parsedresult/hashlinkedjournal+physicalclosure needed for selectedPASS; partialtail/OOM/import/GET/drift staysrefusedunknown.",
+    "All128schema/fullcutoff/exportcompatibility/numerictargets/CE/RL/boundaryadmission/GP/PUT/DB/outbox/model mutation remain held."
+  ],
+  "configuration": {
+    "bytes": 175138,
+    "created_unix": null,
+    "deadline_unix": null,
+    "launchable": false,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification-v3/configuration-draft.json",
+    "sha256": "f6299b3bce0d038113c8ce61bb8013f3115f26787161ee19e3531a7c268b2e45"
+  },
+  "controller": {
+    "bytes": 5580,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification-v3/controller.py",
+    "sha256": "88345b38ae755a488319e099786b9290d709b09a6e6d8c071374800c8c4d6adc"
+  },
+  "metadata_inventory": {
+    "bytes": 140300,
+    "monotonic_elapsed_ns": 2333423268,
+    "physical_terminal_sha256": "a1b7715045cf5de9acb03b5a00a5f37abfeb682d11ab95b07096edebb65930d5",
+    "pins": 679,
+    "sha256": "c7e823e6cfbdc067f099bdee9f6397a0f8243d7b58f536bb0106b23d49b7fec0",
+    "source_bytes": 64751684,
+    "terminal": "returncode0/not-found/PID0/emptyCG; no GET/GP/DB/optimizer actions"
+  },
+  "previous_selected_review_sha256": "d46d877264b01cd1628569c3c17b13a10cb223e0ca467aecf1ae25bc52a95527",
+  "reviewed_at_utc_ns": 1791575823504963000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "launches": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-fresh-selected-qualification-review/v3",
+  "scope": {
+    "CPU": 1,
+    "GP": false,
+    "GPU": false,
+    "PUT": false,
+    "RAM_bytes": 536870912,
+    "authoritative_role": "train",
+    "export": false,
+    "fresh_window_max_seconds": 180,
+    "full_cutoff": false,
+    "global_deadline_unix": 1791592146.380285,
+    "max_gets": 16,
+    "max_read_bytes": 67108864,
+    "numeric_targets": false,
+    "optimizer_admission": false,
+    "outbox_mutations": false,
+    "phase": "training",
+    "selected_emission_ids": [
+      "01f9ebd4d7aca0ca93b5e601f1f974579de09f95a7418290dfa0cc50976b8502"
+    ],
+    "swap_bytes": 0
+  },
+  "source_packet_sha256": "df096047eaad81e34aec4813277744b01b61fb4b794a5e937cdbc9371328789f",
+  "state": "passed_unclocked_config_and_controller_with_launch_conditions"
+}

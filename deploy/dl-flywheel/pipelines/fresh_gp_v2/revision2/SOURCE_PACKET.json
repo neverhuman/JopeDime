@@ -1,0 +1,224 @@
+{
+  "files": [
+    {
+      "bytes": 11969,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/README.md",
+      "sha256": "86f26825098136b1c0d6c435a52ba5582108f773b76e92d4b26fded3a7b11981"
+    },
+    {
+      "bytes": 2828,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/authority_lease.py",
+      "sha256": "d16f87827b3efd5db2718c73b60b6e09c7acec1d55a1337cca9f6bb6d0c9773e"
+    },
+    {
+      "bytes": 16505,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/borrowed/program_worker_original.py",
+      "sha256": "71fd7385c31e90cba5240b7361fe757deb19814e890cb49a7362c3c9dab86dc8"
+    },
+    {
+      "bytes": 4124,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/borrowed/protocol.json",
+      "sha256": "6436ee62fd0dec8924b40466a93ff9e4b6389e61a2768580baf027fbd377d4e0"
+    },
+    {
+      "bytes": 6859,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/broker.py",
+      "sha256": "8835435eb4028ecc0f59dcc826436c1dc2cbf864aeb9885bf224ebe08066cac0"
+    },
+    {
+      "bytes": 16976,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/campaign_custody.py",
+      "sha256": "ab03821b3073c60a10d9d821fc06c4250b22ae48fdba25448862a40308ff9f40"
+    },
+    {
+      "bytes": 2291,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/common.py",
+      "sha256": "0d8b7c6d44c24423db840f3b80fd2320e839ee8b83a8ab317c8eafb9ee0e7f92"
+    },
+    {
+      "bytes": 585,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/epoch-request.template.json",
+      "sha256": "4c787277cf35e2a2522dba9b9cef62945f28e3a09593abae25f363a271eee82a"
+    },
+    {
+      "bytes": 6406,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/epoch.py",
+      "sha256": "808b3b4d19b6a7b4cab4e389c84fdfdea9f1f6b115be7efc15ed93e85d03fcfb"
+    },
+    {
+      "bytes": 4724,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/execution_boundary.py",
+      "sha256": "9c338a6a5d22ed2073f5c14d62f40e73bac14ad3c162a2d9a81766ff720522ba"
+    },
+    {
+      "bytes": 15120,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/executor.py",
+      "sha256": "69939b9932c232413ff52f8bc140530033d72c94d7062005d6fa49b5d26da981"
+    },
+    {
+      "bytes": 701,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/fencing-handoff.template.json",
+      "sha256": "45603a7e1dfbc406218aa472c1a94af750c5c386d0214322f298e01969e0b4b2"
+    },
+    {
+      "bytes": 4680,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/fresh_gp.py",
+      "sha256": "c7b193d11b325bda4e0af381c02356d88a502efd6f36c23d0c31c03f463e519b"
+    },
+    {
+      "bytes": 13933,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/global_attempts.py",
+      "sha256": "d9159f5c72fb27f5b0b0ac4dc0a83c1d1f71501c1e4a4c903cda1e50e6e144dc"
+    },
+    {
+      "bytes": 11938,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/history_collect.py",
+      "sha256": "faf87745032080719a55dcdbc6cb05a37daf6a7d989caf777c03ae6ffbad7e92"
+    },
+    {
+      "bytes": 9521,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/label_campaign.py",
+      "sha256": "564f25581f8ce4e3e912e5b04a321235d887d050e5f20786c97fa8e52eb10b2f"
+    },
+    {
+      "bytes": 6720,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/make_requests.py",
+      "sha256": "ebfed4b254c5abf33c5b05e8f0c69b145ed4c74842562f23b2f2817a70a495be"
+    },
+    {
+      "bytes": 25679,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/native_global_guard.py",
+      "sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b"
+    },
+    {
+      "bytes": 1309,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/native_runtime.py",
+      "sha256": "becc627b3e0cf78aae8d3514874c88ccdf3107a05e859302c5e29ba47afff3dd"
+    },
+    {
+      "bytes": 13769,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/neural_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    {
+      "bytes": 9013,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/prepare.py",
+      "sha256": "38bfeb93ce2fc9fb0d1eca349dc2ff458bb777e5fb4cafde4bbfff1c8e5a7306"
+    },
+    {
+      "bytes": 4220,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/readonly_snapshot.py",
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
+    },
+    {
+      "bytes": 7746,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/receipt_gate.py",
+      "sha256": "6afb749eaa65c291d0165d4462d160665103773c19cafaec018c72011c5554c3"
+    },
+    {
+      "bytes": 2472,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/resources.py",
+      "sha256": "b8e0135776446fbd24bfa49615987fbb2fdc6a0d9e280603ba4416c894563b40"
+    },
+    {
+      "bytes": 1952,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/role_authority.py",
+      "sha256": "45726833221f73f7005c495f2b0f74d3e308b33b51d1ee2cb60504df100ad6b5"
+    },
+    {
+      "bytes": 95,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/__init__.py",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "bytes": 11160,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/augmentation.py",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "bytes": 16420,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/evergreen.py",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "bytes": 9974,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "bytes": 9259,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/program_inputs.py",
+      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
+    },
+    {
+      "bytes": 6171,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "bytes": 6035,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/program_observer.py",
+      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211"
+    },
+    {
+      "bytes": 17414,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/program_worker.py",
+      "sha256": "3d8cf29ae337b467c249e183c2dde33c9da503d17ea424a994ddbf8753ed484a"
+    },
+    {
+      "bytes": 9341,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "bytes": 13448,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/queue.py",
+      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
+    },
+    {
+      "bytes": 4178,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/s3_library.py",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
+    },
+    {
+      "bytes": 4827,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/score_join.py",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "bytes": 5835,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/runtime/jope_flywheel/target_noise.py",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "bytes": 11787,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/staged_inputs.py",
+      "sha256": "069a9c007db1e145476c2f3bffe13983daaf11f3ac5bc6d2db5763f43119971c"
+    },
+    {
+      "bytes": 17583,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/test_operational.py",
+      "sha256": "9fe2ee034d330a6888147ed337025b27d78bdeaf1fb6d70246aaad5002f733be"
+    },
+    {
+      "bytes": 6034,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/test_receipt_operational.py",
+      "sha256": "1cf97c8e04d0a53a7a3d35304a0603b0bec97132069c9c6b80c832af23f3d4c2"
+    },
+    {
+      "bytes": 4708,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/transport.py",
+      "sha256": "6f450bc96743da53242c7df670b2690bcb53393a136faab6db116dff28c8ae2f"
+    }
+  ],
+  "no_remote_mutations": true,
+  "preserves_v1": true,
+  "proposed_repository_root": "deploy/dl-flywheel/pipelines/gp/fresh128",
+  "schema": "jope.fresh128-operational-source-packet/v2",
+  "source_payload": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/review-payload",
+  "validation": {
+    "bytes": 3308,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision2/validation.json",
+    "sha256": "a2f06d8191d70d04c0939b16f7a04483e0919dea189ed071410b907de61a5f33"
+  }
+}

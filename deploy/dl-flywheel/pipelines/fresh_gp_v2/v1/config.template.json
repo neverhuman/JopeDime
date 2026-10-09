@@ -1,0 +1,889 @@
+{
+  "schema": "jope.fresh-variant-gp-campaign/v1",
+  "approved_for_execution": false,
+  "host": "xbabe3",
+  "created_unix": null,
+  "work_deadline_unix": null,
+  "deadline_unix": null,
+  "global_deadline_unix": 1791592146.380285,
+  "source_root": "/home/ubuntu/JopeDime/.agent/proposals/dl-fresh128-gp-v1-20261009/runtime",
+  "artifact_root": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/fresh128_gp_20261009_v1",
+  "deployment_paths_are_evidence_not_portable_defaults": true,
+  "research_only": true,
+  "teaching_eligible": false,
+  "optimizer_reward_allowed": false,
+  "required_encoders": [
+    "kumo_tabular_s"
+  ],
+  "resources": {
+    "CPUQuota": "100%",
+    "MemoryMax": 4294967296,
+    "MemorySwapMax": 0,
+    "TasksMax": 64,
+    "Nice": 10,
+    "CUDA_VISIBLE_DEVICES": "",
+    "BLAS_THREADS": 1
+  },
+  "initial_concurrency": 1,
+  "maximum_qualified_concurrency": 8,
+  "selected_count": 128,
+  "selection": [
+    {
+      "identity": "93de8c680bbce0fed5c2fb5684b3b8ff8132682b4e469f2ab32f025e75f6f5ae",
+      "sequence": 938,
+      "parent_lineage_sha256": "8cda574076044a06421d9c6e07d06bbc59249085638d39f84bd5d3faca46a8be",
+      "partition": "validation"
+    },
+    {
+      "identity": "3756d6706512a13dfa40f58b639524efe4cd778413eb4c15338c937c1acaeb39",
+      "sequence": 939,
+      "parent_lineage_sha256": "c0d6fd9cf40df7264d7e23752677f0ab8ec8851388430eb8e929333158a682ed",
+      "partition": "train"
+    },
+    {
+      "identity": "c79ac243a5958f433059fed6c2ad4bc7a9e55526866376090b01f8473e184f35",
+      "sequence": 940,
+      "parent_lineage_sha256": "e55f2a042cc81bc2c5dbe6c32b0d04450705e21149f519c67d670aec786f708f",
+      "partition": "train"
+    },
+    {
+      "identity": "add347abe7e60e80d002115a6f2b375b3c447ef982945e0fa56cdf6cd06acb3a",
+      "sequence": 941,
+      "parent_lineage_sha256": "b8e708669b2e8f9cdf3ec9d327da778005a9254c3c8594f240f9f113d7a4410e",
+      "partition": "train"
+    },
+    {
+      "identity": "5ca1b32a8127247f2eaf5e4a92ec85ed31574d349bf7c6e1dc4271201804f329",
+      "sequence": 942,
+      "parent_lineage_sha256": "48db709a6436cf651f8ef6cced43061c1407a6dc8c8ff0f66bc9f1b6a7c15547",
+      "partition": "train"
+    },
+    {
+      "identity": "211a2ae46b517c365752b5a0b7295580ee425540e4a1e541ebd4ff946f7cfad2",
+      "sequence": 943,
+      "parent_lineage_sha256": "a8f56ea7604d73d314e6a5f74ec017fbd2390c3aa54a1a6042b34486f2edc793",
+      "partition": "train"
+    },
+    {
+      "identity": "813c93824ce9e04dc48e52d1f5b3893b76b1c3a867a8e08ca67a4cb853546f52",
+      "sequence": 944,
+      "parent_lineage_sha256": "02e1ec45429a88a16495e27aa7fd999d2725d8301a3d034ef7af8287b8851adf",
+      "partition": "train"
+    },
+    {
+      "identity": "25904854f4f0004449c74a31c22da367399bca3d1d66514a5057f043262dcd3e",
+      "sequence": 945,
+      "parent_lineage_sha256": "6c79e6ab28e0c73986a77df1d6f30f05649af22823525a6800beeabebe7d9f27",
+      "partition": "train"
+    },
+    {
+      "identity": "0899e6fb7aa6a06f9325e52e454fdd37d21f02e971fe9ceaf6b078110b258d25",
+      "sequence": 946,
+      "parent_lineage_sha256": "3533b25d0abcf79442dd66355145f21d1ac9ee342f7b894044f923dbc10e7cde",
+      "partition": "train"
+    },
+    {
+      "identity": "57ff9f4c3793d7057742259b4dacd44a3b6cc4de3cbf5c34deee6e5ecb8a2e74",
+      "sequence": 947,
+      "parent_lineage_sha256": "f1814fec1229e0976336d9988eff740e0eb653cb2d166d6e09fdd60fb6a92c0a",
+      "partition": "validation"
+    },
+    {
+      "identity": "4379a64efb56eb976c7a97e0efa083ce308b0bd606ef8698f2d3efa0f9a34351",
+      "sequence": 948,
+      "parent_lineage_sha256": "377758a585c164f55e388e3fa30f115ff4177b5d9958fc3b53fb736ba6949c92",
+      "partition": "train"
+    },
+    {
+      "identity": "252950f0ed76771791e3c1aa1ba4a8800c82db6c5c8e5083ac29fba607c5eb35",
+      "sequence": 949,
+      "parent_lineage_sha256": "2884ffab1f4b0afd3cad0c15bb0fb0fdff65748281df5cef734674564ef36075",
+      "partition": "train"
+    },
+    {
+      "identity": "a70af95f99cd1d16d7588c0243437d6146c83c930a7db9402dda3425b57c4670",
+      "sequence": 950,
+      "parent_lineage_sha256": "4226ef4e30e1af75ad2ecbc354cd62d7418e72fef4a86ba236c4ba48ebbce97b",
+      "partition": "validation"
+    },
+    {
+      "identity": "35a9330a90495caa94bcb6c136554e5cfcb5d984cc8b0fa2ad88f90362ebff6d",
+      "sequence": 951,
+      "parent_lineage_sha256": "f26f19b23e8777178a1c0b40bb785c84338d089279ffc9673f14c06bc332b3b6",
+      "partition": "train"
+    },
+    {
+      "identity": "cd36ea43d9f58577d716521a6fdf89909de6f7a782eed777ab53151fa57150ba",
+      "sequence": 952,
+      "parent_lineage_sha256": "353d8eb6410ab38815b9804896db3f51ab68d9a4d570ddc208b57641be0ea27c",
+      "partition": "train"
+    },
+    {
+      "identity": "4c38d42cc38b38256170827c8c7d816d0696e4194058462339de56876599c176",
+      "sequence": 953,
+      "parent_lineage_sha256": "2c69ed458c658def59def5ce339b9431c38d9a03addd5cfb5ab603d52c683fe2",
+      "partition": "train"
+    },
+    {
+      "identity": "fe790bd13887ef2689cd382807c8403172eaa46580afec88ceae3597698c41c7",
+      "sequence": 954,
+      "parent_lineage_sha256": "0305372071806e4f10b46decc722b6ec03292b3b9f7744d325c6532c855a665c",
+      "partition": "train"
+    },
+    {
+      "identity": "d2c5c8f1166588c0deb87424f59aa7899870bb2b191adb6b1d25c6f0fd539e17",
+      "sequence": 955,
+      "parent_lineage_sha256": "ca69d542fb0d440ed2fcf6a48874988c362c5299b5c19572e0cd5f4fbc23c879",
+      "partition": "train"
+    },
+    {
+      "identity": "4f8682f97e5ce7075b36476aa46e61c3d94f11f8ba0e0e48b43e4ea5f860090c",
+      "sequence": 956,
+      "parent_lineage_sha256": "3e2e0500f4b55c7224c15ce4c3c1013e3ad16ff3d7d3a66df3461351c9ea6b7b",
+      "partition": "train"
+    },
+    {
+      "identity": "f6da4f1cc650b64f4fb117c9d66cd43f435bb61b4a1f27ca98875e55779d43e3",
+      "sequence": 957,
+      "parent_lineage_sha256": "32fb5a88ad6736b4ae04251ed6de3754c03ad92a10aeab36921eb32d04cbc46a",
+      "partition": "train"
+    },
+    {
+      "identity": "5ab4dc7e15bfa3db69f23e350acbb2f8c4f8bc5fe4c19ebd170d790c95540d1c",
+      "sequence": 958,
+      "parent_lineage_sha256": "0fcc498b619182202e29c2fbb8e9e739486cf1b75440228fe0481a0c911f64d2",
+      "partition": "train"
+    },
+    {
+      "identity": "d8889b848dcec81138dc8481f5ea0c3c7d2eba2ace8d03d6807a4f4b38c08ae0",
+      "sequence": 959,
+      "parent_lineage_sha256": "a376a5ff8d4e119d85a8d6ba1f304bab8669bd2da42df24b30c86a4e6eeb934d",
+      "partition": "train"
+    },
+    {
+      "identity": "2477b5daa0332b179a88002efdeedcda6f1696548b66bb20fa6440c698b7b7f8",
+      "sequence": 960,
+      "parent_lineage_sha256": "f601dfb352e9e471c3356792215f9ca9d3e30fa523d9933146761d3a9c429946",
+      "partition": "train"
+    },
+    {
+      "identity": "d5f1d1763ae465b09e7dc4dae3eadd7ae4035e19ec3974f88d1e060fb29b106b",
+      "sequence": 961,
+      "parent_lineage_sha256": "a7cb14b3befe0fa79ec49deace9623aab536cd7eeaa27eca3ca19e22e5c81813",
+      "partition": "train"
+    },
+    {
+      "identity": "1ede19aea8d858a8d284a38c87bcd8cef8b90ba2bfe67b6d5e2e77d960815b30",
+      "sequence": 962,
+      "parent_lineage_sha256": "b1abc8f57c2f8d7b1e399c3f4c825d74eeeb272cee6a76d0232918978d79c6db",
+      "partition": "validation"
+    },
+    {
+      "identity": "76e8cd2f3a2a0908b647f3d4bc9d00433b75105f35193ee2cad68cbe721c9ff1",
+      "sequence": 963,
+      "parent_lineage_sha256": "f5c7bf5102365b264ddd529ed6479f9ec2013bf1613cb7b1870625a2c1579871",
+      "partition": "train"
+    },
+    {
+      "identity": "f64f42a8697f6f6801b3db4ec051797c044dc2447f1db21dfe95e97fb52b92b9",
+      "sequence": 964,
+      "parent_lineage_sha256": "067bca11e239e102e934d720d60e3d93778e49420b891bb1f58969790a58938c",
+      "partition": "train"
+    },
+    {
+      "identity": "8b81f54964c544f620e027bfb2a1066194da31e65a3a8d81502b097653ce6c68",
+      "sequence": 965,
+      "parent_lineage_sha256": "4c129854304742ca4f27afa13bce1b385a8418cc5e0ee5f5e665cb7cd315b348",
+      "partition": "train"
+    },
+    {
+      "identity": "cf98fb4b12e5d64d1493a6778f4f3f970bb0b805bec868dac7e803303ba15f2e",
+      "sequence": 966,
+      "parent_lineage_sha256": "3a1692c37b60ead7b1e2b23f5e06777a3284cb7e4633ff1a8967a59f3e3d47fa",
+      "partition": "train"
+    },
+    {
+      "identity": "f5ed25485be2b115a81f94c3e69a96d64f365d082316cfa75a73e11184276686",
+      "sequence": 967,
+      "parent_lineage_sha256": "93617dd7dad321132933438c59ba99fc77c624ecfffab22c5f792aaa995e3f1e",
+      "partition": "train"
+    },
+    {
+      "identity": "8d03d65a93a3072a14a80dc2ddc7be6dcef5c5f862838c2817a3d1d241f3aeaf",
+      "sequence": 968,
+      "parent_lineage_sha256": "5718623d091dfeb89f2502691dbf88ee5553e18202a74200a8e0aac8476d72f7",
+      "partition": "train"
+    },
+    {
+      "identity": "23eb22b1fd5e68e575330e9b6b3fcd9ede4ebc0b6c58e6ba593ad5cbd3b8058d",
+      "sequence": 969,
+      "parent_lineage_sha256": "0a9b293c0c05ffaa3c6f07f14789ff58a3751c42b8a0a5417ba61147d1e76d6e",
+      "partition": "train"
+    },
+    {
+      "identity": "6fe2bab38afa9dfc7118911f3aabf32c5cc479d5996055b6e8ec7923c5a34269",
+      "sequence": 970,
+      "parent_lineage_sha256": "91eaa3904aadf1ef094618e6ca146b234018cbe1e9fcffa5faf9132c0abf7286",
+      "partition": "train"
+    },
+    {
+      "identity": "c27ad6b4f28d6d73a205f719afd97e79a2d07c8b518c87c6110bfa26774bd7e6",
+      "sequence": 971,
+      "parent_lineage_sha256": "1102066a96f10390b49808e1cf2e7dcc7dcf2197420e278b326f33394fe1ddfd",
+      "partition": "train"
+    },
+    {
+      "identity": "5002a92970b6d222e5af30e22007e779c4d038278508ea715c3ff013c9798c3c",
+      "sequence": 972,
+      "parent_lineage_sha256": "fd50863ddab9c230bbdb4f2a7e58226758907cecd378cc529c62cded3c1cf4c2",
+      "partition": "train"
+    },
+    {
+      "identity": "fc55938fba54b79307b39e1a4e1099f16b688446aaef13269ceaf7224230cc38",
+      "sequence": 973,
+      "parent_lineage_sha256": "0fcf0c357232edb08f8b17d0e54e409bdaebab47f1c4fb7a9bdb0be86b86ca21",
+      "partition": "train"
+    },
+    {
+      "identity": "048e1cbbf101bcc525aabe5e2c23a10f9011a14d62aeeada8175432018ab4ed2",
+      "sequence": 974,
+      "parent_lineage_sha256": "5e96378ba92c0ac3195dc6b20d968ba7033de71bbd7787fb9a5d118b92f738c3",
+      "partition": "train"
+    },
+    {
+      "identity": "6452223626a6f4c7e22cf89872352a51c1ff92013679658e3774a8547fb17763",
+      "sequence": 975,
+      "parent_lineage_sha256": "153aa040bcd3ae52fecd0888b967d5800074c337e1fe114ce9e79e7b96da0271",
+      "partition": "train"
+    },
+    {
+      "identity": "00c51d31c57e08842da13a41351155a6bb193235a5f194c4e7ee25b60f9c2053",
+      "sequence": 976,
+      "parent_lineage_sha256": "6d8fc43845ecd190476f004f2094638da8639f3dbea51e40167689916f64cc4a",
+      "partition": "train"
+    },
+    {
+      "identity": "497b4304e1be9a3902b6e8c194882791e8cc7173464c70e35a9329e36ede5dc7",
+      "sequence": 977,
+      "parent_lineage_sha256": "cf6821313bc1e48c9e6965bc6acc4a3ad7f25d956d1cf0818e84ec14ae9b0fde",
+      "partition": "train"
+    },
+    {
+      "identity": "b59d4e7b00a1245f6a307c3a0677570f0e5b31c9a3438d31eb88ce806bc5244e",
+      "sequence": 978,
+      "parent_lineage_sha256": "6f173dd80e1d03c1c6296f36efb63ba9884b89feca37abd009842494292ca2a2",
+      "partition": "train"
+    },
+    {
+      "identity": "fa656684d29d5c6fb96eab623a7c3b048860f8bd57387e115d39188d5372097e",
+      "sequence": 979,
+      "parent_lineage_sha256": "916bfaebd4daf5a881c461383a4364ff8ac1d3e42f0e9809e44cc49d2e0e2a52",
+      "partition": "train"
+    },
+    {
+      "identity": "332ce34736ab45a874fa3bd2a33b3b19332f61ae2e298228a6f6e53232ec2a9c",
+      "sequence": 980,
+      "parent_lineage_sha256": "c63e4d2b23928cab861ae1be0190a20ddbe1b74aa7dd01322329e8db1eeccbba",
+      "partition": "train"
+    },
+    {
+      "identity": "33804368f72a86afe3f1c53fc99e91a20cd1790c61eb7b9ff9c6bb2cfbc4b3f3",
+      "sequence": 981,
+      "parent_lineage_sha256": "64c90db1abf90ced477e7f2e45692992e2bdd2c3ae8ba52a5ad8aca68aecc771",
+      "partition": "train"
+    },
+    {
+      "identity": "1f638aef9deba90f7e474a7e00e01548bead7dfcb6e219087582288ca150de10",
+      "sequence": 982,
+      "parent_lineage_sha256": "c3d5b65678dba8bd773a09a518e79168d1506112d5190b8669902c2bcf659ad5",
+      "partition": "train"
+    },
+    {
+      "identity": "d9c0980a9f119781e1ed0523160b24b5c3cfd286cccad82875bf7509b6b9a919",
+      "sequence": 983,
+      "parent_lineage_sha256": "2524a8e2ccff4ce81d07b29df81918ea2c1f23a376f5ce98bdeceaa31831ad54",
+      "partition": "train"
+    },
+    {
+      "identity": "d05e44e5392d2710d679a8cccaad3bcc4ab3ef70cbe1a881fb0ff708916f179e",
+      "sequence": 984,
+      "parent_lineage_sha256": "d2667e1c2073315548ffeea7cc4f3ac318be04a895024becb5ce9f3f11a370b6",
+      "partition": "validation"
+    },
+    {
+      "identity": "d67d9e7988b77f2a92b7e0cea3cb8170b139ce7fb875ff775e91307c7ea12c08",
+      "sequence": 985,
+      "parent_lineage_sha256": "cec5abb4905314391866e46e8bba675a96278f19c3a033ef00541be04ee037b8",
+      "partition": "train"
+    },
+    {
+      "identity": "107024dfaac8b1390333b75c82316362b06953d3962c06b554310846005802b3",
+      "sequence": 986,
+      "parent_lineage_sha256": "306075a870a5c6bddf57e556d06c52b5251ef318e9d12c97b17713f03b7baf06",
+      "partition": "validation"
+    },
+    {
+      "identity": "d0e93b2273241f18f083f06b2c78184c3444dec1ee3454de3abed346af13700e",
+      "sequence": 987,
+      "parent_lineage_sha256": "b42334c01c87c233e9f2ce295d43a6e267bd4b6c06a3b3ed7d326177ce099bcc",
+      "partition": "train"
+    },
+    {
+      "identity": "76414c0bb51a92b715e454fdba39c5aba1b933321b06769bd22c675bd0ccf45a",
+      "sequence": 988,
+      "parent_lineage_sha256": "c2f35f37fc016bd7854334cda8a3e3630a5f45d34d99417791e936a815f76ee4",
+      "partition": "train"
+    },
+    {
+      "identity": "9b8c2c666e7529ba4f06eb983a327b7a368402bd0e426cef955373ba38bfbcd4",
+      "sequence": 989,
+      "parent_lineage_sha256": "b5b08c79d5664416137d75bd7787b6094a68c80366e14150d6b8d38d70799607",
+      "partition": "train"
+    },
+    {
+      "identity": "4c84a6657129e2b1716aac3414f760bf100ce9dd1abb037f06dfa654cfe64f66",
+      "sequence": 990,
+      "parent_lineage_sha256": "2f83f52d6ac94ab2ad53334de3bbdb603a197799c4eeed39fa5444ece39a689d",
+      "partition": "train"
+    },
+    {
+      "identity": "3f98ac41e500a413264d5431381156844139e1f537945f78deec7dd0a962379a",
+      "sequence": 991,
+      "parent_lineage_sha256": "dd3292b6c3236c2bf6db88175d3330210fe5d03f31cc9b0bbcb7f423d0dc793f",
+      "partition": "validation"
+    },
+    {
+      "identity": "671e2ef988689a08ab75f6ee2ac0b715fe421db6a56e37b93be4a977f345ee92",
+      "sequence": 992,
+      "parent_lineage_sha256": "479cdc2df313db154b48572075acb099276fd3eeaccfb7db11ebdbbca11ac758",
+      "partition": "train"
+    },
+    {
+      "identity": "2a0ef1d3c59b1e8d73e5d46f88e8672a270a482200b3a9413e1a3e421cc9a3ac",
+      "sequence": 993,
+      "parent_lineage_sha256": "1977f3c8080bc2876fa799cbd9599e7e9f336cf7866c936ffcf0141dfc696ace",
+      "partition": "train"
+    },
+    {
+      "identity": "dc3cdcbcb29efa3c05f2b16d0c2993c3762882f071da45307f7465d24941c346",
+      "sequence": 994,
+      "parent_lineage_sha256": "64c47f05c0719356d265ac81f4922847b6954de100f2966da8254b6fa40e74ae",
+      "partition": "train"
+    },
+    {
+      "identity": "7c2ba8443ee1ce359c0c87ffa64b0d5669f203d9a972d09f9012b3f825f6d13c",
+      "sequence": 995,
+      "parent_lineage_sha256": "47bcc2ac587de685a440aeef5a4af09daabeaa410282b57cf0030fc806539969",
+      "partition": "train"
+    },
+    {
+      "identity": "a77b061b3fa7e96e5bc6c4e70b2b4d0fde3802d251c9fd3ee78d9ca6f871cc23",
+      "sequence": 996,
+      "parent_lineage_sha256": "7ce9f56c963cc5731c6207c8e5d7fc8eb16ff554c3e835cdc9023a8522442e7a",
+      "partition": "train"
+    },
+    {
+      "identity": "c5e0ba1b4d357a1f834f20f385c88e7404b9e3a1fb02322f9828095a397731bf",
+      "sequence": 997,
+      "parent_lineage_sha256": "1e09b8e52bc9be85731f4aa20c35e6cf52b005b4b5ce193da54c913740427087",
+      "partition": "train"
+    },
+    {
+      "identity": "9a57e0d5d8500bb5ad3a408cd2105954b89dff983df1346cfc79fc012220a4cb",
+      "sequence": 998,
+      "parent_lineage_sha256": "728acfe4062e63b837a3b4e101c88e107f7d06d79dc445fa0b088b461befc140",
+      "partition": "train"
+    },
+    {
+      "identity": "aae97ff47a092d90d827dd0a30a54a51807f06bcd5dca9df274ea75f3583b68c",
+      "sequence": 999,
+      "parent_lineage_sha256": "145c297b6f0271e451d1126a05df64254fc232b03693d574efa8c8c735f13c41",
+      "partition": "train"
+    },
+    {
+      "identity": "a67fa13c5d685d9a696b9a1ae28c2de2fb91522004cda96b57db200c55317ee4",
+      "sequence": 1000,
+      "parent_lineage_sha256": "1b26906414c13d747a5abb5daab11eddeba0544bd98da655def55de9d1ce4858",
+      "partition": "train"
+    },
+    {
+      "identity": "76067aa56f17b03f02a09c6032c42055e146d7d76a6559d42d1e4053ef451a2b",
+      "sequence": 1001,
+      "parent_lineage_sha256": "3b9df5b3fc6069881e58404a37fe683533b462111efc353ee5dc0ccdd097be7d",
+      "partition": "train"
+    },
+    {
+      "identity": "2fcfc856217c8b520f7a1e778f301ba45fe080c7396385a0497990883705bdb2",
+      "sequence": 1002,
+      "parent_lineage_sha256": "b75afb6439e797f8dd6be8ca4fc359770f0a8ed76fbf95a4d4c17faff93e3dd2",
+      "partition": "train"
+    },
+    {
+      "identity": "40444f0916b651b1c25a3b1dccb60989d063409e37e29c4578ac6a858baef607",
+      "sequence": 1003,
+      "parent_lineage_sha256": "8b7d173bc36a7f440289b0d73deb80ee80c88d7bb636276450d853090f76bfb8",
+      "partition": "train"
+    },
+    {
+      "identity": "14c4f36fcfd79cd6c1dbe877cef6297aa89617989ac16dd05777d392eea3aab1",
+      "sequence": 1004,
+      "parent_lineage_sha256": "19cb0330b532b9482fea1be563b5131874e243bee8096f11e0e02beb2b810eaa",
+      "partition": "train"
+    },
+    {
+      "identity": "725b7ae4113aa06e4b88aa2b31162a5315360917471587d20fe82946a776c413",
+      "sequence": 1005,
+      "parent_lineage_sha256": "976666ddbc04bf83665bdee9f80955bd1c2cce8d0936a36e656ed58326528035",
+      "partition": "train"
+    },
+    {
+      "identity": "bd182ae9ea06b22ec92f156840e9e1d154eabe264d8922403412c6335199dba1",
+      "sequence": 1006,
+      "parent_lineage_sha256": "27e011b75293fa6722a8cfd66ca56bc5b7f5d5438e8a7e944233a70b418af2e2",
+      "partition": "train"
+    },
+    {
+      "identity": "5a540fa74ecf7026813c62b9f638fcbd8019e5244ed5778d6f4a45d0545e3538",
+      "sequence": 1007,
+      "parent_lineage_sha256": "bda3b8b704e0f4613ea2e60e2e5272f67ff7b26892c3aeb734a93e003ae517cc",
+      "partition": "train"
+    },
+    {
+      "identity": "0820a8339f5a4d8a09dfce9c0468c04516f0b178692fbb7c93e4e54ae9a12358",
+      "sequence": 1008,
+      "parent_lineage_sha256": "decc0b940c68a223d1c8f4ff4b9733e4c9faf5c9c7b3d33db7015e25565f4114",
+      "partition": "train"
+    },
+    {
+      "identity": "c40979369d71ec2df394f41e380e397748f31b70b3767856ea1269b04a39ce01",
+      "sequence": 1009,
+      "parent_lineage_sha256": "6fbeaf9af2dddae36b7949f93b627688732145331d3220ac9441dd53171fe2ce",
+      "partition": "train"
+    },
+    {
+      "identity": "93efbebe692574d3c48b814639e8ce772820ed77e7d461bb11c5e30f548172d7",
+      "sequence": 1010,
+      "parent_lineage_sha256": "bda1e1efdddc4c4eb2cd8d0b8fd414d0fac475155adcfc83348c27f6bfeaa970",
+      "partition": "train"
+    },
+    {
+      "identity": "5ed19137e1bd346e90e78b87286c513c0fc5d8a6adabb079a45a0735f33be56c",
+      "sequence": 1011,
+      "parent_lineage_sha256": "8a1729888a66038bd7337208e9f380091cfa2eea2f5dace065175bd26d348a72",
+      "partition": "train"
+    },
+    {
+      "identity": "61bfd78ad661995580869b1bea6dfe263835013faaefba5f6bf8b44884d48c7f",
+      "sequence": 1012,
+      "parent_lineage_sha256": "20d7dbe488ceb2b970ec6fa1a0178c9462806d1df3bebe7a918d6812ed6d9360",
+      "partition": "train"
+    },
+    {
+      "identity": "30a27955db7f8ce481a9664a8a50ef80966b467cc782173d1b887e268ab8ba37",
+      "sequence": 1013,
+      "parent_lineage_sha256": "f49c953124c0a338f9ce885836d5e71001833b4c511e67afdcbd206db3db0bef",
+      "partition": "train"
+    },
+    {
+      "identity": "fa38e5360072dd082ba589f9da774d9d7d411ff01a61dbb5aa28452c80cfff78",
+      "sequence": 1014,
+      "parent_lineage_sha256": "b5f751635d71da6431c2b6ff610091be729aa919d2b7c74c2df11ee7882b4fc3",
+      "partition": "train"
+    },
+    {
+      "identity": "32f4b378e48030767b4818e068a13b34bcdab83c180926f3d6b4816f7c0a17f8",
+      "sequence": 1015,
+      "parent_lineage_sha256": "89ba8f4bb526a5328431d9d7eb1bfbe620cea6b063f79f91d6f63bb02d8c957d",
+      "partition": "train"
+    },
+    {
+      "identity": "205eaeafd5a578dd68bad6fadd638f4aca1d29ae6b356a7ae44781fdfbe438f7",
+      "sequence": 1016,
+      "parent_lineage_sha256": "83fa83a39ae2ba6e7c581a9eb9f0a24f8e4a174a3dc9f4d593d142acbcf10951",
+      "partition": "train"
+    },
+    {
+      "identity": "6d38f2156b420ebc9824b7d4a9688a31b91b721c5f1af2b4cdfd5c92141bc4bc",
+      "sequence": 1017,
+      "parent_lineage_sha256": "4efbdf53458eae868a26dd07b5de2dc9b1fcd6017dc9baee9b36d9c041483e56",
+      "partition": "train"
+    },
+    {
+      "identity": "cc6c4c3945170bdcea1ccb79debc26a417ff9c1ad1ea8a2ecddda349fdb65015",
+      "sequence": 1018,
+      "parent_lineage_sha256": "897d05e2a5eff9c307e00b07ae3d08003f097899477ec5a8b64acdb95ef34365",
+      "partition": "train"
+    },
+    {
+      "identity": "313769c50a87ad435e6304c1138ea50067a25ea4fbe3b48ed6bde3ffcf546a06",
+      "sequence": 1019,
+      "parent_lineage_sha256": "97e508a01416d971f898a09e22da03aa65675365c86abce60e485a924fa9ed0b",
+      "partition": "train"
+    },
+    {
+      "identity": "71d72a0678db8d0b3845144293d6bcc41e27c5c3652697f2f4986c3e1bf12d4d",
+      "sequence": 1020,
+      "parent_lineage_sha256": "da393b7c8b97324b3ed04be95e004388b5b792dea3ec287a67144a8fb75f12fe",
+      "partition": "train"
+    },
+    {
+      "identity": "eac513103d6fd894fb55abeaaefcd6f3be43ee18829b8fc1c355871a760f343b",
+      "sequence": 1021,
+      "parent_lineage_sha256": "02da17ee7002797e84714410d5e77fe13d8985244ec39791025210b7bb9af1a2",
+      "partition": "train"
+    },
+    {
+      "identity": "699ec9cca2661cebe6fde0bf5e5418c6d7dafcb0c76ae1e6952a42268449d453",
+      "sequence": 1022,
+      "parent_lineage_sha256": "04b85e1cd1d09e8469bd367aa32fc98401f9b24594533a43c81db94f78f83350",
+      "partition": "train"
+    },
+    {
+      "identity": "d96ed702482fe801a2a854cbdc6f3042155ee1a05d7820371fb819a95a70b996",
+      "sequence": 1023,
+      "parent_lineage_sha256": "bbfec59a1a2fa9cf4229b6690d8673924cb40ff531298489ea98aea8599aae0f",
+      "partition": "train"
+    },
+    {
+      "identity": "30226561fe158e32db5732a24a4673434d2df6566d3c891ec6892b3d8478a0ca",
+      "sequence": 1024,
+      "parent_lineage_sha256": "14790f1d2a9a877baf187e0a1531b37cd8d11729de6dacd915df028b8bc2edd8",
+      "partition": "train"
+    },
+    {
+      "identity": "8b8d14c3f943a95f79f9e2878de4196fe0104631d02b7041a731ff21736a2ee9",
+      "sequence": 1025,
+      "parent_lineage_sha256": "c5117dfdfcf5c730f98f99108dabe2096a79655e0dcaac6eae4d6a4ca226ff63",
+      "partition": "train"
+    },
+    {
+      "identity": "1902966dbfcfb7d46efc44685acf4561c3e3914aa4fb35f659ce79a616dd6517",
+      "sequence": 1026,
+      "parent_lineage_sha256": "13df6736bd9657b5e8590049eaf3248a60146e342492a45b22f502ac63f0ca3d",
+      "partition": "train"
+    },
+    {
+      "identity": "9b73a1d795a96d8278338c397dfe927d1776d47134357f39a50140744f5e3fff",
+      "sequence": 1027,
+      "parent_lineage_sha256": "59c4ae40b2db2af660ff104783505ff855a7e13194112af7a23290d80769d909",
+      "partition": "train"
+    },
+    {
+      "identity": "bb0a4b893c5d58f4c29eed8399e54fae0a74ec9cf61f3afcf13a362b51526c00",
+      "sequence": 1028,
+      "parent_lineage_sha256": "754347cd1de2b2d909ba36c68c093fecd458dccb2dc9e303aa87dccf4870b321",
+      "partition": "train"
+    },
+    {
+      "identity": "7d8ffd7b350e511e1f9023d01f30681dca1e5f3c44f2f93b787e746bc1f1d266",
+      "sequence": 1029,
+      "parent_lineage_sha256": "46ae7d4ad9cf52c68282512e2c2eccd65d628c697f277e8bef8da9fb9e76017f",
+      "partition": "train"
+    },
+    {
+      "identity": "ead461aa52229119c28ed6f986fd8d763577b9adb74cd2ee45171382cdd436b9",
+      "sequence": 1030,
+      "parent_lineage_sha256": "16ab993f1b6a16a6f2ed5e62e55ba7cfa6a268ab46996d698d3d5de9ec6625d3",
+      "partition": "train"
+    },
+    {
+      "identity": "c27250790ef3691e578c9611b091f66416f53315f0ceede13ae99bc0deeeaa09",
+      "sequence": 1031,
+      "parent_lineage_sha256": "374bfe4a16133a0bb32486c7fe3601a9fa7afdb8364bd73e70d8b793f6f18993",
+      "partition": "train"
+    },
+    {
+      "identity": "9d9aeefe39aa852b65f940626a8be3cbba6b2fedaf82ae139db2ede3c6bf79dd",
+      "sequence": 1032,
+      "parent_lineage_sha256": "8ec79fcdb54a55d97a3b76da8116c51c92981f0872cf75207dbf74fae6021a56",
+      "partition": "train"
+    },
+    {
+      "identity": "0faac76614e0e7c7fe6d1e37afce98fb2127398d68c90e881210bc5bcc7d09da",
+      "sequence": 1033,
+      "parent_lineage_sha256": "bd2bea41a29eb86fae44c25dd2c8c10f2a8e937acf5dc577c8775e68ec9b5538",
+      "partition": "train"
+    },
+    {
+      "identity": "b8f88706b788aaefa596498c5ef1a49d78a1e900541a95d6540868811250cde4",
+      "sequence": 1034,
+      "parent_lineage_sha256": "22c86b17870b69db8d86f28d2f93c556ce06401f1eb2e5417fbbee72697d7f4d",
+      "partition": "train"
+    },
+    {
+      "identity": "1f1ddad7f07ce298f4a6194a06ee5d378193f70d64f1e89c59f16fc42583a687",
+      "sequence": 1035,
+      "parent_lineage_sha256": "2a0c4c7eca00cb7a031fbd721754ce3697a6715d317c6f5c38f1afc5ffee522e",
+      "partition": "train"
+    },
+    {
+      "identity": "cb0ce6862c17100f8a5862866492192f936637d8788991a77c901a8dd23ddc52",
+      "sequence": 1036,
+      "parent_lineage_sha256": "dc1330b31a33cecfc05daacb4b22922c68d91e78dec8a6adc6b41119de6c6098",
+      "partition": "train"
+    },
+    {
+      "identity": "f3419dbbd28636b9e9e6dfacb75c206c4581dfbdf3605d6f6aa716982a923974",
+      "sequence": 1037,
+      "parent_lineage_sha256": "73c1a72d8e5069ed57387e55ba5f610fea533c9c08b5a9630f7545f381a7cc91",
+      "partition": "train"
+    },
+    {
+      "identity": "a1d4569af29075ae08b42193c95d5e1637cf84191d18eb85b584dd63b5caff7d",
+      "sequence": 1038,
+      "parent_lineage_sha256": "ac82633927ec2efeadbeb9b4ad30f561c60a3e019766ba2cce91a6d83fd39557",
+      "partition": "train"
+    },
+    {
+      "identity": "acc7d6069d59c984462637b99fc9cdf04a32828726baae3e2a96c751c754e485",
+      "sequence": 1039,
+      "parent_lineage_sha256": "fac25e4ddc24afc23a97e11ca28e560e6e1c7974e5e23943b10e7ee318f82f7a",
+      "partition": "train"
+    },
+    {
+      "identity": "464e0757c418b44827f9b2479800ef4074e3c1f15d251a349ca21ff9ead27b1c",
+      "sequence": 1040,
+      "parent_lineage_sha256": "03d520b5639cef0e7f2a5f8a95d327c24c610e7db3969a57b4c8bb1206660a47",
+      "partition": "train"
+    },
+    {
+      "identity": "c74783feed842ba2260fc46d0afe47a6a101829569faa8c18579e3ee2da94235",
+      "sequence": 1041,
+      "parent_lineage_sha256": "14429809f235aba6536ab7daf72758e74d650116d64e23acab954b7782e7d1fa",
+      "partition": "train"
+    },
+    {
+      "identity": "a1af7a36239606fe62122c4c308ea1498500e7382de1a0678b239b9f6bec47f3",
+      "sequence": 1042,
+      "parent_lineage_sha256": "8b7d54035c411dc7d79a882797134e7dac47c064eedb21c64d4feb8547b5d388",
+      "partition": "train"
+    },
+    {
+      "identity": "246f4749062dcbde269ae8df9f131386e5be7a215e3d735380e84941c9a3d646",
+      "sequence": 1043,
+      "parent_lineage_sha256": "f48f66ae9d074fd237c47dc965fa41cb00d4a16c70d7c5d38e9cf554589d62d6",
+      "partition": "train"
+    },
+    {
+      "identity": "be2b5a31bd3a85c6f7d7ddf157443e5a923ffcf9f83f2db12d79cfbc31662d5a",
+      "sequence": 1044,
+      "parent_lineage_sha256": "5595ddaa415558f4c1e08b9b5130db3eeb89cc4188ba06c0cbb50772b2663df9",
+      "partition": "train"
+    },
+    {
+      "identity": "83c1f45896845837a15e38b6df14edbb0b978e7f6e4dc56f6df1822759bd077a",
+      "sequence": 1045,
+      "parent_lineage_sha256": "3f675e00fd387ae45d4446204c011c4535d2e03aadf98ebd154a4eac69a6f277",
+      "partition": "validation"
+    },
+    {
+      "identity": "e0e0064c1b298a9327caca5fd8219f1806651f6a61fc9bb9bee685885d93725c",
+      "sequence": 1046,
+      "parent_lineage_sha256": "f1ec35997beee2d0cb227d614cdb505caf5d05896629e723c323eceb86cb2668",
+      "partition": "train"
+    },
+    {
+      "identity": "aa023c92cc7557dfc1dae65a5eeb08f835b4baa4d5ade73777692cb434301336",
+      "sequence": 1047,
+      "parent_lineage_sha256": "4129fba3b611ff932f0051ff8b6e8b4f1fd9c65bda53d7bdbe6e843a3a78534d",
+      "partition": "train"
+    },
+    {
+      "identity": "b12ca004e454a62c38a7eae72d2dc45f0180c5143669b2d9a138a4b7c9ae9241",
+      "sequence": 1048,
+      "parent_lineage_sha256": "25b5839edf51192f72da3f130cd42709b2d34304e6d319a2738af594ff5eeaac",
+      "partition": "train"
+    },
+    {
+      "identity": "9b857e9a8deb12432dc25dc2f70fb42dde656ddf9554fdc81e8854baa2873ef9",
+      "sequence": 1049,
+      "parent_lineage_sha256": "8f39323b1bf9a410f10dcc13e81b75d53f35f2922a6b8605ff3c7a1ff186213d",
+      "partition": "validation"
+    },
+    {
+      "identity": "622464daf97fa09cea0f98d1c78dc10165819482b36a8d094cc7d5d81cb0daf5",
+      "sequence": 1050,
+      "parent_lineage_sha256": "7c1b82c7ed600e94e3a655fa79c6797e1aa55c20d87593fcdd97e22cb498abb9",
+      "partition": "train"
+    },
+    {
+      "identity": "08b96ccf542b85137f066b885b08ed382e08a817902684e90829c18287ac70d4",
+      "sequence": 1051,
+      "parent_lineage_sha256": "6fc37757759689b89a60c6af3895f851c10325ea1c9716361547bc49691cac5b",
+      "partition": "train"
+    },
+    {
+      "identity": "af251b5ebe23d4cc6ec1e7585e72678f6323b82ecb8cdca5c296a28245ae988b",
+      "sequence": 1052,
+      "parent_lineage_sha256": "4946d86775d47160b35d57bb09c0f41cc8d64b06ee88d468704bb663db9ef9ab",
+      "partition": "validation"
+    },
+    {
+      "identity": "aae77c84d803e99a0ed1203b5edcc445256bec9ad355a6d00d6d42ee67d7f6c7",
+      "sequence": 1053,
+      "parent_lineage_sha256": "34270cc4de6026be2b25bb355a85e0d70b920495712a9b4545536d2d1d832290",
+      "partition": "train"
+    },
+    {
+      "identity": "80522d9914171002266899f75fa3384e6f5f00d2b31f86eb5b1f7c8760f42448",
+      "sequence": 1054,
+      "parent_lineage_sha256": "69844a615eb0880205d0dbb81ff35382fbec61bb4ba075057663fe51ba894cd6",
+      "partition": "train"
+    },
+    {
+      "identity": "3e65465ea15bb4ae8b34bf6a3c6b79ce70e8a2fc2f7320fa6c856b29d308840b",
+      "sequence": 1055,
+      "parent_lineage_sha256": "394a78f6737c0c1814167c1c7d3a334f6d8cbdcc32ea6ab46de525fc5f840404",
+      "partition": "train"
+    },
+    {
+      "identity": "6776d40ba25732b70351e7a6144d877d89eac03f6e1135c0d930414b31185770",
+      "sequence": 1056,
+      "parent_lineage_sha256": "4c1ef7e4b40c5abcfde6c40c8e7f175307a33f102f564bafc828f45256379fc5",
+      "partition": "train"
+    },
+    {
+      "identity": "0aa50874bcb69bce5d7dd90887e97797acd920d8a7bec09f93b8ea78bde070b8",
+      "sequence": 1057,
+      "parent_lineage_sha256": "713dbf0a4c9346998fe30422b82630073bd407851d6768e8795d07b9fd3f6188",
+      "partition": "train"
+    },
+    {
+      "identity": "c2969a66cd0b2eae2ff6f6012ae01670e1c0e829ebe36aa0f2f21d74fd4468d5",
+      "sequence": 1058,
+      "parent_lineage_sha256": "8494820f7c86e0a5418a953a63aa371837d1468f605a25cc84ed26e2aa1198d8",
+      "partition": "train"
+    },
+    {
+      "identity": "96c6c481773ce42eb7a402f2b887549a7b01f22a03b526ac70525ce1fcf7182c",
+      "sequence": 1059,
+      "parent_lineage_sha256": "56f4c97f39ece67ce4bd1e8a19f60b59b848671bf4d4f721dd1fd98b791f8ec9",
+      "partition": "train"
+    },
+    {
+      "identity": "1e0b88c988a9af3b73b87144471b748b5a29ddd53a712a90e99ec92a5e7df064",
+      "sequence": 1060,
+      "parent_lineage_sha256": "aecc0c4e0758c96fee0318ff66ee59ebd10a8a9097171d2470f4c88d454068ba",
+      "partition": "train"
+    },
+    {
+      "identity": "6ca50473e7e6eced361785689d05741541c5aa2b56b9928dd9dbcc9925f2a3a6",
+      "sequence": 1061,
+      "parent_lineage_sha256": "cf6322fd4e671a627a5bd45b22711c1f94ce72967aba814ebfd88f6b7b7023b8",
+      "partition": "train"
+    },
+    {
+      "identity": "c42838f6caaa8d2d338b24fc2c9231fb1f90129d6bf307e3de75b88756b40fed",
+      "sequence": 1062,
+      "parent_lineage_sha256": "e92d3bfd026f555e253a5a79bc13bf514a1fa4b78710a21e0ef207b210a97dca",
+      "partition": "train"
+    },
+    {
+      "identity": "a4a333c83e6a73aa3958902154239bd175700dbc89fb4cfbfff000de3b6e0dca",
+      "sequence": 1063,
+      "parent_lineage_sha256": "4cbfc40dfd0cabe8ad8b68ca53311025763d4e0d2f93996a3bad59be9f07099b",
+      "partition": "train"
+    },
+    {
+      "identity": "2b29c4fc01c54adc66e720fa15016b203ed20292237cbc82602d5dc2bd344061",
+      "sequence": 1064,
+      "parent_lineage_sha256": "7f566398f7f16b6fad4e6b6fafdc50107c2b6301dea695bd536e00f113ac9616",
+      "partition": "train"
+    },
+    {
+      "identity": "62063dc9dd62738598658fc8ef414457b575ea3e4ca12e6edf372a502666dd71",
+      "sequence": 1065,
+      "parent_lineage_sha256": "3c11f24b255c259434dd3505ef115ba3fbd3a18345d7471f6754d7ad215191df",
+      "partition": "train"
+    }
+  ],
+  "selection_sha256": "cf5077e3ba0cd32ae2ec30075720c8618e114cbd5d88fc69ae18b615d9810ac5",
+  "candidate_inventory": {
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/gp-scale-candidate/fresh128-input-candidates.json",
+    "sha256": "71f0d5129f02f95a6a9821caff080cbb9b3426c4eab844db1bbcca3ed8712030",
+    "bytes": 567948
+  },
+  "shards": [],
+  "shard_ids": [],
+  "context_descriptors": [],
+  "context_owners": {},
+  "source_pins": [],
+  "history_sources": [],
+  "ownership_producer_sha256": null,
+  "cold_qualification": null,
+  "stop_conditions": [
+    "Metadata-only inventory is not a current-role/readback/history qualification.",
+    "All128 native contexts and exact current receipt bodies must be replay-qualified.",
+    "Full18 legacy queues plus original/continuation outboxes must be canonicalized from read-only captures.",
+    "A reviewed cross-host whole-context authority producer and live broker lease are required.",
+    "Active native xbabe2 context disjointness must be proven from current source/descriptor closure.",
+    "Source/runtime/native tools and CPU1/RAM4GiB actual envelope must be verified.",
+    "Fresh aggregate residual memory/current load and foreign reserve gates must pass.",
+    "Independent source review and an integrated end-to-end CPU-only preflight are required."
+  ],
+  "protocol_descriptor": {
+    "direction": "lower",
+    "evaluation_source_build_plan_sha256": "4bb10409dde5a686da91fb96501113a0e5dd1efcde6429cab1024d4270302632",
+    "fold_protocol": "jope.s1-two-fold/v1",
+    "inner_fold_fit_rule": "train labels != fold, validate labels == fold, original relative order",
+    "input_semantics": "unscaled_fit_rows_v1",
+    "input_target_units": "prepared_synthetic_target_units",
+    "metric": "rmse",
+    "outer_test_payload_rows": 0,
+    "prediction_parity_tolerance": 1e-09,
+    "scaling": "minmax_fitted_on_fit_rows_v1",
+    "schema": "jope.flywheel-native-evaluation-protocol/v1",
+    "scope": "registered new prepared variants only; research-only, not native HWM context admission"
+  },
+  "vocabulary_descriptor": {
+    "canonical_conventions": "GenomeIr::parse followed by GenomeIr::canonical",
+    "canonicalizer_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+    "genome_source_sha256": "f6db05df29345f508d7ef8270a81dc64e09fd2951e648906f31da91bf99473b7",
+    "schema": "jope.flywheel-native-dsl-identity/v1",
+    "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835"
+  },
+  "programs": [
+    {
+      "dsl": "(pipe X (ridge))",
+      "name": "ridge",
+      "program_sha256": "beeee67c8c273bb5fc87168752e6cc2df381904f498d42f49b30b8df10037e02"
+    },
+    {
+      "dsl": "(pipe X (standardize) (ridge lambda=1))",
+      "name": "standardized_ridge",
+      "program_sha256": "e2ff2a41a56fdc9edb0f00eeb3f335015772800d321aad6bd85ccb7831aeedcf"
+    },
+    {
+      "dsl": "(pipe X (robust_scale) (ridge lambda=0.1))",
+      "name": "robust_ridge",
+      "program_sha256": "c7655fdaa0ae179072fefc095cfd46012c07966d2f752920e1df6896ddbb63e3"
+    },
+    {
+      "dsl": "(pipe X (rank) (ridge lambda=0.1))",
+      "name": "rank_ridge",
+      "program_sha256": "d4a814e2efc7d0bb98bf35deb2d79649d0f3256765b799663951262a9c5ae7c8"
+    },
+    {
+      "dsl": "(pipe X (rff_cos append=false gamma=0.7 n=16 seed=5) (ridge lambda=0.1))",
+      "name": "rff_ridge",
+      "program_sha256": "f915c3e023b9f93c1b424ff004fbfe750cc53c9581f0565ea16e32f514b1896d"
+    },
+    {
+      "dsl": "(pipe X (rand_proj append=false k=8 seed=7) (ridge lambda=0.1))",
+      "name": "projected_ridge",
+      "program_sha256": "f86f8fa93e82ee331bd21169cb57bbd6f5ab0202a98e8ee48f98f65b5687be35"
+    },
+    {
+      "dsl": "(pipe X (row_stats append=false) (ridge lambda=0.1))",
+      "name": "row_stats_ridge",
+      "program_sha256": "b378389a172e945b010d5c76af0e7af62c11d12889be65002ae297bc2cd986d5"
+    },
+    {
+      "dsl": "(pipe X (elasticnet alpha=0.01 l1_ratio=0.3 sweeps=20))",
+      "name": "elastic_net",
+      "program_sha256": "b3d486cd7156c56ef88a351cbd92b0f3ceba326008ef0d170e805f45c508a733"
+    }
+  ],
+  "source_build_plan_sha256": "4bb10409dde5a686da91fb96501113a0e5dd1efcde6429cab1024d4270302632",
+  "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835"
+}

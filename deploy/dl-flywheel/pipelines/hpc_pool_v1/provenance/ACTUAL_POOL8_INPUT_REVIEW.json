@@ -1,0 +1,165 @@
+{
+  "authorized_delta_exact": [
+    {
+      "after": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-publisher-v43-20261009/paper_publish_v43.py",
+      "before": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-publisher-v42-20261009/paper_publish_v42.py",
+      "path": "/other_allocations/4/expected_argv/2"
+    },
+    {
+      "after": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-publisher-v43-20261009/window.json",
+      "before": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-publisher-v42-20261009/window.json",
+      "path": "/other_allocations/4/expected_argv/6"
+    },
+    {
+      "after": "cab6641f6403001b234ead09265b23daad96f2fe2f7d292f8f0d8eb70b2d2617",
+      "before": "07416da463680a4ec56165d81c39d31d0e082e814f748070cb6dfbd0387507af",
+      "path": "/other_allocations/4/expected_argv/8"
+    },
+    {
+      "after": "jopedime-paper-publish-v43.service",
+      "before": "jopedime-paper-publish-v42.service",
+      "path": "/other_allocations/4/unit"
+    },
+    {
+      "after": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-native-pool-20261009-v1/packet2",
+      "before": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-native-pool-20261009-v1/packet1",
+      "path": "/root"
+    },
+    {
+      "after": "jope-native-v5-pool-20261009-packet2",
+      "before": "jope-native-v5-pool-20261009-packet1",
+      "path": "/unit_prefix"
+    },
+    {
+      "after": 8,
+      "before": 12,
+      "path": "/worker_count"
+    }
+  ],
+  "capture_time_unix": 1791557790.2864525,
+  "closed_schema_verified": true,
+  "declared_added_workers": 8,
+  "declared_other_allocations": 5,
+  "exact_reference_shapes_checked": 39,
+  "final_independent_source_review": {
+    "bytes": 4302,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_EXACT_CPU_ADDENDUM.json",
+    "sha256": "ecc5e7da97e6b90d6b76ca629663f63789451de0ea2dbb9cb81696f1fdb59888"
+  },
+  "input": {
+    "bytes": 13030,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/pool8-input.json",
+    "sha256": "e4c62d930a09418dd64c141b68c030e6faeba77e0625326973dbebba5f0b0e6c"
+  },
+  "limitations": [
+    "Local input schema, immutable pins, authorized delta and arithmetic only; no remote files or live services were inspected.",
+    "The original physical capture reports parents inactive/PID0 but does not independently prove empty current cgroups. Fresh physical parent closure is required before using42.625GiB.",
+    "The five declared owned allocations match the authorized input delta; complete current owned-allocation inventory remains the caller responsibility.",
+    "Freeze/preflight/every dispatch must enforce fresh current resources, exact publisher43 argv/caps, legacy closure, registry inode/config/source custody, exact inputs/Python and the unchanged deadline.",
+    "No clock was frozen, source changed, tests rerun, worker launched, queue claimed, registry mutated or S3 operation performed by this review."
+  ],
+  "physical_input_capture": {
+    "bytes": 24702,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/physical-inputs.json",
+    "sha256": "ca8332c4c4c0a2f52d2b99f0698fcb93a6951a679cb2b016572c9de5fb0a8064"
+  },
+  "prior_input": {
+    "bytes": 13031,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/pool12-input.json",
+    "sha256": "66eb0169cc49a233481ebf0bbec1dd2f002c0a801c90449725da40532997c565"
+  },
+  "prior_input_review": {
+    "bytes": 3607,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/ACTUAL_POOL12_INPUT_REVIEW.json",
+    "sha256": "97d65a39a180191877b48cb3ea9aac92df55c935e74ac983f25816482c63d0bc"
+  },
+  "prior_pool12_custody": {
+    "local_saved_dry_result": {
+      "bytes": 948,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/dry.json",
+      "sha256": "dfff752516a773c6165851d683785fe64e989c4204c13f51cba300b638b4ae5d"
+    },
+    "local_saved_stage_ref": {
+      "bytes": 200,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/stage-ref.json",
+      "sha256": "6085f9e443e8c360613adc781cbae5757db3093c97eb6802ca6b7e47bc85e7e9"
+    },
+    "reported_by_root": "Resource HOLD before freeze clock; stage only. This read-only review did not query the remote root to independently prove absence of a freeze/launch."
+  },
+  "publisher43_evidence": {
+    "argv_evidence": "Controller tail matches script, deployment, window, window SHA and output path. Controller invokes python3; manifest requires /usr/bin/python3. Saved launch receipt lacks actual /proc argv and physical cgroup CPU/memory limits; fresh exact launcher probe must establish those values.",
+    "captured_at_unix": 1791558989.0822442,
+    "captured_returncode": 0,
+    "captured_service": {
+      "ActiveState": "active",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/jopedime-paper-publish-v43.service",
+      "LoadState": "loaded",
+      "MainPID": "617048"
+    },
+    "controller": {
+      "bytes": 3214,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/publisher43-launch-controller.py",
+      "sha256": "577a7b0f7ce95099c19e6aee36ac2e9b940ea8ec111b2fcc711f23e4b701980f"
+    },
+    "controller_declared_caps": {
+      "CPUQuota": "25%",
+      "MemoryMax": "128M",
+      "MemorySwapMax": 0
+    },
+    "current_publisher_state_verified": false,
+    "independent_controller_review": {
+      "bytes": 2454,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/publisher43-independent-review.json",
+      "sha256": "ca3001f75f58e4eec1b5f2bba1ef84d39e58f0ac99c7f4a1253b1df567ca51e7"
+    },
+    "launch_receipt": {
+      "bytes": 388,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/publisher43-launch.json",
+      "sha256": "78a697c49a5d96031a85ffa85621b72ac99a7a4f5fa3c0e493824d66bcdc0543"
+    },
+    "manifest_window_sha_matches_local_window_bytes": true,
+    "window": {
+      "bytes": 370,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/publisher43-window.json",
+      "sha256": "cab6641f6403001b234ead09265b23daad96f2fe2f7d292f8f0d8eb70b2d2617"
+    }
+  },
+  "resource_arithmetic": {
+    "added_pool_bytes": 8589934592,
+    "current_available_memory_verified": false,
+    "declared_cpu_percent_plus_pool_if_parents_closed": 2075,
+    "foreign_reserve_bytes": 25769803776,
+    "free_disk_required_gib": 40,
+    "owned_full_caps_bytes": 11408506880,
+    "owned_full_caps_gib": 10.625,
+    "parent_reserve_condition": "Zero only when the launcher physically proves all four parents closed; otherwise1GiB per active parent.",
+    "required_available_bytes_if_parents_closed": 45768245248,
+    "required_available_gib_if_four_parents_active": 46.625,
+    "required_available_gib_if_parents_closed": 42.625
+  },
+  "reviewed_at_utc": "2026-10-09T15:19:34.880588+00:00",
+  "reviewer": "/root/generalization_design/review_guard",
+  "runtime_source": {
+    "bytes": 41357,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
+    "sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2"
+  },
+  "schema": "jope.native-pool-actual-input-review/v1",
+  "source_packet": {
+    "bytes": 2056,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/PACKET.json",
+    "sha256": "c43543b8b940e21b808b283a360f8c7664bd4f8227b2988dfa4fb229a802e4e3"
+  },
+  "source_roster_count": 34,
+  "state": "bounded_no_findings_local_input_delta",
+  "unchanged_pins": [
+    "parent_manifest",
+    "parent_plan",
+    "prepared",
+    "worker_template",
+    "python",
+    "registry_path",
+    "registry_identity",
+    "all34 source_files"
+  ]
+}

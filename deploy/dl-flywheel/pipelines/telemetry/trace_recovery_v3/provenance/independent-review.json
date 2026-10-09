@@ -1,0 +1,147 @@
+{
+  "actions_by_reviewer": {
+    "GP_executions": 0,
+    "Git_operations": 0,
+    "S3_requests": 0,
+    "implementation_edits": 0,
+    "qualification_executions": 0,
+    "receipt_writes": 1,
+    "remote_actions": 0,
+    "signals": 0
+  },
+  "conditions": [
+    "Root must freeze exactly this reviewed template only once, stage all exact source/capture/proof pins without changing old files, then retain the constructor output and immutable original new-window clock.",
+    "Actual bounded host preflight must pass the full frozen old verifier, every physical prior pin and raw chain through606, all three closed unit checks and the exact607/606/1212/1213/3787 tuple. Saved local captures alone do not establish current host state.",
+    "Refresh physical RAM/load and account for all owned declared future caps and foreign work before launch; launcher RAM>=26GiB/load<100 is a floor, not a shared reservation or a release of any GP pool HOLD.",
+    "The single fixed window must wholly fit the original global deadline. Preserve every refusal, timeout, OOM, partial upload and launch intent; no automatic retry, restaging the same window, old attempt reset or historical key reexecution.",
+    "A stopped progress report has inherited unresolved_gap_parts=[153] only. Any fresh partial attempt must be disclosed separately from put-attempt/reply/unknown/fatal files; next_fresh_part is not fresh retry permission after failure. A successor must capture and charge the entire new attempt inventory and hold its partial part.",
+    "Verified-object totals in mutable progress count complete segment pairs; partial verified-object files must be reported during final custody reconciliation. A zero exit or progress-only observation does not prove complete closure.",
+    "Success requires owned service PID0/empty cgroup and full charged-attempt/receipt closure. Keep the active telemetry writer and all existing traces, checkouts and foreign jobs untouched."
+  ],
+  "file_pins": {
+    "README.md": {
+      "bytes": 9510,
+      "sha256": "8f7f83ffb4e234f40a82536b50e75b3c8016686357a8ddaa4ee21f1cb6a7e20b"
+    },
+    "config.template.json": {
+      "bytes": 1894,
+      "sha256": "12086a0f31fac152481d4648018731bb49301bc59f5093e2c75f5d98063aa676"
+    },
+    "custody-inputs.json": {
+      "bytes": 1098,
+      "sha256": "4ce34db400596e390e56a92e1812198a3541a9b0f9683073133a01cf9f7f2bfc"
+    },
+    "launch_v3.py": {
+      "bytes": 5941,
+      "sha256": "494ecc4085fdb8ae81bc1c9fb21d001a7ce00ea8b055efaddecef03e03a2a82c"
+    },
+    "prepare_config.py": {
+      "bytes": 2731,
+      "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
+    },
+    "prior1-capture.json": {
+      "bytes": 2837433,
+      "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4"
+    },
+    "prior2-capture.json": {
+      "bytes": 2630301,
+      "sha256": "048e97db6131b4c76090eafbf60372bf3143da5d873ead079e32412639ad180d"
+    },
+    "source-delta.json": {
+      "bytes": 55535,
+      "sha256": "25283c1c48ee119cc3a6f3be50c2a73b9d321c77b2bff68e1f11f6f5757512ef"
+    },
+    "terminal-proof.json": {
+      "bytes": 2832,
+      "sha256": "3300d26a4ceaaea69095e38539a13b706af1545965068738126e0309d5342a21"
+    },
+    "test-output.json": {
+      "bytes": 630,
+      "sha256": "5ea06d2cd737cf394fc5db500208c9f7021575ae8069ad42462bc351d8384e78"
+    },
+    "test_trace_recovery_v3.py": {
+      "bytes": 21875,
+      "sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3"
+    },
+    "trace_archive_v1_c8a13033.py": {
+      "bytes": 17268,
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+    },
+    "trace_recovery_v2.py": {
+      "bytes": 20376,
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
+    },
+    "trace_recovery_v3.py": {
+      "bytes": 20806,
+      "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
+    },
+    "validation.json": {
+      "bytes": 5340,
+      "sha256": "5b4114fbf50d5d29f3c70065324f20a6b6bcec1adeff92b6c1242c8562991e8d"
+    }
+  },
+  "findings": [
+    "Frozen prior source copies retain exact fe000e7a and c8a13033 bytes; newly added source changes are isolated to v3 worker, constructor and launcher.",
+    "Complete prior1 and prior2 physical inventories, source/config/window/execution custody, all attempted keys, raw sealed event continuity, receipts and exact-version readback evidence are verified again before execution and under the exclusive old archive-directory flock.",
+    "All original 306 verified keys plus unknown153 and 750 prior1 + 156 prior2 attempts are included in the unique historical attempted-key guard; no skipped old identity or unlisted old file can silently become fresh.",
+    "Prior services must all be physically inactive/failed with PID0 and empty cgroup. The new service is create-only, never-started and bounded by the frozen wall/monotonic deadline. Launcher does not stop any foreign or prior unit.",
+    "A durable attempted-key record precedes every create-only PUT; exact returned VersionId, bytes and actual body GET are required before a verified artifact and complete pair receipt. Failures remain held and cannot trigger automatic replay.",
+    "CPU time uses actual own/child user/system deltas and monotonic spans; CUDA timing is absent, GPU/GP/optimizer execution counts are zero."
+  ],
+  "limits": {
+    "CPU_quota_percent": 100,
+    "CUDA_VISIBLE_DEVICES": "",
+    "MemoryMax_bytes": 536870912,
+    "MemorySwapMax_bytes": 0,
+    "Nice": 19,
+    "Restart": "no",
+    "TasksMax": 24,
+    "cloud_contiguous_verified_through_part": 152,
+    "first_new_part": 607,
+    "fresh_window_seconds": 3600,
+    "global_deadline_unix": 1791592146.380285,
+    "maximum_complete_fresh_pairs": 1893,
+    "maximum_fresh_pair_puts": 3786,
+    "maximum_global_put_attempts": 5000,
+    "maximum_part_exclusive": 2500,
+    "permanent_prior_unknown_parts": [
+      153
+    ],
+    "prior_charged_put_attempts": 1213,
+    "prior_verified_objects": 1212,
+    "prior_verified_segments": 606,
+    "remaining_put_attempts": 3787,
+    "unused_odd_put_allowance": 1
+  },
+  "qualification_evidence": {
+    "old_suites_rerun_by_reviewer": false,
+    "scope": "New synthetic affected fixtures only; ColdJoin injects an already verified prior1 result and launcher services are mocked. Full historical physical replay remains actual host preflight work.",
+    "supplied_fixture_count": 34,
+    "supplied_fixture_state": "passed",
+    "tests_run_by_reviewer": 0
+  },
+  "reviewed_at_utc": "2026-10-09T17:07:19.067779+00:00",
+  "reviewer": "/root/successor_review",
+  "schema": "jope.independent-source-review/v1",
+  "scope": "Independent local read-only source/config/custody review. This is not GitHub approval, live runtime qualification, cloud availability verification, or permission to retry an unknown outcome.",
+  "source_packet": {
+    "bytes": 3055,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/SOURCE_PACKET.json",
+    "sha256": "bb87853d974aed1df6eaae22e3aa4ed3a77a3d15631994113cb498c12fda65da"
+  },
+  "state": "passed",
+  "static_checks": {
+    "AST_parses": 6,
+    "exact_hash_and_byte_pins": 15,
+    "prior1_capture_files_retained_exactly_in_prior2": 2637,
+    "prior1_embedded_bodies_hash_verified": 2636,
+    "prior1_embedded_verified_bytes": 1476900,
+    "prior1_omitted_body_count": 1,
+    "prior2_inventory_files": 3198,
+    "prior2_root_counts": {
+      "v1": 2638,
+      "v2": 560
+    }
+  },
+  "template_sha256": "12086a0f31fac152481d4648018731bb49301bc59f5093e2c75f5d98063aa676"
+}

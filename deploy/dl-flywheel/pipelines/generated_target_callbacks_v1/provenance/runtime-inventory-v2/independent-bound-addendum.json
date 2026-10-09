@@ -1,0 +1,29 @@
+{
+  "blockers": [],
+  "conditions": [
+    "Run assertions enabled, use this exact new hash in the fresh one-use source-support unit/intent. All prior60s/CPU1/512MiB/swap0/noGPU/global/current-owner conditions remain.",
+    "Bound is JSON body <=1MiB; print adds one newline, so total stdout <=1MiB+1byte. Wrapper should handle or honestly refuse that framing boundary; no truncation may be called a complete inventory.",
+    "Serialization/source hash memory remains capped by external512MiB; honestOOM/cap/import failure is retained, no retry or old qualifier replay.",
+    "Metadata-only source acceptance does not qualify callbacks/fullcutoff/targets/GP/admission or expand held pools."
+  ],
+  "preserved_prior_source_sha256": "794c9a45bcc8877e4d04f131e02407f5c3ae38bb5d7d9c6b673d2d07e5511c0d",
+  "prior_review_sha256": "9b39f8e0d4ba3859e0a6435f6062016b713aa6b5bb70274c50ec18e07ed9757a",
+  "reviewed_at_utc_ns": 1791575561083090000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "launches": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-runtime-inventory-bound-addendum/v1",
+  "source": {
+    "bytes": 3336,
+    "path": "work/heartbeat-20261009-1843/callback-runtime-inventory-v2/inventory-bounded.py",
+    "sha256": "3ccd0c87291801e075669a3095758c27973d8b62236ebdaa6f0323ce2be34726"
+  },
+  "state": "passed_narrow_source_addendum",
+  "verified_delta": "Only serialize result into output, assert UTF8 body <=1MiB before any stdout print, then print. No new operation/import/schema/origin/custody/resource behavior."
+}

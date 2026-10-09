@@ -1,0 +1,291 @@
+{
+  "actions_by_reviewer": {
+    "Git_actions": 0,
+    "S3_requests": 0,
+    "live_SQLite_reads": 0,
+    "network_or_remote_actions": 0,
+    "qualification_executions": 0,
+    "receipt_writes": 1,
+    "signals": 0,
+    "source_edits": 0,
+    "source_imports": 0
+  },
+  "checks": {
+    "Python_source_AST_parses": 11,
+    "closed_Python_source_pin_count": 11,
+    "exact_packet_pins": 27,
+    "fixture_roster_AST_count": 28,
+    "original721_suites_rerun": false,
+    "supplied_errors": 0,
+    "supplied_expected_failures": 0,
+    "supplied_failures": 0,
+    "supplied_skips": 0,
+    "supplied_tests_run": 28,
+    "supplied_unexpected_successes": 0,
+    "test_export_identities": 25,
+    "test_runner_identities": 3,
+    "tests_run_by_reviewer": 0
+  },
+  "fixed_blockers": [
+    "Exporter now requires exact licensed campaign KumoSmall weightfc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423 and2051values; valid but unapproved weight refusal has its own fixture before callbacks.",
+    "Runner now binds exact ordered28fixture identities, actual28execution count,11Python source bytes, all imported module origins and source-pin manifest; skipped/expected failures/unexpected successes/errors/failures/count/source/origin drift all prevent PASS."
+  ],
+  "integration_findings": {
+    "blockers_found": [
+      "Onlytest_export coverage/native family whiletest_runner was misclassified as production research.",
+      "Wrapper used unsupported--output and collected/executed fields rather than actual--receipt andtests_run."
+    ],
+    "correction_independently_reviewed_in_this_receipt": false,
+    "earlier_assembler_sha256": "b328c231f9a462cd214730d777708e5ab7ce191936672be81caedcd15a6a0bd7",
+    "next_gate": "Review exact generated payload/helpers and both metadata families separately before integration; do not mutate frozen runner.",
+    "parent_reports_corrected": true
+  },
+  "limitations_and_conditions": [
+    "Only synthetic callback/SQLite fixtures have executed. Fixture callbacks must never be used for live scientific/S3/current-role authority; qualified production adapters, exact approved request and source/dependency/runtime closure remain separate gates.",
+    "Defining-file/code/dependency pins do not attest mutable module globals/native modules or external services. Future adapters need independent source/runtime qualification and bounded exact-version reads before body buffering.",
+    "Cooperative120s deadlines cannot terminate a hung callback; any future live use requires an external harddeadline/memory cap and an independently qualified sealed-cutoff capture.",
+    "Prior successful reference bodies are re-read only for canonical duplicate indexing; old full seven-artifact closure rests on a separately qualified predecessor. No re-execution or unknown retry is authorized.",
+    "Reference export does not prove originating optimizer commits, materialize q/ranking tensors, promote variant CE/RL, prepare GPU tensors or implement repeated closed-epoch adoption. Every such step needs independent continuity/role/membership/physical checkpoint qualification.",
+    "The sealed README ending still says one test family; root integration must append a clearly separate note that native coverage/inventory need BOTH test_export.py and test_runner.py families, leaving frozen source/proof bytes intact.",
+    "Actual additive integration/metadata/wrapper/private-index/native static commands and current-head CI are outside this receipt.28 replaces unintegrated held24; count721+28=749 wiring only, never24+28 or a full749test execution."
+  ],
+  "offline_source_pin_manifest": {
+    "bytes": 5794,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+    "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c"
+  },
+  "preserved_contracts": [
+    "Core cutoff/common/transition and fixture callback/reference-outbox semantics remain byte-identical to frozenv1; only exporter weight guard, new harness/fixtures and additive documentation/provenance change.",
+    "A separately sealed standalone physical outbox backup is opened read-only/query-only/immutable after exactSHA/config/head/count and no-sidecar checks. Complete events/materialized lease/outcome/batchACK/payload ancestry are verified; no live WAL copy is accepted or optimizer commit asserted.",
+    "Only exact successful variant rows with both authoritative inherited train role and training phase are candidate targets. Validation, unknown/failure/native/cap exclusions retain a complete emission census.",
+    "Every new appended canonical result reads the exact wrapper and seven VersionId/hash/bytes bodies, preserves native/Rust parity/current gate semantics through a separately qualified structured verifier, joins context/program/score identity and forbids invented target fields.",
+    "Canonical aliases contribute one ref while retaining source emission IDs; old references/tasks/order remain immutable, and conflicting aliases refuse without partialoutput.",
+    "The exact supervised objective, original native train-only Kumo normalizer/fit roster, context and construction-source pins remain bound. Export output stays metadata-only, no numeric targets, CE teachers, S3 writes, GP executions, optimizer updates or admission commits."
+  ],
+  "preserved_v1": {
+    "author_additive_hold_note": {
+      "bytes": 770,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+      "sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48"
+    },
+    "exact_packet_retained": {
+      "bytes": 11536,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+      "sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412"
+    },
+    "held_predecessor_packet_sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412",
+    "held_status_remains": true,
+    "original19_packaged_file_pins_reverified_unchanged": true,
+    "root_held_review": {
+      "bytes": 13291,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v1/review/independent-source-review.json",
+      "sha256": "a90d956ad14ae77e100b0b9b0c3ef017041c9138ca6a46a1a7e764b5289b6966"
+    }
+  },
+  "reviewed_at_utc": "2026-10-09T18:22:52.343827+00:00",
+  "reviewer": "/root/successor_review",
+  "schema": "jope.independent-generated-target-export-source-review/v2",
+  "scope": "Independent read-only exact corrected sibling source/fixture contract review. PASS is source-only; no live callback/export, source integration, native GitHub approval, numeric target/admission, GP/optimizer action or resource release.",
+  "source_file_pins": [
+    {
+      "bytes": 13855,
+      "kind": "documentation",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+      "sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md"
+    },
+    {
+      "bytes": 5794,
+      "kind": "qualification_pin_manifest",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+      "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json"
+    },
+    {
+      "bytes": 77,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py",
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py"
+    },
+    {
+      "bytes": 4948,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py"
+    },
+    {
+      "bytes": 10540,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py"
+    },
+    {
+      "bytes": 24595,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py"
+    },
+    {
+      "bytes": 3992,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json",
+      "sha256": "71be856675ac48cd80924e46c3aaba67066e1705219be3a7118f66cc0d9cfed2",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json"
+    },
+    {
+      "bytes": 9120,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json",
+      "sha256": "f64d7e0c075f36d90f1f976dcd0789c237ef7beb9b868463856c6e86904ee2db",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json"
+    },
+    {
+      "bytes": 8643,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json",
+      "sha256": "86c68a448dafe4595ae96447bd1bb1e27ec247e35cd670cadfb241ebccec3cc9",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json"
+    },
+    {
+      "bytes": 2825,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json",
+      "sha256": "7ab3565fa8335a95b8dfe4d1b76f4a6a72c705c9ef181166f36f88f05a84ee24",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json"
+    },
+    {
+      "bytes": 48521,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json",
+      "sha256": "fd98df93c8002d907886d030fa9bb6ba2d8078c7ea628e8cdf8e7cbc0d2d4a36",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json"
+    },
+    {
+      "bytes": 9762,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json",
+      "sha256": "91488f3e5a9ffd775b5bd2b654df46a39b4f6e287e257974f7dd29dd41c4c18c",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json"
+    },
+    {
+      "bytes": 6194,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json",
+      "sha256": "a35ca4b966134300ed67a6b6507b66de28f63417c7383dc60c3d4e0475cfc8d2",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json"
+    },
+    {
+      "bytes": 11475,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json",
+      "sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json"
+    },
+    {
+      "bytes": 5131,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json",
+      "sha256": "2ae134ecd2ff098183f7e9f4d0560c72f1267f8524245edf72a9e0777a4ec051",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json"
+    },
+    {
+      "bytes": 22276,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json",
+      "sha256": "d4251be6ded0646bbd53b99cb19bcc05a17b6cf04f5202d34a06374a2e5488d9",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json"
+    },
+    {
+      "bytes": 9394,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json",
+      "sha256": "0e8e6f57377401881dd31aa7dae6f12073bdaf091fd3f1eba8c78da479e306c2",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json"
+    },
+    {
+      "bytes": 3126,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json",
+      "sha256": "b1a70a87339c962074b3236fe8102902c4ee011be0eb2b1c38b53e1f308c3593",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json"
+    },
+    {
+      "bytes": 11536,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+      "sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json"
+    },
+    {
+      "bytes": 770,
+      "kind": "provenance",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+      "sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json"
+    },
+    {
+      "bytes": 11024,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py",
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py"
+    },
+    {
+      "bytes": 55,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py",
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py"
+    },
+    {
+      "bytes": 2810,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py",
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py"
+    },
+    {
+      "bytes": 13769,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py"
+    },
+    {
+      "bytes": 23779,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py",
+      "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py"
+    },
+    {
+      "bytes": 2907,
+      "kind": "fixture_or_test_support",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py",
+      "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py"
+    },
+    {
+      "bytes": 905,
+      "kind": "research_source",
+      "repository_path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30",
+      "source_relative": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py"
+    }
+  ],
+  "source_packet": {
+    "bytes": 15418,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/SOURCE_PACKET.json",
+    "sha256": "343b3e555f11e0f48d5a2f44adac3d45e710847543135c2399c353944f73d436"
+  },
+  "state": "passed",
+  "supplied_qualification": {
+    "bytes": 11475,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/qualification-final.json",
+    "sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735"
+  }
+}

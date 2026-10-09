@@ -1,0 +1,163 @@
+{
+  "all_python_source_pins": {
+    "__init__.py": {
+      "bytes": 77,
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006"
+    },
+    "common.py": {
+      "bytes": 4948,
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    "cutoff.py": {
+      "bytes": 10540,
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+    },
+    "export_verified.py": {
+      "bytes": 24595,
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    },
+    "run_offline.py": {
+      "bytes": 11024,
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a"
+    },
+    "tests/__init__.py": {
+      "bytes": 55,
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f"
+    },
+    "tests/fixture_callbacks.py": {
+      "bytes": 2810,
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66"
+    },
+    "tests/reference_outbox.py": {
+      "bytes": 13769,
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    "tests/test_export.py": {
+      "bytes": 23779,
+      "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13"
+    },
+    "tests/test_runner.py": {
+      "bytes": 2907,
+      "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3"
+    },
+    "transition.py": {
+      "bytes": 905,
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+    }
+  },
+  "at_utc": "2026-10-09T18:18:14.731985+00:00",
+  "checks": [
+    "Exact required campaign weight SHA fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423 matches existing training_snapshot_kumos.py line 47; exporter refuses any other otherwise-valid SHA before verified callback use.",
+    "All 11 Python sources exactly match the separately packet-bound SOURCE_PINS manifest; no package pyc files exist.",
+    "AST-derived ordered 25 exporter tests plus three runner tests exactly match all 28 frozen manifest identities. No tests were imported or executed for this check.",
+    "Runner validates exact closed source/import/fixture manifest before fixture imports, removes preexisting scoped modules, disables bytecode writes, checks module __file__ and __spec__.origin before and after execution, and restores scoped imports/path/write policy in finally.",
+    "Runner requires exact ordered unique 28 fixture IDs and rejects failures, errors, skips, expected failures, unexpected successes, count drift, source or manifest drift and import-origin drift.",
+    "New negative fixture rejects another valid 64-hex Kumo SHA; three runner fixtures cover nonclean outcome categories, altered fixture rosters, changed source bytes and altered/missing import origins.",
+    "README preserves v1 hold and distinguishes old receipts from revision 2 qualification; documents source pin manifest as external packet evidence rather than a signature.",
+    "Author final receipt matches current 11 source pins, source-manifest SHA, exact 28 identities and exact import-origin mapping; test transcript reports all 28 ok with no disallowed outcomes."
+  ],
+  "delta": {
+    "changed_or_added_python_paths": [
+      "export_verified.py",
+      "run_offline.py",
+      "tests/test_export.py",
+      "tests/test_runner.py"
+    ],
+    "unchanged_python_paths": [
+      "__init__.py",
+      "common.py",
+      "cutoff.py",
+      "tests/__init__.py",
+      "tests/fixture_callbacks.py",
+      "tests/reference_outbox.py",
+      "transition.py"
+    ]
+  },
+  "findings": [],
+  "historical_and_delta_pins": [
+    {
+      "bytes": 770,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+      "sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48"
+    },
+    {
+      "bytes": 11536,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+      "sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412"
+    },
+    {
+      "bytes": 9120,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json",
+      "sha256": "f64d7e0c075f36d90f1f976dcd0789c237ef7beb9b868463856c6e86904ee2db"
+    },
+    {
+      "bytes": 22276,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json",
+      "sha256": "d4251be6ded0646bbd53b99cb19bcc05a17b6cf04f5202d34a06374a2e5488d9"
+    }
+  ],
+  "qualification_observed": {
+    "errors": [],
+    "executed_by": "author, not reviewer",
+    "expected_failures": [],
+    "failures": [],
+    "passed": true,
+    "receipt": {
+      "bytes": 11475,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/qualification-final.json",
+      "sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735"
+    },
+    "skipped": [],
+    "tests_run": 28,
+    "unexpected_successes": [],
+    "wall_seconds": 0.438979665748775
+  },
+  "remaining_gates": [
+    "Trusted runtime/callback globals, dependency execution state and external services remain outside source-file attestation; production verifier and role-authority adapters remain unqualified.",
+    "Precaptured immutable SQLite custody, real artifact availability and scientific parity must be independently qualified before any live export.",
+    "This packet exports verified reference bytes only; numeric targets, native overlay, publishing, preparation, optimizer/admission commits and training gains remain outside its scope."
+  ],
+  "reviewed_pins": [
+    {
+      "bytes": 24595,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    },
+    {
+      "bytes": 11024,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py",
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a"
+    },
+    {
+      "bytes": 23779,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py",
+      "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13"
+    },
+    {
+      "bytes": 2907,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py",
+      "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3"
+    },
+    {
+      "bytes": 5794,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+      "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c"
+    },
+    {
+      "bytes": 13855,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+      "sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d"
+    }
+  ],
+  "reviewer": "/root/generalization_design/review_guard",
+  "reviewer_execution": {
+    "live_database_access": 0,
+    "production_imports": 0,
+    "remote_actions": 0,
+    "source_edits": 0,
+    "tests": 0
+  },
+  "schema": "jope.generated-target-export-independent-source-review/v2",
+  "scope": "Static review of revision 2 delta only, composed with preserved revision 1 source review. This is not production callback, scientific adapter, native evaluator or live custody qualification.",
+  "verdict": "no blocking findings within the narrow corrected source-only reference-export and offline-runner scope"
+}

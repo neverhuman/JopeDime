@@ -1,0 +1,22 @@
+{
+  "inputs": {
+    "prior1-capture.json": {
+      "bytes": 2837433,
+      "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/prior1-capture.json",
+      "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4"
+    },
+    "prior2-capture.json": {
+      "bytes": 2630301,
+      "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/prior2-capture.json",
+      "sha256": "048e97db6131b4c76090eafbf60372bf3143da5d873ead079e32412639ad180d"
+    },
+    "terminal-proof.json": {
+      "bytes": 2832,
+      "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/terminal-proof.json",
+      "sha256": "3300d26a4ceaaea69095e38539a13b706af1545965068738126e0309d5342a21"
+    }
+  },
+  "portable_package_excludes_bodies": true,
+  "reason": "Live closed custody captures are deployment evidence, not fixture data or portable defaults. All34 fixtures synthesize temporary local inputs. Root must stage exact pinned captures separately.",
+  "schema": "jope.trace-recovery3-custody-inputs/v1"
+}

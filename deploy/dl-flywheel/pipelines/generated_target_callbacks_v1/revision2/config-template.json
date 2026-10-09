@@ -1,0 +1,237 @@
+{
+  "configuration": {
+    "authority_source_pins": [
+      {
+        "bytes": 52279,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/catalog-waves/p3-sealed-excluded-catalog-v1b-20261007T080246Z.json",
+        "sha256": "b24eccdb2abea543620709e031b474afb64abb25805554817ac8f4dc3dc3e6c5"
+      },
+      {
+        "bytes": 3857,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/TRAINING-EXCLUSION-LAYERS-v4-20261008T075246Z.json",
+        "sha256": "53989656b455446353f6854bee48cc870f44a1fddb8697445c6ddc9db296abe4"
+      },
+      {
+        "bytes": 240061,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r3-v1-20261008T070216Z.json",
+        "sha256": "d3bde306c40378edfcd8c4c5a50cb8b26268dd51c0fb7c3730e194b33d2e6d22"
+      },
+      {
+        "bytes": 14687,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r3b-v1-20261008T072806Z.json",
+        "sha256": "f3ea9af87ccc4c9201ca0cf5bc95bb007d248ae80664f5d565e15e4f1560e799"
+      },
+      {
+        "bytes": 144949,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r3c-v1-20261008T074538Z.json",
+        "sha256": "75cec49392bd19b86f55a7cf127a2f3e99703282a86bd5f0d3da412ac202a538"
+      },
+      {
+        "bytes": 368897,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/exclusions/training-exclusion-layer-ofm-r4-v1-20261008T075246Z.json",
+        "sha256": "74bcde95416d45222db0925445005b82357f3d0320bdaf8c0e2d025623cf020a"
+      },
+      {
+        "bytes": 302673,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/gp-hwm-index/excluded-by-ruling-gp1-20261007T051439Z.json",
+        "sha256": "dd7adb3f3df1fd2bf45a642763b4e8a7514662b01e2ebb8b5241197958e62264"
+      },
+      {
+        "bytes": 2272,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/gp-hwm-index/gp-target-one-holdout-20261007T232522Z.json",
+        "sha256": "66c10bb9df8850016e6a133b46f681a50054604dc12d5404eb94755d09f56650"
+      },
+      {
+        "bytes": 675350,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/gp-hwm-index/gp-target-one-holdout-after-layers-v4-20261008T080549Z.json",
+        "sha256": "8732a29403a84edd3e77d0243a1ff768c068405fba5960500f289a46b1a3e960"
+      },
+      {
+        "bytes": 721777,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/owner-relays/one-holdout-role-map-v1-20261007T231936Z.json",
+        "sha256": "3b9caf36a3cde3f12d0337ebfc633b55a1e989a3f53410df578f6fc9a7aa0109"
+      }
+    ],
+    "created_unix": null,
+    "deadline_unix": null,
+    "global_deadline_unix": 1791592146.380285,
+    "max_gets": 16,
+    "max_read_bytes": 67108864,
+    "mode": "selected-qualification",
+    "output_root": "REQUIRES_NEW_OWNED_PROPOSAL/output",
+    "package_files": {
+      "__init__.py": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0",
+      "bindings.py": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3",
+      "callbacks.py": "37935e0cba6ac645dddb3fc4158c14b2c418e379d6ed71eab7b7dea131ceae9f",
+      "cli.py": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3",
+      "durable.py": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e",
+      "readonly_io.py": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09",
+      "run_offline.py": "5c4888c40410e741a0303545f1411be10d4450db37a25ca11fc5444589dc2289",
+      "tests_contracts.py": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78",
+      "tests_custody.py": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2",
+      "tests_io.py": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc",
+      "tests_semantics.py": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e",
+      "vendor/__init__.py": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "vendor/augmentation.py": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "vendor/evergreen.py": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "vendor/program_gate.py": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "vendor/program_inputs.py": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66",
+      "vendor/program_io.py": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "vendor/protocol.py": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "vendor/score_join.py": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "vendor/target_noise.py": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    "refs": {
+      "adoption": {
+        "bytes": 634,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuous_20261009_v1/training/adopted-prepared-transfer-000003432.json",
+        "sha256": "e90980f0be8adc86521e95344d9d809a6309d6fb9b8d86f9986c4cad2b4b32bd"
+      },
+      "candidate_observation": {
+        "path": "REQUIRES_STAGED_EXACT_SELECTED_OBSERVATION",
+        "sha256": "dd741e203df73948c6e6bb41a5067f8ff475d9f7130f8803125123c7745759c2"
+      },
+      "code_license": {
+        "bytes": 11432,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/src/structured-data-models/LICENSE",
+        "sha256": "4f321b887d0350e672e06c8a8bc85cff17ee2d1f3c360617079041ceee324c81"
+      },
+      "compose_source": {
+        "path": "REQUIRES_PINNED_ORIGINAL_COMPOSE",
+        "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+      },
+      "execution_config": {
+        "path": "REQUIRES_ACTUAL_IMMUTABLE_EXECUTION_CONFIG",
+        "sha256": "f358735358d2f56ad12106bcf327454d6af87ca440c46fc35e86558414b1de93"
+      },
+      "kumo_audit": {
+        "path": "REQUIRES_STAGED_EXACT_AUDIT",
+        "sha256": "0b5aaba0080c34d7ea5d20b21bff8eda8e364f0e11fbdb304347305f4ed5e564"
+      },
+      "labels_source": {
+        "path": "REQUIRES_PINNED_ORIGINAL_LABELS",
+        "sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd"
+      },
+      "normalizer": {
+        "bytes": 538515,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_native_full_20261009_v1/training/preprocessing.json",
+        "sha256": "4f093f59af6cb4522c8fda77cce357ecd72d0561e3816ac261ec1c91808ca62d"
+      },
+      "prepared": {
+        "bytes": 13520220,
+        "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-prepared128-20261009/runtime/prepared.json",
+        "sha256": "b8518a6e350018e1fa6e9ba3c23d14c3f635096f5fda7ea7af16f453e1edbb53"
+      },
+      "training_config": {
+        "bytes": 12243,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuous_20261009_v1/config.json",
+        "sha256": "fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed"
+      },
+      "weight_license": {
+        "bytes": 2693,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/models/nvidia__Kumo-Tabular/LICENSE",
+        "sha256": "44b43ed7b8e0f987dc5e90fb6cb4b901eccf0b14dc9f17a9033951603851d37d"
+      }
+    },
+    "runtime": {
+      "import_files": [],
+      "interpreter": {
+        "path": "/usr/bin/python3.12",
+        "sha256": "REQUIRES_HASH"
+      },
+      "modules": {
+        "boto3": {
+          "file": {
+            "path": "REQUIRES_PHYSICAL_ORIGIN",
+            "sha256": "REQUIRES_HASH"
+          },
+          "version": "1.35.49"
+        },
+        "botocore": {
+          "file": {
+            "path": "REQUIRES_PHYSICAL_ORIGIN",
+            "sha256": "REQUIRES_HASH"
+          },
+          "version": "REQUIRES_VERSION"
+        },
+        "numpy": {
+          "file": {
+            "path": "REQUIRES_PHYSICAL_ORIGIN",
+            "sha256": "REQUIRES_HASH"
+          },
+          "version": "1.26.4"
+        }
+      },
+      "python_version": "3.12.3"
+    },
+    "schema": "jope.generated-target-production-callbacks/v1",
+    "selected": [
+      "01f9ebd4d7aca0ca93b5e601f1f974579de09f95a7418290dfa0cc50976b8502"
+    ],
+    "worker_config": {
+      "emitter": {
+        "bytes": 1225984,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_s1_runtime_b8098ea5f9b2/cargo-target/s1flywheel/jope-flywheel-emit",
+        "sha256": "c2dd505644d3dccfced7c42ffe26482f82eb374ce47f853b1a525e55114f0daa"
+      },
+      "generator_config": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_20261009/config.json",
+        "sha256": "cd9ee8f882735c42b49d694b99dbbc4187035804099bc49f0ca81f8ec77a9b0a"
+      },
+      "maximum_actual_evaluations": 24,
+      "native_canonicalizer": {
+        "bytes": 3689280,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/jope-s1-proposal.s1main",
+        "sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1"
+      },
+      "protocol_descriptor": {
+        "direction": "lower",
+        "evaluation_source_build_plan_sha256": "4bb10409dde5a686da91fb96501113a0e5dd1efcde6429cab1024d4270302632",
+        "fold_protocol": "jope.s1-two-fold/v1",
+        "inner_fold_fit_rule": "train labels != fold, validate labels == fold, original relative order",
+        "input_semantics": "unscaled_fit_rows_v1",
+        "input_target_units": "prepared_synthetic_target_units",
+        "metric": "rmse",
+        "outer_test_payload_rows": 0,
+        "prediction_parity_tolerance": 1e-09,
+        "scaling": "minmax_fitted_on_fit_rows_v1",
+        "schema": "jope.flywheel-native-evaluation-protocol/v1",
+        "scope": "registered new prepared variants only; research-only, not native HWM context admission"
+      },
+      "registry": {
+        "bytes": 342303,
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label16_20261009_v1/registry.json",
+        "sha256": "d3bbcc43af64e58f7944c8dce0290db309bad2718af2e82b5bc0a30d45a617a1"
+      },
+      "research_only": true,
+      "rustc": {
+        "bytes": 645000,
+        "path": "/home/ubuntu/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+        "sha256": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea"
+      },
+      "source_build_plan_sha256": "4bb10409dde5a686da91fb96501113a0e5dd1efcde6429cab1024d4270302632",
+      "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835",
+      "vocabulary_descriptor": {
+        "canonical_conventions": "GenomeIr::parse followed by GenomeIr::canonical",
+        "canonicalizer_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "genome_source_sha256": "f6db05df29345f508d7ef8270a81dc64e09fd2951e648906f31da91bf99473b7",
+        "schema": "jope.flywheel-native-dsl-identity/v1",
+        "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835"
+      },
+      "worker": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_s1_runtime_b8098ea5f9b2/cargo-target/s1flywheel/bootstrap",
+        "sha256": "626d93a5cd11830e1b7cd43bf46f3fbde42c06273e750faa6d64b69a0c037526"
+      }
+    }
+  },
+  "construction_notes": [
+    "Fill metadata and source/runtime pins before creating clock; template must not be executed.",
+    "First qualification selects one dated successful train row; at most4 permitted by source.",
+    "Fresh clock <=180s, CPU1/512MiB/swap0/noGPU; external owner admission required.",
+    "Input preparation and runtime inventory collection are read-only separate actions; no CPU/host admission is implied.",
+    "No full cutoff/export/optimizer target adoption is implemented by cli.py."
+  ],
+  "launchable": false,
+  "schema": "jope.generated-target-callbacks-config-template/v1",
+  "state": "source-only; unresolved physical refs/runtime inventory/clock"
+}

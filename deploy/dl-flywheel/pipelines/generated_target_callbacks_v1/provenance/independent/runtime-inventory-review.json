@@ -1,0 +1,33 @@
+{
+  "actions": {
+    "gp_executions": 0,
+    "implementation_edits": 0,
+    "imports_run": 0,
+    "remote_actions": 0,
+    "s3_requests": 0,
+    "tests_run": 0
+  },
+  "created_utc": "2026-10-09T19:15:22.123608+00:00",
+  "launch_conditions": [
+    "Exact source pin/interpreter physicalreadback, one-use fresh60s userunit under original1791592146.380285;CPU100%/RAM512MiB/swap0/Nice19/Tasks24/Restartno/BLAS1/CUDAempty and fresh shared cap/ownership checks. No existing failedintent/window reset.",
+    "External supervisor bounds stdout\u22641MiB before buffering/untrusted-print completion and retains exact truncation/failure evidence. inventory.py itself builds/prints the complete JSON and does not enforce1MiB stdout or60s; those are wrapper requirements.",
+    "Preserve failure/OOM/timeout as failed inventory; do not label partial result source/runtime-complete or retry automatically. Owner proves inactive/PID0/emptycgroup or auto-unloaded owned journal and preservesoriginallaunchlimits.",
+    "Builder must verify actualobservedNumPy1.26.4/boto3 1.35.49/botocore and qualifiedinterpreterhash against approved runtime; source checks only Python version and discovers dependencyversions.",
+    "Lazy SDK/auth dependencies missing from inventory must later be refused by callback runtimeorigin guards or included with separately pinned metadata. No credential file reads/outputs or client/networkprobe in this helper."
+  ],
+  "observations": [
+    "No client/Session/S3 request, SQLite, queue/GP/broker/optimizer or signal code. Imports numpy/boto3/botocore and package metadata only. sys.dont_write_bytecode before external imports.",
+    "Python3.12.3/CUDAempty/cgroupCPU\u22641/RAM\u2264512MiB/swap0 checked. Reads package.py/.so pin files\u226464MiB/4096filecount/256MiB aggregate, resolved physical origins, exacthash/bytes.",
+    "Per-file source reads and module versions are observations; stdout statepassed means inventory completed, not SDK lazy-client/auth completeness or model/callback qualification.",
+    "Own UTC-nanosecond/monotonic/CPU-user-system recorded; memory peak/deadline/genuine physical service closure require owner external receipt."
+  ],
+  "reviewer": "successor_review",
+  "schema": "jope.independent-callback-runtime-inventory-review/v1",
+  "scope": "Metadata-only helper source/envelope review, no actual import/launch/runtime qualification or resource reservation.",
+  "source": {
+    "bytes": 2495,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory/inventory.py",
+    "sha256": "cc2d32cc758f2431906475b14d574d7e71b1c25af827503577317b6a0a9a191c"
+  },
+  "state": "passed_source_with_explicit_launch_conditions"
+}

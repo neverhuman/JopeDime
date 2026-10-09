@@ -1,0 +1,11 @@
+{
+  "schema": "jope.native-global-census/v1",
+  "scope_sha256": null,
+  "canonicalizer_sha256": null,
+  "source_paths": [],
+  "coverage_complete": false,
+  "all_legacy_writers_stopped": false,
+  "closure_evidence": [],
+  "entries": [],
+  "source_identities": {}
+}

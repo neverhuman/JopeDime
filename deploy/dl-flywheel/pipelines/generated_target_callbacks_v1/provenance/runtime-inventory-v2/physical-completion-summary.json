@@ -1,0 +1,35 @@
+{
+  "assembler_remote_actions": 0,
+  "cpu_system_seconds": 0.42114999999999997,
+  "cpu_user_seconds": 0.501947,
+  "database_writes": 0,
+  "gp_executions": 0,
+  "independent_physical_probe_by_assembler": false,
+  "monotonic_elapsed_ns": 2333423268,
+  "optimizer_updates": 0,
+  "owner_physical_capture": {
+    "bytes": 167228,
+    "sha256": "a1b7715045cf5de9acb03b5a00a5f37abfeb682d11ab95b07096edebb65930d5",
+    "source": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/physical-terminal.json"
+  },
+  "physical_unit": {
+    "ActiveState": "inactive",
+    "ControlGroup": "",
+    "LoadState": "not-found",
+    "MainPID": "0"
+  },
+  "pins": 679,
+  "result": {
+    "bytes": 140300,
+    "sha256": "c7e823e6cfbdc067f099bdee9f6397a0f8243d7b58f536bb0106b23d49b7fec0",
+    "source": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-runtime-inventory-v2/inventory-result.json"
+  },
+  "returncode": 0,
+  "s3_requests": 0,
+  "schema": "jope.callback-inventory-completion-custody/v1",
+  "scope": "Exact owner-captured metadata inventory and closed-unit proof. No selected-callback success, full cutoff/export, numeric targets or optimizer admission claim.",
+  "source_bytes_hashed": 64751684,
+  "source_sha256": "3ccd0c87291801e075669a3095758c27973d8b62236ebdaa6f0323ce2be34726",
+  "state": "passed_metadata_inventory_only",
+  "stdout_bytes": 140300
+}

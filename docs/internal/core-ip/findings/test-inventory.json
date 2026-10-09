@@ -1,92 +1,433 @@
 {
-  "schema": "jope.regression-test-inventory/v1",
-  "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
-  "coverage_map": "deploy/ci/coverage.json",
   "baseline": "docs/internal/core-ip/findings/baseline.json",
-  "subsystems": {
-    "preparation": {
-      "work_packages": [
-        "W1"
+  "baseline_triage": [
+    {
+      "class": "jope-dime-regressor::dlgp_best5",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "description": "Dataset acquisition, family registry, preparation, splits, views and label admission."
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "lane": "full-default",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
+      "triage": "missing-real-corpus-input"
     },
-    "encoders": {
-      "work_packages": [
-        "W2"
+    {
+      "class": "jope-dime-regressor::dlgp_best5",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "description": "Hyperion/Foundation/Target encoders, semantic bundles and context production."
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "lane": "full-default",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
+      "triage": "missing-real-corpus-input"
     },
-    "policy": {
-      "work_packages": [
-        "W2",
-        "W4"
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "description": "Policy model, grammar, decoding, sampling and proposal ranking."
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-default",
+      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
+      "triage": "missing-real-corpus-input"
     },
-    "gp": {
-      "work_packages": [
-        "W4",
-        "W5"
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
       ],
-      "description": "Genetic-programming search, variation, proposal population and expression kernels."
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-default",
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
+      "triage": "deferred-classification"
     },
-    "fitting": {
-      "work_packages": [
-        "W5"
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
       ],
-      "description": "Fit boundary, fitted predictors, selection, refit and scoring."
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-default",
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
+      "triage": "deferred-classification"
     },
-    "teaching": {
-      "work_packages": [
-        "W3"
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "description": "Teacher admission, eligibility, HWM decisions and corpus membership."
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-default",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
+      "triage": "missing-real-corpus-input"
     },
-    "training": {
-      "work_packages": [
-        "W6"
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "description": "Training corpus, objectives, updates and checkpoints."
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-default",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
+      "triage": "missing-real-corpus-input"
     },
-    "storage": {
-      "work_packages": [
-        "W3",
-        "W6",
-        "W8"
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
       ],
-      "description": "Ledgers, sealed storage, mirrors and durable state."
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-default",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
+      "triage": "missing-real-corpus-input"
     },
-    "export": {
-      "work_packages": [
-        "W9"
+    {
+      "class": "jope-parallel::gp_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
       ],
-      "description": "Fitted export, emitters and backend parity."
+      "item": "target:jope-parallel/test/gp_contracts",
+      "lane": "full-default",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "triage": "fit-authority-fence"
     },
-    "orchestration": {
-      "work_packages": [
-        "W7"
+    {
+      "class": "jope-parallel::gp_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
       ],
-      "description": "SmartCluster, workers, queues, services and native controller."
+      "item": "target:jope-parallel/test/gp_contracts",
+      "lane": "full-default",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "triage": "fit-authority-fence"
     },
-    "performance": {
-      "work_packages": [
-        "W11"
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
       ],
-      "description": "GPU/timing benchmarks and performance harnesses."
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-default",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "triage": "fit-authority-fence"
     },
-    "evaluation": {
-      "work_packages": [
-        "W10"
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
       ],
-      "description": "Arena/Elo, panels and benchmark evaluation."
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-default",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "triage": "fit-authority-fence"
     },
-    "evidence": {
-      "work_packages": [
-        "W12"
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
       ],
-      "description": "Evidence, findings and claim verification tooling."
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-default",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-default",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-default",
+      "note": "Request check ran before resume identity (7b745bf9e): specific RNG diagnostic unreachable and legacy resumes recorded refused requests. Fixed in gp.rs; new legacy-resume test.",
+      "status": "fixed-locally",
+      "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
+      "triage": "product-defect"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-default",
+      "note": "Asserted pre-7b745bf9e cleanup; journal and candidate artifacts are deliberately retained recovery evidence. Test now asserts retention.",
+      "status": "fixed-locally",
+      "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
+      "triage": "stale-expectation"
+    },
+    {
+      "class": "feat-math::golden",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/w0-repro/baseline-20260926T045654Z/scratch-golden.log",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-budget-prefix/test-full-main.txt"
+      ],
+      "item": "target:feat-math/test/golden",
+      "lane": "full-scratch",
+      "note": "No assertion failed: the 600 s full-scratch budget was shorter than this test (576-619 s), so timeout(1) killed the lane. Passes bit-exactly with gpr-scratch-reuse in 582.5 s locally; budget now 900 s (full-default 1500 s, total unchanged). CI re-execution pending.",
+      "status": "fixed-locally",
+      "test": "fast_profile_portfolio_head",
+      "triage": "lane-timeout"
+    },
+    {
+      "class": "jope-dime-regressor::dlgp_best5",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "lane": "full-scratch",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
+      "triage": "missing-real-corpus-input"
+    },
+    {
+      "class": "jope-dime-regressor::dlgp_best5",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "item": "target:jope-dime-regressor/test/dlgp_best5",
+      "lane": "full-scratch",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
+      "triage": "missing-real-corpus-input"
+    },
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-scratch",
+      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
+      "triage": "missing-real-corpus-input"
+    },
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
+      ],
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-scratch",
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
+      "triage": "deferred-classification"
+    },
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
+      ],
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-scratch",
+      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
+      "triage": "deferred-classification"
+    },
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-scratch",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
+      "triage": "missing-real-corpus-input"
+    },
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-scratch",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
+      "triage": "missing-real-corpus-input"
+    },
+    {
+      "class": "jope-dime-regressor::bin/jope-dime-regressor",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
+      ],
+      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
+      "lane": "full-scratch",
+      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing.",
+      "status": "open",
+      "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
+      "triage": "missing-real-corpus-input"
+    },
+    {
+      "class": "jope-parallel::gp_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/gp_contracts",
+      "lane": "full-scratch",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::gp_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/gp_contracts",
+      "lane": "full-scratch",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-scratch",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-scratch",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-scratch",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-scratch",
+      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5).",
+      "status": "moved",
+      "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
+      "triage": "fit-authority-fence"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-scratch",
+      "note": "Request check ran before resume identity (7b745bf9e): specific RNG diagnostic unreachable and legacy resumes recorded refused requests. Fixed in gp.rs; new legacy-resume test.",
+      "status": "fixed-locally",
+      "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
+      "triage": "product-defect"
+    },
+    {
+      "class": "jope-parallel::view_contracts",
+      "evidence": [
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
+        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
+      ],
+      "item": "target:jope-parallel/test/view_contracts",
+      "lane": "full-scratch",
+      "note": "Asserted pre-7b745bf9e cleanup; journal and candidate artifacts are deliberately retained recovery evidence. Test now asserts retention.",
+      "status": "fixed-locally",
+      "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
+      "triage": "stale-expectation"
     }
-  },
+  ],
+  "coverage_map": "deploy/ci/coverage.json",
   "items": {
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
@@ -102,172 +443,935 @@
       ]
     },
     "python:deploy/ci/test-aggregate.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-dl-offline-group.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-full-main.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-install-private.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-prepare-asm-runtime.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-provenance.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-qualify-demo.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-receipt.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-results.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-runner.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-status.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "python:deploy/ci/test-training-proof.py": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
+      "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py": {
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/test_operational.py": {
+      "reason": "Frozen fresh GP v1/revision2 research orchestration, exact input/role/history/ownership custody and native execution guard. Source import is not live source qualification, GP/S3 execution, training admission or optimizer evidence. Test identities/counts and fixture-only clock are pinned by the isolated runner.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/test_receipt_operational.py": {
+      "reason": "Frozen fresh GP v1/revision2 research orchestration, exact input/role/history/ownership custody and native execution guard. Source import is not live source qualification, GP/S3 execution, training admission or optimizer evidence. Test identities/counts and fixture-only clock are pinned by the isolated runner.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/test_permanent_broker.py": {
+      "reason": "Cold permanent-registry repair with create-once custody, exact external head, complete event replay and all prior epoch worker history. Offline fixtures do not authorize live scoring or training admission.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/test_fresh128.py": {
+      "reason": "Frozen fresh GP v1/revision2 research orchestration, exact input/role/history/ownership custody and native execution guard. Source import is not live source qualification, GP/S3 execution, training admission or optimizer evidence. Test identities/counts and fixture-only clock are pinned by the isolated runner.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py": {
+      "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py": {
+      "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py": {
+      "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py": {
+      "reason": "21 isolated native-pool orchestration or finite-action math fixtures. Additive to prior587; mathematical examples and simulated dispatch are not deployed actor learning, live resource or native scoring qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v4/test_live_snapshot.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v4/test_native_failure.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py": {
+      "reason": "Native-v5 cold-build revision2 shared actual-schema binding and nine additional portable CPU fixtures. No scientific objective/parity or global guard change; actual source/build/physical closure and deployment require separate runtime receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_successor.py": {
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_census.py": {
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": {
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_prepared_snapshot.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_resume_transfer.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_transfer_watch.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/rl_spec_audit/test_audit_math.py": {
+      "reason": "9 isolated native-pool orchestration or finite-action math fixtures. Additive to prior587; mathematical examples and simulated dispatch are not deployed actor learning, live resource or native scoring qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
+      "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_no_winner_bootstrap.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_pr1.py": {
+      "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
+      "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/test_trace_recovery_v2.py": {
+      "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/test_trace_recovery_v3.py": {
+      "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/test_callback_targets.py": {
+      "reason": "Executable adapter for the unchanged pinned generated-target callback runner: 37 revision1 + 7 new revision2 + 11 revision3 + 8 reference-compatibility fixtures in four isolated children. No new fixture identities; aggregate remains 812. Preserves source/proofs/roles and performs no GP, S3 PUT, numeric construction or optimizer admission.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_augmentation.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_batch_stream.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_evergreen.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_evidence.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_paper_archive.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_program_bridge.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_program_gate.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_protocol.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_queue.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_s3_library.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_score_join.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_target_noise.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_training_admission.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_training_snapshot.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests/test_training_snapshot_kumos.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_continuous/test_continuous_runner.py": {
+      "reason": "Executed offline continual-learning continuation regressions in the Python lane; source qualification only. Live optimizer and S3 evidence are separately recorded.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_continuous/test_continuous_state_review.py": {
+      "reason": "Executed offline continual-learning continuation regressions in the Python lane; source qualification only. Live optimizer and S3 evidence are separately recorded.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_archive_trace.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_native_inputs.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_hpc/test_verified_cache.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_growth_pipeline.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_native_variant_snapshot.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_decode.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_batch.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_cli.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_train.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_outbox.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_training_snapshot_native.py": {
+      "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/tests_native/test_variant_outbox.py": {
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/restore/test_p7_restore.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_admission_fail_closed.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "teaching"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_common.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_cpuguard.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_jtt1.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_nonnumeric.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_calibration.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_live.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_model_objective.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_sampler.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_payload_strip.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_quarantine.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_raw_split_v2.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_split_v2_groups.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_split_defaults.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1prep.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1raw.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_target_linear.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_trainonly.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_build_local_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2g.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_target_linear.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_partial_refusal_manifest.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2g.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_v2g.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_dryrun.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_interface.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_mapping.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_parser.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_refusals.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_simulate.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_unpromotable.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_keys.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_pin.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_screen.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_review_fixes.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_closure.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_commit_publish.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_hygiene.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_interface.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_registry.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_selection.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_verify.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_automaton.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_oracle.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_programs.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_tokenizer.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_build.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_hygiene.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_poison.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_real.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_redteam.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_sample.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_schema.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_metafeatures.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_normalizers.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_review_findings.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_real.py": {
+      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_strip_outer_test.py": {
+      "reason": "Not a test module: the PR #224 payload-strip lane tool, whose file name matches the *_test.py family pattern; it is exercised by tests/test_payload_strip.py inside the reviewed twenty-one-module offline selection and is not executed as a test family itself.",
+      "role": "research"
     },
     "python:deploy/dl-trainonly/research/dlhwm/tests/test_dlhwm_guards.py": {
-      "role": "research",
-      "reason": "research DL wave guard tests (clean-license refusal, create-only S3 stub, lineage-pure folds, mask and anchor fail-closed); outside the maintained product surface"
+      "reason": "research DL wave guard tests (clean-license refusal, create-only S3 stub, lineage-pure folds, mask and anchor fail-closed); outside the maintained product surface",
+      "role": "research"
     },
     "python:deploy/dl-trainonly/test_contracts.py": {
-      "role": "infrastructure",
-      "reason": "CPU-only offline GPU budget and output custody control conformance; no regression learning or live hardware/storage qualification"
+      "reason": "CPU-only offline GPU budget and output custody control conformance; no regression learning or live hardware/storage qualification",
+      "role": "infrastructure"
+    },
+    "python:deploy/dl-trainonly/test_gpu_manifest_cut.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/test_hwm_publish.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/test_manifest_binding.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/test_offline_guard.py": {
+      "reason": "Python audit-boundary controls for offline DL custody fixtures; no runtime adoption or OS/native-extension isolation claim.",
+      "role": "infrastructure"
+    },
+    "python:deploy/dl-trainonly/test_verify_lane.py": {
+      "reason": "Pinned DL source custody and substitution/refusal conformance; no model learning or operational promotion claim.",
+      "role": "infrastructure"
+    },
+    "python:deploy/lambda/training/teacher-v2/test_materialize_g0.py": {
+      "reason": "S1 two-fold G0 preparation and production executable conformance, including forbidden outer-target perturbation and admitted input controls.",
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "gp",
+        "fitting",
+        "training"
+      ]
+    },
+    "python:deploy/lambda/training/teacher-v2/test_s1_budget.py": {
+      "reason": "S1 fixed-budget continuation and durable attempt accounting, with failures and initialization inside the owner ceiling.",
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "training"
+      ]
     },
     "python:python/src/jope/research/test_exact_accept.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_adaptive.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_backlog.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_campaign.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_canary.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_canary_propose.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_common.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_compile_cache.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_context_proposals.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_controller.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_dl_generate.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_evaluator.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_freshness.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_ingest.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_monitor.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_ops.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_packed_corpus.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_pair_registry.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_sealed_audit.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_service.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_status.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_train.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_wave.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_exact_winner_scan.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_proposal_task_routing.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_smart_v3_cpu_scq.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_train_only_redteam_generation.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/src/jope/research/test_train_spec_policy.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/tests/test_context_proposals.py": {
       "role": "regression",
@@ -283,16 +1387,16 @@
       ]
     },
     "python:python/tests/test_durable_selfplay.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "python:python/tests/test_experimental_proposal.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/tests/test_experimental_runtime.py": {
-      "role": "research",
-      "reason": "research script test outside the maintained product surface"
+      "reason": "research script test outside the maintained product surface",
+      "role": "research"
     },
     "python:python/tests/test_freeze_corpus_decoupling.py": {
       "role": "regression",
@@ -309,8 +1413,8 @@
       ]
     },
     "python:python/tests/test_optional_task_readiness.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "python:python/tests/test_policy_training_contract.py": {
       "role": "regression",
@@ -319,32 +1423,32 @@
       ]
     },
     "python:python/tests/test_recipe_e.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "python:python/tests/test_reward_ranked_dl_generate.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "python:python/tests/test_selfplay_controller.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_test_exact_campaign.py": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
-    },
-    "python:python/tests/test_training_campaign.py": {
-      "role": "regression",
-      "subsystems": [
-        "training"
-      ]
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "python:python/tests/test_target_artifact_pins.py": {
       "role": "regression",
       "subsystems": [
         "encoders",
         "storage"
+      ]
+    },
+    "python:python/tests/test_test_exact_campaign.py": {
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
+    },
+    "python:python/tests/test_training_campaign.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
       ]
     },
     "python:python/tests/test_training_comparison.py": {
@@ -401,8 +1505,8 @@
       ]
     },
     "target:feat-math/test/advanced_v3_multiclass": {
-      "role": "deferred-classification",
-      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
+      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan",
+      "role": "deferred-classification"
     },
     "target:feat-math/test/advanced_v3_parity": {
       "role": "regression",
@@ -420,6 +1524,13 @@
       "role": "regression",
       "subsystems": [
         "performance"
+      ]
+    },
+    "target:feat-math/test/capability_manifest": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "policy"
       ]
     },
     "target:feat-math/test/champion_parity": {
@@ -444,14 +1555,22 @@
         "export"
       ]
     },
-    "target:feat-math/test/conversion_roundtrip": {
+    "target:feat-math/test/conversion_calibration_winner": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
+    "target:feat-math/test/conversion_expression_matrix": {
       "role": "regression",
       "subsystems": [
         "gp",
         "export"
       ]
     },
-    "target:feat-math/test/conversion_expression_matrix": {
+    "target:feat-math/test/conversion_roundtrip": {
       "role": "regression",
       "subsystems": [
         "gp",
@@ -465,6 +1584,21 @@
         "export"
       ]
     },
+    "target:feat-math/test/cumulative_integration_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
+    "target:feat-math/test/export_report": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "gp"
+      ]
+    },
     "target:feat-math/test/fault_trace": {
       "role": "regression",
       "subsystems": [
@@ -472,7 +1606,21 @@
         "gp"
       ]
     },
+    "target:feat-math/test/finite_difference_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
     "target:feat-math/test/fitted_width": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
+      ]
+    },
+    "target:feat-math/test/golden": {
       "role": "regression",
       "subsystems": [
         "fitting"
@@ -485,10 +1633,11 @@
         "export"
       ]
     },
-    "target:feat-math/test/golden": {
+    "target:feat-math/test/gp_language_tricks": {
       "role": "regression",
       "subsystems": [
-        "fitting"
+        "gp",
+        "export"
       ]
     },
     "target:feat-math/test/historical_v1": {
@@ -500,10 +1649,56 @@
         "policy"
       ]
     },
+    "target:feat-math/test/inverse_links_ingress_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/inverse_links_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/ip_scrub": {
       "role": "regression",
       "subsystems": [
         "export"
+      ]
+    },
+    "target:feat-math/test/kernel2_closure": {
+      "role": "regression",
+      "subsystems": [
+        "export",
+        "gp",
+        "policy"
+      ]
+    },
+    "target:feat-math/test/kernel2_expression_search": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:feat-math/test/kernel2_pipeline_search": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:feat-math/test/kernel2_refinement_control": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:feat-math/test/kernel2_search": {
+      "role": "regression",
+      "subsystems": [
+        "gp"
       ]
     },
     "target:feat-math/test/kernel_codec": {
@@ -537,11 +1732,53 @@
         "export"
       ]
     },
+    "target:feat-math/test/linear_scaling_recipes": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/linear_scaling_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/mathexpr_boundary_parity": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/mathexpr_current_semantics": {
       "role": "regression",
       "subsystems": [
         "fitting",
         "gp"
+      ]
+    },
+    "target:feat-math/test/numerical_policy_execution": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/numerical_policy_ingress": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/numerical_policy_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
       ]
     },
     "target:feat-math/test/ordered_axis_contract": {
@@ -562,11 +1799,26 @@
         "export"
       ]
     },
+    "target:feat-math/test/realized_path_stats_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
     "target:feat-math/test/registry_vocabulary": {
       "role": "regression",
       "subsystems": [
         "gp",
         "policy"
+      ]
+    },
+    "target:feat-math/test/ridge_press_oracle": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting"
       ]
     },
     "target:feat-math/test/roll_zero_width": {
@@ -590,6 +1842,27 @@
         "gp"
       ]
     },
+    "target:feat-math/test/stable_exponential_execution_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/stable_exponential_ingress_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
+    "target:feat-math/test/stable_exponential_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/stage_telemetry": {
       "role": "regression",
       "subsystems": [
@@ -597,11 +1870,26 @@
         "gp"
       ]
     },
+    "target:feat-math/test/timescale_nabla_v2": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "fitting",
+        "export"
+      ]
+    },
     "target:feat-math/test/tokens": {
       "role": "regression",
       "subsystems": [
         "gp",
         "policy"
+      ]
+    },
+    "target:feat-math/test/versioned_conversion": {
+      "role": "regression",
+      "subsystems": [
+        "gp",
+        "export"
       ]
     },
     "target:hyperion/bin/hyperion-batch-worker": {
@@ -780,8 +2068,8 @@
       ]
     },
     "target:jope-bench/test/classification": {
-      "role": "deferred-classification",
-      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
+      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan",
+      "role": "deferred-classification"
     },
     "target:jope-bench/test/committed_evidence": {
       "role": "regression",
@@ -803,28 +2091,28 @@
       ]
     },
     "target:jope-ci/bin/jope-ci": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-ci/lib/jope_ci": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-ci/test/build_report": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-ci/test/build_report_python_parity": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-ci/test/cargo_artifact": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-ci/test/cargo_artifact_python_parity": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-cli/bin/jope": {
       "role": "regression",
@@ -930,232 +2218,232 @@
       ]
     },
     "target:jope-dime-regressor/bin/aspfm_recovery_evolve": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/corpus_eval": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope-dime-regressor": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control; also holds real-corpus island/train-only fixtures and deferred binary42 fixtures"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control; also holds real-corpus island/train-only fixtures and deferred binary42 fixtures",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_canary_executor": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_capacity": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_causal_evidence": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_causal_pair_repair": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_compile_cache": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_dlgp_best5": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_dlgp_best5_worker": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_dlgp_budget_supervisor": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_effective_unit_audit": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_encoder_supervisor": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_encoder_v2_capacity": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_encoder_v2_import": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_expanded_catalog": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_flywheel_liveness": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_generalized_gp": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_gp_bridge": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_gpu_lane_admission": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_hyperion_cache": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_hyperion_gate": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_ledger_reconciler": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_ops_health_check": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_queue_control": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_reporting": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_sealed_zeroshot": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_alarms": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_bundle": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_corpus_freezer": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_expansion_driver": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_freshness": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_gc": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_mcp": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_promotion": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_propose_driver": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_queue": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_shadow": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_status": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_supply": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_trainer_watchdog": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_tui": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_selfplay_wave": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_spec_drift": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_strategy_screen": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_task_elo": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_task_learning_controller": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_task_rating": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_timeseries_export": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_training_archive": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_training_history": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_training_replica": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_utilization_supervisor": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/jope_v3_control": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/scq_runs_gc": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/bin/search-v3": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/lib/jope_dime_regressor": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/dlgp_best5": {
       "role": "regression-real-corpus",
@@ -1165,44 +2453,44 @@
       ]
     },
     "target:jope-dime-regressor/test/dlgp_budget_campaign": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/encoder_v2_recovery": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/epoch6_foundation": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/epoch6_waves": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/generalized_gp": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/hyperion_gate": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/router_contracts_v2": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/search_v3": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/selfplay_shadow_integration": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-dime-regressor/test/systemd_unit_paths": {
-      "role": "historical",
-      "reason": "historical campaign tooling retained for replay; not a maintained regression control"
+      "reason": "historical campaign tooling retained for replay; not a maintained regression control",
+      "role": "historical"
     },
     "target:jope-learning/bin/jope-learning": {
       "role": "regression",
@@ -1522,8 +2810,8 @@
       ]
     },
     "target:jope-parallel/test/binary_preparation": {
-      "role": "deferred-classification",
-      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan"
+      "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan",
+      "role": "deferred-classification"
     },
     "target:jope-parallel/test/bounded_agent": {
       "role": "regression",
@@ -1887,12 +3175,12 @@
       ]
     },
     "target:jope-paths/bin/jope-units-render": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-paths/lib/jope_paths": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-pipeline/bin/jope-context-proof": {
       "role": "regression",
@@ -1903,13 +3191,13 @@
     },
     "target:jope-pipeline/lib/jope_pipeline": {
       "role": "regression",
+      "scope": "Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate. Review regressions additionally cover rectangular training/holdout admission, both fitted-width mismatch directions, retained completed-stage fault counts on downstream failure, preflight refinement refusal and unchanged reference model/prediction bits.",
       "subsystems": [
         "encoders",
         "fitting",
         "gp",
         "policy"
-      ],
-      "scope": "Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate. Review regressions additionally cover rectangular training/holdout admission, both fitted-width mismatch directions, retained completed-stage fault counts on downstream failure, preflight refinement refusal and unchanged reference model/prediction bits."
+      ]
     },
     "target:jope-pipeline/test/dependency_fence": {
       "role": "regression",
@@ -1986,8 +3274,8 @@
       ]
     },
     "target:jope-records/test/python_parity": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:jope-records/test/records": {
       "role": "regression",
@@ -1998,16 +3286,16 @@
       ]
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:numpy-pcg64/test/first_outputs": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:numpy-pcg64/test/sampling_golden": {
-      "role": "infrastructure",
-      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
+      "role": "infrastructure"
     },
     "target:scq/bin/scq": {
       "role": "regression",
@@ -2071,1164 +3359,92 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "target:feat-math/test/capability_manifest": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "policy"
-      ]
-    },
-    "target:feat-math/test/export_report": {
-      "role": "regression",
-      "subsystems": [
-        "export",
-        "gp"
-      ]
-    },
-    "target:feat-math/test/kernel2_closure": {
-      "role": "regression",
-      "subsystems": [
-        "export",
-        "gp",
-        "policy"
-      ]
-    },
-    "target:feat-math/test/mathexpr_boundary_parity": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/versioned_conversion": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/kernel2_search": {
-      "role": "regression",
-      "subsystems": [
-        "gp"
-      ]
-    },
-    "target:feat-math/test/kernel2_expression_search": {
-      "role": "regression",
-      "subsystems": [
-        "gp"
-      ]
-    },
-    "target:feat-math/test/kernel2_pipeline_search": {
-      "role": "regression",
-      "subsystems": [
-        "gp"
-      ]
-    },
-    "target:feat-math/test/kernel2_refinement_control": {
-      "role": "regression",
-      "subsystems": [
-        "gp"
-      ]
-    },
-    "target:feat-math/test/inverse_links_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/inverse_links_ingress_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/stable_exponential_ingress_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/numerical_policy_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/numerical_policy_ingress": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/numerical_policy_execution": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/stable_exponential_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/stable_exponential_execution_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/finite_difference_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "fitting",
-        "export"
-      ]
-    },
-    "target:feat-math/test/cumulative_integration_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "fitting",
-        "export"
-      ]
-    },
-    "target:feat-math/test/linear_scaling_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/linear_scaling_recipes": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "target:feat-math/test/timescale_nabla_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "fitting",
-        "export"
-      ]
-    },
-    "target:feat-math/test/conversion_calibration_winner": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "fitting",
-        "export"
-      ]
-    },
-    "python:deploy/lambda/training/teacher-v2/test_s1_budget.py": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "training"
-      ],
-      "reason": "S1 fixed-budget continuation and durable attempt accounting, with failures and initialization inside the owner ceiling."
-    },
-    "python:deploy/lambda/training/teacher-v2/test_materialize_g0.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "gp",
-        "fitting",
-        "training"
-      ],
-      "reason": "S1 two-fold G0 preparation and production executable conformance, including forbidden outer-target perturbation and admitted input controls."
-    },
-    "target:feat-math/test/realized_path_stats_v2": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "fitting",
-        "export"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/restore/test_p7_restore.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_admission_fail_closed.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "teaching"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_common.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_cpuguard.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_jtt1.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_nonnumeric.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_calibration.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_live.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_model_objective.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_sampler.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_payload_strip.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_quarantine.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_raw_split_v2.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_rowsel_split_v2_groups.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_split_defaults.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1prep.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1raw.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_target_linear.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_trainonly.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2g.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/test_gpu_manifest_cut.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/test_manifest_binding.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/test_hwm_publish.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "gp",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2g.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_helper.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_v2g.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_target_linear.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fold_isolation.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_build_local_fold_isolation.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_partial_refusal_manifest.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_fold_isolation.py": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "teaching",
-        "storage"
-      ]
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_dryrun.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_interface.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_mapping.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_parser.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_refusals.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_simulate.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_unpromotable.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_keys.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_pin.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_screen.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_review_fixes.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_closure.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_commit_publish.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_hygiene.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_interface.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_registry.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_selection.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_verify.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_automaton.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_oracle.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_programs.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_tokenizer.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_build.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_hygiene.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_poison.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_real.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_redteam.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_sample.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_schema.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_metafeatures.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_normalizers.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_review_findings.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_real.py": {
-      "role": "research",
-      "reason": "Newly imported DL lane family outside the reviewed twenty-one-module offline selection; static source custody only, not executed coverage or operational qualification."
-    },
-    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_strip_outer_test.py": {
-      "role": "research",
-      "reason": "Not a test module: the PR #224 payload-strip lane tool, whose file name matches the *_test.py family pattern; it is exercised by tests/test_payload_strip.py inside the reviewed twenty-one-module offline selection and is not executed as a test family itself."
-    },
-    "python:deploy/dl-trainonly/test_verify_lane.py": {
-      "role": "infrastructure",
-      "reason": "Pinned DL source custody and substitution/refusal conformance; no model learning or operational promotion claim."
-    },
-    "python:deploy/dl-trainonly/test_offline_guard.py": {
-      "role": "infrastructure",
-      "reason": "Python audit-boundary controls for offline DL custody fixtures; no runtime adoption or OS/native-extension isolation claim."
-    },
-    "target:feat-math/test/ridge_press_oracle": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "fitting"
-      ]
-    },
-    "target:feat-math/test/gp_language_tricks": {
-      "role": "regression",
-      "subsystems": [
-        "gp",
-        "export"
-      ]
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
-      "role": "regression",
-      "subsystems": [
-        "evaluation",
-        "evidence",
-        "orchestration"
-      ]
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler.py": {
-      "role": "regression",
-      "subsystems": [
-        "evaluation",
-        "evidence",
-        "orchestration"
-      ]
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_pr1.py": {
-      "role": "regression",
-      "subsystems": [
-        "policy",
-        "teaching",
-        "storage"
-      ],
-      "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability."
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
-      "role": "regression",
-      "subsystems": [
-        "policy",
-        "teaching",
-        "storage"
-      ],
-      "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability."
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py": {
-      "role": "regression",
-      "subsystems": [
-        "evaluation",
-        "evidence",
-        "orchestration"
-      ]
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_no_winner_bootstrap.py": {
-      "role": "regression",
-      "subsystems": [
-        "evaluation",
-        "evidence",
-        "orchestration"
-      ]
     }
   },
-  "baseline_triage": [
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::dlgp_best5",
-      "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
-      "item": "target:jope-dime-regressor/test/dlgp_best5",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+  "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
+  "schema": "jope.regression-test-inventory/v1",
+  "subsystems": {
+    "encoders": {
+      "description": "Hyperion/Foundation/Target encoders, semantic bundles and context production.",
+      "work_packages": [
+        "W2"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::dlgp_best5",
-      "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
-      "item": "target:jope-dime-regressor/test/dlgp_best5",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "evaluation": {
+      "description": "Arena/Elo, panels and benchmark evaluation.",
+      "work_packages": [
+        "W10"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "evidence": {
+      "description": "Evidence, findings and claim verification tooling.",
+      "work_packages": [
+        "W12"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "deferred-classification",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
-      ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "export": {
+      "description": "Fitted export, emitters and backend parity.",
+      "work_packages": [
+        "W9"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "deferred-classification",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
-      ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "fitting": {
+      "description": "Fit boundary, fitted predictors, selection, refit and scoring.",
+      "work_packages": [
+        "W5"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "gp": {
+      "description": "Genetic-programming search, variation, proposal population and expression kernels.",
+      "work_packages": [
+        "W4",
+        "W5"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "orchestration": {
+      "description": "SmartCluster, workers, queues, services and native controller.",
+      "work_packages": [
+        "W7"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
+    "performance": {
+      "description": "GPU/timing benchmarks and performance harnesses.",
+      "work_packages": [
+        "W11"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::gp_contracts",
-      "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
-      "item": "target:jope-parallel/test/gp_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
+    "policy": {
+      "description": "Policy model, grammar, decoding, sampling and proposal ranking.",
+      "work_packages": [
+        "W2",
+        "W4"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::gp_contracts",
-      "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
-      "item": "target:jope-parallel/test/gp_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
+    "preparation": {
+      "description": "Dataset acquisition, family registry, preparation, splits, views and label admission.",
+      "work_packages": [
+        "W1"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::view_contracts",
-      "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
+    "storage": {
+      "description": "Ledgers, sealed storage, mirrors and durable state.",
+      "work_packages": [
+        "W3",
+        "W6",
+        "W8"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::view_contracts",
-      "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
+    "teaching": {
+      "description": "Teacher admission, eligibility, HWM decisions and corpus membership.",
+      "work_packages": [
+        "W3"
+      ]
     },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::view_contracts",
-      "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::view_contracts",
-      "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::view_contracts",
-      "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "product-defect",
-      "status": "fixed-locally",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
-      ],
-      "note": "Request check ran before resume identity (7b745bf9e): specific RNG diagnostic unreachable and legacy resumes recorded refused requests. Fixed in gp.rs; new legacy-resume test."
-    },
-    {
-      "lane": "full-default",
-      "class": "jope-parallel::view_contracts",
-      "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "stale-expectation",
-      "status": "fixed-locally",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
-      ],
-      "note": "Asserted pre-7b745bf9e cleanup; journal and candidate artifacts are deliberately retained recovery evidence. Test now asserts retention."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "feat-math::golden",
-      "test": "fast_profile_portfolio_head",
-      "item": "target:feat-math/test/golden",
-      "triage": "lane-timeout",
-      "status": "fixed-locally",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/w0-repro/baseline-20260926T045654Z/scratch-golden.log",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-budget-prefix/test-full-main.txt"
-      ],
-      "note": "No assertion failed: the 600 s full-scratch budget was shorter than this test (576-619 s), so timeout(1) killed the lane. Passes bit-exactly with gpr-scratch-reuse in 582.5 s locally; budget now 900 s (full-default 1500 s, total unchanged). CI re-execution pending."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::dlgp_best5",
-      "test": "all_six_arms_complete_eight_generation_synthetic_worker_with_exact_ledgers",
-      "item": "target:jope-dime-regressor/test/dlgp_best5",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::dlgp_best5",
-      "test": "training_staging_rebuilds_stable_rows_without_resolving_test",
-      "item": "target:jope-dime-regressor/test/dlgp_best5",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "commands::train_only_study::tests::production_sotarena_registry_freezes_exact_37_to_requested_10",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Historical production context catalog not located on this host or in CI; explicit unavailable precondition added. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::binary42::tests::all_frozen_dataset_bindings_and_binary_labels_are_valid",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "deferred-classification",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
-      ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::binary42::tests::binary42_fitted_cpp17_predictions_match_rust_bits",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "deferred-classification",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z"
-      ],
-      "note": "Binary classification is deferred; real-corpus inputs are absent here and in CI. Fails with an explicit unavailable message. Health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::island_extension::tests::generation_30_populations_reconstruct_deterministically",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::island_extension::tests::prior_no_win_cohort_reconstructs_in_order",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-dime-regressor::bin/jope-dime-regressor",
-      "test": "test_adaptive::island_extension::tests::sealed_generation_29_artifacts_bind_seven_champion_continuations",
-      "item": "target:jope-dime-regressor/bin/jope-dime-regressor",
-      "triage": "missing-real-corpus-input",
-      "status": "open",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-noinputs-20260926T051309Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-regressor-hostlane-20260926T051335Z"
-      ],
-      "note": "Real-corpus fixture; roots now resolve via ADR-0003. Passes in the host lane with the read-only custody inputs; CI has no such inputs. The health follow-up routes this exact case to deploy/ci/real-corpus-tests.txt and the manifest-verified host-real-corpus lane; it remains collected but explicitly ignored in credential-free CI. Missing host inputs remain unavailable, not passing."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::gp_contracts",
-      "test": "sealed_memory_view_matches_file_evaluation_and_rejects_writes",
-      "item": "target:jope-parallel/test/gp_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::sealed_memory_view_matches_file_evaluation_and_rejects_writes",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::gp_contracts",
-      "test": "fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
-      "item": "target:jope-parallel/test/gp_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::view_contracts",
-      "test": "fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::fitted_view_predictor_uses_the_exact_cut_and_original_target_units",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::view_contracts",
-      "test": "experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::view_contracts",
-      "test": "isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::isolated_fitted_view_export_binds_success_and_preserves_worker_failures",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::view_contracts",
-      "test": "one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "fit-authority-fence",
-      "status": "moved",
-      "moved_to": "target:jope-parallel/lib/jope_parallel gp::fit_contract_tests::one_evaluation_budget_runs_the_incumbent_before_neural_candidates",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-fence-postfix-20260926T054031Z"
-      ],
-      "note": "Refused by the shipped fit-authority fence (socket, activation block, event witness) by design. The positive contract runs in the cfg(test) library build behind the reviewed test-only issuer; integration tests now assert the shipped refusals. Production activation verifiers remain unimplemented (W5)."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::view_contracts",
-      "test": "matched_search_seed_is_recorded_and_cannot_change_on_resume",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "product-defect",
-      "status": "fixed-locally",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
-      ],
-      "note": "Request check ran before resume identity (7b745bf9e): specific RNG diagnostic unreachable and legacy resumes recorded refused requests. Fixed in gp.rs; new legacy-resume test."
-    },
-    {
-      "lane": "full-scratch",
-      "class": "jope-parallel::view_contracts",
-      "test": "projected_gp_candidates_are_exactly_representable_unique_and_durable",
-      "item": "target:jope-parallel/test/view_contracts",
-      "triage": "stale-expectation",
-      "status": "fixed-locally",
-      "evidence": [
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-prefix-20260926T050454Z",
-        "/home/ubuntu/jope-rescue-20260921/regression-remediation-20260926/claude-w0-w12/runs/w0-seed-postfix-20260926T050536Z"
-      ],
-      "note": "Asserted pre-7b745bf9e cleanup; journal and candidate artifacts are deliberately retained recovery evidence. Test now asserts retention."
+    "training": {
+      "description": "Training corpus, objectives, updates and checkpoints.",
+      "work_packages": [
+        "W6"
+      ]
     }
-  ]
+  }
 }

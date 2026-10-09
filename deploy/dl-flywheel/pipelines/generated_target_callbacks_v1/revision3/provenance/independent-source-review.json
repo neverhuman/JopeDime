@@ -1,0 +1,24 @@
+{
+  "actual_shape_sha256": "59205a102b6287eaa58af7f698fbaf5a78d3557757fb199eb7340a7ce54ecae3",
+  "independent_tests_run": 0,
+  "limitations": [
+    "Source review only; author qualification is separate.",
+    "Actual captured metadata covers one selected parent among 36 refs, not all 128 parent schemas.",
+    "No live runtime qualification or actual parent payload was executed by this reviewer."
+  ],
+  "remote_actions": false,
+  "review_scope": [
+    "Exact closed four-field parent encoder pin only from replayed immutable registry parent role",
+    "Compressed bytes/SHA and bounded decompressed raw SHA both checked",
+    "Generic two/three-field read_bound unchanged",
+    "Separate immutable role map matches replayed lineage set"
+  ],
+  "reviewer": "/root/generalization_design/review_guard",
+  "schema": "jope.narrow-independent-source-review/v1",
+  "source_pins": {
+    "callbacks.py": "5e8b17daee58da4f66f1e4bf2bce4c62b5e5bc7889ae3150b4f52a159141e014",
+    "parent_encoder.py": "f017dde5d183002bfbc3e5109b6cb29c6f4f8b230209371b127b7290225bb685"
+  },
+  "unresolved_blockers": [],
+  "verdict": "PASS narrow source diff"
+}

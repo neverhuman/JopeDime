@@ -1,0 +1,42 @@
+{
+  "base": {
+    "bytes": 17268,
+    "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/trace_archive_v1_c8a13033.py",
+    "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+  },
+  "created_unix": null,
+  "deadline_unix": null,
+  "global_deadline_unix": 1791592146.380285,
+  "host": "xbabe3",
+  "logs_root": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/hpc_trace_20261009_v1/logs",
+  "maximum_global_put_attempts": 5000,
+  "maximum_put_attempts": 3787,
+  "maximum_segments": 2500,
+  "out": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3",
+  "previous_source": {
+    "bytes": 20376,
+    "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/trace_recovery_v2.py",
+    "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
+  },
+  "prior1_capture": {
+    "bytes": 2837433,
+    "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/prior1-capture.json",
+    "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4"
+  },
+  "prior2_capture": {
+    "bytes": 2630301,
+    "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/prior2-capture.json",
+    "sha256": "048e97db6131b4c76090eafbf60372bf3143da5d873ead079e32412639ad180d"
+  },
+  "schema": "jope.trace-archive-recovery/v3",
+  "source": {
+    "bytes": 20806,
+    "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/trace_recovery_v3.py",
+    "sha256": "9d2ea46452973e001cba7a1afa0d898424ffa1ef5bb27c7d822532304b68fb53"
+  },
+  "terminal_proof": {
+    "bytes": 2832,
+    "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-trace-recovery-20261009-v3/terminal-proof.json",
+    "sha256": "3300d26a4ceaaea69095e38539a13b706af1545965068738126e0309d5342a21"
+  }
+}

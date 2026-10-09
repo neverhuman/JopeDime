@@ -1,0 +1,55 @@
+{
+  "actions": {
+    "live_database_reads": 0,
+    "network_calls": 0,
+    "production_imports": 0,
+    "remote_calls": 0,
+    "review_note_writes": 1,
+    "source_edits": 0,
+    "tests_executed": 0
+  },
+  "confirmed_source_observations": [
+    "Context.identity is digest(asdict(Context)); exporter digest(ctx) and evaluation key shape agree with current protocol/program_gate.",
+    "Current cutoff opens only a pinned precaptured image mode=ro/immutable=1 and query_only, refuses WAL/SHM/rollback journal, checks full chain/materialized state and singleton config, and creates no schema/index. This is source inspection, not a runtime no-write proof.",
+    "Current source includes stricter exact ACK, config numeric bounds, complete descriptor/parent-role proof and original normalization fit-roster binding.",
+    "Exact result bytes and seven named artifact refs are checked; semantic numeric/parity validity intentionally remains delegated to a separately reviewed production verifier adapter, absent from this packet.",
+    "Rows and result receipt retain no CE promotion, no optimizer admission and no originating optimizer-commit claim; target numeric materialization remains deferred to pinned compose/labels.",
+    "Prior wrapper/program re-read supports alias indexing only; it does not requalify every old artifact."
+  ],
+  "next": "Review frozen implementation and newly authored offline fixtures separately; this note is not final source approval.",
+  "open_findings": [
+    {
+      "file": "common.py",
+      "finding": "CheckedCallback hashes the source file currently on disk and checks supplied function qualname/source filename, but does not establish that the loaded function code was compiled from those pinned bytes. A normally imported stale function can pass after the file is updated when the request pins the new file SHA. A replacement code object using the same filename/name also passes. Thus exact loaded callable source closure is not enforced.",
+      "id": "loaded_callback_source_identity",
+      "lines": "97-108",
+      "suggestion": "Bind actual compiled function code to the pinned bytes via a reviewed fresh-source loader or static compiled-code equivalence check; retain explicit trusted callback/dependency/global-state limits. Add a new stale-loaded-function negative fixture. Filename/qualname alone is not a code identity."
+    }
+  ],
+  "read_snapshots": {
+    "common.py": "7cbf6677da77f55e6517829a649ff94185262f5888f0f0b6d6adf09b0abd40c9",
+    "cutoff.py": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490",
+    "export_verified.py": "72ca808654e038282ea6043825f9e44fe9a8938e6d99ad3cbbfefdf3d39fc615"
+  },
+  "resolved_during_read": [
+    {
+      "current_lines": "export_verified.py:259-273",
+      "finding": "The new-row cap originally ran before canonical-key deduplication, allowing later conflicting aliases of an accepted result to be classified pending.",
+      "id": "selection_limit_hides_alias_conflict",
+      "initial_lines": "export_verified.py:229-239",
+      "resolution": "Observed accepted and predecessor canonical ref conflict checks moved before limits."
+    },
+    {
+      "current_lines": "export_verified.py:128-130,212",
+      "finding": "get_version originally bypassed CheckedCallback.",
+      "id": "reader_callback_unpinned",
+      "initial_lines": "export_verified.py:127-129,182",
+      "resolution": "Observed read_version added to closed callback map and ExactReader now receives that checked callback."
+    }
+  ],
+  "reviewed_at_utc": "2026-10-09T18:03:02.568513+00:00",
+  "reviewer": "/root/generalization_design/review_guard",
+  "schema": "jope.generated-target-export-draft-review/v1",
+  "scope": "Static review of common.py, cutoff.py and export_verified.py against current outbox/Context schemas. No tests or production imports. Author is editing concurrently; observations below bind the specified read snapshots, not a final implementation.",
+  "state": "draft_review_open_not_frozen"
+}

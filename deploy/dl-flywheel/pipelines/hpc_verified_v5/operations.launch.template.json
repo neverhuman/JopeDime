@@ -1,0 +1,295 @@
+{
+  "schema": "jope.native-v5-launch-input/v1",
+  "prepared": {
+    "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_20261009/prepared/prepared.json",
+    "sha256": "FILL_EXACT_SHA256",
+    "bytes": 0
+  },
+  "worker_template": {
+    "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_20261009/worker-template.json",
+    "sha256": "FILL_EXACT_SHA256",
+    "bytes": 0
+  },
+  "source_files": [
+    {
+      "relative_path": "historical_custody.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/historical_custody.py",
+        "sha256": "fecb4075b06e60fb118c765282ea08e6a03dd1343934318443eebadf431eac7c",
+        "bytes": 7284
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/__init__.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/__init__.py",
+        "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+        "bytes": 95
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/augmentation.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/augmentation.py",
+        "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+        "bytes": 11160
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/batch_stream.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/batch_stream.py",
+        "sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
+        "bytes": 22632
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/evergreen.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/evergreen.py",
+        "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+        "bytes": 16420
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/evidence.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/evidence.py",
+        "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
+        "bytes": 32112
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/native_variant_snapshot.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/native_variant_snapshot.py",
+        "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
+        "bytes": 20129
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/paper_archive.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/paper_archive.py",
+        "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
+        "bytes": 29832
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/program_gate.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/program_gate.py",
+        "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+        "bytes": 9974
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/program_inputs.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/program_inputs.py",
+        "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
+        "bytes": 9259
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/program_io.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/program_io.py",
+        "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+        "bytes": 6171
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/program_observer.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/program_observer.py",
+        "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
+        "bytes": 6035
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/program_worker.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/program_worker.py",
+        "sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1",
+        "bytes": 15140
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/protocol.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/protocol.py",
+        "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+        "bytes": 9341
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/queue.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/queue.py",
+        "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
+        "bytes": 13448
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/s3_library.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/s3_library.py",
+        "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
+        "bytes": 4178
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/score_join.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/score_join.py",
+        "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+        "bytes": 4827
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/target_noise.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/target_noise.py",
+        "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+        "bytes": 5835
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/timing.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/timing.py",
+        "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+        "bytes": 4321
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/training_admission.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/training_admission.py",
+        "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
+        "bytes": 25049
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/training_snapshot.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/training_snapshot.py",
+        "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
+        "bytes": 30174
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/training_snapshot_kumos.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/training_snapshot_kumos.py",
+        "sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
+        "bytes": 36579
+      }
+    },
+    {
+      "relative_path": "jope_flywheel/training_snapshot_native.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/jope_flywheel/training_snapshot_native.py",
+        "sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
+        "bytes": 23102
+      }
+    },
+    {
+      "relative_path": "native_build.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_build.py",
+        "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e",
+        "bytes": 4459
+      }
+    },
+    {
+      "relative_path": "native_corpus_authority.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_corpus_authority.py",
+        "sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9",
+        "bytes": 3879
+      }
+    },
+    {
+      "relative_path": "native_dispatch.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_dispatch.py",
+        "sha256": "e6f37b7c8d8998a0c78128726b129e284f974fe4690e3304892b74083197a998",
+        "bytes": 16856
+      }
+    },
+    {
+      "relative_path": "native_evaluate.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_evaluate.py",
+        "sha256": "b0a230bdf7a28ac1e04fef5e7dd6a038523ed20c421d1bef6ae112f4c67a6c86",
+        "bytes": 13913
+      }
+    },
+    {
+      "relative_path": "native_failure.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_failure.py",
+        "sha256": "41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99",
+        "bytes": 10462
+      }
+    },
+    {
+      "relative_path": "native_global_guard.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_global_guard.py",
+        "sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b",
+        "bytes": 25679
+      }
+    },
+    {
+      "relative_path": "native_inputs.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/native_inputs.py",
+        "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+        "bytes": 7575
+      }
+    },
+    {
+      "relative_path": "neural_outbox.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/neural_outbox.py",
+        "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+        "bytes": 13769
+      }
+    },
+    {
+      "relative_path": "readonly_snapshot.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/readonly_snapshot.py",
+        "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c",
+        "bytes": 4220
+      }
+    },
+    {
+      "relative_path": "timing.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/timing.py",
+        "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+        "bytes": 4321
+      }
+    },
+    {
+      "relative_path": "verified_cache.py",
+      "ref": {
+        "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_successor_v5_operations_revision2_20261009/source/verified_cache.py",
+        "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
+        "bytes": 8981
+      }
+    }
+  ],
+  "root": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_original_successor_v5_20261009_packet1_revision2",
+  "registry_path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/native_execution_global_20261009_v5/registry.sqlite",
+  "python": {
+    "path": "/usr/bin/python3.10",
+    "sha256": "FILL_EXACT_SHA256",
+    "bytes": 0
+  },
+  "unit_prefix": "jope-native-v5-20261009-packet1-revision2"
+}

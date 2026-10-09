@@ -1,0 +1,17 @@
+{
+  "authorized_concurrency": 1,
+  "broker_bootstrap": null,
+  "broker_history": null,
+  "broker_producer_sha256": null,
+  "fencing_handoff": null,
+  "history_collections": [],
+  "physical_producer_sha256": null,
+  "prepared": null,
+  "required_outboxes": [
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuous_20261009_v1/training/outbox.sqlite",
+    "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_native_full_20261009_v1/training/outbox.sqlite"
+  ],
+  "resource_reservations": null,
+  "schema": "jope.fresh128-epoch-request/v3",
+  "state": "UNQUALIFIED_TEMPLATE_NOT_LAUNCHABLE"
+}

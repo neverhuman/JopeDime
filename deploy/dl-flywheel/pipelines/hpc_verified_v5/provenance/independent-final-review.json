@@ -1,0 +1,56 @@
+{
+  "files": [
+    {
+      "bytes": 23004,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5/operations_census.py",
+      "sha256": "846acc4cc331be0e41dee97a89fc188f0a5fddc946bb44dae700f554db55c0e2"
+    },
+    {
+      "bytes": 8363,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5/test_operations_census.py",
+      "sha256": "8c2e5436e57aa9b81cd4d13dc46753870eefca0b23ba0f250f3ec699f442a73e"
+    },
+    {
+      "bytes": 25679,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5/native_global_guard.py",
+      "sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b"
+    },
+    {
+      "bytes": 22974,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5/test_native_successor.py",
+      "sha256": "777f63ff8ffb83c349b586dbd80e13c54c72ae76a10d2634beb37e5d17232453"
+    },
+    {
+      "bytes": 4220,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5/readonly_snapshot.py",
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
+    },
+    {
+      "bytes": 17191,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-successor-v5/native_dispatch.py",
+      "sha256": "06b2d208717b2c114fdd8853403c1ef546ad2b6120c2289ef23f1dc12874a8bc"
+    }
+  ],
+  "limits": [
+    "Review uses CPU-only fixture data.",
+    "No remote systemd/SSH/GP/S3 operations or production queue writes performed.",
+    "Operational inventories remain intentionally invalid until the root supplies and pins actual discovery and unit data.",
+    "This is a source-review receipt, not authorization or proof of production launch/completion."
+  ],
+  "resolved_findings": [
+    "Incomplete transferred collection receipts now fail semantic inventory/source/unit validation before preparation.",
+    "Collected physical source identities are pinned into census and checked before first registry creation."
+  ],
+  "reviewed_at_unix": 1791552896.552222,
+  "reviewer": "generalization_design/review_guard",
+  "schema": "jope.native-v5-independent-final-review/v1",
+  "scope": "Read-only targeted independent review of collect/prepare inventory authority, source and unit closure, unresolved aliases, and census-to-first-registry physical identity. Launcher implementation was authored by this reviewer and is excluded from independent sign-off.",
+  "validation": {
+    "census_tests": 9,
+    "command": "rtk proxy python3 -B -m unittest test_operations_census test_native_successor -v",
+    "failed": 0,
+    "passed": 35,
+    "successor_tests": 26
+  },
+  "verdict": "no_remaining_concrete_blockers_in_reviewed_scope"
+}

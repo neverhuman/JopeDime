@@ -1,0 +1,55 @@
+{
+  "blockers": [],
+  "config_review_sha256": "07a7a9746598873c2c60fd041a05ec7f49e8ed7df470f45305727edf122ccfbf",
+  "configuration_draft_sha256": "964e26062ad0e04a6aced5d78b55817a04ee72bf6afb3aebf89ffe2d6e4a08c9",
+  "controller": {
+    "bytes": 5580,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification/controller-v2.py",
+    "sha256": "25fbf9a3a367e7d4f82d8c661e62dc181175beeedd2c586f66a240cd28099082"
+  },
+  "launch_conditions": [
+    "Populate only two null clocks in reviewed draft with genuinely fresh immutable interval<=180s below original global1791592146.380285; verify exact final raw config and no other field changes.",
+    "Refresh shared-resource authorization/physical admission. Source-support window is separate from held scoring or archive pools; 26GiB memory floor is not a reservation.",
+    "Create-only cold source/config staging must match reviewed pins and intended parent ownership; output/launch/dispatch evidence must not be reused.",
+    "Report dispatch/runtime caps from dispatch-intent, not earlier launch-intent sampled_remaining; retain both records unchanged.",
+    "If systemd control/monitor deadline/stream cap handling has unknown outcome, preserve durable attempt custody and independently inspect terminal physical owner state. Do not infer stop success from helper returncode or run again.",
+    "A complete valid result plus config-bound journal/source/terminal evidence is required before selected qualification PASS. Incomplete tails/partial results/fatal memory/clock/import/GET drift remain refused or unknown.",
+    "Stop description alone is not a completion proof; parent must preserve physically recorded unit/PID/cgroup/argv closure. No restarted or reused units permitted."
+  ],
+  "preserved_controller_v1_sha256": "b06a80687477d80bdfde170ef3bf9e27d8a5e76c5584e94eb806e0a0c92d4c92",
+  "preserved_v1_hold_receipt_sha256": "a78bf4e10eef48e79ee65562715ca3735605fbf58207ac101ead7423e67d4300",
+  "resolved_blocker": {
+    "description": "Final remaining duration is refreshed against fixed wall and paired monotonic ends after preflight/output opens. The dispatched service RuntimeMax removes5seconds closure margin. Separate fsynced dispatch intent binds sampled/actual durations and config. Absolute/monotonic deadline watchdog is retained independently of service-start latency.",
+    "file": "work/heartbeat-20261009-1843/callback-live-qualification/controller-v2.py",
+    "lines": [
+      12,
+      35,
+      36,
+      38,
+      41,
+      46,
+      48
+    ]
+  },
+  "reviewed_at_utc_ns": 1791574130677114000,
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "implementation_edits": 0,
+    "launches": 0,
+    "network": 0,
+    "remote_queries": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-selected-qualification-launch-review/v2",
+  "scope_guards": [
+    "Existing exact package hash check, new output directory, never-started unit not-found/PID0/empty cgroup and resource-floor gates are retained.",
+    "A single exclusive fsynced launch intent prevents replay. Both stdout and stderr are create-only; dispatch intent is also exclusive/fsynced.",
+    "Service uses CPU100%/512MiB/swap0/Nice19/Tasks24/Restartno/BLAS1/CUDAempty and a qualified interpreter whose resolved source/import identity is checked by runtime.",
+    "Guardian stop command has a fixed new unit name plus exact config-SHA Description and Transient=yes proof. It never targets predecessor, model, foreign GPU/job or arbitrary PID. Monitor termination is limited to the controller-own Popen child.",
+    "stdout/stderr limits are explicitly sampled watchdog thresholds with actual final byte counts.",
+    "No GP/PUT/DB/outbox/optimizer/full-cutoff/export/admission path is added."
+  ],
+  "source_review_sha256": "8b4a3121adc0e642df51ea57a7b23c95f2a0459879a3ceffc19d0f3e961a33e6",
+  "state": "passed_controller_with_cold_launch_conditions"
+}

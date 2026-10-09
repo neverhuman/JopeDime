@@ -1,0 +1,72 @@
+{
+  "blockers": [],
+  "launch_conditions": [
+    "Exact cold package/config/materialization and source/runtime/license pins must match; fresh unique output root must not exist and must have only owned nonsymlink ancestors.",
+    "Initial actual scope remains ONE selected train observation, max16 GET, 64MiB total attempted/read bytes, fresh wall/monotonic deadline <=180s below original global1791592146.380285.",
+    "CPU1/RAM512MiB/swap0/noGPU/BLAS1/noRestart and fresh shared-resource admission must be externally enforced; source PASS is not a reservation.",
+    "No automatic restart, retry, cleanup or reuse of failed output; hard death, partial journal/result or missing verified terminal record remains incomplete/unknown. Validate full result JSON and complete event prefix/source/config bindings before claiming qualification.",
+    "Counters after last fsynced record on hard death remain unavailable. Event count reserves two terminal slots, while its4MiB byte cap has no distinct terminal byte reservation; byte/disk failure therefore requires retaining incomplete custody rather than asserting a final result. This is not a blocker for the bounded one-context16GET selected pilot.",
+    "No full cutoff, reference export, numerical target materialization, CE/RL optimizer updates, admission, held-pool expansion or GitHub approval follows from this receipt."
+  ],
+  "packet": {
+    "ast_parsed_python_files": 20,
+    "bytes": 229444,
+    "files": 31,
+    "path": "work/heartbeat-20261009-1843/generated-target-callbacks-v1/revision2/SOURCE_PACKET.json",
+    "sha256": "3ee878760d7e24c4fcc26310d21a1848388827df24f9d5ea551919a9d76f6b9b"
+  },
+  "preserved_prior_hold_sha256": "54e1848a1955cb8ad0681bc0807c3ff25bcbc2140b415138ba8d62774db47a82",
+  "qualification": {
+    "actual_python312_native_s3_qualified": false,
+    "affected_config_tests": 2,
+    "new_custody_tests": 7,
+    "prior_37_receipt_retained": true,
+    "python": "3.14.6",
+    "reviewer_tests_run": 0,
+    "sha256": "0a37d0ff60eed6d5e3e16c76285d1977bba1a84abfe518cda36be04e2144ec3c",
+    "tests_run": 9,
+    "unaffected_prior_tests_rerun": 0
+  },
+  "resolved_blocker": {
+    "current": "Exclusive EventSink is established before configure. GET and canonical-only subprocess dispatch fsync config-bound hash-linked attempts before execution. _WINDOW is assigned before replay/network setup; known failures preserve available timing/counters in create-only local result. Hard exit retains the fsynced prefix without inventing completion.",
+    "files_lines": [
+      "package/cli.py:35",
+      "package/callbacks.py:31",
+      "package/callbacks.py:42",
+      "package/callbacks.py:194",
+      "package/readonly_io.py:121",
+      "package/readonly_io.py:152",
+      "package/durable.py:24"
+    ],
+    "prior": "Frozen v1 lost configure GET/native attempts and timings on failure before Runtime assignment."
+  },
+  "reviewed_at_utc_ns": 1791573775564427000,
+  "reviewed_core": {
+    "package/bindings.py": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3",
+    "package/callbacks.py": "37935e0cba6ac645dddb3fc4158c14b2c418e379d6ed71eab7b7dea131ceae9f",
+    "package/cli.py": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3",
+    "package/durable.py": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e",
+    "package/readonly_io.py": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09",
+    "package/run_offline.py": "5c4888c40410e741a0303545f1411be10d4450db37a25ca11fc5444589dc2289"
+  },
+  "reviewer": "/root/successor_review",
+  "reviewer_actions": {
+    "gp": 0,
+    "implementation_edits": 0,
+    "network": 0,
+    "remote_writes": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "schema": "jope.independent-callback-source-review/v2",
+  "scientific_and_authority_preservation": [
+    "All nine vendored files are byte-identical to the held predecessor.",
+    "Bindings, original normalizer, Kumo2051 frozen weight/license, admitted128 descriptor roles and exact publication identities remain unchanged.",
+    "Only selected successful training-phase observations with authoritative train partition are replayed. Unknown/validation observations are not accepted.",
+    "Existing fixed native/Rust parity is verified from measured artifact bodies; no new GP, emitted Rust, compiler or evaluator execution is exposed.",
+    "Pure seven-body measurement verifier is used without constructing the database-mutating ProgramGate.",
+    "Full-authority callback still refuses actual annotated predecessor references; compatibility is separate."
+  ],
+  "source_pins_sha256": "a94191229fadf3b1b0f04477370ab6e55ea9483852536b6a869bbdd9b739b8e0",
+  "state": "passed_source_only_with_launch_conditions"
+}

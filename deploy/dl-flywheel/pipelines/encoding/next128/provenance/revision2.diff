@@ -1,0 +1,118 @@
+--- preserved-v1/packet0/kumo_queue.py
++++ revision2/packet0/kumo_queue.py
+@@ -88,7 +88,7 @@
+    db.execute('COMMIT');return {'state':'blocked_claim','conflicts':conflicts,'rows':[]}
+   if missing:
+    db.execute('COMMIT');return {'state':'empty','missing_selected_identities':missing,'rows':[]}
+-  need(len(selected)==COUNT and time.time()<deadline,'complete fixed support/deadline before claim')
++  need(len(selected)==COUNT and deadline-time.time()>=660,'complete fixed support and660 seconds immediately before claim INSERT')
+   db.execute('INSERT INTO '+PACKETS+' VALUES(?,?,?,?,?,?,NULL)',(packet_id,HOST,pipeline_sha,now,deadline,'claimed'))
+   for item in selected:
+    row=item['row'];db.execute('INSERT INTO '+ITEMS+' VALUES(?,?,?,?,?)',(row['identity'],packet_id,row['sequence'],canonical(row).decode(),canonical(item['publication']).decode()))
+--- preserved-v1/packet0/kumo_controller.py
++++ revision2/packet0/kumo_controller.py
+@@ -10,7 +10,7 @@
+ HERE=Path(__file__).resolve().parent
+ W='/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final'
+ R=W+'/flywheel_kumo_fresh32_xbabe3_20261009'
+-SOURCE_ROOT='/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-kumo-xbabe3-next128-20261009/packet0/runtime'
++SOURCE_ROOT='/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-kumo-xbabe3-next128-20261009/revision2/packet0/runtime'
+ 
+ def need(ok,msg):
+  if not ok:raise ValueError(msg)
+@@ -77,7 +77,7 @@
+  def remaining():
+   seconds=math.floor(min(deadline-time.time(),mono-time.monotonic()));need(seconds>5,'unchanged packet deadline');return seconds
+  ident=PACKET_ID;folder=local/ident;folder.mkdir();save(folder,'window',{'created_unix':start,'deadline_unix':deadline,'packet_id':ident})
+- cmd=bounded('xbabe2','jope-kumo3fresh-intake-'+ident[:12],common+'/kumo_intake.py',['--config',common+'/config.json','--config-sha',pin,'--packet-id',ident,'--deadline',str(deadline)],min(180,remaining()));save(folder,'intake-intent',{'command':cmd});intake=json.loads(ssh('xbabe2',cmd,timeout=min(185,remaining()+5)).splitlines()[-1]);save(folder,'intake',intake)
++ need(remaining()>=660,'shared remaining before actual intake must reserve660 seconds');cmd=bounded('xbabe2','jope-kumo3fresh-intake-'+ident[:12],common+'/kumo_intake.py',['--config',common+'/config.json','--config-sha',pin,'--packet-id',ident,'--deadline',str(deadline)],min(180,remaining()));save(folder,'intake-intent',{'command':cmd});intake=json.loads(ssh('xbabe2',cmd,timeout=min(185,remaining()+5)).splitlines()[-1]);save(folder,'intake',intake)
+  if intake['state']in('empty','blocked_claim','packet_already_exists'):return intake
+  need(intake['state']=='prepared','intake not prepared');stage=transfer(intake,common,remaining);save(folder,'stage',stage);root=stage['root'];mref=intake['manifest'];mraw=ssh('xbabe2',['cat',mref['path']]);need(sha(mraw)==mref['sha256'],'manifest source');m=json.loads(mraw);save(folder,'manifest',m)
+  ref,proof=fresh_authority(root,mref['sha256'],remaining);save(folder,'preflight-role',{'ref':ref,'proof':proof});args=['--manifest',mref['path'],'--manifest-sha',mref['sha256'],'--host','xbabe3','--authority-path',ref['path'],'--authority-sha',ref['sha256']]
+--- preserved-v1/run_next128.py
++++ revision2/run_next128.py
+@@ -23,7 +23,7 @@
+ GLOBAL = 1791592146.380285
+ WORKER_SHA = '0883dd4085e01cc0e1a3353396fd7004854c4ae2e68868f1eb79a053a6cb2a42'
+ SELECTION_SHA = '947ff1dd0269b82dfa2cf4e3a53ceb052fa4c498b327429410529012499fbd5b'
+-SOURCE_ROOT = '/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-kumo-xbabe3-next128-20261009'
++SOURCE_ROOT = '/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-kumo-xbabe3-next128-20261009/revision2'
+ MAX_LOG = 8 * 1024**2
+ # Intake reserves the last600 seconds for publication/commit. Do not claim a
+ # packet with less than60 seconds left in its GPU qualification portion.
+--- preserved-v1/test_next128.py
++++ revision2/test_next128.py
+@@ -233,6 +233,41 @@
+         with self.assertRaisesRegex(ValueError, 'claim window'):
+             self.claim(db, deadline=time.time() - 1)
+ 
++    def test_role_lookup_delay_leaves_zero_real_claim_inserts(self):
++        db = self.database()
++        clock = [1000.]
++        def delayed_role(row):
++            # Simulate staging/authority work consuming the useful GPU reserve
++            # after the entry guard but inside the real claim transaction.
++            clock[0] = 1500.
++            return True
++        with patch.object(self.queue.time, 'time', side_effect=lambda: clock[0]):
++            with self.assertRaisesRegex(ValueError, 'immediately before claim INSERT'):
++                self.claim(db, role=delayed_role, deadline=2000.)
++        self.assertEqual(db.execute('SELECT count(*) FROM ' + self.queue.PACKETS).fetchone()[0], 0)
++        self.assertEqual(db.execute('SELECT count(*) FROM ' + self.queue.ITEMS).fetchone()[0], 0)
++        self.assertFalse(db.in_transaction)
++
++    def test_resource_delay_refuses_before_actual_intake_dispatch(self):
++        previous = sys.modules.get('campaign')
++        sys.modules['campaign'] = self.campaign
++        try:
++            controller = load(HERE / 'packet0/kumo_controller.py', 'delayed_controller')
++        finally:
++            if previous is None:
++                del sys.modules['campaign']
++            else:
++                sys.modules['campaign'] = previous
++        clock = [1000.]
++        def resource(*args):
++            clock[0] = 2150.
++            return {'passed': True}
++        config = {'created_unix': 1000., 'deadline_unix': 2800., 'shared_monotonic_deadline': 1900.}
++        with tempfile.TemporaryDirectory() as temp, patch.object(controller, 'resource_precheck', side_effect=resource), patch.object(controller, 'ssh') as ssh, patch.object(controller.time, 'time', side_effect=lambda: clock[0]), patch.object(controller.time, 'monotonic', side_effect=lambda: clock[0] - 900.):
++            with self.assertRaisesRegex(ValueError, 'before actual intake'):
++                controller.packet(config, 'unused-pin', '/unused', Path(temp))
++            ssh.assert_not_called()
++
+     def test_success_then_same_packet_never_replays(self):
+         db = self.database()
+         self.assertEqual(self.claim(db)['state'], 'claimed')
+@@ -247,15 +282,16 @@
+             self.assertEqual(run.sha(raw), run.WORKER_SHA)
+ 
+     def test_queue_changes_only_fixed_sequence_literal(self):
+-        original = HERE.parent / 'kumo-xbabe3-fresh32/kumo_queue.py'
++        original = HERE.parent.parent / 'kumo-xbabe3-fresh32/kumo_queue.py'
+         before = ast.dump(ast.parse(original.read_text()), include_attributes=False)
+         for ordinal in range(4):
+             text = (HERE / ('packet' + str(ordinal)) / 'kumo_queue.py').read_text()
++            text = text.replace("need(len(selected)==COUNT and deadline-time.time()>=660,'complete fixed support and660 seconds immediately before claim INSERT')", "need(len(selected)==COUNT and time.time()<deadline,'complete fixed support/deadline before claim')")
+             text = text.replace('list(range(' + str(938 + ordinal * 32) + ',' + str(970 + ordinal * 32) + '))', 'list(range(906,938))')
+             self.assertEqual(ast.dump(ast.parse(text), include_attributes=False), before)
+ 
+     def test_controller_only_fixed_root_and_shared_clock_deltas(self):
+-        original = HERE.parent / 'kumo-xbabe3-fresh32/kumo_controller.py'
++        original = HERE.parent.parent / 'kumo-xbabe3-fresh32/kumo_controller.py'
+         before = ast.dump(ast.parse(original.read_text()), include_attributes=False)
+         original_root = '/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-kumo-xbabe3-fresh32-20261009/runtime'
+         added_guard = "need(type(c['shared_monotonic_deadline'])in(int,float)and 0<c['shared_monotonic_deadline']-time.monotonic()<=1800,'shared monotonic deadline');need(c['shared_scope']=='next128-four-fixed32-v1','shared scope');"
+@@ -264,10 +300,11 @@
+             text = text.replace(run.SOURCE_ROOT + '/packet' + str(ordinal) + '/runtime', original_root)
+             text = text.replace("mono=config['shared_monotonic_deadline'];need(time.monotonic()<mono,'unchanged shared monotonic deadline')", "mono=time.monotonic()+deadline-time.time()")
+             text = text.replace(added_guard, '')
++            text = text.replace("need(remaining()>=660,'shared remaining before actual intake must reserve660 seconds');", '')
+             self.assertEqual(ast.dump(ast.parse(text), include_attributes=False), before)
+ 
+     def test_no_source_replays_first32_or_original_held32(self):
+-        old = json.loads((HERE.parent / 'kumo-xbabe3-fresh32/selection.json').read_bytes())
++        old = json.loads((HERE.parent.parent / 'kumo-xbabe3-fresh32/selection.json').read_bytes())
+         old_ids = {r['identity'] for r in old['rows']}
+         all_ids = []
+         for ordinal in range(4):

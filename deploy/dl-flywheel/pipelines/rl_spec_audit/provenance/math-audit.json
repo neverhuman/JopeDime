@@ -1,0 +1,91 @@
+{
+  "schema": "jope.rl-spec-math-audit/v1",
+  "at_utc_ns": 1791557069261294000,
+  "attachment_sha256": "c0103ef73437f45e50b3d49b9644478a780a9d8a677eba031351f798039f9217",
+  "tests": [
+    {
+      "case": "marginal_best_of_B",
+      "B": 1,
+      "gradient": [
+        -0.10747280255026126,
+        0.22873877610098753,
+        -0.1212659735507263
+      ],
+      "finite_difference_error": 7.145492531002162e-12,
+      "averaged_loss_gradient_divisor": 1
+    },
+    {
+      "case": "marginal_best_of_B",
+      "B": 2,
+      "gradient": [
+        -0.08216528411793272,
+        0.18467920194057003,
+        -0.10251391782263732
+      ],
+      "finite_difference_error": 8.590295141885917e-12,
+      "averaged_loss_gradient_divisor": 2
+    },
+    {
+      "case": "marginal_best_of_B",
+      "B": 4,
+      "gradient": [
+        -0.02678396374862897,
+        0.062416108616067986,
+        -0.03563214486743903
+      ],
+      "finite_difference_error": 9.818139357076205e-11,
+      "averaged_loss_gradient_divisor": 4
+    },
+    {
+      "case": "dense_rloo",
+      "G": 2,
+      "gradient": [
+        -0.2382086640602989,
+        0.3216853718168002,
+        -0.08347670775650132
+      ]
+    },
+    {
+      "case": "dense_rloo",
+      "G": 4,
+      "gradient": [
+        -0.23820866406029884,
+        0.3216853718168001,
+        -0.08347670775650122
+      ]
+    },
+    {
+      "case": "off_policy_HWM",
+      "item_ratio_bias_max": 0.4816451948315022,
+      "joint_ratio_error_max": 6.938893903907228e-18
+    },
+    {
+      "case": "raw_incumbent_clipped_samples",
+      "raw_gradient": [
+        -0.11143461021672957,
+        -0.3699759351591151,
+        0.48141054537584477
+      ],
+      "mixed_gradient": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "case": "conditional_quality_vs_unconditional_utility",
+      "conditional_gradient": [
+        0.0,
+        0.0
+      ],
+      "utility_gradient": [
+        0.48,
+        -0.48
+      ]
+    }
+  ],
+  "optimizer_updates": 0,
+  "GP_executions": 0,
+  "cloud_requests": 0,
+  "source_changes": 0
+}

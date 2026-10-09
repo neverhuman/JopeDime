@@ -1,0 +1,58 @@
+{
+  "implementation": "New standard-library reference exporter only. Copied outbox is used solely to create temporary synthetic fixture databases. No current source files changed.",
+  "reference_snapshot": "PR277 source snapshot 18d3940 provided by root; byte pins below are the read-first authority for this proposal",
+  "references": {
+    "jope_flywheel/native_variant_snapshot.py": {
+      "bytes": 20129,
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/jope_flywheel/native_variant_snapshot.py",
+      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+    },
+    "jope_flywheel/program_gate.py": {
+      "bytes": 9974,
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/jope_flywheel/program_gate.py",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    "jope_flywheel/protocol.py": {
+      "bytes": 9341,
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/jope_flywheel/protocol.py",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    "pipelines/continuous/consumer/dltrain/labels.py": {
+      "bytes": 20071,
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/labels.py",
+      "sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd"
+    },
+    "pipelines/continuous/neural_native_batch.py": {
+      "bytes": 8846,
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/pipelines/continuous/neural_native_batch.py",
+      "sha256": "afb95ca22d49934b8d7914f0016aad0029bf2c9220fbb69565763d6e0594b7a8"
+    },
+    "pipelines/continuous/neural_native_train.py": {
+      "bytes": 19746,
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/pipelines/continuous/neural_native_train.py",
+      "sha256": "e73567dcffde3989c7ac33bdfc9ae2df99dc6c29f8e83baf519ba1b9eac29280"
+    },
+    "pipelines/continuous/neural_outbox.py": {
+      "bytes": 13769,
+      "copy_sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "packaged_fixture_copy": "tests/reference_outbox.py",
+      "purpose": "Read-only schema/math reference; not imported by production exporter",
+      "repository_path": "deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    }
+  },
+  "schema": "jope.generated-target-export-source-origins/v1",
+  "scope_exclusions": [
+    "No live callback scientific qualification",
+    "No native overlay",
+    "No numerical target construction",
+    "No optimizer or epoch-boundary admission",
+    "No credentials or live data included"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "config_sha256": "f0ea865b674c07ace3a73e87e12086fdef0eb83a38a6f3839516af091a3bb3d6",
+  "controller_returncode": 0,
+  "controller_returncode_is_not_semantic_success": true,
+  "custody_body_omitted_from_source_package": true,
+  "database_writes": 0,
+  "durable_event_head": {
+    "bytes": 25866,
+    "config_sha256": "f0ea865b674c07ace3a73e87e12086fdef0eb83a38a6f3839516af091a3bb3d6",
+    "events": 32,
+    "head_sha256": "b42583691f3369b1f0fd62d809ea71c9b14365e9d3cbd1a69b237d71fb820d76"
+  },
+  "full_cutoff_verified": false,
+  "gets": 5,
+  "gp_executions": 0,
+  "observed_elapsed_seconds": 4.623140176292509,
+  "optimizer_admission": false,
+  "optimizer_updates": 0,
+  "owner_observed_terminal_unit": {
+    "ActiveState": "inactive",
+    "ControlGroup": "",
+    "LoadState": "not-found",
+    "MainPID": "0"
+  },
+  "reason": "unlisted imported external source:/usr/lib/python3/dist-packages/s3transfer/compat.py",
+  "reference_export_completed": false,
+  "result": {
+    "bytes": 11412,
+    "sha256": "1a9b6ec5b14687e03492a4d118ab55589e44fbaa9469ca377fcf7dc5d5147ddb"
+  },
+  "s3_writes": 0,
+  "schema": "jope.callback-selected-failure-custody-summary/v1",
+  "scope": "Hash-bound summary of owner-captured terminal evidence; no live actions or independent complete event-chain replay by assembler.",
+  "source_custody": {
+    "bytes": 14822,
+    "path": "work/heartbeat-20261009-1843/callback-live-qualification-v2/physical-terminal-custody.json",
+    "sha256": "ac115e0d943bbe88983e8e2007a8adb5e6739ee30f19590d690c9c52ae1f0d90"
+  },
+  "state": "failed",
+  "verified_bytes": 788233
+}

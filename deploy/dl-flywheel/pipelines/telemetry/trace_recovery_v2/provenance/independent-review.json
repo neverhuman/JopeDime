@@ -1,0 +1,121 @@
+{
+  "checks": {
+    "fresh_first_part": 529,
+    "full_local_sealed_chain_read_by_reviewer": false,
+    "maximum_new_complete_pair_attempts": 3942,
+    "old_attempts_replayed": false,
+    "preserved_gap153_reported_events": 31,
+    "prior_archived_events": 16283,
+    "prior_global_charged_put_attempts": 1057,
+    "prior_verified_segments": 528,
+    "recovery1_new_segments": 375,
+    "recovery1_put_attempts": 750,
+    "recovery1_verified_objects": 750,
+    "remaining_attempts": 3943,
+    "reported_local_chain_last_seq": 16314,
+    "timing_file_body_omitted": true,
+    "total_verified_objects": 1056
+  },
+  "conditions": [
+    "Freeze exactly once with this template and receipt SHA, preserving the immutable originalv1 deadlines and all failed/unknown evidence. Stage only the reviewed five files into the new owned source root under~/JopeDime.",
+    "Require fresh physical old/archive-recovery1 closure and empty owned cgroups, newunit neverstarted and exclusive existing archive directory flock; preserve trace writers and all foreign jobs.",
+    "Actual noS3 host preflight must reopen all exact captured pins including3,716,110-byte timing file SHA53b5fad1af6191813d5dc2dbcd2998bfe9b995cdaacb696fbfed97cb02f326ca and the entire local event chain. Require exact529/528/1057/3943/gap153 proof before launch.",
+    "Use the unchanged global ceiling and one fixed3600-second wall/external runtime deadline; internal wall/monotonic limits must stop cloud work on expiry.",
+    "Never PUT segment153 or any captured attempted key, including an unreceipted tail. Historical404 stays dated evidence, not current absence or retry permission.",
+    "Every newPUT has a fsynced create-only attempt before request, create-only cloud key, disabled retries and exactVersionId/bytes/hash readback. Stop on ambiguous failure; no automatic restart or clock reset.",
+    "Report archived coverage and unresolved gap separately. Existing receipts are imported custody, not fresh network verification."
+  ],
+  "limits": {
+    "automatic_retry": false,
+    "cpu_cores": 1,
+    "global_deadline_unix": 1791592146.380285,
+    "maximum_global_put_attempts": 5000,
+    "maximum_load1_exclusive": 100,
+    "maximum_part_exclusive": 2500,
+    "memory_bytes": 536870912,
+    "minimum_available_ram_bytes": 27917287424,
+    "nice": 19,
+    "preflight_seconds_maximum": 180,
+    "restart": "no",
+    "single_fresh_wall_window_seconds": 3600,
+    "swap_bytes": 0,
+    "tasks": 24,
+    "visible_gpu": ""
+  },
+  "live_execution_claim": false,
+  "method": "Local read-only source/hash/AST and existing fixture receipt review. Decoded and hash/size verified2636 embedded capture bodies and750 actual attempt/reply/exactversion/receipt joins. No tests or remote actions.",
+  "native_github_approval": false,
+  "prior_capture": {
+    "bytes": 2837433,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/prior-capture.json",
+    "sha256": "2821889375a2c0b1cd9706cd7e52e1fd008c35545f43802e2119161c30d92bd4"
+  },
+  "qualification": {
+    "new_local_tests": 13,
+    "old21_rerun": false,
+    "reviewer_test_execution": 0,
+    "skip_count": 0
+  },
+  "recorded_at_unix": 1791554023.182732,
+  "reviewer": "/root/successor_review",
+  "schema": "jope.trace-recovery-v2-independent-review/v1",
+  "source_pins": [
+    {
+      "bytes": 20376,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/trace_recovery_v2.py",
+      "sha256": "fe000e7a0bed06f4b339997eaea745a1b0737430da5543f8f61c4d6ce553df22"
+    },
+    {
+      "bytes": 17268,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/trace_archive_v1_c8a13033.py",
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+    },
+    {
+      "bytes": 5352,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/launch_v2.py",
+      "sha256": "88495db8b75290103e26a69bc0afd382d9e198d29977eb04a68d4436a92de95a"
+    },
+    {
+      "bytes": 1676,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/prepare_config.py",
+      "sha256": "345baae54ac798542c151fa7a20f869ad8279436884b066e83def324215144e7"
+    },
+    {
+      "bytes": 14781,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/test_trace_recovery_v2.py",
+      "sha256": "f8d2ee0bac9f392c0c59250fc39ae6a9c1b3527ee8ff2841f49cf40d8e21baad"
+    },
+    {
+      "bytes": 1049,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/config.template.json",
+      "sha256": "5aa2fe2054406ffe05b0ee193afa2efcc35ade93f5be5ce62d08e7b25849d94a"
+    },
+    {
+      "bytes": 999,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/metadata-audit.json",
+      "sha256": "303278fa975f70e6363b6e7dfac78df0d5cd1b778eb9d6e83029c0f15cb0d82f"
+    },
+    {
+      "bytes": 1471,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/test-result.json",
+      "sha256": "16f5d8de58c6ddc86dbc742b49548776582cbcb806558cb8f9896df851b9de24"
+    },
+    {
+      "bytes": 2045,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/tests.log",
+      "sha256": "ca552343a0b81cbf64114ed13626f0a2f34847b871304a599531dded9f27016d"
+    }
+  ],
+  "state": "passed",
+  "template": {
+    "bytes": 1049,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/config.template.json",
+    "sha256": "5aa2fe2054406ffe05b0ee193afa2efcc35ade93f5be5ce62d08e7b25849d94a"
+  },
+  "template_sha256": "5aa2fe2054406ffe05b0ee193afa2efcc35ade93f5be5ce62d08e7b25849d94a",
+  "validation": {
+    "bytes": 2683,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/validation.json",
+    "sha256": "a85c8b4cbf0e732d07d60eaa0f2cd037b6c89d8dbf4c565e93c6c1986de15ab0"
+  }
+}

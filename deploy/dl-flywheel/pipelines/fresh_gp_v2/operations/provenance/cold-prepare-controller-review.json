@@ -1,0 +1,76 @@
+{
+  "actions": [
+    "Local exact source reads/hash/AST inspection and this new review receipt only."
+  ],
+  "bounds": {
+    "BLAS_threads": 1,
+    "CPUQuota": "100%",
+    "CUDA_VISIBLE_DEVICES": "",
+    "KillMode": "control-group",
+    "MemoryMax": "512MiB",
+    "MemorySwapMax": 0,
+    "Nice": 19,
+    "Restart": "no",
+    "TasksMax": 32,
+    "global_deadline_unix": 1791592146.380285,
+    "initial_load1_below": 64,
+    "maximum_seconds": 600,
+    "minimum_available_ram": "max(36GiB,15%MemTotal+2GiB)",
+    "minimum_initial_remaining_seconds": 300,
+    "monitor_interval_seconds": 1,
+    "retire_load1_at_least": 96
+  },
+  "compatibility": [
+    "Reviewed prepare uses per-input bounded arrays, disk-backed exact-version caches and content-addressed source replicas; it does not require a4GiB minimum envelope. Lower512MiB cap is safe as a bounded attempt, not a claim the full128 preparation is memory-qualified.",
+    "No GPU encoding, native fit, emitted-program scoring, S3PUT, program/optimizer claim, broker creation or epoch freeze in prepare path. Native canonicalization is read-only protocol derivation.",
+    "A resource stop or honest OOM preserves the unique partial output/control/log/service evidence and must not trigger same-attempt retry, clock reset, fake readiness or a smaller silent denominator.",
+    "Neither native pool HOLD is released, and this attempt is not a shared host reservation."
+  ],
+  "controller": {
+    "bytes": 5299,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/fresh128-stage/prepare_controller.py",
+    "sha256": "448bfafc4696261d2f7b420e5030f5f131390f2b8e5004205c45c80e9d49ca9e"
+  },
+  "not_performed": [
+    "No tests, remote reads/writes, SSH/S3, imports, process controls, launch, GP/native fitting/GPU/optimizer or source edits."
+  ],
+  "qualified_source_packet": {
+    "bytes": 12195,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/SOURCE_PACKET.json",
+    "sha256": "d512604093cdae042af9344be7b0eef8c36eced11af294831e28b289a353788c"
+  },
+  "qualified_source_review": {
+    "bytes": 18831,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/fresh128-gp-v1/revision3/INDEPENDENT_REVIEW.json",
+    "sha256": "ad7ff23c6de33b99da87ef3e4e161e434d249b4e930686c5302ec7a76aaf1d63"
+  },
+  "resolved_findings": [
+    "Terminal natural_close requires inactive/failed plus zeroMainPID/emptycgroup. Brief activating PID0 is allowed only20seconds and never sealed as complete.",
+    "Ownership compares actual NUL-separated cmdline exactly to launched Python/CLI/prepare/source/request/output argv tail and the exact owned service cgroup before retirement.",
+    "Pre-unit import qualification has20second timeout and BLAS1/CUDA-empty environment.",
+    "successful_exit is reported separately from prepared.json existence; intentional resource stops/OOM remain distinct."
+  ],
+  "reviewed_at_unix": 1791565122.482038,
+  "reviewer": "/root/successor_review",
+  "runtime_conditions": [
+    "Root must verify actual xbabe2 source/request/Python bytes and exact staging/import closure before controller launch, plus unchanged source role/artifact qualification.",
+    "OUT prepared-001 and OPS cold-prepare-001 absent, unit never-started; fresh host RAM above threshold/loadbelow64. Create-only intent/launch/terminal files; original global deadline stays fixed.",
+    "Retire only this exact-owned unit when its resource/clock guard fires; no foreign controls. Unknown systemd or custody outcome stays preserved, no automatic retry.",
+    "Treat successful_exit and full prepared artifact/closure as separate acceptance checks; file existence alone is not success/admission. Root separately reviews/qualifies any future GP epoch or lower-cap successor."
+  ],
+  "runtime_pins": {
+    "prepare_request_sha256": "32b8525a6d4e296f9bad517033078ffe95bc7e136e7487a4cc8706cf27d1355b",
+    "python_sha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f",
+    "python_versions": [
+      "3.12.3",
+      "1.26.4",
+      "1.35.49"
+    ],
+    "root": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-fresh128-gp-20261009-v3",
+    "source_manifest_sha256": "4a9f318cd35ac16fea278fdaca411af5e07fd89d5b116de68e0d0f927e90b8d3",
+    "unit": "jopedime-fresh128-cold-prepare-20261009-v3"
+  },
+  "schema": "jope.independent-cold-prepare-controller-review/v1",
+  "scope": "One new CPU/GET-only cold preparation attempt. Source/controller review only, not actual launch, resource reservation, preflight success, prepared/admitted data claim, GP/pool release or CI/GitHub approval.",
+  "state": "passed"
+}

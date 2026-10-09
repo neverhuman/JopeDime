@@ -1,0 +1,1548 @@
+{
+  "receipt": {
+    "arms": {
+      "64efd8802601/honest-flip": {
+        "arm": "64efd8802601/honest-flip",
+        "arm_result": {
+          "bytes": 2815,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/honest-flip/arm-result.json",
+          "sha256": "25fbd7915ca6307ea325345889c6903a2c9dd557df988265530f223b1815912b"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+        "cpu_sys_s": 3.491,
+        "cpu_user_s": 35.68,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/honest-flip/digests.json",
+          "sha256": "f15148da6d670e2e9768bf4ff19109ea53e1a0e2d99d8ce01dbc67ca94f29515"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 4.171,
+        "eval_wall_s_mean": 0.245,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:31:03Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "689faf3dc9d6718d6c89aafeba1af5145bbb01a0838d735b441f4f2433612e70",
+          "seen_sha256": "0a8c18ee3768a9fc890f037003a5bf246230da080cbe6be2f089f27a8c28a216",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 80
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/flip.jtt1",
+        "input_sha256": "c72e10c875e88fded8d17b391e02efbf2ec5f5e9939a43660fcb5c03bd401e98",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:30:38Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 25.369,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "64efd8802601/honest-orig": {
+        "arm": "64efd8802601/honest-orig",
+        "arm_result": {
+          "bytes": 2817,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/honest-orig/arm-result.json",
+          "sha256": "637e4ebbd981374076949318f294af4f5e7005c8e41de7b128bcfb0dec669627"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+        "cpu_sys_s": 3.664,
+        "cpu_user_s": 37.243,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/honest-orig/digests.json",
+          "sha256": "e040a31a0e5ecfca0a13254fddb5094b88ae8e697a7573ca5b1695598e5618ef"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 4.324,
+        "eval_wall_s_mean": 0.235,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:30:11Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "689faf3dc9d6718d6c89aafeba1af5145bbb01a0838d735b441f4f2433612e70",
+          "seen_sha256": "0a8c18ee3768a9fc890f037003a5bf246230da080cbe6be2f089f27a8c28a216",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 80
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/orig.jtt1",
+        "input_sha256": "994dba5a5700468f744d2204a8a350e025df703ab76e3a75c73483e853a2eeb8",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:29:49Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 22.777,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "64efd8802601/honest-replay": {
+        "arm": "64efd8802601/honest-replay",
+        "arm_result": {
+          "bytes": 2819,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/honest-replay/arm-result.json",
+          "sha256": "6a257335daf9906a26904eca4c6084673f8176d7fdef5c2e99ebd967be63115e"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+        "cpu_sys_s": 3.448,
+        "cpu_user_s": 36.694,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/honest-replay/digests.json",
+          "sha256": "83015bb19045d92efe417fbb5cf147c7e77c0b2082dfdf3413e36d1e32030bbf"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 4.373,
+        "eval_wall_s_mean": 0.251,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:30:38Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "689faf3dc9d6718d6c89aafeba1af5145bbb01a0838d735b441f4f2433612e70",
+          "seen_sha256": "0a8c18ee3768a9fc890f037003a5bf246230da080cbe6be2f089f27a8c28a216",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 80
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/orig.jtt1",
+        "input_sha256": "994dba5a5700468f744d2204a8a350e025df703ab76e3a75c73483e853a2eeb8",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:30:12Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 26.301,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "64efd8802601/leaky-flip": {
+        "arm": "64efd8802601/leaky-flip",
+        "arm_result": {
+          "bytes": 2024,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/leaky-flip/arm-result.json",
+          "sha256": "a7fd37b42bf76f10a7ddaa536619d114d57e63c1a02ad911ff54682143048ea1"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+        "cpu_sys_s": 1.994,
+        "cpu_user_s": 26.635,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/leaky-flip/digests.json",
+          "sha256": "c7df48304f731faa324f197e7720f389583f61be333b7aea94c69acffc432530"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.226,
+        "eval_wall_s_mean": 0.412,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:32:02Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "5586cb97f47380b132c87fb9cddfffb5d023066860c0157ab23612b562ba9b00",
+          "seen_sha256": "f8c4d76516d5699e2c4cfad62c8e1ee9a7e4b678428c00fa97f1d2229fc2c492",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/flip.jtt1",
+        "input_sha256": "c72e10c875e88fded8d17b391e02efbf2ec5f5e9939a43660fcb5c03bd401e98",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:31:44Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 18.069,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "worker_sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90"
+      },
+      "64efd8802601/leaky-orig": {
+        "arm": "64efd8802601/leaky-orig",
+        "arm_result": {
+          "bytes": 2813,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/leaky-orig/arm-result.json",
+          "sha256": "0121dfbe946e01f7df5767524a5f56d401a2619afaa1e21f2f5da2e08eb0e8c1"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+        "cpu_sys_s": 4.65,
+        "cpu_user_s": 61.352,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/64efd8802601/leaky-orig/digests.json",
+          "sha256": "643dc9f611da5d3e4f2b7714e2fa9e098dc744b98fed2d7dd98c759a040af99f"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.477,
+        "eval_wall_s_mean": 0.394,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:31:43Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "e34be389c9f872ae66c2a45a9c09d6b7644ecd43d9e341831043eb66d546b083",
+          "seen_sha256": "580627fd3b97b1ee704e9252090c21c667911e2763ac53afdf00d7beac58d1b7",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 83
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/orig.jtt1",
+        "input_sha256": "994dba5a5700468f744d2204a8a350e025df703ab76e3a75c73483e853a2eeb8",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:31:04Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 39.518,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "worker_sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90"
+      },
+      "b6161a4925a5/honest-flip": {
+        "arm": "b6161a4925a5/honest-flip",
+        "arm_result": {
+          "bytes": 2811,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/honest-flip/arm-result.json",
+          "sha256": "db82e05576cb4e94bf6cb5ca6d367da5386eceb3b7e06c0487ba4a6d2a496094"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+        "cpu_sys_s": 3.195,
+        "cpu_user_s": 54.022,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/honest-flip/digests.json",
+          "sha256": "7d6452d27f9efdba333e418cb9e2bf9372c4ca653ec9fd8161aa653d80b952d5"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.022,
+        "eval_wall_s_mean": 0.41,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:26:16Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "ff49e381f703cf148ab8dbb63b1d912b827438728d15c25584c06bd0b59bf40d",
+          "seen_sha256": "c2ba4520274c724d3d36cc190cde84f32156c2bc8cf4e5deb0515bfc8de8d667",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 90
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/flip.jtt1",
+        "input_sha256": "177d5438615016c11469b5d437f237872627e03e62583407d5e01a880d40b64e",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:25:27Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 48.292,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "b6161a4925a5/honest-orig": {
+        "arm": "b6161a4925a5/honest-orig",
+        "arm_result": {
+          "bytes": 2801,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/honest-orig/arm-result.json",
+          "sha256": "08e7e49fb41a65d0b2254fc628b40e293aa9653b29c701c95dd80c23a66aa5c0"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+        "cpu_sys_s": 2.701,
+        "cpu_user_s": 49.635,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/honest-orig/digests.json",
+          "sha256": "a21e70aa99fb0956fa4e6cbdedcc541b9cb24842ae02d7f9ebc12902059b12ed"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.062,
+        "eval_wall_s_mean": 0.838,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:24:01Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "ff49e381f703cf148ab8dbb63b1d912b827438728d15c25584c06bd0b59bf40d",
+          "seen_sha256": "c2ba4520274c724d3d36cc190cde84f32156c2bc8cf4e5deb0515bfc8de8d667",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 90
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/orig.jtt1",
+        "input_sha256": "23c46e72412ba5b9d7f957d488e3e80dd4406c325647bea6be2934f84128aab8",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:21:42Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 138.958,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "b6161a4925a5/honest-replay": {
+        "arm": "b6161a4925a5/honest-replay",
+        "arm_result": {
+          "bytes": 2811,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/honest-replay/arm-result.json",
+          "sha256": "e13258cd75375d837ccbd53e519dddaaa658230a7d94e9b38b273231a5484bb4"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+        "cpu_sys_s": 2.862,
+        "cpu_user_s": 51.801,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/honest-replay/digests.json",
+          "sha256": "50e72b43f5558b5c9811e6e6b60a7cf306dfc680653b4cbaec48d58f8a3a3184"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.231,
+        "eval_wall_s_mean": 0.495,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:25:27Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "ff49e381f703cf148ab8dbb63b1d912b827438728d15c25584c06bd0b59bf40d",
+          "seen_sha256": "c2ba4520274c724d3d36cc190cde84f32156c2bc8cf4e5deb0515bfc8de8d667",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 90
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/orig.jtt1",
+        "input_sha256": "23c46e72412ba5b9d7f957d488e3e80dd4406c325647bea6be2934f84128aab8",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:24:20Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 67.199,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "b6161a4925a5/leaky-flip": {
+        "arm": "b6161a4925a5/leaky-flip",
+        "arm_result": {
+          "bytes": 2021,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/leaky-flip/arm-result.json",
+          "sha256": "358e5fe3e371e580c1520529b972b49d3ec9d6cec579af0054c6493981a96a61"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+        "cpu_sys_s": 1.294,
+        "cpu_user_s": 33.47,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/leaky-flip/digests.json",
+          "sha256": "a7f88b3ab53ede73ac8d407afc4fdcb3a78518e14f08bf54cb75d1878b69b860"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.025,
+        "eval_wall_s_mean": 0.485,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:27:35Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "6c49627c7a5e7f3dfe3fcc8a962ee9910bbbebaf08e4636e796eb70ec378632f",
+          "seen_sha256": "a711bbc6d73df3e4026d5433b4752c7f89be9f3ce7a587ba405db62ad4c6d9a3",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/flip.jtt1",
+        "input_sha256": "177d5438615016c11469b5d437f237872627e03e62583407d5e01a880d40b64e",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:27:12Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 23.171,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "worker_sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90"
+      },
+      "b6161a4925a5/leaky-orig": {
+        "arm": "b6161a4925a5/leaky-orig",
+        "arm_result": {
+          "bytes": 2815,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/leaky-orig/arm-result.json",
+          "sha256": "b9b1f48551a55d52ec57bec21a4b1236a39341307c99f291c3d7e746e852758b"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 128
+        },
+        "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+        "cpu_sys_s": 3.247,
+        "cpu_user_s": 78.815,
+        "digests": {
+          "bytes": 88192,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/b6161a4925a5/leaky-orig/digests.json",
+          "sha256": "ace9242592a435d11f0702afb2712aab2f9bd671678a91317208893692873cfc"
+        },
+        "engine_exit": 0,
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 4.626,
+        "eval_wall_s_mean": 0.515,
+        "files": 942,
+        "finished_utc": "2026-10-06T09:27:11Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+          "ready": true,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "2116cda5b330e6b354ae417b7731975539adc24798c38fea31e5b5cc2382471e",
+          "seen_sha256": "8535d856095d0f2d52dd2784f2e7a619e3611c6fd367fc5ec5dea1104f772465",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 91
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/orig.jtt1",
+        "input_sha256": "23c46e72412ba5b9d7f957d488e3e80dd4406c325647bea6be2934f84128aab8",
+        "outcome": "selection_reached",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:26:16Z",
+        "statuses": {
+          "completed": 224
+        },
+        "wall_s": 55.451,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "worker_sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90"
+      },
+      "fa8baf93645c/honest-flip": {
+        "arm": "fa8baf93645c/honest-flip",
+        "arm_result": {
+          "bytes": 2023,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/honest-flip/arm-result.json",
+          "sha256": "26e55bd8f95af479628fa941fb46d6d8005f0e75801ee40821a6e88974aa9cf6"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+        "cpu_sys_s": 1.983,
+        "cpu_user_s": 45.8,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/honest-flip/digests.json",
+          "sha256": "329d2801e6d117ac69226731fc9e25b6aa84051222b6af828e79d45395c127b7"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.126,
+        "eval_wall_s_mean": 0.631,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:28:51Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "f58dc78830b9b9816786d787d0cecc5f5fdba53e46a5cccdeb62dafe80ffffbd",
+          "seen_sha256": "1f02ad102b2b691a1c901fd3a9d4cd4c06f3ee7b9b7d54927103573fc95d9a06",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/flip.jtt1",
+        "input_sha256": "1b8833076bb9a5fc7c8641d7e1abd359d254bb0f5ae54481aa493eeb8d848e24",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:28:24Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 26.837,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "fa8baf93645c/honest-orig": {
+        "arm": "fa8baf93645c/honest-orig",
+        "arm_result": {
+          "bytes": 2022,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/honest-orig/arm-result.json",
+          "sha256": "e00429b20f7ba82950ee28c39de11a0b061bc0dd2db38ea9988ba96828aec921"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+        "cpu_sys_s": 1.819,
+        "cpu_user_s": 46.89,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/honest-orig/digests.json",
+          "sha256": "fea24a8ab947c15db92ee78f6f333260ba4b8db6ca2f17e1c7b13e7587339748"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.226,
+        "eval_wall_s_mean": 0.595,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:27:59Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "f58dc78830b9b9816786d787d0cecc5f5fdba53e46a5cccdeb62dafe80ffffbd",
+          "seen_sha256": "1f02ad102b2b691a1c901fd3a9d4cd4c06f3ee7b9b7d54927103573fc95d9a06",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/orig.jtt1",
+        "input_sha256": "8ea1743d8c70838905618d1a857f352dcee52af298973a52ebbd2af88f486a18",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:27:35Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 24.142,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "fa8baf93645c/honest-replay": {
+        "arm": "fa8baf93645c/honest-replay",
+        "arm_result": {
+          "bytes": 2022,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/honest-replay/arm-result.json",
+          "sha256": "3e9225f7da6d85649d2430fd3a72c45c192f2968ed59f5dc735e38e78edd8cd7"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+        "cpu_sys_s": 1.789,
+        "cpu_user_s": 45.96,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/honest-replay/digests.json",
+          "sha256": "ba5c34dbbbf76a28117eebc815e62850e43836383a120ca5255e383361b3724d"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.122,
+        "eval_wall_s_mean": 0.599,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:28:24Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "f58dc78830b9b9816786d787d0cecc5f5fdba53e46a5cccdeb62dafe80ffffbd",
+          "seen_sha256": "1f02ad102b2b691a1c901fd3a9d4cd4c06f3ee7b9b7d54927103573fc95d9a06",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/orig.jtt1",
+        "input_sha256": "8ea1743d8c70838905618d1a857f352dcee52af298973a52ebbd2af88f486a18",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:27:59Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 24.48,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "worker_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+      },
+      "fa8baf93645c/leaky-flip": {
+        "arm": "fa8baf93645c/leaky-flip",
+        "arm_result": {
+          "bytes": 2017,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/leaky-flip/arm-result.json",
+          "sha256": "4096452d90c4f677c96cb0cfe7a9a4d8128519dbb579fc8b21c03da3de34ce08"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+        "cpu_sys_s": 2.016,
+        "cpu_user_s": 67.059,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/leaky-flip/digests.json",
+          "sha256": "66bd8960d5d2ebcc117047da5c6b0d886ac1306dffcfb2bc3278c21a51597818"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 4.774,
+        "eval_wall_s_mean": 0.81,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:29:48Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "1d869ed540146576f296b806d806709b54c1a66b686b9128d46cfe09229ca3b6",
+          "seen_sha256": "0013c319212caba3206ff3033f638dab91d6c41e6ceefe7bfd827a3f5a539944",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/flip.jtt1",
+        "input_sha256": "1b8833076bb9a5fc7c8641d7e1abd359d254bb0f5ae54481aa493eeb8d848e24",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:29:18Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 30.023,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "worker_sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90"
+      },
+      "fa8baf93645c/leaky-orig": {
+        "arm": "fa8baf93645c/leaky-orig",
+        "arm_result": {
+          "bytes": 2019,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/leaky-orig/arm-result.json",
+          "sha256": "df33cfec2e10ee8d7acda60240697d82313381d25f2feea736a111342f5f739b"
+        },
+        "attempts": {
+          "g0": 96,
+          "generations": 0
+        },
+        "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+        "cpu_sys_s": 1.909,
+        "cpu_user_s": 66.468,
+        "digests": {
+          "bytes": 28579,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/arms/fa8baf93645c/leaky-orig/digests.json",
+          "sha256": "020c40f32500edfdf2b25d618975cdbbbf2176fd82069dbffa6492dd518dc597"
+        },
+        "engine_sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "eval_wall_s_max": 5.174,
+        "eval_wall_s_mean": 0.769,
+        "files": 298,
+        "finished_utc": "2026-10-06T09:29:18Z",
+        "g0_manifest": {
+          "attempt_accounting_verified": false,
+          "completed": 96,
+          "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+          "ready": false,
+          "sampling_resume_qualified": false,
+          "schema": "jope.s1-g0-scored/v1",
+          "seed_index_sha256": "9c3c30bceb5639c64ce859268906922226b29a82c49be8ae0e6915199f95bc1b",
+          "seen_sha256": "49eb8e304edeceae07f0b21279207b8531dc5af0b6c08fc311214d0176650baf",
+          "selection_protocol": "jope.s1-two-fold/v1",
+          "terminal_slots": 96,
+          "unique_eligible_semantics": 0
+        },
+        "input": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/orig.jtt1",
+        "input_sha256": "8ea1743d8c70838905618d1a857f352dcee52af298973a52ebbd2af88f486a18",
+        "outcome": "g0_not_ready",
+        "proposal_sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "schema": "jope.dl-s1-control-arm/v1",
+        "started_utc": "2026-10-06T09:28:51Z",
+        "statuses": {
+          "completed": 96
+        },
+        "wall_s": 27.215,
+        "worker": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "worker_sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90"
+      }
+    },
+    "authority": {
+      "coordinator_choices_disclosed_reversible": [
+        "pin 6bf65b12 (reviewed teacher-v2/feat-math trees), API snapshot, reused lane target, profiles s1main/s1leak",
+        "contexts: dataset/fold mapping of the preregistered pilot to current v2 contexts (control only; pilot re-registration remains an owner decision)",
+        "outer-test clause recorded as 'absent in both runs' (no outer-test score is produced at this pin)",
+        "leaky worker = two-substitution test-only overlay via RUSTC_WRAPPER, never committed or placed in any repo tree",
+        "separate control ledger; attempts not charged to the production S1 budget",
+        "2 generations x 64 after 96 G0 (224 attempts per run), 5 runs per context"
+      ],
+      "instruction": "coordinator GO relaying owner instruction ENG:watcher 2:55am MT (delegated): 'if yes, run it now and post the result'",
+      "kind": "delegated owner instruction, not Jepson-typed"
+    },
+    "binaries": {
+      "engine": {
+        "built_path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/s1-target/s1main/jope-island-engine",
+        "bytes": 2666368,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/jope-island-engine.s1main",
+        "sha256": "2e44b6e04ae8bc6e90eda0f7bc44559b87f38a756c39ef36b6a8c661fa945ccf",
+        "source": "pin, rust/island-engine"
+      },
+      "flags": "--offline --locked; CARGO_INCREMENTAL=0; CARGO_PROFILE_DEV_DEBUG=line-tables-only; CARGO_NET_OFFLINE=true",
+      "profiles": "cargo --config 'profile.s1main.inherits=\"release\"' --profile s1main (and s1leak); #204 release/ and s1diag/ binaries untouched",
+      "proposal": {
+        "built_path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/s1-target/s1main/jope-s1-proposal",
+        "bytes": 3689280,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/jope-s1-proposal.s1main",
+        "sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1",
+        "source": "pin, rust/s1-proposal (bin jope-s1-proposal from rust/proposal-engine/src/main.rs)"
+      },
+      "toolchain": "1.97.1 (rust-toolchain.toml at pin)",
+      "worker_honest": {
+        "built_path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/s1-target/s1main/bootstrap",
+        "bytes": 3649816,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1main",
+        "sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+        "source": "pin, deploy/lambda/training/teacher-v2/rust/lambda-worker (main.rs sha256 e369e13b...)"
+      },
+      "worker_leaky": {
+        "built_path": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/s1-target/s1leak/bootstrap",
+        "bytes": 3649880,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/binaries/bootstrap.s1leak",
+        "sha256": "af472ce4b66a72cecdfafd6c544accb1ed893c712b44b3142c7453d6ba5d5a90",
+        "source": "pin + overlay/s1_fit_on_outer_test.rs swapped for lambda-worker/src/main.rs via RUSTC_WRAPPER (dep-info names the overlay)"
+      }
+    },
+    "commands": {
+      "scope": "systemd-run --user --scope --slice=jopedime-dltrain.slice -p CPUQuota=300% -p MemoryMax=6G nice -n 10 (self-capped at 300% inside the 600%/12G lane slice); worker parallelism 3",
+      "scripts": {
+        "compare.py": {
+          "bytes": 11934,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/compare.py",
+          "sha256": "0486e28cf83bdf5ec6e43ade72d946f4a9ceff6fbe8edfd92ad39b64a3aa48db"
+        },
+        "conformance.sh": {
+          "bytes": 1084,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/conformance.sh",
+          "sha256": "1e705cf3ac835f8c82c6070da32275c5c125e8ac1c21f2633260b75c13459e45"
+        },
+        "make_receipt.py": {
+          "bytes": 15090,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/make_receipt.py",
+          "sha256": "6cce2ac9c8faf127f1cfed8a1523c3d6f53faeefe5e844c8871fcb144253d153"
+        },
+        "prepare_inputs.py": {
+          "bytes": 4209,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/prepare_inputs.py",
+          "sha256": "2be800aa147e2e81a876ebc161b93cb2598e11de8eeef8002f65227ede2e2577"
+        },
+        "run_arm.sh": {
+          "bytes": 1062,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/run_arm.sh",
+          "sha256": "1069081deec1c3fc29c17cfdf28742ff9a57c4eea2a42f5149064195982b0c04"
+        },
+        "run_step.py": {
+          "bytes": 2827,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/run_step.py",
+          "sha256": "c4fd558decd262d8eca21f4a47d00ee22bffc68ce21f0ce68e186c325ffd216d"
+        },
+        "s1_control_driver.py": {
+          "bytes": 11943,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/s1_control_driver.py",
+          "sha256": "5eded84e227b7e557c6c4ce1db3e363f5d65512df931bf45a896e7b9e11ee03b"
+        }
+      },
+      "steps_jsonl": {
+        "bytes": 43570,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/steps.jsonl",
+        "sha256": "7406262d94ff5b32eec7eb4444b18e2ca0ab70b1c2ffbc47da56f75d9163d8e1"
+      },
+      "thread_env": "RAYON_NUM_THREADS=OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=1; TMPDIR under RUN/tmp/s1-control (never /tmp)"
+    },
+    "comparison": {
+      "file": {
+        "bytes": 28207,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/comparison.json",
+        "sha256": "51763d366551cc845f18bca11830c878b1866178f3180d52fcbed03c0426097c"
+      },
+      "per_context": {
+        "64efd8802601": {
+          "g0_gate_summary": {
+            "honest-orig": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 10,
+                "1": 3,
+                "2": 83
+              },
+              "gate_passed": 80,
+              "geomean_ratio_median": 0.720578154475957,
+              "geomean_ratio_min": 0.6461228413779313
+            },
+            "leaky-flip": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 96
+              },
+              "gate_passed": 0,
+              "geomean_ratio_median": 9.330148276512556,
+              "geomean_ratio_min": 1.0000000000001175
+            },
+            "leaky-orig": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 8,
+                "1": 4,
+                "2": 84
+              },
+              "gate_passed": 83,
+              "geomean_ratio_median": 0.7081213720040475,
+              "geomean_ratio_min": 0.6202425061349793
+            }
+          },
+          "g0_level_honest_identical": true,
+          "honest_identical": true,
+          "honest_identical_note": "true requires all three honest runs to reach selection and match; contexts that did not reach selection are reported at G0 level only",
+          "honest_orig_vs_flip_identical": true,
+          "honest_orig_vs_replay_identical": true,
+          "leak_flagged": true,
+          "leaky_orig_vs_flip": {
+            "differing_fields": [
+              "cv_fold_wins",
+              "cv_gate_passed",
+              "cv_geomean_rmse_ratio",
+              "cv_log_ratio_sd",
+              "cv_mean_log_ratio",
+              "cv_tail_log_ratio",
+              "fitness",
+              "full_prediction_sha256"
+            ],
+            "examples": [
+              "g0/042f31985773b7ee2cddb50ce5fedd328df700ac1f17313fab4172c10408c597",
+              "g0/047d77584edba18d67dc2d26c837141777f7e74ef21639d065f7998dc894dd49",
+              "g0/06db4e344d2dc6ce2d958752f30eb67ae21c74eaa00cd965fec6bf875c54f9b7",
+              "g0/07d2c2b8d9067da986d86edbc65d9129b344e03dbbd808e5fd5303c9b2ed4068",
+              "g0/08cbcee7162f2191853df1303166d6ff6288984b861f140b71b7b2a069e5e1fe"
+            ],
+            "final_selection_differs": null,
+            "flagged": true,
+            "g0_evaluations_with_different_inner_cv_rmse": 96,
+            "g0_ready": [
+              true,
+              false
+            ],
+            "programs_in_only_one_run": 128,
+            "scored_programs_compared": 96,
+            "scored_programs_differing": 96
+          },
+          "official_test_products_in_evaluations": 0,
+          "outcomes": {
+            "honest-flip": "selection_reached",
+            "honest-orig": "selection_reached",
+            "honest-replay": "selection_reached",
+            "leaky-flip": "g0_not_ready",
+            "leaky-orig": "selection_reached"
+          },
+          "reached_selection": true,
+          "status_diagnostic_paths_differing_orig_vs_flip": [
+            "$.result.best_test_leader.cv_ratio",
+            "$.result.best_test_leader.fitness",
+            "$.result.best_test_leader.program_sha256",
+            "$.result.largest_root_families[1].root",
+            "$.result.largest_root_families[2].root",
+            "$.result.largest_root_families[3].root",
+            "$.result.largest_root_families[4].root",
+            "$.result.largest_root_families[5].root",
+            "$.result.largest_root_families[6].root",
+            "$.result.largest_root_families[7].root",
+            "$.result.status.best_test_leader.cv_ratio",
+            "$.result.status.best_test_leader.fitness",
+            "$.result.status.best_test_leader.program_sha256",
+            "$.result.status.largest_root_families[1].root",
+            "$.result.status.largest_root_families[2].root",
+            "$.result.status.largest_root_families[3].root",
+            "$.result.status.largest_root_families[4].root",
+            "$.result.status.largest_root_families[5].root",
+            "$.result.status.largest_root_families[6].root",
+            "$.result.status.largest_root_families[7].root",
+            "$.result.status.largest_root_families[8].root",
+            "$.status.best_test_leader.cv_ratio",
+            "$.status.best_test_leader.fitness",
+            "$.status.best_test_leader.program_sha256",
+            "$.status.largest_root_families[0].root",
+            "$.status.largest_root_families[1].root",
+            "$.status.largest_root_families[2].root",
+            "$.status.largest_root_families[3].root",
+            "$.status.largest_root_families[4].root",
+            "$.status.largest_root_families[5].root",
+            "$.status.largest_root_families[6].root"
+          ],
+          "status_diagnostic_paths_differing_orig_vs_replay": [
+            "$.result.best_test_leader.cv_ratio",
+            "$.result.best_test_leader.fitness",
+            "$.result.best_test_leader.program_sha256",
+            "$.result.largest_root_families[1].root",
+            "$.result.largest_root_families[2].root",
+            "$.result.largest_root_families[4].root",
+            "$.result.largest_root_families[5].root",
+            "$.result.largest_root_families[7].root",
+            "$.result.largest_root_families[8].root",
+            "$.result.largest_root_families[9].root",
+            "$.result.status.best_test_leader.cv_ratio",
+            "$.result.status.best_test_leader.fitness",
+            "$.result.status.best_test_leader.program_sha256",
+            "$.result.status.largest_root_families[1].root",
+            "$.result.status.largest_root_families[2].root",
+            "$.result.status.largest_root_families[3].root",
+            "$.result.status.largest_root_families[4].root",
+            "$.result.status.largest_root_families[5].root",
+            "$.result.status.largest_root_families[6].root",
+            "$.result.status.largest_root_families[7].root",
+            "$.result.status.largest_root_families[9].root",
+            "$.status.best_test_leader.cv_ratio",
+            "$.status.best_test_leader.fitness",
+            "$.status.best_test_leader.program_sha256",
+            "$.status.largest_root_families[0].root",
+            "$.status.largest_root_families[1].root",
+            "$.status.largest_root_families[2].root",
+            "$.status.largest_root_families[3].root",
+            "$.status.largest_root_families[4].root",
+            "$.status.largest_root_families[5].root",
+            "$.status.largest_root_families[6].root"
+          ]
+        },
+        "b6161a4925a5": {
+          "g0_gate_summary": {
+            "honest-orig": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 2,
+                "1": 2,
+                "2": 92
+              },
+              "gate_passed": 90,
+              "geomean_ratio_median": 0.7444766775966295,
+              "geomean_ratio_min": 0.7197785861446924
+            },
+            "leaky-flip": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 95,
+                "1": 1
+              },
+              "gate_passed": 0,
+              "geomean_ratio_median": 4185.119972679754,
+              "geomean_ratio_min": 1.0000000000050349
+            },
+            "leaky-orig": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 2,
+                "2": 94
+              },
+              "gate_passed": 91,
+              "geomean_ratio_median": 0.7442457724722021,
+              "geomean_ratio_min": 0.7170163951356534
+            }
+          },
+          "g0_level_honest_identical": true,
+          "honest_identical": true,
+          "honest_identical_note": "true requires all three honest runs to reach selection and match; contexts that did not reach selection are reported at G0 level only",
+          "honest_orig_vs_flip_identical": true,
+          "honest_orig_vs_replay_identical": true,
+          "leak_flagged": true,
+          "leaky_orig_vs_flip": {
+            "differing_fields": [
+              "cv_fold_wins",
+              "cv_gate_passed",
+              "cv_geomean_rmse_ratio",
+              "cv_log_ratio_sd",
+              "cv_mean_log_ratio",
+              "cv_tail_log_ratio",
+              "fitness",
+              "full_prediction_sha256"
+            ],
+            "examples": [
+              "g0/008aac6a0028f039bf806bd12cb65206716f187250a8f578bb2af49463c9bc5a",
+              "g0/017392fb38bb192aa437e124010d591011536348d5f6a29b7ae165812ef53933",
+              "g0/024a1279db3a1855413717886f4c7a90fc2202121e08c0a7b3228d2941a43716",
+              "g0/02cd43778c916cb1fcdf4a354204967f402409e5644b83dd5a45f7ce260c685d",
+              "g0/0d5a90e61ec008f548dffdc397a1dffda9de2415132c739c360444b3cf8eed71"
+            ],
+            "final_selection_differs": null,
+            "flagged": true,
+            "g0_evaluations_with_different_inner_cv_rmse": 96,
+            "g0_ready": [
+              true,
+              false
+            ],
+            "programs_in_only_one_run": 128,
+            "scored_programs_compared": 96,
+            "scored_programs_differing": 96
+          },
+          "official_test_products_in_evaluations": 0,
+          "outcomes": {
+            "honest-flip": "selection_reached",
+            "honest-orig": "selection_reached",
+            "honest-replay": "selection_reached",
+            "leaky-flip": "g0_not_ready",
+            "leaky-orig": "selection_reached"
+          },
+          "reached_selection": true,
+          "status_diagnostic_paths_differing_orig_vs_flip": [
+            "$.result.best_test_leader.cv_ratio",
+            "$.result.best_test_leader.fitness",
+            "$.result.best_test_leader.program_sha256",
+            "$.result.largest_root_families[4].root",
+            "$.result.largest_root_families[5].root",
+            "$.result.largest_root_families[6].root",
+            "$.result.largest_root_families[7].root",
+            "$.result.largest_root_families[8].root",
+            "$.result.largest_root_families[9].root",
+            "$.result.status.best_test_leader.cv_ratio",
+            "$.result.status.best_test_leader.fitness",
+            "$.result.status.best_test_leader.program_sha256",
+            "$.result.status.largest_root_families[0].root",
+            "$.result.status.largest_root_families[1].root",
+            "$.result.status.largest_root_families[2].root",
+            "$.result.status.largest_root_families[3].root",
+            "$.result.status.largest_root_families[4].root",
+            "$.result.status.largest_root_families[5].root",
+            "$.result.status.largest_root_families[6].root",
+            "$.result.status.largest_root_families[7].root",
+            "$.result.status.largest_root_families[8].root",
+            "$.result.status.largest_root_families[9].root",
+            "$.status.best_test_leader.cv_ratio",
+            "$.status.best_test_leader.fitness",
+            "$.status.best_test_leader.program_sha256",
+            "$.status.largest_root_families[0].root",
+            "$.status.largest_root_families[1].root",
+            "$.status.largest_root_families[2].root",
+            "$.status.largest_root_families[3].root",
+            "$.status.largest_root_families[4].root",
+            "$.status.largest_root_families[5].root",
+            "$.status.largest_root_families[6].root"
+          ],
+          "status_diagnostic_paths_differing_orig_vs_replay": [
+            "$.result.best_test_leader.cv_ratio",
+            "$.result.best_test_leader.fitness",
+            "$.result.best_test_leader.program_sha256",
+            "$.result.largest_root_families[0].root",
+            "$.result.largest_root_families[1].root",
+            "$.result.largest_root_families[2].root",
+            "$.result.largest_root_families[3].root",
+            "$.result.largest_root_families[4].root",
+            "$.result.largest_root_families[5].root",
+            "$.result.largest_root_families[6].root",
+            "$.result.status.best_test_leader.cv_ratio",
+            "$.result.status.best_test_leader.fitness",
+            "$.result.status.best_test_leader.program_sha256",
+            "$.result.status.largest_root_families[4].root",
+            "$.result.status.largest_root_families[5].root",
+            "$.result.status.largest_root_families[6].root",
+            "$.result.status.largest_root_families[7].root",
+            "$.result.status.largest_root_families[8].root",
+            "$.result.status.largest_root_families[9].root",
+            "$.status.best_test_leader.cv_ratio",
+            "$.status.best_test_leader.fitness",
+            "$.status.best_test_leader.program_sha256",
+            "$.status.largest_root_families[0].root",
+            "$.status.largest_root_families[1].root",
+            "$.status.largest_root_families[2].root",
+            "$.status.largest_root_families[3].root",
+            "$.status.largest_root_families[4].root",
+            "$.status.largest_root_families[5].root",
+            "$.status.largest_root_families[6].root"
+          ]
+        },
+        "fa8baf93645c": {
+          "g0_gate_summary": {
+            "honest-orig": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 32,
+                "1": 35,
+                "2": 29
+              },
+              "gate_passed": 0,
+              "geomean_ratio_median": 0.9999707204287626,
+              "geomean_ratio_min": 0.9658478877870447
+            },
+            "leaky-flip": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 94,
+                "1": 2
+              },
+              "gate_passed": 0,
+              "geomean_ratio_median": 113.15289148248733,
+              "geomean_ratio_min": 1.0000000000000633
+            },
+            "leaky-orig": {
+              "completed": 96,
+              "fold_wins_histogram": {
+                "0": 21,
+                "1": 34,
+                "2": 41
+              },
+              "gate_passed": 0,
+              "geomean_ratio_median": 0.9964695677780749,
+              "geomean_ratio_min": 0.9150203199164512
+            }
+          },
+          "g0_level_honest_identical": true,
+          "honest_identical": false,
+          "honest_identical_note": "true requires all three honest runs to reach selection and match; contexts that did not reach selection are reported at G0 level only",
+          "honest_orig_vs_flip_identical": true,
+          "honest_orig_vs_replay_identical": true,
+          "leak_flagged": true,
+          "leaky_orig_vs_flip": {
+            "differing_fields": [
+              "cv_fold_wins",
+              "cv_geomean_rmse_ratio",
+              "cv_log_ratio_sd",
+              "cv_mean_log_ratio",
+              "cv_tail_log_ratio",
+              "fitness",
+              "full_prediction_sha256"
+            ],
+            "examples": [
+              "g0/02b6216dd133e37db83435026993658d46af9f7ee1ae94ddfa9e006c55f668bd",
+              "g0/067357dff60fb951261285d523fc5e6a76709773fd4058b65a5ea7eb13a3f688",
+              "g0/126e427d7a1fe01b42ccd90d64314ca020bb3ea6ac5ce235ebbd951637c60c18",
+              "g0/14c5b88419c1f04cef5250c5f4e7b51fe06f95e946496ec29be51d59c3ee6e06",
+              "g0/1a51299084d82085145b0aa9e2021a775de65d4a818a62afabe899ca3b48cf5f"
+            ],
+            "final_selection_differs": null,
+            "flagged": true,
+            "g0_evaluations_with_different_inner_cv_rmse": 96,
+            "g0_ready": [
+              false,
+              false
+            ],
+            "programs_in_only_one_run": 0,
+            "scored_programs_compared": 96,
+            "scored_programs_differing": 96
+          },
+          "official_test_products_in_evaluations": 0,
+          "outcomes": {
+            "honest-flip": "g0_not_ready",
+            "honest-orig": "g0_not_ready",
+            "honest-replay": "g0_not_ready",
+            "leaky-flip": "g0_not_ready",
+            "leaky-orig": "g0_not_ready"
+          },
+          "reached_selection": false,
+          "status_diagnostic_paths_differing_orig_vs_flip": null,
+          "status_diagnostic_paths_differing_orig_vs_replay": null
+        }
+      }
+    },
+    "comparison_definitions": {
+      "evaluations": "every worker evaluation record (G0 and generations) compared after removing only started_utc_us, fit_finished_utc_us, finished_utc_us, wall_us from each inner_cv fold (wall clocks)",
+      "leak_flag": "leaky orig vs flip: any difference in G0 scored rows or accepted scored rows (fitness, gate, wins, cv ratios, prediction hash), G0 inner-CV RMSE, or final selection",
+      "raw_bytes": "g0-prepared/{sample.json,projection.f32,seeds.json,manifest.json}, g0-scored/{seed-index.jsonl.gz,seen.jsonl,manifest.json}",
+      "selection": "final per-island best_program_sha256, best_fitness, best_cv_ratio, completed, unique_semantics; all island populations; balanced_leader; next_birth; proposal_seq",
+      "transcript": "every engine command line and every propose/accept response compared as raw bytes; ready/status/snapshot/shutdown responses compared after removing status.best_test_leader and status.largest_root_families, with raw-byte differences reported",
+      "why_two_status_fields": "best_test_leader = min_by(diagnostic_cmp on test_rmse) over a HashSet; in S1 every test_rmse is None so all tie and the per-process HashSet order picks it. largest_root_families sorts a HashMap by count only; ties keep HashMap order. Neither feeds selection (rust/island-engine/src/main.rs status())."
+    },
+    "conformance": {
+      "preserved_before_reuse": {
+        "archive": {
+          "bytes": 317506,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/preserved/s1-mutants-before-control.tar.gz",
+          "sha256": "3f14da9368797f1f447d3a4f1547e4db5c8ce2ac1e6c1d9954090ca0491b4d4a"
+        },
+        "checksums": {
+          "bytes": 2154,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/preserved/s1-mutants-before-control.sha256",
+          "sha256": "936358f3586eb6afa0dc61742ff82616e693f2f15337b70264d0d831b5dfe452"
+        },
+        "note": "pre-existing build/s1-target/s1-mutants (from the #204 pilot qualify run) archived and restore-verified before qualify_s1 regenerated it"
+      },
+      "qualify_s1": {
+        "failure_recognition_controls": 3,
+        "killed": 27,
+        "mutants_json": {
+          "bytes": 13201,
+          "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/qualify-s1/mutants.json",
+          "sha256": "58cab3d361cc74e3fc97b85b4e8088d82afb1ea29862461bf8240c2edab1d511"
+        },
+        "of": 27,
+        "unrelated_counted_as_kills": 0
+      },
+      "steps": {
+        "build-s1leak-lambda-worker": {
+          "exit": 0,
+          "log_sha256": "22e6c4f2e62f2f09b9311a714919bec7603132d528fe92c791b104936e0743ce",
+          "wall_s": 144.078
+        },
+        "build-s1main-island-engine": {
+          "exit": 0,
+          "log_sha256": "6137f1029ffe8f1329e19923854804258a511266980321f490b570c7a6982f74",
+          "wall_s": 25.29
+        },
+        "build-s1main-lambda-worker": {
+          "exit": 0,
+          "log_sha256": "283bfc243cdaf730b0745853b3496a23e78eaf49e03eb45c8cd7fc68ee4c89bc",
+          "wall_s": 131.242
+        },
+        "build-s1main-s1-proposal": {
+          "exit": 0,
+          "log_sha256": "e459b384c0ed43438f07de1912654873f63ec87feda1300df501e923b3cbe49e",
+          "wall_s": 62.168
+        },
+        "qualify-s1": {
+          "exit": 0,
+          "log_sha256": "dc3bb8f8e83a177a1bf26b446bfb4108b361d3b3c7f8d7831be110d2d93bd160",
+          "wall_s": 38.079
+        },
+        "test-island-engine": {
+          "exit": 0,
+          "log_sha256": "eb48925911d45e1b7451cc8bb2bf61cb54c73c921fda8702e0e3323e0ebc96e1",
+          "wall_s": 2.578
+        },
+        "test-lambda-worker": {
+          "exit": 0,
+          "log_sha256": "e8e29e10cdd6421aed847ef50739b7bd1e8dafd87d7ae7da929b9ac29d45ba5d",
+          "wall_s": 16.017
+        },
+        "test-materialize-g0": {
+          "exit": 0,
+          "log_sha256": "bebff98b5aa7ea1b0d34fd6b366d7c0a32d36ad22f3bad0cdbb07bda3876358e",
+          "wall_s": 11.02
+        },
+        "test-s1-budget": {
+          "exit": 0,
+          "log_sha256": "6497257041ba361d3e4cc1ce47e0c543a7b87fe4ef82539abc2062d79acfb688",
+          "wall_s": 3.971
+        },
+        "test-s1-proposal": {
+          "exit": 0,
+          "log_sha256": "8558c29cb9ad451842612b1d49d6ef49088c4434108302673e91f6d9cf43bdfe",
+          "wall_s": 0.835
+        }
+      },
+      "tests": "lambda-worker 10/10, island-engine 23/23, s1-proposal 5/5, test_s1_budget 9/9, test_materialize_g0 4/4 (51 collected, 51 passed, 0 skipped)"
+    },
+    "constraints_observed": [
+      "CPU only, xbabe2, inside jopedime-dltrain.slice, self-capped at 300%",
+      "no ps/pgrep/proc reads; no /tmp; no S3 or network beyond read-only GitHub API GETs via gh-role writer",
+      "no Git mutation; no clone or worktree; canonical checkout untouched (read-only object reads earlier)",
+      "no chat-file posts; no production S1 ledger; nothing published; never xbabe0"
+    ],
+    "contexts": {
+      "inputs": [
+        {
+          "context_sha256": "b6161a4925a53f8d1a15fc9b233bfea63d7454086d4eb620db44618768003c8a",
+          "cut_id": "trainonly-split-v2g:ba832db59c3c112eb20b07fc113423d35797685a0989d92e1f90aa3917d96736",
+          "dataset_hash": "6752633826892e66",
+          "flip": {
+            "bytes": 119389,
+            "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/flip.jtt1",
+            "perturbation": "outer-test target cell i := (-1)**i * 1e6 (finite), written without decoding originals",
+            "sha256": "177d5438615016c11469b5d437f237872627e03e62583407d5e01a880d40b64e",
+            "target_cells_changed": 182,
+            "target_cells_total": 182
+          },
+          "fold": 1,
+          "fold_sizes": [
+            438,
+            438
+          ],
+          "inner_folds": 2,
+          "n_test": 182,
+          "n_train": 876,
+          "orig": {
+            "bytes": 119389,
+            "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/b6161a4925a5/orig.jtt1",
+            "sha256": "23c46e72412ba5b9d7f957d488e3e80dd4406c325647bea6be2934f84128aab8"
+          },
+          "p": 13,
+          "replaces_preregistered_view": "6752633826892e66__r0__f1__test_adaptive_897e5bee6182",
+          "source_dir": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/PUBLISH-clean-v2g/shard-0/6752633826892e66__r0__f1__l7asplit2g_6c3b5c841f49",
+          "teacher_gz_bytes": 47415,
+          "teacher_gz_sha256": "d26a21988acf1e227bfa1fd8c03d935ffbd7c34f8780a1060c0f498a8615e1de",
+          "training_block_equal": true,
+          "training_block_sha256": "33a09635fa9db6009ceed64f799a36b934fd37cc5588ef14aaf1a81b88e022b0",
+          "view_id": "6752633826892e66__r0__f1__l7asplit2g_6c3b5c841f49"
+        },
+        {
+          "context_sha256": "fa8baf93645c969176ff3880f5e1c290281ea0881a7d8d9e0ca62079edbbefe0",
+          "cut_id": "trainonly-split-v2:aaa93e4d46b41bd78c7b2efcb61f9491298e5084ad3ad6063b95dfe5b51c96c8",
+          "dataset_hash": "6213dc5320e7212f",
+          "flip": {
+            "bytes": 224464,
+            "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/flip.jtt1",
+            "perturbation": "outer-test target cell i := (-1)**i * 1e6 (finite), written without decoding originals",
+            "sha256": "1b8833076bb9a5fc7c8641d7e1abd359d254bb0f5ae54481aa493eeb8d848e24",
+            "target_cells_changed": 371,
+            "target_cells_total": 371
+          },
+          "fold": 4,
+          "fold_sizes": [
+            744,
+            743
+          ],
+          "inner_folds": 2,
+          "n_test": 371,
+          "n_train": 1487,
+          "orig": {
+            "bytes": 224464,
+            "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/fa8baf93645c/orig.jtt1",
+            "sha256": "8ea1743d8c70838905618d1a857f352dcee52af298973a52ebbd2af88f486a18"
+          },
+          "p": 14,
+          "replaces_preregistered_view": "6213dc5320e7212f__r0__f4__test_adaptive_cf71c05c4a2a",
+          "source_dir": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/PUBLISH-clean-v2/shard-0/6213dc5320e7212f__r0__f4__l7bsplit2_106590747a22",
+          "teacher_gz_bytes": 39140,
+          "teacher_gz_sha256": "8ed530cfc9ba6b4cb3ccdf93a046f1163726d05976f09050f6fb5377b8901cda",
+          "training_block_equal": true,
+          "training_block_sha256": "71bb6c0f743484cd7b74e0e2f0ec0b965dddf51f7a98c41e1073e7dca1b9ed4e",
+          "view_id": "6213dc5320e7212f__r0__f4__l7bsplit2_106590747a22"
+        },
+        {
+          "context_sha256": "64efd88026012d9a813c172a674498a438c1cf015c90d81d65821bab31eb2a21",
+          "cut_id": "trainonly-split-v2:d1c11c2c9cbd70548e1e4eb6e1c227a377e2990cbf5d09769baa08eeef4da5c1",
+          "dataset_hash": "980b8a55787b291f",
+          "flip": {
+            "bytes": 120813,
+            "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/flip.jtt1",
+            "perturbation": "outer-test target cell i := (-1)**i * 1e6 (finite), written without decoding originals",
+            "sha256": "c72e10c875e88fded8d17b391e02efbf2ec5f5e9939a43660fcb5c03bd401e98",
+            "target_cells_changed": 299,
+            "target_cells_total": 299
+          },
+          "fold": 4,
+          "fold_sizes": [
+            598,
+            598
+          ],
+          "inner_folds": 2,
+          "n_test": 299,
+          "n_train": 1196,
+          "orig": {
+            "bytes": 120813,
+            "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs/64efd8802601/orig.jtt1",
+            "sha256": "994dba5a5700468f744d2204a8a350e025df703ab76e3a75c73483e853a2eeb8"
+          },
+          "p": 9,
+          "replaces_preregistered_view": "980b8a55787b291f__r0__f4__test_adaptive_52a9f855746a",
+          "source_dir": "/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/PUBLISH-clean-v2/shard-0/980b8a55787b291f__r0__f4__l7asplit2_7fddbed2ba00",
+          "teacher_gz_bytes": 9479,
+          "teacher_gz_sha256": "c5ef0796e94e1b25d41ccfdb70b630c30af260126a933147dcc9571b5242a2d7",
+          "training_block_equal": true,
+          "training_block_sha256": "7794e6139baefdb6b4e4c330b1c96bc0a893e357da28dd7ffc06fecdd626fcf9",
+          "view_id": "980b8a55787b291f__r0__f4__l7asplit2_7fddbed2ba00"
+        }
+      ],
+      "inputs_json": {
+        "bytes": 4642,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/inputs.json",
+        "sha256": "04c062412a10600501864b3e5dbbd2dbafb9a996c02f8455aed143328dcaf9c8"
+      },
+      "note": "CONTROL contexts are the dataset/fold mapping of the preregistered pilot (pilot-preregistration.json 53df1012) to current v2 contexts. 6752633826892e66 f1's v2split context bb73a268... is superseded (superseded-local-groupdrop-v2split-20261006T071327Z.json), so its v2g context is used. Whether to re-register the S1 pilot on v2 contexts remains an owner decision."
+    },
+    "control_ledger": {
+      "charging": "NOT charged to the production S1 budget (S1-BUDGET-18, 6,081,504); production S1 ledger not opened or initialized",
+      "finished": 2464,
+      "header": {
+        "bytes": 587,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/control-ledger.header.json",
+        "sha256": "a5f6ac979361b8b235d731349efd1f6d107ca945088f496c23523816bc5900b3"
+      },
+      "ledger": {
+        "bytes": 1209706,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/control-ledger.jsonl",
+        "sha256": "fbeafd2bdf1645da8510c26e0de3c091432f2b5d3b795f5265bd356be88144c9"
+      },
+      "reserved": 2464,
+      "statuses": {
+        "completed": 2464
+      },
+      "unfinished": []
+    },
+    "cpu": {
+      "arms": 799.1,
+      "conformance_and_builds": 600.3,
+      "total_cpu_h": 0.389,
+      "total_cpu_s": 1399.4,
+      "wall_s_all_steps": 1036.5
+    },
+    "leaky_overlay": {
+      "custody": "test-only; never committed; lives only under receipts/trainonly-v2/s1-control/overlay (no repo tree)",
+      "diff": {
+        "bytes": 657,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/overlay/s1_fit_on_outer_test.diff",
+        "sha256": "f3bda25fc631de4e52474858f64a8f4ba7d859ebd132396d9d7295568b594fd1"
+      },
+      "effect": "parse_s1_data decodes the outer-test rows too and labels them fold 2, so they join BOTH inner folds' fitting rows but never a validation fold: fold sizes and OOF targets still pass the engine's frozen-sample checks, while every fit (hence every selection score) depends on outer-test targets",
+      "mutant_source": {
+        "bytes": 35436,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/overlay/s1_fit_on_outer_test.rs",
+        "sha256": "0311faca67c63261516f3d067f09103e253804e58ef45ea22591da1143c3551e"
+      },
+      "wrapper": {
+        "bytes": 326,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/overlay/rustc-wrapper.py",
+        "sha256": "fcaf74943b853b8a1739febf00b02721ef5d02d6835118d8a7a96344d2d4f655"
+      }
+    },
+    "limitations": [
+      "2 generations (224 attempts per run), the preregistered pilot size, not the 18-generation budget",
+      "the leaky variant is one leak class (outer-test rows in fitting sets); engine-side test-reading selector mutants remain covered only at fixture level by qualify_s1 (27/27 killed), because S1 test products never reach the engine",
+      "no outer-test score is produced at this pin, so the 'only the outer-test score may change' clause is vacuous here",
+      "G0 cache import still does not consume manifest dependency hashes (root204 advisory); not exercised here"
+    ],
+    "outer_test_clause": {
+      "detail": "At this pin the S1 worker (--fit-s1) emits no official_test product and the engine refuses S1 records carrying one; --score-g0 writes test_rmse null. Count of evaluation files carrying official_test per context is in comparison.contexts.*.official_test_products_in_evaluations.",
+      "result": "absent in both runs"
+    },
+    "recorded_utc": "2026-10-06T09:32:51.799481+00:00",
+    "schema": "jope.dl-s1-control-receipt/v1",
+    "source": {
+      "pin": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835",
+      "pr": {
+        "approval_commit": "f8025d26f317fdfc319e21a6e8ce19c4bbcfe0fe",
+        "head": "f8025d26f317fdfc319e21a6e8ce19c4bbcfe0fe",
+        "merged_at": "2026-10-06T05:30:35Z",
+        "merged_by": "neverhumanbot",
+        "native_approval": 5423708301,
+        "number": 214
+      },
+      "repo": "veox-ai/JopeDime",
+      "snapshot_manifest": {
+        "bytes": 91954,
+        "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/source-manifest-6bf65b12.json",
+        "sha256": "2197415bf8bc2ab351cc2a98efeb949e278eaff1962a605d14db8217108fd1a3"
+      },
+      "snapshot_method": "gh-role writer api contents?ref=<pin> raw; 352 files; every git blob SHA1 verified against the pinned tree; no clone, no worktree",
+      "snapshot_root": "/home/ubuntu/scratch/jopedime-dl-training-v1/build/s1-src-6bf65b12",
+      "trees": {
+        "crates/feat-math": "405aa04d98c3 (identical at f8025d26 and 6bf65b12; main 988b3f32 has 61b8b578 from #203/#200)",
+        "teacher-v2": "cb1a4e824327 (identical at f8025d26, 6bf65b12 and main 988b3f32eb53)"
+      }
+    },
+    "verdict": "PASS",
+    "verdict_rule": "PASS only if at least one context reached selection and, for every context that reached selection, the three honest runs (orig, replay, flip) are identical on all listed artifacts and the leaky orig and flip runs differ in at least one selection score; INCONCLUSIVE if G0 readiness blocked every context; otherwise FAIL.",
+    "what_this_is": "S1 inner-CV-only must-fail CONTROL on the GP teacher (root204 two-fold fixes, PR #214). It is NOT the S1 pilot: no pilot ledger, no production S1 ledger, no publication."
+  },
+  "actual_plan": {
+    "emitter": {
+      "bytes": 1225984,
+      "path": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_s1_runtime_b8098ea5f9b2/cargo-target/s1flywheel/jope-flywheel-emit",
+      "sha256": "c2dd505644d3dccfced7c42ffe26482f82eb374ce47f853b1a525e55114f0daa"
+    },
+    "native_build_receipt": {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-control/receipt.json",
+      "sha256": "714eb90e71a4253fb94f6605711709f0c2e1eb09146ba06e86da34d4c86d4014"
+    },
+    "native_canonicalizer": {
+      "bytes": 3689280,
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/jope-s1-proposal.s1main",
+      "sha256": "69975947982bcffb0a55fde96f85b68f043e107e0d946eadffcdac7311f026c1"
+    },
+    "rustc": {
+      "bytes": 645000,
+      "path": "/home/ubuntu/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea"
+    },
+    "source_commit": "6bf65b12e9f0e5ec2697720a6119f13ea27d4835",
+    "worker": {
+      "path": "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/bootstrap.s1main",
+      "sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+    }
+  }
+}

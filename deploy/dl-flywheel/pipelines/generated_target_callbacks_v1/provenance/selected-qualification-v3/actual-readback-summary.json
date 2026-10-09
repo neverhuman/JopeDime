@@ -1,0 +1,170 @@
+{
+  "admitted_roster_contexts_declared": 128,
+  "assembler_actions": {
+    "GP": 0,
+    "git": 0,
+    "remote": 0,
+    "source_imports": 0,
+    "tests": 0
+  },
+  "cgroup_cpu_usage_before_after": {
+    "after": "usage_usec 3167481\nuser_usec 2381625\nsystem_usec 785856\ncore_sched.force_idle_usec 0\nnr_periods 121\nnr_throttled 2\nthrottled_usec 1238\nnr_bursts 0\nburst_usec 0\n",
+    "before": "usage_usec 70026\nuser_usec 44016\nsystem_usec 26009\ncore_sched.force_idle_usec 0\nnr_periods 2\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+  },
+  "config": {
+    "bytes": 175166,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v3/config.json",
+    "sha256": "f5ba88712359e0a1c3244fcbf8f3fc07df1633340e3ba71647ab4a2f88235c37"
+  },
+  "controller": {
+    "bytes": 5580,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v3/controller.py",
+    "sha256": "88345b38ae755a488319e099786b9290d709b09a6e6d8c071374800c8c4d6adc"
+  },
+  "controller_outer_returncode": 0,
+  "created_unix": 1791575879.6023488,
+  "database_writes": 0,
+  "deadline_unix": 1791576059.6023488,
+  "durable_event_head": {
+    "bytes": 70598,
+    "config_sha256": "f5ba88712359e0a1c3244fcbf8f3fc07df1633340e3ba71647ab4a2f88235c37",
+    "events": 84,
+    "head_sha256": "be1788fceb1ad7587e2caf49a39e7369c388128c79085834fc20b49907be0a99"
+  },
+  "exact_output_refs": {
+    "controller-result.json": {
+      "bytes": 427,
+      "sha256": "2e10a81d47ffb6c4e02acda658f2a30974722da1c3cbd217481e5162728736f2"
+    },
+    "dispatch-intent.json": {
+      "bytes": 280,
+      "sha256": "8a01e0a0e0cd38bec9bfdccf0d631f49968004af546309ba6cc848d4ed7b8677"
+    },
+    "launch-intent.json": {
+      "bytes": 679,
+      "sha256": "d9655ab9dd045706df5acd3c984114bf2ba2409080f69fb677110a73230dbb47"
+    },
+    "output/events.jsonl": {
+      "bytes": 70598,
+      "sha256": "0597adfe795d9296eb3dabc7ef773d3af6bd75c58d046ed5f7570994a687ed45"
+    },
+    "output/result.json": {
+      "bytes": 33228,
+      "sha256": "1e4931727e33c799b9de36f89ad69a9125d36b6db80a7f24a93fcae8562c28dd"
+    }
+  },
+  "finished_unix": 1791575957.4701734,
+  "freeze_receipt": {
+    "bytes": 480,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v3/freeze-receipt.json",
+    "sha256": "cfba9ad56085c99fa96033b0c7ec8b31f767bcb3af9888b3d14b4dc206c23442"
+  },
+  "full_authority_ready": false,
+  "full_cutoff_verified": false,
+  "global_deadline_unix": 1791592146.380285,
+  "gp_executions": 0,
+  "local_readback_hash_sequence_and_config_chain_checked": true,
+  "native_train_context_ids_sha256": "8742613e5c9257cedcee924135f8edfda55d008c8a37dfe8099d45fa1a86cd9c",
+  "new_teaching_admission": false,
+  "normalizer_sha256": "4f093f59af6cb4522c8fda77cce357ecd72d0561e3816ac261ec1c91808ca62d",
+  "numeric_targets_materialized": false,
+  "objective_sha256": "bf02f87341bc52aa4b3c329492d1eae5621c3543a9e60c9b3f34aa7b407ece48",
+  "optimizer_admission": false,
+  "optimizer_updates": 0,
+  "owner_capture": {
+    "bytes": 113624,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v3/physical-terminal-custody.json",
+    "sha256": "078d815ccb06e0865e3147870f895d9bd2994cb5ea5bb1afe6bc6327a02c8cb3"
+  },
+  "physical_unit": {
+    "ActiveState": "inactive",
+    "ControlGroup": "",
+    "LoadState": "not-found",
+    "MainPID": "0"
+  },
+  "reference_export_completed": false,
+  "replayed_selected_contexts": 1,
+  "result_state_authoritative": "passed",
+  "roster": {
+    "dimension": 2051,
+    "name": "kumo-s-only-v1",
+    "weight_sha256": "fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423"
+  },
+  "runtime_package_python_pins": {
+    "__init__.py": "bfa631b44e9d9cad628c4abb51680233a8c7ea39fbb421da6d7f6c1b649d08b0",
+    "bindings.py": "f8833a0d666321015ffd779c716fde47b9b6d0e56ecdaf418f5484e17c8a0bc3",
+    "callbacks.py": "5e8b17daee58da4f66f1e4bf2bce4c62b5e5bc7889ae3150b4f52a159141e014",
+    "cli.py": "8a7313076d4a51069bdfb7be7cc8e705d4f16e2a98eb54b7eb066cf24baafff3",
+    "durable.py": "befb530d90a4f6e55d8d4134b763f16bd19f03791c74b62e8d29826c2e09510e",
+    "parent_encoder.py": "f017dde5d183002bfbc3e5109b6cb29c6f4f8b230209371b127b7290225bb685",
+    "readonly_io.py": "49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09",
+    "run_offline.py": "68e35a39fa6db89d3b279a8e54cdce67b3efdc1474bfb3c430fd74922be34066",
+    "tests_contracts.py": "fccb0c587e7fdba0ebbfd9b04dbfb130a462c7a22bb2e2a1fc1a065ec944da78",
+    "tests_custody.py": "3563cc0b51748807be79108e8843452e7dca738825c94daceb68e3abc3416ab2",
+    "tests_io.py": "bd5c1e8fc41e517decb8ed97e98d96b4797829ed78add64a1f99e91f7a28efbc",
+    "tests_parent_encoder.py": "c24eb7772afd398f7d7883e649a67b75ecbbabab1f1c20f556a464259d326560",
+    "tests_semantics.py": "f67a05e409efd6c1206f63d9a354ca7bfa71c61840997427c310b2a3c5ca2c1e",
+    "vendor/__init__.py": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+    "vendor/augmentation.py": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+    "vendor/evergreen.py": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+    "vendor/program_gate.py": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+    "vendor/program_inputs.py": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66",
+    "vendor/program_io.py": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+    "vendor/protocol.py": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+    "vendor/score_join.py": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+    "vendor/target_noise.py": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+  },
+  "s3_writes": 0,
+  "schema": "jope.callback-selected-actual-readback-custody/v1",
+  "scope": "Owner captured one successful TRAIN wrapper and seven exact-version artifacts through canonical/verifier callbacks, current role and selected replay checks. No complete live cutoff/export, numeric-target construction, CE promotion, RL, optimizer or admission proof. Prior failed attempts remain immutable.",
+  "selected_results": [
+    {
+      "ce_eligible": false,
+      "context_id": "7f281db391fca27500d281050c5752ae387fdc742bc410824297180bec66f699",
+      "emission_id": "01f9ebd4d7aca0ca93b5e601f1f974579de09f95a7418290dfa0cc50976b8502",
+      "measurement": {
+        "artifact_versions": {
+          "evaluation": "zYOyox.fgj3sq02qVyXuoP1poPPVksyo",
+          "input": "P.czVQH.4G5xprhZUTvYj5S.js46DFMC",
+          "program": "yEfGs5jeUOrnxRVWD964fpWieRxt4ntR",
+          "rust_executable": "1izcU0SB_zU5p21Bc_IuS6lnteQq1fd4",
+          "rust_parity": "5IVpo69pqSYwyN4YfLIOqu1EzRBN8.19",
+          "rust_source": "vv5vrRd0oaBRwlLo9IOcilil5EqPdtsh",
+          "score_records": "MpqsgTjqmLj5wXaOi3hBrXNhXrHMYBPL"
+        },
+        "canonical_score_row_sha256": [
+          "ed928c2f05d736a4a380bd0443eac00c0604075ccccff3969ce81fcf33deed01",
+          "12d78c5358a6404c538fe51d910a274fb139e534d4d0f692dcc9af703929e510"
+        ],
+        "context_id": "7f281db391fca27500d281050c5752ae387fdc742bc410824297180bec66f699",
+        "evaluation_key": "4fa859343a8280e43587f5f79df4504795ac5f0442d8b423de5665d03ffb78b9",
+        "evaluation_sha256": "d53adec7dd1fcc39587155bd30104a246919bed8208a81f49551b62b65c0253d",
+        "inner_fold_rmse": [
+          0.11027130542207264,
+          0.0973384350300289
+        ],
+        "measurement": "executed",
+        "program_sha256": "3044a2c7cb75083c3ffa67771d5f254bab84d23d33375cf5091a2328f46225e3",
+        "status": "completed",
+        "teaching_eligible": false
+      },
+      "result_ref": {
+        "bucket": "veox-jopedime-learning-use2",
+        "bytes": 3447,
+        "key": "experiments/gp-policy-dl/v2-trainonly/program-results/flywheel/v1/4fa859343a8280e43587f5f79df4504795ac5f0442d8b423de5665d03ffb78b9/record.json",
+        "sha256": "ef3d5a6e66efdb11aea4c90d636d27fdb29cdfa875fd29abc17a84d5dd406b6c",
+        "version_id": "Pcy_62r9y2as2oZ0JZnI0cBhnGYjy1QZ"
+      }
+    }
+  ],
+  "source_packet_sha256": "df096047eaad81e34aec4813277744b01b61fb4b794a5e937cdbc9371328789f",
+  "staging_receipt": {
+    "bytes": 5246,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-live-qualification-v3/stage-manifest.json",
+    "sha256": "63ddd2e615840cfbcadbc4f23019363b8fe7c17d7a01345dff53500f3df12ac3"
+  },
+  "state": "passed_selected_one_train_result_only",
+  "verified_gets": 13,
+  "verified_read_bytes": 5406788,
+  "window_elapsed_seconds": 8.299005036242306
+}
