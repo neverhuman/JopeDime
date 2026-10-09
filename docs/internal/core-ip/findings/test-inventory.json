@@ -2786,6 +2786,14 @@
         "storage"
       ],
       "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
     }
   },
   "baseline_triage": [

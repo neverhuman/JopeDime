@@ -9049,6 +9049,16 @@
       ],
       "dispositions": [],
       "scope": "Data-free additive research fixtures via run_rlfw_offline.py; no deployed policy, corpus, service or evaluator inputs."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_slate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Registered data-free best-of-32 fixtures: exact leaf membership, all raw draws, predicted-only ranking, fixed feasibility fallback, durable restart and eight blind charges. No live evaluator, checkpoint or performance qualification."
     }
   }
 }

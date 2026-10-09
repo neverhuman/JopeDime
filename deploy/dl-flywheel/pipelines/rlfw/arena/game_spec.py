@@ -1,9 +1,9 @@
 """Frozen game identities, committed before disclosing an execution result."""
 
-from dataclasses import asdict, dataclass
 import hashlib
 import json
 import math
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
@@ -146,6 +146,13 @@ class GameSpec:
             raise ValueError(
                 "tonight's preregistered B/tau/bootstrap settings are frozen"
             )
+        if type(self.slate_k) is not int or self.slate_k not in (8, 32):
+            raise ValueError("slate size must be baseline eight or rerank 32")
+        if (
+            any(a.name.startswith("rerank32:") for a in self.arms)
+            and self.slate_k != 32
+        ):
+            raise ValueError("rerank32 requires preregistered K=32")
         if self.benchmark_valid is not False or self.kpi_version != "rlfw-kpi/v1":
             raise ValueError("research results only")
         if (
@@ -223,6 +230,7 @@ class GameSpec:
             "out_dir",
             "state_path",
             "arms",
+            "slate_k",
             "policy_qualification_sha256",
             "device_parity_sha256",
         ):
