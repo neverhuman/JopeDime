@@ -59,13 +59,15 @@ hosted exact-head CI and independent approval remain required.
 ## Live runtime requirements
 
 ```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
 "$RLFW_PYTHON" -m rlfw.no_winner_bootstrap --enable-no-winner-bootstrap \
   --spec "$B/runs/bootstrap_wave/spec.json" --runtime-binding "$B/l0/bootstrap_binding.py" \
   --policy-code-root "$B/code_pin" --policy-qualification "$B/runs/cpu_qualified/qualification.json" \
   --device cpu --pool-workers 4
 ```
 
-`RLFW_PYTHON` must select the qualified interpreter and exact Torch runtime.
+Run from the reviewed checkout. `RLFW_PYTHON` must select the qualified
+interpreter and exact Torch runtime.
 The CLI accepts `--device cpu|cuda`, default CPU. CUDA requires the complete
 identical-pin likelihood/head parity certificate. All executions require the
 bounded campaign scope, current health/memory guards, same-pin 1000-draw policy
