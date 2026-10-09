@@ -9347,6 +9347,16 @@
       ],
       "dispositions": [],
       "scope": "25 source CPU variant bridge fixtures through run_variant_offline.py invoked by run_offline.py; exact roster, zero skips. No live execution, S3 writes, model rewards or optimizer admission."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "20 CPU telemetry custody fixtures via run_telemetry_offline.py invoked by run_offline.py; exact roster/no skips/no cloud/GPU/GP/optimizer activity. Positive publication, unknown no-retry, partial closure, historical prefix/gap/version/hash/deadline/budget boundaries."
     }
   }
 }

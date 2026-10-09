@@ -1210,10 +1210,10 @@
     },
     {
       "path": "deploy/dl-flywheel/run_offline.py",
-      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin": "Codex heartbeat20261009-1203 scoped additive telemetry source update fromPR277@5a34a57083c0849f5b4b07c5cf52480584ec59d3",
       "origin_sha256": "8af4bdc464fcb1f5a9627ce4c3ee2d5bd5cb2d6c5a16052f77ce6137aab6e19f",
-      "sha256": "901d9b3896bbd873e710320a35362c74392ae39adb1945280f4b50b67d806fff",
-      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+      "sha256": "2bb96813e46cf0ee7310ef66055187827339ea6efad72cc43cf59a998375eba2",
+      "normalization": "Add20 telemetry runner identities; preserve every prior434 fixture/runner; no full-suite rerun claim."
     },
     {
       "path": "deploy/dl-flywheel/run_successor_offline.py",
@@ -1415,6 +1415,34 @@
       "origin_sha256": "3f55b000a9ceed169114efaf5733e68039fd6fff81bdceaba4268ad04a1865a5",
       "sha256": "76c507f4d4100819461a9b46e6838d40d5af6a6d3283e93211d8b2b9e08cf420",
       "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
+      "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
+      "origin_sha256": "9914b52a792429c441253bccfaf64674484de117ddf9f7d1f099148831e4ac6f",
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
+      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py",
+      "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
+      "origin_sha256": "bb10f8bbd5aaa59fce64b2455936a2e14acd6041b899fe6a646f4e63675f54b6",
+      "sha256": "8e05f8b4b2719d111beff716ac09c48ba0dd7e0da8cf97fa626d3fb13471d14c",
+      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion."
+    },
+    {
+      "path": "deploy/dl-flywheel/run_telemetry_offline.py",
+      "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
+      "origin_sha256": "75fc47efd2555559749146731dc867bbc9d8fed31596bf8d2bb27403a67399fc",
+      "sha256": "ac360eb1083c91f0ac674ce57337e5facaa6961df628941260b508126fb75cbe",
+      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion."
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/trace-archive-recovery.md",
+      "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
+      "origin_sha256": "0893344e35fd825375bf89f9a54231ddfb5873460de36c5c954d2ddb91123429",
+      "sha256": "8a49142177e412ee058d06cfac3f4b3ed1c700725b64eaebec7d50ddc4ef193f",
+      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion."
     }
   ]
 }

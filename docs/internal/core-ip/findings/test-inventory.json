@@ -2892,6 +2892,18 @@
     "python:deploy/dl-flywheel/tests_native/test_variant_outbox.py": {
       "role": "research",
       "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
+      "role": "research",
+      "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
+      "role": "research",
+      "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts."
+    },
+    "python:deploy/dl-flywheel/run_telemetry_offline.py": {
+      "role": "research",
+      "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts."
     }
   },
   "baseline_triage": [
