@@ -210,9 +210,22 @@ class GameSpec:
 
     @property
     def pairing_sha256(self):
-        # The arm and its checkpoint can differ in a paired challenger game.
+        # Checkpoint-specific qualifications remain bound by the full game SHA.
+        # They certify each arm, but are not shared comparison conditions.
         d = self.to_dict()
-        for key in ("game_id", "bench_root", "out_dir", "state_path", "arms"):
+        certificates = {self.policy_qualification_sha256, self.device_parity_sha256}
+        d["runtime_files"] = [
+            item for item in d["runtime_files"] if item[1] not in certificates
+        ]
+        for key in (
+            "game_id",
+            "bench_root",
+            "out_dir",
+            "state_path",
+            "arms",
+            "policy_qualification_sha256",
+            "device_parity_sha256",
+        ):
             d.pop(key)
         d["support"] = [
             self.arms[0].trie_sha256,

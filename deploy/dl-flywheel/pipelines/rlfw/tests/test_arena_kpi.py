@@ -85,6 +85,41 @@ class SpecTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             s.verify_frozen()
 
+    def test_pairing_allows_independent_checkpoint_certificates_only(self):
+        s = replace(
+            spec_at(self.root),
+            device="cuda",
+            policy_qualification_sha256="b" * 64,
+            device_parity_sha256="c" * 64,
+            runtime_files=(
+                ("qualification.json", "b" * 64),
+                ("parity.json", "c" * 64),
+                ("helper.py", "d" * 64),
+            ),
+        )
+        other = replace(
+            s,
+            game_id="new",
+            policy_qualification_sha256="e" * 64,
+            device_parity_sha256="f" * 64,
+            runtime_files=(
+                ("new-qualification.json", "e" * 64),
+                ("new-parity.json", "f" * 64),
+                ("helper.py", "d" * 64),
+            ),
+        )
+        self.assertNotEqual(s.sha256, other.sha256)
+        s.require_pair(other)
+        with self.assertRaises(ValueError):
+            s.require_pair(replace(other, device="cpu"))
+        with self.assertRaises(ValueError):
+            s.require_pair(
+                replace(
+                    other,
+                    runtime_files=other.runtime_files[:-1] + (("helper.py", SHA),),
+                )
+            )
+
     def test_rejects_wrong_roles_paths_namespace_and_budget(self):
         with self.assertRaises(ValueError):
             ContextSpec("c", "l", "train", SHA, SHA)

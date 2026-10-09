@@ -14,7 +14,13 @@ from rlfw.arena.kpi import compute_report
 from rlfw.arena.oracle import BlindOracle
 from rlfw.arena.report import read_run, write_reports
 from rlfw.arena.scheduler import ArenaScheduler, context_order
-from rlfw.bench_cli import compare, parser, verify_device, verify_runtime_scope
+from rlfw.bench_cli import (
+    compare,
+    parser,
+    reuse_incumbents,
+    verify_device,
+    verify_runtime_scope,
+)
 from rlfw.tests.test_arena_kpi import SHA, spec_at
 
 
@@ -641,6 +647,43 @@ class SchedulerTests(unittest.TestCase):
         unit = report["per_context"][0]
         self.assertGreater(unit["unknown_cost_attempts"], 0)
         self.assertIsNone(unit["wall_seconds"])
+
+    def test_reused_incumbent_checks_fresh_role_before_disclosure(self):
+        parent, _ = self.arena()
+        parent.run(max_contexts=1)
+        write_reports(
+            self.spec, parent.rows(), parent.hwm_values(), parent.closed_contexts()
+        )
+        child_spec = replace(
+            self.spec,
+            game_id="child",
+            out_dir=str(self.root / "runs/child"),
+            state_path=str(self.root / "state/child.sqlite"),
+        )
+        child, _ = self.arena(
+            child_spec, check=lambda c: {"role": "train", "role_map_sha256": SHA}
+        )
+        with self.assertRaises(ValueError):
+            reuse_incumbents(
+                child_spec, self.spec.out_dir, child, child.arms, child.oracle
+            )
+        self.assertEqual(child.rows(), [])
+        child.oracle.role_check = lambda c: {
+            "role": "development",
+            "role_map_sha256": SHA,
+        }
+        reuse_incumbents(child_spec, self.spec.out_dir, child, child.arms, child.oracle)
+        self.assertEqual(len(child.rows()), 1)
+        self.assertTrue(child.rows()[0].qualified and child.rows()[0].cache_hit)
+        self.assertEqual(child.rows()[0].q_grid, 500_000)
+        self.assertEqual(child.rows()[0].wall_seconds, 0)
+        child.oracle.evaluate = lambda r: self.fail(
+            "qualified reused program must hit cache"
+        )
+        child.run(max_contexts=1)
+        self.assertEqual(len(child.rows()), 17)
+        for arm in ("uniform_trie", "trie_sample:toy"):
+            self.assertEqual(sum(r.charged for r in child.rows() if r.arm == arm), 8)
 
 
 if __name__ == "__main__":
