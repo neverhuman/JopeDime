@@ -1,5 +1,28 @@
 # Research checkpoint gate and teacher proposals
 
+## R5/R6 protocol admission
+
+Paired R5 runs produce an explicit `jope.rlfw-gate-panel/r5-r6-v1` panel.
+Terminal program parity slots stay charged without quality or gain, successful
+siblings remain measurable, and an unqualified original leaves its comparator
+unavailable. R5 panels carry their frozen runtime pins and cannot enter the
+legacy whole-context custody calculation.
+
+`r6_scope` verifies the sealed seeded partition of the original 53 development
+lineages, with 26 tune and 27 confirm lineages. Official panels must contain
+exactly the registered confirm lineages. Runtime pins bind the split, program
+fate registry and terminal result cache; byte drift or changed development
+authority refuses admission. The scope retains prior measurement identities
+and the prior D5 look count. This does not classify previously observed confirm
+data as untouched or authorize development data for optimizer or teacher use.
+
+The new official alpha budget is unresolved. R5/R6 gate evaluation therefore
+refuses before creating a ledger, reservation, receipt or pointer. A benchmark
+with an R6 registration also refuses legacy gate execution. An approved new
+gate protocol and its source qualification are required before an official
+look; the old schedule is never silently reset or reused. The checks below
+qualify legacy gate behavior and synthetic admission controls separately.
+
 `rlfw.promotion_gate` reads matched, hash-verified arena outputs. It derives
 utility from qualified slot rows and re-scored originals, rather than accepting
 the report's summary values. The checkpoint arms must share the frozen panel,
@@ -7,7 +30,7 @@ seeds, support, preprocessing, budget, cache and evaluator conditions. Different
 quality for one measured program/comparison, or different measurements under
 one receipt SHA, refuses the input.
 
-Promotion requires all 54 registered lineages and complete paired units. A
+The legacy v1 gate requires all 54 registered lineages and complete paired units. A
 censored result, unknown evaluator cost or unqualified original produces an
 `INCONCLUSIVE` decision. An incomplete run also stays inconclusive. Reduced
 context rosters can qualify only when they were frozen before execution and
@@ -93,8 +116,9 @@ receipt tampering, state links, pointer changes, a real arena-output loader and
 teacher authority/integrity refusals. Logs live in
 `logs/l2/promotion-teacher-final.log` and `logs/l2/shadow-gate-final.log`.
 
-After qualified challenger and baseline games exist, compute the source bundle
-identity and evaluate one explicit gate:
+For the legacy protocol, after qualified challenger and baseline games exist,
+compute the source bundle identity and evaluate one explicit gate. This command
+refuses once an R6 split is registered:
 
 ```sh
 export PYTHONPATH=deploy/dl-flywheel/pipelines

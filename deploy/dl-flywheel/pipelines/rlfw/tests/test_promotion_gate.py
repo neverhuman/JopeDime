@@ -10,7 +10,7 @@ import time
 import unittest
 from unittest import mock
 
-from rlfw.arena.game_spec import canonical, digest
+from rlfw.arena.game_spec import canonical, digest, R5_KPI_VERSION, R5_OUTCOME_CLASSES
 from rlfw.arena.kpi import LABEL
 from rlfw.promotion_gate import (
     alpha_schedule,
@@ -22,6 +22,8 @@ from rlfw.promotion_gate import (
     verify_receipt,
     panel_from_runs,
     load_custody,
+    R6_PANEL_SCHEMA,
+    r6_scope,
 )
 
 SHA = "a" * 64
@@ -75,6 +77,77 @@ def panel(delta=0.1):
         "slot_receipt_sha256s": [SHA],
         "benchmark_valid": False,
     }
+
+
+def r6_panel_at(root):
+    lineages = [digest(["r6-lineage", i]) for i in range(53)]
+    seed = "registered-fixture-seed"
+    rows = sorted(
+        (
+            {
+                "lineage_id": lineage,
+                "hash": digest(
+                    {
+                        "schema": "rlfw-R6-lineage-hash/v1",
+                        "seed": seed,
+                        "lineage_id": lineage,
+                    }
+                ),
+            }
+            for lineage in lineages
+        ),
+        key=lambda r: (r["hash"], r["lineage_id"]),
+    )
+    for i, row in enumerate(rows):
+        row.update(
+            subrole="D-tune" if i < 26 else "D-confirm",
+            FMC_allowed=i < 26,
+            optimizer_teacher_allowed=False,
+        )
+    split = {
+        "schema": "rlfw-R6-dev-subroles/v1",
+        "seed": seed,
+        "rows": rows,
+        "lineages": 53,
+        "D_tune": 26,
+        "D_confirm": 27,
+        "score_fields_used": [],
+        "physical_role_map_sha256": SHA,
+        "physical_roles_changed": False,
+        "dev_never_optimizer_teacher": True,
+        "outside_pool_official_measurement_allowed": False,
+        "prior_D5_paired_gate_looks": 1,
+        "prior_measurements": [{"spec_sha256": SHA, "official_new_R6_look": False}],
+        "new_official_alpha_budget": None,
+    }
+    pins = []
+    (root / "cache").mkdir(exist_ok=True)
+    for relative, value in (
+        ("cache/R6-dev-lineage-split.json", split),
+        ("cache/R5-program-no-retry-registry.json", {}),
+        ("cache/R5-terminal-exact-result-cache.json", {}),
+    ):
+        path = root / relative
+        path.write_text(canonical(value) + "\n")
+        path.chmod(0o444)
+        pins.append([relative, hashlib.sha256(path.read_bytes()).hexdigest()])
+    p = panel()
+    p.update(
+        schema=R6_PANEL_SCHEMA,
+        kpi_version=R5_KPI_VERSION,
+        bench_root=str(root),
+        runtime_files=pins,
+    )
+    p["roster"] = p["roster"][:27]
+    for side in ("challenger", "champion"):
+        p[side] = p[side][:27]
+    for i, row in enumerate(rows[26:]):
+        for entry in (p["roster"][i], p["challenger"][i], p["champion"][i]):
+            entry["lineage_id"] = row["lineage_id"]
+    p["panel_sha256"] = digest(
+        {"contexts": p["roster"], "seeds": p["seeds"], "role_map": SHA}
+    )
+    return p, split
 
 
 class GateMathTests(unittest.TestCase):
@@ -187,6 +260,150 @@ class GateStateTests(unittest.TestCase):
         self.cfg = GateConfig(
             str(self.root), time.time() + 60, SHA, apply_research_pointer=True
         )
+
+    def test_r6_confirm_scope_preserves_prior_look_and_refuses_before_state_writes(
+        self,
+    ):
+        run_gate(self.cfg, panel())
+        before = {
+            str(p.relative_to(self.root)): p.read_bytes()
+            for p in (self.root / "state").rglob("*")
+            if p.is_file()
+        }
+        p, split = r6_panel_at(self.root)
+        scope = r6_scope(p)
+        self.assertEqual(len(scope["confirm_lineages"]), 27)
+        self.assertEqual(scope["prior_D5_paired_gate_looks"], 1)
+        self.assertEqual(scope["prior_measurements"], split["prior_measurements"])
+        self.assertIsNone(scope["new_official_alpha_budget"])
+        self.assertFalse(scope["official_gate_enabled"])
+        for operation in (lambda: evaluate_panel(p, 1), lambda: run_gate(self.cfg, p)):
+            with self.assertRaisesRegex(ValueError, "approved gate protocol"):
+                operation()
+        # Downgrading the panel cannot spend the existing monthly budget either.
+        with self.assertRaisesRegex(ValueError, "legacy gate protocol"):
+            run_gate(self.cfg, panel())
+        after = {
+            str(p.relative_to(self.root)): p.read_bytes()
+            for p in (self.root / "state").rglob("*")
+            if p.is_file()
+        }
+        self.assertEqual(before, after)
+
+    def test_r6_tune_outside_and_changed_partition_are_refused(self):
+        p, split = r6_panel_at(self.root)
+        for lineage in (
+            split["rows"][0]["lineage_id"],
+            digest("outside registered pool"),
+        ):
+            changed = deepcopy(p)
+            changed["roster"][0]["lineage_id"] = lineage
+            with self.assertRaisesRegex(ValueError, "27 confirm"):
+                r6_scope(changed)
+        path = self.root / "cache/R6-dev-lineage-split.json"
+        split["rows"][26]["FMC_allowed"] = True
+        path.chmod(0o600)
+        path.write_text(canonical(split) + "\n")
+        path.chmod(0o444)
+        p["runtime_files"][0][1] = hashlib.sha256(path.read_bytes()).hexdigest()
+        with self.assertRaisesRegex(ValueError, "partition or development authority"):
+            r6_scope(p)
+
+    def test_r6_missing_runtime_pin_and_cache_drift_refuse_before_new_ledger(self):
+        p, _ = r6_panel_at(self.root)
+        changed = deepcopy(p)
+        changed["runtime_files"].pop()
+        with self.assertRaisesRegex(ValueError, "runtime pin"):
+            run_gate(self.cfg, changed)
+        path = self.root / "cache/R5-terminal-exact-result-cache.json"
+        path.chmod(0o600)
+        path.write_text("changed")
+        path.chmod(0o444)
+        with self.assertRaisesRegex(ValueError, "byte drift"):
+            run_gate(self.cfg, p)
+        self.assertFalse((self.root / "state").exists())
+
+    def test_r5_run_loader_keeps_terminal_slots_and_unavailable_comparators(self):
+        from rlfw.arena.kpi import SlotResult
+        from rlfw.arena.report import write_reports
+        from rlfw.tests.test_arena_kpi import spec_at
+
+        specs = []
+        for name, q in (("challenger", 200_000), ("champion", 100_000)):
+            spec = replace(
+                spec_at(self.root, 2),
+                game_id=name,
+                out_dir=str(self.root / "runs" / name),
+                state_path=str(self.root / "state" / (name + ".sqlite")),
+                kpi_version=R5_KPI_VERSION,
+                outcome_classes=R5_OUTCOME_CLASSES,
+            )
+            spec.freeze()
+            specs.append(spec)
+            rows = []
+            for c in spec.contexts:
+                rows.append(
+                    SlotResult(
+                        c.context_id,
+                        c.lineage_id,
+                        "hwm",
+                        1,
+                        1,
+                        SHA,
+                        "parity_unqualified",
+                        None,
+                        False,
+                        spec_sha256=spec.sha256,
+                    )
+                )
+                for arm in spec.arms[1:]:
+                    for slot in range(1, 9):
+                        failed = slot == 1
+                        pin = (
+                            "e" * 64
+                            if arm.name == "uniform_trie"
+                            else ("c" * 64 if name == "challenger" else "d" * 64)
+                        )
+                        quality = 0 if arm.name == "uniform_trie" else q
+                        rows.append(
+                            SlotResult(
+                                c.context_id,
+                                c.lineage_id,
+                                arm.name,
+                                1,
+                                slot,
+                                pin,
+                                "parity_unqualified"
+                                if failed
+                                else "qualified_complete",
+                                None if failed else quality,
+                                not failed,
+                                wall_seconds=1,
+                                spec_sha256=spec.sha256,
+                                receipt_sha256=None
+                                if failed
+                                else digest([c.context_id, pin, quality]),
+                            )
+                        )
+            write_reports(
+                spec,
+                rows,
+                {c.context_id: None for c in spec.contexts},
+                [c.context_id for c in spec.contexts],
+            )
+        p = panel_from_runs(
+            specs[0].out_dir, specs[1].out_dir, "trie_sample:toy", "trie_sample:toy"
+        )
+        self.assertEqual(p["schema"], R6_PANEL_SCHEMA)
+        self.assertEqual(p["kpi_version"], R5_KPI_VERSION)
+        self.assertEqual(p["runtime_files"], [])
+        for side, best in (("challenger", 0.2), ("champion", 0.1)):
+            for unit in p[side]:
+                self.assertEqual(unit["parity_unqualified_rate"], 1 / 8)
+                self.assertEqual(unit["charged_slots"], 8)
+                self.assertEqual(unit["best_q@8"], best)
+                self.assertIsNone(unit["hwm"])
+                self.assertIsNone(unit["positive_gain"])
 
     def test_receipt_roundtrip_hash_and_tamper_refusal(self):
         signed = signed_receipt({"verdict": "INCONCLUSIVE", "look": 1})

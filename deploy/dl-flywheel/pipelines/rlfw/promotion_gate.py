@@ -13,9 +13,97 @@ from pathlib import Path
 from statistics import fmean, median, NormalDist
 import time
 
-from .arena.game_spec import canonical, digest, local_path, require_sha
+from .arena.game_spec import canonical, digest, local_path, require_sha, R5_KPI_VERSION
 from .arena.kpi import cluster_draws, context_units, LABEL
 from .arena.report import read_run
+
+
+R6_PANEL_SCHEMA = "jope.rlfw-gate-panel/r5-r6-v1"
+
+
+def r6_scope(panel):
+    """Validate the sealed confirmation scope without authorizing a gate look."""
+    if (
+        panel["schema"] != R6_PANEL_SCHEMA
+        or panel["kpi_version"] != R5_KPI_VERSION
+        or panel["device"] != "cpu"
+        or panel["benchmark_valid"] is not False
+    ):
+        raise ValueError("explicit CPU R5/R6 research panel required")
+    pins = dict(panel["runtime_files"])
+    if len(pins) != len(panel["runtime_files"]):
+        raise ValueError("duplicate R6 runtime pins")
+    relative = "cache/R6-dev-lineage-split.json"
+    for name in (
+        relative,
+        "cache/R5-program-no-retry-registry.json",
+        "cache/R5-terminal-exact-result-cache.json",
+    ):
+        require_sha(pins.get(name), "R6 scope/cache runtime pin")
+        path = local_path(panel["bench_root"], Path(panel["bench_root"]) / name)
+        if (
+            path.stat().st_mode & 0o222
+            or hashlib.sha256(path.read_bytes()).hexdigest() != pins[name]
+        ):
+            raise ValueError("sealed R6 scope/cache byte drift")
+    split = json.loads(
+        local_path(
+            panel["bench_root"], Path(panel["bench_root"]) / relative
+        ).read_text()
+    )
+    rows = split["rows"]
+    if (
+        split["schema"] != "rlfw-R6-dev-subroles/v1"
+        or split["lineages"] != 53
+        or split["D_tune"] != 26
+        or split["D_confirm"] != 27
+        or len(rows) != 53
+        or len({r["lineage_id"] for r in rows}) != 53
+        or split["score_fields_used"] != []
+        or split["physical_role_map_sha256"] != panel["role_map_sha256"]
+        or split["physical_roles_changed"] is not False
+        or split["dev_never_optimizer_teacher"] is not True
+        or split["outside_pool_official_measurement_allowed"] is not False
+        or type(split["prior_D5_paired_gate_looks"]) is not int
+        or split["prior_D5_paired_gate_looks"] < 1
+        or not split["prior_measurements"]
+    ):
+        raise ValueError("registered R6 split and prior exposure history required")
+    for i, row in enumerate(sorted(rows, key=lambda r: (r["hash"], r["lineage_id"]))):
+        require_sha(row["lineage_id"], "registered lineage")
+        if (
+            row["hash"]
+            != digest(
+                {
+                    "schema": "rlfw-R6-lineage-hash/v1",
+                    "seed": split["seed"],
+                    "lineage_id": row["lineage_id"],
+                }
+            )
+            or row["subrole"] != ("D-tune" if i < 26 else "D-confirm")
+            or row["FMC_allowed"] is not (i < 26)
+            or row["optimizer_teacher_allowed"] is not False
+        ):
+            raise ValueError("seeded R6 partition or development authority changed")
+    confirm = {r["lineage_id"] for r in rows if r["subrole"] == "D-confirm"}
+    if {c["lineage_id"] for c in panel["roster"]} != confirm or any(
+        c["role"] != "development" for c in panel["roster"]
+    ):
+        raise ValueError("official R6 gate requires exactly all 27 confirm lineages")
+    return {
+        "split_sha256": pins[relative],
+        "runtime_files": panel["runtime_files"],
+        "confirm_lineages": sorted(confirm),
+        "prior_D5_paired_gate_looks": split["prior_D5_paired_gate_looks"],
+        "prior_measurements": split["prior_measurements"],
+        "new_official_alpha_budget": split["new_official_alpha_budget"],
+        "official_gate_enabled": False,
+    }
+
+
+def refuse_unapproved_r6(panel):
+    r6_scope(panel)
+    raise ValueError("R6 official alpha budget requires an approved gate protocol")
 
 
 def alpha_schedule(looks=6, alpha=0.05):
@@ -303,8 +391,23 @@ def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
         if not closed <= {c.context_id for c in spec.contexts}:
             raise ValueError("unknown reported closed context")
         hwm = {r.context_id: r.q for r in rows if r.arm == "hwm"}
+        options = (
+            {
+                "hwm_programs": {
+                    c.context_id: c.hwm_program_sha256
+                    for c in spec.contexts
+                    if c.hwm_program_sha256 is not None
+                },
+                "program_parity": True,
+            }
+            if spec.kpi_version == R5_KPI_VERSION
+            else {}
+        )
         units = context_units(
-            [r for r in rows if r.arm == arm and r.context_id in closed], hwm
+            [r for r in rows if r.arm == arm and r.context_id in closed],
+            hwm,
+            spec.tau,
+            **options,
         )
         expected = {(c, s) for c in closed for s in spec.seeds}
         if {(u["context_id"], u["seed"]) for u in units} != expected:
@@ -324,7 +427,7 @@ def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
     candidate, au = side(a, ar, ap, challenger_arm)
     baseline, bu = side(b, br, bp, champion_arm)
     roster = [asdict(c) for c in a.contexts]
-    return {
+    panel = {
         "schema": "jope.rlfw-gate-panel/v1",
         "label": LABEL + "; " + a.device + " inference",
         "device": a.device,
@@ -345,9 +448,23 @@ def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
         ),
         "benchmark_valid": False,
     }
+    if a.kpi_version == R5_KPI_VERSION:
+        panel.update(
+            schema=R6_PANEL_SCHEMA,
+            label=(
+                "Lane A, task-label-aware inner-CV search, dev panel "
+                f"L={len({c.lineage_id for c in a.contexts})}, directional; cpu inference"
+            ),
+            kpi_version=a.kpi_version,
+            bench_root=a.bench_root,
+            runtime_files=[list(item) for item in a.runtime_files],
+        )
+    return panel
 
 
 def evaluate_panel(panel, look, *, custody=None):
+    if panel["schema"] == R6_PANEL_SCHEMA:
+        refuse_unapproved_r6(panel)
     if (
         panel["schema"] != "jope.rlfw-gate-panel/v1"
         or panel["benchmark_valid"] is not False
@@ -596,6 +713,14 @@ def state_path(bench, path):
 def run_gate(config, panel):
     """Every valid look spends before inference; only this CLI can move research state."""
     config.guard()
+    if panel["schema"] == R6_PANEL_SCHEMA:
+        if Path(config.bench_root).resolve() != Path(panel["bench_root"]).resolve():
+            raise ValueError("R6 gate scope belongs to another benchmark root")
+        # R5/R6 never inherits the old custody exclusions or spends its budget.
+        # The new official budget is unresolved; reject before any state write.
+        refuse_unapproved_r6(panel)
+    elif (Path(config.bench_root) / "cache/R6-dev-lineage-split.json").exists():
+        raise ValueError("R6 registration refuses a legacy gate protocol")
     for pin in (
         *panel["game_spec_sha256s"],
         *panel["checkpoint_sha256s"],
