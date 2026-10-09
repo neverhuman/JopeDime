@@ -75,6 +75,12 @@
       "sha256": "3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4"
     },
     {
+      "path": "deploy/dl-flywheel/docs/release-status.md",
+      "origin": "followup dated operational status and logging limits",
+      "origin_sha256": "cb2d5fc64c6ebd8144c23f05d02e2acb78fd65e087aef28aebdab25bf6e9f835",
+      "sha256": "cb2d5fc64c6ebd8144c23f05d02e2acb78fd65e087aef28aebdab25bf6e9f835"
+    },
+    {
       "path": "deploy/dl-flywheel/jope_flywheel/__init__.py",
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/__init__.py",
       "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
