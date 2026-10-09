@@ -9079,6 +9079,26 @@
       ],
       "dispositions": [],
       "scope": "Explicit data-free measured-tilt/trie-loss/offline-trainer mechanics via run_rlfw_offline.py. Synthetic tensors/optimizer steps only, no corpus/native evaluations/live sealed-model training. Actual pinned L6 parity is a separate source-byte-bound acceptance receipt."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_promotion_gate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free research gate/teacher-reporter mechanics via run_rlfw_offline.py. Synthetic 1000-null scheduled panels, 54 parent clusters, durable monthly budget, immutable integrity receipts and isolated pointer fixtures; no live gate, corpus, evaluator, teacher write or serving qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_teacher_dry_run.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free research gate/teacher-reporter mechanics via run_rlfw_offline.py. Synthetic 1000-null scheduled panels, 54 parent clusters, durable monthly budget, immutable integrity receipts and isolated pointer fixtures; no live gate, corpus, evaluator, teacher write or serving qualification."
     }
   }
 }

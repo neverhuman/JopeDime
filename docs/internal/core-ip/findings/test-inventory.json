@@ -2814,6 +2814,24 @@
         "evidence",
         "orchestration"
       ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_promotion_gate.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_teacher_dry_run.py": {
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
     }
   },
   "baseline_triage": [
