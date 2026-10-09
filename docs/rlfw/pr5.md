@@ -92,8 +92,9 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
 ```
 
 The two training suites are registered in `run_rlfw_offline.py`. Run the actual
-offline runner as the acceptance command; it collects all 92 PR1, arena and
-training fixtures with no skips. Both the local required hook and hosted Python
+offline runner as the acceptance command; it collects the registered PR1,
+arena, slate and training fixtures with no skips. Its source-bound receipt
+records the complete current inventory. Both the local required hook and hosted Python
 lane use the already synced, locked CPU environment through
 `uv run --project python --no-sync`; the tensor fixtures require its declared
 Torch and safetensors dependencies. This fixture environment is separate from
