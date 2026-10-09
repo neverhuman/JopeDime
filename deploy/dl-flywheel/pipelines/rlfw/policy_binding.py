@@ -4,6 +4,7 @@ import hashlib
 import importlib
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -75,6 +76,10 @@ class PinnedPolicy:
         parameter_sha256,
         device="cpu",
     ):
+        if device not in ("cpu", "cuda"):
+            raise ValueError("device must be cpu or cuda")
+        if device == "cuda":
+            os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
         root = Path(policy_code_root).resolve()
         checkpoint = Path(checkpoint_dir).resolve()
         if not is_sha(code_manifest_sha256) or not is_sha(parameter_sha256):
@@ -97,6 +102,10 @@ class PinnedPolicy:
             verify_policy_origins(root)
         finally:
             sys.path[:] = original
+        if device == "cuda" and not self.torch.cuda.is_available():
+            raise ValueError("requested CUDA device is unavailable")
+        model.configure_determinism(1)
+        self.device = device
         manifest = json.loads((checkpoint / "manifest.json").read_bytes())
         if manifest["parameter_sha256"] != parameter_sha256:
             raise ValueError("checkpoint parameter pin mismatch")

@@ -9,6 +9,8 @@ from unittest.mock import patch
 
 from rlfw.policy_binding import verify_manifest, verify_policy_origins
 from rlfw.run_rlfw_offline import source_identity
+from rlfw.trie_logprob import TrieLogProb
+from rlfw.verify_checkpoint import compare_readouts
 
 
 class BindingTests(unittest.TestCase):
@@ -92,3 +94,33 @@ class BindingTests(unittest.TestCase):
             os.environ, {"JOPE_SOURCE_SHA": "a" * 40, "GITHUB_SHA": "b" * 40}
         ):
             self.assertEqual(source_identity(), ("a" * 40, "b" * 40))
+
+    def test_device_parity_reports_likelihood_and_each_head_drift(self):
+        class Readout:
+            def __init__(self, delta=0.0):
+                self.delta = delta
+
+            def logprobs_many(self, contexts, rows):
+                return [
+                    TrieLogProb(-0.5 - self.delta, (-0.5 - self.delta, 0.0))
+                    for _ in rows
+                ]
+
+            def score_heads(self, contexts, rows):
+                return [
+                    {
+                        "q": 0.1 + self.delta,
+                        "p_complete": 0.7 + self.delta,
+                        "runtime_seconds": 1.0 + self.delta,
+                    }
+                    for _ in rows
+                ]
+
+        zero = compare_readouts(Readout(), Readout(), [None], [(1, 3, 2)])
+        self.assertEqual(
+            set(zero),
+            {"total_logprob", "token_logprob", "q", "p_complete", "runtime_log1p"},
+        )
+        self.assertTrue(all(value == 0.0 for value in zero.values()))
+        changed = compare_readouts(Readout(), Readout(1e-4), [None], [(1, 3, 2)])
+        self.assertTrue(all(value > 1e-6 for value in changed.values()))

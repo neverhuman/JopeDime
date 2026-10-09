@@ -109,6 +109,7 @@ class ResearchHWM:
     def __init__(self, path, *, state_root):
         self.path = Path(path).resolve()
         state_root = Path(state_root).resolve()
+        self.artifact_root = state_root.parent / "runs"
         if state_root.name != "state" or not self.path.is_relative_to(state_root):
             raise ValueError(
                 "ledger must be beneath the explicit benchmark state directory"
@@ -138,6 +139,33 @@ class ResearchHWM:
         db.execute("PRAGMA busy_timeout=60000")
         return db
 
+    def _artifact_valid(self, ref):
+        if not isinstance(ref, dict) or not is_sha(ref.get("sha256")):
+            return False
+        if "path" not in ref:
+            return bool(ref.get("version_id") and ref.get("uri"))
+        # The pinned evaluator emits local content-addressed references. Verify
+        # their bytes inside this benchmark; no remote version is invented.
+        if not isinstance(ref["path"], str) or type(ref.get("bytes")) is not int:
+            return False
+        path = Path(ref["path"])
+        try:
+            if (
+                not path.is_absolute()
+                or not path.resolve().is_relative_to(self.artifact_root)
+                or any(p.is_symlink() for p in (path, *path.parents))
+                or not path.is_file()
+                or not 0 < ref["bytes"] <= 64 * 1024**2
+                or path.stat().st_size != ref["bytes"]
+            ):
+                return False
+            with path.open("rb") as stream:
+                return (
+                    hashlib.file_digest(stream, "sha256").hexdigest() == ref["sha256"]
+                )
+        except OSError:
+            return False
+
     def publish(self, key, publication, *, role_check):
         """role_check(key) runs freshly inside the transaction, never from a cached flag.
 
@@ -166,11 +194,7 @@ class ResearchHWM:
         else:
             artifacts = publication.artifacts or {}
             if set(artifacts) != ARTIFACT_ROLES or any(
-                not isinstance(ref, dict)
-                or not is_sha(ref.get("sha256"))
-                or not ref.get("version_id")
-                or not ref.get("uri")
-                for ref in artifacts.values()
+                not self._artifact_valid(ref) for ref in artifacts.values()
             ):
                 reason = "missing_closure"
         if (
