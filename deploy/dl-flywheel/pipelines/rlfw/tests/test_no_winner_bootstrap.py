@@ -360,6 +360,61 @@ class BootstrapTests(unittest.TestCase):
         )
 
     @mock.patch("rlfw.arena.oracle.time.time", return_value=1791540000.0)
+    def test_exhausted_censored_attempts_publish_refusals_and_charge_slots(self, clock):
+        for outcome in ("parity_custody", "infra_unknown"):
+            with self.subTest(outcome=outcome):
+                fixture = BootstrapTests("runTest")
+                fixture.setUp()
+                try:
+
+                    def evaluate(request):
+                        return {
+                            **fixture.result(request, outcome),
+                            "cost_unknown": outcome == "infra_unknown",
+                        }
+
+                    value = fixture.scheduler(evaluate=evaluate)
+                    rows = value.run(max_contexts=1)
+                    self.assertEqual(len(rows), 8)
+                    self.assertEqual(len(fixture.calls), 24)
+                    self.assertEqual(sum(row.attempts for row in rows), 24)
+                    self.assertTrue(all(row.outcome == "censored" for row in rows))
+                    self.assertTrue(all(row.censor_reason == outcome for row in rows))
+                    self.assertTrue(
+                        all(row.q_grid is None and row.q is None for row in rows)
+                    )
+                    events = [
+                        event
+                        for context in fixture.contexts
+                        for event in value.ledger.events(context.hwm_key)
+                    ]
+                    self.assertEqual(len(events), 8)
+                    self.assertTrue(
+                        all(
+                            event["event"] == "refused"
+                            and event["reason"] == outcome
+                            and event["publication"]["q_grid"] is None
+                            for event in events
+                        )
+                    )
+                    report = value.coverage_report()
+                    self.assertEqual(report["contexts_attempted"], 1)
+                    self.assertEqual(report["contexts_with_valid_program"], 0)
+                    self.assertEqual(report["contexts_exit_usable"], 0)
+                    self.assertEqual(report["censored_logical_slots"], 8)
+                    self.assertEqual(len(report["closed_contexts"]), 1)
+                    if outcome == "infra_unknown":
+                        self.assertEqual(report["unknown_cost_attempts"], 24)
+                        self.assertIsNone(report["evaluator_wall_seconds"])
+                        self.assertIsNone(report["evaluator_cpu_seconds"])
+                    else:
+                        self.assertEqual(report["unknown_cost_attempts"], 0)
+                        self.assertEqual(report["evaluator_wall_seconds"], 48)
+                        self.assertEqual(report["evaluator_cpu_seconds"], 72)
+                finally:
+                    fixture.doCleanups()
+
+    @mock.patch("rlfw.arena.oracle.time.time", return_value=1791540000.0)
     def test_role_change_after_execution_and_missing_artifacts_cannot_publish(
         self, clock
     ):

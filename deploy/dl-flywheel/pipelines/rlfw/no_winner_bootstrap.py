@@ -510,7 +510,7 @@ class BootstrapScheduler(ArenaScheduler):
                 context.hwm_key.digest,
                 row.program_sha256,
                 key,
-                row.unknown_reason if row.outcome == "censored" else row.outcome,
+                row.censor_reason if row.outcome == "censored" else row.outcome,
                 row.q_grid,
                 result.get("artifacts"),
             ),
