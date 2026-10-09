@@ -13,17 +13,17 @@ def main():
         for item in suite:
             if isinstance(item,unittest.TestSuite):yield from ids(item)
             else:yield item.id()
-    identities=sorted(ids(suite));need=len(identities)==len(set(identities))==28
-    if not need:raise ValueError('exact28 new fixture roster changed')
+    identities=sorted(ids(suite));need=len(identities)==len(set(identities))==40
+    if not need:raise ValueError('exact40 new fixture roster changed')
     started=time.time_ns()
     with(args.output/'tests.log').open('x')as log:result=unittest.TextTestRunner(stream=log,verbosity=2).run(suite)
-    paths=['jope_flywheel/variant_outbox.py','pipelines/variants/variant_dispatch.py','tests_native/test_variant_outbox.py','run_variant_offline.py']
+    paths=['jope_flywheel/variant_outbox.py','pipelines/variants/variant_dispatch.py','tests_native/test_variant_outbox.py','run_variant_offline.py','jope_flywheel/program_inputs.py','pipelines/hpc_verified_v4/verified_cache.py']
     receipt={'schema':'jope.variant-outbox-offline/v1','started_utc_ns':started,'finished_utc_ns':time.time_ns(),
         'source_sha':os.environ.get('JOPE_SOURCE_SHA'),'collected':len(identities),'executed':result.testsRun,
         'failures':len(result.failures),'errors':len(result.errors),'skipped':len(result.skipped),
         'identities':identities,'sources':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest()for p in paths},
         'log_sha256':hashlib.sha256((args.output/'tests.log').read_bytes()).hexdigest(),
-        'passed':result.wasSuccessful()and result.testsRun==28 and not result.skipped and not result.expectedFailures,
+        'passed':result.wasSuccessful()and result.testsRun==40 and not result.skipped and not result.expectedFailures,
         'scope':'New CPU fixtures only; no S3 writes, native execution, live outbox mutations, GPU or optimizer.'}
     (args.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print(json.dumps({k:v for k,v in receipt.items()if k not in('identities','sources')}))

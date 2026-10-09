@@ -7,7 +7,7 @@ from pathlib import Path
 from . import evergreen
 from .augmentation import array_sha256
 from .program_io import bound, need, sha, tick
-from .protocol import Context, canonical, digest
+from .protocol import Context, canonical, digest, sha256
 
 BUCKET = 'veox-jopedime-learning-use2'
 PREFIX = 'experiments/gp-policy-dl/v2-trainonly/'
@@ -33,14 +33,10 @@ def current_roles(config):
     return set(target['views']), cids, views
 
 
-def dataset_object(client, ref, *, variant, name, deadline):
+def _dataset_version(client, ref, deadline):
+    """First read verifies exact response version, bytes and hash; never absence."""
     tick(deadline)
-    expected = PREFIX + ('receipts/flywheel-datasets/v1/' if name == 'receipt' else 'datasets/flywheel/v1/') + variant + '/'
-    expected += ref['sha256'] + '.json' if name == 'receipt' else name
-    need(ref['bucket'] == BUCKET and ref['key'] == expected, 'dataset object namespace')
-    need(type(ref['bytes']) is int and 0 < ref['bytes'] <= 8*1024**2, 'dataset object cap')
-    need(type(ref['version_id']) is str and ref['version_id'] not in ('', 'null'), 'exact dataset version')
-    result = client.get_object(Bucket=BUCKET, Key=expected, VersionId=ref['version_id'])
+    result = client.get_object(Bucket=BUCKET, Key=ref['key'], VersionId=ref['version_id'])
     need(result.get('VersionId') == ref['version_id'] and result.get('ContentLength') == ref['bytes'], 'dataset version/length')
     data = bytearray()
     with result['Body'] as stream:
@@ -50,13 +46,30 @@ def dataset_object(client, ref, *, variant, name, deadline):
             data.extend(block); need(len(data) <= ref['bytes'], 'bounded dataset read')
     tick(deadline)
     need(len(data) == ref['bytes'] and sha(data) == ref['sha256'], 'dataset exact version hash')
-    return bytes(data)
+    return bytes(data), ref['version_id']
+
+
+def dataset_object(client, ref, *, variant, name, deadline, version_cache=None):
+    tick(deadline); sha256(ref['sha256'])
+    expected = PREFIX + ('receipts/flywheel-datasets/v1/' if name == 'receipt' else 'datasets/flywheel/v1/') + variant + '/'
+    expected += ref['sha256'] + '.json' if name == 'receipt' else name
+    need(ref['bucket'] == BUCKET and ref['key'] == expected, 'dataset object namespace')
+    need(type(ref['bytes']) is int and 0 < ref['bytes'] <= 8*1024**2, 'dataset object cap')
+    need(type(ref['version_id']) is str and ref['version_id'] not in ('', 'null'), 'exact dataset version')
+    # Namespace and expected context path are checked before every cache hit.
+    body, version = (_dataset_version(client, ref, deadline) if version_cache is None
+                     else version_cache.get_version(ref))
+    tick(deadline)
+    need(version == ref['version_id'] and len(body) == ref['bytes'] and sha(body) == ref['sha256'],
+         'dataset cached exact version hash')
+    return body
 
 
 class RegisteredInputs:
     def __init__(self, config, registry, native, client, deadline):
         self.config, self.registry, self.native = config, registry, native
         self.client, self.deadline = client, deadline
+        self.version_cache = None
         self.generator = json.loads(bound(config['generator_config']))
         need(registry['schema'] == 'jope.flywheel-program-inputs/v1' and
              registry['generator_config_sha256'] == config['generator_config']['sha256'], 'registered generator identity')
@@ -67,6 +80,22 @@ class RegisteredInputs:
         parents = [json.loads(line) for line in bound(self.generator['parent_registry']).splitlines()]
         self.parents = {p['parent_lineage_sha256']: p for p in parents}
         need(len(parents) == len(self.parents) == 1068, 'full qualified parent registry')
+
+    def enable_version_cache(self, max_bytes):
+        """Fresh-runtime opt-in; roles, source binding and replay stay uncached."""
+        need(self.version_cache is None, 'input cache already configured')
+        from pipelines.hpc_verified_v4.verified_cache import VerifiedVersionCache
+        self.version_cache = VerifiedVersionCache(
+            lambda ref: _dataset_version(self.client, ref, self.deadline),
+            check=lambda: tick(self.deadline), max_bytes=max_bytes, max_entries=1024)
+
+    def cache_stats(self):
+        return ({'enabled': False} if self.version_cache is None
+                else {'enabled': True, **self.version_cache.snapshot()})
+
+    def dataset_read(self, ref, *, variant, name):
+        return dataset_object(self.client, ref, variant=variant, name=name,
+                              deadline=self.deadline, version_cache=self.version_cache)
 
     def describe(self, identity):
         tick(self.deadline); need(identity in self.rows, 'unregistered program input')
@@ -82,9 +111,9 @@ class RegisteredInputs:
             ref = row['files'][name]
             need(Path(ref['path']) == Path(self.generator['out'])/'variants'/identity/name, 'registered input path')
             files[name] = bound(ref, 8*1024**2)
-            need(dataset_object(self.client, row['s3'][name], variant=identity, name=name, deadline=self.deadline) == files[name],
+            need(self.dataset_read(row['s3'][name], variant=identity, name=name) == files[name],
                  'published dataset differs from registered local source')
-        publication = json.loads(dataset_object(self.client, row['s3']['receipt'], variant=identity, name='receipt', deadline=self.deadline))
+        publication = json.loads(self.dataset_read(row['s3']['receipt'], variant=identity, name='receipt'))
         meta = json.loads(files['metadata.json']); generation = json.loads(files['generation.json'])
         need(canonical(meta) == files['metadata.json'] and meta['parent'] == parent and
              meta['parent_record_sha256'] == digest(parent), 'exact parent/transformation metadata')

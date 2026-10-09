@@ -115,6 +115,127 @@ class VariantTests(unittest.TestCase):
             emissions.insert(0, native)
         self.outbox.record_batch(batch, emissions)
 
+    def cache_fixture(self):
+        import time
+        from jope_flywheel.program_inputs import RegisteredInputs, BUCKET, PREFIX
+        from test_s3_library import Fake
+        class Counted(Fake):
+            def __init__(self): super().__init__(); self.gets=0; self.heads=0
+            def get_object(self, **kw): self.gets+=1; return super().get_object(**kw)
+            def head_object(self, **kw): self.heads+=1; return super().head_object(**kw)
+        inputs=object.__new__(RegisteredInputs);inputs.client=Counted()
+        inputs.deadline=time.time()+60;inputs.version_cache=None;inputs.enable_version_cache(1024**2)
+        variant='a'*64;key=PREFIX+'datasets/flywheel/v1/'+variant+'/metadata.json';raw=b'{"fixture":true}'
+        inputs.client.objects[key]=(raw,{},'v1')
+        ref={'bucket':BUCKET,'key':key,'version_id':'v1','sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}
+        return inputs,variant,ref,raw
+
+    def test_dataset_cache_repeated_exact_read_uses_one_actual_get(self):
+        inputs,variant,ref,raw=self.cache_fixture()
+        for _ in range(3): self.assertEqual(inputs.dataset_read(ref,variant=variant,name='metadata.json'),raw)
+        self.assertEqual(inputs.client.gets,1)
+        self.assertEqual(inputs.cache_stats()['hits'],2)
+        self.assertEqual(inputs.cache_stats()['backend_calls'],1)
+
+    def test_dataset_cache_new_version_is_not_an_old_version_hit(self):
+        inputs,variant,ref,raw=self.cache_fixture();inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        inputs.client.objects[ref['key']]=(raw,{},'v2')
+        self.assertEqual(inputs.dataset_read(dict(ref,version_id='v2'),variant=variant,name='metadata.json'),raw)
+        self.assertEqual(inputs.client.gets,2);self.assertEqual(inputs.cache_stats()['hits'],0)
+
+    def test_dataset_cache_changed_hash_or_size_never_reuses_old_bytes(self):
+        inputs,variant,ref,raw=self.cache_fixture();inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        for changes in ({'sha256':'f'*64},{'bytes':len(raw)+1}):
+            with self.assertRaises(ValueError): inputs.dataset_read(dict(ref,**changes),variant=variant,name='metadata.json')
+        self.assertEqual(inputs.cache_stats()['hits'],0)
+        self.assertEqual(inputs.cache_stats()['backend_failures'],2)
+
+    def test_dataset_namespace_is_checked_even_when_exact_ref_is_cached(self):
+        inputs,variant,ref,raw=self.cache_fixture();inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        for change in ({'variant':'b'*64,'name':'metadata.json'},{'variant':variant,'name':'generation.json'}):
+            with self.assertRaisesRegex(ValueError,'namespace'): inputs.dataset_read(ref,**change)
+        self.assertEqual(inputs.client.gets,1);self.assertEqual(inputs.cache_stats()['hits'],0)
+
+    def test_corrupt_dataset_cache_fails_without_backend_fallback(self):
+        inputs,variant,ref,raw=self.cache_fixture();inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        cache=inputs.version_cache.cache;key=inputs.version_cache.identity(ref);entry=cache._items[key]
+        cache._items[key]=type(entry)(b'corrupt',entry.sha256,entry.charge)
+        with self.assertRaisesRegex(ValueError,'corrupted'): inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        self.assertEqual(inputs.client.gets,1);self.assertEqual(inputs.cache_stats()['integrity_failures'],1)
+
+    def test_dataset_cache_hit_still_stops_at_deadline(self):
+        inputs,variant,ref,raw=self.cache_fixture();inputs.dataset_read(ref,variant=variant,name='metadata.json');inputs.deadline=0
+        with self.assertRaises(TimeoutError): inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        self.assertEqual(inputs.client.gets,1);self.assertEqual(inputs.cache_stats()['hits'],0)
+
+    def test_dataset_get_failure_is_not_cached(self):
+        inputs,variant,ref,raw=self.cache_fixture();del inputs.client.objects[ref['key']]
+        with self.assertRaises(KeyError): inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        self.assertEqual(inputs.cache_stats()['entries'],0);self.assertEqual(inputs.cache_stats()['backend_failures'],1)
+        # Fixture-only second request proves absence was not memoized; no live execution retry.
+        inputs.client.objects[ref['key']]=(raw,{},'v1')
+        self.assertEqual(inputs.dataset_read(ref,variant=variant,name='metadata.json'),raw)
+        self.assertEqual(inputs.client.gets,2)
+
+    def warmed_role_fixture(self):
+        from jope_flywheel.program_io import sha
+        inputs,variant,ref,raw=self.cache_fixture();inputs.dataset_read(ref,variant=variant,name='metadata.json')
+        root=Path(self.tmp.name).resolve();(root/'roles').mkdir(exist_ok=True)
+        def write(name,value):
+            path=root/'roles'/name;body=canonical(value);path.write_bytes(body)
+            return {'path':str(path),'sha256':sha(body),'bytes':len(body)}
+        source=write('source.json',{})
+        layer=write('layer.json',{'schema':'jope.dltrain-training-exclusion-layer/v1','entries':[]})
+        registry=write('TRAINING-EXCLUSION-LAYERS-v1.json',{'layers':[layer]})
+        target=write('gp-target-one-holdout-after-layers-v1.json',{'registry':registry,'views':['eligible']})
+        inputs.rows={variant:{'parent':'c'*64}}
+        inputs.parents={'c'*64:{'view_id':'eligible','retained_lineage_context_sha256':[]}}
+        inputs.config={'generator_config':source}
+        inputs.generator={'source_pins':[source],'parent_registry':source,'authority_pins':[source,layer,registry,target]}
+        return inputs,variant,source,target
+
+    def test_warm_cache_cannot_bypass_changed_local_source_pin(self):
+        inputs,variant,source,target=self.warmed_role_fixture();Path(source['path']).write_text('{"changed":true}')
+        with self.assertRaises(ValueError): inputs.describe(variant)
+        self.assertEqual(inputs.client.gets,1);self.assertEqual(inputs.cache_stats()['hits'],0)
+
+    def test_warm_cache_cannot_bypass_new_exclusion_authority(self):
+        import os,time
+        inputs,variant,source,target=self.warmed_role_fixture()
+        p=Path(target['path']);new=p.with_name('gp-target-one-holdout-after-layers-v2.json');new.write_text('{}');os.utime(new,(time.time()+5,time.time()+5))
+        with self.assertRaisesRegex(ValueError,'newer target authority'): inputs.describe(variant)
+        self.assertEqual(inputs.client.gets,1);self.assertEqual(inputs.cache_stats()['hits'],0)
+
+    def test_library_cache_keeps_live_heads_and_exact_changed_wrapper_versions(self):
+        import time
+        from variant_dispatch import Library
+        from jope_flywheel.s3_library import PREFIX
+        inputs,variant,ref,raw=self.cache_fixture();client=inputs.client;key=PREFIX+'d'*64+'/record.json'
+        first=canonical({'fixture':1});client.objects[key]=(first,{'sha256':hashlib.sha256(first).hexdigest()},'v1')
+        library=Library(client,deadline=time.time()+60,cache_bytes=1024**2)
+        self.assertEqual(library.lookup('d'*64),{'fixture':1});self.assertEqual(library.lookup('d'*64),{'fixture':1})
+        second=canonical({'fixture':2});client.objects[key]=(second,{'sha256':hashlib.sha256(second).hexdigest()},'v2')
+        self.assertEqual(library.lookup('d'*64),{'fixture':2})
+        self.assertEqual(client.heads,3);self.assertEqual(client.gets,2);self.assertEqual(library.cache_stats()['hits'],1)
+
+    def test_library_put_readback_stays_real_then_repeated_closure_uses_verified_bytes(self):
+        import time
+        from variant_dispatch import Library
+        inputs,variant,ref,raw=self.cache_fixture();client=inputs.client
+        library=Library(client,deadline=time.time()+60,cache_bytes=1024**2)
+        ref=library.put_artifact('program',b'(ridge)')
+        self.assertEqual(client.gets,1)
+        for _ in range(4):self.assertEqual(library.get_version(ref),(b'(ridge)','v1'))
+        self.assertEqual(client.gets,1);self.assertEqual(library.cache_stats()['hits'],4)
+        with self.assertRaisesRegex(ValueError,'namespace'):library.get_version(dict(ref,key='foreign'))
+
+    def test_cli_cache_budget_is_explicit_bounded_and_disabled_for_legacy(self):
+        from variant_dispatch import cache_budget
+        self.assertEqual(cache_budget({}),0)
+        self.assertEqual(cache_budget({'verified_cache_bytes':64*1024**2}),32*1024**2)
+        for value in (True,-2,1,1024,64*1024**2+2,3*1024**2+1):
+            with self.assertRaises(ValueError):cache_budget({'verified_cache_bytes':value})
+
     def test_phase_preference_skips_older_opposite_phase_and_preserves_native(self):
         self.record(step=1, phase='validation')
         self.record(step=2, phase='training')

@@ -18,6 +18,7 @@ from jope_flywheel.protocol import canonical, digest
 from jope_flywheel.queue import Queue
 from jope_flywheel.s3_library import S3Library, BUCKET, PREFIX, client, code
 from jope_flywheel.variant_outbox import VariantConsumer
+from pipelines.hpc_verified_v4.verified_cache import VerifiedVersionCache
 
 SCHEMA = 'jope.variant-model-outbox-packet/v1'
 FIELDS = {'schema','out','host','created_unix','deadline_unix','global_deadline_unix',
@@ -35,9 +36,21 @@ def progress(root, value):
 
 class Library(S3Library):
     """Capture the same exact-version wrapper used by the authoritative lookup."""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, cache_bytes=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.record_refs = {}
+        self.version_cache = (VerifiedVersionCache(super().get_version, check=self.tick,
+                              max_bytes=cache_bytes, max_entries=4096) if cache_bytes else None)
+
+    def get_version(self, ref):
+        # Mutable lookup HEAD remains live; immutable body reuse never bypasses namespace.
+        need(ref['bucket'] == BUCKET and ref['key'].startswith(PREFIX), 'library namespace escape')
+        return (super().get_version(ref) if self.version_cache is None
+                else self.version_cache.get_version(ref))
+
+    def cache_stats(self):
+        return ({'enabled': False} if self.version_cache is None
+                else {'enabled': True, **self.version_cache.snapshot()})
 
     def lookup(self, key):
         from jope_flywheel.protocol import sha256
@@ -83,8 +96,16 @@ def outbox_snapshot(path):
         source.close()
 
 
+def cache_budget(c):
+    value = c.get('verified_cache_bytes', 0)
+    need(type(value) is int and (value == 0 or 2*1024**2 <= value <= 64*1024**2)
+         and value % 2 == 0, 'explicit total verified cache budget <=64MiB')
+    return value // 2
+
+
 def preflight(c):
-    need(set(c) == FIELDS and c['schema'] == SCHEMA, 'closed packet config')
+    need(set(c) in (FIELDS, FIELDS | {'verified_cache_bytes'}) and c['schema'] == SCHEMA, 'closed packet config')
+    cache_budget(c)
     root = Path(c['out'])
     need(root.is_absolute() and all(not p.is_symlink() for p in (root,*root.parents)) and
          str(root).startswith('/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-variant-outbox-'),
@@ -184,7 +205,8 @@ def main():
     def report(state):
         progress(root,{'schema':'jope.variant-outbox-progress/v1','at_utc_ns':time.time_ns(),
                  'state':state,'counts':dict(counts),'results':results,'deadline_unix':c['deadline_unix'],
-                 'optimizer_updates':0,'optimizer_reward_allowed':False,'timing_events':timing.ACTIVE.count})
+                 'optimizer_updates':0,'optimizer_reward_allowed':False,'timing_events':timing.ACTIVE.count,
+                 'verified_caches':{'inputs':inputs.cache_stats(),'library':store.cache_stats()}})
     rawclient = client()
     class Budget:
         def __getattr__(self,name): return getattr(rawclient,name)
@@ -210,7 +232,10 @@ def main():
                    'key':kw['Key'],'bytes':kw['ContentLength'],'sha256':kw['Metadata']['sha256']}))
             with timing.span('s3.PUT',key=kw['Key'],bytes=kw['ContentLength']): return rawclient.put_object(**kw)
     budget = Budget(); inputs.client = budget
-    store = Library(budget,deadline=c['deadline_unix'],nativecanonical_json=native.canonical_json)
+    split_cache_bytes = cache_budget(c)
+    if split_cache_bytes: inputs.enable_version_cache(split_cache_bytes)
+    store = Library(budget,deadline=c['deadline_unix'],nativecanonical_json=native.canonical_json,
+                    cache_bytes=split_cache_bytes)
     q = Queue(root/'queue.sqlite',max_jobs=2*c['maximum_emissions'])
     outbox = Outbox(c['outbox_path'],**{k:v for k,v in c['outbox_config'].items() if k != 'schema'})
     observer = ProgramObserver(q,inputs,store,plan_sha256=args.config_sha,canonicalize=native.canonical_program)

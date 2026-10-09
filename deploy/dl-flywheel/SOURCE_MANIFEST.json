@@ -86,10 +86,10 @@
     },
     {
       "path": "deploy/dl-flywheel/docs/generated-variant-execution.md",
-      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
-      "origin_sha256": "4953a3548bac7f1c052bf7e11812d8552e5d65b9ccd07cdbaf50d7e8a7179542",
-      "sha256": "04059b434107570deb66d0cb6f953af99def06cb8057a0f4035fbf81e36a6efd",
-      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
+      "origin": "Codex heartbeat20261009-1109 scoped verified-byte cache successor from PR277@a5376f09caa90e39cc8e41c8a59faef5665de939",
+      "origin_sha256": "04059b434107570deb66d0cb6f953af99def06cb8057a0f4035fbf81e36a6efd",
+      "sha256": "6090b3aaec5e8e2640cf3411e87b4b711dc8e86784ee7bdb8c73a36e35786dc1",
+      "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
     },
     {
       "path": "deploy/dl-flywheel/docs/growth-and-inference-v2.md",
@@ -214,9 +214,10 @@
     },
     {
       "path": "deploy/dl-flywheel/jope_flywheel/program_inputs.py",
-      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_inputs.py",
+      "origin": "Codex heartbeat20261009-1109 scoped verified-byte cache successor from PR277@a5376f09caa90e39cc8e41c8a59faef5665de939",
       "origin_sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
-      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
+      "sha256": "12464b8caed8e0f6a11040aa491b02c5fef558d0e6c63fae112410c5ada72e66",
+      "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
     },
     {
       "path": "deploy/dl-flywheel/jope_flywheel/program_io.py",
@@ -1183,10 +1184,10 @@
     },
     {
       "path": "deploy/dl-flywheel/pipelines/variants/variant_dispatch.py",
-      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
-      "origin_sha256": "8b1eb24ff7dbd435f8356770fb1af7fd7e18a055680c73cab44c881add197b31",
-      "sha256": "164c6db760a140337a8971558564613840fd47d45b8ce2572bc514836bcdc601",
-      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
+      "origin": "Codex heartbeat20261009-1109 scoped verified-byte cache successor from PR277@a5376f09caa90e39cc8e41c8a59faef5665de939",
+      "origin_sha256": "164c6db760a140337a8971558564613840fd47d45b8ce2572bc514836bcdc601",
+      "sha256": "ad5c6caf1a3a86d8651b5766e7677ea565243b90ffdea943487d4da21cc5360b",
+      "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
     },
     {
       "path": "deploy/dl-flywheel/run_continuous_offline.py",
@@ -1223,10 +1224,10 @@
     },
     {
       "path": "deploy/dl-flywheel/run_variant_offline.py",
-      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
-      "origin_sha256": "8f6f80225daf43dd0fe786241bd73b1b1179a289bc8e7cfdf4ab4e9a0d34e656",
-      "sha256": "5cf49b7cb7763232ef70809189819adee4da70826017cfe4e64ee00bdc06dc53",
-      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
+      "origin": "Codex heartbeat20261009-1109 scoped verified-byte cache successor from PR277@a5376f09caa90e39cc8e41c8a59faef5665de939",
+      "origin_sha256": "5cf49b7cb7763232ef70809189819adee4da70826017cfe4e64ee00bdc06dc53",
+      "sha256": "5bc8172f01b4cc2b760577824d8c85a91773db31463f92475cc203e8e463144c",
+      "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
     },
     {
       "path": "deploy/dl-flywheel/tests/fixtures/kumos-component-publication.json",
@@ -1410,10 +1411,10 @@
     },
     {
       "path": "deploy/dl-flywheel/tests_native/test_variant_outbox.py",
-      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
-      "origin_sha256": "60c508f7cd87498824369c251f3e44f6718d61fd2bd7fb1f56db661fb4daa273",
-      "sha256": "3f55b000a9ceed169114efaf5733e68039fd6fff81bdceaba4268ad04a1865a5",
-      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
+      "origin": "Codex heartbeat20261009-1109 scoped verified-byte cache successor from PR277@a5376f09caa90e39cc8e41c8a59faef5665de939",
+      "origin_sha256": "3f55b000a9ceed169114efaf5733e68039fd6fff81bdceaba4268ad04a1865a5",
+      "sha256": "76c507f4d4100819461a9b46e6838d40d5af6a6d3283e93211d8b2b9e08cf420",
+      "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
     }
   ]
 }
