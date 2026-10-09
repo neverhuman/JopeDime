@@ -25,7 +25,8 @@
       "path": "deploy/dl-flywheel/dashboard/index.html",
       "origin": "outputs/DL_paper_dashboard.html",
       "origin_sha256": "f8417674956dd4803b6647fd33641c2becfc77f87bebf4068d45c99df4b51c80",
-      "sha256": "f8417674956dd4803b6647fd33641c2becfc77f87bebf4068d45c99df4b51c80"
+      "sha256": "0d00e6f4dd066ad6a95337b2ba5a94a5d7a7e0a6f7c730e216077116b5e902bc",
+      "normalization": "Return to measured batch loss view when total-presentations mapping becomes unavailable; independent log axes and coverage gaps preserved."
     },
     {
       "path": "deploy/dl-flywheel/dashboard/paper_publish_v33.py",

@@ -126,6 +126,9 @@ function render(s){
  const hs=s.hosts||[],h=hs.find(x=>x.host==='xbabe2')||{},g=h.evergreen||{},
  c=h.gp_label_campaign||{},cc=c.counts||{},f=h.gp_fill_campaign||{},fc=f.counts||{},n=h.neural_training||null;
  const exposure=presentationHistory(n),presentationButton=el('axis').querySelector('[data-axis="total_presentations"]');presentationButton.disabled=!exposure.available;presentationButton.title=exposure.note;
+ // An available axis can become unavailable when the publisher retains a bounded optimizer suffix.
+ // Keep the measured loss history visible; no presentation coordinates are invented.
+ if(axis==='total_presentations'&&!exposure.available){axis='batch';syncControls();}
  const expansion=hs.flatMap(x=>x.gp_expansion_campaigns||[]),extra=k=>expansion.reduce((t,x)=>t+(x.counts?.[k]||0),0);
  const inventory=h.full_corpus;
  if(inventory){
@@ -148,7 +151,7 @@ function render(s){
  text('seen',failedRead?'Unavailable':fmt(n?.unique_train_data_runs_seen||0));
  const unique=n?.unique_train_data_runs_seen||0,presentations=n?.total_train_presentations||0;
  text('presentations',fmt(presentations));
- text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'Training continues at fixed coverage. This view keeps the first loss reading at each unique count; lines break across reuse and epoch changes.'+coverageContinuation(n?.loss_history||[],unique,n?.completed_batches):axis==='total_presentations'?exposure.note:'Unique coverage stays flat while already-seen data is reused.'));
+ text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'Training continues at fixed coverage. This view keeps the first loss reading at each unique count; lines break across reuse and epoch changes.'+coverageContinuation(n?.loss_history||[],unique,n?.completed_batches):axis==='total_presentations'?exposure.note:'Unique coverage stays flat while already-seen data is reused.')+(!exposure.available?' '+exposure.note+' Batches and Epochs retain the recorded loss curves.':''));
  text('axisDescription',(axis==='batch'?'Raw batches on the lower axis; unique data runs seen on the upper axis.':axis==='epoch'?'Epochs on the horizontal axis; latest recorded loss readout in each epoch.':axis==='total_presentations'?'Cumulative training presentations on the horizontal axis, including repeated data runs.':'Unique data runs on the horizontal axis; first loss reading at each count. Later repeated training is shown on the other axes.')+' Validation uses reserved parent lineages.');
  text('batches',failedRead?'Unavailable':fmt(n?.completed_batches||0));
  text('epoch','Completed epochs: '+(n?.completed_epochs??0)+' · presentations: '+fmt(n?.total_train_presentations||0));
