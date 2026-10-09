@@ -1,0 +1,11 @@
+[
+  "test_audit_math.MathAuditTests.test_cli_portable_and_create_only_matches_retained_numerical_cases",
+  "test_audit_math.MathAuditTests.test_conditional_quality_is_not_unconditional_failure_utility",
+  "test_audit_math.MathAuditTests.test_dense_rloo_four",
+  "test_audit_math.MathAuditTests.test_dense_rloo_two",
+  "test_audit_math.MathAuditTests.test_marginal_best_of_four",
+  "test_audit_math.MathAuditTests.test_marginal_best_of_one",
+  "test_audit_math.MathAuditTests.test_marginal_best_of_two",
+  "test_audit_math.MathAuditTests.test_raw_incumbent_and_clipped_sample_can_erase_gradient",
+  "test_audit_math.MathAuditTests.test_stale_best_of_group_needs_joint_not_item_weight"
+]

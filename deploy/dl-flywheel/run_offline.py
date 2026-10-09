@@ -87,8 +87,22 @@ def main():
   trace_v2=json.loads((a.output/'trace_v2/receipt.json').read_bytes())
   success=child.returncode==0 and trace_v2['passed'] is True and trace_v2['collected']==trace_v2['executed']==13
   receipt['trace_v2_suite']=trace_v2;receipt['combined_collected']+=trace_v2['collected'];receipt['combined_executed']+=trace_v2['executed'];receipt['passed']=success
- if success and (receipt['combined_collected']!=587 or receipt['combined_executed']!=587):
-  raise ValueError('All587 wired offline identities must complete')
+ if success:
+  if receipt['combined_collected']!=587 or receipt['combined_executed']!=587:
+   raise ValueError('Prior587 offline identities must remain independently complete')
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_native_pool_offline.py'),'--output',str(a.output/'native_pool')],check=False)
+  native_pool=json.loads((a.output/'native_pool/receipt.json').read_bytes())
+  success=child.returncode==0 and native_pool['passed'] is True and native_pool['collected']==native_pool['executed']==21
+  receipt['native_pool_suite']=native_pool;receipt['combined_collected']+=native_pool['collected'];receipt['combined_executed']+=native_pool['executed'];receipt['passed']=success
+ if success:
+  if receipt['combined_collected']!=608 or receipt['combined_executed']!=608:
+   raise ValueError('Prior608 offline identities must remain independently complete')
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_rl_math_offline.py'),'--output',str(a.output/'rl_math')],check=False)
+  rl_math=json.loads((a.output/'rl_math/receipt.json').read_bytes())
+  success=child.returncode==0 and rl_math['passed'] is True and rl_math['collected']==rl_math['executed']==9
+  receipt['rl_math_suite']=rl_math;receipt['combined_collected']+=rl_math['collected'];receipt['combined_executed']+=rl_math['executed'];receipt['passed']=success
+ if success and (receipt['combined_collected']!=617 or receipt['combined_executed']!=617):
+  raise ValueError('All617 wired offline identities must complete')
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

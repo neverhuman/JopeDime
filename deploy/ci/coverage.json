@@ -266,7 +266,9 @@
         "pytest results",
         "Ruff exit",
         "DL offline subreceipts: 3 pinned module shards plus --combine under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh), combined to 753 collected identities, 712 synthetic executions, 41 exact named host-input/subprocess exclusions, dependencies/source pins and log hashes; separate from pytest",
-        "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals."
+        "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals.",
+        "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed.",
+        "Flywheel aggregate runner additionally wires native pool21 and RL math9 after original587 (617 total). Collection/execution receipts must prove each family independently; source import ran only the30 added fixtures and does not claim a full617 rerun. RLFW remains a separate lane command."
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -279,7 +281,8 @@
         "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$pytest_fixtures\" --junitxml=\"$EVIDENCE/junit.xml\"",
         "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\"",
         "bash ../deploy/ci/dl-offline-group.sh 900 \"$EVIDENCE/dl-lane-offline\"",
-        "uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output \"$EVIDENCE/flywheel-offline\""
+        "uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output \"$EVIDENCE/flywheel-offline\"",
+        "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\""
       ]
     },
     "e2e-smoke": {
@@ -9427,6 +9430,78 @@
       ],
       "dispositions": [],
       "scope": "9 isolated cold-build schema fixtures via run_native_v5_offline.py. Exact actual six-field build-plan raw bytes and receipt source/worker/proposal joins; corruption, optional byte counts, closed keys and real evaluator metadata expression. No GP, Rust compilation, network, GPU or live database operations."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_pr1.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Data-free additive research fixtures via run_rlfw_offline.py; no deployed policy, corpus, service or evaluator inputs."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Data-free additive research fixtures via run_rlfw_offline.py; no deployed policy, corpus, service or evaluator inputs."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "21 isolated portable CPU fixtures via the corresponding run_native_pool_offline.py or run_rl_math_offline.py after prior587. Explicit8/12/24 cardinality, permanent registry and fresh resource gates; finite-action gradient/counterexample/CLI checks. No real GP, cloud, GPU, optimizer, production queue or service operations."
+    },
+    "python:deploy/dl-flywheel/pipelines/rl_spec_audit/test_audit_math.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "9 isolated portable CPU fixtures via the corresponding run_native_pool_offline.py or run_rl_math_offline.py after prior587. Explicit8/12/24 cardinality, permanent registry and fresh resource gates; finite-action gradient/counterexample/CLI checks. No real GP, cloud, GPU, optimizer, production queue or service operations."
+    },
+    "benchmark:deploy/dl-flywheel/pipelines/rlfw/bench_cli.py": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [
+        "benchmark"
+      ],
+      "scope": "Opt-in benchmark-local arena/compare CLI. Synthetic compare and live-scope refusal fixtures run via run_rlfw_offline.py; no native execution or performance proof in CI."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
     }
   }
 }

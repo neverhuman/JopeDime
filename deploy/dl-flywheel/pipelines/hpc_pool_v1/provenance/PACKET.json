@@ -1,0 +1,46 @@
+{
+  "no_source_or_runtime_actions_authorized_by_this_receipt": true,
+  "requires_fresh_parent_manifest_ref_registry_inode_config_and_owned_allocation_argv": true,
+  "runtime_files": [
+    {
+      "bytes": 41357,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
+      "sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2"
+    },
+    {
+      "bytes": 4459,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/native_build.py",
+      "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
+    }
+  ],
+  "schema": "jope.native-pool-source-packet/v1",
+  "state": "review_candidate",
+  "support_files": [
+    {
+      "bytes": 25034,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/test_pool.py",
+      "sha256": "a5cd50ae1eaba1ca917033dd1bbfcda2b7a8e169d12f8dda0eb4658aa326bcdf"
+    },
+    {
+      "bytes": 13038,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/manifest.template.json",
+      "sha256": "46d316f5b5719b68d3a2780507aa3b14bf30ffaf04838646658a78aa71dad0b2"
+    },
+    {
+      "bytes": 7664,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/README.md",
+      "sha256": "0d4d35edd11f8f9e064d5d025aebe74f033ce65b89f42cd4f649a009e5414d93"
+    },
+    {
+      "bytes": 27414,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations-pool.diff",
+      "sha256": "d15bed1adb8c67b273a16f84a789f30414e67c8c7d42433b62be2d12e91372ea"
+    },
+    {
+      "bytes": 8086,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/VALIDATION.json",
+      "sha256": "047ce8e2fc0fead999671d2c67a50dedd153ac1c7035d09d7aaae864e74c4a91"
+    }
+  ],
+  "template_not_launch_ready": true
+}

@@ -4,10 +4,10 @@
   "files": [
     {
       "path": "deploy/ci/coverage.json",
-      "origin": "Native cold revision2 integration on PR277@4bac6573f96fb7091d269f0ed9e16bed71a73728",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
       "origin_sha256": "f7f3fdbf6079594ef3cdbfb0033d39ef2e45a38fc2fc2a8a527557c5ac54faf6",
-      "sha256": "f7f3fdbf6079594ef3cdbfb0033d39ef2e45a38fc2fc2a8a527557c5ac54faf6",
-      "normalization": "Exact qualified revision2 source bytes where copied; additive nine fixture identities, prior578 identities/mappings preserved. Only affected22 checks executed; no full587 execution claim."
+      "sha256": "750e37e9f5a03a9e65235df3fe24b03fe4e109cb423ca182f00539b2f0d5e57d",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved. Additional verified main586c4ae7 metadata preserved."
     },
     {
       "path": "deploy/dl-flywheel/README.md",
@@ -15,6 +15,13 @@
       "origin_sha256": "00cdd7774f94c7f500b290f2751bcdbf71926930e149eaf6138d43e240706eb4",
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe",
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled."
+    },
+    {
+      "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "405225402c42da9fb5f3980c0f5f80c071772374b8568a3cb13b8bd07ec3f3e7",
+      "sha256": "405225402c42da9fb5f3980c0f5f80c071772374b8568a3cb13b8bd07ec3f3e7",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
     },
     {
       "path": "deploy/dl-flywheel/_successor_fixture_runner.py",
@@ -169,6 +176,13 @@
       "sha256": "6c803d0931762c5a22369577f8a25661393db2afc9508270dd66fdfe36c0959c"
     },
     {
+      "path": "deploy/dl-flywheel/docs/native-pool-v1.md",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/pool-rl-source-integration/tree/deploy/dl-flywheel/docs/native-pool-v1.md",
+      "origin_sha256": "1ac4e86e7f85231861e4602149b061592d56f9f7da12cb6752f4ad92a3c9efda",
+      "sha256": "4ea1fb637e0fbe4636a7ec011a81dd5ef955787b15ba0941a261f4885da4db57",
+      "normalization": "Cold revision2: encoded-diff provenance reference and explicit owner-bounded shared-host allocation HOLD; no source/runtime/test changes."
+    },
+    {
       "path": "deploy/dl-flywheel/docs/native-runtime-pins-20261009.json",
       "origin": "outputs/DL_FLYWHEEL_NATIVE_NEURAL_CONFIG.json",
       "origin_sha256": "3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4",
@@ -189,6 +203,13 @@
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged."
     },
     {
+      "path": "deploy/dl-flywheel/docs/pool-and-rl-source-import.md",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/pool-rl-source-integration/tree/deploy/dl-flywheel/docs/pool-and-rl-source-import.md",
+      "origin_sha256": "3e0f5004ea4a674bac4cac2c76124ee80049b6c57078fd9f633e714cca8f9494",
+      "sha256": "92f39247663c26f838135eb93028a24198a170b27d6ee0e0b0e1af8b72e8efa6",
+      "normalization": "Cold revision2: encoded-diff provenance reference and explicit owner-bounded shared-host allocation HOLD; no source/runtime/test changes."
+    },
+    {
       "path": "deploy/dl-flywheel/docs/prepared-admission-and-transfer.md",
       "origin": "Codex heartbeat20261009-0616 scoped source update from PR277@73bd771d907e9007024b2783d93a1174c205f7ec",
       "origin_sha256": "29a1a84e83e9fd8af116e09a2528ac260d827d5d7c354479b8fc83a85ac3f250",
@@ -200,6 +221,13 @@
       "origin": "continuous follow-up authored packaging",
       "origin_sha256": "469192988dfded1e7d74f856d24b4aa0eef4c571bd67bf36b963daa304fd698f",
       "sha256": "469192988dfded1e7d74f856d24b4aa0eef4c571bd67bf36b963daa304fd698f"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/rl-spec-reconciliation.md",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/rl-spec-audit/reconciliation.md",
+      "origin_sha256": "c66017507f61095f8f1efa6aec681683c7ca7cfac6de03cf492a3b3185138c0e",
+      "sha256": "c66017507f61095f8f1efa6aec681683c7ca7cfac6de03cf492a3b3185138c0e",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
     },
     {
       "path": "deploy/dl-flywheel/docs/technical-review.md",
@@ -1467,6 +1495,132 @@
       "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288"
     },
     {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/manifest.template.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/manifest.template.json",
+      "origin_sha256": "46d316f5b5719b68d3a2780507aa3b14bf30ffaf04838646658a78aa71dad0b2",
+      "sha256": "46d316f5b5719b68d3a2780507aa3b14bf30ffaf04838646658a78aa71dad0b2",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/native_build.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/native_build.py",
+      "origin_sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e",
+      "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
+      "origin_sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2",
+      "sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/ACTUAL_POOL12_INPUT_REVIEW.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/ACTUAL_POOL12_INPUT_REVIEW.json",
+      "origin_sha256": "97d65a39a180191877b48cb3ea9aac92df55c935e74ac983f25816482c63d0bc",
+      "sha256": "97d65a39a180191877b48cb3ea9aac92df55c935e74ac983f25816482c63d0bc",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/ACTUAL_POOL8_INPUT_REVIEW.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "5a592ba3a35cd9dd12eb7c3e3b5fa738e62b53f2177f9c0b3d7d49dff99d1f2f",
+      "sha256": "5a592ba3a35cd9dd12eb7c3e3b5fa738e62b53f2177f9c0b3d7d49dff99d1f2f",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/INDEPENDENT_CARDINALITY_ADDENDUM.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_CARDINALITY_ADDENDUM.json",
+      "origin_sha256": "c5fa80482f2077c0a3110902667e8f772e6a51a2efdd8db50da91e02a122b25a",
+      "sha256": "c5fa80482f2077c0a3110902667e8f772e6a51a2efdd8db50da91e02a122b25a",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/INDEPENDENT_EXACT_CPU_ADDENDUM.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_EXACT_CPU_ADDENDUM.json",
+      "origin_sha256": "ecc5e7da97e6b90d6b76ca629663f63789451de0ea2dbb9cb81696f1fdb59888",
+      "sha256": "ecc5e7da97e6b90d6b76ca629663f63789451de0ea2dbb9cb81696f1fdb59888",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/INDEPENDENT_REVIEW.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_REVIEW.json",
+      "origin_sha256": "f19933a2a34ad6be35e32ccc5309f93b0c1119e7a93dbd1ed68e370196383fac",
+      "sha256": "f19933a2a34ad6be35e32ccc5309f93b0c1119e7a93dbd1ed68e370196383fac",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/INDEPENDENT_SMALL_ALLOCATION_ADDENDUM.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_SMALL_ALLOCATION_ADDENDUM.json",
+      "origin_sha256": "996fffe6d241a3ea40ed5cf91908e187bc3c59633e57bc1d609caa889e9a0f7c",
+      "sha256": "996fffe6d241a3ea40ed5cf91908e187bc3c59633e57bc1d609caa889e9a0f7c",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/PACKET.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/PACKET.json",
+      "origin_sha256": "c43543b8b940e21b808b283a360f8c7664bd4f8227b2988dfa4fb229a802e4e3",
+      "sha256": "c43543b8b940e21b808b283a360f8c7664bd4f8227b2988dfa4fb229a802e4e3",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/VALIDATION.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/VALIDATION.json",
+      "origin_sha256": "047ce8e2fc0fead999671d2c67a50dedd153ac1c7035d09d7aaae864e74c4a91",
+      "sha256": "047ce8e2fc0fead999671d2c67a50dedd153ac1c7035d09d7aaae864e74c4a91",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/operations-pool-diff.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/pool-rl-source-integration/tree/deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/operations-pool.diff",
+      "origin_sha256": "d15bed1adb8c67b273a16f84a789f30414e67c8c7d42433b62be2d12e91372ea",
+      "sha256": "db45f42411f6f06a20e4aa1144383656b345157605b460f37dc1412fb3665fd9",
+      "normalization": "Base64 encoding of exact original unified diff; decoded SHA256 and byte count are embedded and verified. Original artifact and r1 preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/origin-README.md",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/README.md",
+      "origin_sha256": "0d4d35edd11f8f9e064d5d025aebe74f033ce65b89f42cd4f649a009e5414d93",
+      "sha256": "0d4d35edd11f8f9e064d5d025aebe74f033ce65b89f42cd4f649a009e5414d93",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/packaged-offline-receipt.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "32c99c6691371c43d333b3c4c259e1c4c8447891cba9b4fe7a02eb4db8880e37",
+      "sha256": "32c99c6691371c43d333b3c4c259e1c4c8447891cba9b4fe7a02eb4db8880e37",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/reviewed-pool12-input.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/pool12-input.json",
+      "origin_sha256": "66eb0169cc49a233481ebf0bbec1dd2f002c0a801c90449725da40532997c565",
+      "sha256": "66eb0169cc49a233481ebf0bbec1dd2f002c0a801c90449725da40532997c565",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/provenance/reviewed-pool8-input.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "e4c62d930a09418dd64c141b68c030e6faeba77e0625326973dbebba5f0b0e6c",
+      "sha256": "e4c62d930a09418dd64c141b68c030e6faeba77e0625326973dbebba5f0b0e6c",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/test-identities.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "26e1b981004dc65712329ea3523fcbbbcacfe5321a098b38ba2dddbc29e48e6a",
+      "sha256": "26e1b981004dc65712329ea3523fcbbbcacfe5321a098b38ba2dddbc29e48e6a",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/test_pool.py",
+      "origin_sha256": "a5cd50ae1eaba1ca917033dd1bbfcda2b7a8e169d12f8dda0eb4658aa326bcdf",
+      "sha256": "a5cd50ae1eaba1ca917033dd1bbfcda2b7a8e169d12f8dda0eb4658aa326bcdf",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/historical_custody.py",
       "origin": "work/heartbeat-20261009-0616/native-v4/historical_custody.py",
       "origin_sha256": "fecb4075b06e60fb118c765282ea08e6a03dd1343934318443eebadf431eac7c",
@@ -2367,6 +2521,48 @@
       "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
     },
     {
+      "path": "deploy/dl-flywheel/pipelines/rl_spec_audit/audit_math.py",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "ed3cf280dcf0565970266f90646b47aa1f25678a7675f5498cef38a86689eaf0",
+      "sha256": "ed3cf280dcf0565970266f90646b47aa1f25678a7675f5498cef38a86689eaf0",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rl_spec_audit/provenance/math-audit.json",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/rl-spec-audit/math-audit.json",
+      "origin_sha256": "33a603b88cc6d4becf12b6625c85df88306465d573a764b7d8080f67aa1c8f13",
+      "sha256": "33a603b88cc6d4becf12b6625c85df88306465d573a764b7d8080f67aa1c8f13",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rl_spec_audit/provenance/origin-audit_math.py.txt",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/rl-spec-audit/audit_math.py",
+      "origin_sha256": "330c256117a0411eba0aa97dfa9284f267cd2ae950224ee27b4b861d7b96d6d0",
+      "sha256": "330c256117a0411eba0aa97dfa9284f267cd2ae950224ee27b4b861d7b96d6d0",
+      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rl_spec_audit/provenance/packaged-offline-receipt.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "1efffc4eb27fa4620ed292530a8746b8a1a122d01246627d8a477820c9ed5c34",
+      "sha256": "1efffc4eb27fa4620ed292530a8746b8a1a122d01246627d8a477820c9ed5c34",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rl_spec_audit/test-identities.json",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "14d426704724ef0981c18b051f33e38750a7483e9b1acf86c2a061b660cbb08e",
+      "sha256": "14d426704724ef0981c18b051f33e38750a7483e9b1acf86c2a061b660cbb08e",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rl_spec_audit/test_audit_math.py",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92",
+      "sha256": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
       "path": "deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py",
       "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
       "origin_sha256": "bb10f8bbd5aaa59fce64b2455936a2e14acd6041b899fe6a646f4e63675f54b6",
@@ -2519,6 +2715,13 @@
       "normalization": "Exact eight historical modules/74identities; new variant25 run only in isolated shard."
     },
     {
+      "path": "deploy/dl-flywheel/run_native_pool_offline.py",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "1bc20cda01ebeacff9ca96f395238dc39aa2d5b89310e05966f76b82c38a08cb",
+      "sha256": "1bc20cda01ebeacff9ca96f395238dc39aa2d5b89310e05966f76b82c38a08cb",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
       "path": "deploy/dl-flywheel/run_native_v5_offline.py",
       "origin": "Native cold revision2 integration on PR277@4bac6573f96fb7091d269f0ed9e16bed71a73728",
       "origin_sha256": "f4d09fc60c19876a2a2806f7570b0847db1f6cb124e47e8a758660fab82b7501",
@@ -2534,10 +2737,17 @@
     },
     {
       "path": "deploy/dl-flywheel/run_offline.py",
-      "origin": "Native cold revision2 integration on PR277@4bac6573f96fb7091d269f0ed9e16bed71a73728",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
       "origin_sha256": "9f87e2bfc1239f874c5cc0c2e6ab299a7489e5ab83ecfe21735c9eb4abe304ef",
-      "sha256": "9f87e2bfc1239f874c5cc0c2e6ab299a7489e5ab83ecfe21735c9eb4abe304ef",
-      "normalization": "Exact qualified revision2 source bytes where copied; additive nine fixture identities, prior578 identities/mappings preserved. Only affected22 checks executed; no full587 execution claim."
+      "sha256": "d251e2c9922714b07d02327f6fc86d43ad74a1f21caf4c8d3bfbf3ccbe9696be",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
+      "path": "deploy/dl-flywheel/run_rl_math_offline.py",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "48c3cfc7d39fed3b742f46f051bf44976c3dc42c21c3312f9e306ac27ee193d8",
+      "sha256": "48c3cfc7d39fed3b742f46f051bf44976c3dc42c21c3312f9e306ac27ee193d8",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
     },
     {
       "path": "deploy/dl-flywheel/run_successor_offline.py",
@@ -2755,11 +2965,18 @@
       "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring."
     },
     {
+      "path": "deploy/dl-flywheel/verify_source_inventory.py",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
+      "origin_sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2",
+      "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved."
+    },
+    {
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "origin": "Native cold revision2 integration on PR277@4bac6573f96fb7091d269f0ed9e16bed71a73728",
+      "origin": "Local reviewed pool/RL integration on PR277@61e712cfc1ee8341776161eb6886ad73d3c094b3",
       "origin_sha256": "7bbddf4537e4f408aa212604be674138cadf3331c5b16eff24e3aaeacb29a6b8",
-      "sha256": "7bbddf4537e4f408aa212604be674138cadf3331c5b16eff24e3aaeacb29a6b8",
-      "normalization": "Exact qualified revision2 source bytes where copied; additive nine fixture identities, prior578 identities/mappings preserved. Only affected22 checks executed; no full587 execution claim."
+      "sha256": "fdbb882785df02b594436c05c2e08bfe088ea7b712f9ddc9c46bb91a67cad72c",
+      "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved. Additional verified main586c4ae7 metadata preserved."
     }
   ]
 }

@@ -1,0 +1,94 @@
+{
+  "capture_time_unix": 1791557790.2864525,
+  "captured_parent_counts": {
+    "claimed": 257,
+    "failure_custody_verified": 2,
+    "known_rejections": 2,
+    "published": 255,
+    "unknown": 0
+  },
+  "declared_added_workers": 12,
+  "final_independent_source_review": {
+    "bytes": 4302,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/INDEPENDENT_EXACT_CPU_ADDENDUM.json",
+    "sha256": "ecc5e7da97e6b90d6b76ca629663f63789451de0ea2dbb9cb81696f1fdb59888"
+  },
+  "input": {
+    "bytes": 13031,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/pool12-input.json",
+    "sha256": "66eb0169cc49a233481ebf0bbec1dd2f002c0a801c90449725da40532997c565"
+  },
+  "limitations": [
+    "Local read-only comparison only; no remote actions or source edits.",
+    "Captured resources are historical; frozen launcher must recheck fresh physical cgroups, registry, source files, CPU/disk/memory and Python before freeze/preflight/dispatch.",
+    "No new clock, scorer launch, S3 operation or registry mutation was performed by this review.",
+    "No full historical test rerun; final source review chain records the actual focused test runs."
+  ],
+  "owned_allocations": [
+    {
+      "argv_matches_captured_physical": true,
+      "cpu_quota_percent": 800,
+      "kind": "learner",
+      "memory_cap_bytes": 8589934592,
+      "unit": "jopedime-neural-continuous-recovery5-20261009.service"
+    },
+    {
+      "argv_matches_captured_physical": true,
+      "cpu_quota_percent": 400,
+      "kind": "other_owned",
+      "memory_cap_bytes": 2147483648,
+      "unit": "jopedime-growth-pipeline-v2-20261009.service"
+    },
+    {
+      "argv_matches_captured_physical": true,
+      "cpu_quota_percent": 25,
+      "kind": "other_owned",
+      "memory_cap_bytes": 268435456,
+      "unit": "jopedime-hpc-archive-20261009-v1.service"
+    },
+    {
+      "argv_matches_captured_physical": true,
+      "cpu_quota_percent": 25,
+      "kind": "other_owned",
+      "memory_cap_bytes": 268435456,
+      "unit": "jopedime-hpc-trace-20261009-v1.service"
+    },
+    {
+      "argv_matches_captured_physical": true,
+      "cpu_quota_percent": 25,
+      "kind": "other_owned",
+      "memory_cap_bytes": 134217728,
+      "unit": "jopedime-paper-publish-v42.service"
+    }
+  ],
+  "physical_input_capture": {
+    "bytes": 24702,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-inputs/physical-inputs.json",
+    "sha256": "ca8332c4c4c0a2f52d2b99f0698fcb93a6951a679cb2b016572c9de5fb0a8064"
+  },
+  "resource_arithmetic": {
+    "added_pool_bytes": 12884901888,
+    "captured_available_bytes": 51919990784,
+    "captured_available_gib": 48.3542594909668,
+    "captured_declared_cpu_percent_plus_pool": 2475,
+    "foreign_reserve_bytes": 25769803776,
+    "owned_reserved_bytes": 11408506880,
+    "parent_current_reserved_bytes": 0,
+    "required_available_bytes": 50063212544,
+    "required_available_gib": 46.625
+  },
+  "reviewed_at_utc": "2026-10-09T15:02:39.229414+00:00",
+  "schema": "jope.native-pool-actual-input-review/v1",
+  "source_packet": {
+    "bytes": 2056,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/PACKET.json",
+    "sha256": "c43543b8b940e21b808b283a360f8c7664bd4f8227b2988dfa4fb229a802e4e3"
+  },
+  "source_roster": {
+    "same_prepared_scope": true,
+    "same_python": true,
+    "same_registry_path_inode_config": true,
+    "unchanged_parent_sources": 34
+  },
+  "state": "bounded_no_findings"
+}
