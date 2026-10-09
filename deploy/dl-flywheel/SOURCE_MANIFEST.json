@@ -1,11 +1,11 @@
 {
   "files": [
     {
-      "normalization": "Add one coverage family; all611 prior rows, lanes/dispositions and other metadata retained.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
-      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
+      "normalization": "Additive classifications only; every previous item/lane/disposition and metadata preserved.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
+      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
       "path": "deploy/ci/coverage.json",
-      "sha256": "3fd1cf4025cfab6a497a48aa697488305c06d712dbaa534b5fef3b5fa51127f9"
+      "sha256": "e38da7e9a9801e0c1ee8025561e99cd1ce8b17249b197e61ada4fa6b2a40b855"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -15,11 +15,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Add only seven production/helper research classifications; all225 previous classification rows remain byte-value identical.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
-      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
+      "normalization": "Additive classifications only; every previous item/lane/disposition and metadata preserved.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
+      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "5af2c671528f2e5a9a87c548d16f55fce74f1260b17a393c6eb2a78ca5134d00"
+      "sha256": "6c412ea016d53acfc03acc8da16694eb99236462d1984539d4ba06116aa2412b"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -2390,6 +2390,216 @@
       "sha256": "e61f36cc773d5f30a4506fc2360914fac8f0234ca1b29a1e82d3b323fa9fb0c2"
     },
     {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+      "origin_sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
+      "sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+      "origin_sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
+      "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py",
+      "origin_sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py",
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+      "origin_sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+      "origin_sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "origin_sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py",
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    },
+    {
+      "normalization": "Additive integration clarification; frozen author bytes remain exact.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
+      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/INTEGRATION.md",
+      "sha256": "de9e18220107473f67b79ffcaeb0be97442f0856fd3af2fd793f7168d99198e2"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json",
+      "origin_sha256": "71be856675ac48cd80924e46c3aaba67066e1705219be3a7118f66cc0d9cfed2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/draft-source-review.json",
+      "sha256": "71be856675ac48cd80924e46c3aaba67066e1705219be3a7118f66cc0d9cfed2"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json",
+      "origin_sha256": "f64d7e0c075f36d90f1f976dcd0789c237ef7beb9b868463856c6e86904ee2db",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-source-review.json",
+      "sha256": "f64d7e0c075f36d90f1f976dcd0789c237ef7beb9b868463856c6e86904ee2db"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json",
+      "origin_sha256": "86c68a448dafe4595ae96447bd1bb1e27ec247e35cd670cadfb241ebccec3cc9",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/independent-v2-source-review.json",
+      "sha256": "86c68a448dafe4595ae96447bd1bb1e27ec247e35cd670cadfb241ebccec3cc9"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json",
+      "origin_sha256": "7ab3565fa8335a95b8dfe4d1b76f4a6a72c705c9ef181166f36f88f05a84ee24",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-addendum.json",
+      "sha256": "7ab3565fa8335a95b8dfe4d1b76f4a6a72c705c9ef181166f36f88f05a84ee24"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json",
+      "origin_sha256": "fd98df93c8002d907886d030fa9bb6ba2d8078c7ea628e8cdf8e7cbc0d2d4a36",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt1.json",
+      "sha256": "fd98df93c8002d907886d030fa9bb6ba2d8078c7ea628e8cdf8e7cbc0d2d4a36"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json",
+      "origin_sha256": "91488f3e5a9ffd775b5bd2b654df46a39b4f6e287e257974f7dd29dd41c4c18c",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-attempt2.json",
+      "sha256": "91488f3e5a9ffd775b5bd2b654df46a39b4f6e287e257974f7dd29dd41c4c18c"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json",
+      "origin_sha256": "a35ca4b966134300ed67a6b6507b66de28f63417c7383dc60c3d4e0475cfc8d2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-summary.json",
+      "sha256": "a35ca4b966134300ed67a6b6507b66de28f63417c7383dc60c3d4e0475cfc8d2"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json",
+      "origin_sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-final.json",
+      "sha256": "455447de7f2bc38f56e69d1bf6d842ed45f8e1b1dbe6c65ede2683dcd669b735"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json",
+      "origin_sha256": "2ae134ecd2ff098183f7e9f4d0560c72f1267f8524245edf72a9e0777a4ec051",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/qualification-v2-summary.json",
+      "sha256": "2ae134ecd2ff098183f7e9f4d0560c72f1267f8524245edf72a9e0777a4ec051"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json",
+      "origin_sha256": "d4251be6ded0646bbd53b99cb19bcc05a17b6cf04f5202d34a06374a2e5488d9",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/revision2-delta.json",
+      "sha256": "d4251be6ded0646bbd53b99cb19bcc05a17b6cf04f5202d34a06374a2e5488d9"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json",
+      "origin_sha256": "0e8e6f57377401881dd31aa7dae6f12073bdaf091fd3f1eba8c78da479e306c2",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/schema-review.json",
+      "sha256": "0e8e6f57377401881dd31aa7dae6f12073bdaf091fd3f1eba8c78da479e306c2"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json",
+      "origin_sha256": "b1a70a87339c962074b3236fe8102902c4ee011be0eb2b1c38b53e1f308c3593",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/source-origins.json",
+      "sha256": "b1a70a87339c962074b3236fe8102902c4ee011be0eb2b1c38b53e1f308c3593"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+      "origin_sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-SOURCE_PACKET.json",
+      "sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+      "origin_sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v1-hold.json",
+      "sha256": "acc2d4c06c337254ff71c3e12ed5299768d8af333c7c9c45aa788e1c1f17ff48"
+    },
+    {
+      "normalization": "Corrected author packet; historical v1 remains held and unchanged.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/SOURCE_PACKET.json",
+      "origin_sha256": "343b3e555f11e0f48d5a2f44adac3d45e710847543135c2399c353944f73d436",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v2-SOURCE_PACKET.json",
+      "sha256": "343b3e555f11e0f48d5a2f44adac3d45e710847543135c2399c353944f73d436"
+    },
+    {
+      "normalization": "Independent read-only source review, not native GitHub approval or runtime qualification.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/independent-source-review.json",
+      "origin_sha256": "9d82a432b411949212fc66b2c9a36e736eb5bba9902eaaa2428f40cdb5ec6345",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/provenance/v2-root-independent-review.json",
+      "sha256": "9d82a432b411949212fc66b2c9a36e736eb5bba9902eaaa2428f40cdb5ec6345"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py",
+      "origin_sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py",
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py",
+      "origin_sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py",
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py",
+      "origin_sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py",
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py",
+      "origin_sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py",
+      "origin_sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py",
+      "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py",
+      "origin_sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py",
+      "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3"
+    },
+    {
+      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
+      "origin_sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+    },
+    {
       "origin": "work/flywheel-20261008/proposals/growth-pipeline-v2/growth_pipeline.py",
       "origin_sha256": "c2860c98163f55df6b5c018a780c89b58201cc4f9d718f7288354e5c85d40bf5",
       "path": "deploy/dl-flywheel/pipelines/growth/growth_pipeline.py",
@@ -3805,11 +4015,11 @@
       "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6"
     },
     {
-      "normalization": "Additive dispatch of 34 new trace-v3 fixtures only after unchanged prior687 runner prefix; original suffix preserved. 721 wired identities is not a full-suite execution claim.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/baseline/deploy/dl-flywheel/run_offline.py",
-      "origin_sha256": "07f471a7f741c0b50fc5b6b6c06b6875a8ba0f848f7c289dfe41d479dac8df94",
+      "normalization": "Append corrected 28-fixture reference-export suite after unchanged prior721; original prefix/suffix retained. Full suite not rerun.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/tree/deploy/dl-flywheel/run_offline.py",
+      "origin_sha256": "bd6d58004a8b7401ea7de787e9035657d1e539a941d34d80d9d99b8f24bb88ea",
       "path": "deploy/dl-flywheel/run_offline.py",
-      "sha256": "bd6d58004a8b7401ea7de787e9035657d1e539a941d34d80d9d99b8f24bb88ea"
+      "sha256": "89917ac6d15ee6fd9a12a631f7b16c8437f2f0128c28dfba3a76893aa08454e9"
     },
     {
       "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved.",
@@ -4048,11 +4258,11 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Add one research test family only; all502 prior rows and non-items metadata retained.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-v3-integration/assemble_local.py",
-      "origin_sha256": "ed534b916dfb2b6f3808c88e43db749bbdb7c4e0a437b486d33a3ba92659c2d8",
+      "normalization": "Additive classifications only; every previous item/lane/disposition and metadata preserved.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/target-export-integration/assemble_local.py",
+      "origin_sha256": "6778fd31c8502894cffe710231b43cbf1e0e4b2ccc16861d343d78a6ff797298",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "243f732f23e50dd9e59352a793c6d73d095df296f1177445ce1babd453a215e5"
+      "sha256": "7282624f1c3706990098ce45434a63f605ec4c1a01596e3222f71613012f6701"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

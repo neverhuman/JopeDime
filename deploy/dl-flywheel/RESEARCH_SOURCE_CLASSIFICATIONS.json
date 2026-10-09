@@ -1547,6 +1547,78 @@
       "origin": "FreshGP source import; historical and operational version scopes are isolated. Frozen math/runtime bytes preserved.",
       "sha256": "bb18a7b21fd5c58e833b1d829532b579747b47819d77186986167d23b4227ea5"
     },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/__init__.py": {
+      "bytes": 77,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py": {
+      "bytes": 4948,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py": {
+      "bytes": 10540,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/export_verified.py": {
+      "bytes": 24595,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/run_offline.py": {
+      "bytes": 11024,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/__init__.py": {
+      "bytes": 55,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/fixture_callbacks.py": {
+      "bytes": 2810,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/reference_outbox.py": {
+      "bytes": 13769,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py": {
+      "bytes": 905,
+      "classification": {
+        "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+        "role": "research"
+      },
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+    },
     "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/native_build.py": {
       "bytes": 4459,
       "classification": {

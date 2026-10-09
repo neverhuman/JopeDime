@@ -121,6 +121,15 @@ def main():
   receipt['trace_v3_suite']=trace_v3;receipt['combined_collected']+=trace_v3['collected'];receipt['combined_executed']+=trace_v3['executed'];receipt['passed']=success
  if success and(receipt['combined_collected']!=721 or receipt['combined_executed']!=721):
   raise ValueError('All721 wired offline identities must complete')
+ if success:
+  if receipt['combined_collected']!=721 or receipt['combined_executed']!=721:
+   raise ValueError('Prior721 offline identities must remain independently complete')
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'pipelines/generated_target_admission_v1/run_offline.py'),'--receipt',str((a.output/'generated-targets-receipt.json').resolve())],check=False)
+  generated_targets=json.loads((a.output/'generated-targets-receipt.json').read_bytes())
+  success=child.returncode==0 and generated_targets['passed']is True and generated_targets['tests_run']==28 and len(generated_targets['fixture_ids'])==28 and len(set(generated_targets['fixture_ids']))==28
+  receipt['generated_targets_suite']=generated_targets;receipt['combined_collected']+=len(generated_targets['fixture_ids']);receipt['combined_executed']+=generated_targets['tests_run'];receipt['passed']=success
+ if success and(receipt['combined_collected']!=749 or receipt['combined_executed']!=749):
+  raise ValueError('All749 wired offline identities must complete')
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

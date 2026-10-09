@@ -1,0 +1,12 @@
+{
+  "at_utc": "2026-10-09T18:12:50.231533+00:00",
+  "correction_scope": "New sibling generated-target-export-v2 only. The original package, attempts and review are preserved unchanged. Source-only reference export; no production callback or live use qualification.",
+  "findings": [
+    "Kumo roster allowed an arbitrary valid SHA instead of the campaign exact approved weight.",
+    "Offline runner did not reject expected failures or require the exact frozen fixture roster and source/import pin closure."
+  ],
+  "held_source_packet_sha256": "0851c9199162aa7c9b42c1f761d424aadabafbd5aaad8dc47e535fca9d704412",
+  "schema": "jope.generated-target-export-v1-hold/v1",
+  "state": "held_do_not_integrate_or_use",
+  "v1_all_19_packaged_file_pins_verified_unchanged": true
+}

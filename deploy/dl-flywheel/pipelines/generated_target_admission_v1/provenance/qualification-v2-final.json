@@ -1,0 +1,110 @@
+{
+  "admission_commits": 0,
+  "at_utc": "2026-10-09T18:17:13.541654+00:00",
+  "errors": [],
+  "expected_failures": [],
+  "failures": [],
+  "fixture_ids": [
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_artifact_budget_exhaustion_and_deadline_refuse_partial_manifest",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_bare_verifier_success_and_wrong_identity_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_callback_source_and_dependency_drift",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_canonical_alias_dedup_after_selection_cap",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_complete_pending_refusal_validation_census",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_conflicting_alias_ref_refused_even_after_cap",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_duplicate_weight_in_predecessor_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_loaded_callback_code_must_match_current_pinned_file",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_missing_version_and_missing_object_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_new_unique_limit_retains_complete_pending_denominator",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_no_sql_network_subprocess_or_source_mutation_during_export",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_normalizer_roster_drift_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_old_ref_retained_and_existing_alias_not_double_weighted",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_old_reference_removal_reordering_and_replacement_rejected",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_parity_rejection_no_target_manifest",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_event_and_materialized_ack_tampering",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_no_mutation_and_exact_head",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_sidecars_hash_config_and_row_bounds",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_stale_role_proof_wrong_objective_and_drift_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_stale_version_and_corrupt_bytes_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_success_all_seven_and_no_numerical_or_admission_claim",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_valid_but_unapproved_kumo_weight_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_validation_alias_cannot_claim_training_role",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_wrong_objective_and_normalizer_refused",
+    "generated_target_admission_v1.tests.test_export.ExportTests.test_wrong_wrapper_context_program_and_protocol_refused",
+    "generated_target_admission_v1.tests.test_runner.RunnerTests.test_expected_and_unexpected_failures_skips_and_counts_are_not_passes",
+    "generated_target_admission_v1.tests.test_runner.RunnerTests.test_missing_extra_duplicate_replaced_or_reordered_fixtures_refused",
+    "generated_target_admission_v1.tests.test_runner.RunnerTests.test_source_pin_and_import_origin_tampering_refused"
+  ],
+  "gp_executions": 0,
+  "imports": {
+    "generated_target_admission_v1": "__init__.py",
+    "generated_target_admission_v1.common": "common.py",
+    "generated_target_admission_v1.cutoff": "cutoff.py",
+    "generated_target_admission_v1.export_verified": "export_verified.py",
+    "generated_target_admission_v1.run_offline": "run_offline.py",
+    "generated_target_admission_v1.tests": "tests/__init__.py",
+    "generated_target_admission_v1.tests.fixture_callbacks": "tests/fixture_callbacks.py",
+    "generated_target_admission_v1.tests.reference_outbox": "tests/reference_outbox.py",
+    "generated_target_admission_v1.tests.test_export": "tests/test_export.py",
+    "generated_target_admission_v1.tests.test_runner": "tests/test_runner.py",
+    "generated_target_admission_v1.transition": "transition.py"
+  },
+  "live_database_access": 0,
+  "passed": true,
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "remote_actions": 0,
+  "schema": "jope.generated-target-export-offline-qualification/v2",
+  "scope": "Corrected source-only exporter family; synthetic callbacks. No production callback/native evaluator qualification.",
+  "skipped": [],
+  "source_pin_manifest_sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c",
+  "source_pins": {
+    "__init__.py": {
+      "bytes": 77,
+      "sha256": "c9a1a81bab49fc6e4777d1305ba4de1910c2c82e4b09c2dc854fff57b0ccd006"
+    },
+    "common.py": {
+      "bytes": 4948,
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    "cutoff.py": {
+      "bytes": 10540,
+      "sha256": "bbc939e79b5a37b2afd0395a470771cab6dbe826dd4441f2a62a5821f7556490"
+    },
+    "export_verified.py": {
+      "bytes": 24595,
+      "sha256": "a5d4ef8a1c62cc025e47569604d5153c69dd16d70309663df078f7cceabf9eda"
+    },
+    "run_offline.py": {
+      "bytes": 11024,
+      "sha256": "f7db3dd2ea525f8a5d0fed88723813ed12240a0cac3bbf22fefb464ff72c166a"
+    },
+    "tests/__init__.py": {
+      "bytes": 55,
+      "sha256": "4e93b58572ba6595186e5855a392e2a95bcf6767bfc1f052bb54478ab09e314f"
+    },
+    "tests/fixture_callbacks.py": {
+      "bytes": 2810,
+      "sha256": "14df7d12951bd2db31e48ce3c05ffa2c7e68ffbc3e39ed9c8affd491d574bf66"
+    },
+    "tests/reference_outbox.py": {
+      "bytes": 13769,
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    "tests/test_export.py": {
+      "bytes": 23779,
+      "sha256": "85cd627b4406d1e69394499fb76737bfe50e0d72fee9be15d636b2b10f699a13"
+    },
+    "tests/test_runner.py": {
+      "bytes": 2907,
+      "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3"
+    },
+    "transition.py": {
+      "bytes": 905,
+      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+    }
+  },
+  "source_unchanged": true,
+  "test_output": "test_artifact_budget_exhaustion_and_deadline_refuse_partial_manifest (generated_target_admission_v1.tests.test_export.ExportTests.test_artifact_budget_exhaustion_and_deadline_refuse_partial_manifest) ... ok\ntest_bare_verifier_success_and_wrong_identity_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_bare_verifier_success_and_wrong_identity_refused) ... ok\ntest_callback_source_and_dependency_drift (generated_target_admission_v1.tests.test_export.ExportTests.test_callback_source_and_dependency_drift) ... ok\ntest_canonical_alias_dedup_after_selection_cap (generated_target_admission_v1.tests.test_export.ExportTests.test_canonical_alias_dedup_after_selection_cap) ... ok\ntest_complete_pending_refusal_validation_census (generated_target_admission_v1.tests.test_export.ExportTests.test_complete_pending_refusal_validation_census) ... ok\ntest_conflicting_alias_ref_refused_even_after_cap (generated_target_admission_v1.tests.test_export.ExportTests.test_conflicting_alias_ref_refused_even_after_cap) ... ok\ntest_duplicate_weight_in_predecessor_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_duplicate_weight_in_predecessor_refused) ... ok\ntest_loaded_callback_code_must_match_current_pinned_file (generated_target_admission_v1.tests.test_export.ExportTests.test_loaded_callback_code_must_match_current_pinned_file) ... ok\ntest_missing_version_and_missing_object_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_missing_version_and_missing_object_refused) ... ok\ntest_new_unique_limit_retains_complete_pending_denominator (generated_target_admission_v1.tests.test_export.ExportTests.test_new_unique_limit_retains_complete_pending_denominator) ... ok\ntest_no_sql_network_subprocess_or_source_mutation_during_export (generated_target_admission_v1.tests.test_export.ExportTests.test_no_sql_network_subprocess_or_source_mutation_during_export) ... ok\ntest_normalizer_roster_drift_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_normalizer_roster_drift_refused) ... ok\ntest_old_ref_retained_and_existing_alias_not_double_weighted (generated_target_admission_v1.tests.test_export.ExportTests.test_old_ref_retained_and_existing_alias_not_double_weighted) ... ok\ntest_old_reference_removal_reordering_and_replacement_rejected (generated_target_admission_v1.tests.test_export.ExportTests.test_old_reference_removal_reordering_and_replacement_rejected) ... ok\ntest_parity_rejection_no_target_manifest (generated_target_admission_v1.tests.test_export.ExportTests.test_parity_rejection_no_target_manifest) ... ok\ntest_snapshot_event_and_materialized_ack_tampering (generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_event_and_materialized_ack_tampering) ... ok\ntest_snapshot_no_mutation_and_exact_head (generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_no_mutation_and_exact_head) ... ok\ntest_snapshot_sidecars_hash_config_and_row_bounds (generated_target_admission_v1.tests.test_export.ExportTests.test_snapshot_sidecars_hash_config_and_row_bounds) ... ok\ntest_stale_role_proof_wrong_objective_and_drift_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_stale_role_proof_wrong_objective_and_drift_refused) ... ok\ntest_stale_version_and_corrupt_bytes_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_stale_version_and_corrupt_bytes_refused) ... ok\ntest_success_all_seven_and_no_numerical_or_admission_claim (generated_target_admission_v1.tests.test_export.ExportTests.test_success_all_seven_and_no_numerical_or_admission_claim) ... ok\ntest_valid_but_unapproved_kumo_weight_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_valid_but_unapproved_kumo_weight_refused) ... ok\ntest_validation_alias_cannot_claim_training_role (generated_target_admission_v1.tests.test_export.ExportTests.test_validation_alias_cannot_claim_training_role) ... ok\ntest_wrong_objective_and_normalizer_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_wrong_objective_and_normalizer_refused) ... ok\ntest_wrong_wrapper_context_program_and_protocol_refused (generated_target_admission_v1.tests.test_export.ExportTests.test_wrong_wrapper_context_program_and_protocol_refused) ... ok\ntest_expected_and_unexpected_failures_skips_and_counts_are_not_passes (generated_target_admission_v1.tests.test_runner.RunnerTests.test_expected_and_unexpected_failures_skips_and_counts_are_not_passes) ... ok\ntest_missing_extra_duplicate_replaced_or_reordered_fixtures_refused (generated_target_admission_v1.tests.test_runner.RunnerTests.test_missing_extra_duplicate_replaced_or_reordered_fixtures_refused) ... ok\ntest_source_pin_and_import_origin_tampering_refused (generated_target_admission_v1.tests.test_runner.RunnerTests.test_source_pin_and_import_origin_tampering_refused) ... ok\n\n----------------------------------------------------------------------\nRan 28 tests in 0.350s\n\nOK\n",
+  "tests_run": 28,
+  "unexpected_successes": [],
+  "wall_seconds": 0.438979665748775
+}

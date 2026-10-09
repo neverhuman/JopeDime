@@ -1392,6 +1392,26 @@
       ],
       "scope": "25 isolated offline CPU fixtures via run_fresh_gp_offline.py, part of49 additive to prior617. No GP/native fitting, network, GPU, S3 or live queue operations."
     },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified."
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified."
+    },
     "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py": {
       "discovery": {
         "kind": "python-family"

@@ -514,6 +514,14 @@
       "reason": "Frozen fresh GP v1/revision2 research orchestration, exact input/role/history/ownership custody and native execution guard. Source import is not live source qualification, GP/S3 execution, training admission or optimizer evidence. Test identities/counts and fixture-only clock are pinned by the isolated runner.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_export.py": {
+      "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py": {
+      "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py": {
       "reason": "21 isolated native-pool orchestration or finite-action math fixtures. Additive to prior587; mathematical examples and simulated dispatch are not deployed actor learning, live resource or native scoring qualification.",
       "role": "research"
