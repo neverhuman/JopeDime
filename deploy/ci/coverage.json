@@ -9367,6 +9367,36 @@
       ],
       "dispositions": [],
       "scope": "37 isolated CPU fresh32 encoder fixtures via run_fresh32_offline.py, invoked additively by run_offline.py after every prior455 identity. Source/runtime and qualification preservation, exact-version custody, cross-host ownership/held-failure exclusion, fixed scope/deadline, atomic progress rename refusal, source-row CAS and safe copy-script execution. No live GP, S3, GPU, optimizer or production DB activity."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_successor.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "26 isolated native-v5 CPU fixtures via run_native_v5_offline.py, invoked only after all prior492 identities. Read-only physical SQLite snapshots, global canonical no-replay custody, exact census and source identity, short live claim CAS, physical legacy closure and bounded create-only operational planning. No real GP, S3, GPU, optimizer, systemd or production queue actions."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_census.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "10 isolated native-v5 CPU fixtures via run_native_v5_offline.py, invoked only after all prior492 identities. Read-only physical SQLite snapshots, global canonical no-replay custody, exact census and source identity, short live claim CAS, physical legacy closure and bounded create-only operational planning. No real GP, S3, GPU, optimizer, systemd or production queue actions."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "12 isolated native-v5 CPU fixtures via run_native_v5_offline.py, invoked only after all prior492 identities. Read-only physical SQLite snapshots, global canonical no-replay custody, exact census and source identity, short live claim CAS, physical legacy closure and bounded create-only operational planning. No real GP, S3, GPU, optimizer, systemd or production queue actions."
     }
   }
 }

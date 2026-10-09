@@ -2972,6 +2972,162 @@
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/provenance/production2a_worker_cedc828f.py": {
       "role": "research",
       "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/historical_custody.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/__init__.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/augmentation.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/batch_stream.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evidence.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/native_variant_snapshot.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/paper_archive.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_gate.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_inputs.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_io.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_observer.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_worker.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/protocol.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/queue.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/s3_library.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/target_noise.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/timing.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_admission.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_native.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_corpus_authority.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_dispatch.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_evaluate.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_failure.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/native_inputs.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_census.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_launch.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_successor.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_census.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/verified_cache.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
+    },
+    "python:deploy/dl-flywheel/run_native_v5_offline.py": {
+      "role": "research",
+      "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts."
     }
   },
   "baseline_triage": [

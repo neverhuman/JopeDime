@@ -66,6 +66,13 @@ def main():
   fresh32=json.loads((a.output/'fresh32/receipt.json').read_bytes())
   success=child.returncode==0 and fresh32['passed'] is True and fresh32['collected']==fresh32['executed']==37
   receipt['fresh32_suite']=fresh32;receipt['combined_collected']+=fresh32['collected'];receipt['combined_executed']+=fresh32['executed'];receipt['passed']=success
+ if success:
+  if receipt['combined_collected']!=492 or receipt['combined_executed']!=492:
+   raise ValueError('Prior492 offline identities must remain independently complete')
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_native_v5_offline.py'),'--output',str(a.output/'native_v5')],check=False)
+  native_v5=json.loads((a.output/'native_v5/receipt.json').read_bytes())
+  success=child.returncode==0 and native_v5['passed'] is True and native_v5['collected']==native_v5['executed']==48
+  receipt['native_v5_suite']=native_v5;receipt['combined_collected']+=native_v5['collected'];receipt['combined_executed']+=native_v5['executed'];receipt['passed']=success
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

@@ -1211,10 +1211,10 @@
     },
     {
       "path": "deploy/dl-flywheel/run_offline.py",
-      "origin": "Codex fresh32 additive source integration on PR277@0813d5f401baa4fcaadbdde7992e86a3fa191af5",
-      "origin_sha256": "2bb96813e46cf0ee7310ef66055187827339ea6efad72cc43cf59a998375eba2",
-      "sha256": "a6e9e5e35820522fd2ce63b451824aba8b601d605c911bd447dbbb8e77df263f",
-      "normalization": "Additive37 research CPU family and source custody; preserve prior455 identities and old CI items/lanes/dispositions. No live execution claim."
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "a6e9e5e35820522fd2ce63b451824aba8b601d605c911bd447dbbb8e77df263f",
+      "sha256": "a99b0924b3d83edb8c164081bb058421cf44f172774c57c1f9081e9bd61e685f",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
     },
     {
       "path": "deploy/dl-flywheel/run_successor_offline.py",
@@ -1447,10 +1447,10 @@
     },
     {
       "path": "deploy/ci/coverage.json",
-      "origin": "Codex fresh32 additive source integration on PR277@0813d5f401baa4fcaadbdde7992e86a3fa191af5",
-      "origin_sha256": "2c0f9a124275b2c77c61253d8e8eb77fc95465d664e095c9eeb69c066e4b66a4",
-      "sha256": "4ed6730c702f12e8da778b3e10260fba6eb46ce69cc2dd831949cda8f54da7e3",
-      "normalization": "Additive37 research CPU family and source custody; preserve prior455 identities and old CI items/lanes/dispositions. No live execution claim."
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "4ed6730c702f12e8da778b3e10260fba6eb46ce69cc2dd831949cda8f54da7e3",
+      "sha256": "60438c5cb86d2fedf6526ca35b57d16df4c9ea2daf7e2f23061a99057c7d314e",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
     },
     {
       "path": "deploy/dl-flywheel/docs/fresh32-encoder.md",
@@ -1650,10 +1650,353 @@
     },
     {
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "origin": "Codex fresh32 additive source integration on PR277@0813d5f401baa4fcaadbdde7992e86a3fa191af5",
-      "origin_sha256": "fe1decff5fe91decfc6850c12c6eb2f5475fbe954412f4eb4955ba45342c7d3b",
-      "sha256": "0d7396618bbf16d557563d6295541645ad4047dd9b96d93b41cc651a8f7ea7e0",
-      "normalization": "Additive37 research CPU family and source custody; preserve prior455 identities and old CI items/lanes/dispositions. No live execution claim."
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "0d7396618bbf16d557563d6295541645ad4047dd9b96d93b41cc651a8f7ea7e0",
+      "sha256": "c4fd7af1c398e95f25c3ab1dfc33333d8f9f2ba3b2e6b90cd5adc94ad99ef28d",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/native-successor-v5.md",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "719cd42598d7cb378754e0ff7b6e99bd38debebd1968b350b07dd3e8c1007d79",
+      "sha256": "719cd42598d7cb378754e0ff7b6e99bd38debebd1968b350b07dd3e8c1007d79",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/census.template.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "994f6d106be986f01ec924021217b776e54fc913072a8818b7245f2166d3a474",
+      "sha256": "994f6d106be986f01ec924021217b776e54fc913072a8818b7245f2166d3a474",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/historical_custody.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "fecb4075b06e60fb118c765282ea08e6a03dd1343934318443eebadf431eac7c",
+      "sha256": "fecb4075b06e60fb118c765282ea08e6a03dd1343934318443eebadf431eac7c",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/__init__.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/augmentation.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/batch_stream.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
+      "sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evidence.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
+      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/native_variant_snapshot.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
+      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/paper_archive.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
+      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_gate.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_inputs.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
+      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_io.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_observer.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
+      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_worker.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1",
+      "sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/protocol.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/queue.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
+      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/s3_library.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/target_noise.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/timing.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_admission.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
+      "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
+      "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
+      "sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_native.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
+      "sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_corpus_authority.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9",
+      "sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_dispatch.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "06b2d208717b2c114fdd8853403c1ef546ad2b6120c2289ef23f1dc12874a8bc",
+      "sha256": "06b2d208717b2c114fdd8853403c1ef546ad2b6120c2289ef23f1dc12874a8bc",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_evaluate.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "b0a230bdf7a28ac1e04fef5e7dd6a038523ed20c421d1bef6ae112f4c67a6c86",
+      "sha256": "b0a230bdf7a28ac1e04fef5e7dd6a038523ed20c421d1bef6ae112f4c67a6c86",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_failure.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99",
+      "sha256": "41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b",
+      "sha256": "22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_inputs.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+      "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations.inventory.xbabe2.template.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "ed928dab6e18739c238c5b35deb593e2345337d8fda90d09cdf3091697cf2769",
+      "sha256": "ed928dab6e18739c238c5b35deb593e2345337d8fda90d09cdf3091697cf2769",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations.inventory.xbabe3.template.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "43831ece0a6d72c56ba7982d5c1e96742d24c21cbef16794af7e43cf68f487cb",
+      "sha256": "43831ece0a6d72c56ba7982d5c1e96742d24c21cbef16794af7e43cf68f487cb",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations.launch.template.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "d2e6e5a1a27e8afc686ad6e49179f1645ac08750995eac71191ccf0ee5dfe258",
+      "sha256": "d2e6e5a1a27e8afc686ad6e49179f1645ac08750995eac71191ccf0ee5dfe258",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_census.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "846acc4cc331be0e41dee97a89fc188f0a5fddc946bb44dae700f554db55c0e2",
+      "sha256": "846acc4cc331be0e41dee97a89fc188f0a5fddc946bb44dae700f554db55c0e2",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_launch.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "93e0f40ced7f4a1ff190fda0d5acf172613b81ebc4bffbb7d0362bb4d100052b",
+      "sha256": "93e0f40ced7f4a1ff190fda0d5acf172613b81ebc4bffbb7d0362bb4d100052b",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/packet.template.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "555954e6447fe9233153023916c85f3d79d1f1d82e455fca45459e3af1ffe3f0",
+      "sha256": "555954e6447fe9233153023916c85f3d79d1f1d82e455fca45459e3af1ffe3f0",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/provenance/FINAL_VALIDATION.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "923c5507b771ab7ae05ad5c0e2f1dfa0d1570dc6a3239539d54468d2db44ee78",
+      "sha256": "923c5507b771ab7ae05ad5c0e2f1dfa0d1570dc6a3239539d54468d2db44ee78",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/provenance/ORIGIN.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "bb5b6110728b44dd8376061c7a53a52eb27acdade01f70f4d261ea120fe74760",
+      "sha256": "bb5b6110728b44dd8376061c7a53a52eb27acdade01f70f4d261ea120fe74760",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/provenance/independent-final-review.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "d78ae88c90e32d1e65b84c3bfac231d89945e813fc0c30a68959394a717498b5",
+      "sha256": "d78ae88c90e32d1e65b84c3bfac231d89945e813fc0c30a68959394a717498b5",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c",
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test-identities.json",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "d4f43bb9c5111fd7e49f1cd192d6a64fbd97a769377f71e8dd6b09ce7ee05222",
+      "sha256": "d4f43bb9c5111fd7e49f1cd192d6a64fbd97a769377f71e8dd6b09ce7ee05222",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_successor.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "777f63ff8ffb83c349b586dbd80e13c54c72ae76a10d2634beb37e5d17232453",
+      "sha256": "777f63ff8ffb83c349b586dbd80e13c54c72ae76a10d2634beb37e5d17232453",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_census.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "20a4e6f5a0b7c4d866c11bd97f5d1228dc4244ae56c62e90cbadc9fd496445ea",
+      "sha256": "20a4e6f5a0b7c4d866c11bd97f5d1228dc4244ae56c62e90cbadc9fd496445ea",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "5fb0e95427bc7dd59e6c2ac4da2e9dbbf503daa161ea14a789e33e6f7e653a16",
+      "sha256": "5fb0e95427bc7dd59e6c2ac4da2e9dbbf503daa161ea14a789e33e6f7e653a16",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/verified_cache.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
+      "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
+    },
+    {
+      "path": "deploy/dl-flywheel/run_native_v5_offline.py",
+      "origin": "Native-v5 reviewed local packet; additive integration on PR277@32dd801209134883a0ae4b4b4170087fed8e1dea",
+      "origin_sha256": "545c03d414397c6b242e92b37255b3d51a3b4aeaf72c97b8abd9ba52eac31a85",
+      "sha256": "545c03d414397c6b242e92b37255b3d51a3b4aeaf72c97b8abd9ba52eac31a85",
+      "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner."
     }
   ]
 }
