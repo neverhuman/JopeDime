@@ -61,6 +61,7 @@ def panel(delta=0.1):
     return {
         "schema": "jope.rlfw-gate-panel/v1",
         "label": LABEL + "; cpu inference",
+        "device": "cpu",
         "panel_sha256": digest({"contexts": roster, "seeds": (7,), "role_map": SHA}),
         "pairing_sha256": SHA,
         "game_spec_sha256s": [SHA, "b" * 64],
@@ -395,7 +396,8 @@ class D5CustodyTests(unittest.TestCase):
                     "lineage_id": f"parent{i if i < 54 else 53}",
                     "category": "clean" if kept else "parity_custody",
                     "kept": kept,
-                    "h_c": 0.0 if kept else None,
+                    # Screen raw q and deployed micro-q are distinct values.
+                    "h_c": 0.0000004 if kept else None,
                     "h_c_grid": 0 if kept else None,
                     "programs": [{"role": "hwm", "program_sha256": SHA}],
                 }
@@ -532,6 +534,22 @@ class D5CustodyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 evaluate_panel(candidate, 3, custody=custody)
 
+    def test_unregistered_original_units_refuse_before_custody_projection(self):
+        custody = load_custody(self.root)
+        for cid, lineage in (("c64", "parent53"), ("c0", "parent0")):
+            candidate = deepcopy(self.panel)
+            for side in ("champion", "challenger"):
+                candidate[side].append(
+                    {**candidate[side][0], "context_id": cid, "lineage_id": lineage}
+                )
+            with self.assertRaisesRegex(ValueError, "unregistered original gate unit"):
+                evaluate_panel(candidate, 3, custody=custody)
+        candidate = deepcopy(self.panel)
+        for side in ("champion", "challenger"):
+            candidate[side][0]["seed"] = 999
+        with self.assertRaisesRegex(ValueError, "unregistered original gate unit"):
+            evaluate_panel(candidate, 3, custody=custody)
+
     def test_missing_changed_or_linked_custody_refuses(self):
         path = self.root / "runs/parity_screen/custody.json"
         raw = path.read_bytes()
@@ -548,6 +566,68 @@ class D5CustodyTests(unittest.TestCase):
         pointer.symlink_to(path)
         with self.assertRaisesRegex(ValueError, "links"):
             load_custody(self.root)
+
+    def test_cpu_inference_is_explicit_and_cuda_cli_refuses_before_artifacts(self):
+        custody = load_custody(self.root)
+        for device in (None, "cuda"):
+            candidate = deepcopy(self.panel)
+            if device is None:
+                candidate.pop("device")
+            else:
+                candidate["device"] = device
+            with self.assertRaisesRegex(ValueError, "explicit CPU inference"):
+                evaluate_panel(candidate, 3, custody=custody)
+        from rlfw.promotion_gate import main
+
+        with mock.patch("rlfw.promotion_gate.panel_from_runs") as loader:
+            with self.assertRaisesRegex(ValueError, "CPU inference"):
+                main(
+                    [
+                        "--bench-root",
+                        str(self.root),
+                        "--challenger-run",
+                        "unused",
+                        "--champion-run",
+                        "unused",
+                        "--challenger-arm",
+                        "challenger",
+                        "--champion-arm",
+                        "champion",
+                        "--deadline-unix",
+                        "1791608400",
+                        "--source-sha256",
+                        SHA,
+                        "--device",
+                        "cuda",
+                    ]
+                )
+            loader.assert_not_called()
+
+    def test_every_outside_roster_arena_exclusion_enters_separate_sensitivity(self):
+        point_identity = digest(self.panel)
+        self.overlay([64])
+        result = evaluate_panel(self.panel, 3, custody=load_custody(self.root))
+        self.assertEqual(result["verdict"], "INCONCLUSIVE")
+        self.assertEqual(result["arena_excluded_in_panel"], [])
+        self.assertEqual(result["arena_excluded_outside_panel"], ["c64"])
+        self.assertEqual(len(result["per_lineage_deltas"]["score"]), 53)
+        self.assertEqual(digest(self.panel), point_identity)
+        bounds = result["censoring_bounds"]["paired_delta_winrate"]
+        self.assertAlmostEqual(bounds["lower"], -1 / (2 * 53))
+        self.assertAlmostEqual(bounds["upper"], 1 / (2 * 53))
+        inventory = result["censoring_bounds"]["arena_exclusion_inventory"]
+        self.assertEqual(inventory["pooled_context_count"], 1)
+        self.assertEqual(
+            inventory["paired_per_arm_context_count"], {"challenger": 1, "champion": 1}
+        )
+        self.assertEqual(inventory["per_lineage_context_count"], {"parent53": 1})
+        self.assertFalse(result["censoring_bounds"]["raw_gain"]["available"])
+        self.overlay([64, 65])
+        result = evaluate_panel(self.panel, 3, custody=load_custody(self.root))
+        bounds = result["censoring_bounds"]["paired_delta_winrate"]
+        self.assertAlmostEqual(bounds["lower"], -2 / (3 * 53))
+        self.assertAlmostEqual(bounds["upper"], 2 / (3 * 53))
+        self.assertEqual(result["arena_excluded_outside_panel"], ["c64", "c65"])
 
     def test_cumulative_52_context_and_44_lineage_boundaries_are_fixed(self):
         self.overlay(range(64, 105))

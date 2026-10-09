@@ -148,6 +148,7 @@ def load_custody(bench_root):
             not in ("clean", "parity_custody", "nondeterministic", "infra_unknown")
             or type(c["kept"]) is not bool
             or c["kept"] != (c["category"] == "clean")
+            or (c["kept"] and type(c["h_c_grid"]) is not int)
             for c in rows.values()
         )
     ):
@@ -229,15 +230,22 @@ def custody_panel(panel, custody):
             raise ValueError("gate roster differs from screened original HWM custody")
     kept = {c["context_id"] for c in roster if rows[c["context_id"]]["kept"]}
     excluded = {c["context_id"] for c in roster} - kept
+    registered = {(c["context_id"], seed) for c in roster for seed in panel["seeds"]}
     for side in ("challenger", "champion"):
         keys = [(u["context_id"], u["seed"]) for u in panel[side]]
+        if any(key not in registered for key in keys):
+            raise ValueError("unregistered original gate unit")
         if len(set(keys)) != len(keys):
             raise ValueError("duplicated gate units")
         for u in panel[side]:
             c = rows.get(u["context_id"])
             if c is None or u["lineage_id"] != c["lineage_id"]:
                 raise ValueError("gate unit custody lineage mismatch")
-            if c["kept"] and u["hwm"] is not None and u["hwm"] != c["h_c"]:
+            if (
+                c["kept"]
+                and u["hwm"] is not None
+                and u["hwm"] != c["h_c_grid"] / 1_000_000
+            ):
                 raise ValueError("screened original HWM quality changed")
     result = {
         **panel,
@@ -261,6 +269,8 @@ def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
     a, ar, ap = read_run(challenger)
     b, br, bp = read_run(champion)
     a.require_pair(b)
+    if a.device != "cpu" or b.device != "cpu":
+        raise ValueError("owner D5 gate requires CPU inference")
     measured = {}
     receipt_values = {}
     for row in ar + br:
@@ -317,6 +327,7 @@ def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
     return {
         "schema": "jope.rlfw-gate-panel/v1",
         "label": LABEL + "; " + a.device + " inference",
+        "device": a.device,
         "panel_sha256": digest(
             {"contexts": roster, "seeds": a.seeds, "role_map": a.role_map_sha256}
         ),
@@ -372,6 +383,8 @@ def evaluate_panel(panel, look, *, custody=None):
     excluded = []
     expected_lineages = 54
     if custody is not None:
+        if panel.get("device") != "cpu":
+            raise ValueError("owner D5 gate requires explicit CPU inference")
         panel, excluded = custody_panel(panel, custody)
         expected_lineages = custody["coverage"]["lineages_kept"]
     schedule = alpha_schedule()
@@ -433,8 +446,22 @@ def evaluate_panel(panel, look, *, custody=None):
         custody["coverage"]["kept_lineage_ids"]
     ):
         reasons.append("kept lineage inventory incomplete")
+    arena_excluded = (
+        sorted(
+            cid
+            for cid, c in custody["rows"].items()
+            if c["screen_kept"] and not c["kept"]
+        )
+        if custody is not None
+        else []
+    )
+    original_ids = {c["context_id"] for c in original_panel["roster"]}
+    outside = sorted(set(arena_excluded) - original_ids)
+    sensitivity_roster = original_panel["roster"] + [
+        custody["rows"][cid] for cid in outside
+    ]
     censoring = None
-    if excluded:
+    if arena_excluded:
         # Raw gain has no preregistered finite bound in a gate panel. Do not
         # turn an excluded, unmeasured gain into zero or certify its sign.
         reasons.append("unbounded gain for arena-excluded contexts")
@@ -443,10 +470,10 @@ def evaluate_panel(panel, look, *, custody=None):
             for side in ("challenger", "champion")
         ]
         groups = [defaultdict(list) for _ in range(6)]
-        for c in original_panel["roster"]:
+        for c in sensitivity_roster:
             for seed in original_panel["seeds"]:
                 key = (c["context_id"], seed)
-                if c["context_id"] in excluded:
+                if c["context_id"] in arena_excluded:
                     values = (0.0, 1.0, 0.0, 1.0, -1.0, 1.0)
                 elif key in sides[0] and key in sides[1]:
                     a, b = sides[0][key]["score"], sides[1][key]["score"]
@@ -467,9 +494,21 @@ def evaluate_panel(panel, look, *, custody=None):
                 "upper": (fmean(fmean(v) for v in high.values()) if high else None),
             }
         censoring["raw_gain"] = {"available": False, "lower": None, "upper": None}
+        per_lineage_exclusions = defaultdict(int)
+        for cid in arena_excluded:
+            per_lineage_exclusions[custody["rows"][cid]["lineage_id"]] += 1
         censoring["scope"] = (
-            "deterministic bounds over original paired roster; not confidence intervals"
+            "counterfactual bounds over original paired roster plus every campaign "
+            "arena exclusion; not observations or confidence intervals"
         )
+        censoring["arena_exclusion_inventory"] = {
+            "context_ids": arena_excluded,
+            "pooled_context_count": len(arena_excluded),
+            "paired_per_arm_context_count": {
+                arm: len(arena_excluded) for arm in original_panel["arms"]
+            },
+            "per_lineage_context_count": dict(sorted(per_lineage_exclusions.items())),
+        }
     stats = {}
     if per_lineage:
         for metric in ("positive_gain", "score"):
@@ -524,6 +563,7 @@ def evaluate_panel(panel, look, *, custody=None):
         "custody": custody["reference"] if custody is not None else None,
         "coverage": custody["coverage"] if custody is not None else None,
         "arena_excluded_in_panel": excluded,
+        "arena_excluded_outside_panel": outside,
         "censoring_bounds": censoring,
     }
 
@@ -720,7 +760,10 @@ def main(argv=None):
     p.add_argument("--deadline-unix", required=True, type=float)
     p.add_argument("--source-sha256", required=True)
     p.add_argument("--apply-research-pointer", action="store_true")
+    p.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     args = p.parse_args(argv)
+    if args.device != "cpu":
+        raise ValueError("owner D5 gate requires CPU inference")
     source_root = Path(__file__).parent
     module_sha = digest(
         {

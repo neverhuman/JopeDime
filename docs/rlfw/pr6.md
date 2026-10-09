@@ -45,6 +45,10 @@ D5 supersedes the earlier cutoffs; recorded attempts and monthly gate looks rema
 
 ## Commands and evidence
 
+D5 permits CPU inference only. The panel carries the device from both frozen
+GameSpecs; missing or CUDA inference refuses under D5 custody. The CLI defaults
+`--device` to `cpu`; `cuda` refuses before artifact reads or monthly spending.
+
 D5 and D5.1 qualify the development panel through the benchmark lane's sealed
 263-context screen and versioned arena custody. The gate reads their byte-bound
 state, applies arena exclusions to both arms, and derives the retained lineage
@@ -53,14 +57,19 @@ than 44 lineages, refuses the gate. The original 54-lineage protocol remains
 required when no D5 custody exists.
 
 Retained contexts keep their screened original program and measured comparator
-quality. Gate intervals use the final retained lineages with the unchanged
+on the same integer micro-q grid used by arena slots. The screen's raw floating
+value is retained in custody; no comparator is refitted or given a looser tolerance.
+Gate intervals use the final retained lineages with the unchanged
 2,000 bootstrap draws and seed 7. Reservations and decisions bind the custody
 versions, coverage and exclusions; a changed custody snapshot prevents a pointer
 commit. The gate never changes the benchmark custody or STOP records.
 
 For arena exclusions it reports each arm's WIN/LOSS bounds and the paired bounds
-over the original paired roster, including lineages lost entirely in the arena.
-These are deterministic sensitivity bounds, separate from the retained-lineage CIs.
+in a separate counterfactual sensitivity that includes every campaign arena
+exclusion, including contexts outside the frozen point roster and lineages lost
+entirely in the arena. Its pooled, paired-arm and lineage inventories retain all
+excluded context IDs. These hypothetical outcomes do not change the measured
+point roster or retained-lineage CIs and are not reported as observations.
 The panel protocol supplies no finite bound for an excluded raw gain, so that
 gain remains unavailable and the promotion decision is inconclusive. No failed
 or excluded gain becomes zero. These limits are separate from fixture calibration.
@@ -104,7 +113,7 @@ nice -n 19 ionice -c3 python3 -B -m rlfw.promotion_gate \
   --champion-run "$BENCH/runs/baseline_T1" \
   --challenger-arm trie_sample:challenger \
   --champion-arm trie_sample:current_latest \
-  --deadline-unix 1791608400 --source-sha256 "$SOURCE_SHA"
+  --device cpu --deadline-unix 1791608400 --source-sha256 "$SOURCE_SHA"
 ```
 
 This command consumes a monthly look and writes receipts. To enable a research
