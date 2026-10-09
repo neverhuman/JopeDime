@@ -203,7 +203,7 @@ class ArenaScheduler:
 
     def slate(self, context, arm, seed):
         key = (context.context_id, arm.name, seed)
-        if arm.name.startswith("rerank32:"):
+        if self.prepares(arm):
             return self.prepared_slate(context, arm, seed)
         value = self.db.execute(
             "SELECT payload FROM slates WHERE context=? AND arm=? AND seed=?", key
@@ -227,9 +227,15 @@ class ArenaScheduler:
             self.db.execute("INSERT INTO slate_costs VALUES(?,?,?,?)", (*key, elapsed))
         return slate
 
-    def prepared_slate(self, context, arm, seed):
+    def prepares(self, arm):
+        return arm.name.startswith("rerank32:")
+
+    def load_packet(self, value):
         from ..slate import PreparedSlate
 
+        return PreparedSlate.from_dict(value)
+
+    def prepared_slate(self, context, arm, seed):
         if self.spec.slate_k != 32:
             raise ValueError("rerank GameSpec requires fixed K=32")
         key = (context.context_id, arm.name, seed)
@@ -238,7 +244,7 @@ class ArenaScheduler:
             key,
         ).fetchone()
         if value:
-            packet = PreparedSlate.from_dict(json.loads(value[0]))
+            packet = self.load_packet(json.loads(value[0]))
         else:
             start = time.monotonic()
             packet = self.arms.prepare_slate(context, arm, seed)
@@ -324,7 +330,7 @@ class ArenaScheduler:
                     duplicate = candidate.program.program_sha256 in seen
                     seen.add(candidate.program.program_sha256)
                     jobs.append((arm, seed, slot, candidate, duplicate))
-                    if arm.name != "hwm" and not arm.name.startswith("rerank32:"):
+                    if arm.name != "hwm" and not self.prepares(arm):
                         self.decision_sink(
                             decision_value(
                                 self.spec,

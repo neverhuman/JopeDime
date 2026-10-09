@@ -118,6 +118,9 @@ class RerankArms(BaselineArms):
     def prepare_slate(self, context, arm, seed):
         if not arm.name.startswith("rerank32:"):
             raise ValueError("unsupported rerank arm")
+        return self.prepare_neural_slate(context, arm, seed)
+
+    def prepare_neural_slate(self, context, arm, seed):
         if arm.temperature != 1.0:
             raise ValueError("rerank uses preregistered temperature 1.0")
         raw, distinct = [], {}
