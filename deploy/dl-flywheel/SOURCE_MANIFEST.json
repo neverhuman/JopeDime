@@ -86,10 +86,10 @@
     },
     {
       "path": "deploy/dl-flywheel/docs/generated-variant-execution.md",
-      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
       "origin_sha256": "4953a3548bac7f1c052bf7e11812d8552e5d65b9ccd07cdbaf50d7e8a7179542",
-      "sha256": "4953a3548bac7f1c052bf7e11812d8552e5d65b9ccd07cdbaf50d7e8a7179542",
-      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+      "sha256": "04059b434107570deb66d0cb6f953af99def06cb8057a0f4035fbf81e36a6efd",
+      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
     },
     {
       "path": "deploy/dl-flywheel/docs/growth-and-inference-v2.md",
@@ -298,10 +298,10 @@
     },
     {
       "path": "deploy/dl-flywheel/jope_flywheel/variant_outbox.py",
-      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
       "origin_sha256": "3c2c1ccab2af7aa1905c479a88c8c42859e4f9cd430aee1966655c84d82d329a",
-      "sha256": "3c2c1ccab2af7aa1905c479a88c8c42859e4f9cd430aee1966655c84d82d329a",
-      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+      "sha256": "e3c3d1e74ac508f858c1aa7641cf9447bf1eae03ce8b329a7b4cacd1d453a60e",
+      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
     },
     {
       "path": "deploy/dl-flywheel/operations/evergreen_deploy.py",
@@ -1183,10 +1183,10 @@
     },
     {
       "path": "deploy/dl-flywheel/pipelines/variants/variant_dispatch.py",
-      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
       "origin_sha256": "8b1eb24ff7dbd435f8356770fb1af7fd7e18a055680c73cab44c881add197b31",
-      "sha256": "8b1eb24ff7dbd435f8356770fb1af7fd7e18a055680c73cab44c881add197b31",
-      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+      "sha256": "164c6db760a140337a8971558564613840fd47d45b8ce2572bc514836bcdc601",
+      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
     },
     {
       "path": "deploy/dl-flywheel/run_continuous_offline.py",
@@ -1223,10 +1223,10 @@
     },
     {
       "path": "deploy/dl-flywheel/run_variant_offline.py",
-      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
       "origin_sha256": "8f6f80225daf43dd0fe786241bd73b1b1179a289bc8e7cfdf4ab4e9a0d34e656",
-      "sha256": "8f6f80225daf43dd0fe786241bd73b1b1179a289bc8e7cfdf4ab4e9a0d34e656",
-      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+      "sha256": "5cf49b7cb7763232ef70809189819adee4da70826017cfe4e64ee00bdc06dc53",
+      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
     },
     {
       "path": "deploy/dl-flywheel/tests/fixtures/kumos-component-publication.json",
@@ -1410,10 +1410,10 @@
     },
     {
       "path": "deploy/dl-flywheel/tests_native/test_variant_outbox.py",
-      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin": "Codex phase-fair successor from PR277@0bfb0c4304e44708549d8cc47ea1488228f6a09f",
       "origin_sha256": "60c508f7cd87498824369c251f3e44f6718d61fd2bd7fb1f56db661fb4daa273",
-      "sha256": "60c508f7cd87498824369c251f3e44f6718d61fd2bd7fb1f56db661fb4daa273",
-      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+      "sha256": "3f55b000a9ceed169114efaf5733e68039fd6fff81bdceaba4268ad04a1865a5",
+      "normalization": "Reviewed optional phase preference, strict24-claim proportional caps,28affectedCPUfixtures and dated pilot/census evidence; no live runtime replacement."
     }
   ]
 }

@@ -23,7 +23,7 @@ SCHEMA = 'jope.variant-model-outbox-packet/v1'
 FIELDS = {'schema','out','host','created_unix','deadline_unix','global_deadline_unix',
           'maximum_emissions','source_pins','training_config','execution_config',
           'adoption_receipt','prepared','outbox_path','outbox_config','worker_config',
-          'historical_census','worker_id','lock_path'}
+          'historical_census','worker_id','lock_path','phase_order'}
 
 
 def progress(root, value):
@@ -90,7 +90,8 @@ def preflight(c):
          str(root).startswith('/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-variant-outbox-'),
          'owned isolated proposal root')
     need(os.uname().nodename == c['host'] == 'xbabe2', 'qualified registry host')
-    need(1 <= c['maximum_emissions'] <= 4 and
+    need(type(c['maximum_emissions']) is int and 1 <= c['maximum_emissions'] <= 24 and
+         c['phase_order'] == ['training','validation'] and
          0 < c['deadline_unix'] - c['created_unix'] <= 1800 and
          c['deadline_unix'] <= c['global_deadline_unix'] == 1791592146.380285 and
          time.time() < c['deadline_unix'], 'fixed bounded packet; original global clock')
@@ -177,7 +178,8 @@ def main():
     create(root/'preflight.json',canonical(proof))
     timing.ACTIVE = timing.Timing(root/'stage-timing.jsonl',group,config_sha256=args.config_sha,
                                  cuda_execution_time_ns=None,gpu_used=False)
-    counts = {'claimed':0,'cached_verified':0,'published_verified':0,'unknown_attempt':0,'heads':0,'gets':0,'puts':0}
+    counts = {'claimed':0,'cached_verified':0,'published_verified':0,'unknown_attempt':0,'heads':0,'gets':0,'puts':0,
+              'resolved_training':0,'resolved_validation':0}
     results = []
     def report(state):
         progress(root,{'schema':'jope.variant-outbox-progress/v1','at_utc_ns':time.time_ns(),
@@ -187,10 +189,10 @@ def main():
     class Budget:
         def __getattr__(self,name): return getattr(rawclient,name)
         def head_object(self,**kw):
-            need(counts['heads'] < 128,'HEAD attempt cap'); counts['heads'] += 1
+            need(counts['heads'] < 32*c['maximum_emissions'],'HEAD attempt cap'); counts['heads'] += 1
             with timing.span('s3.HEAD',key=kw['Key']): return rawclient.head_object(**kw)
         def get_object(self,**kw):
-            need(counts['gets'] < 1024,'GET attempt cap'); counts['gets'] += 1
+            need(counts['gets'] < 256*c['maximum_emissions'],'GET attempt cap'); counts['gets'] += 1
             with timing.span('s3.GET_headers',key=kw['Key'],version_id=kw.get('VersionId')):
                 result = rawclient.get_object(**kw)
             body = result['Body']
@@ -201,7 +203,7 @@ def main():
                     with timing.span('s3.GET_body',key=kw['Key'],requested_bytes=size): return body.read(size)
             result['Body'] = Body(); return result
         def put_object(self,**kw):
-            need(counts['puts'] < 32 and kw['Bucket'] == BUCKET and kw['Key'].startswith(PREFIX)
+            need(counts['puts'] < 8*c['maximum_emissions'] and kw['Bucket'] == BUCKET and kw['Key'].startswith(PREFIX)
                  and kw.get('IfNoneMatch') == '*','create-only bounded program-library PUT')
             counts['puts'] += 1
             create(root/('put-attempt-%03d.json'%counts['puts']),canonical({'utc_ns':time.time_ns(),
@@ -209,7 +211,7 @@ def main():
             with timing.span('s3.PUT',key=kw['Key'],bytes=kw['ContentLength']): return rawclient.put_object(**kw)
     budget = Budget(); inputs.client = budget
     store = Library(budget,deadline=c['deadline_unix'],nativecanonical_json=native.canonical_json)
-    q = Queue(root/'queue.sqlite',max_jobs=8)
+    q = Queue(root/'queue.sqlite',max_jobs=2*c['maximum_emissions'])
     outbox = Outbox(c['outbox_path'],**{k:v for k,v in c['outbox_config'].items() if k != 'schema'})
     observer = ProgramObserver(q,inputs,store,plan_sha256=args.config_sha,canonicalize=native.canonical_program)
     workerroot = root/'worker'; workerroot.mkdir(exist_ok=False)
@@ -235,10 +237,13 @@ def main():
         while counts['claimed'] < c['maximum_emissions'] and remaining(c['deadline_unix']) > 610:
             used = sum(p.stat().st_size for p in root.rglob('*') if p.is_file())
             need(used < 1024**3-128*1024**2, 'owned output ceiling before next claim')
-            with timing.span('gp.model_outbox.total'):
-                result = consumer.once()
+            preferred=c['phase_order'][counts['claimed']%2]
+            with timing.span('gp.model_outbox.total',preferred_phase=preferred):
+                result = consumer.once(preferred_phase=preferred)
             if result['state'] == 'empty': break
             counts['claimed'] += 1; counts[result['state']] += 1
+            if result['state'] in ('cached_verified','published_verified'):
+                counts['resolved_'+result['phase']] += 1
             create(root/(result['emission_id']+'.json'),canonical(result)); results.append(result)
             if result['state'] == 'unknown_attempt':
                 state = 'paused_unknown_no_retry'; report(state); break

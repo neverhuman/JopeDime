@@ -115,6 +115,34 @@ class VariantTests(unittest.TestCase):
             emissions.insert(0, native)
         self.outbox.record_batch(batch, emissions)
 
+    def test_phase_preference_skips_older_opposite_phase_and_preserves_native(self):
+        self.record(step=1, phase='validation')
+        self.record(step=2, phase='training')
+        claim = claim_variant(self.outbox,'phase-fixture',lease_seconds=600,
+                              deadline=self.outbox.now()+1800,preferred_phase='training')
+        self.assertEqual(claim['body']['emission']['phase'],'training')
+        self.assertEqual(claim['body']['batch']['global_step'],2)
+        states=self.outbox.verify()['states']
+        self.assertEqual(states['leased'],1)
+        self.assertEqual(states['recorded'],2)
+
+    def test_phase_preference_falls_back_without_reclaiming_previous_lease(self):
+        self.record(step=1,phase='training')
+        self.record(step=2,phase='training')
+        claims=[claim_variant(self.outbox,'phase-fixture',lease_seconds=600,
+                              deadline=self.outbox.now()+1800,preferred_phase='validation')for _ in range(2)]
+        self.assertEqual([c['body']['batch']['global_step']for c in claims],[1,2])
+        self.assertNotEqual(claims[0]['lease']['emission_id'],claims[1]['lease']['emission_id'])
+        self.assertEqual(self.outbox.verify()['states']['leased'],2)
+
+    def test_invalid_phase_preference_cannot_mutate_or_execute(self):
+        self.record()
+        before=self.outbox.verify()
+        with self.assertRaisesRegex(ValueError,'qualified phase preference'):
+            self.consumer.once(preferred_phase='outer-test')
+        self.assertEqual(self.outbox.verify(),before)
+        self.assertEqual(self.worker.calls,0)
+
     def test_cached_success_verifies_all_artifacts_and_outbox_chain(self):
         self.record()
         r = self.consumer.once()

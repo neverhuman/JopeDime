@@ -13,8 +13,8 @@ def main():
         for item in suite:
             if isinstance(item,unittest.TestSuite):yield from ids(item)
             else:yield item.id()
-    identities=sorted(ids(suite));need=len(identities)==len(set(identities))==25
-    if not need:raise ValueError('exact25 new fixture roster changed')
+    identities=sorted(ids(suite));need=len(identities)==len(set(identities))==28
+    if not need:raise ValueError('exact28 new fixture roster changed')
     started=time.time_ns()
     with(args.output/'tests.log').open('x')as log:result=unittest.TextTestRunner(stream=log,verbosity=2).run(suite)
     paths=['jope_flywheel/variant_outbox.py','pipelines/variants/variant_dispatch.py','tests_native/test_variant_outbox.py','run_variant_offline.py']
@@ -23,7 +23,7 @@ def main():
         'failures':len(result.failures),'errors':len(result.errors),'skipped':len(result.skipped),
         'identities':identities,'sources':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest()for p in paths},
         'log_sha256':hashlib.sha256((args.output/'tests.log').read_bytes()).hexdigest(),
-        'passed':result.wasSuccessful()and result.testsRun==25 and not result.skipped and not result.expectedFailures,
+        'passed':result.wasSuccessful()and result.testsRun==28 and not result.skipped and not result.expectedFailures,
         'scope':'New CPU fixtures only; no S3 writes, native execution, live outbox mutations, GPU or optimizer.'}
     (args.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print(json.dumps({k:v for k,v in receipt.items()if k not in('identities','sources')}))

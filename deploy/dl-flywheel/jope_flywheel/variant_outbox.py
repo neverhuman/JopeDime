@@ -15,8 +15,10 @@ def need(ok, message):
         raise ValueError(message)
 
 
-def claim_variant(outbox, owner, *, lease_seconds, deadline):
+def claim_variant(outbox, owner, *, lease_seconds, deadline, preferred_phase=None):
     """Same frozen outbox event grammar; native/leased/unknown rows are untouched."""
+    need(preferred_phase is None or preferred_phase in ('training', 'validation'),
+         'qualified phase preference')
     now = outbox.now()
     need(type(owner) is str and 0 < len(owner) <= 128 and
          type(lease_seconds) is int and 1 <= lease_seconds <= 600 and
@@ -26,7 +28,9 @@ def claim_variant(outbox, owner, *, lease_seconds, deadline):
     try:
         row = db.execute("SELECT * FROM emissions WHERE state='recorded' AND "
                          "json_extract(body,'$.emission.input_descriptor.source_kind')="
-                         "'flywheel_variant' ORDER BY rowid LIMIT 1").fetchone()
+                         "'flywheel_variant' ORDER BY CASE WHEN "
+                         "json_extract(body,'$.emission.phase')=? THEN 0 ELSE 1 END, "
+                         "rowid LIMIT 1", (preferred_phase,)).fetchone()
         if row is None:
             db.execute('COMMIT')
             return None
@@ -163,11 +167,11 @@ class VariantConsumer:
              'successful wrapper exact-version closure')
         return measured['evaluation_key'] == key
 
-    def once(self):
+    def once(self, *, preferred_phase=None):
         remaining = int(self.deadline - self.outbox.now())
         need(remaining >= 600, 'reserve complete bounded evaluation/publication lease')
         claim = claim_variant(self.outbox, self.owner, lease_seconds=600,
-                              deadline=self.deadline)
+                              deadline=self.deadline, preferred_phase=preferred_phase)
         if claim is None:
             return {'state': 'empty', 'optimizer_updates': 0}
         body, lease = claim['body'], claim['lease']
