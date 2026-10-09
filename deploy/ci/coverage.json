@@ -9337,6 +9337,16 @@
       ],
       "dispositions": [],
       "scope": "51 successor CPU fixtures through run_successor_offline.py invoked by run_offline.py: transfer21/prepared12/custody18; selected methods and inherited base fixture cases, zero skips. No live optimizer/GPU/S3/process controls."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_variant_outbox.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "25 source CPU variant bridge fixtures through run_variant_offline.py invoked by run_offline.py; exact roster, zero skips. No live execution, S3 writes, model rewards or optimizer admission."
     }
   }
 }

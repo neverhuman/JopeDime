@@ -2864,6 +2864,34 @@
     "python:deploy/dl-flywheel/tests_continuous/test_continuous_state_review.py": {
       "role": "research",
       "reason": "Executed offline continual-learning continuation regressions in the Python lane; source qualification only. Live optimizer and S3 evidence are separately recorded."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v4/test_live_snapshot.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/hpc_verified_v4/test_native_failure.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_prepared_snapshot.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_resume_transfer.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/pipelines/prepared/test_transfer_watch.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_variant_outbox.py": {
+      "role": "research",
+      "reason": "Executed offline flywheel custody, prepared transfer or generated-variant bridge fixtures through run_offline.py in the Python lane; research source qualification only. Live optimizer, native execution and versioned S3 acceptance remain separate receipts."
     }
   },
   "baseline_triage": [

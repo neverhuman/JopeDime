@@ -85,6 +85,13 @@
       "sha256": "dd3f98ec42d68802d9e1de8088ba87669933925dfef3949aa189e2c24718abae"
     },
     {
+      "path": "deploy/dl-flywheel/docs/generated-variant-execution.md",
+      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin_sha256": "4953a3548bac7f1c052bf7e11812d8552e5d65b9ccd07cdbaf50d7e8a7179542",
+      "sha256": "4953a3548bac7f1c052bf7e11812d8552e5d65b9ccd07cdbaf50d7e8a7179542",
+      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+    },
+    {
       "path": "deploy/dl-flywheel/docs/growth-and-inference-v2.md",
       "origin": "outputs/DL_FLYWHEEL_GROWTH_AND_INFERENCE_V2.md",
       "origin_sha256": "525c317fa8cc13e36b091fdcdc6fd016d242d29cd052a32c230a5847974ccb6b",
@@ -288,6 +295,13 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_snapshot_native.py",
       "origin_sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
       "sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2"
+    },
+    {
+      "path": "deploy/dl-flywheel/jope_flywheel/variant_outbox.py",
+      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin_sha256": "3c2c1ccab2af7aa1905c479a88c8c42859e4f9cd430aee1966655c84d82d329a",
+      "sha256": "3c2c1ccab2af7aa1905c479a88c8c42859e4f9cd430aee1966655c84d82d329a",
+      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
     },
     {
       "path": "deploy/dl-flywheel/operations/evergreen_deploy.py",
@@ -1168,6 +1182,13 @@
       "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
     },
     {
+      "path": "deploy/dl-flywheel/pipelines/variants/variant_dispatch.py",
+      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin_sha256": "8b1eb24ff7dbd435f8356770fb1af7fd7e18a055680c73cab44c881add197b31",
+      "sha256": "8b1eb24ff7dbd435f8356770fb1af7fd7e18a055680c73cab44c881add197b31",
+      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
+    },
+    {
       "path": "deploy/dl-flywheel/run_continuous_offline.py",
       "origin": "continuous follow-up authored packaging",
       "origin_sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032",
@@ -1181,15 +1202,17 @@
     },
     {
       "path": "deploy/dl-flywheel/run_native_offline.py",
-      "origin": "followup integration",
+      "origin": "Codex heartbeat20261009-0843 fixed historical native collection roster",
       "origin_sha256": "f2222c8a95c8e132b1bdf8431edab26751e7bdee4f0b08a53dbc27f3c3f3b417",
-      "sha256": "f2222c8a95c8e132b1bdf8431edab26751e7bdee4f0b08a53dbc27f3c3f3b417"
+      "sha256": "37de60d78197afbf88340ad37be2e8595a0fbf7ded9a1be46bbc4473487a252d",
+      "normalization": "Exact eight historical modules/74identities; new variant25 run only in isolated shard."
     },
     {
       "path": "deploy/dl-flywheel/run_offline.py",
-      "origin": "Codex heartbeat20261009-0616 scoped source update from PR277@73bd771d907e9007024b2783d93a1174c205f7ec",
-      "origin_sha256": "338b83b2765f60f25fde2e9907001b43869933f445fe5493aa1a9454bcd450fc",
-      "sha256": "8af4bdc464fcb1f5a9627ce4c3ee2d5bd5cb2d6c5a16052f77ce6137aab6e19f"
+      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin_sha256": "8af4bdc464fcb1f5a9627ce4c3ee2d5bd5cb2d6c5a16052f77ce6137aab6e19f",
+      "sha256": "901d9b3896bbd873e710320a35362c74392ae39adb1945280f4b50b67d806fff",
+      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
     },
     {
       "path": "deploy/dl-flywheel/run_successor_offline.py",
@@ -1197,6 +1220,13 @@
       "origin_sha256": "c5c116dd353e4f9f640a00997e8272cf1331c7e9b59414310a18c07446e8a8a0",
       "sha256": "e8117495e972d489601dd39d969ca042c5645f639a783dd890dcac99ea27bad1",
       "normalization": "Repository-local import paths/fixture regression or reviewed publisher executor selection; imported runtime origin retained."
+    },
+    {
+      "path": "deploy/dl-flywheel/run_variant_offline.py",
+      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin_sha256": "8f6f80225daf43dd0fe786241bd73b1b1179a289bc8e7cfdf4ab4e9a0d34e656",
+      "sha256": "8f6f80225daf43dd0fe786241bd73b1b1179a289bc8e7cfdf4ab4e9a0d34e656",
+      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
     },
     {
       "path": "deploy/dl-flywheel/tests/fixtures/kumos-component-publication.json",
@@ -1377,6 +1407,13 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_training_snapshot_native.py",
       "origin_sha256": "d4744bf7ff20cb7f385c5a0eb26fcc0ab357c913e29f94ac22f88f378077ad9c",
       "sha256": "d4744bf7ff20cb7f385c5a0eb26fcc0ab357c913e29f94ac22f88f378077ad9c"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests_native/test_variant_outbox.py",
+      "origin": "Codex heartbeat20261009-0843 scoped variant bridge from PR277@3c34e670",
+      "origin_sha256": "60c508f7cd87498824369c251f3e44f6718d61fd2bd7fb1f56db661fb4daa273",
+      "sha256": "60c508f7cd87498824369c251f3e44f6718d61fd2bd7fb1f56db661fb4daa273",
+      "normalization": "Measured model-outbox variant bridge, completed-key cache-only custody and private indexed read snapshot; no active runtime hotpatch."
     }
   ]
 }

@@ -3,6 +3,10 @@ import argparse,hashlib,json,os,sys,time,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 REPO=ROOT.parents[1]
+NATIVE_MODULES=('test_growth_pipeline','test_native_variant_snapshot','test_neural_decode','test_neural_native_batch','test_neural_native_cli','test_neural_native_train','test_neural_outbox','test_training_snapshot_native')
+def collect_suite():
+ sys.path.insert(0,str(ROOT/'tests_native'))
+ return unittest.defaultTestLoader.loadTestsFromNames(NATIVE_MODULES)
 def main():
  p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args()
  native=ROOT/'pipelines/native/consumer'
@@ -10,7 +14,7 @@ def main():
  sys.path[:0]=[str(ROOT),str(native),str(ROOT/'pipelines/native'),str(ROOT/'pipelines/neural'),str(ROOT/'pipelines/growth'),str(ROOT/'tests')]
  a.output.mkdir(parents=True,exist_ok=False)
  started=time.time()
- suite=unittest.defaultTestLoader.discover(str(ROOT/'tests_native'))
+ suite=collect_suite()
  count=suite.countTestCases()
  def ids(items):
   for item in items:

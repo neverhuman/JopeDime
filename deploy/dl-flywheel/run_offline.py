@@ -49,6 +49,11 @@ def main():
   successor=json.loads((a.output/'successor/receipt.json').read_bytes())
   success=child.returncode==0 and successor['passed'] is True
   receipt['successor_suite']=successor;receipt['combined_collected']+=successor['collected'];receipt['combined_executed']+=successor['executed'];receipt['passed']=success
+ if success:
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_variant_offline.py'),'--output',str(a.output/'variant')],check=False)
+  variant=json.loads((a.output/'variant/receipt.json').read_bytes())
+  success=child.returncode==0 and variant['passed'] is True
+  receipt['variant_suite']=variant;receipt['combined_collected']+=variant['collected'];receipt['combined_executed']+=variant['executed'];receipt['passed']=success
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)
