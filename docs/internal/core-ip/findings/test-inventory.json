@@ -2856,6 +2856,14 @@
     "python:deploy/dl-flywheel/tests_hpc/test_archive_trace.py": {
       "role": "research",
       "reason": "Executed offline continual-learning regression fixtures in the Python lane; research flywheel outside the reviewed product baseline. Physical GPU and S3 qualifications have separate run receipts."
+    },
+    "python:deploy/dl-flywheel/tests_continuous/test_continuous_runner.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning continuation regressions in the Python lane; source qualification only. Live optimizer and S3 evidence are separately recorded."
+    },
+    "python:deploy/dl-flywheel/tests_continuous/test_continuous_state_review.py": {
+      "role": "research",
+      "reason": "Executed offline continual-learning continuation regressions in the Python lane; source qualification only. Live optimizer and S3 evidence are separately recorded."
     }
   },
   "baseline_triage": [

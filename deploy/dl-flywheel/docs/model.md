@@ -1,101 +1,95 @@
-# JopeDime continual GP policy — research candidate v1.0.0
+# JopeDime continuous GP policy — v1.0.0 research candidate
 
-## Status and scientific scope
+Updated 2026-10-09. This document describes the active full-corpus PolicyLM continuation, not the older Wave4 outcome critic or the 13-context qualification. It is a research candidate; measured development loss is not proof of improved GP win rate on independent unseen datasets.
 
-Updated 2026-10-09 03:00 UTC. This is the corrective continual-policy candidate, separate from the historical DL_wave4 outcome critic. It is not a production release or a demonstrated best-generalizing model. The first GPU qualification completed eight actual optimizer updates, one full epoch, 13 unique training data runs, 15 training presentations and readouts on all three validation contexts. Fixed-support training loss fell from 1.5667485 to 1.291574; validation loss fell from 1.4469008 to 1.224733. All 23 model-decoded GP proposals resolved before their updates: 14 new native executions with Rust parity and S3 publication, nine exact-context initial cache hits, zero failed proposals.
+## Current run and the 6,857 counter
 
-Validation score rate (ties count one half) was 62.5% versus a random panel GP and 6.25% versus the best panel GP, across eight proposals on only three contexts. The loss improvement has not established superiority over the strongest measured opponent. The physical nine-checkpoint chain, AdamW state, CPU/CUDA RNG and exact result references are independently verified in DL_FLYWHEEL_NEURAL_FINAL_VERIFICATION.json. The 130-file, 87,562,240-byte archive has exact-version S3 custody documented by DL_FLYWHEEL_NEURAL_PAPER_ARCHIVE_COMPLETE.json.
+The first full pass completed 429 optimizer updates across 6,857 distinct training data runs and scored 263 reserved validation data runs. The prior trainer stopped after that configured pass. The continuous version restores the physical checkpoint at update 429, all AdamW moments, CPU/CUDA random state and the frozen input normalization. It repeatedly reshuffles complete epochs, retaining earlier batch-membership fingerprints. It does not reset the model at an epoch boundary.
 
-There are 128 S3-published new data runs with required Kumo Small vectors, and the first 16 have a complete eight-program measured panel (128 fixed GP results). The first frozen loader retains the original 125 results; the three later completions belong to a subsequent snapshot. Verified exposure admitted ten supported contexts through an atomic evidence-bound transition, causing the generator to create ten more variants (138 generated; the ten new variants still await publication/encoding at this update). Six auxiliary-only training contexts remain pending rather than releasing main-objective capacity. Follow the live dashboard for subsequent observations.
+`unique training data runs` counts distinct dataset-version × split contexts consumed by a committed optimizer update. `total training data-run exposures` counts every committed presentation, including reuse in later epochs. Batches and exposures should increase when training revisits data; unique coverage should increase only when the optimizer actually consumes a new context. Two inner scoring folds do not create two input identities.
 
-First neural config: ce55dfe5f887d78e50937545d294850625fc036da5305cb3b1070205a3699cf5. Exact admission plan: 199f0cbd90c631cdae88beabbe8583ed4a95efcedc880a4abaddcd34926e3303. Actual commit receipt: d90d3c784402c52161b4e2ec1e9e76a702f0f6c2bccaad92d134d5454c1384de. The next segment must continue the same weights, optimizer, RNG and global batch journal; it must not reset the model or splice a new run into this curve.
+Actual continuation verification found physical update457, 7,305 total exposures and changed model parameters. At update493 the same fixed validation panel measured1.284191, versus1.381380 at update429; fixed training loss measured1.340202 versus1.427419. Read the live dashboard for current values. The original first-pass fixed losses were4.453104 training and4.394558 validation. The separate full263-context validation pass measured1.343791 at update429; do not compare this directly with the smaller fixed panel.
 
-A data_run means one dataset version with one exact split definition. Two inner cross-validation scoring passes on that data_run are two scores, not two new inputs. A genuinely different split receives a distinct identity. The new growing corpus, the historical 7,120-view corpus, and the earlier 100-variant one-parent pilot are separate inventories. The new policy is not yet consuming all 7,120 original views.
+Active root on xbabe2: `/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuous_20261009_v1`. Service: `jopedime-neural-continuous-20261009-v1`. Config SHA256: `fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed`. Original full-run config: `3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4`. Resumed parameter SHA256: `b888b5d66fda926c3609fa068a42a022a079e2d4bbc8db3b5badec8f51acaf20`.
 
-## Required input and explicit exclusions
+## Data coverage and admission
 
-The sole input block is NVIDIA Kumo-Tabular Small: 2,051 values, comprising 2,048 pooled hidden values and three query diagnostics. Model repository revision: 3c3e10bbdb590ace29e7026847f92db3c603096d. Small regressor weight SHA256: fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423. The roster/license audit is DL_FLYWHEEL_KUMOS_ROSTER_AUDIT.md/.json.
+The reconciled original inventory contains14,987 data runs from3,003 dataset versions. Current role/exclusion rules admit12,581 contexts. A complete teacher/input join exists for7,120 of those:6,857 training and263 validation. The other5,461 eligible contexts are an explicit input/label-join backlog; they have not all trained. Some have terminal records without winner labels. Kumo availability alone does not make a context training-ready.
 
-No PriorLabs/TabPFN 3.5, A0, Hyperion, Kumo Large, Mitra, TabDPT, TabICL, DOPE, Lion statistics, or other-model prediction diagnostics enter this candidate. Historical additional vectors remain preserved, but are not read by its loader. Historical mixed-input model performance cannot establish Kumo-only performance.
+The initial continuous snapshot contains the original7,120 plus three verified augmented contexts:6,859 training and264 validation. The two additional training contexts only increase the seen counter after their actual optimizer updates. Further measured128/138-context extensions are being validated separately; their existence in S3 does not imply admission.
 
-Input vectors are standardized using means and scales fit only on training contexts. A zero scale becomes one; standardized values are clipped at ±10. The raw vector and preprocessing statistics remain reproducible. There is no learned feature selection or validation-selected encoder filtering in this version.
+New snapshots are adopted only at closed epoch boundaries via an atomic inbox. They must preserve all old contexts, exact roles, original normalization and previous batch fingerprints. Raw, unencoded, unscored, unknown or failed contexts remain pending. Changed dataset features, targets or split require a fresh required encoding and exact-context GP measurements; parent labels are not copied. Every snapshot records exact S3 bucket/key/VersionId/hash/bytes closure and source/role identities.
 
-Each input is joined to its exact target identity, split, source lineage, raw content hash and current role authority. Changed features, target noise, or split require fresh encoding and exact-context scores. Parent scores are not copied to descendants. Outer test rows and excluded/sealed families are outside the optimizer closure. The current authority still excludes all 1,565 G3 views pending an explicit rights ruling.
+About5% of original parent lineages are reserved for validation, and descendants inherit their parent's role. The qualified augmentation registry contains1,068 parent lineages:1,014 training and54 validation. Context proportions need not equal5% because parents have different numbers of folds. Fuzzed variants do not create independent source families. Excluded and sealed families remain outside the optimizer closure.
 
-## Model
+## Required encoder and preprocessing
 
-The native PolicyLM has 828,421 parameters: a Kumo context projection followed by a causal prefix Transformer, d_model=128, two layers, four attention heads, feed-forward width512, dropout0.1, vocabulary282 and maximum128 tokens. The context conditions the program token sequence. Training uses native AdamW parameter groups, learning rate0.0003, weight decay0.01 with the native bias/norm exclusions, and gradient-norm clipping at1.
+Only NVIDIA Kumo-Tabular Small enters this model:2,051 values, comprising2,048 pooled hidden values plus three query diagnostics. Revision:`3c3e10bbdb590ace29e7026847f92db3c603096d`; small regressor weight SHA256:`fc672f536501d64356036050ac2acea7e46927f7b9ad38366abe048f88e7d423`.
 
-The first live qualification uses actual model logits for autoregressive sampling through a fixed trie of16 preregistered native-valid programs. This deliberately limits the action space while proving the complete execution loop. It does not claim unrestricted GP topology generation. The initial eight controls include ridge, standardized ridge, robust-scaled ridge, ranked ridge, RFF+ridge, random-projection+ridge, row-statistics+ridge and elastic net. The additional allowed programs change registered numeric parameters.
+The loader does not consume PriorLabs/TabPFN3.5, Kumo Large, A0, Hyperion, Mitra, TabDPT, TabICL, DOPE, Lion statistics or other-model prediction blocks. Historical extra vectors remain historical artifacts. New encoding jobs compute only Kumo Small.
 
-Every emitted proposal includes model/checkpoint identity, batch index, data_run/context identity, exact program string/hash, decode seed and token evidence. Sampling seeds bind fixed run seed, batch index, data_run ID and position, rather than a wall-clock-dependent record identity.
+Training-only vector means/scales are frozen from the original training corpus. Zero scales become one; standardized inputs are clipped at±10. Validation never fits preprocessing. New variants use the same statistics without refitting. No PSO/CMA-ES feature mask or validation-selected binary gate is active in this version; that remains a separately specified experiment.
 
-## Loss and what a falling curve means
+## Model and program output
 
-This candidate retains the native successor-v1 objective:
+The native PolicyLM has893,957 parameters: a context projection and causal prefix Transformer, width128, two layers, four attention heads, feed-forward width512, dropout0.1, vocabulary282 and maximum sequence length640. AdamW starts at0.0003 learning rate with0.01 weight decay and the native bias/norm exclusions; gradient norm is clipped at1. Plateau control reduces the learning rate by0.5 down to1e-6 while retaining the best checkpoints and continuing shuffled epochs.
 
-L = CE + 0.25 × Bradley–Terry pairwise loss + 0.10 × listwise loss
-    + 0.25 × quality Huber loss + 0.10 × feasibility CE
-    + 0.05 × runtime Huber loss.
+The decoder samples actual model logits through a fixed trie containing6,640 programs derived only from original training teachers. It does not read validation teacher programs into that trie. This is restricted program selection/generation: a decoded program may be new for a particular dataset/split even when the same string has appeared elsewhere. Arbitrary unseen GP topology generation is not claimed.
 
-CE teaches measured high-quality program sequences. Pairwise and listwise terms teach ordering among measured programs for the same context. Quality regression estimates normalized measured quality; feasibility and runtime are auxiliary tasks. Unsupported terms remain explicitly unsupported rather than receiving invented targets.
+A macro-batch contains up to16 training contexts with at most one context from any parent lineage. Micro-batches respect8,192 padded tokens and do not silently truncate long sequences. Teacher windows rotate across epochs; the loader uses up to eight measured candidates plus an eligible winner per context. It does not ingest every historical GP program into every update.
 
-The native teacher/comparator rules are unchanged, including distinct program-skeleton support. The run requires nonzero real teacher and ranking support in both training and validation before any optimizer update. Feasibility-only data cannot masquerade as successful program learning.
+Each update durably emits two proposals: one rotating training context and one rotating validation context. This is not yet one proposal for every context in the macro-batch. Proposal records include exact context/program identity, checkpoint, decode seed, token evidence and phase. Evaluation is asynchronous so GP execution latency does not block every gradient update. Shared backlog limits apply before additional proposals can overwhelm consumers.
 
-The plotted train and validation losses use fixed context/member panels, with dropout disabled during both readouts. This makes their changes interpretable across updates. A lower validation objective is useful evidence, but not equivalent to a higher executed GP win rate or generalization to new independent datasets. The dashboard therefore reports measured GP comparisons separately.
+## Loss and score normalization
 
-Initial optimization uses one frozen measured-label snapshot. Newly executed proposal outcomes are stored immediately but become optimizer targets only in a subsequent versioned snapshot. This is supervised policy/ranking qualification, not an online policy-gradient or reinforced-learning performance claim.
+The support-masked objective is:
 
-## Normalization decision
+`L = CE + 0.25 quality_Huber + 0.25 pairwise_Bradley_Terry + 0.10 listwise + 0.10 feasibility_CE + 0.05 runtime_Huber`.
 
-Retain every raw inner-fold RMSE and target unit. The current native objective uses its original same-split mean-baseline normalization:
-q = -0.5 × sum over two folds of log(max(GP_RMSE,epsilon)/max(mean_baseline_RMSE,epsilon)).
-q is clipped to ±log(1000) for optimization. The context-specific epsilon is max(1e-12 × max(1,abs(mean(y))), 1e-6 × robust_target_scale), with MAD, then IQR, then standard-deviation fallbacks. A positive q means lower error than the mean baseline. Baseline disagreement or missing support does not become an invented target. A separately versioned CatBoost-relative objective is planned; it will not silently replace or mix with the current objective.
+CE teaches eligible program sequences; pairwise/listwise terms teach ordering among measured programs on the same context. Quality, feasibility and runtime are separate auxiliary targets. Terms without real support are masked, not filled with zero scores. New augmented programs currently contribute measured quality/feasibility/runtime and supported ranking terms; self-generated variant programs do not automatically become CE imitation teachers.
 
-A useful candidate target is log((baseline_RMSE + epsilon)/(GP_RMSE + epsilon)), with a documented scale-aware epsilon and fixed robust clipping. A positive value means lift over the baseline. Advantages: less dominance from target units and a stronger difficulty-adjusted comparator. Risks: near-perfect baselines make ratios unstable; baseline weaknesses become part of the target; train/validation protocol mismatch causes leakage; normalizing does not create independent data. Fit the baseline only on the complementary inner fold, use a fixed configuration without validation tuning, and preserve raw errors plus denominator support. The CatBoost job and its measured comparisons are not claimed as completed here.
+Retain both raw inner-fold RMSEs and normalize quality against the complementary-fold mean predictor:
 
-## Shuffling, exposure and validation
+`q = -0.5 * sum(log(max(GP_RMSE, epsilon) / max(mean_baseline_RMSE, epsilon)))`.
 
-The planner persistently records membership fingerprints as sorted data_run IDs, while separately recording shuffled order. It permits at most one source lineage in a batch. Epoch membership is exhausted before starting a new pass; exact membership repetition is rejected. When a finite pool cannot produce a new permitted batch, the run waits explicitly instead of recycling one invisibly.
+Optimization clips q to±log(1000). The context epsilon uses target scale with MAD/IQR/standard-deviation fallbacks and a numerical floor; source code and snapshot retain the exact formula. Positive q means lower error than the mean predictor. The baseline uses only the appropriate fitting fold.
 
-A reservation is not exposure. A batch counts only after actual backward/optimizer work, changed model parameters, physical checkpoint creation, optimizer evidence and a committed planner record. Reserved-but-uncommitted work remains visible for reconciliation. New frozen corpus adoption and any restart must preserve this journal; creating a fresh journal must not be presented as global deduplication.
+CatBoost-relative quality is not active. A stronger reference can normalize difficulty more meaningfully, but near-perfect baselines make ratios unstable, and it adds fitting cost and another protocol dependency. Keep this run's normalization fixed; evaluate a separately versioned CatBoost-relative objective with raw errors, denominator support and training-only fit before changing it. Never mix objectives under one label identity.
 
-Approximately5% of source lineages are reserved for validation; all their descendants retain that role. The current qualified source registry has1,068 lineages:1,014 training and54 validation. The first16-context qualification has13 train and3 validation contexts for development support, so its ratio is intentionally not the full-registry ratio. Fuzzed descendants do not count as new independent source families.
+Fixed training/validation panel readouts both disable dropout and retain the same members/teacher windows across the continuation. Full original validation runs at completed epoch boundaries; expanded validation is reported separately. Lower validation loss supports this development trajectory but is not an executed-program win rate or an unbiased generalization estimate. The reserved development panel also controls learning rate, so it is not an untouched final test set.
 
-## Mandatory GP execution and S3
+## Epochs, checkpoints and failure recovery
 
-An emission is durably recorded before resolving its outcome. Cache identity includes canonical program, dataset bytes, target identity, split, evaluator, vocabulary and protocol. Exact matching is required; a program scored on a different split or target is not a hit.
+The planner exhausts the current training snapshot before closing an epoch. It shuffles order and groups distinct parents into new batch memberships, preserving order-independent membership hashes across the original and continuation journals. A context may appear in many epochs; a whole exact batch membership is not reused. If no legal new batch exists, it waits explicitly.
 
-Uncached programs use the local native evaluation route and GP-to-Rust emitter. Both inner folds are scored; generated Rust predictions must match the native evaluator within1e-9 × max(1,abs(reference)). Seven artifacts plus the final lookup record are published create-only, then checked through exact VersionId GET and SHA256. The lookup record is written last. Failures and ambiguous outcomes remain explicit and have no numeric reward. A batch cannot update until all its emitted programs have verified results.
+Exposure is recorded only after optimizer work, physical checkpoint creation and a committed batch proof. Failed or ambiguous updates are preserved for reconciliation. Checkpoints include model, AdamW, CPU/CUDA RNG and separate optimizer-control state. Recovery retention keeps the last two, best two and each completed epoch checkpoint; historical batch proofs and loss records remain.
 
-Bucket: veox-jopedime-learning-use2.
-Research prefix: experiments/gp-policy-dl/v2-trainonly/.
-Dataset artifacts: datasets/flywheel/v1/<full-identity>/.
-Encoder/dataset completion receipts: receipts/flywheel-datasets/v1/.
-Program result library: program-results/flywheel/v1/.
-Attempt custody: program-attempts/flywheel/v1/.
-Paper archives: paper-evidence/20261008/neural/.
+The current service is a bounded continuous campaign, with50,000 additional-update limit, inherited deadline1791592146.380285,24GiB output cap and32,768 shared unresolved proposals. It continues across normal epoch endings. An existing15-minute maintenance heartbeat verifies progression and prepares reconciled bounded successors; an integrity/resource failure must not be bypassed or replayed merely to keep a counter moving.
 
-These are versioned research flywheel records, not an assertion that the native production HWM or original dataset catalog has been promoted.
+## GP execution, parity and S3
 
-## Fuzzing and growth
+Every generated proposal is durably queued before resolution. Exact-context cache identity includes dataset, target, split, canonical program, evaluator and protocol. Confirmed misses execute the native local evaluation route and generated Rust on both inner folds. Rust/native predictions must agree within the fixed tolerance `1e-9 * max(1, abs(reference))`. Successful artifacts and the final lookup record are create-only and verified by exact-VersionId GET plus SHA256. The result record is published last.
 
-The source registry keeps train-only prepared views under2,000 rows. Every derived dataset preserves exact source hashes, source lineage, split definitions, recipe version, random seed, added/dropped columns, feature correspondence, target-noise level, target units and caveats in JSON.
+Native/Rust parity failures are explicit implementation/evaluation failures, not fabricated bad RMSEs. Six such failures were retained during the first cached native expansion; numeric publication and gradients are withheld. Consumers preserve unknown attempts and immutable local/S3 custody. Never loosen the tolerance to inflate throughput.
 
-The current recipe can drop0/5/10% of columns while retaining at least one, append bounded Gaussian nuisance columns, and add0/1/3/5% target noise relative to training-label scale. The first128 happened to exercise unchanged and1% target noise. Feature noise is disabled until categorical/prepared-column semantics can be established. No-op content is rejected; labels/scores are never inherited for changed inputs. Existing inner split definitions are preserved; manufacturing new independent outer folds is not yet implemented.
+Newly measured results become training targets only through a later admitted snapshot. Win rate and Elo require matched same-context evaluation against frozen random/winner opponents. Those comparisons have not yet been calculated for the current full model, so the dashboard leaves them unavailable. Historical13-context comparisons must not be relabeled as current-model results.
 
-Generation targets100,000 variants, rotates source lineages and limits descendants per lineage. It is subject to a bounded pending queue. Published, encoded, scored and actually trained are separate states. Only verified train/validation exposure may release pending capacity; changing a count or ticking a publication flag is insufficient.
+S3 bucket:`veox-jopedime-learning-use2`; research prefix:`experiments/gp-policy-dl/v2-trainonly/`. Derived datasets live under`datasets/flywheel/v1/<identity>/`; source/transform JSON and exact splits accompany each. Encoder receipts live under`receipts/flywheel-datasets/v1/`. Program-result and attempt namespaces are schema-versioned and distinguish native-original from augmented contexts. These are research records, not silent promotion of the production GP high-water mark.
 
-## Comparisons
+## Growing the corpus and compute allocation
 
-Each measured model proposal is compared against a uniform random member and the best measured member of the frozen eight-program panel on the exact same context and protocol. The comparison metric is the geometric mean of the two measured inner-fold RMSEs. This panel winner is not the global S3 HWM.
+The augmentation generator rotates parents toward100,000 distinct variants under2,000rows. Recipes preserve source hashes, lineage, split, seed, column correspondence, target units and transformation parameters. Approved changes include bounded column drops, bounded synthetic Gaussian nuisance columns and0/1/3/5% target noise scaled from designated fit labels. Generic feature noise remains disabled until continuous/categorical semantics are qualified. No-op content is rejected. Current variants retain the source inner splits; a general new-fold factory is not yet implemented.
 
-The dashboard's score rates use validation proposals only: win=1, tie=0.5, loss=0. Diagnostic Elo starts at1,500 against a fixed1,500 opponent with K=16 in chronological order. Training and validation games remain separate; distinct-context count is shown alongside repeated games. With only three initial validation contexts, these numbers are pipeline qualification evidence, not a white-paper generalization result.
+Raw generation, required encoding, GP scoring and training admission have independent bounded queues. Raw generation no longer waits for optimizer exposure. Its current unencoded buffer is4,096 contexts; a plateau at that bound means encoder throughput is limiting generation. Historical encoded receipts are reconciled separately from new stage commits.
 
-## Compute, logging and limits
+xbabe1 runs the dedicated required-encoder pipeline; xbabe2 runs the continuous model, generation and bounded native GP consumers; xbabe3 supports GP evaluation and other coordinated owned work. Resource checks account for foreign workloads. GPU memory is used for actual tensors/model work; filling memory or maximizing utilization alone is not the throughput objective.
 
-The first policy qualification is on xbabe2: one GPU, at most8CPU and8GiBRAM, no swap, maximum8 batches of2 training contexts plus one rotating validation proposal per batch. The new1200-second run reserves180seconds for final attempt custody. xbabe1 is left for its owner. xbabe3 handles separately bounded corpus preparation after resource checks.
+## Timing and white-paper evidence
 
-Every run retains immutable source/config/role/snapshot hashes; actual batch order and membership; raw and weighted loss terms and support; gradients and checkpoint hashes; named AdamW moments; CPU and CUDA RNG tensors; preprocessing statistics; generated token/program records; actual measurements and exact S3 versions; failures; and measured comparison games. A separate closed-run paper archive preserves checkpoints and evidence with exact-version readback.
+All three hosts record UTC nanoseconds, monotonic timestamps, source identities, CPU counters, cgroup user/system/throttling, memory/swap/pressure, I/O, network and GPU utilization/memory/power. New instrumented workers record stage spans, process/child CPU time and CUDA event time. Wall duration, summed worker time, utilization samples and actual GPU kernel time are different measurements and must not be added indiscriminately.
 
-Completed gates: actual neural optimizer qualification, full first-run paper custody, and verified exposure-based generator admission with observed new generation. Remaining completion gates: persistent model continuation; publishing/encoding the next ten variants; scheduling/labeling the remaining112 encoded variants; original7,120-view admission audit; evaluated CatBoost normalization; broader program generation; long-run continuous scheduling and resource arbitration; source PR integration after the existing owner queue clears. These are explicit remaining tasks, not completed capabilities.
+Hash-chained host segments are sealed, published create-only and exact-version verified in S3 under`paper-evidence/20261009/hpc-trace-v1/`. Active unsealed segments remain local until sealed. Checkpoint, program and stage evidence have their own archives; the host archive alone does not prove every model artifact is already in S3.
+
+The completed844.3-second first pass spent309.4seconds(36.6%) on input preparation,252.6seconds(29.9%) on decoding and29.0seconds(3.4%) in the optimizer stage. Remaining time includes validation, checkpoint and other overhead pending finer attribution. Exact repeated native verification measured2.644seconds/18downloads versus0.149seconds/zero downloads after cache warm-up, with identical measured scores. Cold-cache work was slower; this17.7x warm verification gain is not an end-to-end speedup.
+
+See `DL_HPC_BOTTLENECKS_AND_TIMING.md`, the live dashboard and exact source receipts for current throughput findings. Source is being integrated under`~/JopeDime/deploy/dl-flywheel` on xbabe2 in PR277. No release tag, production serving claim or completed100k-corpus claim is implied.

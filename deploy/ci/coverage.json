@@ -9257,6 +9257,26 @@
       ],
       "dispositions": [],
       "scope": "26 offline HPC cases executed by run_hpc_offline.py within run_offline.py. No live CPU/GPU/S3 proof inferred from fixtures."
+    },
+    "python:deploy/dl-flywheel/tests_continuous/test_continuous_runner.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "17 offline continuation cases in run_continuous_offline.py; exact optimizer/RNG and journal fixtures, no GPU/S3/live data calls."
+    },
+    "python:deploy/dl-flywheel/tests_continuous/test_continuous_state_review.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "17 offline continuation cases in run_continuous_offline.py; exact optimizer/RNG and journal fixtures, no GPU/S3/live data calls."
     }
   }
 }

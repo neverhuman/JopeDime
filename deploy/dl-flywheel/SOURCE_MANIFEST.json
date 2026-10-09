@@ -4,28 +4,41 @@
   "files": [
     {
       "path": "deploy/dl-flywheel/README.md",
-      "origin": "HPC source integration",
-      "origin_sha256": "55611a31f441e1f528905164c66da15f8cc209ddd52944bf36e1075237e853a7",
-      "sha256": "55611a31f441e1f528905164c66da15f8cc209ddd52944bf36e1075237e853a7"
+      "origin": "continuous follow-up authored packaging",
+      "origin_sha256": "00cdd7774f94c7f500b290f2751bcdbf71926930e149eaf6138d43e240706eb4",
+      "sha256": "00cdd7774f94c7f500b290f2751bcdbf71926930e149eaf6138d43e240706eb4"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/collect.py",
       "origin": "work/flywheel-20261008/paper_publish.py",
-      "origin_sha256": "9ffb96acdc375588af653b1176ec35e715625c0a0bf6c58f2654211d97845b83",
-      "sha256": "9ffb96acdc375588af653b1176ec35e715625c0a0bf6c58f2654211d97845b83"
+      "origin_sha256": "dbca82f85766e283d748556e1f8b1b5182b87dd474a51faf487ab8352a3d065e",
+      "sha256": "dbca82f85766e283d748556e1f8b1b5182b87dd474a51faf487ab8352a3d065e"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/index.html",
       "origin": "outputs/DL_paper_dashboard.html",
-      "origin_sha256": "ca6081527ce75a23d0d416faa76e0e52ca03cd9e6836a6ecf5c977f0901e99ca",
-      "sha256": "c428daaeb0ec40f268a505037c4caf164e52e4da0f909aa6e9b4cc972c402e1d",
-      "normalization": "Trailing whitespace and blank EOF only; runtime original preserved"
+      "origin_sha256": "43e6d6bd14b9bf7b85e5a0c29ed52c03ddcffe90b2455aeb100067939e417199",
+      "sha256": "cea6c8a4b88bc51f092ccf0b5246fe2c397bc209684e9366eb5e3758f24b1a48",
+      "normalization": "Removed one whitespace-only HTML line for git diff --check; runtime logic unchanged.",
+      "original_sha256": "43e6d6bd14b9bf7b85e5a0c29ed52c03ddcffe90b2455aeb100067939e417199"
     },
     {
       "path": "deploy/dl-flywheel/dashboard/server.py",
       "origin": "outputs/dlhwm_dashboard/server.py",
       "origin_sha256": "23cf83d78b14e6d39c3c0f82593afe82e50e2167b6a234b3fc389252073e7aa3",
       "sha256": "23cf83d78b14e6d39c3c0f82593afe82e50e2167b6a234b3fc389252073e7aa3"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/continuous-independent-review-20261009.json",
+      "origin": "outputs/DL_FLYWHEEL_CONTINUOUS_INDEPENDENT_REVIEW.json",
+      "origin_sha256": "6ef0ac823570deacd56d80ad4bc29671310d2a035bf7e52a5dc65e89c29e9fd9",
+      "sha256": "6ef0ac823570deacd56d80ad4bc29671310d2a035bf7e52a5dc65e89c29e9fd9"
+    },
+    {
+      "path": "deploy/dl-flywheel/docs/continuous-runtime-pins-20261009.json",
+      "origin": "outputs/DL_FLYWHEEL_CONTINUOUS_CONFIG.json",
+      "origin_sha256": "fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed",
+      "sha256": "fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed"
     },
     {
       "path": "deploy/dl-flywheel/docs/correction-plan.md",
@@ -84,8 +97,8 @@
     {
       "path": "deploy/dl-flywheel/docs/model.md",
       "origin": "outputs/DL_CONTINUAL_MODEL_V1.md",
-      "origin_sha256": "e65adda9e4ff0dd3faa43c01dda10d7474c302956d3d872c7c950d7242e949dd",
-      "sha256": "e65adda9e4ff0dd3faa43c01dda10d7474c302956d3d872c7c950d7242e949dd"
+      "origin_sha256": "c5b805e327f763d9aa56b8a12dda7d1e761b0589f2575edd3f66c31fe7157e03",
+      "sha256": "c5b805e327f763d9aa56b8a12dda7d1e761b0589f2575edd3f66c31fe7157e03"
     },
     {
       "path": "deploy/dl-flywheel/docs/native-dispatch-qualification-20261009.json",
@@ -101,9 +114,9 @@
     },
     {
       "path": "deploy/dl-flywheel/docs/release-status.md",
-      "origin": "followup dated operational status and logging limits",
-      "origin_sha256": "cb2d5fc64c6ebd8144c23f05d02e2acb78fd65e087aef28aebdab25bf6e9f835",
-      "sha256": "cb2d5fc64c6ebd8144c23f05d02e2acb78fd65e087aef28aebdab25bf6e9f835"
+      "origin": "continuous follow-up authored packaging",
+      "origin_sha256": "469192988dfded1e7d74f856d24b4aa0eef4c571bd67bf36b963daa304fd698f",
+      "sha256": "469192988dfded1e7d74f856d24b4aa0eef4c571bd67bf36b963daa304fd698f"
     },
     {
       "path": "deploy/dl-flywheel/jope_flywheel/__init__.py",
@@ -266,6 +279,252 @@
       "origin": "work/flywheel-20261008/paper_backup_core.py",
       "origin_sha256": "3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429",
       "sha256": "3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/__init__.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/__init__.py",
+      "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
+      "sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/automaton.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/automaton.py",
+      "origin_sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a",
+      "sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/common.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/common.py",
+      "origin_sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe",
+      "sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/dsl_tokenizer.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/dsl_tokenizer.py",
+      "origin_sha256": "0912e7216320a82dc34d9af13554de91656aba558977bd213905a541fbaf9807",
+      "sha256": "0912e7216320a82dc34d9af13554de91656aba558977bd213905a541fbaf9807"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/labels.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/labels.py",
+      "origin_sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd",
+      "sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/model.py",
+      "origin_sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
+      "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/objective.py",
+      "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
+      "sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/oracle.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/oracle.py",
+      "origin_sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a",
+      "sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/sampler.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/sampler.py",
+      "origin_sha256": "03f56065564d953a67fe873428a2171dea5bc93ee113ea88d5c7a3a8d168265f",
+      "sha256": "03f56065564d953a67fe873428a2171dea5bc93ee113ea88d5c7a3a8d168265f"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/continuous_cli.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_cli.py",
+      "origin_sha256": "a282ab11a4a7247fd9ce1a514192a71153e18b5cf5a34533eb7edcdb2edd6e3a",
+      "sha256": "a282ab11a4a7247fd9ce1a514192a71153e18b5cf5a34533eb7edcdb2edd6e3a"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/continuous_runner.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_runner.py",
+      "origin_sha256": "add98aa1ebcb66868b1594eb47f859f457be75627289f1548d9f7772320c1ab0",
+      "sha256": "add98aa1ebcb66868b1594eb47f859f457be75627289f1548d9f7772320c1ab0"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/continuous_state.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/continuous_state.py",
+      "origin_sha256": "6f920ee26fbfbbd719365d79b1fe638d8bceae61585ced436f94e11943f332ca",
+      "sha256": "6f920ee26fbfbbd719365d79b1fe638d8bceae61585ced436f94e11943f332ca"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/native_corpus_authority.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/native_corpus_authority.py",
+      "origin_sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9",
+      "sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/neural_decode.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_decode.py",
+      "origin_sha256": "cf36801e284492dd41126feaf3014bff1feb20adc2f9a3b5ee27459519e8763a",
+      "sha256": "cf36801e284492dd41126feaf3014bff1feb20adc2f9a3b5ee27459519e8763a"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/neural_native_batch.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_native_batch.py",
+      "origin_sha256": "afb95ca22d49934b8d7914f0016aad0029bf2c9220fbb69565763d6e0594b7a8",
+      "sha256": "afb95ca22d49934b8d7914f0016aad0029bf2c9220fbb69565763d6e0594b7a8"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/neural_native_stream.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_native_stream.py",
+      "origin_sha256": "0dc1022f8132fbfb4b0b04aab1840369e0b799b3fd9c06a8fbd29b7c878754c4",
+      "sha256": "0dc1022f8132fbfb4b0b04aab1840369e0b799b3fd9c06a8fbd29b7c878754c4"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/neural_native_train.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_native_train.py",
+      "origin_sha256": "e73567dcffde3989c7ac33bdfc9ae2df99dc6c29f8e83baf519ba1b9eac29280",
+      "sha256": "e73567dcffde3989c7ac33bdfc9ae2df99dc6c29f8e83baf519ba1b9eac29280"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_outbox.py",
+      "origin_sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+      "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/neural_storage.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/neural_storage.py",
+      "origin_sha256": "ebc3dd0143a956f051511ec09a5f34129b9a63e4bdae0263c6ac5bde5ac8cc92",
+      "sha256": "ebc3dd0143a956f051511ec09a5f34129b9a63e4bdae0263c6ac5bde5ac8cc92"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/__init__.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/__init__.py",
+      "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
+      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/augmentation.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/augmentation.py",
+      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
+      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/batch_stream.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/batch_stream.py",
+      "origin_sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
+      "sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/evergreen.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/evergreen.py",
+      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
+      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/evidence.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/evidence.py",
+      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
+      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/native_variant_snapshot.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/native_variant_snapshot.py",
+      "origin_sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
+      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/paper_archive.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/paper_archive.py",
+      "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
+      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_gate.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_gate.py",
+      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
+      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_inputs.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_inputs.py",
+      "origin_sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400",
+      "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_io.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_observer.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_observer.py",
+      "origin_sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
+      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_worker.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_worker.py",
+      "origin_sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33",
+      "sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/queue.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/queue.py",
+      "origin_sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
+      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/s3_library.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/s3_library.py",
+      "origin_sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
+      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/score_join.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/score_join.py",
+      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
+      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/target_noise.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/target_noise.py",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/timing.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/timing.py",
+      "origin_sha256": "ca8ea1ddb3412476e5f93e5058f2c1c491748b0dc15d71f86c06a6b2d5f7bd1d",
+      "sha256": "ca8ea1ddb3412476e5f93e5058f2c1c491748b0dc15d71f86c06a6b2d5f7bd1d"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_admission.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_admission.py",
+      "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
+      "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot.py",
+      "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
+      "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_kumos.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot_kumos.py",
+      "origin_sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
+      "sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_native.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot_native.py",
+      "origin_sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
+      "sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2"
     },
     {
       "path": "deploy/dl-flywheel/pipelines/encoding/evergreen_kumos_packet.py",
@@ -557,6 +816,12 @@
       "sha256": "63b0a13aa76369c08553e9cfb360a6998492ac43e8c1a152e9e08c841b9bc965"
     },
     {
+      "path": "deploy/dl-flywheel/run_continuous_offline.py",
+      "origin": "continuous follow-up authored packaging",
+      "origin_sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032",
+      "sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032"
+    },
+    {
       "path": "deploy/dl-flywheel/run_hpc_offline.py",
       "origin": "HPC source integration",
       "origin_sha256": "233c8c159e3f90a7de6b21f2f1a8d587ee3ec166d95de23dbd6f31654dd5dbd4",
@@ -570,9 +835,9 @@
     },
     {
       "path": "deploy/dl-flywheel/run_offline.py",
-      "origin": "HPC source integration",
-      "origin_sha256": "0bb64c28a8ff1de56dc9d7a3c24c66a9de459d97f37d57dd86a66daae16c24b7",
-      "sha256": "0bb64c28a8ff1de56dc9d7a3c24c66a9de459d97f37d57dd86a66daae16c24b7"
+      "origin": "continuous follow-up authored packaging",
+      "origin_sha256": "338b83b2765f60f25fde2e9907001b43869933f445fe5493aa1a9454bcd450fc",
+      "sha256": "338b83b2765f60f25fde2e9907001b43869933f445fe5493aa1a9454bcd450fc"
     },
     {
       "path": "deploy/dl-flywheel/tests/fixtures/kumos-component-publication.json",
@@ -669,6 +934,18 @@
       "origin": "work/flywheel-release-20261009/test_training_snapshot_kumos.py",
       "origin_sha256": "c9584821932528d61d9f0fa60bb529b75b74bb45e682a1dc32194a380bcc285d",
       "sha256": "c9584821932528d61d9f0fa60bb529b75b74bb45e682a1dc32194a380bcc285d"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests_continuous/test_continuous_runner.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/test_continuous_runner.py",
+      "origin_sha256": "ef492a43214a2e236ff28ab8a250b39738208b100a0e20860239220ab84e7f15",
+      "sha256": "ef492a43214a2e236ff28ab8a250b39738208b100a0e20860239220ab84e7f15"
+    },
+    {
+      "path": "deploy/dl-flywheel/tests_continuous/test_continuous_state_review.py",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/test_continuous_state_review.py",
+      "origin_sha256": "b25da38bd7e4c3a51b3a7260307034cfa3e8b20ed195667448cc292f574922ae",
+      "sha256": "b25da38bd7e4c3a51b3a7260307034cfa3e8b20ed195667448cc292f574922ae"
     },
     {
       "path": "deploy/dl-flywheel/tests_hpc/test_archive_trace.py",

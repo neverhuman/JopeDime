@@ -287,6 +287,42 @@ if HOST=='xbabe2':
   if state.get('ActiveState')not in ('active','activating')and 'neural_terminal'not in out:out['neural_unfinished_stop']=True
  except FileNotFoundError:pass
  except Exception as e:out['errors'].append('Neural training: native '+type(e).__name__)
+if HOST=='xbabe2':
+ try:
+  root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuous_20261009_v1');pin='fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed'
+  raw=(root/'config.json').read_bytes()
+  if (root/'config.json').is_symlink()or hashlib.sha256(raw).hexdigest()!=pin:raise ValueError('continuous config identity')
+  out['neural_transition']={'state':'checking_resume','config_sha256':pin,'from_completed_batches':429}
+  for key in ('neural_terminal','neural_unfinished_stop'):out.pop(key,None)
+  service=subprocess.run(['systemctl','--user','show','jopedime-neural-continuous-20261009-v1','--property=ActiveState,SubState,Result,ExecMainStatus'],capture_output=True,text=True,timeout=5,check=True)
+  state=dict(line.split('=',1)for line in service.stdout.splitlines()if '='in line);out['neural_service']=state
+  p=root/'training/progress.json'
+  if p.is_file():
+   raw=p.read_bytes()
+   if p.is_symlink()or len(raw)>16777216:raise ValueError('continuous progress cap')
+   v=json.loads(raw);origin=v['resumed_from']
+   if v['schema']!='jope.flywheel-neural-progress/v1'or v['config_sha256']!=pin or origin['absolute_optimizer_step']!=429 or origin['config_sha256']!='3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4' or origin['checkpoint_parameter_sha256']!='b888b5d66fda926c3609fa068a42a022a079e2d4bbc8db3b5badec8f51acaf20':raise ValueError('continuous ancestry identity')
+   prior=out.get('neural_training',{});old=prior.get('loss_history',[]);new=v.get('loss_history',[])
+   # Join only this exact resumed model with an observed identical boundary readout.
+   boundary=next((x for x in new if x['batch']==429),None)
+   if old and boundary:
+    last=old[-1]
+    if last['batch']!=429 or any(abs(last[k]-boundary[k])>1e-6 for k in ('train_loss','validation_loss')):raise ValueError('continuous fixed panel boundary mismatch')
+    v['loss_history']=old+[x for x in new if x['batch']>429]
+   for key in ('original_teacher_inventory','active_snapshot'):
+    if key in v:v[key]={k:x for k,x in v[key].items()if k in ('schema','counts','spec_sha256','snapshot_sha256','at','native_snapshot','variants','contexts','counts_by_role')}
+   out['neural_training']=v;out['neural_continuous']=True;out.pop('neural_transition',None)
+  for filename in ('status.json','fatal.json'):
+   p=root/filename
+   if not p.is_file():continue
+   raw=p.read_bytes()
+   if p.is_symlink()or len(raw)>8388608:raise ValueError('continuous terminal cap')
+   t=json.loads(raw)
+   if t.get('config_sha256',pin)!=pin:raise ValueError('continuous terminal identity')
+   out['neural_terminal']={k:t.get(k)for k in ('state','at','optimizer_steps','error')}
+  if state.get('ActiveState')not in('active','activating')and'neural_terminal'not in out:out['neural_unfinished_stop']=True
+ except FileNotFoundError:pass
+ except Exception as e:out['errors'].append('Neural training: continuous '+type(e).__name__)
 try:
  root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_kumos112_20261009')
  p=root/'runs'/HOST/'progress.json';raw=p.read_bytes()
@@ -412,6 +448,40 @@ if HOST=='xbabe2':
    if key=='inference_first':v={k:v[k]for k in ('at','status','timing_events','timing_stage_summary','decode','all_expected_record_versions_and_seven_artifacts_verified')}
    out[key]=v
   except Exception as e:out['errors'].append(key+': '+type(e).__name__)
+
+
+if HOST=='xbabe2':
+ try:
+  import sqlite3
+  p=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_20261009/data/expansion.sqlite')
+  con=sqlite3.connect(p.as_uri()+'?mode=ro',uri=True,timeout=.5);con.row_factory=sqlite3.Row
+  try:
+   if con.execute('SELECT sha FROM config WHERE id=1').fetchone()[0]!='8fdd90611435beaaa9b29ced7239e6329ad9e0beea4065fe6c7173d21cae2241':raise ValueError('encoding database identity')
+   rows=con.execute("SELECT s.receipt_json,s.receipt_sha,v.identity FROM flywheel_pipeline_stage_v1 s JOIN variants v ON v.identity=s.identity WHERE s.stage='kumo_small_s3_verified' AND v.sequence>=138").fetchall()
+   for r in rows:
+    body=r['receipt_json'].encode()
+    if hashlib.sha256(body).hexdigest()!=r['receipt_sha']:raise ValueError('encoding stage hash')
+    v=json.loads(body)
+    if v['variant_identity']!=r['identity']or v['required_encoders']!=['kumo_tabular_s']:raise ValueError('encoding stage identity')
+   out['rolling_kumo']={'at':time.time(),'verified_new_vectors':len(rows),'packet_states':dict(con.execute('SELECT state,count(*) FROM flywheel_kumo_packets_v1 GROUP BY state'))}
+  finally:con.close()
+ except Exception as e:out['errors'].append('Rolling encoding: '+type(e).__name__)
+ try:
+  p=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_native_full_20261009_v1/training/outbox.sqlite')
+  con=sqlite3.connect(p.as_uri()+'?mode=ro',uri=True,timeout=.5)
+  try:
+   states=dict(con.execute('SELECT state,count(*) FROM emissions GROUP BY state'));out['native_gp_outbox']={'at':time.time(),'states':states,'total':sum(states.values()),'pending':sum(v for k,v in states.items()if k not in('published_verified','cached_verified','failure_custody_verified'))}
+  finally:con.close()
+  if out.get('neural_continuous'):
+   p=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_continuous_20261009_v1/training/outbox.sqlite')
+   con=sqlite3.connect(p.as_uri()+'?mode=ro',uri=True,timeout=.5)
+   try:
+    for k,v in con.execute('SELECT state,count(*) FROM emissions GROUP BY state'):states[k]=states.get(k,0)+v
+   finally:con.close()
+   out['native_gp_outbox']={'at':time.time(),'states':states,'total':sum(states.values()),'pending':sum(v for k,v in states.items()if k not in('published_verified','cached_verified','failure_custody_verified'))}
+  if out.get('neural_training',{}).get('config_sha256')in('3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4','fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed'):
+   n=out['neural_training'];n.update(published_results=states.get('published_verified',0),cache_hits=states.get('cached_verified',0),novel_programs_executed=states.get('published_verified',0),failed_programs=states.get('unknown_attempt',0)+states.get('failure_custody_verified',0),unresolved_programs=out['native_gp_outbox']['pending'])
+ except Exception as e:out['errors'].append('Native GP outbox: '+type(e).__name__)
 
 attempts=[('initial','runs/'+HOST,'e561d42d83fa655e1d3391747183b87587ee20be0291ef04db6d6116d26dabc9')]
 if HOST=='xbabe2':attempts.append(('recovery1','runs/recovery1/'+HOST,'b3d448a20668f6ae16c5369e589600ff1ffb9f1f642a3c43e5d179b0f72e35ee'))

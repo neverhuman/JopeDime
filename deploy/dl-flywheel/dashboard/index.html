@@ -75,7 +75,7 @@ function render(s){
  const isFresh=Date.now()/1000-s.at<90,published=g.published;
  const base=(h.gp_qualification?.qualified_program_count||0)+(h.gp_bridge?.actual_evaluations||0),
  fixed=(cc.completed_publications||0)+(fc.completed_publications||0)+extra('completed_publications'),
- previous=h.neural_previous_run||{},gp=base+fixed+(n?.published_results||0)+(previous.published_results||0);
+ previous=h.neural_previous_run||{},inferenceCount=h.inference_first?.status?.attempt_custody?.counts?.completed_publications||0,gp=base+fixed+inferenceCount+(n?.published_results||0)+(previous.published_results||0);
  text('connection',isFresh?'Live source observations':'Stale source observations');
  text('updated',new Date(s.at*1000).toLocaleString());
  text('pool',published===undefined?'—':fmt(published));
@@ -87,13 +87,14 @@ function render(s){
  text('batches',failedRead?'Unavailable':fmt(n?.completed_batches||0));
  text('epoch','Completed epochs: '+(n?.completed_epochs??0)+' · presentations: '+fmt(n?.total_train_presentations||0));
  text('gpTotal',fmt(gp));
- text('gpSupport',fixed+' fixed-panel + '+(n?.published_results||0)+' new model-proposed + '+base+' qualified control results · '+(previous.published_results||0)+' archived model results');
+ text('gpSupport',fixed+' fixed-panel + '+(n?.published_results||0)+' new model-proposed + '+base+' qualified control results · '+inferenceCount+' inference-only model results · '+(previous.published_results||0)+' archived model results');
  let training=n?'Current model: '+stateName(n.state)+' · '+fmt(n.completed_batches||0)+' completed batches':
    h.neural_service?'Trainer is checking the frozen data and source files. No optimizer update observed yet.':
    'New continual training has not started. GP labels are being prepared; the Kumo Small-only trainer is being connected.';
  if(h.neural_transition)training='Resuming the same model after '+h.neural_transition.from_completed_batches+' batches; verifying checkpoint and data. Previous measured curves retained.';
  if(h.neural_terminal)training+=' · final evidence: '+stateName(h.neural_terminal.state)+(h.neural_terminal.error?' · '+h.neural_terminal.error:'');
- if(h.neural_service?.ActiveState==='inactive' && n?.completed_epochs>=1)training+=' · optimizer is stopped; this snapshot completed its configured pass';
+ if(!h.neural_continuous && h.neural_service?.ActiveState==='inactive' && n?.completed_epochs>=1)training+=' · optimizer is stopped; this snapshot completed its configured pass';
+ if(h.neural_continuous)training+=' · continuously reshuffled epochs · new scored data admitted between epochs';
  if(h.neural_unfinished_stop)training+=' · service stopped without a final receipt';
  if(failedRead)training='Training telemetry unavailable: source verification failed. No zero-progress inference is made.';
  text('trainingStatus',training);
@@ -112,10 +113,10 @@ function render(s){
  ]){const p=document.createElement('p');p.textContent=line;el('workState').append(p)}
  text('made',fmt(g.published||0));
  text('generationState',(g.generated||0)+' generated and '+(g.published||0)+' S3-published. Original + transforms recorded.');
- const enc=hs.reduce((t,x)=>t+(x.evergreen_encoding_publication?.completed_variants||0)+(x.kumos_publication?.completed_variants||0)+(x.growth10_kumos_publication?.completed_variants||0),0);
+ const enc=(h.rolling_kumo?.verified_new_vectors||0)+hs.reduce((t,x)=>t+(x.evergreen_encoding_publication?.completed_variants||0)+(x.kumos_publication?.completed_variants||0)+(x.growth10_kumos_publication?.completed_variants||0),0);
  text('encoded',fmt(enc)+' in S3');
  const kr=hs.filter(x=>x.kumos_encoding).map(x=>({host:x.host,...x.kumos_encoding}));
- text('encodingState','Kumo Small only. '+(kr.length?kr.map(x=>x.host+': '+x.state+' '+(x.observed_completed_components??x.completed_variant_components??0)+'/56 local vectors').join('; '):'Waiting for worker observations.')+' S3 count requires publication readback.');
+ text('encodingState','Kumo Small only. '+(h.rolling_kumo?fmt(h.rolling_kumo.verified_new_vectors)+' new rolling vectors verified; ':'')+(kr.length?kr.map(x=>x.host+': '+x.state+' '+(x.observed_completed_components??x.completed_variant_components??0)+'/56 local vectors').join('; '):'Waiting for worker observations.')+' S3 count requires publication readback.');
  const scoredIds=new Set([c,f,...expansion].flatMap(x=>x.scored_context_ids||(x.outcomes||[]).filter(r=>r.state==='ready').map(r=>r.variant_identity)));
  text('scored',fmt(scoredIds.size)+' data runs');
  text('scoredState',fixed+' measured panel program results; '+(n?.published_results||0)+' additional model-proposed results.');
@@ -126,7 +127,7 @@ function render(s){
  const prior=hs.find(x=>x.gp_expansion_previous_attempt)?.gp_expansion_previous_attempt;
  text('priorAttempt',prior?'Previous GP expansion attempt closed before execution: '+prior.worker_guard_refusals+' worker-limit refusals, zero native GP executions and zero GP result writes. Evidence preserved; the corrected workers use new queues.':'Prior attempt evidence remains available in the source log.');
  const td=n?.training_data;
- text('corpusDetails','Current growing corpus: '+(g.published||0)+' data runs. Qualified parent pool: '+(h.parents?.parents??'—')+' lineages. '+(td?'Current frozen run: '+td.eligible_train_contexts+' eligible train contexts and '+td.dev_contexts+' validation contexts. ':'')+(h.neural_native_corpus?'Fresh model: 6,857 original training contexts and 263 reserved validation contexts loaded. Curves belong to this model only. ':'')+'Inner CV scoring passes do not create new input identities. Augmented contexts enter a subsequent frozen training snapshot after measured GP admission.');
+ text('corpusDetails','Current growing corpus: '+(g.published||0)+' data runs. Qualified parent pool: '+(h.parents?.parents??'—')+' lineages. '+(td?'Current frozen run: '+td.eligible_train_contexts+' eligible train contexts and '+td.dev_contexts+' validation contexts. ':'')+(h.neural_native_corpus?'Original base: 6,857 training contexts and 263 reserved validation contexts. The continuation retains the same model and comparable fixed panels. ':'')+'Inner CV scoring passes do not create new input identities. New augmented contexts enter at epoch boundaries after measured GP admission; raw or unscored variants are not counted as trained.');
  plot('lossPlot',n?.loss_history||[],[{key:'train_loss',color:'#70e2b2'},{key:'validation_loss',color:'#80baff'}],axis,axis==='batch');
  const lh=n?.loss_history||[];
  if(lh.length){const a=lh[0],b=lh[lh.length-1],change=k=>a[k]===0?'':(' ('+((b[k]/a[k]-1)*100).toFixed(1)+'%)');
@@ -136,7 +137,7 @@ function render(s){
  text('winWinner',n?.winrate_vs_winner==null?'—':(100*n.winrate_vs_winner).toFixed(1)+'%');
  text('elo',n?.elo==null?'—':Number(n.elo).toFixed(0));
  const vs=n?.comparison_summary?.best_fixed_panel?.validation;
- text('winSupport',vs?.games?vs.games+' validation proposals across '+vs.contexts+' distinct contexts · '+vs.wins+' wins / '+vs.ties+' ties / '+vs.losses+' losses vs panel best. Elo starts 1,500, K=16. Small qualification sample; panel best is not the global S3 winner.':'No scored neural validation proposals yet. Fixed candidates build labels and opponents; they do not count as model wins.');
+ text('winSupport',vs?.games?vs.games+' validation proposals across '+vs.contexts+' distinct contexts · '+vs.wins+' wins / '+vs.ties+' ties / '+vs.losses+' losses vs panel best. Elo starts 1,500, K=16. Small qualification sample; panel best is not the global S3 winner.':'Matched-opponent validation win rates have not been calculated for this run. Verified GP results and pending proposals are tracked separately.');
  plot('growthPlot',s.flywheel_history||[],[{key:'data_runs_published',color:'#70e2b2'},{key:'gp_results_published',color:'#80baff'}],'at',false);
  el('programRows').replaceChildren();
  const nr=n?.resolver_outcomes||[];
@@ -155,7 +156,7 @@ function render(s){
  if(hp){const p=hp.neural;for(const [label,key,next]of [['Training input preparation','input_seconds','Cache verified inputs and prefetch'],['GP decoding during training','decode_seconds','Batch autoregressive decoding'],['Optimizer stage','optimizer_seconds','Measure CUDA events before scaling GPU'],['Validation, checkpoints and other overhead','other_seconds','Separate spans; bounded checkpoint retention']])stages.push([label,p[key].toFixed(1)+' s',(100*p[key]/p.wall_seconds).toFixed(1)+'% of '+p.wall_seconds.toFixed(0)+' s',next]);stages.push(['GP worker time outside native/emit/compile/execute', (hp.gp.sum_worker_active_wall_s-hp.gp.sum_command_wall_s).toFixed(1)+' worker-s',(hp.gp.outside_commands_fraction*100).toFixed(1)+'% across 80 GPs','Exact-version object cache; canonicalization memo']);}
  if(inf){const p=inf.timing_stage_summary;stages.push(['Fresh model-proposal publication',p['gp.publish'].wall_seconds.toFixed(2)+' s','3 proposals; nested spans overlap','Avoid repeated verified-object downloads']);stages.push(['Actual native GP fitting',p['native.lambda'].wall_seconds.toFixed(3)+' s','3 exact-context evaluations','More workers only after overhead reduction']);stages.push(['Model forward CUDA events',(inf.decode.cuda_event_model_forward_ms/1000).toFixed(3)+' GPU-s',inf.decode.seconds.toFixed(3)+' s total decode wall','Compare GPU time separately from host time']);}
  for(const row of stages){const tr=document.createElement('tr');for(const value of row){const td=document.createElement('td');td.textContent=value;tr.append(td)}el('hpcRows').append(tr)}
- text('hpcEvidence',inf?'Fresh inference qualification: 3/3 model-generated programs executed and verified in S3; '+fmt(inf.timing_events)+' timestamped events. The 858 proposals from the completed full training pass are a separate queue.':'Waiting for inference timing verification.');
+ text('hpcEvidence',inf?'Fresh inference qualification: 3/3 model-generated programs executed and verified in S3; '+fmt(inf.timing_events)+' timestamped events. The original training pass emitted 858 proposals; the live queue status above tracks their verified outcomes.':'Waiting for inference timing verification.');
  text('traceState',hs.map(x=>{const t=x.hpc_trace,a=x.hpc_archive;return x.host+': '+(t?fmt(t.events)+' logged events, sampled '+((Date.now()*1e6-t.at_unix_ns)/1e9).toFixed(0)+' s ago':'telemetry unavailable')+(a?', '+fmt(a.verified_segments)+' sealed segments / '+fmt(a.archived_events)+' events verified in S3':' / archive not observed')}).join(' · '));
  el('hosts').replaceChildren();
  for(const host of hs){const d=document.createElement('div');d.className='host';const b=document.createElement('h3');b.textContent=host.host;const p=document.createElement('p');p.textContent='CPU '+(host.cpu_utilization_percent==null?'—':host.cpu_utilization_percent.toFixed(1)+'%')+' · '+host.cpu_count+' cores · load '+host.load[0].toFixed(1)+' · '+(host.memory.MemAvailable/2**30).toFixed(1)+' GiB available';d.append(b,p);for(const gpu of host.gpus||[]){const q=document.createElement('p');q.className='note';q.textContent=gpu.name+' · GPU '+gpu.utilization_percent+'% · '+gpu.memory_used_mib+' / '+gpu.memory_total_mib+' MiB used';d.append(q)}if(host.workload_note){const note=document.createElement('p');note.className='note';note.textContent=host.workload_note;d.append(note)}el('hosts').append(d)}

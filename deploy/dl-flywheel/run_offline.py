@@ -39,6 +39,11 @@ def main():
   hpc=json.loads((a.output/'hpc/receipt.json').read_bytes())
   success=child.returncode==0 and hpc['passed'] is True
   receipt['hpc_suite']=hpc;receipt['combined_collected']+=hpc['collected'];receipt['combined_executed']+=hpc['executed'];receipt['passed']=success
+ if success:
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'run_continuous_offline.py'),'--output',str(a.output/'continuous')],check=False)
+  continuous=json.loads((a.output/'continuous/receipt.json').read_bytes())
+  success=child.returncode==0 and continuous['passed'] is True
+  receipt['continuous_suite']=continuous;receipt['combined_collected']+=continuous['collected'];receipt['combined_executed']+=continuous['executed'];receipt['passed']=success
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)
