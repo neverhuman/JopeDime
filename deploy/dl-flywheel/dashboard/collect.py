@@ -11,10 +11,11 @@ import time
 def collect_compute(host):
     """Read-only compute view; does not attribute foreign training to this policy."""
     assert host == 'xbabe1'
-    code = r'''import json,os,subprocess,time
+    code = r'''import hashlib,json,os,subprocess,time
 from pathlib import Path
 out={'host':'xbabe1','at':time.time(),'load':os.getloadavg(),'cpu_count':os.cpu_count(),'archives':[],'errors':[],
- 'workload_note':'Grok-owned model training uses this GPU; CPU GP scoring is coordinated separately. Its batches are not added to the current policy counters.'}
+ 'workload_note':'GPU counters cover all jobs on this host. Only the current policy’s optimizer receipts affect its training totals.'}
+cpu0=[int(v)for v in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
 mem={k:int(v.split()[0])*1024 for k,v in (s.split(':',1) for s in Path('/proc/meminfo').read_text().splitlines())}
 out['memory']={k:mem[k] for k in ('MemTotal','MemAvailable','SwapTotal','SwapFree')}
 try:
@@ -22,16 +23,45 @@ try:
  out['gpus']=[dict(zip(['uuid','name','utilization_percent','memory_used_mib','memory_total_mib'],[x.strip()for x in line.split(',')]))for line in r.stdout.splitlines()]
 except Exception as e:out['errors'].append('GPU counters: '+type(e).__name__)
 out['memory_pressure']=Path('/proc/pressure/memory').read_text()[:1024]
+out['gp_expansion_campaigns']=[]
+try:
+ root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_xbabe1_gp16_20261009')
+ raw=(root/'campaign.json').read_bytes()
+ if len(raw)>2097152 or hashlib.sha256(raw).hexdigest()!='70c1f9560076740ece80edb773be14919614dcce4b1460579ef784e2cf23ae6c':raise ValueError('xb1 campaign identity')
+ p=root/'shard0/config.json';raw=p.read_bytes();pin='97d0bf6a516c992e14ec31659ed810b8795ebea5ee8df570cda94dbb7032b0c3'
+ if p.is_symlink()or len(raw)>2097152 or hashlib.sha256(raw).hexdigest()!=pin:raise ValueError('xb1 config identity')
+ c=json.loads(raw);slots=len(c['variants'])*len(c['programs']);v={'state':'staged','counts':{},'outcomes':[],'scored_context_ids':[]}
+ p=root/'shard0/progress.json'
+ if p.exists():
+  if p.is_symlink()or p.stat().st_size>8388608:raise ValueError('xb1 progress bounds')
+  v=json.loads(p.read_bytes())
+  if v['config_sha256']!=pin:raise ValueError('xb1 progress identity')
+  v['scored_context_ids']=sorted({r['variant_identity']for r in v.get('outcomes',[])if r.get('state')=='ready'})
+  v['outcomes']=[{k:r.get(k)for k in ('slot','variant_identity','partition','phase','program_name','program_sha256','state','measurement','error')}for r in v.get('outcomes',[])[-12:]]
+ p=root/'shard0/status.json'
+ if p.exists():
+  if p.is_symlink()or p.stat().st_size>16777216:raise ValueError('xb1 status bounds')
+  terminal=json.loads(p.read_bytes())
+  if terminal['config_sha256']!=pin:raise ValueError('xb1 terminal identity')
+  v.update(state=terminal['state'],terminal_at=terminal['at'])
+ v.update(label='xbabe1 / CPU qualification',expected_slots=slots,data_runs_with_scores=len(v['scored_context_ids']))
+ out['gp_expansion_campaigns'].append(v)
+except FileNotFoundError:pass
+except Exception as e:out['errors'].append('xb1 GP scoring: '+type(e).__name__)
+
+cpu1=[int(v)for v in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
+delta=sum(cpu1)-sum(cpu0);idle=(cpu1[3]+cpu1[4])-(cpu0[3]+cpu0[4]);out['cpu_utilization_percent']=max(0,min(100,100*(delta-idle)/delta))if delta>0 else None
 print(json.dumps(out,allow_nan=False))
 '''
     r=subprocess.run(['ssh','-o','BatchMode=yes','-o','ConnectTimeout=5',host,'python3 -c '+shlex.quote(code)],text=True,capture_output=True,timeout=12,check=True)
-    if len(r.stdout)>16384:raise ValueError('compute response cap')
+    if len(r.stdout)>1048576:raise ValueError('compute response cap')
     return json.loads(r.stdout)
 
 def collect(host, entries):
     code = '''import hashlib,json,os,subprocess,time
 from pathlib import Path
 out={'host':HOST,'at':time.time(),'load':os.getloadavg(),'cpu_count':os.cpu_count(),'archives':[],'errors':[]}
+cpu0=[int(v)for v in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
 mem={k:int(v.split()[0])*1024 for k,v in (s.split(':',1) for s in Path('/proc/meminfo').read_text().splitlines())}
 out['memory']={k:mem[k] for k in ('MemTotal','MemAvailable')}
 if HOST=='xbabe3':
@@ -135,7 +165,7 @@ if HOST=='xbabe2':
   if p.is_symlink() or len(raw)>4194304:raise ValueError('GP label progress cap')
   v=json.loads(raw)
   if v['config_sha256']!='c26ea0088211b23ba18407a8136efb8fbcebc89dfadb57c622ab18429ae19e3c':raise ValueError('GP label source identity')
-  v['data_runs_with_scores']=len({r['variant_identity']for r in v.get('outcomes',[])if r.get('state')=='ready'})
+  v['scored_context_ids']=sorted({r['variant_identity']for r in v.get('outcomes',[])if r.get('state')=='ready'});v['data_runs_with_scores']=len(v['scored_context_ids'])
   v['outcomes']=[{k:r.get(k)for k in ('slot','round','variant_identity','partition','phase','program_name','program_sha256','state','measurement','error')}for r in v.get('outcomes',[])[-12:]]
   if (root/'status.json').is_file():
    terminal=json.loads((root/'status.json').read_bytes())
@@ -194,6 +224,54 @@ if HOST=='xbabe2':
     out['neural_unfinished_stop']=True
   except FileNotFoundError:pass
   except Exception as e:out['errors'].append('Neural training: '+type(e).__name__)
+if HOST=='xbabe2':
+ try:
+  root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_growth_pipeline_v2_20261009_r2')
+  pin='b4eb3a3aa5e85ff9af0eab29101c21dec74018826e3244ee9b5103caa47d5e78'
+  raw=(root/'config.json').read_bytes()
+  if (root/'config.json').is_symlink()or hashlib.sha256(raw).hexdigest()!=pin:raise ValueError('growth config identity')
+  p=root/'progress.json';raw=p.read_bytes()
+  if p.is_symlink()or len(raw)>1048576:raise ValueError('growth progress cap')
+  v=json.loads(raw)
+  if v['schema']!='jope.flywheel-growth-pipeline/v2'or v['config_sha256']!=pin:raise ValueError('growth identity')
+  out['evergreen']=v
+ except FileNotFoundError:pass
+ except Exception as e:out['errors'].append('Growth pipeline: '+type(e).__name__)
+ try:
+  p=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/paper_observer_addfba0176a7/DL_FLYWHEEL_GROWTH10_KUMOS_PUBLICATION_RECOVERY1_COMPLETE.json');raw=p.read_bytes()
+  if p.is_symlink()or hashlib.sha256(raw).hexdigest()!='11811a380e6c61cb580ac7510c61a9ce244cae84c87833d1debcc887e3607520':raise ValueError('growth10 Kumo closure')
+  v=json.loads(raw)
+  if v['state']!='complete'or v['completed_variants']!=10 or v['verified_objects']!=20:raise ValueError('growth10 counts')
+  out['growth10_kumos_publication']={k:v[k]for k in ('at','state','completed_variants','verified_vectors','verified_objects')}
+ except FileNotFoundError:pass
+ except Exception as e:out['errors'].append('Growth10 Kumo: '+type(e).__name__)
+if HOST=='xbabe2':
+ try:
+  root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_neural_native_full_20261009_v1')
+  pin='3725119c62edb81f7e1be7a92b307a10a71812900e4f80d428c37fc60cb0fda4'
+  raw=(root/'config.json').read_bytes()
+  if (root/'config.json').is_symlink() or hashlib.sha256(raw).hexdigest()!=pin:raise ValueError('native neural config identity')
+  raw=(root/'training/progress.json').read_bytes()
+  if (root/'training/progress.json').is_symlink() or len(raw)>8388608:raise ValueError('native neural progress cap')
+  v=json.loads(raw)
+  if v['schema']!='jope.flywheel-neural-progress/v1' or v['config_sha256']!=pin:raise ValueError('native neural progress identity')
+  inv=v.get('native_teacher_inventory',{});v['native_teacher_inventory']={k:x for k,x in inv.items() if k in ('schema','counts','spec_sha256','at')}
+  if out.get('neural_training'):out['neural_previous_run']={k:x for k,x in out['neural_training'].items() if k not in ('loss_history','optimizer_history','resolver_outcomes')}
+  out['neural_training']=v;out['neural_native_corpus']=True
+  for key in ('neural_terminal','neural_unfinished_stop','neural_transition'):out.pop(key,None)
+  service=subprocess.run(['systemctl','--user','show','jopedime-neural-native-full-20261009-v1','--property=ActiveState,SubState,Result,ExecMainStatus'],capture_output=True,text=True,timeout=5,check=True)
+  state=dict(line.split('=',1)for line in service.stdout.splitlines()if '='in line);out['neural_service']=state
+  for filename in ('status.json','fatal.json'):
+   p=root/filename
+   if not p.is_file():continue
+   raw=p.read_bytes()
+   if p.is_symlink() or len(raw)>8388608:raise ValueError('native neural terminal cap')
+   t=json.loads(raw)
+   if t.get('config_sha256',pin)!=pin:raise ValueError('native neural terminal identity')
+   out['neural_terminal']={k:t.get(k)for k in ('state','at','optimizer_steps','error')}
+  if state.get('ActiveState')not in ('active','activating')and 'neural_terminal'not in out:out['neural_unfinished_stop']=True
+ except FileNotFoundError:pass
+ except Exception as e:out['errors'].append('Neural training: native '+type(e).__name__)
 try:
  root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_evergreen_kumos112_20261009')
  p=root/'runs'/HOST/'progress.json';raw=p.read_bytes()
@@ -229,6 +307,39 @@ try:
 except FileNotFoundError:pass
 except Exception as e:out['errors'].append('Kumo publication: '+type(e).__name__)
 
+if HOST=='xbabe2':
+ out['gp_expansion_campaigns']=[]
+ try:
+  root=Path('/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_hpc_growth10_20261009')
+  p=root/'dispatch-manifest.json';raw=p.read_bytes()
+  if p.is_symlink()or len(raw)>1048576 or hashlib.sha256(raw).hexdigest()!='dd25d0e41372bdec02418379c3b6dacd7176b4764ac9158a0f2966efebffc76f':raise ValueError('GP80 manifest identity')
+  manifest=json.loads(raw)
+  for job in manifest['jobs']:
+   p=Path(job['config']['path']);raw=p.read_bytes()
+   if p.is_symlink()or len(raw)!=job['config']['bytes']or hashlib.sha256(raw).hexdigest()!=job['config']['sha256']:raise ValueError('GP80 config identity')
+   cfg=json.loads(raw);slots=len(cfg['variants'])*len(cfg['programs'])
+   if slots!=cfg['maximum_actual_evaluations']:raise ValueError('GP80 planned slots')
+   v={'state':'staged','config_sha256':job['config']['sha256'],'counts':{},'outcomes':[],'scored_context_ids':[]}
+   p=Path(job['root'])/'progress.json'
+   if p.exists():
+    raw=p.read_bytes()
+    if p.is_symlink()or len(raw)>8388608:raise ValueError('GP80 progress bounds')
+    v=json.loads(raw)
+    if v['config_sha256']!=job['config']['sha256']:raise ValueError('GP80 progress identity')
+    v['scored_context_ids']=sorted({r['variant_identity']for r in v.get('outcomes',[])if r.get('state')=='ready'})
+    v['outcomes']=[{k:r.get(k)for k in ('slot','variant_identity','partition','phase','program_name','program_sha256','state','measurement','error')}for r in v.get('outcomes',[])[-12:]]
+   p=Path(job['root'])/'status.json'
+   if p.exists():
+    raw=p.read_bytes()
+    if p.is_symlink()or len(raw)>16777216:raise ValueError('GP80 terminal bounds')
+    terminal=json.loads(raw)
+    if terminal['config_sha256']!=job['config']['sha256']:raise ValueError('GP80 terminal identity')
+    v.update(state=terminal['state'],terminal_at=terminal['at'])
+   v.update(label='xbabe2 / '+job['id'],expected_slots=slots,data_runs_with_scores=len(v['scored_context_ids']))
+   out['gp_expansion_campaigns'].append(v)
+ except FileNotFoundError:pass
+ except Exception as e:out['errors'].append('GP80: '+type(e).__name__)
+
 if HOST=='xbabe3':
  out['gp_expansion_campaigns']=[]
  for index,pin in {'0': {'sha256': '1e332c5de94fe4356ddcb913af31affe9fd2b5ad9dfce193946b71abb2d88b13', 'path': '/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label112_20261009_v1/recovery1/shard0/config.json', 'progress': '/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label112_20261009_v1/recovery1/shard0/progress.json', 'status': '/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label112_20261009_v1/recovery1/shard0/status.json'}, '1': {'sha256': 'c0fe5cf52c5e9b8365ed06026f7be58009a65041d71e063920759fa72adfb04c', 'path': '/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label112_20261009_v1/recovery1/shard1/config.json', 'progress': '/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label112_20261009_v1/recovery1/shard1/progress.json', 'status': '/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_program_label112_20261009_v1/recovery1/shard1/status.json'}}.items():
@@ -245,7 +356,7 @@ if HOST=='xbabe3':
     if p.is_symlink() or len(raw)>8388608:raise ValueError('GP112 progress bounds')
     v=json.loads(raw)
     if v['config_sha256']!=pin['sha256']:raise ValueError('GP112 progress identity')
-    v['data_runs_with_scores']=len({r['variant_identity']for r in v.get('outcomes',[])if r.get('state')=='ready'})
+    v['scored_context_ids']=sorted({r['variant_identity']for r in v.get('outcomes',[])if r.get('state')=='ready'});v['data_runs_with_scores']=len(v['scored_context_ids'])
     v['outcomes']=[{k:r.get(k)for k in ('slot','variant_identity','partition','phase','program_name','program_sha256','state','measurement','error')}for r in v.get('outcomes',[])[-12:]]
    p=Path(pin['status'])
    if p.exists():
@@ -302,6 +413,8 @@ for x in ENTRIES:
   if s['host']!=HOST or s['manifest_sha256']!=x['manifest_sha256']:raise ValueError('identity mismatch')
   s['archive_root']=x['archive'];s['observer_unit']=x['unit'];out['archives'].append(s)
  except Exception as e:out['errors'].append(x['label']+': '+type(e).__name__)
+cpu1=[int(v)for v in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
+delta=sum(cpu1)-sum(cpu0);idle=(cpu1[3]+cpu1[4])-(cpu0[3]+cpu0[4]);out['cpu_utilization_percent']=max(0,min(100,100*(delta-idle)/delta))if delta>0 else None
 print(json.dumps(out,allow_nan=False))
 '''.replace('HOST', repr(host)).replace('ENTRIES', repr(entries))
     cmd = ['/usr/bin/python3', '-c', code] if host == 'xbabe2' else ['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', host, 'python3 -c ' + shlex.quote(code)]
@@ -331,9 +444,9 @@ def main():
         g = host2.get('evergreen', {}); gp = host2.get('gp_label_campaign', {}).get('counts', {}); fill = host2.get('gp_fill_campaign', {}).get('counts', {}); neural = host2.get('neural_training', {})
         expanded = sum(x.get('counts',{}).get('completed_publications',0)for h in s['hosts']for x in h.get('gp_expansion_campaigns',[]))
         point = {'at': s['at'], 'data_runs_published': g.get('published',0),
-                 'gp_results_published': host2.get('gp_publication',{}).get('published_programs',0)+host2.get('gp_bridge',{}).get('actual_evaluations',0)+gp.get('completed_publications',0)+fill.get('completed_publications',0)+neural.get('published_results',0)+expanded,
+                 'gp_results_published': host2.get('gp_publication',{}).get('published_programs',0)+host2.get('gp_bridge',{}).get('actual_evaluations',0)+gp.get('completed_publications',0)+fill.get('completed_publications',0)+neural.get('published_results',0)+host2.get('neural_previous_run',{}).get('published_results',0)+expanded,
                  'unique_data_runs_seen': host2.get('neural_training',{}).get('unique_train_data_runs_seen',0),
-                 'completed_batches': host2.get('neural_training',{}).get('completed_batches',0)}
+                 'completed_batches': host2.get('neural_training',{}).get('completed_batches',0),'neural_run_id':neural.get('run_id',neural.get('config_sha256'))}
         history_path = a.deployment.parent/'flywheel_history_v1.jsonl'
         history = []
         if history_path.exists():

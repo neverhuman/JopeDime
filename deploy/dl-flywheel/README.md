@@ -22,7 +22,7 @@ Native PolicyLM modules remain in the repository at `deploy/dl-trainonly/lane/sr
 
 ## Offline checks
 
-Run from the repository root in the existing qualified Python environment. CI uses `run_offline.py --output <fresh-evidence-directory>` to require all226 cases and write a separate receipt:
+Run from the repository root in the existing qualified Python environment. CI uses `run_offline.py --output <fresh-evidence-directory>` to require 226 original cases plus74 native/growth cases in an isolated640-token interpreter (300 total) and write a separate receipt:
 
 ```sh
 rtk proxy env PYTHONPATH=deploy/dl-flywheel:deploy/dl-trainonly/lane/src/dl_training_v1 JOPE_POLICYLM_SOURCE=deploy/dl-trainonly/lane/src/dl_training_v1 python3 -B -m unittest discover -s deploy/dl-flywheel/tests -v
@@ -47,3 +47,5 @@ The active roster is Kumo Small, 2,051 values. The expanded encoder/mask proposa
 5. Generator capacity releases only from verified supported training/validation exposure.
 6. Terminal GP status is not a numeric reward, and a raw S3 object count is not a data-run count.
 7. Mask searches use inner development evidence. No searched mask is called an out-of-sample improvement without independent outer evaluation.
+
+Full-corpus and growth follow-up source lives in `pipelines/native/` and `pipelines/growth/`. Runtime pins are dated evidence, not automatic launch authorization. `native_variant_snapshot.py` prepares a new boundary snapshot; input-ready vectors do not imply measured GP labels or training admission. Unpromoted variant CE is disabled. The normalizer remains frozen on the original training subset. See [growth and inference](docs/growth-and-inference-v2.md).

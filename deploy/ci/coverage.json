@@ -266,7 +266,7 @@
         "pytest results",
         "Ruff exit",
         "DL offline subreceipts: 3 pinned module shards plus --combine under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh), combined to 753 collected identities, 712 synthetic executions, 41 exact named host-input/subprocess exclusions, dependencies/source pins and log hashes; separate from pytest",
-        "Flywheel offline subreceipt:226 collected/executed identities, zero skips, log hash; separate from pytest totals."
+        "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals."
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
@@ -9147,6 +9147,86 @@
       ],
       "dispositions": [],
       "scope": "Full offline unittest suite in deploy/dl-flywheel/run_offline.py:226 exact identities, no skipped cases, separate receipt from pytest. Native PolicyLM input/label/sampler tests use checked-in synthetic fixtures; no live dataset, GPU, GP campaign or S3 execution."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_decode.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_outbox.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_batch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_train.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_growth_pipeline.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_native_variant_snapshot.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_training_snapshot_native.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
+    },
+    "python:deploy/dl-flywheel/tests_native/test_neural_native_cli.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Native follow-up suite:74 exact identities in an isolated640-token consumer interpreter, portable synthetic fixtures, no live paths/credentials/data/GPU/S3. run_offline.py requires226 original+74 follow-up tests, zero skips."
     }
   }
 }

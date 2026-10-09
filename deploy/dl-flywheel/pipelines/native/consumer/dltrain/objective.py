@@ -1,0 +1,507 @@
+"""Training objectives (PLAN §6.3.2 successor-v1 and the lineage-B baseline-objective arm), the masked CE primitive
+(§5 P7 test 1), the objective identities hashed into run plans, and the warmup+cosine LR factor (§6.6: the
+schedule is a hashed formula, never a serialized lambda).
+
+All per-context reductions are fixed-layout tensor ops (a dense [C, N] membership mask with masked sums, or
+[N, N] pair masks), never Python-ordered float accumulation. Group roles and weights follow §6.1; the
+feasibility and runtime terms use local-backend members only (§6.3 backend rule, carried by ``feas_valid`` and
+``rt_valid``). A term without support is the connected zero ``q_hat.sum() * 0.0`` with support 0. A non-finite consumed head output, term or total raises
+ObjectiveNonFinite.
+"""
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Callable
+
+import torch
+import torch.nn.functional as F
+
+from . import common, labels
+
+if TYPE_CHECKING:  # pragma: no cover - typing only; the objective reads Batch fields by name
+    from .model import PolicyOutputs
+    from .sampler import Batch
+
+SUCCESSOR_V1 = "successor-v1"
+BASELINE_V1 = "baseline-v1"
+# The coefficient tables are read when each objective is called (never copied at import), so the trainer's step-0
+# gradient-scale audit can zero all but one term in place and backpropagate that term alone.
+COEF_SUCCESSOR = {"ce": 1.0, "bt": 0.25, "list": 0.10, "q": 0.25, "feas": 0.10, "rt": 0.05}
+COEF_BASELINE = {"seq_nll": 1.0, "bt": 0.25, "list": 0.10, "rt": 0.10, "cf_bt": 0.05}
+TEACHER_TAU = 0.25
+LIST_TAU = 0.25
+HUBER_DELTA = 1.0
+BOOST_THRESHOLD = labels.RANK_BOOST_THRESHOLD
+BOOST_FACTOR = labels.RANK_BOOST_FACTOR
+BASELINE_LABEL_SMOOTHING = 0.05
+ROW_WEIGHT_FLOOR = 0.05
+ROW_WEIGHT_EXPONENT = 4
+LOG1P_TIMEOUT = math.log1p(labels.TIMEOUT_S)
+SCHEDULE_ID = "warmup_linear_cosine_v1"
+OBJECTIVE_SCHEMA = "jope.dl-objective/v1"
+VALUE_GRID_SCALE = labels.Q_GRID_SCALE
+LIST_MIN_MEMBERS = 3
+ROLE_TEACHER = 0  # teacher (successor) or champion (baseline)
+_PER_SEQUENCE_FIELDS = ("role", "q_opt", "midrank_pct", "value", "value_pct", "q_grid", "q_known", "feas_valid",
+                        "feas_class", "rt_valid", "rt_censored", "rt_target", "imitation_divisor")
+
+
+class ObjectiveNonFinite(RuntimeError):
+    """A loss term or the total loss is NaN or infinite; the step must not be applied."""
+
+
+@dataclass
+class ObjectiveResult:
+    """``loss`` is a 0-dim float32 graph-connected tensor; the dicts hold raw, weighted and support values."""
+    loss: torch.Tensor
+    terms: dict[str, float]
+    weighted: dict[str, float]
+    support: dict[str, int]
+
+
+# ------------------------------------------------------------------------------------------------- identities
+
+def identity(name: str) -> dict:
+    """Canonical description of an objective; its sha256 is the run plan's ``objective_sha256``."""
+    common_rules = {
+        "schema": OBJECTIVE_SCHEMA,
+        "name": name,
+        "huber_delta": HUBER_DELTA,
+        "tie_rule": "q_grid 1e-6 equality",
+        "empty_support": "connected_zero",
+        "backend_rule": "local only for feas and rt",
+        "token_mask": "grammar_legal_set_neg_infinity",
+        "token_targets": "tokens_1_to_T_minus_1_bos_never_a_target",
+        "sequence_reduction": "mean_over_valid_positions",
+        "nonfinite": "refused_ObjectiveNonFinite",
+        "schedule_id": SCHEDULE_ID,
+    }
+    if name == SUCCESSOR_V1:
+        return common_rules | {
+            "coefficients": dict(COEF_SUCCESSOR),
+            "taus": {"teacher": TEACHER_TAU, "list": LIST_TAU},
+            "boost_rule": {"statistic": "max_within_context_midrank_pct", "threshold": BOOST_THRESHOLD,
+                           "factor": BOOST_FACTOR, "pair_weight": "min(abs(q_opt_i-q_opt_k),1)"},
+            "label_smoothing": 0.0,
+            "row_weight": None,
+            "q_clip": labels.Q_CLIP,
+            "timeout_log1p_s": LOG1P_TIMEOUT,
+            "reductions": {
+                "ce": "per group context sum over teachers of softmax(q_opt/teacher_tau)/imitation_divisor times "
+                      "unsmoothed sequence CE; mean over group contexts",
+                "bt": "per group context sum w*softplus(q_hat_loser-q_hat_winner)/sum w over q_known pairs with "
+                      "distinct q_grid; mean over contexts with positive pair weight",
+                "list": "group contexts with >=3 q_known members: -sum softmax(midrank_pct/list_tau)*"
+                        "log_softmax(q_hat); mean over eligible contexts",
+                "q": "huber(q_hat-q_opt) over q_known members of group contexts; per-context mean; mean over contexts",
+                "feas": "cross_entropy(feas_logits, class) over feas_valid members; per-context mean; sum over "
+                        "contexts of ctx_weight*mean divided by the number of contexts with support",
+                "rt": "completed huber(rt_hat-log1p seconds); censored timeout relu(log1p(90)-rt_hat)^2; rt_valid "
+                      "members; per-context mean; sum over contexts of ctx_weight*mean divided by the number of "
+                      "contexts with support",
+            },
+            "group": "4_teachers_2_comparators_below_the_teacher_band_up_to_2_failures; feasibility stream at "
+                     "ctx_weight 0.1 of a context",
+            "calibration": "prior_shift_readout_only_excluded_from_loss: softmax(feas_logits+log(pi_nat[backend])-"
+                           "log(pi_group)); pi_group from the journal's feas_class_counts (L_feas members)",
+        }
+    if name == BASELINE_V1:
+        return common_rules | {
+            "coefficients": dict(COEF_BASELINE),
+            "taus": {"list": LIST_TAU},
+            "boost_rule": {"statistic": "max_value_pct", "threshold": BOOST_THRESHOLD, "factor": BOOST_FACTOR,
+                           "pair_weight": "abs(value_i-value_k)"},
+            "label_smoothing": BASELINE_LABEL_SMOOTHING,
+            "row_weight": {"floor": ROW_WEIGHT_FLOOR, "exponent": ROW_WEIGHT_EXPONENT, "statistic": "value_pct"},
+            "value": "1/(1+rmse_geo/median(rmse_geo)); rmse_geo=exp(mean_j log max(rmse_j,eps_c)); grid round(value*1e6)",
+            "reductions": {
+                "seq_nll": "smoothed sequence CE; row-weighted mean with weights floor+value_pct^exponent",
+                "bt": "all non-tied within-context pairs on q_hat; sum(w/mean(w)*softplus(s_loser-s_winner))/n_pairs",
+                "list": "contexts with >=3 rows: -sum softmax(value_pct/list_tau)*log_softmax(q_hat); mean over groups",
+                "rt": "smooth_l1(rt_hat, rt_target, beta=1) mean over rt_valid rows",
+                "cf_bt": "the bt rule on the context-free head",
+            },
+            "group": "champion_plus_7_quantile_comparators",
+        }
+    raise ValueError(f"unknown objective {name!r}")
+
+
+def objective_sha256(name: str) -> str:
+    return common.sha256_bytes(common.canonical(identity(name)))
+
+
+def lr_factor(e: int, *, warmup: int, max_updates: int, lr: float, lr_min: float) -> float:
+    """``warmup_linear_cosine_v1``: e = completed scheduler steps; linear warmup to 1, then cosine to lr_min/lr."""
+    if e < 0 or warmup < 0 or max_updates < 0:
+        raise ValueError("e, warmup and max_updates must be >= 0")
+    if not (lr > 0 and math.isfinite(lr)) or not (0 <= lr_min and math.isfinite(lr_min)):
+        raise ValueError("lr must be finite and > 0, lr_min finite and >= 0")
+    if warmup > 0 and e < warmup:
+        return (e + 1) / warmup
+    if max_updates <= warmup:
+        return lr_min / lr
+    t = min(1.0, (e - warmup) / (max_updates - warmup))
+    return (lr_min + 0.5 * (lr - lr_min) * (1.0 + math.cos(math.pi * t))) / lr
+
+
+# --------------------------------------------------------------------------------------- masked CE primitive
+
+def valid_positions(lengths: torch.Tensor, T: int) -> torch.Tensor:
+    """Bool[N, T-1]: position i predicts token i+1 and is supervised iff i < length - 1."""
+    return torch.arange(T - 1, device=lengths.device).unsqueeze(0) < (lengths.unsqueeze(1) - 1)
+
+
+def masked_token_nll(logits: torch.Tensor, targets: torch.Tensor, legal: torch.Tensor, valid: torch.Tensor,
+                     label_smoothing: float = 0.0) -> torch.Tensor:
+    """Per-position NLL of ``-log softmax`` over the legal set only, flattened to (N*(T-1), V); 0 where invalid.
+
+    Illegal logits at valid positions are replaced by -inf before the softmax, so they neither change the value
+    nor receive gradient. With smoothing s: (1-s)*nll + s*mean over the legal set of -log p."""
+    if logits.dim() != 3:
+        raise ValueError("logits must be [N, T-1, V]")
+    n, tm1, v = logits.shape
+    if targets.shape != (n, tm1) or valid.shape != (n, tm1) or legal.shape != (n, tm1, v):
+        raise ValueError("targets/valid must be [N, T-1] and legal [N, T-1, V]")
+    if legal.dtype != torch.bool or valid.dtype != torch.bool:
+        raise ValueError("legal and valid must be boolean")
+    smoothing = float(label_smoothing)
+    if not 0.0 <= smoothing < 1.0:
+        raise ValueError("label_smoothing must be in [0, 1)")
+    if bool(valid.any()):
+        tv = targets[valid]
+        if int(tv.min()) < 0 or int(tv.max()) >= v:
+            raise ValueError("a target at a valid position is outside the vocabulary")
+        if not bool(legal[valid].any(-1).all()):
+            raise ValueError("a valid position has an empty legal row")
+    safe = torch.where(valid, targets, torch.zeros_like(targets)).reshape(n * tm1, 1)
+    legal_flat = legal.reshape(n * tm1, v)
+    valid_flat = valid.reshape(n * tm1)
+    if not bool(legal_flat.gather(1, safe).squeeze(1)[valid_flat].all()):
+        raise ValueError("a target at a valid position is illegal")
+    fill = legal_flat.logical_not() & valid_flat.unsqueeze(1)
+    logp = logits.float().reshape(n * tm1, v).masked_fill(fill, float("-inf")).log_softmax(-1)
+    nll = -logp.gather(1, safe).squeeze(1)
+    if smoothing > 0.0:
+        count = legal_flat.sum(-1).clamp(min=1).to(logp.dtype)
+        smooth = torch.where(legal_flat, -logp, torch.zeros_like(logp)).sum(-1) / count
+        nll = (1.0 - smoothing) * nll + smoothing * smooth
+    nll = nll.reshape(n, tm1)
+    return torch.where(valid, nll, torch.zeros_like(nll))
+
+
+def sequence_ce(logits: torch.Tensor, targets: torch.Tensor, legal: torch.Tensor, valid: torch.Tensor,
+                label_smoothing: float = 0.0) -> torch.Tensor:
+    """Float[N]: mean masked NLL over each sequence's valid positions (every sequence must have >= 1)."""
+    nll = masked_token_nll(logits, targets, legal, valid, label_smoothing)
+    count = valid.sum(1)
+    if bool((count < 1).any()):
+        raise ValueError("every sequence needs at least one target position")
+    return nll.sum(1) / count.to(nll.dtype)
+
+
+# ---------------------------------------------------------------------------------------------------- helpers
+
+def _check(out: "PolicyOutputs", batch: "Batch") -> tuple[int, int, int]:
+    tokens = batch.tokens
+    if tokens.dim() != 2:
+        raise ValueError("batch.tokens must be [N, T]")
+    n, t = tokens.shape
+    c = batch.ctx_is_group.shape[0]
+    if out.logits.dim() != 3 or tuple(out.logits.shape[:2]) != (n, t - 1):
+        raise ValueError("out.logits must be [N, T-1, V]")
+    for name, value, shape in (("q_hat", out.q_hat, (n,)), ("rt_hat", out.rt_hat, (n,)),
+                               ("feas_logits", out.feas_logits, (n, 3))):
+        if tuple(value.shape) != shape:
+            raise ValueError(f"out.{name} must have shape {shape}")
+    if batch.ctx_weight.shape != (c,) or batch.seq_ctx.shape != (n,) or batch.lengths.shape != (n,):
+        raise ValueError("batch context/sequence fields have inconsistent shapes")
+    for name in _PER_SEQUENCE_FIELDS:
+        if tuple(getattr(batch, name).shape) != (n,):
+            raise ValueError(f"batch.{name} must have shape ({n},)")
+    if n and (int(batch.seq_ctx.min()) < 0 or int(batch.seq_ctx.max()) >= c):
+        raise ValueError("batch.seq_ctx outside [0, C)")
+    if c and not bool(torch.isfinite(batch.ctx_weight).all() & (batch.ctx_weight > 0).all()):
+        raise ValueError("batch.ctx_weight must be finite and > 0")
+    return n, t, c
+
+
+def _check_finite_heads(out: "PolicyOutputs", names: tuple[str, ...]) -> None:
+    """Refuse non-finite values in the head outputs an objective consumes: a NaN there means broken parameters, and
+    even an unused entry would leak NaN gradients through the dense pair matrices."""
+    for name in names:
+        value = getattr(out, name)
+        if not bool(torch.isfinite(value).all()):
+            raise ObjectiveNonFinite(f"model output {name!r} is non-finite")
+
+
+def _membership(seq_ctx: torch.Tensor, n_ctx: int) -> torch.Tensor:
+    """Bool[C, N] one-hot context membership."""
+    return torch.arange(n_ctx, device=seq_ctx.device).unsqueeze(1) == seq_ctx.unsqueeze(0)
+
+
+def _ctx_sum(member: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    """Per-context masked sum of a per-sequence vector: Float[C]."""
+    return torch.where(member, x.unsqueeze(0), torch.zeros((), dtype=x.dtype, device=x.device)).sum(1)
+
+
+def _masked(mask: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    return torch.where(mask, x, torch.zeros((), dtype=x.dtype, device=x.device))
+
+
+def _ctx_mean_then_weighted(member: torch.Tensor, mask: torch.Tensor, per: torch.Tensor,
+                            ctx_weight: torch.Tensor | None) -> torch.Tensor:
+    """Per-context mean of ``per`` over ``mask`` members, then sum_c w_c * mean_c over the contexts with >= 1
+    member, divided by the number of those contexts (w_c = 1 without ctx_weight). Every drawn context has equal loss
+    weight and a feasibility-stream context counts as its declared 0.1 of one (PLAN §6.1), whatever else the batch
+    holds; dividing by the weight sum instead would cancel that 0.1. The caller guarantees >= 1 member."""
+    total = _ctx_sum(member, _masked(mask, per))
+    count = _ctx_sum(member, mask.to(per.dtype))
+    has = count > 0
+    mean_c = _masked(has, total / torch.where(has, count, torch.ones_like(count)))
+    weight = _masked(has, torch.ones_like(count) if ctx_weight is None else ctx_weight.to(per.dtype))
+    return (weight * mean_c).sum() / has.sum().to(per.dtype)
+
+
+def _boost(pct: torch.Tensor) -> torch.Tensor:
+    """[N, N] pair boost: BOOST_FACTOR where max(pct_i, pct_k) >= BOOST_THRESHOLD (threshold in pct's dtype)."""
+    threshold = torch.tensor(BOOST_THRESHOLD, dtype=pct.dtype, device=pct.device)
+    high = torch.maximum(pct.unsqueeze(1), pct.unsqueeze(0)) >= threshold
+    return torch.where(high, BOOST_FACTOR, 1.0).to(torch.float64)
+
+
+def _finish(terms_t: dict[str, torch.Tensor], coef: dict[str, float], support: dict[str, int]) -> ObjectiveResult:
+    terms: dict[str, float] = {}
+    for name in coef:
+        value = float(terms_t[name].detach())
+        if not math.isfinite(value):
+            raise ObjectiveNonFinite(f"objective term {name!r} is non-finite ({value})")
+        terms[name] = value
+    names = list(coef)
+    loss = coef[names[0]] * terms_t[names[0]]
+    for name in names[1:]:                                              # fixed coefficient-table order
+        loss = loss + coef[name] * terms_t[name]
+    loss = loss.float()
+    total = float(loss.detach())
+    if not math.isfinite(total):
+        raise ObjectiveNonFinite(f"objective loss is non-finite ({total})")
+    return ObjectiveResult(loss=loss, terms=terms, weighted={k: coef[k] * terms[k] for k in coef}, support=support)
+
+
+def _list_term(eligible_members: torch.Tensor, eligible: torch.Tensor, pct: torch.Tensor,
+               q_hat: torch.Tensor) -> torch.Tensor:
+    """Mean over eligible contexts of -sum softmax(pct / LIST_TAU) * log_softmax(q_hat) over eligible members."""
+    neg_inf = torch.tensor(float("-inf"), dtype=torch.float64, device=q_hat.device)
+    fill = torch.where(eligible.unsqueeze(1), neg_inf, torch.zeros((), dtype=torch.float64, device=q_hat.device))
+    scores = (pct.to(torch.float64) / LIST_TAU).unsqueeze(0)
+    target = torch.softmax(torch.where(eligible_members, scores, fill), dim=1)
+    pred_fill = fill.to(q_hat.dtype)
+    logq = torch.log_softmax(torch.where(eligible_members, q_hat.unsqueeze(0), pred_fill), dim=1)
+    per_ctx = -_masked(eligible_members, target.to(q_hat.dtype) * logq).sum(1)
+    return _masked(eligible, per_ctx).sum() / eligible.sum().to(q_hat.dtype)
+
+
+# ---------------------------------------------------------------------------------------------- successor-v1
+
+def bt_pair_matrix(batch: "Batch") -> tuple[torch.Tensor, torch.Tensor]:
+    """successor-v1 L_BT pairs: Bool[N, N] with [i, k] true iff i (winner) and k (loser) are q_known members of
+    the same group context with q_grid_i > q_grid_k, and their Float64 weights
+    min(|q_opt_i - q_opt_k|, 1) * (2 if max(pct) >= 0.9 else 1). Equals labels.ranking_pairs per context."""
+    in_group = batch.ctx_is_group[batch.seq_ctx]
+    known = batch.q_known & in_group
+    same = batch.seq_ctx.unsqueeze(1) == batch.seq_ctx.unsqueeze(0)
+    pair = same & known.unsqueeze(1) & known.unsqueeze(0) & (batch.q_grid.unsqueeze(1) > batch.q_grid.unsqueeze(0))
+    q_opt = batch.q_opt.to(torch.float64)
+    dq = (q_opt.unsqueeze(1) - q_opt.unsqueeze(0)).abs().clamp(max=labels.RANK_WEIGHT_CAP)
+    weight = torch.where(pair, dq * _boost(batch.midrank_pct), torch.zeros((), dtype=torch.float64))
+    return pair, weight
+
+
+def teacher_weights(batch: "Batch") -> torch.Tensor:
+    """Float64[N]: softmax(q_opt / TEACHER_TAU) over each group context's teachers, divided by the imitation
+    divisor; 0 for every non-teacher."""
+    n_ctx = batch.ctx_is_group.shape[0]
+    member = _membership(batch.seq_ctx, n_ctx)
+    teacher = (batch.role == ROLE_TEACHER) & batch.ctx_is_group[batch.seq_ctx]
+    z = batch.q_opt.to(torch.float64) / TEACHER_TAU
+    top = torch.zeros(n_ctx, dtype=torch.float64)                       # per-context max, for a stable softmax
+    if z.numel():
+        neg_inf = torch.tensor(float("-inf"), dtype=torch.float64)
+        top = torch.where(member & teacher.unsqueeze(0), z.unsqueeze(0), neg_inf).amax(1)
+        top = torch.where(torch.isfinite(top), top, torch.zeros_like(top))
+    e = _masked(teacher, torch.exp(z - top[batch.seq_ctx]))
+    denom = _ctx_sum(member, e)[batch.seq_ctx]
+    divisor = batch.imitation_divisor.to(torch.float64)
+    if bool((teacher & ~(torch.isfinite(divisor) & (divisor >= 1.0))).any()):
+        raise ValueError("a teacher's imitation_divisor must be finite and >= 1")
+    safe = torch.where(teacher, denom * divisor, torch.ones_like(denom))
+    return _masked(teacher, e / safe)
+
+
+def successor_v1(out: "PolicyOutputs", batch: "Batch") -> ObjectiveResult:
+    """L = L_CE + 0.25 L_BT + 0.10 L_list + 0.25 L_q + 0.10 L_feas + 0.05 L_rt (PLAN §6.3.2)."""
+    if batch.mode != SUCCESSOR_V1:
+        raise ValueError(f"successor-v1 needs a successor-v1 batch, got {batch.mode!r}")
+    n, t, c = _check(out, batch)
+    _check_finite_heads(out, ("q_hat", "feas_logits", "rt_hat"))
+    q_hat, rt_hat = out.q_hat.float(), out.rt_hat.float()
+    member = _membership(batch.seq_ctx, c)
+    in_group = batch.ctx_is_group[batch.seq_ctx]
+    zero = q_hat.sum() * 0.0
+    terms: dict[str, torch.Tensor] = {}
+    support: dict[str, int] = {}
+
+    # L_CE over teachers of group contexts.
+    teacher = (batch.role == ROLE_TEACHER) & in_group
+    teacher_ctx = (member & teacher.unsqueeze(0)).any(1)
+    support["teachers"] = int(teacher.sum())
+    support["group_contexts"] = int(teacher_ctx.sum())
+    if support["teachers"]:
+        ce = sequence_ce(out.logits, batch.tokens[:, 1:], batch.legal, valid_positions(batch.lengths, t))
+        weighted_ce = _ctx_sum(member, _masked(teacher, teacher_weights(batch).to(ce.dtype) * ce))
+        terms["ce"] = _masked(teacher_ctx, weighted_ce).sum() / teacher_ctx.sum().to(ce.dtype)
+    else:
+        terms["ce"] = zero
+
+    # L_BT over q_known pairs with distinct q_grid inside each group context.
+    pair, pair_w = bt_pair_matrix(batch)
+    effective = pair & (pair_w > 0)
+    support["pairs"] = int(effective.sum())
+    if support["pairs"]:
+        w = pair_w.to(q_hat.dtype)
+        losses = F.softplus(q_hat.unsqueeze(0) - q_hat.unsqueeze(1))       # [i, k] = softplus(q_k - q_i)
+        num = _ctx_sum(member, _masked(effective, w * losses).sum(1))
+        den = _ctx_sum(member, _masked(effective, w).sum(1))
+        has = den > 0
+        terms["bt"] = _masked(has, num / torch.where(has, den, torch.ones_like(den))).sum() / has.sum().to(q_hat.dtype)
+    else:
+        terms["bt"] = zero
+
+    # L_list over group contexts with >= 3 q_known members.
+    known = batch.q_known & in_group
+    n_known = _ctx_sum(member, known.to(torch.int64))
+    list_ctx = batch.ctx_is_group & (n_known >= LIST_MIN_MEMBERS)
+    support["list_groups"] = int(list_ctx.sum())
+    if support["list_groups"]:
+        terms["list"] = _list_term(member & known.unsqueeze(0) & list_ctx.unsqueeze(1), list_ctx,
+                                   batch.midrank_pct, q_hat)
+    else:
+        terms["list"] = zero
+
+    # L_q: Huber(q_hat - q_opt) over q_known members of group contexts.
+    support["q_members"] = int(known.sum())
+    if support["q_members"]:
+        huber_q = F.huber_loss(q_hat, batch.q_opt.to(q_hat.dtype), reduction="none", delta=HUBER_DELTA)
+        terms["q"] = _ctx_mean_then_weighted(member, known, huber_q, None)
+    else:
+        terms["q"] = zero
+
+    # L_feas: unweighted 3-class CE over feas_valid (local-backend, labelled) members of every context.
+    feas_valid = batch.feas_valid
+    support["feas_members"] = int(feas_valid.sum())
+    if support["feas_members"]:
+        cls = torch.where(feas_valid, batch.feas_class, torch.zeros_like(batch.feas_class))
+        if int(cls.min()) < 0 or int(cls.max()) > 2:
+            raise ValueError("feas_class must be 0, 1 or 2 for feas_valid members")
+        ce_feas = F.cross_entropy(out.feas_logits.float(), cls, reduction="none")
+        terms["feas"] = _ctx_mean_then_weighted(member, feas_valid, ce_feas, batch.ctx_weight)
+    else:
+        terms["feas"] = zero
+
+    # L_rt: completed Huber, timeout right-censored at log1p(90) (local backend only via rt_valid).
+    rt_valid = batch.rt_valid
+    support["rt_members"] = int(rt_valid.sum())
+    if support["rt_members"]:
+        target = batch.rt_target.to(rt_hat.dtype)
+        exact = F.huber_loss(rt_hat, target, reduction="none", delta=HUBER_DELTA)
+        censored = torch.relu(target - rt_hat) ** 2
+        per = torch.where(batch.rt_censored, censored, exact)
+        terms["rt"] = _ctx_mean_then_weighted(member, rt_valid, per, batch.ctx_weight)
+    else:
+        terms["rt"] = zero
+
+    return _finish(terms, COEF_SUCCESSOR, support)
+
+
+# ----------------------------------------------------------------------------------------------- baseline-v1
+
+def baseline_pair_matrix(batch: "Batch") -> tuple[torch.Tensor, torch.Tensor, int]:
+    """baseline-v1 BT pairs: Bool[N, N] [i, k] true iff rows i (winner) and k share a context and
+    value_grid_i > value_grid_k (value_grid = round(value*1e6), half to even); Float64 weights
+    |value_i - value_k| * (2 if max(value_pct) >= 0.9 else 1); and the number of skipped tied pairs."""
+    same = batch.seq_ctx.unsqueeze(1) == batch.seq_ctx.unsqueeze(0)
+    value = batch.value.to(torch.float64)
+    grid = torch.round(value * VALUE_GRID_SCALE).to(torch.int64)
+    pair = same & (grid.unsqueeze(1) > grid.unsqueeze(0))
+    n = value.shape[0]
+    upper = torch.ones(n, n, dtype=torch.bool, device=value.device).triu(diagonal=1)
+    tied = int((same & upper & (grid.unsqueeze(1) == grid.unsqueeze(0))).sum())
+    dv = (value.unsqueeze(1) - value.unsqueeze(0)).abs()
+    weight = torch.where(pair, dv * _boost(batch.value_pct), torch.zeros((), dtype=torch.float64))
+    return pair, weight, tied
+
+
+def baseline_v1(out: "PolicyOutputs", batch: "Batch") -> ObjectiveResult:
+    """The lineage-B composite: seq_nll + 0.25 BT + 0.10 ListNet + 0.10 runtime + 0.05 context-free BT."""
+    if batch.mode != BASELINE_V1:
+        raise ValueError(f"baseline-v1 needs a baseline-v1 batch, got {batch.mode!r}")
+    if out.cf_hat is None:
+        raise ValueError("baseline-v1 needs the context-free head (PolicyConfig.context_free_head=True)")
+    n, t, c = _check(out, batch)
+    if tuple(out.cf_hat.shape) != (n,):
+        raise ValueError("out.cf_hat must be [N]")
+    if n and not bool((batch.value > 0).all()):
+        raise ValueError("every baseline-v1 row needs a value")
+    _check_finite_heads(out, ("q_hat", "rt_hat", "cf_hat"))
+    q_hat, cf_hat, rt_hat = out.q_hat.float(), out.cf_hat.float(), out.rt_hat.float()
+    member = _membership(batch.seq_ctx, c)
+    zero = q_hat.sum() * 0.0
+    terms: dict[str, torch.Tensor] = {}
+    support: dict[str, int] = {"rows": n}
+
+    if n:
+        nll = sequence_ce(out.logits, batch.tokens[:, 1:], batch.legal, valid_positions(batch.lengths, t),
+                          label_smoothing=BASELINE_LABEL_SMOOTHING)
+        row_w = ROW_WEIGHT_FLOOR + batch.value_pct.to(torch.float32) ** ROW_WEIGHT_EXPONENT
+        terms["seq_nll"] = (row_w * nll).sum() / row_w.sum()
+    else:
+        terms["seq_nll"] = zero
+
+    pair, pair_w, tied = baseline_pair_matrix(batch)
+    support["pairs"] = int(pair.sum())
+    support["tied_pairs"] = tied
+    if support["pairs"]:
+        scale = pair_w[pair].mean()
+        norm_w = (pair_w / scale).to(q_hat.dtype)
+
+        def bt(score: torch.Tensor) -> torch.Tensor:
+            losses = F.softplus(score.unsqueeze(0) - score.unsqueeze(1))    # [i, k] = softplus(s_k - s_i)
+            return _masked(pair, norm_w * losses).sum() / support["pairs"]
+
+        terms["bt"], terms["cf_bt"] = bt(q_hat), bt(cf_hat)
+    else:
+        terms["bt"] = terms["cf_bt"] = zero
+
+    n_rows = _ctx_sum(member, torch.ones(n, dtype=torch.int64, device=q_hat.device))
+    list_ctx = n_rows >= LIST_MIN_MEMBERS
+    support["list_groups"] = int(list_ctx.sum())
+    if support["list_groups"]:
+        terms["list"] = _list_term(member & list_ctx.unsqueeze(1), list_ctx, batch.value_pct, q_hat)
+    else:
+        terms["list"] = zero
+
+    rt_valid = batch.rt_valid
+    support["rt_rows"] = int(rt_valid.sum())
+    if support["rt_rows"]:
+        per = F.smooth_l1_loss(rt_hat, batch.rt_target.to(rt_hat.dtype), reduction="none", beta=1.0)
+        terms["rt"] = _masked(rt_valid, per).sum() / support["rt_rows"]
+    else:
+        terms["rt"] = zero
+
+    return _finish(terms, COEF_BASELINE, support)
+
+
+OBJECTIVES: dict[str, Callable[["PolicyOutputs", "Batch"], ObjectiveResult]] = {
+    SUCCESSOR_V1: successor_v1,
+    BASELINE_V1: baseline_v1,
+}
