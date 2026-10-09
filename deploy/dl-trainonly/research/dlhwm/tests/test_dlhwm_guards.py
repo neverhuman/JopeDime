@@ -73,3 +73,12 @@ def test_sweep_knobs_lion_and_b10rank():
     torch.manual_seed(0); y = torch.tensor([1.0, 0.0, 1.0, 0.0, float("nan")]); good = torch.tensor([3.0, -3.0, 3.0, -3.0, 0.0])
     assert b10rank(good, y) < b10rank(-good, y)
     assert float(huber_mean(torch.zeros(3), torch.tensor([0.0, 2.0, float("nan")]), 1.0)) == pytest.approx(0.75)
+def test_twohead_forward_and_param_split():
+    torch = pytest.importorskip("torch")
+    from dlhwm.models import TwoHead, BlockFormer
+    torch.manual_seed(0); m = TwoHead(6, [5], dT=4, d=16, L=1, heads=2, w=8, depth=1, zdim=4)
+    B = 7; xL, mL, xe, me, xt, mt = torch.randn(B, 6), torch.zeros(B, 6), [torch.randn(B, 5)], torch.zeros(B, 1), torch.randn(B, 4), torch.zeros(B, 4)
+    o = m(xL, mL, xe, me, xt=xt, mt=mt); assert set(o) == {"fit_mu", "fit_ls", "gap_mu", "gap_ls", "b10"} and o["b10"].shape == (B,)
+    pt, pa = m.param_split(); assert len(pt) + len(pa) == len(list(m.parameters())) and not ({id(p) for p in pt} & {id(p) for p in pa})
+    o["b10"].sum().backward(); assert all(p.grad is not None for p in pa)   # beat10 head trains
+    torch.manual_seed(0); b = BlockFormer(6, [5], d=16, L=1, heads=2); b.eval(); assert torch.allclose(b(xL, mL, xe, me)["fit_mu"], b.h(b.embed(xL, mL, xe, me))["fit_mu"])

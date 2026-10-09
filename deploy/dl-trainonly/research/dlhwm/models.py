@@ -38,10 +38,11 @@ class BlockFormer(nn.Module):
         s.cls = nn.Parameter(torch.zeros(1, 1, d)); s.btype = nn.Parameter(torch.zeros(1, len(dims) * ntok, d)); nn.init.normal_(s.btype, std=0.02)
         s.enc = nn.TransformerEncoder(nn.TransformerEncoderLayer(d, heads, 2 * d, drop, activation="gelu", batch_first=True, norm_first=True), L, enable_nested_tensor=False)
         s.h = Heads(d)
-    def forward(s, xL, mL, xe, me):
+    def embed(s, xL, mL, xe, me):
         me = block_drop(me, s.bdrop, s.training); B = xL.shape[0]
         e = s.bp(xe, me).reshape(B, -1, s.cls.shape[-1]) + s.btype
-        t = torch.cat([s.cls.expand(B, -1, -1), s.ft(xL, mL), e], 1); return s.h(s.enc(t)[:, 0])
+        t = torch.cat([s.cls.expand(B, -1, -1), s.ft(xL, mL), e], 1); return s.enc(t)[:, 0]   # CLS embedding
+    def forward(s, xL, mL, xe, me): return s.h(s.embed(xL, mL, xe, me))
 class ResMLP(nn.Module):
     """W0-B: residual MLP on the concatenated clean features (encoder blocks projected per block, LV4 + missing mask raw)."""
     def __init__(s, dL, dims, k=64, w=512, depth=4, drop=0.2, bdrop=0.2):
@@ -72,4 +73,23 @@ class GatedSet(nn.Module):
         g = g * (1 - mfull) + 1e-4; s.last_gate = g.detach()
         kv = s.nx(toks * g[..., None]); lat, _ = s.xa(s.lat.expand(B, -1, -1), kv, kv, key_padding_mask=mfull.bool())
         h = s.sa(torch.cat([lat, toks * g[..., None]], 1)); return s.h(h[:, :lat.shape[1]].mean(1))
-ARCH = {"blockformer": BlockFormer, "resmlp": ResMLP, "gatedset": GatedSet}
+class TwoHead(nn.Module):
+    """dlcf2 two-head model: a shared BlockFormer trunk (L tokens + encoder-block tokens, like confirm arm (c)) feeds the fitness/gap heads;
+    the beat10 head is a compact residual MLP (like arm (a)) on the fold-selected top-K columns (xt, mt) concatenated with a 32-d projection of the
+    trunk CLS embedding (shared trunk; beat10 gradients reach the trunk through that projection). b10 output replaces the trunk's own b10 logit."""
+    def __init__(s, dL, dims, dT=50, d=192, L=6, heads=8, drop=0.1, bdrop=0.2, w=128, depth=2, adrop=0.4, zdim=32):
+        super().__init__(); s.trunk = BlockFormer(dL, dims, d, L, heads, drop, bdrop); s.z = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, zdim))
+        s.ainp = nn.Sequential(nn.Linear(2 * dT + zdim, w), nn.GELU())
+        s.ablocks = nn.ModuleList([nn.Sequential(nn.LayerNorm(w), nn.Linear(w, 2 * w), nn.GELU(), nn.Dropout(adrop), nn.Linear(2 * w, w)) for _ in range(depth)])
+        for b in s.ablocks: nn.init.zeros_(b[-1].weight); nn.init.zeros_(b[-1].bias)
+        s.aout = nn.Sequential(nn.LayerNorm(w), nn.Linear(w, 1)); nn.init.zeros_(s.aout[1].weight); nn.init.zeros_(s.aout[1].bias)
+    def param_split(s):
+        """(trunk + projection params, beat10-head params) for the two optimizers."""
+        aux = list(s.ainp.parameters()) + list(s.ablocks.parameters()) + list(s.aout.parameters()); ids = {id(p) for p in aux}
+        return [p for p in s.parameters() if id(p) not in ids], aux
+    def forward(s, xL, mL, xe, me, xt=None, mt=None):
+        h = s.trunk.embed(xL, mL, xe, me); o = s.trunk.h(h)
+        a = s.ainp(torch.cat([xt * (1 - mt), mt, s.z(h)], 1))
+        for b in s.ablocks: a = a + b(a)
+        o["b10"] = s.aout(a)[:, 0]; return o
+ARCH = {"blockformer": BlockFormer, "resmlp": ResMLP, "gatedset": GatedSet, "twohead": TwoHead}

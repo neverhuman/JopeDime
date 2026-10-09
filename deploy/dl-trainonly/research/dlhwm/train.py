@@ -141,6 +141,18 @@ def load_anchor(d, r, k, n, FO, Y, bundle_sha):
         miss = ~np.isfinite(AN[:, j]); AN[miss, j] = np.nanmean(AN[z["ti"], j])
         prov[t] = {"file": os.path.abspath(p), "sha256": sha256b(open(p, "rb").read()), "K": int(z["P"].shape[0]), "bundle_sha256": str(z["bundle_sha256"]) if "bundle_sha256" in z.files else None, "filled": int(miss.sum())}
     return AN, prov
+class MultiOpt:
+    """one or more optimizers stepped together (arch twohead: Lion trunk + AdamW beat10 head); a single optimizer behaves exactly as before."""
+    def __init__(s, opts): s.opts = opts
+    def zero_grad(s, set_to_none=True):
+        for o in s.opts: o.zero_grad(set_to_none=set_to_none)
+    def step(s):
+        for o in s.opts: o.step()
+class MultiSched:
+    def __init__(s, scheds): s.scheds = scheds
+    def step(s):
+        for sc in s.scheds: sc.step()
+    def get_last_lr(s): return s.scheds[0].get_last_lr()
 def group_folds(groups, k, seed):
     rng = np.random.default_rng(seed); ug, cnt = np.unique(groups, return_counts=True); order = rng.permutation(len(ug))
     order = order[np.argsort(-cnt[order], kind="stable")]; load_ = np.zeros(k); gf = {}
@@ -149,9 +161,11 @@ def group_folds(groups, k, seed):
     return np.array([gf[g] for g in groups])
 CFG = {"blockformer": dict(lr=5e-4, wd=0.05, bs=256, epochs=200, patience=30, kw={}),
        "resmlp": dict(lr=1e-3, wd=0.05, bs=256, epochs=250, patience=35, kw={}),
-       "gatedset": dict(lr=7e-4, wd=0.05, bs=256, epochs=250, patience=35, kw={})}
+       "gatedset": dict(lr=7e-4, wd=0.05, bs=256, epochs=250, patience=35, kw={}),
+       "twohead": dict(lr=1e-4, wd=0.25, bs=256, epochs=400, patience=60, kw={})}
 # sweep knobs (dlhwm/d-sweep); defaults reproduce the frozen d796edc trainer exactly. All selection (early stopping, SWA accept) uses inner-validation rows only.
 SWEEP_DEFAULTS = dict(loss="bnll", huber_delta=1.0, w_gap=0.5, w_b10=1.0, w_rank=0.2, w_b10rank=0.0, opt="adamw", ema=0.995, swa_k=0)
+TWOHEAD_DEFAULTS = dict(aux_lr=1e-3, aux_wd=0.15)   # arch twohead only: AdamW for the beat10 head (arm (a) settings); trunk uses lr/wd/opt
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--data", required=True); ap.add_argument("--arch", required=True); ap.add_argument("--run-id", required=True)
     ap.add_argument("--out", required=True); ap.add_argument("--repeats", default="0"); ap.add_argument("--folds", default="0,1,2,3,4")
@@ -164,11 +178,14 @@ def main():
     ap.add_argument("--enc", default="all", help="feature-subset wave: comma list of clean encoder blocks to use, 'all' or 'none'")
     ap.add_argument("--lgroups", default="V21,TL,ZL,V3,V4,Z", help="feature-subset wave: LV4 column groups kept in block L")
     ap.add_argument("--topk", type=int, default=0, help="feature-subset wave: keep the top-K of [L cols + 32 fold-fit PCs per used encoder], ranked per fold by LightGBM TreeSHAP on inner-train rows only")
+    ap.add_argument("--trunk-enc", default="", help="arch twohead: comma list of encoder blocks fed to the shared trunk (with all L cols); --topk K feeds the beat10 head")
     ap.add_argument("--subset", default="", help="subset tag recorded in summary (e.g. S1)")
     ap.add_argument("--kw", default="{}", help="JSON overrides for the model constructor"); ap.add_argument("--cfg", default="{}", help="JSON overrides for lr/wd/bs/epochs/patience")
     a = ap.parse_args(); out = f"{a.out}/{a.run_id}"; os.makedirs(out, exist_ok=True); cfg = CFG[a.arch]
     if a.epochs: cfg["epochs"] = a.epochs
-    cfg = {**SWEEP_DEFAULTS, **cfg, **json.loads(a.cfg)}; cfg["kw"] = {**cfg["kw"], **json.loads(a.kw)}
+    cfg = {**SWEEP_DEFAULTS, **(TWOHEAD_DEFAULTS if a.arch == "twohead" else {}), **cfg, **json.loads(a.cfg)}; cfg["kw"] = {**cfg["kw"], **json.loads(a.kw)}
+    TH = a.arch == "twohead"
+    if TH and (not a.topk or not a.trunk_enc): raise SystemExit("arch twohead needs --topk K (beat10 head) and --trunk-enc (trunk encoder blocks)")
     if cfg["loss"] not in ("bnll", "huber") or cfg["opt"] not in ("adamw", "lion"): raise SystemExit(f"--cfg: unknown loss/opt {cfg['loss']!r}/{cfg['opt']!r}")
     torch.backends.cuda.matmul.allow_tf32 = True; dev = "cuda" if torch.cuda.is_available() else "cpu"
     torch.set_num_threads(int(os.environ.get("DLHWM_TORCH_THREADS", "3")))   # fixed small CPU footprint; all tensors live on the GPU
@@ -188,6 +205,8 @@ def main():
     if not kl: raise SystemExit("--lgroups keeps no L columns")
     L = L[:, kl]; Lc = [Lc[j] for j in kl]
     E = {b: np.load(f"{a.data}/blocks_{b}.npy") for b in blocks}
+    TRUNK = a.trunk_enc.split(",") if TH else []
+    if [b for b in TRUNK if b not in blocks]: raise SystemExit(f"--trunk-enc: blocks not available {TRUNK}")
     if "tabdpt13" in E: E["tabdpt13"][tov] = np.nan
     MASK = parse_mask(a.mask, blocks, a.mask_mode, a.mask_unlisted) if a.mask else {}
     for b in [b for b in blocks if MASK.get(b, {}).get("weight", 1.0) == 0.0]: del E[b]; blocks.remove(b)
@@ -195,7 +214,7 @@ def main():
     reps = [int(r) for r in a.repeats.split(",")]; folds = [int(k) for k in a.folds.split(",")]
     git = a.git_sha; summary = {"run_id": a.run_id, "arch": a.arch, "pure": not a.anchor, "gbm_anchor": bool(a.anchor), "distill": False, "gbm_input": bool(a.anchor), "pca": a.pca,
         "blocks": ["L"] + blocks, "no_tabdpt": a.no_tabdpt, "yshuffle": a.yshuffle, "git_sha": git, "host": host(), "cfg": cfg, "mask": a.mask or "all-dims-fallback", "mask_sha256": sha256b(open(a.mask, "rb").read()) if a.mask else None,
-        "mask_spec": MASK, "optimistic": bool(a.mask), "subset": a.subset, "enc": a.enc, "lgroups": a.lgroups, "topk": a.topk, "n_L_cols": len(Lc),   # the mask is chosen on outer-fold OOS scores (owner-accepted overfit): mask arms are optimistic
+        "mask_spec": MASK, "optimistic": bool(a.mask), "subset": a.subset, "enc": a.enc, "lgroups": a.lgroups, "topk": a.topk, "trunk_enc": TRUNK, "n_L_cols": len(Lc),   # the mask is chosen on outer-fold OOS scores (owner-accepted overfit): mask arms are optimistic
         "data_manifest_sha256": sha256b(open(f"{a.data}/MANIFEST.json", "rb").read()), "folds": {}, "s3": []}
     for r in reps:
         oof = np.full((n, 5), np.nan); oofraw = np.full((n, 2), np.nan)
@@ -217,14 +236,17 @@ def main():
                 Z[miss] = 0
                 Xe.append(Z); Me.append(miss)
             Me = np.stack(Me, 1).astype(np.float32) if Me else np.zeros((n, 0), np.float32)
-            sel_names = None
+            sel_names = None; ublocks = blocks; XT = MT = None
             if a.topk:   # rank [L cols + 32 PCs per used encoder] on inner-train rows only; the model then sees only the top-K columns (as block L)
                 cand = [XL]; cm = [ML]; names = list(Lc)
                 for b, Z0, mi in zip(blocks, Xe, Me.T.astype(bool)):
                     P = Z0 if a.pca or MASK.get(b) else pca_gpu(Z0, tr[~mi[tr]], 32, dev); P[mi] = 0; cand.append(P); cm.append(np.repeat(mi[:, None], P.shape[1], 1).astype(np.float32)); names += [f"{b}:pc{i}" for i in range(P.shape[1])]
                 C = np.concatenate(cand, 1).astype(np.float32); CM = np.concatenate(cm, 1)
                 imp = shap_rank(C[tr], yf[tr], ybb[tr], a.seed * 100 + r * 10 + k); sel = np.argsort(-imp)[:a.topk]
-                XL, ML = C[:, sel], CM[:, sel]; sel_names = [names[i] for i in sel]; Xe, Me = [], np.zeros((n, 0), np.float32)
+                sel_names = [names[i] for i in sel]
+                if TH:   # twohead: top-K columns feed only the beat10 head; the trunk keeps all L cols + the --trunk-enc blocks
+                    XT, MT = C[:, sel], CM[:, sel]; ti = [i for i, b in enumerate(blocks) if b in TRUNK]; Xe = [Xe[i] for i in ti]; Me = Me[:, ti]; ublocks = [blocks[i] for i in ti]
+                else: XL, ML = C[:, sel], CM[:, sel]; Xe, Me = [], np.zeros((n, 0), np.float32)
             if a.anchor:
                 AN, aprov = load_anchor(a.anchor, r, k, n, FO, {"fitness": yfit, "gap": ygap, "beat10": yb}, summary["data_manifest_sha256"])   # outer-train rows = inner cross-fitted OOF; test rows = test preds
                 summary.setdefault("anchor_provenance", {})[f"r{r}f{k}"] = aprov
@@ -236,18 +258,22 @@ def main():
                 ANC = np.column_stack([aF, aG, aB]).astype(np.float32); XL = np.concatenate([XL, ANC], 1); ML = np.concatenate([ML, np.zeros_like(ANC)], 1)
             else: ANC = np.zeros((n, 3), np.float32)
             G = lambda x: torch.as_tensor(x, device=dev)
-            gXL, gML, gXe, gMe, gANC = G(XL), G(ML), [G(x) for x in Xe], G(Me), G(ANC); gYf, gYg, gYb = G(Yf.astype(np.float32)), G(Yg.astype(np.float32)), G(ybb.astype(np.float32))
+            gXL, gML, gXe, gMe, gANC = G(XL), G(ML), [G(x) for x in Xe], G(Me), G(ANC); gXT, gMT = (G(XT), G(MT)) if TH else (None, None)
+            X2 = (lambda ii: {"xt": gXT[ii], "mt": gMT[ii]}) if TH else (lambda ii: {}); gYf, gYg, gYb = G(Yf.astype(np.float32)), G(Yg.astype(np.float32)), G(ybb.astype(np.float32))
             torch.manual_seed(a.seed * 100 + r * 10 + k); np.random.seed(a.seed * 100 + r * 10 + k)
-            model = ARCH[a.arch](XL.shape[1], [x.shape[1] for x in Xe], **cfg["kw"]).to(dev)
+            model = ARCH[a.arch](XL.shape[1], [x.shape[1] for x in Xe], **({"dT": XT.shape[1]} if TH else {}), **cfg["kw"]).to(dev)
             ema = torch.optim.swa_utils.AveragedModel(model, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(cfg["ema"]))
-            opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["wd"], betas=(0.9, 0.98)) if cfg["opt"] == "adamw" else Lion(model.parameters(), lr=cfg["lr"], weight_decay=cfg["wd"])
+            mk_opt = lambda ps, lr, wd, kind: torch.optim.AdamW(ps, lr=lr, weight_decay=wd, betas=(0.9, 0.98)) if kind == "adamw" else Lion(ps, lr=lr, weight_decay=wd)
+            if TH: pt, pa = model.param_split(); opts = [mk_opt(pt, cfg["lr"], cfg["wd"], cfg["opt"]), mk_opt(pa, cfg["aux_lr"], cfg["aux_wd"], "adamw")]
+            else: opts = [mk_opt(model.parameters(), cfg["lr"], cfg["wd"], cfg["opt"])]
+            opt = MultiOpt(opts)
             spe = math.ceil(len(tr) / cfg["bs"]); tot = cfg["epochs"] * spe; warm = max(1, int(0.05 * tot))
-            sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1, s / tot))))
+            sched = MultiSched([torch.optim.lr_scheduler.LambdaLR(o_, lambda s: min(1, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1, s / tot)))) for o_ in opts])
             def anch(o, ii):
                 if not a.anchor: return o
                 o = dict(o); o["fit_mu"] = o["fit_mu"] + gANC[ii, 0]; o["gap_mu"] = o["gap_mu"] + gANC[ii, 1]; o["b10"] = o["b10"] + gANC[ii, 2]; return o
             def fwd(m, idx):
-                ii = G(idx); return anch(m(gXL[ii], gML[ii], [x[ii] for x in gXe], gMe[ii]), ii)
+                ii = G(idx); return anch(m(gXL[ii], gML[ii], [x[ii] for x in gXe], gMe[ii], **X2(ii)), ii)
             def loss_of(o, idx):
                 ii = G(idx); yfi, ygi, ybi = gYf[ii], gYg[ii], gYb[ii]; mb = torch.isfinite(ybi)
                 lb = F.binary_cross_entropy_with_logits(o["b10"][mb].float(), (ybi[mb] * 0.95 + 0.025)) if mb.any() else o["b10"].sum() * 0
@@ -265,7 +291,7 @@ def main():
                     ii = G(idx[s:s + 1024]); me = gMe[ii] if me_override is None else me_override(gMe[ii])
                     xl, ml = gXL[ii], gML[ii]
                     if me_override is not None and getattr(me_override, "dropL", False): ml = torch.ones_like(ml)
-                    with torch.autocast(dev, dtype=torch.bfloat16): o = anch(m(xl, ml, [x[ii] for x in gXe], me), ii)
+                    with torch.autocast(dev, dtype=torch.bfloat16): o = anch(m(xl, ml, [x[ii] for x in gXe], me, **X2(ii)), ii)
                     outs.append(torch.stack([o["fit_mu"], o["fit_ls"], o["gap_mu"], o["gap_ls"], o["b10"]], 1).float().cpu().numpy())
                     if getattr(m, "last_gate", None) is not None: GATES.append(m.last_gate.float().cpu().numpy())
                 return np.concatenate(outs)
@@ -305,7 +331,7 @@ def main():
             P = predict(m, te); oof[te] = P; oofraw[te, 0] = P[:, 0] * fs + fm; oofraw[te, 1] = P[:, 2] * gs + gm; tr2, tauc = score(P, te)
             # block ablation at inference (representation usefulness): mark one block missing at a time; L ablated via all-missing mask
             abl = {}
-            for bi, b in enumerate(["L"] + (blocks if gMe.shape[1] else [])):
+            for bi, b in enumerate(["L"] + (ublocks if gMe.shape[1] else [])):
                 if b == "L":
                     f_ = lambda me: me; f_.dropL = True
                 else:
@@ -316,7 +342,7 @@ def main():
                 GATES.clear(); predict(m, te); gates = dict(zip(["L"] + (blocks if gMe.shape[1] else []), np.concatenate(GATES).mean(0).round(4).tolist()))
             fold_rec = {"best_val_crit": float(best[0]), "topk_features": sel_names, "r": r, "k": k, "n_tr": len(tr), "n_va": len(va), "n_te": len(te), "best_ep": best[1], "epochs_run": len(hist), "test_r2": tr2, "test_auc": tauc,
                         "secs": time.time() - t0, "swa": swa_rec, "ablation": abl, "gates": gates, "target_norm": [fm, fs, gm, gs]}
-            buf = io.BytesIO(); torch.save({"state_dict": best[2], "arch": a.arch, "kw": cfg["kw"], "dL": XL.shape[1], "dims": [x.shape[1] for x in Xe], "blocks": blocks,
+            buf = io.BytesIO(); torch.save({"state_dict": best[2], "arch": a.arch, "kw": cfg["kw"], "dL": XL.shape[1], "dims": [x.shape[1] for x in Xe], "blocks": ublocks, "dT": XT.shape[1] if TH else 0, "topk_features": sel_names,
                         "L_cols": Lc, "QL": QL, "target_norm": [fm, fs, gm, gs], "fold": [r, k], "run_id": a.run_id, "git_sha": git}, buf)
             ck = buf.getvalue(); open(f"{out}/model_r{r}f{k}.pt", "wb").write(ck); fold_rec["ckpt_sha256"] = sha256b(ck)
             if a.s3:
