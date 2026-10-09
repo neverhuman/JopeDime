@@ -11,7 +11,12 @@ import time
 import unittest
 from pathlib import Path
 
-MODULES = ("rlfw.tests.test_pr1", "rlfw.tests.test_binding")
+MODULES = (
+    "rlfw.tests.test_pr1",
+    "rlfw.tests.test_binding",
+    "rlfw.tests.test_arena_kpi",
+    "rlfw.tests.test_arena_scheduler",
+)
 
 
 def source_identity():
