@@ -285,8 +285,14 @@ class GateStateTests(unittest.TestCase):
         self.assertEqual(other.read_text(), "keep")
 
     def test_fixed_deadline_and_lineage_protocol_are_not_overridden(self):
-        with self.assertRaises(ValueError):
-            replace(self.cfg, deadline_unix=1791550801)
+        with mock.patch("rlfw.promotion_gate.time.time", return_value=1791554400.0):
+            resumed = replace(self.cfg, deadline_unix=1791568800)
+            resumed.guard()
+            with self.assertRaises(ValueError):
+                replace(self.cfg, deadline_unix=1791568801)
+        with mock.patch("rlfw.promotion_gate.time.time", return_value=1791568800.0):
+            with self.assertRaises(RuntimeError):
+                resumed.guard()
         with self.assertRaises(ValueError):
             replace(self.cfg, expected_lineages=2)
         with mock.patch(

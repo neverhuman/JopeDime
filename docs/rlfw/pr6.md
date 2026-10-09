@@ -40,7 +40,8 @@ Only `--apply-research-pointer` enables a qualifying pointer change. One atomic
 `BENCH/state/pointer_versions/`. Subsequent gates must compare against the
 current research champion. The module never changes a serving checkpoint,
 native ledger or teacher table. Campaign STOP/HOLD prevents pointer application,
-and the original 13:00 UTC deadline cannot be extended by this CLI.
+and the owner-corrected 18:00 UTC deadline cannot be extended by this CLI.
+The correction preserves completed attempt budgets and recorded gate looks.
 
 ## Commands and evidence
 
@@ -50,7 +51,7 @@ From the reviewed checkout:
 export TMPDIR="$HOME/.cache/jope-test-tmp/rlfw-l2"
 mkdir -p "$TMPDIR"
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
-  nice -n 19 ionice -c3 python3 -B -m unittest \
+  nice -n 19 ionice -c3 uv run --project python --no-sync python3 -B -m unittest \
   rlfw.tests.test_promotion_gate rlfw.tests.test_teacher_dry_run -v
 ```
 
@@ -83,7 +84,7 @@ nice -n 19 ionice -c3 python3 -B -m rlfw.promotion_gate \
   --champion-run "$BENCH/runs/baseline_T1" \
   --challenger-arm trie_sample:challenger \
   --champion-arm trie_sample:current_latest \
-  --deadline-unix 1791550800 --source-sha256 "$SOURCE_SHA"
+  --deadline-unix 1791568800 --source-sha256 "$SOURCE_SHA"
 ```
 
 This command consumes a monthly look and writes receipts. To enable a research
@@ -143,5 +144,7 @@ refit artifacts are runtime inputs; the synthetic fixtures do not provide them.
 The additive package and its explicit APIs leave all existing default paths
 unchanged. Both fixture families are registered in `run_rlfw_offline.py`, which
 runs the complete additive fixture collection and writes source-bound identities,
-counts and outcomes. Use that runner and `just required` for acceptance; full
+counts and outcomes. Use the already synced, locked CPU environment through
+`uv run --project python --no-sync` for the complete fixture collection and
+`just required` for acceptance; full
 exact-head CI and independent LR approval remain required.

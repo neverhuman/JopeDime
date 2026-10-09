@@ -83,7 +83,7 @@ class GateConfig:
 
     def __post_init__(self):
         require_sha(self.source_sha256, "gate source")
-        if self.expected_lineages != 54 or not 0 < self.deadline_unix <= 1791550800:
+        if self.expected_lineages != 54 or not 0 < self.deadline_unix <= 1791568800:
             raise ValueError("fixed campaign deadline and 54 lineages required")
 
     def guard(self):
