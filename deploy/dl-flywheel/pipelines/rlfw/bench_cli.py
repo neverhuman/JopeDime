@@ -135,6 +135,50 @@ def verify_device(spec, device, parity_path=None):
         raise ValueError("each CUDA policy checkpoint requires device parity")
 
 
+def reuse_incumbents(spec, parent_directory, scheduler, arms, oracle):
+    """Reuse only qualified original receipts after fresh authority checks."""
+    import sqlite3
+    from dataclasses import replace
+
+    parent, rows, _ = read_run(parent_directory)
+    spec.require_pair(parent)
+    for row in rows:
+        if row.arm != "hwm" or not row.qualified:
+            continue
+        context = next(c for c in spec.contexts if c.context_id == row.context_id)
+        oracle.check_role(context)
+        spec.verify_frozen()
+        with sqlite3.connect(f"file:{parent.state_path}?mode=ro", uri=True) as db:
+            evidence = db.execute(
+                "SELECT execution_key,evidence FROM slots WHERE context=? AND arm='hwm'",
+                (row.context_id,),
+            ).fetchone()
+        if evidence is None:
+            raise ValueError("incumbent reuse requires its original qualified evidence")
+        candidate = arms.slate(
+            context, next(a for a in spec.arms if a.name == "hwm"), spec.seeds[0], 8
+        )[0]
+        result = oracle.validate(json.loads(evidence[1]), context, candidate.program)
+        key = oracle.execution_key(context, candidate.program)
+        if evidence[0] != key or result["q_grid"] != row.q_grid:
+            raise ValueError("incumbent reuse execution identity or score mismatch")
+        oracle.check_role(context)
+        spec.verify_frozen()
+        scheduler.commit(
+            replace(
+                row,
+                spec_sha256=spec.sha256,
+                wall_seconds=0,
+                cpu_seconds=0,
+                cache_hit=True,
+                unknown_cost_attempts=0,
+            ),
+            key,
+            result,
+        )
+        oracle.own_results[key] = result
+
+
 def arena(args):
     spec = GameSpec.from_dict(json.loads(Path(args.spec).read_text()))
     verify_runtime_scope(spec)
@@ -193,50 +237,7 @@ def arena(args):
     )
     try:
         if args.reuse_hwm_from:
-            parent, rows, _ = read_run(args.reuse_hwm_from)
-            spec.require_pair(parent)
-            for row in rows:
-                if row.arm != "hwm":
-                    continue
-                # Read the already-qualified full evidence from the parent outbox.
-                import sqlite3
-                from dataclasses import replace
-
-                with sqlite3.connect(
-                    f"file:{parent.state_path}?mode=ro", uri=True
-                ) as db:
-                    evidence = db.execute(
-                        "SELECT execution_key,evidence FROM slots WHERE context=? AND arm='hwm'",
-                        (row.context_id,),
-                    ).fetchone()
-                if evidence is None:
-                    raise ValueError(
-                        "incumbent reuse requires its original qualified evidence"
-                    )
-                context = next(
-                    c for c in spec.contexts if c.context_id == row.context_id
-                )
-                candidate = arms.slate(
-                    context,
-                    spec.arms[[a.name for a in spec.arms].index("hwm")],
-                    spec.seeds[0],
-                    8,
-                )[0]
-                result = oracle.validate(
-                    json.loads(evidence[1]), context, candidate.program
-                )
-                key = oracle.execution_key(context, candidate.program)
-                if evidence[0] != key:
-                    raise ValueError("incumbent reuse execution-key mismatch")
-                scheduler.commit(
-                    replace(
-                        row, spec_sha256=spec.sha256, wall_seconds=0, cpu_seconds=0
-                    ),
-                    key,
-                    result,
-                )
-                if row.charged:
-                    oracle.own_results[key] = result
+            reuse_incumbents(spec, args.reuse_hwm_from, scheduler, arms, oracle)
 
         def checkpoint(current):
             if len(current.closed_contexts()) % args.checkpoint_report_every == 0:
