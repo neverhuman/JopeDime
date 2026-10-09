@@ -142,14 +142,15 @@ systemd-run --user --scope --unit=rlfw-l2-shadow \
   --targets "$BENCH/runs/exit_targets.json" --target-sha256 "$TARGET_SHA" \
   --runtime-binding "$BENCH/l2/training_binding.py" \
   --runtime-files "$BENCH/cache/training-runtime-files.json" \
-  --source-sha256 "$SOURCE_SHA" --deadline-unix 1791568800 \
+  --source-sha256 "$SOURCE_SHA" --deadline-unix 1791608400 \
   --device cpu --max-updates 500 --learning-rate 0.0001 \
   --lambda-pi 0.25 --lambda-kl 0.02
 ```
 
-The owner corrected the campaign cutoff to 2026-10-09 18:00 UTC (12:00 MT).
+The owner's D5 ruling renews the campaign until 2026-10-10 05:00 UTC
+(23:00 MT on October 9), superseding the earlier cutoffs.
 The trainer refuses a deadline beyond that cutoff or a deadline already reached;
-the correction does not reset individual completed or interrupted attempts.
+earlier completed and interrupted attempts retain their recorded outcomes.
 
 The CPU default supports fixtures and explicitly authorized CPU runs. Verify
 the actual imported `torch.__version__` matches the source CPU certificate
@@ -161,8 +162,10 @@ or failed parity refuses execution. The command does not imply that those live
 inputs or CUDA qualification already exist. The benchmark adapter `l2/training_binding.py` now has a concrete pinned
 artifact-verifier and mixed-batch implementation, with static and isolated admission checks only. It
 requires a sealed training manifest, existing qualified train artifact closures
-and exactly 64 train probes. Actual challenger execution remains unavailable:
-those inputs are absent and the campaign native parity STOP is active.
+and exactly 64 train probes. Actual challenger execution remains unavailable
+because those inputs are absent. The trainer honors campaign STOP and health
+holds. D5's parity screen and custody transition belong to the benchmark lane;
+this CLI does not replace that state.
 
 A trained checkpoint still needs its own sampler/device qualification and a
 paired arena against the baseline under [PR2](pr2.md). Promotion is a separate
