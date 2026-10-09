@@ -133,6 +133,7 @@ def main():
                 f"batch-{start}",
                 "iid-trie-sample",
                 propensity=math.exp(logged.total),
+                batch_protocol_sha256=row["batch_protocol_sha256"],
             )
             trace.append(record)
             # Preserve numerical failures and their exact batch protocol before stopping.
