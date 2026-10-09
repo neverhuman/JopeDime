@@ -51,8 +51,11 @@ def tilt_weights(q, q_opt, anchor_logprob, config):
     if not all(math.isfinite(x) for x in (*q, *q_opt, *anchor_logprob)):
         raise ValueError("finite measured values and anchor likelihood required")
     baseline = math.fsum(q_opt) / len(q_opt)
+    # Raw anchor draws already contribute one power of the sampling density.
+    # Generalized targets therefore use alpha - 1 on each iid draw.
+    exponent = config.alpha if config.form == "set" else config.alpha - 1.0
     logits = [
-        (config.alpha * lp if config.form == "set" else 0.0)
+        exponent * lp
         + max(
             -config.advantage_clip,
             min(config.advantage_clip, (value - baseline) / config.temperature),

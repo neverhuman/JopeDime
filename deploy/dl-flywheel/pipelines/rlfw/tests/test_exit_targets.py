@@ -133,6 +133,63 @@ class TargetTests(unittest.TestCase):
             )
         )
 
+    def test_raw_iid_generalized_alpha_matches_target_density(self):
+        q = (0.0, 0.2)
+        probabilities = (0.9, 0.1)
+        logp = tuple(math.log(p) for p in probabilities)
+        for alpha in (0.0, 0.5, 1.0, 2.0):
+            with self.subTest(alpha=alpha):
+                iid, baseline = tilt_weights(
+                    q, q, logp, replace(config("raw_iid"), alpha=alpha)
+                )
+                numerator = [
+                    p ** (alpha - 1) * math.exp(value / 0.2)
+                    for p, value in zip(probabilities, q)
+                ]
+                expected = [x / math.fsum(numerator) for x in numerator]
+                for actual, reference in zip(iid, expected):
+                    self.assertAlmostEqual(actual, reference, places=12)
+                self.assertEqual(baseline, 0.1)
+                # Recover the same generalized target after integrating over
+                # the sampling distribution on this complete two-leaf support.
+                integrated = [p * weight for p, weight in zip(probabilities, iid)]
+                total = math.fsum(integrated)
+                set_weights, _ = tilt_weights(
+                    q, q, logp, replace(config(), alpha=alpha)
+                )
+                for actual, reference in zip(integrated, set_weights):
+                    self.assertAlmostEqual(actual / total, reference, places=12)
+
+    def test_raw_iid_nondefault_alpha_preserves_duplicate_draw_and_prefix_mass(self):
+        rows = [row(0, 0.0), row(0, 0.0), row(1, 0.2)]
+        for index, value in enumerate(rows):
+            value.update(draw_index=index, iid_group_size=3)
+        probabilities = {(1, 3, 2): 0.9, (1, 4, 2): 0.1}
+        for alpha in (0.0, 2.0):
+            with self.subTest(alpha=alpha):
+                target = self.build(
+                    rows,
+                    replace(config("raw_iid"), alpha=alpha),
+                    probabilities=probabilities,
+                )["manifest"]["contexts"][0]
+                numerator = [
+                    probabilities[tuple(r["program"]["tokens"])] ** (alpha - 1)
+                    * math.exp(r["q"] / 0.2)
+                    for r in rows
+                ]
+                expected = [x / math.fsum(numerator) for x in numerator]
+                self.assertEqual(len(target["programs"]), 3)
+                for program, reference in zip(target["programs"], expected):
+                    self.assertAlmostEqual(program["weight"], reference, places=12)
+                self.assertAlmostEqual(target["certified_anchor_mass"], 1.0)
+                root = next(p for p in target["prefixes"] if p["prefix"] == (1,))
+                children = dict(root["children"])
+                self.assertAlmostEqual(
+                    children[3], expected[0] + expected[1], places=12
+                )
+                self.assertAlmostEqual(children[4], expected[2], places=12)
+                self.assertAlmostEqual(root["reach_mass"], 1.0)
+
     def test_set_deduplicates_but_iid_preserves_complete_draws(self):
         rows = [row(0, 0.0), row(0, 0.0), row(1, 0.2)]
         for index, r in enumerate(rows):

@@ -5,7 +5,11 @@ native/Rust artifact-closure checks. Development and sealed rows fail before
 eligibility filtering. Unqualified outcomes never supply a numeric reward.
 The set form deduplicates programs and weights the measured raw q tilt by the
 frozen anchor probability. Complete, unfiltered raw iid groups preserve repeated
-draws and omit that probability factor. Both forms require two distinct supported
+draws. The generalized set target uses the anchor probability to power `alpha`;
+raw iid weights use power `alpha - 1`, because their sampling already supplies
+one anchor factor. At the default `alpha=1`, raw iid weights omit the factor
+exactly. Nondefault alpha remains effective, and repeated draws retain their
+individual mass. Both forms require two distinct supported
 programs and two distinct measured grids; other contexts contribute zero actor
 loss. Targets retain receipt identities, certified anchor support mass and
 EOS-inclusive conditional prefix masses. Each supported token sequence must
@@ -99,9 +103,11 @@ lane use the already synced, locked CPU environment through
 `uv run --project python --no-sync`; the tensor fixtures require its declared
 Torch and safetensors dependencies. This fixture environment is separate from
 the source certificate interpreter used for a live challenger. The training
-suites contain 27 fixtures.
-The fixture log `logs/l2/exit-trainer-identity-final.log` records those 27 passing tests with no
-skips. It includes measured tilt derivative/variance, set versus iid weighting,
+initial suites contained 27 fixtures.
+The preserved fixture log `logs/l2/exit-trainer-identity-final.log` records those
+27 passing tests with no skips. Two additional generalized raw iid checks verify
+nondefault anchor powers, the sampled target density, duplicate draws and prefix
+mass; the default alpha remains bitwise equal to the original weights. It includes measured tilt derivative/variance, set versus iid weighting,
 exact full-trie KL and gradients, KL-estimator gradient, default-zero equality,
 dev refusal, two synthetic optimizer updates with an unchanged anchor, the
 threshold refusal, fixed deadline, path isolation, real numeric checkpoint serialization and unknown interrupted step.
