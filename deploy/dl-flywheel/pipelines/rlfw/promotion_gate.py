@@ -83,12 +83,178 @@ class GateConfig:
 
     def __post_init__(self):
         require_sha(self.source_sha256, "gate source")
-        if self.expected_lineages != 54 or not 0 < self.deadline_unix <= 1791568800:
+        if self.expected_lineages != 54 or not 0 < self.deadline_unix <= 1791608400:
             raise ValueError("fixed campaign deadline and 54 lineages required")
 
     def guard(self):
         if time.time() >= self.deadline_unix:
             raise RuntimeError("fixed campaign gate deadline expired")
+
+
+def load_custody(bench_root):
+    """Read the owner-sealed screen and the versioned all-arm arena overlay."""
+    state = Path(bench_root) / "state"
+    pointer_path = state_path(bench_root, state / "CUSTODY_D5.json")
+    if not pointer_path.exists():
+        if (state / "STOP.pre-D5.json").exists():
+            raise ValueError("D5 custody pointer missing")
+        return None
+
+    def pinned(path, expected, area):
+        require_sha(expected, "custody byte pin")
+        path = local_path(bench_root, path, area)
+        raw = path.read_bytes()
+        if path.stat().st_mode & 0o222 or hashlib.sha256(raw).hexdigest() != expected:
+            raise ValueError("sealed custody byte drift")
+        return json.loads(raw)
+
+    pointer_raw = pointer_path.read_bytes()
+    pointer = json.loads(pointer_raw)
+    if (
+        pointer_path.stat().st_mode & 0o222
+        or pointer["schema"] != "rlfw-D5-custody-pointer/v1"
+        or pointer["deadline_unix"] != 1791608400
+        or pointer["excludes_all_arms"] is not True
+        or pointer["reuse_clean_HWM_h_c"] is not True
+        or pointer["blocked_parity_coverage"] is not False
+    ):
+        raise ValueError("owner D5 custody protocol required")
+    body = pinned(pointer["custody_path"], pointer["custody_sha256"], "runs")
+    verification = pinned(
+        pointer["screen_verification_path"],
+        pointer["screen_verification_sha256"],
+        "logs",
+    )
+    summary = pinned(
+        pointer["screen_summary_path"], verification["summary_sha256"], "runs"
+    )
+    if (
+        body["schema"] != "rlfw-D5-parity-custody/v1"
+        or body["native_tolerance"] != 1e-9
+        or body["excludes_all_arms"] is not True
+        or verification["passed"] is not True
+        or verification["custody_sha256"] != pointer["custody_sha256"]
+        or verification["screen_manifest_sha256"] != pointer["screen_manifest_sha256"]
+        or summary["state"] != "completed"
+    ):
+        raise ValueError("qualified sealed D5 screen required")
+    rows = {c["context_id"]: dict(c) for c in body["contexts"]}
+    if (
+        len(body["contexts"]) != len(rows)
+        or len(rows) != 263
+        or len({c["lineage_id"] for c in rows.values()}) != 54
+        or any(
+            c["category"]
+            not in ("clean", "parity_custody", "nondeterministic", "infra_unknown")
+            or type(c["kept"]) is not bool
+            or c["kept"] != (c["category"] == "clean")
+            for c in rows.values()
+        )
+    ):
+        raise ValueError("complete original D5 context dispositions required")
+    for c in rows.values():
+        c["screen_kept"] = c["kept"]
+    reference = {
+        "pointer_sha256": hashlib.sha256(pointer_raw).hexdigest(),
+        "screen_custody_sha256": pointer["custody_sha256"],
+        "verification_sha256": pointer["screen_verification_sha256"],
+        "arena_extension_sha256": None,
+    }
+    overlay_path = state_path(bench_root, state / "arena_custody/custody.json")
+    if overlay_path.exists():
+        raw = overlay_path.read_bytes()
+        pin = hashlib.sha256(raw).hexdigest()
+        version = state_path(bench_root, overlay_path.parent / f"custody-{pin}.json")
+        overlay = pinned(version, pin, "state")
+        if (
+            overlay["schema"] != "rlfw-D5-arena-custody-extension/v1"
+            or overlay["screen_custody_sha256"] != pointer["custody_sha256"]
+        ):
+            raise ValueError("arena custody screen binding mismatch")
+        for c in overlay["arena_exclusions"]:
+            if (
+                c["context_id"] not in rows
+                or c["lineage_id"] != rows[c["context_id"]]["lineage_id"]
+                or c["category"]
+                not in (
+                    "parity_custody",
+                    "parity_custody_arena",
+                    "nondeterministic",
+                    "infra_unknown",
+                )
+                or c["excludes_all_arms"] is not True
+                or c["native_tolerance"] != 1e-9
+                or c["q"] is not None
+                or c["q_grid"] is not None
+                or c["actual_attempts"] != 3
+            ):
+                raise ValueError("qualified all-arm arena custody required")
+            rows[c["context_id"]].update(kept=False, category=c["category"])
+        reference["arena_extension_sha256"] = pin
+    kept = [c for c in rows.values() if c["kept"]]
+    lineages = sorted({c["lineage_id"] for c in kept})
+    if len(rows) - len(kept) > 52 or len(lineages) < 44:
+        raise ValueError("BLOCKED_PARITY_COVERAGE")
+    return {
+        "rows": rows,
+        "reference": reference,
+        "coverage": {
+            "contexts_total": 263,
+            "contexts_kept": len(kept),
+            "contexts_excluded": 263 - len(kept),
+            "lineages_total": 54,
+            "lineages_kept": len(lineages),
+            "kept_lineage_ids": lineages,
+            "excluded_context_ids": sorted(
+                cid for cid, c in rows.items() if not c["kept"]
+            ),
+            "exclusion_skew": summary["exclusion_skew"],
+        },
+    }
+
+
+def custody_panel(panel, custody):
+    """Project both arms together; original measured HWM identities stay fixed."""
+    rows = custody["rows"]
+    roster = panel["roster"]
+    for c in roster:
+        screened = rows.get(c["context_id"])
+        if (
+            screened is None
+            or not screened["screen_kept"]
+            or screened["lineage_id"] != c["lineage_id"]
+            or [p["program_sha256"] for p in screened["programs"] if p["role"] == "hwm"]
+            != [c["hwm_program_sha256"]]
+        ):
+            raise ValueError("gate roster differs from screened original HWM custody")
+    kept = {c["context_id"] for c in roster if rows[c["context_id"]]["kept"]}
+    excluded = {c["context_id"] for c in roster} - kept
+    for side in ("challenger", "champion"):
+        keys = [(u["context_id"], u["seed"]) for u in panel[side]]
+        if len(set(keys)) != len(keys):
+            raise ValueError("duplicated gate units")
+        for u in panel[side]:
+            c = rows.get(u["context_id"])
+            if c is None or u["lineage_id"] != c["lineage_id"]:
+                raise ValueError("gate unit custody lineage mismatch")
+            if c["kept"] and u["hwm"] is not None and u["hwm"] != c["h_c"]:
+                raise ValueError("screened original HWM quality changed")
+    result = {
+        **panel,
+        "roster": [c for c in roster if c["context_id"] in kept],
+        **{
+            side: [u for u in panel[side] if u["context_id"] in kept]
+            for side in ("challenger", "champion")
+        },
+    }
+    result["panel_sha256"] = digest(
+        {
+            "contexts": result["roster"],
+            "seeds": result["seeds"],
+            "role_map": result["role_map_sha256"],
+        }
+    )
+    return result, sorted(excluded)
 
 
 def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
@@ -170,7 +336,7 @@ def panel_from_runs(challenger, champion, challenger_arm, champion_arm):
     }
 
 
-def evaluate_panel(panel, look):
+def evaluate_panel(panel, look, *, custody=None):
     if (
         panel["schema"] != "jope.rlfw-gate-panel/v1"
         or panel["benchmark_valid"] is not False
@@ -202,6 +368,12 @@ def evaluate_panel(panel, look):
         )
     ):
         raise ValueError("frozen development roster/seed identity mismatch")
+    original_panel = panel
+    excluded = []
+    expected_lineages = 54
+    if custody is not None:
+        panel, excluded = custody_panel(panel, custody)
+        expected_lineages = custody["coverage"]["lineages_kept"]
     schedule = alpha_schedule()
     if type(look) is not int or not 1 <= look <= 6:
         raise ValueError("monthly gate look exhausted")
@@ -217,8 +389,8 @@ def evaluate_panel(panel, look):
         raise ValueError("duplicated gate units")
     if set(left) != expected:
         reasons.append("panel incomplete")
-    if len(set(roster.values())) != 54:
-        reasons.append("fewer than 54 frozen lineages")
+    if len(set(roster.values())) != expected_lineages:
+        reasons.append(f"fewer than {expected_lineages} frozen lineages")
     metrics = defaultdict(lambda: defaultdict(list))
     costs = [defaultdict(list), defaultdict(list)]
     gains = [defaultdict(list), defaultdict(list)]
@@ -253,8 +425,51 @@ def evaluate_panel(panel, look):
         metric: {k: fmean(v) for k, v in sorted(groups.items())}
         for metric, groups in metrics.items()
     }
-    if len(per_lineage.get("positive_gain", {})) != 54:
-        reasons.append("not all 54 lineages have qualified paired units")
+    if len(per_lineage.get("positive_gain", {})) != expected_lineages:
+        reasons.append(
+            f"not all {expected_lineages} lineages have qualified paired units"
+        )
+    if custody is not None and set(roster.values()) != set(
+        custody["coverage"]["kept_lineage_ids"]
+    ):
+        reasons.append("kept lineage inventory incomplete")
+    censoring = None
+    if excluded:
+        # Raw gain has no preregistered finite bound in a gate panel. Do not
+        # turn an excluded, unmeasured gain into zero or certify its sign.
+        reasons.append("unbounded gain for arena-excluded contexts")
+        sides = [
+            {(u["context_id"], u["seed"]): u for u in original_panel[side]}
+            for side in ("challenger", "champion")
+        ]
+        groups = [defaultdict(list) for _ in range(6)]
+        for c in original_panel["roster"]:
+            for seed in original_panel["seeds"]:
+                key = (c["context_id"], seed)
+                if c["context_id"] in excluded:
+                    values = (0.0, 1.0, 0.0, 1.0, -1.0, 1.0)
+                elif key in sides[0] and key in sides[1]:
+                    a, b = sides[0][key]["score"], sides[1][key]["score"]
+                    if a is None or b is None:
+                        continue
+                    values = (a, a, b, b, a - b, a - b)
+                else:
+                    continue
+                for group, value in zip(groups, values):
+                    group[c["lineage_id"]].append(value)
+        censoring = {}
+        for i, name in enumerate(
+            ("challenger_winrate", "champion_winrate", "paired_delta_winrate")
+        ):
+            low, high = groups[2 * i : 2 * i + 2]
+            censoring[name] = {
+                "lower": (fmean(fmean(v) for v in low.values()) if low else None),
+                "upper": (fmean(fmean(v) for v in high.values()) if high else None),
+            }
+        censoring["raw_gain"] = {"available": False, "lower": None, "upper": None}
+        censoring["scope"] = (
+            "deterministic bounds over original paired roster; not confidence intervals"
+        )
     stats = {}
     if per_lineage:
         for metric in ("positive_gain", "score"):
@@ -306,6 +521,10 @@ def evaluate_panel(panel, look):
         "bootstrap": 2000,
         "bootstrap_seed": 7,
         "benchmark_valid": False,
+        "custody": custody["reference"] if custody is not None else None,
+        "coverage": custody["coverage"] if custody is not None else None,
+        "arena_excluded_in_panel": excluded,
+        "censoring_bounds": censoring,
     }
 
 
@@ -351,6 +570,7 @@ def run_gate(config, panel):
     with os.fdopen(descriptor, "r+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         config.guard()
+        custody = load_custody(config.bench_root)
         month = datetime.now(timezone.utc).strftime("%Y-%m")
         ledger = state_path(config.bench_root, state / "gates" / month)
         ledger.mkdir(parents=True, exist_ok=True)
@@ -386,11 +606,16 @@ def run_gate(config, panel):
             "previous_pointer_sha256": digest(previous),
             "spending": alpha_schedule()[look - 1],
             "at_unix": time.time(),
+            "custody": custody["reference"] if custody is not None else None,
         }
         create_json(
             ledger / f"look_{look:02d}.reservation.json", signed_receipt(reservation)
         )
-        decision = evaluate_panel(panel, look)
+        decision = (
+            evaluate_panel(panel, look, custody=custody)
+            if custody is not None
+            else evaluate_panel(panel, look)
+        )
         blocked = (state / "STOP.json").exists() or (
             state / "bench-health-hold.json"
         ).exists()
@@ -412,7 +637,12 @@ def run_gate(config, panel):
         receipt = signed_receipt(
             {
                 "schema": "jope.rlfw-research-gate/v1",
-                "label": panel["label"],
+                "label": (
+                    "Lane A, task-label-aware inner-CV search, dev panel "
+                    f"(kept L={custody['coverage']['lineages_kept']}), directional; CPU inference"
+                    if custody is not None
+                    else panel["label"]
+                ),
                 "reservation_sha256": digest(reservation),
                 "source_sha256": config.source_sha256,
                 "month": month,
@@ -432,6 +662,8 @@ def run_gate(config, panel):
         application = None
         if applied:
             config.guard()
+            if load_custody(config.bench_root) != custody:
+                raise RuntimeError("custody changed before research pointer commit")
             if (state / "STOP.json").exists() or (
                 state / "bench-health-hold.json"
             ).exists():

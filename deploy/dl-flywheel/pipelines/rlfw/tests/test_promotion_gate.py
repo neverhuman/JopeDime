@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from dataclasses import replace
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -9,7 +10,7 @@ import time
 import unittest
 from unittest import mock
 
-from rlfw.arena.game_spec import digest
+from rlfw.arena.game_spec import canonical, digest
 from rlfw.arena.kpi import LABEL
 from rlfw.promotion_gate import (
     alpha_schedule,
@@ -20,6 +21,7 @@ from rlfw.promotion_gate import (
     signed_receipt,
     verify_receipt,
     panel_from_runs,
+    load_custody,
 )
 
 SHA = "a" * 64
@@ -285,12 +287,12 @@ class GateStateTests(unittest.TestCase):
         self.assertEqual(other.read_text(), "keep")
 
     def test_fixed_deadline_and_lineage_protocol_are_not_overridden(self):
-        with mock.patch("rlfw.promotion_gate.time.time", return_value=1791554400.0):
-            resumed = replace(self.cfg, deadline_unix=1791568800)
+        with mock.patch("rlfw.promotion_gate.time.time", return_value=1791570600.0):
+            resumed = replace(self.cfg, deadline_unix=1791608400)
             resumed.guard()
             with self.assertRaises(ValueError):
-                replace(self.cfg, deadline_unix=1791568801)
-        with mock.patch("rlfw.promotion_gate.time.time", return_value=1791568800.0):
+                replace(self.cfg, deadline_unix=1791608401)
+        with mock.patch("rlfw.promotion_gate.time.time", return_value=1791608400.0):
             with self.assertRaises(RuntimeError):
                 resumed.guard()
         with self.assertRaises(ValueError):
@@ -377,6 +379,202 @@ class GateStateTests(unittest.TestCase):
             panel_from_runs(
                 specs[0].out_dir, specs[1].out_dir, "trie_sample:toy", "trie_sample:toy"
             )
+
+
+class D5CustodyTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="rlfw-d5-gate-")
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.rows = []
+        for i in range(263):
+            kept = i != 0 and not 54 <= i < 64
+            self.rows.append(
+                {
+                    "context_id": f"c{i}",
+                    "lineage_id": f"parent{i if i < 54 else 53}",
+                    "category": "clean" if kept else "parity_custody",
+                    "kept": kept,
+                    "h_c": 0.0 if kept else None,
+                    "h_c_grid": 0 if kept else None,
+                    "programs": [{"role": "hwm", "program_sha256": SHA}],
+                }
+            )
+        self.write_json(
+            "runs/parity_screen/custody.json",
+            {
+                "schema": "rlfw-D5-parity-custody/v1",
+                "contexts": self.rows,
+                "native_tolerance": 1e-9,
+                "excludes_all_arms": True,
+            },
+        )
+        self.write_json(
+            "runs/parity_screen/summary.json",
+            {
+                "state": "completed",
+                "exclusion_skew": {"p_value": 0.1},
+            },
+        )
+        self.write_json(
+            "logs/verification.json",
+            {
+                "passed": True,
+                "custody_sha256": self.pin("runs/parity_screen/custody.json"),
+                "summary_sha256": self.pin("runs/parity_screen/summary.json"),
+                "screen_manifest_sha256": SHA,
+            },
+        )
+        self.write_json("state/STOP.pre-D5.json", {"historical": True})
+        self.write_json(
+            "state/CUSTODY_D5.json",
+            {
+                "schema": "rlfw-D5-custody-pointer/v1",
+                "deadline_unix": 1791608400,
+                "excludes_all_arms": True,
+                "reuse_clean_HWM_h_c": True,
+                "blocked_parity_coverage": False,
+                "custody_path": str(self.root / "runs/parity_screen/custody.json"),
+                "custody_sha256": self.pin("runs/parity_screen/custody.json"),
+                "screen_summary_path": str(
+                    self.root / "runs/parity_screen/summary.json"
+                ),
+                "screen_verification_path": str(self.root / "logs/verification.json"),
+                "screen_verification_sha256": self.pin("logs/verification.json"),
+                "screen_manifest_sha256": SHA,
+            },
+        )
+        self.panel = panel()
+        for side in ("roster", "challenger", "champion"):
+            self.panel[side] = [u for u in self.panel[side] if u["context_id"] != "c0"]
+        self.rehash(self.panel)
+
+    def write_json(self, relative, body):
+        path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            path.chmod(0o600)  # This test's own generated state only.
+        path.write_text(canonical(body))
+        path.chmod(0o444)
+
+    def pin(self, relative):
+        return hashlib.sha256((self.root / relative).read_bytes()).hexdigest()
+
+    def rehash(self, body):
+        body["panel_sha256"] = digest(
+            {
+                "contexts": body["roster"],
+                "seeds": body["seeds"],
+                "role_map": body["role_map_sha256"],
+            }
+        )
+
+    def overlay(self, ids):
+        rows = [
+            {
+                "context_id": f"c{i}",
+                "lineage_id": self.rows[i]["lineage_id"],
+                "category": "parity_custody_arena",
+                "excludes_all_arms": True,
+                "native_tolerance": 1e-9,
+                "q": None,
+                "q_grid": None,
+                "actual_attempts": 3,
+            }
+            for i in ids
+        ]
+        body = {
+            "schema": "rlfw-D5-arena-custody-extension/v1",
+            "screen_custody_sha256": self.pin("runs/parity_screen/custody.json"),
+            "arena_exclusions": rows,
+        }
+        pin = digest(body)
+        self.write_json(f"state/arena_custody/custody-{pin}.json", body)
+        self.write_json("state/arena_custody/custody.json", body)
+
+    def test_sealed_53_lineage_panel_passes_while_unbound_subset_stays_inconclusive(
+        self,
+    ):
+        self.assertEqual(evaluate_panel(self.panel, 3)["verdict"], "INCONCLUSIVE")
+        custody = load_custody(self.root)
+        result = evaluate_panel(self.panel, 3, custody=custody)
+        self.assertEqual(result["verdict"], "PROMOTE")
+        self.assertEqual(result["coverage"]["contexts_kept"], 252)
+        self.assertEqual(result["coverage"]["lineages_kept"], 53)
+        self.assertEqual(len(result["per_lineage_deltas"]["positive_gain"]), 53)
+        self.assertEqual(result["bootstrap"], 2000)
+        self.assertEqual(result["bootstrap_seed"], 7)
+
+    def test_arena_exclusion_is_paired_and_unmeasured_gain_cannot_promote(self):
+        self.overlay([1])
+        result = evaluate_panel(self.panel, 3, custody=load_custody(self.root))
+        self.assertEqual(result["verdict"], "INCONCLUSIVE")
+        self.assertEqual(result["arena_excluded_in_panel"], ["c1"])
+        self.assertEqual(result["coverage"]["contexts_kept"], 251)
+        self.assertNotIn("parent1", result["per_lineage_deltas"]["positive_gain"])
+        bounds = result["censoring_bounds"]["paired_delta_winrate"]
+        self.assertLess(bounds["lower"], 0)
+        self.assertGreater(bounds["upper"], 0)
+        self.assertFalse(result["censoring_bounds"]["raw_gain"]["available"])
+        self.assertEqual(len(self.panel["champion"]), 53)
+        self.assertEqual(len(self.panel["challenger"]), 53)
+
+    def test_screened_hwm_program_quality_and_lineage_are_bound(self):
+        custody = load_custody(self.root)
+        for change in (
+            lambda p: p["roster"][0].update(hwm_program_sha256="b" * 64),
+            lambda p: p["roster"][0].update(lineage_id="other"),
+            lambda p: p["champion"][0].update(hwm=0.1),
+        ):
+            candidate = deepcopy(self.panel)
+            change(candidate)
+            self.rehash(candidate)
+            with self.assertRaises(ValueError):
+                evaluate_panel(candidate, 3, custody=custody)
+
+    def test_missing_changed_or_linked_custody_refuses(self):
+        path = self.root / "runs/parity_screen/custody.json"
+        raw = path.read_bytes()
+        path.chmod(0o600)
+        path.write_bytes(raw + b" ")
+        with self.assertRaisesRegex(ValueError, "byte drift"):
+            load_custody(self.root)
+        path.write_bytes(raw)
+        path.chmod(0o444)
+        pointer = self.root / "state/CUSTODY_D5.json"
+        pointer.unlink()  # This test's own generated pointer only.
+        with self.assertRaisesRegex(ValueError, "pointer missing"):
+            load_custody(self.root)
+        pointer.symlink_to(path)
+        with self.assertRaisesRegex(ValueError, "links"):
+            load_custody(self.root)
+
+    def test_cumulative_52_context_and_44_lineage_boundaries_are_fixed(self):
+        self.overlay(range(64, 105))
+        self.assertEqual(load_custody(self.root)["coverage"]["contexts_excluded"], 52)
+        self.overlay(range(64, 106))
+        with self.assertRaisesRegex(ValueError, "BLOCKED_PARITY_COVERAGE"):
+            load_custody(self.root)
+        self.overlay(range(1, 10))
+        self.assertEqual(load_custody(self.root)["coverage"]["lineages_kept"], 44)
+        self.overlay(range(1, 11))
+        with self.assertRaisesRegex(ValueError, "BLOCKED_PARITY_COVERAGE"):
+            load_custody(self.root)
+
+    def test_custody_drift_before_pointer_commit_retains_spend_without_pointer(self):
+        cfg = GateConfig(str(self.root), 1791608400, SHA, apply_research_pointer=True)
+        run_gate(cfg, self.panel)
+        run_gate(cfg, self.panel)
+        custody = load_custody(self.root)
+        with mock.patch(
+            "rlfw.promotion_gate.load_custody", side_effect=[custody, None]
+        ):
+            with self.assertRaisesRegex(RuntimeError, "custody changed"):
+                run_gate(cfg, self.panel)
+        self.assertFalse((self.root / "state/champion.json").exists())
+        self.assertEqual(
+            len(list((self.root / "state/gates").rglob("*.reservation.json"))), 3
+        )
 
 
 if __name__ == "__main__":

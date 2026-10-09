@@ -40,10 +40,30 @@ Only `--apply-research-pointer` enables a qualifying pointer change. One atomic
 `BENCH/state/pointer_versions/`. Subsequent gates must compare against the
 current research champion. The module never changes a serving checkpoint,
 native ledger or teacher table. Campaign STOP/HOLD prevents pointer application,
-and the owner-corrected 18:00 UTC deadline cannot be extended by this CLI.
-The correction preserves completed attempt budgets and recorded gate looks.
+and the owner-renewed 05:00 UTC October 10 deadline cannot be extended by this CLI.
+D5 supersedes the earlier cutoffs; recorded attempts and monthly gate looks remain intact.
 
 ## Commands and evidence
+
+D5 and D5.1 qualify the development panel through the benchmark lane's sealed
+263-context screen and versioned arena custody. The gate reads their byte-bound
+state, applies arena exclusions to both arms, and derives the retained lineage
+inventory. Cumulative exclusion of more than 52 contexts, or retention of fewer
+than 44 lineages, refuses the gate. The original 54-lineage protocol remains
+required when no D5 custody exists.
+
+Retained contexts keep their screened original program and measured comparator
+quality. Gate intervals use the final retained lineages with the unchanged
+2,000 bootstrap draws and seed 7. Reservations and decisions bind the custody
+versions, coverage and exclusions; a changed custody snapshot prevents a pointer
+commit. The gate never changes the benchmark custody or STOP records.
+
+For arena exclusions it reports each arm's WIN/LOSS bounds and the paired bounds
+over the original paired roster, including lineages lost entirely in the arena.
+These are deterministic sensitivity bounds, separate from the retained-lineage CIs.
+The panel protocol supplies no finite bound for an excluded raw gain, so that
+gain remains unavailable and the promotion decision is inconclusive. No failed
+or excluded gain becomes zero. These limits are separate from fixture calibration.
 
 From the reviewed checkout:
 
@@ -84,7 +104,7 @@ nice -n 19 ionice -c3 python3 -B -m rlfw.promotion_gate \
   --champion-run "$BENCH/runs/baseline_T1" \
   --challenger-arm trie_sample:challenger \
   --champion-arm trie_sample:current_latest \
-  --deadline-unix 1791568800 --source-sha256 "$SOURCE_SHA"
+  --deadline-unix 1791608400 --source-sha256 "$SOURCE_SHA"
 ```
 
 This command consumes a monthly look and writes receipts. To enable a research
