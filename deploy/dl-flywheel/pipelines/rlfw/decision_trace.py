@@ -72,8 +72,11 @@ class DecisionRecord:
             raise ValueError("bounded integer decoder seed required")
         if not math.isfinite(self.temperature) or self.temperature <= 0:
             raise ValueError("positive finite temperature required")
-        if len(self.tokens) < 2 or any(
-            type(x) is not int or x < 0 for x in self.tokens
+        if (
+            len(self.tokens) < 2
+            or self.tokens[0] != 1
+            or self.tokens[-1] != 2
+            or any(type(x) is not int or x < 0 for x in self.tokens)
         ):
             raise ValueError("BOS/EOS-inclusive integer tokens required")
         if len(self.logprob.per_token) != len(self.tokens) - 1:

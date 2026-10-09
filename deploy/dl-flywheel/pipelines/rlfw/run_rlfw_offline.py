@@ -14,6 +14,16 @@ from pathlib import Path
 MODULES = ("rlfw.tests.test_pr1", "rlfw.tests.test_binding")
 
 
+def source_identity():
+    local = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent, text=True
+    ).strip()
+    return (
+        os.environ.get("JOPE_SOURCE_SHA") or local,
+        os.environ.get("GITHUB_SHA") or local,
+    )
+
+
 def flatten(suite):
     for item in suite:
         if isinstance(item, unittest.TestSuite):
@@ -34,6 +44,7 @@ def main():
     if loader.errors or not identities:
         raise RuntimeError("test collection failed or collected zero tests")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
+    source_commit, checkout_sha = source_identity()
     receipt = {
         "schema": "jope.rlfw-offline/v1",
         "started_unix": started,
@@ -46,10 +57,8 @@ def main():
         "passed": result.wasSuccessful()
         and result.testsRun == len(identities)
         and not result.skipped,
-        "source_commit": os.environ.get("GITHUB_SHA")
-        or subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent, text=True
-        ).strip(),
+        "source_commit": source_commit,
+        "checkout_sha": checkout_sha,
         "command": sys.argv,
         "python": sys.version,
         "environment": {
