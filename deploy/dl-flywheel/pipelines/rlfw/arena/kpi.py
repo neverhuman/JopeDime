@@ -8,7 +8,7 @@ import math
 import random
 from statistics import fmean, median
 
-from .game_spec import require_sha
+from .game_spec import require_sha, R5_KPI_VERSION
 
 LABEL = "Lane A, task-label-aware inner-CV search, dev panel L=54, directional"
 
@@ -41,6 +41,7 @@ class SlotResult:
             "qualified_complete",
             "program_failed",
             "timeout",
+            "parity_unqualified",
             "censored",
         ):
             raise ValueError("unresolved infra/parity outcomes must be censored")
@@ -131,10 +132,21 @@ def outcome_score(best, hwm, tau=0.01):
     return ("WIN", 1.0) if delta > tau else ("LOSS", 0.0)
 
 
-def context_units(rows, hwm, tau=0.01):
+def context_units(rows, hwm, tau=0.01, *, hwm_programs=None, program_parity=False):
     grouped = defaultdict(list)
     for row in rows:
+        if row.outcome == "parity_unqualified" and not program_parity:
+            raise ValueError("program parity requires an explicit R5 metric version")
         grouped[(row.context_id, row.arm, row.seed)].append(row)
+    if hwm_programs is None:
+        # Preserve callers that already bind identity alongside numeric quality.
+        hwm_programs = {
+            ctx: hwm[(ctx, "program_sha256")]
+            for ctx, _, _ in grouped
+            if (ctx, "program_sha256") in hwm
+        }
+    for program in hwm_programs.values():
+        require_sha(program, "original program")
     units = []
     for (ctx, arm, seed), slots in sorted(grouped.items()):
         slots.sort(key=lambda r: r.slot)
@@ -187,10 +199,11 @@ def context_units(rows, hwm, tau=0.01):
             "timeout_rate": sum(r.outcome == "timeout" for r in slots) / 8,
             "censored_rate": sum(r.outcome == "censored" for r in slots) / 8,
             "distinct_shas": float(len({r.program_sha256 for r in slots})),
-            "rediscovery_rate": sum(
-                r.program_sha256 == hwm.get((ctx, "program_sha256")) for r in slots
-            )
-            / 8,
+            "rediscovery_rate": (
+                sum(r.program_sha256 == hwm_programs[ctx] for r in slots) / 8
+                if ctx in hwm_programs
+                else None
+            ),
             "cache_hit_rate": sum(r.cache_hit for r in slots) / 8,
             "wall_seconds": None
             if any(r.unknown_cost_attempts for r in slots)
@@ -204,6 +217,10 @@ def context_units(rows, hwm, tau=0.01):
             "qualified_completion_rate": sum(r.qualified for r in slots) / 8,
             "charged_slots": sum(r.charged for r in slots),
         }
+        if program_parity:
+            unit["parity_unqualified_rate"] = (
+                sum(r.outcome == "parity_unqualified" for r in slots) / 8
+            )
         for b in (1, 2, 4, 8):
             unit[f"best_q@{b}"] = best[b]
             unit[f"valid@{b}"] = float(best[b] is not None)
@@ -244,6 +261,12 @@ def arm_metrics(units):
     for b in (1, 2, 4, 8):
         result[f"best_q@{b}"] = summarize_values(units, f"best_q@{b}")
         result[f"valid@{b}"] = summarize_values(units, f"valid@{b}")
+    if any("parity_unqualified_rate" in u for u in units):
+        if not all("parity_unqualified_rate" in u for u in units):
+            raise ValueError("mixed metric versions in one arm")
+        result["parity_unqualified_rate"] = summarize_values(
+            units, "parity_unqualified_rate"
+        )
     costs = [u["wall_seconds"] for u in units if u["wall_seconds"] is not None]
     result["median_evaluator_seconds"] = (
         median(costs) if len(costs) == len(units) and costs else None
@@ -407,6 +430,7 @@ def compute_report(spec, rows, hwm, closed_contexts, ranking=()):
             row.spec_sha256 != spec.sha256
             or allowed.get(row.context_id) != row.lineage_id
             or row.arm not in {a.name for a in spec.arms}
+            or row.outcome not in spec.outcome_classes
         ):
             raise ValueError("result identity disagrees with frozen GameSpec")
     comparators = {r.context_id: r for r in rows if r.arm == "hwm"}
@@ -437,7 +461,17 @@ def compute_report(spec, rows, hwm, closed_contexts, ranking=()):
     reports = {}
     primary_units = None
     for tau in (spec.tau, 0.005, 0.02):
-        units = context_units(sampling, hwm, tau)
+        units = context_units(
+            sampling,
+            hwm,
+            tau,
+            hwm_programs={
+                c.context_id: c.hwm_program_sha256
+                for c in spec.contexts
+                if c.hwm_program_sha256 is not None
+            },
+            program_parity=spec.kpi_version == R5_KPI_VERSION,
+        )
         by_arm = {
             a.name: [u for u in units if u["arm"] == a.name]
             for a in spec.arms
@@ -484,6 +518,8 @@ def compute_report(spec, rows, hwm, closed_contexts, ranking=()):
             if row is None
             else "comparable"
             if row.qualified
+            else "hwm_parity_unqualified"
+            if row.outcome == "parity_unqualified"
             else "hwm_parity_custody"
             if row.censor_reason == "parity_custody"
             else "hwm_infra_unknown"
@@ -492,7 +528,12 @@ def compute_report(spec, rows, hwm, closed_contexts, ranking=()):
         )
         coverage[category] += 1
     return {
-        "label": LABEL,
+        "label": LABEL
+        if spec.kpi_version != R5_KPI_VERSION
+        else (
+            "Lane A, task-label-aware inner-CV search, dev panel "
+            f"L={len({c.lineage_id for c in spec.contexts})}, directional; {spec.device} inference"
+        ),
         "spec_sha256": spec.sha256,
         "pairing_sha256": spec.pairing_sha256,
         "bootstrap": 2000,

@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from .arms import Candidate, decision_value, draw_seed
-from .game_spec import canonical, digest, local_path
+from .game_spec import canonical, digest, local_path, R5_KPI_VERSION
 from .kpi import SlotResult
 
 
@@ -87,6 +87,18 @@ class ArenaScheduler:
             "SELECT execution_key,evidence FROM slots WHERE charged=1"
         ):
             self.oracle.own_results[key] = json.loads(evidence)
+        if spec.kpi_version == R5_KPI_VERSION:
+            self.db.executescript("""
+                CREATE TABLE IF NOT EXISTS program_fates(
+                    execution_key TEXT PRIMARY KEY, evidence TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS terminal_attempts(
+                    context TEXT, arm TEXT, seed INTEGER, slot INTEGER,
+                    payload TEXT NOT NULL, PRIMARY KEY(context,arm,seed,slot));
+            """)
+            for key, evidence in self.db.execute(
+                "SELECT execution_key,evidence FROM program_fates"
+            ):
+                self.oracle.own_results[key] = json.loads(evidence)
 
     def close(self):
         self.db.close()
@@ -199,6 +211,67 @@ class ArenaScheduler:
             self.db.execute(
                 "UPDATE attempts SET result=? WHERE context=? AND arm=? AND seed=? AND slot=? AND number=?",
                 (canonical(result), *key, number),
+            )
+
+    def terminal_attempt(self, key):
+        if self.spec.kpi_version != R5_KPI_VERSION:
+            return None
+        with self.mutex:
+            row = self.db.execute(
+                "SELECT payload FROM terminal_attempts WHERE context=? AND arm=? AND seed=? AND slot=?",
+                key,
+            ).fetchone()
+        return json.loads(row[0]) if row else None
+
+    def record_program_fate(self, key, number, execution_key, result, *, cached):
+        if (
+            self.spec.kpi_version != R5_KPI_VERSION
+            or result["outcome_class"] != "parity_unqualified"
+            or result.get("qualified") is not False
+            or any(result.get(name) is not None for name in ("q", "q_opt", "q_grid"))
+        ):
+            raise ValueError("terminal program fates require the R5 parity outcome")
+        payload = canonical(
+            {
+                "number": number,
+                "result": result,
+                "cache_hit": cached,
+                "wall_seconds": 0.0 if cached else result["wall_seconds"],
+                "cpu_seconds": 0.0 if cached else result["cpu_seconds"],
+                "unknown_cost": False
+                if cached
+                else bool(result.get("cost_unknown", False)),
+            }
+        )
+        evidence = canonical(result)
+        with self.mutex, self.db:
+            reserved = self.db.execute(
+                "SELECT 1 FROM attempts WHERE context=? AND arm=? AND seed=? AND slot=? AND number=?",
+                (*key, number),
+            ).fetchone()
+            if reserved is None:
+                raise ValueError(
+                    "terminal fate requires its durable attempt reservation"
+                )
+            old = self.db.execute(
+                "SELECT evidence FROM program_fates WHERE execution_key=?",
+                (execution_key,),
+            ).fetchone()
+            if old and old[0] != evidence:
+                raise ValueError("conflicting permanent program fate")
+            previous = self.db.execute(
+                "SELECT payload FROM terminal_attempts WHERE context=? AND arm=? AND seed=? AND slot=?",
+                key,
+            ).fetchone()
+            if previous and previous[0] != payload:
+                raise ValueError("conflicting terminal attempt replay")
+            self.db.execute(
+                "INSERT OR IGNORE INTO program_fates VALUES(?,?)",
+                (execution_key, evidence),
+            )
+            self.db.execute(
+                "INSERT OR IGNORE INTO terminal_attempts VALUES(?,?,?,?,?)",
+                (*key, payload),
             )
 
     def slate(self, context, arm, seed):

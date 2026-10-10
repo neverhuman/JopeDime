@@ -40,7 +40,38 @@ pointer. The yield report counts actual attempted contexts, contexts with at
 least one qualified program, and contexts with at least two distinct programs
 whose measured micro-q gap exceeds 10000. It reports new parent families relative
 to the frozen starting inventory, observed evaluator costs, unresolved costs,
-censored slots and unfinished/unattempted contexts. It reports coverage only.
+censored slots, terminal parity slots and unfinished/unattempted contexts. It
+reports coverage only.
+
+## Program parity outcomes (R5)
+
+Bootstrap specs (`jope.rlfw-bootstrap-spec/v2`) carry the arena's
+`rlfw-kpi/r5-program-parity-v1` version, and the shared oracle and outbox apply
+it. A deterministic native/Rust mismatch is the program-level outcome
+`parity_unqualified`: the logical slot is charged once, no q, q_opt or q_grid
+is recorded, and the slot is never retried. Its permanent program fate and the
+attempt's cost are saved before the charge, so a repeat of the same execution
+identity reuses that fate without a new native request. The research ledger
+records the event as a refusal without a numeric label. The context stays in the
+wave, and its other programs remain measurable. The legacy `parity_custody`
+retry outcome is refused under R5. `infra_unknown` keeps its bounded retries and
+censoring.
+
+## Campaign window (R21)
+
+No deadline is written in the code. Each wave spec binds a
+`jope.rlfw-bootstrap-campaign-window/v1` window with `created_unix`,
+`deadline_unix`, `window_hours`, `boot_id` and `created_monotonic`. The window
+lasts exactly 72 hours, and its deadline must equal creation plus 72 hours.
+The CLI requires `--campaign-window`, a benchmark-local manifest whose
+window equals the spec's. A missing, malformed or different manifest is refused
+before any runtime import. The CLI, every context and every execution require
+the current wall clock and the same-boot monotonic clock to lie inside the
+window. After a reboot the deadline cannot be verified, so the run refuses and
+needs a new owner-approved window. The window starts only when the owner
+approves bootstrap waves. The approved launcher writes
+`CampaignWindow.opened_now().to_manifest()` once; no CLI path opens, renews or
+extends a window.
 
 ## Acceptance
 
@@ -52,7 +83,9 @@ just required
 Registered synthetic fixtures cover eligibility, native identities, seeded
 parent balance, mixed selection, probabilities/propensities, packet replay,
 empty-arena admission, first-label CAS, failure NULLs, role changes, missing
-closure, strict yield boundaries, the renewed deadline and partial/unknown costs.
+closure, strict yield boundaries, R5 parity outcomes, the injected campaign
+window, a scan for literal deadlines in the package source and partial/unknown
+costs.
 Their evaluator,
 artifacts and probabilities are synthetic. They establish source behavior;
 hosted exact-head CI and independent approval remain required.
@@ -62,7 +95,8 @@ hosted exact-head CI and independent approval remain required.
 ```sh
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=deploy/dl-flywheel/pipelines \
 "$RLFW_PYTHON" -m rlfw.no_winner_bootstrap --enable-no-winner-bootstrap \
-  --spec "$B/runs/bootstrap_wave/spec.json" --runtime-binding "$B/l0/bootstrap_binding.py" \
+  --spec "$B/runs/bootstrap_wave/spec.json" --campaign-window "$B/state/bootstrap-campaign-window.json" \
+  --runtime-binding "$B/l0/bootstrap_binding.py" \
   --policy-code-root "$B/code_pin" --policy-qualification "$B/runs/cpu_qualified/qualification.json" \
   --device cpu --pool-workers 4
 ```
@@ -72,10 +106,8 @@ interpreter and exact Torch runtime.
 The CLI accepts `--device cpu|cuda`, default CPU. CUDA requires the complete
 identical-pin likelihood/head parity certificate. All executions require the
 bounded campaign scope, current health/memory guards, same-pin 1000-draw policy
-qualification, pinned runtime dependencies and fixed 2026-10-10 05:00 UTC deadline
-authorized by D5. The schema refuses any other cutoff, and the oracle refuses
-execution at or after that cutoff. A synthetic CLI wave also verifies admission
-after the superseded 18:00 UTC deadline.
+qualification, pinned runtime dependencies and an open injected campaign window.
+The oracle refuses execution at or after the window's deadline.
 
 The sealed `build_bootstrap(spec, device=...)` runtime supplies the complete
 catalog, sample/sample_many, score_heads, coverage_probabilities, fresh role/input

@@ -1,5 +1,40 @@
 # Matched-budget arena and KPI harness
 
+## Versioned program parity outcomes
+
+Legacy `rlfw-kpi/v1` GameSpecs keep their frozen taxonomy and retry semantics.
+The explicit `rlfw-kpi/r5-program-parity-v1` version requires
+`R5_OUTCOME_CLASSES` from `rlfw.arena.game_spec`; its different version and
+taxonomy change the GameSpec and pairing hashes. Existing specs and outboxes
+are never rewritten into that version.
+
+Under R5, the pinned evaluator or frozen cache classifies a deterministic
+program mismatch as `parity_unqualified`, with `qualified=false`,
+`parity_verified=false` and no q, q_opt or q_grid. An available normalized error
+must exceed the unchanged `1e-9` threshold; absent historical diagnostic error
+stays absent. The outcome commits one charged logical slot, completes without
+retry, and can be reused for the same exact execution identity. Actual costs
+and unknown costs remain explicit. The context remains in the roster.
+Before disclosing a charge, the R5 outbox atomically saves the permanent program
+fate and the logical attempt's original cost and cache status. An interruption
+between classification and charging resumes that attempt without a new native
+request or reservation. The physical source evidence remains separate from a
+cache lookup's zero new cost.
+
+Such slots supply no quality or gain in best-of-budget metrics. Other qualified
+programs in the context remain measurable. An unqualified original comparator
+leaves h_c unavailable. Infrastructure uncertainty retains its separate retry
+and censoring behavior. Reports expose a per-arm lineage-macro rate of terminal
+parity outcomes and use the R5 roster's registered lineage count in the label.
+They derive rediscovery identities from the frozen original programs while
+preserving the older callers' bound identity maps.
+
+The synthetic acceptance checks cover charging, no retries, exact cache reuse,
+durable outbox closure and resume, version pairing, absent comparators, preserved
+costs and refusal of numeric rewards on parity outcomes. Source fixture proof
+does not establish live R5 qualification. New runs still require reviewed
+source, runtime pins, the registered development split and independent review.
+
 The additive `rlfw.arena` package freezes a game before execution, precommits all
 arm slates for each context, and persists score disclosure and slot charging in an
 isolated SQLite outbox. The comparator is the original program re-executed under

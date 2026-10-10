@@ -7,11 +7,13 @@ import json
 import math
 import random
 import sys
-from dataclasses import asdict, dataclass, replace
+import time
+from dataclasses import asdict, dataclass, fields, replace
 from pathlib import Path
 
 from rlfw.arena.arms import Candidate, draw_seed, pr1_trace_sink
 from rlfw.arena.game_spec import (
+    R5_KPI_VERSION,
     ArmSpec,
     GameSpec,
     canonical,
@@ -125,6 +127,95 @@ def select_wave(contexts, role_check, role_map_sha256):
     return tuple(selected)
 
 
+CAMPAIGN_WINDOW_SCHEMA = "jope.rlfw-bootstrap-campaign-window/v1"
+# Owner ruling R21: the window length is fixed; its start is the owner's approval.
+CAMPAIGN_WINDOW_HOURS = 72
+
+
+def campaign_clock():
+    """Read wall time, monotonic time and boot identity together."""
+    return {
+        "unix": time.time(),
+        "monotonic": time.monotonic(),
+        "boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+    }
+
+
+@dataclass(frozen=True)
+class CampaignWindow:
+    """Bootstrap campaign window injected from its manifest, never a code constant."""
+
+    created_unix: float
+    deadline_unix: float
+    window_hours: int
+    boot_id: str
+    created_monotonic: float
+
+    def __post_init__(self):
+        if (
+            type(self.window_hours) is not int
+            or self.window_hours != CAMPAIGN_WINDOW_HOURS
+        ):
+            raise ValueError("bootstrap campaign window must last 72 hours")
+        clocks = (self.created_unix, self.deadline_unix, self.created_monotonic)
+        if (
+            any(type(v) not in (int, float) or not math.isfinite(v) for v in clocks)
+            or self.created_unix <= 0
+            or self.created_monotonic < 0
+        ):
+            raise ValueError("finite campaign window clocks required")
+        if self.deadline_unix != self.created_unix + 3600 * self.window_hours:
+            raise ValueError("campaign deadline must close the window at its length")
+        if (
+            type(self.boot_id) is not str
+            or not 0 < len(self.boot_id) <= 64
+            or self.boot_id != self.boot_id.strip()
+        ):
+            raise ValueError("campaign window boot identity required")
+
+    @classmethod
+    def opened_now(cls):
+        """For the owner-approved launcher only; no CLI path opens or renews a window."""
+        now = campaign_clock()
+        return cls(
+            now["unix"],
+            now["unix"] + 3600 * CAMPAIGN_WINDOW_HOURS,
+            CAMPAIGN_WINDOW_HOURS,
+            now["boot_id"],
+            now["monotonic"],
+        )
+
+    def to_manifest(self):
+        return {"schema": CAMPAIGN_WINDOW_SCHEMA, **asdict(self)}
+
+    @classmethod
+    def from_manifest(cls, value):
+        if not isinstance(value, dict) or value.get("schema") != CAMPAIGN_WINDOW_SCHEMA:
+            raise ValueError("bootstrap campaign window manifest required")
+        d = dict(value)
+        d.pop("schema")
+        if set(d) != {f.name for f in fields(cls)}:
+            raise ValueError("campaign window manifest fields changed")
+        return cls(**d)
+
+    def require_open(self):
+        now = campaign_clock()
+        if now["boot_id"] != self.boot_id:
+            raise RuntimeError(
+                "campaign deadline is unverifiable after a reboot; "
+                "a new owner-approved window is required"
+            )
+        if not (
+            self.created_unix <= now["unix"] < self.deadline_unix
+            and self.created_monotonic
+            <= now["monotonic"]
+            < self.created_monotonic + 3600 * self.window_hours
+        ):
+            raise RuntimeError(
+                "bootstrap campaign window is closed at its deadline or not yet open"
+            )
+
+
 @dataclass(frozen=True)
 class BootstrapSpec:
     game_id: str
@@ -141,7 +232,7 @@ class BootstrapSpec:
     policy_code_manifest_sha256: str
     policy_qualification_sha256: str
     runtime_files: tuple[tuple[str, str], ...]
-    deadline_unix: float
+    campaign_window: CampaignWindow
     previously_labeled_parents: tuple[str, ...] = ()
     cache_snapshot_sha256: str = digest({})
     protocol: str = "jope.flywheel-s1-inner-rmse/v1"
@@ -154,6 +245,7 @@ class BootstrapSpec:
     device: str = "cpu"
     device_parity_sha256: str | None = None
     operator: str = "coverage_5_2_1"
+    kpi_version: str = R5_KPI_VERSION
 
     def __post_init__(self):
         if (
@@ -182,12 +274,12 @@ class BootstrapSpec:
             self.operator,
         ) != ((20261009,), 8, 32, 0.01, 20261009, "coverage_5_2_1"):
             raise ValueError("preregistered wave settings cannot change")
-        if (
-            self.device not in ("cpu", "cuda")
-            or not math.isfinite(self.deadline_unix)
-            or self.deadline_unix != 1791608400.0
+        if self.device not in ("cpu", "cuda") or not isinstance(
+            self.campaign_window, CampaignWindow
         ):
-            raise ValueError("explicit device and fixed deadline required")
+            raise ValueError("explicit device and injected campaign window required")
+        if self.kpi_version != R5_KPI_VERSION:
+            raise ValueError("bootstrap waves use the R5 program-parity outcomes")
         if self.cache_snapshot_sha256 != digest({}):
             raise ValueError("bootstrap starts with the frozen empty research cache")
         for field in (
@@ -247,11 +339,16 @@ class BootstrapSpec:
                 raise ValueError("wave/research comparison identity mismatch")
 
     def to_dict(self):
-        return {"schema": "jope.rlfw-bootstrap-spec/v1", **asdict(self)}
+        return {"schema": "jope.rlfw-bootstrap-spec/v2", **asdict(self)}
 
     @property
     def sha256(self):
         return digest(self.to_dict())
+
+    @property
+    def deadline_unix(self):
+        # The shared scope and oracle checks read the injected window's deadline.
+        return self.campaign_window.deadline_unix
 
     # Reuse byte-custody operations; no development GameSpec is constructed.
     freeze = GameSpec.freeze
@@ -260,8 +357,11 @@ class BootstrapSpec:
     @classmethod
     def from_dict(cls, value):
         d = dict(value)
-        if d.pop("schema") != "jope.rlfw-bootstrap-spec/v1":
+        if d.pop("schema") != "jope.rlfw-bootstrap-spec/v2":
             raise ValueError("incompatible bootstrap schema")
+        if d.get("campaign_window") is None:
+            raise ValueError("bootstrap spec must bind its injected campaign window")
+        d["campaign_window"] = CampaignWindow(**d["campaign_window"])
         contexts = []
         for item in d["contexts"]:
             c = dict(item)
@@ -476,6 +576,10 @@ class TrainingOracle(BlindOracle):
             raise ValueError("context outside frozen train wave")
         check_training_context(context, self.role_check, self.spec.role_map_sha256)
 
+    def _resolve(self, *args, **kwargs):
+        self.spec.campaign_window.require_open()
+        return super()._resolve(*args, **kwargs)
+
 
 class BootstrapScheduler(ArenaScheduler):
     def __init__(
@@ -492,6 +596,8 @@ class BootstrapScheduler(ArenaScheduler):
         return CoverageSlate.from_dict(value)
 
     def _run_context(self, context):
+        # No proposal, admission or execution once the injected window has closed.
+        self.spec.campaign_window.require_open()
         with self.admission() as granted:
             if granted is not True or self.queue_empty() is not True:
                 raise RuntimeError("bootstrap requires reserved empty arena queue")
@@ -567,6 +673,9 @@ class BootstrapScheduler(ArenaScheduler):
                 parents - set(self.spec.previously_labeled_parents)
             ),
             "censored_logical_slots": sum(r.outcome == "censored" for r in rows),
+            "parity_unqualified_logical_slots": sum(
+                r.outcome == "parity_unqualified" for r in rows
+            ),
             "unfinished_contexts": sorted(attempted - set(self.closed_contexts())),
             "closed_contexts": self.closed_contexts(),
             "unattempted_contexts_unknown": sorted(set(self.context_by_id) - attempted),
@@ -588,6 +697,7 @@ def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--enable-no-winner-bootstrap", action="store_true")
     p.add_argument("--spec", required=True)
+    p.add_argument("--campaign-window")
     p.add_argument("--runtime-binding", required=True)
     p.add_argument("--policy-code-root", required=True)
     p.add_argument("--policy-qualification", required=True)
@@ -602,11 +712,19 @@ def main(argv=None):
     args = parser().parse_args(argv)
     if not args.enable_no_winner_bootstrap:
         raise ValueError("no-winner bootstrap defaults to off")
+    if args.campaign_window is None:
+        raise ValueError("bootstrap requires its injected campaign window manifest")
     from rlfw.bench_cli import verify_device, verify_runtime_scope
     from rlfw.decision_trace import DecisionTrace
     from rlfw.policy_binding import verify_manifest
 
     spec = BootstrapSpec.from_dict(json.loads(Path(args.spec).read_text()))
+    window = CampaignWindow.from_manifest(
+        json.loads(local_path(spec.bench_root, args.campaign_window).read_text())
+    )
+    if window != spec.campaign_window:
+        raise ValueError("wave spec must bind the injected campaign window")
+    window.require_open()
     verify_runtime_scope(spec)
     verify_device(spec, args.device, args.device_parity)
     verify_manifest(
