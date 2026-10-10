@@ -952,9 +952,9 @@ fn class_structure_and_no_machine_smell() {
     assert_eq!(*py, again.python, "python emission not deterministic");
     assert_eq!(*rs, again.rust, "rust emission not deterministic");
 
-    // Emitter version: 2.1 added the composite-kernel / ksmooth / deep-boost heads; 2.2 the
-    // shipped-text lint, the manifest's `program` keys and the reworded closed-form docstring.
-    assert_eq!(feat_math::transpile::EMITTER_VERSION, "2.2.0");
+    // Emitter version: 2.2 the shipped-text lint and manifest program keys; 2.3 the
+    // monobound partition point in lower_bound and upper_bound.
+    assert_eq!(feat_math::transpile::EMITTER_VERSION, "2.3.0");
 }
 
 /// The emitted `score` method actually computes a sane R^2 when run.

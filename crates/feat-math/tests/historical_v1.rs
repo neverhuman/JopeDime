@@ -1,6 +1,8 @@
 //! B00 historical v1 corpus. The fixture is read only: there is no regeneration mode.
 //! Run this test together with `compat_freeze`, which executes the pre-existing fitted
 //! witnesses whose names and exact prediction bits are indexed here.
+//! S1 Fix-1 does not rewrite the golden object. Its ledger overlays the representative
+//! manifest version and the JavaScript prelude's search helpers only.
 
 use feat_math::dsl::{DslExpr, Stage};
 use feat_math::kernel::{pipeline::PipelineSlots, Program};
@@ -351,10 +353,98 @@ fn historical_v1_golden_matches() {
     );
     assert_eq!(actual["negative_cases"]["roll_zero_width"], ledger["after"]);
     expected["negative_cases"]["roll_zero_width"] = ledger["after"].clone();
-    assert_eq!(
-        actual, expected,
-        "historical_v1 byte and bit drift outside B02's one-case ledger"
+    let search: Value = serde_json::from_slice(
+        &std::fs::read(
+            root()
+                .parent()
+                .unwrap()
+                .join("transitions/s1_fix1_binning_search_bytes.v1.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(search["schema"], "feat-math.historical-v1-transition.v1");
+    assert_eq!(search["path"], "emitted");
+    let replacements = search["replacements"].as_array().unwrap();
+    assert_eq!(replacements.len(), 2);
+    for item in replacements {
+        let index = usize::try_from(item["index"].as_u64().unwrap()).unwrap();
+        let language = item["language"].as_str().unwrap();
+        assert_eq!(expected["emitted"][index]["language"], language);
+        assert_eq!(actual["emitted"][index]["language"], language);
+        assert_eq!(expected["emitted"][index]["sha256"], item["before_sha256"]);
+        assert_eq!(
+            actual["emitted"][index], item["after"],
+            "S1 Fix-1 ledger after-state drifted for {language}"
+        );
+        expected["emitted"][index] = item["after"].clone();
+    }
+    let mut drifts = Vec::new();
+    diff_values(&actual, &expected, "$", &mut drifts);
+    assert!(
+        drifts.is_empty(),
+        "historical_v1 byte and bit drift outside B02's one-case ledger:\n{}",
+        drifts.join("\n")
     );
+}
+
+fn diff_values(actual: &Value, expected: &Value, path: &str, out: &mut Vec<String>) {
+    match (actual, expected) {
+        (Value::Object(left), Value::Object(right)) => {
+            for (key, value) in left {
+                match right.get(key) {
+                    Some(other) => diff_values(value, other, &format!("{path}.{key}"), out),
+                    None => out.push(format!("only-actual {path}.{key}")),
+                }
+            }
+            for key in right.keys() {
+                if !left.contains_key(key) {
+                    out.push(format!("only-expected {path}.{key}"));
+                }
+            }
+        }
+        (Value::Array(left), Value::Array(right)) => {
+            if left.len() != right.len() {
+                out.push(format!("len {path} {} vs {}", left.len(), right.len()));
+            }
+            for (index, (value, other)) in left.iter().zip(right.iter()).enumerate() {
+                diff_values(value, other, &format!("{path}[{index}]"), out);
+            }
+        }
+        (left, right) if left != right => {
+            out.push(format!("DIFF {path} {}", value_window(left, right)))
+        }
+        _ => {}
+    }
+}
+
+fn value_window(actual: &Value, expected: &Value) -> String {
+    let left = actual.to_string();
+    let right = expected.to_string();
+    let at = left
+        .bytes()
+        .zip(right.bytes())
+        .position(|(a, b)| a != b)
+        .unwrap_or(left.len().min(right.len()));
+    let window = |text: &str| {
+        let start = at.saturating_sub(48);
+        let end = (at + 48).min(text.len());
+        let start = (start..=end)
+            .find(|index| text.is_char_boundary(*index))
+            .unwrap_or(end);
+        let end = (start..=end)
+            .rev()
+            .find(|index| text.is_char_boundary(*index))
+            .unwrap_or(start);
+        text[start..end].replace('\n', "\\n")
+    };
+    format!(
+        "len {} vs {} at {at} actual {:?} expected {:?}",
+        left.len(),
+        right.len(),
+        window(&left),
+        window(&right)
+    )
 }
 
 #[test]

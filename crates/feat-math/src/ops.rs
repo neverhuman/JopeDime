@@ -220,14 +220,36 @@ pub fn quantile_sorted(s: &[f64], q: f64) -> f64 {
     s[lo] * (1.0 - frac) + s[hi] * frac
 }
 
-/// Number of elements strictly less than v (Rust partition_point / Python bisect_left).
+/// Number of elements strictly less than v.
+///
+/// Vendored from Rust 1.97.1 `slice::partition_point` (`binary_search_by` in
+/// `library/core/src/slice/mod.rs`). That wrapper never yields Equal, so the
+/// index is `base + (predicate as usize)`. Keeping the loop here, instead of
+/// calling std, holds this pin's results if a later toolchain changes the search.
 pub fn lower_bound(s: &[f64], v: f64) -> usize {
-    s.partition_point(|e| *e < v)
+    monobound_partition_point(s, |e| e < v)
 }
 
-/// Number of elements less than or equal to v (bisect_right).
+/// Number of elements less than or equal to v.
 pub fn upper_bound(s: &[f64], v: f64) -> usize {
-    s.partition_point(|e| *e <= v)
+    monobound_partition_point(s, |e| e <= v)
+}
+
+fn monobound_partition_point(s: &[f64], pred: impl Fn(f64) -> bool) -> usize {
+    let mut size = s.len();
+    if size == 0 {
+        return 0;
+    }
+    let mut base = 0usize;
+    while size > 1 {
+        let half = size / 2;
+        let mid = base + half;
+        if pred(s[mid]) {
+            base = mid;
+        }
+        size -= half;
+    }
+    base + usize::from(pred(s[base]))
 }
 
 /// Mid-rank of v against sorted train values, scaled to [0,1].

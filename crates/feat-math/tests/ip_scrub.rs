@@ -187,7 +187,7 @@ fn every_emitter_is_clean_on_every_fixture() {
         emitted_js >= 2,
         "only {emitted_js} JavaScript artifacts were checked"
     );
-    assert_eq!(EMITTER_VERSION, "2.2.0");
+    assert_eq!(EMITTER_VERSION, "2.3.0");
 }
 
 /// Numeric schema `c0..` and a shortest-round-trip string table, as the campaign lanes build them.

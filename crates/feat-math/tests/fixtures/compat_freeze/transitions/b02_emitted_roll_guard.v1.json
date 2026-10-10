@@ -8,7 +8,7 @@
     "dsl": "(pipe X (roll k=2) (ridge))",
     "genome_sha256": "a771a1baf38951a6fc8745105d093b6155bc6b792ae1afd1bad0eafee9602233",
     "flavor": "pipeline",
-    "emitter_version": "2.2.0",
+    "emitter_version": "2.3.0",
     "py_sha256": "9b67e1454117d4d9c5a575c76a5e68cf3c2186f345a19fe7f149cfedfe7ec317",
     "rs_sha256": "1d488d58f1569ce21b5588c370854697db2da2d570a7e73efbc2555ac943a2c9"
   },

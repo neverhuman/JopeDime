@@ -813,34 +813,32 @@ static double quantile(const std::vector<double>& sorted_values, double q) {
     return sorted_values[lo] * (1.0 - frac) + sorted_values[hi] * frac;
 }"#;
 
-const H_LOWER_BOUND: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
+const H_LOWER_BOUND: &str = r#"// Count of elements strictly less than v (Rust 1.97.1 monobound partition point).
 static std::size_t lower_bound(const std::vector<double>& sorted_values, double v) {
-    std::size_t lo = 0;
-    std::size_t hi = sorted_values.size();
-    while (lo < hi) {
-        std::size_t mid = (lo + hi) / 2;
-        if (sorted_values[mid] < v) {
-            lo = mid + 1;
-        } else {
-            hi = mid;
-        }
+    std::size_t size = sorted_values.size();
+    if (size == 0) return 0;
+    std::size_t base = 0;
+    while (size > 1) {
+        std::size_t half = size / 2;
+        std::size_t mid = base + half;
+        if (sorted_values[mid] < v) base = mid;
+        size -= half;
     }
-    return lo;
+    return base + (sorted_values[base] < v ? 1 : 0);
 }"#;
 
-const H_UPPER_BOUND: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
+const H_UPPER_BOUND: &str = r#"// Count of elements less than or equal to v (Rust 1.97.1 monobound partition point).
 static std::size_t upper_bound(const std::vector<double>& sorted_values, double v) {
-    std::size_t lo = 0;
-    std::size_t hi = sorted_values.size();
-    while (lo < hi) {
-        std::size_t mid = (lo + hi) / 2;
-        if (sorted_values[mid] <= v) {
-            lo = mid + 1;
-        } else {
-            hi = mid;
-        }
+    std::size_t size = sorted_values.size();
+    if (size == 0) return 0;
+    std::size_t base = 0;
+    while (size > 1) {
+        std::size_t half = size / 2;
+        std::size_t mid = base + half;
+        if (sorted_values[mid] <= v) base = mid;
+        size -= half;
     }
-    return lo;
+    return base + (sorted_values[base] <= v ? 1 : 0);
 }"#;
 
 const H_MID_RANK: &str = r#"// Average of the strict and non-strict ranks of v, scaled to [0, 1].

@@ -50,7 +50,10 @@ mod emit_js;
 /// previously emitted invalid Python (Rust Debug escapes such as `\\u{2028}`).
 /// Printable ASCII bound output and all frozen recipe emitter bytes are unchanged.
 /// The separate fitted-portable/1 public emitter pins its own template identities.
-pub const EMITTER_VERSION: &str = "2.2.0";
+/// v2.3: `lower_bound` and `upper_bound` in every emitter are the Rust 1.97.1
+/// monobound partition point. Artifacts that include those helpers change
+/// bytes. Results change only where the searched vector is not monotone.
+pub const EMITTER_VERSION: &str = "2.3.0";
 
 /// Which transcendental math implementation an emission request selects.
 ///

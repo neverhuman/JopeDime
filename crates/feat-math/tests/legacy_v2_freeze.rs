@@ -157,8 +157,10 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_sha256: "15529624f7d1f6927138b993103892fee598a995c31f01162205c5573f95b29a",
         rust_code_tokens: 3_104,
         rust_doc_tokens: 553,
+        // 2.3.0: manifest stamps the emitter version. Python and Rust bytes of this
+        // program do not include the binning search, and the prediction bits below are unchanged.
         manifest_len: 628,
-        manifest_sha256: "2dae98558e4d13db3badc67b9814d62031fbc2ed8089cd5523de1b26a749a933",
+        manifest_sha256: "bc88e5fadba5a34a3c2c1ef4438aebd226662ce61bcba7b35a1d7954d240a2a1",
         prediction_bits: &[
             0x3fca590c3f55b872,
             0x4013cc4995ccc1cf,
@@ -179,7 +181,7 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_code_tokens: 2_411,
         rust_doc_tokens: 455,
         manifest_len: 522,
-        manifest_sha256: "0d0dd5d88969829863bc62fe7a8c0cb8824385dfc50bcdfd082d42b92751fa6d",
+        manifest_sha256: "bf55fa46f89730bec3042f25d9e50e142e1f406b9f2f065f8019302b5aad5b87",
         prediction_bits: &[
             0xbf20540380be5600,
             0x401267bbd9628caf,
@@ -191,16 +193,17 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         name: "target_aware_ensemble",
         canonical: "(pipe X (pair_prod append=true topk=3) (target_bin_encode bins=4) (ensemble depth=2 lambda_frac=0.02 rounds=8))",
         genome_sha256: "4bc89be6d8775ab9a3dda50b8e93152a9f4addd63f594939ef86cadb865800dd",
-        python_len: 19_781,
-        python_sha256: "3bd937b61d87dd3d0b2d8a8a792256dd26b5a8734ee692ece245ac63a183b61d",
-        python_code_tokens: 3_893,
-        python_doc_tokens: 667,
-        rust_len: 25_612,
-        rust_sha256: "0bc79ba5898d035327800309657a02a44812a34c19391e556224ba6b48bbbf13",
-        rust_code_tokens: 5_705,
-        rust_doc_tokens: 651,
+        // 2.3.0: target_bin_encode emits the monobound search. Prediction bits unchanged.
+        python_len: 19_873,
+        python_sha256: "ccb69cbc96fd817260d79021c23fd1f33196bc244340dde9d1eb27501d06420d",
+        python_code_tokens: 3_905,
+        python_doc_tokens: 669,
+        rust_len: 25_719,
+        rust_sha256: "6763e5fbec512d84dcbf73be44211e80e9e37f73d591c2b5981cd5e6075fd595",
+        rust_code_tokens: 5_723,
+        rust_doc_tokens: 653,
         manifest_len: 646,
-        manifest_sha256: "9a2a9c8210d81b5ec628ca007c77f83eddb65af2b7d7ceb47cbd8a432f23a155",
+        manifest_sha256: "faa234eaf9c6bbe81225124ed901cb744844d78801354c4ddc9994af8f304000",
         prediction_bits: &[
             0x3fee888888888888,
             0x3fee888888888888,
@@ -222,7 +225,7 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_code_tokens: 1_322,
         rust_doc_tokens: 276,
         manifest_len: 514,
-        manifest_sha256: "29d232e3e40c23e1e00f6792b6578668a94442efecab6fac32e78745f3dc1104",
+        manifest_sha256: "f7c941302158d0fc0f1aa5d29796816d7d46664a96680a999715d27a513f8ffe",
         prediction_bits: &[
             0x3fee509f8f512d46,
             0x3fef4c905f54b9a4,
@@ -234,16 +237,17 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         name: "champion",
         canonical: "(pipe X (winsor_clip append=true q=0.1) (cheb append=true degree=6) (robust_scale) (robust_scale) (poly_interact append=true) (quantile_bins bins=16) (histgbm depth=5 lr=0.15 rounds=150))",
         genome_sha256: "0bc6e75d8f12173ac6e2acf432233e48457cf773e1bedef56f536384513c158d",
-        python_len: 16_991,
-        python_sha256: "0a3c2da6f86cda8d042a2d4f6e9ba6c35e08798b89ef05b63f56cb7096f85b5d",
-        python_code_tokens: 2_811,
-        python_doc_tokens: 725,
-        rust_len: 22_188,
-        rust_sha256: "512098bc4a760614a50eac24586fca5de3d44faf7ef1dc70f5af8e44d570d1f6",
-        rust_code_tokens: 4_459,
-        rust_doc_tokens: 709,
+        // 2.3.0: quantile_bins and histgbm emit the monobound search. Prediction bits unchanged.
+        python_len: 17_083,
+        python_sha256: "df53cecc99a7fe358e4ab69080584c0609f1b910cb830e06c8dffa982b46620e",
+        python_code_tokens: 2_823,
+        python_doc_tokens: 727,
+        rust_len: 22_295,
+        rust_sha256: "32c6a811e04406f1bfe29671c8d8534115b16c5e8acf7736c014d891f6a248c4",
+        rust_code_tokens: 4_477,
+        rust_doc_tokens: 711,
         manifest_len: 798,
-        manifest_sha256: "17130bfc43c643da416548baa33b52caed99bbf12312d4eeef0be008d2bb74dd",
+        manifest_sha256: "1563a016cc8baf93e4b0d26d66de7acac8a6582e627808b3bcb8d40d27233787",
         prediction_bits: &[
             0x3fee888888888888,
             0x3fee888888888888,
@@ -405,11 +409,11 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // prediction_bits, RNG stream and fold assignment unchanged, and all 83 golden
             // parity cases still agree bit-for-bit.
             // Previous: 91f759100481b3fbbf8f85d626eba63140f7d7ead6e0e778ecc4b59ac3c6d0c9
-            // Re-pinned with EMITTER_VERSION 2.2.0: golden.rs asserts the new version string.
-            // The 83 parity cases are unchanged; the pipeline emissions they cover are
-            // byte-identical (deploy/ci/emitters.sh pins unchanged).
-            // Previous: d8cc5d006f4ffa2e3a40840b08b13410f9ecca73f0ddad1378a3aa29296c171e
-            "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
+            // Re-pinned with EMITTER_VERSION 2.3.0: golden.rs asserts the new version string.
+            // The 83 parity cases are unchanged. This file's hash moves because that
+            // asserted string does. Previous:
+            // 25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2
+            "b5dcde5db8cab18d8142e5db9fe38f370e6f25f6647b67406a068c03f204ee6e",
         ),
         (
             "tests/champion_parity.rs",

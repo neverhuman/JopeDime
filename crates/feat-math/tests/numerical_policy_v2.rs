@@ -469,7 +469,7 @@ fn stable_reductions_match_the_independent_boundary_oracle() {
 fn policy_identity_is_additive_and_legacy_emitter_identity_is_preserved() {
     assert_eq!(POLICY_ID, "v2");
     assert_eq!(KERNEL_ID, "feat-math.fdlibm-neumaier-lassq.v2");
-    assert_eq!(feat_math::transpile::EMITTER_VERSION, "2.2.0");
+    assert_eq!(feat_math::transpile::EMITTER_VERSION, "2.3.0");
     for language in [
         NumericalLanguage::Rust,
         NumericalLanguage::Python,

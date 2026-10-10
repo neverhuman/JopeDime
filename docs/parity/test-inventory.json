@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4172,
+  "count": 4174,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 730,
+    "count": 732,
     "ignored": 7,
     "binaries": {
      "feat-math": {
@@ -438,6 +438,15 @@
       "ignored": 1,
       "tests": [
        "emitter_speed"
+      ]
+     },
+     "feat-math::binning_search": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "emitters_write_the_monobound_and_python_matches_native",
+       "vendored_monobound_matches_partition_point_and_not_the_old_loop"
       ]
      },
      "feat-math::capability_manifest": {
@@ -6550,7 +6559,7 @@
   }
  },
  "totals": {
-  "rust": 4168,
+  "rust": 4170,
   "python": 182
  }
 }
