@@ -175,6 +175,48 @@ class LifecycleTests(unittest.TestCase):
             again = export_ledger(rows[:1], root / "ledger.parquet", root / "ledger.duckdb")
             self.assertEqual(again["rows"], 1)
 
+    def test_second_client_reloads_before_admit(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as tmp:
+            path = Path(tmp) / "budget.jsonl"
+            first = BudgetLedger(path, byte_cap=100, put_cap=10)
+            second = BudgetLedger(path, byte_cap=100, put_cap=10)
+            moment = datetime(2026, 10, 10, 14, tzinfo=timezone.utc)
+            self.assertEqual(first.admit(60, 1, kind="fixture", now=moment)["decision"], "admit")
+            refused = second.admit(60, 1, kind="fixture", now=moment)
+            self.assertEqual(refused["decision"], "refuse")
+            self.assertEqual(refused["projected_bytes"], 120)
+            reloaded = BudgetLedger(path, byte_cap=100, put_cap=10)
+            self.assertEqual(len(reloaded.events), 1)
+            self.assertEqual(reloaded.events[0]["prev"], "0" * 64)
+
+    def test_sample_lists_object_candidates_without_a_prefix_rule(self):
+        key = "research/objects/abc/rust_executable"
+        proposal = proposal_from_rows(
+            [row(key, 200000, rust_source_sha256="a" * 64)],
+            current_evaluator="b" * 64,
+            superseded_source_shas={"a" * 64},
+            sample_note="bounded sample, not a census",
+            census=True,
+        )
+        self.assertEqual(proposal["proposed_rules"], [])
+        self.assertFalse(proposal["listing_census"])
+        self.assertEqual(proposal["object_candidates"], [
+            {"key": key, "action": "propose_expire", "size": 200000,
+             "reason": "superseded_by_reproducible_executable", "scope": "object"},
+        ])
+        versioned = proposal_from_rows(
+            [row(key, 200000, rust_source_sha256="a" * 64, version_id="v1")],
+            current_evaluator="b" * 64,
+            superseded_source_shas={"a" * 64},
+            sample_note="complete listing",
+            census=True,
+        )
+        self.assertEqual(versioned["proposed_rules"], [])
+        self.assertTrue(versioned["listing_census"])
+        self.assertTrue(versioned["listing_versioned"])
+        self.assertEqual(versioned["object_candidates"][0]["key"], key)
+        self.assertIn("prefix", versioned["prefix_rules_withheld"])
+
     def test_default_caps(self):
         self.assertEqual(BYTE_CAP, 200 * 10**9)
 

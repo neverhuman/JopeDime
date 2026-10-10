@@ -1,8 +1,11 @@
 # Search, Rust scoring, and the S3 score lifecycle
 
 Inherited product code is commit `edf36182b3fb3254afd244c9be1f1f6f274b9e0c`.
-The cache and lifecycle package added by this lane is commit
+The cache added by this lane is commit
 `dfa461fd9c4035f9078ff9f49f29d67b847b62c6`.
+The lifecycle repair (ledger reload under a lock, and no S3 prefix rule
+from a listing) is `BudgetLedger.admit` and `proposal_from_rows` in
+`s3_lifecycle.py`, at the line numbers cited below.
 Measurements below were taken on this host on 2026-10-10.
 Receipts live under `.agent/proposals/claude-rlfw-20261009/rlfw-grok/` and are
 outside git (`.gitignore` ignores `.agent/`). A figure that was not measured
@@ -273,7 +276,7 @@ already sit in a higher tier are **unmeasured**, so this is not a bill.
 if those bytes were absent. That figure is a counterfactual in
 `receipts/dry-run-v1.json`. It is not a proposed deletion. The 3,889
 executables stay until each source SHA-256 has a reproducible replacement
-(`classify_object`, lines 141–150).
+(`classify_object`, lines 143–152).
 
 This run's own requests: 26 LIST, 20 GET, 10 HEAD.
 26 × 0.000005 + 30 × 0.0000004 = $0.000142.
@@ -282,33 +285,43 @@ Production PUT and GET counts per day, and therefore production $/day, are
 
 ### Proposal rules that were not applied
 
-`proposal_from_rows` (`s3_lifecycle.py:162`) sets `applied` false.
-`refuse_apply(True)` raises (line 241). A prefix rule is emitted only when
-every classified object under that prefix has the same proposed action
-(lines 186–213). The head sample produced zero proposed rules:
+`proposal_from_rows` (`s3_lifecycle.py:171`) sets `applied` false.
+`refuse_apply(True)` raises (lines 253–255). `proposed_rules` is always
+empty. An S3 prefix matches every key that begins with it, including keys
+that were not in the listing, so a full object key is still a prefix.
+`_listing_is_census` (line 164) records whether the note and `census` flag
+describe a complete listing, and `listing_versioned` records whether every
+input row has a version id. Neither flag emits a rule, because this
+function is not given a role or tag filter. Rows that would expire or move
+are listed in `object_candidates` with that object's full key
+(`s3_lifecycle.py:206–232`). The head sample produced zero proposed rules:
 3 keys untouched (`/gp-hwm/`, `/checkpoints/`, `/paper-evidence/`) and
 7 retained (`executable_not_yet_superseded`, `evaluator_unmeasured`, or
 `no_rule`). Proposal SHA-256
 `c38278cf6654661b1140736b33e4fe06eae795b06ebdb9652adf26258fa8da10`.
 
-Protected markers (lines 35–43): `/gp-hwm/`, `/checkpoints/`,
+Protected markers (lines 37–45): `/gp-hwm/`, `/checkpoints/`,
 `/paper-evidence/`, `/provenance/`, `/sealed/`, `/judge/`, and the substring
 `legal-hold`. A legal-hold status other than absent, empty, or `OFF`, or any
-object-lock mode, is untouched (lines 62–66). An object whose legal hold was
-not read is retained with reason `legal_hold_unmeasured` (lines 123–126).
+object-lock mode, is untouched (lines 64–68). An object whose legal hold was
+not read is retained with reason `legal_hold_unmeasured` (lines 125–128).
 A score whose evaluator SHA-256 is missing is retained as
-`evaluator_unmeasured` (lines 138–140). A stale score (both evaluator ids
+`evaluator_unmeasured` (lines 140–141). A stale score (both evaluator ids
 present and different) below 128 KiB is not individually transitioned
-(lines 129–132), because the live configuration bills objects under 128 KiB
+(lines 131–134), because the live configuration bills objects under 128 KiB
 as 128 KiB. Glacier Instant Retrieval is proposed only at 90 days
-(`GIR_MIN_DAYS`, line 29), which matches the receipt note that GIR has a
-90-day minimum. Executable expiry is 14 days (line 30), which is inside that
-minimum, so the proposal expires rather than transitions those objects.
+(`GIR_MIN_DAYS`, line 31), which matches the receipt note that GIR has a
+90-day minimum. Executable expiry is 14 days (line 32), which is inside that
+minimum, so an object candidate expires rather than transitions.
 
 Caps: 200 × 10^9 bytes per UTC day and 2,000,000 PUTs per UTC day, alarm at
-80% on an admit (`BYTE_CAP`, `PUT_CAP`, `ALARM_RATIO`, lines 21–23).
-`BudgetLedger` is a local hash chain and does not call S3 (line 246).
-A refuse is not appended. `export_ledger` (line 319) writes Parquet and
+80% on an admit (`BYTE_CAP`, `PUT_CAP`, `ALARM_RATIO`, lines 23–25).
+`BudgetLedger` (line 258) is a local hash chain and does not call S3.
+`admit` (line 311) takes an exclusive lock, reloads the file, then decides.
+A second client opened on the same path before the first admit still sees
+that admit and refuses a projection over the cap. A refuse is not appended.
+A crash before the append leaves no reservation. `export_ledger` (line 357)
+writes Parquet and
 checks the row count through `read_parquet`. A second export to the same
 DuckDB file replaces the table. The census export is
 `receipts/objects-census.parquet`, 7 rows, SHA-256
@@ -321,7 +334,7 @@ The ledger event for this read-only run admitted 0 bytes and 0 PUTs.
 1. Library writes are create-only (`IfNoneMatch='*'`, `s3_library.py:50`)
    and a read checks the exact version, length, and SHA-256 (lines 25–35).
 2. This package does not delete, rewrite, or change storage class. Applying
-   a proposal raises (`s3_lifecycle.py:241–243`).
+   a proposal raises (`s3_lifecycle.py:253–255`).
 3. Sealed, judge, legal-hold, high-water, checkpoint, paper-evidence, and
    provenance keys are untouched or, when the hold was not read, retained.
 4. An executable expires only after its `rust_source_sha256` is in the
@@ -338,7 +351,11 @@ The ledger event for this read-only run admitted 0 bytes and 0 PUTs.
 ## Tests
 
 `python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests`
-on the bytes committed as `dfa461fd9`: 8 tests, OK, 2.841 s, including real
-`rustc` and a DuckDB round trip that exports twice to the same file.
+on the repaired tree: 10 tests, OK, 3.065 s, including real `rustc`, a
+second ledger client that refuses 60+60 bytes under a 100-byte cap, a
+partial sample and a versioned census that both emit no prefix rule, and a
+DuckDB round trip that
+exports twice to the same file. The earlier `dfa461fd9` run was 8 tests, OK,
+2.841 s, before those two cases existed.
 The package is not listed in `SOURCE_MANIFEST.json`. Hosted CI did not run
 these tests. CI coverage of this package is **unmeasured**.

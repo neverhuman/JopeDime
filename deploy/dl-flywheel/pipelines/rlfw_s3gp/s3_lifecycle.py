@@ -10,8 +10,10 @@ is not in that receipt is not invented here.
 """
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -159,6 +161,13 @@ def monthly_usd(size_bytes: int, usd_per_gb_month: float) -> float:
     return (size_bytes / 10**9) * usd_per_gb_month
 
 
+def _listing_is_census(sample_note: str, census: bool) -> bool:
+    """A note that says the listing is not a census wins over the flag."""
+    if "not a census" in (sample_note or "").lower():
+        return False
+    return bool(census)
+
+
 def proposal_from_rows(
     rows: list[dict],
     *,
@@ -166,8 +175,14 @@ def proposal_from_rows(
     superseded_source_shas: set[str] | None = None,
     existing_rules: list | None = None,
     sample_note: str,
+    census: bool = False,
 ) -> dict:
-    """Build a proposal. `applied` is always false. Passing apply=True raises."""
+    """Build a proposal. `applied` is always false. Passing apply=True raises.
+
+    This function never emits an S3 prefix rule. A prefix matches every key
+    that begins with it, including keys absent from the listing. Rows that
+    would expire or move are object candidates only.
+    """
     classified = [
         classify_object(
             row,
@@ -183,41 +198,38 @@ def proposal_from_rows(
         bucket["bytes"] += row["size"]
     expire_bytes = totals.get("propose_expire", {}).get("bytes", 0)
     gir_bytes = totals.get("propose_glacier_ir", {}).get("bytes", 0)
-    # A prefix rule is safe only when every scanned object under that prefix
-    # has the same proposed action. Mixed prefixes produce no rule.
-    by_prefix: dict[str, set[str]] = {}
+    complete = _listing_is_census(sample_note, census)
+    versioned = complete and all(
+        isinstance(row.get("version_id"), str) and row["version_id"] not in ("", "null")
+        for row in rows
+    )
+    candidates = []
     for row in classified:
-        parent = row["key"].rsplit("/", 1)[0] + "/"
-        by_prefix.setdefault(parent, set()).add(row["action"])
-    rules = []
-    for prefix, actions in sorted(by_prefix.items()):
-        if actions == {"propose_expire"}:
-            rules.append(
-                {
-                    "ID": "proposed-expire-superseded-executables",
-                    "Status": "proposed-not-applied",
-                    "Filter": {"Prefix": prefix},
-                    "Expiration": {"Days": EXECUTABLE_EXPIRE_DAYS},
-                    "note": "14 days is under the 90-day GIR minimum, so this is expiry, not a transition",
-                }
-            )
-        elif actions == {"propose_glacier_ir"}:
-            rules.append(
-                {
-                    "ID": "proposed-demote-stale-scores",
-                    "Status": "proposed-not-applied",
-                    "Filter": {"Prefix": prefix},
-                    "Transitions": [{"Days": GIR_MIN_DAYS, "StorageClass": "GLACIER_IR"}],
-                    "note": "only objects already >=128 KiB; bucket minimum is all_storage_classes_128K",
-                }
-            )
+        if row["action"] not in ("propose_expire", "propose_glacier_ir"):
+            continue
+        candidates.append(
+            {
+                "key": row["key"],
+                "action": row["action"],
+                "size": row["size"],
+                "reason": row["reason"],
+                "scope": "object",
+            }
+        )
     body = {
         "schema": SCHEMA,
         "applied": False,
         "sample_note": sample_note,
         "current_evaluator_sha256": current_evaluator,
         "existing_rules_unchanged": existing_rules or [],
-        "proposed_rules": rules,
+        "proposed_rules": [],
+        "object_candidates": candidates,
+        "listing_census": complete,
+        "listing_versioned": versioned,
+        "prefix_rules_withheld": (
+            "an S3 prefix matches every key that begins with it, including "
+            "keys absent from this listing; no role or tag filter is supplied"
+        ),
         "totals": totals,
         "classified": classified,
         "cost_if_expire_executables_usd_per_month": round(
@@ -244,13 +256,22 @@ def refuse_apply(apply: bool) -> None:
 
 
 class BudgetLedger:
-    """Hash-chained daily byte and PUT guard. It does not talk to S3."""
+    """Hash-chained daily byte and PUT guard. It does not talk to S3.
+
+    `admit` reloads the file under an exclusive lock before it decides.
+    A second client opened earlier does not keep its own allowance.
+    The reservation is the appended line. A crash before that append
+    leaves no reservation. A partial last line fails the next load.
+    """
 
     def __init__(self, path: Path, byte_cap: int = BYTE_CAP, put_cap: int = PUT_CAP):
         self.path = Path(path)
         self.byte_cap = byte_cap
         self.put_cap = put_cap
-        self.events = self._load()
+        self.events = self._locked_load() if self.path.exists() else []
+
+    def _lock_path(self) -> Path:
+        return self.path.with_name(self.path.name + ".lock")
 
     def _load(self) -> list[dict]:
         if not self.path.exists():
@@ -270,6 +291,15 @@ class BudgetLedger:
             events.append(event)
         return events
 
+    def _locked_load(self) -> list[dict]:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self._lock_path().open("a+") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                return self._load()
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
     def _day_usage(self, day: str) -> tuple[int, int]:
         nbytes = puts = 0
         for event in self.events:
@@ -283,37 +313,45 @@ class BudgetLedger:
             raise ValueError("negative usage")
         moment = now or datetime.now(timezone.utc)
         day = moment.astimezone(timezone.utc).strftime("%Y-%m-%d")
-        used_b, used_p = self._day_usage(day)
-        projected_b = used_b + nbytes
-        projected_p = used_p + puts
-        alarm = (
-            projected_b >= int(self.byte_cap * ALARM_RATIO)
-            or projected_p >= int(self.put_cap * ALARM_RATIO)
-        )
-        over = projected_b > self.byte_cap or projected_p > self.put_cap
-        decision = "refuse" if over else "admit"
-        prev = self.events[-1]["sha256"] if self.events else "0" * 64
-        event = {
-            "schema": LEDGER_SCHEMA,
-            "day": day,
-            "kind": kind,
-            "bytes": nbytes,
-            "puts": puts,
-            "decision": decision,
-            "alarm": alarm and decision == "admit",
-            "projected_bytes": projected_b,
-            "projected_puts": projected_p,
-            "byte_cap": self.byte_cap,
-            "put_cap": self.put_cap,
-            "prev": prev,
-        }
-        event["sha256"] = sha256_hex(canonical(event))
-        if decision == "admit":
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            with self.path.open("a") as handle:
-                handle.write(json.dumps(event, sort_keys=True) + "\n")
-            self.events.append(event)
-        return event
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self._lock_path().open("a+") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                self.events = self._load()
+                used_b, used_p = self._day_usage(day)
+                projected_b = used_b + nbytes
+                projected_p = used_p + puts
+                alarm = (
+                    projected_b >= int(self.byte_cap * ALARM_RATIO)
+                    or projected_p >= int(self.put_cap * ALARM_RATIO)
+                )
+                over = projected_b > self.byte_cap or projected_p > self.put_cap
+                decision = "refuse" if over else "admit"
+                prev = self.events[-1]["sha256"] if self.events else "0" * 64
+                event = {
+                    "schema": LEDGER_SCHEMA,
+                    "day": day,
+                    "kind": kind,
+                    "bytes": nbytes,
+                    "puts": puts,
+                    "decision": decision,
+                    "alarm": alarm and decision == "admit",
+                    "projected_bytes": projected_b,
+                    "projected_puts": projected_p,
+                    "byte_cap": self.byte_cap,
+                    "put_cap": self.put_cap,
+                    "prev": prev,
+                }
+                event["sha256"] = sha256_hex(canonical(event))
+                if decision == "admit":
+                    with self.path.open("a") as handle:
+                        handle.write(json.dumps(event, sort_keys=True) + "\n")
+                        handle.flush()
+                        os.fsync(handle.fileno())
+                    self.events.append(event)
+                return event
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 def export_ledger(rows: list[dict], parquet_path: Path, duckdb_path: Path) -> dict:
