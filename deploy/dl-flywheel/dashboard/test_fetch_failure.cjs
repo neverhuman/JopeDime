@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {flywheelView,review}=require('./flywheel.js');
+const fresh={at:995,hosts:[{host:'xbabe1',at:995},{host:'xbabe2',at:995},{host:'xbabe3',at:995}]};
+const offline=flywheelView(fresh,1000,true);
+assert.equal(offline.fresh,false);assert.match(offline.status,/Connection unavailable/);
+assert.equal(offline.age,5);
+const later=flywheelView(fresh,1200,true);assert.equal(later.age,205);
+const sameConfigDifferentRun=flywheelView({hosts:[{host:'xbabe2',neural_training:{run_id:'new-run',schema:'jope.flywheel-neural-progress/v1',config_sha256:review.config,execution_config_sha256:review.executionConfig,completed_batches:1}}]},1000);
+assert(sameConfigDifferentRun.superseded);
+const source=fs.readFileSync(__dirname+'/index.html','utf8');
+assert(source.includes("catch(e){connectionFailed=true;text('connection','Connection unavailable; retained observations');mountFlywheel(current||{},true)}"));
+console.log(JSON.stringify({schema:'codex.new-dashboard-fetch-failure/v1',executed:3,failed:0,cases:['network failure invalidates source label','retained age advances after failure','new run with same config invalidates v1 review'],production_service_runs:0}));

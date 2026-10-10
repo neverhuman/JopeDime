@@ -1,0 +1,108 @@
+{
+  "all_python_count": 9,
+  "budgets": {
+    "all_decoded_witness_bytes": 33554432,
+    "fresh_read_bytes": 33554432,
+    "transport_bytes": 50331648
+  },
+  "created_utc": "2026-10-10T12:27:50.720354+00:00",
+  "fixture_count": 32,
+  "fixture_roster_sha256": "ccba3bfe6a3a877fa2c5536ea6cc72bf5ce413beb44f20fa7a30d2059c874126",
+  "fixture_runs": 1,
+  "freshness_claim": "Locally supplied exact historical captured bytes are rehashed under external authority; no old remote freshness and no certificate-only reuse. All historical body witnesses still required.",
+  "frozen_parent_design": {
+    "bytes": 1351,
+    "path": "work/owner-three-objectives-20261010-1146/paper-monitor-v14-ops-template/budget-audit/DESIGN_PACKET.json",
+    "sha256": "1151100d6c9b5c8db5b803c309eaf3f329832dc279d988eece46309b466e42f0"
+  },
+  "independent_final_review": "pending",
+  "old_fixture_runs": 0,
+  "origin_read_first": {
+    "bytes": 102109,
+    "path": "work/owner-three-objectives-20261010-1146/xbabe2-read-first.json",
+    "sha256": "0a239f4482434af9e57aeccdd2fdd6cab0f7119505f6471c7c241a3b9a27e295"
+  },
+  "pins": {
+    "CONTRACTS.md": {
+      "bytes": 3905,
+      "sha256": "4010c06d46668f175e0d2b67f139488d299c979fd1a268556eb7f2b3f90abcf9"
+    },
+    "FINAL_STATIC_PROOF.json": {
+      "bytes": 2113,
+      "sha256": "cafe9e885d7c1193a9aa1614dd7e0e3da20517e1257cc69bede2bd802b7746bb"
+    },
+    "IMPORT_WRITE_SOURCE.json": {
+      "bytes": 3409,
+      "sha256": "39cb7fccb1cb5275a37f5f1302360f6a926f34ca98134cebc9a59ef6a781e70e"
+    },
+    "QUALIFICATION_PLAN.json": {
+      "bytes": 5331,
+      "sha256": "e0124e6eaa8c10c4327e495391e22cb16bc9a26e5c8df3e1138537b80a5a0525"
+    },
+    "README.md": {
+      "bytes": 8039,
+      "sha256": "46f14a58ee04b2b42fb9f1d57caee9d5ed5b0ee84ee77aae502982966e3dfdf0"
+    },
+    "attempts/qualification-001.json": {
+      "bytes": 12140,
+      "sha256": "1b1a11f6b35808bfc399d1df794f723099c21f04ff130125f590143bd798bd1c"
+    },
+    "package/__init__.py": {
+      "bytes": 80,
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    "package/authority.py": {
+      "bytes": 5260,
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    "package/common.py": {
+      "bytes": 4959,
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    "package/custody_manifest.py": {
+      "bytes": 13078,
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    "package/phase_verifier.py": {
+      "bytes": 8516,
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    "review-notes/draft-findings.json": {
+      "bytes": 595,
+      "sha256": "eb42d93856b74528304e5d1eb51eacbe0f8b6aee0582d75de971bb449026cc22"
+    },
+    "review-notes/phase-contract-notes.json": {
+      "bytes": 8513,
+      "sha256": "31c080eb0ac0e82ba8e5d4705f203897daf0da942d99610cc5352fdbb51c6cd3"
+    },
+    "run_offline.py": {
+      "bytes": 6325,
+      "sha256": "af7a2c8eac2e8f36666ccbf2ae54c421c84f660ae37a39804813991172ef06cc"
+    },
+    "tests/__init__.py": {
+      "bytes": 57,
+      "sha256": "9b8c37f075319480d9def70e906ab3938c053e11383b5d1216ee94220588ab7d"
+    },
+    "tests/fixtures.py": {
+      "bytes": 8169,
+      "sha256": "157357a1880365c9152fa8a958dca2c0cbbe0b58c6126a63bb887d38de4e1b68"
+    },
+    "tests/test_custody.py": {
+      "bytes": 16878,
+      "sha256": "7ee2fcc3a4c4ed683fe88948c0d5f540d73c116c803d99b471e3cf1a58d74187"
+    }
+  },
+  "production_python_count": 5,
+  "qualification_plan": {
+    "bytes": 5331,
+    "sha256": "e0124e6eaa8c10c4327e495391e22cb16bc9a26e5c8df3e1138537b80a5a0525"
+  },
+  "qualification_receipt": {
+    "bytes": 12140,
+    "sha256": "1b1a11f6b35808bfc399d1df794f723099c21f04ff130125f590143bd798bd1c"
+  },
+  "runtime_or_remote_acceptance": false,
+  "schema": "codex.paper-monitor-incremental-custody-source-packet/v1",
+  "scientific_or_canonical_source_change": false,
+  "state": "AUTHOR_NEW_PURE_FIXTURES_PASS_RUNTIME_HOLD"
+}

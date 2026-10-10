@@ -1332,6 +1332,16 @@
       ],
       "scope": "Direct stdlib unittest execution verifies required-training collection/JUnit gates reject missing, skipped, failed, stale or renamed cases."
     },
+    "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+    },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "discovery": {
         "kind": "python-family"
@@ -1721,6 +1731,46 @@
         "python"
       ],
       "scope": "10 CPU fixtures for a reproducible executable cache and an S3 lifecycle proposal that refuses to apply. A second budget client reloads under a lock. Listings emit object candidates and no prefix rule. DuckDB export runs when that package is installed. No bucket mutation."
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/test_preflight.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/test_reuse.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/test_custody.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
       "discovery": {

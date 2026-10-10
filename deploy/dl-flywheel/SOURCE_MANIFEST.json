@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
@@ -21,7 +21,7 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
@@ -47,11 +47,11 @@
       "sha256": "dbca82f85766e283d748556e1f8b1b5182b87dd474a51faf487ab8352a3d065e"
     },
     {
-      "normalization": "Return to measured batch loss view when total-presentations mapping becomes unavailable; independent log axes and coverage gaps preserved.",
+      "normalization": "Return to measured batch loss view when total-presentations mapping becomes unavailable; independent log axes and coverage gaps preserved. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority.",
       "origin": "outputs/DL_paper_dashboard.html",
       "origin_sha256": "f8417674956dd4803b6647fd33641c2becfc77f87bebf4068d45c99df4b51c80",
       "path": "deploy/dl-flywheel/dashboard/index.html",
-      "sha256": "0d00e6f4dd066ad6a95337b2ba5a94a5d7a7e0a6f7c730e216077116b5e902bc"
+      "sha256": "161266cd064d6e5a28ac2e32552aa34229002a3566d7c54655a0d7f47c358226"
     },
     {
       "origin": "work/heartbeat-20261009-0616/paper_publish_v33.py",
@@ -5168,11 +5168,11 @@
       "sha256": "640d75ae20ad3908f60a221fc287cea0db86d2e8676f76ca2b52322ae48854a6"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/run_offline.py",
       "origin_sha256": "bd75be69227f5014503344656ac0c5d744f1c8af2cd2021db56043a825d91a51",
       "path": "deploy/dl-flywheel/run_offline.py",
-      "sha256": "3caca9f51f71225751ad9c73036b6b66ecabf495752aaf3190a3069b61f7fead"
+      "sha256": "7d59f30cbdf01414026d2d26aaedd822cf9195c43d9e470330a4e5ffff66f94b"
     },
     {
       "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved.",
@@ -5418,11 +5418,473 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
       "sha256": "0eb6f0052e39f03b8d81dd56766dd2295900c26794daa0066ece7576bbc30d8d"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
+      "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
+      "path": "deploy/ci/ci-plan.py",
+      "sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/CI_INTEGRATION.md",
+      "origin_sha256": "c62a653b3abf6df387fb91e7924e1101b82d34910c133e4e7f2f176ae830292c",
+      "path": "deploy/dl-flywheel/dashboard/CI_INTEGRATION.md",
+      "sha256": "c62a653b3abf6df387fb91e7924e1101b82d34910c133e4e7f2f176ae830292c"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/DASHBOARD_FIXTURE_ROSTER.json",
+      "origin_sha256": "4a1989c8799b8b97305a4ac6e38a7004f7d829027681e3219f305a762e61bcd6",
+      "path": "deploy/dl-flywheel/dashboard/DASHBOARD_FIXTURE_ROSTER.json",
+      "sha256": "4a1989c8799b8b97305a4ac6e38a7004f7d829027681e3219f305a762e61bcd6"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/FLYWHEEL_EVIDENCE_PROTOCOL.md",
+      "origin_sha256": "d977510fb5d86736fc98285c9b551004862c0066ba54dfc1b22fa4332f72f041",
+      "path": "deploy/dl-flywheel/dashboard/FLYWHEEL_EVIDENCE_PROTOCOL.md",
+      "sha256": "d977510fb5d86736fc98285c9b551004862c0066ba54dfc1b22fa4332f72f041"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold docs-only r3 appends current14:26 isolated BUILD evidence/two SOURCE holds and explicitly pending owning-package qualification; no source or test edits.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/README.md",
+      "origin_sha256": "2be39b82d4a5daf10d34122b5548e380492a15d99faf4e411fa781ef5f69860f",
+      "path": "deploy/dl-flywheel/dashboard/README.md",
+      "sha256": "61404aa852221857581c0b178156403d67df7386711f68eee9927204b3645d96"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/flywheel.js",
+      "origin_sha256": "8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48",
+      "path": "deploy/dl-flywheel/dashboard/flywheel.js",
+      "sha256": "8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/provenance/flywheel/INDEPENDENT_SOURCE_REVIEW.json",
+      "origin_sha256": "7111112715c265f6b6fffa4f2d0e0ef0ae75fa0f3830f017aaeb88367f136417",
+      "path": "deploy/dl-flywheel/dashboard/provenance/flywheel/INDEPENDENT_SOURCE_REVIEW.json",
+      "sha256": "7111112715c265f6b6fffa4f2d0e0ef0ae75fa0f3830f017aaeb88367f136417"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/provenance/flywheel/REVIEW_PACKET.json",
+      "origin_sha256": "297673cadf5d58f8e184141ae88eff08c74f0261c818f3475798f6710b6f754d",
+      "path": "deploy/dl-flywheel/dashboard/provenance/flywheel/REVIEW_PACKET.json",
+      "sha256": "297673cadf5d58f8e184141ae88eff08c74f0261c818f3475798f6710b6f754d"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/provenance/liveness/README.md",
+      "origin_sha256": "a56efe38638692d6b0a4d9a01f2add26a6fee12a9238d6167a3342f139b5498d",
+      "path": "deploy/dl-flywheel/dashboard/provenance/liveness/README.md",
+      "sha256": "a56efe38638692d6b0a4d9a01f2add26a6fee12a9238d6167a3342f139b5498d"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/provenance/liveness/liveness_cases.cjs",
+      "origin_sha256": "f72d892bd19a90235bf4fc4476ba84823c85fd2754e5ab1b1e4cdc586ac81df3",
+      "path": "deploy/dl-flywheel/dashboard/provenance/liveness/liveness_cases.cjs",
+      "sha256": "f72d892bd19a90235bf4fc4476ba84823c85fd2754e5ab1b1e4cdc586ac81df3"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/provenance/liveness/original.html",
+      "origin_sha256": "0d00e6f4dd066ad6a95337b2ba5a94a5d7a7e0a6f7c730e216077116b5e902bc",
+      "path": "deploy/dl-flywheel/dashboard/provenance/liveness/original.html",
+      "sha256": "0d00e6f4dd066ad6a95337b2ba5a94a5d7a7e0a6f7c730e216077116b5e902bc"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/provenance/liveness/renderer.js",
+      "origin_sha256": "848cd80f04bebdc45bb0566ba045f774a37e89a67a9f9388746606736d032705",
+      "path": "deploy/dl-flywheel/dashboard/provenance/liveness/renderer.js",
+      "sha256": "848cd80f04bebdc45bb0566ba045f774a37e89a67a9f9388746606736d032705"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/test_age_tick.cjs",
+      "origin_sha256": "9389a8db93210c1dda0eb25bba762e252713f5047ba255c17e575add65430ec3",
+      "path": "deploy/dl-flywheel/dashboard/test_age_tick.cjs",
+      "sha256": "9389a8db93210c1dda0eb25bba762e252713f5047ba255c17e575add65430ec3"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py",
+      "origin_sha256": "36728ba2d84287e908c278439bdd9660694149e125b7ac3933a4625e231abd9c",
+      "path": "deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py",
+      "sha256": "36728ba2d84287e908c278439bdd9660694149e125b7ac3933a4625e231abd9c"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/test_fetch_failure.cjs",
+      "origin_sha256": "3b0bb35691544aa1f145b053b6c086fb8dfddfdff78b617ab61e5ab10a0b2283",
+      "path": "deploy/dl-flywheel/dashboard/test_fetch_failure.cjs",
+      "sha256": "3b0bb35691544aa1f145b053b6c086fb8dfddfdff78b617ab61e5ab10a0b2283"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/test_flywheel.cjs",
+      "origin_sha256": "2116390b5c0f440eeeb58340fd7467d127427214bb3db401080ad0e7add98b7b",
+      "path": "deploy/dl-flywheel/dashboard/test_flywheel.cjs",
+      "sha256": "2116390b5c0f440eeeb58340fd7467d127427214bb3db401080ad0e7add98b7b"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/dashboard/test_review_boundaries.cjs",
+      "origin_sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536",
+      "path": "deploy/dl-flywheel/dashboard/test_review_boundaries.cjs",
+      "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
+    },
+    {
+      "normalization": "Cold r2 exact CI source pin; no execution or authority.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
+      "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
+      "sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/FIXTURE_ROSTER.json",
+      "origin_sha256": "16d16378bfeff0cb3ec2f98ea1564ce6511dab2a4831ca044693889eb6bf8e50",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/FIXTURE_ROSTER.json",
+      "sha256": "b46d6465c87324cda601931d890a94c652fd2f8815747c998694c1a09516c02f"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/IMPORT_WRITE_MANIFEST.json",
+      "origin_sha256": "2f45f3738617196a87a319f657c21b4c2b41799f4505d343d4af8b16e85245c0",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/IMPORT_WRITE_MANIFEST.json",
+      "sha256": "e78e002677de2a47bdec6d7a59d0b7349b94c4f6fb271b99ba4892433c8fc1aa"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/README.md",
+      "origin_sha256": "9449d5ed4e811327bef4744414efc2be7ccfa1131965aed8aba783f0fb7ec95c",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/README.md",
+      "sha256": "98a72f10f1267528c957570f9739cf101e807613272529eec14cdb71851994b3"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
+      "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
+      "sha256": "894c2d07673b3264a02fba7a11c2d16239308a5a611914bfd16b54f8ee8c5f51"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_ORIGINS.json",
+      "origin_sha256": "e81be5992c7745a0eba80a7ea196e009d59d4369a1f3211fb83180ca7aec92c0",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_ORIGINS.json",
+      "sha256": "4987b7ac7a9ee960b1db5ecf6fe74cd3ffbbf5dfdfcc78c1c3c958a54f9d0fb4"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py",
+      "origin_sha256": "8600a79ba1e227d4656e5c5489b07051933091ce59b26d9fa69b1353704723d0",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py",
+      "sha256": "8600a79ba1e227d4656e5c5489b07051933091ce59b26d9fa69b1353704723d0"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/test_preflight.py",
+      "origin_sha256": "980a4123210ffa3a1decc28a6b01ace6ed7ea5371e6ea45086e16700738b43ee",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/test_preflight.py",
+      "sha256": "980a4123210ffa3a1decc28a6b01ace6ed7ea5371e6ea45086e16700738b43ee"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/__init__.py",
+      "origin_sha256": "e9debd8749a2b19582f9440cf01f465e610d3cdd3fd7e6af615b4947810f0fa9",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/__init__.py",
+      "sha256": "e9debd8749a2b19582f9440cf01f465e610d3cdd3fd7e6af615b4947810f0fa9"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/framing.py",
+      "origin_sha256": "333154cc284c7915b62b21525a8ae337537f85df6f5ea2fd6b10241541dbc179",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/framing.py",
+      "sha256": "333154cc284c7915b62b21525a8ae337537f85df6f5ea2fd6b10241541dbc179"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/reader.py",
+      "origin_sha256": "75232a01c6d28632860ea6ba1a385c87c1b1f2896386f8f9eef8d89193a82757",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/reader.py",
+      "sha256": "75232a01c6d28632860ea6ba1a385c87c1b1f2896386f8f9eef8d89193a82757"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/reuse.py",
+      "origin_sha256": "0d4f94357a5dca5591e16e56b358fd0d8e8ff60619ab82cb1ecd31579af54ef0",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/reuse.py",
+      "sha256": "0d4f94357a5dca5591e16e56b358fd0d8e8ff60619ab82cb1ecd31579af54ef0"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/__init__.py",
+      "origin_sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/__init__.py",
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/authority.py",
+      "origin_sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/authority.py",
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/common.py",
+      "origin_sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/common.py",
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/custody_manifest.py",
+      "origin_sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/custody_manifest.py",
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/phase_verifier.py",
+      "origin_sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/phase_verifier.py",
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/__init__.py",
+      "origin_sha256": "61228820fbe2eba336d95a990a83458dcb72582e04114e19d87006b15a0e3178",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/__init__.py",
+      "sha256": "61228820fbe2eba336d95a990a83458dcb72582e04114e19d87006b15a0e3178"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/fixtures.py",
+      "origin_sha256": "96152f3f342e2410ab60d272a03cd170f629d539e9a722a6242886d9a20fd366",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/fixtures.py",
+      "sha256": "96152f3f342e2410ab60d272a03cd170f629d539e9a722a6242886d9a20fd366"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/test_reuse.py",
+      "origin_sha256": "f2f33d1474e39447d04951fa213a643f58d42b5d6e40acf0775c2dc53def6a30",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/test_reuse.py",
+      "sha256": "f2f33d1474e39447d04951fa213a643f58d42b5d6e40acf0775c2dc53def6a30"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/__init__.py",
+      "origin_sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/__init__.py",
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/authority.py",
+      "origin_sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/authority.py",
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/common.py",
+      "origin_sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/common.py",
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/custody_manifest.py",
+      "origin_sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/custody_manifest.py",
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/phase_verifier.py",
+      "origin_sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/phase_verifier.py",
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/__init__.py",
+      "origin_sha256": "9b8c37f075319480d9def70e906ab3938c053e11383b5d1216ee94220588ab7d",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/__init__.py",
+      "sha256": "9b8c37f075319480d9def70e906ab3938c053e11383b5d1216ee94220588ab7d"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/fixtures.py",
+      "origin_sha256": "157357a1880365c9152fa8a958dca2c0cbbe0b58c6126a63bb887d38de4e1b68",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/fixtures.py",
+      "sha256": "157357a1880365c9152fa8a958dca2c0cbbe0b58c6126a63bb887d38de4e1b68"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/test_custody.py",
+      "origin_sha256": "7ee2fcc3a4c4ed683fe88948c0d5f540d73c116c803d99b471e3cf1a58d74187",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/test_custody.py",
+      "sha256": "7ee2fcc3a4c4ed683fe88948c0d5f540d73c116c803d99b471e3cf1a58d74187"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/offline_adapter.py",
+      "origin_sha256": "4d719608f1f57498e568cb85c4d6e64fe90c41a7a21f1f9693be3ced8168faf4",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/offline_adapter.py",
+      "sha256": "4d719608f1f57498e568cb85c4d6e64fe90c41a7a21f1f9693be3ced8168faf4"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/EXTERNAL_QUALIFICATION_IDENTITIES.json",
+      "origin_sha256": "e1f5a28cdd7ce122893de5469fadce22b0c8b653932fb61929ebbf51e8f94686",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/EXTERNAL_QUALIFICATION_IDENTITIES.json",
+      "sha256": "e1f5a28cdd7ce122893de5469fadce22b0c8b653932fb61929ebbf51e8f94686"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/budget_preflight_SOURCE_PACKET.json",
+      "origin_sha256": "4f6864cce7c853c55e14184fffa863591a8d1ee5e6fde283dc048c0a8817d846",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/budget_preflight_SOURCE_PACKET.json",
+      "sha256": "4f6864cce7c853c55e14184fffa863591a8d1ee5e6fde283dc048c0a8817d846"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/capture_reuse_FINAL_SOURCE_PACKET.json",
+      "origin_sha256": "6bed217c2692805ce1e55c8d6765e7674ec6065b63ab2bdda78ceb7565251247",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/capture_reuse_FINAL_SOURCE_PACKET.json",
+      "sha256": "6bed217c2692805ce1e55c8d6765e7674ec6065b63ab2bdda78ceb7565251247"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/capture_reuse_QUALIFICATION_LINEAGE_ADDENDUM.json",
+      "origin_sha256": "1c30c1ab700b250de722c936f3c8cdb4c873535040795f393e1b88938f216b26",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/capture_reuse_QUALIFICATION_LINEAGE_ADDENDUM.json",
+      "sha256": "1c30c1ab700b250de722c936f3c8cdb4c873535040795f393e1b88938f216b26"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/capture_reuse_SOURCE_PACKET.json",
+      "origin_sha256": "c192c2fab5a72bb5d2ef284004fa3c22cbeb1b3f682019a8e33dd57228491cc5",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/capture_reuse_SOURCE_PACKET.json",
+      "sha256": "c192c2fab5a72bb5d2ef284004fa3c22cbeb1b3f682019a8e33dd57228491cc5"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/incremental_SOURCE_PACKET.json",
+      "origin_sha256": "6f9b9be3bdc0343708daf448021841fae1b4b2ca56d4103a79ea19d0c38ff65c",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/author_packets/incremental_SOURCE_PACKET.json",
+      "sha256": "6f9b9be3bdc0343708daf448021841fae1b4b2ca56d4103a79ea19d0c38ff65c"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/budget_preflight_v1/IMPORT_WRITE_MANIFEST.json",
+      "origin_sha256": "6ec496ffe820907dbbabfcf678840c7b78219868466fbb715b62ac7073e19fef",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/budget_preflight_v1/IMPORT_WRITE_MANIFEST.json",
+      "sha256": "6ec496ffe820907dbbabfcf678840c7b78219868466fbb715b62ac7073e19fef"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/budget_preflight_v1/README.md",
+      "origin_sha256": "7ae4e9016c1491a3c42c7ba8964f94a8c91bc2b8739240afdadca0cecf5ea414",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/budget_preflight_v1/README.md",
+      "sha256": "7ae4e9016c1491a3c42c7ba8964f94a8c91bc2b8739240afdadca0cecf5ea414"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/budget_preflight_v1/original_run_offline.py.txt",
+      "origin_sha256": "8f7bf4858db6d5cb898b19515ee32b6142b8822a95e65e993e0081ba5589fdb0",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/budget_preflight_v1/original_run_offline.py.txt",
+      "sha256": "8f7bf4858db6d5cb898b19515ee32b6142b8822a95e65e993e0081ba5589fdb0"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/CONTRACTS.md",
+      "origin_sha256": "8daf4f42d57e3f717bacc9472b8ce8d5461eab524e32f31953dc870ee6a28ebd",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/CONTRACTS.md",
+      "sha256": "8daf4f42d57e3f717bacc9472b8ce8d5461eab524e32f31953dc870ee6a28ebd"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/README.md",
+      "origin_sha256": "f5e00ed45bdd7e512f3138f3cfa72dcc70107cc12d3bb1170637145e0428d3fa",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/README.md",
+      "sha256": "f5e00ed45bdd7e512f3138f3cfa72dcc70107cc12d3bb1170637145e0428d3fa"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/WORKER_READY_GATES.md",
+      "origin_sha256": "0dcb3d2b72112a1195ed9dbc23d1a8eac811f87395457237351a7a80a9ed0d89",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/WORKER_READY_GATES.md",
+      "sha256": "0dcb3d2b72112a1195ed9dbc23d1a8eac811f87395457237351a7a80a9ed0d89"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/original_run_offline.py.txt",
+      "origin_sha256": "7488d4727f28d7582c166389c6c725aca0e9b50505abc42e256ea0d0fe000e89",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/capture_reuse_v3/original_run_offline.py.txt",
+      "sha256": "7488d4727f28d7582c166389c6c725aca0e9b50505abc42e256ea0d0fe000e89"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/incremental_v1/CONTRACTS.md",
+      "origin_sha256": "4010c06d46668f175e0d2b67f139488d299c979fd1a268556eb7f2b3f90abcf9",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/incremental_v1/CONTRACTS.md",
+      "sha256": "4010c06d46668f175e0d2b67f139488d299c979fd1a268556eb7f2b3f90abcf9"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/incremental_v1/README.md",
+      "origin_sha256": "46f14a58ee04b2b42fb9f1d57caee9d5ed5b0ee84ee77aae502982966e3dfdf0",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/incremental_v1/README.md",
+      "sha256": "46f14a58ee04b2b42fb9f1d57caee9d5ed5b0ee84ee77aae502982966e3dfdf0"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/incremental_v1/original_run_offline.py.txt",
+      "origin_sha256": "af7a2c8eac2e8f36666ccbf2ae54c421c84f660ae37a39804813991172ef06cc",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/provenance/incremental_v1/original_run_offline.py.txt",
+      "sha256": "af7a2c8eac2e8f36666ccbf2ae54c421c84f660ae37a39804813991172ef06cc"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/run_family.py",
+      "origin_sha256": "301f73971f13ceaf79372f72019117404a2a0e0f6266df07290b0567b4088678",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/run_family.py",
+      "sha256": "d15178e75c346a2ad229d8647557b8855750b16c5dca1e01811a004c7ca3ec5a"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/run_offline.py",
+      "origin_sha256": "31bdb3e5f832b6d20dd25f4b5eac9312067347d41e40985ebdcf9cecae9e158b",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/run_offline.py",
+      "sha256": "31bdb3e5f832b6d20dd25f4b5eac9312067347d41e40985ebdcf9cecae9e158b"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/__init__.py",
+      "origin_sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/__init__.py",
+      "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
+    },
+    {
+      "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py",
+      "origin_sha256": "344c1bad838816da2100389b9a44ac92b4630e8f07a8ddc94d6c41c9d2de9e73",
+      "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py",
+      "sha256": "b80642cde9094c03c4e586eb712fed5f260032038afd7a94e797d3561e3a2a71"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

@@ -1,0 +1,3 @@
+# Dashboard portable CI bridge
+
+The exact final-r2 HTML and core source are preserved. Historical README and review packets describe their dated source qualification. The current strict bridge wires37 identities:12 flywheel,6 review boundaries,3 fetch failure,13 inline optimizerDisplay and3 independent age-tick cases. It extracts the function from final HTML and requires exact equality with the frozen parent renderer before the13 owning cases. Source copying executed zero fixtures. Missing Node is a failure, never a skip. Future evidence must use an absent external output directory. Source/synthetic acceptance is distinct from a cold deployed WEB qualification or verified optimizer progress.

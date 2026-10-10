@@ -139,6 +139,22 @@ def main():
   receipt['callback_targets_suite']=callback_targets;receipt['combined_collected']+=callback_targets['collected'];receipt['combined_executed']+=callback_targets['executed'];receipt['passed']=success
  if success and(receipt['combined_collected']!=812 or receipt['combined_executed']!=812):
   raise ValueError('All812 wired offline identities must complete')
+ if success:
+  if receipt['combined_collected']!=812 or receipt['combined_executed']!=812:
+   raise ValueError('Prior812 offline identities must remain independently complete')
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'pipelines/standalone_paper_monitor_v1/run_offline.py'),'--output',str((a.output/'standalone_monitor').resolve())],check=False)
+  standalone_monitor=json.loads((a.output/'standalone_monitor/receipt.json').read_bytes())
+  success=child.returncode==0 and standalone_monitor['passed']is True and standalone_monitor['collected']==standalone_monitor['executed']==82 and len(standalone_monitor['identities'])==len(set(standalone_monitor['identities']))==82
+  receipt['standalone_monitor_suite']=standalone_monitor;receipt['combined_collected']+=standalone_monitor['collected'];receipt['combined_executed']+=standalone_monitor['executed'];receipt['passed']=success
+ if success and(receipt['combined_collected']!=894 or receipt['combined_executed']!=894):
+  raise ValueError('All894 wired offline identities must complete')
+ if success:
+  child=subprocess.run([sys.executable,'-B',str(ROOT/'dashboard/test_dashboard_flywheel.py'),'--output',str((a.output/'dashboard_flywheel').resolve())],check=False)
+  dashboard_flywheel=json.loads((a.output/'dashboard_flywheel/receipt.json').read_bytes())
+  success=child.returncode==0 and dashboard_flywheel['passed']is True and dashboard_flywheel['collected']==dashboard_flywheel['executed']==37 and len(dashboard_flywheel['identities'])==len(set(dashboard_flywheel['identities']))==37
+  receipt['dashboard_flywheel_suite']=dashboard_flywheel;receipt['combined_collected']+=dashboard_flywheel['collected'];receipt['combined_executed']+=dashboard_flywheel['executed'];receipt['passed']=success
+ if success and(receipt['combined_collected']!=931 or receipt['combined_executed']!=931):
+  raise ValueError('All931 wired offline identities must complete')
  (a.output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
  print(json.dumps({k:v for k,v in receipt.items()if k!='identities'}))
  if not success:raise SystemExit(1)

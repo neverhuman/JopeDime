@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""One create-only exact-roster qualification of this new pure source family.
+
+No network/project/runtime imports. Reads this frozen source/plan and writes only
+one specified new receipt. A failed receipt is preserved; reruns require an
+explicit new reviewed attempt, not this runner auto-retrying.
+"""
+import argparse
+import ast
+import contextlib
+import hashlib
+import importlib.util
+import io
+import json
+import os
+from pathlib import Path
+import sys
+import time
+import unittest
+
+sys.dont_write_bytecode=True
+ROOT=Path(__file__).resolve().parent
+
+def sha(raw): return hashlib.sha256(raw).hexdigest()
+def wire(obj): return json.dumps(obj,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
+def pin(path):
+    b=path.read_bytes(); return {'sha256':sha(b),'bytes':len(b)}
+def require(ok,why):
+    if not ok: raise RuntimeError(why)
+def flatten(suite):
+    for item in suite:
+        if isinstance(item,unittest.TestSuite): yield from flatten(item)
+        else: yield item
+
+def load(name,path,package=False):
+    require(name not in sys.modules,'no preexisting module alias '+name)
+    kwargs={'submodule_search_locations':[str(path.parent)]} if package else {}
+    spec=importlib.util.spec_from_file_location(name,path,**kwargs)
+    mod=importlib.util.module_from_spec(spec); sys.modules[name]=mod; spec.loader.exec_module(mod)
+    return mod
+
+def main():
+    ap=argparse.ArgumentParser(); ap.add_argument('--plan-sha',required=True); ap.add_argument('--receipt',required=True)
+    args=ap.parse_args(); receipt=Path(args.receipt).absolute()
+    require(receipt.parent == ROOT/'attempts' and not receipt.is_symlink(),'owned direct receipt path')
+    receipt.parent.mkdir(exist_ok=True)
+    # Reserve create-only before executing anything from the package.
+    fd=os.open(receipt,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    plan_raw=(ROOT/'QUALIFICATION_PLAN.json').read_bytes()
+    started=time.time_ns(); mono=time.monotonic_ns(); cpu=time.process_time_ns(); result=None; output=io.StringIO()
+    record={'schema':'codex.capture-reuse-offline-qualification/v1','state':'failed_before_run',
+            'started_utc_ns':started,'plan_sha256':sha(plan_raw),'old_fixture_runs':0,'runtime_or_remote_execution':False}
+    exitcode=1
+    try:
+        require(sha(plan_raw)==args.plan_sha,'exact external plan pin')
+        plan=json.loads(plan_raw); require(plan['schema']=='codex.capture-reuse-qualification-plan/v1','plan schema')
+        expected=plan['fixture_ids']; require(expected==sorted(set(expected)) and len(expected)>0,'exact unique roster')
+        actual_py=sorted(str(p.relative_to(ROOT)) for base in ('package','tests') for p in (ROOT/base).rglob('*.py'))+['run_offline.py']
+        require(set(actual_py)==set(plan['source_pins']),'closed complete Python source roster')
+        for rel,expected_pin in plan['source_pins'].items():
+            path=ROOT/rel; require(not path.is_symlink() and path.resolve().is_relative_to(ROOT),'source origin')
+            require(pin(path)==expected_pin,'source pin '+rel); ast.parse(path.read_text())
+        load('monitor_capture_reuse_v1',ROOT/'package/__init__.py',True)
+        load('monitor_capture_reuse_v1_tests',ROOT/'tests/__init__.py',True)
+        mod=load('monitor_capture_reuse_v1_tests.test_reuse',ROOT/'tests/test_reuse.py')
+        full=unittest.defaultTestLoader.loadTestsFromModule(mod); available={x.id():x for x in flatten(full)}
+        require(set(expected)<=set(available),'selected affected/new roster exists')
+        suite=unittest.TestSuite(available[i]for i in expected); ids=sorted(x.id()for x in flatten(suite))
+        require(ids==expected,'collected roster must exactly equal frozen plan')
+        origins={}
+        for name,module in sys.modules.copy().items():
+            if name.startswith(('monitor_capture_reuse_v1.', 'monitor_capture_reuse_v1_tests.')) or name in ('monitor_capture_reuse_v1','monitor_capture_reuse_v1_tests'):
+                source=Path(module.__file__).resolve(); rel=str(source.relative_to(ROOT))
+                require(rel in plan['source_pins'] and pin(source)==plan['source_pins'][rel],'loaded exact source origin')
+                origins[name]={'path':rel,**pin(source)}
+        with contextlib.redirect_stdout(output),contextlib.redirect_stderr(output):
+            result=unittest.TextTestRunner(stream=output,verbosity=2).run(suite)
+        require(result.testsRun==len(expected),'exact executed count')
+        require(not result.failures and not result.errors and not result.skipped and not result.expectedFailures
+                and not result.unexpectedSuccesses,'no failed/skipped/expected/unexpected cases')
+        # Recheck source custody after qualification, not just before import.
+        require(all(pin(ROOT/r)==p for r,p in plan['source_pins'].items()),'source unchanged after fixtures')
+        record.update(state='passed',fixture_ids=ids,source_pins=plan['source_pins'],import_origins=origins)
+        exitcode=0
+    except BaseException as exc:
+        record.update(error_type=type(exc).__name__,error=str(exc))
+    finally:
+        record.update(ended_utc_ns=time.time_ns(),elapsed_monotonic_ns=time.monotonic_ns()-mono,
+                      process_cpu_ns=time.process_time_ns()-cpu,python=sys.version,
+                      tests_run=0 if result is None else result.testsRun,
+                      failures=0 if result is None else len(result.failures),errors=0 if result is None else len(result.errors),
+                      skipped=0 if result is None else len(result.skipped),
+                      expected_failures=0 if result is None else len(result.expectedFailures),
+                      unexpected_successes=0 if result is None else len(result.unexpectedSuccesses),
+                      output_utf8=output.getvalue(),output_sha256=sha(output.getvalue().encode()))
+        raw=wire(record)+b'\n'
+        require(len(raw)<256*1024,'bounded qualification receipt')
+        view=memoryview(raw)
+        while view:
+            n=os.write(fd,view); require(n>0,'receipt short write'); view=view[n:]
+        os.fsync(fd); os.close(fd)
+        directory=os.open(receipt.parent,os.O_RDONLY); os.fsync(directory); os.close(directory)
+    print(json.dumps({'state':record['state'],'tests_run':record['tests_run'],'receipt':str(receipt),
+                      'sha256':sha(raw),'bytes':len(raw)}))
+    return exitcode
+
+if __name__=='__main__': raise SystemExit(main())

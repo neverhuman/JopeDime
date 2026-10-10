@@ -1,0 +1,38 @@
+const fs=require('fs');const vm=require('vm');const assert=require('assert');
+const source=fs.readFileSync(process.argv[2],'utf8');
+const display=vm.runInNewContext(source+'\noptimizerDisplay');
+const now=1000,s={at:990},base={at:991,errors:[]};
+const cases=[];
+function check(id,h,expected,pattern,snapshot=s){
+ const before=JSON.stringify(h);const actual=display(snapshot,h,now);
+ assert.strictEqual(actual.state,expected,id);assert.match(actual.text,pattern,id);
+ assert.strictEqual(JSON.stringify(h),before,id+' no input mutation');
+ cases.push({id,state:'passed',display:actual});
+}
+check('failed_continual_flag_is_stopped',{...base,neural_continuous:true,neural_service:{ActiveState:'failed',SubState:'failed',Result:'timeout',ExecMainStatus:'15'}},'stopped',/stopped.*failed.*timeout.*15/);
+check('inactive_continual_flag_is_stopped',{...base,neural_continuous:true,neural_training:{state:'running',completed_batches:17773},neural_service:{ActiveState:'inactive',SubState:'dead'}},'stopped',/stopped.*inactive.*historical/);
+check('active_service_is_not_optimizer_progress',{...base,neural_continuous:true,neural_service:{ActiveState:'active',SubState:'running'},neural_training:{state:'running',completed_batches:17773}},'running_unverified',/active\/running.*progress is unverified/);
+check('changed_reported_counter_is_not_physical_proof',{...base,neural_service:{ActiveState:'active',SubState:'running'},neural_training:{completed_batches:17774,optimizer_steps:17774,checkpoint_sha256:'a'.repeat(64)}},'running_unverified',/progress is unverified/);
+check('absence_is_unknown',{...base,neural_continuous:true},'unknown',/no current trainer service/);
+check('stale_snapshot_is_unknown',{...base,neural_service:{ActiveState:'active',SubState:'running'}},'unknown',/stale or unavailable/,{at:900});
+check('stale_host_is_unknown',{...base,at:800,neural_service:{ActiveState:'active',SubState:'running'}},'unknown',/stale or unavailable/);
+check('future_clock_is_unknown',{...base,neural_service:{ActiveState:'active',SubState:'running'}},'unknown',/stale or unavailable/,{at:1001});
+check('source_failure_never_zero_or_live',{...base,errors:['Neural training: read mismatch'],neural_service:{ActiveState:'active',SubState:'running'}},'unknown',/source verification failed/);
+check('activating_is_starting',{...base,neural_service:{ActiveState:'activating',SubState:'start'}},'starting',/starting.*no current committed/);
+check('deactivating_is_stopping',{...base,neural_service:{ActiveState:'deactivating',SubState:'stop-sigterm'}},'stopping',/stopping.*unverified/);
+check('active_exited_is_not_running',{...base,neural_service:{ActiveState:'active',SubState:'exited'}},'unknown',/active\/exited/);
+check('unrecognized_extra_proof_cannot_promote',{...base,neural_service:{ActiveState:'active',SubState:'running'},neural_physical_progress:{verified:true,optimizer_step_changed:true}},'running_unverified',/unverified/);
+const original=fs.readFileSync(process.argv[3],'utf8');
+const candidate=fs.readFileSync(process.argv[4],'utf8');
+const oldBinding=original.split('\n').find(x=>x.trim().startsWith('if(h.neural_continuous)training+='));
+assert(oldBinding.includes('continuously reshuffled epochs'));
+let training='';const h={neural_continuous:true,neural_service:{ActiveState:'failed',Result:'timeout',ExecMainStatus:'15'}};
+const oldResult=vm.runInNewContext(oldBinding+'\ntraining',{h,training});
+assert.match(oldResult,/continuously reshuffled epochs/);
+assert(!candidate.includes("if(h.neural_continuous)training+=' · continuously reshuffled epochs"));
+assert(candidate.includes("'DL optimizer: '+optimizer.text"));
+assert(!candidate.includes('Training continues at fixed coverage.'));
+const frozenPlot=original.slice(original.indexOf('function plot('),original.indexOf('function render('));
+assert(candidate.includes(frozenPlot));
+for(const label of ['Linear X','Log X','Linear Y','Log Y'])assert.strictEqual(candidate.split(label).length,original.split(label).length);
+console.log(JSON.stringify({schema:'codex.dashboard-liveness-new-fake-fixtures/v1',state:'passed',tests_collected:cases.length,tests_executed:cases.length,tests_failed:0,tests_skipped:0,tests_expected_failed:0,production_imports:0,browser_or_server_execution:0,fixture_type:'synthetic finite-state renderer; no optimizer or service execution',cases,old_binding:oldBinding,preserved_plot_source:true,preserved_axis_labels:true}));

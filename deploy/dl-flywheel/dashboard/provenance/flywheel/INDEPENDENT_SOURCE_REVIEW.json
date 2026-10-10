@@ -1,0 +1,122 @@
+{
+  "actions": {
+    "Node_tests_or_syntax": 0,
+    "browser_or_network": 0,
+    "imports": 0,
+    "service_or_optimizer": 0,
+    "source_edits": 0
+  },
+  "build_wording_authority": {
+    "bytes": 12194,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/v2-r2-independent/REVIEW_RECEIPT.json",
+    "sha256": "06d08998f3ac2922733003be2a0e7d039ecd73fbb7ef9fbb05b6293eaee9d9f3"
+  },
+  "checks": {
+    "age_tick_uses_retained_timestamp_and_missing_snapshot_noop": true,
+    "axis_control_handlers_byte_equal": true,
+    "axis_renders_and_10s_age_tick_preserve_failure": true,
+    "candidate_script_exact_HTML_extraction": true,
+    "catch_restores_failure_on_render_error": true,
+    "counts_only_changed_legacy_encoding_label": true,
+    "dynamic_new_DOM_content_textContent_only": true,
+    "failure_flag_cleared_only_initialization_or_successful_JSON_before_render": true,
+    "four_control_label_counts": {
+      "Linear X": 1,
+      "Linear Y": 1,
+      "Log X": 1,
+      "Log Y": 1
+    },
+    "legacy_function_block_sha256": "b512602370c7c4dde97626049f6d37372808071fd74781a7b013767d742e6f06",
+    "legacy_plot_presentation_coverage_loss_tooltip_optimizer_functions_byte_equal": true,
+    "new_v2_wording_matches_independent_receipt_holds": true,
+    "no_positive_feedback_learning_uplift_claim": true,
+    "separate_JS_embedded_once": true,
+    "seven_finite_pins_exact": true
+  },
+  "limits": [
+    "This is narrow source review; no browser, deployment, live source service, runtime resource, monitor freshness or learning qualification.",
+    "10s timer updates new panel/header observation age, not a bounded fetch deadline; browser scheduling/pending fetch lifetime remain browser behavior.",
+    "Prior accessibility optional recommendation and fixed collector-host contract limitations remain.",
+    "Canonical strict CJS roster must include all24 now; retaining21 would omit3 new age cases."
+  ],
+  "packet": {
+    "bytes": 2254,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/REVIEW_PACKET.json",
+    "sha256": "297673cadf5d58f8e184141ae88eff08c74f0261c818f3475798f6710b6f754d"
+  },
+  "preserved_first_packet_erratum": {
+    "authority": false,
+    "pin": {
+      "bytes": 1568,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/AUTHOR_CHANGE_PACKET.json",
+      "sha256": "1fb3bba9d3b15a52ebe5a933b3b4b625c17c140e054d8ba9c8b98f3ea44bff3c"
+    },
+    "reason": "Historical self-entry hashes an empty file and earlier HTML/script bodies; explicit7-file REVIEW_PACKET is authority."
+  },
+  "prior_core": {
+    "bytes": 11505,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/flywheel.js",
+    "sha256": "5cd6b616d59fa22b987c5b31982ce2aedfc89125c584aed3eb9ab28114251ae8"
+  },
+  "prior_correction_review": {
+    "bytes": 6072,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-independent-review/CORRECTION_SOURCE_REVIEW.json",
+    "sha256": "b47d2ed0dc5e1c35fc64aefc47fa0516c9308cb9847db23f2c77ae4445789924"
+  },
+  "prior_html": {
+    "bytes": 61919,
+    "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/index.html",
+    "sha256": "4d518adb0562cd29918812e0c4c0be232f410779ec5a505f345e5b8c6d4e6059"
+  },
+  "qualification_accounting": {
+    "author_reports_new3_plus_affected3_exit0_once": true,
+    "final_dataflow_after_author_case_execution": "Packet discloses final sticky-render dataflow adjustment; no final full24 execution claimed. New ageEvidence function unchanged from author-passing body.",
+    "independent_test_runs": 0,
+    "new_age_tick_cases": 3,
+    "new_total_unique_CJS_cases": 24,
+    "node_syntax": "Packet records check before final dataflow correction; root message additionally reports current syntax PASS. Reviewer did not execute Node or treat unretained tool output as independent proof.",
+    "old13_rerun_claimed": false,
+    "old21_whole_rerun_claimed": false,
+    "prior_distinct_CJS_cases": 21
+  },
+  "reviewed_code": [
+    {
+      "bytes": 62383,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/index.html",
+      "sha256": "161266cd064d6e5a28ac2e32552aa34229002a3566d7c54655a0d7f47c358226"
+    },
+    {
+      "bytes": 11668,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/flywheel.js",
+      "sha256": "8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48"
+    },
+    {
+      "bytes": 3873,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/test_flywheel.cjs",
+      "sha256": "2116390b5c0f440eeeb58340fd7467d127427214bb3db401080ad0e7add98b7b"
+    },
+    {
+      "bytes": 2125,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/test_review_boundaries.cjs",
+      "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
+    },
+    {
+      "bytes": 1233,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/test_fetch_failure.cjs",
+      "sha256": "3b0bb35691544aa1f145b053b6c086fb8dfddfdff78b617ab61e5ab10a0b2283"
+    },
+    {
+      "bytes": 1489,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/test_age_tick.cjs",
+      "sha256": "9389a8db93210c1dda0eb25bba762e252713f5047ba255c17e575add65430ec3"
+    },
+    {
+      "bytes": 42048,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/dashboard-flywheel/final-r2/candidate-script.js",
+      "sha256": "20a90c0397f5a1cd502f9ae65980d5bb2452cf6bdb000f8ad6380dacfa9213f7"
+    }
+  ],
+  "schema": "codex.dashboard-final-r2-independent-review/v1",
+  "utc": "2026-10-10T14:39:43.864297+00:00",
+  "verdict": "PASS_NARROW_SEALED_SOURCE_DELTA_NO_RUNTIME_CLAIM"
+}

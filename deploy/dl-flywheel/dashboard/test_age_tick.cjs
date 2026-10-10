@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
+const {flywheelView}=require('./flywheel.js');const html=fs.readFileSync(__dirname+'/index.html','utf8');
+const code=html.match(/function ageEvidence\(\)\{[^\n]+\}/)[0];let now=1000,calls=[];const labels={};
+const ctx={current:{at:995,hosts:['xbabe1','xbabe2','xbabe3'].map(host=>({host,at:995}))},connectionFailed:false,Date:{now:()=>now*1000},flywheelView,mountFlywheel:(s,failed)=>calls.push(flywheelView(s,now,failed)),text:(id,value)=>labels[id]=value};vm.createContext(ctx);vm.runInContext(code,ctx);
+ctx.ageEvidence();assert(calls.at(-1).fresh);now=1100;ctx.ageEvidence();assert(!calls.at(-1).fresh);assert.equal(calls.at(-1).age,105);assert.match(labels.connection,/Retained observations/);
+const cases=['independent clock ages retained source while fetch is pending'];
+now=1000;ctx.connectionFailed=true;ctx.ageEvidence();assert(!calls.at(-1).fresh);assert.match(labels.connection,/Connection unavailable/);cases.push('clock tick preserves prior connection failure');
+ctx.current=null;const oldCalls=calls.length;ctx.ageEvidence();assert.equal(calls.length,oldCalls);cases.push('clock tick does not invent a missing snapshot');
+assert(html.includes('setInterval(ageEvidence,10000)'));assert(html.includes("text('encoded',fmt(enc)+' reported vectors')"));
+console.log(JSON.stringify({schema:'codex.new-dashboard-age-tick/v1',executed:3,failed:0,cases,production_service_runs:0}));

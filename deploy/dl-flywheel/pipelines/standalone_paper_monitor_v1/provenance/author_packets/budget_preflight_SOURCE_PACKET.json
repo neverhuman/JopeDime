@@ -1,0 +1,47 @@
+{
+  "actual_producer_runs": 0,
+  "files": {
+    "IMPORT_WRITE_MANIFEST.json": {
+      "bytes": 1545,
+      "sha256": "6ec496ffe820907dbbabfcf678840c7b78219868466fbb715b62ac7073e19fef"
+    },
+    "QUALIFICATION_PLAN.json": {
+      "bytes": 1966,
+      "sha256": "aba552d7cdd72d0596e8467c6c0a638a39263c410034d759775dc06e6792a202"
+    },
+    "README.md": {
+      "bytes": 2244,
+      "sha256": "7ae4e9016c1491a3c42c7ba8964f94a8c91bc2b8739240afdadca0cecf5ea414"
+    },
+    "preflight.py": {
+      "bytes": 6277,
+      "sha256": "8600a79ba1e227d4656e5c5489b07051933091ce59b26d9fa69b1353704723d0"
+    },
+    "qualification.intent.json": {
+      "bytes": 118,
+      "sha256": "e9fa33bc06afc929d5b431760627a870f6892f74e49de7889daa53222d3f07df"
+    },
+    "qualification.json": {
+      "bytes": 5200,
+      "sha256": "2185a0406a52abcba45cd3666a868a7a9e42ae1bfa2bb06de08e8ac2d0ad1c9e"
+    },
+    "run_offline.py": {
+      "bytes": 3087,
+      "sha256": "8f7bf4858db6d5cb898b19515ee32b6142b8822a95e65e993e0081ba5589fdb0"
+    },
+    "test_preflight.py": {
+      "bytes": 5042,
+      "sha256": "980a4123210ffa3a1decc28a6b01ace6ed7ea5371e6ea45086e16700738b43ee"
+    }
+  },
+  "new_fixture_count": 15,
+  "old_fixture_runs": 0,
+  "qualification": {
+    "bytes": 5200,
+    "path": "work/owner-three-objectives-20261010-1358/producer-implementation/preflight-validator-v1/qualification.json",
+    "sha256": "2185a0406a52abcba45cd3666a868a7a9e42ae1bfa2bb06de08e8ac2d0ad1c9e"
+  },
+  "runtime_or_issuance_authority": false,
+  "schema": "codex.producer-budget-preflight-source-packet/v1",
+  "state": "SOURCE_AND15_NEW_FAKE_CASES_PENDING_INDEPENDENT_REVIEW"
+}

@@ -1,0 +1,38 @@
+{
+  "new_adapter_fixture_executions": 0,
+  "old_fixture_replays_during_packaging": 0,
+  "pins": [
+    {
+      "bytes": 12140,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1146/paper-monitor-incremental-custody-v1-author/attempts/qualification-001.json",
+      "sha256": "1b1a11f6b35808bfc399d1df794f723099c21f04ff130125f590143bd798bd1c"
+    },
+    {
+      "bytes": 15258,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1146/paper-monitor-incremental-custody-v1-independent/SOURCE_REVIEW.json",
+      "sha256": "d92245aa4eb207a34140c5863cbe133db588c51cc786823f2c53de8cbb8cb322"
+    },
+    {
+      "bytes": 15164,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1246/paper-monitor-capture-reuse-v1-independent/SOURCE_REVIEW.json",
+      "sha256": "ee81c7f2a9adced0f3e020af127f215ebb320e2edef80a74af06d9c4d17ee462"
+    },
+    {
+      "bytes": 5200,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/producer-implementation/preflight-validator-v1/qualification.json",
+      "sha256": "2185a0406a52abcba45cd3666a868a7a9e42ae1bfa2bb06de08e8ac2d0ad1c9e"
+    },
+    {
+      "bytes": 10146,
+      "path": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-monitor-review/producer-review/SOURCE_REVIEW.json",
+      "sha256": "9e563dc54d986b8709292290a79c5ae442440e1a3941fc1ba586b5d52b381a0b"
+    }
+  ],
+  "preserved_old_fixture_counts": {
+    "budget_preflight_v1": 15,
+    "capture_reuse_v3_distinct": 28,
+    "incremental_v1": 32
+  },
+  "schema": "jope.standalone-monitor-external-qualification-identities/v1",
+  "scope": "Historical source/synthetic qualification identities only. Original receipts remain unchanged at origin. No runtime authority."
+}

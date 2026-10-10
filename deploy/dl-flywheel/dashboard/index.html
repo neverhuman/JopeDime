@@ -1,15 +1,22 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JopeDime · Continuous learning</title>
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JopeDime · Learning flywheel</title>
 <style>
 :root{color-scheme:dark;--bg:#091319;--card:#10232c;--edge:#29404b;--text:#eef5f6;--muted:#9db4be;--green:#70e2b2;--blue:#80baff;--gold:#f2c576}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 95% 0,#143639 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.5 system-ui}main{max-width:1440px;margin:auto;padding:28px 32px 70px}nav{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:24px;border-bottom:1px solid var(--edge)}a{color:var(--green)}nav a{margin-left:20px;text-decoration:none;font-size:13px}.brand{font-weight:750;letter-spacing:.12em;font-size:13px}.eyebrow{color:var(--green);font:12px ui-monospace;letter-spacing:.13em;text-transform:uppercase}h1{font-size:clamp(36px,5vw,60px);line-height:1.07;letter-spacing:-.045em;margin:16px 0}h2{font-size:21px;margin:0 0 8px;letter-spacing:-.02em}h3{font-size:15px;margin:0 0 6px}p{margin:8px 0;color:var(--muted)}.hero{display:flex;justify-content:space-between;gap:40px;align-items:end;margin:38px 0 25px}.hero p{max-width:750px}.stamp{font-size:12px;color:var(--muted);text-align:right;min-width:230px}.dot{display:inline-block;background:var(--green);width:7px;height:7px;border-radius:50%;margin-right:7px}.alert{border:1px solid #665638;background:#2b261b;color:var(--gold);border-radius:10px;padding:14px 18px;margin-bottom:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{border:1px solid var(--edge);background:linear-gradient(140deg,#142a34,#0e1e27);border-radius:13px;padding:22px}.value{display:block;font-size:42px;line-height:1.15;letter-spacing:-.045em;font-weight:740;margin:12px 0}.label{font-size:12px;color:var(--muted);letter-spacing:.065em;text-transform:uppercase}.note{color:var(--muted);font-size:12px}.panel{margin-top:20px}.columns{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.controls{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}button{border:1px solid #38525f;color:var(--muted);background:transparent;border-radius:6px;padding:6px 11px;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}.controls-label{align-self:center;color:var(--muted);font-size:12px;margin-right:3px}button.on{color:var(--text);background:#254251;border-color:#5b8795}.plot{width:100%;height:250px;display:block}.empty{min-height:242px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed #324a56;border-radius:8px;background:repeating-linear-gradient(0deg,transparent,transparent 47px,#17303a 48px)}.empty b{font-size:18px}.empty p{max-width:410px;padding:0 14px}.legend{display:flex;gap:20px;font-size:12px;color:var(--muted)}.legend i{width:18px;height:3px;display:inline-block;margin:0 7px 3px 0}.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.stage{border:1px solid var(--edge);padding:15px;border-radius:8px;min-height:144px}.stage .count{display:block;font-size:25px;font-weight:700;margin:9px 0}.stage p{font-size:12px}.accent{color:var(--green)}.warn{color:var(--gold)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.metric{border-left:2px solid #426a76;padding:0 14px}.metric strong{display:block;font-size:28px;margin:7px 0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--edge)}th{color:var(--muted);font-weight:500}.hostrow{display:flex;gap:14px;flex-wrap:wrap}.host{flex:1;min-width:250px}.bar{height:7px;background:#28414c;border-radius:8px;margin:12px 0;overflow:hidden}.fill{height:100%;background:var(--green)}details{margin-top:24px;padding-top:18px;border-top:1px solid var(--edge)}summary{cursor:pointer;color:var(--muted)}code{font-size:12px;overflow-wrap:anywhere}footer{margin-top:32px;font-size:12px;color:var(--muted)}.tag{font:11px ui-monospace;padding:3px 6px;background:#203e49;border-radius:4px}svg text{font:11px system-ui;fill:#9db4be}@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{display:block}.stamp{text-align:left;margin-top:20px}.stages{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){main{padding:20px 15px}.cards,.metrics{grid-template-columns:1fr}nav{align-items:start}nav a{display:block;margin:5px 0}.value{font-size:36px}}
+
+html{scroll-behavior:smooth}h1 em{font-style:normal;color:#89efc2}h1{font-size:clamp(42px,5.4vw,72px)}.hero{align-items:center;margin:42px 0 32px}.hero p{max-width:610px}.hero-links{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px;font-size:13px}.hero-links a{text-decoration:none}.stamp{border-left:1px solid var(--edge);padding-left:22px;min-width:230px;text-align:left;max-width:280px}.stamp-rule{border-top:1px solid var(--edge);margin:16px 0}.fly-panel{padding:26px;border:1px solid #45635e;border-radius:18px;background:linear-gradient(120deg,#14322e,#101f2a 70%);margin-bottom:24px;scroll-margin-top:16px}.fly-heading{display:flex;gap:20px;justify-content:space-between;align-items:center}.fly-heading h2{font-size:28px;margin-top:6px}.fly-readiness{font-size:12px;color:#f2c576;border:1px solid #776547;border-radius:30px;padding:8px 12px;max-width:230px}.fly-intro{font-size:13px;max-width:720px;margin:10px 0 22px}.fly-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px}.fly-nodes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.fly-step{display:flex;flex-direction:column;text-align:left;align-items:stretch;border:1px solid #35534f;background:#10232a;padding:16px 12px;min-height:163px;border-radius:10px;position:relative;color:var(--text);transition:border-color .15s,background .15s}.fly-step:hover{background:#1b393c}.fly-step[aria-pressed=true]{background:#23423c;border-color:#93efc7;box-shadow:0 0 0 1px #93efc7}.fly-number{font:11px ui-monospace;color:var(--muted);margin-bottom:12px}.fly-title{font-size:13px;font-weight:680;line-height:1.4}.fly-count{font-size:12px;color:#d2e2e4;margin:9px 0 14px;line-height:1.5}.fly-state{font-size:10px;margin-top:auto;color:#89efc2}.build .fly-state{color:#a3caff}.held .fly-state,.unqualified .fly-state{color:#f2c576}.fly-detail{padding:22px;border:1px solid #38575d;border-radius:12px;background:#091820;min-width:0}.fly-detail h3{font-size:23px;margin-top:10px}.fly-detail p{font-size:13px}.fly-detail .fly-metric{font-size:18px;color:var(--text);margin:12px 0}.fly-detail h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:20px 0 5px;color:#c6dcdd}.fly-return{display:flex;gap:14px;border-top:1px dashed #739887;padding:16px 0 0;margin-top:20px}.fly-return>span{font-size:28px;color:#89efc2}.fly-return strong{font-size:13px;font-weight:600}.fly-return p{font-size:12px;margin:3px 0}.fly-bottom{border-top:1px solid #35534f;display:flex;justify-content:space-between;gap:16px;margin-top:22px;padding-top:15px;color:var(--muted);font-size:11px}.alert{font-size:13px}.panel{scroll-margin-top:20px}
+@media(max-width:1200px){.fly-layout{grid-template-columns:1fr}.fly-detail{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}.fly-detail .eyebrow,.fly-detail h3,.fly-detail .fly-metric{grid-column:1/-1}.fly-detail h4{grid-column:1}.fly-detail h4+p{grid-column:2}.fly-detail h4{margin:8px 0}.fly-detail>p:not(.fly-metric){grid-column:1/-1}.fly-detail h4+p{grid-column:2}.fly-detail h4{align-self:center}}
+@media(max-width:760px){.hero{display:block}.stamp{border-left:0;border-top:1px solid var(--edge);padding:16px 0 0;margin-top:24px;max-width:none}.stamp-rule{display:none}.fly-heading{display:block}.fly-readiness{display:inline-block;max-width:none;margin-top:8px}.fly-nodes{grid-template-columns:repeat(2,minmax(0,1fr))}.fly-step{min-height:135px}.fly-panel{padding:20px}.fly-detail{display:block}.fly-bottom{flex-direction:column;gap:4px}.hero-links{gap:12px}main{padding:24px 20px}.fly-detail h4{margin-top:16px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.fly-step{transition:none}}
+
 </style><main>
-<nav><span class="brand">JOPEDIME / CONTINUOUS LEARNING</span><div><a href="/DL_CONTINUAL_MODEL_V1.md">Current model specification</a><a href="/DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md">Technical review</a><a href="/DL_WHITE_PAPER_TRACKING.md">Evidence log</a><a href="/DL_ENCODER_MASK_NEXT_TESTS.md">Encoder and mask experiments</a><a href="/full/">Previous model experiments</a></div></nav>
-<section class="hero"><div><div class="eyebrow">One growing corpus. One current training run.</div><h1>Data in. Programs out.<br>Measured results.</h1><p>A <strong>data run</strong> is one regression dataset version with one exact split definition. A new split is a new data run. Counts below track the growing corpus and its actual use by the current model.</p></div><div class="stamp"><span class="dot"></span><span id="connection">Connecting to source records</span><br><span id="updated">No observation yet</span></div></section>
+<nav><span class="brand">JOPEDIME / LEARNING FLYWHEEL</span><div><a href="/DL_CONTINUAL_MODEL_V1.md">Current model specification</a><a href="/DL_GP_FLYWHEEL_TECHNICAL_REVIEW.md">Technical review</a><a href="/DL_WHITE_PAPER_TRACKING.md">Evidence log</a><a href="/DL_ENCODER_MASK_NEXT_TESTS.md">Encoder and mask experiments</a><a href="/full/">Previous model experiments</a></div></nav>
+<section class="hero"><div><div class="eyebrow">An evidence trail through every turn</div><h1>See the learning<br><em>flywheel.</em></h1><p>Data becomes programs. Programs become measured results. Follow the return path from those results to better targets, committed learning and independently measured performance.</p><div class="hero-links"><a href="#flywheel">Explore the loop ↘</a><a href="#lossPlot">Loss &amp; coverage</a><a href="#programRows">Programs &amp; costs</a></div></div><div class="stamp"><span id="connection">Awaiting source records</span><br><span id="updated">No observation yet</span><div class="stamp-rule"></div><span id="flywheelReviewAt">Dated build review</span></div></section>
+<section id="flywheel" class="fly-panel" aria-label="Flywheel evidence and completion gates"><div class="fly-heading"><div><div class="eyebrow">The feedback path</div><h2>Measured work. Visible gaps.</h2></div><span id="flywheelReadiness" class="fly-readiness">Feedback → learning is not yet qualified</span></div><p class="fly-intro">Select a stage to inspect its evidence and the next completion gate. Recorded counts come from different cohorts; they are not a conversion funnel.</p><div class="fly-layout"><div><div id="flywheelNodes" class="fly-nodes"></div><div class="fly-return"><span>↶</span><div><strong>Close the loop with verified feedback</strong><p>Only measured, eligible training outcomes return as targets. Validation stays outside optimizer admission.</p></div></div></div><aside id="flywheelDetail" class="fly-detail" aria-label="Selected stage evidence"></aside></div><div class="fly-bottom"><span id="flywheelFreshness">Observation status unavailable</span><span id="flywheelAge">Awaiting timestamp</span></div></section>
 <div id="trainingStatus" class="alert">New continual training is not connected yet. Completed historical model experiments are available separately.</div>
 <section class="cards" style="margin-bottom:16px">
 <div class="card"><div class="label">Original catalog · data runs</div><span class="value" id="originalRuns">—</span><div class="note" id="originalSupport">Reconciling exact dataset × split identities</div></div>
 <div class="card"><div class="label">Eligible original data runs</div><span class="value" id="eligibleRuns">—</span><div class="note" id="eligibleSupport">Current role and exclusion authority</div></div>
 <div class="card"><div class="label">Published winner-label contexts</div><span class="value" id="winnerLabels">—</span><div class="note" id="labelSupport">Terminal records are shown separately</div></div>
-<div class="card"><div class="label">Total training data-run exposures</div><span class="value" id="presentations">—</span><div class="note">Increases on every pass; unique coverage is counted separately</div></div>
+<div class="card"><div class="label">Total training data-run exposures</div><span class="value" id="presentations">—</span><div class="note">Recorded repeated exposure; unique coverage is counted separately</div></div>
 </section><div class="alert" id="fullCorpusStatus">Awaiting pinned full-corpus inventory.</div>
 <section class="cards">
 <div class="card"><div class="label">New augmented data runs in S3</div><span class="value" id="pool">—</span><div class="note" id="poolSupport">New variants only. Original S3 corpus is being reconciled below.</div></div>
@@ -18,11 +25,11 @@
 <div class="card"><div class="label">New flywheel GP results in S3</div><span class="value" id="gpTotal">—</span><div class="note" id="gpSupport">Actual exact-context program executions</div></div>
 </section>
 
-<section class="columns"><div class="panel"><div class="eyebrow">Current model</div><h2>Training vs validation loss</h2><p class="note" id="axisDescription">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis" role="group" aria-label="Loss horizontal axis"><span class="controls-label">X axis</span><button type="button" class="on" data-axis="batch" aria-pressed="true">Batches</button><button type="button" data-axis="epoch" aria-pressed="false">Epochs</button><button type="button" data-axis="unique_data_runs_seen" aria-pressed="false">Unique data runs</button><button type="button" data-axis="total_presentations" aria-pressed="false" disabled>Total presentations</button></div><div class="controls" id="lossXScale" role="group" aria-label="Training horizontal scale"><span class="controls-label">X scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear X</button><button type="button" data-scale="log" aria-pressed="false">Log X</button></div><div class="controls" id="lossScale" role="group" aria-label="Loss vertical scale"><span class="controls-label">Y scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear Y</button><button type="button" data-scale="log" aria-pressed="false">Log Y</button></div><p class="note" id="lossScaleNote" role="status" aria-live="polite">Linear loss scale.</p><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
-<div class="panel"><div class="eyebrow">Live pipeline</div><h2>What is actually running</h2><div id="workState"><p>Awaiting source status.</p></div><div class="metrics"><div class="metric"><span class="note">New GP executions</span><strong id="executions">—</strong></div><div class="metric"><span class="note">Reused cached GP results</span><strong id="cacheHits">—</strong></div><div class="metric"><span class="note">Failed GP attempts</span><strong id="failures">—</strong></div></div><p class="note" id="gpCampaign">No program campaign observed.</p><div class="bar"><div id="gpBar" class="fill" style="width:0"></div></div><p class="note">An emitted program becomes a result only after native execution, emitted Rust parity, and S3 readback.</p></div></section>
+<section class="columns"><div class="panel"><div class="eyebrow">Recorded model history</div><h2>Training vs validation loss</h2><p class="note" id="axisDescription">Raw batches on the lower axis; unique data runs seen on the upper axis. Validation uses reserved parent lineages.</p><div class="controls" id="axis" role="group" aria-label="Loss horizontal axis"><span class="controls-label">X axis</span><button type="button" class="on" data-axis="batch" aria-pressed="true">Batches</button><button type="button" data-axis="epoch" aria-pressed="false">Epochs</button><button type="button" data-axis="unique_data_runs_seen" aria-pressed="false">Unique data runs</button><button type="button" data-axis="total_presentations" aria-pressed="false" disabled>Total presentations</button></div><div class="controls" id="lossXScale" role="group" aria-label="Training horizontal scale"><span class="controls-label">X scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear X</button><button type="button" data-scale="log" aria-pressed="false">Log X</button></div><div class="controls" id="lossScale" role="group" aria-label="Loss vertical scale"><span class="controls-label">Y scale</span><button type="button" class="on" data-scale="linear" aria-pressed="true">Linear Y</button><button type="button" data-scale="log" aria-pressed="false">Log Y</button></div><p class="note" id="lossScaleNote" role="status" aria-live="polite">Linear loss scale.</p><p class="note warn" id="coverageNote">Unique coverage and repeated presentations are tracked separately.</p><div id="lossPlot" class="empty"><b>No new training batches recorded</b><p>Loss curves will begin with the first verified updates. Previous experiments are not spliced into this run.</p></div><div class="legend"><span><i style="background:var(--green)"></i>Train</span><span><i style="background:var(--blue)"></i>Validation</span></div><p class="note" id="lossSummary">Comparable fixed-support loss readouts will appear here.</p></div>
+<div class="panel"><div class="eyebrow">Service evidence</div><h2>Recorded work &amp; current status</h2><div id="workState"><p>Awaiting source status.</p></div><div class="metrics"><div class="metric"><span class="note">New GP executions</span><strong id="executions">—</strong></div><div class="metric"><span class="note">Reused cached GP results</span><strong id="cacheHits">—</strong></div><div class="metric"><span class="note">Failed GP attempts</span><strong id="failures">—</strong></div></div><p class="note" id="gpCampaign">No program campaign observed.</p><div class="bar"><div id="gpBar" class="fill" style="width:0"></div></div><p class="note">An emitted program becomes a result only after native execution, emitted Rust parity, and S3 readback.</p></div></section>
 <section class="panel"><div class="eyebrow">No stage hidden</div><h2>From new data to a trained batch</h2><div class="stages">
 <div class="stage"><h3>1. Fuzz &amp; publish</h3><span id="made" class="count">—</span><p id="generationState">Source and transform JSON travel with every variant.</p></div>
-<div class="stage"><h3>2. Required encoding</h3><span id="encoded" class="count">—</span><p id="encodingState">Kumo Small only:2,051 values. Historical extra blocks are retained.</p></div>
+<div class="stage"><h3>2. Required encoding</h3><span id="encoded" class="count">—</span><p id="encodingState">Kumo Small only:2,051 values. Other encoder blocks are not admitted.</p></div>
 <div class="stage"><h3>3. Execute GPs</h3><span id="scored" class="count">—</span><p id="scoredState">Fresh labels on the exact dataset and split.</p></div>
 <div class="stage"><h3>4. Train</h3><span id="trained" class="count">—</span><p>Distinct parent datasets within each batch; persistent batch-membership deduplication.</p></div>
 <div class="stage"><h3>5. Validate</h3><span id="validated" class="count">—</span><p id="validationState">About 5% of source lineages reserved; all descendants inherit that role.</p></div></div><p class="note" id="intakeNote">Generation waits when downstream capacity is full. Published, encoded, scored and trained are separate counts.</p></section>
@@ -34,7 +41,140 @@
 <details><summary>Corpus, storage, normalization and historical evidence</summary><p id="priorAttempt">Prior attempt evidence remains available in the source log.</p><p id="corpusDetails">The growing corpus is shown separately from the original 7,120-view experiment and the 100-variant single-parent pilot.</p><p>Every S3 dataset record keeps its source lineage, source checksum, split, recipe, seed, added/dropped columns, target-noise level, target identity and input checksum. GP cache keys bind the canonical program to the exact data, target, split and evaluator. Changing any of those requires a new measurement.</p><p><strong>Normalization:</strong> retain raw RMSE and a same-split baseline. The existing mean-baseline objective and the proposed fixed CatBoost-relative objective have separate identities; their targets are never mixed. CatBoost comparisons will appear only after its baseline has actually run.</p><p><a href="/DL_FLYWHEEL_CORRECTION_PLAN.md">Correction and implementation plan</a> · <a href="/DL_FLYWHEEL_EVERGREEN_IMPLEMENTATION.md">Detailed protocol and S3 layout</a> · <a href="/DL_FLYWHEEL_GROWTH_AND_INFERENCE_V2.md">Independent growth and inference queues</a> · <a href="/DL_FLYWHEEL_PLAN.md">Loss and comparison decisions</a> · <a href="/full/">Previous training curves</a> · <a href="/">Previous architecture experiments</a></p></details>
 <footer id="foot">Telemetry observations do not constitute optimizer exposure. Missing results remain missing.</footer>
 </main><script>
-const el=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString(),ns='http://www.w3.org/2000/svg';let current=null,axis='batch';
+'use strict';
+// Counts come from the existing collector. Qualification comes from a dated review,
+// never from campaign flags, utilization, a checkpoint filename or elapsed time.
+const review = Object.freeze({
+  at: '2026-10-10T14:26:47Z', generation: 'v2 build',
+  learner: 'Build only · launch not authorized',
+  historicalStep: 17773,
+  run: 'native-continuous-20261009-v1',
+  config: 'fec184217e7c50a3fc3bc1cc7e33edafdbd218d1fafa1bd0d68debf626dcd4ed',
+  executionConfig: 'f358735358d2f56ad12106bcf327454d6af87ca440c46fc35e86558414b1de93',
+  build: 'Independent review joins the new CUDA next-update parity, ancestry and dry-run receipts. Final-write deadline and restart outbox safeguards still need correction; new-target learning remains unqualified.',
+  monitoring: 'Last owned publisher closed normally. A successor is held on complete-history input custody and its fixed memory budget.',
+  provenance: 'R19 build-only ruling; R20/R21 takeover proof; independent v2-r2 receipt 06d08998; V14 normal terminal review.'
+});
+
+function validCount(value) {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+function observedSum(values) {
+  const present = values.filter(value => value !== undefined && value !== null);
+  if (!present.length || !present.every(value => validCount(value) !== null)) return null;
+  const sum=present.reduce((a, b) => a + b, 0);
+  return validCount(sum);
+}
+function snapshotAge(at, now) {
+  return typeof at === 'number' && Number.isFinite(at) && at <= now ? now - at : null;
+}
+function flywheelView(snapshot, now = Date.now() / 1000, sourceUnavailable=false) {
+  const hosts = Array.isArray(snapshot?.hosts) ? snapshot.hosts.filter(value=>value&&typeof value==='object') : [];
+  const host = hosts.find(value => value.host === 'xbabe2') || {};
+  const neural = host.neural_training || {};
+  const growth = host.evergreen || {};
+  const encoded = observedSum([host.rolling_kumo?.verified_new_vectors,
+    ...hosts.flatMap(value => [value.evergreen_encoding_publication?.completed_variants,
+      value.kumos_publication?.completed_variants, value.growth10_kumos_publication?.completed_variants])]);
+  const age = snapshotAge(snapshot?.at, now);
+  const fresh = !sourceUnavailable && age !== null && age < 90 && ['xbabe1','xbabe2','xbabe3'].every(id=>{
+    const observed=hosts.find(value=>value.host===id);
+    const hostAge=snapshotAge(observed?.at,now);
+    return hostAge!==null&&hostAge<90;
+  });
+  const count = (value, unit) => validCount(value) === null ? 'Not reported' : validCount(value).toLocaleString() + ' ' + unit;
+  const suffix = fresh ? 'Observed source record' : 'Retained source record';
+  const step = validCount(neural.completed_batches);
+  const identityMatches = neural.run_id===review.run && neural.schema==='jope.flywheel-neural-progress/v1' &&
+    neural.config_sha256===review.config && neural.execution_config_sha256===review.executionConfig;
+  const superseded = !identityMatches || (step !== null && step > review.historicalStep);
+  const stages = [
+    {id:'data', title:'Data & lineage', state:'recorded', metric:count(growth.published,'variants in S3'),
+      description:'Regression contexts carry their parent, exact split, transform, seed, target and input identity. Descendants keep their parent’s train or validation role.',
+      evidence:suffix + '. Raw publication is separate from encoding, scoring and optimizer exposure.',
+      next:'Join each new context to verified inputs, source metadata and its inherited role before downstream use.'},
+    {id:'encoding', title:'Kumo encoding', state:'recorded', metric:count(encoded,'reported vectors'),
+      description:'Licensed Kumo Small supplies the frozen 2,051-value input. A raw dataset is usable only after exact encoding and publication readback.',
+      evidence:suffix + '. Sum of the publication cohorts present in this snapshot; missing cohorts are unknown. This is partial reporting, not the complete original catalog or a full encoder census.',
+      next:'Qualify fresh inputs without replaying completed encodings or admitting other encoder blocks.'},
+    {id:'proposal', title:'Model → GP', state:'recorded', metric:count(neural.model_generated_programs,'model proposals'),
+      description:'The policy decodes a typed program structure. Valid emitted proposals enter a durable execution queue; generation itself provides no reward.',
+      evidence:suffix + '. Emitted proposals and measured results have different identities and counts.',
+      next:'Resolve the exact proposed program, context, evaluator and global attempt history before scoring.'},
+    {id:'execution', title:'Native & Rust', state:'recorded', metric:count(neural.published_results,'model results in S3'),
+      description:'Run a GP on its exact context, emit working Rust, and require native/Rust agreement at the fixed 1e-9 tolerance before accepting a numeric result.',
+      evidence:suffix + '. This is the neural campaign’s publication count, not a new evaluation or a proof of learning.',
+      next:'Keep program parity failures nonnumeric with no reward and no retry; keep infrastructure and unknown outcomes distinct.'},
+    {id:'evolution', title:'Typed GP evolution', state:'unqualified', metric:'Integration proof pending',
+      description:'Mutate and recombine valid model-produced structures under the same context and equal budgets. Keep parent custody and compare measured outcomes.',
+      evidence:'An integrated model → evolution → better measured target loop is not yet qualified by this dashboard.',
+      next:'Produce a same-context, equal-budget comparison with exact ancestry; do not mix evaluator or objective versions.'},
+    {id:'library', title:'Versioned game library', state:'recorded', metric:'Exact identities required',
+      description:'Keep costs and scores tied to program, data, split, evaluator, objective and normalizer. Improving a model does not automatically invalidate an old measured play.',
+      evidence:'Completed keys are cache-only. Missing artifacts and unknown attempts never authorize automatic reexecution.',
+      next:'Qualify consumed membership, archive-aware resolution and tombstones before any deletion. Retention prices are forecasts until billed.'},
+    {id:'targets', title:'Numerical targets', state:'build', metric:'Qualification pending',
+      description:'Convert measured train-role outcomes into feedback with one explicit objective and normalizer. Dense supervised targets, teacher promotion and actor learning are separate.',
+      evidence:review.build,
+      next:'Close references and numerical preparation; independently verify target values and full input lineage.'},
+    {id:'admission', title:'Closed-epoch admission', state:'build', metric:'Repeatable boundary pending',
+      description:'Admit an immutable target generation at a closed epoch boundary while retaining ordered references, roles, fingerprints, planner and outbox custody.',
+      evidence:'New source is build-only. Repeatable live adoption and actual new-target batch exposure remain unqualified.',
+      next:'Verify complete membership, durable ACK and cumulative joins, then prove first actual exposure in the next admitted batch.'},
+    {id:'learning', title:'Committed learning', state:'held', metric:count(step,identityMatches?'historical updates':'reported updates · identity unverified'),
+      description:'An optimizer update counts only when planner/control commits join a physically changed model and preserved AdamW, CPU/CUDA RNG and checkpoint ancestry.',
+      evidence:superseded ? 'Run/config identity is absent or differs, or a newer counter is present; refresh the dated build review. This is not live optimizer proof.' : 'The accepted v1 run is stopped. V2 is build-only; generated-result learning has not been proved.',
+      next:'Finish deadline and restart custody safeguards, qualify owned resources, and obtain the required live approval. The pre-R14 CUDA next-update receipt has been independently joined.'},
+    {id:'evaluation', title:'Same-context evaluation', state:'unqualified', metric:'Flywheel uplift unmeasured',
+      description:'Compare learned proposals and evolved programs against frozen alternatives with matched contexts and budgets. Fixed loss, expanded validation and real games answer different questions.',
+      evidence:'This view contains no qualified feedback-caused improvement, generalization, win-rate or Elo claim.',
+      next:'Measure an independently qualified evaluation after new-target learning. Return eligible train feedback to the next generation.'}
+  ];
+  return {stages, age, fresh, superseded, status: sourceUnavailable ? 'Connection unavailable · retained observations' : fresh ? 'Fresh source observations' : 'Retained observations · refresh paused',
+    reviewAt:review.at, learning:'Feedback → learning is not yet qualified', monitoring:review.monitoring};
+}
+
+function mountFlywheel(snapshot, sourceUnavailable=false) {
+  const view = flywheelView(snapshot,Date.now()/1000,sourceUnavailable);
+  const nodes = document.querySelector('#flywheelNodes');
+  if (!nodes) return;
+  const old = document.querySelector('.fly-step[aria-pressed="true"]')?.dataset.stage || 'targets';
+  const focused = document.activeElement?.classList.contains('fly-step') ? document.activeElement.dataset.stage : null;
+  nodes.replaceChildren();
+  const stateLabel = {recorded:'Recorded evidence', build:'Build in progress', held:'Live gate held', unqualified:'Proof pending'};
+  const detail = document.querySelector('#flywheelDetail');
+  const select = id => {
+    const stage = view.stages.find(value => value.id === id);
+    for (const button of nodes.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.stage === id));
+    detail.replaceChildren();
+    for (const [tag, cls, content] of [
+      ['div','eyebrow',stateLabel[stage.state]],['h3','',stage.title],['p','fly-metric',stage.metric],
+      ['p','',stage.description],['h4','','Evidence'],['p','',stage.evidence],['h4','','Next completion gate'],['p','',stage.next]
+    ]) { const item = document.createElement(tag); item.className=cls; item.textContent=content; detail.append(item); }
+  };
+  view.stages.forEach((stage, index) => {
+    const button = document.createElement('button');
+    button.type='button';button.className='fly-step '+stage.state;button.dataset.stage=stage.id;
+    button.setAttribute('aria-label', stage.title);button.setAttribute('aria-controls','flywheelDetail');
+    for (const [cls, content] of [['fly-number',String(index+1).padStart(2,'0')],['fly-title',stage.title],
+      ['fly-count',stage.metric],['fly-state',stateLabel[stage.state]]]) {
+      const item = document.createElement('span');item.className=cls;item.textContent=content;button.append(item);
+    }
+    button.onclick=()=>select(stage.id);nodes.append(button);
+  });
+  select(old);
+  if(focused)nodes.querySelector('[data-stage="'+focused+'"]')?.focus({preventScroll:true});
+  document.querySelector('#flywheelReadiness').textContent=view.learning;
+  document.querySelector('#flywheelFreshness').textContent=view.status;
+  document.querySelector('#flywheelAge').textContent=view.age === null ? 'Observation time unavailable' :
+    'Snapshot age '+Math.floor(view.age/60).toLocaleString()+' min · counts retain their original timestamp';
+  document.querySelector('#flywheelReviewAt').textContent='Build review '+new Date(view.reviewAt).toISOString().replace('T',' ').replace('.000Z',' UTC');
+}
+
+if (typeof module !== 'undefined') module.exports={flywheelView,validCount,observedSum,snapshotAge,review};
+
+
+const el=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString(),ns='http://www.w3.org/2000/svg';let current=null,axis='batch',connectionFailed=false;
 const scaleStorageKey='jopedime.paper.loss-y-scale.v1';
 function readLossScale(){try{return localStorage.getItem(scaleStorageKey)==='log'?'log':'linear'}catch{return 'linear'}}
 let lossScale=readLossScale();
@@ -121,8 +261,26 @@ function plot(id,rows,series,key,dual){
  }
  target.className='';target.replaceChildren(svg);
 }
+// Campaign configuration and retained progress do not establish a live optimizer.
+// This snapshot schema has no verified physical optimizer-change receipt.
+function optimizerDisplay(s,h,nowSeconds=Date.now()/1000){
+ const service=h.neural_service;
+ const fresh=t=>typeof t==='number'&&Number.isFinite(t)&&nowSeconds-t>=0&&nowSeconds-t<90;
+ const failedRead=(h.errors||[]).some(x=>typeof x==='string'&&x.startsWith('Neural training:'));
+ if(failedRead)return {state:'unknown',text:'Optimizer status unavailable: training source verification failed. Retained observations do not establish current progress.'};
+ if(!fresh(s.at)||!fresh(h.at))return {state:'unknown',text:'Optimizer status unknown: service observations are stale or unavailable. Recorded loss and batch history are retained.'};
+ if(!service||typeof service!=='object')return {state:'unknown',text:'Optimizer status unknown: no current trainer service observation.'};
+ const active=service.ActiveState,sub=service.SubState;
+ if(active==='failed')return {state:'stopped',text:'Optimizer is stopped: trainer service failed'+(service.Result?' ('+String(service.Result)+')':'')+(service.ExecMainStatus!=null?' · recorded exit status '+String(service.ExecMainStatus):'')+'.'};
+ if(active==='inactive')return {state:'stopped',text:'Optimizer is stopped: trainer service is inactive. Completed batches and losses are historical observations.'};
+ if(active==='deactivating')return {state:'stopping',text:'Trainer service is stopping; current optimizer execution is unverified.'};
+ if(active==='activating')return {state:'starting',text:'Trainer service is starting; no current committed optimizer progress has been verified.'};
+ if(active==='active'&&sub==='running')return {state:'running_unverified',text:'Trainer service reports active/running; current committed optimizer progress is unverified.'};
+ return {state:'unknown',text:'Optimizer status unknown: trainer service state '+String(active||'unobserved')+'/'+String(sub||'unobserved')+'.'};
+}
 function render(s){
  current=s;
+ mountFlywheel(s,connectionFailed);
  const hs=s.hosts||[],h=hs.find(x=>x.host==='xbabe2')||{},g=h.evergreen||{},
  c=h.gp_label_campaign||{},cc=c.counts||{},f=h.gp_fill_campaign||{},fc=f.counts||{},n=h.neural_training||null;
  const exposure=presentationHistory(n),presentationButton=el('axis').querySelector('[data-axis="total_presentations"]');presentationButton.disabled=!exposure.available;presentationButton.title=exposure.note;
@@ -137,35 +295,32 @@ function render(s){
  text('eligibleRuns',fmt(e.contexts));text('eligibleSupport',fmt(e.dataset_hashes)+' dataset versions · '+fmt(inventory.counts.excluded.contexts)+' excluded contexts');
  text('winnerLabels',fmt(e.published.selection_reached));text('labelSupport',fmt(e.published.g0_not_ready)+' terminal records without winner labels · '+fmt(e.published.none)+' unpublished finals');
 
- text('fullCorpusStatus','Inventory reconciled '+new Date(inventory.observed_at).toLocaleString()+'. Kumo Small coverage: '+fmt(inventory.kumo_s_availability.reported.verified_main_s3)+' contexts in the owner’s '+new Date(inventory.kumo_s_availability.as_of).toLocaleString()+' S3 completeness receipt. This refresh joined catalog metadata; it did not re-download every vector. The active original-data run loads 6,857 training and 263 validation contexts; 5,461 additional eligible contexts still need label/input joins. New augmented data and actual model exposure are below.');
+ text('fullCorpusStatus','Inventory reconciled '+new Date(inventory.observed_at).toLocaleString()+'. Kumo Small coverage: '+fmt(inventory.kumo_s_availability.reported.verified_main_s3)+' contexts in the owner’s '+new Date(inventory.kumo_s_availability.as_of).toLocaleString()+' S3 completeness receipt. This refresh joined catalog metadata; it did not re-download every vector. The recorded original-data run loaded 6,857 training and 263 validation contexts; 5,461 additional eligible contexts still need label/input joins. New augmented data and actual model exposure are below.');
  }
  const failedRead=(h.errors||[]).some(x=>x.startsWith('Neural training:'));
- const isFresh=Date.now()/1000-s.at<90,published=g.published;
+ const sourceAge=snapshotAge(s.at,Date.now()/1000),isFresh=sourceAge!==null&&sourceAge<90,published=g.published;
  const base=(h.gp_qualification?.qualified_program_count||0)+(h.gp_bridge?.actual_evaluations||0),
  fixed=(cc.completed_publications||0)+(fc.completed_publications||0)+extra('completed_publications'),
  previous=h.neural_previous_run||{},inferenceCount=h.inference_first?.status?.attempt_custody?.counts?.completed_publications||0,gp=base+fixed+inferenceCount+(n?.published_results||0)+(previous.published_results||0);
- text('connection',isFresh?'Live source observations':'Stale source observations');
+ text('connection',flywheelView(s,Date.now()/1000,connectionFailed).status);
  text('updated',new Date(s.at*1000).toLocaleString());
  text('pool',published===undefined?'—':fmt(published));
  text('poolSupport','New variants only · '+fmt(g.generated??0)+' generated · '+fmt(Math.max(0,(g.generated??0)-(g.published??0)))+' awaiting S3 publication');
  text('seen',failedRead?'Unavailable':fmt(n?.unique_train_data_runs_seen||0));
  const unique=n?.unique_train_data_runs_seen||0,presentations=n?.total_train_presentations||0;
  text('presentations',fmt(presentations));
- text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'Training continues at fixed coverage. This view keeps the first loss reading at each unique count; lines break across reuse and epoch changes.'+coverageContinuation(n?.loss_history||[],unique,n?.completed_batches):axis==='total_presentations'?exposure.note:'Unique coverage stays flat while already-seen data is reused.')+(!exposure.available?' '+exposure.note+' Batches and Epochs retain the recorded loss curves.':''));
+ text('coverageNote',fmt(unique)+' unique training data runs · '+fmt(presentations)+' total presentations, including reuse. '+(unique===13?'Current qualification is limited to 13 training and 3 validation data runs. ':'')+(axis==='unique_data_runs_seen'?'Unique coverage stays fixed when previously seen data is reused. This view keeps the first loss reading at each unique count; lines break across recorded reuse and epoch changes.'+coverageContinuation(n?.loss_history||[],unique,n?.completed_batches):axis==='total_presentations'?exposure.note:'Unique coverage stays flat while already-seen data is reused.')+(!exposure.available?' '+exposure.note+' Batches and Epochs retain the recorded loss curves.':''));
  text('axisDescription',(axis==='batch'?'Raw batches on the lower axis; unique data runs seen on the upper axis.':axis==='epoch'?'Epochs on the horizontal axis; latest recorded loss readout in each epoch.':axis==='total_presentations'?'Cumulative training presentations on the horizontal axis, including repeated data runs.':'Unique data runs on the horizontal axis; first loss reading at each count. Later repeated training is shown on the other axes.')+' Validation uses reserved parent lineages.');
  text('batches',failedRead?'Unavailable':fmt(n?.completed_batches||0));
  text('epoch','Completed epochs: '+(n?.completed_epochs??0)+' · presentations: '+fmt(n?.total_train_presentations||0));
  text('gpTotal',fmt(gp));
  text('gpSupport',fixed+' fixed-panel + '+(n?.published_results||0)+' new model-proposed + '+base+' qualified control results · '+inferenceCount+' inference-only model results · '+(previous.published_results||0)+' archived model results');
- let training=n?'Current model: '+stateName(n.state)+' · '+fmt(n.completed_batches||0)+' completed batches':
-   h.neural_service?'Trainer is checking the frozen data and source files. No optimizer update observed yet.':
-   'New continual training has not started. GP labels are being prepared; the Kumo Small-only trainer is being connected.';
- if(h.neural_transition)training='Resuming the same model after '+h.neural_transition.from_completed_batches+' batches; verifying checkpoint and data. Previous measured curves retained.';
- if(h.neural_terminal)training+=' · final evidence: '+stateName(h.neural_terminal.state)+(h.neural_terminal.error?' · '+h.neural_terminal.error:'');
- if(!h.neural_continuous && h.neural_service?.ActiveState==='inactive' && n?.completed_epochs>=1)training+=' · optimizer is stopped; this snapshot completed its configured pass';
- if(h.neural_continuous)training+=' · continuously reshuffled epochs · new scored data admitted between epochs';
- if(h.neural_unfinished_stop)training+=' · service stopped without a final receipt';
- if(failedRead)training='Training telemetry unavailable: source verification failed. No zero-progress inference is made.';
+ const optimizer=optimizerDisplay(s,h);
+ let training=optimizer.text+(n?' Retained model history: '+fmt(n.completed_batches||0)+' completed batches · last recorded state: '+stateName(n.state)+'.':'');
+ if(h.neural_transition)training+=' Recorded transfer: resume after '+h.neural_transition.from_completed_batches+' batches; this record does not establish current execution.';
+ if(h.neural_terminal)training+=' Recorded terminal evidence: '+stateName(h.neural_terminal.state)+(h.neural_terminal.error?' · '+h.neural_terminal.error:'')+'.';
+ if(h.neural_continuous)training+=' Campaign policy: reshuffle epochs and admit scored data at closed epoch boundaries.';
+ if(h.neural_unfinished_stop)training+=' The latest recorded stop has no final receipt.';
  text('trainingStatus',training);
  text('executions',fmt((cc.completed_actual_executions||0)+(fc.completed_actual_executions||0)+(n?.novel_programs_executed||0)+(previous.novel_programs_executed||0)+extra('completed_actual_executions')));
  text('cacheHits',fmt((cc.initial_cache_hits||0)+(fc.initial_cache_hits||0)+(n?.cache_hits||0)+(previous.cache_hits||0)+extra('initial_cache_hits')));
@@ -177,13 +332,13 @@ function render(s){
  for(const line of [
    'GP scoring: '+(expansion.length?expansion.map(x=>(x.label||'xbabe3 / worker '+(Number(x.shard)+1))+' '+stateName(x.state)+' ('+(x.counts?.finished_slots||0)+'/'+(x.expected_slots||448)+')').join('; '):(f.state?'fill '+f.state:(c.state||'unobserved'))),
    'Required encoder: Kumo Small only · 2,051 values',
-   n?'DL optimizer: '+stateName(n.state):'DL optimizer: '+(h.neural_service?'preflight':'not connected'),
+   'DL optimizer: '+optimizer.text,
    g.state==='downstream_backpressure_or_target'?'Data generation: waiting for downstream capacity':'Data generation: '+(g.state||'unobserved')
  ]){const p=document.createElement('p');p.textContent=line;el('workState').append(p)}
  text('made',fmt(g.published||0));
  text('generationState',(g.generated||0)+' generated and '+(g.published||0)+' S3-published. Original + transforms recorded.');
  const enc=(h.rolling_kumo?.verified_new_vectors||0)+hs.reduce((t,x)=>t+(x.evergreen_encoding_publication?.completed_variants||0)+(x.kumos_publication?.completed_variants||0)+(x.growth10_kumos_publication?.completed_variants||0),0);
- text('encoded',fmt(enc)+' in S3');
+ text('encoded',fmt(enc)+' reported vectors');
  const kr=hs.filter(x=>x.kumos_encoding).map(x=>({host:x.host,...x.kumos_encoding}));
  text('encodingState','Kumo Small only. '+(h.rolling_kumo?fmt(h.rolling_kumo.verified_new_vectors)+' new rolling vectors verified; ':'')+(kr.length?kr.map(x=>x.host+': '+x.state+' '+(x.observed_completed_components??x.completed_variant_components??0)+'/56 local vectors').join('; '):'Waiting for worker observations.')+' S3 count requires publication readback.');
  const scoredIds=new Set([c,f,...expansion].flatMap(x=>x.scored_context_ids||(x.outcomes||[]).filter(r=>r.state==='ready').map(r=>r.variant_identity)));
@@ -196,7 +351,7 @@ function render(s){
  const prior=hs.find(x=>x.gp_expansion_previous_attempt)?.gp_expansion_previous_attempt;
  text('priorAttempt',prior?'Previous GP expansion attempt closed before execution: '+prior.worker_guard_refusals+' worker-limit refusals, zero native GP executions and zero GP result writes. Evidence preserved; the corrected workers use new queues.':'Prior attempt evidence remains available in the source log.');
  const td=n?.training_data;
- text('corpusDetails','Current growing corpus: '+(g.published||0)+' data runs. Qualified parent pool: '+(h.parents?.parents??'—')+' lineages. '+(td?'Current frozen run: '+td.eligible_train_contexts+' eligible train contexts and '+td.dev_contexts+' validation contexts. ':'')+(h.neural_native_corpus?'Original base: 6,857 training contexts and 263 reserved validation contexts. The continuation retains the same model and comparable fixed panels. ':'')+'Inner CV scoring passes do not create new input identities. New augmented contexts enter at epoch boundaries after measured GP admission; raw or unscored variants are not counted as trained.');
+ text('corpusDetails','Recorded growing corpus: '+(g.published||0)+' data runs. Qualified parent pool: '+(h.parents?.parents??'—')+' lineages. '+(td?'Last recorded frozen run: '+td.eligible_train_contexts+' eligible train contexts and '+td.dev_contexts+' validation contexts. ':'')+(h.neural_native_corpus?'Original base: 6,857 training contexts and 263 reserved validation contexts. The continuation retains the same model and comparable fixed panels. ':'')+'Inner CV scoring passes do not create new input identities. The admission protocol requires closed epoch boundaries after measured GP qualification; raw or unscored variants are not counted as trained.');
  plot('lossPlot',exposure.available?exposure.rows:(axis==='total_presentations'?[]:n?.loss_history||[]),[{key:'train_loss',color:'#70e2b2'},{key:'validation_loss',color:'#80baff'}],axis,axis==='batch');
  const lh=n?.loss_history||[];
  if(lh.length){const a=lh[0],b=lh[lh.length-1],change=k=>a[k]===0?'':(' ('+((b[k]/a[k]-1)*100).toFixed(1)+'%)');
@@ -218,7 +373,7 @@ function render(s){
    (r.variant_identity||'').slice(0,10),r.program_name||(r.program_sha256||'').slice(0,12),
    r.origin,r.partition||r.phase,r.state,r.measurement?.inner_fold_rmse?.map(x=>x.toPrecision(5)).join(' / ')||'Not measured'
  ]){const td=document.createElement('td');td.textContent=value;tr.append(td)}el('programRows').append(tr)}
- text('origin','Latest observed work. Model proposals come from the current policy; expansion-panel programs build measured labels for new data runs. Every emitted model proposal is durably queued for native execution and S3 publication. Pending proposals are shown separately and never count as measured rewards or wins. The optimizer currently learns from previously measured targets.');
+ text('origin','Latest observed work. Model proposals come from the current policy; expansion-panel programs build measured labels for new data runs. Proposal records distinguish emission, queued work, execution and verified publication. Pending proposals are shown separately and never count as measured rewards or wins. The recorded v1 optimizer used previously measured supervised targets; new-result learning remains unqualified.');
 
  el('hpcRows').replaceChildren();
  const hp=h.hpc_profile, inf=h.inference_first, stages=[];
@@ -232,10 +387,11 @@ function render(s){
  const errors=(s.errors||[]).length+hs.reduce((t,h)=>t+(h.errors||[]).length,0);
  text('foot','Observed '+new Date(s.at*1000).toLocaleString()+' · '+errors+' collector errors. Source stages retain their own timestamps and receipts.');
 }
-async function refresh(){try{const r=await fetch('/api/paper-evidence',{cache:'no-store'});if(!r.ok)throw Error(r.status);render(await r.json())}catch(e){text('connection','Connection unavailable; retained observations')}}
+async function refresh(){try{const r=await fetch('/api/paper-evidence',{cache:'no-store'});if(!r.ok)throw Error(r.status);const next=await r.json();connectionFailed=false;render(next)}catch(e){connectionFailed=true;text('connection','Connection unavailable; retained observations');mountFlywheel(current||{},true)}}
+function ageEvidence(){if(!current)return;const view=flywheelView(current,Date.now()/1000,connectionFailed);mountFlywheel(current,connectionFailed);text('connection',view.status)}
 function syncControls(){for(const [id,field,value]of [['axis','axis',axis],['lossXScale','scale',lossXScale],['lossScale','scale',lossScale]])for(const b of el(id).querySelectorAll('button')){const selected=b.dataset[field]===value;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected))}}
 for(const b of el('axis').querySelectorAll('button'))b.onclick=()=>{axis=b.dataset.axis;syncControls();if(current)render(current)};
 for(const b of el('lossXScale').querySelectorAll('button'))b.onclick=()=>{lossXScale=b.dataset.scale;try{localStorage.setItem(xScaleStorageKey,lossXScale)}catch{}syncControls();if(current)render(current)};
 for(const b of el('lossScale').querySelectorAll('button'))b.onclick=()=>{lossScale=b.dataset.scale;try{localStorage.setItem(scaleStorageKey,lossScale)}catch{}syncControls();if(current)render(current)};
-syncControls();refresh();setInterval(refresh,10000);
+syncControls();refresh();setInterval(refresh,10000);setInterval(ageEvidence,10000);
 </script></html>

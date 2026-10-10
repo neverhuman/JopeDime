@@ -1,0 +1,15 @@
+{
+  "file_roster": "original53 payloads plus exact prior SOURCE_PACKET and this one additive accounting receipt",
+  "frozen_source_packet": {
+    "bytes": 8543,
+    "sha256": "c192c2fab5a72bb5d2ef284004fa3c22cbeb1b3f682019a8e33dd57228491cc5"
+  },
+  "qualification_lineage_addendum": {
+    "bytes": 1465,
+    "sha256": "1c30c1ab700b250de722c936f3c8cdb4c873535040795f393e1b88938f216b26"
+  },
+  "schema": "codex.capture-reuse-final-source-addendum/v1",
+  "source_or_fixture_changes": false,
+  "state": "SOURCE_ONLY_REVIEW_PENDING_LIVE_HOLD",
+  "test_or_runtime_reexecution": false
+}
