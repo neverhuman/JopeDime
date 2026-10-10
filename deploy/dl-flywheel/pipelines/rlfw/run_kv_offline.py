@@ -25,6 +25,8 @@ def main():
     if loader.errors or not identities:
         raise RuntimeError("KV test collection failed")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
+    from rlfw.tests.test_kv_neural import OBSERVATIONS
+
     source, checkout = source_identity()
     receipt = {
         "schema": "jope.kv-trie-fixtures/v1",
@@ -34,6 +36,7 @@ def main():
         "finished_unix": time.time(),
         "command": sys.argv,
         "collected": identities,
+        "observations": OBSERVATIONS,
         "executed": result.testsRun,
         "failed": [t.id() for t, _ in result.failures],
         "errors": [t.id() for t, _ in result.errors],

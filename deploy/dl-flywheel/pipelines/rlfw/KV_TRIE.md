@@ -19,7 +19,9 @@ Its numerical tolerance must be declared before a run and checked afterward.
 float64 softmax. Its LRU caches whole forward geometries for one call, including
 contexts, active rows, lengths and padding. It uses full forwards: **bitwise
 incremental KV acceleration remains unqualified**. The small real transformer
-fixture retains a nonzero reduction-shape drift counterexample. This separation
+fixture measures backend-dependent drift and requires 1e-6 closeness; zero drift
+is valid on some backends. Existing-checkpoint GPU receipts retain measured
+nonzero drift. This separation
 lets the exact protocol be used without silently changing deployed probability.
 `kv_sample` is explicitly `jope.kv-trie-analysis/v1`, with bounded memory,
 independent row seeds, complete-leaf checks and a deadline.

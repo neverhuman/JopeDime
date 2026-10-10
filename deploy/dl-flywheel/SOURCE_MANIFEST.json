@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "813d08f739dcfe8bf00bb3caf1e34812f4dae788c81ed6b254f194d37ad3c114"
+      "sha256": "0a0e8dd3f41c68c2ba64ed26f737b8b830a6c2bbd9e2c3f6c6201f8d6ecfb72a"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4716,10 +4716,11 @@
       "sha256": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92"
     },
     {
+      "normalization": "CX-KV backend-portable drift observation correction; exact trace/logit and numerical tolerance checks retained.",
       "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
       "origin_sha256": "6efca6223c7c05b4d522c1ca3750b47fc5b6921a0f1c5da4402120493857f275",
       "path": "deploy/dl-flywheel/pipelines/rlfw/KV_TRIE.md",
-      "sha256": "6efca6223c7c05b4d522c1ca3750b47fc5b6921a0f1c5da4402120493857f275"
+      "sha256": "6f5aa26afb0424421f675dc19206a219ace523c2ceb7ae1be55b01cfefd0db92"
     },
     {
       "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
@@ -4812,16 +4813,18 @@
       "sha256": "3919bd1381c97cd6dcf489fcd7bb4b01dff0e0095a055c1997a428735afcf55c"
     },
     {
+      "normalization": "CX-KV backend-portable drift observation correction; exact trace/logit and numerical tolerance checks retained.",
       "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
       "origin_sha256": "ce7476eaaf05efbf61e73d508e7eb90e239658db411b3a6e99b79ad36169fa82",
       "path": "deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py",
-      "sha256": "ce7476eaaf05efbf61e73d508e7eb90e239658db411b3a6e99b79ad36169fa82"
+      "sha256": "5828424682c0cddb4db45bec6b76b0e4178213f72ba6a132ad6165a121f6f6d8"
     },
     {
+      "normalization": "CX-KV backend-portable drift observation correction; exact trace/logit and numerical tolerance checks retained.",
       "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
       "origin_sha256": "80eb1dc3d735cd59d1465edb488709f6456b7707238f20d43bd82eb29713c9ba",
       "path": "deploy/dl-flywheel/pipelines/rlfw/tests/test_kv_neural.py",
-      "sha256": "80eb1dc3d735cd59d1465edb488709f6456b7707238f20d43bd82eb29713c9ba"
+      "sha256": "584ecb36f6d14cda974f32d5b751aed8144156d7dc9b2ea74a3d23cf2cebde21"
     },
     {
       "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
