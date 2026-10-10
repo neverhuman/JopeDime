@@ -1,0 +1,80 @@
+{
+ "fixture_ids": [
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a1_duplicate_orphan_and_mismatched_rows_refused",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a1_extra_appended_reference_without_row_refused_before_root",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a2_contract_tamper_refused_before_root",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a2_seven_field_predecessor_refs_accepted_with_unchanged_bytes",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3_deadline_expiry_after_compose_or_between_rows_leaves_no_status",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3_network_attempting_or_unaudited_store_cannot_claim_zero_network",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r3_combined_budget_refuses_before_any_overshoot",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r3_monotonic_or_boot_change_expires_the_paired_clock",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r5_clock_anchors_boot_and_monotonic_before_wall",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r5_expiry_after_durable_status_leaves_root_unqualified",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r5_terminal_outside_its_bound_is_refused",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a_to_b_root_is_consumed_by_frozen_candidate",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_b_to_c_second_append_keeps_ordered_prefix",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_composed_labels_equal_direct_recomputation",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_exact_fit_reaches_floor_cap_and_grid_uses_raw_q",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_manifest_tamper_refusals",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_new_record_reaches_shared_trunk_with_zero_ce_support",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_reordered_or_removed_old_refs_refused",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_root_is_new_exclusive_and_read_only",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_same_inputs_same_prepared_bytes",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_stale_role_proof_refused_before_any_root",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_token_refusal_is_reconciled_not_dropped",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2_bad_remote_readback_or_expired_clock_leaves_no_cache",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2_chained_cache_fetches_only_new_objects",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2_closed_cache_refuses_undeclared_and_corrupted_objects",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2_namespace_allow_list_refuses_foreign_objects",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2_prefetch_then_closed_prepare_equals_in_memory_root",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2r4_cache_cap_refuses_before_overshoot_and_leaves_no_complete_cache",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2r4_recorder_streams_bodies_and_keeps_only_refs_in_memory",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2r5_expiry_after_durable_completion_leaves_cache_unqualified",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r7_expiry_during_final_terminal_publication_is_refused",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r7_qualify_rechecks_monotonic_and_boot_after_wall",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r7_replaced_marker_bound_and_sample_refused",
+  "pipelines.generated_target_preparation_v2.tests.test_preparation.PreparationTests.test_a3r7_systemd_unit_in_time_success_is_accepted",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2r7_expiry_during_final_qualified_publication_is_refused",
+  "pipelines.generated_target_preparation_v2.tests.test_worker.WorkerTests.test_w2r7_replaced_qualified_bound_refused_and_acceptance_required"
+ ],
+ "package": "generated_target_preparation_v2",
+ "schema": "jope.c10-offline-source-pins/v2",
+ "source_pins": {
+  "__init__.py": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "offline.py": {
+   "bytes": 7167,
+   "sha256": "cfb5d7c4188e60611db79d0924e845f002c87af71e929e7cd18ff95f6d84dc30"
+  },
+  "preparation.py": {
+   "bytes": 41143,
+   "sha256": "7d6e438c358e59d09ffcb3505309e8f12f7ab01ce9eac145b2386384a95669dd"
+  },
+  "run_offline.py": {
+   "bytes": 5509,
+   "sha256": "bb4fac1d7f5db06b45909c7f225d08577997d40503cddddd68c467c25665eb17"
+  },
+  "tests/__init__.py": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "tests/test_preparation.py": {
+   "bytes": 41029,
+   "sha256": "2adff52a9579bfe6e67019c57ab6accac6c3b221e7765995ecce6bca71edd9dc"
+  },
+  "tests/test_worker.py": {
+   "bytes": 17282,
+   "sha256": "53e7931d24746b237ae8c68739e0c6286a57dffb2cb02345bd572a3bef3699d3"
+  },
+  "tests/world.py": {
+   "bytes": 9318,
+   "sha256": "8a017e11e85d91d47443582b62d025b0de33709fd1ee482ba726f8de0f6285d9"
+  },
+  "worker.py": {
+   "bytes": 14904,
+   "sha256": "64aa6e94671cee39fc1c148cb8d1c99146b87c957d3aec5027a92571aa6af515"
+  }
+ }
+}

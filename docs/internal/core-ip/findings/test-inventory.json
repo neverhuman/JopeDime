@@ -490,12 +490,36 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py": {
+      "reason": "Research closed-epoch boundary adoption (C10b revision 7): 23 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py": {
+      "reason": "Research closed-epoch boundary adoption (C10b revision 7): 23 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py": {
+      "reason": "Research v2.0.0 continual-learner fixtures, build r2.3: 37 isolated CPU cases (9 runner, 28 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py": {
+      "reason": "Research v2.0.0 continual-learner fixtures, build r2.3: 37 isolated CPU cases (9 runner, 28 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py": {
       "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_final_capture.py": {
+      "reason": "Research read-only final capture (W10 revision 2): 32 isolated CPU cases through the package's own pinned runner, wired by run_v2_offline.py, additive to prior812. Private-copy fixtures only; a live capture is a separate receipt.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_runtime_limit.py": {
+      "reason": "Research read-only final capture (W10 revision 2): 32 isolated CPU cases through the package's own pinned runner, wired by run_v2_offline.py, additive to prior812. Private-copy fixtures only; a live capture is a separate receipt.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/test_operational.py": {
@@ -520,6 +544,14 @@
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/tests/test_runner.py": {
       "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_preparation.py": {
+      "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7): 36 isolated CPU cases through run_v2_offline.py, additive to prior812. Counting fake store only; live prefetch and preparation remain separate receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_worker.py": {
+      "reason": "Research prepared-candidate preparation and closed-cache worker (C10a revision 7): 36 isolated CPU cases through run_v2_offline.py, additive to prior812. Counting fake store only; live prefetch and preparation remain separate receipts.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py": {
@@ -552,6 +584,10 @@
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": {
       "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py": {
+      "reason": "Research train-only native-result overlay packets (W3 revision 2): 30 isolated CPU cases through run_v2_offline.py, additive to prior812, with the vendored R6 preregistration as a pinned fixture input. No live native result admission.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {

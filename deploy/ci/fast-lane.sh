@@ -191,6 +191,7 @@ cd python
 unset DL_OFFLINE_RUNNER
 bash ../deploy/ci/dl-offline-group.sh 900 "$EVIDENCE/dl-lane-offline"
 timeout 300s uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output "$EVIDENCE/flywheel-offline"
+timeout 600s uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output "$EVIDENCE/flywheel-v2-offline"
 )
     # Additive research fixtures use stdlib fake policies; no deployed imports or checkpoint inputs.
 python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json"
