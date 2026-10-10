@@ -252,6 +252,7 @@ class SealSpendTest(unittest.TestCase):
                     program_sha256=digest("not-the-pick"),
                 )
             self.assertEqual(store.load()["scored"], [])
+            self.assertEqual(store.load()["dispatches"], [])
 
     def test_tamper_and_early_release_are_refused(self):
         import json
@@ -334,8 +335,10 @@ class EvaluatorAttestationTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as root:
             store, program = self._spent(root)
+            calls = {"n": 0}
 
             def pinned(request):
+                calls["n"] += 1
                 return self._result(request, rust_attested=False)
 
             evaluator = JudgeEvaluator(
@@ -346,6 +349,14 @@ class EvaluatorAttestationTest(unittest.TestCase):
             )
             with self.assertRaises(ValueError):
                 evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
+            self.assertEqual(store.load()["scored"], [])
+            self.assertEqual(store.load()["dispatches"][0]["state"], "unknown")
+            with self.assertRaises(SealSpent):
+                evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
+            self.assertEqual(calls["n"], 1)
+
+        with tempfile.TemporaryDirectory() as root:
+            store, program = self._spent(root)
 
             def failed(request):
                 return self._result(
@@ -357,17 +368,27 @@ class EvaluatorAttestationTest(unittest.TestCase):
                     closure_verified=False,
                 )
 
-            evaluator.pinned_evaluate = failed
+            evaluator = JudgeEvaluator(
+                failed,
+                evaluator_sha256=EVALUATOR,
+                canonicalizer_sha256=CANONICALIZER,
+                protocol=PROTOCOL,
+            )
             attested = evaluator.score(
                 store, family_id="fam", context_id="judge-fam", program_sha256=program
             )
             self.assertIsNone(attested.get("q_grid"))
             self.assertIsNone(attested.get("q"))
+            self.assertEqual(store.load()["dispatches"][0]["state"], "scored")
+            with self.assertRaises(SealSpent):
+                evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
 
         with tempfile.TemporaryDirectory() as root:
             store, program = self._spent(root)
+            calls = {"n": 0}
 
             def leaked(request):
+                calls["n"] += 1
                 return self._result(request, outcome_class="timeout", q_grid=1, q=1e-6)
 
             evaluator = JudgeEvaluator(
@@ -379,6 +400,79 @@ class EvaluatorAttestationTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
             self.assertEqual(store.load()["scored"], [])
+            self.assertEqual(store.load()["dispatches"][0]["state"], "unknown")
+            with self.assertRaises(SealSpent):
+                evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
+            self.assertEqual(calls["n"], 1)
+
+    def test_concurrent_scores_execute_one_callback(self):
+        import concurrent.futures
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as root:
+            store, program = self._spent(root)
+            count = {"n": 0}
+            lock = threading.Lock()
+            barrier = threading.Barrier(2)
+
+            def callback(request):
+                with lock:
+                    count["n"] += 1
+                try:
+                    barrier.wait(timeout=1.0)
+                except threading.BrokenBarrierError:
+                    pass
+                return self._result(request)
+
+            evaluator = JudgeEvaluator(
+                callback,
+                evaluator_sha256=EVALUATOR,
+                canonicalizer_sha256=CANONICALIZER,
+                protocol=PROTOCOL,
+            )
+
+            def attempt():
+                try:
+                    evaluator.score(
+                        store, family_id="fam", context_id="judge-fam", program_sha256=program
+                    )
+                    return "complete"
+                except SealSpent:
+                    return "spent"
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                outcomes = sorted(pool.map(lambda _: attempt(), range(2)))
+            self.assertEqual(outcomes, ["complete", "spent"])
+            self.assertEqual(count["n"], 1)
+            self.assertEqual(store.load()["dispatches"][0]["state"], "scored")
+            self.assertEqual(len(store.load()["scored"]), 1)
+
+    def test_callback_exception_consumes_pick_without_unknown_retry(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as root:
+            store, program = self._spent(root)
+            count = {"n": 0}
+
+            def callback(request):
+                count["n"] += 1
+                if count["n"] == 1:
+                    raise RuntimeError("fixture simulates post-dispatch infrastructure uncertainty")
+                return self._result(request)
+
+            evaluator = JudgeEvaluator(
+                callback,
+                evaluator_sha256=EVALUATOR,
+                canonicalizer_sha256=CANONICALIZER,
+                protocol=PROTOCOL,
+            )
+            with self.assertRaises(RuntimeError):
+                evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
+            with self.assertRaises(SealSpent):
+                evaluator.score(store, family_id="fam", context_id="judge-fam", program_sha256=program)
+            self.assertEqual(count["n"], 1)
+            self.assertEqual(store.load()["scored"], [])
+            self.assertEqual(store.load()["dispatches"][0]["state"], "unknown")
 
     def test_t15_overlap_is_not_scored_and_is_not_called_unseen(self):
         import tempfile

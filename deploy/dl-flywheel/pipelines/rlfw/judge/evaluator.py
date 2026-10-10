@@ -8,7 +8,7 @@ import math
 
 from rlfw.arena.game_spec import require_sha
 
-from .seal import QuarantineError, SealSpent, mark_scored
+from .seal import QuarantineError, mark_scored, quarantine_dispatch, reserve_dispatch
 
 OUTCOMES = (
     "qualified_complete",
@@ -43,8 +43,13 @@ class JudgeEvaluator:
             raise QuarantineError(family["overlap_status"])
         if document["picks"].get(family_id) != program_sha256:
             raise ValueError("only the precommitted pick can be scored")
-        if any(row["context_id"] == context_id and row["program_sha256"] == program_sha256 for row in document["scored"]):
-            raise SealSpent("this judge context was already scored")
+        reserve_dispatch(
+            store.path,
+            arm=document["arm"],
+            context_id=context_id,
+            fixture_root=store.fixture_root,
+            program_sha256=program_sha256,
+        )
         request = {
             "canonicalizer_sha256": self.canonicalizer_sha256,
             "context_id": context_id,
@@ -54,15 +59,36 @@ class JudgeEvaluator:
             "program_sha256": program_sha256,
             "protocol": self.protocol,
         }
-        attested = attest(self.pinned_evaluate(request), request)
-        mark_scored(
+        try:
+            attested = attest(self.pinned_evaluate(request), request)
+        except BaseException:
+            _leave_unknown(store, context_id=context_id, arm=document["arm"], program_sha256=program_sha256)
+            raise
+        try:
+            mark_scored(
+                store.path,
+                arm=document["arm"],
+                context_id=context_id,
+                fixture_root=store.fixture_root,
+                program_sha256=program_sha256,
+            )
+        except BaseException:
+            _leave_unknown(store, context_id=context_id, arm=document["arm"], program_sha256=program_sha256)
+            raise
+        return attested
+
+
+def _leave_unknown(store, *, context_id, arm, program_sha256):
+    try:
+        quarantine_dispatch(
             store.path,
-            arm=document["arm"],
+            arm=arm,
             context_id=context_id,
             fixture_root=store.fixture_root,
             program_sha256=program_sha256,
         )
-        return attested
+    except Exception:
+        return
 
 
 def attest(result, request):

@@ -153,6 +153,7 @@ def build_document(raw_families, disclosures, *, arm, seed, kind):
         "overlap_status": roster_status([family["overlap_status"] for family in families]),
         "picks": None,
         "plan_sha256": None,
+        "dispatches": [],
         "release": None,
         "schema": SCHEMA,
         "scored": [],
@@ -197,7 +198,13 @@ def save_new(path, document):
     path = Path(path)
     if path.exists():
         raise FileExistsError(path)
-    if document.get("state") != "sealed" or document.get("release") or document.get("picks") or document.get("scored"):
+    if (
+        document.get("state") != "sealed"
+        or document.get("release")
+        or document.get("picks")
+        or document.get("scored")
+        or document.get("dispatches")
+    ):
         raise ValueError("a new seal is sealed, unreleased, and unpicked")
     if document.get("seal_id") != seal_id_of(document):
         raise ValueError("seal id mismatch")
@@ -265,30 +272,88 @@ def release(path, *, fixture_root, owner_fixture_release=False):
     return _mutate(path, update)
 
 
+def _score_record(arm, context_id, program_sha256):
+    return {"arm": arm, "context_id": context_id, "program_sha256": program_sha256}
+
+
+def _same_pick(item, record):
+    return (
+        item.get("arm") == record["arm"]
+        and item.get("context_id") == record["context_id"]
+        and item.get("program_sha256") == record["program_sha256"]
+    )
+
+
+def _require_released_pick(document, *, context_id, arm, program_sha256):
+    released = document.get("kind") == "fixture" and document.get("state") == "spent"
+    if not released or not (document.get("release") or {}).get("spent"):
+        raise RealSealRefusal("scoring requires a spent fixture seal")
+    if arm != document["arm"]:
+        raise ValueError("arm does not match the frozen seal")
+    family = next(
+        (item for item in document["families"] if item["judge_context_id"] == context_id),
+        None,
+    )
+    if family is None:
+        raise ValueError("context is not a judge context on this seal")
+    if family["overlap_status"] != "no_overlap":
+        raise QuarantineError(family["overlap_status"])
+    if document["picks"][family["family_id"]] != program_sha256:
+        raise ValueError("only the precommitted pick can be scored")
+
+
+def reserve_dispatch(path, *, context_id, arm, program_sha256, fixture_root):
+    """Consume the pick under the seal lock before the evaluator is called."""
+    _inside(path, fixture_root)
+    require_sha(program_sha256, "program")
+
+    def update(document):
+        _require_released_pick(
+            document, context_id=context_id, arm=arm, program_sha256=program_sha256
+        )
+        record = _score_record(arm, context_id, program_sha256)
+        dispatches = document.setdefault("dispatches", [])
+        if any(_same_pick(item, record) for item in dispatches) or record in document["scored"]:
+            raise SealSpent("this judge context was already dispatched")
+        dispatches.append({**record, "state": "reserved"})
+
+    return _mutate(path, update)
+
+
+def quarantine_dispatch(path, *, context_id, arm, program_sha256, fixture_root):
+    """Keep a reserved dispatch consumed when the attempt outcome is unknown."""
+    _inside(path, fixture_root)
+    require_sha(program_sha256, "program")
+
+    def update(document):
+        record = _score_record(arm, context_id, program_sha256)
+        for item in document.get("dispatches", []):
+            if _same_pick(item, record) and item.get("state") == "reserved":
+                item["state"] = "unknown"
+                return
+
+    return _mutate(path, update)
+
+
 def mark_scored(path, *, context_id, arm, program_sha256, fixture_root):
     _inside(path, fixture_root)
     require_sha(program_sha256, "program")
 
     def update(document):
-        released = document.get("kind") == "fixture" and document.get("state") == "spent"
-        if not released or not (document.get("release") or {}).get("spent"):
-            raise RealSealRefusal("scoring requires a spent fixture seal")
-        if arm != document["arm"]:
-            raise ValueError("arm does not match the frozen seal")
-        family = next(
-            (item for item in document["families"] if item["judge_context_id"] == context_id),
-            None,
+        _require_released_pick(
+            document, context_id=context_id, arm=arm, program_sha256=program_sha256
         )
-        if family is None:
-            raise ValueError("context is not a judge context on this seal")
-        if family["overlap_status"] != "no_overlap":
-            raise QuarantineError(family["overlap_status"])
-        if document["picks"][family["family_id"]] != program_sha256:
-            raise ValueError("only the precommitted pick can be scored")
-        record = {"arm": arm, "context_id": context_id, "program_sha256": program_sha256}
+        record = _score_record(arm, context_id, program_sha256)
         if record in document["scored"]:
             raise SealSpent("this judge context was already scored")
+        dispatch = next(
+            (item for item in document.get("dispatches", []) if _same_pick(item, record)),
+            None,
+        )
+        if dispatch is None or dispatch.get("state") != "reserved":
+            raise SealSpent("this judge context was already dispatched")
         document["scored"] = [*document["scored"], record]
+        dispatch["state"] = "scored"
 
     return _mutate(path, update)
 
