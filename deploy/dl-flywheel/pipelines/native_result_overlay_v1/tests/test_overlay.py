@@ -797,5 +797,195 @@ class OverlayTests(unittest.TestCase):
             V.r6_roster(raw + b' ', C.R6_PREREGISTRATION_SHA256)
 
 
+    # ------------------------------------------------------------------ terminal publication (CX-REV PR292 P2)
+    def publication_boundary(self, mode):
+        """CX-REV's publication-boundary reproducer (review of 4293d771), ported: the REAL ``create_only`` /
+        ``fsync_dir`` run, then only the fixture clock moves -- the wall clock to the ORIGINAL deadline, or (``monotonic-``
+        modes) the monotonic clock past its paired bound -- before the selected final publication operation returns.
+        One synthetic verified B row; every consumer verdict is collected before anything is asserted."""
+        wall, mono_shift, real_mono = [time.time()], [0.0], time.monotonic
+        deadline = wall[0] + 600
+        real_create, real_fsync = B.create_only, B.fsync_dir
+        events = []
+
+        def cross():
+            if mode.startswith('monotonic-'):
+                mono_shift[0] = 2.0 * C.MAX_SECONDS
+            else:
+                wall[0] = deadline
+
+        def create(path, body):
+            ref = real_create(path, body)
+            events.append(('create', Path(path).name, wall[0]))
+            if (mode, Path(path).name) in (('marker-write', 'overlay-complete.json'),
+                                           ('acceptance-write', 'overlay-accepted.json')):
+                cross()
+            return ref
+
+        def fsync(path):
+            real_fsync(path)
+            events.append(('directory-fsync', Path(path).name, wall[0]))
+            if mode in ('directory-fsync', 'monotonic-directory-fsync'):
+                cross()
+        name = 'publication-' + mode
+        row = self.w.row('B', self.w.result('B', '(pipe X (ridge alpha=261.0))'))
+        out = {'build': 'accepted', 'error': None}
+        with mock.patch.object(B.time, 'time', side_effect=lambda: wall[0]), \
+                mock.patch.object(B.time, 'monotonic', side_effect=lambda: real_mono() + mono_shift[0]), \
+                mock.patch.object(B, 'create_only', side_effect=create), \
+                mock.patch.object(B, 'fsync_dir', side_effect=fsync):
+            try:
+                self.w.build([row], name, deadline=deadline)
+            except ValueError as error:
+                out['build'], out['error'] = 'refused', str(error)
+        out.update(returned_wall=wall[0], deadline=deadline, events=events, root=self.root / name)
+        marker = json.loads((self.root / name / 'overlay-complete.json').read_bytes())
+        out['marker'] = marker
+        for consumer, call in (
+                ('completed_packet', lambda: completed_packet(self.root / name, predecessor_head=None)),
+                ('validate_chain', lambda: len(validate_chain([marker['packet']],
+                                                              expected_head=marker['head_sha256']).rows))):
+            try:
+                out[consumer + '_result'] = call()
+                out[consumer] = 'accepted'
+            except ValueError as error:
+                out[consumer], out[consumer + '_error'] = 'refused', str(error)
+        return out
+
+    def assert_late_publication_refused(self, out, stage):
+        self.assertEqual({k: out[k] for k in ('build', 'completed_packet', 'validate_chain')},
+                         {'build': 'refused', 'completed_packet': 'refused', 'validate_chain': 'refused'}, out['events'])
+        self.assertIn('deadline crossed ' + stage, out['error'])
+        for consumer in ('completed_packet', 'validate_chain'):
+            self.assertIn('late terminal record kept for custody', out[consumer + '_error'])
+        root = out['root']
+        for name in ('packet.json', 'receipt.json', 'overlay-complete.json', 'overlay-refused.json'):
+            self.assertTrue((root / name).is_file(), name)                       # the late root is kept for custody
+            self.assertEqual(stat.S_IMODE((root / name).stat().st_mode), 0o444)
+        refusal = json.loads((root / 'overlay-refused.json').read_bytes())
+        marker_raw = (root / 'overlay-complete.json').read_bytes()
+        self.assertEqual((refusal['verdict'], refusal['stage']), ('refused', stage.replace(' ', '_')))
+        self.assertEqual(refusal['marker'], {'path': str(root / 'overlay-complete.json'), 'sha256': C.sha(marker_raw),
+                                             'bytes': len(marker_raw)})
+        self.assertEqual(refusal['bound'], out['marker']['bound'])
+        self.assertEqual(refusal['bound']['wall_deadline_unix'], out['deadline'])        # the UNCHANGED original bound
+        self.assertFalse(C.in_bound(refusal['sample'], refusal['bound']))
+        return refusal
+
+    def test_publication_deadline_in_time_control_is_accepted_end_to_end(self):
+        out = self.publication_boundary('control')
+        self.assertEqual({k: out[k] for k in ('build', 'completed_packet', 'validate_chain')},
+                         {'build': 'accepted', 'completed_packet': 'accepted', 'validate_chain': 'accepted'})
+        self.assertLess(out['returned_wall'], out['deadline'])
+        self.assertEqual(out['validate_chain_result'], 1)
+        self.assertEqual(len(out['completed_packet_result'][0]['rows']), 1)
+
+    def test_publication_deadline_crossed_during_final_marker_write_is_refused_at_build_and_consume(self):
+        out = self.publication_boundary('marker-write')
+        self.assertEqual(out['returned_wall'], out['deadline'])
+        self.assert_late_publication_refused(out, 'after durable marker')
+        self.assertFalse((out['root'] / 'overlay-accepted.json').exists())
+
+    def test_publication_deadline_crossed_during_final_directory_fsync_is_refused_at_build_and_consume(self):
+        out = self.publication_boundary('directory-fsync')
+        self.assertEqual(out['returned_wall'], out['deadline'])
+        self.assert_late_publication_refused(out, 'after durable marker')
+        self.assertFalse((out['root'] / 'overlay-accepted.json').exists())
+
+    def test_publication_monotonic_bound_crossed_during_final_directory_fsync_is_refused(self):
+        out = self.publication_boundary('monotonic-directory-fsync')
+        self.assertLess(out['returned_wall'], out['deadline'])                   # the wall clock alone says in time
+        refusal = self.assert_late_publication_refused(out, 'after durable marker')
+        self.assertGreaterEqual(refusal['sample']['monotonic'], refusal['bound']['monotonic_deadline'])
+        self.assertFalse((out['root'] / 'overlay-accepted.json').exists())
+
+    def test_publication_deadline_crossed_during_acceptance_write_is_refused_at_build_and_consume(self):
+        out = self.publication_boundary('acceptance-write')
+        refusal = self.assert_late_publication_refused(out, 'after durable acceptance')
+        accepted_raw = (out['root'] / 'overlay-accepted.json').read_bytes()            # written in time, then late
+        self.assertEqual(refusal['acceptance'], {'path': str(out['root'] / 'overlay-accepted.json'),
+                                                 'sha256': C.sha(accepted_raw), 'bytes': len(accepted_raw)})
+
+    def test_consumers_require_the_exact_in_time_terminal_acceptance(self):
+        r1 = self.w.build([self.w.row('A', self.w.result('A', '(pipe X (ridge alpha=262.0))'))], 'accepted-1')
+        r2 = self.w.build([self.w.row('A', self.w.result('A', '(pipe X (ridge alpha=263.0))'))], 'accepted-2', **after(r1))
+        root = Path(r1['packet']['path']).parent
+        marker_raw = (root / 'overlay-complete.json').read_bytes()
+        accepted_raw = (root / 'overlay-accepted.json').read_bytes()
+        marker, accepted = json.loads(marker_raw), json.loads(accepted_raw)
+        self.assertEqual(r1['acceptance'], {'path': str(root / 'overlay-accepted.json'), 'sha256': C.sha(accepted_raw),
+                                            'bytes': len(accepted_raw)})
+        self.assertEqual(stat.S_IMODE((root / 'overlay-accepted.json').stat().st_mode), 0o444)
+        self.assertFalse((root / 'overlay-refused.json').exists())
+        self.assertEqual((marker['schema'], set(marker['bound'])),
+                         (C.MARKER_SCHEMA, {'wall_deadline_unix', 'monotonic_deadline', 'boot_id'}))
+        self.assertEqual((accepted['verdict'], accepted['stage'], accepted['bound'], accepted['packet'],
+                          accepted['head_sha256'], accepted['seq']),
+                         ('accepted', 'after_durable_marker', marker['bound'], r1['packet'], r1['head_sha256'], 1))
+        self.assertEqual(accepted['marker'], {'path': str(root / 'overlay-complete.json'), 'sha256': C.sha(marker_raw),
+                                              'bytes': len(marker_raw)})
+        self.assertTrue(C.in_bound(accepted['sample'], accepted['bound']))
+        self.assertEqual(len(view_of(r1, r2).rows), 2)
+
+        def put(name, body):
+            path = root / name
+            if path.exists():
+                os.unlink(path)
+            path.write_bytes(body)
+        bound = marker['bound']
+        late = {**accepted['sample'], 'wall_unix': bound['wall_deadline_unix']}
+        mono_late = {**accepted['sample'], 'monotonic': bound['monotonic_deadline']}
+        extended = {**bound, 'wall_deadline_unix': bound['wall_deadline_unix'] + 3600,
+                    'monotonic_deadline': bound['monotonic_deadline'] + 3600}
+        r2_accepted = json.loads((Path(r2['packet']['path']).parent / 'overlay-accepted.json').read_bytes())
+        forged = {
+            'missing acceptance': (None, 'no success marker and in-time terminal acceptance'),
+            'late wall sample': (canonical({**accepted, 'sample': late}), 'qualified inside its original bound'),
+            'late monotonic sample': (canonical({**accepted, 'sample': mono_late}), 'qualified inside its original bound'),
+            'other boot': (canonical({**accepted, 'sample': {**accepted['sample'], 'boot_id': 'x'}}),
+                           'qualified inside its original bound'),
+            'extended bound': (canonical({**accepted, 'bound': extended, 'sample': late}), 'unchanged original bound'),
+            'other marker bytes': (canonical({**accepted, 'marker': {**accepted['marker'], 'sha256': '0' * 64}}),
+                                   'exact success marker bytes'),
+            'refusal renamed': (canonical({**accepted, 'verdict': 'refused'}), 'accepted overlay terminal record'),
+            'other root acceptance': (canonical(r2_accepted), 'acceptance binds this packet'),
+            'non-canonical': (json.dumps(accepted, indent=1).encode(), 'non-canonical'),
+        }
+        for case, (body, why) in forged.items():
+            with self.subTest(case):
+                if body is None:
+                    os.unlink(root / 'overlay-accepted.json')
+                else:
+                    put('overlay-accepted.json', body)
+                with self.assertRaisesRegex(ValueError, why):
+                    completed_packet(root, predecessor_head=None)
+                with self.assertRaisesRegex(ValueError, why):
+                    view_of(r1, r2)
+                with self.assertRaisesRegex(ValueError, why):
+                    self.w.build([], 'after-' + case.replace(' ', '-'), **after(r1))
+                self.assertFalse((self.root / ('after-' + case.replace(' ', '-'))).exists())
+                put('overlay-accepted.json', accepted_raw)
+        self.assertEqual(len(view_of(r1, r2).rows), 2)
+        # A refusal beside a valid acceptance (the acceptance publication itself was late) refuses every consumer.
+        (root / 'overlay-refused.json').write_bytes(canonical({'fixture': 'late acceptance publication'}))
+        for consume in (lambda: completed_packet(root, predecessor_head=None), lambda: view_of(r1, r2),
+                        lambda: self.w.build([], 'after-refusal', **after(r1))):
+            with self.assertRaisesRegex(ValueError, 'late terminal record kept for custody'):
+                consume()
+        self.assertFalse((self.root / 'after-refusal').exists())
+        os.unlink(root / 'overlay-refused.json')
+        # A pre-terminal v1 marker (no sealed bound) is refused even with an acceptance re-pinned to its bytes.
+        v1 = canonical({**{k: v for k, v in marker.items() if k != 'bound'},
+                        'schema': 'jope.native-result-overlay-complete/v1'})
+        put('overlay-complete.json', v1)
+        put('overlay-accepted.json', canonical({**accepted, 'marker': {**accepted['marker'], 'sha256': C.sha(v1),
+                                                                       'bytes': len(v1)}}))
+        for consume in (lambda: completed_packet(root, predecessor_head=None), lambda: view_of(r1, r2)):
+            with self.assertRaisesRegex(ValueError, 'overlay success marker'):
+                consume()
+        put('overlay-complete.json', marker_raw)
+        put('overlay-accepted.json', accepted_raw)
+        self.assertEqual(completed_packet(root, predecessor_head=None)[2], r1['head_sha256'])
+
 if __name__ == '__main__':
     unittest.main()

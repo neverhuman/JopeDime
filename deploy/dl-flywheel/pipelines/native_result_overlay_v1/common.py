@@ -6,13 +6,17 @@ Invariants:
 - Every packet read is an exact ``{path, sha256, bytes}`` read of a regular, non-symlink file with no symlink parent.
 - Census classes are closed: every consumed source row lands in exactly one of five classes with one closed reason.
 - Revision 2: packets are DELTAS (<= 2,048 new rows each) in a head chain of <= 4,096 packets / <= 500,000 rows.
+- Terminal qualification: one paired original bound (wall deadline, the matching monotonic deadline, the boot id),
+  fixed when the build starts and never reset; a clock sample is in time only strictly inside it on the same boot.
 Nothing here touches S3, a GPU, an outbox, a planner, an optimizer or a GP/program executor.
 """
 import hashlib
 import json
+import math
 import os
 import resource
 import stat
+import time
 from pathlib import Path
 
 from jope_flywheel.protocol import canonical, digest
@@ -21,7 +25,18 @@ PACKET_SCHEMA = 'jope.native-result-overlay-packet/v2'   # revision 2: DELTA pac
 HEAD_SCHEMA = 'jope.native-overlay-head/v1'
 WINDOW_SCHEMA = 'jope.native-overlay-window/v1'
 RECEIPT_SCHEMA = 'jope.native-result-overlay-build/v1'
-MARKER_SCHEMA = 'jope.native-result-overlay-complete/v1'
+MARKER_SCHEMA = 'jope.native-result-overlay-complete/v2'  # v2: seals the original paired bound
+TERMINAL_SCHEMA = 'jope.native-result-overlay-terminal/v1'
+MARKER_NAME = 'overlay-complete.json'
+ACCEPTED_NAME = 'overlay-accepted.json'   # in-time terminal acceptance; every consumer requires it
+REFUSED_NAME = 'overlay-refused.json'     # late terminal refusal (root kept for custody); every consumer refuses
+MARKER_KEYS = frozenset({'schema', 'packet', 'receipt', 'head_sha256', 'predecessor_overlay_head_sha256', 'seq',
+                         'bound'})
+TERMINAL_KEYS = frozenset({'schema', 'verdict', 'stage', 'root', 'packet', 'receipt', 'marker', 'head_sha256',
+                           'predecessor_overlay_head_sha256', 'seq', 'bound', 'sample', 'acceptance'})
+BOUND_KEYS = frozenset({'wall_deadline_unix', 'monotonic_deadline', 'boot_id'})
+SAMPLE_KEYS = frozenset({'boot_id', 'monotonic', 'wall_unix'})
+MAX_TERMINAL_BYTES = 1024 * 1024
 DRY_RUN_SCHEMA = 'jope.native-overlay-dry-run/v1'
 ROTATION_DOMAIN = 'native-overlay-rotation/v1'
 SOURCE_KIND = 'native_overlay_verified_s1'
@@ -191,6 +206,43 @@ def fsync_dir(path):
         os.fsync(fd)
     finally:
         os.close(fd)
+
+
+def boot_id():
+    with open('/proc/sys/kernel/random/boot_id') as f:
+        return f.read().strip()
+
+
+def clock_sample():
+    """Boot, monotonic, wall, then a FRESH monotonic and boot after the wall sample (the C10a ``sample_now`` rule):
+    a stall while sampling the wall clock, or a backward wall step, cannot hide an elapsed monotonic bound or a
+    reboot."""
+    boot0, mono0 = boot_id(), time.monotonic()
+    wall = time.time()
+    mono, boot = time.monotonic(), boot_id()
+    return {'boot_id': boot if boot == boot0 else 'boot-changed-while-sampling', 'monotonic': max(mono, mono0),
+            'wall_unix': wall}
+
+
+def _finite(x):
+    return type(x) in (int, float) and math.isfinite(x)
+
+
+def check_bound(b):
+    """A strict finite paired (wall, monotonic, boot) original bound."""
+    need(type(b) is dict and set(b) == BOUND_KEYS and _finite(b['wall_deadline_unix']) and
+         _finite(b['monotonic_deadline']) and type(b['boot_id']) is str and 0 < len(b['boot_id']) <= 64,
+         'strict finite paired bound')
+    return b
+
+
+def in_bound(sample, bound):
+    """True iff a strict clock sample lies strictly inside the original bound on the same boot."""
+    check_bound(bound)
+    need(type(sample) is dict and set(sample) == SAMPLE_KEYS and _finite(sample['monotonic']) and
+         _finite(sample['wall_unix']) and type(sample['boot_id']) is str, 'strict clock sample')
+    return (sample['boot_id'] == bound['boot_id'] and sample['wall_unix'] < bound['wall_deadline_unix'] and
+            sample['monotonic'] < bound['monotonic_deadline'])
 
 
 def module_sha(module):

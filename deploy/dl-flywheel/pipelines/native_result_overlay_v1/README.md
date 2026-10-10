@@ -35,9 +35,20 @@ overlay_snapshot(base_snapshot, chain_view, *, max_padded_tokens) -> snapshot
 
 - Before any row is read, it re-validates `predecessor_chain` in full against `predecessor_head`; both are `None` for genesis.
 - It then builds delta packet k and writes a **new** root:
-  - `packet.json`, then `receipt.json`, then `overlay-complete.json` (the success marker, written last; it carries `head_sha256`, `predecessor_overlay_head_sha256` and `seq`);
+  - `packet.json`, then `receipt.json`, then `overlay-complete.json` (the success marker; schema `jope.native-result-overlay-complete/v2`, carrying `head_sha256`, `predecessor_overlay_head_sha256`, `seq` and the sealed original `bound`);
   - every file is created with O_EXCL|O_NOFOLLOW, mode 0444, and fsynced together with its directory.
-- Nothing is written on refusal.
+- Nothing is written on a refusal before publication.
+
+**Terminal qualification** (CX-REV PR292 P2; the C10a r5/r7 post-durable rule). When the build starts it fixes one paired original bound: the wall `deadline`, the matching monotonic deadline (monotonic sampled before wall) and the boot id. The bound is never reset. After the marker and both directories are durable, the build samples the clocks again (boot, monotonic, wall, then monotonic and boot again):
+- **In time:** it writes the create-only `overlay-accepted.json` (`jope.native-result-overlay-terminal/v1`, `verdict: accepted`). This pins the exact marker bytes, the packet, receipt, head and sequence, the bound and the sample. The build samples once more after the acceptance is durable, and only then returns. The receipt it returns carries `acceptance`.
+- **Late at either point:** it writes the create-only `overlay-refused.json` (`verdict: refused`, with the stage and the late sample) and raises. The late root stays on disk for custody. Success is never returned at or after the deadline.
+
+A consumer's admission (`validate_chain`, `completed_packet`, and through them the boundary inbox at publication, adoption and restart) requires, for every packet, its root's acceptance:
+- verified against the marker bytes, the packet, head and sequence;
+- carrying the unchanged bound sealed in the marker, with a sample strictly inside it;
+- with no `overlay-refused.json` in the root.
+
+A late root is never admissible merely because its packet, receipt or marker exist. `validate_packet` remains structural only and admits nothing.
 
 **Unbounded volume.** The build stops pulling rows from the iterator once it holds 2,048 distinct new keys or 1,024 touched contexts (also once 32,768 rows are consumed). It records the reason in `stopped` (`NEW_ROW_CAP` / `CONTEXT_CAP` / `SOURCE_ROW_CAP`, or `None` when the iterator is exhausted). The caller passes the **same iterator** to the next build with the extended chain, so no row is lost or consumed twice:
 
@@ -51,7 +62,7 @@ while True:
 
 ### `validate_chain`
 
-It strictly validates every packet in order (exact bytes, canonical JSON, closed schema) and recomputes the head chain to `expected_head`. Across the **whole chain** it refuses:
+It strictly validates every packet in order (exact bytes, canonical JSON, closed schema) and recomputes the head chain to `expected_head`. After those checks, it requires every packet's in-time terminal acceptance (see **Terminal qualification** above). Across the **whole chain** it refuses:
 - a broken predecessor link, sequence or chain position (`chain.packets_before` / `rows_before`), and changed pins;
 - a duplicate (context, program), evaluation key or result ref (a conflicting or reused ref);
 - an anchor declared twice, or any row whose anchored baseline, shard ref or lineage differs bit-for-bit from the context's **first** anchor;

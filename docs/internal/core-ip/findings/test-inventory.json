@@ -495,19 +495,19 @@
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py": {
-      "reason": "Research closed-epoch boundary adoption (C10b revision 7): 23 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
+      "reason": "Research closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case): 24 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py": {
-      "reason": "Research closed-epoch boundary adoption (C10b revision 7): 23 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
+      "reason": "Research closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case): 24 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py": {
-      "reason": "Research v2.0.0 continual-learner fixtures, build r2.3: 37 isolated CPU cases (9 runner, 28 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "reason": "Research v2.0.0 continual-learner fixtures, build r2.6: 40 isolated CPU cases (9 runner, 31 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py": {
-      "reason": "Research v2.0.0 continual-learner fixtures, build r2.3: 37 isolated CPU cases (9 runner, 28 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "reason": "Research v2.0.0 continual-learner fixtures, build r2.6: 40 isolated CPU cases (9 runner, 31 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
@@ -591,7 +591,7 @@
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py": {
-      "reason": "Research train-only native-result overlay packets (W3 revision 2): 30 isolated CPU cases through run_v2_offline.py, additive to prior812, with the vendored R6 preregistration as a pinned fixture input. No live native result admission.",
+      "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix): 36 isolated CPU cases through run_v2_offline.py, additive to prior812, with the vendored R6 preregistration as a pinned fixture input. No live native result admission.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {

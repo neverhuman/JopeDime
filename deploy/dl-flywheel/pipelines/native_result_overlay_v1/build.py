@@ -19,9 +19,16 @@ Invariants:
   recomputation.
 - Exact original objective, normalizer, lineage roles, native base and fixed panels are pinned and never changed.
   The packet is never a CE teacher, never an optimizer update and never an admission.
-- The root is new and create-only: packet.json, receipt.json and finally overlay-complete.json (0444, O_EXCL, fsync).
+- The root is new and create-only: packet.json, receipt.json and then overlay-complete.json (0444, O_EXCL, fsync).
   The dry run (every touched context at every rotation offset of its cumulative overlay set, through the real
   prepare_microbatches + collate) and the deadline / RSS limits are checked before any byte is written.
+- Terminal qualification (the C10a r5/r7 post-durable rule): the build fixes ONE paired original bound when it starts
+  (wall ``deadline``, the matching monotonic deadline, the boot id; sealed in the marker) and never resets it. Only a
+  clock sample taken AFTER the marker and both directories are durable and lying inside that bound writes the
+  create-only acceptance record overlay-accepted.json (binding the exact marker bytes, the bound and the sample); the
+  bound is sampled again after the acceptance is durable. A deadline crossed at either point writes the create-only
+  refusal record overlay-refused.json, keeps the late root for custody and raises: success is never returned late.
+  Consumers (``validate_chain``, ``completed_packet``) require the acceptance and refuse any root with a refusal.
 """
 import importlib
 import os
@@ -35,10 +42,11 @@ from dltrain import labels as L
 from jope_flywheel import training_snapshot_native as N
 
 from . import verify as V
-from .common import (AUTHORITY_EVERY, CLASSES, DEPENDENCIES, FAILURE_STATES, MARKER_SCHEMA, MAX_CONTEXTS,
-                     MAX_PACKET_BYTES, MAX_READ_BYTES, MAX_ROWS, MAX_RSS_BYTES, MAX_SECONDS, MAX_SOURCE_ROWS,
-                     OVERLAY_WINDOW, PACKET_SCHEMA, PENDING_STATES, RECEIPT_SCHEMA, ROTATION_DOMAIN, VERIFIED_STATES,
-                     WORKER_SHA_PIN, artifact_refs, canonical, create_only, digest, exact_canonical, fsync_dir, hash64,
+from .common import (ACCEPTED_NAME, AUTHORITY_EVERY, CLASSES, DEPENDENCIES, FAILURE_STATES, MARKER_NAME, MARKER_SCHEMA,
+                     MAX_CONTEXTS, MAX_PACKET_BYTES, MAX_READ_BYTES, MAX_ROWS, MAX_RSS_BYTES, MAX_SECONDS,
+                     MAX_SOURCE_ROWS, OVERLAY_WINDOW, PACKET_SCHEMA, PENDING_STATES, RECEIPT_SCHEMA, REFUSED_NAME,
+                     ROTATION_DOMAIN, TERMINAL_SCHEMA, VERIFIED_STATES, WORKER_SHA_PIN, artifact_refs, boot_id,
+                     canonical, clock_sample, create_only, digest, exact_canonical, fsync_dir, hash64, in_bound,
                      max_rss_bytes, module_sha, need, ref5, safe_path, sha)
 from .labels_overlay import (direct_recomputation, label_row, old_labels_equal, overlay_record, record_json,
                              union_labels)
@@ -67,6 +75,20 @@ def _sources(sources):
     return out
 
 
+def _refuse(root, terminal, stage, sample, acceptance_ref):
+    """The original bound was crossed during the final publication: keep the late root for custody, write the
+    create-only refusal record every consumer honours, and raise (success is never returned late)."""
+    why = ('overlay build deadline crossed ' + stage.replace('_', ' ') +
+           ' (late publication refused; root kept for custody)')
+    try:
+        create_only(root / REFUSED_NAME, canonical({**terminal, 'verdict': 'refused', 'stage': stage, 'sample': sample,
+                                                    'acceptance': acceptance_ref}))
+        fsync_dir(root)
+    except OSError as error:
+        raise ValueError(why + '; refusal record not written: ' + str(error)) from error
+    raise ValueError(why)
+
+
 def build_packet(rows_iter, *, native, store, authority, inputs, canonicalize, native_spec_bytes, preprocessing_bytes,
                  preprocessing_sha256, registry_bytes, objective_sha256, source_pins, r6_roster_bytes, r6_roster_sha256,
                  campaigns, sources, max_padded_tokens, root, deadline, predecessor_chain=None, predecessor_head=None,
@@ -80,8 +102,11 @@ def build_packet(rows_iter, *, native, store, authority, inputs, canonicalize, n
     ``store.get_version(ref) -> (bytes, version_id)`` with ``store.nativecanonical_json``; ``authority() -> bytes``;
     ``inputs.describe(descriptor, phase)`` is NativeInputs or an equivalent; ``canonicalize(raw) -> canonical DSL``.
     """
+    boot0, mono0 = boot_id(), time.monotonic()   # BEFORE wall: a delay can only shrink the monotonic allowance
     started, cpu0 = time.time(), os.times()
     need(type(deadline) in (int, float) and started < deadline <= started + MAX_SECONDS, 'bounded build window (<= 1800 s)')
+    # The ONE original paired bound of this build (never reset); sealed in the marker and the terminal record.
+    bound = {'wall_deadline_unix': deadline, 'monotonic_deadline': mono0 + (deadline - started), 'boot_id': boot0}
     root = safe_path(root)
     need(root.parent.is_dir() and not root.exists(), 'new create-only overlay root')
     nat = getattr(native, 'native', native)
@@ -402,8 +427,8 @@ def build_packet(rows_iter, *, native, store, authority, inputs, canonicalize, n
     need(dry['passed'], 'overlay dry run at every rotation offset')
     rss = max_rss_bytes()
     need(rss <= MAX_RSS_BYTES, 'overlay build RSS <= 2 GiB')
-    need(time.time() < deadline, 'overlay build deadline before publication')
-    # ---- create-only publication; the success marker is written last
+    need(in_bound(clock_sample(), bound), 'overlay build deadline before publication')
+    # ---- create-only publication; the success marker, then the terminal acceptance (or refusal), are written last
     root.mkdir(mode=0o755)
     packet_ref = create_only(root / 'packet.json', raw)
     cpu1 = os.times()
@@ -425,16 +450,31 @@ def build_packet(rows_iter, *, native, store, authority, inputs, canonicalize, n
                'outer_test_values_decoded': False, 'new_ce_teachers': new_ce, 'optimizer_updates': 0,
                'admission_committed': False,
                'scope': 'Train-only measured overlay targets; no optimizer, planner, outbox, S3 write, GPU or GP.'}
-    need(time.time() < deadline, 'overlay build deadline before receipt')
+    need(in_bound(clock_sample(), bound), 'overlay build deadline before receipt')
     receipt_ref = create_only(root / 'receipt.json', canonical(receipt))
-    need(time.time() < deadline, 'overlay build deadline before success marker')
-    marker_ref = create_only(root / 'overlay-complete.json',
+    need(in_bound(clock_sample(), bound), 'overlay build deadline before success marker')
+    marker_ref = create_only(root / MARKER_NAME,
                              canonical({'schema': MARKER_SCHEMA, 'packet': packet_ref, 'receipt': receipt_ref,
                                         'head_sha256': head, 'predecessor_overlay_head_sha256': prev_head,
-                                        'seq': seq}))
+                                        'seq': seq, 'bound': bound}))
     fsync_dir(root)
     fsync_dir(root.parent)
-    return {**receipt, 'receipt': receipt_ref, 'marker': marker_ref}
+    # ---- post-durable terminal qualification against the UNCHANGED original bound (C10a r5/r7 pattern)
+    terminal = {'schema': TERMINAL_SCHEMA, 'root': str(root), 'packet': packet_ref, 'receipt': receipt_ref,
+                'marker': marker_ref, 'head_sha256': head, 'predecessor_overlay_head_sha256': prev_head, 'seq': seq,
+                'bound': bound}
+    after_marker = clock_sample()
+    if not in_bound(after_marker, bound):
+        _refuse(root, terminal, 'after_durable_marker', after_marker, None)
+    acceptance_ref = create_only(root / ACCEPTED_NAME,
+                                 canonical({**terminal, 'verdict': 'accepted', 'stage': 'after_durable_marker',
+                                            'sample': after_marker, 'acceptance': None}))
+    fsync_dir(root)
+    # The acceptance publication is bounded too: a deadline crossed while writing/fsyncing it never returns success.
+    after_acceptance = clock_sample()
+    if not in_bound(after_acceptance, bound):
+        _refuse(root, terminal, 'after_durable_acceptance', after_acceptance, acceptance_ref)
+    return {**receipt, 'receipt': receipt_ref, 'marker': marker_ref, 'acceptance': acceptance_ref}
 
 
 __all__ = ['build_packet', 'builder_pins']

@@ -6,7 +6,9 @@ on W3's synthetic native world (byte-exact copy of W3 DELIVERY-r2 in this tree) 
 PolicyLM/AdamW updates and physical checkpoints: overlay-only adoptions at two closed epochs, first exposures joined
 to the overlay window receipts, restart parity and zero-mutation refusals.  ``MixedTests`` exercises the variant +
 overlay state machine on the C10a fixture world with a stub chain interface (real head folding, empty rows), because
-the two fixture worlds do not share a native base.  No live data, outbox, S3, GPU or program execution.
+the two fixture worlds do not share a native base.  A W3 root whose final publication crossed its original deadline
+(kept for custody with its refusal record) is refused at publication, adoption and restart.  No live data, outbox, S3,
+GPU or program execution.
 """
 import copy
 import json
@@ -26,6 +28,7 @@ from jope_flywheel.protocol import canonical, digest
 from pipelines.boundary_admission_v2 import boundary as Bd
 from pipelines.boundary_admission_v2.tests.harness import CAMPAIGN, Executor, World, new_inbox
 from pipelines.generated_target_preparation_v2.tests import world as CW
+from pipelines.native_result_overlay_v1 import build as OB
 from pipelines.native_result_overlay_v1 import loader as OL
 from pipelines.native_result_overlay_v1 import packet as PK
 from pipelines.native_result_overlay_v1.tests import world as W3
@@ -257,6 +260,52 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual(ex.planner.verify(), planner_before)
         self.assertIsNotNone(ex.boundary())                       # the untouched candidate still adopts
         self.assertEqual(ex.snapshot.overlay_head_sha256, self.p1['head_sha256'])
+
+    def test_r6_overlay_inbox_requires_in_time_terminal_acceptance(self):
+        """CX-REV PR292 P2 at the inbox: a late W3 root is refused at publication; an in-time packet whose root later
+        gains a refusal record (its acceptance publication was late) is refused at adoption and restart."""
+        w3 = self.w.w3
+        row = w3.row('A', w3.result('A', '(pipe X (ridge alpha=790.0))', [b * 0.47 for b in w3.ctx['A']['recon']]))
+        wall = [time.time()]
+        deadline = wall[0] + 600
+        real_fsync = OB.fsync_dir
+
+        def fsync(path):                     # the REAL directory fsync, then the clock reaches the original deadline
+            real_fsync(path)
+            wall[0] = deadline
+        with mock.patch.object(OB.time, 'time', side_effect=lambda: wall[0]), \
+                mock.patch.object(OB, 'fsync_dir', side_effect=fsync):
+            with self.assertRaisesRegex(ValueError, 'deadline crossed after durable marker'):
+                w3.build([row], 'late-1', deadline=deadline)
+        marker = json.loads((w3.root / 'late-1' / 'overlay-complete.json').read_bytes())
+        late = {'packet': marker['packet'], 'receipt': marker['receipt'], 'head_sha256': marker['head_sha256']}
+        inbox = self.inbox('late')
+        before = files(inbox.root)
+        with self.assertRaisesRegex(ValueError, 'late terminal record kept for custody'):
+            self.publish(inbox, late)
+        self.assertEqual(files(inbox.root), before)
+        ex = Executor(self.w, self.base / 'late', inbox)
+        self.addCleanup(ex.close)
+        ex.run_epoch()
+        self.publish(inbox, self.p1)                              # in time: publishes
+        refused = Path(self.p1['packet']['path']).parent / 'overlay-refused.json'
+        refused.write_bytes(canonical({'fixture': 'late acceptance publication'}))
+        planner_before = ex.planner.verify()
+        with self.assertRaisesRegex(ValueError, 'late terminal record kept for custody'):
+            ex.boundary()
+        self.assertEqual(ex.planner.verify(), planner_before)
+        self.assertEqual(sorted(p.name for p in (inbox.root / 'intents').iterdir()), [])
+        self.assertEqual(inbox.holds(), [])
+        os.unlink(refused)
+        adopted = ex.boundary()                                   # the in-time terminal acceptance adopts
+        self.assertEqual(adopted.overlay_head_sha256, self.p1['head_sha256'])
+        record = inbox.adoptions()[-1]
+        self.assertEqual(self.w.load(inbox, record).identity, adopted.identity)
+        refused.write_bytes(canonical({'fixture': 'late acceptance publication'}))
+        with self.assertRaisesRegex(ValueError, 'late terminal record kept for custody'):
+            self.w.load(inbox, record)                            # restart rehydration
+        os.unlink(refused)
+        self.assertEqual(self.w.load(inbox, record).identity, adopted.identity)
 
 
 class StubChain:

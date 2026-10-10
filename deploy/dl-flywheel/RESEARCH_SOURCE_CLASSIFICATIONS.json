@@ -3109,7 +3109,7 @@
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7) with 23 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3118,25 +3118,25 @@
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/boundary.py": {
       "bytes": 49588,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7) with 23 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13"
     },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/run_offline.py": {
-      "bytes": 3442,
+      "bytes": 3583,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7) with 23 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "0a57a73139fd4729b37314c54505042f86ca3859d9df9268d6eb0b30fc4567d3"
+      "sha256": "51565dad0bee7a0cb0321a69991d75b0b226450e21a46d385cace414473188f3"
     },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7) with 23 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3145,7 +3145,7 @@
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/harness.py": {
       "bytes": 12624,
       "classification": {
-        "reason": "Research closed-epoch boundary adoption library (C10b revision 7) with 23 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
+        "reason": "Research closed-epoch boundary adoption library (C10b revision 7, plus the in-time overlay acceptance case) with 24 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Library source only; the shipped pinned runner binds the lane base export and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3154,7 +3154,7 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3163,7 +3163,7 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py": {
       "bytes": 23242,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3172,7 +3172,7 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/custody_v6.py": {
       "bytes": 15179,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3181,7 +3181,7 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/genesis.py": {
       "bytes": 15448,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3190,7 +3190,7 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
       "bytes": 18310,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3199,25 +3199,25 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/resume_v6.py": {
       "bytes": 7520,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "9029f2f44a9136945a4c1f3007515640f26e1b7a8bca03f17655e0158bc94181"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py": {
-      "bytes": 44722,
+      "bytes": 45460,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "d5621a48a1f1922e32c172b02367d94334c0e40716eb8140ace006b5ddc55685"
+      "sha256": "db87374f1a2222c4d43a926b89a756969dc5fe927ba0d80a0e7f89d6f58c0b0a"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.3 (runner_v6, genesis, resume, custody, parity probe, CLI) with 37 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r2.6 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3361,34 +3361,34 @@
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/__init__.py": {
       "bytes": 1308,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "6921ce49b31cd64d2f4f078523a66c5036df60e0f34cc386cb23c4d22e774f86"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py": {
-      "bytes": 28222,
+      "bytes": 31464,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "2210f8d9a1c224a15dffc6a6e70f9ace16dc10cdc513c2242b6cb26c4f7157fe"
+      "sha256": "7f19f66d7c4d48c42b6e66b0b99d01ecc927c3ac1c62eb5b15112a1c403f5716"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/common.py": {
-      "bytes": 8716,
+      "bytes": 11421,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "f43044ee77824a0d7ca8963b1f73ab5c03b41315f87a01deddd2a028dbd00aed"
+      "sha256": "fb4e50b5f9245dceb7d132717ae7c8695506ee4706ef51b7cc3e105811b43e8a"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/labels_overlay.py": {
       "bytes": 4874,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3397,7 +3397,7 @@
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/loader.py": {
       "bytes": 13539,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3406,34 +3406,34 @@
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/offline.py": {
       "bytes": 7760,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py": {
-      "bytes": 24734,
+      "bytes": 28945,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "5b9c144a1ce5cc5b068f2a2063514638a9f495a8c9c0b7e0e7164b6b56a5d191"
+      "sha256": "55dcb204ac0704bf76589b5f3e4330bdfe6611be54bf2f30d386fe3096ab3059"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py": {
-      "bytes": 2032,
+      "bytes": 2558,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "3c957deef9ea839dba5e503a876c41ead7b567138f07b063757fba6737ac501b"
+      "sha256": "5f1870a76b67ba436450c569ccfe886ed01ea14c11aef9b424449ccbc1d448d2"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3442,7 +3442,7 @@
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/world.py": {
       "bytes": 26117,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3451,20 +3451,20 @@
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/verify.py": {
       "bytes": 22162,
       "classification": {
-        "reason": "Research train-only native-result overlay packets (W3 revision 2, byte copy) with 30 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
+        "reason": "Research train-only native-result overlay packets (W3 revision 2 with the late-publication fix) with 36 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
     },
     "python:deploy/dl-flywheel/run_v2_offline.py": {
-      "bytes": 15724,
+      "bytes": 15898,
       "classification": {
-        "reason": "Isolated exact-roster runner for the five v2.0.0 learner families (158 identities), run as its own python-lane command with its own 600 s budget after the unchanged prior812 run_offline.py identities. Pins each package source roster and the import closure against SOURCE_MANIFEST.json; adds no identities of its own and grants no launch permission.",
+        "reason": "Isolated exact-roster runner for the five v2.0.0 learner families (168 identities), run as its own python-lane command with its own 600 s budget after the unchanged prior812 run_offline.py identities. Pins each package source roster and the import closure against SOURCE_MANIFEST.json; adds no identities of its own and grants no launch permission.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "7b06a1ecb87a3b21e13e2f93918fcfae44131aab3b3c377ede6984d9aa468ee3"
+      "sha256": "c5b202d1c412e77d9cef98c4fa28e6eae1e8100ca3d308240cd5ade4382f0722"
     }
   }
 }

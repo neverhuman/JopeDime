@@ -22,7 +22,8 @@
   "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_only_adoptions_compose_and_first_exposures",
   "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_refusals_mutate_nothing",
   "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_restart_reloads_composite_and_next_update_is_bitwise_identical",
-  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1r7_publication_and_restart_require_the_accepted_envelope"
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1r7_publication_and_restart_require_the_accepted_envelope",
+  "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_inbox_requires_in_time_terminal_acceptance"
  ],
  "package": "boundary_admission_v2",
  "schema": "jope.c10-offline-source-pins/v2",
@@ -36,8 +37,8 @@
    "sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13"
   },
   "run_offline.py": {
-   "bytes": 3442,
-   "sha256": "0a57a73139fd4729b37314c54505042f86ca3859d9df9268d6eb0b30fc4567d3"
+   "bytes": 3583,
+   "sha256": "51565dad0bee7a0cb0321a69991d75b0b226450e21a46d385cace414473188f3"
   },
   "tests/__init__.py": {
    "bytes": 0,
@@ -52,8 +53,8 @@
    "sha256": "58a25f01d36540ea0104621bbc012cd8c687c2f18775ccef7abe6bf5325794d6"
   },
   "tests/test_overlay_components.py": {
-   "bytes": 19001,
-   "sha256": "86aef81cdc8b8e404b1567c255190a801718f8afee054d0570c57fbec5ee31ec"
+   "bytes": 22110,
+   "sha256": "60f8aaf37797c82fb367269b1bd90702b7daa75b3b92361d413988ec0b038250"
   }
  }
 }
