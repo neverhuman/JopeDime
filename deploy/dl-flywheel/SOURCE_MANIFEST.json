@@ -1,17 +1,17 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "506438d58526a396f5e8214640e562c53c0fc25791d333d342748cc735d4630b"
+      "sha256": "bf4c41e50c12313e4877a651af12acfd0c427dbb75399b5dfc08e0223af1f4d0"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "1d030df86248f3d2985334ac9d7a420e31a5d80777902191d11eef91089e4d00"
+      "sha256": "d201ac0d412e4e77c6d9c8aa059db912209e8154f1ca56c42ce41728f69eab07"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -21,11 +21,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "9f1ba2f821448d0ef59c4a15c94a9dd603abc35b553815825abb08c730a63f75"
+      "sha256": "b4c07d7ff3d7d3cf34f4c79135733441d1dc9ec49bc8a68c42c9fa1defeb1b32"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4716,6 +4716,90 @@
       "sha256": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92"
     },
     {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/INTERFACE.md",
+      "sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "adfc129026c6cc08ccd5e16fd12d0920c3116a56fd159a65b72348f4529f41c6",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/__init__.py",
+      "sha256": "adfc129026c6cc08ccd5e16fd12d0920c3116a56fd159a65b72348f4529f41c6"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "5987faf25d12bdfa6595b9769549813e9be6dba21a08d77617ee6904b2cafd9d",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/collector.py",
+      "sha256": "5987faf25d12bdfa6595b9769549813e9be6dba21a08d77617ee6904b2cafd9d"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "f94ed5b3db5b9c80a02fc4b658d0066edc7e158bad6818146e33445b6fc636f9",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/groups.py",
+      "sha256": "f94ed5b3db5b9c80a02fc4b658d0066edc7e158bad6818146e33445b6fc636f9"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/objective.py",
+      "sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py",
+      "sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/sampling.py",
+      "sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/test-identities.json",
+      "sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "ef9af334f79974023be00e8e46970159fc43879191a20191a62875c85603e7df",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/__init__.py",
+      "sha256": "ef9af334f79974023be00e8e46970159fc43879191a20191a62875c85603e7df"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/fixtures.py",
+      "sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "c35af46c58c7d2e0503aed50c942cf075038934e3e915f1541ff628df9991e24",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py",
+      "sha256": "c35af46c58c7d2e0503aed50c942cf075038934e3e915f1541ff628df9991e24"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "e2d05f84204488eb5f14c15d818eaccb9940bb1e8bd6f547eb098fc61aa60377",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_groups.py",
+      "sha256": "e2d05f84204488eb5f14c15d818eaccb9940bb1e8bd6f547eb098fc61aa60377"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "f4d5799ca74b9db4c624c6d769ad52681787315e7da9f89836eb2077e69afab8",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_math.py",
+      "sha256": "f4d5799ca74b9db4c624c6d769ad52681787315e7da9f89836eb2077e69afab8"
+    },
+    {
+      "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
+      "origin_sha256": "3919bd1381c97cd6dcf489fcd7bb4b01dff0e0095a055c1997a428735afcf55c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_sampling.py",
+      "sha256": "3919bd1381c97cd6dcf489fcd7bb4b01dff0e0095a055c1997a428735afcf55c"
+    },
+    {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "e257af8f540fd7b84c84e4be5e9c617310dc3bf3807aea55eed98ce74c9c919c",
       "path": "deploy/dl-flywheel/pipelines/rlfw_s3gp/__init__.py",
@@ -5299,7 +5383,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "117cc2164e53beda2b1e6b6719e103a2ffe14834b9100e7f0a8cfe592e23b5cc"
+      "sha256": "bf979dd63e9fc74f6c785d0358cf8d68d6f39f115da05c1604d18d8bc6f1fbd9"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

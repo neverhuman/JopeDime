@@ -2833,6 +2833,70 @@
       },
       "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
       "sha256": "72923d713354130f9a2e0e1f384f00f75e3e03474a3bd77cda3f1de06060b1ff"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/__init__.py": {
+      "bytes": 79,
+      "sha256": "adfc129026c6cc08ccd5e16fd12d0920c3116a56fd159a65b72348f4529f41c6",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/collector.py": {
+      "bytes": 3309,
+      "sha256": "5987faf25d12bdfa6595b9769549813e9be6dba21a08d77617ee6904b2cafd9d",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/groups.py": {
+      "bytes": 7789,
+      "sha256": "f94ed5b3db5b9c80a02fc4b658d0066edc7e158bad6818146e33445b6fc636f9",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/objective.py": {
+      "bytes": 8256,
+      "sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py": {
+      "bytes": 4234,
+      "sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/sampling.py": {
+      "bytes": 7141,
+      "sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/__init__.py": {
+      "bytes": 61,
+      "sha256": "ef9af334f79974023be00e8e46970159fc43879191a20191a62875c85603e7df",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/fixtures.py": {
+      "bytes": 3298,
+      "sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
+      }
     }
   }
 }

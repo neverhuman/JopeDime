@@ -197,6 +197,11 @@ timeout 300s uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --outp
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json" )
     # Lifecycle proposals and the executable cache. No bucket calls. DuckDB is optional.
 python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests -q
+    # C4/S7/S8 finite-action and actual CPU float64 autograd fixtures.
+(
+cd python
+uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt "$EVIDENCE/onpolicy-offline.json"
+)
     ;;
   rust-test)
     status=0
