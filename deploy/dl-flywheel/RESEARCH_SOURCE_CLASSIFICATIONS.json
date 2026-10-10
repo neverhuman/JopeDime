@@ -2897,6 +2897,30 @@
         "role": "research",
         "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
       }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/kv_decode.py": {
+      "bytes": 12102,
+      "classification": {
+        "reason": "Finite-support inference and bounded KV analysis/strict deployed-geometry fixtures; measured labels remain separate from predicted heads. No program execution, live training or deployment qualification.",
+        "role": "research"
+      },
+      "sha256": "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py": {
+      "bytes": 2203,
+      "classification": {
+        "reason": "Finite-support inference and bounded KV analysis/strict deployed-geometry fixtures; measured labels remain separate from predicted heads. No program execution, live training or deployment qualification.",
+        "role": "research"
+      },
+      "sha256": "ce7476eaaf05efbf61e73d508e7eb90e239658db411b3a6e99b79ad36169fa82"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/trie_enumerate.py": {
+      "bytes": 9201,
+      "classification": {
+        "reason": "Finite-support inference and bounded KV analysis/strict deployed-geometry fixtures; measured labels remain separate from predicted heads. No program execution, live training or deployment qualification.",
+        "role": "research"
+      },
+      "sha256": "2aa2c692edd40dd439a1f5df67170d49e2e562399908b79145e0ca5ab664e5a6"
     }
   }
 }
