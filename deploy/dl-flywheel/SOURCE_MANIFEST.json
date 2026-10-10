@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "b4c07d7ff3d7d3cf34f4c79135733441d1dc9ec49bc8a68c42c9fa1defeb1b32"
+      "sha256": "5838ec1cb7894122843764d97bf4a66683a21364d1009d6f46357a60cf26d6a0"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4719,7 +4719,7 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/INTERFACE.md",
-      "sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b"
+      "sha256": "cacf1b7bda2d2a95050d9adf30613c1ab5c08f1195c53e810fd5db3cada5bd8e"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4731,7 +4731,7 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "5987faf25d12bdfa6595b9769549813e9be6dba21a08d77617ee6904b2cafd9d",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/collector.py",
-      "sha256": "5987faf25d12bdfa6595b9769549813e9be6dba21a08d77617ee6904b2cafd9d"
+      "sha256": "35b8a71c729890d0b7aba5ec21d7f977ab9a88ccf2f36abb7d9d975d98b2781a"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4761,7 +4761,7 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/test-identities.json",
-      "sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9"
+      "sha256": "e24a27e541a9bbc9b95115ebaa7c1cb65546d1ebd20d44f41fcd5537eb4c79e0"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4785,7 +4785,7 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "e2d05f84204488eb5f14c15d818eaccb9940bb1e8bd6f547eb098fc61aa60377",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_groups.py",
-      "sha256": "e2d05f84204488eb5f14c15d818eaccb9940bb1e8bd6f547eb098fc61aa60377"
+      "sha256": "5ddba149410cef5e28a0d961841d60508290e04c34827ca82def1b3dc9ad44d9"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",

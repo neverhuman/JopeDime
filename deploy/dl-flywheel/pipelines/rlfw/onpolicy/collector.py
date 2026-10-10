@@ -39,6 +39,14 @@ class RoundCollector:
         frozen = {(g.policy, g.generated_update, g.sample_rule) for g in groups}
         if len(frozen) != 1:
             raise ValueError("one frozen behavior checkpoint/update/utility per round")
+        incumbents = {}
+        for g in groups:
+            identity = (g.parent, g.comparison, g.incumbent)
+            if g.context in incumbents and incumbents[g.context] != identity:
+                raise ValueError(
+                    "one frozen comparison/incumbent per context per round"
+                )
+            incumbents[g.context] = identity
         self._round_id = round_id
         self._specs = {g.group_id: g for g in groups}
         self._results = {g.group_id: {} for g in groups}

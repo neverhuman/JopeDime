@@ -234,6 +234,48 @@ class GroupTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             c.resolve("g", "absent", g.outcomes[0])
 
+    def test_round_refuses_changed_incumbent_identity_or_null_for_same_context(self):
+        g = group_for()
+        for incumbent in (q_for(0.9), q_for(0.2, program="0" * 64), None):
+            other = replace(g.spec, group_id="g2", incumbent=incumbent)
+            for reverse, specs in enumerate(((g.spec, other), (other, g.spec))):
+                with (
+                    self.subTest(incumbent=incumbent, reverse=reverse),
+                    self.assertRaisesRegex(ValueError, "frozen.*incumbent"),
+                ):
+                    RoundCollector("r", specs)
+
+    def test_round_accepts_identical_reverified_incumbent_and_null(self):
+        for h in (0.2, None):
+            g = group_for(h=h)
+            other = replace(
+                g.spec, group_id="g2", incumbent=None if h is None else q_for(h)
+            )
+            c = RoundCollector("r", (g.spec, other))
+            for spec in (g.spec, other):
+                for draw, outcome in zip(spec.draws, g.outcomes):
+                    c.resolve(spec.group_id, draw.draw_id, outcome)
+            self.assertEqual([x.h for x in c.close().groups], [h, h])
+
+    def test_round_accepts_distinct_contexts_with_distinct_incumbents(self):
+        g = group_for()
+        incumbent = q_for(0.9, context="other")
+        other = replace(
+            g.spec,
+            group_id="g2",
+            context="other",
+            comparison=incumbent.comparison,
+            incumbent=incumbent,
+        )
+        outcomes = tuple(
+            q_for(q.raw, context="other", program=q.program) for q in g.outcomes
+        )
+        c = RoundCollector("r", (g.spec, other))
+        for spec, values in ((g.spec, g.outcomes), (other, outcomes)):
+            for draw, outcome in zip(spec.draws, values):
+                c.resolve(spec.group_id, draw.draw_id, outcome)
+        self.assertEqual([x.h for x in c.close().groups], [0.2, 0.9])
+
     def test_parent_macro_reduction_does_not_weight_sibling_or_group_volume(self):
         rows = [("p0", "c0", 1.0), ("p0", "c0", 3.0), ("p1", "c1", 6.0)]
         self.assertEqual(parent_macro_mean(rows), 4.0)

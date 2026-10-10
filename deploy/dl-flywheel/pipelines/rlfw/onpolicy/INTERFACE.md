@@ -11,6 +11,9 @@ runtime. They do not launch collection or change any incumbent ledger.
    generation update and monotonic time. Repeated program SHAs remain repeated
    draws. Freeze a verified incumbent and the identical sample/incumbent utility
    rule. Current `HWMKey` is reused; a future key migration needs an adapter.
+   All groups for a context in that round must share the identical parent,
+   comparison and incumbent publication identity, including NULL. Distinct
+   contexts may have distinct incumbents.
 2. `verify_q(key, publication, parent=..., role_check=..., verify_closure=...)`
    admits only measured, qualified-complete integer q_grid. Callbacks MUST freshly
    verify TRAIN role/parent and actual seven-body closure, q recomputation, parity
