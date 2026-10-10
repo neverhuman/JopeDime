@@ -2609,13 +2609,13 @@
       "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
     },
     "python:deploy/dl-flywheel/run_fresh32_offline.py": {
-      "bytes": 3392,
+      "bytes": 4380,
       "classification": {
         "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "c8b9fb7e6f50199b48bece23c8b86aa67b68a42e85fb86ea532aa9d91d8a7eb8"
+      "sha256": "274218da9b4ef0ac159c4adb1165761b244c0dcf8bbd53be1a2f27c128a07bb9"
     },
     "python:deploy/dl-flywheel/run_fresh_gp_offline.py": {
       "bytes": 4276,
@@ -2663,13 +2663,13 @@
       "sha256": "48c3cfc7d39fed3b742f46f051bf44976c3dc42c21c3312f9e306ac27ee193d8"
     },
     "python:deploy/dl-flywheel/run_telemetry_offline.py": {
-      "bytes": 2172,
+      "bytes": 3163,
       "classification": {
         "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "ac360eb1083c91f0ac674ce57337e5facaa6961df628941260b508126fb75cbe"
+      "sha256": "8a99d35c387c8feff93f5658372e1c739c1a7d24563922feadf82a27bb9aeb00"
     },
     "python:deploy/dl-flywheel/run_trace_v2_offline.py": {
       "bytes": 170,
