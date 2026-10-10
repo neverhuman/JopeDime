@@ -2506,6 +2506,33 @@
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "ed3cf280dcf0565970266f90646b47aa1f25678a7675f5498cef38a86689eaf0"
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/__init__.py": {
+      "bytes": 231,
+      "classification": {
+        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "e257af8f540fd7b84c84e4be5e9c617310dc3bf3807aea55eed98ce74c9c919c"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/s3_lifecycle.py": {
+      "bytes": 14409,
+      "classification": {
+        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "3674c2174b266b641f5ab5a5f1538c4d350b502a23addb323dbde8f4cf1e9d74"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/score_cache.py": {
+      "bytes": 6963,
+      "classification": {
+        "reason": "S3 score lifecycle proposal and reproducible executable cache. Source proof does not apply a lifecycle rule or qualify a live learning loop.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "a0b0f3a905c5ea86b9d21c988a6803c44291c4d9236880bbf5fc4703f78de922"
+    },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
       "bytes": 17268,
       "classification": {

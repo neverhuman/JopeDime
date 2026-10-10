@@ -624,6 +624,14 @@
         "orchestration"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_lifecycle.py": {
+      "reason": "CPU fixtures for the executable cache and the lifecycle proposal. They do not apply a lifecycle rule, change storage class, or qualify a live learning loop.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py": {
+      "reason": "CPU fixtures for the executable cache and the lifecycle proposal. They do not apply a lifecycle rule, change storage class, or qualify a live learning loop.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
       "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
       "role": "research"

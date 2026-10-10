@@ -1602,6 +1602,26 @@
       ],
       "scope": "Registered data-free best-of-32 fixtures: exact leaf membership, all raw draws, predicted-only ranking, fixed feasibility fallback, durable restart and eight blind charges. No live evaluator, checkpoint or performance qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_lifecycle.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "10 CPU fixtures for a reproducible executable cache and an S3 lifecycle proposal that refuses to apply. A second budget client reloads under a lock. Listings emit object candidates and no prefix rule. DuckDB export runs when that package is installed. No bucket mutation."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "10 CPU fixtures for a reproducible executable cache and an S3 lifecycle proposal that refuses to apply. A second budget client reloads under a lock. Listings emit object candidates and no prefix rule. DuckDB export runs when that package is installed. No bucket mutation."
+    },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
       "discovery": {
         "kind": "python-family"

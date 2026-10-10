@@ -194,6 +194,8 @@ timeout 300s uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --outp
 )
     # Additive research fixtures use stdlib fake policies; no deployed imports or checkpoint inputs.
 python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json"
+    # Lifecycle proposals and the executable cache. No bucket calls. DuckDB is optional.
+python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests -q
     ;;
   rust-test)
     status=0

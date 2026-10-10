@@ -358,5 +358,11 @@ partial sample and a versioned census that both emit no prefix rule, and a
 DuckDB round trip that
 exports twice to the same file. The earlier `dfa461fd9` run was 8 tests, OK,
 2.841 s, before those two cases existed.
-The package is not listed in `SOURCE_MANIFEST.json`. Hosted CI did not run
-these tests. CI coverage of this package is **unmeasured**.
+The two test modules are assigned in `deploy/ci/coverage.json` and
+`docs/internal/core-ip/findings/test-inventory.json`. The non-test modules
+are hashed in `RESEARCH_SOURCE_CLASSIFICATIONS.json` and
+`SOURCE_MANIFEST.json`. The Python lane command is
+`python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests`.
+Hosted CI for that registration is **unmeasured** until the run for this
+commit finishes. The earlier hosted run on `50969b90a` failed hygiene with
+two unassigned additions, and its Python lane was `skipped-by-path`.
