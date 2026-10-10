@@ -138,6 +138,25 @@ class BoundaryDriver:
         return snapshot
 
 
+GUARD_ALERT = 'fixed-panel validation regressed beyond the sealed reference; adoptions HELD; owner review required'
+
+
+def guard_update(guard, rg, *, epoch, at_step, loss, now):
+    """The pure G32 transition for one checked closed epoch (returns a new state; the input is not modified).
+
+    ``over`` counts consecutive epochs strictly above ``ratio`` x ``reference_loss`` and resets on a good epoch; the
+    guard trips once ``over`` reaches ``consecutive_epochs`` and the trip is sticky: ``tripped_at``/``alert`` keep the
+    first trip's identity forever.  History keeps the last 50 checks."""
+    need(type(loss) is float and loss == loss, 'finite fixed-panel loss')
+    g = json.loads(json.dumps(guard))
+    g['over'] = g['over'] + 1 if loss > rg['ratio'] * rg['reference_loss'] else 0
+    g['history'] = (g['history'] + [{'epoch': epoch, 'at_step': at_step, 'fixed_panel_loss': loss}])[-50:]
+    g['last_checked_epoch'] = epoch
+    if g['over'] >= rg['consecutive_epochs'] and not g['tripped']:
+        g.update(tripped=True, tripped_at={'epoch': epoch, 'at_step': at_step, 'at': now}, alert=GUARD_ALERT)
+    return g
+
+
 def planner_epoch_complete(planner):
     """True when the planner's current epoch is complete (its boundary work is due or done)."""
     epoch = planner._get('epoch')
@@ -342,13 +361,9 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
             extended_validation = {k: v for k, v in extended.items() if k != 'program_windows'}
         if not curves or curves[-1]['batch'] != origin_step + steps: evaluate()
         if not (root / 'epochs' / f'{epoch:06d}').exists(): recovery.retain(current_path, 'epochs', f'{epoch:06d}')
-        latest = curves[-1]['validation_loss']
-        guard['over'] = guard['over'] + 1 if latest > rg['ratio'] * rg['reference_loss'] else 0
-        guard['history'] = (guard['history'] + [{'epoch': epoch, 'at_step': origin_step + steps, 'fixed_panel_loss': latest}])[-50:]
-        guard['last_checked_epoch'] = epoch
-        if guard['over'] >= rg['consecutive_epochs'] and not guard['tripped']:
-            guard.update(tripped=True, tripped_at={'epoch': epoch, 'at_step': origin_step + steps, 'at': time.time()},
-                         alert='fixed-panel validation regressed beyond the sealed reference; adoptions HELD; owner review required')
+        state = json.loads(json.dumps(guard))
+        guard.clear(); guard.update(guard_update(dict(state), rg, epoch=epoch, at_step=origin_step + steps,
+                                                 loss=float(curves[-1]['validation_loss']), now=time.time()))
         publish(root, 'learning-guard.json', guard)
         if guard['tripped']:
             boundary.status.update(state='held_by_learning_guard', last={'at_step': origin_step + steps, 'reason': guard['alert']})

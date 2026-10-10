@@ -28,6 +28,7 @@ EXPECTED_FIXTURE_IDS = (
     'pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_refusals_mutate_nothing',
     'pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_restart_reloads_composite_and_next_update_is_bitwise_identical',
     'pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1r7_publication_and_restart_require_the_accepted_envelope',
+    'pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_inbox_requires_in_time_terminal_acceptance',
 )
 
 if __name__ == '__main__':

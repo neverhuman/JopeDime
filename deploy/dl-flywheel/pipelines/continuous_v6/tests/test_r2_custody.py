@@ -268,12 +268,12 @@ class R2CustodyTests(V6Fixture, unittest.TestCase):
         self.assertNotIn('last_checked_epoch', json.loads((t / 'learning-guard.json').read_bytes()))
         return res['deferred_boundary']['epoch']
 
-    def restart(self, root, guard_cfg, *, budget=0.001, deadline=15):
+    def restart(self, root, guard_cfg, *, budget=0.001, deadline=15, updates=2, **kw):
         later = FakeBoundary()
         with mock.patch.object(R6, 'remaining', lambda d: d - time.time()), \
              mock.patch.object(R6, 'planner_epoch_complete', lambda planner: True):
-            out, _ = self.run_v6(root, self.config(max_new_updates=2, epoch_boundary_budget_seconds=budget, regression_guard=guard_cfg),
-                                 self.resume(root), boundary=later, deadline=time.time() + deadline)
+            out, _ = self.run_v6(root, self.config(max_new_updates=updates, epoch_boundary_budget_seconds=budget, regression_guard=guard_cfg),
+                                 self.resume(root), boundary=later, deadline=time.time() + deadline, **kw)
         return out, later, json.loads((root / 'training' / 'learning-guard.json').read_bytes())
 
     def test_g32_deferred_epoch_is_checked_before_adoption_and_trips(self):
@@ -304,11 +304,81 @@ class R2CustodyTests(V6Fixture, unittest.TestCase):
         ok = {'reference_loss': 1e9, 'ratio': 1.02, 'consecutive_epochs': 1}
         epoch = self.deferred_segment(root, ok)
         db = sqlite3.connect(t / 'batches.sqlite'); before = db.execute('SELECT count(*) FROM batches').fetchone()[0]; db.close()
-        out, later, guard = self.restart(root, ok, budget=1e6)
+        calls = []
+        class Counting(R6.BatchStream):   # the fixture's reserve() can return Waiting without writing a row (mutant g27)
+            def reserve(self, *a, **k):
+                calls.append(1); return super().reserve(*a, **k)
+        # updates=3 > the resumed local step (2), so a missing start-deferral guard WOULD enter the loop (mutant g27)
+        out, later, guard = self.restart(root, ok, budget=1e6, updates=3, planner_factory=Counting)
+        self.assertEqual(calls, [], 'no reservation attempt while a closed epoch is still unchecked')
         db = sqlite3.connect(t / 'batches.sqlite'); after = db.execute('SELECT count(*) FROM batches').fetchone()[0]; db.close()
         self.assertEqual((out['state'], later.calls, before), ('global_deadline_reached', [], after))
         self.assertNotIn('last_checked_epoch', guard)
         self.assertEqual(json.loads((t / 'result.json').read_bytes())['deferred_boundary']['epoch'], epoch)
+
+    def test_g32_guard_update_transitions(self):
+        """Mutation survivors g13/g14/g15: the pure transition, table-tested."""
+        rg = {'reference_loss': 1.0, 'ratio': 1.02, 'consecutive_epochs': 2}
+        g0 = {'schema': 'jope.v2-learning-guard/v1', **rg, 'over': 0, 'tripped': False, 'history': []}
+        at = R6.guard_update(g0, rg, epoch=1, at_step=10, loss=1.02, now=1.0)
+        self.assertEqual((at['over'], at['tripped']), (0, False), 'exactly ratio x reference is not a regression')
+        self.assertEqual(g0['history'], [], 'input state is not modified')
+        g = R6.guard_update(g0, rg, epoch=1, at_step=10, loss=1.0201, now=1.0); self.assertEqual((g['over'], g['tripped']), (1, False))
+        g = R6.guard_update(g, rg, epoch=2, at_step=20, loss=1.0, now=2.0); self.assertEqual(g['over'], 0, 'a good epoch resets the count')
+        g = R6.guard_update(g, rg, epoch=3, at_step=30, loss=1.5, now=3.0); self.assertFalse(g['tripped'])
+        g = R6.guard_update(g, rg, epoch=4, at_step=40, loss=1.5, now=4.0)
+        self.assertEqual((g['over'], g['tripped'], g['tripped_at']), (2, True, {'epoch': 4, 'at_step': 40, 'at': 4.0}))
+        g = R6.guard_update(g, rg, epoch=5, at_step=50, loss=0.5, now=5.0)
+        g = R6.guard_update(g, rg, epoch=6, at_step=60, loss=9.0, now=6.0)
+        g = R6.guard_update(g, rg, epoch=7, at_step=70, loss=9.0, now=7.0)
+        self.assertEqual((g['tripped'], g['tripped_at']['epoch'], g['alert'], g['last_checked_epoch']), (True, 4, R6.GUARD_ALERT, 7),
+                         'sticky: a later re-trip keeps the first trip identity')
+        self.assertEqual([h['epoch'] for h in g['history']], [1, 2, 3, 4, 5, 6, 7])
+        for i in range(60): g = R6.guard_update(g, rg, epoch=8 + i, at_step=80 + i, loss=0.1, now=8.0)
+        self.assertEqual(len(g['history']), 50)
+        with self.assertRaisesRegex(ValueError, 'finite'):
+            R6.guard_update(g0, rg, epoch=1, at_step=1, loss=float('nan'), now=1.0)
+
+    def test_g32_runner_refuses_malformed_policy_and_genesis_sidecar(self):
+        """Mutation survivors g05/g08."""
+        self.genesis(); root = self.base / 'campaign'
+        bad = ({'reference_loss': 1.0, 'ratio': 1.02}, {'reference_loss': 1.0, 'ratio': 0.5, 'consecutive_epochs': 3},
+               {'reference_loss': 1.0, 'ratio': 1.02, 'consecutive_epochs': 0}, {'reference_loss': -1.0, 'ratio': 1.02, 'consecutive_epochs': 3})
+        for rg in bad:
+            with self.assertRaisesRegex(ValueError, 'closed learning-guard policy'):
+                self.run_v6(root, self.config(regression_guard=rg), G.genesis_resume(root, execution_config_sha256=EXEC))
+        r = G.genesis_resume(root, execution_config_sha256=EXEC)
+        (root / 'training' / 'learning-guard.json').write_bytes(canonical({'schema': 'jope.v2-learning-guard/v1'}))
+        with self.assertRaisesRegex(ValueError, 'genesis has no learning-guard state'):
+            self.run_v6(root, self.config(), r)
+
+    def rebind(self, c, *, intent=None, verification=None, result=None):
+        """Rewrite terminal files with every sha binding recomputed, so only the edited clause can refuse."""
+        t = c / 'training'; load = lambda f: json.loads((t / f).read_bytes())
+        i, v, r = load('terminal-intent.json'), load('result-verification.json'), load('result.json')
+        i.update(intent or {}); v.update(verification or {}); r.update(result or {})
+        for f in ('terminal-intent.json', 'result-verification.json', 'result.json'): os.chmod(t / f, stat.S_IWUSR | stat.S_IRUSR)
+        (t / 'terminal-intent.json').write_bytes(canonical(i)); v['intent_sha256'] = sha(canonical(i))
+        (t / 'result-verification.json').write_bytes(canonical(v))
+        r.update(intent_sha256=sha(canonical(i)), verification_sha256=sha(canonical(v))); (t / 'result.json').write_bytes(canonical(r))
+
+    def test_f2_fully_rebound_unpassed_or_unclean_closure_refuses(self):
+        """Mutation survivors x02/x03: with every binding consistent, the passed / CLEAN clauses alone must refuse."""
+        root = self.completed()
+        c = self.copy(root, 'unpassed'); self.rebind(c, verification={'passed': False})
+        with self.assertRaisesRegex(ValueError, 'passed verification'):
+            self.resume(c)
+        c = self.copy(root, 'unclean'); self.rebind(c, intent={'state': 'waiting_for_memory'}, verification={'state': 'waiting_for_memory'},
+                                                    result={'state': 'waiting_for_memory'})
+        with self.assertRaisesRegex(ValueError, 'clean terminal state'):
+            self.resume(c)
+        c = self.copy(root, 'resealed-guard')   # mutant g18: verification's sealed guard replaced, sidecar and its sha unchanged
+        reset = dict(json.loads((c / 'training' / 'result-verification.json').read_bytes())['learning_guard'], tripped=True, over=99)
+        self.rebind(c, verification={'learning_guard': reset})
+        with self.assertRaisesRegex(ValueError, 'closure-sealed state'):
+            self.resume(c)
+        c = self.copy(root, 'rebound-ok'); self.rebind(c)
+        self.assertEqual(self.resume(c)['local_step'], 2, 'a faithful rebind of unchanged content still resumes')
 
     def test_f3_stale_control_or_checkpoint_refuses(self):
         root = self.completed()

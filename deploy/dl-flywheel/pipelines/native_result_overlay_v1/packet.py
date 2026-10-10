@@ -14,17 +14,26 @@ Invariants:
 - Census: five closed classes with closed reasons summing exactly to the consumed rows of that packet's build.
 - Fixed flags: ``new_ce_teachers == 0``, ``optimizer_updates == 0``, ``admission_committed is False``; every overlay
   record is CE-false with ``source_kind == native_overlay_verified_s1`` on a train partition.
+- Admission requires an in-time terminal result: ``validate_chain`` and ``completed_packet`` accept a packet only from
+  its own build root (``<root>/packet.json``) holding the create-only ``overlay-accepted.json`` that pins the exact
+  success-marker bytes, the packet, head and sequence, the UNCHANGED original bound sealed in the marker, and a
+  post-durable-marker clock sample strictly inside that bound -- and no ``overlay-refused.json``. A late root kept for
+  custody is never admissible merely because its packet, receipt or marker exist. ``validate_packet`` is structural
+  only and admits nothing.
 """
 import math
+import os
 from array import array
 from collections import Counter
 
 from jope_flywheel.training_snapshot_native import NativeRecord
 
-from .common import (CLASSES, HEAD_SCHEMA, MARKER_SCHEMA, MAX_CHAIN_PACKETS, MAX_CHAIN_ROWS, MAX_CONTEXTS,
-                     MAX_PACKET_BYTES, MAX_ROWS, MAX_RSS_BYTES, MAX_SECONDS, MAX_SOURCE_ROWS, OVERLAY_WINDOW,
-                     PACKET_SCHEMA, REASONS, REF_KEYS, ROTATION_DOMAIN, SOURCE_KIND, STOPS, artifact_refs, canonical,
-                     digest, exact_canonical, hash64, need, read_exact, read_small, ref5, safe_path, sha)
+from .common import (ACCEPTED_NAME, CLASSES, HEAD_SCHEMA, MARKER_KEYS, MARKER_NAME, MARKER_SCHEMA, MAX_CHAIN_PACKETS,
+                     MAX_CHAIN_ROWS, MAX_CONTEXTS, MAX_PACKET_BYTES, MAX_ROWS, MAX_RSS_BYTES, MAX_SECONDS,
+                     MAX_SOURCE_ROWS, MAX_TERMINAL_BYTES, OVERLAY_WINDOW, PACKET_SCHEMA, REASONS, REF_KEYS,
+                     REFUSED_NAME, ROTATION_DOMAIN, SOURCE_KIND, STOPS, TERMINAL_KEYS, TERMINAL_SCHEMA, artifact_refs,
+                     canonical, check_bound, digest, exact_canonical, hash64, in_bound, need, read_exact, read_small,
+                     ref5, safe_path, sha)
 from .labels_overlay import RECORD_FIELDS, record_from_json
 
 PACKET_KEYS = frozenset({'schema', 'seq', 'predecessor_overlay_head_sha256', 'chain', 'pins', 'campaigns', 'sources',
@@ -340,7 +349,8 @@ class ChainView:
 
 
 def validate_packet(packet_ref, *, predecessor_head):
-    """Strict read-only validation of ONE published delta packet (no whole-chain properties)."""
+    """Strict read-only STRUCTURAL validation of ONE delta packet (no whole-chain properties, no admission: an
+    admissible packet additionally needs its in-time terminal acceptance, see ``accepted_publication``)."""
     raw = read_exact(packet_ref, MAX_PACKET_BYTES)
     p = exact_canonical(raw)
     validate_doc(p)
@@ -348,31 +358,77 @@ def validate_packet(packet_ref, *, predecessor_head):
     return p
 
 
+LATE_REFUSAL = 'overlay publication refused: late terminal record kept for custody'
+
+
+def accepted_publication(packet_ref, *, head_sha256, predecessor_head, seq):
+    """Consumer gate: the packet's own build root holds an in-time terminal acceptance and no late refusal.
+
+    The acceptance must pin the exact success-marker bytes, this packet ref, head, predecessor head and sequence, and
+    carry the UNCHANGED original bound sealed in the marker with a post-durable-marker sample strictly inside it.
+    Returns the acceptance record."""
+    need(type(packet_ref) is dict and type(packet_ref.get('path')) is str, 'packet ref')
+    path = safe_path(packet_ref['path'])
+    root = path.parent
+    need(path == root / 'packet.json', 'packet is the packet.json of its build root')
+    need(not os.path.lexists(root / REFUSED_NAME), LATE_REFUSAL)
+    need(os.path.lexists(root / MARKER_NAME) and os.path.lexists(root / ACCEPTED_NAME),
+         'overlay publication has no success marker and in-time terminal acceptance')
+    marker_raw = read_small(root / MARKER_NAME, MAX_TERMINAL_BYTES)
+    marker = exact_canonical(marker_raw)
+    need(type(marker) is dict and set(marker) == MARKER_KEYS and marker['schema'] == MARKER_SCHEMA and
+         marker['packet'] == packet_ref and marker['head_sha256'] == head_sha256 and
+         marker['predecessor_overlay_head_sha256'] == predecessor_head and marker['seq'] == seq,
+         'overlay success marker binds this packet, head and sequence')
+    bound = check_bound(marker['bound'])
+    a = exact_canonical(read_small(root / ACCEPTED_NAME, MAX_TERMINAL_BYTES))
+    need(type(a) is dict and set(a) == TERMINAL_KEYS and a['schema'] == TERMINAL_SCHEMA and a['verdict'] == 'accepted'
+         and a['stage'] == 'after_durable_marker' and a['acceptance'] is None, 'accepted overlay terminal record')
+    need(a['root'] == str(root) and a['packet'] == packet_ref and a['receipt'] == marker['receipt'] and
+         a['head_sha256'] == head_sha256 and a['predecessor_overlay_head_sha256'] == predecessor_head and
+         a['seq'] == seq, 'acceptance binds this packet, head and sequence')
+    need(a['marker'] == {'path': str(root / MARKER_NAME), 'sha256': sha(marker_raw), 'bytes': len(marker_raw)},
+         'acceptance pins the exact success marker bytes')
+    need(a['bound'] == bound, 'acceptance carries the unchanged original bound sealed in the marker')
+    need(in_bound(a['sample'], bound), 'overlay publication qualified inside its original bound')
+    # Checked again last: a refusal written by a build still running past its bound is seen as late as possible.
+    need(not os.path.lexists(root / REFUSED_NAME), LATE_REFUSAL)
+    return a
+
+
 def validate_chain(packet_refs_in_order, *, expected_head):
-    """Strictly validate packets 1..n in order and return the cumulative ``ChainView`` ending at ``expected_head``."""
+    """Strictly validate packets 1..n in order and return the cumulative ``ChainView`` ending at ``expected_head``.
+
+    Every packet must also be an in-time terminal publication (``accepted_publication``); the gate runs after the
+    structural and whole-chain checks, so it never relaxes them."""
     need(type(packet_refs_in_order) in (list, tuple) and 0 < len(packet_refs_in_order) <= MAX_CHAIN_PACKETS and
          hash64(expected_head), 'ordered bounded packet refs and an expected head')
-    view = ChainView()
+    view, links = ChainView(), []
     for ref in packet_refs_in_order:
         raw = read_exact(ref, MAX_PACKET_BYTES)
         p = validate_doc(exact_canonical(raw))
+        before = view.head_sha256
         view.add(p, packet_sha256=sha(raw), packet_bytes=len(raw), path=ref['path'])
+        links.append((ref, view.head_sha256, before, view.seq))
         del raw, p                                        # no raw bytes or parsed packets are retained
     need(view.head_sha256 == expected_head, 'chain head recomputes to the expected head')
+    for ref, head, before, seq in links:
+        accepted_publication(ref, head_sha256=head, predecessor_head=before, seq=seq)
     return view
 
 
 def completed_packet(root, *, predecessor_head):
-    """Read a build root through its success marker (written last); returns (packet, packet_ref, head)."""
+    """Read an ACCEPTED build root through its success marker; returns (packet, packet_ref, head)."""
     root = safe_path(root)
-    marker = exact_canonical(read_small(root / 'overlay-complete.json', 1024 * 1024))
-    need(marker.get('schema') == MARKER_SCHEMA and marker['packet']['path'] == str(root / 'packet.json'),
-         'overlay success marker')
+    marker = exact_canonical(read_small(root / MARKER_NAME, MAX_TERMINAL_BYTES))
+    need(type(marker) is dict and marker.get('schema') == MARKER_SCHEMA and type(marker.get('packet')) is dict and
+         marker['packet'].get('path') == str(root / 'packet.json'), 'overlay success marker')
     p = validate_packet(marker['packet'], predecessor_head=predecessor_head)
     head = head_sha256(canonical(p), predecessor_head)
     need(head == marker['head_sha256'] and p['seq'] == marker['seq'], 'marker head/sequence')
+    accepted_publication(marker['packet'], head_sha256=head, predecessor_head=predecessor_head, seq=p['seq'])
     return p, marker['packet'], head
 
 
 __all__ = ['ChainView', 'ChainRow', 'head_sha256', 'head_from_sha', 'validate_doc', 'validate_packet',
-           'validate_chain', 'completed_packet', 'overlay_programs_digest']
+           'validate_chain', 'completed_packet', 'accepted_publication', 'overlay_programs_digest']

@@ -1,7 +1,7 @@
 """Isolated, exact-roster CPU fixtures for the v2.0.0 learner packages; additive to the prior812 identities.
 
-Families (158 identities): continuous_v6 37, boundary_admission_v2 23, generated_target_preparation_v2 36,
-native_result_overlay_v1 30 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
+Families (168 identities): continuous_v6 40, boundary_admission_v2 24, generated_target_preparation_v2 36,
+native_result_overlay_v1 36 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
 fixtures replace module globals and clocks.  final_capture_v1 runs through its own pinned runner, which supports the
 integrated tree.  The other four run through the child mode below: the boundary/preparation/overlay runners shipped
 inside those packages bind the lane's external base export manifest and an older candidate root, which are not part
@@ -34,9 +34,9 @@ R6_PREREGISTRATION_SHA256 = 'd228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f
 
 # Execution order follows the import dependencies (continuous_v6 imports the other four packages).
 SOURCE_PINS_SHA256 = {
-    'boundary_admission_v2': '93b3190ac4a7fe811bca27bcc9f0bced28fe112d356226c04c5a6440d442e5c2',
+    'boundary_admission_v2': '25d4910ffddbd1c66cbaa6e01dd2d39181b106da0bb2caffaadc1d774ab003fc',
     'generated_target_preparation_v2': 'e13111f7166e55036364b42b74132c972c1dc5f1deb54d21b1f2ce1384d01f5a',
-    'native_result_overlay_v1': '3df3f100a27b7024a89cd7b70dc76f51ff0051909a9538ba5f20053773bf3d88',
+    'native_result_overlay_v1': '3b43721a17cb6d41486012f4b311b20be78a6d337fa5676fee1433cd08fea31d',
     'final_capture_v1': '7b5f44511c66d6d4c3d5bd54f547a76c0c9d59c87f82b69f74feebd861af9ca4',
 }
 CONTINUOUS_V6_PINS = {
@@ -46,9 +46,9 @@ CONTINUOUS_V6_PINS = {
     'genesis.py': '6cd7a44566c692e656e740d547c2f01137718cb002174efa93463940a1d1a04e',
     'parity_probe.py': 'a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142',
     'resume_v6.py': '9029f2f44a9136945a4c1f3007515640f26e1b7a8bca03f17655e0158bc94181',
-    'runner_v6.py': 'd5621a48a1f1922e32c172b02367d94334c0e40716eb8140ace006b5ddc55685',
+    'runner_v6.py': 'db87374f1a2222c4d43a926b89a756969dc5fe927ba0d80a0e7f89d6f58c0b0a',
     'tests/__init__.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    'tests/test_r2_custody.py': '5af918c56c593b08b122a23a5c17e488d305ab2f27f6c73feca52c120880df9c',
+    'tests/test_r2_custody.py': '6eedd89a39074b9108663a894f2fac634f3d9c053f0821e94fa437644a297ab0',
     'tests/test_runner_v6.py': 'ca070ad813ad2a702df585244b4fd5506290e67a916636f7c580d1a765438b42',
 }
 CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6Tests.' + name for name in (
@@ -67,6 +67,7 @@ CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6
     'test_f2_clean_closure_resumes_and_binds_every_file',
     'test_f2_failed_closure_writes_failure_and_no_clean_result',
     'test_f2_fatal_and_markers_refuse_and_runner_rechecks_basis',
+    'test_f2_fully_rebound_unpassed_or_unclean_closure_refuses',
     'test_f2_missing_or_interrupted_verification_refuses',
     'test_f2_rebound_or_failed_verification_refuses',
     'test_f2_stale_closure_of_an_earlier_segment_refuses',
@@ -85,17 +86,19 @@ CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6
     'test_g32_deferred_epoch_is_checked_before_adoption_and_trips',
     'test_g32_deferred_epoch_with_too_little_time_defers_again_without_reservation',
     'test_g32_guard_state_is_sealed_in_the_closure',
+    'test_g32_guard_update_transitions',
     'test_g32_learning_guard_holds_adoptions_and_is_sticky',
+    'test_g32_runner_refuses_malformed_policy_and_genesis_sidecar',
 )) + tuple('pipelines.continuous_v6.tests.test_r2_custody.R2ClockAndOwnerTests.' + name for name in (
     'test_f6_gpu_exclusive_and_pinned',
     'test_f6_stopped_owners_must_be_closed',
     'test_f6_unit_membership_and_inclusive_allocation',
     'test_f6_window_uses_boot_clock_and_fails_closed',
 ))
-EXPECTED_COUNTS = {'boundary_admission_v2': 23, 'generated_target_preparation_v2': 36,
-                   'native_result_overlay_v1': 30, 'final_capture_v1': 32, 'continuous_v6': 37}
+EXPECTED_COUNTS = {'boundary_admission_v2': 24, 'generated_target_preparation_v2': 36,
+                   'native_result_overlay_v1': 36, 'final_capture_v1': 32, 'continuous_v6': 40}
 OWN_RUNNER = {'final_capture_v1'}
-TOTAL = 158
+TOTAL = 168
 CHILD_SCHEMA = 'jope.v2-learner-offline-child/v1'
 RECEIPT_SCHEMA = 'jope.v2-learner-offline/v1'
 SCOPE = ('Offline CPU fixtures on private temporary worlds only. No live campaign, optimizer launch, planner, '
