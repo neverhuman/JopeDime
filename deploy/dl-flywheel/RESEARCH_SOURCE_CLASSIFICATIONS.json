@@ -2790,13 +2790,13 @@
       "sha256": "afe0461447c66608643e0ee3b1a344580bdac28753d922afcd3db69704c6f68a"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/measured.py": {
-      "bytes": 6770,
+      "bytes": 6849,
       "classification": {
         "reason": "Offline C11 IPO/DPO, compressed-trie PUCT/Gumbel and OPE source. Data-free fixtures are a separate family. Scratch evidence stays outside this tree and is not a promotion.",
         "role": "research"
       },
       "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
-      "sha256": "095f76a601be5b6156847d4b6bb784380c959e0a35bbbf26faa0cbd5e6085927"
+      "sha256": "499013872a7925e71e3b76653eb43d0ac63fa512c4dc9b131380e23ec3dfb382"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/ope.py": {
       "bytes": 4474,
@@ -2817,13 +2817,13 @@
       "sha256": "bb404f5d9b159ebf444c25191eed1c57a7eb65f6caa6ad89e2abc1b4e684c9a8"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/puct.py": {
-      "bytes": 3758,
+      "bytes": 4255,
       "classification": {
         "reason": "Offline C11 IPO/DPO, compressed-trie PUCT/Gumbel and OPE source. Data-free fixtures are a separate family. Scratch evidence stays outside this tree and is not a promotion.",
         "role": "research"
       },
       "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
-      "sha256": "ab0d6ea80a603ffa7d1cf5fff2843410c7b176259b0e14ff117c7ce739feec82"
+      "sha256": "171428852757e00ba8de900c8e9ec90257fde7bed7dce71cd1bcd18110a81f17"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/torch_loss.py": {
       "bytes": 6358,

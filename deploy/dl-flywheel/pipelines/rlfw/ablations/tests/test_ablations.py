@@ -88,6 +88,17 @@ class MeasuredTests(unittest.TestCase):
         self.assertEqual(again["q_grid"], 335805)
         self.assertEqual(again["role"], "train")
 
+    def test_nonfinite_threshold_refuses_pairs(self):
+        rows = [_row(SHA, 2_000_000), _row(SHA_B, 0, tokens=(1, 4, 2))]
+        for bad in (float("nan"), float("inf"), float("-inf"), None):
+            with self.assertRaises(ValueError):
+                build_pairs(rows, bad)
+        pairs, refused = build_pairs(rows, 0.0)
+        self.assertEqual(refused, {})
+        self.assertEqual(len(pairs), 1)
+        self.assertEqual(pairs[0]["winner"], SHA)
+        self.assertAlmostEqual(pairs[0]["margin"], 2.0)
+
 
 class LossTests(unittest.TestCase):
     def test_ipo_and_dpo_at_zero_margin(self):
@@ -124,13 +135,37 @@ class SearchTests(unittest.TestCase):
         one = puct_select(programs, priors, q_of, 1)
         self.assertEqual(one["selected"], [1])
         self.assertEqual(seen, [1])
-        self.assertFalse(one["uses_measured_q_for_selection"])
+        self.assertTrue(one["backs_up_selected_measured_q"])
+        self.assertFalse(one["reads_unselected_q"])
         seen.clear()
         both = puct_select(programs, priors, q_of, 2)
         self.assertEqual(sorted(both["selected"]), [0, 1])
-        self.assertEqual(sorted(seen), [0, 1])
+        self.assertEqual(seen, both["selected"])
         with self.assertRaises(ValueError):
             puct_select(programs, priors, q_of, 1, c=2.0)
+
+    def test_selected_q_backup_changes_the_next_program(self):
+        programs = [(1, 10, 2), (1, 11, 2), (1, 11, 3, 2)]
+        priors = [1 / 3, 1 / 3, 1 / 3]
+
+        def run(first_q):
+            seen = []
+
+            def q_of(index):
+                seen.append(index)
+                return first_q if index == 1 else 0.0
+
+            chosen = puct_select(programs, priors, q_of, 2)
+            return chosen["selected"], seen
+
+        low, seen_low = run(-1.0)
+        high, seen_high = run(1.0)
+        self.assertEqual(low[0], 1)
+        self.assertEqual(high[0], 1)
+        self.assertEqual(low[1], 0)
+        self.assertEqual(high[1], 2)
+        self.assertEqual(seen_low, low)
+        self.assertEqual(seen_high, high)
 
     def test_gumbel_is_seeded_and_does_not_take_q(self):
         self.assertNotIn("q", inspect.signature(gumbel_topk).parameters)

@@ -116,8 +116,13 @@ def target_allowed(measurement):
 
 def build_pairs(measurements, tau_c):
     """Same-context pairs with measured q_w - q_l > tau_c. Target roles only."""
-    if not isinstance(tau_c, (int, float)) or isinstance(tau_c, bool) or tau_c < 0:
-        _fail("tau_c must be >= 0")
+    if (
+        isinstance(tau_c, bool)
+        or not isinstance(tau_c, (int, float))
+        or not math.isfinite(tau_c)
+        or tau_c < 0
+    ):
+        _fail("tau_c must be finite and >= 0")
     by_context = defaultdict(list)
     refused = defaultdict(int)
     for row in measurements:

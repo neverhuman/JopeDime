@@ -1,7 +1,9 @@
 """Compressed-trie PUCT over complete programs.
 
-Measured q is revealed only after a leaf is chosen. It is not an input to
-the selection score. c = 1.25 and seed = 7 are pre-registered.
+Measured q is read only at the selected leaf, then backed up as a
+visit-weighted mean. Unselected and predicted q are never read. c = 1.25
+and seed = 7 are pre-registered. Ties break by higher conditional prior,
+then smaller token id. The seed is not a draw.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ class _Node:
         self.program_index = None
         self.prior = 0.0
         self.visits = 0
+        self.value_sum = 0.0
 
 
 def _require_distribution(priors):
@@ -88,7 +91,8 @@ def puct_select(programs, priors, q_of, budget, c=PUCT_C, seed=PUCT_SEED):
             for token in choices:
                 child = node.children[token]
                 conditional = child.prior / node.prior
-                score = (
+                mean_q = 0.0 if child.visits == 0 else child.value_sum / child.visits
+                score = mean_q + (
                     PUCT_C
                     * conditional
                     * math.sqrt(max(node.visits, 1))
@@ -98,16 +102,22 @@ def puct_select(programs, priors, q_of, budget, c=PUCT_C, seed=PUCT_SEED):
             ranked.sort(reverse=True)
             node = node.children[ranked[0][3]]
             path.append(node)
+        q = q_of(node.program_index)
+        if isinstance(q, bool) or not isinstance(q, (int, float)) or not math.isfinite(q):
+            raise ValueError("revealed q must be finite")
+        q = float(q)
         for seen in path:
             seen.visits += 1
+            seen.value_sum += q
         done.add(node.program_index)
         selected.append(node.program_index)
-        revealed.append(q_of(node.program_index))
+        revealed.append(q)
     return {
         "selected": selected,
         "q": revealed,
         "c": PUCT_C,
         "seed": PUCT_SEED,
         "budget": budget,
-        "uses_measured_q_for_selection": False,
+        "backs_up_selected_measured_q": True,
+        "reads_unselected_q": False,
     }
