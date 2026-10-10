@@ -574,6 +574,14 @@
       "reason": "9 isolated native-pool orchestration or finite-action math fixtures. Additive to prior587; mathematical examples and simulated dispatch are not deployed actor learning, live resource or native scoring qualification.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/ablations/tests/test_ablations.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "policy"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "role": "regression",
       "subsystems": [

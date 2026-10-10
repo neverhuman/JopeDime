@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "03e157898de5f976b29c52f6de0b8563867fdef8d8afc1bcce73e9f226c1e532"
+      "sha256": "506438d58526a396f5e8214640e562c53c0fc25791d333d342748cc735d4630b"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "c31e3d981e061cf2439fc9fddc9a958b7ca9dbd5515b1b9c23676847dee88d6e"
+      "sha256": "0d918e861631b17b272e10c1c2dc3e5ae9cddfdf605807ca730875638b085227"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -5299,7 +5299,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "04326b4c8a6e5c6e99311b8b8c94b95ba2f324457acbbb817563c0a41fc0d685"
+      "sha256": "117cc2164e53beda2b1e6b6719e103a2ffe14834b9100e7f0a8cfe592e23b5cc"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
