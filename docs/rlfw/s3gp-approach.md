@@ -6,6 +6,7 @@ The cache added by this lane is commit
 The lifecycle repair (ledger reload under a lock, and no S3 prefix rule
 from a listing) is `BudgetLedger.admit` and `proposal_from_rows` in
 `s3_lifecycle.py`, at the line numbers cited below.
+That repair is commit `5c456d5294380be2b9edf21652c717132038b50c`.
 Measurements below were taken on this host on 2026-10-10.
 Receipts live under `.agent/proposals/claude-rlfw-20261009/rlfw-grok/` and are
 outside git (`.gitignore` ignores `.agent/`). A figure that was not measured
