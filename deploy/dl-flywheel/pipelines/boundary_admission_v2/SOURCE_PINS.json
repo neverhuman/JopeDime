@@ -53,8 +53,8 @@
    "sha256": "58a25f01d36540ea0104621bbc012cd8c687c2f18775ccef7abe6bf5325794d6"
   },
   "tests/test_overlay_components.py": {
-   "bytes": 22110,
-   "sha256": "60f8aaf37797c82fb367269b1bd90702b7daa75b3b92361d413988ec0b038250"
+   "bytes": 23107,
+   "sha256": "d3eb3d456bf1bdb5103f8aef93bdd18187ac193b30087d69164fe89c3e9f7f5a"
   }
  }
 }

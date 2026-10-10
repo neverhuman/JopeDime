@@ -1360,7 +1360,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "40 isolated CPU fixtures for the v2.0.0 continual learner, build r2.6 (runner_v6, genesis, resume, custody, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks and the closure-sealed G32 learning guard with exactly-once epoch checks, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "40 isolated CPU fixtures for the v2.0.0 continual learner, build r2.7 (runner_v6, genesis, resume, custody, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks and the closure-sealed G32 learning guard with exactly-once epoch checks, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py": {
       "discovery": {
@@ -1370,7 +1370,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "40 isolated CPU fixtures for the v2.0.0 continual learner, build r2.6 (runner_v6, genesis, resume, custody, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks and the closure-sealed G32 learning guard with exactly-once epoch checks, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "40 isolated CPU fixtures for the v2.0.0 continual learner, build r2.7 (runner_v6, genesis, resume, custody, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks and the closure-sealed G32 learning guard with exactly-once epoch checks, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "discovery": {
@@ -1580,7 +1580,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "36 isolated CPU fixtures for train-only native-result overlay packet chains (W3 revision 2 with the post-durable terminal publication check) via run_v2_offline.py, additive after prior812. Delta-chain validation, anchors and label unions, emission body identity, role guards, row/token caps and create-only roots; one fixture reads the vendored R6 dev-split preregistration under its pinned sha256. No live native results, S3, GPU or network."
+      "scope": "38 isolated CPU fixtures for train-only native-result overlay packet chains (W3 revision 2 with the caller-written bounded terminal acceptance envelope) via run_v2_offline.py, additive after prior812. Delta-chain validation, anchors and label unions, emission body identity, role guards, row/token caps and create-only roots; one fixture reads the vendored R6 dev-split preregistration under its pinned sha256. No live native results, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {
       "discovery": {
@@ -9594,7 +9594,7 @@
         "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals.",
         "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed.",
         "Flywheel aggregate runner additionally wires native pool21 and RL math9 after original587 (617 total). Collection/execution receipts must prove each family independently; source import ran only the30 added fixtures and does not claim a full617 rerun. RLFW remains a separate lane command.",
-        "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 168 exact identities in five isolated CPU families (continuous_v6 40, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 36, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim."
+        "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 170 exact identities in five isolated CPU families (continuous_v6 40, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 38, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim."
       ],
       "feature_selection": "not-applicable",
       "inputs": [

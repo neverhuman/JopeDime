@@ -39,7 +39,7 @@ from jope_flywheel.score_join import build_records
 from neural_native_train import fit_preprocessing
 from neural_outbox import Outbox
 
-from pipelines.native_result_overlay_v1 import build_packet
+from pipelines.native_result_overlay_v1 import accept_publication, build_packet
 from pipelines.native_result_overlay_v1 import common as C
 
 SENTINEL = struct.pack('<Q', 0x7FF4DEADBEEF5EED)   # signaling NaN payload in every outer-test cell
@@ -427,8 +427,15 @@ class World:
         args.update(over)
         return args
 
-    def build(self, rows, root, **over):
-        return build_packet(iter(rows), **self.args(root, **over))
+    def build(self, rows, root, *, accept=True, **over):
+        """The fixture CALLER: build, then -- only after build_packet RETURNED -- seal the caller's bounded terminal
+        acceptance (in-process return of the returned marker; post-return sample).  ``accept=False`` stops after the
+        return, leaving the root unadmitted."""
+        receipt = build_packet(iter(rows), **self.args(root, **over))
+        if accept:
+            receipt['acceptance'] = accept_publication(Path(receipt['packet']['path']).parent, physical={
+                'kind': 'in_process_return', 'returned_sha256': receipt['marker']['sha256']})
+        return receipt
 
 
 def npy(a):

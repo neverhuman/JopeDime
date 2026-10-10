@@ -8,6 +8,8 @@ Invariants:
 - Revision 2: packets are DELTAS (<= 2,048 new rows each) in a head chain of <= 4,096 packets / <= 500,000 rows.
 - Terminal qualification: one paired original bound (wall deadline, the matching monotonic deadline, the boot id),
   fixed when the build starts and never reset; a clock sample is in time only strictly inside it on the same boot.
+- The builder never certifies itself: admission needs the CALLER's bounded terminal acceptance envelope (the C10a r7
+  design), written only after ``build_packet`` RETURNED, outside the root at ``acceptance_path(root)``.
 Nothing here touches S3, a GPU, an outbox, a planner, an optimizer or a GP/program executor.
 """
 import hashlib
@@ -26,14 +28,23 @@ HEAD_SCHEMA = 'jope.native-overlay-head/v1'
 WINDOW_SCHEMA = 'jope.native-overlay-window/v1'
 RECEIPT_SCHEMA = 'jope.native-result-overlay-build/v1'
 MARKER_SCHEMA = 'jope.native-result-overlay-complete/v2'  # v2: seals the original paired bound
-TERMINAL_SCHEMA = 'jope.native-result-overlay-terminal/v1'
+TERMINAL_SCHEMA = 'jope.native-result-overlay-terminal/v2'  # the builder's late refusal record only (custody)
 MARKER_NAME = 'overlay-complete.json'
-ACCEPTED_NAME = 'overlay-accepted.json'   # in-time terminal acceptance; every consumer requires it
-REFUSED_NAME = 'overlay-refused.json'     # late terminal refusal (root kept for custody); every consumer refuses
+REFUSED_NAME = 'overlay-refused.json'     # builder's late terminal refusal (root kept for custody); consumers refuse
 MARKER_KEYS = frozenset({'schema', 'packet', 'receipt', 'head_sha256', 'predecessor_overlay_head_sha256', 'seq',
                          'bound'})
 TERMINAL_KEYS = frozenset({'schema', 'verdict', 'stage', 'root', 'packet', 'receipt', 'marker', 'head_sha256',
-                           'predecessor_overlay_head_sha256', 'seq', 'bound', 'sample', 'acceptance'})
+                           'predecessor_overlay_head_sha256', 'seq', 'bound', 'sample'})
+# The caller's bounded terminal acceptance envelope (same closed shape and physical evidence as C10a r7's
+# ``jope.c10a-bounded-terminal-acceptance/v1``); every consumer requires it.
+ACCEPTANCE_SCHEMA = 'jope.native-overlay-bounded-terminal-acceptance/v1'
+ACCEPTANCE_SUBJECT = 'native_overlay_root'
+ACCEPTANCE_SUFFIX = '.acceptance.json'     # <parent>/<root name>.acceptance.json, outside the build root
+ACCEPTANCE_KEYS = frozenset({'schema', 'subject', 'root', 'artifacts', 'marker', 'bound', 'physical',
+                             'post_publication_sample', 'verdict', 'reason'})
+PHYSICAL_KEYS = {'systemd_unit': frozenset({'kind', 'unit', 'result', 'exec_main_status', 'exit_monotonic_usec',
+                                            'boot_id'}),
+                 'in_process_return': frozenset({'kind', 'returned_sha256'})}
 BOUND_KEYS = frozenset({'wall_deadline_unix', 'monotonic_deadline', 'boot_id'})
 SAMPLE_KEYS = frozenset({'boot_id', 'monotonic', 'wall_unix'})
 MAX_TERMINAL_BYTES = 1024 * 1024
@@ -243,6 +254,28 @@ def in_bound(sample, bound):
          _finite(sample['wall_unix']) and type(sample['boot_id']) is str, 'strict clock sample')
     return (sample['boot_id'] == bound['boot_id'] and sample['wall_unix'] < bound['wall_deadline_unix'] and
             sample['monotonic'] < bound['monotonic_deadline'])
+
+
+def acceptance_path(root):
+    """The one place a root's caller acceptance envelope lives: a sibling of the root, never inside it."""
+    root = Path(root)
+    return root.parent / (root.name + ACCEPTANCE_SUFFIX)
+
+
+def physical_ok(physical, bound, post, returned_sha256):
+    """Physical in-time success of the RETURNED build against the ORIGINAL bound (C10a r7 ``physical_ok``).
+
+    ``systemd_unit``: the build unit's own terminal record (Result=success, ExecMainStatus=0,
+    ExecMainExitTimestampMonotonic on the same boot strictly before the monotonic deadline).  ``in_process_return``:
+    the call returned exactly the sealed success marker and the caller's post-return sample is inside the bound."""
+    need(type(physical) is dict and physical.get('kind') in PHYSICAL_KEYS and
+         set(physical) == PHYSICAL_KEYS[physical['kind']], 'closed physical terminal evidence')
+    check_bound(bound)
+    if physical['kind'] == 'systemd_unit':
+        usec = physical['exit_monotonic_usec']
+        return (physical['result'] == 'success' and physical['exec_main_status'] == 0 and type(usec) is int and
+                0 < usec and usec / 1e6 < bound['monotonic_deadline'] and physical['boot_id'] == bound['boot_id'])
+    return physical['returned_sha256'] == returned_sha256 and in_bound(post, bound)
 
 
 def module_sha(module):
