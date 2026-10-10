@@ -594,7 +594,8 @@ class TrainingOracle(BlindOracle):
         return super()._resolve(*args, **kwargs)
 
     def before_attempt(self, context):
-        # Every reservation and evaluator request, including retries in one slot.
+        # Before every reservation and again before each evaluator request it
+        # authorizes, including retries in one slot.
         self.spec.campaign_window.require_open()
 
 

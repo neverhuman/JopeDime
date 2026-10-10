@@ -428,6 +428,40 @@ class BootstrapTests(unittest.TestCase):
     def test_wall_expiry_between_attempts_blocks_next_request(self):
         self.attempt_boundary(self, "wall deadline")
 
+    def reservation_boundary(self, f, change):
+        # Review of 939b294c: the clock changes inside the durable SQLite reservation.
+        with mock.patch(
+            "rlfw.arena.oracle.time.time", return_value=f.window.deadline_unix - 1
+        ) as clock:
+            value = f.scheduler(evaluate=lambda r: f.result(r, "infra_unknown"))
+            reserve = value.reserve_attempt
+
+            def reserve_across_boundary(key):
+                number = reserve(key)
+                CLOCK_CHANGES[change](f, clock)
+                return number
+
+            value.reserve_attempt = reserve_across_boundary
+            with self.assertRaises(RuntimeError):
+                value.run(max_contexts=1)
+            report = value.coverage_report()
+        # The consumed reservation stays an unavailable outcome; nothing was requested.
+        attempts = value.db.execute("SELECT number,result FROM attempts").fetchall()
+        self.assertEqual(attempts, [(1, None)])
+        self.assertEqual((f.calls, value.rows()), ([], []))
+        self.assertEqual(report["unknown_cost_attempts"], 1)
+        self.assertIsNone(report["evaluator_wall_seconds"])
+        self.assertTrue(all(not value.ledger.events(c.hwm_key) for c in f.contexts))
+
+    def test_wall_expiry_during_reservation_blocks_request(self):
+        self.reservation_boundary(self, "wall deadline")
+
+    def test_monotonic_expiry_during_reservation_blocks_request(self):
+        self.reservation_boundary(self, "monotonic expiry")
+
+    def test_reboot_during_reservation_blocks_request(self):
+        self.reservation_boundary(self, "other boot")
+
     def admission_boundary(self, f, change):
         # Review PR291-02: admission returns a valid grant after the window closed.
         with mock.patch(

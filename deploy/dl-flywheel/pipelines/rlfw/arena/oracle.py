@@ -31,7 +31,7 @@ class BlindOracle:
             )
 
     def before_attempt(self, context):
-        """Runs immediately before every attempt reservation and evaluator request."""
+        """Runs before each reservation and again before its evaluator request."""
 
     def execution_key(self, context, program):
         return digest(
@@ -244,6 +244,10 @@ class BlindOracle:
             attempt = (
                 attempt_store.reserve_attempt(attempt_key) if attempt_store else number
             )
+            if not cached:
+                # A durable reservation can cross a boundary. A refusal here leaves
+                # that consumed attempt's outcome unavailable and never retries it.
+                self.before_attempt(context)
             result = self.validate(
                 source if cached else self.evaluate({**request, "attempt": attempt}),
                 context,
