@@ -3,6 +3,7 @@
 Interface the C10b boundary inbox calls (see README.md):
   build_packet(rows_iter, *, native, store, authority, ..., predecessor_chain=None, predecessor_head=None, root,
                deadline) -> receipt
+  accept_publication(root, *, physical) -> envelope ref   # CALLER-ONLY, after build_packet RETURNED in time
   validate_chain(packet_refs_in_order, *, expected_head) -> ChainView (cumulative view)
   validate_packet(packet_ref, *, predecessor_head) -> packet dict (one packet, no whole-chain properties)
   head_sha256(packet_raw, predecessor_head) -> str
@@ -12,7 +13,8 @@ runner has fixed and pinned sys.path.
 """
 import importlib
 
-_EXPORTS = {'build_packet': 'build', 'validate_packet': 'packet', 'validate_chain': 'packet',
+_EXPORTS = {'build_packet': 'build', 'accept_publication': 'packet', 'validate_packet': 'packet',
+            'validate_chain': 'packet',
             'completed_packet': 'packet', 'head_sha256': 'packet', 'ChainView': 'packet',
             'overlay_snapshot': 'loader', 'overlay_ref_digest': 'loader', 'OverlayLoader': 'loader'}
 __all__ = sorted(_EXPORTS)

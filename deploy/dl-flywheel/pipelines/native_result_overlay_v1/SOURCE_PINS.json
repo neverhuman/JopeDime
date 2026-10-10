@@ -10,7 +10,9 @@
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_anchoring_to_the_exact_shard_baseline_pair",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_baseline_disagreement_refused",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_c10_r4_boundary_composite_identity_and_exposure_join",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_caller_acceptance_is_bounded_by_the_original_deadline",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_census_five_classes_sum_exactly",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_consumers_cannot_admit_before_the_caller_acceptance",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_consumers_require_the_exact_in_time_terminal_acceptance",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_direct_recomputation_equality",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_dry_run_every_offset",
@@ -18,10 +20,10 @@
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_old_shard_rows_byte_unchanged_and_old_labels_unchanged",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_outer_test_values_never_decoded",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_overlay_snapshot_identity_membership_and_mixed_base",
-  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_crossed_during_acceptance_write_is_refused_at_build_and_consume",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_crossed_during_final_directory_fsync_is_refused_at_build_and_consume",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_crossed_during_final_marker_write_is_refused_at_build_and_consume",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_in_time_control_is_accepted_end_to_end",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_late_refusal_storage_failure_stays_inadmissible",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_monotonic_bound_crossed_during_final_directory_fsync_is_refused",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_anchor_drift_refused",
   "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_duplicate_across_packets_refused",
@@ -47,16 +49,16 @@
  "schema": "jope.w3-offline-source-pins/v1",
  "source_pins": {
   "__init__.py": {
-   "bytes": 1308,
-   "sha256": "6921ce49b31cd64d2f4f078523a66c5036df60e0f34cc386cb23c4d22e774f86"
+   "bytes": 1461,
+   "sha256": "1a70a30358f3927b07558ef7e08180820efa7466ce1f09e6f7af9990953678d8"
   },
   "build.py": {
-   "bytes": 31464,
-   "sha256": "7f19f66d7c4d48c42b6e66b0b99d01ecc927c3ac1c62eb5b15112a1c403f5716"
+   "bytes": 31007,
+   "sha256": "9b46611dfcbf6d6a3553af01e0555304ce4fb709c2e942a6262ae5ebf14d29f4"
   },
   "common.py": {
-   "bytes": 11421,
-   "sha256": "fb4e50b5f9245dceb7d132717ae7c8695506ee4706ef51b7cc3e105811b43e8a"
+   "bytes": 13725,
+   "sha256": "39f21f29315eaad1c52921f49da459ac2a513564e972868ffa8eac206419f51d"
   },
   "labels_overlay.py": {
    "bytes": 4874,
@@ -71,24 +73,24 @@
    "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
   },
   "packet.py": {
-   "bytes": 28945,
-   "sha256": "55dcb204ac0704bf76589b5f3e4330bdfe6611be54bf2f30d386fe3096ab3059"
+   "bytes": 31932,
+   "sha256": "94193aecf3259e3ec0a1b855b77e7bf3d8c66df107f75c23acde2ea19805a496"
   },
   "run_offline.py": {
-   "bytes": 2558,
-   "sha256": "5f1870a76b67ba436450c569ccfe886ed01ea14c11aef9b424449ccbc1d448d2"
+   "bytes": 2663,
+   "sha256": "d9209c7982012cf38562abe7501927078526b290c804805fc7bf132fcf3c238b"
   },
   "tests/__init__.py": {
    "bytes": 0,
    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "tests/test_overlay.py": {
-   "bytes": 63861,
-   "sha256": "82b47014e5590f4a99ee872acba70e3036eb3f3a49c465a696df76c461631628"
+   "bytes": 75015,
+   "sha256": "bb9ca4b2445cce40e492d9b4fd22293adbfb003fd012c86d8b6b08109b0b5e3b"
   },
   "tests/world.py": {
-   "bytes": 26117,
-   "sha256": "51c4bd89022bbdaf9d2efdb29edb318bd3eb80b76383d764c86613b49a463790"
+   "bytes": 26680,
+   "sha256": "82099d4f29df5612ac46d200933727e73fa4a5e277f8c08edba386577f8287a6"
   },
   "verify.py": {
    "bytes": 22162,

@@ -25,6 +25,7 @@ build_packet(rows_iter, *, native, store, authority, inputs, canonicalize, nativ
              preprocessing_sha256, registry_bytes, objective_sha256, source_pins, r6_roster_bytes, r6_roster_sha256,
              campaigns, sources, max_padded_tokens, root, deadline, predecessor_chain=None, predecessor_head=None,
              max_read_bytes=8 GiB) -> receipt
+accept_publication(root, *, physical) -> envelope ref   # CALLER-ONLY, after build_packet RETURNED in time
 validate_chain(packet_refs_in_order, *, expected_head) -> ChainView      # cumulative view; strict, read-only
 validate_packet(packet_ref: {path, sha256, bytes}, *, predecessor_head) -> packet dict   # ONE packet, no chain props
 head_sha256(packet_raw: bytes, predecessor_head: str | None) -> str
@@ -39,30 +40,48 @@ overlay_snapshot(base_snapshot, chain_view, *, max_padded_tokens) -> snapshot
   - every file is created with O_EXCL|O_NOFOLLOW, mode 0444, and fsynced together with its directory.
 - Nothing is written on a refusal before publication.
 
-**Terminal qualification** (CX-REV PR292 P2; the C10a r5/r7 post-durable rule). When the build starts it fixes one paired original bound: the wall `deadline`, the matching monotonic deadline (monotonic sampled before wall) and the boot id. The bound is never reset. After the marker and both directories are durable, the build samples the clocks again (boot, monotonic, wall, then monotonic and boot again):
-- **In time:** it writes the create-only `overlay-accepted.json` (`jope.native-result-overlay-terminal/v1`, `verdict: accepted`). This pins the exact marker bytes, the packet, receipt, head and sequence, the bound and the sample. The build samples once more after the acceptance is durable, and only then returns. The receipt it returns carries `acceptance`.
-- **Late at either point:** it writes the create-only `overlay-refused.json` (`verdict: refused`, with the stage and the late sample) and raises. The late root stays on disk for custody. Success is never returned at or after the deadline.
+**Terminal qualification** (CX-REV PR292 P2, reviews of `4293d771` and `053c2a97`; the C10a r7 design). The builder never certifies itself.
 
-A consumer's admission (`validate_chain`, `completed_packet`, and through them the boundary inbox at publication, adoption and restart) requires, for every packet, its root's acceptance:
-- verified against the marker bytes, the packet, head and sequence;
-- carrying the unchanged bound sealed in the marker, with a sample strictly inside it;
+- **The bound.** When the build starts it fixes one paired original bound, which is never reset: the wall `deadline`, the matching monotonic deadline (monotonic sampled before wall) and the boot id. The marker seals it.
+- **The builder's last check.** After the marker and both directories are durable, the build samples the clocks once more as defense in depth. A crossed bound writes the create-only `overlay-refused.json` (best effort: `jope.native-result-overlay-terminal/v2`, `verdict: refused`, with the late sample) and raises; the late root stays on disk for custody. The builder writes no positive terminal record.
+- **The caller's envelope.** Only after `build_packet` RETURNED does the caller call `accept_publication(root, physical=...)`. This samples the clocks first (boot, monotonic, wall, then monotonic and boot again) and writes the one create-only envelope `<parent>/<root name>.acceptance.json`, outside the root (`jope.native-overlay-bounded-terminal-acceptance/v1`, with the same closed shape as C10a's `jope.c10a-bounded-terminal-acceptance/v1`). The envelope pins:
+  - the exact marker bytes;
+  - the sealed packet and receipt, which are re-read exactly;
+  - the unchanged bound;
+  - the post-return sample;
+  - the physical evidence: `in_process_return` (the returned marker's sha256, plus a post-return sample strictly inside the bound) or `systemd_unit` (Result=success, ExecMainStatus=0, an exit monotonic timestamp before the monotonic deadline on the same boot).
+
+  If the predicate fails, the envelope is written with `verdict: refused` (custody) and the call raises.
+- **Fail-closed cases.** Each of these leaves no accepted envelope, so no admission:
+  - the build raised (late, an OSError after any internal write, or a refusal that could not be written);
+  - the build is still running (a mid-build read);
+  - the build returned but has not been accepted yet;
+  - the caller's envelope could not be written.
+
+A consumer's admission (`validate_chain` and `completed_packet`, and through them the boundary inbox at publication, adoption and restart, and `build_packet`'s predecessor re-validation) requires, for every packet, the caller's `accepted` envelope:
+- for this root and subject;
+- pinning the exact marker bytes, whose marker binds the packet, head and sequence;
+- pinning the sealed artifacts and carrying the unchanged bound sealed in the marker;
+- with physical in-time evidence;
 - with no `overlay-refused.json` in the root.
 
-A late root is never admissible merely because its packet, receipt or marker exist. `validate_packet` remains structural only and admits nothing.
+`validate_packet` remains structural only and admits nothing. A build must be accepted before the next packet can extend it.
 
 **Unbounded volume.** The build stops pulling rows from the iterator once it holds 2,048 distinct new keys or 1,024 touched contexts (also once 32,768 rows are consumed). It records the reason in `stopped` (`NEW_ROW_CAP` / `CONTEXT_CAP` / `SOURCE_ROW_CAP`, or `None` when the iterator is exhausted). The caller passes the **same iterator** to the next build with the extended chain, so no row is lost or consumed twice:
 
 ```python
 it = verified_results(source, since_head)
 while True:
-    r = build_packet(it, ..., predecessor_chain=refs or None, predecessor_head=head, root=new_root(), deadline=...)
+    root = new_root()
+    r = build_packet(it, ..., predecessor_chain=refs or None, predecessor_head=head, root=root, deadline=...)
+    accept_publication(root, physical={'kind': 'in_process_return', 'returned_sha256': r['marker']['sha256']})
     refs.append(r['packet']); head = r['head_sha256']
     if r['stopped'] is None: break
 ```
 
 ### `validate_chain`
 
-It strictly validates every packet in order (exact bytes, canonical JSON, closed schema) and recomputes the head chain to `expected_head`. After those checks, it requires every packet's in-time terminal acceptance (see **Terminal qualification** above). Across the **whole chain** it refuses:
+It strictly validates every packet in order (exact bytes, canonical JSON, closed schema) and recomputes the head chain to `expected_head`. After those checks, it requires every packet's caller acceptance envelope (see **Terminal qualification** above). Across the **whole chain** it refuses:
 - a broken predecessor link, sequence or chain position (`chain.packets_before` / `rows_before`), and changed pins;
 - a duplicate (context, program), evaluation key or result ref (a conflicting or reused ref);
 - an anchor declared twice, or any row whose anchored baseline, shard ref or lineage differs bit-for-bit from the context's **first** anchor;

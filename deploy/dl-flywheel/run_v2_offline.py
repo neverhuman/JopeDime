@@ -1,7 +1,7 @@
 """Isolated, exact-roster CPU fixtures for the v2.0.0 learner packages; additive to the prior812 identities.
 
-Families (168 identities): continuous_v6 40, boundary_admission_v2 24, generated_target_preparation_v2 36,
-native_result_overlay_v1 36 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
+Families (170 identities): continuous_v6 40, boundary_admission_v2 24, generated_target_preparation_v2 36,
+native_result_overlay_v1 38 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
 fixtures replace module globals and clocks.  final_capture_v1 runs through its own pinned runner, which supports the
 integrated tree.  The other four run through the child mode below: the boundary/preparation/overlay runners shipped
 inside those packages bind the lane's external base export manifest and an older candidate root, which are not part
@@ -34,9 +34,9 @@ R6_PREREGISTRATION_SHA256 = 'd228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f
 
 # Execution order follows the import dependencies (continuous_v6 imports the other four packages).
 SOURCE_PINS_SHA256 = {
-    'boundary_admission_v2': '25d4910ffddbd1c66cbaa6e01dd2d39181b106da0bb2caffaadc1d774ab003fc',
+    'boundary_admission_v2': 'aba1cf02fa65ce0e26683ce07cb119bb61e01bd60760f384691349415f4ec336',
     'generated_target_preparation_v2': 'e13111f7166e55036364b42b74132c972c1dc5f1deb54d21b1f2ce1384d01f5a',
-    'native_result_overlay_v1': '3b43721a17cb6d41486012f4b311b20be78a6d337fa5676fee1433cd08fea31d',
+    'native_result_overlay_v1': 'b5b69f69602246d226b2428138372a42c88daea6528a582277f075c485876e90',
     'final_capture_v1': '7b5f44511c66d6d4c3d5bd54f547a76c0c9d59c87f82b69f74feebd861af9ca4',
 }
 CONTINUOUS_V6_PINS = {
@@ -96,9 +96,9 @@ CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6
     'test_f6_window_uses_boot_clock_and_fails_closed',
 ))
 EXPECTED_COUNTS = {'boundary_admission_v2': 24, 'generated_target_preparation_v2': 36,
-                   'native_result_overlay_v1': 36, 'final_capture_v1': 32, 'continuous_v6': 40}
+                   'native_result_overlay_v1': 38, 'final_capture_v1': 32, 'continuous_v6': 40}
 OWN_RUNNER = {'final_capture_v1'}
-TOTAL = 168
+TOTAL = 170
 CHILD_SCHEMA = 'jope.v2-learner-offline-child/v1'
 RECEIPT_SCHEMA = 'jope.v2-learner-offline/v1'
 SCOPE = ('Offline CPU fixtures on private temporary worlds only. No live campaign, optimizer launch, planner, '
