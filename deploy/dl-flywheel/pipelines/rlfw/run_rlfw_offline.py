@@ -19,6 +19,9 @@ MODULES = (
     "rlfw.tests.test_slate",
     "rlfw.tests.test_no_winner_bootstrap",
     "rlfw.ablations.tests.test_ablations",
+    "rlfw.judge.tests.test_judge_lane",
+    "rlfw.judge.tests.test_kumo_canaries",
+    "rlfw.judge.tests.test_power",
 )
 
 
