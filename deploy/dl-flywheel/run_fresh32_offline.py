@@ -13,6 +13,22 @@ SOURCE=ROOT/'pipelines/encoding/fresh32'
 NAMES=('campaign','kumo_queue','kumo_controller','kumo_publish','kumo_intake','evergreen_kumos_packet','test_fresh32')
 
 
+# Fixture-only wall clock (PR #283 independent review finding B2).  The frozen campaign modules cap every window at
+# the historical global deadline 1791592146.380285 (2026-10-10T00:29:06Z) while these fixtures build their windows
+# from time.time(), so the suite started failing as real time crossed that constant.  Inside this fixture process
+# only, the wall clock is shifted to a fixed epoch at which the whole suite passed (2026-10-09T23:00:00Z); elapsed
+# time, monotonic clocks and file times are untouched and the shift is recorded in the receipt.
+FIXTURE_WALL_EPOCH = 1791586800.0
+
+
+def shift_fixture_wall_clock():
+    real_time, real_time_ns = time.time, time.time_ns
+    shift_ns = int(round((FIXTURE_WALL_EPOCH - real_time()) * 1e9))
+    time.time = lambda: real_time() + shift_ns / 1e9
+    time.time_ns = lambda: real_time_ns() + shift_ns
+    return {'fixture_wall_epoch': FIXTURE_WALL_EPOCH, 'fixture_wall_shift_ns': shift_ns}
+
+
 def identities(suite):
     for item in suite:
         if isinstance(item,unittest.TestSuite):yield from identities(item)
@@ -30,6 +46,7 @@ def main():
     sys.dont_write_bytecode=True
     if any(name in sys.modules for name in NAMES):
         raise ValueError('fresh32 requires an isolated process with no prior campaign imports')
+    clock=shift_fixture_wall_clock()
     sys.path.insert(0,str(SOURCE))
     suite=unittest.defaultTestLoader.loadTestsFromName('test_fresh32')
     names=sorted(identities(suite))
@@ -42,7 +59,7 @@ def main():
             raise ValueError('isolated source import differs: '+name)
     started=time.time_ns()
     receipt={'schema':'jope.fresh32-offline-tests/v1','source_sha':os.environ.get('JOPE_SOURCE_SHA'),
-             'started_utc_ns':started,'collected':len(names),'identities':names,
+             'started_utc_ns':started,**clock,'collected':len(names),'identities':names,
              'sources':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
                         for p in sorted(SOURCE.rglob('*'))if p.is_file()},
              'gp_executions':0,'s3_requests':0,'gpu_execution':False,'production_queue_mutations':0,

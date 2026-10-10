@@ -15,11 +15,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "ed253f19bd830867825be8ca94ef9a340bfa88c5ca9f87b9ba97fc6cccf06697"
+      "sha256": "23ae60050dcc5a14c53a56dd1d24296bced9da68f64278f3dcf425c2046aef0e"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4961,11 +4961,11 @@
       "sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032"
     },
     {
-      "normalization": "Additive37 research CPU family and source custody; preserve prior455 identities and old CI items/lanes/dispositions. No live execution claim.",
+      "normalization": "Additive37 research CPU family and source custody; preserve prior455 identities and old CI items/lanes/dispositions. No live execution claim. PR283 review B2: fixture-only wall clock shifted to 2026-10-09T23:00:00Z (recorded in the receipt) so fixtures no longer depend on real time vs the frozen 00:29:06Z deadline.",
       "origin": "Codex fresh32 additive source integration on PR277@0813d5f401baa4fcaadbdde7992e86a3fa191af5",
       "origin_sha256": "c8b9fb7e6f50199b48bece23c8b86aa67b68a42e85fb86ea532aa9d91d8a7eb8",
       "path": "deploy/dl-flywheel/run_fresh32_offline.py",
-      "sha256": "c8b9fb7e6f50199b48bece23c8b86aa67b68a42e85fb86ea532aa9d91d8a7eb8"
+      "sha256": "274218da9b4ef0ac159c4adb1165761b244c0dcf8bbd53be1a2f27c128a07bb9"
     },
     {
       "normalization": "Portable isolated21 new fixtures and additive metadata/docs. Prior617+49 identities preserved;70 fresh-GP identities collected, only21 executed for revision3 packaging. No runtime/scientific/production-clock changes.",
@@ -5023,18 +5023,18 @@
       "sha256": "48c3cfc7d39fed3b742f46f051bf44976c3dc42c21c3312f9e306ac27ee193d8"
     },
     {
-      "normalization": "Repository-local import paths/fixture regression or reviewed publisher executor selection; imported runtime origin retained.",
+      "normalization": "Repository-local import paths/fixture regression or reviewed publisher executor selection; imported runtime origin retained. PR283 review B2: fixture-only wall clock shifted to 2026-10-09T23:00:00Z (recorded in the receipt) so fixtures no longer depend on real time vs the frozen 00:29:06Z deadline.",
       "origin": "Codex heartbeat20261009-0616 scoped source update from PR277@73bd771d907e9007024b2783d93a1174c205f7ec",
       "origin_sha256": "c5c116dd353e4f9f640a00997e8272cf1331c7e9b59414310a18c07446e8a8a0",
       "path": "deploy/dl-flywheel/run_successor_offline.py",
-      "sha256": "e8117495e972d489601dd39d969ca042c5645f639a783dd890dcac99ea27bad1"
+      "sha256": "2115261d46048551a888c3581b2c92a98bf4d2fb3eb3553a724e09084bb1d96b"
     },
     {
-      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion.",
+      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion. PR283 review B2: fixture-only wall clock shifted to 2026-10-09T23:00:00Z (recorded in the receipt) so fixtures no longer depend on real time vs the frozen 00:29:06Z deadline.",
       "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
       "origin_sha256": "75fc47efd2555559749146731dc867bbc9d8fed31596bf8d2bb27403a67399fc",
       "path": "deploy/dl-flywheel/run_telemetry_offline.py",
-      "sha256": "ac360eb1083c91f0ac674ce57337e5facaa6961df628941260b508126fb75cbe"
+      "sha256": "8a99d35c387c8feff93f5658372e1c739c1a7d24563922feadf82a27bb9aeb00"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
