@@ -1,0 +1,59 @@
+{
+ "fixture_ids": [
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_adoption_retains_old_contexts_roles_and_validation",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1_restart_refuses_tampered_numeric_target_with_matching_status",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1_restart_refuses_tampered_status_config_source_extension_receipt_or_symlink",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1r5_restart_requires_a_qualified_terminal_marker",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b2_broken_existing_adoption_links_refuse_restart",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b2_intent_join_tamper_after_cas_holds_without_record",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b2_intent_without_cas_holds_and_never_attempts_cas",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b3_exposure_evidence_tamper_refused_or_deduplicated",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b3_first_exposure_counts_under_descendant_adoption",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b3r3_omitted_earlier_proof_never_promotes_a_later_first",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b4_authority_refused_inside_cas_retains_intent_and_holds",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b4_stale_authority_at_boundary_holds_without_cas",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_crash_points_reconcile_to_exactly_one_adoption_or_hold",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_one_adoption_per_completed_epoch_without_mutation",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_publication_chain_and_prefix_refusals",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_refusals_happen_before_any_intent",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_restart_next_update_is_bitwise_identical",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_two_successive_adoptions_and_first_actual_exposures",
+  "pipelines.boundary_admission_v2.tests.test_overlay_components.MixedTests.test_r6_variant_then_overlay_then_both_keep_each_component",
+  "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_only_adoptions_compose_and_first_exposures",
+  "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_refusals_mutate_nothing",
+  "pipelines.boundary_admission_v2.tests.test_overlay_components.OverlayTests.test_r6_overlay_restart_reloads_composite_and_next_update_is_bitwise_identical",
+  "pipelines.boundary_admission_v2.tests.test_boundary.BoundaryTests.test_b1r7_publication_and_restart_require_the_accepted_envelope"
+ ],
+ "package": "boundary_admission_v2",
+ "schema": "jope.c10-offline-source-pins/v2",
+ "source_pins": {
+  "__init__.py": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "boundary.py": {
+   "bytes": 49588,
+   "sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13"
+  },
+  "run_offline.py": {
+   "bytes": 3442,
+   "sha256": "0a57a73139fd4729b37314c54505042f86ca3859d9df9268d6eb0b30fc4567d3"
+  },
+  "tests/__init__.py": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "tests/harness.py": {
+   "bytes": 12624,
+   "sha256": "e8342e95b9a9b2060eb379d46c74388210a32b3e33a136daf998c9ebf3027a09"
+  },
+  "tests/test_boundary.py": {
+   "bytes": 32244,
+   "sha256": "58a25f01d36540ea0104621bbc012cd8c687c2f18775ccef7abe6bf5325794d6"
+  },
+  "tests/test_overlay_components.py": {
+   "bytes": 19001,
+   "sha256": "86aef81cdc8b8e404b1567c255190a801718f8afee054d0570c57fbec5ee31ec"
+  }
+ }
+}

@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 9 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
@@ -21,7 +21,7 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 40 research source classifications; no existing item changed.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
@@ -5418,7 +5418,7 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 9 research test-family items; no existing item changed.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
@@ -5885,6 +5885,405 @@
       "origin_sha256": "344c1bad838816da2100389b9a44ac92b4630e8f07a8ddc94d6c41c9d2de9e73",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py",
       "sha256": "b80642cde9094c03c4e586eb712fed5f260032038afd7a94e797d3561e3a2a71"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/SOURCE_PINS.json (C10 revision 7)",
+      "origin_sha256": "93b3190ac4a7fe811bca27bcc9f0bced28fe112d356226c04c5a6440d442e5c2",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/SOURCE_PINS.json",
+      "sha256": "93b3190ac4a7fe811bca27bcc9f0bced28fe112d356226c04c5a6440d442e5c2"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/__init__.py (C10 revision 7)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/boundary.py (C10 revision 7)",
+      "origin_sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/boundary.py",
+      "sha256": "cf624b71d26eabb04e514e65692ab3783207d64154a1fdce64618cf30a692f13"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/run_offline.py (C10 revision 7)",
+      "origin_sha256": "0a57a73139fd4729b37314c54505042f86ca3859d9df9268d6eb0b30fc4567d3",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/run_offline.py",
+      "sha256": "0a57a73139fd4729b37314c54505042f86ca3859d9df9268d6eb0b30fc4567d3"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/__init__.py (C10 revision 7)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/harness.py (C10 revision 7)",
+      "origin_sha256": "e8342e95b9a9b2060eb379d46c74388210a32b3e33a136daf998c9ebf3027a09",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/harness.py",
+      "sha256": "e8342e95b9a9b2060eb379d46c74388210a32b3e33a136daf998c9ebf3027a09"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py (C10 revision 7)",
+      "origin_sha256": "58a25f01d36540ea0104621bbc012cd8c687c2f18775ccef7abe6bf5325794d6",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py",
+      "sha256": "58a25f01d36540ea0104621bbc012cd8c687c2f18775ccef7abe6bf5325794d6"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py (C10 revision 7)",
+      "origin_sha256": "86aef81cdc8b8e404b1567c255190a801718f8afee054d0570c57fbec5ee31ec",
+      "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py",
+      "sha256": "86aef81cdc8b8e404b1567c255190a801718f8afee054d0570c57fbec5ee31ec"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/__init__.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "41f4b2fc38ac1ac4658c1d30f25521b97cd5811d43dd7796e55617d72aab9c7d",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py",
+      "sha256": "41f4b2fc38ac1ac4658c1d30f25521b97cd5811d43dd7796e55617d72aab9c7d"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/custody_v6.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "6d2ea58d4e0fc8eb1c6b855a711a6f3324a5448ab759d0b321a429ae812d356e",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/custody_v6.py",
+      "sha256": "6d2ea58d4e0fc8eb1c6b855a711a6f3324a5448ab759d0b321a429ae812d356e"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/genesis.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "6cd7a44566c692e656e740d547c2f01137718cb002174efa93463940a1d1a04e",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/genesis.py",
+      "sha256": "6cd7a44566c692e656e740d547c2f01137718cb002174efa93463940a1d1a04e"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py",
+      "sha256": "a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/resume_v6.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "9029f2f44a9136945a4c1f3007515640f26e1b7a8bca03f17655e0158bc94181",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/resume_v6.py",
+      "sha256": "9029f2f44a9136945a4c1f3007515640f26e1b7a8bca03f17655e0158bc94181"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "d5621a48a1f1922e32c172b02367d94334c0e40716eb8140ace006b5ddc55685",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py",
+      "sha256": "d5621a48a1f1922e32c172b02367d94334c0e40716eb8140ace006b5ddc55685"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/tests/__init__.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "5af918c56c593b08b122a23a5c17e488d305ab2f27f6c73feca52c120880df9c",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py",
+      "sha256": "5af918c56c593b08b122a23a5c17e488d305ab2f27f6c73feca52c120880df9c"
+    },
+    {
+      "normalization": "Byte copy of the v2.0.0 learner build r2.3 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py (v2.0.0 learner build r2.3)",
+      "origin_sha256": "ca070ad813ad2a702df585244b4fd5506290e67a916636f7c580d1a765438b42",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py",
+      "sha256": "ca070ad813ad2a702df585244b4fd5506290e67a916636f7c580d1a765438b42"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/README.md (W10 revision 2)",
+      "origin_sha256": "0174970142d0c19debf3d9510424e212b7dc2963a0de713f8563760a9e9b7c28",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/README.md",
+      "sha256": "0174970142d0c19debf3d9510424e212b7dc2963a0de713f8563760a9e9b7c28"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/SOURCE_PINS.json (W10 revision 2)",
+      "origin_sha256": "7b5f44511c66d6d4c3d5bd54f547a76c0c9d59c87f82b69f74feebd861af9ca4",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/SOURCE_PINS.json",
+      "sha256": "7b5f44511c66d6d4c3d5bd54f547a76c0c9d59c87f82b69f74feebd861af9ca4"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/__init__.py (W10 revision 2)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/capture.py (W10 revision 2)",
+      "origin_sha256": "d1649bfaacd594b0af5eaee45698d4dccb6e735edc06116f6054af790acf054a",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/capture.py",
+      "sha256": "d1649bfaacd594b0af5eaee45698d4dccb6e735edc06116f6054af790acf054a"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/fault_injection.py (W10 revision 2)",
+      "origin_sha256": "92d34969903068e8882b2758fbce0d05894e5300cb65413adcb7d7cd65c75d7c",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/fault_injection.py",
+      "sha256": "92d34969903068e8882b2758fbce0d05894e5300cb65413adcb7d7cd65c75d7c"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/measure.py (W10 revision 2)",
+      "origin_sha256": "89a444fca010f6e147dd3caf84d352e823e4b0bf8ef3f5a6454738113a73007a",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/measure.py",
+      "sha256": "89a444fca010f6e147dd3caf84d352e823e4b0bf8ef3f5a6454738113a73007a"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/probe.py (W10 revision 2)",
+      "origin_sha256": "01d84301cc52a833263c1a2a721482686c0083ebfe2709dd55a963963db69b94",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/probe.py",
+      "sha256": "01d84301cc52a833263c1a2a721482686c0083ebfe2709dd55a963963db69b94"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/run_offline.py (W10 revision 2)",
+      "origin_sha256": "f216ffc30404bac11fbbc16cb2203b5b3b288813371281842b6bdb5b9389e903",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/run_offline.py",
+      "sha256": "f216ffc30404bac11fbbc16cb2203b5b3b288813371281842b6bdb5b9389e903"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/tests/__init__.py (W10 revision 2)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/tests/owner-askuserquestion-receipt-R17-v1.json (W10 revision 2)",
+      "origin_sha256": "2a1b0a5e96b54cf48d4f7f8a2bf57c86938814d92846d4c30a7e642711d7b534",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/tests/owner-askuserquestion-receipt-R17-v1.json",
+      "sha256": "2a1b0a5e96b54cf48d4f7f8a2bf57c86938814d92846d4c30a7e642711d7b534"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_final_capture.py (W10 revision 2)",
+      "origin_sha256": "e914df60cc23a71380fe628135194178dbb86efd14a64c66924840c526e34bc7",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_final_capture.py",
+      "sha256": "e914df60cc23a71380fe628135194178dbb86efd14a64c66924840c526e34bc7"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_runtime_limit.py (W10 revision 2)",
+      "origin_sha256": "7d1ea76fa2ddd977594fa7d6ba7b0445d674ec4fefb24deb61eb7a1e842baccc",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_runtime_limit.py",
+      "sha256": "7d1ea76fa2ddd977594fa7d6ba7b0445d674ec4fefb24deb61eb7a1e842baccc"
+    },
+    {
+      "normalization": "Byte copy of the W10 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/final_capture_v1/tests/world.py (W10 revision 2)",
+      "origin_sha256": "07c26bd883abba31011d369079136b13de118c550d82e6edc158e8e452df55e1",
+      "path": "deploy/dl-flywheel/pipelines/final_capture_v1/tests/world.py",
+      "sha256": "07c26bd883abba31011d369079136b13de118c550d82e6edc158e8e452df55e1"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/SOURCE_PINS.json (C10 revision 7)",
+      "origin_sha256": "e13111f7166e55036364b42b74132c972c1dc5f1deb54d21b1f2ce1384d01f5a",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/SOURCE_PINS.json",
+      "sha256": "e13111f7166e55036364b42b74132c972c1dc5f1deb54d21b1f2ce1384d01f5a"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/__init__.py (C10 revision 7)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/offline.py (C10 revision 7)",
+      "origin_sha256": "cfb5d7c4188e60611db79d0924e845f002c87af71e929e7cd18ff95f6d84dc30",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/offline.py",
+      "sha256": "cfb5d7c4188e60611db79d0924e845f002c87af71e929e7cd18ff95f6d84dc30"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/preparation.py (C10 revision 7)",
+      "origin_sha256": "7d6e438c358e59d09ffcb3505309e8f12f7ab01ce9eac145b2386384a95669dd",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/preparation.py",
+      "sha256": "7d6e438c358e59d09ffcb3505309e8f12f7ab01ce9eac145b2386384a95669dd"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/run_offline.py (C10 revision 7)",
+      "origin_sha256": "bb4fac1d7f5db06b45909c7f225d08577997d40503cddddd68c467c25665eb17",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/run_offline.py",
+      "sha256": "bb4fac1d7f5db06b45909c7f225d08577997d40503cddddd68c467c25665eb17"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/__init__.py (C10 revision 7)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_preparation.py (C10 revision 7)",
+      "origin_sha256": "2adff52a9579bfe6e67019c57ab6accac6c3b221e7765995ecce6bca71edd9dc",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_preparation.py",
+      "sha256": "2adff52a9579bfe6e67019c57ab6accac6c3b221e7765995ecce6bca71edd9dc"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_worker.py (C10 revision 7)",
+      "origin_sha256": "53e7931d24746b237ae8c68739e0c6286a57dffb2cb02345bd572a3bef3699d3",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_worker.py",
+      "sha256": "53e7931d24746b237ae8c68739e0c6286a57dffb2cb02345bd572a3bef3699d3"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/world.py (C10 revision 7)",
+      "origin_sha256": "8a017e11e85d91d47443582b62d025b0de33709fd1ee482ba726f8de0f6285d9",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/world.py",
+      "sha256": "8a017e11e85d91d47443582b62d025b0de33709fd1ee482ba726f8de0f6285d9"
+    },
+    {
+      "normalization": "Byte copy of the C10 revision 7 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/generated_target_preparation_v2/worker.py (C10 revision 7)",
+      "origin_sha256": "64aa6e94671cee39fc1c148cb8d1c99146b87c957d3aec5027a92571aa6af515",
+      "path": "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/worker.py",
+      "sha256": "64aa6e94671cee39fc1c148cb8d1c99146b87c957d3aec5027a92571aa6af515"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/README.md (W3 revision 2)",
+      "origin_sha256": "e44790edd8b96640b872a376b9ac30b57fdee024d1dc0229fec54ec6326f3e1d",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/README.md",
+      "sha256": "e44790edd8b96640b872a376b9ac30b57fdee024d1dc0229fec54ec6326f3e1d"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/SOURCE_PINS.json (W3 revision 2)",
+      "origin_sha256": "3df3f100a27b7024a89cd7b70dc76f51ff0051909a9538ba5f20053773bf3d88",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/SOURCE_PINS.json",
+      "sha256": "3df3f100a27b7024a89cd7b70dc76f51ff0051909a9538ba5f20053773bf3d88"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/__init__.py (W3 revision 2)",
+      "origin_sha256": "6921ce49b31cd64d2f4f078523a66c5036df60e0f34cc386cb23c4d22e774f86",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/__init__.py",
+      "sha256": "6921ce49b31cd64d2f4f078523a66c5036df60e0f34cc386cb23c4d22e774f86"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py (W3 revision 2)",
+      "origin_sha256": "2210f8d9a1c224a15dffc6a6e70f9ace16dc10cdc513c2242b6cb26c4f7157fe",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py",
+      "sha256": "2210f8d9a1c224a15dffc6a6e70f9ace16dc10cdc513c2242b6cb26c4f7157fe"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/common.py (W3 revision 2)",
+      "origin_sha256": "f43044ee77824a0d7ca8963b1f73ab5c03b41315f87a01deddd2a028dbd00aed",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/common.py",
+      "sha256": "f43044ee77824a0d7ca8963b1f73ab5c03b41315f87a01deddd2a028dbd00aed"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/labels_overlay.py (W3 revision 2)",
+      "origin_sha256": "4de070493d88e1311892593f54c2d32f6cf9a7f9ad6d074bbe7c6a5f716fab9b",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/labels_overlay.py",
+      "sha256": "4de070493d88e1311892593f54c2d32f6cf9a7f9ad6d074bbe7c6a5f716fab9b"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/loader.py (W3 revision 2)",
+      "origin_sha256": "bf8dc6532b1b6bf2ce143e876e62ba4a2fb803e06646bf46b4605a34979bb155",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/loader.py",
+      "sha256": "bf8dc6532b1b6bf2ce143e876e62ba4a2fb803e06646bf46b4605a34979bb155"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/offline.py (W3 revision 2)",
+      "origin_sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/offline.py",
+      "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py (W3 revision 2)",
+      "origin_sha256": "5b9c144a1ce5cc5b068f2a2063514638a9f495a8c9c0b7e0e7164b6b56a5d191",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py",
+      "sha256": "5b9c144a1ce5cc5b068f2a2063514638a9f495a8c9c0b7e0e7164b6b56a5d191"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py (W3 revision 2)",
+      "origin_sha256": "3c957deef9ea839dba5e503a876c41ead7b567138f07b063757fba6737ac501b",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py",
+      "sha256": "3c957deef9ea839dba5e503a876c41ead7b567138f07b063757fba6737ac501b"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py (W3 revision 2)",
+      "origin_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py (W3 revision 2)",
+      "origin_sha256": "5f4b91b549fdd796b637ad060ef41578193ef688e51b92cf93349c75a7fa3364",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py",
+      "sha256": "5f4b91b549fdd796b637ad060ef41578193ef688e51b92cf93349c75a7fa3364"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/world.py (W3 revision 2)",
+      "origin_sha256": "51c4bd89022bbdaf9d2efdb29edb318bd3eb80b76383d764c86613b49a463790",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/world.py",
+      "sha256": "51c4bd89022bbdaf9d2efdb29edb318bd3eb80b76383d764c86613b49a463790"
+    },
+    {
+      "normalization": "Byte copy of the W3 revision 2 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/verify.py (W3 revision 2)",
+      "origin_sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/verify.py",
+      "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
+    },
+    {
+      "normalization": "New additive isolated fixture runner; frozen packages, their shipped runners and the prior812 runners are unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 v2pr-r2.3 (new runner for the v2.0.0 learner families, build r2.3)",
+      "origin_sha256": "7b06a1ecb87a3b21e13e2f93918fcfae44131aab3b3c377ede6984d9aa468ee3",
+      "path": "deploy/dl-flywheel/run_v2_offline.py",
+      "sha256": "7b06a1ecb87a3b21e13e2f93918fcfae44131aab3b3c377ede6984d9aa468ee3"
+    },
+    {
+      "normalization": "Byte copy vendored as the pinned fixture input that native_result_overlay_v1 reads through JOPE_W3_R6_PATH; run_v2_offline.py verifies its sha256 first.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 r6/r6-dev-split-preregistration-v1.json (owner ruling R6 preregistration)",
+      "origin_sha256": "d228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f9da22d741725a",
+      "path": "deploy/dl-flywheel/tests/fixtures/r6-dev-split-preregistration-v1.json",
+      "sha256": "d228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f9da22d741725a"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
