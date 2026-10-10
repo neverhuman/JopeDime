@@ -65,9 +65,14 @@ No deadline is written in the code. Each wave spec binds a
 lasts exactly 72 hours, and its deadline must equal creation plus 72 hours.
 The CLI requires `--campaign-window`, a benchmark-local manifest whose
 window equals the spec's. A missing, malformed or different manifest is refused
-before any runtime import. The CLI, every context and every execution require
-the current wall clock and the same-boot monotonic clock to lie inside the
-window. After a reboot the deadline cannot be verified, so the run refuses and
+before any runtime import. The whole window is checked again immediately before
+each guarded step: CLI start, each context before and after its admission
+wait, every model dispatch (decode batch, head readout, calibration
+probabilities) and every attempt reservation and evaluator request, including
+retries within one slot. Each check requires the current wall clock and the
+same-boot monotonic clock to lie inside the window; a closing window stops the
+next step and keeps the outcomes and costs already recorded. After a reboot the
+deadline cannot be verified, so the run refuses and
 needs a new owner-approved window. The window starts only when the owner
 approves bootstrap waves. The approved launcher writes
 `CampaignWindow.opened_now().to_manifest()` once; no CLI path opens, renews or

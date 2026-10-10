@@ -35,6 +35,14 @@ RUNTIME_FIXTURES = {}
 # Synthetic fixture window: every test that reaches it sets its wall clock explicitly.
 WINDOW_CREATED = 1791536400.0
 WINDOW_MONOTONIC = 1000.0
+# Each change closes the window, or makes it unverifiable, one second before its deadline.
+CLOCK_CHANGES = {
+    "wall deadline": lambda f, clock: setattr(
+        clock, "return_value", f.window.deadline_unix
+    ),
+    "monotonic expiry": lambda f, clock: setattr(f, "skew", 2.0),
+    "other boot": lambda f, clock: setattr(f, "boot", "other-boot"),
+}
 
 
 class BootstrapTests(unittest.TestCase):
@@ -380,6 +388,100 @@ class BootstrapTests(unittest.TestCase):
             value.attempt_history((context.context_id, self.arm.name, 20261009, 1)), []
         )
 
+    def fresh(self):
+        fixture = BootstrapTests("runTest")
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        return fixture
+
+    def attempt_boundary(self, f, change):
+        # Review PR291-01: the clock changes after the first request of one slot.
+        with mock.patch(
+            "rlfw.arena.oracle.time.time", return_value=f.window.deadline_unix - 1
+        ) as clock:
+
+            def evaluate(request):
+                result = f.result(request, "infra_unknown")
+                CLOCK_CHANGES[change](f, clock)
+                return result
+
+            value = f.scheduler(evaluate=evaluate)
+            with self.assertRaises(RuntimeError):
+                value.run(max_contexts=1)
+            report = value.coverage_report()
+        self.assertEqual([c["attempt"] for c in f.calls], [1])
+        attempts = value.db.execute("SELECT number,result FROM attempts").fetchall()
+        # The finished unknown attempt keeps its outcome and cost; nothing new is reserved.
+        self.assertEqual(len(attempts), 1)
+        self.assertEqual(attempts[0][0], 1)
+        self.assertEqual(json.loads(attempts[0][1])["outcome_class"], "infra_unknown")
+        self.assertEqual(report["observed_wall_seconds"], 2.0)
+        self.assertEqual(value.rows(), [])
+        self.assertTrue(all(not value.ledger.events(c.hwm_key) for c in f.contexts))
+
+    def test_reboot_between_attempts_blocks_next_request(self):
+        self.attempt_boundary(self, "other boot")
+
+    def test_monotonic_expiry_between_attempts_blocks_next_request(self):
+        self.attempt_boundary(self, "monotonic expiry")
+
+    def test_wall_expiry_between_attempts_blocks_next_request(self):
+        self.attempt_boundary(self, "wall deadline")
+
+    def admission_boundary(self, f, change):
+        # Review PR291-02: admission returns a valid grant after the window closed.
+        with mock.patch(
+            "rlfw.arena.oracle.time.time", return_value=f.window.deadline_unix - 1
+        ) as clock:
+            value = f.scheduler()
+
+            @contextlib.contextmanager
+            def admission():
+                CLOCK_CHANGES[change](f, clock)
+                yield True
+
+            value.admission = admission
+            with self.assertRaises(RuntimeError):
+                value.run(max_contexts=1)
+            report = value.coverage_report()
+        self.assertEqual((f.draws, f.calls), (0, []))
+        self.assertEqual(report["contexts_attempted"], 0)
+
+    def test_expiry_during_admission_blocks_proposals(self):
+        for change in CLOCK_CHANGES:
+            with self.subTest(change):
+                self.admission_boundary(self.fresh(), change)
+
+    def dispatch_boundary(self, f, change):
+        # The clock changes during one model dispatch; the next dispatch never starts.
+        with mock.patch(
+            "rlfw.arena.oracle.time.time", return_value=f.window.deadline_unix - 1
+        ) as clock:
+            decode, heads, readouts = f.sample_many, f.heads, []
+
+            def sample_many(cid, arm, seeds):
+                rows = decode(cid, arm, seeds)
+                CLOCK_CHANGES[change](f, clock)
+                return rows
+
+            def score_heads(cid, arm, rows):
+                readouts.append(rows)
+                return heads(cid, arm, rows)
+
+            f.sample_many, f.heads = sample_many, score_heads
+            value = f.scheduler()
+            with self.assertRaises(RuntimeError):
+                value.run(max_contexts=1)
+        self.assertEqual((f.draws, readouts, f.calls), (32, [], []))
+        self.assertEqual(
+            value.db.execute("SELECT count(*) FROM prepared_slates").fetchone()[0], 0
+        )
+
+    def test_window_closing_between_model_dispatches_stops_the_next(self):
+        for change in CLOCK_CHANGES:
+            with self.subTest(change):
+                self.dispatch_boundary(self.fresh(), change)
+
     def test_no_literal_campaign_deadline_in_rlfw_sources(self):
         package = Path(__file__).resolve().parents[1]
         sources = sorted(
@@ -672,7 +774,9 @@ class BootstrapTests(unittest.TestCase):
         self.assertTrue(all(e["reason"] == "missing_closure" for e in events))
         self.assertTrue(all(e["publication"]["q_grid"] is None for e in events))
 
-    def test_mixed_packet_restart_reuses_every_raw_draw_without_inference(self):
+    @mock.patch("rlfw.arena.oracle.time.time", return_value=1791540000.0)
+    def test_mixed_packet_restart_reuses_every_raw_draw_without_inference(self, clock):
+        # Model dispatches are window-guarded, so the fixture sets its wall clock.
         first = self.scheduler()
         selected = first.slate(self.contexts[0], self.arm, 20261009)
         first.close()

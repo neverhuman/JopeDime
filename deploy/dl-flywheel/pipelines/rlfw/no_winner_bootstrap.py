@@ -515,6 +515,19 @@ class CoverageArms(RerankArms):
         require_sha(calibration_sha256, "calibration")
         self.probabilities, self.calibration_sha256 = probabilities, calibration_sha256
 
+    def bind_window(self, window):
+        """Recheck the whole campaign window immediately before every model dispatch."""
+
+        def guarded(call):
+            def dispatch(*args, **kwargs):
+                window.require_open()
+                return call(*args, **kwargs)
+
+            return dispatch
+
+        for name in ("sample", "sample_many", "score_heads", "probabilities"):
+            setattr(self, name, guarded(getattr(self, name)))
+
     def prepare_slate(self, context, arm, seed):
         import time
 
@@ -580,6 +593,10 @@ class TrainingOracle(BlindOracle):
         self.spec.campaign_window.require_open()
         return super()._resolve(*args, **kwargs)
 
+    def before_attempt(self, context):
+        # Every reservation and evaluator request, including retries in one slot.
+        self.spec.campaign_window.require_open()
+
 
 class BootstrapScheduler(ArenaScheduler):
     def __init__(
@@ -587,6 +604,7 @@ class BootstrapScheduler(ArenaScheduler):
     ):
         self.ledger, self.admission, self.queue_empty = ledger, admission, queue_empty
         self.context_by_id = {c.context_id: c for c in spec.contexts}
+        arms.bind_window(spec.campaign_window)
         super().__init__(spec, arms, oracle, sink, workers=workers)
 
     def prepares(self, arm):
@@ -601,6 +619,8 @@ class BootstrapScheduler(ArenaScheduler):
         with self.admission() as granted:
             if granted is not True or self.queue_empty() is not True:
                 raise RuntimeError("bootstrap requires reserved empty arena queue")
+            # An admission wait never carries an earlier check across the boundary.
+            self.spec.campaign_window.require_open()
             super()._run_context(context)
 
     def commit(self, row, key, result):

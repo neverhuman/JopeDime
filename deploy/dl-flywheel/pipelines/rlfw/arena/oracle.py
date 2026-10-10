@@ -30,6 +30,9 @@ class BlindOracle:
                 "fresh role/exclusion authority changed; freeze and re-spec"
             )
 
+    def before_attempt(self, context):
+        """Runs immediately before every attempt reservation and evaluator request."""
+
     def execution_key(self, context, program):
         return digest(
             {
@@ -237,6 +240,7 @@ class BlindOracle:
                 raise RuntimeError("fixed campaign deadline expired")
             self.check_role(context)
             self.spec.verify_frozen()
+            self.before_attempt(context)
             attempt = (
                 attempt_store.reserve_attempt(attempt_key) if attempt_store else number
             )
