@@ -21,6 +21,11 @@ restore of the captured checkpoint, and the exact NEXT-update parity receipt (``
 B* through the frozen v1 step primitives and through runner_v6, bitwise model/AdamW/RNG equality).  ``probe=True``
 builds a scratch, pre-R14 root (v1 control unchanged, no R14 event, never a live root) on which that probe runs.
 
+Training objective (r3, owner ruling R23): ``training_objective_sha256`` is the digest of runner_v6's
+training-objective identity ``{l6: OBJECTIVE, anchor_kl: ...}`` (anchored_step.training_objective).  It is required,
+sealed in genesis.json and returned in every resume.  runner_v6 refuses a config whose identity differs.  The C10
+inbox contract keeps pinning the unchanged L6 label objective.
+
 Epoch accounting (r2, Codex F5): v1 stopped inside its open planner epoch 40 (lineage epoch 41; 5,712 consumed,
 1,270 remaining).  v2 does NOT continue that partial epoch: its fresh planner opens a full pass over the active
 manifest.  genesis.json records v1's open epoch exactly and declares this fresh-schedule choice; v1's partial epoch
@@ -107,9 +112,12 @@ def r14_event(v1_control, *, r14_receipt_sha256, parity_receipts):
 
 
 def build(capture_dir, campaign_root, *, preprocessing_raw, campaign_sha256, contract, r14_receipt_sha256,
-          parity_receipts, outbox_max_pending, next_update_parity=None, probe=False, seed=None, batch_size=None):
+          parity_receipts, outbox_max_pending, training_objective_sha256, next_update_parity=None, probe=False, seed=None,
+          batch_size=None):
     capture_dir, campaign_root = Path(capture_dir), Path(campaign_root)
     need(campaign_root.is_absolute() and not campaign_root.exists() and campaign_root.parent.is_dir(), 'new campaign root')
+    need(type(training_objective_sha256) is str and len(training_objective_sha256) == 64 and
+         all(ch in '0123456789abcdef' for ch in training_objective_sha256), 'R23 training-objective identity (sha256)')
     body, joins, ancestry = FC.load_capture(capture_dir)
     inputs = FP.captured_inputs(capture_dir)
     need(inputs['ancestry'] == ancestry, 'captured successor inputs')
@@ -172,6 +180,7 @@ def build(capture_dir, campaign_root, *, preprocessing_raw, campaign_sha256, con
     inbox = Bd.Inbox.create(campaign_root / 'inbox', genesis_snapshot_sha256=genesis_snapshot,
                             genesis_manifest_sha256=manifest_sha, campaign_sha256=campaign_sha256, contract=contract)
     genesis = {'schema': GENESIS_SCHEMA, 'generation': 'v2.0.0', 'campaign_sha256': campaign_sha256,
+               'training_objective_sha256': training_objective_sha256,
                'probe': bool(probe), 'r14': None if probe else {'applied': True, 'event_sha256': refs['r14_event']['sha256']},
                'epoch_accounting': accounting,
                'capture': {'final_capture_sha256': capture_sha,
@@ -198,10 +207,11 @@ def genesis_resume(campaign_root, *, execution_config_sha256):
     root = Path(campaign_root); raw = (root / 'genesis.json').read_bytes(); g = json.loads(raw)
     need(g['schema'] == GENESIS_SCHEMA, 'genesis receipt')
     t = root / 'training'
-    need(not any((t / m).exists() for m in MARKERS + TERMINAL_FILES + ('learning-guard.json',)) and not list(root.glob('fatal*.json')) and
+    need(not any((t / m).exists() for m in MARKERS + TERMINAL_FILES + ('learning-guard.json', 'kl-guard.json')) and not list(root.glob('fatal*.json')) and
          not (t / 'verified-watermark.json').exists() and not list(t.glob('batch-*.json')), 'no segment has ever started')
     control = json.loads((root / 'training' / 'optimizer-control.json').read_bytes())
     need(sha(canonical(control)) == g['refs']['control']['sha256'], 'post-R14 control is the sealed genesis control')
-    return {**g['resume'], 'checkpoint_manifest': g['refs']['checkpoint_manifest'], 'checkpoint_state': g['refs']['checkpoint_state'],
+    return {**g['resume'], 'training_objective_sha256': g['training_objective_sha256'],
+            'checkpoint_manifest': g['refs']['checkpoint_manifest'], 'checkpoint_state': g['refs']['checkpoint_state'],
             'control': control, 'execution_config_sha256': execution_config_sha256,
             'watermark': CU.genesis_watermark(g), 'basis': {'kind': 'genesis', 'genesis_sha256': sha(raw)}}

@@ -9,6 +9,7 @@ cleanly AND verifiably (r2, Codex F2/F3).  It refuses unless every one of these 
     segment (a later segment that never closed leaves a stale result, which is refused);
   * the verification passed, binds the exact intent bytes and this execution, and ``result.json`` binds the exact
     verification and intent bytes; the state is a clean terminal state;
+  * the learning-guard (G32) and KL-guard (T12) sidecars are byte-identical to the states sealed in the verification;
   * the published control is the verified control; the full read-only planner verify is the verified watermark head
     with no reservation; the watermark re-joins the planner, the outbox (whose later resolution events may follow)
     and the proof files with no suffix and an exact proof inventory, every committed proof re-hashed against its
@@ -69,6 +70,10 @@ def v2_resume(campaign_root, *, execution_config_sha256):
     need(type(verification.get('learning_guard')) is dict and gpath.is_file() and not gpath.is_symlink() and
          sha(gpath.read_bytes()) == verification['learning_guard_sha256'] == sha(canonical(verification['learning_guard'])),
          'learning-guard state is exactly the closure-sealed state (absent, altered or reset refused)')
+    kpath = t / 'kl-guard.json'
+    need(type(verification.get('kl_guard')) is dict and kpath.is_file() and not kpath.is_symlink() and
+         sha(kpath.read_bytes()) == verification['kl_guard_sha256'] == sha(canonical(verification['kl_guard'])),
+         'KL-guard state is exactly the closure-sealed state (absent, altered or reset refused)')
     wm = verification['watermark']; origin = g['origin_absolute_step']
     p = BatchStream.__new__(BatchStream); p.db = _ro(t / 'batches.sqlite')
     try:
@@ -108,7 +113,8 @@ def v2_resume(campaign_root, *, execution_config_sha256):
             'proof_tail': result['proof_tail'], 'watermark': wm,
             'checkpoint_manifest': _ref(slot / 'manifest.json'), 'checkpoint_state': _ref(slot / 'state.safetensors'),
             'control': control, 'execution_config_sha256': execution_config_sha256,
-            'learning_guard': verification['learning_guard'],
+            'learning_guard': verification['learning_guard'], 'kl_guard': verification['kl_guard'],
+            'training_objective_sha256': g['training_objective_sha256'],
             'basis': {'kind': 'closure', 'segment_id': segment['segment_id'], 'result_sha256': sha(raw['result.json']),
                       'verification_sha256': sha(raw['result-verification.json'])},
             'restart_of': {'result_sha256': sha(canonical(result)), 'planner_head': head}}

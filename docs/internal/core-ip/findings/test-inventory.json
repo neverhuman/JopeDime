@@ -498,12 +498,20 @@
       "reason": "Research closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case): 24 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_anchored_step.py": {
+      "reason": "Research v2.0.0 continual-learner fixtures, build r3.1: 83 isolated CPU cases (9 runner, 31 custody, 31 KL guard, 12 anchored step; closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_kl_guard.py": {
+      "reason": "Research v2.0.0 continual-learner fixtures, build r3.1: 83 isolated CPU cases (9 runner, 31 custody, 31 KL guard, 12 anchored step; closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py": {
-      "reason": "Research v2.0.0 continual-learner fixtures, build r2.7: 40 isolated CPU cases (9 runner, 31 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "reason": "Research v2.0.0 continual-learner fixtures, build r3.1: 83 isolated CPU cases (9 runner, 31 custody, 31 KL guard, 12 anchored step; closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py": {
-      "reason": "Research v2.0.0 continual-learner fixtures, build r2.7: 40 isolated CPU cases (9 runner, 31 custody, closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "reason": "Research v2.0.0 continual-learner fixtures, build r3.1: 83 isolated CPU cases (9 runner, 31 custody, 31 KL guard, 12 anchored step; closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
