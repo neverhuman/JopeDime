@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "721505e94100b46a6852c4ecf196c66370d3247d3ee7b3955f33bb23b8d678da"
+      "sha256": "a19cc4d98feddc112f183eb5747e6bf7df9b8b8c915d44b8009c0bec439d8d9d"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -19,7 +19,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "0569010598aac67274cf20898d41c1f80eefec51c8d9cae9f29ac0d43113a4ef"
+      "sha256": "53bdcb26b384dfe9cef32e76dc28efe53738e9713d4b8401ee8a21441a1d1d23"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4807,7 +4807,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/SOURCE_PINS.json (W3 revision 2 with the overlay terminal-acceptance fix)",
       "origin_sha256": "b5b69f69602246d226b2428138372a42c88daea6528a582277f075c485876e90",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/SOURCE_PINS.json",
-      "sha256": "566be4fcd9476bed319b5f06eb6ea4e54b4608e7dc7951710e9e74f1e74b4b40"
+      "sha256": "8a2e397b626f61227f50696acb056040415a17909712b0ad9553b0344ac51c04"
     },
     {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
@@ -4863,7 +4863,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py (W3 revision 2 with the overlay terminal-acceptance fix)",
       "origin_sha256": "d9209c7982012cf38562abe7501927078526b290c804805fc7bf132fcf3c238b",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py",
-      "sha256": "4cbf49b282e9d42b0a0c7873c4745ca9b6919db16d198fcfb768a14dad6c2f06"
+      "sha256": "e42e5bc76041539bb3dac061c155128714bb04a53a2e7da43c89e8adb9c49688"
     },
     {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
@@ -4877,7 +4877,7 @@
       "origin": "CX-DUR W03 private durability fault fixtures on PR292 fb5b877b; owner20:20 authorized stacked repair",
       "origin_sha256": "e6a84fd69e52cde769495c56f926c641ee66b27c8f7dc8f23c5c479c2db022da",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_durability.py",
-      "sha256": "6e7ca8fd2daf904df9bfda7348d1ff76dc4e65a77d53da9668a0766a9842e227"
+      "sha256": "c04115d425c7441281cfa61f604949794d723f7b9191e615ee50a69fadb20437"
     },
     {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
@@ -5517,7 +5517,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2pr-r3.1 (new runner for the v2.0.0 learner families, build r3.1)",
       "origin_sha256": "83439d0e0407c3f0a9c00e8c4beab5b0e3220734c8f9a45aaa4518908cb1287a",
       "path": "deploy/dl-flywheel/run_v2_offline.py",
-      "sha256": "8f2bdd6fa5a4e0032ae4f531c16062fab95fd0bd601f122731f37c7eb208305e"
+      "sha256": "59c5b55057c23e64f2216fa761662167772e485432c994580140715955d8bc27"
     },
     {
       "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring.",

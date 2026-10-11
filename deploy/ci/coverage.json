@@ -1600,7 +1600,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "16 W03 private CPU durability fault cases, additive to all213 baseline IDs: retained caller-final-fsync, unfinished/partial publication and completion, death after claim/manifest/checkpoint fsync, CAS rollback/reconciliation and first-exposure/duplicate custody. Actual private process death and toy optimizer fixtures only; NON-QUALIFYING, no live/S3/GPU or retry."
+      "scope": "17 W03 private CPU durability fault cases, additive to all213 baseline IDs: retained caller-final-fsync, unfinished/partial publication and completion, death after claim/manifest/checkpoint fsync, CAS rollback/reconciliation and first-exposure/duplicate custody. Actual private process death and toy optimizer fixtures only; NON-QUALIFYING, no live/S3/GPU or retry."
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py": {
       "discovery": {

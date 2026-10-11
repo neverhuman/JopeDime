@@ -333,7 +333,8 @@ class PublicationDurabilityTests(CrashWorld):
         def child():
             real = C.os.fsync
             def fsync(fd):
-                if os.readlink('/proc/self/fd/' + str(fd)).endswith('.pending'):
+                # The later qualification directory also ends in .pending; block only the candidate FILE.
+                if stat.S_ISREG(os.fstat(fd).st_mode) and os.readlink('/proc/self/fd/' + str(fd)).endswith('.pending'):
                     os.write(ready_w, b'1')
                     os.read(go_r, 1)
                 real(fd)
@@ -354,6 +355,35 @@ class PublicationDurabilityTests(CrashWorld):
 
         self.die(child, while_running=reader)
         self.assertEqual(self.f.consumers(root), {'completed_packet': (True, 1), 'validate_chain': (True, 1)})
+
+    def test_original_bound_crossing_after_publisher_return_cannot_be_qualified(self):
+        for kind in ('wall', 'monotonic'):
+            with self.subTest(kind=kind):
+                r, root = self.returned('post-return-' + kind)
+                publish = PK._publish_acceptance
+                real_wall, real_mono = C.time.time, C.time.monotonic
+                wall, shift, returned = [None], [0.0], []
+
+                def completed(*args, **kwargs):
+                    result = publish(*args, **kwargs)
+                    returned.append(result)
+                    self.refused(root)
+                    if kind == 'wall':
+                        wall[0] = result['bound']['wall_deadline_unix']
+                    else:
+                        shift[0] = result['bound']['monotonic_deadline'] - real_mono() + .01
+                    return result
+
+                with mock.patch.object(PK, '_publish_acceptance', side_effect=completed), \
+                        mock.patch.object(C.time, 'time', side_effect=lambda: real_wall() if wall[0] is None else wall[0]), \
+                        mock.patch.object(C.time, 'monotonic', side_effect=lambda: real_mono() + shift[0]):
+                    with self.assertRaisesRegex(ValueError, 'caller return outside the original bound'):
+                        self.accept(r, root)
+                    self.assertEqual(len(returned), 1)
+                    self.assertTrue(PK.completion_path(root).exists())
+                    self.assertFalse(PK.qualification_root(root).exists())
+                    self.refused(root)
+                self.no_retry(r, root)
 
     def test_process_death_before_builder_publication_and_partial_pack_keep_custody(self):
         for partial in (False, True):
