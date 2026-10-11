@@ -24,6 +24,13 @@ r2 (Codex F4, F6, F2):
   * A fatal error writes a create-only ``fatal-<ns>.json`` into the campaign root (never overwritten); every later
     start refuses while one exists.  The first start uses genesis only if no segment ever started; otherwise only a
     verified closure resumes (resume_v6).
+
+R23 (r3): the campaign identity (``identity.training_objective_sha256``), ``neural.training_objective_sha256`` and
+genesis.json must name one training objective.  runner_v6 recomputes it from ``neural.anchor_kl`` and the L6 objective.
+
+KL guard (T12): the runner's frozen KL anchor is the sealed capture checkpoint, i.e. v1's final parameters.  Its
+refs come from ``final_capture_v1.probe.captured_inputs``, the verifying reader.  runner_v6 re-verifies the bytes
+and the parameter sha256 against ``neural['kl_guard']`` and the ancestry.
 """
 import argparse, hashlib, json, os, shutil, socket, subprocess, sys, time, types
 from pathlib import Path
@@ -188,7 +195,7 @@ def prepare(args, *, n_overrides=None):
     from neural_native_stream import BatchStream
     from pipelines.boundary_admission_v2 import boundary as Bd
     from pipelines.native_result_overlay_v1 import loader as OL, packet as PK
-    from pipelines.final_capture_v1 import capture as FC
+    from pipelines.final_capture_v1 import capture as FC, probe as FP
     from pipelines.continuous_v6 import genesis as G, resume_v6 as RV, runner_v6 as R6
     dry = args.dry_run is not None
     campaign_root = Path(execution['campaign_root'])
@@ -204,6 +211,9 @@ def prepare(args, *, n_overrides=None):
          n['max_seq'] == 640 and n['emissions_per_step'] in (1, 2) and n['closure_budget_seconds'] < c['closure_reserve_seconds'],
          'reviewed v2 numerical scope; closure budget inside the closure reserve')
     ancestry = join_capture(c, g, FC.load_capture)   # F4: before any data or model work
+    need(c['identity'].get('training_objective_sha256') == n.get('training_objective_sha256') == g.get('training_objective_sha256'),
+         'R23: the campaign identity, config and genesis bind one training objective')
+    kl_anchor = FP.captured_inputs(Path(c['capture_dir']))['checkpoint']   # T12: v1 final checkpoint refs (sealed capture)
     if dry:
         need(not args.dry_run.exists() and args.dry_run.parent.is_dir() and 0 < args.dry_updates <= 16, 'new dry-run scratch')
         args.dry_run.mkdir(); work = args.dry_run / 'campaign'; FATAL_DIR = work
@@ -289,13 +299,15 @@ def prepare(args, *, n_overrides=None):
     if not dry or args.dry_device == 'cuda': need(torch.cuda.is_available() and torch.cuda.device_count() == 1, 'one available CUDA device')
     return types.SimpleNamespace(native=native, snapshot=snapshot, n=n, c=c, g=g, genesis_sha256=sha(g_raw), work=work, t=t, pin=pin,
                                  window=window, dry=dry, ancestry=ancestry, pre=pre, deadline=deadline, fresh=fresh,
-                                 boundary=boundary, resume=resume, R6=R6, publish=publish, execution_sha256=sha(execution_raw))
+                                 boundary=boundary, resume=resume, R6=R6, publish=publish, execution_sha256=sha(execution_raw),
+                                 kl_anchor=kl_anchor)
 
 
 def run_prepared(x, **run_kw):
     result = x.R6.run(x.native, x.snapshot, {'neural': x.n, 'inherited_backlog': x.g['inherited_backlog']}, root=x.t,
                       campaign_sha=x.c['campaign_sha256'], ancestry=x.ancestry, preprocessing=x.pre, deadline=x.deadline,
-                      authority_check=x.fresh, boundary=x.boundary, resume=x.resume, genesis_sha256=x.genesis_sha256, **run_kw)
+                      authority_check=x.fresh, boundary=x.boundary, resume=x.resume, genesis_sha256=x.genesis_sha256,
+                      kl_anchor=x.kl_anchor, **run_kw)
     x.publish(x.work, 'status.json', {'schema': 'jope.v2-campaign-status/v1', 'state': result['state'], 'config_sha256': x.pin,
                                       'at': time.time(), 'result': result, 'window': x.window, 'dry_run': x.dry, 'training_root': str(x.t)})
     return result

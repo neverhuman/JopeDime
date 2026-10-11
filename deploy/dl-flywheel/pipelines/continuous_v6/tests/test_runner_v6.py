@@ -26,7 +26,9 @@ from pipelines.boundary_admission_v2 import boundary as Bd
 from pipelines.continuous_v6 import genesis as G
 from pipelines.continuous_v6 import resume_v6 as RV
 from pipelines.continuous_v6 import runner_v6 as R6
+from pipelines.continuous_v6 import anchored_step as AS
 from pipelines.final_capture_v1 import capture as FC
+from pipelines.final_capture_v1 import probe as FP
 from pipelines.final_capture_v1.tests import world as W10
 from pipelines.generated_target_preparation_v2.tests import world as CW
 
@@ -85,6 +87,7 @@ class V6Fixture:
     def genesis(self, name='campaign', **over):
         args = dict(preprocessing_raw=self.w.pre_raw, campaign_sha256=CAMPAIGN, contract=CW.contract(self.w.pre_raw),
                     r14_receipt_sha256=R14_RECEIPT, parity_receipts=PARITY, outbox_max_pending=100,
+                    training_objective_sha256=digest(AS.training_objective(self.anchor_kl())),
                     next_update_parity=None if over.get('probe') else parity_receipt(self.capture))
         args.update(over)
         return G.build(self.capture, self.base / name, **args)
@@ -94,12 +97,27 @@ class V6Fixture:
         n.update(max_new_updates=2, emissions_per_step=1, step_budget_floor_seconds=0.001, memory_floor_fraction=0.0,
                  memory_exit_fraction=-1.0, memory_exit_checks=3, max_pending_emissions=100, run_id='fixture-v2',
                  epoch_boundary_budget_seconds=0.001, watermark_budget_seconds=60, closure_budget_seconds=60,
-                 regression_guard={'reference_loss': 1e9, 'ratio': 1.02, 'consecutive_epochs': 3})
+                 regression_guard={'reference_loss': 1e9, 'ratio': 1.02, 'consecutive_epochs': 3},
+                 kl_guard=self.kl_policy(), anchor_kl=self.anchor_kl())
         n.update(over)
+        n.setdefault('training_objective_sha256', digest(AS.training_objective(n['anchor_kl'])))
         return {'neural': n, 'inherited_backlog': {'fixture': True}}
+
+    def anchor_kl(self, **over):
+        """R23 anchor-KL block exactly as the builder emits it (the W10 deployed trie is one program: KL is 0 there)."""
+        _, _, ancestry = FC.load_capture(self.capture)
+        return {'weight': 0.2, 'contexts_per_step': 1, 'anchor_parameter_sha256': ancestry['checkpoint_sha256'],
+                'form': AS.FORM, 'temperature': 1.0, 'max_tokens_per_chunk': 16384, **over}
+
+    def kl_policy(self, **over):
+        """T12 KL-guard policy; permissive by default (like regression_guard's 1e9 reference) so only KL tests trip it."""
+        _, _, ancestry = FC.load_capture(self.capture)
+        return {'probe_contexts': 2, 'alarm_mean': 1e8, 'hold_mean': 1e9, 'hold_max': 1e9,
+                'anchor_parameter_sha256': ancestry['checkpoint_sha256'], **over}
 
     def run_v6(self, root, cfg, resume, *, boundary=None, deadline=None, memory=lambda: 0.5, ancestry=None, **kw):
         if ancestry is None: _, _, ancestry = FC.load_capture(self.capture)
+        kw.setdefault('kl_anchor', FP.captured_inputs(self.capture)['checkpoint'])
         boundary = boundary or FakeBoundary()
         with mock.patch.object(R6, 'time', SLEEPLESS):
             out = R6.run(self.w.native, self.w.active, cfg, root=root / 'training', campaign_sha=CAMPAIGN, ancestry=ancestry,

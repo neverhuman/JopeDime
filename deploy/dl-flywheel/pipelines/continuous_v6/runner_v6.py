@@ -34,6 +34,25 @@ reward; there is no automatic recovery.  Deltas from v1 (plan v2.0 section 5b; r
     The guard state is sealed in every verified closure and recovered only from it.  Every closed epoch's boundary
     work runs exactly once (``close_epoch``, recorded as ``last_checked_epoch``); work deferred at a deadline runs at
     the next start BEFORE any adoption or reservation, or is deferred again if time is still short.
+ 12. KL-to-anchor guard (gap T12; rulings R14/R22; ``kl_guard``): at every closed epoch, BEFORE adoption and in the
+    same ``close_epoch`` as G32, the exact trie KL of the current policy against the frozen v1 final policy is
+    measured on ``neural['kl_guard']['probe_contexts']`` digest-chosen native TRAIN contexts, under the deployed trie
+    mask and decode temperature (per-epoch evidence ``kl-guard-epoch-<epoch>.json``).  The probe runs FIRST in the
+    boundary, before any boundary side effect.  A probe that cannot finish before the in-loop deadline is unavailable
+    (never a value): the whole boundary is then deferred through the existing deferral mechanism, and no guard state,
+    evidence file or plateau changes (CX-REV 5ecdb6b4).  kl_mean >= ``alarm_mean`` is
+    a recorded alarm.  kl_mean >= ``hold_mean`` or kl_max >= ``hold_max`` trips a sticky HOLD (``kl-guard.json``):
+    adoptions are HELD, L6 training continues, and the alert needs owner review.  Like G32 the state is sealed in
+    every verified closure, recovered only from that seal, and absent at genesis.  A deferred epoch's KL check runs at
+    the next start, before any adoption.
+ 13. Anchored objective (owner ruling R23 / D10; amends R8): every update is ``anchored_step.run_microbatches_anchored``.
+    It runs L6 exactly as frozen run_microbatches, then ``weight`` x the exact trie KL(policy || v1 anchor) on the
+    batch's first ``contexts_per_step`` contexts in eval mode, then run_microbatches' clip/step tail.  The anchor is
+    the KL guard's read-only anchor model (one copy).  ``neural['anchor_kl']`` is required.  The training-objective
+    identity ``{l6: OBJECTIVE, anchor_kl: ...}`` (``training_objective_sha256``) must equal the config's and the
+    genesis-sealed value.  It is bound in every batch proof, progress, the terminal intent, the verification and the
+    result.  ``loss`` (history, plateau and G32) stays the L6 total; proofs carry the per-step ``anchor_kl``.  The
+    C10 inbox contract still pins the unchanged L6 label objective (``objective_sha256``).
 """
 from dataclasses import asdict
 from pathlib import Path
@@ -51,6 +70,8 @@ from neural_decode import BatchedTrie
 from continuous_state import restore, normalizer, Recovery, append
 from pipelines.boundary_admission_v2 import boundary as Bd
 from . import custody_v6 as CU
+from . import kl_guard as KG
+from . import anchored_step as AS
 
 GENERATION = 'v2.0.0'
 PLANNER_INDEXES = {'v2_members_batch': ('members', 'CREATE INDEX IF NOT EXISTS v2_members_batch ON members(batch)')}
@@ -185,7 +206,7 @@ def check_basis(root, resume, genesis_sha256):
 
 
 def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing, deadline, authority_check, boundary,
-        resume, genesis_sha256, memory=mem_available_fraction, planner_factory=BatchStream):
+        resume, genesis_sha256, kl_anchor=None, memory=mem_available_fraction, planner_factory=BatchStream):
     root = Path(root); n = config['neural']; device = torch.device(n['device'])
     origin_step = ancestry['optimizer_steps']; start_steps = resume['local_step']
     need(type(origin_step) is int and origin_step > 0 and resume['origin_absolute_step'] == origin_step, 'lineage origin step')
@@ -211,6 +232,25 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
     need(guard['schema'] == 'jope.v2-learning-guard/v1' and all(guard[k] == rg[k] for k in rg) and
          type(guard['tripped']) is bool and type(guard['over']) is int and type(guard['history']) is list,
          'learning-guard policy unchanged across segments')
+    # KL-to-anchor guard (T12): the same seal discipline as G32.  The anchor is the v1 final checkpoint (ancestry).
+    kg = KG.check_policy(n.get('kl_guard'))
+    need(kg['anchor_parameter_sha256'] == ancestry['checkpoint_sha256'], 'KL anchor is the v1 final checkpoint (ancestry)')
+    # R23 anchored objective: required; one anchor (the KL guard's), the deployed temperature, a sealed identity.
+    ak = AS.check_config(n.get('anchor_kl'))
+    need(ak['weight'] > 0 and ak['anchor_parameter_sha256'] == kg['anchor_parameter_sha256'] and
+         ak['temperature'] == float(n['decode_temperature']), 'R23 anchor-KL term: positive weight, the guard anchor, the deployed temperature')
+    training_objective = AS.training_objective(ak); training_objective_sha256 = digest(training_objective)
+    need(n.get('training_objective_sha256') == training_objective_sha256 == resume.get('training_objective_sha256'),
+         'training-objective identity is the configured and genesis-sealed one (R23)')
+    kpath = root / KG.SIDECAR
+    if resume['basis']['kind'] == 'genesis':
+        need(not kpath.exists() and resume.get('kl_guard') is None, 'genesis has no KL-guard state')
+        kl = None
+    else:
+        sealed = resume.get('kl_guard')
+        need(type(sealed) is dict and kpath.is_file() and not kpath.is_symlink() and
+             kpath.read_bytes() == canonical(sealed), 'KL-guard state is exactly the closure-sealed state')
+        kl = json.loads(kpath.read_bytes())
     authority_check(snapshot); M.configure_determinism()
     with timing.span('model.restore_checkpoint_and_optimizer'):
         net, opt, origin = restore(resume['checkpoint_manifest'], resume['checkpoint_state'],
@@ -254,6 +294,15 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
     panel_identity = digest({'native_snapshot': native.identity, 'train': train_panel, 'dev': dev_panel, 'epoch': 0,
                              'batch_index': 0, 'objective': OBJECTIVE})
     need(panel_identity == resume['control']['fixed_panel_sha256'], 'unchanged fixed evaluation panels')
+    with timing.span('model.kl_anchor_load'):
+        anchor = KG.load_anchor(kl_anchor, expected_parameter_sha256=kg['anchor_parameter_sha256'], device=device)
+    kl_probe = KG.KLProbe(trie, anchor, [(c, norm(c, native.encoding(c))) for c in KG.probe_set(native, seed=n['seed'], k=kg['probe_contexts'])],
+                          temperature=float(n['decode_temperature']), device=device,
+                          basis={'native_snapshot_sha256': native.identity, 'preprocessing_sha256': sha(preprocessing),
+                                 'anchor_parameter_sha256': kg['anchor_parameter_sha256']})
+    kl = KG.check_state(KG.initial_state(kg, kl_probe.identity) if kl is None else kl, kg, kl_probe.identity)
+    need(kl.get('last_checked_epoch') == guard.get('last_checked_epoch'), 'KL guard and learning guard checked the same closed epochs')
+    anchor_term = AS.AnchorKL(trie, anchor, ak, device=device)          # shares the guard's read-only anchor model
     panels = {role: prepare_microbatches(native, ids, epoch=0, batch_index=0, normalizer=norm,
                                          max_padded_tokens=n['max_padded_tokens'])[:2]
               for role, ids in [('training', train_panel), ('validation', dev_panel)]}
@@ -309,7 +358,8 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                 'fixed_panel_sha256': panel_identity, 'plateau': monitor, 'boundary': boundary.status,
                 'planner': s, 'checkpoint_sha256': checkpoint_sha, 'active_snapshot_sha256': snapshot.identity,
                 'segment_id': segment_id, 'verified_watermark': watermark, 'deferred_boundary': deferred,
-                'learning_guard': guard,
+                'learning_guard': guard, 'kl_guard': kl,
+                'training_objective': training_objective, 'training_objective_sha256': training_objective_sha256,
                 'storage': {'observed_unique_inode_bytes': used, 'cap_bytes': n['output_cap_bytes'], 'outbox_payload_bytes': payload},
                 'proposal_catalog': {'sha256': trie.identity, 'programs': len(trie.programs), 'scope': 'fixed original training teachers only'},
                 'scope': 'v2.0.0 continuation from the sealed v1 capture; L6 objective on measured records only; adopted verified '
@@ -343,10 +393,20 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
 
     def close_epoch(epoch):
         """All closed-epoch boundary work, exactly once per lineage epoch (in-loop or deferred to a later start):
-        full validation, a fixed-panel evaluation AT this step, the epoch checkpoint, the G32 check (recorded as
-        ``last_checked_epoch``), then adoption only if the guard is not tripped, then the verified watermark."""
+        the exact KL-to-anchor probe FIRST, then full validation, a fixed-panel evaluation AT this step, the epoch
+        checkpoint, the G32 and KL-guard checks (both recorded as ``last_checked_epoch``), then adoption only if
+        neither guard is tripped, then the verified watermark.  Returns None when done.  If the KL probe cannot finish
+        before the in-loop deadline, it returns a deferral record instead, before any side effect: no guard state,
+        evidence file, plateau or checkpoint class has changed, so the caller defers the whole boundary
+        (CX-REV 5ecdb6b4)."""
         nonlocal full_validation, extended_validation, snapshot, watermark
         need(guard.get('last_checked_epoch') != epoch, 'closed epoch checked exactly once')
+        try:
+            with timing.span('validation.kl_to_anchor', epoch=epoch):
+                measured = kl_probe.measure(net, deadline=deadline)
+        except TimeoutError as late:
+            return {'epoch': epoch, 'at_step': origin_step + steps, 'probe_error': str(late)[:300],
+                    'reason': 'KL probe unavailable before the in-loop deadline; boundary work deferred, no guard state updated'}
         with timing.span('validation.full_original_support', epoch=epoch):
             full = evaluate_full_validation(native, net, native_dev, epoch=0, normalizer=norm, config=n, deadline=deadline)
         full['actual_epoch'] = epoch; create(root / f'validation-original-epoch-{epoch:06d}.json', canonical(full))
@@ -361,12 +421,18 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
             extended_validation = {k: v for k, v in extended.items() if k != 'program_windows'}
         if not curves or curves[-1]['batch'] != origin_step + steps: evaluate()
         if not (root / 'epochs' / f'{epoch:06d}').exists(): recovery.retain(current_path, 'epochs', f'{epoch:06d}')
+        create(root / f'kl-guard-epoch-{epoch:06d}.json', canonical({'schema': KG.EPOCH_SCHEMA, 'epoch': epoch, 'at_step': origin_step + steps,
+                                                                    'parameter_sha256': checkpoint_sha, **measured}))
         state = json.loads(json.dumps(guard))
         guard.clear(); guard.update(guard_update(dict(state), rg, epoch=epoch, at_step=origin_step + steps,
                                                  loss=float(curves[-1]['validation_loss']), now=time.time()))
-        publish(root, 'learning-guard.json', guard)
-        if guard['tripped']:
-            boundary.status.update(state='held_by_learning_guard', last={'at_step': origin_step + steps, 'reason': guard['alert']})
+        updated = KG.kl_guard_update(kl, kg, epoch=epoch, at_step=origin_step + steps, kl_mean=measured['kl_mean'],
+                                     kl_max=measured['kl_max'], now=time.time())
+        kl.clear(); kl.update(updated)
+        publish(root, 'learning-guard.json', guard); publish(root, KG.SIDECAR, kl)
+        if guard['tripped'] or kl['tripped']:
+            boundary.status.update(state='held_by_learning_guard' if guard['tripped'] else 'held_by_kl_guard',
+                                   last={'at_step': origin_step + steps, 'reason': '; '.join(g['alert'] for g in (guard, kl) if g['tripped'])})
             publish(root, 'boundary-status.json', boundary.status)
         else:
             with timing.span('input.epoch_boundary_inbox_adoption', epoch=epoch):
@@ -384,15 +450,17 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
         if epoch_closed():
             closed = ancestry['completed_epochs'] + planner._get('epoch')
             if guard.get('last_checked_epoch') != closed:
-                # A closed epoch whose boundary work (G32 check included) was deferred: do it exactly once, BEFORE any
+                # A closed epoch whose boundary work (G32 and KL checks included) was deferred: do it exactly once, BEFORE any
                 # adoption or reservation; with too little time, defer again and end without a reservation.
                 if remaining(deadline) <= n['epoch_boundary_budget_seconds']:
                     deferred = {'epoch': closed, 'at_step': origin_step + steps, 'reason': 'insufficient time for deferred boundary work at start'}
                     state = 'global_deadline_reached'; start_deferred = True
                 else:
                     with timing.span('input.deferred_epoch_boundary_at_start', epoch=closed):
-                        close_epoch(closed)
-            elif not guard['tripped']:
+                        late = close_epoch(closed)
+                    if late is not None:   # KL probe unavailable: defer again, no reservation, no guard update
+                        deferred = late; state = 'global_deadline_reached'; start_deferred = True
+            elif not guard['tripped'] and not kl['tripped']:
                 with timing.span('input.boundary_adoption_at_start'):
                     snapshot = boundary.step(planner, snapshot, checkpoint_sha, at_step=origin_step + steps)
         publish(root, 'progress.json', progress())
@@ -451,7 +519,9 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                                            'validation_data_run_ids': [c for p, c in emit if p == 'validation']}, emissions)
             before = M.parameter_sha256(net); need(before == checkpoint_sha, 'actual pre-update checkpoint chain'); stage = time.monotonic()
             with timing.span('model.forward_backward_optimizer', absolute_optimizer_step=absolute), timing.CUDAForwards(net) as cuda:
-                objective = run_microbatches(net, batches, total, optimizer=opt, deadline=deadline); objective['cuda_forward_timing'] = cuda.receipt()
+                step_kl = anchor_term.contexts(ids, lambda c: norm(c, snapshot.encoding(c)))
+                objective = AS.run_microbatches_anchored(net, batches, total, optimizer=opt, deadline=deadline, anchor_kl=(anchor_term, step_kl))
+                objective['cuda_forward_timing'] = cuda.receipt()
             perf['optimizer_seconds'] += time.monotonic() - stage; after = M.parameter_sha256(net); need(after != before, 'actual parameter update')
             with timing.span('checkpoint.atomic_durable_physical_state', absolute_optimizer_step=absolute):
                 newpath, newcp = recovery.save(net, opt, absolute, campaign_sha)
@@ -459,7 +529,8 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                      'execution_config_sha256': resume['execution_config_sha256'], 'absolute_optimizer_step': absolute,
                      'local_optimizer_step': steps + 1, 'batch': asdict(current), 'selection': selection, 'objective': objective,
                      'decoder': decode_info, 'emission_ack': ack, 'checkpoint': newcp, 'snapshot_sha256': snapshot.identity,
-                     'adoption_seq': boundary.seq,
+                     'adoption_seq': boundary.seq, 'anchor_kl': objective['anchor_kl'],
+                     'training_objective_sha256': training_objective_sha256,
                      'checkpoint_retention': 'rolling; retained only if among last2/best2/epoch checkpoints',
                      'fresh_generated_rewards_used': False}
             raw = canonical(proof); create(root / f'batch-{absolute:09d}.json', raw)
@@ -470,7 +541,8 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
             presentations += len(ids); current = None; step_seconds.append(time.monotonic() - began)
             recovery.committed(newpath); control()
             history = {'batch': absolute, 'new_batch': steps, 'epoch': epoch, 'context_count': len(ids), 'train_loss': objective['loss'],
-                       'terms': objective['terms'], 'support': objective['support'], 'dropout': True, 'at': time.time()}
+                       'terms': objective['terms'], 'support': objective['support'], 'dropout': True, 'at': time.time(),
+                       'anchor_kl': objective['anchor_kl'], 'objective_total': objective['objective_total']}
             append(root / 'optimizer-history.jsonl', history); hist.append(history); hist = hist[-2048:]
             proof_tail.append({'absolute_step': absolute, 'proof_sha256': sha(raw), 'parameter_sha256': after}); proof_tail = proof_tail[-2:]
             completed = planner.summary()['completed_epochs']
@@ -481,7 +553,10 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                     # next segment's start (adoption runs there; this epoch's full validation is recorded as deferred).
                     deferred = {'epoch': epoch, 'at_step': origin_step + steps, 'reason': 'insufficient in-loop time for boundary work'}
                     state = 'global_deadline_reached'; break
-                close_epoch(epoch); last_full = completed
+                late = close_epoch(epoch)
+                if late is not None:       # KL probe unavailable: defer the whole boundary to the next start
+                    deferred = late; state = 'global_deadline_reached'; break
+                last_full = completed
             publish(root, 'progress.json', progress())
         else:
             if not start_deferred: state = 'maximum_updates_reached'
@@ -513,9 +588,10 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                       'unique_train_contexts_seen': len(seen), 'total_train_presentations': presentations,
                       'fixed_panel_sha256': panel_identity, 'plateau': monitor, 'preprocessing_sha256': sha(preprocessing),
                       'snapshot_sha256': snapshot.identity, 'adoption_seq': boundary.seq, 'boundary': boundary.status,
-                      'optimizer_control': final_control, 'verified': False}
+                      'optimizer_control': final_control, 'training_objective_sha256': training_objective_sha256, 'verified': False}
             publish(root, 'terminal-intent.json', intent); intent_sha = sha(canonical(intent))
             publish(root, 'learning-guard.json', guard)   # sealed below; the next segment recovers it only from the seal
+            publish(root, KG.SIDECAR, kl)                  # likewise sealed below
             t0 = time.monotonic()
             final_mark, report = CU.extend(root, planner.db, outbox.db, watermark, budget_seconds=n['closure_budget_seconds'], **custody)
             prefix = CU.prefix_integrity(root, planner.db, origin_step, final_mark['local_step'],
@@ -534,6 +610,8 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                             'planner_verification': planner_v, 'outbox_verification': outbox_v, 'prefix_integrity': prefix,
                             'control_sha256': sha(canonical(final_control)), 'checkpoint': cp, 'checkpoint_path': str(current_path),
                             'learning_guard': guard, 'learning_guard_sha256': sha(canonical(guard)),
+                            'kl_guard': kl, 'kl_guard_sha256': sha(canonical(kl)),
+                            'training_objective_sha256': training_objective_sha256,
                             'execution_config_sha256': resume['execution_config_sha256'], 'campaign_sha256': campaign_sha,
                             'seconds': {'suffix_joins': t1 - t0, 'planner_verify': t2 - t1, 'outbox_verify': t3 - t2,
                                         'closure': time.monotonic() - closing}}
@@ -544,7 +622,8 @@ def run(native, snapshot, config, *, root, campaign_sha, ancestry, preprocessing
                                           'origin_absolute_step': origin_step, 'new_optimizer_steps': steps,
                                           'absolute_optimizer_steps': origin_step + steps, 'current_parameter_sha256': checkpoint_sha,
                                           'latest_checkpoint': cp, 'proof_tail': proof_tail, 'deferred_boundary': deferred,
-                                          'snapshot_sha256': snapshot.identity, 'adoption_seq': boundary.seq})
+                                          'snapshot_sha256': snapshot.identity, 'adoption_seq': boundary.seq,
+                                          'training_objective_sha256': training_objective_sha256})
         except BaseException as error:
             closure_error = type(error).__name__ + ': ' + str(error)[:4000]
             try:

@@ -1,6 +1,6 @@
 """Isolated, exact-roster CPU fixtures for the v2.0.0 learner packages; additive to the prior812 identities.
 
-Families (170 identities): continuous_v6 40, boundary_admission_v2 24, generated_target_preparation_v2 36,
+Families (213 identities): continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36,
 native_result_overlay_v1 38 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
 fixtures replace module globals and clocks.  final_capture_v1 runs through its own pinned runner, which supports the
 integrated tree.  The other four run through the child mode below: the boundary/preparation/overlay runners shipped
@@ -41,15 +41,23 @@ SOURCE_PINS_SHA256 = {
 }
 CONTINUOUS_V6_PINS = {
     '__init__.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    'cli_v6.py': '41f4b2fc38ac1ac4658c1d30f25521b97cd5811d43dd7796e55617d72aab9c7d',
+    'anchored_step.py': 'fc05ee4d3d861107b9401dade3706e4f55a34523c4b79f96949c25ce327867bf',
+    'cli_v6.py': '59d0017dee39c0f40c6c75a7cc8a810ae22a8239d75f8cfe3de9506b65bc1911',
     'custody_v6.py': '6d2ea58d4e0fc8eb1c6b855a711a6f3324a5448ab759d0b321a429ae812d356e',
-    'genesis.py': '6cd7a44566c692e656e740d547c2f01137718cb002174efa93463940a1d1a04e',
+    'genesis.py': 'dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca',
+    'kl_guard.py': '5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264',
     'parity_probe.py': 'a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142',
-    'resume_v6.py': '9029f2f44a9136945a4c1f3007515640f26e1b7a8bca03f17655e0158bc94181',
-    'runner_v6.py': 'db87374f1a2222c4d43a926b89a756969dc5fe927ba0d80a0e7f89d6f58c0b0a',
+    'resume_v6.py': '861e92c151ba7a7365e6b1e95963933a8269357f0b50161b19e6f95dcd6609d7',
+    'runner_v6.py': '23f4677f2945d0522cef524c7ef7937e4e1580d1175e74931f8cfd0f45582a8f',
     'tests/__init__.py': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    'tests/fixtures/__init__.py': '782fc19537cf6e8e1c253a593f378897e97a02128cf2ae682fd0bf4426ca711b',
+    'tests/fixtures/kl_ref_r22_harness_v2.py': 'f4a424b360d5ba6306d65ef14874f307779664ecb9d2ac3ff9ab415778f1028f',
+    'tests/fixtures/kl_ref_r22_harness_v4.py': '9740fc788ddf63e5630d876703fcd79495aa3246583b5279451d538c03e9cc38',
+    'tests/fixtures/kl_ref_rebased_exit_objective.py': '0b6be567135fcb7d83786a4532d1e09e0b2707420f22b390a142c9f294f3caf2',
+    'tests/test_anchored_step.py': 'dc45e02bf801a10a4b6cc84183146304d84cd27031771de9980d5625222f60e5',
+    'tests/test_kl_guard.py': '39b861883ca3735c1814fa602cdde07ea88253758565727fdb61962048a4f0a4',
     'tests/test_r2_custody.py': '6eedd89a39074b9108663a894f2fac634f3d9c053f0821e94fa437644a297ab0',
-    'tests/test_runner_v6.py': 'ca070ad813ad2a702df585244b4fd5506290e67a916636f7c580d1a765438b42',
+    'tests/test_runner_v6.py': 'ebad8f0554f995d74e37cfe7103f2e2cfa9a5e83104743c4029ac9336044a1ce',
 }
 CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6Tests.' + name for name in (
     'test_genesis_inherits_lineage_indexes_and_logs_r14_after_parity',
@@ -94,11 +102,61 @@ CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6
     'test_f6_stopped_owners_must_be_closed',
     'test_f6_unit_membership_and_inclusive_allocation',
     'test_f6_window_uses_boot_clock_and_fails_closed',
+)) + tuple('pipelines.continuous_v6.tests.test_anchored_step.AnchoredKLMathTests.' + name for name in (
+    'test_c_kl_equals_kl_guard_and_independent_enumeration',
+    'test_c_pin_value_and_gradient_bitwise_equal_to_harness_v4',
+    'test_config_closure_and_identity',
+    'test_policy_pass_keeps_only_checkpointed_activations',
+)) + tuple('pipelines.continuous_v6.tests.test_anchored_step.AnchoredRunnerTests.' + name for name in (
+    'test_f_restart_continuity_is_bitwise',
+    'test_f_runner_trains_with_the_anchor_term_and_binds_the_identity',
+    'test_runner_refuses_a_missing_or_malformed_anchor_term_or_identity',
+)) + tuple('pipelines.continuous_v6.tests.test_anchored_step.AnchoredStepWorld.' + name for name in (
+    'test_a_weight_zero_is_bitwise_frozen_run_microbatches',
+    'test_b_at_the_anchor_kl_is_zero_and_the_update_is_bitwise_frozen',
+    'test_d_the_kl_term_draws_no_random_numbers',
+    'test_e_deadline_is_respected_before_and_inside_the_term',
+    'test_single_program_trie_adds_nothing',
+)) + tuple('pipelines.continuous_v6.tests.test_kl_guard.KLDeadlineTests.' + name for name in (
+    'test_a_late_anchor_pass_never_leaves_a_partial_cache',
+    'test_all_nodes_checks_the_deadline_after_every_chunk',
+    'test_branching_in_time_control',
+    'test_cached_single_program_already_expired_must_refuse',
+    'test_cached_single_program_in_time_control',
+    'test_final_real_forward_crossing_original_deadline_must_refuse',
+    'test_slow_final_aggregation_after_the_last_forward_refuses',
+)) + tuple('pipelines.continuous_v6.tests.test_kl_guard.KLMathTests.' + name for name in (
+    'test_deadline_or_invalid_probe_is_unavailable_never_a_value',
+    'test_exact_kl_equals_independent_leaf_enumeration',
+    'test_measure_is_rng_and_parameter_neutral',
+    'test_pin_bitwise_equal_to_r22_harness',
+    'test_pin_equal_to_rebased_exact_trie_kl',
+    'test_probe_requires_frozen_anchor_and_closed_inputs',
+    'test_single_program_trie_is_exact_zero_without_forward',
+    'test_unchanged_model_gives_exact_zero',
+)) + tuple('pipelines.continuous_v6.tests.test_kl_guard.KLRunnerTests.' + name for name in (
+    'test_alarm_only_is_recorded_and_does_not_block',
+    'test_hold_blocks_adoption_at_a_closed_epoch_and_l6_training_continues',
+    'test_hold_blocks_adoption_at_a_deferred_start',
+    'test_hold_is_sticky_across_a_sealed_restart_and_the_policy_cannot_change',
+    'test_runner_genesis_epoch_check_on_the_unchanged_policy_is_exact_zero',
+    'test_runner_refuses_malformed_policy_wrong_anchor_and_unpaired_guards',
+    'test_sidecar_is_sealed_in_the_closure_and_refused_if_deleted_reset_or_altered',
+    'test_unavailable_probe_at_a_closed_epoch_defers_and_updates_no_guard_state',
+    'test_unavailable_probe_at_a_deferred_start_defers_again_without_reservation',
+    'test_unchanged_v1_policy_gives_exact_zero_through_the_anchor_loader',
+)) + tuple('pipelines.continuous_v6.tests.test_kl_guard.KLTransitionTests.' + name for name in (
+    'test_malformed_policy_refused',
+    'test_probe_set_is_deterministic_train_only',
+    'test_recovered_state_must_match_policy_and_probe_set',
+    'test_sticky_first_trip_alarm_record_and_capped_history',
+    'test_transition_refusals',
+    'test_transition_table',
 ))
 EXPECTED_COUNTS = {'boundary_admission_v2': 24, 'generated_target_preparation_v2': 36,
-                   'native_result_overlay_v1': 38, 'final_capture_v1': 32, 'continuous_v6': 40}
+                   'native_result_overlay_v1': 38, 'final_capture_v1': 32, 'continuous_v6': 83}
 OWN_RUNNER = {'final_capture_v1'}
-TOTAL = 170
+TOTAL = 213
 CHILD_SCHEMA = 'jope.v2-learner-offline-child/v1'
 RECEIPT_SCHEMA = 'jope.v2-learner-offline/v1'
 SCOPE = ('Offline CPU fixtures on private temporary worlds only. No live campaign, optimizer launch, planner, '

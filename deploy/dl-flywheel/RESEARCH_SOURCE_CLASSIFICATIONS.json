@@ -3154,70 +3154,70 @@
     "python:deploy/dl-flywheel/pipelines/continuous_v6/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py": {
-      "bytes": 23242,
+      "bytes": 24236,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "41f4b2fc38ac1ac4658c1d30f25521b97cd5811d43dd7796e55617d72aab9c7d"
+      "sha256": "59d0017dee39c0f40c6c75a7cc8a810ae22a8239d75f8cfe3de9506b65bc1911"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/custody_v6.py": {
       "bytes": 15179,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "6d2ea58d4e0fc8eb1c6b855a711a6f3324a5448ab759d0b321a429ae812d356e"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/genesis.py": {
-      "bytes": 15448,
+      "bytes": 16255,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "6cd7a44566c692e656e740d547c2f01137718cb002174efa93463940a1d1a04e"
+      "sha256": "dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
       "bytes": 18310,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "a4a20a03298ba4a2f4eb06e746c023b5b9471ff9d4e4d915a2e222919d6af142"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/resume_v6.py": {
-      "bytes": 7520,
+      "bytes": 8095,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "9029f2f44a9136945a4c1f3007515640f26e1b7a8bca03f17655e0158bc94181"
+      "sha256": "861e92c151ba7a7365e6b1e95963933a8269357f0b50161b19e6f95dcd6609d7"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py": {
-      "bytes": 45460,
+      "bytes": 52884,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "db87374f1a2222c4d43a926b89a756969dc5fe927ba0d80a0e7f89d6f58c0b0a"
+      "sha256": "23f4677f2945d0522cef524c7ef7937e4e1580d1175e74931f8cfd0f45582a8f"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/__init__.py": {
       "bytes": 0,
       "classification": {
-        "reason": "Research v2.0.0 continual-learner source, build r2.7 (runner_v6, genesis, resume, custody, parity probe, CLI) with 40 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
@@ -3458,13 +3458,67 @@
       "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
     },
     "python:deploy/dl-flywheel/run_v2_offline.py": {
-      "bytes": 15898,
+      "bytes": 19976,
       "classification": {
-        "reason": "Isolated exact-roster runner for the five v2.0.0 learner families (170 identities), run as its own python-lane command with its own 600 s budget after the unchanged prior812 run_offline.py identities. Pins each package source roster and the import closure against SOURCE_MANIFEST.json; adds no identities of its own and grants no launch permission.",
+        "reason": "Isolated exact-roster runner for the five v2.0.0 learner families (213 identities), run as its own python-lane command with its own 600 s budget after the unchanged prior812 run_offline.py identities. Pins each package source roster and the import closure against SOURCE_MANIFEST.json; adds no identities of its own and grants no launch permission.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "32600f2a9541b6d1e3c255d60423899a2d026c96f8f3e7aaced0758989cb363f"
+      "sha256": "83439d0e0407c3f0a9c00e8c4beab5b0e3220734c8f9a45aaa4518908cb1287a"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/anchored_step.py": {
+      "bytes": 9330,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "fc05ee4d3d861107b9401dade3706e4f55a34523c4b79f96949c25ce327867bf"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py": {
+      "bytes": 21929,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/__init__.py": {
+      "bytes": 118,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "782fc19537cf6e8e1c253a593f378897e97a02128cf2ae682fd0bf4426ca711b"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py": {
+      "bytes": 6840,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "f4a424b360d5ba6306d65ef14874f307779664ecb9d2ac3ff9ab415778f1028f"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py": {
+      "bytes": 7481,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "9740fc788ddf63e5630d876703fcd79495aa3246583b5279451d538c03e9cc38"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_rebased_exit_objective.py": {
+      "bytes": 5100,
+      "classification": {
+        "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; actual test families are classified separately.",
+      "sha256": "0b6be567135fcb7d83786a4532d1e09e0b2707420f22b390a142c9f294f3caf2"
     }
   }
 }
