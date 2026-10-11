@@ -1542,6 +1542,16 @@
       ],
       "scope": "9 isolated portable CPU fixtures via the corresponding run_native_pool_offline.py or run_rl_math_offline.py after prior587. Explicit8/12/24 cardinality, permanent registry and fresh resource gates; finite-action gradient/counterexample/CLI checks. No real GP, cloud, GPU, optimizer, production queue or service operations."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_actual_policy_probability.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Actual PolicyLM/decoder/objective finite CPU fixture: EOS-inclusive float64 trie sequence likelihood, normalization and measured-target CE gradient sign. No data/live qualification."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "discovery": {
         "kind": "python-family"
@@ -1601,6 +1611,16 @@
         "python"
       ],
       "scope": "Registered data-free best-of-32 fixtures: exact leaf membership, all raw draws, predicted-only ranking, fixed feasibility fallback, durable restart and eight blind charges. No live evaluator, checkpoint or performance qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_successor_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Synthetic successor-support role/identity/version and availability-vs-outcome fixtures; qualified use BLOCKED_JEPSON."
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
       "discovery": {
@@ -9483,7 +9503,8 @@
         "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\"",
         "bash ../deploy/ci/dl-offline-group.sh 900 \"$EVIDENCE/dl-lane-offline\"",
         "uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output \"$EVIDENCE/flywheel-offline\"",
-        "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\""
+        "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\"",
+        "CUDA_VISIBLE_DEVICES='' uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_gate_a_offline.py --receipt \"$EVIDENCE/rlfw-gate-a.json\""
       ],
       "command": [
         "bash",

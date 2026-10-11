@@ -194,6 +194,10 @@ timeout 300s uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --outp
 )
     # Additive research fixtures use stdlib fake policies; no deployed imports or checkpoint inputs.
 python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json"
+(
+cd python
+CUDA_VISIBLE_DEVICES='' uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_gate_a_offline.py --receipt "$EVIDENCE/rlfw-gate-a.json"
+)
     ;;
   rust-test)
     status=0

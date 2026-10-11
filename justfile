@@ -51,6 +51,7 @@ test-real-corpus custody:
 python-check:
     cd python && uv run ruff check . && uv run ruff format --check . && uv run pytest -q -m "not xbabe2"
     python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py
+    CUDA_VISIBLE_DEVICES='' uv run --project python --extra cpu python deploy/dl-flywheel/pipelines/rlfw/run_gate_a_offline.py --receipt target/health/rlfw-gate-a.json
 
 # ADR-0003: no absolute home paths in code or units (python/src is informational until WP6 lands)
 lint-paths:

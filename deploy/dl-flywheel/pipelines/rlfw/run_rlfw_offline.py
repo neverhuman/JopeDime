@@ -18,6 +18,7 @@ MODULES = (
     "rlfw.tests.test_arena_scheduler",
     "rlfw.tests.test_slate",
     "rlfw.tests.test_no_winner_bootstrap",
+    "rlfw.tests.test_successor_support",
 )
 
 
