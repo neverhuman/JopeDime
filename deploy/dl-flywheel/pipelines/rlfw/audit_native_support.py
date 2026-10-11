@@ -74,6 +74,7 @@ def main():
     from rlfw.probability_contract import (
         START_PARAMETER_SHA256,
         actor_logprob,
+        load_actor_parameters,
         require_same_support_reference,
     )
     from rlfw.successor_support import V1_TRIE_SHA256, SuccessorBuilder, digest
@@ -279,14 +280,7 @@ def main():
     read_pin(args.checkpoint / "state.safetensors", STATE_SHA)
     net = M.PolicyLM(M.PolicyConfig(**checkpoint_manifest["model_config"]))
     state = load_file(str(args.checkpoint / "state.safetensors"), device="cpu")
-    net.load_state_dict(
-        {
-            k.removeprefix("model."): v
-            for k, v in state.items()
-            if k.startswith("model.")
-        },
-        strict=True,
-    )
+    load_actor_parameters(net, state)
     if M.parameter_sha256(net) != START_PARAMETER_SHA256:
         raise ValueError("start checkpoint parameter drift")
     net.eval()

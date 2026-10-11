@@ -106,6 +106,28 @@ def require_same_support_reference(actor_support, reference_support, parameter_s
         raise ValueError("reference must be the frozen ea078456 start checkpoint")
 
 
+def load_actor_parameters(net, state):
+    """Use v1's named-parameter inventory; tied LM weight is stored only once."""
+    import torch
+
+    parameters = dict(net.named_parameters())
+    supplied = {
+        name.removeprefix("model."): value
+        for name, value in state.items()
+        if name.startswith("model.")
+    }
+    if set(supplied) != set(parameters):
+        raise ValueError("checkpoint model tensor inventory mismatch")
+    if any(
+        supplied[name].shape != value.shape or not torch.isfinite(supplied[name]).all()
+        for name, value in parameters.items()
+    ):
+        raise ValueError("checkpoint model tensor shape/nonfinite mismatch")
+    with torch.no_grad():
+        for name, parameter in parameters.items():
+            parameter.copy_(supplied[name])
+
+
 START_PARAMETER_SHA256 = (
     "ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb"
 )

@@ -12,7 +12,11 @@ from dltrain import objective as O
 from neural_decode import BatchedTrie
 
 from rlfw.compact_support import CompactSupportTrie, encode
-from rlfw.probability_contract import actor_logprob, weighted_archive_ce
+from rlfw.probability_contract import (
+    actor_logprob,
+    load_actor_parameters,
+    weighted_archive_ce,
+)
 
 
 class ActualPolicyTests(unittest.TestCase):
@@ -174,6 +178,30 @@ class ActualPolicyTests(unittest.TestCase):
         a = actor_logprob(self.net, z, [x["tokens"] for x in eager], self.trie).total
         b = actor_logprob(self.net, z, [x["tokens"] for x in indexed], compact).total
         self.assertTrue(torch.equal(a, b))
+
+    def test_actual_v1_named_parameter_checkpoint_keeps_tied_weight(self):
+        state = {
+            "model." + name: value.detach().clone()
+            for name, value in self.net.named_parameters()
+        }
+        self.assertNotIn("model.lm_head.weight", state)
+        restored = M.PolicyLM(self.net.cfg)
+        load_actor_parameters(restored, state)
+        self.assertIs(restored.lm_head.weight, restored.tok_emb.weight)
+        self.assertEqual(M.parameter_sha256(restored), M.parameter_sha256(self.net))
+        for change in [
+            {
+                name: value
+                for name, value in state.items()
+                if name != "model.tok_emb.weight"
+            },
+            {**state, "model.lm_head.weight": state["model.tok_emb.weight"]},
+            {**state, "model.tok_emb.weight": state["model.tok_emb.weight"][:1]},
+        ]:
+            before = M.parameter_sha256(restored)
+            with self.assertRaises(ValueError):
+                load_actor_parameters(restored, change)
+            self.assertEqual(before, M.parameter_sha256(restored))
 
 
 if __name__ == "__main__":
