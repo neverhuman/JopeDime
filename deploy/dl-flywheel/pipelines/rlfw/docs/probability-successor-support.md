@@ -74,3 +74,5 @@ Native measurements lack the seven-artifact Rust qualification closure. This
 is a development audit and a source/fixture proof, not a heldout capability,
 live learning or serving result. Bulk artifacts remain outside Git in
 `.agent/rlfw-coord/lanes/CX-SUP/`.
+
+The complete native scratch audit produced 2,633,926 programs (2,627,286 additions), covering all 2,829,211 measured TRAIN detail rows. On all 263 development contexts / 54 lineages, grammar summed NLL exceeds v1-trie summed NLL by 73.044906 nats on average; exact sampler/actor recomputation differs by at most 3.55e-15. The actual successor sampler emits a measured noncatalog program with finite actor likelihood. See [small pinned results summary](probability-successor-results.json) for source/input/receipt identities, operator coverage, same-support reference and conditional lineage CI. These remain SCRATCH and BLOCKED_JEPSON for qualified use.

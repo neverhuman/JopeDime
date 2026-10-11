@@ -1,0 +1,163 @@
+{
+  "added_operator_program_coverage": {
+    "bin_onehot": 320509,
+    "blom": 329158,
+    "cheb": 515625,
+    "elasticnet": 354587,
+    "hinge": 367143,
+    "histgbm": 1136836,
+    "ksmooth": 266868,
+    "oblique_hinge": 338735,
+    "pair_prod": 407125,
+    "poly_interact": 405498,
+    "quantile_bins": 351397,
+    "rand_proj": 330875,
+    "rank": 331437,
+    "rff_cos": 318490,
+    "rff_sin": 321247,
+    "ridge": 461476,
+    "ridge_gcv": 407519,
+    "robust_scale": 339077,
+    "row_stats": 292628,
+    "sigmoid": 344191,
+    "standardize": 989309,
+    "target_bin_encode": 341702,
+    "winsor_clip": 1046524
+  },
+  "added_size": 2627286,
+  "checkpoint_parameter_sha256": "ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb",
+  "grammar_extra_nll": {
+    "max": 399.6956786699671,
+    "mean": 73.04490611611129,
+    "median": 62.7365273026155,
+    "min": 0.02868340350155929
+  },
+  "l6_changed": false,
+  "label": "SCRATCH NON-QUALIFYING",
+  "lineage_averaged_grammar_extra_nll": {
+    "bootstrap_replicates": 10000,
+    "ci95_percentile": [
+      67.72602652457908,
+      86.72050334116491
+    ],
+    "label": "conditional descriptive dev-panel uncertainty; no untouched holdout or improvement claim",
+    "mean": 76.83236067009284,
+    "parents": 54,
+    "seed": 20261011,
+    "unit": "equally weighted parent lineage means"
+  },
+  "max_sampler_recompute_abs_error": 3.552713678800501e-15,
+  "old_trie_sha256": "116154767f2df56fb065c9b6bc3ce07df38c3672843c0eb4b944d84e8e8473bd",
+  "operator_program_coverage": {
+    "bin_onehot": 320929,
+    "blom": 329866,
+    "cheb": 517773,
+    "elasticnet": 355735,
+    "hinge": 368069,
+    "histgbm": 1139172,
+    "ksmooth": 267104,
+    "oblique_hinge": 339302,
+    "pair_prod": 408670,
+    "poly_interact": 407108,
+    "quantile_bins": 352160,
+    "rand_proj": 331487,
+    "rank": 332185,
+    "rff_cos": 318910,
+    "rff_sin": 321674,
+    "ridge": 462728,
+    "ridge_gcv": 409187,
+    "robust_scale": 339831,
+    "row_stats": 292991,
+    "sigmoid": 345168,
+    "standardize": 992554,
+    "target_bin_encode": 342311,
+    "winsor_clip": 1049282
+  },
+  "optimizer_steps": 0,
+  "preprocessing_sha256": "4f093f59af6cb4522c8fda77cce357ecd72d0561e3816ac261ec1c91808ca62d",
+  "qualified_use": "BLOCKED_JEPSON",
+  "receipt_sha256": {
+    "native-final/audit-report.json": "54c2a6280e7cdd17305b894faf052923f073f04c0c26ed720311161710eea69b",
+    "native-final/availability.json": "cb4751e78185a96ee5db7d69dfe8317e1ec4f6d601d1fac2afb506e685fcfc43",
+    "native-final/context-outcome-eligibility.json": "229c751f5f0731efe22586edee31ca98663dea9c7061594b8b4c36c0822265b1",
+    "native-final/current-authority-proof.json": "2eb6d9f7415d97a2aecb94b6e193682b3cb33f96edabc58e603b10d824cae2e1",
+    "native-final/support-manifest.json": "d4443874c68674c29005809d906ea36133e0d015ea08b7be46a743ea53425996",
+    "native-final/val263-probability-mismatch.json": "c6c3a9358cd85afea910abcb61358e4440534a549dda18832d90d00cdbf06270"
+  },
+  "refused_measured_rows": {},
+  "run": {
+    "active_cpu_seconds": 643.5096900000001,
+    "cgroup_readback": {
+      "cpu.max": "200000 100000\n",
+      "cpu.stat": "usage_usec 646113046\nuser_usec 625874371\nsystem_usec 20238675\ncore_sched.force_idle_usec 0\nnr_periods 6873\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+      "memory.max": "10737418240\n",
+      "memory.peak": "8620523520\n",
+      "memory.swap.max": "0\n"
+    },
+    "exit_code": 0,
+    "framework": {
+      "LSE_dtype": "float64",
+      "dropout": "OFF",
+      "inference_device": "cpu",
+      "numpy": "2.5.3",
+      "python": "3.12.12 (main, Feb 12 2026, 00:42:14) [Clang 21.1.4 ]",
+      "safetensors": "0.8.0",
+      "threads": 1,
+      "torch": "2.14.0+cu130"
+    },
+    "prepared_manifest_sha256": "0018725e27ade99f7e8d73c290f527f7453fc5eaa3654142a196fc473d4eaf8a",
+    "wall_seconds": 677.7896111011505
+  },
+  "schema": "jope.rlfw-native-support-audit/v1",
+  "scope_limits": [
+    "Measured native scratch rows lack seven-artifact Rust qualification.",
+    "Availability does not grant context reward/target eligibility.",
+    "Dev263 inherits v1 lineage ancestry; no untouched holdout claim."
+  ],
+  "smoke": {
+    "actor_support_sha256": "0cc448ac77c601ad45885be44533b6f1696c610dc652d6e16cbf88ec6c87c3e7",
+    "cross_support_forward_kl": "REFUSED",
+    "finite_added": {
+      "baseline_verified": true,
+      "context_id": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+      "logprob": -17.083435948491598,
+      "program_sha256": "00091c1b1524beef83606e471e15fbfa27f4669e59dde83ed5d379da15fc0e78",
+      "q": 0.5081547015561774,
+      "reference_logprob_under_successor": -17.083435948491598,
+      "training_target_available": true
+    },
+    "reference_parameter_sha256": "ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb",
+    "reference_support_sha256": "0cc448ac77c601ad45885be44533b6f1696c610dc652d6e16cbf88ec6c87c3e7",
+    "sampled_added_actor_logprob": -13.35292782825488,
+    "sampled_added_native_source": {
+      "context_id": "7e7b4c441561be5358376b954351315cad3c2a76c281f1246640928c5c381980",
+      "shard_sha256": "5f4d6074d5e16103d1b4bc0c7b556cde6a56aedb2dd36f35790b55107c4f8848"
+    },
+    "sampled_context_id": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "sampled_program_sha256": "b30339169c103abd9bf4fa26ba708c15102652cf9aafc36224c8d5e2a7484c00",
+    "sampled_seed": 0
+  },
+  "source_commit": "adff20c1fbfd1bb573719858485035ca633efb46",
+  "state_sha256": "3cdd73d8cef758e4c1895fc2ab7ea811c0c5c69b05709aca012eafc8e3492b19",
+  "successor_size": 2633926,
+  "successor_trie_sha256": "0cc448ac77c601ad45885be44533b6f1696c610dc652d6e16cbf88ec6c87c3e7",
+  "support_change_extra_nll": {
+    "is_forward_kl": false,
+    "max": 17.922322742705596,
+    "mean": 5.681170986752152,
+    "min": 0.0
+  },
+  "training_detail_availability": {
+    "context_reward_eligibility": "not inferred from availability; q only verified for smoke context",
+    "measured_rows": 2829211,
+    "old_support_fraction": 0.01231403384194392,
+    "old_support_rows": 34839,
+    "successor_support_fraction": 1.0,
+    "successor_support_rows": 2829211,
+    "train_contexts_loaded": 6857,
+    "train_contexts_with_detail_shards": 2267
+  },
+  "training_shard_contexts": 2267,
+  "val_contexts": 263,
+  "val_parents": 54
+}
