@@ -115,6 +115,29 @@ class SuccessorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "start checkpoint"):
             require_same_support_reference("new", "new", "0" * 64)
 
+    def test_reused_support_requires_complete_current_train_provenance(self):
+        legitimate, unseen = program("prepared-train"), program("prepared-extra")
+        # Mirror the audit's pinned-cache preload, then current TRAIN rescan.
+        for p in [legitimate, unseen]:
+            self.builder.programs[p["program_sha256"]] = dict(p)
+        self.add(legitimate["dsl"])
+        with self.assertRaisesRegex(ValueError, "1 .*current TRAIN provenance"):
+            self.freeze()
+        self.assertFalse(self.builder.frozen)
+        # A current measured TRAIN row completes custody; no cache-only leaf
+        # can enter the positive frozen support, including after a failed freeze.
+        self.add(unseen["dsl"])
+        programs, manifest = self.freeze()
+        self.assertEqual(len(programs), 6642)
+        self.assertEqual(
+            manifest["added_program_sha256"],
+            sorted(p["program_sha256"] for p in [legitimate, unseen]),
+        )
+        self.assertEqual(manifest["counts"]["measured_rows"], 2)
+        self.assertEqual(
+            set(manifest["added_program_sha256"]), set(self.builder.sources)
+        )
+
     def test_compact_prefix_index_keeps_eos_and_all_children(self):
         programs = [program("short"), program("long"), program("other")]
         rows = [(1, 3, 2), (1, 3, 4, 2), (1, 5, 2)]

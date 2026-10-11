@@ -69,6 +69,9 @@ samples and batch protocols are retained. `--reuse-support` requires an explicit
 prepared manifest SHA, checks availability/role/vocabulary identity, then
 rechecks every native shard and raw token identity; it retains the pinned
 preparation's grammar check as provenance.
+Before freezing, every noncatalog leaf must also have a measured source from
+the current TRAIN scan. A digest-consistent prepared extra leaf without that
+source is refused; pinned cache contents alone cannot extend availability.
 
 Native measurements lack the seven-artifact Rust qualification closure. This
 is a development audit and a source/fixture proof, not a heldout capability,

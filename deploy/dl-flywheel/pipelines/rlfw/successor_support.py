@@ -113,6 +113,13 @@ class SuccessorBuilder:
         return ph
 
     def freeze(self, *, vocabulary_sha256, max_seq, source_pins, operator_names):
+        # Reused availability is a cache, not evidence of current TRAIN custody.
+        # Only add_measured records sources during the current native scan.
+        missing = (self.programs.keys() - self.catalog_shas) - self.sources.keys()
+        if missing:
+            raise ValueError(
+                f"{len(missing)} noncatalog programs lack current TRAIN provenance"
+            )
         programs = [dict(self.programs[ph]) for ph in sorted(self.programs)]
         added = sorted(set(self.programs) - self.catalog_shas)
         operators = Counter()
