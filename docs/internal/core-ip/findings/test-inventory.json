@@ -574,6 +574,14 @@
       "reason": "9 isolated native-pool orchestration or finite-action math fixtures. Additive to prior587; mathematical examples and simulated dispatch are not deployed actor learning, live resource or native scoring qualification.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_actual_policy_probability.py": {
+      "reason": "Finite CPU adapters against actual PolicyLM/decoder/objective: probability support, EOS sequence sums, archive gradient and tied checkpoint inventory. Scratch source proof; no live qualification.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "role": "regression",
       "subsystems": [
@@ -622,6 +630,15 @@
         "evaluation",
         "evidence",
         "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_successor_support.py": {
+      "reason": "Synthetic versioned support identity, TRAIN-role refusal, freeze, compact prefix index and availability separate from context outcomes. Qualified use BLOCKED_JEPSON.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "storage"
       ]
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
