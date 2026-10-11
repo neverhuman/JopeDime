@@ -2867,13 +2867,13 @@
       "sha256": "5a2ba71ce9291c8a7248f9ed1faf040c6e10001eb5701da2486bd90140e184f0"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py": {
-      "bytes": 5397,
+      "bytes": 5560,
       "classification": {
         "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "4cbf49b282e9d42b0a0c7873c4745ca9b6919db16d198fcfb768a14dad6c2f06"
+      "sha256": "e42e5bc76041539bb3dac061c155128714bb04a53a2e7da43c89e8adb9c49688"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py": {
       "bytes": 0,
@@ -3100,7 +3100,7 @@
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "8f2bdd6fa5a4e0032ae4f531c16062fab95fd0bd601f122731f37c7eb208305e"
+      "sha256": "59c5b55057c23e64f2216fa761662167772e485432c994580140715955d8bc27"
     },
     "python:deploy/dl-flywheel/verify_source_inventory.py": {
       "bytes": 4100,
