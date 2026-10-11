@@ -272,20 +272,19 @@ pub struct CvReport {
     pub oof_r2: f64,
 }
 
-/// Honest k-fold CV: the WHOLE pipeline (fitted transforms, target-aware
-/// encoders, head) is refit inside each fold. Fold assignment is the shared
-/// deterministic `fold_of`, identical across every experiment.
-pub fn cv_r2(
+/// Out-of-fold predictions from honest k-fold CV. Each fold refits the whole
+/// pipeline on that fold's fitting rows only.
+pub fn cv_oof_predictions(
     genome: &GenomeIr,
     x: &Rows,
     y: &[f64],
     k: usize,
     dataset_key: &str,
-) -> Result<CvReport> {
+) -> Result<Vec<f64>> {
     let n = x.len().min(y.len());
     let k = k.max(2);
     let mut oof = vec![f64::NAN; n];
-    let mut fold_r2 = Vec::with_capacity(k);
+    let mut folds_used = 0usize;
     for fold in 0..k {
         let mut xtr: Rows = Vec::new();
         let mut ytr: Vec<f64> = Vec::new();
@@ -304,10 +303,42 @@ pub fn cv_r2(
             continue;
         }
         let preds = fit_predict(genome, &xtr, &ytr, &xva)?;
-        let yva: Vec<f64> = va_idx.iter().map(|&r| y[r]).collect();
-        fold_r2.push(r2(&yva, &preds));
+        folds_used += 1;
         for (i, &r) in va_idx.iter().enumerate() {
             oof[r] = preds[i];
+        }
+    }
+    if folds_used == 0 {
+        bail!("cv produced no folds");
+    }
+    Ok(oof)
+}
+
+/// Honest k-fold CV: the WHOLE pipeline (fitted transforms, target-aware
+/// encoders, head) is refit inside each fold. Fold assignment is the shared
+/// deterministic `fold_of`, identical across every experiment.
+pub fn cv_r2(
+    genome: &GenomeIr,
+    x: &Rows,
+    y: &[f64],
+    k: usize,
+    dataset_key: &str,
+) -> Result<CvReport> {
+    let n = x.len().min(y.len());
+    let oof = cv_oof_predictions(genome, x, y, k, dataset_key)?;
+    let mut fold_r2 = Vec::new();
+    let k = k.max(2);
+    for fold in 0..k {
+        let mut ys = Vec::new();
+        let mut ps = Vec::new();
+        for r in 0..n {
+            if fold_of(dataset_key, r, k) == fold && oof[r].is_finite() {
+                ys.push(y[r]);
+                ps.push(oof[r]);
+            }
+        }
+        if !ys.is_empty() && (n - ys.len()) >= 8 {
+            fold_r2.push(r2(&ys, &ps));
         }
     }
     if fold_r2.is_empty() {
@@ -737,5 +768,107 @@ mod tests {
                 });
             }
         });
+    }
+
+    /// Inner-fold fit for the DSL stages named in the 2026-10-11 gap close.
+    /// Poisoning a fold's held-out rows must not change the model fitted on that
+    /// fold's fitting rows. Fitting those held-out rows as well must change the
+    /// predictions, so a leaked fit cannot hide. `cv_oof_predictions` has to
+    /// match the fitting-rows-only model.
+    #[test]
+    fn inner_fold_learned_stages_fit_only_on_fitting_rows() {
+        let stages = [
+            "(pipe X (target_bin_encode bins=4 prior=1) (ridge))",
+            "(pipe X (quantile_bins bins=4) (ridge))",
+            "(pipe X (winsor_clip q=0.1) (ridge))",
+            "(pipe X (standardize) (ridge))",
+            "(pipe X (impute strategy=median) (ridge))",
+            "(pipe X (ridge))",
+        ];
+        let n = 60usize;
+        let mut x: Rows = Vec::new();
+        let mut y = Vec::new();
+        for i in 0..n {
+            let a = if i % 9 == 0 { 0.0 } else { (i as f64) * 0.17 };
+            let b = ((i * 3) % 11) as f64 - 5.0;
+            x.push(vec![a, b]);
+            y.push(0.4 * (i as f64) - 0.2 * b);
+        }
+        let k = 5usize;
+        let key = "gjudge-inner-fold";
+        for src in stages {
+            let genome = GenomeIr::parse(src).unwrap();
+            let fold = (0..k)
+                .find(|&fold| {
+                    let n_fit = (0..n).filter(|&r| fold_of(key, r, k) != fold).count();
+                    let n_held = n - n_fit;
+                    n_held > 0 && n_fit >= 8
+                })
+                .unwrap();
+            let mut x_fit = Vec::new();
+            let mut y_fit = Vec::new();
+            let mut x_held = Vec::new();
+            let mut held = Vec::new();
+            for r in 0..n {
+                if fold_of(key, r, k) == fold {
+                    x_held.push(x[r].clone());
+                    held.push(r);
+                } else {
+                    x_fit.push(x[r].clone());
+                    y_fit.push(y[r]);
+                }
+            }
+            let honest = fit(&genome, &x_fit, &y_fit).unwrap().predict(&x_held).unwrap();
+            let leaked = fit(&genome, &x, &y).unwrap().predict(&x_held).unwrap();
+            assert_ne!(
+                honest.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                leaked.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                "negative control did not move {src}"
+            );
+            let oof = cv_oof_predictions(&genome, &x, &y, k, key).unwrap();
+            for (j, &r) in held.iter().enumerate() {
+                assert_eq!(oof[r].to_bits(), honest[j].to_bits(), "{src} row {r}");
+            }
+            let mut x_poison = x.clone();
+            let mut y_poison = y.clone();
+            for &r in &held {
+                x_poison[r] = vec![1.0e6, -1.0e6];
+                y_poison[r] = 1.0e6;
+            }
+            let mut x_fit_poison = Vec::new();
+            let mut y_fit_poison = Vec::new();
+            for r in 0..n {
+                if fold_of(key, r, k) != fold {
+                    x_fit_poison.push(x_poison[r].clone());
+                    y_fit_poison.push(y_poison[r]);
+                }
+            }
+            let again = fit(&genome, &x_fit_poison, &y_fit_poison)
+                .unwrap()
+                .predict(&x_held)
+                .unwrap();
+            assert_eq!(
+                honest.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                again.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+                "held-out poison changed the fold fit for {src}"
+            );
+            // Poison held-out targets and send them through `cv_oof_predictions`.
+            // Prediction rows stay the original features, so a bit change means
+            // that fold's fit read the held-out targets. Poisoning the features
+            // as well would change the prediction input and is not this check;
+            // the complement fit above already scores the original features.
+            let mut y_only = y.clone();
+            for &r in &held {
+                y_only[r] = 1.0e6;
+            }
+            let oof_y = cv_oof_predictions(&genome, &x, &y_only, k, key).unwrap();
+            for (j, &r) in held.iter().enumerate() {
+                assert_eq!(
+                    oof_y[r].to_bits(),
+                    honest[j].to_bits(),
+                    "held-out target leaked into the inner-fold fit for {src} row {r}"
+                );
+            }
+        }
     }
 }
