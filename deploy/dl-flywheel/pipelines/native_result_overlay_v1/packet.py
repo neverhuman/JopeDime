@@ -21,7 +21,9 @@ Invariants:
   receipt, the UNCHANGED original bound sealed in the marker, and physical in-time evidence (an in-process return of
   that marker with a post-return sample strictly inside the bound, or the build unit's successful exit before the
   monotonic deadline); a builder refusal record also refuses. A build that raised, a build still running and a
-  returned build not yet accepted have no envelope and are never admissible. ``validate_packet`` is structural only.
+  returned build not yet accepted are never admissible. Admission also requires the caller's exact completion
+  marker, file-fsynced privately only after the envelope parent fsync succeeds, then atomically made visible.
+  An envelope or pending completion left by failure stays custody only. ``validate_packet`` is structural only.
 """
 import math
 import os
@@ -35,8 +37,8 @@ from .common import (ACCEPTANCE_KEYS, ACCEPTANCE_SCHEMA, ACCEPTANCE_SUBJECT, CLA
                      MAX_ROWS, MAX_RSS_BYTES, MAX_SECONDS, MAX_SOURCE_ROWS, MAX_TERMINAL_BYTES, OVERLAY_WINDOW,
                      PACKET_SCHEMA, REASONS, REF_KEYS, REFUSED_NAME, ROTATION_DOMAIN, SOURCE_KIND, STOPS,
                      acceptance_path, artifact_refs, canonical, check_bound, clock_sample, create_only, digest,
-                     exact_canonical, fsync_dir, hash64, need, physical_ok, read_exact, read_small, ref5, safe_path,
-                     sha)
+                     exact_canonical, fsync_dir, hash64, in_bound, need, physical_ok, read_exact, read_small, ref5,
+                     safe_path, sha)
 from .labels_overlay import RECORD_FIELDS, record_from_json
 
 PACKET_KEYS = frozenset({'schema', 'seq', 'predecessor_overlay_head_sha256', 'chain', 'pins', 'campaigns', 'sources',
@@ -364,6 +366,14 @@ def validate_packet(packet_ref, *, predecessor_head):
 LATE_REFUSAL = 'overlay publication refused: late terminal record kept for custody'
 NO_ACCEPTANCE = 'overlay publication has no caller terminal acceptance (the build has not returned in time)'
 ARTIFACTS = (('packet.json', 'packet'), ('receipt.json', 'receipt'))
+COMPLETION_SCHEMA = 'jope.native-overlay-acceptance-complete/v1'
+COMPLETION_KEYS = frozenset({'schema', 'root', 'acceptance', 'bound', 'completion_sample'})
+
+
+def completion_path(root):
+    """Caller completion, outside the root; a pending file is never an admission marker."""
+    out = acceptance_path(root)
+    return out.with_name(root.name + '.acceptance-complete.json')
 
 
 def _ref(path, raw):
@@ -388,11 +398,20 @@ def accept_publication(root, *, physical):
     is taken FIRST, before anything is read. It pins the exact marker bytes, the sealed packet and receipt (re-read
     exactly), the unchanged original bound and the physical evidence. A failed predicate is written as a ``refused``
     envelope (custody only; nothing is deleted, no window is reset) and then raises; if even that write fails, there
-    is no envelope and nothing is admissible. Never call it after ``build_packet`` raised.
+    is no qualified completion and nothing is admissible. Never call it after ``build_packet`` raised.
+
+    Accepted bytes alone are custody, not completion. Only after their parent fsync succeeds do we create and
+    file-fsync a private completion, fsync its directory, and expose it with a create-only atomic hard link.
+    There is no fallible I/O after that visibility point. Concurrent readers never see a pending file; any earlier
+    failure leaves all bytes in place and cannot be retried. A crash that loses the new link fails closed; surviving
+    links always name the already-fsynced completion of the durable envelope. No negative record is needed.
     """
     root = safe_path(root)
     out = acceptance_path(root)
-    need(root.is_dir() and out.parent.is_dir() and not os.path.lexists(out), 'create-only acceptance outside the root')
+    complete = completion_path(root)
+    pending = complete.with_name('.' + complete.name + '.pending')
+    need(root.is_dir() and out.parent.is_dir() and
+         not any(os.path.lexists(p) for p in (out, complete, pending)), 'create-only acceptance outside the root')
     post = clock_sample()
     doc = {'schema': ACCEPTANCE_SCHEMA, 'subject': ACCEPTANCE_SUBJECT, 'root': str(root), 'artifacts': {},
            'marker': None, 'bound': None, 'physical': physical, 'post_publication_sample': post, 'verdict': 'refused',
@@ -413,11 +432,20 @@ def accept_publication(root, *, physical):
     ref = create_only(out, canonical(doc))
     fsync_dir(out.parent)
     need(doc['verdict'] == 'accepted', 'overlay acceptance refused (kept as custody): ' + doc['reason'])
+    sample = clock_sample()
+    need(in_bound(sample, doc['bound']), 'overlay acceptance completion outside the original bound (kept as custody)')
+    completion = {'schema': COMPLETION_SCHEMA, 'root': str(root), 'acceptance': ref,
+                  'bound': doc['bound'], 'completion_sample': sample}
+    create_only(pending, canonical(completion))
+    fsync_dir(out.parent)
+    need(in_bound(clock_sample(), doc['bound']),
+         'overlay acceptance completion outside the original bound (kept as custody)')
+    os.link(pending, complete, follow_symlinks=False)
     return ref
 
 
 def accepted_publication(packet_ref, *, head_sha256, predecessor_head, seq):
-    """Consumer gate: the caller's ``accepted`` envelope for the packet's own build root, and no refusal.
+    """Consumer gate: the caller's ``accepted`` envelope AND qualified completion for this build root, no refusal.
 
     The envelope must pin the exact success-marker bytes (whose marker binds this packet ref, head, predecessor head
     and sequence), the sealed packet and receipt, the UNCHANGED original bound sealed in the marker, and physical
@@ -442,6 +470,15 @@ def accepted_publication(packet_ref, *, head_sha256, predecessor_head, seq):
     need(a['bound'] == marker['bound'], 'acceptance carries the unchanged original bound sealed in the marker')
     need(physical_ok(a['physical'], a['bound'], a['post_publication_sample'], sha(marker_raw)),
          'acceptance physical terminal evidence inside the original bound')
+    complete = completion_path(root)
+    need(os.path.lexists(complete), 'overlay acceptance has no durable caller completion')
+    c = exact_canonical(read_small(complete, MAX_TERMINAL_BYTES))
+    need(type(c) is dict and set(c) == COMPLETION_KEYS and c['schema'] == COMPLETION_SCHEMA and
+         c['root'] == str(root) and c['acceptance'] == _ref(out, canonical(a)) and c['bound'] == a['bound'],
+         'durable caller completion pins the exact acceptance and original bound')
+    need(in_bound(c['completion_sample'], c['bound']) and
+         c['completion_sample']['monotonic'] >= a['post_publication_sample']['monotonic'],
+         'durable caller completion is in time after the acceptance sample')
     need(not os.path.lexists(root / REFUSED_NAME), LATE_REFUSAL)
     return a
 
