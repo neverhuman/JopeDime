@@ -27,6 +27,7 @@ Invariants:
 """
 import math
 import os
+import ctypes
 from array import array
 from collections import Counter
 
@@ -368,12 +369,29 @@ NO_ACCEPTANCE = 'overlay publication has no caller terminal acceptance (the buil
 ARTIFACTS = (('packet.json', 'packet'), ('receipt.json', 'receipt'))
 COMPLETION_SCHEMA = 'jope.native-overlay-acceptance-complete/v1'
 COMPLETION_KEYS = frozenset({'schema', 'root', 'acceptance', 'bound', 'completion_sample'})
+QUALIFICATION_SCHEMA = 'jope.native-overlay-caller-return/v1'
+QUALIFICATION_KEYS = frozenset({'schema', 'root', 'acceptance', 'publication', 'bound', 'post_return_sample'})
 
 
 def completion_path(root):
-    """Caller completion, outside the root; a pending file is never an admission marker."""
+    """Bounded caller publication candidate. It never certifies its own completion."""
     out = acceptance_path(root)
     return out.with_name(root.name + '.acceptance-complete.json')
+
+
+def qualification_root(root):
+    return completion_path(root).with_name(root.name + '.acceptance-qualified')
+
+
+def _deliver_qualification(pending, qualified):
+    """Linux create-only atomic directory delivery, including refusal of an existing EMPTY directory."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    rename = libc.renameat2
+    rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    rename.restype = ctypes.c_int
+    if rename(-100, os.fsencode(pending), -100, os.fsencode(qualified), 1):  # AT_FDCWD, RENAME_NOREPLACE
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(qualified))
 
 
 def _ref(path, raw):
@@ -391,7 +409,7 @@ def _marker(root):
     return raw, m
 
 
-def accept_publication(root, *, physical):
+def _publish_acceptance(root, *, physical):
     """CALLER/OPERATOR-ONLY, and only after ``build_packet`` RETURNED successfully (``in_process_return`` of the
     returned marker) or its unit terminated (``systemd_unit``): seal the ONE create-only bounded terminal acceptance
     envelope at ``acceptance_path(root)`` (outside the root; C10a r7 ``accept_subject``). The post-return clock sample
@@ -400,18 +418,18 @@ def accept_publication(root, *, physical):
     envelope (custody only; nothing is deleted, no window is reset) and then raises; if even that write fails, there
     is no qualified completion and nothing is admissible. Never call it after ``build_packet`` raised.
 
-    Accepted bytes alone are custody, not completion. Only after their parent fsync succeeds do we create and
-    file-fsync a private completion, fsync its directory, and expose it with a create-only atomic hard link.
-    There is no fallible I/O after that visibility point. Concurrent readers never see a pending file; any earlier
-    failure leaves all bytes in place and cannot be retried. A crash that loses the new link fails closed; surviving
-    links always name the already-fsynced completion of the durable envelope. No negative record is needed.
+    The publication candidate is custody, never admission. Its final link and parent fsync are INCLUDED in the
+    original bound. Only the operator's separate witness of this function's actual in-time return qualifies it.
     """
     root = safe_path(root)
     out = acceptance_path(root)
     complete = completion_path(root)
     pending = complete.with_name('.' + complete.name + '.pending')
+    qualified = qualification_root(root)
     need(root.is_dir() and out.parent.is_dir() and
-         not any(os.path.lexists(p) for p in (out, complete, pending)), 'create-only acceptance outside the root')
+         not any(os.path.lexists(p) for p in (out, complete, pending, qualified,
+                                            qualified.with_name('.' + qualified.name + '.pending'))),
+         'create-only acceptance outside the root')
     post = clock_sample()
     doc = {'schema': ACCEPTANCE_SCHEMA, 'subject': ACCEPTANCE_SUBJECT, 'root': str(root), 'artifacts': {},
            'marker': None, 'bound': None, 'physical': physical, 'post_publication_sample': post, 'verdict': 'refused',
@@ -436,12 +454,37 @@ def accept_publication(root, *, physical):
     need(in_bound(sample, doc['bound']), 'overlay acceptance completion outside the original bound (kept as custody)')
     completion = {'schema': COMPLETION_SCHEMA, 'root': str(root), 'acceptance': ref,
                   'bound': doc['bound'], 'completion_sample': sample}
-    create_only(pending, canonical(completion))
+    publication = create_only(pending, canonical(completion))
     fsync_dir(out.parent)
     need(in_bound(clock_sample(), doc['bound']),
          'overlay acceptance completion outside the original bound (kept as custody)')
     os.link(pending, complete, follow_symlinks=False)
-    return ref
+    fsync_dir(out.parent)
+    need(in_bound(clock_sample(), doc['bound']),
+         'overlay acceptance publication outside the original bound (kept as custody)')
+    return {'acceptance': ref, 'publication': {**publication, 'path': str(complete)}, 'bound': doc['bound']}
+
+
+def accept_publication(root, *, physical):
+    """Publish under the original bound, then seal an operator witness of the publisher's ACTUAL return.
+
+    Evidence delivery is separate from the bounded publication it witnesses (as with the builder's terminal
+    acceptance). Its private file/directory are fsynced before atomic directory delivery, so unfinished evidence
+    never qualifies an already-readable publication. No negative record, window reset or retry is needed.
+    """
+    root = safe_path(root)
+    returned = _publish_acceptance(root, physical=physical)
+    post = clock_sample()  # FIRST after the bounded publisher actually returned, not before its final syscall
+    need(in_bound(post, returned['bound']), 'overlay acceptance caller return outside the original bound')
+    qualified = qualification_root(root)
+    pending = qualified.with_name('.' + qualified.name + '.pending')
+    proof = {'schema': QUALIFICATION_SCHEMA, 'root': str(root), **returned, 'post_return_sample': post}
+    pending.mkdir(mode=0o755)
+    create_only(pending / 'completion.json', canonical(proof))
+    fsync_dir(pending)
+    fsync_dir(pending.parent)
+    _deliver_qualification(pending, qualified)
+    return returned['acceptance']
 
 
 def accepted_publication(packet_ref, *, head_sha256, predecessor_head, seq):
@@ -479,6 +522,16 @@ def accepted_publication(packet_ref, *, head_sha256, predecessor_head, seq):
     need(in_bound(c['completion_sample'], c['bound']) and
          c['completion_sample']['monotonic'] >= a['post_publication_sample']['monotonic'],
          'durable caller completion is in time after the acceptance sample')
+    qualified = qualification_root(root) / 'completion.json'
+    need(os.path.lexists(qualified), 'overlay acceptance has no qualified caller return')
+    q = exact_canonical(read_small(qualified, MAX_TERMINAL_BYTES))
+    need(type(q) is dict and set(q) == QUALIFICATION_KEYS and q['schema'] == QUALIFICATION_SCHEMA and
+         q['root'] == str(root) and q['acceptance'] == c['acceptance'] and q['bound'] == c['bound'] and
+         q['publication'] == _ref(complete, canonical(c)),
+         'qualified caller return pins the exact publication, acceptance and original bound')
+    need(in_bound(q['post_return_sample'], q['bound']) and
+         q['post_return_sample']['monotonic'] >= c['completion_sample']['monotonic'],
+         'qualified caller return after the final publication syscall inside the original bound')
     need(not os.path.lexists(root / REFUSED_NAME), LATE_REFUSAL)
     return a
 

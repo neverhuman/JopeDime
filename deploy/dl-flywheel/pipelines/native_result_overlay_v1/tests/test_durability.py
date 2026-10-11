@@ -77,7 +77,9 @@ class PublicationDurabilityTests(CrashWorld):
                          {'completed_packet': False, 'validate_chain': False})
 
     def custody(self, root):
-        paths = list(root.rglob('*')) + list(root.parent.glob('*' + root.name + '*'))
+        paths = list(root.rglob('*'))
+        for path in root.parent.glob('*' + root.name + '*'):
+            paths.extend(path.rglob('*') if path.is_dir() else (path,))
         return {str(p): p.read_bytes() for p in paths if p.is_file()}
 
     def no_retry(self, r, root):
@@ -144,7 +146,7 @@ class PublicationDurabilityTests(CrashWorld):
 
     def test_reader_during_every_caller_write_and_fsync_refuses_until_atomic_completion(self):
         r, root = self.returned('interleaved-reader')
-        real_create, real_sync, real_link = PK.create_only, PK.fsync_dir, PK.os.link
+        real_create, real_sync, real_link, real_rename = PK.create_only, PK.fsync_dir, PK.os.link, PK._deliver_qualification
         events = []
 
         def create(path, raw):
@@ -164,23 +166,31 @@ class PublicationDurabilityTests(CrashWorld):
             self.refused(root)
             self.assertEqual(stat.S_IMODE(Path(src).stat().st_mode), 0o444)
             real_link(src, dst, **kw)
+            self.refused(root)  # publication cannot certify its own return
+            events.append('atomic-publication')
+
+        def rename(src, dst):
+            self.refused(root)
+            real_rename(src, dst)
             self.assertEqual(self.f.consumers(root), {'completed_packet': (True, 1), 'validate_chain': (True, 1)})
-            events.append('atomic-completion')
+            events.append('atomic-evidence-delivery')
 
         with mock.patch.object(PK, 'create_only', side_effect=create), \
-                mock.patch.object(PK, 'fsync_dir', side_effect=fsync), mock.patch.object(PK.os, 'link', side_effect=link):
+                mock.patch.object(PK, 'fsync_dir', side_effect=fsync), mock.patch.object(PK.os, 'link', side_effect=link), \
+                mock.patch.object(PK, '_deliver_qualification', side_effect=rename):
             self.accept(r, root)
-        self.assertEqual(len(events), 5)
-        self.assertEqual(events[-1], 'atomic-completion')
+        self.assertEqual(len(events), 10)
+        self.assertEqual(events[-1], 'atomic-evidence-delivery')
 
     def test_process_death_before_and_after_every_caller_publication_boundary(self):
-        for boundary in ('envelope', 'envelope-dir', 'completion-file', 'completion-dir', 'before-link', 'after-link'):
+        for boundary in ('envelope', 'envelope-dir', 'completion-file', 'completion-dir', 'before-link', 'after-link',
+                         'before-evidence-delivery', 'after-evidence-delivery'):
             with self.subTest(boundary=boundary):
                 r, root = self.returned('death-' + boundary)
                 original = self.custody(root)
 
                 def child():
-                    create0, sync0, link0 = PK.create_only, PK.fsync_dir, PK.os.link
+                    create0, sync0, link0, rename0 = PK.create_only, PK.fsync_dir, PK.os.link, PK._deliver_qualification
                     syncs = []
 
                     def create(path, body):
@@ -202,18 +212,116 @@ class PublicationDurabilityTests(CrashWorld):
                         if boundary == 'after-link':
                             os._exit(86)
 
+                    def rename(src, dst):
+                        if boundary == 'before-evidence-delivery':
+                            os._exit(86)
+                        rename0(src, dst)
+                        if boundary == 'after-evidence-delivery':
+                            os._exit(86)
+
                     with mock.patch.object(PK, 'create_only', side_effect=create), \
                             mock.patch.object(PK, 'fsync_dir', side_effect=sync), \
-                            mock.patch.object(PK.os, 'link', side_effect=link):
+                            mock.patch.object(PK.os, 'link', side_effect=link), \
+                            mock.patch.object(PK, '_deliver_qualification', side_effect=rename):
                         self.accept(r, root)
 
                 self.die(child)
                 self.assertTrue(all(self.custody(root)[p] == raw for p, raw in original.items()))
-                if boundary == 'after-link':
+                if boundary == 'after-evidence-delivery':
                     self.assertEqual(self.f.consumers(root), {'completed_packet': (True, 1), 'validate_chain': (True, 1)})
                 else:
                     self.refused(root)
                 self.no_retry(r, root)
+
+    def test_actual_publication_link_crossing_original_wall_or_monotonic_bound_refuses(self):
+        for kind in ('in-time', 'wall', 'monotonic'):
+            with self.subTest(kind=kind):
+                r, root = self.returned('link-bound-' + kind)
+                bound = json.loads(Path(r['marker']['path']).read_bytes())['bound']
+                link0, wall0, mono0 = PK.os.link, C.time.time, C.time.monotonic
+                wall, shift, events = [None], [0.0], []
+
+                def link(src, dst, **kw):
+                    self.assertTrue(C.in_bound(PK.clock_sample(), bound))
+                    if kind == 'wall':
+                        wall[0] = bound['wall_deadline_unix']
+                    if kind == 'monotonic':
+                        shift[0] = bound['monotonic_deadline'] - mono0() + .01
+                    link0(src, dst, **kw)
+                    events.append(PK.clock_sample())
+                    self.refused(root)
+
+                with mock.patch.object(C.time, 'time', side_effect=lambda: wall0() if wall[0] is None else wall[0]), \
+                        mock.patch.object(C.time, 'monotonic', side_effect=lambda: mono0() + shift[0]), \
+                        mock.patch.object(PK.os, 'link', side_effect=link):
+                    if kind == 'in-time':
+                        self.accept(r, root)
+                        self.assertEqual(self.f.consumers(root),
+                                         {'completed_packet': (True, 1), 'validate_chain': (True, 1)})
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'publication outside the original bound'):
+                            self.accept(r, root)
+                        self.refused(root)
+                self.assertEqual(len(events), 1)
+                self.assertEqual(C.in_bound(events[0], bound), kind == 'in-time')
+                self.no_retry(r, root)
+
+    def test_publication_final_parent_fsync_failure_requires_a_qualified_return(self):
+        r, root = self.returned('candidate-parent-fsync')
+        sync0, calls = PK.fsync_dir, []
+        def fsync(path):
+            calls.append(path)
+            if len(calls) == 3:
+                self.assertTrue(PK.completion_path(root).exists())
+                self.refused(root)
+                raise OSError('candidate final parent fsync')
+            sync0(path)
+        with mock.patch.object(PK, 'fsync_dir', side_effect=fsync):
+            with self.assertRaisesRegex(OSError, 'candidate final parent fsync'):
+                self.accept(r, root)
+        self.refused(root)
+        self.no_retry(r, root)
+
+    def test_unfinished_qualification_witness_and_failed_delivery_never_admit(self):
+        for boundary in ('witness-file-fsync', 'evidence-delivery'):
+            with self.subTest(boundary=boundary):
+                r, root = self.returned(boundary)
+                create0 = PK.create_only
+                def create(path, body):
+                    if boundary == 'witness-file-fsync' and Path(path).name == 'completion.json':
+                        with mock.patch.object(C.os, 'fsync', side_effect=OSError(boundary)):
+                            return create0(path, body)
+                    return create0(path, body)
+                def rename(src, dst):
+                    raise OSError(boundary)
+                with mock.patch.object(PK, 'create_only', side_effect=create):
+                    if boundary == 'evidence-delivery':
+                        with mock.patch.object(PK, '_deliver_qualification', side_effect=rename):
+                            with self.assertRaisesRegex(OSError, boundary):
+                                self.accept(r, root)
+                    else:
+                        with self.assertRaisesRegex(OSError, boundary):
+                            self.accept(r, root)
+                self.assertTrue(PK.completion_path(root).exists())
+                self.refused(root)
+                self.no_retry(r, root)
+
+    def test_qualification_delivery_never_replaces_an_existing_empty_directory(self):
+        r, root = self.returned('existing-qualification')
+        deliver0, observed = PK._deliver_qualification, []
+        def deliver(src, dst):
+            Path(dst).mkdir(mode=0o700)
+            observed.append(Path(dst).stat())
+            return deliver0(src, dst)
+        with mock.patch.object(PK, '_deliver_qualification', side_effect=deliver):
+            with self.assertRaises(FileExistsError):
+                self.accept(r, root)
+        qualified = PK.qualification_root(root)
+        self.assertEqual(qualified.stat().st_ino, observed[0].st_ino)
+        self.assertEqual(stat.S_IMODE(qualified.stat().st_mode), 0o700)
+        self.assertEqual(list(qualified.iterdir()), [])
+        self.refused(root)
+        self.no_retry(r, root)
 
     def test_concurrent_reader_refuses_complete_marker_bytes_while_their_fsync_is_blocked(self):
         r, root = self.returned('concurrent-reader')

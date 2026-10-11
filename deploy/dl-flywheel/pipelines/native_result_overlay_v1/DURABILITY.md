@@ -1,32 +1,41 @@
 # W03 caller completion
 
 This is a BUILD ONLY repair for CL to adopt from a stacked branch. It does not authorize live qualification,
-learning, publication, retries or merges. Existing acceptance and failed-root bytes remain unchanged.
+learning, retries or merges. Existing acceptance, failed-root and original cost receipt bytes remain custody.
 
-Both `completed_packet` and `validate_chain` use `accepted_publication`. The gate now requires the original
-accepted envelope **and** `<root>.acceptance-complete.json`, bound to that exact envelope, root and original paired
-deadline. Legacy positive envelopes without this completion remain inadmissible; they are never upgraded by a
-reader or silently retried.
+Both `completed_packet` and `validate_chain` use `accepted_publication`. The gate requires the accepted envelope,
+the publication candidate, and an operator return witness at `<root>.acceptance-qualified/completion.json`.
+Legacy positive envelopes and publication candidates alone are never admissible and are never upgraded by readers.
 
-The caller writes and file-fsyncs the envelope, then fsyncs its parent directory. Only after that succeeds does it
-create a private `.acceptance-complete.json.pending` file, file-fsync it and fsync its parent. It rechecks the same
-original deadline and atomically hard-links the private file to the public completion path. This last operation
-is the visibility/commit boundary; the caller performs no fallible I/O after it. Readers cannot observe the private
-file as completion while its write or fsync is unfinished. The public path is create-only and the private file
-remains as custody. A power loss that loses the last directory link produces missing completion and refusal;
-any surviving link names already-fsynced marker bytes for an already-durable envelope. This deliberately favors
-refusal over automatic recovery. Process death after the atomic link may leave an admissible committed packet
-without a returned acknowledgement; duplicate delivery still refuses without changing bytes.
+The bounded publisher writes and file-fsyncs the envelope and fsyncs its parent. It then writes/file-fsyncs a private
+publication candidate, fsyncs its parent, atomically links the candidate to `<root>.acceptance-complete.json`,
+fsyncs that parent again, checks the UNCHANGED original wall/monotonic/boot bound AFTER these final operations,
+and returns the exact acceptance/publication references. Thus a link or final directory fsync crossing either
+original deadline cannot return a qualified success. A reader inside that operation still has no return witness.
 
-Any earlier storage error, deadline crossing or process death preserves the packet, receipt, builder marker,
-envelope and any private marker already written. The create-only names prevent a later call from republishing the
-same failed root. Admission does not depend on best-effort negative records. No evaluator or optimizer cost is
-reset or recast as zero; the original builder receipt remains custody even when admission fails.
+The operator samples FIRST after the bounded publisher actually returns and checks the same original paired
+bound. Only then does it record the return witness, binding the exact publication, acceptance, root and original
+bound. This is terminal evidence of a measured completed operation; evidence materialization/delivery is separate
+from the bounded operation it witnesses, as with the builder's terminal acceptance. It does not extend the bound,
+replace the post-return sample with a pre-I/O sample, or certify the publication from its own readable bytes.
 
-`tests/test_durability.py` adds actual private process-death injections and I/O failures, including the retained
-CX-REV final-parent-fsync failure, concurrent reads while marker fsync is blocked, partial packet publication,
-checkpoint/manifest/claim boundaries, interrupted SQLite CAS adoption, and first-exposure proof deduplication.
-All prior 213 registered identities and fixture bodies remain. These CPU worlds include toy optimizer/checkpoint
-operations and are NON-QUALIFYING scratch evidence, not a hardware power-loss test, native evaluation, parity
-qualification, live feedback closure, promotion or retry permit. Checkpoint/CAS/exposure fixtures exercise their
-existing contracts; the repair does not broaden those contracts or resolve separate F2/F3 findings.
+The witness is written/file-fsynced in a private directory; that directory and its parent are fsynced before
+create-only atomic directory delivery (`renameat2(RENAME_NOREPLACE)` on Linux). Both consumers require its exact
+canonical bytes. Any error/death before delivery leaves only custody and refuses. A concurrent reader cannot use
+a witness whose file fsync is unfinished. The final delivery has no subsequent fallible I/O; losing its directory
+entry after power loss fails closed, while surviving entries name already-fsynced evidence for an already-durable,
+measured in-time publication. An existing file or directory, including an empty directory, is never overwritten.
+
+All partial envelope, candidate, witness and failed-root bytes remain in place. The create-only envelope claim
+prevents silent republication/recovery of the same root, including a bounded publication whose evidence delivery
+failed. A negative record is not needed. The original builder receipt/cost remains custody even without admission.
+Death after successful evidence delivery may leave a committed packet without a returned acknowledgement;
+duplicate delivery refuses without changing bytes. The protocol does not silently reuse an uncertain optimizer
+batch or mint another evaluation identity.
+
+`tests/test_durability.py` adds actual private process-death and I/O faults: the retained CX-REV parent-fsync case,
+concurrent reads during marker fsync, partial packs, final-link wall/monotonic crossings plus in-time control,
+final publication parent-fsync, witness failures, claim/checkpoint/manifest boundaries, interrupted SQLite CAS,
+and pre/post first exposure with duplicate proof delivery. All original213 fixture IDs/bodies remain. These CPU
+worlds include toy optimizer/checkpoint operations and are NON-QUALIFYING, not hardware power-loss qualification,
+native evaluation/parity, live feedback closure, promotion or retry permission. Separate F2/F3/CLI findings remain.

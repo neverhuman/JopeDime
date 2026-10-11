@@ -46,6 +46,7 @@
   "pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_after_claim_before_and_after_checkpoint_fsync_and_after_manifest_write_never_commits",
   "pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_before_first_exposure_has_no_commit_and_after_first_exposure_is_deduplicated",
   "pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_during_cas_rolls_back_and_after_cas_reconciles_exactly_once",
+  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_actual_publication_link_crossing_original_wall_or_monotonic_bound_refuses",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_complete_accepted_envelope_and_failed_caller_parent_fsync_stays_inadmissible",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_completion_binding_tampering_and_duplicate_delivery_are_refused_without_rewrite",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_concurrent_reader_refuses_complete_marker_bytes_while_their_fsync_is_blocked",
@@ -54,7 +55,10 @@
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_pending_completion_file_fsync_failure_is_not_a_completion",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_process_death_before_and_after_every_caller_publication_boundary",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_process_death_before_builder_publication_and_partial_pack_keep_custody",
-  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_reader_during_every_caller_write_and_fsync_refuses_until_atomic_completion"
+  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_publication_final_parent_fsync_failure_requires_a_qualified_return",
+  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_qualification_delivery_never_replaces_an_existing_empty_directory",
+  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_reader_during_every_caller_write_and_fsync_refuses_until_atomic_completion",
+  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_unfinished_qualification_witness_and_failed_delivery_never_admit"
  ],
  "package": "native_result_overlay_v1",
  "r6_preregistration_sha256": "d228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f9da22d741725a",
@@ -85,20 +89,20 @@
    "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
   },
   "packet.py": {
-   "bytes": 34538,
-   "sha256": "3b588a6c44a39c2091750d1851eaaaf6161d00760cbdf50c12a03da23ad912a4"
+   "bytes": 37549,
+   "sha256": "5a2ba71ce9291c8a7248f9ed1faf040c6e10001eb5701da2486bd90140e184f0"
   },
   "run_offline.py": {
-   "bytes": 4741,
-   "sha256": "fef30bdfc04482b915c592f1a0acbfdc95625ead83076b40197f93e711edb964"
+   "bytes": 5397,
+   "sha256": "4cbf49b282e9d42b0a0c7873c4745ca9b6919db16d198fcfb768a14dad6c2f06"
   },
   "tests/__init__.py": {
    "bytes": 0,
    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "tests/test_durability.py": {
-   "bytes": 20387,
-   "sha256": "2fb4bfeb354d1063d635b339138e77dd2ed142cdb41cc138a2fc0de07334f544"
+   "bytes": 26167,
+   "sha256": "6e7ca8fd2daf904df9bfda7348d1ff76dc4e65a77d53da9668a0766a9842e227"
   },
   "tests/test_overlay.py": {
    "bytes": 75015,

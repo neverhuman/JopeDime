@@ -2858,22 +2858,22 @@
       "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py": {
-      "bytes": 34538,
+      "bytes": 37549,
       "classification": {
         "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "3b588a6c44a39c2091750d1851eaaaf6161d00760cbdf50c12a03da23ad912a4"
+      "sha256": "5a2ba71ce9291c8a7248f9ed1faf040c6e10001eb5701da2486bd90140e184f0"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py": {
-      "bytes": 4741,
+      "bytes": 5397,
       "classification": {
         "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "fef30bdfc04482b915c592f1a0acbfdc95625ead83076b40197f93e711edb964"
+      "sha256": "4cbf49b282e9d42b0a0c7873c4745ca9b6919db16d198fcfb768a14dad6c2f06"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py": {
       "bytes": 0,
@@ -3100,7 +3100,7 @@
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "7f2ebc7e02c23796e8a9664008491869246229cca549e89d4d486340d959481b"
+      "sha256": "8f2bdd6fa5a4e0032ae4f531c16062fab95fd0bd601f122731f37c7eb208305e"
     },
     "python:deploy/dl-flywheel/verify_source_inventory.py": {
       "bytes": 4100,
