@@ -94,6 +94,9 @@ def main():
             continuous / "consumer/dltrain/model.py",
             continuous / "consumer/dltrain/objective.py",
             continuous / "neural_decode.py",
+            continuous / "native_corpus_authority.py",
+            continuous / "runtime/jope_flywheel/training_snapshot_native.py",
+            pipelines / "rlfw/policy_binding.py",
         ]
     }
     torch.set_num_threads(1)
@@ -102,6 +105,8 @@ def main():
     raw_spec = read_pin(args.spec, SPEC_SHA)
     spec = json.loads(raw_spec)
     proof = authority.check(spec)
+    authority_bytes = json.dumps(proof).encode()
+    (args.output / "current-authority-proof.json").write_bytes(authority_bytes)
     s = N.load_snapshot(
         raw_spec,
         SPEC_SHA,
@@ -111,7 +116,7 @@ def main():
                 "/home/ubuntu/jopedime_probe_exp",
             ]
         ),
-        authority_bytes=json.dumps(proof).encode(),
+        authority_bytes=authority_bytes,
     )
     role_map = {cid: c["partition"] for cid, c in s.contexts.items()}
     training_winners = {
@@ -239,12 +244,15 @@ def main():
                 len(builder.programs),
                 flush=True,
             )
+    # Check the original pinned role/exclusion closure is still the current
+    # authority before emitting a frozen version, after this potentially long scan.
+    authority.check(spec)
     programs, manifest = builder.freeze(
         vocabulary_sha256=s.vocab.sha256,
         max_seq=s.max_seq,
         source_pins={
             "snapshot_sha256": SPEC_SHA,
-            "authority_sha256": N.byte_sha(json.dumps(proof).encode()),
+            "authority_sha256": N.byte_sha(authority_bytes),
             "training_detail_shards": shard_pins,
         },
         operator_names=operators,
