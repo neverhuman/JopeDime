@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "d6ad68a8350fc3f1653f77ef6bbf768a3ac73284d43d386b570452b59208c14a"
+      "sha256": "e4f68b65a67922822dfd46a5ef8701a78bdb93098c69c07a57c2732f13ffac60"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -19,7 +19,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "7f875e2c20b4ee9a71fcdd7f1cd8926177e0360a29ace5884f28d300c31b1667"
+      "sha256": "162d9d8bc081e0ae274cec147685ef77a7933598407fcda6c1890c433751396f"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4789,6 +4789,13 @@
       "sha256": "ebc3dd0143a956f051511ec09a5f34129b9a63e4bdae0263c6ac5bde5ac8cc92"
     },
     {
+      "normalization": "Additive W03 source; all baseline fixture bodies/identities preserved.",
+      "origin": "CX-DUR W03 stacked repair on PR292 fb5b877b; owner20:20",
+      "origin_sha256": "1610b45f2b7c749af6db2c825e8bca10de6286b7aeec3283b9c78e1be13afbb7",
+      "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/DURABILITY.md",
+      "sha256": "1610b45f2b7c749af6db2c825e8bca10de6286b7aeec3283b9c78e1be13afbb7"
+    },
+    {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/README.md (W3 revision 2 with the overlay terminal-acceptance fix)",
       "origin_sha256": "79de64c956b410a88746157c10d0dd1446ad66308fd0cd4bd2e162a6849a237f",
@@ -4800,7 +4807,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/SOURCE_PINS.json (W3 revision 2 with the overlay terminal-acceptance fix)",
       "origin_sha256": "b5b69f69602246d226b2428138372a42c88daea6528a582277f075c485876e90",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/SOURCE_PINS.json",
-      "sha256": "908355d7329ad7a8e892cfbec758e2c29c571420138b80e159ee6c7da0a183ca"
+      "sha256": "360591556d21b1b25b757c8e72c920b6aa0ee416f7532ae0f14533f667d38e8c"
     },
     {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
@@ -4856,7 +4863,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py (W3 revision 2 with the overlay terminal-acceptance fix)",
       "origin_sha256": "d9209c7982012cf38562abe7501927078526b290c804805fc7bf132fcf3c238b",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py",
-      "sha256": "eada9b87bd3e798d75bcc3b5a21db91b4eb9eff17a278064ef3185005d9b4413"
+      "sha256": "fef30bdfc04482b915c592f1a0acbfdc95625ead83076b40197f93e711edb964"
     },
     {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
@@ -4866,11 +4873,11 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "normalization": "New additive test family; no baseline fixture identity removed or weakened.",
+      "normalization": "New additive test family; no baseline fixture identity removed or weakened. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved.",
       "origin": "CX-DUR W03 private durability fault fixtures on PR292 fb5b877b; owner20:20 authorized stacked repair",
       "origin_sha256": "e6a84fd69e52cde769495c56f926c641ee66b27c8f7dc8f23c5c479c2db022da",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_durability.py",
-      "sha256": "e6a84fd69e52cde769495c56f926c641ee66b27c8f7dc8f23c5c479c2db022da"
+      "sha256": "2fb4bfeb354d1063d635b339138e77dd2ed142cdb41cc138a2fc0de07334f544"
     },
     {
       "normalization": "Byte copy of the W3 revision 2 with the overlay terminal-acceptance fix package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
@@ -5510,7 +5517,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2pr-r3.1 (new runner for the v2.0.0 learner families, build r3.1)",
       "origin_sha256": "83439d0e0407c3f0a9c00e8c4beab5b0e3220734c8f9a45aaa4518908cb1287a",
       "path": "deploy/dl-flywheel/run_v2_offline.py",
-      "sha256": "b615ed5182babd4036ca363193fc86c4b1289d05424786db74e169c099304eab"
+      "sha256": "7f2ebc7e02c23796e8a9664008491869246229cca549e89d4d486340d959481b"
     },
     {
       "normalization": "Opt-in exact-version byte caches; per-use role/source/replay unchanged;40 affected fixture roster and434 total wiring.",

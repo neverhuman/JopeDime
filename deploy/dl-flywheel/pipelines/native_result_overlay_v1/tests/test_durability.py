@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import select
 import stat
 import time
 import traceback
@@ -25,7 +26,7 @@ import neural_storage as Storage
 
 
 class CrashWorld(unittest.TestCase):
-    def die(self, call):
+    def die(self, call, while_running=None):
         """One private child, no graceful cleanup, no retry; bound hangs and retain their failure."""
         pid = os.fork()
         if pid == 0:
@@ -36,6 +37,13 @@ class CrashWorld(unittest.TestCase):
                 os._exit(1)
             os._exit(2)  # the requested boundary must actually have been reached
         deadline = time.monotonic() + 30
+        if while_running is not None:
+            try:
+                while_running()
+            except BaseException:
+                os.kill(pid, signal.SIGKILL)
+                os.waitpid(pid, 0)
+                raise
         while True:
             ended, status = os.waitpid(pid, os.WNOHANG)
             if ended:
@@ -206,6 +214,38 @@ class PublicationDurabilityTests(CrashWorld):
                 else:
                     self.refused(root)
                 self.no_retry(r, root)
+
+    def test_concurrent_reader_refuses_complete_marker_bytes_while_their_fsync_is_blocked(self):
+        r, root = self.returned('concurrent-reader')
+        ready_r, ready_w = os.pipe()
+        go_r, go_w = os.pipe()
+        for fd in (ready_r, ready_w, go_r, go_w):
+            self.addCleanup(os.close, fd)
+
+        def child():
+            real = C.os.fsync
+            def fsync(fd):
+                if os.readlink('/proc/self/fd/' + str(fd)).endswith('.pending'):
+                    os.write(ready_w, b'1')
+                    os.read(go_r, 1)
+                real(fd)
+            with mock.patch.object(C.os, 'fsync', side_effect=fsync):
+                self.accept(r, root)
+            os._exit(86)
+
+        def reader():
+            self.assertTrue(select.select([ready_r], [], [], 10)[0], 'writer reached private marker file fsync')
+            self.assertEqual(os.read(ready_r, 1), b'1')
+            pending = list(root.parent.glob('.*concurrent-reader*pending'))
+            self.assertEqual(len(pending), 1)
+            self.assertEqual(json.loads(pending[0].read_bytes())['acceptance']['sha256'],
+                             C.sha(C.acceptance_path(root).read_bytes()))
+            self.refused(root)
+            self.assertFalse(PK.completion_path(root).exists())
+            os.write(go_w, b'1')
+
+        self.die(child, while_running=reader)
+        self.assertEqual(self.f.consumers(root), {'completed_packet': (True, 1), 'validate_chain': (True, 1)})
 
     def test_process_death_before_builder_publication_and_partial_pack_keep_custody(self):
         for partial in (False, True):

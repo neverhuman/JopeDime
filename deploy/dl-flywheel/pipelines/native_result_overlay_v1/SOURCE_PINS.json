@@ -48,6 +48,7 @@
   "pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_during_cas_rolls_back_and_after_cas_reconciles_exactly_once",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_complete_accepted_envelope_and_failed_caller_parent_fsync_stays_inadmissible",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_completion_binding_tampering_and_duplicate_delivery_are_refused_without_rewrite",
+  "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_concurrent_reader_refuses_complete_marker_bytes_while_their_fsync_is_blocked",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_deadline_crossed_during_completion_fsync_retains_original_bound_and_refuses",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_pending_completion_directory_fsync_failure_is_not_a_completion",
   "pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_pending_completion_file_fsync_failure_is_not_a_completion",
@@ -88,16 +89,16 @@
    "sha256": "3b588a6c44a39c2091750d1851eaaaf6161d00760cbdf50c12a03da23ad912a4"
   },
   "run_offline.py": {
-   "bytes": 4521,
-   "sha256": "eada9b87bd3e798d75bcc3b5a21db91b4eb9eff17a278064ef3185005d9b4413"
+   "bytes": 4741,
+   "sha256": "fef30bdfc04482b915c592f1a0acbfdc95625ead83076b40197f93e711edb964"
   },
   "tests/__init__.py": {
    "bytes": 0,
    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "tests/test_durability.py": {
-   "bytes": 18657,
-   "sha256": "e6a84fd69e52cde769495c56f926c641ee66b27c8f7dc8f23c5c479c2db022da"
+   "bytes": 20387,
+   "sha256": "2fb4bfeb354d1063d635b339138e77dd2ed142cdb41cc138a2fc0de07334f544"
   },
   "tests/test_overlay.py": {
    "bytes": 75015,
