@@ -2921,6 +2921,190 @@
         "role": "research"
       },
       "sha256": "2aa2c692edd40dd439a1f5df67170d49e2e562399908b79145e0ca5ab664e5a6"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py": {
+      "bytes": 6277,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "8600a79ba1e227d4656e5c5489b07051933091ce59b26d9fa69b1353704723d0"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/__init__.py": {
+      "bytes": 83,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "e9debd8749a2b19582f9440cf01f465e610d3cdd3fd7e6af615b4947810f0fa9"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/framing.py": {
+      "bytes": 1422,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "333154cc284c7915b62b21525a8ae337537f85df6f5ea2fd6b10241541dbc179"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/reader.py": {
+      "bytes": 5812,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "75232a01c6d28632860ea6ba1a385c87c1b1f2896386f8f9eef8d89193a82757"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/reuse.py": {
+      "bytes": 12556,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "0d4f94357a5dca5591e16e56b358fd0d8e8ff60619ab82cb1ecd31579af54ef0"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/__init__.py": {
+      "bytes": 80,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/authority.py": {
+      "bytes": 5260,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/common.py": {
+      "bytes": 4959,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/custody_manifest.py": {
+      "bytes": 13078,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/package/vendor/phase_verifier.py": {
+      "bytes": 8516,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/__init__.py": {
+      "bytes": 53,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "61228820fbe2eba336d95a990a83458dcb72582e04114e19d87006b15a0e3178"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/fixtures.py": {
+      "bytes": 6804,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "96152f3f342e2410ab60d272a03cd170f629d539e9a722a6242886d9a20fd366"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/__init__.py": {
+      "bytes": 80,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/authority.py": {
+      "bytes": 5260,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/common.py": {
+      "bytes": 4959,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/custody_manifest.py": {
+      "bytes": 13078,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/package/phase_verifier.py": {
+      "bytes": 8516,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/__init__.py": {
+      "bytes": 57,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "9b8c37f075319480d9def70e906ab3938c053e11383b5d1216ee94220588ab7d"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/fixtures.py": {
+      "bytes": 8169,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "157357a1880365c9152fa8a958dca2c0cbbe0b58c6126a63bb887d38de4e1b68"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/offline_adapter.py": {
+      "bytes": 4323,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "4d719608f1f57498e568cb85c4d6e64fe90c41a7a21f1f9693be3ced8168faf4"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/run_family.py": {
+      "bytes": 6194,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority. Cold revision2 independently binds actual guarded CI source origin before/after its three new cases.",
+        "role": "research"
+      },
+      "sha256": "d15178e75c346a2ad229d8647557b8855750b16c5dca1e01811a004c7ca3ec5a"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/run_offline.py": {
+      "bytes": 3421,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "31bdb3e5f832b6d20dd25f4b5eac9312067347d41e40985ebdcf9cecae9e158b"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/__init__.py": {
+      "bytes": 54,
+      "classification": {
+        "reason": "Pure source-only monitor custody, read-budget, fixture support or portable offline orchestration. Original source bytes preserved; no real RootSeal producer, runtime admission, GP or optimizer authority.",
+        "role": "research"
+      },
+      "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
     }
   }
 }

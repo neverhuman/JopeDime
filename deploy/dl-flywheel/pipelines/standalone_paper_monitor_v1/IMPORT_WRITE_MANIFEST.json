@@ -1,0 +1,15 @@
+{
+  "additional_import": "adapter family only: exact pinned deploy/ci/ci-plan.py via non-main alias; stdlib classify only, no CLI/Git execution",
+  "imports": "stdlib; original aliases in isolated children; no runtime, credentials, SDK, SSH, NVML or CUDA",
+  "isolated_families": [
+    "incremental_v1",
+    "capture_reuse_v3",
+    "budget_preflight_v1",
+    "adapter_v1"
+  ],
+  "new_adapter_qualification": "pending independent review and explicit attempt",
+  "runtime_authority": "HELD",
+  "schema": "jope.standalone-monitor-portable-import-write/v1",
+  "source_membership": "complete raw SHA/byte manifest before and after fixtures",
+  "writes": "fresh explicitly supplied external output only, create-only intent/receipt; synthetic tests use tempfile roots"
+}

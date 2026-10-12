@@ -1,0 +1,50 @@
+{
+  "bytecode_disabled_during_qualification": true,
+  "external_authority_limitation": "ExternalPlanPin authenticates supplied bytes, not who chose them. Successful Projection is never a history completeness, policy, physical custody, RootSeal, producer or launch grant.",
+  "imports": {
+    "preflight.py": [
+      "dataclasses",
+      "hashlib",
+      "json",
+      "pathlib",
+      "re"
+    ],
+    "run_offline.py": [
+      "argparse",
+      "base64",
+      "hashlib",
+      "importlib.util",
+      "io",
+      "json",
+      "os",
+      "pathlib",
+      "platform",
+      "preflight",
+      "sys",
+      "test_preflight",
+      "time",
+      "unittest"
+    ],
+    "test_preflight.py": [
+      "copy",
+      "hashlib",
+      "json",
+      "preflight",
+      "unittest",
+      "unittest.mock"
+    ]
+  },
+  "production_io": "none; project accepts exact bytes and typed external hash pin only",
+  "production_network_process_control": "none",
+  "runner_pinned_import_origins": [
+    "preflight.py",
+    "test_preflight.py"
+  ],
+  "runner_writes": [
+    "qualification.intent.json create-only fsynced",
+    "qualification.json create-only fsynced"
+  ],
+  "schema": "codex.producer-preflight-import-write-manifest/v1",
+  "stdlib_and_interpreter": "Host Python3.14.6 observed; standard library is not a portable full pinned runtime image. No actual producer/remote-runtime qualification claimed.",
+  "tests": "15 new fake cases; no old family/capture/verifier replay; six known inventory byte totals used as scalar synthetic counterexample only."
+}

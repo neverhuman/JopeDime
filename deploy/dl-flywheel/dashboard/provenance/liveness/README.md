@@ -1,0 +1,1 @@
+Frozen parent renderer, original public HTML source and13 fake fixture cases. These are source only, not snapshots, runtime receipts or a live operator. Current bridge extracts optimizerDisplay from final index.html, compares exact function bytes to renderer.js, and supplies original HTML solely for regression bindings.

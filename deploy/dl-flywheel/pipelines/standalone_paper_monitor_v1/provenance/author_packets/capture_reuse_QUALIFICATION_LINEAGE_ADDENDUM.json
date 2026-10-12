@@ -1,0 +1,31 @@
+{
+  "all28_on_final_source": false,
+  "corrects_frozen_plan_wording": "revision2 QUALIFICATION_PLAN historical_22_pass_not_replayed=true was overbroad:21 of22 were not repeated;1 affected previously passing reader case was repeated. Frozen plan is preserved, this addendum supersedes that wording only.",
+  "distinct_fixture_identities": 28,
+  "first_run": {
+    "errors": 4,
+    "executed": 26,
+    "passed": 22
+  },
+  "new_execution_for_this_correction": false,
+  "prior_frozen_packet": {
+    "bytes": 8543,
+    "sha256": "c192c2fab5a72bb5d2ef284004fa3c22cbeb1b3f682019a8e33dd57228491cc5"
+  },
+  "reason": "Independent reviewer requests explicit previously-passing affected case accounting; source/fixtures/old receipts unchanged",
+  "revision2_run": {
+    "executed": 6,
+    "new_exact_history_type_case": 1,
+    "previously_passing_affected_case_repeated": 1,
+    "previously_passing_case": "test_fresh_hash_corruption_fails_and_burns_session",
+    "reason_for_affected_repetition": "strict reader constructor fix and test-only resolved macOS temp path; previous case failed closed before actual intended corruption path",
+    "repaired_error_cases": 4
+  },
+  "revision3_run": {
+    "executed": 1,
+    "new_inventory_commitment_case": 1
+  },
+  "schema": "codex.capture-reuse-qualification-lineage-correction/v1",
+  "summary_repaired_affected_reader_cases_pass_5_means": "4 repaired former errors +1 affected previously passing case",
+  "total_executions": 33
+}

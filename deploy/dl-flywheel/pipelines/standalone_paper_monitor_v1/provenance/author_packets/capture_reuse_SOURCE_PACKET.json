@@ -1,0 +1,232 @@
+{
+  "current_revision": "revision3",
+  "files": {
+    "PRESERVED_ATTEMPT1.json": {
+      "bytes": 2378,
+      "sha256": "4a0120630a70298a52421ad7db78e6493feae0fefdacb7d7d19e126ede184456"
+    },
+    "QUALIFICATION_PLAN.json": {
+      "bytes": 4885,
+      "sha256": "8fc0acfd2ac8a9593b4259c0b752f225f9dbd673068362ece1fdb1e4212c4376"
+    },
+    "READ_FIRST.json": {
+      "bytes": 928,
+      "sha256": "4fe08f60267c9d5316ee0dba20b97cf1f7d18225bb5244eb53d41b16a474e394"
+    },
+    "attempts/qualification-001.json": {
+      "bytes": 12813,
+      "sha256": "efe4092ff04dfbf05876b153e6a543e9da1d96a2dc8f66f4d6a7f0f058384f73"
+    },
+    "package/__init__.py": {
+      "bytes": 83,
+      "sha256": "e9debd8749a2b19582f9440cf01f465e610d3cdd3fd7e6af615b4947810f0fa9"
+    },
+    "package/framing.py": {
+      "bytes": 1422,
+      "sha256": "333154cc284c7915b62b21525a8ae337537f85df6f5ea2fd6b10241541dbc179"
+    },
+    "package/reader.py": {
+      "bytes": 5687,
+      "sha256": "ee3b328a3d550f0e41dc93522a19cb093c1284835b548bd1b9d8bf20164da448"
+    },
+    "package/reuse.py": {
+      "bytes": 12361,
+      "sha256": "b2a33e4eb3219af5fd1041b8db6efe2ef519f256b12eb6d9b6f7db53714d20b5"
+    },
+    "package/vendor/__init__.py": {
+      "bytes": 80,
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    "package/vendor/authority.py": {
+      "bytes": 5260,
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    "package/vendor/common.py": {
+      "bytes": 4959,
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    "package/vendor/custody_manifest.py": {
+      "bytes": 13078,
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    "package/vendor/phase_verifier.py": {
+      "bytes": 8516,
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    "revision2/QUALIFICATION_PLAN.json": {
+      "bytes": 3132,
+      "sha256": "ac5ca70124473fa7c4f5ec915a373bfd73431df06a87de4d4487115569f4aea1"
+    },
+    "revision2/attempts/qualification-002.json": {
+      "bytes": 5799,
+      "sha256": "318b867cf3a5e24c211aae23aa9cfde71c7062f6d919d0812ce7f028996d174d"
+    },
+    "revision2/package/__init__.py": {
+      "bytes": 83,
+      "sha256": "e9debd8749a2b19582f9440cf01f465e610d3cdd3fd7e6af615b4947810f0fa9"
+    },
+    "revision2/package/framing.py": {
+      "bytes": 1422,
+      "sha256": "333154cc284c7915b62b21525a8ae337537f85df6f5ea2fd6b10241541dbc179"
+    },
+    "revision2/package/reader.py": {
+      "bytes": 5812,
+      "sha256": "75232a01c6d28632860ea6ba1a385c87c1b1f2896386f8f9eef8d89193a82757"
+    },
+    "revision2/package/reuse.py": {
+      "bytes": 12361,
+      "sha256": "b2a33e4eb3219af5fd1041b8db6efe2ef519f256b12eb6d9b6f7db53714d20b5"
+    },
+    "revision2/package/vendor/__init__.py": {
+      "bytes": 80,
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    "revision2/package/vendor/authority.py": {
+      "bytes": 5260,
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    "revision2/package/vendor/common.py": {
+      "bytes": 4959,
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    "revision2/package/vendor/custody_manifest.py": {
+      "bytes": 13078,
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    "revision2/package/vendor/phase_verifier.py": {
+      "bytes": 8516,
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    "revision2/run_offline.py": {
+      "bytes": 6460,
+      "sha256": "7488d4727f28d7582c166389c6c725aca0e9b50505abc42e256ea0d0fe000e89"
+    },
+    "revision2/tests/__init__.py": {
+      "bytes": 53,
+      "sha256": "61228820fbe2eba336d95a990a83458dcb72582e04114e19d87006b15a0e3178"
+    },
+    "revision2/tests/fixtures.py": {
+      "bytes": 6729,
+      "sha256": "270b2ffd70b57fa4467b106536ad1e7b973cb711fd7fe5afc4441f2d8f3ec372"
+    },
+    "revision2/tests/test_reuse.py": {
+      "bytes": 7824,
+      "sha256": "d27fd8ea6048e8e7d6c0bee975f8276961491b78963ad97edde99c46b95b4181"
+    },
+    "revision3/CONTRACTS.md": {
+      "bytes": 4685,
+      "sha256": "8daf4f42d57e3f717bacc9472b8ce8d5461eab524e32f31953dc870ee6a28ebd"
+    },
+    "revision3/CURRENT_SOURCE_MANIFEST.json": {
+      "bytes": 2666,
+      "sha256": "d4b7b8b2cc36585c31984d131a91e5b84cdfe6b5eeb5874fb73144b898ee16fa"
+    },
+    "revision3/IMPORT_WRITE_SOURCE.json": {
+      "bytes": 1983,
+      "sha256": "26aa29c01ec37d23a27d4457356c2afd570437a5ea698a1d230f5c2fbbcb355c"
+    },
+    "revision3/QUALIFICATION_PLAN.json": {
+      "bytes": 2514,
+      "sha256": "92788bff66a8e32190d1b9e1b2fb6ccfb183415c5b9b0e68df1be8bf723d4a6d"
+    },
+    "revision3/QUALIFICATION_SUMMARY.json": {
+      "bytes": 2126,
+      "sha256": "190c6d50e0779768eb5202c281cb418673ad70a6fe88d1891a7199635dd1e6af"
+    },
+    "revision3/README.md": {
+      "bytes": 5094,
+      "sha256": "f5e00ed45bdd7e512f3138f3cfa72dcc70107cc12d3bb1170637145e0428d3fa"
+    },
+    "revision3/WORKER_READY_GATES.md": {
+      "bytes": 3895,
+      "sha256": "0dcb3d2b72112a1195ed9dbc23d1a8eac811f87395457237351a7a80a9ed0d89"
+    },
+    "revision3/attempts/qualification-003.json": {
+      "bytes": 4500,
+      "sha256": "4ab10c23354e745e52175870b28e32707de81e83dcce573c12737a3d6f593bf5"
+    },
+    "revision3/package/__init__.py": {
+      "bytes": 83,
+      "sha256": "e9debd8749a2b19582f9440cf01f465e610d3cdd3fd7e6af615b4947810f0fa9"
+    },
+    "revision3/package/framing.py": {
+      "bytes": 1422,
+      "sha256": "333154cc284c7915b62b21525a8ae337537f85df6f5ea2fd6b10241541dbc179"
+    },
+    "revision3/package/reader.py": {
+      "bytes": 5812,
+      "sha256": "75232a01c6d28632860ea6ba1a385c87c1b1f2896386f8f9eef8d89193a82757"
+    },
+    "revision3/package/reuse.py": {
+      "bytes": 12556,
+      "sha256": "0d4f94357a5dca5591e16e56b358fd0d8e8ff60619ab82cb1ecd31579af54ef0"
+    },
+    "revision3/package/vendor/__init__.py": {
+      "bytes": 80,
+      "sha256": "35ee2f16cd8a4ddfc843a23967c20f7e9299679790891305af92bd12d3d393b1"
+    },
+    "revision3/package/vendor/authority.py": {
+      "bytes": 5260,
+      "sha256": "7af0ae9f5dda6432b7e0838daa75b15b4a9521a94953e21cb3fc1c677edd4b8a"
+    },
+    "revision3/package/vendor/common.py": {
+      "bytes": 4959,
+      "sha256": "b6227b49ac9d1789fda4c78ed5537ebe3c84f3b4ed89a2ed8ac289f91d207f29"
+    },
+    "revision3/package/vendor/custody_manifest.py": {
+      "bytes": 13078,
+      "sha256": "457177f40cf88e483dedf7b4273c2feb16051684e678ee41b833cb399c5b3fdf"
+    },
+    "revision3/package/vendor/phase_verifier.py": {
+      "bytes": 8516,
+      "sha256": "cff5ffdd8163b837a5fef4b290541f5b4533a1710fdfced943b9f46c791c9805"
+    },
+    "revision3/run_offline.py": {
+      "bytes": 6460,
+      "sha256": "7488d4727f28d7582c166389c6c725aca0e9b50505abc42e256ea0d0fe000e89"
+    },
+    "revision3/tests/__init__.py": {
+      "bytes": 53,
+      "sha256": "61228820fbe2eba336d95a990a83458dcb72582e04114e19d87006b15a0e3178"
+    },
+    "revision3/tests/fixtures.py": {
+      "bytes": 6804,
+      "sha256": "96152f3f342e2410ab60d272a03cd170f629d539e9a722a6242886d9a20fd366"
+    },
+    "revision3/tests/test_reuse.py": {
+      "bytes": 8487,
+      "sha256": "f2f33d1474e39447d04951fa213a643f58d42b5d6e40acf0775c2dc53def6a30"
+    },
+    "run_offline.py": {
+      "bytes": 6268,
+      "sha256": "9fb5f601f8955c9d4fb3377483cbe8f1654e979059b24bef054650ec315ca890"
+    },
+    "tests/__init__.py": {
+      "bytes": 53,
+      "sha256": "61228820fbe2eba336d95a990a83458dcb72582e04114e19d87006b15a0e3178"
+    },
+    "tests/fixtures.py": {
+      "bytes": 6719,
+      "sha256": "f39832a07165a48e809b3465d8f5691b3f2e1283aaccde8712ef579cd593e4ff"
+    },
+    "tests/test_reuse.py": {
+      "bytes": 7507,
+      "sha256": "05cb96d8b49eaed508fbe878c192f2e00c47fffb687ba9474c80fccae75466ac"
+    }
+  },
+  "launches": 0,
+  "old_fixture_runs": 0,
+  "qualification_summary": {
+    "bytes": 2126,
+    "sha256": "190c6d50e0779768eb5202c281cb418673ad70a6fe88d1891a7199635dd1e6af"
+  },
+  "remote_calls": 0,
+  "runtime_source_count": 9,
+  "schema": "codex.paper-monitor-capture-reuse-source-packet/v1",
+  "source_imports_only_during_new_synthetic_qualification": true,
+  "state": "SOURCE_ONLY_REVIEW_PENDING_ACTUAL_ROOTSEAL_AND_RUNTIME_HOLD",
+  "vendor_original_packet": {
+    "bytes": 4051,
+    "sha256": "6f9b9be3bdc0343708daf448021841fae1b4b2ca56d4103a79ea19d0c38ff65c"
+  }
+}

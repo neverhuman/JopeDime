@@ -1,0 +1,62 @@
+{
+  "schema": "codex.dashboard-final-r2-review-packet/v1",
+  "at": "2026-10-10T14:37:44.928522+00:00",
+  "files": [
+    {
+      "path": "index.html",
+      "bytes": 62383,
+      "sha256": "161266cd064d6e5a28ac2e32552aa34229002a3566d7c54655a0d7f47c358226"
+    },
+    {
+      "path": "flywheel.js",
+      "bytes": 11668,
+      "sha256": "8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48"
+    },
+    {
+      "path": "test_flywheel.cjs",
+      "bytes": 3873,
+      "sha256": "2116390b5c0f440eeeb58340fd7467d127427214bb3db401080ad0e7add98b7b"
+    },
+    {
+      "path": "test_review_boundaries.cjs",
+      "bytes": 2125,
+      "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
+    },
+    {
+      "path": "test_fetch_failure.cjs",
+      "bytes": 1233,
+      "sha256": "3b0bb35691544aa1f145b053b6c086fb8dfddfdff78b617ab61e5ab10a0b2283"
+    },
+    {
+      "path": "test_age_tick.cjs",
+      "bytes": 1489,
+      "sha256": "9389a8db93210c1dda0eb25bba762e252713f5047ba255c17e575add65430ec3"
+    },
+    {
+      "path": "candidate-script.js",
+      "bytes": 42048,
+      "sha256": "20a90c0397f5a1cd502f9ae65980d5bb2452cf6bdb000f8ad6380dacfa9213f7"
+    }
+  ],
+  "first_packet_sha256": "1fb3bba9d3b15a52ebe5a933b3b4b625c17c140e054d8ba9c8b98f3ea44bff3c",
+  "first_packet_erratum": "First writer opened its receipt before a directory comprehension, so an empty self-entry is invalid; it is retained historical only. This explicit finite code roster excludes every receipt and is actual source authority.",
+  "qualification": {
+    "new_age_tick_executions": 3,
+    "affected_fetch_failure_executions": 3,
+    "rcs": [
+      0,
+      0
+    ],
+    "node_syntax_before_final_dataflow_correction": 0,
+    "old21_whole_rerun": false,
+    "old13_rerun": false,
+    "age_tick_code_unchanged_since_passing": true,
+    "final_dataflow_delta": "All render paths use sticky connection-failure; successful JSON read clears it before render, errors restore it. No old test replay claimed."
+  },
+  "changes": [
+    "Ages retained source without fetch completion",
+    "Partial legacy vector aggregate says reported vectors",
+    "Latest independently verified build receipt wording",
+    "Sticky failure flag across axis/render paths"
+  ]
+}

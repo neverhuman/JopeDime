@@ -1,0 +1,125 @@
+{
+  "no_service_or_optimizer_execution": true,
+  "schema": "jope.dashboard-fixture-bridge-roster/v1",
+  "scripts": [
+    {
+      "case_shape": "named_states",
+      "cases": [
+        "missing evidence never becomes zero",
+        "fresh campaign and GPU do not prove learning",
+        "future source observation refused",
+        "boundary age ninety is stale",
+        "partial host source cannot appear fresh",
+        "invalid counts never admitted",
+        "published zero stays a recorded zero",
+        "encoding sum scope and absence distinct",
+        "new counter requires new review rather than live claim",
+        "measured proposals and results remain separate",
+        "renderer is pure and preserves source history",
+        "malformed host records do not invent counts"
+      ],
+      "path": "test_flywheel.cjs",
+      "schema": "codex.new-dashboard-flywheel-fixtures/v1"
+    },
+    {
+      "case_shape": "named_states",
+      "cases": [
+        "fresh xb2 cannot certify stale xb3",
+        "missing host does not certify whole source",
+        "all three current hosts can label observations fresh",
+        "partial encoding explicitly reports subset",
+        "reset run with new config invalidates old review",
+        "exact captured identity permits historical label without live claim"
+      ],
+      "path": "test_review_boundaries.cjs",
+      "schema": "codex.new-dashboard-review-boundaries/v1"
+    },
+    {
+      "case_shape": "strings",
+      "cases": [
+        "network failure invalidates source label",
+        "retained age advances after failure",
+        "new run with same config invalidates v1 review"
+      ],
+      "path": "test_fetch_failure.cjs",
+      "schema": "codex.new-dashboard-fetch-failure/v1"
+    },
+    {
+      "case_shape": "ids_states",
+      "cases": [
+        "failed_continual_flag_is_stopped",
+        "inactive_continual_flag_is_stopped",
+        "active_service_is_not_optimizer_progress",
+        "changed_reported_counter_is_not_physical_proof",
+        "absence_is_unknown",
+        "stale_snapshot_is_unknown",
+        "stale_host_is_unknown",
+        "future_clock_is_unknown",
+        "source_failure_never_zero_or_live",
+        "activating_is_starting",
+        "deactivating_is_stopping",
+        "active_exited_is_not_running",
+        "unrecognized_extra_proof_cannot_promote"
+      ],
+      "original_html": "provenance/liveness/original.html",
+      "path": "provenance/liveness/liveness_cases.cjs",
+      "receipt_style": "liveness",
+      "renderer": "provenance/liveness/renderer.js",
+      "schema": "codex.dashboard-liveness-new-fake-fixtures/v1"
+    },
+    {
+      "case_shape": "strings",
+      "cases": [
+        "independent clock ages retained source while fetch is pending",
+        "clock tick preserves prior connection failure",
+        "clock tick does not invent a missing snapshot"
+      ],
+      "path": "test_age_tick.cjs",
+      "schema": "codex.new-dashboard-age-tick/v1"
+    }
+  ],
+  "source_pins": {
+    "flywheel.js": {
+      "bytes": 11668,
+      "sha256": "8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48"
+    },
+    "index.html": {
+      "bytes": 62383,
+      "sha256": "161266cd064d6e5a28ac2e32552aa34229002a3566d7c54655a0d7f47c358226"
+    },
+    "provenance/liveness/liveness_cases.cjs": {
+      "bytes": 4414,
+      "sha256": "f72d892bd19a90235bf4fc4476ba84823c85fd2754e5ab1b1e4cdc586ac81df3"
+    },
+    "provenance/liveness/original.html": {
+      "bytes": 43793,
+      "sha256": "0d00e6f4dd066ad6a95337b2ba5a94a5d7a7e0a6f7c730e216077116b5e902bc"
+    },
+    "provenance/liveness/renderer.js": {
+      "bytes": 2008,
+      "sha256": "848cd80f04bebdc45bb0566ba045f774a37e89a67a9f9388746606736d032705"
+    },
+    "test_age_tick.cjs": {
+      "bytes": 1489,
+      "sha256": "9389a8db93210c1dda0eb25bba762e252713f5047ba255c17e575add65430ec3"
+    },
+    "test_dashboard_flywheel.py": {
+      "bytes": 8488,
+      "sha256": "36728ba2d84287e908c278439bdd9660694149e125b7ac3933a4625e231abd9c"
+    },
+    "test_fetch_failure.cjs": {
+      "bytes": 1233,
+      "sha256": "3b0bb35691544aa1f145b053b6c086fb8dfddfdff78b617ab61e5ab10a0b2283"
+    },
+    "test_flywheel.cjs": {
+      "bytes": 3873,
+      "sha256": "2116390b5c0f440eeeb58340fd7467d127427214bb3db401080ad0e7add98b7b"
+    },
+    "test_review_boundaries.cjs": {
+      "bytes": 2125,
+      "sha256": "0f83520ae6d087f18fa5d596755e6773961547fee32538d195f0caa8eff63536"
+    }
+  },
+  "wired_fixture_count": 37,
+  "wrapper_qualification_executions": 0
+}

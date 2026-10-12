@@ -490,6 +490,10 @@
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
     },
+    "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
+      "reason": "Pure monitor custody/budget or dashboard renderer synthetic research fixtures; portable CI bridge, no GP/learner/runtime authority. Includes owning CI routing behavior through guarded stdlib classify; no CLI/Git/runtime.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "reason": "Research Kumo Small fresh32 source/custody and37 isolated CPU contracts. New runner is additive to prior455 identities. Runtime replay, CUDA, S3 publication and production queue claims require separate current source-bound operational qualification; imported deployment paths are not portable defaults.",
       "role": "research"
@@ -716,6 +720,22 @@
     },
     "python:deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py": {
       "reason": "CPU fixtures for the executable cache and the lifecycle proposal. They do not apply a lifecycle rule, change storage class, or qualify a live learning loop.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/test_preflight.py": {
+      "reason": "Pure monitor custody/budget or dashboard renderer synthetic research fixtures; portable CI bridge, no GP/learner/runtime authority. Includes owning CI routing behavior through guarded stdlib classify; no CLI/Git/runtime.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/test_reuse.py": {
+      "reason": "Pure monitor custody/budget or dashboard renderer synthetic research fixtures; portable CI bridge, no GP/learner/runtime authority. Includes owning CI routing behavior through guarded stdlib classify; no CLI/Git/runtime.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/test_custody.py": {
+      "reason": "Pure monitor custody/budget or dashboard renderer synthetic research fixtures; portable CI bridge, no GP/learner/runtime authority. Includes owning CI routing behavior through guarded stdlib classify; no CLI/Git/runtime.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py": {
+      "reason": "Pure monitor custody/budget or dashboard renderer synthetic research fixtures; portable CI bridge, no GP/learner/runtime authority. Includes owning CI routing behavior through guarded stdlib classify; no CLI/Git/runtime.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {

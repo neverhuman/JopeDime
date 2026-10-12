@@ -1,0 +1,32 @@
+"""Run only the new fake preflight roster once, after exact local source pins."""
+import argparse,base64,hashlib,importlib.util,io,json,os,pathlib,platform,sys,time,unittest
+ROOT=pathlib.Path(__file__).resolve().parent
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--plan-sha256',required=True);args=ap.parse_args()
+    raw=(ROOT/'QUALIFICATION_PLAN.json').read_bytes()
+    assert hashlib.sha256(raw).hexdigest()==args.plan_sha256,'external plan pin'
+    plan=json.loads(raw)
+    for name,pin in plan['sources'].items():
+        p=ROOT/name;assert p.parent==ROOT and not p.is_symlink()
+        body=p.read_bytes();assert len(body)==pin['bytes']and hashlib.sha256(body).hexdigest()==pin['sha256']
+    intent=ROOT/'qualification.intent.json';fd=os.open(intent,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+    os.write(fd,json.dumps({'plan_sha256':args.plan_sha256,'started_ns':time.time_ns()}).encode());os.fsync(fd);os.close(fd)
+    start=time.time_ns();mono=time.monotonic_ns();cpu=time.process_time_ns()
+    sys.path.insert(0,str(ROOT));import test_preflight,preflight
+    assert pathlib.Path(test_preflight.__file__).resolve()==ROOT/'test_preflight.py'
+    assert pathlib.Path(preflight.__file__).resolve()==ROOT/'preflight.py'
+    suite=unittest.defaultTestLoader.loadTestsFromModule(test_preflight)
+    def ids(s):
+        for x in s:
+            if isinstance(x,unittest.TestSuite):yield from ids(x)
+            else:yield x.id()
+    actual=list(ids(suite));assert sorted(actual)==sorted(plan['fixture_roster'])and len(actual)==len(set(actual))
+    stream=io.StringIO();result=unittest.TextTestRunner(stream=stream,verbosity=2).run(suite)
+    passed=result.wasSuccessful()and result.testsRun==len(actual)and not result.skipped and not result.expectedFailures and not result.unexpectedSuccesses
+    receipt={'schema':'codex.producer-preflight-new-fixture-receipt/v1','state':'PASS_NEW_FAKE_CASES'if passed else'FAIL_PRESERVED','plan_sha256':args.plan_sha256,'sources':plan['sources'],'fixture_roster':actual,'tests_run':result.testsRun,'failures':len(result.failures),'errors':len(result.errors),'skipped':len(result.skipped),'expected_failures':len(result.expectedFailures),'unexpected_successes':len(result.unexpectedSuccesses),'started_unix_ns':start,'finished_unix_ns':time.time_ns(),'elapsed_monotonic_ns':time.monotonic_ns()-mono,'process_cpu_ns':time.process_time_ns()-cpu,'python':platform.python_version(),'output_base64':base64.b64encode(stream.getvalue().encode()).decode(),'actual_producer_or_RootSeal':False,'historical_fixtures_or_capture_execution':0,'fixture_inputs':'synthetic only; historical six scalar sizes are synthetic counterexample constants, no real body loaded'}
+    fd=os.open(ROOT/'qualification.json',os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.write(fd,(json.dumps(receipt,sort_keys=True,indent=2)+'\n').encode());os.fsync(fd);os.close(fd)
+    print(json.dumps({k:receipt[k]for k in ['state','tests_run','failures','errors','skipped','elapsed_monotonic_ns']}))
+    return 0 if passed else 1
+
+if __name__=='__main__':raise SystemExit(main())
