@@ -16,6 +16,8 @@ pub struct SourceIdentity {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum InitialState {
     ModelFree {
+        /// Initial GP population, ordering and controller state, without neural weights.
+        search_state_sha256: String,
         rng_state_sha256: String,
     },
     Checkpoint {
@@ -79,7 +81,12 @@ impl ExperimentIdentity {
             &self.data_roster_sha256,
         ];
         match &self.initial_state {
-            InitialState::ModelFree { rng_state_sha256 } => hashes.push(rng_state_sha256),
+            InitialState::ModelFree {
+                search_state_sha256,
+                rng_state_sha256,
+            } => {
+                hashes.extend([search_state_sha256, rng_state_sha256]);
+            }
             InitialState::Checkpoint {
                 parameters_sha256,
                 optimizer_sha256,

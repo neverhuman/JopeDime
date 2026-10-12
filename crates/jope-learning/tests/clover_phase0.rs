@@ -26,6 +26,7 @@ fn identity() -> ExperimentIdentity {
             closure_sha256: digest("full source closure"),
         },
         initial_state: InitialState::ModelFree {
+            search_state_sha256: digest("initial GP population and controller state"),
             rng_state_sha256: digest("initial rng"),
         },
         evaluator_sha256: digest("evaluator"),
@@ -71,6 +72,14 @@ fn identity_is_canonical_complete_and_model_free() {
     let mut extra = wire;
     extra["lane"] = json!("CONTROL");
     assert!(serde_json::from_value::<ExperimentIdentity>(extra).is_err());
+    for field in ["search_state_sha256", "rng_state_sha256"] {
+        let mut missing = serde_json::to_value(&id).unwrap();
+        missing["initial_state"]
+            .as_object_mut()
+            .unwrap()
+            .remove(field);
+        assert!(serde_json::from_value::<ExperimentIdentity>(missing).is_err());
+    }
 }
 
 #[test]

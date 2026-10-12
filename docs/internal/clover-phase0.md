@@ -26,7 +26,8 @@ and `python3`, which CI supplies. Scratch stays in each lane's existing Cargo ta
 ## Identity and trust boundaries
 
 The experiment record covers the full Git commit and a complete source/build closure digest;
-model-free RNG state or checkpoint parameters, optimizer and RNG; evaluator and parity contract;
+model-free GP population/controller and RNG state or checkpoint parameters, optimizer and RNG;
+evaluator and parity contract;
 support; objective; frozen data roster; seed; all resource budgets; and guard identities.
 All contract references are SHA-256 content identities. Support must bind the program set,
 grammar, tokenizer, canonicalizer and admission evidence. The data roster must bind task,

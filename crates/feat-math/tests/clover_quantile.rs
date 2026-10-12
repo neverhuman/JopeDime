@@ -93,7 +93,7 @@ fn runtime_matches_independent_quantile_and_binning_oracles() {
                 FittedOp::QuantileBins { edges, .. } | FittedOp::BinOnehot { edges, .. } => edges,
                 _ => unreachable!(),
             };
-            assert_bits(&c.name, edges, &[c.edges.clone()]);
+            assert_bits(&c.name, edges, std::slice::from_ref(&c.edges));
             let output = apply_op(&fitted, &probes).unwrap();
             if actual.is_empty() {
                 actual = output;
