@@ -1,0 +1,125 @@
+{
+  "alpha": 0.05,
+  "factor": 7.84,
+  "measured_judge_sigma": false,
+  "power_target": 0.8,
+  "rows": [
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": null,
+      "mde_80": null,
+      "measured": false,
+      "name": "effect_0.2_sigma",
+      "power": null,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.1,
+      "delta_in_sigma": 0.1,
+      "families_needed_for_power_80": 783.9999999999999,
+      "lineages": null,
+      "mde_80": null,
+      "measured": false,
+      "name": "effect_0.1_sigma",
+      "power": null,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": 54,
+      "mde_80": 0.38103173776627214,
+      "measured": false,
+      "name": "dev_panel_L54",
+      "power": 0.3122735486894528,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": 10,
+      "mde_80": 0.8854377448471462,
+      "measured": false,
+      "name": "smoke_L10",
+      "power": 0.09693544676040111,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": 50,
+      "mde_80": 0.3959797974644666,
+      "measured": false,
+      "name": "week1_L50",
+      "power": 0.29298893644798735,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": 100,
+      "mde_80": 0.27999999999999997,
+      "measured": false,
+      "name": "internal_L100",
+      "power": 0.5160052739761748,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": 200,
+      "mde_80": 0.1979898987322333,
+      "measured": false,
+      "name": "sealed_floor_L200",
+      "power": 0.8074304194325571,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.1,
+      "delta_in_sigma": 0.1,
+      "families_needed_for_power_80": 783.9999999999999,
+      "lineages": 200,
+      "mde_80": 0.1979898987322333,
+      "measured": false,
+      "name": "sealed_floor_L200_effect_0.1_sigma",
+      "power": 0.29298893644798735,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "delta": 0.2,
+      "delta_in_sigma": 0.2,
+      "families_needed_for_power_80": 195.99999999999997,
+      "lineages": 400,
+      "mde_80": 0.13999999999999999,
+      "measured": false,
+      "name": "sealed_L400",
+      "power": 0.9793266319025755,
+      "sigma_D": 1.0,
+      "sigma_source": "hypothetical_unit_sigma"
+    },
+    {
+      "citation": "/home/ubuntu/jopedime_probe_exp/rlfw-20261009/REPORT_20261009.md:349",
+      "name": "observed_judge_sigma_D",
+      "reason": "No Lane B judge scores exist. The D5 paired arena is Lane A and INCONCLUSIVE, so it is not a judge-partition sigma.",
+      "sigma_D": null,
+      "sigma_source": "unmeasured",
+      "status": "unmeasured"
+    }
+  ],
+  "schema": "jope.rlfw-judge-power/v1"
+}

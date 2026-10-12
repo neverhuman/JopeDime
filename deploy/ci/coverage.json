@@ -1552,6 +1552,36 @@
       ],
       "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B seal and judge-evaluator tests via run_rlfw_offline.py. Temporary seals only; no real seal is released, and no Kumo weights, corpus, or live evaluator are loaded."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_kumo_canaries.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture canaries A1-A5 via run_rlfw_offline.py. The live runner exits before any weight file is opened. No Kumo forward, GPU, or corpus."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_power.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Lane B power-table fixtures via run_rlfw_offline.py. The 7.84 factor is the spec constant. Observed judge sigma stays unmeasured. No corpus or live comparison."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
       "discovery": {
         "kind": "python-family"
