@@ -1,17 +1,17 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "bf4c41e50c12313e4877a651af12acfd0c427dbb75399b5dfc08e0223af1f4d0"
+      "sha256": "3c14165c9b5be869c3a0326366e85cce7242135a27a114dee5d96e429d03f794"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "d201ac0d412e4e77c6d9c8aa059db912209e8154f1ca56c42ce41728f69eab07"
+      "sha256": "fcdbe605e306fe800d9c9a6d9d62fbc75085dcf1a33f21439aac20cb6bd2620a"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -21,11 +21,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "5838ec1cb7894122843764d97bf4a66683a21364d1009d6f46357a60cf26d6a0"
+      "sha256": "0a0e8dd3f41c68c2ba64ed26f737b8b830a6c2bbd9e2c3f6c6201f8d6ecfb72a"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4716,6 +4716,19 @@
       "sha256": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92"
     },
     {
+      "normalization": "CX-KV backend-portable drift observation correction; exact trace/logit and numerical tolerance checks retained.",
+      "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
+      "origin_sha256": "6efca6223c7c05b4d522c1ca3750b47fc5b6921a0f1c5da4402120493857f275",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/KV_TRIE.md",
+      "sha256": "6f5aa26afb0424421f675dc19206a219ace523c2ceb7ae1be55b01cfefd0db92"
+    },
+    {
+      "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
+      "origin_sha256": "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/kv_decode.py",
+      "sha256": "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570"
+    },
+    {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/INTERFACE.md",
@@ -4798,6 +4811,32 @@
       "origin_sha256": "3919bd1381c97cd6dcf489fcd7bb4b01dff0e0095a055c1997a428735afcf55c",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_sampling.py",
       "sha256": "3919bd1381c97cd6dcf489fcd7bb4b01dff0e0095a055c1997a428735afcf55c"
+    },
+    {
+      "normalization": "CX-KV backend-portable drift observation correction; exact trace/logit and numerical tolerance checks retained.",
+      "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
+      "origin_sha256": "ce7476eaaf05efbf61e73d508e7eb90e239658db411b3a6e99b79ad36169fa82",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py",
+      "sha256": "5828424682c0cddb4db45bec6b76b0e4178213f72ba6a132ad6165a121f6f6d8"
+    },
+    {
+      "normalization": "CX-KV backend-portable drift observation correction; exact trace/logit and numerical tolerance checks retained.",
+      "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
+      "origin_sha256": "80eb1dc3d735cd59d1465edb488709f6456b7707238f20d43bd82eb29713c9ba",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/tests/test_kv_neural.py",
+      "sha256": "584ecb36f6d14cda974f32d5b751aed8144156d7dc9b2ea74a3d23cf2cebde21"
+    },
+    {
+      "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
+      "origin_sha256": "42b43d31a444878ed4f7fdf6f043c42e086e8f1297fcdbf8e8951ab8bade5e8d",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/tests/test_kv_trie.py",
+      "sha256": "42b43d31a444878ed4f7fdf6f043c42e086e8f1297fcdbf8e8951ab8bade5e8d"
+    },
+    {
+      "origin": "CX-KV owner-assigned additive source from origin/main edf36182",
+      "origin_sha256": "2aa2c692edd40dd439a1f5df67170d49e2e562399908b79145e0ca5ab664e5a6",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/trie_enumerate.py",
+      "sha256": "2aa2c692edd40dd439a1f5df67170d49e2e562399908b79145e0ca5ab664e5a6"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
@@ -5379,11 +5418,11 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "bf979dd63e9fc74f6c785d0358cf8d68d6f39f115da05c1604d18d8bc6f1fbd9"
+      "sha256": "2b4e469f0150cf5fe2c4419aec99c230b4d45f1d6740a14a7a062a80a3991c87"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

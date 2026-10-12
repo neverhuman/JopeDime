@@ -202,6 +202,7 @@ python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests -q
 cd python
 uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt "$EVIDENCE/onpolicy-offline.json"
 )
+( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py --receipt "$EVIDENCE/kv-trie-offline.json" )
     ;;
   rust-test)
     status=0

@@ -643,6 +643,24 @@
         "storage"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_kv_neural.py": {
+      "reason": "Isolated finite-support mass/parity, bounded same-context cache, 1000 seeded strict toy traces with per-step logit equality, incremental drift and qualified-support ranking fixtures. No live program execution or operational qualification.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "evaluation",
+        "evidence"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_kv_trie.py": {
+      "reason": "Isolated finite-support mass/parity, bounded same-context cache, 1000 seeded strict toy traces with per-step logit equality, incremental drift and qualified-support ranking fixtures. No live program execution or operational qualification.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "evaluation",
+        "evidence"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_no_winner_bootstrap.py": {
       "role": "regression",
       "subsystems": [
