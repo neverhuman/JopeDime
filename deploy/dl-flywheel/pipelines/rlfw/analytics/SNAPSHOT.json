@@ -1,0 +1,92 @@
+{
+  "bootstrap_draws": 2000,
+  "command": [
+    "/home/ubuntu/JopeDime/.agent/worktrees/rlfw-cx-met/deploy/dl-flywheel/pipelines/rlfw/analytics/build.py",
+    "--bench",
+    "/home/ubuntu/jopedime_probe_exp/rlfw-20261009",
+    "--retained",
+    "/home/ubuntu/jopedime_probe_exp/rlfw-20261009/runs/d5b/analysis-owner1620-1791589225",
+    "--copies",
+    "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/run-final-s3/inputs",
+    "--output",
+    "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/run-final-s3/analytics",
+    "--s3-census-manifest",
+    "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/g-s3gp-input.json"
+  ],
+  "committed_artifacts": [
+    {
+      "bytes": 9315,
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-10.parquet",
+      "sha256": "03399dc551c0116481c906f58f321c63ed25169aef2d38c9695415e0286126da"
+    },
+    {
+      "bytes": 161898,
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-09.parquet",
+      "sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a"
+    },
+    {
+      "bytes": 31673,
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard.html",
+      "sha256": "33f086ed60ad602bd6c87bf9daec8839bb4073122596d7fd1782e6a405b1d54f"
+    }
+  ],
+  "compute_limit": {
+    "CPUQuota": "200%",
+    "GPU": false,
+    "MemoryMax": "4G"
+  },
+  "context_set_sha256": "92b6608dbd2beab5850966e17da40f613d7a634d2e2acee01c02f5e52f5c0378",
+  "epsilon_rule": "pinned dltrain.labels.epsilon from both saved inner score folds (fitting rows only)",
+  "epsilon_source_sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd",
+  "exit_status": 0,
+  "finished_unix": 1791642228.853108,
+  "full_receipt": {
+    "bytes": 511552,
+    "path": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/run-final-s3/analytics/receipt.json",
+    "sha256": "079ae6035a248df1bcf79aa0d326040d0a1f445f7ff956fa4f69b6d6b5cb0fa4"
+  },
+  "input_count": 1104,
+  "observed_until_unix": 1791589386.3189168,
+  "paired_measurements": 1034,
+  "parquet": [
+    {
+      "path": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/run-final-s3/analytics/daily/2026-10-09.parquet",
+      "sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/run-final-s3/analytics/daily/2026-10-10.parquet",
+      "sha256": "03399dc551c0116481c906f58f321c63ed25169aef2d38c9695415e0286126da"
+    }
+  ],
+  "rows": 1116,
+  "schema": "jope.rlfw-analytics/v1",
+  "scope": "retained Lane A observations; no live-loop qualification",
+  "scope_finish": {
+    "cpu.max": "200000 100000",
+    "cpu.stat": "usage_usec 37499520\nuser_usec 34898218\nsystem_usec 2601302\ncore_sched.force_idle_usec 0\nnr_periods 1934\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "memory.max": "4294967296",
+    "memory.peak": "233521152",
+    "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/run-u1204219.scope"
+  },
+  "scope_start": {
+    "cpu.max": "200000 100000",
+    "cpu.stat": "usage_usec 117616\nuser_usec 83727\nsystem_usec 33889\ncore_sched.force_idle_usec 0\nnr_periods 2\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "memory.max": "4294967296",
+    "memory.peak": "20209664",
+    "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/run-u1204219.scope"
+  },
+  "source_commit": "cbeca37700daf9404afd4b9fec3414573b919462",
+  "source_sha256": {
+    "__init__.py": "524cfa9cfe2652c4cbe93991b1670ec3c4f57b2fe8cac2f6960c646c691f739f",
+    "build.py": "a1432ddbaa5b74eed16413f21bbcac696bdb665dc90295534ad0b12450f720f5",
+    "extract.py": "b403df46a6c9f4b5ea384fdd31bb1dee896067ddbdf9a504eebd9e5f895afbb4",
+    "metrics.py": "5100482e1ee73d0cd8b4670843afd8cf7207e8e9ca5d1e87cad5ce1873e948c9",
+    "report.py": "130bb37ff99c61f6c7da6a449753b9586551b983c33da78dfa2a20fbe4a331bc",
+    "run_offline.py": "05bcfb59b02cccade629551ad428fc22869158d44207db8d0f6954578b5180cd",
+    "tests/__init__.py": "fcdc780cb1afe4475dcd7553ada1cb2b710721ed99b7e1701b95d706de883edc",
+    "tests/test_io.py": "c1a946630bb59f6fb5a9fd5f361f77408bb3cf71e3755a653a88e323b3000c4d",
+    "tests/test_metrics.py": "ca842578f3fd1064f969d0d93f84ad8802bb958deb87116ba80625497ed11544",
+    "windows.py": "af044270ad359a660f31929c0bf022cece6e7e7ecf58b9df5f489fb2be4fdb8c"
+  },
+  "started_unix": 1791641919.797394
+}

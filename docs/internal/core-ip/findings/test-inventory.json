@@ -634,6 +634,38 @@
         "policy"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_io.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_metrics.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_scratch.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "storage"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane.py": {
       "role": "regression",
       "subsystems": [

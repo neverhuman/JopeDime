@@ -1,0 +1,216 @@
+{
+  "schema": "jope.cx-met-operational-snapshot/v1",
+  "generated_utc": "2026-10-11T21:15:42.371032+00:00",
+  "code_commit": "599295bb572e2f0dfd72824f69b375bc8a7596ff",
+  "artifact_parent_commit": "917a7db9c857264456f2d54aa913ff63c4bdaee8",
+  "rows": 198859,
+  "base_rows": 154510,
+  "operational_rows": 44349,
+  "row_multiset_sha256": "a66ea3c6bb7dc23ccac44ae4ef7463b69d357a3e96fed690885338737cb22939",
+  "original_multiset_sha256": "a66ea3c6bb7dc23ccac44ae4ef7463b69d357a3e96fed690885338737cb22939",
+  "non_qualifying": true,
+  "program_execution": false,
+  "promotion_input": false,
+  "runtime_code_sha256": {
+    "operational.py": "bb530b51c9ee9961a201cc3c7aa8dfdc38a110939122a36e1d5cea19c7f685ec",
+    "report.py": "7dfd42077d847bce8e2bd536da95e647c1062df61bf094bfb8503b536c56c902",
+    "extract.py": "b403df46a6c9f4b5ea384fdd31bb1dee896067ddbdf9a504eebd9e5f895afbb4",
+    "scratch.py": "46151e645cdfdb48038cc110259769e30824eb11813ec705434ed7d5dedf42ce",
+    "context_costs.py": "a4464469a073902bb7df19478bcf5af8257de39c42bb0c809d255020f5ea64a9"
+  },
+  "inputs": [
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/input-v2.json",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/2cdfe3ccb8475292ff646b45aae290156a66f23c0d5d57a1226d1652fee4edf5",
+      "sha256": "2cdfe3ccb8475292ff646b45aae290156a66f23c0d5d57a1226d1652fee4edf5",
+      "bytes": 2622
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/daily-20261011/watch/20261011T204959Z-002/daily/2026-10-10.parquet",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/43255a6b9a6bef7cae3b59ba740e2943aafeee96959dce236d9cc409265ca9a4",
+      "sha256": "43255a6b9a6bef7cae3b59ba740e2943aafeee96959dce236d9cc409265ca9a4",
+      "bytes": 54158
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/daily-20261011/watch/20261011T204959Z-002/daily/2026-10-11.parquet",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/4ce420f38fc23e09cfbab14593e299c975ec45e806b4b273132dd278ca1da6f8",
+      "sha256": "4ce420f38fc23e09cfbab14593e299c975ec45e806b4b273132dd278ca1da6f8",
+      "bytes": 8686866
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/daily-20261011/retained-final/daily/2026-10-09.parquet",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "bytes": 161911
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/daily-20261011/retained-final/daily/2026-10-10.parquet",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/36b5e3b6f9738983d719c2b688cbffbd6fe02abf2e59215ff89f03bf46cf1548",
+      "sha256": "36b5e3b6f9738983d719c2b688cbffbd6fe02abf2e59215ff89f03bf46cf1548",
+      "bytes": 9367
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/daily-20261011/retained-final/daily/2026-10-11.parquet",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/1358a524d47c95882bc6d06e994796032eddad3b783f64e2e9c56e15d8524a87",
+      "sha256": "1358a524d47c95882bc6d06e994796032eddad3b783f64e2e9c56e15d8524a87",
+      "bytes": 5242
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-grok/receipts/throughput-denominator-20261011.json",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/ee8f641fd5fd1c31db51c61b9d63a202eaa00762f0192692ac9696226dda6fb0",
+      "sha256": "ee8f641fd5fd1c31db51c61b9d63a202eaa00762f0192692ac9696226dda6fb0",
+      "bytes": 2057
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-grok/runs/scratch-gp-xb3/receipt.json",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/4be396f4b98fe9bd183582186af02faa456d2093b1ebce0e0b63030128a8b5da",
+      "sha256": "4be396f4b98fe9bd183582186af02faa456d2093b1ebce0e0b63030128a8b5da",
+      "bytes": 988
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/parent-map.json",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/9c8c8fb02952cfa1d7deab1c0f4d1367d9dbec96ecc3f3891f1bbed35a3b71e1",
+      "sha256": "9c8c8fb02952cfa1d7deab1c0f4d1367d9dbec96ecc3f3891f1bbed35a3b71e1",
+      "bytes": 1332977
+    },
+    {
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-OP/scratch-train/r10-archive/INITIAL_MEASURED_AUDIT.json",
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2/inputs/54bb54cab48f0191c7f8120e67d8fe983454d6f8a90da3491e98c92e2a5dfb26",
+      "sha256": "54bb54cab48f0191c7f8120e67d8fe983454d6f8a90da3491e98c92e2a5dfb26",
+      "bytes": 28387
+    }
+  ],
+  "parent_map_proof": {
+    "observed_at": "2026-10-11T20:50:55.097786+00:00",
+    "physical_parent_rows": 1068,
+    "mapped_contexts": 7120,
+    "roster_contexts": 263,
+    "matched": 263,
+    "missing": 0,
+    "ambiguous": 0,
+    "matched_parents": 54,
+    "inputs": [
+      {
+        "source": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/spec.json",
+        "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/parent-inputs/05dc9558e36461068832b449cedff46123376e3567b9c011e7d74f9b8a8018ee",
+        "sha256": "05dc9558e36461068832b449cedff46123376e3567b9c011e7d74f9b8a8018ee",
+        "bytes": 329860
+      },
+      {
+        "source": "/home/ubuntu/jopedime_probe_exp/ofm-20261008/dl_final/flywheel_native_full_20261009/inputs/parents.jsonl",
+        "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/parent-inputs/8fe409848aadd6256644466faca6a0ceab73ab67131d30243701e0d93d9d0593",
+        "sha256": "8fe409848aadd6256644466faca6a0ceab73ab67131d30243701e0d93d9d0593",
+        "bytes": 7205297
+      },
+      {
+        "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-OP/scratch-train/r8/result/context-costs.json",
+        "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/parent-inputs/d9d47b42debf778e3edcf9a12d57f13d1a5748f31dbc5425bd880d63c89d0cda",
+        "sha256": "d9d47b42debf778e3edcf9a12d57f13d1a5748f31dbc5425bd880d63c89d0cda",
+        "bytes": 5008771
+      }
+    ],
+    "mapping_field": "retained_lineage_context_sha256 -> parent_lineage_sha256"
+  },
+  "native_driver": {
+    "schema": "jope.cx-met-check/v1",
+    "driver_sha256": "9bf7b0b29b44173b1d5a13d90c497cb894a69761293dc5edad88aed5f6315cbc",
+    "source_commit": "599295bb572e2f0dfd72824f69b375bc8a7596ff",
+    "finished_head": "599295bb572e2f0dfd72824f69b375bc8a7596ff",
+    "dirty_at_start": "",
+    "dirty_at_finish": "",
+    "command": [
+      "python",
+      "-m",
+      "rlfw.analytics.operational",
+      "--manifest",
+      "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/input-v2.json",
+      "--output",
+      "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/native-v2"
+    ],
+    "exit_status": 0,
+    "started_unix": 1791752933.7660446,
+    "finished_unix": 1791752944.7270083,
+    "environment": {
+      "TMPDIR": "/home/ubuntu/.local/state/jopedime/rlfw-cx-met/tmp",
+      "CARGO_INCREMENTAL": null,
+      "CARGO_PROFILE_DEV_DEBUG": null,
+      "CARGO_BUILD_JOBS": null,
+      "NEXTEST_TEST_THREADS": null,
+      "CARGO_TARGET_DIR": null,
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "CUDA_VISIBLE_DEVICES": ""
+    },
+    "scope_start": {
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/cx-met-gap-native-v2-2109.scope",
+      "cpu.max": "200000 100000",
+      "memory.max": "4294967296",
+      "cpu.stat": "usage_usec 89827\nuser_usec 40471\nsystem_usec 49355\ncore_sched.force_idle_usec 0\nnr_periods 5\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+      "memory.peak": "22274048"
+    },
+    "scope_finish": {
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/cx-met-gap-native-v2-2109.scope",
+      "cpu.max": "200000 100000",
+      "memory.max": "4294967296",
+      "cpu.stat": "usage_usec 8152188\nuser_usec 6179028\nsystem_usec 1973160\ncore_sched.force_idle_usec 0\nnr_periods 114\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+      "memory.peak": "1260081152"
+    },
+    "log_sha256": "16e0b1e6130967afb765e80767b057839841fe4562b159a7bedf3f47b189fbdc"
+  },
+  "creator_sha256": "1038b284d6e2abdb8eca773edfd796fe662f69132db9c878da57c7a0a91b378c",
+  "creator_path": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/gap-close-20261011/freeze_gap.py",
+  "outputs": [
+    {
+      "path": "daily-gap-20261011/shard-000/2026-10-09.parquet",
+      "sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "bytes": 161911
+    },
+    {
+      "path": "daily-gap-20261011/shard-001/2026-10-10.parquet",
+      "sha256": "2c36bacd02b2ec3faab821261a5f5b311f40fc80b1530c106f6880cbfa9e8bbc",
+      "bytes": 55253
+    },
+    {
+      "path": "daily-gap-20261011/shard-002/2026-10-11.parquet",
+      "sha256": "09dbc7f347d42acfab36674715e327a011e39c37eab62705d5049b3662c2c6e9",
+      "bytes": 1386262
+    },
+    {
+      "path": "daily-gap-20261011/shard-003/2026-10-11.parquet",
+      "sha256": "a11fe84bf2ecea121b46b345521e317997461afec690e4a857eca2840347cda7",
+      "bytes": 1972178
+    },
+    {
+      "path": "daily-gap-20261011/shard-004/2026-10-11.parquet",
+      "sha256": "ac7d46289228a7dcb2c5e3d3610691e2723fe17f3b67807948aa09b271995a94",
+      "bytes": 1927352
+    },
+    {
+      "path": "daily-gap-20261011/shard-005/2026-10-11.parquet",
+      "sha256": "c5cbce61856d4afd53eb02fc2cc1ec0a5d5f4d1ec53121cfe42a586453bdd28a",
+      "bytes": 1953615
+    },
+    {
+      "path": "daily-gap-20261011/shard-006/2026-10-11.parquet",
+      "sha256": "e530c8df7412d0caa85328e257d457f5279d09b205aa9149952ac2770d6dcaf7",
+      "bytes": 1702493
+    },
+    {
+      "path": "daily-gap-20261011/shard-007/2026-10-11.parquet",
+      "sha256": "e58f10a7a4e56bfb9bd9d1aae0981a58c74529aeffd94fef4d69587b3dd04b1e",
+      "bytes": 619172
+    },
+    {
+      "path": "daily-gap-20261011/shard-008/2026-10-11.parquet",
+      "sha256": "7d260d394a2e9ab3da34b84e9e7905684fbec05da2ddc5e5200bb443f33eb70c",
+      "bytes": 59750
+    },
+    {
+      "path": "dashboard-gap-20261011.html",
+      "sha256": "fd45451eacbe5e209e25f80793d3f78f8ea47946856322431bc3a261bcd0235d",
+      "bytes": 5067264
+    }
+  ],
+  "limits": "Base watcher closed at original deadline; no GPU or learner/scoring/S3 operations by CX-MET. Actor probes retain updates0; qualified production gauges stay NULL."
+}

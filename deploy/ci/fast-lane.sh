@@ -204,6 +204,8 @@ cd python
 uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt "$EVIDENCE/onpolicy-offline.json"
 )
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py --receipt "$EVIDENCE/kv-trie-offline.json" )
+    # Analytics uses the locked numpy/pyarrow environment; all inputs are fixtures.
+uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
     ;;
   rust-test)
     status=0

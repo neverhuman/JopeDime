@@ -1682,6 +1682,46 @@
       ],
       "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Observed per-context L6 variance/power, exact power boundary, fixed roster/epoch/update joins and actual Parquet ingestion; scope elapsed clocks vs resource caps. No GPU/evaluation."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_io.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Isolated read-only analytics fixtures via analytics/run_offline.py: paired bootstrap, comparison identity, fixed-parent macro, cgroup denominator, censored latency, immutable DB copies, Parquet roundtrip. No live evaluation, learner or S3 traffic."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_metrics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Isolated read-only analytics fixtures via analytics/run_offline.py: paired bootstrap, comparison identity, fixed-parent macro, cgroup denominator, censored latency, immutable DB copies, Parquet roundtrip. No live evaluation, learner or S3 traffic."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_scratch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Read-only scratch receipts: native schema and JSONL reconciliation, immutable remote copies, unknown costs, equal-budget deltas, distinct KL panels, actual Parquet/HTML; no training or live state."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane.py": {
       "discovery": {
         "kind": "python-family"

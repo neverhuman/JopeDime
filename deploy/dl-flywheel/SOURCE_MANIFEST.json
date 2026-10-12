@@ -6361,6 +6361,288 @@
       "origin_sha256": "e6a84fd69e52cde769495c56f926c641ee66b27c8f7dc8f23c5c479c2db022da",
       "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_durability.py",
       "sha256": "c04115d425c7441281cfa61f604949794d723f7b9191e615ee50a69fadb20437"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "6642276d1a4ccf8964390549eb18bc8ed8cfbe818754e77401640756d46fea84",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/CONTEXT_EXPORT.md",
+      "sha256": "272bb81f5b47098f10670000dc50e4c06cb593fac423e7f377001da7b3cad774"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "a4c7ff7df70c8b021c7319bcaaaab69836c43fa113565b208a89a215b3d57765",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/CONTEXT_SNAPSHOT.json",
+      "sha256": "a4c7ff7df70c8b021c7319bcaaaab69836c43fa113565b208a89a215b3d57765"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "8e417d9ce16583e2167d0ce550934ae309884505e63ca1ae5af14d5a5ace85ca",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/DAY_20261011_SNAPSHOT.json",
+      "sha256": "6de87f02336a01468968fb3cfd322741cbd5605bec72cdf1c5c79dfdb820d144"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "8a3f33bac42f4e6e75a067e12fb283ef8d085ac3566b1708b9e6d0c7534a18fe",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/DAY_GAP_20261011_SNAPSHOT.json",
+      "sha256": "8a3f33bac42f4e6e75a067e12fb283ef8d085ac3566b1708b9e6d0c7534a18fe"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "56bd5e8dacd176d39edd1523c566c37c4f68132d93978ae5f32bb7129d5a592b",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/METRICS.md",
+      "sha256": "fac59119335c985eaec14f15a18662b86fb074b752096c1285213789a2819df2"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "691057092d598a8d626f0382cf3ae874365c52871f431ffeb70a6d2fbdb86cb8",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/SCRATCH_SNAPSHOT.json",
+      "sha256": "691057092d598a8d626f0382cf3ae874365c52871f431ffeb70a6d2fbdb86cb8"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "3cc69711632111ea94ef12c4064e879231000a40317c9538a40beec495dce4ac",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/SNAPSHOT.json",
+      "sha256": "3cc69711632111ea94ef12c4064e879231000a40317c9538a40beec495dce4ac"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "524cfa9cfe2652c4cbe93991b1670ec3c4f57b2fe8cac2f6960c646c691f739f",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/__init__.py",
+      "sha256": "524cfa9cfe2652c4cbe93991b1670ec3c4f57b2fe8cac2f6960c646c691f739f"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "f687e6619b54c7c869c87edd25c625c36ea566cdef96d778a477d20e1cb535d4",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/build.py",
+      "sha256": "a1432ddbaa5b74eed16413f21bbcac696bdb665dc90295534ad0b12450f720f5"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "221ff07bc7b7e7a32f1f80a22e26582cbcc8b852ba6f093751e937e9035eb151",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/build_scratch.py",
+      "sha256": "a3dbbda41a6022e3e40dffcb7b4052e4ad868b78cf1e02072356c0ae0d108e30"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "6c702137f6b2c074cef21f37a27df0eec1a6d4bd294aaf9cde892fcbd759631e",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/context-daily/2026-10-10.parquet",
+      "sha256": "6c702137f6b2c074cef21f37a27df0eec1a6d4bd294aaf9cde892fcbd759631e"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "3d456821079f33ea15e79d29117718444ce57818564d0cf05c6f25854fe389b6",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/context-dashboard.html",
+      "sha256": "3d456821079f33ea15e79d29117718444ce57818564d0cf05c6f25854fe389b6"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "43d18b9c893febb770238d63db359954fdc48b2098fc13b5eadae425b19f6d73",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/context_costs.py",
+      "sha256": "a4464469a073902bb7df19478bcf5af8257de39c42bb0c809d255020f5ea64a9"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/2026-10-09.parquet",
+      "sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "7305f108fff19d2f8e937bcc63dd2e449f70cd4aa6f946f5b6f19eb39bfaeddb",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/2026-10-10.parquet",
+      "sha256": "7305f108fff19d2f8e937bcc63dd2e449f70cd4aa6f946f5b6f19eb39bfaeddb"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "38a59880fb6f96cf5aa7bde934b922a6b1f6dff8ba4d21030d00d313e17d56f2",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-000/2026-10-11.parquet",
+      "sha256": "38a59880fb6f96cf5aa7bde934b922a6b1f6dff8ba4d21030d00d313e17d56f2"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "7f43e5d41c0bcaf220001b9772ef93f4361cc898fe1e5b5df89b1be8d48fc197",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-001/2026-10-11.parquet",
+      "sha256": "7f43e5d41c0bcaf220001b9772ef93f4361cc898fe1e5b5df89b1be8d48fc197"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "f3475b9e911a39a026760bc678fb11f29fbf2facd5a2e6f7640f38f4c69d7034",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-002/2026-10-11.parquet",
+      "sha256": "f3475b9e911a39a026760bc678fb11f29fbf2facd5a2e6f7640f38f4c69d7034"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "3b6d3184cc0ed5d8101a101b482482b521944ef15fbf94535fa7f823eaa0b968",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-20261011/shard-003/2026-10-11.parquet",
+      "sha256": "3b6d3184cc0ed5d8101a101b482482b521944ef15fbf94535fa7f823eaa0b968"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-000/2026-10-09.parquet",
+      "sha256": "61a14fa8d3297c8f476fa7b29e8a92f4825e1b58ad894a92876f0ec1f9e79786"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "2c36bacd02b2ec3faab821261a5f5b311f40fc80b1530c106f6880cbfa9e8bbc",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-001/2026-10-10.parquet",
+      "sha256": "2c36bacd02b2ec3faab821261a5f5b311f40fc80b1530c106f6880cbfa9e8bbc"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "09dbc7f347d42acfab36674715e327a011e39c37eab62705d5049b3662c2c6e9",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-002/2026-10-11.parquet",
+      "sha256": "09dbc7f347d42acfab36674715e327a011e39c37eab62705d5049b3662c2c6e9"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "a11fe84bf2ecea121b46b345521e317997461afec690e4a857eca2840347cda7",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-003/2026-10-11.parquet",
+      "sha256": "a11fe84bf2ecea121b46b345521e317997461afec690e4a857eca2840347cda7"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "ac7d46289228a7dcb2c5e3d3610691e2723fe17f3b67807948aa09b271995a94",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-004/2026-10-11.parquet",
+      "sha256": "ac7d46289228a7dcb2c5e3d3610691e2723fe17f3b67807948aa09b271995a94"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "c5cbce61856d4afd53eb02fc2cc1ec0a5d5f4d1ec53121cfe42a586453bdd28a",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-005/2026-10-11.parquet",
+      "sha256": "c5cbce61856d4afd53eb02fc2cc1ec0a5d5f4d1ec53121cfe42a586453bdd28a"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "e530c8df7412d0caa85328e257d457f5279d09b205aa9149952ac2770d6dcaf7",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-006/2026-10-11.parquet",
+      "sha256": "e530c8df7412d0caa85328e257d457f5279d09b205aa9149952ac2770d6dcaf7"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "e58f10a7a4e56bfb9bd9d1aae0981a58c74529aeffd94fef4d69587b3dd04b1e",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-007/2026-10-11.parquet",
+      "sha256": "e58f10a7a4e56bfb9bd9d1aae0981a58c74529aeffd94fef4d69587b3dd04b1e"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "7d260d394a2e9ab3da34b84e9e7905684fbec05da2ddc5e5200bb443f33eb70c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily-gap-20261011/shard-008/2026-10-11.parquet",
+      "sha256": "7d260d394a2e9ab3da34b84e9e7905684fbec05da2ddc5e5200bb443f33eb70c"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-09.parquet",
+      "sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "03399dc551c0116481c906f58f321c63ed25169aef2d38c9695415e0286126da",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-10.parquet",
+      "sha256": "03399dc551c0116481c906f58f321c63ed25169aef2d38c9695415e0286126da"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "a514504ae54dda0e8e39d5adda9ec82e6273b3c16a1dfb232766b76dd6d27eaa",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard-20261011.html",
+      "sha256": "f63e0e0ad0a13812dda34aeea5d089a378a32ce4d8de91ada00fd86d7f7b2822"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "fd45451eacbe5e209e25f80793d3f78f8ea47946856322431bc3a261bcd0235d",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard-gap-20261011.html",
+      "sha256": "fd45451eacbe5e209e25f80793d3f78f8ea47946856322431bc3a261bcd0235d"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "33f086ed60ad602bd6c87bf9daec8839bb4073122596d7fd1782e6a405b1d54f",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/dashboard.html",
+      "sha256": "33f086ed60ad602bd6c87bf9daec8839bb4073122596d7fd1782e6a405b1d54f"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "b403df46a6c9f4b5ea384fdd31bb1dee896067ddbdf9a504eebd9e5f895afbb4",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/extract.py",
+      "sha256": "b403df46a6c9f4b5ea384fdd31bb1dee896067ddbdf9a504eebd9e5f895afbb4"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "6c05a2a391bb1902774768e682197fbdaafae65de98babb6e9ce411af23b1fb1",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/metrics.py",
+      "sha256": "5100482e1ee73d0cd8b4670843afd8cf7207e8e9ca5d1e87cad5ce1873e948c9"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "cf6beb0be7592c52a07ae9b80bf04a5cd2ae18983f8e5f018fd9b13b6c315496",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/operational.py",
+      "sha256": "bb530b51c9ee9961a201cc3c7aa8dfdc38a110939122a36e1d5cea19c7f685ec"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "e770b1a69dcf1ab725ed13337ae6d7ccfcee2c7d836a12d6079a2721244f2a19",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/report.py",
+      "sha256": "7dfd42077d847bce8e2bd536da95e647c1062df61bf094bfb8503b536c56c902"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "05bcfb59b02cccade629551ad428fc22869158d44207db8d0f6954578b5180cd",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py",
+      "sha256": "9eda882bd42cc04979428ee32f36d3cd9fe55a38cf090b758773ddc17b5794f5"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "648f36d040c29315af73e3e4a8369e83267a7cd0f4254dea895d86b6ff796e9b",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-daily/2026-10-10.parquet",
+      "sha256": "648f36d040c29315af73e3e4a8369e83267a7cd0f4254dea895d86b6ff796e9b"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "dd13fb84d4e9d04fa81036d3accd259e38681e204c8d5cd6a8fbf8be14b76c99",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-dashboard.html",
+      "sha256": "dd13fb84d4e9d04fa81036d3accd259e38681e204c8d5cd6a8fbf8be14b76c99"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "81dc637ef56b59eaea7f96960d9e3814e8b7ea8500e24875afbdb3fc9266672a",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch.py",
+      "sha256": "46151e645cdfdb48038cc110259769e30824eb11813ec705434ed7d5dedf42ce"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "fcdc780cb1afe4475dcd7553ada1cb2b710721ed99b7e1701b95d706de883edc",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/__init__.py",
+      "sha256": "fcdc780cb1afe4475dcd7553ada1cb2b710721ed99b7e1701b95d706de883edc"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "953f1696e0c50c95b928f6166fd0fd72ed0f99739918d0b327e16dabb45f6390",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py",
+      "sha256": "14a93c05d9b70b6e64590cdc3c6b9e18c9b320246f2144b56975b6c725cdc990"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "c71d0a6f4141481986cafaa2cda0dc356e369d1c9ec82695971b2753d7c6b6d4",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_io.py",
+      "sha256": "d861180e76c7c152a11b2071770756eeabb8bf8b60d01f7884d0a5d4cd528da7"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "ca842578f3fd1064f969d0d93f84ad8802bb958deb87116ba80625497ed11544",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_metrics.py",
+      "sha256": "0abf78bde8559062b1c2f826703f87801159fd3d9243088cd6c6e7b77896afaa"
+    },
+    {
+      "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
+      "origin_sha256": "dd492c6863824ea78b3ecb03cf8a5b7240566cd10071f98aa99c19954df977e2",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_scratch.py",
+      "sha256": "4522d95b1597adf1e5de2d1e8ea9eb1ce782416010a4ffc690c98bf0a0ec3728"
+    },
+    {
+      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "041e87da89dc44b898dd067da31a6cb9c60278450ec9de5ad6bf8449a306f11c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/windows.py",
+      "sha256": "253d10fda99deb153144a820e971bd359929c1bef0f720e75864d04a64977b87"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
