@@ -1,0 +1,110 @@
+{
+  "schema": "jope.w10-offline-source-pins/v1",
+  "package": "final_capture_v1",
+  "revision": "r2",
+  "base": {
+    "commit": "745be43fa28685bc4fc464ad00169ea2850e2e73",
+    "subtree": "deploy/dl-flywheel"
+  },
+  "fixture_ids": [
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_a_missing_result_is_captured_and_fresh_journal_inherits",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_a_present_result_must_join_exactly",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_b_checkpoint_bytes_tamper_refused",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_b_failed_or_uncertain_terminal_state_refused",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_b_owner_active_or_cgroup_nonempty_refused",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_b_parameter_sha_disagreement_refused",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_b_pending_reservation_or_orphan_state_is_a_hold",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_b_proof_or_ack_evidence_mismatch_refused",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_c_capture_bytes_are_deterministic",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_d_next_update_parity_on_isolated_scratch",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_e_private_copy_only_pinned_runtime_and_create_only_output",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_f_tensor_key_classes_synthetic_headers",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_g_chunked_parts_boundaries_tamper_missing_and_reorder",
+    "pipelines.final_capture_v1.tests.test_final_capture.FinalCaptureTests.test_h_capacity_at_v1_and_v2_scale",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_live_shape_runtime_limit_stopped_idle_is_captured",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_a_timeout_with_unresolved_reservation_is_a_hold",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_b_write_after_in_loop_deadline_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_b_in_loop_deadline_comes_from_window_and_config",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_b_in_loop_deadline_must_have_passed",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_c_owner_cgroup_or_pid_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_c_restarted_unit_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_d_systemd_result_other_than_timeout_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_e_running_failed_or_unknown_state_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_f_last_commit_progress_and_rolling_must_agree",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_g_missing_or_forged_r17_receipt_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_g_clean_class_refuses_r17_inputs",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_h_symlink_or_special_file_in_root_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_h_walk_entry_and_byte_bounds_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_i_live_walk_must_equal_private_copy_walk",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_i_live_walk_changed_during_capture_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_j_status_or_result_json_present_refused",
+    "pipelines.final_capture_v1.tests.test_runtime_limit.RuntimeLimitTests.test_r_k_walk_parts_reader_refuses_tamper"
+  ],
+  "source_pins": {
+    "__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "capture.py": {
+      "sha256": "d1649bfaacd594b0af5eaee45698d4dccb6e735edc06116f6054af790acf054a",
+      "bytes": 48985
+    },
+    "fault_injection.py": {
+      "sha256": "92d34969903068e8882b2758fbce0d05894e5300cb65413adcb7d7cd65c75d7c",
+      "bytes": 12410
+    },
+    "measure.py": {
+      "sha256": "89a444fca010f6e147dd3caf84d352e823e4b0bf8ef3f5a6454738113a73007a",
+      "bytes": 5331
+    },
+    "probe.py": {
+      "sha256": "01d84301cc52a833263c1a2a721482686c0083ebfe2709dd55a963963db69b94",
+      "bytes": 9962
+    },
+    "run_offline.py": {
+      "sha256": "f216ffc30404bac11fbbc16cb2203b5b3b288813371281842b6bdb5b9389e903",
+      "bytes": 8176
+    },
+    "tests/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "tests/test_final_capture.py": {
+      "sha256": "e914df60cc23a71380fe628135194178dbb86efd14a64c66924840c526e34bc7",
+      "bytes": 26533
+    },
+    "tests/test_runtime_limit.py": {
+      "sha256": "7d1ea76fa2ddd977594fa7d6ba7b0445d674ec4fefb24deb61eb7a1e842baccc",
+      "bytes": 21060
+    },
+    "tests/world.py": {
+      "sha256": "07c26bd883abba31011d369079136b13de118c550d82e6edc158e8e452df55e1",
+      "bytes": 14421
+    }
+  },
+  "fixture_inputs": {
+    "tests/owner-askuserquestion-receipt-R17-v1.json": "2a1b0a5e96b54cf48d4f7f8a2bf57c86938814d92846d4c30a7e642711d7b534"
+  },
+  "base_pins": {
+    "pipelines/continuous/neural_native_stream.py": "0dc1022f8132fbfb4b0b04aab1840369e0b799b3fd9c06a8fbd29b7c878754c4",
+    "pipelines/continuous/continuous_state.py": "6f920ee26fbfbbd719365d79b1fe638d8bceae61585ced436f94e11943f332ca",
+    "pipelines/continuous/neural_storage.py": "ebc3dd0143a956f051511ec09a5f34129b9a63e4bdae0263c6ac5bde5ac8cc92",
+    "pipelines/continuous/neural_native_train.py": "e73567dcffde3989c7ac33bdfc9ae2df99dc6c29f8e83baf519ba1b9eac29280",
+    "pipelines/continuous/neural_native_batch.py": "afb95ca22d49934b8d7914f0016aad0029bf2c9220fbb69565763d6e0594b7a8",
+    "pipelines/continuous/neural_outbox.py": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11",
+    "pipelines/continuous/neural_decode.py": "cf36801e284492dd41126feaf3014bff1feb20adc2f9a3b5ee27459519e8763a",
+    "pipelines/continuous/consumer/dltrain/model.py": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
+    "pipelines/continuous/consumer/dltrain/dsl_tokenizer.py": "0912e7216320a82dc34d9af13554de91656aba558977bd213905a541fbaf9807",
+    "pipelines/continuous/consumer/dltrain/objective.py": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
+    "pipelines/continuous/runtime/jope_flywheel/protocol.py": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+    "pipelines/continuous/runtime/jope_flywheel/program_io.py": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+    "pipelines/continuous/runtime/jope_flywheel/timing.py": "ca8ea1ddb3412476e5f93e5058f2c1c491748b0dc15d71f86c06a6b2d5f7bd1d",
+    "pipelines/continuous/runtime/jope_flywheel/training_snapshot_native.py": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
+    "pipelines/prepared/fixture_continuous.py": "ef492a43214a2e236ff28ab8a250b39738208b100a0e20860239220ab84e7f15",
+    "pipelines/prepared/baseline_runner.py": "add98aa1ebcb66868b1594eb47f859f457be75627289f1548d9f7772320c1ab0",
+    "pipelines/prepared/continuous_runner.py": "10cbf4ea960600a6445730d06ad3b442dd03da1681c94536d018e71ea0c58f29",
+    "pipelines/prepared/continuous_cli.py": "84f55b109c2931b05a42ffb0f8b834e60a4bb73ee69a8727be5c8ed31b520c77",
+    "pipelines/prepared/reconcile.py": "3a5aa4a55d8c0be840d2b940f65c6a7f3f6b8b2838a55f677542475b2b46fae1",
+    "pipelines/prepared/prepared_admission.py": "25b865fe35c1d7fcecb12a2c881a9befcb88fa7d7c0d9e7f1854ccb8e3ec70b3"
+  }
+}
