@@ -7,6 +7,7 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import platform
 from pathlib import Path
 import resource
 import socket
@@ -28,6 +29,7 @@ MODULES = (
     "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
     "tests.test_v2_nonraw_target_linear", "tests.test_v2_rowsel_build_fallback", "tests.test_v2_rowsel_build_fold_isolation", "tests.test_v2_build_local_fold_isolation",
     "tests.test_v2_partial_refusal_manifest",
+    "test_feature_reduction",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -77,7 +79,7 @@ HOST_CASES = {
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 753
+EXPECTED_COLLECTED = 770
 # The strict lane runs as disjoint module shards plus --combine, all under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh;
 # the budget is unchanged), and --combine proves the shards cover MODULES exactly and add up to the pinned totals above. Balanced by
 # measured per-module time; each shard's collected count is pinned from the same real offline collection.
@@ -96,9 +98,10 @@ SHARDS = (
         "tests.test_rowsel_split_v2_groups", "tests.test_v2_rowsel_raw_helper", "tests.test_v2_publish", "tests.test_nonnumeric",
         "tests.test_t1prep", "tests.test_split_defaults", "tests.test_quarantine", "test_manifest_binding", "tests.test_v2_rowsel_raw_v2g",
         "tests.test_v2_rowsel_build_fallback", "tests.test_v2_rowsel_build_fold_isolation", "tests.test_v2_build_local_fold_isolation",
+        "test_feature_reduction",
     ),
 )
-EXPECTED_COLLECTED_BY_SHARD = (255, 262, 236)
+EXPECTED_COLLECTED_BY_SHARD = (255, 262, 253)
 
 
 def module_of(case):
@@ -234,6 +237,9 @@ def main():
     memory = min(limit, old_hard) if old_hard != resource.RLIM_INFINITY else limit
     resource.setrlimit(resource.RLIMIT_AS, (memory, old_hard))
     forbidden, probes = [], []
+    # catboost's import calls platform.processor(), which runs `uname -p`; resolve the cached platform values before the
+    # audit hook so the selector fixtures never launch a process (test_feature_reduction).
+    platform.uname(); platform.processor()
     sys.addaudithook(make_audit(forbidden, probes, Path.home()))
     # urllib3 otherwise probes IPv6 by creating a socket during boto3 import.
     # Offline fixtures have no network capability; keep every socket event denied.
@@ -243,7 +249,8 @@ def main():
     def adapter_pins():
         return {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                 for name in ("hwm_publish.py", "test_hwm_publish.py", "gpu_manifest_cut.py", "test_gpu_manifest_cut.py",
-                             "manifest_binding.py", "test_manifest_binding.py", "run_lane_offline.py")}
+                             "manifest_binding.py", "test_manifest_binding.py",
+                             "feature_reduction.py", "test_feature_reduction.py", "run_lane_offline.py")}
     adapter_before = adapter_pins()
     root = custody / "src/dl_training_v1"
     os.chdir(root)
