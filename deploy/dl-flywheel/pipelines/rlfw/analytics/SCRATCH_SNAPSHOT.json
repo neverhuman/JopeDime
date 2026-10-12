@@ -1,0 +1,454 @@
+{
+  "benchmark_valid": false,
+  "code_sha256": {
+    "/home/ubuntu/JopeDime/.agent/worktrees/rlfw-cx-met/deploy/dl-flywheel/pipelines/rlfw/analytics/build_scratch.py": "221ff07bc7b7e7a32f1f80a22e26582cbcc8b852ba6f093751e937e9035eb151",
+    "/home/ubuntu/JopeDime/.agent/worktrees/rlfw-cx-met/deploy/dl-flywheel/pipelines/rlfw/analytics/extract.py": "b403df46a6c9f4b5ea384fdd31bb1dee896067ddbdf9a504eebd9e5f895afbb4",
+    "/home/ubuntu/JopeDime/.agent/worktrees/rlfw-cx-met/deploy/dl-flywheel/pipelines/rlfw/analytics/report.py": "4aed70f566a77e3d9b981fb217c4b44f68b6e37265f741e0ebabd89cf23aae96",
+    "/home/ubuntu/JopeDime/.agent/worktrees/rlfw-cx-met/deploy/dl-flywheel/pipelines/rlfw/analytics/scratch.py": "81dc637ef56b59eaea7f96960d9e3814e8b7ea8500e24875afbdb3fc9266672a"
+  },
+  "committed_artifacts": [
+    {
+      "bytes": 21945,
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-daily/2026-10-10.parquet",
+      "sha256": "648f36d040c29315af73e3e4a8369e83267a7cd0f4254dea895d86b6ff796e9b"
+    },
+    {
+      "bytes": 248637,
+      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch-dashboard.html",
+      "sha256": "dd13fb84d4e9d04fa81036d3accd259e38681e204c8d5cd6a8fbf8be14b76c99"
+    }
+  ],
+  "full_receipt": {
+    "bytes": 27532,
+    "path": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/receipt.json",
+    "sha256": "e875d8993bfddb1d35153e152f4fabb78cc14339232a178a0bf66715ce49b933"
+  },
+  "inputs": [
+    {
+      "bytes": 1896,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/0511cd5ea3d9c61ff0e2be409c5ccad1fd97452b880ff9be95a163e25585f873",
+      "sha256": "0511cd5ea3d9c61ff0e2be409c5ccad1fd97452b880ff9be95a163e25585f873",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/input.json"
+    },
+    {
+      "bytes": 11118,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/30198724321c6cd62203ab84121b305a54ea9112bf3584f37096f4ba4caf70c2",
+      "sha256": "30198724321c6cd62203ab84121b305a54ea9112bf3584f37096f4ba4caf70c2",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/run-20261010T174612Z/run-closure.json"
+    },
+    {
+      "bytes": 13790,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/e6dc8d37b8e1c6df2055cc6a0a7684cc48b6c30f733f5f17aa32ff7138deac10",
+      "sha256": "e6dc8d37b8e1c6df2055cc6a0a7684cc48b6c30f733f5f17aa32ff7138deac10",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/sweep2/run-closure.json"
+    },
+    {
+      "bytes": 5168,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/d2f1a4c6c8be94bf0e0148256e1144fb829571f89908dd50df007b6dea3e4197",
+      "sha256": "d2f1a4c6c8be94bf0e0148256e1144fb829571f89908dd50df007b6dea3e4197",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-neg-mismatch-20261010T181113Z/receipt.json"
+    },
+    {
+      "bytes": 1295,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/dad36e6669954a9eb707179d5145001bb66a854201d7847b774fb208937f4a96",
+      "sha256": "dad36e6669954a9eb707179d5145001bb66a854201d7847b774fb208937f4a96",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-neg-mismatch-20261010T181113Z/metrics.jsonl"
+    },
+    {
+      "bytes": 2655,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/d67119c66eedc244bbeeb1aceb669f58680bd5dc02f2947ba323fa843e3d9d7f",
+      "sha256": "d67119c66eedc244bbeeb1aceb669f58680bd5dc02f2947ba323fa843e3d9d7f",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-neg-notimeout-20261010T181106Z/receipt.json"
+    },
+    {
+      "bytes": 0,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-neg-notimeout-20261010T181106Z/metrics.jsonl"
+    },
+    {
+      "bytes": 19471,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/aadb39f7328af4346f9a28b0c3ace6cd47b66c8fdda0075ac10ed001d4fd43c5",
+      "sha256": "aadb39f7328af4346f9a28b0c3ace6cd47b66c8fdda0075ac10ed001d4fd43c5",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-smoke-deadline-20261010T181208Z/receipt.json"
+    },
+    {
+      "bytes": 91028,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/8c0b5258eb658f75b7c3c3e016413d6bfaf9feec96d2e79029c2e362e4488ee5",
+      "sha256": "8c0b5258eb658f75b7c3c3e016413d6bfaf9feec96d2e79029c2e362e4488ee5",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-smoke-deadline-20261010T181208Z/metrics.jsonl"
+    },
+    {
+      "bytes": 33686,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/532032d39c2afc9d5d3ae1156f4c92dfdaa278342815433b6fec2a8638666835",
+      "sha256": "532032d39c2afc9d5d3ae1156f4c92dfdaa278342815433b6fec2a8638666835",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/sweep2/claude-rlfw-lpi-scratch-sweep2-20261010T181758Z/receipt.json"
+    },
+    {
+      "bytes": 927688,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/1ef6d836979b7e2126c718d5c8ded35622da40f8fa68f245d18f0d1c59277aea",
+      "sha256": "1ef6d836979b7e2126c718d5c8ded35622da40f8fa68f245d18f0d1c59277aea",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/sweep2/claude-rlfw-lpi-scratch-sweep2-20261010T181758Z/metrics.jsonl"
+    },
+    {
+      "bytes": 16528,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/1f85f3b69b45643e7dadc64a6c2c4736a8fd3d1811c5f556adbaaa93294b0298",
+      "sha256": "1f85f3b69b45643e7dadc64a6c2c4736a8fd3d1811c5f556adbaaa93294b0298",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-20261010T174612Z/receipt.json"
+    },
+    {
+      "bytes": 220520,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/1c9166ae7ebd2b68d8fc147ec25d76d4f606423a2cc192992f206d4a02838d17",
+      "sha256": "1c9166ae7ebd2b68d8fc147ec25d76d4f606423a2cc192992f206d4a02838d17",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-20261010T174612Z/metrics.jsonl"
+    },
+    {
+      "bytes": 14145,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/5389f4b7dde1da3a0e18c51d5c683a4ac2dec793cc9b2ad894308845e884a035",
+      "sha256": "5389f4b7dde1da3a0e18c51d5c683a4ac2dec793cc9b2ad894308845e884a035",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-smoke-173703/receipt.json"
+    },
+    {
+      "bytes": 8242,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/369bec7703ad37924125d2c6b24666cc1953c569802b745ded5df16f9214bcf8",
+      "sha256": "369bec7703ad37924125d2c6b24666cc1953c569802b745ded5df16f9214bcf8",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-smoke-173703/metrics.jsonl"
+    },
+    {
+      "bytes": 16182,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/963765b1114038129f47d2407129c5d09e21e5135fa51e8badf269a61f0bcf97",
+      "sha256": "963765b1114038129f47d2407129c5d09e21e5135fa51e8badf269a61f0bcf97",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-smoke-174232/receipt.json"
+    },
+    {
+      "bytes": 11001,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/53dc12803a2d079e2f9379178eb6b88c5c15d651364e7c219f7da7c64545e0af",
+      "sha256": "53dc12803a2d079e2f9379178eb6b88c5c15d651364e7c219f7da7c64545e0af",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-smoke-174232/metrics.jsonl"
+    },
+    {
+      "bytes": 16528,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/1f85f3b69b45643e7dadc64a6c2c4736a8fd3d1811c5f556adbaaa93294b0298",
+      "sha256": "1f85f3b69b45643e7dadc64a6c2c4736a8fd3d1811c5f556adbaaa93294b0298",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-20261010T174612Z/receipt.json"
+    },
+    {
+      "bytes": 5168,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/d2f1a4c6c8be94bf0e0148256e1144fb829571f89908dd50df007b6dea3e4197",
+      "sha256": "d2f1a4c6c8be94bf0e0148256e1144fb829571f89908dd50df007b6dea3e4197",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-neg-mismatch-20261010T181113Z/receipt.json"
+    },
+    {
+      "bytes": 2655,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/d67119c66eedc244bbeeb1aceb669f58680bd5dc02f2947ba323fa843e3d9d7f",
+      "sha256": "d67119c66eedc244bbeeb1aceb669f58680bd5dc02f2947ba323fa843e3d9d7f",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-neg-notimeout-20261010T181106Z/receipt.json"
+    },
+    {
+      "bytes": 14145,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/5389f4b7dde1da3a0e18c51d5c683a4ac2dec793cc9b2ad894308845e884a035",
+      "sha256": "5389f4b7dde1da3a0e18c51d5c683a4ac2dec793cc9b2ad894308845e884a035",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-smoke-173703/receipt.json"
+    },
+    {
+      "bytes": 16182,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/963765b1114038129f47d2407129c5d09e21e5135fa51e8badf269a61f0bcf97",
+      "sha256": "963765b1114038129f47d2407129c5d09e21e5135fa51e8badf269a61f0bcf97",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-smoke-174232/receipt.json"
+    },
+    {
+      "bytes": 19471,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/aadb39f7328af4346f9a28b0c3ace6cd47b66c8fdda0075ac10ed001d4fd43c5",
+      "sha256": "aadb39f7328af4346f9a28b0c3ace6cd47b66c8fdda0075ac10ed001d4fd43c5",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-smoke-deadline-20261010T181208Z/receipt.json"
+    },
+    {
+      "bytes": 23209,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/08cead08798d67b49b02a47092a2bc0deac27170410a2395be9b7f253d84efe6",
+      "sha256": "08cead08798d67b49b02a47092a2bc0deac27170410a2395be9b7f253d84efe6",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-smoke3-20261010T195003Z/receipt.json"
+    },
+    {
+      "bytes": 12540,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/9ecdba410fc419985754589955cf2c7b7a2957f291216ef7a2a92d73517b2b44",
+      "sha256": "9ecdba410fc419985754589955cf2c7b7a2957f291216ef7a2a92d73517b2b44",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-smoke3-20261010T195003Z/metrics.jsonl"
+    },
+    {
+      "bytes": 33686,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/532032d39c2afc9d5d3ae1156f4c92dfdaa278342815433b6fec2a8638666835",
+      "sha256": "532032d39c2afc9d5d3ae1156f4c92dfdaa278342815433b6fec2a8638666835",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-sweep2-20261010T181758Z/receipt.json"
+    },
+    {
+      "bytes": 310837,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/876492dce444ae290e0b2d32b7b89749bb7dfb35b51f8c506ec8cb683da44a39",
+      "sha256": "876492dce444ae290e0b2d32b7b89749bb7dfb35b51f8c506ec8cb683da44a39",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-sweep3-20261010T195546Z/metrics.jsonl"
+    },
+    {
+      "bytes": 164536,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/c6aee8907f6dfd55fa6b8c089909eb470c9608d44288ee5a5877cb733ccc8faa",
+      "sha256": "c6aee8907f6dfd55fa6b8c089909eb470c9608d44288ee5a5877cb733ccc8faa",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/G-ABL/c11-evidence.json"
+    },
+    {
+      "bytes": 9483,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/1fc4afa9f590dcee756c091e6ff23fd0379c792995e913f82a6e2ca4a978c1b7",
+      "sha256": "1fc4afa9f590dcee756c091e6ff23fd0379c792995e913f82a6e2ca4a978c1b7",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-20261010T195102Z/receipt.json"
+    },
+    {
+      "bytes": 502,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/7b29a2f6f0009f0c181faafb5e788e6b123b007cf59e1b93767f41f11b5942e3",
+      "sha256": "7b29a2f6f0009f0c181faafb5e788e6b123b007cf59e1b93767f41f11b5942e3",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-20261010T195102Z/metrics.jsonl"
+    },
+    {
+      "bytes": 12349,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/084f9fc952984f96afe5cd178fc6242016123f2c462b8a2088edf09226b08cbd",
+      "sha256": "084f9fc952984f96afe5cd178fc6242016123f2c462b8a2088edf09226b08cbd",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-r2-20261010T195151Z/receipt.json"
+    },
+    {
+      "bytes": 3427,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/9ee7e69ca0b8925abe6426f3605551c0df8ac145305b3fc31e5070915666be87",
+      "sha256": "9ee7e69ca0b8925abe6426f3605551c0df8ac145305b3fc31e5070915666be87",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-r2-20261010T195151Z/metrics.jsonl"
+    },
+    {
+      "bytes": 3320432,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/b857f6a1246d1d8abbb79915bc0a713def321de86236e1b8f4949de1847889cb",
+      "sha256": "b857f6a1246d1d8abbb79915bc0a713def321de86236e1b8f4949de1847889cb",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-r3-20261010T195806Z/metrics.jsonl"
+    },
+    {
+      "bytes": 2265,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/c81c27d75c4e1e9ed29ca11f8bc73291d1b4035ccd32d550eed1eb6948dd36f6",
+      "sha256": "c81c27d75c4e1e9ed29ca11f8bc73291d1b4035ccd32d550eed1eb6948dd36f6",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/EVAL_TABLE.md"
+    },
+    {
+      "bytes": 24683,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/85b2cbda7144a338c185d8a774890bde127bd81cf0e62d2adc9235ad3b82419e",
+      "sha256": "85b2cbda7144a338c185d8a774890bde127bd81cf0e62d2adc9235ad3b82419e",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run1-control-ecce2b4b5923/receipt.json"
+    },
+    {
+      "bytes": 24685,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/93d9d6033635c9882476115f6f2e17bbb59e10bac8dc3b77777c1b3feac9ba56",
+      "sha256": "93d9d6033635c9882476115f6f2e17bbb59e10bac8dc3b77777c1b3feac9ba56",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run1-lpi-61185b0436ff/receipt.json"
+    },
+    {
+      "bytes": 24683,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/03d69c7dca73a8053239d54e9c935e940355b128b3163c6359b848d6b7b152fd",
+      "sha256": "03d69c7dca73a8053239d54e9c935e940355b128b3163c6359b848d6b7b152fd",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run1-lpi_cal-fcf058517be5/receipt.json"
+    },
+    {
+      "bytes": 24634,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/036f6fddf888afb0d170f1d13300a8cf0c6465013da3b3c9c31245eec8529d23",
+      "sha256": "036f6fddf888afb0d170f1d13300a8cf0c6465013da3b3c9c31245eec8529d23",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run2-control-11f71bc63e2d/receipt.json"
+    },
+    {
+      "bytes": 24705,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/e865ed0e3244c687bbd59404e88212328c6cf123e6f64d532e714f6e24c492a6",
+      "sha256": "e865ed0e3244c687bbd59404e88212328c6cf123e6f64d532e714f6e24c492a6",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run2-lpi_001-b74ffaada23f/receipt.json"
+    },
+    {
+      "bytes": 24651,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/355b4dbb758a483e3fde355d7d21fc4b490080396df93ca8553dc10e439bac2a",
+      "sha256": "355b4dbb758a483e3fde355d7d21fc4b490080396df93ca8553dc10e439bac2a",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run2-lpi_003-08b5098413f0/receipt.json"
+    },
+    {
+      "bytes": 24637,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/c033f8ce14146ed88c4a53a4e0d4820794ba4b99445fbf3646dfe498fdb6c24b",
+      "sha256": "c033f8ce14146ed88c4a53a4e0d4820794ba4b99445fbf3646dfe498fdb6c24b",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/G-ABL-ckpt-copy-ee5560da77b8/receipt.json"
+    },
+    {
+      "bytes": 161898,
+      "copy": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-MET/scratch-ingest/watch/20261010T200933Z-000/inputs/ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a",
+      "sha256": "ffd8d8f6cdfde054b658d3b3b490007e047ede26dcf8a11722400d6ae539077a",
+      "source": "/home/ubuntu/JopeDime/.agent/worktrees/rlfw-cx-met/deploy/dl-flywheel/pipelines/rlfw/analytics/daily/2026-10-09.parquet"
+    }
+  ],
+  "inventory": [
+    {
+      "lane": "CL",
+      "metrics_sha256": "dad36e6669954a9eb707179d5145001bb66a854201d7847b774fb208937f4a96",
+      "rows": 3,
+      "sha256": "d2f1a4c6c8be94bf0e0148256e1144fb829571f89908dd50df007b6dea3e4197",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-neg-mismatch-20261010T181113Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rows": 3,
+      "sha256": "d67119c66eedc244bbeeb1aceb669f58680bd5dc02f2947ba323fa843e3d9d7f",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-neg-notimeout-20261010T181106Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "8c0b5258eb658f75b7c3c3e016413d6bfaf9feec96d2e79029c2e362e4488ee5",
+      "rows": 32,
+      "sha256": "aadb39f7328af4346f9a28b0c3ace6cd47b66c8fdda0075ac10ed001d4fd43c5",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/harness-v2/controls/claude-rlfw-lpi-scratch-smoke-deadline-20261010T181208Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "1ef6d836979b7e2126c718d5c8ded35622da40f8fa68f245d18f0d1c59277aea",
+      "rows": 74,
+      "sha256": "532032d39c2afc9d5d3ae1156f4c92dfdaa278342815433b6fec2a8638666835",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/frozen/sweep2/claude-rlfw-lpi-scratch-sweep2-20261010T181758Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "1c9166ae7ebd2b68d8fc147ec25d76d4f606423a2cc192992f206d4a02838d17",
+      "rows": 32,
+      "sha256": "1f85f3b69b45643e7dadc64a6c2c4736a8fd3d1811c5f556adbaaa93294b0298",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-20261010T174612Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "369bec7703ad37924125d2c6b24666cc1953c569802b745ded5df16f9214bcf8",
+      "rows": 31,
+      "sha256": "5389f4b7dde1da3a0e18c51d5c683a4ac2dec793cc9b2ad894308845e884a035",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-smoke-173703/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "53dc12803a2d079e2f9379178eb6b88c5c15d651364e7c219f7da7c64545e0af",
+      "rows": 32,
+      "sha256": "963765b1114038129f47d2407129c5d09e21e5135fa51e8badf269a61f0bcf97",
+      "source": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-smoke-174232/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "metrics_sha256": "9ecdba410fc419985754589955cf2c7b7a2957f291216ef7a2a92d73517b2b44",
+      "rows": 41,
+      "sha256": "08cead08798d67b49b02a47092a2bc0deac27170410a2395be9b7f253d84efe6",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-smoke3-20261010T195003Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CL",
+      "rows": 12,
+      "sha256": "876492dce444ae290e0b2d32b7b89749bb7dfb35b51f8c506ec8cb683da44a39",
+      "source": "xbabe3:/home/ubuntu/claude-rlfw-lane/rlfw-takeover/lpi-scratch/run/claude-rlfw-lpi-scratch-sweep3-20261010T195546Z/metrics.jsonl",
+      "status": "PARTIAL / NON-QUALIFYING"
+    },
+    {
+      "lane": "G-ABL",
+      "rows": 9,
+      "sha256": "c6aee8907f6dfd55fa6b8c089909eb470c9608d44288ee5a5877cb733ccc8faa",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/G-ABL/c11-evidence.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-OP",
+      "metrics_sha256": "7b29a2f6f0009f0c181faafb5e788e6b123b007cf59e1b93767f41f11b5942e3",
+      "rows": 3,
+      "sha256": "1fc4afa9f590dcee756c091e6ff23fd0379c792995e913f82a6e2ca4a978c1b7",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-20261010T195102Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-OP",
+      "metrics_sha256": "9ee7e69ca0b8925abe6426f3605551c0df8ac145305b3fc31e5070915666be87",
+      "reconciliation_note": "Receipt final update inventory absent; JSONL steps preserved as raw evidence, final reported updates unmeasured.",
+      "rows": 8,
+      "sha256": "084f9fc952984f96afe5cd178fc6242016123f2c462b8a2088edf09226b08cbd",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-r2-20261010T195151Z/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-OP",
+      "rows": 12,
+      "sha256": "b857f6a1246d1d8abbb79915bc0a713def321de86236e1b8f4949de1847889cb",
+      "source": "xbabe3:/home/ubuntu/jope-evidence/rlfw-cx-op/scratch-train/results/cxop-rloo-pkpo-r3-20261010T195806Z/metrics.jsonl",
+      "status": "PARTIAL / NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "sha256": "c81c27d75c4e1e9ed29ca11f8bc73291d1b4035ccd32d550eed1eb6948dd36f6",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/EVAL_TABLE.md",
+      "status": "copied provider table; numeric values from receipts"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "85b2cbda7144a338c185d8a774890bde127bd81cf0e62d2adc9235ad3b82419e",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run1-control-ecce2b4b5923/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "93d9d6033635c9882476115f6f2e17bbb59e10bac8dc3b77777c1b3feac9ba56",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run1-lpi-61185b0436ff/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "03d69c7dca73a8053239d54e9c935e940355b128b3163c6359b848d6b7b152fd",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run1-lpi_cal-fcf058517be5/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "036f6fddf888afb0d170f1d13300a8cf0c6465013da3b3c9c31245eec8529d23",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run2-control-11f71bc63e2d/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "e865ed0e3244c687bbd59404e88212328c6cf123e6f64d532e714f6e24c492a6",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run2-lpi_001-b74ffaada23f/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "355b4dbb758a483e3fde355d7d21fc4b490080396df93ca8553dc10e439bac2a",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/CL-R22-run2-lpi_003-08b5098413f0/receipt.json",
+      "status": "NON-QUALIFYING"
+    },
+    {
+      "lane": "CX-KV",
+      "rows": 8,
+      "sha256": "c033f8ce14146ed88c4a53a4e0d4820794ba4b99445fbf3646dfe498fdb6c24b",
+      "source": "/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/CX-KV/eval-results/G-ABL-ckpt-copy-ee5560da77b8/receipt.json",
+      "status": "NON-QUALIFYING"
+    }
+  ],
+  "non_qualifying": true,
+  "observed_at": "2026-10-10T20:09:48.633059+00:00",
+  "promotion_input": false,
+  "rows": 349,
+  "schema": "jope.cx-met-scratch-snapshot/v1",
+  "scope": {
+    "RuntimeMaxUSec": "2h",
+    "cpu.max": "200000 100000",
+    "cpu.stat": "usage_usec 86485\nuser_usec 54053\nsystem_usec 32432\ncore_sched.force_idle_usec 0\nnr_periods 5\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+    "memory.max": "4294967296",
+    "memory.peak": "25239552",
+    "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/cx-met-scratch-watch-2012.scope",
+    "runtime_max_seconds": 7200.0
+  },
+  "source_commit": "d7919d669a6232fd5d578590b4b307c5e3681894"
+}
