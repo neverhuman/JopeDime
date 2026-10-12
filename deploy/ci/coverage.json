@@ -1552,6 +1552,46 @@
       ],
       "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "C4/S7/S8 CPU fixtures through run_onpolicy_offline.py: exhaustive RLOO/PKPO, actual float64 autograd, seven-body synthetic q verification, quarantine, IS/lag gates and exact parent-balanced quotas. No live optimizer, arena lift, cloud, GPU or production adapter qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_groups.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "C4/S7/S8 CPU fixtures through run_onpolicy_offline.py: exhaustive RLOO/PKPO, actual float64 autograd, seven-body synthetic q verification, quarantine, IS/lag gates and exact parent-balanced quotas. No live optimizer, arena lift, cloud, GPU or production adapter qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_math.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "C4/S7/S8 CPU fixtures through run_onpolicy_offline.py: exhaustive RLOO/PKPO, actual float64 autograd, seven-body synthetic q verification, quarantine, IS/lag gates and exact parent-balanced quotas. No live optimizer, arena lift, cloud, GPU or production adapter qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_sampling.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "C4/S7/S8 CPU fixtures through run_onpolicy_offline.py: exhaustive RLOO/PKPO, actual float64 autograd, seven-body synthetic q verification, quarantine, IS/lag gates and exact parent-balanced quotas. No live optimizer, arena lift, cloud, GPU or production adapter qualification."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "discovery": {
         "kind": "python-family"
@@ -9513,7 +9553,8 @@
         "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\"",
         "bash ../deploy/ci/dl-offline-group.sh 900 \"$EVIDENCE/dl-lane-offline\"",
         "uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output \"$EVIDENCE/flywheel-offline\"",
-        "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\""
+        "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\"",
+        "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt \"$EVIDENCE/onpolicy-offline.json\""
       ],
       "command": [
         "bash",

@@ -582,6 +582,42 @@
         "policy"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
+      "reason": "Executed finite-action and pure-library acceptance fixtures. Runtime learning/equal-budget arena and durable integration remain unmeasured.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "evidence"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_groups.py": {
+      "reason": "Executed finite-action and pure-library acceptance fixtures. Runtime learning/equal-budget arena and durable integration remain unmeasured.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "evidence"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_math.py": {
+      "reason": "Executed finite-action and pure-library acceptance fixtures. Runtime learning/equal-budget arena and durable integration remain unmeasured.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "evidence"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_sampling.py": {
+      "reason": "Executed finite-action and pure-library acceptance fixtures. Runtime learning/equal-budget arena and durable integration remain unmeasured.",
+      "role": "regression",
+      "subsystems": [
+        "policy",
+        "training",
+        "evidence"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "role": "regression",
       "subsystems": [
