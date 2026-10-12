@@ -1542,6 +1542,16 @@
       ],
       "scope": "9 isolated portable CPU fixtures via the corresponding run_native_pool_offline.py or run_rl_math_offline.py after prior587. Explicit8/12/24 cardinality, permanent registry and fresh resource gates; finite-action gradient/counterexample/CLI checks. No real GP, cloud, GPU, optimizer, production queue or service operations."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/ablations/tests/test_ablations.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. No corpus, live execution, training or serving qualification."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "discovery": {
         "kind": "python-family"
