@@ -3664,6 +3664,18 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/clover_quantile": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/clover_quantile.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": ["rust-check", "rust-test", "full-default"],
+      "scope": "Offline CPU CLOVER v1 quantile semantics against independent fixtures, runtime and generated Rust/Python; toolchain absence fails. No GPU or live evaluator qualification."
+    },
     "target:feat-math/test/advanced_v3_parity": {
       "discovery": {
         "doctest": false,
@@ -6648,6 +6660,18 @@
         "full-doctests"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/clover_phase0": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/clover_phase0.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": ["rust-check", "rust-test", "full-default"],
+      "scope": "Offline CPU experiment identity, encoder visibility, actual preprocessing audit, persistent HOLD/recovery and immutable manifest-last publication faults. No model, training, external data or remote storage."
     },
     "target:jope-learning/test/champions_fixture": {
       "discovery": {
