@@ -1,11 +1,17 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "46037552c4cada7756a87a912fbe1121fc8cf82ff1ab7096ed700b0eb442348b"
+      "sha256": "03e157898de5f976b29c52f6de0b8563867fdef8d8afc1bcce73e9f226c1e532"
+    },
+    {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
+      "path": "deploy/ci/fast-lane.sh",
+      "sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -15,11 +21,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "23ae60050dcc5a14c53a56dd1d24296bced9da68f64278f3dcf425c2046aef0e"
+      "sha256": "c31e3d981e061cf2439fc9fddc9a958b7ca9dbd5515b1b9c23676847dee88d6e"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4710,6 +4716,36 @@
       "sha256": "57271014940897f91ac767e77e14f10aad343d9243c147783664c0955e5abc92"
     },
     {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "e257af8f540fd7b84c84e4be5e9c617310dc3bf3807aea55eed98ce74c9c919c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw_s3gp/__init__.py",
+      "sha256": "e257af8f540fd7b84c84e4be5e9c617310dc3bf3807aea55eed98ce74c9c919c"
+    },
+    {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "3674c2174b266b641f5ab5a5f1538c4d350b502a23addb323dbde8f4cf1e9d74",
+      "path": "deploy/dl-flywheel/pipelines/rlfw_s3gp/s3_lifecycle.py",
+      "sha256": "3674c2174b266b641f5ab5a5f1538c4d350b502a23addb323dbde8f4cf1e9d74"
+    },
+    {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "a0b0f3a905c5ea86b9d21c988a6803c44291c4d9236880bbf5fc4703f78de922",
+      "path": "deploy/dl-flywheel/pipelines/rlfw_s3gp/score_cache.py",
+      "sha256": "a0b0f3a905c5ea86b9d21c988a6803c44291c4d9236880bbf5fc4703f78de922"
+    },
+    {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "a4d74f321b8a1fc5201eb95b0d4dc904691a69376dd9687de659b1650e22f02e",
+      "path": "deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_lifecycle.py",
+      "sha256": "a4d74f321b8a1fc5201eb95b0d4dc904691a69376dd9687de659b1650e22f02e"
+    },
+    {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "482a936a7b08dd7a1faf7f51a69461a93b88b44aec2c999fe3af747932e4912f",
+      "path": "deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py",
+      "sha256": "482a936a7b08dd7a1faf7f51a69461a93b88b44aec2c999fe3af747932e4912f"
+    },
+    {
       "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion.",
       "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
       "origin_sha256": "bb10f8bbd5aaa59fce64b2455936a2e14acd6041b899fe6a646f4e63675f54b6",
@@ -5259,11 +5295,11 @@
       "sha256": "a05abd63fcd85d23a9eabf8b1f162a7b87a30e91bd0bb536256883df25da81d2"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "851173f2e63279529d2c234803210516e9417964da686cd4e0c13fb47d298650"
+      "sha256": "04326b4c8a6e5c6e99311b8b8c94b95ba2f324457acbbb817563c0a41fc0d685"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
