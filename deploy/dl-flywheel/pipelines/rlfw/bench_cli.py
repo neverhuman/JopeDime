@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 from .arena.arms import BaselineArms, pr1_trace_sink
-from .arena.game_spec import GameSpec, canonical, local_path
+from .arena.game_spec import GameSpec, canonical, local_path, R5_KPI_VERSION
 from .arena.kpi import LABEL, context_units, paired_difference
 from .arena.oracle import BlindOracle
 from .arena.report import read_run, write_reports
@@ -292,7 +292,15 @@ def compare(args):
         closed = {u["context_id"] for u in report["per_context"]}
         hwm = {r.context_id: r.q for r in rows if r.arm == "hwm"}
         return context_units(
-            [r for r in rows if r.arm == arm and r.context_id in closed], hwm, spec.tau
+            [r for r in rows if r.arm == arm and r.context_id in closed],
+            hwm,
+            spec.tau,
+            hwm_programs={
+                c.context_id: c.hwm_program_sha256
+                for c in spec.contexts
+                if c.hwm_program_sha256 is not None
+            },
+            program_parity=spec.kpi_version == R5_KPI_VERSION,
         )
 
     result = {

@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 
 from rlfw.arena.arms import BaselineArms
-from rlfw.arena.game_spec import digest
+from rlfw.arena.game_spec import digest, R5_KPI_VERSION, R5_OUTCOME_CLASSES
 from rlfw.arena.kpi import compute_report
 from rlfw.arena.oracle import BlindOracle
 from rlfw.arena.report import read_run, write_reports
@@ -206,6 +206,232 @@ class SchedulerTests(unittest.TestCase):
                     for r in arena.rows()
                 )
             )
+
+    def test_r5_program_parity_is_terminal_cached_and_contexts_close(self):
+        spec = replace(
+            self.spec, kpi_version=R5_KPI_VERSION, outcome_classes=R5_OUTCOME_CLASSES
+        )
+        calls = []
+
+        def evaluate(request):
+            calls.append(request)
+            return {
+                **self.result(request, "parity_unqualified"),
+                "parity_verified": False,
+                "parity_max_normalized_error": 1e-5,
+            }
+
+        arena, _ = self.arena(spec, evaluate=evaluate)
+        arena.run()
+        rows = arena.rows()
+        self.assertEqual(len(calls), 5)
+        self.assertEqual(len(rows), 5 * 17)
+        self.assertEqual(len(arena.closed_contexts()), 5)
+        self.assertTrue(
+            all(
+                r.outcome == "parity_unqualified"
+                and r.charged
+                and not r.qualified
+                and r.q is None
+                and r.q_grid is None
+                and r.attempts == 1
+                and r.censor_reason is None
+                for r in rows
+            )
+        )
+        self.assertTrue(all(arena.committed(r) for r in rows))
+        self.assertEqual(sum(r.wall_seconds for r in rows), 5.0)
+        self.assertEqual(sum(r.cpu_seconds for r in rows), 10.0)
+        report = compute_report(spec, rows, arena.hwm_values(), arena.closed_contexts())
+        self.assertEqual(report["no_comparable_hwm"], 5)
+        self.assertEqual(
+            report["hwm_coverage_categories"], {"hwm_parity_unqualified": 5}
+        )
+        self.assertIn("L=5", report["label"])
+        for sensitivity in report["tau_sensitivity"].values():
+            for metrics in sensitivity["arms"].values():
+                self.assertEqual(metrics["parity_unqualified_rate"]["mean"], 1.0)
+                self.assertIsNone(metrics["best_q@8"]["mean"])
+                self.assertIsNone(metrics["win_rate"]["mean"])
+        write_reports(spec, rows, arena.hwm_values(), arena.closed_contexts())
+        read_run(spec.out_dir)
+        restored, _ = self.arena(
+            spec, evaluate=lambda r: self.fail("closed R5 contexts must not reexecute")
+        )
+        restored.run()
+        self.assertEqual(
+            [r.to_dict() for r in restored.rows()], [r.to_dict() for r in rows]
+        )
+
+    def test_r5_failure_keeps_successful_siblings_and_other_contexts_active(self):
+        other = program("two", (1, 3, 2))
+        spec = replace(
+            self.spec, kpi_version=R5_KPI_VERSION, outcome_classes=R5_OUTCOME_CLASSES
+        )
+        calls = []
+
+        def evaluate(request):
+            calls.append(request)
+            if request["program"]["program_sha256"] == self.p["program_sha256"]:
+                return {
+                    **self.result(request, "parity_unqualified"),
+                    "parity_verified": False,
+                    "parity_max_normalized_error": 1e-5,
+                }
+            return self.result(request)
+
+        def sample(cid, arm, seed):
+            return {
+                "program": other,
+                "tokens": other["tokens"],
+                "trie_sha256": SHA,
+                "checkpoint_parameter_sha256": SHA,
+                "total_logprob": 0.0,
+                "per_token_logprob": [0.0, 0.0],
+                "logprob_support": "trie_children",
+                "logprob_aggregation": "sum_including_eos",
+            }
+
+        arena, _ = self.arena(spec, evaluate=evaluate)
+        arena.arms = BaselineArms(
+            [self.p, other], {c.context_id: self.p for c in spec.contexts}, sample
+        )
+        arena.run()
+        self.assertEqual(len(calls), 10)
+        self.assertEqual(len(arena.closed_contexts()), 5)
+        self.assertTrue(all(r.charged and r.attempts == 1 for r in arena.rows()))
+        self.assertTrue(any(r.outcome == "parity_unqualified" for r in arena.rows()))
+        report = compute_report(
+            spec, arena.rows(), arena.hwm_values(), arena.closed_contexts()
+        )
+        metrics = report["tau_sensitivity"]["0.01"]["arms"]["trie_sample:toy"]
+        self.assertEqual(metrics["best_q@8"]["mean"], 0.5)
+        self.assertEqual(metrics["valid@8"]["mean"], 1.0)
+        self.assertIsNone(metrics["win_rate"]["mean"])
+
+    def test_r5_interrupted_terminal_attempt_resumes_without_native_or_new_attempt(
+        self,
+    ):
+        calls = []
+        spec = replace(
+            self.spec, kpi_version=R5_KPI_VERSION, outcome_classes=R5_OUTCOME_CLASSES
+        )
+
+        def evaluate(request):
+            calls.append(request)
+            return {
+                **self.result(request, "parity_unqualified"),
+                "parity_verified": False,
+                "parity_max_normalized_error": 1e-5,
+            }
+
+        arena, _ = self.arena(spec, evaluate=evaluate)
+        context, arm = spec.contexts[0], spec.arms[1]
+        candidate = arena.arms.slate(context, arm, 1, 8)[0]
+
+        def interrupted(*args):
+            raise RuntimeError("interruption before logical charge")
+
+        for slot, cached, wall in ((1, False, 1.0), (2, True, 0.0)):
+            with self.assertRaisesRegex(
+                RuntimeError, "interruption before logical charge"
+            ):
+                arena.oracle.resolve(
+                    context,
+                    arm,
+                    1,
+                    slot,
+                    candidate,
+                    duplicate=slot > 1,
+                    commit=interrupted,
+                    attempt_store=arena,
+                )
+            restored, _ = self.arena(
+                spec,
+                evaluate=lambda r: self.fail("terminal fate must never execute again"),
+            )
+            row = restored.oracle.resolve(
+                context,
+                arm,
+                1,
+                slot,
+                candidate,
+                duplicate=slot > 1,
+                commit=restored.commit,
+                attempt_store=restored,
+            )
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(row.attempts, 1)
+            self.assertEqual(row.cache_hit, cached)
+            self.assertEqual(row.wall_seconds, wall)
+            self.assertEqual(row.cpu_seconds, 2 * wall)
+            self.assertEqual(row.unknown_cost_attempts, 0)
+            self.assertTrue(row.charged and row.q is None and restored.committed(row))
+            self.assertEqual(
+                len(restored.attempt_history((context.context_id, arm.name, 1, slot))),
+                1,
+            )
+            arena = restored
+
+    def test_r5_frozen_cache_and_taxonomy_reward_refusals(self):
+        context = self.spec.contexts[0]
+        value = {
+            **self.result(
+                {"context_identity": context.identity_sha256, "program": self.p},
+                "parity_unqualified",
+            ),
+            "parity_verified": False,
+            "parity_max_normalized_error": None,
+        }
+        key = digest(
+            {
+                "context_identity": context.identity_sha256,
+                "program_sha256": self.p["program_sha256"],
+                "evaluator_sha256": self.spec.evaluator_sha256,
+                "canonicalizer_sha256": self.spec.canonicalizer_sha256,
+                "protocol": self.spec.protocol,
+            }
+        )
+        cache = {key: value}
+        spec = replace(
+            self.spec,
+            contexts=(context,),
+            kpi_version=R5_KPI_VERSION,
+            outcome_classes=R5_OUTCOME_CLASSES,
+            cache_snapshot_sha256=digest(cache),
+        )
+        arena, _ = self.arena(
+            spec,
+            cache=cache,
+            evaluate=lambda r: self.fail("known unqualified cache must not execute"),
+        )
+        arena.run()
+        self.assertTrue(
+            all(
+                r.charged and r.cache_hit and r.q is None and r.wall_seconds == 0.0
+                for r in arena.rows()
+            )
+        )
+        candidate = arena.arms.catalog[0]
+        for changed in (
+            {"q_grid": 0},
+            {"q": 0.0},
+            {"q_opt": 0.0},
+            {"qualified": True},
+            {"parity_verified": True},
+            {"parity_max_normalized_error": 1e-10},
+            {"outcome_class": "parity_custody"},
+        ):
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                arena.oracle.validate({**value, **changed}, context, candidate)
+        legacy = BlindOracle(
+            self.spec,
+            self.result,
+            lambda c: {"role": "development", "role_map_sha256": SHA},
+            {},
+        )
+        with self.assertRaises(ValueError):
+            legacy.validate(value, context, candidate)
 
     def test_result_is_committed_before_oracle_returns(self):
         arena, _ = self.arena()

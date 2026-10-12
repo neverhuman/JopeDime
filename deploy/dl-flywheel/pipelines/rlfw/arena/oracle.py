@@ -6,7 +6,7 @@ from pathlib import Path
 import threading
 import time
 
-from .game_spec import digest, require_sha
+from .game_spec import digest, require_sha, R5_KPI_VERSION
 from .kpi import SlotResult
 
 
@@ -30,6 +30,9 @@ class BlindOracle:
                 "fresh role/exclusion authority changed; freeze and re-spec"
             )
 
+    def before_attempt(self, context):
+        """Runs before each reservation and again before its evaluator request."""
+
     def execution_key(self, context, program):
         return digest(
             {
@@ -50,10 +53,30 @@ class BlindOracle:
             "qualified_complete",
             "program_failed",
             "timeout",
+            "parity_unqualified",
             "parity_custody",
             "infra_unknown",
         ):
             raise ValueError("evaluator returned an unknown outcome taxonomy")
+        if outcome == "parity_unqualified":
+            if self.spec.kpi_version != R5_KPI_VERSION:
+                raise ValueError("program parity requires an explicit R5 game version")
+            if (
+                result.get("qualified") is not False
+                or result.get("parity_verified") is not False
+            ):
+                raise ValueError(
+                    "an unqualified parity outcome cannot claim qualification"
+                )
+            error = result.get("parity_max_normalized_error")
+            if error is not None and (
+                not isinstance(error, (int, float))
+                or not math.isfinite(error)
+                or error <= 1e-9
+            ):
+                raise ValueError("a measured parity mismatch must exceed fixed 1e-9")
+        elif outcome == "parity_custody" and self.spec.kpi_version == R5_KPI_VERSION:
+            raise ValueError("R5 refuses legacy context-parity retry outcomes")
         result["outcome_class"] = outcome
         for name, value in (
             ("context_identity", context.identity_sha256),
@@ -130,6 +153,13 @@ class BlindOracle:
     ):
         self.check_role(context)
         self.spec.verify_frozen()
+        if (Path(self.spec.bench_root) / "state/STOP.json").exists():
+            raise RuntimeError("campaign stop marker is present")
+        if (
+            self.spec.deadline_unix is not None
+            and time.time() >= self.spec.deadline_unix
+        ):
+            raise RuntimeError("fixed campaign deadline expired")
         key = self.execution_key(context, candidate.program)
         request = {
             "context_id": context.context_id,
@@ -150,6 +180,30 @@ class BlindOracle:
         cached = source is not None
         attempt_key = (context.context_id, arm.name, seed, slot)
         history = attempt_store.attempt_history(attempt_key) if attempt_store else []
+        terminal = (
+            attempt_store.terminal_attempt(attempt_key)
+            if attempt_store and self.spec.kpi_version == R5_KPI_VERSION
+            else None
+        )
+        if terminal:
+            if terminal["number"] != len(history):
+                raise ValueError("terminal fate and attempt history differ")
+            result = self.validate(terminal["result"], context, candidate.program)
+            if result["outcome_class"] != "parity_unqualified":
+                raise ValueError("terminal replay requires its resolved parity fate")
+            # The original logical attempt keeps its actual cost and cache status.
+            # The immutable program evidence retains the physical source costs.
+            history = history[:-1] + [
+                {
+                    "result": {
+                        **result,
+                        "wall_seconds": terminal["wall_seconds"],
+                        "cpu_seconds": terminal["cpu_seconds"],
+                        "cost_unknown": terminal["unknown_cost"],
+                    }
+                }
+            ]
+            cached = terminal["cache_hit"]
         wall = sum(
             r["result"]["wall_seconds"] for r in history if r["result"] is not None
         )
@@ -161,7 +215,9 @@ class BlindOracle:
             for r in history
         )
         result = (
-            history[-1]["result"]
+            terminal["result"]
+            if terminal
+            else history[-1]["result"]
             if history and history[-1]["result"] is not None
             else {
                 "outcome_class": "infra_unknown",
@@ -174,7 +230,7 @@ class BlindOracle:
             }
         )
         attempt = len(history)
-        for number in range(len(history) + 1, 4):
+        for number in () if terminal else range(len(history) + 1, 4):
             if (Path(self.spec.bench_root) / "state/STOP.json").exists():
                 raise RuntimeError("campaign stop marker is present")
             if (
@@ -184,9 +240,14 @@ class BlindOracle:
                 raise RuntimeError("fixed campaign deadline expired")
             self.check_role(context)
             self.spec.verify_frozen()
+            self.before_attempt(context)
             attempt = (
                 attempt_store.reserve_attempt(attempt_key) if attempt_store else number
             )
+            if not cached:
+                # A durable reservation can cross a boundary. A refusal here leaves
+                # that consumed attempt's outcome unavailable and never retries it.
+                self.before_attempt(context)
             result = self.validate(
                 source if cached else self.evaluate({**request, "attempt": attempt}),
                 context,
@@ -196,6 +257,12 @@ class BlindOracle:
                 wall += result["wall_seconds"]
                 cpu += result["cpu_seconds"]
                 unknown_costs += bool(result.get("cost_unknown", False))
+            if result["outcome_class"] == "parity_unqualified":
+                if attempt_store:
+                    attempt_store.record_program_fate(
+                        attempt_key, attempt, key, result, cached=cached
+                    )
+                self.own_results[key] = result
             if result["outcome_class"] not in ("parity_custody", "infra_unknown"):
                 break
             # Unknown cache entries are never reusable outcomes.

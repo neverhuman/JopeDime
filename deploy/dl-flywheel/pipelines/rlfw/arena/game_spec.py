@@ -79,6 +79,17 @@ class ArmSpec:
             raise ValueError("policy arms require a sealed checkpoint identity")
 
 
+R5_KPI_VERSION = "rlfw-kpi/r5-program-parity-v1"
+R5_OUTCOME_CLASSES = (
+    "qualified_complete",
+    "program_failed",
+    "timeout",
+    "parity_unqualified",
+    "infra_unknown",
+    "censored",
+)
+
+
 @dataclass(frozen=True)
 class GameSpec:
     game_id: str
@@ -153,8 +164,16 @@ class GameSpec:
             and self.slate_k != 32
         ):
             raise ValueError("rerank32 requires preregistered K=32")
-        if self.benchmark_valid is not False or self.kpi_version != "rlfw-kpi/v1":
+        if self.benchmark_valid is not False or self.kpi_version not in (
+            "rlfw-kpi/v1",
+            R5_KPI_VERSION,
+        ):
             raise ValueError("research results only")
+        if self.kpi_version == R5_KPI_VERSION:
+            if self.outcome_classes != R5_OUTCOME_CLASSES:
+                raise ValueError("R5 requires its frozen program-parity taxonomy")
+        elif "parity_unqualified" in self.outcome_classes:
+            raise ValueError("program parity requires an explicit R5 game version")
         if (
             self.protocol != "jope.flywheel-s1-inner-rmse/v1"
             or self.comparator != "original-program-reexecuted-current-protocol"

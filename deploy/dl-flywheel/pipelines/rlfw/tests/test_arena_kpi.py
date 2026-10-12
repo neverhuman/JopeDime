@@ -7,12 +7,19 @@ import random
 import tempfile
 import unittest
 
-from rlfw.arena.game_spec import ArmSpec, ContextSpec, GameSpec
+from rlfw.arena.game_spec import (
+    ArmSpec,
+    ContextSpec,
+    GameSpec,
+    R5_KPI_VERSION,
+    R5_OUTCOME_CLASSES,
+)
 from rlfw.arena.kpi import (
     SlotResult,
     arm_metrics,
     cluster_stat,
     context_units,
+    compute_report,
     outcome_score,
     paired_difference,
     ranking_metrics,
@@ -84,6 +91,20 @@ class SpecTests(unittest.TestCase):
         p.write_text(p.read_text().replace('"tau":0.01', '"tau":0.02'))
         with self.assertRaises(ValueError):
             s.verify_frozen()
+
+    def test_r5_version_taxonomy_and_pairing_are_explicit(self):
+        legacy = spec_at(self.root)
+        with self.assertRaises(ValueError):
+            replace(legacy, kpi_version=R5_KPI_VERSION)
+        with self.assertRaises(ValueError):
+            replace(legacy, outcome_classes=R5_OUTCOME_CLASSES)
+        current = replace(
+            legacy, kpi_version=R5_KPI_VERSION, outcome_classes=R5_OUTCOME_CLASSES
+        )
+        self.assertEqual(GameSpec.from_dict(current.to_dict()).sha256, current.sha256)
+        self.assertNotEqual(current.sha256, legacy.sha256)
+        with self.assertRaises(ValueError):
+            current.require_pair(legacy)
 
     def test_pairing_allows_independent_checkpoint_certificates_only(self):
         s = replace(
@@ -171,6 +192,108 @@ class SpecTests(unittest.TestCase):
 
 
 class KPITests(unittest.TestCase):
+    def test_r5_parity_slots_are_charged_without_quality_or_gain(self):
+        unresolved = [
+            replace(r, outcome="parity_unqualified", wall_seconds=1.0)
+            for r in slots("a", "one", "X", [None] * 8)
+        ]
+        measured = slots("b", "two", "X", [0.8] * 8)
+        measured[:4] = [
+            replace(
+                r,
+                outcome="parity_unqualified",
+                q_grid=None,
+                qualified=False,
+                receipt_sha256=None,
+            )
+            for r in measured[:4]
+        ]
+        with self.assertRaises(ValueError):
+            context_units(unresolved, {"a": 0.5})
+        units = context_units(
+            unresolved + measured, {"a": 0.5, "b": 0.5}, program_parity=True
+        )
+        self.assertTrue(all(r.charged and r.q is None for r in unresolved))
+        self.assertEqual(units[0]["charged_slots"], 8)
+        self.assertFalse(units[0]["censored"])
+        self.assertIsNone(units[0]["best_q@8"])
+        self.assertEqual(units[0]["positive_gain"], 0.0)
+        self.assertEqual(units[0]["score"], 0.0)
+        self.assertEqual(units[0]["wall_seconds"], 8.0)
+        self.assertAlmostEqual(units[1]["positive_gain"], 0.3)
+        self.assertIsNone(units[1]["best_q@4"])
+        metrics = arm_metrics(units)
+        self.assertEqual(metrics["parity_unqualified_rate"]["mean"], 0.75)
+        self.assertEqual(metrics["censored_units"], 0)
+        with self.assertRaises(ValueError):
+            replace(unresolved[0], q_grid=0)
+
+    def test_rediscovery_counts_program_identity_and_duplicate_draws(self):
+        first = slots("a", "one", "X", [1.0] * 8)
+        first = [
+            replace(r, program_sha256=SHA if i in (0, 2, 7) else f"{i + 10:064x}")
+            for i, r in enumerate(first)
+        ]
+        second = [
+            replace(r, program_sha256=SHA) for r in slots("b", "two", "X", [1.0] * 8)
+        ]
+        data = first + second
+        units = context_units(data, {"a": 1.0}, hwm_programs={"a": SHA, "b": "b" * 64})
+        self.assertEqual(units[0]["rediscovery_rate"], 3 / 8)
+        self.assertEqual(units[1]["rediscovery_rate"], 0.0)
+        self.assertIsNone(units[1]["hwm"])
+        legacy = context_units(
+            data,
+            {"a": 1.0, ("a", "program_sha256"): SHA, ("b", "program_sha256"): "b" * 64},
+        )
+        self.assertEqual(legacy, units)
+        # Numeric quality does not establish original program identity.
+        self.assertTrue(
+            all(u["rediscovery_rate"] is None for u in context_units(data, {"a": 1.0}))
+        )
+        with self.assertRaises(ValueError):
+            context_units(data, {}, hwm_programs={"a": "invalid"})
+
+    def test_report_rediscovery_uses_frozen_original_program_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec = spec_at(Path(directory), contexts=1)
+            rows = []
+            for arm in spec.arms:
+                drawn = slots("c0", "l0", arm.name, [1.0] * 8)
+                if arm.name == "hwm":
+                    drawn = drawn[:1]
+                rows.extend(
+                    replace(
+                        r,
+                        program_sha256=SHA,
+                        spec_sha256=spec.sha256,
+                        cache_hit=True,
+                        duplicate=True,
+                    )
+                    for r in drawn
+                )
+            for proportion in (1.0, 0.5):
+                observed = (
+                    rows
+                    if proportion == 1.0
+                    else [
+                        replace(r, program_sha256="b" * 64)
+                        if r.arm != "hwm" and r.slot % 2 == 0
+                        else r
+                        for r in rows
+                    ]
+                )
+                report = compute_report(spec, observed, {"c0": 1.0}, ["c0"])
+                for sensitivity in report["tau_sensitivity"].values():
+                    for metrics in sensitivity["arms"].values():
+                        self.assertEqual(
+                            metrics["rediscovery_rate"]["mean"], proportion
+                        )
+                        self.assertEqual(metrics["tie"]["mean"], 1.0)
+                self.assertTrue(
+                    all(u["charged_slots"] == 8 for u in report["per_context"])
+                )
+
     def test_margin_boundary_empty_and_lineage_macro(self):
         self.assertEqual(outcome_score(1.01, 1.0), ("TIE", 0.5))
         self.assertEqual(outcome_score(0.99, 1.0), ("TIE", 0.5))
