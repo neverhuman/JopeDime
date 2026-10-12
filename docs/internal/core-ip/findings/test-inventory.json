@@ -1326,6 +1326,13 @@
       "reason": "CPU-only offline GPU budget and output custody control conformance; no regression learning or live hardware/storage qualification",
       "role": "infrastructure"
     },
+    "python:deploy/dl-trainonly/test_feature_reduction.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "teaching"
+      ]
+    },
     "python:deploy/dl-trainonly/test_gpu_manifest_cut.py": {
       "role": "regression",
       "subsystems": [
