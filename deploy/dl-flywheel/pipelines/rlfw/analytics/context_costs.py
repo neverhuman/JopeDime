@@ -604,7 +604,7 @@ def scope_rows(document, *, consumer_commit, as_of_date, source):
     if seconds is not None and seconds < 0:
         raise ValueError("scope clock precedes start")
     cpu = properties.get("CPUUsageNSec", "[not set]")
-    cpu = int(cpu) / 1e9 if cpu.isdigit() else None
+    cpu = int(cpu) / 10**9 if cpu.isdigit() else None
     run = document["run"]
     rows = receipt_rows(
         {
