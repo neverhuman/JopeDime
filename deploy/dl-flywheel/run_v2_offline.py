@@ -1,7 +1,7 @@
 """Isolated, exact-roster CPU fixtures for the v2.0.0 learner packages; additive to the prior812 identities.
 
-Families (213 identities): continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36,
-native_result_overlay_v1 38 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
+Families (230 identities): continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36,
+native_result_overlay_v1 55 and final_capture_v1 32.  Each family runs in its own fresh interpreter because the
 fixtures replace module globals and clocks.  final_capture_v1 runs through its own pinned runner, which supports the
 integrated tree.  The other four run through the child mode below: the boundary/preparation/overlay runners shipped
 inside those packages bind the lane's external base export manifest and an older candidate root, which are not part
@@ -36,7 +36,7 @@ R6_PREREGISTRATION_SHA256 = 'd228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f
 SOURCE_PINS_SHA256 = {
     'boundary_admission_v2': 'aba1cf02fa65ce0e26683ce07cb119bb61e01bd60760f384691349415f4ec336',
     'generated_target_preparation_v2': 'e13111f7166e55036364b42b74132c972c1dc5f1deb54d21b1f2ce1384d01f5a',
-    'native_result_overlay_v1': 'b5b69f69602246d226b2428138372a42c88daea6528a582277f075c485876e90',
+    'native_result_overlay_v1': '8a2e397b626f61227f50696acb056040415a17909712b0ad9553b0344ac51c04',
     'final_capture_v1': '7b5f44511c66d6d4c3d5bd54f547a76c0c9d59c87f82b69f74feebd861af9ca4',
 }
 CONTINUOUS_V6_PINS = {
@@ -154,9 +154,9 @@ CONTINUOUS_V6_IDS = tuple('pipelines.continuous_v6.tests.test_runner_v6.RunnerV6
     'test_transition_table',
 ))
 EXPECTED_COUNTS = {'boundary_admission_v2': 24, 'generated_target_preparation_v2': 36,
-                   'native_result_overlay_v1': 38, 'final_capture_v1': 32, 'continuous_v6': 83}
+                   'native_result_overlay_v1': 55, 'final_capture_v1': 32, 'continuous_v6': 83}
 OWN_RUNNER = {'final_capture_v1'}
-TOTAL = 213
+TOTAL = 230
 CHILD_SCHEMA = 'jope.v2-learner-offline-child/v1'
 RECEIPT_SCHEMA = 'jope.v2-learner-offline/v1'
 SCOPE = ('Offline CPU fixtures on private temporary worlds only. No live campaign, optimizer launch, planner, '

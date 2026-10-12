@@ -3413,22 +3413,22 @@
       "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py": {
-      "bytes": 31932,
+      "bytes": 37549,
       "classification": {
         "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "94193aecf3259e3ec0a1b855b77e7bf3d8c66df107f75c23acde2ea19805a496"
+      "sha256": "5a2ba71ce9291c8a7248f9ed1faf040c6e10001eb5701da2486bd90140e184f0"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/run_offline.py": {
-      "bytes": 2663,
+      "bytes": 5560,
       "classification": {
         "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix) with 38 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source only; the shipped pinned runner binds the lane base export and an older candidate root and is not the in-tree runner.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "d9209c7982012cf38562abe7501927078526b290c804805fc7bf132fcf3c238b"
+      "sha256": "e42e5bc76041539bb3dac061c155128714bb04a53a2e7da43c89e8adb9c49688"
     },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/__init__.py": {
       "bytes": 0,
@@ -3464,7 +3464,7 @@
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "83439d0e0407c3f0a9c00e8c4beab5b0e3220734c8f9a45aaa4518908cb1287a"
+      "sha256": "59c5b55057c23e64f2216fa761662167772e485432c994580140715955d8bc27"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/anchored_step.py": {
       "bytes": 9330,

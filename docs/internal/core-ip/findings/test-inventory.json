@@ -598,6 +598,10 @@
       "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_durability.py": {
+      "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix): 38 isolated CPU cases through run_v2_offline.py, additive to prior812, with the vendored R6 preregistration as a pinned fixture input. No live native result admission. Additive W03 process-death/durability cases; run_v2_offline.py, NON-QUALIFYING.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py": {
       "reason": "Research train-only native-result overlay packets (W3 revision 2 with the terminal-acceptance fix): 38 isolated CPU cases through run_v2_offline.py, additive to prior812, with the vendored R6 preregistration as a pinned fixture input. No live native result admission.",
       "role": "research"

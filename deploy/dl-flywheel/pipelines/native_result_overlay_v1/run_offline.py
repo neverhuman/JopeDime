@@ -47,5 +47,25 @@ EXPECTED_FIXTURE_IDS = tuple(T + name for name in (
     'test_winner_merge_keeps_one_ce_record',
 ))
 
+EXPECTED_FIXTURE_IDS += (
+    'pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_after_claim_before_and_after_checkpoint_fsync_and_after_manifest_write_never_commits',
+    'pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_before_first_exposure_has_no_commit_and_after_first_exposure_is_deduplicated',
+    'pipelines.native_result_overlay_v1.tests.test_durability.LearningBoundaryDurabilityTests.test_death_during_cas_rolls_back_and_after_cas_reconciles_exactly_once',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_actual_publication_link_crossing_original_wall_or_monotonic_bound_refuses',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_complete_accepted_envelope_and_failed_caller_parent_fsync_stays_inadmissible',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_completion_binding_tampering_and_duplicate_delivery_are_refused_without_rewrite',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_concurrent_reader_refuses_complete_marker_bytes_while_their_fsync_is_blocked',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_deadline_crossed_during_completion_fsync_retains_original_bound_and_refuses',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_original_bound_crossing_after_publisher_return_cannot_be_qualified',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_pending_completion_directory_fsync_failure_is_not_a_completion',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_pending_completion_file_fsync_failure_is_not_a_completion',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_process_death_before_and_after_every_caller_publication_boundary',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_process_death_before_builder_publication_and_partial_pack_keep_custody',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_publication_final_parent_fsync_failure_requires_a_qualified_return',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_qualification_delivery_never_replaces_an_existing_empty_directory',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_reader_during_every_caller_write_and_fsync_refuses_until_atomic_completion',
+    'pipelines.native_result_overlay_v1.tests.test_durability.PublicationDurabilityTests.test_unfinished_qualification_witness_and_failed_delivery_never_admit',
+)
+
 if __name__ == '__main__':
     run(Path(__file__).resolve().parent, EXPECTED_FIXTURE_IDS)

@@ -1602,6 +1602,16 @@
       ],
       "scope": "12 isolated native-v5 CPU fixtures via run_native_v5_offline.py, invoked only after all prior492 identities. Read-only physical SQLite snapshots, global canonical no-replay custody, exact census and source identity, short live claim CAS, physical legacy closure and bounded create-only operational planning. No real GP, S3, GPU, optimizer, systemd or production queue actions."
     },
+    "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_durability.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "17 W03 private CPU durability fault cases, additive to all213 baseline IDs: retained caller-final-fsync, unfinished/partial publication and completion, death after claim/manifest/checkpoint fsync, CAS rollback/reconciliation and first-exposure/duplicate custody. Actual private process death and toy optimizer fixtures only; NON-QUALIFYING, no live/S3/GPU or retry."
+    },
     "python:deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py": {
       "discovery": {
         "kind": "python-family"
