@@ -1709,6 +1709,11 @@
       "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan",
       "role": "deferred-classification"
     },
+    "target:feat-math/test/clover_quantile": {
+      "role": "regression",
+      "subsystems": ["fitting", "export"],
+      "note": "CLOVER Phase 0 independent v1 quantile fixtures check runtime and actual generated Rust/Python semantics, including repeated edges and exact ties. Offline CPU only; no live evaluator qualification."
+    },
     "target:feat-math/test/advanced_v3_parity": {
       "role": "regression",
       "subsystems": [
@@ -2737,6 +2742,11 @@
       "subsystems": [
         "teaching"
       ]
+    },
+    "target:jope-learning/test/clover_phase0": {
+      "role": "regression",
+      "subsystems": ["preparation", "encoders", "storage"],
+      "note": "CLOVER Phase 0 canonical complete identities and conflicting lane refusals; encoder label/future boundaries; persistent HOLD, charged UNKNOWN recovery and immutable manifest-last publication under faults. Offline CPU fixture proof, not campaign or training qualification."
     },
     "target:jope-learning/test/pipeline_bank": {
       "role": "regression",
