@@ -1,0 +1,100 @@
+{
+ "base_manifest_sha256": "a9fc94eba8aec5c03333d0c38d9bb0d436d972508e0d6ebe94534d1be5015909",
+ "c10_r4_source_pins": {
+  "boundary_admission_v2": "a9b5cd94f6bf577417fcd5da9b5ebfc922f773d7315a9d299ddc560847e0f9df",
+  "generated_target_preparation_v2": "8e095e36a310954d987533e242d6df0ba5f222bf2cf196b3ee741adc08f0e977"
+ },
+ "fixture_ids": [
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_alias_dedup_keeps_provenance",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_already_in_shard_and_conflicting_refs",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_anchoring_to_the_exact_shard_baseline_pair",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_baseline_disagreement_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_c10_r4_boundary_composite_identity_and_exposure_join",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_caller_acceptance_is_bounded_by_the_original_deadline",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_census_five_classes_sum_exactly",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_consumers_cannot_admit_before_the_caller_acceptance",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_consumers_require_the_exact_in_time_terminal_acceptance",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_direct_recomputation_equality",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_dry_run_every_offset",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_no_shard_context_path_and_chain_anchor",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_old_shard_rows_byte_unchanged_and_old_labels_unchanged",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_outer_test_values_never_decoded",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_overlay_snapshot_identity_membership_and_mixed_base",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_crossed_during_final_directory_fsync_is_refused_at_build_and_consume",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_crossed_during_final_marker_write_is_refused_at_build_and_consume",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_deadline_in_time_control_is_accepted_end_to_end",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_late_refusal_storage_failure_stays_inadmissible",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_publication_monotonic_bound_crossed_during_final_directory_fsync_is_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_anchor_drift_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_duplicate_across_packets_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_label_union_must_be_shard_plus_all_earlier_rows",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_reordered_packets_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_chain_tampered_middle_packet_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_emission_body_b64_exact_bytes",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_replay_chain_view_equals_one_pass_view",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_row_cap_defers_rows_to_the_next_packet",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_shard_rmse_disagreement_refused",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_r2_three_packet_chain_first_anchor_carried",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_real_r6_preregistration_parses_under_its_pin",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_root_create_only_read_only_and_marker_last",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_stale_authority_and_pin_drift_refused_before_any_root",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_token_budget_stop",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_validate_packet_tamper_refusals",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_validation_rows_are_evaluation_only",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_verification_refusals_are_recorded_not_admitted",
+  "pipelines.native_result_overlay_v1.tests.test_overlay.OverlayTests.test_winner_merge_keeps_one_ce_record"
+ ],
+ "package": "native_result_overlay_v1",
+ "r6_preregistration_sha256": "d228d41366e5e313da63fc64ea3c76bcbfebe6899c4e0bb015f9da22d741725a",
+ "schema": "jope.w3-offline-source-pins/v1",
+ "source_pins": {
+  "__init__.py": {
+   "bytes": 1461,
+   "sha256": "1a70a30358f3927b07558ef7e08180820efa7466ce1f09e6f7af9990953678d8"
+  },
+  "build.py": {
+   "bytes": 31007,
+   "sha256": "9b46611dfcbf6d6a3553af01e0555304ce4fb709c2e942a6262ae5ebf14d29f4"
+  },
+  "common.py": {
+   "bytes": 13725,
+   "sha256": "39f21f29315eaad1c52921f49da459ac2a513564e972868ffa8eac206419f51d"
+  },
+  "labels_overlay.py": {
+   "bytes": 4874,
+   "sha256": "4de070493d88e1311892593f54c2d32f6cf9a7f9ad6d074bbe7c6a5f716fab9b"
+  },
+  "loader.py": {
+   "bytes": 13539,
+   "sha256": "bf8dc6532b1b6bf2ce143e876e62ba4a2fb803e06646bf46b4605a34979bb155"
+  },
+  "offline.py": {
+   "bytes": 7760,
+   "sha256": "038d13d861d7c067f87b0c54d7c9fe8b5e707edcc8021a1b3c67fff6ae35d611"
+  },
+  "packet.py": {
+   "bytes": 31932,
+   "sha256": "94193aecf3259e3ec0a1b855b77e7bf3d8c66df107f75c23acde2ea19805a496"
+  },
+  "run_offline.py": {
+   "bytes": 2663,
+   "sha256": "d9209c7982012cf38562abe7501927078526b290c804805fc7bf132fcf3c238b"
+  },
+  "tests/__init__.py": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "tests/test_overlay.py": {
+   "bytes": 75015,
+   "sha256": "bb9ca4b2445cce40e492d9b4fd22293adbfb003fd012c86d8b6b08109b0b5e3b"
+  },
+  "tests/world.py": {
+   "bytes": 26680,
+   "sha256": "82099d4f29df5612ac46d200933727e73fa4a5e277f8c08edba386577f8287a6"
+  },
+  "verify.py": {
+   "bytes": 22162,
+   "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
+  }
+ }
+}
