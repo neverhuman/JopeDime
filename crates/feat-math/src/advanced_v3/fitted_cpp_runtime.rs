@@ -2,6 +2,7 @@
 
 use super::csv::RawTable;
 use super::fitted_cpp::{emit_fitted_cpp17, FittedCppArtifact, FITTED_CPP_REVISION};
+use super::fitted_runtime_image::sealed_image;
 use super::input::FittedColumn;
 use super::pipeline::BoundModel;
 use super::schema::ColumnKind;
@@ -12,7 +13,8 @@ use sha2::{Digest, Sha256};
 use std::ffi::{c_char, c_int, c_void, CString};
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::os::fd::AsRawFd;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -182,6 +184,9 @@ type RuntimeFree = unsafe extern "C" fn(*mut c_void);
 
 struct RuntimeApi {
     library: *mut c_void,
+    // Retain the descriptor until dlclose, so another image cannot reuse its
+    // /proc/self/fd pathname while the dynamic loader still has this handle.
+    _image: fs::File,
     load: RuntimeLoad,
     predict: RuntimePredict,
     free: RuntimeFree,
@@ -214,26 +219,42 @@ impl std::fmt::Debug for FittedCppRuntime {
 }
 
 impl RuntimeApi {
-    unsafe fn open(library: &Path) -> Result<Self> {
-        let path = CString::new(library.as_os_str().as_encoded_bytes())?;
+    /// The pinned image must export the three functions with the ABI below.
+    unsafe fn open(bytes: &[u8], expected_sha256: &str) -> Result<Self> {
+        let image = sealed_image(bytes, expected_sha256)?;
+        let path = CString::new(format!("/proc/self/fd/{}", image.as_raw_fd()))?;
+        // SAFETY: path is a live CString naming the pinned, fully sealed image;
+        // the caller guarantees its runtime ABI and image stays live until dlclose.
         let handle = unsafe { dlopen(path.as_ptr(), RTLD_NOW | RTLD_LOCAL) };
         if handle.is_null() {
             bail!("load fitted C++ runtime: {}", dl_error());
         }
+        // SAFETY: handle is live and each fixed symbol name is NUL-terminated.
         let load = unsafe { load_symbol(handle, b"jope_runtime_model_load\0") };
+        // SAFETY: handle is live and this fixed symbol name is NUL-terminated.
         let predict = unsafe { load_symbol(handle, b"jope_runtime_model_predict\0") };
+        // SAFETY: handle is live and this fixed symbol name is NUL-terminated.
         let free = unsafe { load_symbol(handle, b"jope_runtime_model_free\0") };
         let (load, predict, free) = match (load, predict, free) {
             (Ok(load), Ok(predict), Ok(free)) => (load, predict, free),
             (Err(error), _, _) | (_, Err(error), _) | (_, _, Err(error)) => {
+                // SAFETY: this successful dlopen handle is closed exactly once;
+                // no function pointer escapes when symbol resolution fails.
                 unsafe { dlclose(handle) };
                 return Err(error);
             }
         };
         Ok(Self {
             library: handle,
+            _image: image,
+            // SAFETY: the caller's runtime ABI gives this non-null symbol the
+            // RuntimeLoad signature; the library handle is retained alongside it.
             load: unsafe { std::mem::transmute::<*mut c_void, RuntimeLoad>(load) },
+            // SAFETY: the pinned runtime exports this RuntimePredict signature
+            // and the retained library keeps the function pointer live.
             predict: unsafe { std::mem::transmute::<*mut c_void, RuntimePredict>(predict) },
+            // SAFETY: the pinned runtime exports this RuntimeFree signature
+            // and the retained library keeps the function pointer live.
             free: unsafe { std::mem::transmute::<*mut c_void, RuntimeFree>(free) },
         })
     }
@@ -241,6 +262,8 @@ impl RuntimeApi {
 
 impl Drop for RuntimeApi {
     fn drop(&mut self) {
+        // SAFETY: this is the sole owner of a successful dlopen reference.
+        // Every model holds an Rc to it and frees its model before releasing it.
         unsafe {
             dlclose(self.library);
         }
@@ -252,18 +275,16 @@ impl FittedCppRuntime {
         let work_root = work_root.into();
         fs::create_dir_all(&work_root)
             .with_context(|| format!("create fitted C++ work root {}", work_root.display()))?;
-        let runtime_sha256 = sha256_hex(RUNTIME_LIBRARY);
-        let runtime_path = work_root.join(format!("runtime-{}.so", &runtime_sha256[..16]));
-        if !runtime_path.exists() {
-            fs::write(&runtime_path, RUNTIME_LIBRARY)
-                .with_context(|| format!("write fitted C++ runtime {}", runtime_path.display()))?;
-        } else if sha256_hex(&fs::read(&runtime_path)?) != runtime_sha256 {
-            bail!("existing fitted C++ runtime image has the wrong hash");
-        }
-        let api = Rc::new(unsafe { RuntimeApi::open(&runtime_path)? });
+        // SAFETY: these are the build-embedded fitted_runtime.cpp bytes, whose
+        // three exports have the declared ABI. open pins and seals those bytes.
+        let api =
+            Rc::new(unsafe { RuntimeApi::open(RUNTIME_LIBRARY, &sha256_hex(RUNTIME_LIBRARY))? });
         Ok(Self { work_root, api })
     }
 
+    /// Load a trusted encoder-produced codec. Its executable model image must
+    /// come from a trusted producer: codec checksums establish integrity, not
+    /// authorization to execute an arbitrary native library.
     pub fn load(&self, codec: &[u8]) -> Result<FittedCppModel> {
         let decoded = decode(codec)?;
         // Decode historical containers, but never dlopen an artifact emitted
@@ -292,6 +313,9 @@ impl FittedCppRuntime {
         let path = CString::new(library_path.as_os_str().as_encoded_bytes())?;
         let mut model = std::ptr::null_mut();
         let mut error = CppRuntimeError::default();
+        // SAFETY: codec is a live, length-checked slice; path is a live CString;
+        // model/error are exclusive initialized outputs. The embedded C++ ABI
+        // checks codec bounds and catches exceptions; success transfers one handle.
         let status = unsafe {
             (self.api.load)(
                 codec.as_ptr(),
@@ -324,6 +348,9 @@ impl FittedCppModel {
         }
         let mut output = vec![0.0; table.rows];
         let mut error = CppRuntimeError::default();
+        // SAFETY: model is a live handle from this same runtime; its Rc retains
+        // the library. Input lengths match checked rows*columns, output has rows
+        // elements, and all borrows remain live for this synchronous ABI call.
         let status = unsafe {
             (self.api.predict)(
                 self.model,
@@ -347,6 +374,8 @@ impl FittedCppModel {
 
 impl Drop for FittedCppModel {
     fn drop(&mut self) {
+        // SAFETY: model is the unique successful-load handle, freed exactly once
+        // through the same ABI while its Rc still keeps the runtime loaded.
         unsafe {
             (self.api.free)(self.model);
         }
@@ -663,6 +692,8 @@ unsafe extern "C" {
 }
 
 unsafe fn load_symbol(handle: *mut c_void, name: &[u8]) -> Result<*mut c_void> {
+    // SAFETY: the caller supplies a live dlopen handle and a fixed, live,
+    // NUL-terminated symbol name; the returned address is used while it stays open.
     let pointer = unsafe { dlsym(handle, name.as_ptr().cast()) };
     if pointer.is_null() {
         bail!("load fitted C++ symbol: {}", dl_error());
@@ -671,10 +702,13 @@ unsafe fn load_symbol(handle: *mut c_void, name: &[u8]) -> Result<*mut c_void> {
 }
 
 fn dl_error() -> String {
+    // SAFETY: dlerror takes no arguments and returns a thread-local pointer.
     let pointer = unsafe { dlerror() };
     if pointer.is_null() {
         "dynamic loader returned no detail".to_string()
     } else {
+        // SAFETY: a non-null dlerror result is a live NUL-terminated string until
+        // the next loader operation on this thread; copy it before any such call.
         unsafe { std::ffi::CStr::from_ptr(pointer) }
             .to_string_lossy()
             .into_owned()
@@ -686,6 +720,50 @@ mod tests {
     use super::*;
     use crate::advanced_v3::{fit_table, ColumnSpec, DataSchema, RowSemantics};
     use crate::{GenomeIr, Objective, TaskSpec};
+
+    #[test]
+    fn embedded_runtime_loads_with_good_pin_and_rejects_mismatch() {
+        let expected = sha256_hex(RUNTIME_LIBRARY);
+        // SAFETY: the embedded runtime exports exactly RuntimeApi's declared ABI.
+        let api = unsafe { RuntimeApi::open(RUNTIME_LIBRARY, &expected) }.unwrap();
+        assert!(!api.library.is_null());
+        // SAFETY: the image still has the trusted ABI; its mismatched pin must
+        // reject it before entering the dynamic loader.
+        let error = unsafe { RuntimeApi::open(RUNTIME_LIBRARY, &"0".repeat(64)) }
+            .err()
+            .expect("wrong runtime pin must fail closed");
+        assert!(error.to_string().contains("SHA-256 mismatch"));
+    }
+
+    #[test]
+    fn mutable_cache_cannot_replace_or_disable_embedded_runtime() {
+        let scratch = tempfile::Builder::new()
+            .prefix("fitted-runtime-cache-")
+            .tempdir()
+            .unwrap();
+        let cache = scratch
+            .path()
+            .join(format!("runtime-{}.so", &sha256_hex(RUNTIME_LIBRARY)[..16]));
+        fs::write(&cache, RUNTIME_LIBRARY).unwrap();
+        let first = FittedCppRuntime::new(scratch.path()).unwrap();
+        fs::write(&cache, b"untrusted replacement").unwrap();
+        let second = FittedCppRuntime::new(scratch.path()).unwrap();
+        assert_eq!(fs::read(&cache).unwrap(), b"untrusted replacement");
+        fs::remove_file(cache).unwrap();
+        for runtime in [first, second] {
+            let path = CString::new("unused-model.so").unwrap();
+            let mut model = std::ptr::null_mut();
+            let mut error = CppRuntimeError::default();
+            // SAFETY: a live one-byte codec, CString and exclusive initialized
+            // outputs satisfy the ABI; its codec check rejects before any write.
+            let status = unsafe {
+                (runtime.api.load)(b"x".as_ptr(), 1, path.as_ptr(), &mut model, &mut error)
+            };
+            assert_eq!(status, 2);
+            assert!(model.is_null());
+            assert_eq!(error.code, 2);
+        }
+    }
 
     fn fixture() -> (BoundModel, RawTable) {
         let schema = DataSchema {
@@ -1037,6 +1115,8 @@ int main() {
         let path = CString::new(directory.join("model.so").as_os_str().as_encoded_bytes()).unwrap();
         let mut handle = std::ptr::null_mut();
         let mut error = CppRuntimeError::default();
+        // SAFETY: stored is a live encoder-produced revision-2 codec, path is a
+        // live CString, and handle/error are initialized exclusive output buffers.
         let status = unsafe {
             (runtime.api.load)(
                 stored.as_ptr(),

@@ -423,6 +423,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/executable_verification_identity_rebaseline.v1.json");
     assert_eq!(executable_cache["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(executable_cache["fixtures"][0]["path"], changed_fixtures[1]);
+    // Sealed embedded runtime and libc dependency: evaluator identity only.
+    let sealed_runtime =
+        old_fixture("transitions/fitted_runtime_sealed_identity_rebaseline.v1.json");
+    assert_eq!(sealed_runtime["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(sealed_runtime["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -436,6 +441,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         clippy_floor,
         corpus_bounds,
         executable_cache,
+        sealed_runtime,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

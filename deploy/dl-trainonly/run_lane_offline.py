@@ -26,6 +26,8 @@ MODULES = (
     "tests.test_jtt1", "tests.test_payload_strip", "tests.test_quarantine", "tests.test_admission_fail_closed", "test_hwm_publish", "test_gpu_manifest_cut",
     "test_manifest_binding",
     "tests.test_v2_rowsel_raw_v2g", "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation",
+    "tests.test_v2_nonraw_target_linear", "tests.test_v2_rowsel_build_fallback", "tests.test_v2_rowsel_build_fold_isolation", "tests.test_v2_build_local_fold_isolation",
+    "tests.test_v2_partial_refusal_manifest",
 )
 PRIVATE_INPUT_ROOTS = (
     Path("/home/ubuntu/scratch/jopedime-dl-training-v1"),
@@ -50,9 +52,9 @@ HOST_CASES = {
     "tests.test_v2_rowsel_build_split_v2g.Supplement.test_a_context_count_short_of_the_effective_folds_is_a_problem": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
     "tests.test_v2_rowsel_build_split_v2g.Supplement.test_supplement_plan_build_and_summary": "reads the pinned private NONRAW-SPLIT-A/GROUP-UNION-B owner decisions and relay; requires qualified host custody",
     "tests.test_v2_rowsel_build_split_v2g.V2.test_the_v2_route_builds_the_bytes_c0b989b6_built": "loads the private-lane code-custody builder c0b989b6 (same bytes retained as lane/historical/v2_rowsel_build.py.c0b989b6...); requires qualified host custody",
-    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
-    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_tied_column_never_reaches_the_union_find": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
-    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_ties_are_checked_before_structure": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_a_reproducing_column_tied_to_the_target_is_refused_per_context_at_build": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_the_census_reads_no_target_with_the_registry_port": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
+    "tests.test_v2_rowsel_build_split_v2g.Evidence.test_planning_never_decides_on_a_tie_with_the_registry_port_fields": "class setup loads the pinned private registry port gsk.py 83183db4; requires qualified host custody",
     "tests.test_split_defaults.BeforeAfter.test_v2": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
     "tests.test_split_defaults.BeforeAfter.test_v2g": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
     "tests.test_split_defaults.PortCheck.test_the_registry_replay_lineage_equals_fcfe3828s": "compares against the private code-custody builder bytes fcfe3828 (same bytes retained in lane/historical/); requires qualified host custody",
@@ -70,10 +72,55 @@ HOST_CASES = {
     "tests.test_v2_provenance.Resolver.test_short_prefix_never_binds": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
     "tests.test_v2_provenance.Resolver.test_summary_classification": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
     "tests.test_v2_provenance.Resolver.test_unknown_full_sha_fails_closed": "runs a scratch copy of tools/v2_provenance.py as a child process; the offline guard refuses every subprocess launch",
+    "tests.test_v2_rowsel_build_fallback.Pilot.test_the_real_record_and_the_pilot_plan": "reads the pinned private drifted-fallback lane record (rb.DRIFTED_RECORD) and plans from it; requires qualified host custody",
+    "tests.test_v2_rowsel_build_fallback.SummaryCounts.test_group_annotation_dropped_counts_only_built_datasets": "summarize_v2 hashes the pinned private owner-decision/plan inputs (sha_file under the private roots); requires qualified host custody",
     "tests.test_target_linear.Control.test_2a5429bf_is_refused": "reads the real LINEAR-DETERMINED control context 2a5429bf from the private PUBLISH-rowsel-raw-nonnumeric-v2 tree; requires qualified host custody",
 }
 # Counted from the real offline collection of MODULES on the pinned handoff, not estimated.
-EXPECTED_COLLECTED = 708
+EXPECTED_COLLECTED = 753
+# The strict lane runs as disjoint module shards plus --combine, all under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh;
+# the budget is unchanged), and --combine proves the shards cover MODULES exactly and add up to the pinned totals above. Balanced by
+# measured per-module time; each shard's collected count is pinned from the same real offline collection.
+SHARDS = (
+    (
+        "tests.test_rowsel_raw_split_v2", "tests.test_v2_rowsel_raw", "tests.test_v2_rowsel_build_split_v2",
+        "tests.test_v2_nonraw_split_v2g", "tests.test_t1raw", "tests.test_trainonly", "tests.test_payload_strip", "test_hwm_publish",
+        "tests.test_v2_nonraw_target_linear",
+    ),
+    (
+        "tests.test_v2_rowsel_build", "tests.test_v2_rowsel_build_split_v2g", "tests.test_v2_nonraw_split_v2", "tests.test_rowsel",
+        "tests.test_s3io", "tests.test_v2_provenance", "tests.test_jtt1", "tests.test_admission_fail_closed", "test_gpu_manifest_cut",
+        "tests.test_target_linear", "tests.test_v2_rowsel_raw_fold_isolation", "tests.test_v2_partial_refusal_manifest",
+    ),
+    (
+        "tests.test_rowsel_split_v2_groups", "tests.test_v2_rowsel_raw_helper", "tests.test_v2_publish", "tests.test_nonnumeric",
+        "tests.test_t1prep", "tests.test_split_defaults", "tests.test_quarantine", "test_manifest_binding", "tests.test_v2_rowsel_raw_v2g",
+        "tests.test_v2_rowsel_build_fallback", "tests.test_v2_rowsel_build_fold_isolation", "tests.test_v2_build_local_fold_isolation",
+    ),
+)
+EXPECTED_COLLECTED_BY_SHARD = (255, 262, 236)
+
+
+def module_of(case):
+    """The MODULES entry a host case belongs to (exactly one, matched on the dotted prefix)."""
+    found = [m for m in MODULES if case == m or case.startswith(m + ".")]
+    if len(found) != 1:
+        raise ValueError(f"host case {case} maps to {len(found)} modules")
+    return found[0]
+
+
+def shard_host_cases(modules):
+    return {case: why for case, why in HOST_CASES.items() if module_of(case) in modules}
+
+
+def check_shards():
+    flat = [m for shard in SHARDS for m in shard]
+    if len(flat) != len(set(flat)) or set(flat) != set(MODULES) or len(flat) != len(MODULES):
+        raise ValueError("SHARDS must partition MODULES exactly")
+    if len(EXPECTED_COLLECTED_BY_SHARD) != len(SHARDS) or sum(EXPECTED_COLLECTED_BY_SHARD) != EXPECTED_COLLECTED:
+        raise ValueError("per-shard expected counts must add up to EXPECTED_COLLECTED")
+    if sum(len(shard_host_cases(shard)) for shard in SHARDS) != len(HOST_CASES):
+        raise ValueError("every host case must belong to exactly one shard")
 
 
 def case_ids(suite):
@@ -129,7 +176,8 @@ def private_inputs_unavailable(unavailable):
         yield
 
 
-def offline_suite(loader, modules, unavailable):
+def offline_suite(loader, modules, unavailable, host_cases=None):
+    host_cases = HOST_CASES if host_cases is None else host_cases
     with private_inputs_unavailable(unavailable):
         suite = loader.loadTestsFromNames(modules)
 
@@ -142,16 +190,29 @@ def offline_suite(loader, modules, unavailable):
 
     tests = list(cases(suite))
     names = [test.id() for test in tests]
-    if len(names) != len(set(names)) or not set(HOST_CASES) <= set(names):
+    if len(names) != len(set(names)) or not set(host_cases) <= set(names):
         raise ValueError("offline collection lacks unique declared host cases")
-    selected = unittest.TestSuite(test for test in tests if test.id() not in HOST_CASES)
+    selected = unittest.TestSuite(test for test in tests if test.id() not in host_cases)
     return selected, names
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--shard", help="I/N: run only module shard I of the pinned N (CI runs all N plus --combine under one common deadline)")
+    parser.add_argument("--combine", action="store_true", help="verify OUTPUT/shard-1..N receipts and write OUTPUT/receipt.json")
     args = parser.parse_args()
+    check_shards()
+    if args.combine:
+        return combine(args.output.resolve())
+    modules, host_cases, expected, shard = MODULES, HOST_CASES, EXPECTED_COLLECTED, None
+    if args.shard:
+        index, _, total = args.shard.partition("/")
+        if not (index.isdigit() and total.isdigit() and int(total) == len(SHARDS) and 1 <= int(index) <= len(SHARDS)):
+            raise SystemExit(f"--shard must be I/{len(SHARDS)}")
+        shard = int(index)
+        modules = SHARDS[shard - 1]
+        host_cases, expected = shard_host_cases(modules), EXPECTED_COLLECTED_BY_SHARD[shard - 1]
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     scratch = out / "scratch"
@@ -189,7 +250,7 @@ def main():
     sys.path.insert(0, str(root))
     versions = {name: importlib.metadata.version(name) for name in ("numpy", "boto3", "botocore")}
     unavailable = []
-    suite, collected_names = offline_suite(unittest.defaultTestLoader, MODULES, unavailable)
+    suite, collected_names = offline_suite(unittest.defaultTestLoader, modules, unavailable, host_cases)
     names = list(case_ids(suite))
     start = datetime.datetime.now(datetime.timezone.utc).isoformat()
     tick = time.monotonic()
@@ -202,9 +263,10 @@ def main():
               "argv": sys.argv, "python": sys.executable, "cwd": str(root), "dependencies": versions,
               "handoff_sha256": before["handoff_sha256"], "source_unchanged": before == after and adapter_before == adapter_after,
               "adapter_source_sha256": adapter_before,
-              "modules": list(MODULES), "case_ids": names, "collection_case_ids": collected_names,
+              "shard": f"{shard}/{len(SHARDS)}" if shard else None, "expected_collected": expected,
+              "modules": list(modules), "case_ids": names, "collection_case_ids": collected_names,
               "collected": len(collected_names), "executed": result.testsRun,
-              "excluded": len(HOST_CASES), "excluded_cases": HOST_CASES,
+              "excluded": len(host_cases), "excluded_cases": host_cases,
               "unavailable_host_input_probes": sorted(set(unavailable)),
               "failed": len(result.failures) + len(result.errors), "skipped": len(result.skipped),
               "expected_failures": len(result.expectedFailures), "unexpected_successes": len(result.unexpectedSuccesses),
@@ -218,10 +280,59 @@ def main():
         json.dump(report, stream, indent=2)
         stream.write("\n")
     print(json.dumps({key: report[key] for key in ("collected", "executed", "excluded", "failed", "skipped", "seconds", "handoff_sha256", "source_unchanged")}))
-    return not (result.wasSuccessful() and not forbidden and before == after and adapter_before == adapter_after and len(collected_names) == EXPECTED_COLLECTED
-                and len(names) == result.testsRun == EXPECTED_COLLECTED - len(HOST_CASES)
-                and set(collected_names) - set(names) == set(HOST_CASES)
+    return not (result.wasSuccessful() and not forbidden and before == after and adapter_before == adapter_after and len(collected_names) == expected
+                and len(names) == result.testsRun == expected - len(host_cases)
+                and set(collected_names) - set(names) == set(host_cases)
                 and not result.skipped and not result.expectedFailures and not result.unexpectedSuccesses)
+
+
+def combine(out):
+    """Fail unless OUTPUT/shard-1..N are the pinned shards, each clean, and together the exact full strict lane."""
+    receipts, errors = [], []
+    for index in range(1, len(SHARDS) + 1):
+        shard_dir = out / f"shard-{index}"
+        try:
+            receipt = json.loads((shard_dir / "receipt.json").read_bytes())
+            log_ok = hashlib.sha256((shard_dir / "unittest.log").read_bytes()).hexdigest() == receipt["log_sha256"]
+        except (OSError, ValueError, KeyError) as err:
+            errors.append(f"shard {index}: unreadable receipt or log ({type(err).__name__})")
+            continue
+        receipts.append(receipt)
+        if not log_ok:
+            errors.append(f"shard {index}: unittest.log does not match its receipt")
+        if receipt.get("shard") != f"{index}/{len(SHARDS)}" or receipt.get("modules") != list(SHARDS[index - 1]):
+            errors.append(f"shard {index}: not the pinned shard")
+        if (receipt["collected"] != EXPECTED_COLLECTED_BY_SHARD[index - 1] or receipt["failed"] or receipt["skipped"]
+                or receipt["expected_failures"] or receipt["unexpected_successes"] or receipt["forbidden_attempts"]
+                or not receipt["source_unchanged"] or receipt["executed"] != receipt["collected"] - receipt["excluded"]):
+            errors.append(f"shard {index}: not clean or not the pinned count")
+    if len(receipts) == len(SHARDS):
+        collected = [case for r in receipts for case in r["collection_case_ids"]]
+        executed = [case for r in receipts for case in r["case_ids"]]
+        excluded = {case for r in receipts for case in r["excluded_cases"]}
+        if len(collected) != len(set(collected)) or len(collected) != EXPECTED_COLLECTED:
+            errors.append(f"union collected {len(collected)} != {EXPECTED_COLLECTED} unique identities")
+        if len(executed) != EXPECTED_COLLECTED - len(HOST_CASES) or sum(r["executed"] for r in receipts) != len(executed):
+            errors.append(f"union executed {len(executed)} != {EXPECTED_COLLECTED - len(HOST_CASES)}")
+        if excluded != set(HOST_CASES) or set(collected) - set(executed) != set(HOST_CASES):
+            errors.append("union exclusions are not exactly HOST_CASES")
+        for key in ("handoff_sha256", "adapter_source_sha256", "dependencies", "python"):
+            if len({json.dumps(r[key], sort_keys=True) for r in receipts}) != 1:
+                errors.append(f"shards disagree on {key}")
+    report = {"schema": "jope.dl-offline-fixtures-combined/v1", "shards": len(SHARDS), "verdict": "FAIL" if errors else "PASS",
+              "errors": errors, "collected": sum(r["collected"] for r in receipts), "executed": sum(r["executed"] for r in receipts),
+              "excluded": sum(r["excluded"] for r in receipts), "failed": sum(r["failed"] for r in receipts),
+              "skipped": sum(r["skipped"] for r in receipts),
+              "seconds_by_shard": [round(r["seconds"], 1) for r in receipts],
+              "handoff_sha256": receipts[0]["handoff_sha256"] if receipts else None,
+              "source_unchanged": bool(receipts) and all(r["source_unchanged"] for r in receipts),
+              "shard_receipt_sha256": [hashlib.sha256((out / f"shard-{i}" / "receipt.json").read_bytes()).hexdigest()
+                                       for i in range(1, len(receipts) + 1)]}
+    with (out / "receipt.json").open("x") as stream:
+        json.dump(report, stream, indent=2)
+        stream.write("\n")
+    print(json.dumps({key: report[key] for key in ("verdict", "collected", "executed", "excluded", "failed", "skipped", "seconds_by_shard", "errors")}))
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":

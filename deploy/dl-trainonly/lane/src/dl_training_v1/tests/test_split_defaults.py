@@ -40,6 +40,8 @@ RAW_BEFORE = CUSTODY / "v2_rowsel_raw.py.28be7f98ae0ae1bbf1f093d1120717216ac872d
 PORT_FIELDS = ("port_reproduces_v1_selection", "port_fit_cpu_s")          # the only lineage fields that change
 REASON_KEY = "port_reproduces_v1_selection_not_run"                      # added next to them on the v2/v2g path
 LINEAR_KEY = "target_linear"            # LINEAR-DETERMINED gate result, added (by name) to every new v2/v2g context
+TIE_KEY = "group_target_tie"            # FOLD-1: each v2g context's own tie check (its outer-train rows), added by name
+TIE_PER_CONTEXT = "per context on its own outer-train rows (fold_target_tie_fn)"
 VOLATILE = ("utc_us", "cpu_s", "wall_s", "maxrss_mb", "build_cpu_s", "load_cpu_s")
 
 
@@ -307,7 +309,7 @@ class V2Path(Base):
         ps = disk.patches(rb) + [mock.patch.object(rb.scale_check, "Sources", lambda load_index: src),
                                  mock.patch.object(rb.scale_check, "DataCache", lambda max_items: None),
                                  mock.patch.object(rb, "DATASETS_INV", inv),
-                                 mock.patch.object(rb, "load_tree_scope", lambda rows, t: ({H: its}, {}, {"datasets": 1})),
+                                 mock.patch.object(rb, "load_tree_scope", lambda rows, t, *rest: ({H: its}, {}, {"datasets": 1})),
                                  mock.patch.object(rb, "input_refs", lambda r: dict(tb.REFS)),
                                  mock.patch.object(rb, "guard", lambda: 0), mock.patch.object(rb, "check_cap_label", lambda ds, acq: None),
                                  mock.patch.object(rb, "load_dataset", spy_load), mock.patch.object(rowsel, "sampler_select", spy)]
@@ -332,7 +334,7 @@ class V2Path(Base):
                  "group_evidence": {"reproducing": [tg.GCOL]}, "empty_folds": [], "effective_folds": 5}
         rc, rec, loads, spy = self.run_build_v2("kmeans-clean-groups", extra, tg.M)
         self.assertEqual((rc, rec["status"], loads, spy.all_position_calls()), (0, "done", [False], 0), rec.get("detail"))
-        self.assertIsNone(rec["group_target_tie"])
+        self.assertEqual(rec["group_target_tie"], TIE_PER_CONTEXT)        # FOLD-1: never a dataset-level y decision
 
 
 class BeforeAfter(Base):
@@ -344,7 +346,7 @@ class BeforeAfter(Base):
         return mod.build_dataset_v2(ds, its, shard, tb.CODES, dict(tb.REFS), budget=tb.BUDGET, profile=prof,
                                     extra={"registry_grouping": {"registry_grouped_by_feature_column": True}})
 
-    def compare(self, m, prof_of):
+    def compare(self, m, prof_of, v2g=False):
         old = load_custody(BUILD_BEFORE, "v2_rowsel_build_fcfe3828")
         disk = DiskDataset(self.dir / "in", m)
         ds_old, ds_new = disk.load(old), disk.load(rb, v1_port_check=False)
@@ -360,7 +362,8 @@ class BeforeAfter(Base):
         self.assertEqual(strip(la, PORT_FIELDS), strip(lb, PORT_FIELDS))
         rec_keys = VOLATILE + ("contexts", "lineage", "group_target_tie")
         self.assertEqual(strip(a, rec_keys), strip(b, rec_keys))
-        self.assertIsNone(b.get("group_target_tie"))
+        self.assertEqual(b.get("group_target_tie"), TIE_PER_CONTEXT if v2g else None)
+        self.assertEqual([strip(c) for c in a["contexts"]], [strip(c, VOLATILE + (LINEAR_KEY,)) for c in b["contexts"]])
         for c in a["contexts"]:
             da, db = self.dir / "before" / c["view_id"], self.dir / "after" / c["view_id"]
             for f in ("encoder.jtt1.gz", "teacher.jtt1.gz", "a0.f32", ".done"):
@@ -370,13 +373,15 @@ class BeforeAfter(Base):
             self.assertEqual(lcb.pop(REASON_KEY), rb.PORT_NOT_RUN)
             self.assertEqual((lcb["port_reproduces_v1_selection"], type(lca["port_reproduces_v1_selection"])), (None, bool))
             self.assertEqual(strip(lca, PORT_FIELDS), strip(lcb, PORT_FIELDS))
-            self.assertEqual(strip(ca), strip(cb))
+            self.assertIsNone(cb[LINEAR_KEY]["verdict"])
+            self.assertEqual((cb.get(TIE_KEY) or {}).get("result"), "admit" if v2g else None)
+            self.assertEqual(strip(ca), strip(cb, VOLATILE + (LINEAR_KEY, TIE_KEY)))
 
     def test_v2(self):
         self.compare(tb.fixture_matrix(), lambda mod: mod.PROFILE_V2)
 
     def test_v2g(self):
-        self.compare(tg.M, lambda mod: mod.profile_v2g(tg.GCOL, tg.GNAME, tg.REPL))
+        self.compare(tg.M, lambda mod: mod.profile_v2g(tg.GCOL, tg.GNAME, tg.REPL), v2g=True)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,8 @@
 """Manifest for raw-route GPU encoding sets whose context.json carries no rowsel.split (owner ENG:watcher 16:28 MT item 3).
 
 The GPU encoder copied a slim parent context: rowsel.identity and split_schema, but no rowsel.split block, so the frozen
-tools/v2_rowsel_raw_manifest.py (sha256 16b7f263...) finds no cut and --require-cut refuses the set (publish-batch-v3 exit 7,
+tools/v2_rowsel_raw_manifest.py (sha256 16b7f263...; now 0a9f62ed..., which adds the FOLD-1 partial-refusal
+membership check of PR #251 review 5441124504 and is otherwise unchanged) finds no cut and --require-cut refuses the set (publish-batch-v3 exit 7,
 gpu-rowsel-raw-clean-v2). This adapter runs that tool UNCHANGED except cut_of(): for a context with a `gpu` block and no cut
 of its own, the cut is the tool's own cut_of() applied to the --source build-tree context with the SAME view_id and the SAME
 context_sha256 (the tool separately refuses any identity, rights or GPU-input mismatch with that source). The inherited value
@@ -37,7 +38,7 @@ sys.path.insert(
 )  # the frozen tool and transport import dltrain from the lane root, as in hwm_publish.py
 TOOL = (
     LANE / "tools/v2_rowsel_raw_manifest.py",
-    "16b7f2631dd57f15b5ecf84c603ef6e10add7ff49fc7a789213c885c43931748",
+    "0a9f62edc4b6a991964132dcb4dd114c444f98e190f273de4faf57a15b9966d5",
 )
 TRANSPORT = (
     LANE / "tools/v2_publish.py",

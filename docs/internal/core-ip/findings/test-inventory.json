@@ -105,6 +105,10 @@
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
     },
+    "python:deploy/ci/test-dl-offline-group.py": {
+      "role": "infrastructure",
+      "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
+    },
     "python:deploy/ci/test-full-main.py": {
       "role": "infrastructure",
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem"
@@ -2509,6 +2513,51 @@
       ]
     },
     "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw_v2g.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_target_linear.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_build_local_fold_isolation.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "teaching",
+        "storage"
+      ]
+    },
+    "python:deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_partial_refusal_manifest.py": {
       "role": "regression",
       "subsystems": [
         "preparation",

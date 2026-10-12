@@ -1147,6 +1147,7 @@ name = "feat-math"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "libc",
  "rayon",
  "serde",
  "serde_json",

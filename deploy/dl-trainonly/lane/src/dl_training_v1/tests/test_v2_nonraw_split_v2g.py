@@ -5,7 +5,8 @@ MUST FAIL it.
   Groups      annotated groups never straddle folds; split v2 without groups straddles them (must fail); every group is
               a union with the feature duplicates; with no group values the hook reproduces split v2 exactly
   TargetFree  y never moves the split; duplicate- and group-preserving outer-test feature changes never move it; a split
-              whose group key reads y is refused (must fail); the group column can never be the target
+              whose group key reads y is refused (must fail); the group column can never be the target; FOLD-1: the
+              target-tie guard runs per context after the split on that context's own outer-train rows
   Identity    cut_id 'trainonly-split-v2g:' + split_sha256(h, partition, group spec, folds); replaces_cut = [registry
               split, as-built v2split cut]; comparable_with_replaced false; v2split context schemas; new view tags
   Dataset     outer-test values of fold f never reach context f's train side (end to end); leaky builders refused
@@ -204,53 +205,80 @@ class TargetFree(unittest.TestCase):
         out.append(("target_function_of_group", M))
         return out
 
+    def _each_context_refused(self, rec, out, reason, inp, part):
+        """Every context refused with `reason`, each decided by fold_target_tie over its OWN outer-train rows R; nothing written."""
+        self.assertEqual((rec["status"], rec["reason"]), ("failed", "group_column_target_tied"), rec.get("detail"))
+        folds, _ = tool.v2g_split(H, inp["values"], inp["specs"], part, inp["group_values"], g.group_spec(1, "n1"))
+        built = [f for f in range(5) if folds[f]]
+        self.assertEqual(json.loads(rec["detail"]), {str(f): reason for f in built})
+        for f in built:
+            R, _ = tool.fold_rows(folds, f, N)
+            self.assertEqual(tool.fold_target_tie(inp["group_values"], inp["group_tie_y"], R), reason)
+        self.assertEqual(sorted(p.name for p in out.iterdir()), ["_datasets"])
+
     def test_a_target_tied_group_column_is_refused_in_the_l7b_tool(self):
+        """FOLD-1 (owner 07:22Z; supersedes #218 finding 8): loading reads no y and refuses nothing; after the split each
+        context whose OWN outer-train rows show the tie is refused (every context here) and nothing is written. MUST FAIL
+        on the all-rows guard before the split (the loader itself raised)."""
         self.assertIsNone(g.target_tied_group(GV, A[:, -1]))              # control: the region column is admitted
         for reason, M in self._tied():
-            e = g_entry()
-            e["group_column"] = {"spec": g.group_spec(1, "n1"), "source": "test", "evidence": {}}
-            with self.assertRaises(tool.SplitV2Error) as cm:
-                t1_inputs(M, e)
-            self.assertEqual(cm.exception.reason, "group_column_target_tied", reason)
-            self.assertTrue(cm.exception.detail.startswith(reason), cm.exception.detail)
-            out = Path(tempfile.mkdtemp(prefix="nonraw-v2gsplit-tied-", dir=os.environ.get("TMPDIR")))
-            rec = tool.run_dataset_v2(e, out, "L7b", lambda e, M=M: t1_inputs(M, e), set(), {"code": "x"}, log=lambda s: None,
-                                      version=tool.SPLIT_V2G)
-            self.assertEqual((rec["status"], rec["reason"]), ("failed", "group_column_target_tied"))
-            self.assertEqual(sorted(p.name for p in out.iterdir()), ["_datasets"])
+            with self.subTest(reason=reason):
+                e = g_entry()
+                e["group_column"] = {"spec": g.group_spec(1, "n1"), "source": "test", "evidence": {}}
+                inp = t1_inputs(M, e)                                       # no dataset-level, all-rows refusal
+                self.assertEqual(inp["universe"]["group_target_tie"]["result"], "per context on its own outer-train rows (fold_target_tie)")
+                out = Path(tempfile.mkdtemp(prefix="nonraw-v2gsplit-tied-", dir=os.environ.get("TMPDIR")))
+                rec = tool.run_dataset_v2(e, out, "L7b", lambda e, M=M: t1_inputs(M, e), set(), {"code": "x"}, log=lambda s: None,
+                                          version=tool.SPLIT_V2G)
+                self._each_context_refused(rec, out, reason, inp, "t1")
 
     def test_a_target_tied_group_column_is_refused_in_the_l7a_tool(self):
+        """As in the L7b tool, through make_l7a_loader's attach_groups. MUST FAIL on the all-rows guard before the split."""
         lo = l7a.local
         for reason, M in self._tied():
-            e = g_entry()
-            e["group_column"] = {"spec": g.group_spec(1, "n1"), "source": "test", "evidence": {}}
+            with self.subTest(reason=reason):
+                e = g_entry()
+                e["group_column"] = {"spec": g.group_spec(1, "n1"), "source": "test", "evidence": {}}
 
-            def load(e, M=M):                                               # what make_l7a_loader does after the rematch
-                inp = l7a.l7a_inputs(e, VALUES, RAW_SPECS, "a" * 64, "m" * 64, base.COV, "incoming", {"sha256": "r" * 64}, {},
-                                     base.REMATCH)
-                return lo.attach_groups(inp, e, M)
-            with self.assertRaises(lo.SplitV2Error) as cm:
-                load(e)
-            self.assertEqual((cm.exception.reason, cm.exception.detail.split(":")[0]), ("group_column_target_tied", reason))
-            out = Path(tempfile.mkdtemp(prefix="nonraw-v2gsplit-tied-l7a-", dir=os.environ.get("TMPDIR")))
-            rec = lo.run_dataset_v2(e, out, "L7a", load, set(), {"code": "x"}, log=lambda s: None, version=lo.SPLIT_V2G)
-            self.assertEqual((rec["status"], rec["reason"]), ("failed", "group_column_target_tied"))
-            self.assertEqual(sorted(p.name for p in out.iterdir()), ["_datasets"])
+                def load(e, M=M):                                           # what make_l7a_loader does after the rematch
+                    inp = l7a.l7a_inputs(e, VALUES, RAW_SPECS, "a" * 64, "m" * 64, base.COV, "incoming", {"sha256": "r" * 64}, {},
+                                         base.REMATCH)
+                    return lo.attach_groups(inp, e, M)
+                inp = load(e)                                               # no dataset-level, all-rows refusal
+                out = Path(tempfile.mkdtemp(prefix="nonraw-v2gsplit-tied-l7a-", dir=os.environ.get("TMPDIR")))
+                rec = lo.run_dataset_v2(e, out, "L7a", load, set(), {"code": "x"}, log=lambda s: None, version=lo.SPLIT_V2G)
+                _, srep = lo.v2g_split(H, inp["values"], inp["specs"], lo.ROUTES_V2G["L7a"]["partition"], inp["group_values"],
+                                       g.group_spec(1, "n1"))
+                if srep["components"] < 2:                                  # the raw features + this column form one component:
+                    self.assertEqual((rec["status"], rec["reason"]), ("failed", "split_check_failed"))   # refused on features only
+                    self.assertIn("fewer_than_two_components", rec["detail"])
+                    self.assertEqual(sorted(p.name for p in out.iterdir()), ["_datasets"])
+                    continue
+                self._each_context_refused(rec, out, reason, inp, lo.ROUTES_V2G["L7a"]["partition"])
 
     def test_an_ambiguous_candidate_tied_to_the_target_refuses_the_dataset(self):
+        """FOLD-1: an ambiguous candidate tied to y is never refused for the tie at dataset level; the candidates are
+        resolved on features only (different component structures refuse the dataset, a feature-only reason). MUST FAIL
+        on the all-rows guard, which refused as group_column_target_tied."""
         M = np.array(A, copy=True)
         M[:, 1] = 3.0 * M[:, -1] + 2.0
         e = g_entry()
         e["group_column"] = {"ambiguous": [1, 2], "names": ["n0", "n1", "n2", "c0", "target"], "evidence": {"census_candidates": []}}
-        with self.assertRaises(tool.SplitV2Error) as cm:
-            tool.attach_groups(tool.l7b_inputs(e, M, META, "m" * 64, "a" * 64, base.COV, "frozen"), e, M)
-        self.assertEqual(cm.exception.reason, "group_column_target_tied")
+        with mock.patch.object(g, "target_tied_group", side_effect=AssertionError("y read before the split")):
+            with self.assertRaises(tool.SplitV2Error) as cm:
+                tool.attach_groups(tool.l7b_inputs(e, M, META, "m" * 64, "a" * 64, base.COV, "frozen"), e, M)
+        self.assertNotEqual(cm.exception.reason, "group_column_target_tied")
+        self.assertIn("ambiguous", cm.exception.reason)
 
     def test_an_admitted_group_column_records_the_check(self):
+        """Each context records its OWN tie check (admit, over its n_train outer-train rows); the universe records the
+        per-context rule. MUST FAIL on the dataset-level 'admit' record."""
         for mode in ("L7b", "L7a"):
             for _, _, rec in computed(mode)["results"]:
                 gt = rec["universe"]["group_target_tie"]
-                self.assertEqual((gt["result"], gt["reasons_checked"]), ("admit", list(g.TARGET_TIE_REASONS)))
+                self.assertEqual((gt["result"], gt["reasons_checked"]), ("per context on its own outer-train rows (fold_target_tie)", list(g.TARGET_TIE_REASONS)))
+                ct = rec["group_target_tie"]
+                self.assertEqual((ct["result"], ct["n_rows"], ct["reasons_checked"]), ("admit", rec["n_train"], list(g.TARGET_TIE_REASONS)))
 
     def test_group_values_carry_no_missing_marker(self):
         """PR #218 F4 note: the T1 group values have no missing marker at all (A is finite: scale_check refuses a
