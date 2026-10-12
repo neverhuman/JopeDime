@@ -464,6 +464,9 @@ impl ActivationLock {
             .write(true)
             .mode(0o600)
             .open(path)?;
+        // SAFETY: `file` owns the live FD, retained in `Self` on success. Both arguments are c_int;
+        // flock borrows the FD without pointers or ownership transfer. Every nonzero result,
+        // including EWOULDBLOCK or other errors, is refused below and drops/closes `file`.
         let result = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
         ensure!(
             result == 0,
