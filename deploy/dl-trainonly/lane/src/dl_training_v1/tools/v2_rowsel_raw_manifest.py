@@ -3,7 +3,9 @@
 A raw rebuild draws a new value-free outer split, so a dataset's epoch-0 contexts are replaced as a group
 (context.json `epoch0_replaced`, level "dataset"; new fold f is not epoch-0 fold f). A dataset is published only if ALL its
 new contexts are in the tree (the builder's `new_contexts` count) and each one's inputs match the build tree it came from:
-  CPU trees  encoder/teacher/A0 sha256 equal the build-tree context.json (which may differ only by the Dope additions)
+  CPU trees  encoder/teacher/A0 sha256 equal the build-tree context.json (which may differ only by the Dope additions); a
+             PAYLOAD-STRIP-PUBLISH copy (tools/v2_strip_outer_test.py) instead binds through its publication_strip record:
+             original sha256/raw_sha256 = the build-tree file, stripped sha256 = the published file, n_test 0, train rows equal
   GPU trees  the GPU input encoder JTT1 sha256 equals the build-tree encoder.
 Datasets the builder could not rebuild are listed from the coverage receipt with their reasons. --publish PUTs the manifest
 create-only (research-only contexts route the manifest under research-only/manifests/).
@@ -114,9 +116,17 @@ def main(argv=None):
                 if (ctx["gpu"].get("input") or {}).get("encoder_jtt1_sha256") != sc["files"]["encoder.jtt1.gz"]["sha256"]:
                     raise SystemExit(f"{p['view_id']}: GPU input differs from the source encoder")
             else:
+                strip = (ctx.get("publication_strip") or {}).get("files") or {}
                 for f in INPUT_FILES:
                     got = ctx["files"].get(f) or (ctx.get("row_level_inputs_local_custody") or {}).get(f) or {}
-                    if got.get("sha256") != sc["files"][f]["sha256"]:
+                    srec = strip.get(f)
+                    if srec is not None:   # stripped copy: the record's original is the build-tree file, its stripped the listed one
+                        orig, new = srec.get("original") or {}, srec.get("stripped") or {}
+                        if (orig.get("sha256"), orig.get("raw_sha256")) != (sc["files"][f]["sha256"], sc["files"][f].get("raw_sha256")) \
+                                or new.get("sha256") != got.get("sha256") or new.get("raw_sha256") != got.get("raw_sha256") \
+                                or srec.get("n_test_payload") != 0 or srec.get("train_rows_sha256_equal") is not True:
+                            raise SystemExit(f"{p['view_id']}: {f} publication_strip record does not bind the source build")
+                    elif got.get("sha256") != sc["files"][f]["sha256"]:
                         raise SystemExit(f"{p['view_id']}: {f} differs from the source build")
             if a.require_cut and cut_of(ctx) is None:
                 raise SystemExit(f"{p['view_id']}: no split-v2/v2g cut_id")
@@ -137,7 +147,9 @@ def main(argv=None):
                             "rowsel_identity": (ctx.get("rowsel") or {}).get("identity"), "rights": ctx.get("rights"),
                             "cut_id": cut_of(ctx), "comparable_with_replaced": (ctx.get("cut") or {}).get("comparable_with_replaced", False if cut_of(ctx) else None),
                             "label_exposure": ctx.get("label_exposure"), "holdout_assignment": ctx.get("holdout_assignment"),
-                            "local_context_json_sha256": p["context_json_sha256"], "objects": objs})
+                            "local_context_json_sha256": p["context_json_sha256"], "objects": objs,
+                            **({"publication_strip": {k: ctx["publication_strip"].get(k) for k in ("schema", "ruling", "cut_id", "key_scheme", "code_sha256", "files")}}
+                               if isinstance(ctx.get("publication_strip"), dict) else {})})
         datasets.append({"dataset_hash": h, "class": ps[0]["ctx"].get("class"), "replaces_epoch0": rep})
     not_rebuilt = None
     if cov is not None:
@@ -148,6 +160,7 @@ def main(argv=None):
            "datasets": datasets, "published_datasets": len(datasets), "published_contexts": len(entries),
            "epoch0_contexts_replaced": sum(d["replaces_epoch0"]["count"] for d in datasets),
            "published_objects": sum(len(e["objects"]) for e in entries), "missing_in_ledger": len(missing),
+           "row_level_key_scheme": {n: {"component": vp.FILES[n][0], "object_prefix": vp.FILES[n][1]} for n in sorted(vp.ROW_LEVEL_FILES)},
            "not_rebuilt_from_coverage_receipt": not_rebuilt, "contexts": entries, "code_sha256": sha(Path(__file__).read_bytes()),
            "publisher_code_sha256": sha((Path(__file__).resolve().parent / "v2_publish.py").read_bytes())}
     body = (json.dumps(doc, sort_keys=True, separators=(",", ":")) + "\n").encode()

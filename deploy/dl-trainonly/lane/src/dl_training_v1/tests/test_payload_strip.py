@@ -1,0 +1,523 @@
+"""PAYLOAD-STRIP-PUBLISH (owner ruling 2026-10-06 06:52 MT, owner-decisions-20261006T125305Z.json): offline proofs for
+tools/v2_strip_outer_test.py, dltrain/scorer_labels.py, the publisher gate on real strip output and the manifest binding.
+
+Must-fail cases (each must stay red if the protection is removed; see the mutant receipts):
+  (a) an unstripped payload (n_test > 0) is refused by the publisher gate and flagged by the scan
+  (b) a payload whose train block was altered is refused by the strip tool (train_rows_sha256 mismatch)
+  (c) the tree scan fails on n_test > 0, on a payload row beyond the recorded n_train whose target bytes are a scorer
+      target, and on a scorer artifact inside a publish tree; exact float64 bytes of the target column only
+  (d) no dltrain/ or tools/ module other than the scorer module, its writer (the strip tool) and the S1 outer-test scorer
+      adapter (tools/s1_outer_test_scorer.py, the only scorer-side reader) imports or names the scorer artifact
+"""
+import ast
+import contextlib
+import gzip
+import hashlib
+import importlib.util
+import io
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+from dltrain import jtt1, metafeatures, quarantine, s3io, scorer_labels, trainonly
+
+SRC = Path(__file__).resolve().parents[1]
+
+
+def _load(name, rel):
+    spec = importlib.util.spec_from_file_location(name, SRC / rel)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+st = _load("v2_strip_outer_test", "tools/v2_strip_outer_test.py")
+vp = _load("v2_publish", "tools/v2_publish.py")
+SCORER_READER = "tools/s1_outer_test_scorer.py"      # the ONLY scorer-side reader of the outer-test labels
+ALLOWED = {"dltrain/scorer_labels.py",                 # the format module itself
+           "tools/v2_strip_outer_test.py",             # the writer (and its leak scan)
+           SCORER_READER}
+TOKENS = ("scorer_labels", "scorer-outer-test", "JTS1", ".jts1")
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def make_split(seed, n_train=48, n_test=12, p=3):
+    rng = np.random.default_rng(seed)
+    m = rng.normal(size=(n_train + n_test, p + 1))
+    return trainonly.prepare_split(m, list(range(n_train)), list(range(n_train, n_train + n_test)), min_inner_rows=5)
+
+
+def make_context(shard: Path, ds: str, fold: int, new_contexts: int = 2, record_train_rows=True, **over) -> Path:
+    view = f"{ds}__r0__f{fold}__rowselraw1_{ds[:12]}"
+    d = shard / view
+    d.mkdir(parents=True)
+    enc, tea = make_split(int(ds[:6], 16) + fold)["jtt1"], make_split(int(ds[:6], 16) + fold + 1000)["jtt1"]
+    files = {"encoder.jtt1.gz": gzip.compress(enc, mtime=0), "teacher.jtt1.gz": gzip.compress(tea, mtime=0),
+             "a0.f32": metafeatures.from_raw(enc)[0], "dope.npy": os.urandom(40)}
+    for name, body in files.items():
+        (d / name).write_bytes(body)
+    meta = {n: {"sha256": sha(b), "bytes": len(b)} for n, b in files.items()}
+    meta["encoder.jtt1.gz"]["raw_sha256"], meta["teacher.jtt1.gz"]["raw_sha256"] = sha(enc), sha(tea)
+    ts = {"encoder_train_rows": jtt1.train_rows_sha256(enc), "teacher_train_rows": jtt1.train_rows_sha256(tea)} if record_train_rows else {}
+    seed = f"{ds}{fold}"
+    ctx = {"schema": "jope.dl-v2-rowsel-raw-context/v1", "values_mode": "L7a", "view_id": view, "dataset_hash": ds, "fold": fold,
+           "context_sha256": sha(f"ctx{seed}".encode()), "outer_train_indices_sha256": sha(f"tr{seed}".encode()),
+           "outer_test_indices_sha256": sha(f"te{seed}".encode()), "scaler_sha256": sha(f"sc{seed}".encode()),
+           "inner_labels_sha256": sha(b"il"), "t1_meta_sha256": sha(b"meta"), "n_train": 48, "n_test": 12, "published": False,
+           "code_sha256": {"tools/v2_rowsel_raw.py": "2" * 64}, "row_selection_leak": ["clean"], "utc_us": 1,
+           "epoch0_replaced": {"new_contexts": new_contexts, "count": new_contexts},
+           "rowsel": {"identity": sha(seed.encode()), "split": {"schema": "rowsel-raw-split-v2", "sha256": sha(ds.encode())},
+                      "counterfactual": {"values": {"train_side": ts}}},
+           "files": meta}
+    ctx.update(over)
+    (d / "context.json").write_text(json.dumps(ctx, sort_keys=True) + "\n")
+    (d / ".done").write_bytes(b"ok\n")
+    return d
+
+
+def tree_digest(root: Path) -> dict:
+    return {str(p.relative_to(root)): sha(p.read_bytes()) for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def scorer_violations(root: Path) -> list:
+    """(d) every dltrain/ and tools/ module except ALLOWED: no import of scorer_labels in any form, and no string or bytes
+    constant naming the module, the artifact suffix or its magic."""
+    out = []
+    for f in sorted(list((root / "dltrain").glob("*.py")) + list((root / "tools").glob("*.py"))):
+        rel = f.relative_to(root).as_posix()
+        if rel in ALLOWED:
+            continue
+        for node in ast.walk(ast.parse(f.read_text(), filename=rel)):
+            names = []
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""] + [a.name for a in node.names]
+            if any("scorer_labels" in n for n in names):
+                out.append((rel, node.lineno, "import"))
+            if isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):
+                v = node.value if isinstance(node.value, str) else node.value.decode("latin-1")
+                if any(t in v for t in TOKENS):
+                    out.append((rel, node.lineno, "names the scorer artifact"))
+    return out
+
+
+class _Tree(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="pstrip-", dir=os.environ.get("TMPDIR")))
+        self.src = self.tmp / "src"
+        self.shard = self.src / "shard-0"
+        self.ctx = [make_context(self.shard, ds, f) for ds in ("0123456789abcdef", "fedcba9876543210") for f in (0, 1)]
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def strip(self, name="pub", **kw):
+        return st.strip_tree(self.src, self.tmp / name, self.tmp / f"{name}-scorer", **kw)
+
+
+class Strip(_Tree):
+    def test_strip_drops_the_test_block_and_keeps_every_train_byte(self):
+        before = tree_digest(self.src)
+        doc = self.strip()
+        self.assertEqual(doc["verdict"], "PASS", json.dumps(doc, default=str)[:2000])
+        self.assertEqual(tree_digest(self.src), before, "the source tree is only read")
+        self.assertEqual((doc["contexts_written"], doc["payloads_stripped"], doc["reverify"]["mismatched_or_unexpected"]), (4, 8, []))
+        for d in self.ctx:
+            out, sc = self.tmp / "pub" / d.parent.name / d.name, self.tmp / "pub-scorer" / d.parent.name / d.name
+            sctx, dctx = json.loads((d / "context.json").read_text()), json.loads((out / "context.json").read_text())
+            for k in ("context_sha256", "code_sha256", "view_id", "n_train", "n_test", "published", "epoch0_replaced"):
+                self.assertEqual(dctx[k], sctx[k], k)
+            for f in ("a0.f32", "dope.npy", ".done"):
+                self.assertEqual((out / f).read_bytes(), (d / f).read_bytes(), f)
+            self.assertEqual(dctx["publication_strip"]["key_scheme"], quarantine.key_scheme())
+            self.assertEqual(sorted(p.name for p in out.iterdir()), sorted(p.name for p in d.iterdir()))
+            for name in st.ROW_LEVEL:
+                o, s = gzip.decompress((d / name).read_bytes()), gzip.decompress((out / name).read_bytes())
+                ho, hs = jtt1.parse_header(o), jtt1.parse_header(s)
+                self.assertEqual((hs["n_test"], hs["n_train"], hs["p"], hs["inner_folds"]), (0, ho["n_train"], ho["p"], ho["inner_folds"]))
+                self.assertGreater(ho["n_test"], 0)
+                self.assertEqual(jtt1.train_rows_sha256(s), jtt1.train_rows_sha256(o))
+                for a, b in zip(jtt1.train_view(o)[1:], jtt1.train_view(s)[1:]):
+                    self.assertEqual(a.tobytes(), b.tobytes())
+                _, stop = jtt1.train_range(ho)
+                self.assertEqual(s, o[:4] + jtt1.HEADER.pack(ho["n_train"], 0, ho["p"], ho["inner_folds"]) + o[17:stop])
+                rec = dctx["publication_strip"]["files"][name]
+                self.assertEqual((rec["original"]["raw_sha256"], rec["stripped"]["raw_sha256"]), (sha(o), sha(s)))
+                self.assertEqual(dctx["files"][name], rec["stripped"])
+                self.assertEqual(dctx["files"][name]["sha256"], sha((out / name).read_bytes()))
+                art = sc / scorer_labels.artifact_name(name)
+                self.assertEqual(sha(art.read_bytes()), rec["scorer"]["sha256"])
+                h, X, y = scorer_labels.load(art, expect={"stripped_raw_sha256": sha(s), "view_id": d.name,
+                                                          "cut_id": "trainonly-split-v2:" + sctx["rowsel"]["split"]["sha256"]})
+                test = np.frombuffer(o[stop:], dtype="<f8").reshape(ho["n_test"], ho["p"] + 1)
+                self.assertEqual((X.tobytes(), y.tobytes()), (np.ascontiguousarray(test[:, :-1]).tobytes(), np.ascontiguousarray(test[:, -1]).tobytes()))
+                self.assertEqual(scorer_labels.reconstruct(s, gzip.decompress(art.read_bytes())), o)
+                with self.assertRaises(jtt1.JTTError):
+                    jtt1.parse_header(gzip.decompress(art.read_bytes()))     # no JTT1 decoder accepts the scorer artifact
+            self.assertEqual(metafeatures.from_raw(gzip.decompress((out / "encoder.jtt1.gz").read_bytes()))[0], (d / "a0.f32").read_bytes())
+        self.assertFalse(any(p.name.endswith(scorer_labels.SUFFIX) for p in (self.tmp / "pub").rglob("*")))
+
+    def test_create_only_and_tree_overlap(self):
+        (self.tmp / "pub").mkdir()
+        with self.assertRaises(st.StripRefused):
+            self.strip()
+        for dst, sc in ((self.src / "x", self.tmp / "s1"), (self.tmp / "d2", self.tmp / "d2" / "sc"), (self.tmp / "d3", self.src)):
+            with self.assertRaises(st.StripRefused):
+                st.strip_tree(self.src, dst, sc)
+        self.assertFalse((self.src / "x").exists())
+
+    def test_altered_train_block_is_refused(self):
+        """(b) a train-block change re-recorded consistently in context.json is caught by the builder's train_rows record."""
+        d = self.ctx[1]
+        ctx = json.loads((d / "context.json").read_text())
+        raw = bytearray(gzip.decompress((d / "encoder.jtt1.gz").read_bytes()))
+        raw[jtt1.HEADER_BYTES + 48 + 8 * 5] ^= 1                             # one bit of one train value
+        body = gzip.compress(bytes(raw), mtime=0)
+        (d / "encoder.jtt1.gz").write_bytes(body)
+        ctx["files"]["encoder.jtt1.gz"] = {"sha256": sha(body), "bytes": len(body), "raw_sha256": sha(bytes(raw))}
+        (d / "context.json").write_text(json.dumps(ctx, sort_keys=True) + "\n")
+        doc = self.strip()
+        self.assertEqual((doc["verdict"], [(r["view_id"], r["reason"]) for r in doc["refused"]]), ("FAIL", [(d.name, "train_rows_mismatch")]))
+        self.assertFalse((self.tmp / "pub").exists(), "nothing is written when any context is refused")
+        self.assertFalse((self.tmp / "pub-scorer").exists())
+
+    def test_altered_payload_without_record_update_is_refused(self):
+        d = self.ctx[0]
+        raw = bytearray(gzip.decompress((d / "teacher.jtt1.gz").read_bytes()))
+        raw[jtt1.HEADER_BYTES + 48] ^= 1
+        (d / "teacher.jtt1.gz").write_bytes(gzip.compress(bytes(raw), mtime=0))
+        doc = self.strip()
+        self.assertEqual([r["reason"] for r in doc["refused"]], ["hash_mismatch"])
+
+    def test_raw_identity_binds_when_no_train_rows_were_recorded(self):
+        """A recompressed gz of the same raw strips; a changed raw re-recorded only by its gz sha is refused by raw_sha256."""
+        shard = self.src / "shard-1"
+        d = make_context(shard, "bbbbbbbbbbbbbbbb", 0, new_contexts=1, record_train_rows=False)
+        ctx = json.loads((d / "context.json").read_text())
+        raw = gzip.decompress((d / "encoder.jtt1.gz").read_bytes())
+        body = gzip.compress(raw, compresslevel=1, mtime=0)
+        (d / "encoder.jtt1.gz").write_bytes(body)
+        ctx["files"]["encoder.jtt1.gz"].update(sha256=sha(body), bytes=len(body))
+        (d / "context.json").write_text(json.dumps(ctx, sort_keys=True) + "\n")
+        self.assertEqual(self.strip("ok")["verdict"], "PASS")
+        bad = bytearray(raw)
+        bad[jtt1.HEADER_BYTES + 48 + 3] ^= 1
+        body = gzip.compress(bytes(bad), mtime=0)
+        (d / "encoder.jtt1.gz").write_bytes(body)
+        ctx["files"]["encoder.jtt1.gz"].update(sha256=sha(body), bytes=len(body))
+        (d / "context.json").write_text(json.dumps(ctx, sort_keys=True) + "\n")
+        doc = self.strip("bad")
+        self.assertEqual([(r["view_id"], r["reason"]) for r in doc["refused"]], [(d.name, "raw_sha256_mismatch")])
+
+    def test_strip_payload_checks_the_recorded_train_rows(self):
+        raw = make_split(7)["jtt1"]
+        self.assertEqual(st.strip_payload(raw, jtt1.train_rows_sha256(raw))["train_rows_sha256"], jtt1.train_rows_sha256(raw))
+        with self.assertRaises(st.StripRefused) as cm:
+            st.strip_payload(raw, "0" * 64)
+        self.assertEqual(cm.exception.reason, "train_rows_mismatch")
+
+    def test_unrecorded_train_rows_still_bind_by_raw_sha(self):
+        shard = self.src / "shard-1"
+        make_context(shard, "aaaaaaaaaaaaaaaa", 0, new_contexts=1, record_train_rows=False)
+        doc = self.strip()
+        self.assertEqual(doc["verdict"], "PASS")
+        rows = {r["view_id"]: r for r in doc["contexts"]}
+        self.assertIsNone(rows["aaaaaaaaaaaaaaaa__r0__f0__rowselraw1_aaaaaaaaaaaa"]["payloads"]["encoder.jtt1.gz"]["train_rows_recorded_at"])
+
+    def test_cli_strip_writes_a_create_only_summary(self):
+        receipt = self.tmp / "strip-summary.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = st.main(["strip", "--src", str(self.src), "--dst", str(self.tmp / "pub"), "--scorer-dst", str(self.tmp / "sc"),
+                          "--receipt", str(receipt)])
+        self.assertEqual(rc, 0)
+        doc = json.loads(receipt.read_text())
+        self.assertEqual((doc["schema"], doc["verdict"]), (st.SUMMARY_SCHEMA, "PASS"))
+        self.assertRegex(doc["schema"], r"-summary/v\d+$")
+        self.assertEqual(doc["code_sha256"]["tools/v2_strip_outer_test.py"], sha((SRC / "tools/v2_strip_outer_test.py").read_bytes()))
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            st.main(["strip", "--src", str(self.src), "--dst", str(self.tmp / "pub2"), "--scorer-dst", str(self.tmp / "sc2"),
+                     "--receipt", str(receipt)])
+
+
+class Scan(_Tree):
+    def setUp(self):
+        super().setUp()
+        self.assertEqual(self.strip()["verdict"], "PASS")
+        self.pub, self.sc = self.tmp / "pub", self.tmp / "pub-scorer"
+
+    def test_stripped_tree_passes_and_the_original_fails(self):
+        """(a)+(c) the unstripped originals are flagged both by n_test and by exact target bytes."""
+        self.assertEqual(st.scan_tree(self.pub, self.sc)["verdict"], "PASS")
+        doc = st.scan_tree(self.src, self.sc)
+        self.assertEqual(doc["verdict"], "FAIL")
+        self.assertEqual(doc["findings_by_kind"]["n_test_positive"], 8)
+        self.assertEqual(doc["findings_by_kind"]["outer_test_target_in_payload"], 8)
+        self.assertEqual(doc["target_hits"], 8 * 12)
+        self.assertEqual(st.scan_tree(self.src)["findings_by_kind"], {"n_test_positive": 8}, "the n_test check needs no scorer tree")
+
+    def test_test_rows_folded_into_the_train_block_are_caught(self):
+        """(c) header n_train inflated to hold the outer-test rows, n_test=0: valid JTT1, but rows beyond the recorded n_train
+        carry scorer targets."""
+        d = self.pub / self.ctx[2].parent.name / self.ctx[2].name
+        o = gzip.decompress((self.ctx[2] / "encoder.jtt1.gz").read_bytes())
+        h = jtt1.parse_header(o)
+        labels = o[17:17 + h["n_train"]] + bytes(h["n_test"])
+        folded = o[:4] + jtt1.HEADER.pack(h["n_train"] + h["n_test"], 0, h["p"], 2) + labels + o[17 + h["n_train"]:]
+        jtt1.parse_header(folded)
+        os.chmod(d / "encoder.jtt1.gz", 0o644)
+        (d / "encoder.jtt1.gz").unlink()
+        (d / "encoder.jtt1.gz").write_bytes(gzip.compress(folded, mtime=0))
+        doc = st.scan_tree(self.pub, self.sc)
+        self.assertEqual(doc["findings_by_kind"], {"n_train_differs_from_record": 1, "outer_test_target_in_payload": 1})
+        self.assertEqual(doc["target_hits"], h["n_test"])
+        self.assertEqual(vp.assert_no_outer_test("encoder.jtt1.gz", gzip.compress(folded), None)["n_test"], 0)
+        with self.assertRaises(vp.Refused):          # the publisher binds n_train to the context and refuses it as well
+            vp.assert_no_outer_test("encoder.jtt1.gz", gzip.compress(folded), 48)
+
+    def test_target_matching_is_exact_bytes_of_the_target_column_only(self):
+        """No value search across features, and train rows are never compared: a feature or a train target equal to a
+        test target is not a finding."""
+        d = self.pub / self.ctx[0].parent.name / self.ctx[0].name
+        o = gzip.decompress((self.ctx[0] / "encoder.jtt1.gz").read_bytes())
+        h = jtt1.parse_header(o)
+        _, stop = jtt1.train_range(h)
+        t0 = o[stop + 8 * h["p"]:stop + 8 * (h["p"] + 1)]                     # first outer-test target
+        s = bytearray(gzip.decompress((d / "encoder.jtt1.gz").read_bytes()))
+        w, base = 8 * (h["p"] + 1), 17 + h["n_train"]
+        s[base:base + 8] = t0                                                 # train row 0, feature 0
+        s[base + w + w - 8:base + 2 * w] = t0                                 # train row 1, target
+        os.chmod(d / "encoder.jtt1.gz", 0o644)
+        (d / "encoder.jtt1.gz").unlink()
+        (d / "encoder.jtt1.gz").write_bytes(gzip.compress(bytes(s), mtime=0))
+        self.assertEqual(st.scan_tree(self.pub, self.sc)["verdict"], "PASS")
+        near = np.frombuffer(t0, "<f8")[0]                                    # one ULP away is not the same value
+        s2 = bytearray(o)
+        s2[stop + 8 * h["p"]:stop + w] = np.nextafter(near, np.inf).astype("<f8").tobytes()
+        s2[stop:stop + 8] = o[stop + w + 8 * h["p"]:stop + 2 * w]             # its feature 0 = another test target: not a hit
+        p = self.tmp / "near" / "shard-0" / self.ctx[0].name
+        shutil.copytree(self.ctx[0], p)
+        (p / "encoder.jtt1.gz").write_bytes(gzip.compress(bytes(s2), mtime=0))
+        doc = st.scan_tree(self.tmp / "near", self.sc)
+        self.assertEqual(doc["target_hits"], 2 * 12 - 1, "every exact target matches except the one moved by one ULP")
+
+    def test_scorer_artifact_inside_a_publish_tree_fails(self):
+        art = next(self.sc.rglob("*" + scorer_labels.SUFFIX))
+        d = self.pub / art.parent.parent.name / art.parent.name
+        shutil.copyfile(art, d / "extra.gz")
+        doc = st.scan_tree(self.pub, self.sc)
+        self.assertEqual(doc["findings_by_kind"], {"scorer_artifact_in_tree": 1})
+        (d / "extra.gz").unlink()
+        shutil.copyfile(art, self.pub / art.name)
+        self.assertEqual(st.scan_tree(self.pub)["findings_by_kind"], {"scorer_artifact_in_tree": 1})
+
+
+class PublisherOnStripOutput(_Tree):
+    def _run(self, build):
+        tmp = Path(tempfile.mkdtemp(dir=self.tmp))
+        bucket = vp.FakeBucket()
+        writer, reader, _ = vp.fake_clients(tmp / "budget.jsonl", bucket)
+        ledger = vp.PublishLedger(tmp / "ledger.jsonl")
+        try:
+            return vp.run(build, writer, reader, ledger, writer._dltrain_guard.ledger, workers=2), bucket
+        finally:
+            ledger.close()
+
+    def test_gate_admits_the_strip_copy_and_refuses_the_original(self):
+        """(a) the real strip output publishes in the dry-run bucket with no outer-test row anywhere; the original stops."""
+        self.assertEqual(self.strip()["verdict"], "PASS")
+        doc, bucket = self._run(self.tmp / "pub")
+        self.assertEqual(doc["verdict"], "PASS", json.dumps(doc, default=str)[:1500])
+        n = 0
+        for (_, key), versions in bucket.objects.items():
+            if "/inputs/jtt1-" in key:
+                n += 1
+                self.assertEqual(jtt1.parse_header(gzip.decompress(versions[-1][1]))["n_test"], 0)
+            if "/receipts/jtt1-" in key:
+                r = json.loads(versions[-1][1])
+                self.assertEqual(r["publication_strip"]["file"]["n_test_payload"], 0)
+                self.assertEqual(r["raw_sha256"], r["publication_strip"]["file"]["stripped"]["raw_sha256"])
+        self.assertEqual(n, 8)
+        doc, bucket = self._run(self.src)
+        self.assertEqual((doc["verdict"], bucket.calls), ("FAIL", []))
+        self.assertEqual(set(doc["scan"]["refused_by_reason"]), {"outer_test_rows"})
+        for d in self.ctx:
+            with self.assertRaises(vp.Refused) as cm:
+                vp.scan_context(d)
+            self.assertEqual(cm.exception.reason, "outer_test_rows")
+
+
+class ManifestBinding(_Tree):
+    def _manifest(self, source):
+        vm = _load("v2_rowsel_raw_manifest", "tools/v2_rowsel_raw_manifest.py")
+        vm.TV2 = self.tmp / "tv2"
+        (vm.TV2 / "publish").mkdir(parents=True, exist_ok=True)
+        plans, refused = vp.scan_build(self.tmp / "pub")
+        self.assertEqual(refused, [])
+        ledger = self.tmp / "ledger.jsonl"
+        if not ledger.exists():
+            with open(ledger, "w") as f:
+                for p in plans:
+                    for o in p["objects"]:
+                        f.write(json.dumps({"event": "verified", "key": o["key"], "sha256": o["sha256"], "bytes": o["bytes"], "version_id": "v1"}) + "\n")
+                        f.write(json.dumps({"event": "verified", "key": o["receipt_key"], "sha256": "r" * 64, "bytes": 1, "version_id": "v2"}) + "\n")
+        summ = self.tmp / "summary.json"
+        if not summ.exists():
+            summ.write_text("{}")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            rc = vm.main(["--build", str(self.tmp / "pub"), "--name", "t", "--source", str(source), "--summary", f"{summ}#{sha(summ.read_bytes())}",
+                          "--ledger", str(ledger), "--require-cut"])
+        return rc, json.loads(out.getvalue().splitlines()[-1])
+
+    def test_stripped_copy_binds_to_its_source_build(self):
+        self.assertEqual(self.strip()["verdict"], "PASS")
+        rc, summary = self._manifest(self.src)
+        self.assertEqual((rc, summary["published_contexts"], summary["missing_in_ledger"]), (0, 4, 0))
+        doc = json.loads(Path(summary["local"]).read_text())
+        self.assertEqual(doc["row_level_key_scheme"], {n: {"component": v["component"], "object_prefix": v["object_prefix"]}
+                                                       for n, v in quarantine.key_scheme().items()})
+        for e in doc["contexts"]:
+            self.assertEqual(e["publication_strip"]["key_scheme"], quarantine.key_scheme())
+            self.assertTrue(all(not quarantine.is_quarantined(o["key"]) for o in e["objects"]))
+            self.assertEqual(set(e["publication_strip"]["files"]), set(st.ROW_LEVEL))
+            self.assertIn("tools/v2_strip_outer_test.py", e["publication_strip"]["code_sha256"])
+        other = self.tmp / "src-other"
+        shutil.copytree(self.src, other)
+        cj = other / self.ctx[3].parent.name / self.ctx[3].name / "context.json"
+        ctx = json.loads(cj.read_text())
+        ctx["files"]["teacher.jtt1.gz"]["sha256"] = "9" * 64                   # a different source build
+        cj.write_text(json.dumps(ctx))
+        with self.assertRaises(SystemExit) as cm:
+            self._manifest(other)
+        self.assertIn("publication_strip record does not bind", str(cm.exception))
+
+
+class S1ScorerAdapter(_Tree):
+    """tools/s1_outer_test_scorer.py rebuilds the original teacher bytes from the stripped payload and the scorer artifact,
+    never opening the original teacher file, and refuses any input that is not the pinned one."""
+
+    def setUp(self):
+        super().setUp()
+        self.ad = _load("s1_outer_test_scorer", SCORER_READER)
+        receipt = self.tmp / "strip-summary.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(st.main(["strip", "--src", str(self.src), "--dst", str(self.tmp / "pub"), "--scorer-dst", str(self.tmp / "sc"),
+                                      "--receipt", str(receipt)]), 0)
+        self.spec = f"{receipt}#{sha(receipt.read_bytes())}"
+        self.il = {}
+        for d in self.ctx:
+            raw = gzip.decompress((d / "teacher.jtt1.gz").read_bytes())
+            self.il[d.name] = {"context_dir": str(d), "teacher": {"path": str(d / "teacher.jtt1.gz"), "raw_sha256": sha(raw), "raw_bytes": len(raw)}}
+        self.orig = {d.name: gzip.decompress((d / "teacher.jtt1.gz").read_bytes()) for d in self.ctx}
+        for d in self.ctx:                                   # the original teacher files are gone: the adapter must not need them
+            os.replace(d / "teacher.jtt1.gz", d / "teacher.jtt1.gz.moved")
+
+    def test_rebuilds_the_original_bytes_without_the_original_file(self):
+        idx = self.ad.strip_index([self.spec])
+        for d in self.ctx:
+            r, raw, src = self.ad.teacher_from_strip(d.name, self.il, idx)
+            self.assertEqual(raw, self.orig[d.name])
+            self.assertEqual(self.ad.relabel(raw)[17 + 48:], raw[17 + 48:])
+            self.assertTrue(src["scorer_artifact"]["path"].endswith(scorer_labels.artifact_name("teacher.jtt1.gz")))
+        with self.assertRaises(SystemExit):
+            self.ad.strip_index([self.spec[:-1] + ("0" if self.spec[-1] != "0" else "1")])
+
+    def test_refuses_inputs_that_are_not_the_pinned_ones(self):
+        idx = self.ad.strip_index([self.spec])
+        d = self.ctx[0]
+        ent = idx[(d.name, self.il[d.name]["teacher"]["raw_sha256"])]
+        art = Path(ent["scorer_path"])
+        body = art.read_bytes()
+        os.chmod(art, 0o644)
+        art.write_bytes(gzip.compress(gzip.decompress(body), compresslevel=1, mtime=0))     # same content, other bytes
+        with self.assertRaisesRegex(ValueError, "scorer artifact identity"):
+            self.ad.teacher_from_strip(d.name, self.il, idx)
+        art.write_bytes(body)
+        sp = Path(ent["stripped_path"])
+        sbody = sp.read_bytes()
+        os.chmod(sp, 0o644)
+        sp.write_bytes(gzip.compress(gzip.decompress(sbody), compresslevel=1, mtime=0))
+        with self.assertRaisesRegex(ValueError, "stripped teacher identity"):
+            self.ad.teacher_from_strip(d.name, self.il, idx)
+        sp.write_bytes(sbody)
+        il = json.loads(json.dumps(self.il))
+        il[d.name]["teacher"]["raw_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "no stripped teacher"):
+            self.ad.teacher_from_strip(d.name, il, idx)
+        self.assertNotIn('Path(r["teacher"]["path"])', (SRC / SCORER_READER).read_text())
+
+
+class StaticIsolation(unittest.TestCase):
+    def test_no_other_module_imports_or_names_the_scorer_artifact(self):
+        """(d) only the scorer adapter (dltrain/scorer_labels.py) and the strip tool touch the scorer artifact."""
+        self.assertEqual(scorer_violations(SRC), [])
+        self.assertTrue(all((SRC / a).is_file() for a in ALLOWED))
+        readers = sorted(f.relative_to(SRC).as_posix() for f in list((SRC / "dltrain").glob("*.py")) + list((SRC / "tools").glob("*.py"))
+                         if f.relative_to(SRC).as_posix() not in ("dltrain/scorer_labels.py", "tools/v2_strip_outer_test.py")
+                         and "scorer_labels" in f.read_text())
+        self.assertEqual(readers, [SCORER_READER], "the S1 outer-test scorer adapter is the only scorer-side reader")
+
+    def test_the_static_check_can_fail(self):
+        tmp = Path(tempfile.mkdtemp(prefix="pstrip-static-", dir=os.environ.get("TMPDIR")))
+        try:
+            for rel, text in (("dltrain/encodings.py", "from dltrain import scorer_labels\n"),
+                              ("dltrain/sampler.py", "import dltrain.scorer_labels as s\n"),
+                              ("dltrain/selector.py", "from .scorer_labels import load\n"),
+                              ("tools/v2_gpu_encode.py", "P = 'encoder.scorer-outer-test.jts1.gz'\n"),
+                              ("tools/v2_s1_input_list.py", "import importlib\nm = importlib.import_module('dltrain.scorer_labels')\n"),
+                              ("tools/v2_teacher.py", "MAGIC = b'JTS1'\n"),
+                              ("dltrain/scorer_labels.py", "MAGIC = b'JTS1'\n"), ("tools/v2_strip_outer_test.py", "from dltrain import scorer_labels\n"),
+                              (SCORER_READER, "from dltrain import scorer_labels\n")):
+                (tmp / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp / rel).write_text(text)
+            got = {v[0] for v in scorer_violations(tmp)}
+            self.assertEqual(got, {"dltrain/encodings.py", "dltrain/sampler.py", "dltrain/selector.py", "tools/v2_gpu_encode.py",
+                                   "tools/v2_s1_input_list.py", "tools/v2_teacher.py"})
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_scorer_format_round_trip_and_refusals(self):
+        raw = make_split(11)["jtt1"]
+        r = st.strip_payload(raw)
+        h = jtt1.parse_header(raw)
+        hdr = {"payload": "teacher.jtt1.gz", "view_id": "v", "cut_id": None, "dataset_hash": "d", "fold": 0, "n_train": h["n_train"],
+               "n_test": h["n_test"], "p": h["p"], "inner_folds": 2, "original_raw_sha256": sha(raw), "original_gz_sha256": "g",
+               "stripped_raw_sha256": sha(r["stripped"]), "stripped_gz_sha256": "s", "train_rows_sha256": r["train_rows_sha256"]}
+        art = scorer_labels.encode(hdr, r["test_block"])
+        self.assertEqual(scorer_labels.reconstruct(r["stripped"], art), raw)
+        self.assertEqual(len(scorer_labels.target_bytes(art)), len({r["test_block"][i * 32 + 24:i * 32 + 32] for i in range(h["n_test"])}))
+        bad = bytearray(art)
+        bad[-1] ^= 1
+        for b in (bytes(bad), b"JTT1" + art[4:], art[:-8]):
+            with self.assertRaises(scorer_labels.ScorerError):
+                scorer_labels.decode(b)
+        with self.assertRaises(scorer_labels.ScorerError):
+            scorer_labels.reconstruct(r["stripped"][:-8] + bytes(8), art)
+        with self.assertRaises(scorer_labels.ScorerError):                     # a header that names another original
+            scorer_labels.reconstruct(r["stripped"], scorer_labels.encode(dict(hdr, original_raw_sha256="0" * 64), r["test_block"]))
+        with self.assertRaises(jtt1.JTTError):
+            jtt1.parse_header(art)
+        tmp = Path(tempfile.mkdtemp(prefix="pstrip-load-", dir=os.environ.get("TMPDIR")))
+        try:
+            path = tmp / scorer_labels.artifact_name("teacher.jtt1.gz")
+            path.write_bytes(scorer_labels.gz(art))
+            h2, X, y = scorer_labels.load(path, expect={"artifact_sha256": sha(path.read_bytes()), "view_id": "v"})
+            self.assertEqual((h2["n_test"], X.shape, y.shape), (h["n_test"], (h["n_test"], h["p"]), (h["n_test"],)))
+            for bad_expect in ({"artifact_sha256": "0" * 64}, {"view_id": "another"}, {"stripped_raw_sha256": "0" * 64}):
+                with self.assertRaises(scorer_labels.ScorerError):
+                    scorer_labels.load(path, expect=bad_expect)
+        finally:
+            shutil.rmtree(tmp)
+
+
+if __name__ == "__main__":
+    unittest.main()
