@@ -742,6 +742,22 @@
         "evidence"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_knn_table.py": {
+      "reason": "Executed CPU fixtures for the R25-kNN-CE scratch arm source: neighbour-table exclusions/determinism and harness v7 config refusal. The training run, its L6 evaluation and any improvement remain unmeasured and NON-QUALIFYING.",
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "evidence"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py": {
+      "reason": "Executed CPU fixtures for the R25-kNN-CE scratch arm source: neighbour-table exclusions/determinism and harness v7 config refusal. The training run, its L6 evaluation and any improvement remain unmeasured and NON-QUALIFYING.",
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "evidence"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_kpi.py": {
       "role": "regression",
       "subsystems": [

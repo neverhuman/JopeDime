@@ -3544,6 +3544,54 @@
         "role": "research",
         "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification."
       }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/__init__.py": {
+      "bytes": 105,
+      "sha256": "62c8b7b2c24bb87d3335919de5962080f81317b49bc994e5c9adc308ffcaa0d9",
+      "classification": {
+        "role": "research",
+        "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/knn_table.py": {
+      "bytes": 4848,
+      "sha256": "e26735a4035e291e16be6b3aa93efc14e547fa8d04acc4da2a1858e2b3ab741b",
+      "classification": {
+        "role": "research",
+        "reason": "R25-kNN-CE neighbour table and verifier (ENG:watcher sign-off 2026-10-13T07:42:55Z): cosine kNN over the L6 train roster with held-out/validation/same-lineage exclusions. CPU fixtures only; NON-QUALIFYING scratch arm source."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py": {
+      "bytes": 69384,
+      "sha256": "f67089b6f0b8ba8504933d7d8550ea85ea57a3edbff22ab61653e2b085e4099f",
+      "classification": {
+        "role": "research",
+        "reason": "R22/R25 scratch torch training harness revision 7 (revision 6 plus the kNN-CE term and max_updates). Needs host-local snapshot, sealed v1 capture and a GPU; never run in CI; NON-QUALIFYING, no promotion or live use."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_data_v4.py": {
+      "bytes": 11966,
+      "sha256": "e65aed59d67a269024ef3ff74e3e8f0d17b90809de15a8d87f38e6ba4660c745",
+      "classification": {
+        "role": "research",
+        "reason": "Host-configurable sha-pinned input paths for the R22/R25 scratch harness (unchanged revision 4 data module). NON-QUALIFYING scratch source."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py": {
+      "bytes": 2798,
+      "sha256": "bfd7633caf03e577c32fbde946b77cc70d28031ec6d270f6bd40ec41f2b1641d",
+      "classification": {
+        "role": "research",
+        "reason": "Runner binding the exact R25-kNN-CE CPU fixture identities and source hashes into a receipt. No training or evaluation result."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/__init__.py": {
+      "bytes": 64,
+      "sha256": "6303397b00db10f069bc60043531b7b352d71017ae07011200abbf8672454255",
+      "classification": {
+        "role": "research",
+        "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source."
+      }
     }
   }
 }
