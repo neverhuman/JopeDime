@@ -10,6 +10,7 @@ from rlfw.ablations.catalog import CatalogTrie
 from rlfw.ablations.compare import ci_verdict, lineage_deltas, score_context
 from rlfw.ablations.exact import effective_support, j_b, kl_divergence
 from rlfw.ablations.gumbel import gumbel_topk
+from rlfw.ablations.l6_receipt import L6_ROW_FIELDS, require_g03_receipt, require_l6_cost_row
 from rlfw.ablations.losses import dpo_loss, ipo_loss
 from rlfw.ablations.measured import build_pairs, checked_measurement
 from rlfw.ablations.ope import self_normalized_is, uniform_trie_ope
@@ -469,6 +470,68 @@ class TorchTests(unittest.TestCase):
         self.assertIs(fresh.lm_head.weight, fresh.tok_emb.weight)
         with self.assertRaises(ValueError):
             load_weights(fresh, {"model.lm_head.weight": fresh.tok_emb.weight.detach()}, expected)
+
+
+class L6ReceiptTests(unittest.TestCase):
+    def _row(self, **extra):
+        row = {
+            "context_id": CTX,
+            "arm": "ipo_tau_2",
+            "epoch": 8,
+            "updates": 2272,
+            "seed": 7,
+            "l6_cost": 0.9,
+        }
+        row.update(extra)
+        return row
+
+    def test_row_keeps_the_six_g03_fields(self):
+        row = require_l6_cost_row(self._row(split="full_val"))
+        self.assertEqual(tuple(field for field in L6_ROW_FIELDS), L6_ROW_FIELDS)
+        for field in L6_ROW_FIELDS:
+            self.assertIn(field, row)
+        self.assertEqual(row["epoch"], 8)
+        self.assertEqual(row["updates"], 2272)
+        self.assertEqual(row["seed"], 7)
+
+    def test_each_missing_field_is_refused(self):
+        for field in L6_ROW_FIELDS:
+            row = self._row()
+            del row[field]
+            with self.assertRaises(ValueError):
+                require_l6_cost_row(row)
+
+    def test_nonfinite_cost_and_bool_counts_are_refused(self):
+        for bad in (
+            self._row(l6_cost=float("nan")),
+            self._row(l6_cost=True),
+            self._row(epoch=True),
+            self._row(updates=-1),
+            self._row(seed=True),
+            self._row(context_id=""),
+            self._row(arm=""),
+        ):
+            with self.assertRaises(ValueError):
+                require_l6_cost_row(bad)
+
+    def test_receipt_without_rows_is_refused(self):
+        with self.assertRaises(ValueError):
+            require_g03_receipt({"l6_row_fields": list(L6_ROW_FIELDS), "l6_cost_mean": 0.9})
+        with self.assertRaises(ValueError):
+            require_g03_receipt({"l6_row_fields": ["l6_cost"], "l6_rows": [self._row()]})
+
+    def test_receipt_carries_every_context_row(self):
+        frozen = self._row(arm="frozen_baseline", epoch=0, updates=0, l6_cost=0.5)
+        trained = self._row()
+        receipt = require_g03_receipt(
+            {"l6_row_fields": list(L6_ROW_FIELDS), "l6_rows": [frozen, trained]}
+        )
+        self.assertEqual(len(receipt["l6_rows"]), 2)
+        self.assertEqual(
+            [(row["context_id"], row["arm"], row["epoch"], row["updates"], row["seed"]) for row in receipt["l6_rows"]],
+            [(CTX, "frozen_baseline", 0, 0, 7), (CTX, "ipo_tau_2", 8, 2272, 7)],
+        )
+        self.assertTrue(all(math.isfinite(row["l6_cost"]) for row in receipt["l6_rows"]))
 
 
 if __name__ == "__main__":

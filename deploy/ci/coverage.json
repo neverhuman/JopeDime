@@ -1680,7 +1680,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. No corpus, live execution, training or serving qualification."
+      "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. G03 receipt rows require context_id, arm, epoch, updates, seed, and l6_cost. No corpus, live execution, training or serving qualification."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "discovery": {
