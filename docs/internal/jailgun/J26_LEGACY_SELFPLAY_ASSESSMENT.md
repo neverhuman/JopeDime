@@ -1,7 +1,7 @@
 # J26 — Legacy self-play reuse assessment
 
 Status: assessment only. Nothing in `jope_selfplay_*` or `jope-arena` is adopted, deleted, scheduled, or promoted.
-Source pin: `9ab56e980fa9d246b3ee2eb2d588bd3443424449` (`origin/main` after #305).
+Source pin: `9ab56e980fa9d246b3ee2eb2d588bd3443424449` (inventory, `origin/main` after #305). Rebased onto `97ba24955143de07d39368f0c7f2cf22ca692908` (#306). The diff of `crates/jope-campaigns/src/bin`, `crates/jope-arena`, `docs/campaigns.md`, `docs/parity/capability-matrix.md`, `docs/adr/ADR-0005-canonical-learning-loop.md`, `deploy/systemd/selfplay`, and `deploy/dl-flywheel` between those two commits is empty.
 Owner: `grok_gp_index`. Reviewer: `jopedime_clover`. Train slot 11. No PR until that slot.
 L6 is a validation loss and lower is better. This stack does not compute L6. This document claims no improvement.
 
