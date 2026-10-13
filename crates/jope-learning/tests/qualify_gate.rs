@@ -77,6 +77,7 @@ fn manifest() -> Value {
         "challenger": {"id": "candidate", "sha256": sha(2)},
         "roster_role": "confirmation",
         "families": families,
+        "family_weighting": "equal",
         "min_families": 8,
         "practical_margin": 0.005,
         "alpha_total": 0.05,
@@ -558,6 +559,48 @@ fn unknown_outcomes_drop_their_family_and_are_never_imputed() {
     let some: Vec<Value> = rows(clear_lift).into_iter().skip(2).collect();
     let report = promotion::decide(&manifest, &bytes(&results(&manifest, some))).unwrap();
     assert_eq!(report.families_incomplete, vec!["fam-01".to_owned()]);
+    assert_eq!(report.verdict, Verdict::Inconclusive);
+}
+
+#[test]
+fn incomplete_families_cap_the_verdict_unless_predeclared() {
+    // Eleven families show a clear lift; the twelfth has one unknown context. Dropping it must
+    // not let the remaining families promote: selection on missingness.
+    let mut one_unknown = rows(clear_lift);
+    one_unknown[0]["incumbent"] = Value::Null;
+    let strict = bytes(&manifest());
+    let report =
+        promotion::decide(&strict, &bytes(&results(&strict, one_unknown.clone()))).unwrap();
+    assert_eq!(report.max_incomplete_families, 0);
+    assert_eq!(report.families_incomplete, vec!["fam-01".to_owned()]);
+    assert!(
+        report.lower.unwrap() > report.practical_margin,
+        "the bounds alone would promote"
+    );
+    assert_eq!(report.verdict, Verdict::Inconclusive);
+    assert!(report
+        .reasons
+        .iter()
+        .any(|item| item.contains("selection on missingness")));
+    let refusal = request_promotion(
+        &Gate::On,
+        &strict,
+        &bytes(&results(&strict, one_unknown.clone())),
+    );
+    assert!(matches!(refusal, Err(Refusal::NotReady { .. })));
+
+    // A lift below the margin is not decided either while a family is missing.
+    let mut tiny = rows(|family, _| if family % 2 == 0 { 0.0005 } else { 0.0 });
+    tiny[0]["challenger"] = Value::Null;
+    let report = promotion::decide(&strict, &bytes(&results(&strict, tiny))).unwrap();
+    assert_eq!(report.verdict, Verdict::Inconclusive);
+
+    // A manifest that predeclares one tolerated incomplete family decides the look.
+    let mut tolerant = manifest();
+    tolerant["max_incomplete_families"] = json!(1);
+    let tolerant = bytes(&tolerant);
+    let report = promotion::decide(&tolerant, &bytes(&results(&tolerant, one_unknown))).unwrap();
+    assert_eq!(report.max_incomplete_families, 1);
     assert_eq!(report.verdict, Verdict::PromoteEligible);
 }
 
@@ -651,6 +694,20 @@ fn an_arena_must_be_a_usable_predeclared_confirmation_arena() {
         ("numbered", Box::new(|m| m["looks"][1]["index"] = json!(3))),
         ("min_families", Box::new(|m| m["min_families"] = json!(13))),
         ("min_families", Box::new(|m| m["min_families"] = json!(1))),
+        (
+            "family_weighting",
+            Box::new(|m| m["family_weighting"] = json!("context")),
+        ),
+        (
+            "missing field `family_weighting`",
+            Box::new(|m| {
+                m.as_object_mut().unwrap().remove("family_weighting");
+            }),
+        ),
+        (
+            "leaves fewer than min_families",
+            Box::new(|m| m["max_incomplete_families"] = json!(5)),
+        ),
         ("unique", Box::new(|m| m["families"][1] = json!("fam-01"))),
         (
             "resamples",

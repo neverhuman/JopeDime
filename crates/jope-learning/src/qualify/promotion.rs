@@ -10,11 +10,16 @@
 //!   bytes by SHA-256: one row per context with the selected program's outer metric for both
 //!   contenders, attempts and failures, holds, cost, and the safety panel values.
 //!
-//! The independent unit is the family. Context effects are averaged within their family, and a
-//! family with any unknown context is left out whole rather than imputed. The challenger is
-//! promote-eligible only when the one-sided lower bound of the mean family effect clears the
-//! practical margin, not merely zero. That bound comes from a percentile bootstrap over
-//! families at this look's alpha divided by the contenders.
+//! The independent unit is the family, and every family weighs the same (`family_weighting:
+//! "equal"`, the only weighting accepted). Context effects are averaged within their family, and
+//! a family with any unknown context is left out whole rather than imputed. Leaving families out
+//! can favour either side, so the bounds decide nothing while more families are incomplete than
+//! the manifest's `max_incomplete_families` (default 0) allows: the look is inconclusive. The
+//! challenger is promote-eligible only when the one-sided lower bound of the mean family effect
+//! clears the practical margin, not merely zero. That bound comes from a percentile bootstrap
+//! over families at this look's alpha divided by the contenders. A percentile bootstrap
+//! under-covers with few families; `min_families` is the guard, and its value belongs to the
+//! G36 ruling.
 //!
 //! Some inputs are refused as invalid, not given a verdict: an outer-oracle row (a diagnostic,
 //! never evidence), a development or meta-training roster (not independent confirmation), a
@@ -93,7 +98,12 @@ pub struct ArenaManifest {
     pub challenger: Contender,
     pub roster_role: String,
     pub families: Vec<String>,
+    /// How family effects are averaged. Only `"equal"` is accepted.
+    pub family_weighting: String,
     pub min_families: usize,
+    /// Incomplete families a decisive look tolerates; more makes the look inconclusive.
+    #[serde(default)]
+    pub max_incomplete_families: usize,
     pub practical_margin: f64,
     pub alpha_total: f64,
     pub looks: Vec<Look>,
@@ -231,6 +241,8 @@ pub struct ChampionReport {
     pub family_effect_median: Option<f64>,
     /// Mean over complete-family contexts, each context weighted once. Sensitivity only.
     pub context_effect_mean: Option<f64>,
+    pub family_weighting: String,
+    pub max_incomplete_families: usize,
     pub lower: Option<f64>,
     pub upper: Option<f64>,
     pub practical_margin: f64,
@@ -301,9 +313,23 @@ fn validate_manifest(manifest: &ArenaManifest) -> Result<(), String> {
     if unique.len() != manifest.families.len() || unique.contains("") {
         return Err("families must be unique non-empty ids".to_owned());
     }
+    if manifest.family_weighting != "equal" {
+        return Err(format!(
+            "family_weighting {:?} is not \"equal\", the only weighting this gate estimates",
+            manifest.family_weighting
+        ));
+    }
     if manifest.min_families < 2 || manifest.min_families > manifest.families.len() {
         return Err(format!(
             "min_families {} must be at least 2 and at most the {} declared families",
+            manifest.min_families,
+            manifest.families.len()
+        ));
+    }
+    if manifest.max_incomplete_families > manifest.families.len() - manifest.min_families {
+        return Err(format!(
+            "max_incomplete_families {} leaves fewer than min_families {} of {} families",
+            manifest.max_incomplete_families,
             manifest.min_families,
             manifest.families.len()
         ));
@@ -626,7 +652,15 @@ pub fn decide(manifest_bytes: &[u8], results_bytes: &[u8]) -> Result<ChampionRep
             bootstrap_bounds(&family_effects, manifest.bootstrap, alpha_per_comparison);
         bounds = (Some(lower), Some(upper));
         let margin = manifest.practical_margin;
-        if lower > margin {
+        if families_incomplete.len() > manifest.max_incomplete_families {
+            // Leaving families out can favour either contender, so the bounds decide nothing.
+            reasons.push(format!(
+                "{} incomplete families exceed the predeclared {}: selection on missingness",
+                families_incomplete.len(),
+                manifest.max_incomplete_families
+            ));
+            verdict = verdict.or(Some(Verdict::Inconclusive));
+        } else if lower > margin {
             verdict = verdict.or(Some(Verdict::PromoteEligible));
         } else if upper < margin {
             reasons.push(format!(
@@ -665,6 +699,8 @@ pub fn decide(manifest_bytes: &[u8], results_bytes: &[u8]) -> Result<ChampionRep
         family_effect_mean,
         family_effect_median,
         context_effect_mean,
+        family_weighting: manifest.family_weighting,
+        max_incomplete_families: manifest.max_incomplete_families,
         lower: bounds.0,
         upper: bounds.1,
         practical_margin: manifest.practical_margin,
