@@ -1680,7 +1680,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. No corpus, live execution, training or serving qualification."
+      "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. G03 receipt rows require context_id, arm, epoch, updates, seed, and l6_cost; duplicate identities are refused. No corpus, live execution, training or serving qualification."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "discovery": {
@@ -3843,7 +3843,11 @@
         "test": true
       },
       "dispositions": [],
-      "lanes": ["rust-check", "rust-test", "full-default"],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
       "scope": "Offline CPU CLOVER v1 quantile semantics against independent fixtures, runtime and generated Rust/Python; toolchain absence fails. No GPU or live evaluator qualification."
     },
     "target:feat-math/test/advanced_v3_parity": {
@@ -6840,7 +6844,11 @@
         "test": true
       },
       "dispositions": [],
-      "lanes": ["rust-check", "rust-test", "full-default"],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
       "scope": "Offline CPU experiment identity, encoder visibility, actual preprocessing audit, persistent HOLD/recovery and immutable manifest-last publication faults. No model, training, external data or remote storage."
     },
     "target:jope-learning/test/champions_fixture": {
