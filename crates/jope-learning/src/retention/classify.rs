@@ -8,6 +8,7 @@
 
 use super::groups::Group;
 use super::index::GroupIndex;
+use super::inventory::{E1Overlap, GroupInv};
 use super::lifecycle::Coverage;
 use super::policy::{Kind, Policy};
 use super::refs::Role;
@@ -94,6 +95,13 @@ pub struct Facts<'a> {
     pub family_scored_rows: Option<u64>,
     pub coverage: Coverage,
     pub as_of_unix: u64,
+    /// S3 Inventory facts for this group, when its bucket has a report.
+    pub inv: Option<&'a GroupInv>,
+    /// The inventory's current objects and bytes equal the ledger's, so its exact dates and
+    /// classes describe this group (the report is older than the ledger).
+    pub inv_fresh: bool,
+    /// Key/size/ETag overlap of this group's E1 candidate pair, when both sides are inventoried.
+    pub e1: Option<&'a E1Overlap>,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
@@ -133,11 +141,35 @@ fn roles_str(m: &BTreeMap<Role, u64>) -> String {
         .join(",")
 }
 
-fn is_live(g: &Group, as_of: u64, window_h: u64) -> bool {
-    g.max_last_modified
-        .as_deref()
+fn is_live(max_last_modified: Option<&str>, as_of: u64, window_h: u64) -> bool {
+    max_last_modified
         .and_then(crate::civil::parse_rfc3339)
         .is_some_and(|t| t + window_h * 3600 >= as_of)
+}
+
+/// The group's exact last write, when an unchanged inventory listed its objects.
+fn exact_max<'a>(f: &Facts<'a>) -> Option<&'a str> {
+    if f.inv_fresh {
+        f.inv.and_then(|i| i.max_last_modified.as_deref())
+    } else {
+        None
+    }
+}
+
+/// $/month now: by the inventory's class mix (scaled to the ledger's bytes) when known.
+fn storage_now(f: &Facts, p: &Policy) -> Result<f64> {
+    let g = f.group;
+    match f.inv.filter(|i| i.current_bytes > 0) {
+        Some(i) => {
+            let mut usd = 0.0;
+            for (class, b) in &i.class_bytes {
+                let share = *b as f64 / i.current_bytes as f64;
+                usd += p.prices.storage(1_000_000_000, class)? * share * g.bytes as f64 / 1e9;
+            }
+            Ok(usd)
+        }
+        None => p.prices.storage(g.bytes, &f.storage_class),
+    }
 }
 
 fn tv_for(f: &Facts, kind: Option<Kind>, t0: bool, p: &Policy) -> Tv {
@@ -188,9 +220,33 @@ fn e_candidates(f: &Facts, kind: Option<Kind>, p: &Policy) -> Vec<String> {
     let g = f.group;
     let mut out = Vec::new();
     if let Some(c) = p.e1_candidate_for(&g.bucket, &g.prefix) {
+        match f.e1 {
+            Some(o) => out.push(format!(
+                "E1 vs {}: S3 Inventory shows {} of {} keys with the same key, size and ETag ({}; {} differ, {} only here, {} only there); NOT proven: needs GET+sha256 of both copies (ETag is not a content hash); {}",
+                c.counterpart,
+                o.same_key_size_etag,
+                o.objects,
+                human_bytes(o.same_key_size_etag_bytes),
+                o.same_key_different,
+                o.only_here,
+                o.only_counterpart,
+                c.why
+            )),
+            None => out.push(format!(
+                "E1 vs {}: not provable here (needs inventory key/size join and GET+sha256 of both copies); {}",
+                c.counterpart, c.why
+            )),
+        }
+    }
+    if let Some(i) = f.inv.filter(|i| i.noncurrent_versions > 0) {
         out.push(format!(
-            "E1 vs {}: not provable here (needs inventory key/size join and GET+sha256 of both copies); {}",
-            c.counterpart, c.why
+            "E5: {} noncurrent versions ({}) at the inventory date; {}",
+            i.noncurrent_versions,
+            human_bytes(i.noncurrent_bytes),
+            match f.coverage.noncurrent_days {
+                Some(d) => format!("the applied lifecycle expires them {d} d after they became noncurrent; the brain adds nothing"),
+                None => "no applied noncurrent-expiry rule covers them".into(),
+            }
         ));
     }
     match kind {
@@ -213,7 +269,7 @@ fn e_candidates(f: &Facts, kind: Option<Kind>, p: &Policy) -> Vec<String> {
 fn cost(f: &Facts, action: Action, p: &Policy) -> Result<Cost> {
     let g = f.group;
     let pr = &p.prices;
-    let now = pr.storage(g.bytes, &f.storage_class)?;
+    let now = storage_now(f, p)?;
     let packs = g.bytes.div_ceil(p.pack_bytes).max(u64::from(g.objects > 0));
     let gets = g.objects as f64 / 1000.0 * pr.get_per_1k;
     let puts = packs as f64 / 1000.0 * pr.put_per_1k;
@@ -287,7 +343,12 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
         |r| format!("policy s3://{}/{}", r.bucket, r.prefix),
     );
     let mean = g.bytes.checked_div(g.objects).unwrap_or(0);
-    let live = is_live(g, f.as_of_unix, p.open_run_window_hours);
+    let exact = exact_max(f);
+    let live = is_live(
+        exact.or(g.max_last_modified.as_deref()),
+        f.as_of_unix,
+        p.open_run_window_hours,
+    );
 
     let t0_refs: BTreeMap<Role, u64> = f
         .refs_by_role
@@ -361,13 +422,19 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
                 roles_str(&active_key_refs)
             ),
         )
-    } else if live && g.direct {
-        // A direct group only knows its parent prefix's date range.
+    } else if live && g.direct && exact.is_none() {
+        // A direct group only knows its parent prefix's date range unless an unchanged
+        // inventory listed its objects.
         (
             Action::Hold,
             format!(
-                "direct objects under a prefix written at {}; their own dates are unknown until S3 Inventory",
-                g.max_last_modified.as_deref().unwrap_or("?")
+                "direct objects under a prefix written at {}; their own dates are unknown {}",
+                g.max_last_modified.as_deref().unwrap_or("?"),
+                if f.inv.is_some() {
+                    "(they changed after the S3 Inventory report)"
+                } else {
+                    "until S3 Inventory"
+                }
             ),
         )
     } else if live {
@@ -375,7 +442,7 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
             Action::KeepHot,
             format!(
                 "writer active (last write {} within {}h of as-of); classify again after the run closes",
-                g.max_last_modified.as_deref().unwrap_or("?"),
+                exact.or(g.max_last_modified.as_deref()).unwrap_or("?"),
                 p.open_run_window_hours
             ),
         )
@@ -458,7 +525,24 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
             .collect();
         reason.push_str(&format!("; lifecycle {}", rules.join(",")));
     }
-    if !e.is_empty() {
+    if let Some(i) = f.inv {
+        reason.push_str(&format!(
+            "; inventory {} ({} noncurrent versions{})",
+            if f.inv_fresh {
+                "unchanged since report"
+            } else {
+                "changed since report"
+            },
+            i.noncurrent_versions,
+            exact
+                .filter(|_| g.direct)
+                .map(|m| format!(", direct objects last written {m}"))
+                .unwrap_or_default()
+        ));
+        if !e.is_empty() {
+            reason.push_str("; no E-rule proven (E1 needs GET+sha256; E2-E4 need gp_distilled/v1)");
+        }
+    } else if !e.is_empty() {
         reason.push_str("; E-rules not provable at prefix level");
     }
     Ok(Decision {

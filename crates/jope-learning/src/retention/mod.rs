@@ -30,12 +30,15 @@ pub mod distilled;
 pub mod groups;
 pub mod index;
 pub mod inputs;
+pub mod inventory;
 pub mod lifecycle;
+pub mod md5;
 pub mod pack;
 pub mod parquet;
 pub mod plan;
 pub mod policy;
 pub mod refs;
+pub mod snappy;
 pub mod tags;
 
 use serde::Serialize;

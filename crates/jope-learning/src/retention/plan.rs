@@ -11,6 +11,9 @@ use super::classify::{decide, Decision, Facts};
 use super::groups::{flatten, Group, GroupLookup, Ledger};
 use super::index::{aggregate, IndexSummary};
 use super::inputs::{load, load_spec, InputRecord, InputSpec};
+use super::inventory::{
+    self, DataFile, E1Overlap, E1Pair, GroupInv, Inventory, PinState, ReadStats,
+};
 use super::lifecycle::{coverage, Coverage, Lifecycles};
 use super::policy::{Policy, DEFAULT_POLICY_JSON};
 use super::refs::{RefSet, Role, ScanStats};
@@ -19,7 +22,7 @@ use crate::canon::sha256_hex;
 use anyhow::{bail, ensure, Context, Result};
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -39,9 +42,65 @@ pub struct Config {
     /// which holds input snapshots).
     pub scan_skip_dirs: Vec<String>,
     pub lifecycle_dir: Option<PathBuf>,
+    /// Local S3 Inventory `manifest.json` copies, one per bucket (optional; without them the plan
+    /// is prefix-level only).
+    pub inventories: Vec<InputSpec>,
     pub policy: Option<PathBuf>,
     pub previous_plan: Option<PathBuf>,
     pub source_commit: Option<String>,
+}
+
+/// A group's S3 Inventory facts as recorded in its plan row.
+#[derive(Clone, Debug, Serialize)]
+pub struct RowInventory {
+    pub report_created_at: String,
+    /// Current objects and bytes equal the ledger's: dates and classes are exact for the group.
+    pub unchanged_since_report: bool,
+    #[serde(flatten)]
+    pub facts: GroupInv,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct InventoryLock {
+    pub bucket: String,
+    pub report_created_at: String,
+    pub manifest: InputRecord,
+    pub files: Vec<DataFile>,
+    pub read: ReadStats,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct InventoryBucket {
+    pub bucket: String,
+    pub report_created_at: String,
+    pub rows: u64,
+    pub current_objects: u64,
+    pub current_bytes: u64,
+    pub noncurrent_versions: u64,
+    pub noncurrent_bytes: u64,
+    pub delete_markers: u64,
+    pub rows_outside_ledger_groups: u64,
+    /// The ledger's current objects/bytes for the bucket (a later listing), and the differences.
+    pub ledger_objects: u64,
+    pub ledger_bytes: u64,
+    pub ledger_minus_inventory_objects: i64,
+    pub ledger_minus_inventory_bytes: i64,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct InventorySummary {
+    pub buckets: Vec<InventoryBucket>,
+    /// In-scope ledger buckets without a report (prefix-level facts only).
+    pub ledger_buckets_without_report: Vec<String>,
+    pub groups_with_inventory: u64,
+    pub groups_unchanged_since_report: u64,
+    pub noncurrent_bytes_in_t0_groups: u64,
+    pub noncurrent_bytes_in_other_groups: u64,
+    /// role -> pin state -> distinct keys, for pins into inventoried buckets.
+    pub pins: BTreeMap<String, BTreeMap<String, u64>>,
+    /// Up to 200 pins whose key is not a current object, with the file that named them.
+    pub pins_not_present_sample: Vec<String>,
+    pub e1_overlap: Vec<E1Overlap>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -76,6 +135,8 @@ pub struct PlanRow {
     pub e_rules_fired: Vec<String>,
     pub e_candidates: Vec<String>,
     pub lifecycle: Coverage,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inventory: Option<RowInventory>,
     pub cost: super::classify::Cost,
     pub reason: String,
 }
@@ -146,6 +207,8 @@ pub struct InputsLock {
     pub inputs: Vec<InputRecord>,
     pub lifecycle_files: Vec<InputRecord>,
     pub scans: Vec<ScanStats>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub inventory: Vec<InventoryLock>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -164,7 +227,7 @@ pub struct Summary {
     pub by_action: BTreeMap<&'static str, Totals>,
     pub by_tier: BTreeMap<&'static str, Totals>,
     pub expire: String,
-    pub e_rule_status: BTreeMap<&'static str, &'static str>,
+    pub e_rule_status: BTreeMap<&'static str, String>,
     pub hazards: Vec<Note>,
     pub notes: Vec<Note>,
     pub findings: Vec<String>,
@@ -178,6 +241,8 @@ pub struct Summary {
     pub index_rows: BTreeMap<&'static str, u64>,
     pub index_rows_unmatched_sample: Vec<String>,
     pub diff_vs_previous: Option<BTreeMap<String, u64>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inventory: Option<InventorySummary>,
 }
 
 pub struct Built {
@@ -380,6 +445,10 @@ pub fn build(cfg: &Config) -> Result<Built> {
     let (mut bucketless_resolved, mut bucketless_unresolved) = (0u64, 0u64);
     let mut unmatched_sample = Vec::new();
     let known_buckets: BTreeSet<&str> = ledger.groups.iter().map(|g| g.bucket.as_str()).collect();
+    // (role, resolved bucket, key, group) of every object ref that landed in a group.
+    let mut pins: BTreeSet<(Role, String, String, usize)> = BTreeSet::new();
+    // First file that named each pinned key (for the not-present list).
+    let mut pin_sources: BTreeMap<(Role, String, String), String> = BTreeMap::new();
     for r in &refs.objects {
         let found = if r.bucket.is_empty() {
             // A bucketless key counts only when exactly one bucket holds a non-root group for it.
@@ -400,6 +469,10 @@ pub fn build(cfg: &Config) -> Result<Built> {
         };
         match found {
             Some(gi) => {
+                pins.insert((r.role, ledger.groups[gi].bucket.clone(), r.key.clone(), gi));
+                pin_sources
+                    .entry((r.role, ledger.groups[gi].bucket.clone(), r.key.clone()))
+                    .or_insert_with(|| r.source.clone());
                 *refs_by_group
                     .entry(gi)
                     .or_default()
@@ -428,7 +501,66 @@ pub fn build(cfg: &Config) -> Result<Built> {
         Some(d) => Lifecycles::load_dir(d)?,
         None => Lifecycles::default(),
     };
-    let classes = assign_classes(&ledger, &policy);
+    let mut classes = assign_classes(&ledger, &policy);
+
+    // S3 Inventory: object-level facts per group, pin existence, E1 overlap.
+    let inv: Option<Inventory> = if cfg.inventories.is_empty() {
+        None
+    } else {
+        let mut reports = Vec::new();
+        for spec in &cfg.inventories {
+            reports.push(inventory::load_report(
+                &spec.path,
+                spec.expect_prefix.as_deref(),
+            )?);
+        }
+        let pinned: HashSet<(String, String)> = pins
+            .iter()
+            .map(|(_, b, k, _)| (b.clone(), k.clone()))
+            .collect();
+        let e1_pairs: Vec<E1Pair> = policy
+            .e1_candidates
+            .iter()
+            .filter_map(|c| {
+                let rest = c.counterpart.strip_prefix("s3://")?;
+                let (cb, cp) = rest.split_once('/').unwrap_or((rest, ""));
+                Some((
+                    c.bucket.clone(),
+                    c.prefix.clone(),
+                    cb.to_string(),
+                    cp.to_string(),
+                ))
+            })
+            .collect();
+        Some(inventory::aggregate(
+            reports,
+            &lookup,
+            ledger.groups.len(),
+            &pinned,
+            &e1_pairs,
+        )?)
+    };
+    let fresh = |gi: usize| -> bool {
+        let g = &ledger.groups[gi];
+        inv.as_ref()
+            .and_then(|i| i.per_group[gi].as_ref())
+            .is_some_and(|x| x.current_objects == g.objects && x.current_bytes == g.bytes)
+    };
+    if let Some(i) = &inv {
+        for (gi, x) in i.per_group.iter().enumerate() {
+            let Some(x) = x else { continue };
+            if let Some((class, _)) = x.class_bytes.iter().max_by_key(|(_, b)| **b) {
+                classes[gi] = (
+                    class.clone(),
+                    if fresh(gi) {
+                        "inventory"
+                    } else {
+                        "inventory-changed-since-report"
+                    },
+                );
+            }
+        }
+    }
 
     // Decide every group.
     let empty = BTreeMap::new();
@@ -468,6 +600,13 @@ pub fn build(cfg: &Config) -> Result<Built> {
             family_scored_rows: family_scored,
             coverage: coverage(&lifecycles, &g.bucket, &g.prefix, g.direct),
             as_of_unix,
+            inv: inv.as_ref().and_then(|i| i.per_group[gi].as_ref()),
+            inv_fresh: fresh(gi),
+            e1: inv.as_ref().and_then(|i| {
+                let c = policy.e1_candidate_for(&g.bucket, &g.prefix)?;
+                i.e1.iter()
+                    .find(|o| o.bucket == g.bucket && o.prefix == c.prefix)
+            }),
         };
         let d: Decision = decide(&facts, &policy)?;
         if d.action == Action::Expire {
@@ -487,7 +626,17 @@ pub fn build(cfg: &Config) -> Result<Built> {
             .get(&gi)
             .map(|s| s.iter().cloned().collect())
             .unwrap_or_default();
-        rows.push(row(g, &facts, d, classes[gi].1, sources));
+        let mut r = row(g, &facts, d, classes[gi].1, sources);
+        r.inventory = facts.inv.map(|x| RowInventory {
+            report_created_at: inv
+                .as_ref()
+                .and_then(|i| i.buckets.get(&g.bucket))
+                .map(|b| b.report_created_at.clone())
+                .unwrap_or_default(),
+            unchanged_since_report: facts.inv_fresh,
+            facts: x.clone(),
+        });
+        rows.push(r);
     }
 
     // Hazards, notes, findings.
@@ -582,6 +731,139 @@ pub fn build(cfg: &Config) -> Result<Built> {
             );
         }
     }
+    let inventory_summary = match &inv {
+        None => None,
+        Some(i) => {
+            let (mut nc_t0, mut nc_other, mut with, mut unchanged) = (0u64, 0u64, 0u64, 0u64);
+            for r in &rows {
+                let Some(x) = &r.inventory else { continue };
+                with += 1;
+                unchanged += u64::from(x.unchanged_since_report);
+                if r.action == Action::KeepT0 {
+                    nc_t0 += x.facts.noncurrent_bytes;
+                    if x.facts.noncurrent_versions > 0 {
+                        add_note(
+                            &mut notes,
+                            "t0-noncurrent-versions",
+                            format!(
+                                "{}: noncurrent versions inside T0 groups at the inventory date; the applied rule expires them {} d after they became noncurrent (owner ruling D2 2026-10-13: 90 d for T0 too)",
+                                r.bucket,
+                                r.lifecycle
+                                    .noncurrent_days
+                                    .map_or("never".into(), |d| d.to_string())
+                            ),
+                            x.facts.noncurrent_bytes as f64 / 1e9,
+                        );
+                    }
+                } else {
+                    nc_other += x.facts.noncurrent_bytes;
+                }
+            }
+            // Pins: a T0 or active ref whose key is not a current object is a hazard, unless the
+            // group changed after the report (the key may be newer than the listing).
+            let mut pin_counts: BTreeMap<String, BTreeMap<String, u64>> = BTreeMap::new();
+            let mut sample = Vec::new();
+            for (role, bucket, key, gi) in &pins {
+                let Some(b) = i.buckets.get(bucket) else {
+                    continue;
+                };
+                let state = i
+                    .pins
+                    .get(&(bucket.clone(), key.clone()))
+                    .copied()
+                    .unwrap_or(PinState::Absent);
+                let state_s = serde_json::to_value(state)?
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string();
+                *pin_counts
+                    .entry(role.as_str().into())
+                    .or_default()
+                    .entry(state_s.clone())
+                    .or_default() += 1;
+                if state == PinState::Present {
+                    continue;
+                }
+                let g = &ledger.groups[*gi];
+                let newer = g
+                    .max_last_modified
+                    .as_deref()
+                    .is_some_and(|m| m > b.report_created_at.as_str());
+                let (map, kind) = if newer {
+                    (&mut notes, "pin-not-in-inventory-group-changed-since")
+                } else if role.is_t0() {
+                    (&mut hazards, "t0-pin-not-present")
+                } else if role.is_active() {
+                    (&mut hazards, "active-pin-not-present")
+                } else {
+                    (&mut notes, "mention-not-present")
+                };
+                add_note(
+                    map,
+                    kind,
+                    format!("{bucket}: {} refs whose key is {state_s}", role.as_str()),
+                    0.0,
+                );
+                if sample.len() < 200 {
+                    sample.push(format!(
+                        "{} {state_s} s3://{bucket}/{key}{} (source {})",
+                        role.as_str(),
+                        if newer {
+                            " (group changed since report)"
+                        } else {
+                            ""
+                        },
+                        pin_sources
+                            .get(&(*role, bucket.clone(), key.clone()))
+                            .map_or("?", String::as_str)
+                    ));
+                }
+            }
+            let mut ledger_totals: BTreeMap<&str, (u64, u64)> = BTreeMap::new();
+            for g in &ledger.groups {
+                let e = ledger_totals.entry(g.bucket.as_str()).or_default();
+                e.0 += g.objects;
+                e.1 += g.bytes;
+            }
+            let buckets = i
+                .buckets
+                .iter()
+                .map(|(name, t)| {
+                    let (lo, lb) = ledger_totals.get(name.as_str()).copied().unwrap_or((0, 0));
+                    InventoryBucket {
+                        bucket: name.clone(),
+                        report_created_at: t.report_created_at.clone(),
+                        rows: t.rows,
+                        current_objects: t.current_objects,
+                        current_bytes: t.current_bytes,
+                        noncurrent_versions: t.noncurrent_versions,
+                        noncurrent_bytes: t.noncurrent_bytes,
+                        delete_markers: t.delete_markers,
+                        rows_outside_ledger_groups: t.rows_outside_ledger_groups,
+                        ledger_objects: lo,
+                        ledger_bytes: lb,
+                        ledger_minus_inventory_objects: lo as i64 - t.current_objects as i64,
+                        ledger_minus_inventory_bytes: lb as i64 - t.current_bytes as i64,
+                    }
+                })
+                .collect();
+            Some(InventorySummary {
+                buckets,
+                ledger_buckets_without_report: known_buckets
+                    .iter()
+                    .filter(|b| policy.in_scope(b) && !i.buckets.contains_key(**b))
+                    .map(|b| b.to_string())
+                    .collect(),
+                groups_with_inventory: with,
+                groups_unchanged_since_report: unchanged,
+                noncurrent_bytes_in_t0_groups: nc_t0,
+                noncurrent_bytes_in_other_groups: nc_other,
+                pins: pin_counts,
+                pins_not_present_sample: sample,
+                e1_overlap: i.e1.clone(),
+            })
+        }
+    };
     let to_notes = |m: BTreeMap<(String, String), (u64, f64)>| -> Vec<Note> {
         m.into_iter()
             .map(|((kind, detail), (n, gb))| Note {
@@ -666,6 +948,21 @@ pub fn build(cfg: &Config) -> Result<Built> {
             })
             .collect(),
         scans: refs.scans.clone(),
+        inventory: inv
+            .as_ref()
+            .map(|i| {
+                i.reports
+                    .iter()
+                    .map(|r| InventoryLock {
+                        bucket: r.source_bucket.clone(),
+                        report_created_at: r.created_at.clone(),
+                        manifest: r.manifest.clone(),
+                        files: r.files.clone(),
+                        read: i.buckets[&r.source_bucket].read.clone(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
     };
     let mut lock_json = serde_json::to_vec_pretty(&lock)?;
     lock_json.push(b'\n');
@@ -684,10 +981,24 @@ pub fn build(cfg: &Config) -> Result<Built> {
         schema: PLAN_SUMMARY_SCHEMA,
         as_of: cfg.as_of.clone(),
         mode: "DRY-RUN: read-only; no S3 calls; this tool has no apply, tag, transition or delete path",
-        granularity: format!(
-            "prefix groups from the S3 object ledger generated {} (S3 Inventory not yet available)",
-            ledger.generated_at
-        ),
+        granularity: match &inv {
+            None => format!(
+                "prefix groups from the S3 object ledger generated {} (S3 Inventory not yet available)",
+                ledger.generated_at
+            ),
+            Some(i) => format!(
+                "prefix groups from the S3 object ledger generated {}, with object-level facts from S3 Inventory reports ({}) for {} buckets",
+                ledger.generated_at,
+                i.reports
+                    .iter()
+                    .map(|r| r.created_at.as_str())
+                    .collect::<BTreeSet<_>>()
+                    .into_iter()
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                i.reports.len()
+            ),
+        },
         plan_file: "retention-plan.jsonl",
         plan_sha256: plan_sha,
         rows: rows.len() as u64,
@@ -699,11 +1010,31 @@ pub fn build(cfg: &Config) -> Result<Built> {
         by_tier,
         expire: "0 groups: EXPIRE needs TV=false, an E1-E5 rule proven with object-level evidence (inventory + GET+sha256), and an agreeing independent reference scan; none is available at prefix level".into(),
         e_rule_status: BTreeMap::from([
-            ("E1", "not evaluable: needs S3 Inventory key/size join plus GET+sha256 of both copies (etag is not enough)"),
-            ("E2", "not evaluable: no checkpoint->L6 curve table (gp_distilled/v1 not built)"),
-            ("E3", "not evaluable: no distilled table hash in a T0 manifest"),
-            ("E4", "not evaluable: needs program_sha subset proof over full bodies"),
-            ("E5", "delegated to the applied lifecycle rules p0-noncurrent-expire-* (ledger lists current versions only)"),
+            ("E1", match &inv {
+                None => "not evaluable: needs S3 Inventory key/size join plus GET+sha256 of both copies (etag is not enough)".to_string(),
+                Some(i) => format!(
+                    "candidates only: {}; proof needs GET+sha256 of both copies (a separate, approved read job), so nothing expires",
+                    if i.e1.is_empty() {
+                        "no E1 candidate pair has both buckets inventoried".to_string()
+                    } else {
+                        i.e1.iter()
+                            .map(|o| format!(
+                                "s3://{}/{} vs s3://{}/{}: {} of {} keys same key+size+ETag ({:.1} GB)",
+                                o.bucket, o.prefix, o.counterpart_bucket, o.counterpart_prefix,
+                                o.same_key_size_etag, o.objects, o.same_key_size_etag_bytes as f64 / 1e9
+                            ))
+                            .collect::<Vec<_>>()
+                            .join("; ")
+                    }
+                ),
+            }),
+            ("E2", "not evaluable: no checkpoint->L6 curve table (gp_distilled/v1 not built)".into()),
+            ("E3", "not evaluable: no distilled table hash in a T0 manifest".into()),
+            ("E4", "not evaluable: needs program_sha subset proof over full bodies".into()),
+            ("E5", match &inv {
+                None => "delegated to the applied lifecycle rules p0-noncurrent-expire-* (ledger lists current versions only)".to_string(),
+                Some(_) => "delegated to the applied lifecycle rules p0-noncurrent-expire-*; noncurrent versions per group are listed from S3 Inventory (summary.inventory, row.inventory); T0 groups' noncurrent bytes are in notes t0-noncurrent-versions (D2)".to_string(),
+            }),
         ]),
         hazards: to_notes(hazards),
         notes: to_notes(notes),
@@ -724,6 +1055,7 @@ pub fn build(cfg: &Config) -> Result<Built> {
         ]),
         index_rows_unmatched_sample: agg.rows_unmatched.iter().take(20).cloned().collect(),
         diff_vs_previous: diff,
+        inventory: inventory_summary,
     };
     let report_md = report(&summary, &rows, &lock, &ref_counts);
     Ok(Built {
@@ -778,6 +1110,7 @@ fn row(
         e_rules_fired: Vec::new(),
         e_candidates: d.e_candidates,
         lifecycle: f.coverage.clone(),
+        inventory: None,
         cost: d.cost,
         reason: d.reason,
     }
@@ -942,6 +1275,69 @@ fn report(
         s.refs_bucketless_unresolved,
         s.prefix_mentions
     ));
+    if let Some(inv) = &s.inventory {
+        o.push_str("\n## S3 Inventory\n\n");
+        o.push_str(&format!(
+            "{} groups have inventory rows; {} are unchanged since their report (exact dates and classes). Noncurrent bytes: {:.1} GB in T0 groups, {:.1} GB elsewhere.\n\n",
+            inv.groups_with_inventory,
+            inv.groups_unchanged_since_report,
+            inv.noncurrent_bytes_in_t0_groups as f64 / 1e9,
+            inv.noncurrent_bytes_in_other_groups as f64 / 1e9
+        ));
+        o.push_str("| Bucket | Report | Rows | Current obj | Current GB | Noncurrent ver | Noncurrent GB | Delete markers | Ledger - inventory (obj / GB) |\n|---|---|---:|---:|---:|---:|---:|---:|---:|\n");
+        for b in &inv.buckets {
+            o.push_str(&format!(
+                "| {} | {} | {} | {} | {:.1} | {} | {:.1} | {} | {} / {:.2} |\n",
+                b.bucket,
+                b.report_created_at,
+                b.rows,
+                b.current_objects,
+                b.current_bytes as f64 / 1e9,
+                b.noncurrent_versions,
+                b.noncurrent_bytes as f64 / 1e9,
+                b.delete_markers,
+                b.ledger_minus_inventory_objects,
+                b.ledger_minus_inventory_bytes as f64 / 1e9
+            ));
+        }
+        o.push_str(&format!(
+            "\nIn-scope buckets without a report (prefix-level only): {}\n\n",
+            if inv.ledger_buckets_without_report.is_empty() {
+                "none".to_string()
+            } else {
+                inv.ledger_buckets_without_report.join(", ")
+            }
+        ));
+        for (role, states) in &inv.pins {
+            o.push_str(&format!(
+                "- pins {role}: {}\n",
+                states
+                    .iter()
+                    .map(|(k, n)| format!("{k} {n}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ));
+        }
+        for p in &inv.pins_not_present_sample {
+            o.push_str(&format!("  - not present: {p}\n"));
+        }
+        for e in &inv.e1_overlap {
+            o.push_str(&format!(
+                "- E1 candidate s3://{}/{} vs s3://{}/{}: {} / {} keys same key+size+ETag ({:.1} GB), {} differ, {} only here, {} only there, {} multipart ETags; not proven (needs GET+sha256)\n",
+                e.bucket,
+                e.prefix,
+                e.counterpart_bucket,
+                e.counterpart_prefix,
+                e.same_key_size_etag,
+                e.objects,
+                e.same_key_size_etag_bytes as f64 / 1e9,
+                e.same_key_different,
+                e.only_here,
+                e.only_counterpart,
+                e.multipart_etags
+            ));
+        }
+    }
     o.push_str("\n## Inputs\n\n| Role | Path | Bytes | sha256 | Check |\n|---|---|---:|---|---|\n");
     for i in std::iter::once(&lock.policy)
         .chain(&lock.inputs)
