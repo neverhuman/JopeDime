@@ -113,8 +113,11 @@ POLICY = [
 REQUIRED = {"python": PYTHON, "rust": NATIVE + CONTEXT + POLICY, "policy": POLICY}
 
 
-def verify(mode, junit, collection=None):
+def verify(mode, junit, collection=None, partitioned=False):
+    """partitioned: one nextest slice; a required case its partition leaves to another slice is
+    listed and not run here. union() then requires every case to run in exactly one slice."""
     required = REQUIRED[mode]
+    elsewhere = set()
     if mode != "python":
         if collection is None:
             raise ValueError("Rust training proof needs actual nextest collection")
@@ -122,6 +125,10 @@ def verify(mode, junit, collection=None):
         for binary, name in required:
             suite = suites.get(binary, {})
             case = suite.get("testcases", {}).get(name, {})
+            if (partitioned and suite.get("status") == "listed" and case.get("ignored") is False
+                    and case.get("filter-match") == {"status": "mismatch", "reason": "partition"}):
+                elsewhere.add((binary, name))
+                continue
             if (suite.get("status") != "listed" or case.get("ignored") is not False
                     or case.get("filter-match", {}).get("status") != "matches"):
                 raise ValueError(f"required training proof not selected: {binary}::{name}")
@@ -129,14 +136,34 @@ def verify(mode, junit, collection=None):
     for binary, name in required:
         matches = [case for case in cases
                    if case.get("classname") == binary and case.get("name") == name]
+        if (binary, name) in elsewhere:
+            if matches:
+                raise ValueError(f"required training proof outside this partition was reported: {binary}::{name}")
+            continue
         if len(matches) != 1:
             raise ValueError(f"required training proof missing or duplicate: {binary}::{name}")
         if any(matches[0].find(tag) is not None for tag in ("skipped", "failure", "error")):
             raise ValueError(f"required training proof did not pass: {binary}::{name}")
     return {"schema": "jope.ci-required-training/v1", "mode": mode,
-            "required_executed": len(required), "junit": str(junit),
+            "required_executed": len(required) - len(elsewhere), "junit": str(junit),
             "collection": str(collection) if collection else None,
+            **({"outside_partition": len(elsewhere)} if partitioned else {}),
+            "executed_cases": sorted(f"{binary}::{name}" for binary, name in required if (binary, name) not in elsewhere),
             "qualification": "synthetic contract tests; not live training or encoder parity"}
+
+
+def union(mode, pairs):
+    """pairs: [(collection, junit)] of every slice. Each required case passes in exactly one."""
+    owners = {}
+    for collection, junit in pairs:
+        for case in verify(mode, junit, collection, partitioned=True)["executed_cases"]:
+            owners.setdefault(case, []).append(str(junit))
+    required = {f"{binary}::{name}" for binary, name in REQUIRED[mode]}
+    wrong = {case: owners.get(case, []) for case in required if len(owners.get(case, [])) != 1}
+    if wrong or set(owners) != required:
+        raise ValueError(f"required training proofs not executed exactly once across slices: {wrong}")
+    return {"schema": "jope.ci-required-training/v1", "mode": mode, "required_executed": len(required),
+            "slices": len(pairs), "qualification": "synthetic contract tests; not live training or encoder parity"}
 
 
 def main():
@@ -144,8 +171,9 @@ def main():
     parser.add_argument("mode", choices=REQUIRED)
     parser.add_argument("--junit", required=True, type=Path)
     parser.add_argument("--collection", type=Path)
+    parser.add_argument("--partitioned", action="store_true", help="this collection is one nextest slice")
     args = parser.parse_args()
-    print(json.dumps(verify(args.mode, args.junit, args.collection), sort_keys=True))
+    print(json.dumps(verify(args.mode, args.junit, args.collection, args.partitioned), sort_keys=True))
 
 
 if __name__ == "__main__":

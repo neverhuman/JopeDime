@@ -20,10 +20,44 @@ def families(mapping):
     return {name: lane for name, lane in mapping['lanes'].items() if name.startswith('full-')}
 
 
-def run(mapping, output, execute=receipt.run_lane):
+# full-main.yml runs one `cpu` matrix leg per group, each on its own jope-full-cpu runner when one
+# is free. Grouping changes scheduling only: every family keeps its command, deadline and receipt,
+# and check_test_partition.py proves the groups cover the declared families exactly once.
+# Balanced on measured family wall time (runs 38347124647 and 38361021688: ~1240 s and ~1190 s).
+GROUPS = {
+    'cpu-1': ('full-build-reuse', 'full-default', 'full-doctests', 'full-e2e', 'full-emitters',
+              'full-inputs', 'full-policy', 'full-python', 'full-s3-offline'),
+    'cpu-2': ('full-neural', 'full-scratch'),
+}
+
+
+def partition_errors(declared, groups):
+    """Every declared family in exactly one group, and no group naming an undeclared family."""
+    assigned = [name for names in groups.values() for name in names]
+    errors = [f'family {name} is in {assigned.count(name)} groups' for name in sorted(set(assigned)) if assigned.count(name) > 1]
+    errors += [f'family {name} is in no group' for name in sorted(set(declared) - set(assigned))]
+    errors += [f'group family {name} is not declared' for name in sorted(set(assigned) - set(declared))]
+    return errors
+
+
+def selected(mapping, group=None):
+    declared = families(mapping)
+    if group is None:
+        return declared
+    errors = partition_errors(declared, GROUPS)
+    if errors:
+        raise ValueError('full CPU groups do not partition the declared families: ' + '; '.join(errors))
+    if group not in GROUPS:
+        raise ValueError(f'unknown full CPU group: {group}')
+    # Declaration order, as the single job ran them.
+    return {name: lane for name, lane in declared.items() if name in GROUPS[group]}
+
+
+def run(mapping, output, execute=receipt.run_lane, group=None):
+    chosen = selected(mapping, group)
     output.mkdir(parents=True, exist_ok=False)
     failed = False
-    for name, lane in families(mapping).items():
+    for name, lane in chosen.items():
         destination = output / name
         backend = lane['result_backend']
         junit = destination / 'junit.xml' if backend in ('nextest', 'pytest') else None
@@ -37,9 +71,9 @@ def run(mapping, output, execute=receipt.run_lane):
     return int(failed)
 
 
-def summarize(mapping, output, expected):
+def summarize(mapping, output, expected, group=None):
     inventory, errors = {}, []
-    for name, lane in families(mapping).items():
+    for name, lane in selected(mapping, group).items():
         path = output / name / 'receipt.json'
         try:
             data = json.loads(path.read_text())
@@ -88,10 +122,48 @@ def summarize(mapping, output, expected):
         except (OSError, ValueError, KeyError, TypeError) as exc:
             errors.append(f'{name}: {exc}')
             inventory[name] = {'status': 'missing-or-invalid', 'tests': None, 'diagnostic': str(exc)}
-    return {'schema': 'jope.full-cpu/v1', **expected, 'diagnostic_only': True,
+    return {'schema': 'jope.full-cpu/v1', **expected, 'diagnostic_only': True, 'group': group,
             'status': 'failed' if errors else 'passed', 'families': inventory, 'errors': errors,
             'excluded_dispositions': mapping['dispositions'],
             'note': 'Ignored tests and Python xbabe2-marked tests remain explicit non-execution; research scripts are not collected tests. Qualification and soak are unstarted.'}
+
+
+def aggregate(mapping, downloads, needs, expected):
+    """Re-verify every group's receipts from its own artifact and require the whole family set."""
+    errors, groups = [], {}
+    if set(needs) != {'cpu'} or needs['cpu'].get('result') != 'success':
+        errors.append(f"cpu matrix result {needs.get('cpu', {}).get('result', 'missing')}")
+    errors += partition_errors(families(mapping), GROUPS)
+    prefix = f"full-cpu-{expected['run_id']}-{expected['attempt']}-"
+    found = sorted(path.name for path in downloads.iterdir()) if downloads.is_dir() else []
+    for name in found:
+        if not name.startswith(prefix) or name.removeprefix(prefix) not in GROUPS:
+            errors.append(f'unexpected artifact {name}')
+    executed = []
+    for group in GROUPS:
+        folder = downloads / (prefix + group)
+        try:
+            if folder.is_symlink() or not folder.is_dir():
+                raise ValueError('missing group artifact')
+            recorded = json.loads((folder / 'inventory.json').read_text())
+            report = summarize(mapping, folder, expected, group)
+            if recorded.get('group') != group or recorded.get('status') != 'passed' or set(recorded.get('families', {})) != set(report['families']):
+                raise ValueError('recorded group inventory is not a passing inventory of this group')
+            errors += [f'{group}: {error}' for error in report['errors']]
+            executed += list(report['families'])
+            groups[group] = {'status': report['status'], 'families': report['families']}
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append(f'{group}: {exc}')
+            groups[group] = {'status': 'missing-or-invalid', 'families': None, 'diagnostic': str(exc)}
+    missing = sorted(set(families(mapping)) - set(executed))
+    duplicated = sorted({name for name in executed if executed.count(name) > 1})
+    errors += [f'family {name} has no verified receipt' for name in missing]
+    errors += [f'family {name} was verified in more than one group' for name in duplicated]
+    return {'schema': 'jope.full-cpu-aggregate/v1', **expected, 'diagnostic_only': True,
+            'status': 'failed' if errors else 'passed', 'groups': groups,
+            'partition': {'declared': sorted(families(mapping)), 'executed': sorted(executed),
+                          'missing': missing, 'duplicated': duplicated},
+            'errors': errors}
 
 
 VERSION = '0.15.0'
@@ -184,8 +256,11 @@ def compiler_cache_stats(output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['run', 'summarize', 'cache-setup', 'cache-stats'])
+    parser.add_argument('command', choices=['run', 'summarize', 'aggregate', 'cache-setup', 'cache-stats'])
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--group', choices=sorted(GROUPS), help='one full-main.yml cpu matrix leg; omitted runs every family')
+    parser.add_argument('--downloads', type=Path, help='aggregate: this run and attempt\'s group artifacts')
+    parser.add_argument('--needs', type=Path, help='aggregate: the toJson(needs) of the aggregate job')
     args = parser.parse_args()
     if args.command == 'cache-setup':
         setup_compiler_cache(args.output)
@@ -195,10 +270,27 @@ def main():
         return 0
     mapping = json.loads((ROOT / 'deploy/ci/coverage.json').read_text())
     if args.command == 'run':
-        return run(mapping, args.output)
+        return run(mapping, args.output, group=args.group)
     args.output.mkdir(parents=True, exist_ok=True)
     expected = receipt.identity(os.environ, subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip())
-    report = summarize(mapping, args.output, expected)
+    if args.command == 'aggregate':
+        if args.downloads is None or args.needs is None:
+            parser.error('aggregate requires --downloads and --needs')
+        report = aggregate(mapping, args.downloads, json.loads(args.needs.read_text()), expected)
+        with (args.output / 'aggregate.json').open('x') as stream:
+            json.dump(report, stream, indent=2)
+            stream.write('\n')
+        print(json.dumps(report, indent=2))
+        if os.environ.get('GITHUB_STEP_SUMMARY'):
+            with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+                stream.write(f"Full CPU aggregate at `{expected['source_sha']}`: **{report['status']}**\n\n")
+                stream.write('| Group | Status | Families |\n|---|---|---|\n')
+                for name, result in report['groups'].items():
+                    stream.write(f"| {name} | {result['status']} | {', '.join(result['families'] or [])} |\n")
+                for error in report['errors']:
+                    stream.write(f'\n- {error}')
+        return report['status'] != 'passed'
+    report = summarize(mapping, args.output, expected, args.group)
     with (args.output / 'inventory.json').open('x') as stream:
         json.dump(report, stream, indent=2)
         stream.write('\n')
