@@ -498,6 +498,22 @@
       "reason": "Pure monitor custody/budget or dashboard renderer synthetic research fixtures; portable CI bridge, no GP/learner/runtime authority. Includes owning CI routing behavior through guarded stdlib classify; no CLI/Git/runtime.",
       "role": "research"
     },
+    "python:deploy/dl-flywheel/ingest_joined_roster/tests/test_roster.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage",
+        "evidence"
+      ]
+    },
+    "python:deploy/dl-flywheel/ingest_joined_roster/tests/test_s3.py": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "storage",
+        "evidence"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py": {
       "reason": "Research closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case): 24 isolated CPU cases through run_v2_offline.py, additive to prior812. Library fixtures only; no live inbox, planner or optimizer qualification.",
       "role": "research"
