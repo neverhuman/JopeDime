@@ -1,4 +1,5 @@
-//! Model-free CLOVER Phase 0 contracts. These APIs do not launch execution or training.
+//! CLOVER identity, evidence and bounded discovery contracts. No optimizer training.
+pub mod expansion;
 mod identity;
 mod store;
 mod visibility;
