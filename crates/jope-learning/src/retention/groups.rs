@@ -246,39 +246,50 @@ pub fn flatten(ledger: &Value) -> Result<Ledger> {
 /// Finds the group holding an object key: the deepest leaf prefix, else the deepest internal
 /// prefix's direct group, else the bucket root.
 pub struct GroupLookup {
-    leaf: HashMap<(String, String), usize>,
-    direct: HashMap<(String, String), usize>,
+    buckets: HashMap<String, BucketLookup>,
+}
+
+/// One bucket's prefixes; lookups borrow the key, so streaming an inventory allocates nothing.
+#[derive(Default)]
+pub struct BucketLookup {
+    leaf: HashMap<String, usize>,
+    direct: HashMap<String, usize>,
+}
+
+impl BucketLookup {
+    pub fn find(&self, key: &str) -> Option<usize> {
+        for (i, _) in key.rmatch_indices('/') {
+            let p = &key[..=i];
+            if let Some(&g) = self.leaf.get(p) {
+                return Some(g);
+            }
+            if let Some(&g) = self.direct.get(p) {
+                return Some(g);
+            }
+        }
+        self.direct.get("").copied()
+    }
 }
 
 impl GroupLookup {
     pub fn new(groups: &[Group]) -> GroupLookup {
-        let mut leaf = HashMap::new();
-        let mut direct = HashMap::new();
+        let mut buckets: HashMap<String, BucketLookup> = HashMap::new();
         for (i, g) in groups.iter().enumerate() {
-            let k = (g.bucket.clone(), g.prefix.clone());
+            let b = buckets.entry(g.bucket.clone()).or_default();
             if g.direct {
-                direct.insert(k, i);
+                b.direct.insert(g.prefix.clone(), i);
             } else {
-                leaf.insert(k, i);
+                b.leaf.insert(g.prefix.clone(), i);
             }
         }
-        GroupLookup { leaf, direct }
+        GroupLookup { buckets }
+    }
+
+    pub fn bucket(&self, bucket: &str) -> Option<&BucketLookup> {
+        self.buckets.get(bucket)
     }
 
     pub fn find(&self, bucket: &str, key: &str) -> Option<usize> {
-        let mut cuts: Vec<usize> = key.match_indices('/').map(|(i, _)| i + 1).collect();
-        cuts.reverse();
-        for cut in cuts {
-            let p = (bucket.to_string(), key[..cut].to_string());
-            if let Some(&i) = self.leaf.get(&p) {
-                return Some(i);
-            }
-            if let Some(&i) = self.direct.get(&p) {
-                return Some(i);
-            }
-        }
-        self.direct
-            .get(&(bucket.to_string(), String::new()))
-            .copied()
+        self.buckets.get(bucket)?.find(key)
     }
 }

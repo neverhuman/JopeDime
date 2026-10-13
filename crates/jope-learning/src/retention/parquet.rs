@@ -24,13 +24,15 @@ pub enum ColumnType {
     Int64,
     Double,
     Utf8,
+    /// INT64 milliseconds since the epoch (ConvertedType TIMESTAMP_MILLIS).
+    TimestampMillis,
 }
 
 impl ColumnType {
     fn physical(self) -> i32 {
         match self {
             ColumnType::Boolean => 0,
-            ColumnType::Int64 => 2,
+            ColumnType::Int64 | ColumnType::TimestampMillis => 2,
             ColumnType::Double => 5,
             ColumnType::Utf8 => 6,
         }
@@ -40,6 +42,7 @@ impl ColumnType {
         Ok(match (t, converted) {
             (0, None) => ColumnType::Boolean,
             (2, None) => ColumnType::Int64,
+            (2, Some(9)) => ColumnType::TimestampMillis,
             (5, None) => ColumnType::Double,
             (6, Some(0)) => ColumnType::Utf8,
             _ => bail!("unsupported parquet column type {t} (converted {converted:?})"),
@@ -199,7 +202,7 @@ fn plain(ty: ColumnType, cells: &[&Cell]) -> Result<Vec<u8>> {
                 .collect::<Result<_>>()?;
             out = bitpack_bools(&vals);
         }
-        ColumnType::Int64 => {
+        ColumnType::Int64 | ColumnType::TimestampMillis => {
             for c in cells {
                 let Cell::I64(v) = c else {
                     bail!("int64 column holds {c:?}")
@@ -228,8 +231,134 @@ fn plain(ty: ColumnType, cells: &[&Cell]) -> Result<Vec<u8>> {
     Ok(out)
 }
 
+/// Page compression for [`write_with`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Codec {
+    Uncompressed,
+    Zstd,
+    Snappy,
+}
+
+impl Codec {
+    fn id(self) -> i32 {
+        match self {
+            Codec::Uncompressed => 0,
+            Codec::Snappy => 1,
+            Codec::Zstd => 6,
+        }
+    }
+
+    fn apply(self, page: &[u8]) -> Vec<u8> {
+        match self {
+            Codec::Uncompressed => page.to_vec(),
+            Codec::Zstd => jope_records::zstd_frame::compress(page),
+            Codec::Snappy => super::snappy::compress(page),
+        }
+    }
+}
+
+/// Layout knobs. The defaults (one row group, one PLAIN page per column) are what
+/// `gp_distilled/v1` uses; the others exist so fixtures can look like S3 Inventory files.
+#[derive(Clone, Copy, Debug)]
+pub struct WriteOptions {
+    pub codec: Codec,
+    /// Rows per row group (0: one row group).
+    pub row_group_rows: usize,
+    /// Rows per data page (0: one page per column chunk).
+    pub page_rows: usize,
+    /// Dictionary-encode UTF8, INT64 and timestamp columns (PLAIN_DICTIONARY, as parquet-mr).
+    pub dictionary: bool,
+}
+
+/// `values` of `width` bits as one bit-packed hybrid run (padded to a multiple of 8 values).
+fn bitpacked_run(values: &[u32], width: u32) -> Vec<u8> {
+    let groups = values.len().div_ceil(8);
+    let mut run = Tw::new();
+    run.varint(((groups as u64) << 1) | 1);
+    let mut out = run.buf;
+    let mut packed = vec![0u8; groups * width as usize];
+    let mut bit = 0usize;
+    for i in 0..groups * 8 {
+        let v = values.get(i).copied().unwrap_or(0);
+        for b in 0..width {
+            if v >> b & 1 == 1 {
+                packed[bit / 8] |= 1 << (bit % 8);
+            }
+            bit += 1;
+        }
+    }
+    out.extend(packed);
+    out
+}
+
+/// Distinct values in first-seen order and each present cell's index into them.
+fn dictionary(present: &[&Cell]) -> (Vec<Cell>, Vec<u32>) {
+    let mut seen: BTreeMap<String, u32> = BTreeMap::new();
+    let mut dict = Vec::new();
+    let mut idx = Vec::with_capacity(present.len());
+    for c in present {
+        let k = format!("{c:?}");
+        let i = *seen.entry(k).or_insert_with(|| {
+            dict.push((*c).clone());
+            (dict.len() - 1) as u32
+        });
+        idx.push(i);
+    }
+    (dict, idx)
+}
+
+struct ChunkOut {
+    file_offset: i64,
+    data_offset: i64,
+    dict_offset: Option<i64>,
+    uncompressed: i64,
+    compressed: i64,
+    dictionary: bool,
+}
+
+/// Appends one page (header + body) and returns (uncompressed, compressed) sizes incl. header.
+fn put_page(
+    out: &mut Vec<u8>,
+    codec: Codec,
+    raw: &[u8],
+    header: impl FnOnce(&mut Tw),
+    page_type: i32,
+) -> Result<(i64, i64)> {
+    let body = codec.apply(raw);
+    let mut h = Tw::new();
+    h.i32f(1, page_type);
+    h.i32f(2, i32::try_from(raw.len())?);
+    h.i32f(3, i32::try_from(body.len())?);
+    header(&mut h);
+    let header = h.finish();
+    out.extend(&header);
+    out.extend(&body);
+    Ok((
+        (header.len() + raw.len()) as i64,
+        (header.len() + body.len()) as i64,
+    ))
+}
+
 /// Writes `table` as Parquet. `zstd` selects ZSTD page compression, else UNCOMPRESSED.
 pub fn write(table: &Table, zstd: bool, created_by: &str) -> Result<Vec<u8>> {
+    let codec = if zstd {
+        Codec::Zstd
+    } else {
+        Codec::Uncompressed
+    };
+    write_with(
+        table,
+        &WriteOptions {
+            codec,
+            row_group_rows: 0,
+            page_rows: 0,
+            dictionary: false,
+        },
+        created_by,
+    )
+}
+
+pub fn write_with(table: &Table, opts: &WriteOptions, created_by: &str) -> Result<Vec<u8>> {
     let ncol = table.columns.len();
     ensure!(ncol > 0, "a table needs at least one column");
     for (r, row) in table.rows.iter().enumerate() {
@@ -240,58 +369,133 @@ pub fn write(table: &Table, zstd: bool, created_by: &str) -> Result<Vec<u8>> {
         );
     }
     let nrows = table.rows.len();
+    let group_rows = if opts.row_group_rows == 0 {
+        nrows.max(1)
+    } else {
+        opts.row_group_rows
+    };
     let mut out = MAGIC.to_vec();
-    struct Meta {
-        offset: i64,
-        uncompressed: i64,
-        compressed: i64,
-    }
-    let mut metas = Vec::with_capacity(ncol);
-    for (ci, col) in table.columns.iter().enumerate() {
-        let cells: Vec<&Cell> = table.rows.iter().map(|r| &r[ci]).collect();
-        let defined: Vec<bool> = cells.iter().map(|c| !matches!(c, Cell::Null)).collect();
-        if col.required {
-            ensure!(
-                defined.iter().all(|d| *d),
-                "required column {} holds a null",
-                col.name
-            );
+    let mut groups: Vec<(usize, Vec<ChunkOut>)> = Vec::new();
+    let mut start = 0usize;
+    loop {
+        let rows = &table.rows[start..(start + group_rows).min(nrows)];
+        let mut chunks = Vec::with_capacity(ncol);
+        for (ci, col) in table.columns.iter().enumerate() {
+            let cells: Vec<&Cell> = rows.iter().map(|r| &r[ci]).collect();
+            if col.required {
+                ensure!(
+                    cells.iter().all(|c| !matches!(c, Cell::Null)),
+                    "required column {} holds a null",
+                    col.name
+                );
+            }
+            let file_offset = out.len() as i64;
+            let use_dict =
+                opts.dictionary && col.ty != ColumnType::Boolean && col.ty != ColumnType::Double;
+            let all_present: Vec<&Cell> = cells
+                .iter()
+                .copied()
+                .filter(|c| !matches!(c, Cell::Null))
+                .collect();
+            let (dict, all_idx) = if use_dict {
+                dictionary(&all_present)
+            } else {
+                (Vec::new(), Vec::new())
+            };
+            let (mut unc, mut comp) = (0i64, 0i64);
+            let dict_offset = if use_dict {
+                let off = out.len() as i64;
+                let refs: Vec<&Cell> = dict.iter().collect();
+                let raw = plain(col.ty, &refs).with_context(|| format!("column {}", col.name))?;
+                let n = i32::try_from(dict.len())?;
+                let (u, c) = put_page(
+                    &mut out,
+                    opts.codec,
+                    &raw,
+                    |h| {
+                        h.struct_begin(7);
+                        h.i32f(1, n);
+                        h.i32f(2, 0); // PLAIN
+                        h.struct_end();
+                    },
+                    2,
+                )?;
+                unc += u;
+                comp += c;
+                Some(off)
+            } else {
+                None
+            };
+            let width = (32 - (dict.len().max(2) as u32 - 1).leading_zeros()).max(1);
+            let data_offset = out.len() as i64;
+            let page_rows = if opts.page_rows == 0 {
+                cells.len().max(1)
+            } else {
+                opts.page_rows
+            };
+            let mut p0 = 0usize;
+            let mut idx_pos = 0usize;
+            loop {
+                let slice = &cells[p0..(p0 + page_rows).min(cells.len())];
+                let defined: Vec<bool> = slice.iter().map(|c| !matches!(c, Cell::Null)).collect();
+                let present: Vec<&Cell> = slice
+                    .iter()
+                    .copied()
+                    .filter(|c| !matches!(c, Cell::Null))
+                    .collect();
+                let mut raw = if col.required {
+                    Vec::new()
+                } else {
+                    def_levels(&defined)
+                };
+                if use_dict {
+                    raw.push(width as u8);
+                    raw.extend(bitpacked_run(
+                        &all_idx[idx_pos..idx_pos + present.len()],
+                        width,
+                    ));
+                    idx_pos += present.len();
+                } else {
+                    raw.extend(
+                        plain(col.ty, &present).with_context(|| format!("column {}", col.name))?,
+                    );
+                }
+                let n = i32::try_from(slice.len())?;
+                let (u, c) = put_page(
+                    &mut out,
+                    opts.codec,
+                    &raw,
+                    |h| {
+                        h.struct_begin(5);
+                        h.i32f(1, n);
+                        h.i32f(2, if use_dict { 2 } else { 0 }); // PLAIN_DICTIONARY | PLAIN
+                        h.i32f(3, 3); // RLE definition levels
+                        h.i32f(4, 3); // RLE repetition levels
+                        h.struct_end();
+                    },
+                    0,
+                )?;
+                unc += u;
+                comp += c;
+                p0 += slice.len();
+                if p0 >= cells.len() {
+                    break;
+                }
+            }
+            chunks.push(ChunkOut {
+                file_offset: if use_dict { file_offset } else { data_offset },
+                data_offset,
+                dict_offset,
+                uncompressed: unc,
+                compressed: comp,
+                dictionary: use_dict,
+            });
         }
-        let present: Vec<&Cell> = cells
-            .iter()
-            .copied()
-            .filter(|c| !matches!(c, Cell::Null))
-            .collect();
-        let mut page = if col.required {
-            Vec::new()
-        } else {
-            def_levels(&defined)
-        };
-        page.extend(plain(col.ty, &present).with_context(|| format!("column {}", col.name))?);
-        let body = if zstd {
-            jope_records::zstd_frame::compress(&page)
-        } else {
-            page.clone()
-        };
-        let mut h = Tw::new();
-        h.i32f(1, 0); // DATA_PAGE
-        h.i32f(2, i32::try_from(page.len())?);
-        h.i32f(3, i32::try_from(body.len())?);
-        h.struct_begin(5);
-        h.i32f(1, i32::try_from(nrows)?);
-        h.i32f(2, 0); // PLAIN
-        h.i32f(3, 3); // RLE definition levels
-        h.i32f(4, 3); // RLE repetition levels
-        h.struct_end();
-        let header = h.finish();
-        let offset = out.len() as i64;
-        out.extend(&header);
-        out.extend(&body);
-        metas.push(Meta {
-            offset,
-            uncompressed: (header.len() + page.len()) as i64,
-            compressed: (header.len() + body.len()) as i64,
-        });
+        groups.push((rows.len(), chunks));
+        start += rows.len();
+        if start >= nrows {
+            break;
+        }
     }
     let mut f = Tw::new();
     f.i32f(1, 1);
@@ -305,36 +509,50 @@ pub fn write(table: &Table, zstd: bool, created_by: &str) -> Result<Vec<u8>> {
         f.i32f(1, col.ty.physical());
         f.i32f(3, if col.required { 0 } else { 1 });
         f.binf(4, col.name.as_bytes());
-        if col.ty == ColumnType::Utf8 {
-            f.i32f(6, 0); // ConvertedType UTF8
+        match col.ty {
+            ColumnType::Utf8 => f.i32f(6, 0),            // ConvertedType UTF8
+            ColumnType::TimestampMillis => f.i32f(6, 9), // ConvertedType TIMESTAMP_MILLIS
+            _ => {}
         }
         f.struct_end();
     }
     f.i64f(3, nrows as i64);
-    f.list_begin(4, 12, 1);
-    f.elem_struct_begin();
-    f.list_begin(1, 12, ncol);
-    for (col, m) in table.columns.iter().zip(&metas) {
+    f.list_begin(4, 12, groups.len());
+    for (rows, chunks) in &groups {
         f.elem_struct_begin();
-        f.i64f(2, m.offset);
-        f.struct_begin(3);
-        f.i32f(1, col.ty.physical());
-        f.list_begin(2, 5, 2);
-        f.elem_i32(0);
-        f.elem_i32(3);
-        f.list_begin(3, 8, 1);
-        f.elem_bin(col.name.as_bytes());
-        f.i32f(4, if zstd { 6 } else { 0 });
-        f.i64f(5, nrows as i64);
-        f.i64f(6, m.uncompressed);
-        f.i64f(7, m.compressed);
-        f.i64f(9, m.offset);
-        f.struct_end();
+        f.list_begin(1, 12, ncol);
+        for (col, m) in table.columns.iter().zip(chunks) {
+            f.elem_struct_begin();
+            f.i64f(2, m.file_offset);
+            f.struct_begin(3);
+            f.i32f(1, col.ty.physical());
+            if m.dictionary {
+                f.list_begin(2, 5, 3);
+                f.elem_i32(0);
+                f.elem_i32(2);
+                f.elem_i32(3);
+            } else {
+                f.list_begin(2, 5, 2);
+                f.elem_i32(0);
+                f.elem_i32(3);
+            }
+            f.list_begin(3, 8, 1);
+            f.elem_bin(col.name.as_bytes());
+            f.i32f(4, opts.codec.id());
+            f.i64f(5, *rows as i64);
+            f.i64f(6, m.uncompressed);
+            f.i64f(7, m.compressed);
+            f.i64f(9, m.data_offset);
+            if let Some(d) = m.dict_offset {
+                f.i64f(11, d);
+            }
+            f.struct_end();
+            f.struct_end();
+        }
+        f.i64f(2, chunks.iter().map(|m| m.uncompressed).sum());
+        f.i64f(3, *rows as i64);
         f.struct_end();
     }
-    f.i64f(2, metas.iter().map(|m| m.uncompressed).sum());
-    f.i64f(3, nrows as i64);
-    f.struct_end();
     f.list_begin(5, 12, table.metadata.len());
     for (k, v) in &table.metadata {
         f.elem_struct_begin();
@@ -354,8 +572,10 @@ pub fn write(table: &Table, zstd: bool, created_by: &str) -> Result<Vec<u8>> {
 
 #[derive(Clone, Debug)]
 enum Tv {
-    /// A boolean or double the reader consumes but does not use.
+    /// A list boolean or a double the reader consumes but does not use.
     Other,
+    /// A struct-field boolean (compact protocol: the value is the field type).
+    Bool(bool),
     Int(i64),
     Bin(Vec<u8>),
     List(Vec<Tv>),
@@ -398,7 +618,7 @@ impl<'a> Tr<'a> {
     }
     fn value(&mut self, ty: u8) -> Result<Tv> {
         Ok(match ty {
-            1 | 2 => Tv::Other,
+            1 | 2 => Tv::Bool(ty == 1),
             3 => Tv::Int(i64::from(self.byte()? as i8)),
             4..=6 => Tv::Int(self.zigzag()?),
             7 => {
@@ -490,35 +710,78 @@ fn strukt(v: &Tv) -> Result<&BTreeMap<i16, Tv>> {
 }
 
 fn read_levels(data: &[u8], n: usize) -> Result<(Vec<bool>, usize)> {
-    ensure!(data.len() >= 4, "parquet: definition levels truncated");
+    let (len, body) = length_prefixed(data)?;
+    let out = rle_hybrid(body, 1, n)?;
+    Ok((out.into_iter().map(|v| v == 1).collect(), 4 + len))
+}
+
+/// A 4-byte little-endian length and the bytes it covers.
+fn length_prefixed(data: &[u8]) -> Result<(usize, &[u8])> {
+    ensure!(data.len() >= 4, "parquet: RLE section truncated");
     let len = u32::from_le_bytes(data[..4].try_into()?) as usize;
     ensure!(
         4 + len <= data.len(),
-        "parquet: definition levels run past the page"
+        "parquet: RLE section runs past the page"
     );
+    Ok((len, &data[4..4 + len]))
+}
+
+/// The RLE/bit-packed hybrid encoding (levels, dictionary indices, RLE booleans): `n` values of
+/// `width` bits. Values decoded past `n` (padding of the last bit-packed group) are dropped.
+fn rle_hybrid(data: &[u8], width: u32, n: usize) -> Result<Vec<u32>> {
+    ensure!(width <= 32, "parquet: RLE bit width {width} too large");
     let mut r = Tr {
-        b: &data[4..4 + len],
+        b: data,
         p: 0,
         depth: 0,
     };
     let mut out = Vec::with_capacity(n);
+    let vbytes = width.div_ceil(8) as usize;
     while out.len() < n {
         let h = r.varint()?;
         if h & 1 == 1 {
             let groups = usize::try_from(h >> 1)?;
-            for byte in r.bytes(groups)? {
-                for bit in 0..8 {
-                    out.push(byte >> bit & 1 == 1);
+            let packed = r.bytes(
+                groups
+                    .checked_mul(width as usize)
+                    .context("parquet: RLE overflow")?,
+            )?;
+            let (mut acc, mut bits) = (0u64, 0u32);
+            let mask = if width == 32 {
+                u64::from(u32::MAX)
+            } else {
+                (1u64 << width) - 1
+            };
+            let mut it = packed.iter();
+            for _ in 0..groups * 8 {
+                while bits < width {
+                    acc |=
+                        u64::from(*it.next().context("parquet: bit-packed run truncated")?) << bits;
+                    bits += 8;
                 }
+                out.push((acc & mask) as u32);
+                acc >>= width;
+                bits -= width;
             }
         } else {
             let run = usize::try_from(h >> 1)?;
-            let v = r.byte()? & 1 == 1;
+            ensure!(run > 0, "parquet: empty RLE run");
+            ensure!(
+                out.len() + run <= n + 8,
+                "parquet: RLE run past the page's values"
+            );
+            let v = u32::try_from(le_value(r.bytes(vbytes)?))?;
             out.extend(std::iter::repeat_n(v, run));
         }
     }
     out.truncate(n);
-    Ok((out, 4 + len))
+    Ok(out)
+}
+
+fn le_value(b: &[u8]) -> u64 {
+    b.iter()
+        .rev()
+        .fold(0u64, |acc, &x| (acc << 8) | u64::from(x))
 }
 
 fn take_bytes<'a>(data: &'a [u8], p: &mut usize, k: usize) -> Result<&'a [u8]> {
@@ -542,7 +805,7 @@ fn read_plain(ty: ColumnType, data: &[u8], n: usize) -> Result<Vec<Cell>> {
                 out.push(Cell::Bool(bits[i / 8] >> (i % 8) & 1 == 1));
             }
         }
-        ColumnType::Int64 => {
+        ColumnType::Int64 | ColumnType::TimestampMillis => {
             for _ in 0..n {
                 out.push(Cell::I64(i64::from_le_bytes(take(8)?.try_into()?)));
             }
@@ -705,4 +968,529 @@ pub fn read(bytes: &[u8]) -> Result<Table> {
         rows,
         metadata,
     })
+}
+
+// ---- Streaming reader: many row groups and pages, dictionaries, Snappy (S3 Inventory) ----
+
+/// Snappy, as S3 Inventory writes it.
+const CODEC_SNAPPY: i64 = 1;
+const CODEC_UNCOMPRESSED: i64 = 0;
+const CODEC_ZSTD: i64 = 6;
+const ENC_PLAIN: i64 = 0;
+const ENC_PLAIN_DICTIONARY: i64 = 2;
+const ENC_RLE: i64 = 3;
+const ENC_RLE_DICTIONARY: i64 = 8;
+
+/// One leaf column of a flat schema.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ColumnMeta {
+    pub name: String,
+    /// Parquet physical type (0 BOOLEAN, 1 INT32, 2 INT64, 4 FLOAT, 5 DOUBLE, 6 BYTE_ARRAY).
+    pub physical: i64,
+    pub required: bool,
+    /// For INT64 timestamps: divide by this to get milliseconds (1 millis, 1000 micros, 10^6
+    /// nanos); `None` when the column is not a timestamp.
+    pub timestamp_ms_divisor: Option<i64>,
+}
+
+#[derive(Clone, Debug)]
+struct ChunkMeta {
+    codec: i64,
+    num_values: u64,
+    start: usize,
+    end: usize,
+}
+
+#[derive(Clone, Debug)]
+pub struct RowGroupMeta {
+    pub rows: u64,
+    chunks: Vec<ChunkMeta>,
+}
+
+/// Decoded values of one column chunk.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Values {
+    Bool(Vec<Option<bool>>),
+    I64(Vec<Option<i64>>),
+    F64(Vec<Option<f64>>),
+    Bytes(Vec<Option<Vec<u8>>>),
+}
+
+impl Values {
+    pub fn len(&self) -> usize {
+        match self {
+            Values::Bool(v) => v.len(),
+            Values::I64(v) => v.len(),
+            Values::F64(v) => v.len(),
+            Values::Bytes(v) => v.len(),
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+/// What a chunk's pages looked like (for receipts: which decoder paths real files used).
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize)]
+pub struct PageCounts {
+    pub dictionary: u64,
+    pub data_v1: u64,
+    pub data_v2: u64,
+    pub index: u64,
+    pub encodings: std::collections::BTreeSet<i64>,
+    pub codecs: std::collections::BTreeSet<i64>,
+}
+
+impl PageCounts {
+    pub fn add(&mut self, o: &PageCounts) {
+        self.dictionary += o.dictionary;
+        self.data_v1 += o.data_v1;
+        self.data_v2 += o.data_v2;
+        self.index += o.index;
+        self.encodings.extend(&o.encodings);
+        self.codecs.extend(&o.codecs);
+    }
+}
+
+/// A Parquet file opened for column-chunk reads. Flat schemas only; anything this reader does
+/// not implement (nested columns, INT96, DELTA encodings, other codecs) is an error.
+pub struct FileReader<'a> {
+    bytes: &'a [u8],
+    pub columns: Vec<ColumnMeta>,
+    pub num_rows: u64,
+    pub row_groups: Vec<RowGroupMeta>,
+    pub created_by: Option<String>,
+}
+
+fn timestamp_divisor(m: &BTreeMap<i16, Tv>) -> Result<Option<i64>> {
+    // converted_type 9 TIMESTAMP_MILLIS, 10 TIMESTAMP_MICROS.
+    match int(m, 6) {
+        Some(9) => return Ok(Some(1)),
+        Some(10) => return Ok(Some(1000)),
+        _ => {}
+    }
+    // logicalType (10) -> TIMESTAMP (8) -> unit (2) -> MILLIS (1) | MICROS (2) | NANOS (3).
+    let Some(Tv::Struct(lt)) = m.get(&10) else {
+        return Ok(None);
+    };
+    let Some(Tv::Struct(ts)) = lt.get(&8) else {
+        return Ok(None);
+    };
+    let Some(Tv::Struct(unit)) = ts.get(&2) else {
+        bail!("parquet: timestamp without a unit");
+    };
+    Ok(Some(if unit.contains_key(&1) {
+        1
+    } else if unit.contains_key(&2) {
+        1000
+    } else if unit.contains_key(&3) {
+        1_000_000
+    } else {
+        bail!("parquet: unknown timestamp unit")
+    }))
+}
+
+fn decompress_page(codec: i64, body: &[u8], size: usize) -> Result<Vec<u8>> {
+    ensure!(size <= MAX_PAGE, "parquet: page larger than the reader cap");
+    let page = match codec {
+        CODEC_UNCOMPRESSED => body.to_vec(),
+        CODEC_SNAPPY => super::snappy::decompress(body, size)?,
+        CODEC_ZSTD => {
+            jope_records::zstd_frame::decompress(body, size).map_err(anyhow::Error::msg)?
+        }
+        c => bail!("parquet: codec {c} unsupported"),
+    };
+    ensure!(
+        page.len() == size,
+        "parquet: page decodes to {} bytes, header says {size}",
+        page.len()
+    );
+    Ok(page)
+}
+
+/// PLAIN-decodes `n` values of one physical type.
+fn plain_values(physical: i64, data: &[u8], n: usize, p: &mut usize) -> Result<Values> {
+    Ok(match physical {
+        0 => {
+            let bits = take_bytes(data, p, n.div_ceil(8))?;
+            Values::Bool(
+                (0..n)
+                    .map(|i| Some(bits[i / 8] >> (i % 8) & 1 == 1))
+                    .collect(),
+            )
+        }
+        1 => Values::I64(
+            (0..n)
+                .map(|_| {
+                    Ok(Some(i64::from(i32::from_le_bytes(
+                        take_bytes(data, p, 4)?.try_into()?,
+                    ))))
+                })
+                .collect::<Result<_>>()?,
+        ),
+        2 => Values::I64(
+            (0..n)
+                .map(|_| {
+                    Ok(Some(i64::from_le_bytes(
+                        take_bytes(data, p, 8)?.try_into()?,
+                    )))
+                })
+                .collect::<Result<_>>()?,
+        ),
+        5 => Values::F64(
+            (0..n)
+                .map(|_| {
+                    Ok(Some(f64::from_le_bytes(
+                        take_bytes(data, p, 8)?.try_into()?,
+                    )))
+                })
+                .collect::<Result<_>>()?,
+        ),
+        6 => Values::Bytes(
+            (0..n)
+                .map(|_| {
+                    let len = u32::from_le_bytes(take_bytes(data, p, 4)?.try_into()?) as usize;
+                    Ok(Some(take_bytes(data, p, len)?.to_vec()))
+                })
+                .collect::<Result<_>>()?,
+        ),
+        t => bail!("parquet: physical type {t} unsupported"),
+    })
+}
+
+fn gather(dict: &Values, idx: &[u32]) -> Result<Values> {
+    let get = |i: u32| -> Result<usize> {
+        let i = i as usize;
+        ensure!(i < dict.len(), "parquet: dictionary index {i} out of range");
+        Ok(i)
+    };
+    Ok(match dict {
+        Values::Bool(d) => {
+            Values::Bool(idx.iter().map(|&i| Ok(d[get(i)?])).collect::<Result<_>>()?)
+        }
+        Values::I64(d) => Values::I64(idx.iter().map(|&i| Ok(d[get(i)?])).collect::<Result<_>>()?),
+        Values::F64(d) => Values::F64(idx.iter().map(|&i| Ok(d[get(i)?])).collect::<Result<_>>()?),
+        Values::Bytes(d) => Values::Bytes(
+            idx.iter()
+                .map(|&i| Ok(d[get(i)?].clone()))
+                .collect::<Result<_>>()?,
+        ),
+    })
+}
+
+/// Spreads `present` non-null values over `defined` slots.
+fn spread(present: Values, defined: &[bool]) -> Result<Values> {
+    fn go<T: Clone>(v: Vec<Option<T>>, defined: &[bool]) -> Result<Vec<Option<T>>> {
+        let mut it = v.into_iter();
+        let out: Vec<Option<T>> = defined
+            .iter()
+            .map(|d| if *d { it.next().flatten() } else { None })
+            .collect();
+        ensure!(
+            it.next().is_none(),
+            "parquet: more values than defined slots"
+        );
+        Ok(out)
+    }
+    Ok(match present {
+        Values::Bool(v) => Values::Bool(go(v, defined)?),
+        Values::I64(v) => Values::I64(go(v, defined)?),
+        Values::F64(v) => Values::F64(go(v, defined)?),
+        Values::Bytes(v) => Values::Bytes(go(v, defined)?),
+    })
+}
+
+fn append(acc: &mut Option<Values>, v: Values) -> Result<()> {
+    match (acc.as_mut(), v) {
+        (None, v) => *acc = Some(v),
+        (Some(Values::Bool(a)), Values::Bool(b)) => a.extend(b),
+        (Some(Values::I64(a)), Values::I64(b)) => a.extend(b),
+        (Some(Values::F64(a)), Values::F64(b)) => a.extend(b),
+        (Some(Values::Bytes(a)), Values::Bytes(b)) => a.extend(b),
+        _ => bail!("parquet: pages of one column decode to different types"),
+    }
+    Ok(())
+}
+
+impl<'a> FileReader<'a> {
+    pub fn open(bytes: &'a [u8]) -> Result<FileReader<'a>> {
+        ensure!(
+            bytes.len() >= 12 && &bytes[..4] == MAGIC && &bytes[bytes.len() - 4..] == MAGIC,
+            "not a parquet file"
+        );
+        let flen = u32::from_le_bytes(bytes[bytes.len() - 8..bytes.len() - 4].try_into()?) as usize;
+        ensure!(
+            flen + 12 <= bytes.len(),
+            "parquet footer length {flen} exceeds the file"
+        );
+        let footer = &bytes[bytes.len() - 8 - flen..bytes.len() - 8];
+        let meta = Tr {
+            b: footer,
+            p: 0,
+            depth: 0,
+        }
+        .strukt()?;
+        let num_rows = u64::try_from(int(&meta, 3).context("parquet: num_rows missing")?)?;
+        let schema = list(&meta, 2);
+        ensure!(!schema.is_empty(), "parquet: empty schema");
+        let root = strukt(&schema[0])?;
+        ensure!(
+            int(root, 5) == Some(schema.len() as i64 - 1),
+            "parquet: nested schema (root has {:?} children for {} elements)",
+            int(root, 5),
+            schema.len() - 1
+        );
+        let mut columns = Vec::new();
+        for el in &schema[1..] {
+            let m = strukt(el)?;
+            let name = String::from_utf8(bin(m, 4).context("parquet: column name")?.to_vec())?;
+            ensure!(
+                int(m, 5).is_none(),
+                "parquet: column {name} is a group (nested)"
+            );
+            let physical = int(m, 1).context("parquet: column type")?;
+            let required = match int(m, 3) {
+                Some(0) => true,
+                Some(1) => false,
+                other => bail!("parquet: column {name} repetition {other:?} unsupported"),
+            };
+            let timestamp_ms_divisor = timestamp_divisor(m)?;
+            ensure!(
+                timestamp_ms_divisor.is_none() || physical == 2,
+                "parquet: column {name} is a non-INT64 timestamp (INT96 unsupported)"
+            );
+            columns.push(ColumnMeta {
+                name,
+                physical,
+                required,
+                timestamp_ms_divisor,
+            });
+        }
+        let mut row_groups = Vec::new();
+        let mut total = 0u64;
+        for g in list(&meta, 4) {
+            let g = strukt(g)?;
+            let rows = u64::try_from(int(g, 3).context("parquet: row group num_rows")?)?;
+            total += rows;
+            let chunks = list(g, 1);
+            ensure!(
+                chunks.len() == columns.len(),
+                "parquet: {} column chunks for {} columns",
+                chunks.len(),
+                columns.len()
+            );
+            let mut metas = Vec::new();
+            for (col, chunk) in columns.iter().zip(chunks) {
+                let cm = strukt(
+                    strukt(chunk)?
+                        .get(&3)
+                        .context("parquet: column metadata missing (external chunk?)")?,
+                )?;
+                let path: Vec<&[u8]> = list(cm, 3)
+                    .iter()
+                    .filter_map(|v| match v {
+                        Tv::Bin(b) => Some(b.as_slice()),
+                        _ => None,
+                    })
+                    .collect();
+                ensure!(
+                    path == [col.name.as_bytes()],
+                    "parquet: chunk path does not match column {}",
+                    col.name
+                );
+                let data_off = usize::try_from(int(cm, 9).context("parquet: data_page_offset")?)?;
+                let start = match int(cm, 11) {
+                    Some(d) if d > 0 && (d as usize) < data_off => d as usize,
+                    _ => data_off,
+                };
+                let size = usize::try_from(int(cm, 7).context("parquet: total_compressed_size")?)?;
+                let end = start.checked_add(size).context("parquet: chunk overflow")?;
+                ensure!(
+                    end <= bytes.len() - 8 - flen,
+                    "parquet: column {} chunk runs into the footer",
+                    col.name
+                );
+                let num_values = u64::try_from(int(cm, 5).context("parquet: chunk num_values")?)?;
+                ensure!(
+                    num_values == rows,
+                    "parquet: column {} has {num_values} values for {rows} rows",
+                    col.name
+                );
+                metas.push(ChunkMeta {
+                    codec: int(cm, 4).context("parquet: codec")?,
+                    num_values,
+                    start,
+                    end,
+                });
+            }
+            row_groups.push(RowGroupMeta {
+                rows,
+                chunks: metas,
+            });
+        }
+        ensure!(
+            total == num_rows,
+            "parquet: row groups hold {total} rows, footer says {num_rows}"
+        );
+        let created_by = bin(&meta, 6).map(|b| String::from_utf8_lossy(b).to_string());
+        Ok(FileReader {
+            bytes,
+            columns,
+            num_rows,
+            row_groups,
+            created_by,
+        })
+    }
+
+    pub fn column_index(&self, name: &str) -> Option<usize> {
+        self.columns.iter().position(|c| c.name == name)
+    }
+
+    /// Decodes column `col` of row group `group`: every page, with its dictionary.
+    pub fn read_column(&self, group: usize, col: usize) -> Result<(Values, PageCounts)> {
+        let rg = self
+            .row_groups
+            .get(group)
+            .context("parquet: no such row group")?;
+        let c = self.columns.get(col).context("parquet: no such column")?;
+        let ch = &rg.chunks[col];
+        let chunk = &self.bytes[ch.start..ch.end];
+        let mut counts = PageCounts::default();
+        counts.codecs.insert(ch.codec);
+        let mut dict: Option<Values> = None;
+        let mut acc: Option<Values> = None;
+        let mut done = 0u64;
+        let mut p = 0usize;
+        while done < ch.num_values {
+            ensure!(
+                p < chunk.len(),
+                "parquet: column {} ends before its values",
+                c.name
+            );
+            let mut r = Tr {
+                b: &chunk[p..],
+                p: 0,
+                depth: 0,
+            };
+            let ph = r.strukt()?;
+            let header_len = r.p;
+            let ty = int(&ph, 1).context("parquet: page type")?;
+            let usize_ = usize::try_from(int(&ph, 2).context("parquet: page size")?)?;
+            let csize = usize::try_from(int(&ph, 3).context("parquet: page size")?)?;
+            let body = take_bytes(chunk, &mut (p + header_len), csize)?;
+            p += header_len + csize;
+            match ty {
+                2 => {
+                    counts.dictionary += 1;
+                    ensure!(
+                        dict.is_none(),
+                        "parquet: column {} has two dictionaries",
+                        c.name
+                    );
+                    let dh = strukt(ph.get(&7).context("parquet: dictionary page header")?)?;
+                    let n = usize::try_from(int(dh, 1).context("parquet: dictionary size")?)?;
+                    let enc = int(dh, 2).unwrap_or(ENC_PLAIN);
+                    ensure!(
+                        enc == ENC_PLAIN || enc == ENC_PLAIN_DICTIONARY,
+                        "parquet: dictionary encoding {enc} unsupported"
+                    );
+                    let page = decompress_page(ch.codec, body, usize_)?;
+                    dict = Some(plain_values(c.physical, &page, n, &mut 0)?);
+                }
+                0 | 3 => {
+                    let (n, enc, defined, values): (usize, i64, Vec<bool>, Vec<u8>) = if ty == 0 {
+                        counts.data_v1 += 1;
+                        let dh = strukt(ph.get(&5).context("parquet: data page header")?)?;
+                        let n = usize::try_from(int(dh, 1).context("parquet: num_values")?)?;
+                        let page = decompress_page(ch.codec, body, usize_)?;
+                        let (defined, used) = if c.required {
+                            (vec![true; n], 0)
+                        } else {
+                            ensure!(
+                                int(dh, 3) == Some(ENC_RLE),
+                                "parquet: column {} definition levels not RLE",
+                                c.name
+                            );
+                            read_levels(&page, n)?
+                        };
+                        let enc = int(dh, 2).context("parquet: encoding")?;
+                        (n, enc, defined, page[used..].to_vec())
+                    } else {
+                        counts.data_v2 += 1;
+                        let dh = strukt(ph.get(&8).context("parquet: data page v2 header")?)?;
+                        let n = usize::try_from(int(dh, 1).context("parquet: num_values")?)?;
+                        let dlen = usize::try_from(int(dh, 5).unwrap_or(0))?;
+                        let rlen = usize::try_from(int(dh, 6).unwrap_or(0))?;
+                        ensure!(rlen == 0, "parquet: repetition levels in a flat column");
+                        let compressed = !matches!(dh.get(&7), Some(Tv::Bool(false)));
+                        ensure!(
+                            dlen <= body.len() && dlen <= usize_,
+                            "parquet: v2 levels past the page"
+                        );
+                        let defined = if c.required {
+                            vec![true; n]
+                        } else {
+                            rle_hybrid(&body[..dlen], 1, n)?
+                                .into_iter()
+                                .map(|v| v == 1)
+                                .collect()
+                        };
+                        let rest = &body[dlen..];
+                        let values = if compressed {
+                            decompress_page(ch.codec, rest, usize_ - dlen)?
+                        } else {
+                            rest.to_vec()
+                        };
+                        (n, int(dh, 4).context("parquet: encoding")?, defined, values)
+                    };
+                    counts.encodings.insert(enc);
+                    let present = defined.iter().filter(|d| **d).count();
+                    let vals = match enc {
+                        ENC_PLAIN => plain_values(c.physical, &values, present, &mut 0)?,
+                        ENC_PLAIN_DICTIONARY | ENC_RLE_DICTIONARY => {
+                            let d = dict
+                                .as_ref()
+                                .context("parquet: dictionary-encoded page without a dictionary")?;
+                            let width = u32::from(
+                                *values.first().context("parquet: empty dictionary page")?,
+                            );
+                            gather(d, &rle_hybrid(&values[1..], width, present)?)?
+                        }
+                        ENC_RLE if c.physical == 0 => {
+                            let (_, b) = length_prefixed(&values)?;
+                            Values::Bool(
+                                rle_hybrid(b, 1, present)?
+                                    .into_iter()
+                                    .map(|v| Some(v == 1))
+                                    .collect(),
+                            )
+                        }
+                        e => bail!("parquet: column {} encoding {e} unsupported", c.name),
+                    };
+                    ensure!(
+                        vals.len() == present,
+                        "parquet: column {} decoded {} of {present} values",
+                        c.name,
+                        vals.len()
+                    );
+                    append(&mut acc, spread(vals, &defined)?)?;
+                    done += n as u64;
+                }
+                1 => counts.index += 1,
+                t => bail!("parquet: page type {t} unsupported"),
+            }
+        }
+        ensure!(
+            done == ch.num_values,
+            "parquet: column {} decoded {done} values, chunk says {}",
+            c.name,
+            ch.num_values
+        );
+        let vals = match acc {
+            Some(v) => v,
+            None => plain_values(c.physical, &[], 0, &mut 0)?,
+        };
+        Ok((vals, counts))
+    }
 }
