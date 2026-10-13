@@ -2781,13 +2781,13 @@
       "sha256": "bbf48523f559925abe4767653cf0cce4810c74f4df7d65ca4ee329a4f4b98093"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/l6_receipt.py": {
-      "bytes": 2116,
+      "bytes": 2788,
       "classification": {
         "reason": "G03 per-context L6 receipt row contract: context_id, arm, epoch, updates, seed, l6_cost. Data-free fixtures are a separate family. Scratch evidence stays outside this tree and is not a promotion.",
         "role": "research"
       },
       "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
-      "sha256": "4c8466cfff78eb8bf2532f656f49dc901cbe4a3d4cce13636aeaa2926b3c2c00"
+      "sha256": "1f6ccb94f54d133d5c8c58a3961d5e42fcf9473cd59ea4025c7960fae579dd18"
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/losses.py": {
       "bytes": 1341,
