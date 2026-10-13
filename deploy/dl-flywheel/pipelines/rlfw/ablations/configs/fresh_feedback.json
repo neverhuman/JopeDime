@@ -1,0 +1,13 @@
+{
+  "schema": "jope.j8-control-arm/v1",
+  "intervention": "fresh_feedback",
+  "lambda_pi": 0.0,
+  "lambda_kl": 0.0,
+  "lambda_knn": 0.0,
+  "new_feedback": true,
+  "preexisting_observations": false,
+  "observation_count_matched": false,
+  "trie_arm": false,
+  "launch_allowed": false,
+  "max_updates": 0
+}
