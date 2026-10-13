@@ -196,10 +196,66 @@ previously measured retrieval seed. Training-probe behavior and independent
 parity qualification remain unknown. Catalog absence alone does not establish
 a newly discovered or useful program.
 
-Pending evidence: supervised evolutionary comparisons with complete terminal
-resource receipts; frozen training-probe measurements; repeated independent
-parity-qualified discoveries; GB-07's preregistered effect/cost threshold. Those
-requirements remain open. PR #300 is merged; refresh the private branch after
+### Closed real-budget H1 pilot, 2026-10-13
+
+The owner authorized a separate frozen-roster CPU pilot on xbabe3 using the
+catalogue's original `train.csv` and incumbent remeasurement on matching pipeline
+cuts. This projection differs from the original S1 flywheel views. Source
+`bd716765c401e02210cb6add87e31e1d6efc5c35`, roster `42f5caa7…`, export
+`eb081147…`, and the frozen-v1 actor parameters were pinned before execution.
+Each context had ordinary, policy-seeded and retrieval-seeded arms, two cuts,
+one island and two threads. The admission cap was 512 fit attempts per arm,
+including eight reserved additional fits; each cut had a 252-attempt/300-active-
+second search budget. Nice-15 scopes capped each arm at two CPUs, 2 GiB and
+900 seconds, within a 32-CPU/32-GiB slice with zero swap. The original campaign
+deadline was 06:16:21Z; its closed event was recorded at 06:16:23Z.
+
+The coordinator recorded 53 completed arm receipts and 18 interrupted arms.
+All three arms for context indices 08, 12, 15, 16, 17 and 22 are incomplete;
+their terminal fit counts and outcomes remain unknown. The first five contexts
+hit the 900-second scope limit; context 22 hit the remaining campaign deadline.
+Context 00 had two coordinator arms plus a completed ordinary arm launched under
+a separate supervisor. That separate receipt is retained, giving 54 physical
+receipts, but context 00 is excluded from the requested coordinator-only readout.
+There was no retry, deadline extension or replacement context.
+
+The resulting paired summary covers 17 contexts. Lower loss is better; counts
+and median log ratios describe selected champions on the same TRAIN inner folds:
+
+| Numerator / denominator | Lower loss | Equal | Higher loss | Median log loss ratio |
+| --- | ---: | ---: | ---: | ---: |
+| Policy-seeded / ordinary | 10 | 2 | 5 | -0.000349264 |
+| Retrieval-seeded / ordinary | 16 | 1 | 0 | -0.035361252 |
+| Policy-seeded / retrieval-seeded | 2 | 0 | 15 | +0.017235560 |
+
+Ordinary, policy-seeded and retrieval-seeded champions had lower loss than the
+remeasured incumbent in 8, 10 and 11 of these 17 contexts, respectively. Their
+completed search-attempt totals were 1,913, 1,714 and 2,082. All arms used the
+same configured caps and matched prepared data, but actual attempts and CPU
+costs were unequal. The frozen-v1 producer completed all 24 contexts and 96
+original draws in 369.972 CPU seconds, with unchanged parameters and zero
+PolicyLM optimizer updates.
+
+Forty of the 51 selected champions are syntactically outside the frozen catalog.
+Full-catalog behavioral novelty remains unknown. Native/emitted Rust predictions
+passed bitwise comparison on both TRAIN probes for 48 of the 51 champions.
+Parity failed for context 14's retrieval arm and context 18's ordinary and policy
+arms, with maximum absolute deltas of 0.0021133743, 0.0321004556 and 0.1367213160.
+These failures remain visible in the descriptive summary and cannot support
+qualified discovery claims.
+
+The [machine-readable readout](gp-h1-readout.20261013.json) and
+[17-context table](gp-h1-paired17.20261013.tsv) record exact context identities,
+coverage and failures. Raw receipts, interrupted observations, executor sources,
+input pins and resource logs remain in the outside-checkout
+`clover-gb06/h1-20261013T0510Z` archive. This is NON-QUAL: selected inner-fold
+losses and a complete-case subset do not establish useful support expansion,
+native S1/HWM qualification or paired frozen-v1 L6 improvement. L6 is a validation
+loss; lower is better. Qualified rewards remain zero and H1 remains unestablished.
+
+Pending evidence includes complete terminal resource accounting, full-catalog
+behavioral novelty, independent parity qualification, repeated useful discoveries,
+and GB-07's preregistered effect/cost threshold. Refresh the private branch after
 each main merge and wait for the owner's open queue and main CI before publishing.
-No S3 calls/settings, training runs, other screens, main checkout source changes,
-seal, adoption or promotion are part of this implementation.
+The experiment freeze remains in effect; any next arm requires the owner's
+separate sign-off on a preregistered proposal.
