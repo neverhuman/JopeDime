@@ -206,6 +206,8 @@ uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpoli
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py --receipt "$EVIDENCE/kv-trie-offline.json" )
     # Analytics uses the locked numpy/pyarrow environment; all inputs are fixtures.
 uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
+    # Custody dry-run fixtures use fake clients and perform no remote calls.
+python3 deploy/dl-flywheel/custody_v2/run_offline.py --receipt "$EVIDENCE/custody-v2-offline.json"
     ;;
   rust-test)
     status=0

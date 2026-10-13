@@ -302,6 +302,42 @@ class ReaderTests(unittest.TestCase):
 
 
 class PackTests(unittest.TestCase):
+    def test_invalid_pack_digest_refuses_before_pack_file_access(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt = pack_local(
+                Path(tmp) / "pack", [(row("score_records"), b"same bytes")]
+            )
+            manifest_path = Path(receipt["manifest"])
+            manifest = json.loads(manifest_path.read_bytes())
+            for value in ("../outside", str(Path(tmp) / "outside"), "A" * 64, True):
+                with self.subTest(value=value):
+                    manifest["pack_sha256"] = value
+                    manifest_path.write_text(json.dumps(manifest))
+                    with patch("custody_v2.run_dry_run.verify_local") as verify:
+                        with self.assertRaisesRegex(
+                            ValueError, "content-addressed pack SHA"
+                        ):
+                            verify_saved(manifest_path)
+                    verify.assert_not_called()
+                    with patch("custody_v2.retention.Path.open") as read:
+                        with self.assertRaisesRegex(
+                            ValueError, "content-addressed pack SHA"
+                        ):
+                            verify_local(receipt["pack"], manifest)
+                    read.assert_not_called()
+
+    def test_boolean_reference_bytes_refuse(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt = pack_local(
+                Path(tmp) / "pack", [(row("score_records", body=b"x"), b"x")]
+            )
+            manifest = json.loads(Path(receipt["manifest"]).read_bytes())
+            manifest["refs"][0]["bytes"] = True
+            with self.assertRaisesRegex(
+                ValueError, "reference bytes must be a nonnegative integer"
+            ):
+                verify_local(receipt["pack"], manifest)
+
     def test_pax_metadata_expansion_refuses_before_tar_parsing(self):
         with tempfile.TemporaryDirectory() as tmp:
             body = b"x"

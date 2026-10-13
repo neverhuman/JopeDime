@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "5e2ad50015208b933d39d7b5403ffbd08181897e2861aea37a59ef35f4094dbe"
+      "sha256": "4dc782093ce270c369524e03341f791775c3410a2a5f146324b730a7f67066f7"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "a0188bf349385676315bb631f70aab4bee74bebe224663a576476991e7ca5804"
+      "sha256": "03993cc15c4b850ef9e3643d19887ee970288dd6cbde21f6ec81f2caa073b568"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "83b7584b41c934d7885b32e8624b0513378b5314b70a61da9617a5be460f02a2"
+      "sha256": "bfdde22423ff862da8b0134ddf7994a4acea1d5b338dc2eee04590d3c527aa0f"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -5422,7 +5422,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "0eb6f0052e39f03b8d81dd56766dd2295900c26794daa0066ece7576bbc30d8d"
+      "sha256": "ad22b1bc9cc45243033c16f6b0b24271a8c5ad913fef7ccdd88006604b835949"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -6643,6 +6643,57 @@
       "origin_sha256": "041e87da89dc44b898dd067da31a6cb9c60278450ec9de5ad6bf8449a306f11c",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/windows.py",
       "sha256": "253d10fda99deb153144a820e971bd359929c1bef0f720e75864d04a64977b87"
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/README.md",
+      "sha256": "0e9e1f684085dfb4a48389d6d201fe57fdb270bc2327428ee2e77e67a1b4d4cb",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "0e9e1f684085dfb4a48389d6d201fe57fdb270bc2327428ee2e77e67a1b4d4cb"
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/__init__.py",
+      "sha256": "413f0635bfafdc54b4b981e8edafa2fa8768bd09d8877fb23060c1da6a5f2e05",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "413f0635bfafdc54b4b981e8edafa2fa8768bd09d8877fb23060c1da6a5f2e05"
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/read_only.py",
+      "sha256": "6a233f2e8ac6294ef475b66a99a366951dabbd574e0fa50973fd764b939016ac",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "6a233f2e8ac6294ef475b66a99a366951dabbd574e0fa50973fd764b939016ac"
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/retention.py",
+      "sha256": "328af0e1faf9edf53c016d0ab5117899c2aa4927c74da8652a8fab782ef90225",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "077d6b91f3b00cad9bfb7cfdeb051da51c95e9912da8490dbbbf8a94103993c7",
+      "normalization": "Independent review repair: bound archive/manifest inputs and bind verified bytes; six additive refusal fixtures preserve the original22 roster."
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/run_dry_run.py",
+      "sha256": "874eff9bfbaf0d88b6a0f2049dd67beca6f8765a487b98a1378df6388fd54762",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "2a053e37b9da7f9ae896ae8a69b0883bebbb1017524d1e78d38854f81d989051",
+      "normalization": "Independent review repair: bound archive/manifest inputs and bind verified bytes; six additive refusal fixtures preserve the original22 roster."
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/run_offline.py",
+      "sha256": "96ad3bc281b4f67df393e97c0523714264d0f461a445dca68bbef0f9cd739eb2",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "96ad3bc281b4f67df393e97c0523714264d0f461a445dca68bbef0f9cd739eb2"
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/tests/__init__.py",
+      "sha256": "24944e286642b6e53ba3576ed837082268f592ca5a09df7325f5d9ebcc6a6ce3",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "24944e286642b6e53ba3576ed837082268f592ca5a09df7325f5d9ebcc6a6ce3"
+    },
+    {
+      "path": "deploy/dl-flywheel/custody_v2/tests/test_retention.py",
+      "sha256": "624f02d987dbf34f0b5a5ff22951ccd42b216cad4f72a88ed7c5c4a441b6485b",
+      "origin": "GB-02 private source freeze e2482cefeb27296efb736381ea538700b8ce28a7",
+      "origin_sha256": "0037a895762c1ea976eda9c74fe7ce3d1ccc952c7243525d02091be7ce05a87e",
+      "normalization": "Independent review repair: bound archive/manifest inputs and bind verified bytes; six additive refusal fixtures preserve the original22 roster."
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

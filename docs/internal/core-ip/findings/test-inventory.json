@@ -3570,6 +3570,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:deploy/dl-flywheel/custody_v2/tests/test_retention.py": {
+      "role": "research",
+      "reason": "Read-only exact-version S3 census, conservative keeper classification, 25 GB/day guard, measured-usage cost estimate and independently reopened local pack. Offline clients are fakes; no mutation, live scoring/admission or whole-prefix recovery."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

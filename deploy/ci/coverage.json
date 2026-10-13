@@ -9084,6 +9084,16 @@
       ],
       "lanes": [],
       "scope": "Configured workflow/job; current execution unqualified."
+    },
+    "python:deploy/dl-flywheel/custody_v2/tests/test_retention.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "28 offline cases: no mutating dispatch; bounded pagination, body, inflated tar and manifest reads; exact verified-manifest digest under replacement; keeper uncertainty and exact-version facts; 80%/100% guard; binary-GB pricing; archive/member SHA; deduplication and injected fsync refusal. Read-only exact-version S3 census, conservative keeper classification, 25 GB/day guard, measured-usage cost estimate and independently reopened local pack. Offline clients are fakes; no mutation, live scoring/admission or whole-prefix recovery."
     }
   },
   "lanes": {
@@ -9857,7 +9867,8 @@
         "uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output \"$EVIDENCE/flywheel-offline\"",
         "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\"",
         "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt \"$EVIDENCE/onpolicy-offline.json\"",
-        "uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output \"$EVIDENCE/flywheel-v2-offline\""
+        "uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output \"$EVIDENCE/flywheel-v2-offline\"",
+        "python3 deploy/dl-flywheel/custody_v2/run_offline.py --receipt \"$EVIDENCE/custody-v2-offline.json\""
       ],
       "command": [
         "bash",
@@ -9877,7 +9888,8 @@
         "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals.",
         "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed.",
         "Flywheel aggregate runner additionally wires native pool21 and RL math9 after original587 (617 total). Collection/execution receipts must prove each family independently; source import ran only the30 added fixtures and does not claim a full617 rerun. RLFW remains a separate lane command.",
-        "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 213 exact identities in five isolated CPU families (continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 38, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim."
+        "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 213 exact identities in five isolated CPU families (continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 38, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim.",
+        "Custody-v2 standalone receipt: exact 28 collected/executed case IDs, source/check-out SHAs and all module hashes, zero skips and zero remote calls. All outputs NON-QUALIFYING; separate from pytest."
       ],
       "feature_selection": "not-applicable",
       "inputs": [

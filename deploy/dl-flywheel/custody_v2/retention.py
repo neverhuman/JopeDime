@@ -299,15 +299,19 @@ def verify_local(pack, index):
         and 0 < len(index["blobs"]) <= MAX_PHYSICAL_REFS,
         "bounded blob roster",
     )
-    with Path(pack).open("rb") as file:
-        raw = file.read(MAX_PACK_BYTES + 1)
-    need(len(raw) <= MAX_PACK_BYTES, "bounded compressed pack")
     need(
         index.get("schema") == "jope.custody-local-pack/v2"
         and index.get("qualified") is False
         and index.get("remote_publication") is False,
         "closed non-qualifying pack",
     )
+    need(
+        type(index.get("pack_sha256")) is str and SHA.fullmatch(index["pack_sha256"]),
+        "content-addressed pack SHA",
+    )
+    with Path(pack).open("rb") as file:
+        raw = file.read(MAX_PACK_BYTES + 1)
+    need(len(raw) <= MAX_PACK_BYTES, "bounded compressed pack")
     need(digest(raw) == index["pack_sha256"], "pack SHA mismatch")
     expected = {}
     for blob in index["blobs"]:
@@ -353,7 +357,8 @@ def verify_local(pack, index):
         physical.add(ref)
         name = "members/" + row["sha256"]
         need(
-            name in expected and row["bytes"] == expected[name]["bytes"],
+            name in expected
+            and integer(row["bytes"], "reference bytes") == expected[name]["bytes"],
             "every reference joins a verified blob",
         )
         used.add(name)

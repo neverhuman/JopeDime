@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from custody_v2.read_only import ReadOnlyS3
 from custody_v2.retention import (
     MAX_MANIFEST_BYTES,
+    SHA,
     budget_status,
     canonical,
     classify,
@@ -40,6 +41,10 @@ def verify_saved(manifest):
     need(len(raw) <= MAX_MANIFEST_BYTES, "bounded manifest bytes")
     index = json.loads(raw)
     need(type(index) is dict, "pack manifest object")
+    need(
+        type(index.get("pack_sha256")) is str and SHA.fullmatch(index["pack_sha256"]),
+        "content-addressed pack SHA",
+    )
     report = verify_local(manifest.parent / (index["pack_sha256"] + ".tar.gz"), index)
     report["manifest_sha256"] = digest(raw)
     report["remote_calls"] = 0
