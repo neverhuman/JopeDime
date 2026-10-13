@@ -23,6 +23,9 @@ class ArchiveTarget:
     def __post_init__(self):
         if type(self.outcomes) is not tuple or type(self.weights) is not tuple:
             raise TypeError("immutable archive outcomes and target weights required")
+        if not all(type(w) in (int, float) for w in self.weights):
+            raise TypeError("immutable Python-float archive target weights required")
+        object.__setattr__(self, "weights", tuple(float(w) for w in self.weights))
         if not self.outcomes or not all(isinstance(q, VerifiedQ) for q in self.outcomes):
             raise TypeError("VerifiedQ target outcomes required")
         if (

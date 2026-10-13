@@ -87,6 +87,10 @@ treated as an iid propensity. Raw q is retained, centering cancels, and the
 exponent is not clipped. ArchiveTarget.loss checks fresh TRAIN role and exact
 summed EOS-inclusive differentiable sampler readouts. New support needs a
 matched-support reference; no cross-support forward KL is authorized here.
+ArchiveTarget construction (including dataclasses.replace) accepts only a
+tuple of built-in int/float coefficients and snapshots them to Python floats.
+Tensor coefficients are refused even when detached, so neither an autograd
+graph nor a mutable tensor alias can change or train the frozen teacher.
 
 frozen_round.FrozenRoundStep is the exact frozen branch: pass immutable raw
 GroupSpec draws and an EXPLICIT scope, either full_support_iid or

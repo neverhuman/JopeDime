@@ -4,6 +4,7 @@
   "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_adaptive_archive_reference_and_frozen_pi_reference_are_distinct",
   "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_archive_order_is_deterministic_and_common_quality_shift_cancels",
   "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_conflicting_rewards_for_one_program_are_not_selected_by_maximum",
+  "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_constructor_freezes_scalar_weights_and_refuses_tensor_teachers",
   "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_direct_target_construction_cannot_bypass_reward_or_normalization_checks",
   "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_high_q_has_high_teacher_mass_and_duplicate_delivery_cannot_bias_it",
   "rlfw.onpolicy.tests.test_autograd.ArchiveTests.test_missing_mean_token_likelihood_or_fresh_role_failure_is_refused",

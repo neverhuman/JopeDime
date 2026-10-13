@@ -170,6 +170,42 @@ class ArchiveTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.target(reference_policy=PolicyIdentity(SHA, SHA, SHA, SHA, SHA))
 
+    def test_constructor_freezes_scalar_weights_and_refuses_tensor_teachers(self):
+        target = self.target()
+        teacher = torch.tensor(
+            [-5.0, 0.0, 5.0], dtype=torch.float64, requires_grad=True
+        )
+        masses = torch.softmax(teacher, 0)
+        for weights in (
+            tuple(masses),
+            tuple(masses.detach()),
+            tuple(torch.tensor(w, requires_grad=True) for w in target.weights),
+        ):
+            with self.assertRaisesRegex(TypeError, "Python-float"):
+                replace(target, weights=weights)
+        integers = replace(target, weights=(0, 0, 1))
+        self.assertEqual(integers.weights, (0.0, 0.0, 1.0))
+        self.assertTrue(all(type(w) is float for w in integers.weights))
+        frozen = replace(target, weights=tuple(float(w.detach()) for w in masses))
+        snapshot = frozen.weights
+        masses.detach().fill_(1 / 3)
+        self.assertEqual(frozen.weights, snapshot)
+        z = torch.zeros(3, dtype=torch.float64, requires_grad=True)
+        lp = torch.log_softmax(z, 0)
+        traces = {
+            q.program: TrieLogProb(float(v.detach()), (float(v.detach()), 0.0))
+            for q, v in zip(frozen.outcomes, lp)
+        }
+        policy = PolicyIdentity(SHA, SHA, SHA, SHA, SHA)
+        frozen.loss(
+            policy, traces, dict(zip(traces, lp)), role_check=lambda rows: True
+        ).backward()
+        self.assertIsNone(teacher.grad)
+        expected = 1 / 3 - torch.tensor(snapshot, dtype=torch.float64)
+        self.assertTrue(torch.allclose(z.grad, expected, atol=1e-15, rtol=0))
+        self.assertGreater(float(torch.linalg.vector_norm(z.grad)), 0)
+        self.assertEqual(frozen.weights, snapshot)
+
     def test_sequence_sum_loss_reaches_actor_and_small_step_improves_exact_quality(
         self,
     ):
