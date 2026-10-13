@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "7c91105aaaac53e9fb8ad06bfcbf0d131cf8c0194540a06639165548069177d5"
+      "sha256": "e705b2e52da84ff241080e00aaa5f03b5214df939d7bb505f4b2eb86eddb86cf"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "5d1de8f0539ac9c43c7136a6228716e45c5b411aec12b9597f727b6badd62382"
+      "sha256": "b67959729557f1c2654a4d06bda51c713237e56d73533f1b7809a87e4a57a89c"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -4729,11 +4729,11 @@
       "sha256": "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/INTERFACE.md",
-      "sha256": "a60875798769f961c8dec826e4b9619295ac4e2d7ac7c258cbcf21c10b295bc2",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "a60875798769f961c8dec826e4b9619295ac4e2d7ac7c258cbcf21c10b295bc2"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4760,11 +4760,11 @@
       "sha256": "4934c449eaff686a493d5abc2e6cd567fba661c658120aefc43ddd77d58fd44c"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py",
-      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4773,11 +4773,11 @@
       "sha256": "720c8e16405d7ca5e98f569ea925189e8128109497920b1ed80c4b9629efe95d"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/test-identities.json",
-      "sha256": "61c91f3362c4281de42cae0cbd0e7f87fba521b474c60527b0c1c11fd6dfafb3",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "61c91f3362c4281de42cae0cbd0e7f87fba521b474c60527b0c1c11fd6dfafb3"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4792,11 +4792,11 @@
       "sha256": "14e614367b19fe003f90a51d4d6b018f78c8f43a94872547b8e3a42d94db1369"
     },
     {
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "c35af46c58c7d2e0503aed50c942cf075038934e3e915f1541ff628df9991e24",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py",
-      "sha256": "7cb7ceefb567e9219e1511536683678539f1dce1b7617db0b0eb81699fff3e2e",
-      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
+      "sha256": "7cb7ceefb567e9219e1511536683678539f1dce1b7617db0b0eb81699fff3e2e"
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -5426,7 +5426,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "0b3b435e5300e3fd8630920c9624255939eee3442f204b028ab8b5644596ef33"
+      "sha256": "1d1932a5e4756dc92b63ff3539f220f51cf168c605ef46f695ba1cc8ddd4f74e"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -6649,15 +6649,15 @@
       "sha256": "253d10fda99deb153144a820e971bd359929c1bef0f720e75864d04a64977b87"
     },
     {
-      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py",
       "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
       "origin_sha256": "6ca6f16a2440ca04a0a2b869a34924d79242d073d81811ec88c6f4fa6a96aa3c",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py",
       "sha256": "f0c74484765d5d46cedff540ef066c2b7384bec25e122f974ad54ab03c6271c3"
     },
     {
-      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py",
       "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
       "origin_sha256": "50efe03aaaf3d34978af13c37754aa77b70bfeaa5e156eaba3768993e8ccc013",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py",
       "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc"
     },
     {
@@ -6743,6 +6743,60 @@
       "origin_sha256": "1a9cb732cfeb445add136289ebc53db489d08d0336a88de66ef1f197d32e7759",
       "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py",
       "sha256": "1a9cb732cfeb445add136289ebc53db489d08d0336a88de66ef1f197d32e7759"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "aae05b5113f43730eccfe98728c233fe37a03cc6c3b1747d7a7c075107c3f39b",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/README.md",
+      "sha256": "aae05b5113f43730eccfe98728c233fe37a03cc6c3b1747d7a7c075107c3f39b"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "2cbda9b3452322d073e6f279d5f6d87689041ec4787c41e0baf0c9b45bbdb8d7",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/__init__.py",
+      "sha256": "2cbda9b3452322d073e6f279d5f6d87689041ec4787c41e0baf0c9b45bbdb8d7"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "718ccb69e9289b06d25ff51a940454235324a88f5a307f20a253ec63848c9124",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/__main__.py",
+      "sha256": "718ccb69e9289b06d25ff51a940454235324a88f5a307f20a253ec63848c9124"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "6ba69dfe17bf4ac12b672cc27a4833275d87ba79119dc316a9b8236900295a34",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/roster.py",
+      "sha256": "05848d5f48d531062ce5136310de447277eaf4ea3c5f55f1dbd38915fd46bb06"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "40a5068fc7d830c0ea063b77002e49be7e66b05e6401d72ca3d2b2b134659cad",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/run_offline.py",
+      "sha256": "40a5068fc7d830c0ea063b77002e49be7e66b05e6401d72ca3d2b2b134659cad"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "b93e2545c8e9fd218df3341941551f6f4c505806b991816cb7da8e299f9ce14d",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/s3.py",
+      "sha256": "b93e2545c8e9fd218df3341941551f6f4c505806b991816cb7da8e299f9ce14d"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "6d5bd97a2839a3f338b1ce44617bec41ffb228c3d1439c5ef1b8ad546cfc458a",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/tests/__init__.py",
+      "sha256": "6d5bd97a2839a3f338b1ce44617bec41ffb228c3d1439c5ef1b8ad546cfc458a"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "7096c314141d1f58ebe5dcdb5d852765efde0bfbe3bca55b0f7bb16d975d3a01",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/tests/test_roster.py",
+      "sha256": "ca35009ef520e9e4623b0ce33158ff41d6e527e79af6319c64d71c736385f2b7"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "92172a0b908198828711118259cbb2eb4db039f1911c2e5ff09356c333289a88",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/tests/test_s3.py",
+      "sha256": "92172a0b908198828711118259cbb2eb4db039f1911c2e5ff09356c333289a88"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
