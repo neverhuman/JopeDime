@@ -15,7 +15,8 @@ import json
 import math
 from pathlib import Path
 
-FROZEN_V1_FULL_VAL_L6 = 0.897327
+# Pinned full-precision frozen v1 full-val mean. Do not substitute the six-digit round.
+FROZEN_V1_FULL_VAL_L6 = 0.8973272357035962
 ACTOR_LR = 3.75e-5
 SCHEDULED_UPDATES = 704
 ARM_SCHEMA = "jope.j8-control-arm/v1"
@@ -148,7 +149,7 @@ def classify_arm(spec):
 
 
 def direction(cost):
-    """Compare one full-validation L6 with frozen v1. Never an improvement claim."""
+    """Compare one full-validation L6 with the pinned frozen v1 mean. Never an improvement claim."""
     if isinstance(cost, bool) or not isinstance(cost, (int, float)) or not math.isfinite(cost):
         raise ValueError("l6 cost must be finite")
     if cost > FROZEN_V1_FULL_VAL_L6:
