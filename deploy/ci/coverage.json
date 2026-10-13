@@ -1780,7 +1780,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "C4/S7/S8 CPU fixtures through run_onpolicy_offline.py: exhaustive RLOO/PKPO, actual float64 autograd, seven-body synthetic q verification, quarantine, IS/lag gates and exact parent-balanced quotas. No live optimizer, arena lift, cloud, GPU or production adapter qualification."
+      "scope": "C4/S7/S8 and GB-03 CPU fixtures through run_onpolicy_offline.py: original exact RLOO/PKPO gradients retained; deduplicated verified-q archive targets, frozen-wave refusal and single in-memory callback, actual small PolicyLM synthetic optimizer updates, actor/shared-trunk per-term gradients and high-q probability movement. No production q verifier, durable optimizer CAS, unseen-family improvement, cloud, GPU or live qualification."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_groups.py": {
       "discovery": {

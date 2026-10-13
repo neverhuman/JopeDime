@@ -74,3 +74,46 @@ differences at 1e-9, compare sorted PKPO with literal subsets, and check seeded 
 against its measured standard error. Finite MC is NOT claimed exact to 1e-9.
 Equal-budget arena lift versus L_PI and live update/throughput qualification are
 unmeasured and remain phase-2 gates; fixture success does not authorize launch.
+
+## GB-03 archive and frozen-round actor updates
+
+archive.archive_target constructs a detached reward-directed teacher from
+VerifiedQ outcomes for ONE comparable TRAIN context. Duplicate programs are
+collapsed; conflicting scores are refused. The default reference is uniform
+over deduplicated qualified programs (alpha0). A supplied mapping of frozen
+sampler sequence likelihoods plus its PolicyIdentity selects the distinct
+frozen-policy-conditioned reference (alpha1). No adaptive archive frequency is
+treated as an iid propensity. Raw q is retained, centering cancels, and the
+exponent is not clipped. ArchiveTarget.loss checks fresh TRAIN role and exact
+summed EOS-inclusive differentiable sampler readouts. New support needs a
+matched-support reference; no cross-support forward KL is authorized here.
+
+frozen_round.FrozenRoundStep is the exact frozen branch: pass immutable raw
+GroupSpec draws and an EXPLICIT scope, either full_support_iid or
+measured_leaf_pi_M. The latter describes restricted historical measured-leaf
+sampling, not full-support on-policy learning. Resolve every draw with VerifiedQ
+or a declared quarantine outcome. step probes actual current actor parameters,
+optimizer-update counter, support and dropout through ActorState before and
+after likelihood recomputation. Drift is refused rather than repaired by IS
+inside this exact branch. The original S7 objective remains available separately.
+
+Any quarantined/incomplete group blocks the ENTIRE wave: no partial-wave
+renormalization or action-dependent complete-case update. An eligible wave
+reduces groups by context and parent, builds detached RLOO/PKPO coefficients and
+invokes apply_update(loss) at most once. Closure or a callback exception consumes
+the round. The caller owns actual optimizer/parameter-hash proof, durable CAS,
+failure recovery and checkpoint publication; this in-memory guard is not durable
+exactly-once execution. Lambda weights must retain the registered loss scale.
+
+CPU tests use synthetic seven-body q closure, the actual PolicyLM class in a
+small synthetic configuration, EOS-inclusive three-program masks and raw iid
+duplicate draws. They measure actor/shared-trunk gradients, top-q probability and
+exact expected toy quality after one small optimizer step. This is source/fixture
+evidence, not production q qualification or unseen-family improvement.
+
+CX-OP R10/R11/R23/R24 GPU evidence uses original ea078 weights/v1 moments and
+historical native measurements on measured-leaf pi_M. It lacks production N1
+Rust closure and cannot be relabeled full support. Per-term raw/applied gradients
+and full-trie AND pi_M high-q probability movement remain separate observations.
+Parent-cluster L6 intervals from the repeatedly inspected val263/54 parents are
+development diagnostics; no qualified winner or sealed adoption follows.

@@ -3528,6 +3528,22 @@
       },
       "migration": "New supporting research source; actual test families are classified separately.",
       "sha256": "0b6be567135fcb7d83786a4532d1e09e0b2707420f22b390a142c9f294f3caf2"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py": {
+      "bytes": 6412,
+      "sha256": "5d811a184f173ec7d706bfe4d5842ff4fbb5aa73e0bff50b83b3239a0203566b",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py": {
+      "bytes": 4662,
+      "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc",
+      "classification": {
+        "role": "research",
+        "reason": "CX-OP GB-03 pure verified-q archive target / frozen in-memory actor update library. CPU synthetic fixtures only; no production q closure, durable optimizer CAS, live launch or improvement qualification."
+      }
     }
   }
 }
