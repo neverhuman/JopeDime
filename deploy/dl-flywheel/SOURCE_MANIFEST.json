@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "aab3b9e13b9fd2d507ba5bfc5ba91b40e1b764b5bc14f7be226c6d4eb1d035be"
+      "sha256": "e1793dd89a513f4951f0a01a3130fb9f7675c842cdbe6f672c02872ff532bf4c"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "1db9d9f6e2da6ace11d766bb92ab3cce3c72d2c9a80043e557c0c22b1a6d6908"
+      "sha256": "5d1de8f0539ac9c43c7136a6228716e45c5b411aec12b9597f727b6badd62382"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "8d096c3fe15c8fee56e2309993c6893047c4b0bb8f12f5fce04d8e92f602f80c"
+      "sha256": "001ad87466e70d0128be088fe495e7b231068c1e663fcc166928ce9b5a2927a2"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -5427,7 +5427,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "292962097f26695e7667679cf4da9addf06ed63abd5dea3aa94914555712d8cf"
+      "sha256": "df89bc5d95740a1e2b1b84a03902496e669e5effb15f13b85c9a238bc653fc3a"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",

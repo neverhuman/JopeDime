@@ -26,7 +26,6 @@ pub mod hwm;
 pub mod ledger;
 pub mod metric;
 pub mod mirror;
-pub mod pools;
 pub mod progress;
 pub mod qualify;
 pub mod record;

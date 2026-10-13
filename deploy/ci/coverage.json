@@ -6864,24 +6864,6 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
-    "target:jope-learning/bin/jope_pools": {
-      "discovery": {
-        "doctest": false,
-        "kind": "target",
-        "required_features": [],
-        "source": "crates/jope-learning/src/bin/jope_pools.rs",
-        "test": true
-      },
-      "dispositions": [
-        "runtime-tools"
-      ],
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
-    },
     "target:jope-learning/lib/jope_learning": {
       "discovery": {
         "doctest": true,
@@ -7026,22 +7008,6 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
-    },
-    "target:jope-learning/test/pools": {
-      "discovery": {
-        "doctest": false,
-        "kind": "target",
-        "required_features": [],
-        "source": "crates/jope-learning/tests/pools.rs",
-        "test": true
-      },
-      "dispositions": [],
-      "lanes": [
-        "rust-check",
-        "rust-test",
-        "full-default"
-      ],
-      "scope": "J9 frozen-pool fixtures on synthetic measurements: deterministic, order-independent freeze with sha256 manifests and tamper detection; refusal of validation/sealed/test/development roles; exclusion (never imputation) of unknown or conflicting outcomes; salted selector-independent caps; outcome-free exported views; parent-grouped cross-fitting with every selector scoring every pool; pool-floor no-incumbent reference with token-bag features; an oracle candidate established and constant or prior-equivalent candidates not; missing external scores refused. Shadow-only; no qualification or L6 claim."
     },
     "target:jope-learning/test/progress_cli": {
       "discovery": {
@@ -9191,16 +9157,6 @@
         "python"
       ],
       "scope": "R25-kNN-CE CPU fixtures through run_r25_offline.py (exact 9-identity roster): neighbour table never selects held-out-lineage, validation, same-parent-lineage or non-candidate contexts, deterministic id tie order; harness v7 refuses non-v7/unbounded configs before any output; pinned config equals the 2026-10-13 ENG:watcher sign-off. No snapshot, checkpoint, GPU, training run or L6 improvement claim."
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/test_qhead.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python"
-      ],
-      "scope": "6 CPU fixtures for the J9 torch q-head adapter with a stub policy: one finite score per (context, program) in view order, batch-invariant scores, refusal of views that carry any outcome field, missing context vectors or tokens, unknown schema and non-finite heads. No checkpoint, torch, data or network; no ranking, qualification or L6 claim."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py": {
       "discovery": {
