@@ -19,15 +19,24 @@
 //! false, an E1–E5 rule is proven with object-level evidence, and an independent reference scan
 //! agrees. The ledger only gives prefix-level counts, where no E-rule can be proven, so this
 //! version never emits EXPIRE; [`classify::expire_allowed`] states the gate.
+//!
+//! Write side (strategy §4 and §8.3), library only: [`tags`] builds validated write-time tags,
+//! [`pack`] turns small result objects into >= 64 MiB zstd packs with a verifiable index, and
+//! [`distilled`] writes and reconciles the `gp_distilled/v1` table through the minimal
+//! [`parquet`] writer. None of them talks to S3; writers own their uploads.
 
 pub mod classify;
+pub mod distilled;
 pub mod groups;
 pub mod index;
 pub mod inputs;
 pub mod lifecycle;
+pub mod pack;
+pub mod parquet;
 pub mod plan;
 pub mod policy;
 pub mod refs;
+pub mod tags;
 
 use serde::Serialize;
 
