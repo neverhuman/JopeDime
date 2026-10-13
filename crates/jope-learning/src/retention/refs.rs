@@ -167,9 +167,12 @@ fn is_hex64(s: &str) -> bool {
     s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
-/// An object key, not a prefix (`.../`) or a pattern/placeholder (`*`, `?`, `{}`, `$`, `<>`).
+/// An object key, not a prefix (`.../`) or a pattern/placeholder (`*`, `?`, `{}`, `$`, `<>`, or an
+/// elided key containing `…`, as prose abbreviates long keys).
 pub fn is_object_key(key: &str) -> bool {
-    !key.is_empty() && !key.ends_with('/') && !key.contains(['*', '?', '{', '}', '$', '<', '>'])
+    !key.is_empty()
+        && !key.ends_with('/')
+        && !key.contains(['*', '?', '{', '}', '$', '<', '>', '\u{2026}'])
 }
 
 /// Splits `s3://bucket/key`; `None` for anything that is not an object URI.

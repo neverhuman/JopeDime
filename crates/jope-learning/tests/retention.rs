@@ -306,7 +306,7 @@ fn fixture() -> Fixture {
     put(
         &root.join("repo/docs/notes.md"),
         format!(
-            "See s3://{LEARN}/experiments/mystery/file.json and the bucket s3://{LEARN}/ itself; globs s3://{LEARN}/progress/* and s3://{LEARN}/experiments/${{RUN}}/x.json pin nothing.\n"
+            "See s3://{LEARN}/experiments/mystery/file.json and the bucket s3://{LEARN}/ itself; globs s3://{LEARN}/progress/* and s3://{LEARN}/experiments/${{RUN}}/x.json and the elided s3://{LEARN}/experiments/regression-evolution/v1/attempts/a7f3… pin nothing.\n"
         )
         .as_bytes(),
     );
@@ -431,7 +431,7 @@ fn every_action_path_matches_the_binding_rules() {
     assert_eq!(
         action(&b, &l("experiments/regression-evolution/v1/attempts/")),
         Action::DistillCold,
-        "inventory copy does not pin"
+        "inventory copy and elided key do not pin"
     );
     assert_eq!(
         action(&b, &l("experiments/regression-evolution/v1/contexts/")),
