@@ -57,5 +57,6 @@ pub mod scope_check;
 pub mod synthetic;
 pub mod task_status;
 pub mod test_inventory;
+pub mod zstd_frame;
 
 pub use error::{Error, Result};
