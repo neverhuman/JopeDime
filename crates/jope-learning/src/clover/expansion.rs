@@ -495,7 +495,7 @@ pub fn compare_scratch(request: ScratchRequest<'_>, output: &Path) -> Result<Val
         "cpu_seconds":null,"equal_resource_comparison":false,
         "stop_policy":"no_extension_on_timeout_failure_or_missing_measurement",
         "budget_caveat":"in-process fits are nonpreemptive; bootstrap/seeds are seconds-exempt; external resource receipt required",
-        "qualified_rewards":0,"h1_established":false,"optimizer_updates":0}),
+        "qualified_rewards":0,"h1_established":false,"policy_optimizer_updates":0}),
     )
 }
 

@@ -116,6 +116,9 @@ study. An overrun, unequal completed attempt counts, missing terminal resource
 receipt, or zero measured candidates invalidates an equal-resource comparison.
 The scratch receipt therefore leaves CPU totals null and resource comparability
 false until an independent host receipt exists.
+`policy_optimizer_updates` counts updates to PolicyLM only. GP candidates fit
+their own models; archived early scratch receipts used `optimizer_updates` for
+this same PolicyLM-only count.
 
 No extension or silent retry follows timeout, failed publication, missing input,
 HOLD, or unknown execution. Freeze identities through the Phase 0 experiment/run
