@@ -24,7 +24,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 15 | 0 | 15 | 0 | 0 | 0 |
+| new-bin | 16 | 0 | 16 | 0 | 0 | 0 |
 | new-example | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **820** | **353** | **57** | **1** | **402** | **7** |
+| **total** | **821** | **353** | **58** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
@@ -832,6 +832,7 @@ you saw.
 | new-bin | (new) | crates/jope-arena/src/main.rs (jope-arena) | jope-arena::* (34 tests) | new | SOTArena fetch, Elo ladders, family reports, score emission (WP12; ported from the SOTArena reporter tree recorded in assets/regression/SOURCES.md, now a crate) |
 | new-bin | (new) | crates/jope-bench/src/main.rs (jope-bench) | jope-bench::* (7 tests) | new | same-cut benchmark: every head as a single-head program, caller programs and the search scored on identical `fold_of` cuts, screen then deepen; emits local `jope-arena` tracks (AFM plan Track A, A2); `benchmark install-export` (`asm`, W9-T05: installs a qualified export package under the identity its authenticated qualification receipts re-derive; test `jope-bench::panel::inference::package a_recorded_identity_must_be_the_authenticated_seal`) |
 | new-bin | (new) | crates/jope-learning/src/main.rs (jope-learning) | jope-learning::* (52 tests) | new | learning store: hash-chained HWM and score ledgers, conditional pointers, ingest sources (WP11 L1/L2) |
+| new-bin | (new) | crates/jope-learning/src/bin/jope_pools.rs (jope_pools) | jope-learning::pools (15 tests); jope-learning::test/pools (12 tests) | new | J9/GB-09 shadow-only frozen candidate pools and selector evaluation: ingest-coverage, ingest-roster-features, freeze, views, evaluate; no training, promotion, qualification or L6 claim |
 | vendored-bin | jain-smartcluster@715128f: scq | crates/smartcluster/scq/src/main.rs (scq) | none | moved | vendored smartcluster crate (the SCQ evaluator the flywheel calls) |
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |

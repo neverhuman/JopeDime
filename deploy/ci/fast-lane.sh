@@ -201,6 +201,8 @@ timeout 600s uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --o
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json" )
     # Lifecycle proposals and the executable cache. No bucket calls. DuckDB is optional.
 python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests -q
+    # J9 q-head adapter fixtures (stub policy, stdlib only); the frozen-pool core is Rust (crates/jope-learning/src/pools).
+python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw/pools/tests -t deploy/dl-flywheel/pipelines -q
     # C4/S7/S8 finite-action and actual CPU float64 autograd fixtures.
 (
 cd python
