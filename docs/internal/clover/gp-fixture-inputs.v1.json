@@ -1,0 +1,180 @@
+{
+  "cut": {
+    "hold_indices": [
+      16,
+      17,
+      18,
+      19
+    ],
+    "hold_x": [
+      [
+        16.0,
+        256.0
+      ],
+      [
+        17.0,
+        289.0
+      ],
+      [
+        18.0,
+        324.0
+      ],
+      [
+        19.0,
+        361.0
+      ]
+    ],
+    "hold_y": [
+      9.0,
+      9.5,
+      10.0,
+      10.5
+    ],
+    "index": 0,
+    "train_x": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        4.0
+      ],
+      [
+        3.0,
+        9.0
+      ],
+      [
+        4.0,
+        16.0
+      ],
+      [
+        5.0,
+        25.0
+      ],
+      [
+        6.0,
+        36.0
+      ],
+      [
+        7.0,
+        49.0
+      ],
+      [
+        8.0,
+        64.0
+      ],
+      [
+        9.0,
+        81.0
+      ],
+      [
+        10.0,
+        100.0
+      ],
+      [
+        11.0,
+        121.0
+      ],
+      [
+        12.0,
+        144.0
+      ],
+      [
+        13.0,
+        169.0
+      ],
+      [
+        14.0,
+        196.0
+      ],
+      [
+        15.0,
+        225.0
+      ]
+    ],
+    "train_y": [
+      1.0,
+      1.5,
+      2.0,
+      2.5,
+      3.0,
+      3.5,
+      4.0,
+      4.5,
+      5.0,
+      5.5,
+      6.0,
+      6.5,
+      7.0,
+      7.5,
+      8.0,
+      8.5
+    ]
+  },
+  "policy": {
+    "batch_protocol_sha256": "3312d3dccc477197e80394ebbd2cdc67723d5d83c0eb39951f944bceb3792fa2",
+    "context_sha256": "756c258fbbbc427f970e15843fcd773e7aad3e57e9c8f87adbae1ee1355cf08f",
+    "encoder_input_sha256": "f715365bd84b9fcce9ba042b8e9208857d2d2570ab93f643bf6f92b61bea5bf8",
+    "proposals": [
+      {
+        "behavior_logprob": -3.0,
+        "draw_seed": 101,
+        "genome": "(pipe X (standardize append=false) (ridge))",
+        "program_sha256": "7af2a0bd58dd79b5f4a991f60fd846150ee8d5427dfdc040e0f1993a8b0f1012"
+      }
+    ],
+    "sampling_protocol": "trie_children_temperature_v1",
+    "schema": "clover.policy-seeds/v1",
+    "snapshot": {
+      "checkpoint_sha256": "cf742a04b2676030587644127b93e6ba04174324080e95b80678a29dbc9a3d85",
+      "code_sha256": "ff78cf044a9444d42f3dcccd2f164f43f11c20ccc32059ea8d24bf995ca44d51",
+      "context_width": 2051,
+      "model_class": "PolicyLM",
+      "normalizer_sha256": "20726b1d7a9a3b7e6bc52482cc6bc3f86f4fefbe9ae8bbe691824bcc9a521f31",
+      "parameter_sha256": "950ea477b3dae8de7a86532734908e34e6e3e1198454d0164d7fd9da53beb8b0",
+      "support_sha256": "98fc2a7d61f1ebb56322140165be2947c9ef8af0fd5710ef7663632c95c11dbc",
+      "tokenizer_sha256": "0296190b7dec5529d7e17a0a21b94c2e8020dbe0419b574995fff68e53428a63"
+    },
+    "temperature": 1.0
+  },
+  "qualification": "synthetic_fixture_only",
+  "retrieval": {
+    "seeds": [
+      {
+        "genome": "(pipe X (row_stats append=true) (ridge))",
+        "measurement_receipt_sha256": "2d87eb4b556cacc83ff738b9c1bc107c220b842d8400c64779e838f817703a35",
+        "source_context_sha256": "756c258fbbbc427f970e15843fcd773e7aad3e57e9c8f87adbae1ee1355cf08f"
+      }
+    ]
+  },
+  "role_manifest": {
+    "families": {
+      "forbidden-parent": "sealed",
+      "synthetic-linear-parent": "train"
+    },
+    "schema": "clover.discovery-family-roles/v1"
+  },
+  "roster": {
+    "contexts": [
+      {
+        "context_sha256": "756c258fbbbc427f970e15843fcd773e7aad3e57e9c8f87adbae1ee1355cf08f",
+        "cut": 0,
+        "dataset_sha256": "5c0b6f26bc4b6472d810c4536bd29644c3be1eaaaf9b88dfe5c5d8d6209f6033",
+        "encoder_input_sha256": "f715365bd84b9fcce9ba042b8e9208857d2d2570ab93f643bf6f92b61bea5bf8",
+        "inner_holdout_sha256": "71028160a5d8928bc4083872ad4d678bfce5123e796d2fa677b4388b30224af4",
+        "parent_family": "synthetic-linear-parent",
+        "preprocessing_sha256": "0edb51d74a9bb372c30284983e38bd2fe510a7e79b1695435d6d46d43a742c1f",
+        "role": "train",
+        "training_sha256": "7e50f73b52b147579bb613563eb64901b8db51dc6b21db87ab7982edb4b6f557"
+      }
+    ],
+    "role_manifest_sha256": "b0d8ff98ed5e59b2a7d6c06fda6c04c1ac6969a923af6e6d7855ef2d0361d21c",
+    "schema": "clover.discovery-roster/v1"
+  },
+  "schema": "clover.gp-fixture-inputs/v1"
+}

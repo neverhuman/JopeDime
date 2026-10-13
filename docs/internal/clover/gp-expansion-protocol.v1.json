@@ -1,0 +1,78 @@
+{
+  "schema": "clover.gp-expansion-protocol/v1",
+  "scope": "design_and_offline_scratch_only",
+  "empirical_execution_ready": false,
+  "hypothesis": "H1_repeated_useful_qualified_non_catalog_discovery",
+  "source_configuration": "generated GP configuration receipt; exact source SHA and file hashes required",
+  "roster": {
+    "role": "train",
+    "parent_selection": "sorted eligible parent IDs, at most one context per parent",
+    "maximum_independent_parents": 24,
+    "empirical_roster_sha256": "42f5caa7fba059bf40a28720380379e4fc4b01e5a2fe6f3b969db8c161617043",
+    "original_role_manifest_sha256": "3b9caf36a3cde3f12d0337ebfc633b55a1e989a3f53410df578f6fc9a7aa0109",
+    "original_encoder_provenance_sha256": "98ee2fe153b41556810861dce52586c26c6f83016e06bc319e715c9c56553238",
+    "missing_parent_policy": "report actual count; no validation or sealed substitution"
+  },
+  "policy": {
+    "model_class": "PolicyLM",
+    "context_width": 2051,
+    "parameter_sha256": "ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb",
+    "checkpoint_manifest_sha256": "232596a75ececc9c6292e459218c13583adb5691ee9176d186887cc1fe7db1f5",
+    "code_manifest_sha256": "e0851e5850499f979950c17bfc3a6db5de9a2ea00d3770f1641b09b226e2a129",
+    "tokenizer_sha256": "fd64472eaa5bfca4196f54b4208a39dfd1d697631f420e946f5920990112f8d9",
+    "support_sha256": "116154767f2df56fb065c9b6bc3ce07df38c3672843c0eb4b944d84e8e8473bd",
+    "normalizer_sha256": "4f093f59af6cb4522c8fda77cce357ecd72d0561e3816ac261ec1c91808ca62d",
+    "sampling_protocol": "trie_children_temperature_v1",
+    "temperature": 1.0,
+    "optimizer_updates": 0,
+    "parent_steering": false
+  },
+  "arms": [
+    "ordinary",
+    "policy_seeded",
+    "retrieval_seeded"
+  ],
+  "common_search": {
+    "engine": "feat-math canonical-pipeline GP (in-process)",
+    "evaluations_per_arm_per_cut": 200,
+    "active_seconds_per_arm_per_cut": 180,
+    "islands": 1,
+    "threads": 1,
+    "rng_seeds": [
+      20261013,
+      20261014,
+      20261015
+    ],
+    "order": "cyclic arm order by seed index",
+    "original_catalog_program_count": 6640,
+    "catalog_sha256": "541248fb31e90eec17d3b49edf35a553969122a08898973ec297f1c3a619e366",
+    "permitted_cache_snapshot_sha256": null,
+    "all_failed_and_attempted_fits_charged": true,
+    "inference_cost_included_in_resource_comparison": true,
+    "external_resource_receipt_required": true,
+    "catalog_hash_kind": "original immutable trie-programs.json bytes; novelty receipt also binds canonical program-set hash"
+  },
+  "novelty": {
+    "syntactic": "canonical identity outside frozen catalog",
+    "behavior": "distinct prediction bits on the same frozen legal training probe; normalize signed zero",
+    "qualification": "independent native/emitted parity and protocol evidence required",
+    "probe_manifest_sha256": null,
+    "missing_probe": "unknown"
+  },
+  "stop_conditions": [
+    "missing or conflicting frozen input identity",
+    "validation/sealed family or retrieval ancestry",
+    "STOP or HOLD",
+    "attempt/time/CPU/RAM bound or resource overrun",
+    "unknown execution, missing terminal resource receipt or failed publication",
+    "zero measured candidates",
+    "no useful ordinary-GP expansion at the preregistered effect/cost threshold"
+  ],
+  "retry_policy": "no silent retry or budget extension",
+  "practical_effect_and_cost_threshold": null,
+  "statistical_plan_owner": "GB-07",
+  "qualified_rewards": 0,
+  "h1_established": false,
+  "promotion": false,
+  "dated_scratch_evidence": "gp-evidence.20261013.json"
+}

@@ -1,0 +1,636 @@
+{
+  "contexts": [
+    {
+      "context_sha256": "0c9c7558482d3d3b1ddf1b25302515099819998cdde7c29016f3f2caefbc177a",
+      "encoder_input_sha256": "e4ba3f835b49bad347bf0550870ecfeb59e4682c1a9b99e5c64e4db60e14a80e",
+      "original_context": {
+        "context_id": "0c9c7558482d3d3b1ddf1b25302515099819998cdde7c29016f3f2caefbc177a",
+        "context_sha256": "0c9c7558482d3d3b1ddf1b25302515099819998cdde7c29016f3f2caefbc177a",
+        "cut_id": "trainonly-split-v2:486720688ab6d35b526c99b8867942d9c5170e5bcbd443e7eb3887391bd341ac",
+        "dataset_hash": "52f8f17915c0c72c",
+        "fold": 2,
+        "gp_hwm_ref": {
+          "bytes": 1930,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/52f8f17915c0c72c/f2/0c9c7558482d3d3b1ddf1b25302515099819998cdde7c29016f3f2caefbc177a/d98437318ab618ecbe9a06603480a469b46c85e03f6a70adfe29a74b079c5423.json",
+          "sha256": "d98437318ab618ecbe9a06603480a469b46c85e03f6a70adfe29a74b079c5423",
+          "version_id": "pYJYoAv18cZtASF3v0HgSavnIef0P8xS"
+        },
+        "kumo_source_sha256": "85059759346de7defc34a0bfa46659717a01e7e6e92fc8c8ee05491c98e33e62",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0112d434ddc2c667e79731e54224508e19a340329271d581dbfc4e19254ada62",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "52f8f17915c0c72c__r0__f2__l7asplit2_4093ae4f79e9"
+      },
+      "original_encoding_row": 112,
+      "parent_family": "0112d434ddc2c667e79731e54224508e19a340329271d581dbfc4e19254ada62",
+      "role": "train"
+    },
+    {
+      "context_sha256": "3fed1e40846c20fb98f297e045824b43f64429d2367c0ae12397d096157de232",
+      "encoder_input_sha256": "1c52c06df314ffa18711ba45663d7f01f4f9759e50ae4979c41777cc27409423",
+      "original_context": {
+        "context_id": "3fed1e40846c20fb98f297e045824b43f64429d2367c0ae12397d096157de232",
+        "context_sha256": "3fed1e40846c20fb98f297e045824b43f64429d2367c0ae12397d096157de232",
+        "cut_id": "trainonly-split-v2:9cfdbc2c9cd916a8b10772cc0c812ce78b648e761aad96115ebff6402fcc3e7f",
+        "dataset_hash": "8401b581f6d65ebe",
+        "fold": 0,
+        "gp_hwm_ref": {
+          "bytes": 1923,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/8401b581f6d65ebe/f0/3fed1e40846c20fb98f297e045824b43f64429d2367c0ae12397d096157de232/c465cec0065789448b349e78e0b3180492ed70ffe4aca528e163e45b7cbbebf3.json",
+          "sha256": "c465cec0065789448b349e78e0b3180492ed70ffe4aca528e163e45b7cbbebf3",
+          "version_id": "BR4te8ZcA4DI4iWgt30yCFXdcDlfFaIX"
+        },
+        "kumo_source_sha256": "8bf6b1613c0ea899ac7ba8dcdbdefb2ac0a0d99f2f63939d142586657a054394",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0209cd601daf809e809630dd7fa605af567b69f3626a4a9dc2e21f2e2624ff82",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "8401b581f6d65ebe__r0__f0__rowselraw1_9fb8acf90425"
+      },
+      "original_encoding_row": 655,
+      "parent_family": "0209cd601daf809e809630dd7fa605af567b69f3626a4a9dc2e21f2e2624ff82",
+      "role": "train"
+    },
+    {
+      "context_sha256": "3e378671c6250d86701b53a8a939d1d41307f0ab83bd2d9fa0c0ad418c4a33fb",
+      "encoder_input_sha256": "0317b891d93eed018ed62a999f8bb972f304f0cce15a4a8d622e25a188a1135b",
+      "original_context": {
+        "context_id": "3e378671c6250d86701b53a8a939d1d41307f0ab83bd2d9fa0c0ad418c4a33fb",
+        "context_sha256": "3e378671c6250d86701b53a8a939d1d41307f0ab83bd2d9fa0c0ad418c4a33fb",
+        "cut_id": "trainonly-split-v2:ffd1c2ad867f4ad305b574b15fa8bfd8a963cf2ef8c0b092615446b84c3692c4",
+        "dataset_hash": "ab279eded3b3c52b",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 2153,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/ab279eded3b3c52b/f3/3e378671c6250d86701b53a8a939d1d41307f0ab83bd2d9fa0c0ad418c4a33fb/f6f2712672892900d59341e6c92fe8c74584ce49683eb2ae61dc61a4136840a2.json",
+          "sha256": "f6f2712672892900d59341e6c92fe8c74584ce49683eb2ae61dc61a4136840a2",
+          "version_id": "nwbRXQnsEcQUYMiV3Cui47LczFdNawJk"
+        },
+        "kumo_source_sha256": "c26baf503a4ce5e2b43e08d53b3f36cb424ffb30c6a01498070ae44a4b889c06",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "022548e131a4eb6750899249e6de07c51c17c66ab093a7d870778a562022d497",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "ab279eded3b3c52b__r0__f3__rowselraw1_897269dc43a7"
+      },
+      "original_encoding_row": 644,
+      "parent_family": "022548e131a4eb6750899249e6de07c51c17c66ab093a7d870778a562022d497",
+      "role": "train"
+    },
+    {
+      "context_sha256": "06fe74af013f726268b905c667e16ebb195d76c9f11ee85698273d59d4913321",
+      "encoder_input_sha256": "383fd0f1f9e6e0cccb59481059c5abb05a644e9f96bb608776af767be19a5cef",
+      "original_context": {
+        "context_id": "06fe74af013f726268b905c667e16ebb195d76c9f11ee85698273d59d4913321",
+        "context_sha256": "06fe74af013f726268b905c667e16ebb195d76c9f11ee85698273d59d4913321",
+        "cut_id": "trainonly-split-v2:1312e9c92d9d6986b5d7de688cc0727f712ad563031aaed17f00830354690d90",
+        "dataset_hash": "4f58cf846a3575ef",
+        "fold": 0,
+        "gp_hwm_ref": {
+          "bytes": 2069,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/4f58cf846a3575ef/f0/06fe74af013f726268b905c667e16ebb195d76c9f11ee85698273d59d4913321/9f7468bfff1c217080ba277cfd73acd75a755b76c9e78116dfcc2db1682ab086.json",
+          "sha256": "9f7468bfff1c217080ba277cfd73acd75a755b76c9e78116dfcc2db1682ab086",
+          "version_id": ".oWniQbGbnPWHvuZNjoB75q1GK_XN2v3"
+        },
+        "kumo_source_sha256": "3f2635f788118dc119660be68833ebd0634152de079b6139d5e0e56501bdac1b",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "026e59bcabb5b34e4219b1eab22edada026efbbe6af64e5c9945732e62f1988b",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "4f58cf846a3575ef__r0__f0__rowsel2s_7af7f5dc94a9"
+      },
+      "original_encoding_row": 53,
+      "parent_family": "026e59bcabb5b34e4219b1eab22edada026efbbe6af64e5c9945732e62f1988b",
+      "role": "train"
+    },
+    {
+      "context_sha256": "3e4a4830fb290d3186b63ebe51731de019dde0b7ce37111e8a81df774f4b151d",
+      "encoder_input_sha256": "931dcbeb17be78ea435d70631988ed23848cea40f049f88bfb7e2cf4981ce56d",
+      "original_context": {
+        "context_id": "3e4a4830fb290d3186b63ebe51731de019dde0b7ce37111e8a81df774f4b151d",
+        "context_sha256": "3e4a4830fb290d3186b63ebe51731de019dde0b7ce37111e8a81df774f4b151d",
+        "cut_id": "trainonly-split-v2:be3b86d7d174d4c0bfcee13c9b521d931191e41f3b4b96324ab6ddd87279c604",
+        "dataset_hash": "01e94e24e406850e",
+        "fold": 1,
+        "gp_hwm_ref": {
+          "bytes": 1992,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/01e94e24e406850e/f1/3e4a4830fb290d3186b63ebe51731de019dde0b7ce37111e8a81df774f4b151d/1a1fee40393bfb510617b179d123ae4120a064190b72359f534a87e1bdea2ae0.json",
+          "sha256": "1a1fee40393bfb510617b179d123ae4120a064190b72359f534a87e1bdea2ae0",
+          "version_id": "pzAGffPxorqAudvK05ZL0d8psG3RdBNe"
+        },
+        "kumo_source_sha256": "fcf95d5b852b641b38e0b72fd163650daae1fee4dbd48d6c4cebdc26af3f8fa1",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0297f92d3069bfd97956e757cfbda375cc26db99a49cfe64af6a841bd7762e8a",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "01e94e24e406850e__r0__f1__rowsel2s_3ba3113c2e34"
+      },
+      "original_encoding_row": 646,
+      "parent_family": "0297f92d3069bfd97956e757cfbda375cc26db99a49cfe64af6a841bd7762e8a",
+      "role": "train"
+    },
+    {
+      "context_sha256": "4a656e6d74304f65b3f937bbea12b74b93628f9cc04462efd342bd6d32c78dcf",
+      "encoder_input_sha256": "04cff1c688fed97b17fc7aa707fec80914b34b3cfdbcabf1c6ad13ed8087e053",
+      "original_context": {
+        "context_id": "4a656e6d74304f65b3f937bbea12b74b93628f9cc04462efd342bd6d32c78dcf",
+        "context_sha256": "4a656e6d74304f65b3f937bbea12b74b93628f9cc04462efd342bd6d32c78dcf",
+        "cut_id": "trainonly-split-v2:65b302ddbd326c7990a65abe5329e9c4cfaad701ef04f47ab8a95ff4704fbec9",
+        "dataset_hash": "b624664edda36ba5",
+        "fold": 2,
+        "gp_hwm_ref": {
+          "bytes": 1869,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/b624664edda36ba5/f2/4a656e6d74304f65b3f937bbea12b74b93628f9cc04462efd342bd6d32c78dcf/fcfe96c2738ccfc853dda424314747aab2d3d12ae5c864f74d71a8bfa952d6f8.json",
+          "sha256": "fcfe96c2738ccfc853dda424314747aab2d3d12ae5c864f74d71a8bfa952d6f8",
+          "version_id": "Xp15ROAGviE9DHuqgj0y3lSOb_cIpHBE"
+        },
+        "kumo_source_sha256": "77f1e5ea683673ffc53d83376befbf5b474974ee3fbe6200f5ef11654bfa118c",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0305372071806e4f10b46decc722b6ec03292b3b9f7744d325c6532c855a665c",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "b624664edda36ba5__r0__f2__rowselraw1_de8ec4309cb2"
+      },
+      "original_encoding_row": 763,
+      "parent_family": "0305372071806e4f10b46decc722b6ec03292b3b9f7744d325c6532c855a665c",
+      "role": "train"
+    },
+    {
+      "context_sha256": "078c9c27ac9b5205b07c6445de06929c0a93b9147cf0ad4211eb3fb99c06ccb1",
+      "encoder_input_sha256": "2afe48e1b786b2fff1778c8f735af425e0a39cddc1da779a6ac236192beca307",
+      "original_context": {
+        "context_id": "078c9c27ac9b5205b07c6445de06929c0a93b9147cf0ad4211eb3fb99c06ccb1",
+        "context_sha256": "078c9c27ac9b5205b07c6445de06929c0a93b9147cf0ad4211eb3fb99c06ccb1",
+        "cut_id": "trainonly-split-v2:befa167ccf37e1a66a51fdf48e54123424c65fe4b4674b6f630fee03a04c888b",
+        "dataset_hash": "c3fa7199533d9ae9",
+        "fold": 4,
+        "gp_hwm_ref": {
+          "bytes": 1892,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/c3fa7199533d9ae9/f4/078c9c27ac9b5205b07c6445de06929c0a93b9147cf0ad4211eb3fb99c06ccb1/02ebde264cdd0b68eb04be41f3be134d5a57f27c88ef0a5144da78ec2b27df0f.json",
+          "sha256": "02ebde264cdd0b68eb04be41f3be134d5a57f27c88ef0a5144da78ec2b27df0f",
+          "version_id": "ZSXpa88VUkZhFgo5KVCeejrBafVo8wo3"
+        },
+        "kumo_source_sha256": "6b8ace2a30557487c4082b68d29c76c6519e21018dd5d188d98409c5b4e6842a",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "033f2291be8eb0c4625198404d791c0eb38fed6de8512c483a0cb09de8020101",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "c3fa7199533d9ae9__r0__f4__rowselraw1_1f489c28150e"
+      },
+      "original_encoding_row": 64,
+      "parent_family": "033f2291be8eb0c4625198404d791c0eb38fed6de8512c483a0cb09de8020101",
+      "role": "train"
+    },
+    {
+      "context_sha256": "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+      "encoder_input_sha256": "c580ce62219866e4a45b2ff5da04d85b8450bf363c074dd1b56eefe131c76d92",
+      "original_context": {
+        "context_id": "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+        "context_sha256": "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+        "cut_id": "trainonly-split-v2g:98e5fdbb0fee3e2e4ea713026ca6286c5e4a9a638ff5af8ef8bf754ff151573c",
+        "dataset_hash": "388c182279212eb8",
+        "fold": 1,
+        "gp_hwm_ref": {
+          "bytes": 2078,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/388c182279212eb8/f1/2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421/ca9eaea2a3917529773a18eb37d87f4e937e936e70770a7362f61d14b1360a60.json",
+          "sha256": "ca9eaea2a3917529773a18eb37d87f4e937e936e70770a7362f61d14b1360a60",
+          "version_id": "m81rO5GoSL6aII.BwFUqMHoG3Oq.R3Nm"
+        },
+        "kumo_source_sha256": "b3b240619399c68730bf1d4ff721ec62678aa786fd9f43dc9d5fb4125a5db88a",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "03d520b5639cef0e7f2a5f8a95d327c24c610e7db3969a57b4c8bb1206660a47",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "388c182279212eb8__r0__f1__rowselraw1_a8ec6e9e5976"
+      },
+      "original_encoding_row": 477,
+      "parent_family": "03d520b5639cef0e7f2a5f8a95d327c24c610e7db3969a57b4c8bb1206660a47",
+      "role": "train"
+    },
+    {
+      "context_sha256": "26f71ad611151c1a40648602c326c35a36ec7042543a435c5ebcd5cb7d2a680f",
+      "encoder_input_sha256": "409160a8b9391e6afecab6948a3fc31e2644277e6ba7811422493dbec51d5082",
+      "original_context": {
+        "context_id": "26f71ad611151c1a40648602c326c35a36ec7042543a435c5ebcd5cb7d2a680f",
+        "context_sha256": "26f71ad611151c1a40648602c326c35a36ec7042543a435c5ebcd5cb7d2a680f",
+        "cut_id": "trainonly-split-v2:9ae9ad56532eeb9ec1d5cb9befe028bf45667e8e9a981561689b1f0cccdb980e",
+        "dataset_hash": "5a5d21e1d1228860",
+        "fold": 1,
+        "gp_hwm_ref": {
+          "bytes": 1905,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/5a5d21e1d1228860/f1/26f71ad611151c1a40648602c326c35a36ec7042543a435c5ebcd5cb7d2a680f/271036b5463ad4a83fadb6f7cd7398377148415b836b501f77d6e2a0a4cd05d6.json",
+          "sha256": "271036b5463ad4a83fadb6f7cd7398377148415b836b501f77d6e2a0a4cd05d6",
+          "version_id": "qfiCe0t_JwVF9WmdPNXrFSXsk01vfxWQ"
+        },
+        "kumo_source_sha256": "79a29a43a4ac9aedb9c7735f0a8a87d687ff8f65943ef7bbc9fce04dcfe50614",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0418b8a57d3a6a55e34188c68ce9a15c14f9fc81a9ece72d2a98269a86f23162",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "5a5d21e1d1228860__r0__f1__rowsel2s_b9d10255ca59"
+      },
+      "original_encoding_row": 401,
+      "parent_family": "0418b8a57d3a6a55e34188c68ce9a15c14f9fc81a9ece72d2a98269a86f23162",
+      "role": "train"
+    },
+    {
+      "context_sha256": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+      "encoder_input_sha256": "43c21ffa5cda8a960f22fc26f89453d4331c7727cef172e9527ad04f76475c89",
+      "original_context": {
+        "context_id": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+        "context_sha256": "022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703",
+        "cut_id": "trainonly-split-v2:35c8cbd2e021644fb702489d7762ea1d09a8de81343612473fa981fac6bfa3a4",
+        "dataset_hash": "556c7afa96282660",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 1877,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/556c7afa96282660/f3/022aac25d53a30ab3ec973a1eca35585d26ebecca2f989d562fa05032b1db703/a31ea0c650c388243b45df635e42f09a20fb808184fb1c4126ab416398db6158.json",
+          "sha256": "a31ea0c650c388243b45df635e42f09a20fb808184fb1c4126ab416398db6158",
+          "version_id": "J5YR9nK4VO0eKt1yJxAxSnYfLFTR.Yi4"
+        },
+        "kumo_source_sha256": "c400feda619a7d344649008506a7f16ea1a0a4865260662e63737937fec78319",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "060d1dd44093b6f6be082b701bc164de93dd8c99c2ad055d650eedd52ec13609",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "556c7afa96282660__r0__f3__rowselraw1_73db06abb114"
+      },
+      "original_encoding_row": 14,
+      "parent_family": "060d1dd44093b6f6be082b701bc164de93dd8c99c2ad055d650eedd52ec13609",
+      "role": "train"
+    },
+    {
+      "context_sha256": "3defa5e2cf024d70072ced8fa67008bdcb8fcd9a791bb5b9ac084c6f34614761",
+      "encoder_input_sha256": "c1e6a9f335aed004be858b5f522664be4d054b0e644654fba0d956002156b1de",
+      "original_context": {
+        "context_id": "3defa5e2cf024d70072ced8fa67008bdcb8fcd9a791bb5b9ac084c6f34614761",
+        "context_sha256": "3defa5e2cf024d70072ced8fa67008bdcb8fcd9a791bb5b9ac084c6f34614761",
+        "cut_id": "trainonly-split-v2:5762c7cb0826c46dcd1cb24c2e6b637f284041db2752cf21f68cb2f5b69d086e",
+        "dataset_hash": "871042b1e7f4f2a3",
+        "fold": 1,
+        "gp_hwm_ref": {
+          "bytes": 1919,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/871042b1e7f4f2a3/f1/3defa5e2cf024d70072ced8fa67008bdcb8fcd9a791bb5b9ac084c6f34614761/7c809b5280fe4b4a6b57436b51a1afcfca3981539814bac46f5576415263665c.json",
+          "sha256": "7c809b5280fe4b4a6b57436b51a1afcfca3981539814bac46f5576415263665c",
+          "version_id": "PvfiTgYkwMJ7GvUGWOQq.wbhJVkn1REU"
+        },
+        "kumo_source_sha256": "9e140dad0f6e3cfba0f3aac0b7ecd770593af6670b632183172f63b3aed33560",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "067bca11e239e102e934d720d60e3d93778e49420b891bb1f58969790a58938c",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "871042b1e7f4f2a3__r0__f1__rowselraw1_80f0e0b07d15"
+      },
+      "original_encoding_row": 639,
+      "parent_family": "067bca11e239e102e934d720d60e3d93778e49420b891bb1f58969790a58938c",
+      "role": "train"
+    },
+    {
+      "context_sha256": "28999b253e1632d92e9443472a50d846e40e6d4d07de91ce86f3d0137cb8040e",
+      "encoder_input_sha256": "3990d7aab760b13f30a5fbd8f907846fbd34a2e6976c026d6c4c000b1146368a",
+      "original_context": {
+        "context_id": "28999b253e1632d92e9443472a50d846e40e6d4d07de91ce86f3d0137cb8040e",
+        "context_sha256": "28999b253e1632d92e9443472a50d846e40e6d4d07de91ce86f3d0137cb8040e",
+        "cut_id": "trainonly-split-v2:5546b75cfde7ec8bd28bf54e846212fe26cb2731a65580177d5d2c76aa9473d4",
+        "dataset_hash": "de2868ac837699fd",
+        "fold": 4,
+        "gp_hwm_ref": {
+          "bytes": 1917,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/de2868ac837699fd/f4/28999b253e1632d92e9443472a50d846e40e6d4d07de91ce86f3d0137cb8040e/b9f3f3c591e5964145daacfad5ab4705601d70118b6bc43e2b0fb8fab4fcc555.json",
+          "sha256": "b9f3f3c591e5964145daacfad5ab4705601d70118b6bc43e2b0fb8fab4fcc555",
+          "version_id": "Wg.FQbtMzgru9zY5yJLxk0al5qB379hV"
+        },
+        "kumo_source_sha256": "953004f4e6dcb838a2892ebd6dde62479b09dfa7e56c04604c2f03ed8fa73ca6",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "06f26b3b67bcce982565047a928afed46ea4c05e3eca7203de2a42b765883e25",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "de2868ac837699fd__r0__f4__rowselraw1_2a17fb57fe5a"
+      },
+      "original_encoding_row": 423,
+      "parent_family": "06f26b3b67bcce982565047a928afed46ea4c05e3eca7203de2a42b765883e25",
+      "role": "train"
+    },
+    {
+      "context_sha256": "00419fefd3f9000734195b113873984ca64a5aec9a4ce2304db69af1bdd4abdc",
+      "encoder_input_sha256": "0bfca1309f2c7e918c9864944056ebd3591d65a8d63535271612e78ce4ace9e0",
+      "original_context": {
+        "context_id": "00419fefd3f9000734195b113873984ca64a5aec9a4ce2304db69af1bdd4abdc",
+        "context_sha256": "00419fefd3f9000734195b113873984ca64a5aec9a4ce2304db69af1bdd4abdc",
+        "cut_id": "trainonly-split-v2g:1f6d45254f32dd15f0fadbb5f7ea4f70ea17a72487be3927c899cbfa3eefb7c3",
+        "dataset_hash": "3e37c81aab2938e6",
+        "fold": 2,
+        "gp_hwm_ref": {
+          "bytes": 1870,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/3e37c81aab2938e6/f2/00419fefd3f9000734195b113873984ca64a5aec9a4ce2304db69af1bdd4abdc/92c8961eaaa867d37c1190432326374bac083fe7c4d6562abb38f6c500a891ed.json",
+          "sha256": "92c8961eaaa867d37c1190432326374bac083fe7c4d6562abb38f6c500a891ed",
+          "version_id": "QVOD1kzS..PHfSsJHw6KXyN1hytvoB8q"
+        },
+        "kumo_source_sha256": "c886d171f6cefe343f053cef2f163d2e3248968845a7d451616961c271728a57",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0741bbaaca598edbbeae91ed2f7c5ff423a0638bab11fb745e7ba9e81a6fbaf9",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "3e37c81aab2938e6__r0__f2__rowsel2g_c4955c3550b2"
+      },
+      "original_encoding_row": 1,
+      "parent_family": "0741bbaaca598edbbeae91ed2f7c5ff423a0638bab11fb745e7ba9e81a6fbaf9",
+      "role": "train"
+    },
+    {
+      "context_sha256": "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e",
+      "encoder_input_sha256": "5a92607c8884ad2900d696ba1ce5abbb1a83f39e5123eb659972acf6f3e6461c",
+      "original_context": {
+        "context_id": "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e",
+        "context_sha256": "03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e",
+        "cut_id": "trainonly-split-v2:ae223ea7bf21bf01b6c3c372db49a52b8281d6de72dce00a114fcd55cdaa54dd",
+        "dataset_hash": "2f56285411f40460",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 1887,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/2f56285411f40460/f3/03da6aaf98b8cf5ddfc22effcff75e1759b13f7ed2d8af4df3c745faffbf5f9e/bf1d2632a7a0a2ac6c65f85218431a473556fd14f9a94ad5045108ee1092a66a.json",
+          "sha256": "bf1d2632a7a0a2ac6c65f85218431a473556fd14f9a94ad5045108ee1092a66a",
+          "version_id": "7SgSXQw8mkRuclcdusB9PvlTj2Q2lhLB"
+        },
+        "kumo_source_sha256": "bfcca3c52f97ea0fba923391207ff3fcc54f06c205ebaf99813021c2520365ad",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "085872520f2ec8e6a6bb75b3834a3b6f988c35d0b090d76309bb67b137221a99",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "2f56285411f40460__r0__f3__l7asplit2_1186b3422890"
+      },
+      "original_encoding_row": 26,
+      "parent_family": "085872520f2ec8e6a6bb75b3834a3b6f988c35d0b090d76309bb67b137221a99",
+      "role": "train"
+    },
+    {
+      "context_sha256": "15c626cec6b3f3ef75abe1fd5cd9d296af77c73f570a00b9a141b5be1e405f51",
+      "encoder_input_sha256": "25fe969ac785f3be303b3a9d9607e3f72843e5a2358b0ecf339d60483c7dfd21",
+      "original_context": {
+        "context_id": "15c626cec6b3f3ef75abe1fd5cd9d296af77c73f570a00b9a141b5be1e405f51",
+        "context_sha256": "15c626cec6b3f3ef75abe1fd5cd9d296af77c73f570a00b9a141b5be1e405f51",
+        "cut_id": "trainonly-split-v2:8ca053e3911ed39ec59f87e2c57ea90556956fc4ef5a5d8c9bf9b88acc4a1924",
+        "dataset_hash": "51d5e3d9bca34669",
+        "fold": 2,
+        "gp_hwm_ref": {
+          "bytes": 1906,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/51d5e3d9bca34669/f2/15c626cec6b3f3ef75abe1fd5cd9d296af77c73f570a00b9a141b5be1e405f51/70854b43607eeb502fe789d7a6b1564a97463406bd5513ea640df6e91c4a0e50.json",
+          "sha256": "70854b43607eeb502fe789d7a6b1564a97463406bd5513ea640df6e91c4a0e50",
+          "version_id": "TGQC4PY5H1ZZzfLRIUTl2VpalpQCdv2S"
+        },
+        "kumo_source_sha256": "5e1ccaf45b7a9938dec2ac9c50928acd9f0deba29ef1d11d1b839a4f15da1b99",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "08e4339e5cfb9337788cee7b2d75ba18039806c2e88682eba1298546d19a1672",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "51d5e3d9bca34669__r0__f2__rowselraw1_ed67443da3b5"
+      },
+      "original_encoding_row": 206,
+      "parent_family": "08e4339e5cfb9337788cee7b2d75ba18039806c2e88682eba1298546d19a1672",
+      "role": "train"
+    },
+    {
+      "context_sha256": "0e32d4de3a2894cc9e839bce37b5d9ac46fe54c32c20b11ec9110cd4e3b9f952",
+      "encoder_input_sha256": "fe6b079b75c6836531639e15046acc6fc7df1d6a8ed37c4c466eea24c9f5264a",
+      "original_context": {
+        "context_id": "0e32d4de3a2894cc9e839bce37b5d9ac46fe54c32c20b11ec9110cd4e3b9f952",
+        "context_sha256": "0e32d4de3a2894cc9e839bce37b5d9ac46fe54c32c20b11ec9110cd4e3b9f952",
+        "cut_id": "trainonly-split-v2:c4fff12be4ab026caaf352821ee95666b9ac8cd6cf60e6f74ed7acba8c7bbb24",
+        "dataset_hash": "aa387339bc4eeb2e",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 1934,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/aa387339bc4eeb2e/f3/0e32d4de3a2894cc9e839bce37b5d9ac46fe54c32c20b11ec9110cd4e3b9f952/1c0ba609a5236ec26c88c0ffaf72ca00f494c32c941bb4a7baed4768ccae2c48.json",
+          "sha256": "1c0ba609a5236ec26c88c0ffaf72ca00f494c32c941bb4a7baed4768ccae2c48",
+          "version_id": "CCv2Hrr70wiAcuRBMQqClHCnsMbJoKFQ"
+        },
+        "kumo_source_sha256": "5e95c2a4134443c6c2c37d1f80060399d994cb3e817b3aa0f677ea9d9300f337",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0ab00c0200bab70e98466d9d3474d392b10e903ae0496fc12ebb0cffe996873e",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "aa387339bc4eeb2e__r0__f3__rowsel2s_15ae23c6e756"
+      },
+      "original_encoding_row": 130,
+      "parent_family": "0ab00c0200bab70e98466d9d3474d392b10e903ae0496fc12ebb0cffe996873e",
+      "role": "train"
+    },
+    {
+      "context_sha256": "313ac895b27661558198ef51b3d7fa13dfcc094317a0cf7c05506a7734dd0549",
+      "encoder_input_sha256": "06738181e0d8a861376936205f6e35af1076228c9776ad3d41c80a5107805b1d",
+      "original_context": {
+        "context_id": "313ac895b27661558198ef51b3d7fa13dfcc094317a0cf7c05506a7734dd0549",
+        "context_sha256": "313ac895b27661558198ef51b3d7fa13dfcc094317a0cf7c05506a7734dd0549",
+        "cut_id": "trainonly-split-v2:e64d5f30a9e9fbd80859795419f337434aebfc4ccf1e32cec5a5fcbd1a28c379",
+        "dataset_hash": "ed1de0edd813e04d",
+        "fold": 2,
+        "gp_hwm_ref": {
+          "bytes": 1833,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/ed1de0edd813e04d/f2/313ac895b27661558198ef51b3d7fa13dfcc094317a0cf7c05506a7734dd0549/78371d90eccfc9f34a630b3f9825bcf9cd4f7433f7f712d11c6a88ab68d9cf08.json",
+          "sha256": "78371d90eccfc9f34a630b3f9825bcf9cd4f7433f7f712d11c6a88ab68d9cf08",
+          "version_id": "y4DMWBN0OTdYd0zTPKtNJ94xkyp_q6Rj"
+        },
+        "kumo_source_sha256": "b61229cb83b720c102ac52ddd950f3a9373237f594c6959320917a29bc535870",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0ac93ad79277ad4ad5795161507c9626eac827117e644433ef5f40d9ab468d5b",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "ed1de0edd813e04d__r0__f2__rowsel2s_2085a121f7cc"
+      },
+      "original_encoding_row": 518,
+      "parent_family": "0ac93ad79277ad4ad5795161507c9626eac827117e644433ef5f40d9ab468d5b",
+      "role": "train"
+    },
+    {
+      "context_sha256": "2485e33741fa469f187407a7b11d3aca6cc3d9306194a911b29d97059884aa57",
+      "encoder_input_sha256": "e38e0a98440d797fead5b4904d72aafb59249d5dee321e38d2d9a0c9dd5c6952",
+      "original_context": {
+        "context_id": "2485e33741fa469f187407a7b11d3aca6cc3d9306194a911b29d97059884aa57",
+        "context_sha256": "2485e33741fa469f187407a7b11d3aca6cc3d9306194a911b29d97059884aa57",
+        "cut_id": "trainonly-split-v2:019a52c08e96b77b6923f40fbc91373d8a5412d7d7c8f70563ac2115126829bb",
+        "dataset_hash": "c2721228107f670f",
+        "fold": 0,
+        "gp_hwm_ref": {
+          "bytes": 1871,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/c2721228107f670f/f0/2485e33741fa469f187407a7b11d3aca6cc3d9306194a911b29d97059884aa57/a92f1fffdc837fca900a327b719f4ac0b9d712b952767a185f503e5968e5015d.json",
+          "sha256": "a92f1fffdc837fca900a327b719f4ac0b9d712b952767a185f503e5968e5015d",
+          "version_id": "z3qSwermyUs22yBt_zx6AGJW074gzJo_"
+        },
+        "kumo_source_sha256": "6338e90a968f5607bd82b178df0717c0aee69ebdd26ddda7a4dafd7cb8bf99f9",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0b1a4fdccd6bc077510355b18aaae3b173b2bc71e7bd0cac18873b730f4dac38",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "c2721228107f670f__r0__f0__rowselraw1_a0448b51640e"
+      },
+      "original_encoding_row": 369,
+      "parent_family": "0b1a4fdccd6bc077510355b18aaae3b173b2bc71e7bd0cac18873b730f4dac38",
+      "role": "train"
+    },
+    {
+      "context_sha256": "634d8069d07ed47d0bc53f122e4149c1f90588071c66f652a93352b6a70626fa",
+      "encoder_input_sha256": "ccf9ba01ab2f8f0030c04e853650cfb588ed8f47aea874497b800ed8001a6a42",
+      "original_context": {
+        "context_id": "634d8069d07ed47d0bc53f122e4149c1f90588071c66f652a93352b6a70626fa",
+        "context_sha256": "634d8069d07ed47d0bc53f122e4149c1f90588071c66f652a93352b6a70626fa",
+        "cut_id": "trainonly-split-v2:c290e1ed1c2e30d691ef0736c2d9b92a85e9d98dd3e85d1c4287fcbf6e2b3d6c",
+        "dataset_hash": "72c1bdcbd2d62359",
+        "fold": 1,
+        "gp_hwm_ref": {
+          "bytes": 1957,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/72c1bdcbd2d62359/f1/634d8069d07ed47d0bc53f122e4149c1f90588071c66f652a93352b6a70626fa/95f76fcbc7388b5a78d02b4d0d636a8774a2d0f6acb490eaf08adc9ff6fbeb9f.json",
+          "sha256": "95f76fcbc7388b5a78d02b4d0d636a8774a2d0f6acb490eaf08adc9ff6fbeb9f",
+          "version_id": "zoLfLM5V9Dg7lzfS6Kq8iBN1fSCz2jwi"
+        },
+        "kumo_source_sha256": "f881ecd313e06f2f5eafe1c9d273169ea300293dba99dbcc90f944a6ef254faa",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0b4878da431a400e760774706555434ddd2818402f402bf97ec509a6ddf52b85",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "72c1bdcbd2d62359__r0__f1__rowselraw1_664f0cfb75ae"
+      },
+      "original_encoding_row": 982,
+      "parent_family": "0b4878da431a400e760774706555434ddd2818402f402bf97ec509a6ddf52b85",
+      "role": "train"
+    },
+    {
+      "context_sha256": "585b92cd18b373c250892b8d24c1de3033ea9fcc996dd586f155a8bd0fe32794",
+      "encoder_input_sha256": "7cf02febb279c1d56402431236d575630636bbbc0c3d2a905f3e64c756024ee8",
+      "original_context": {
+        "context_id": "585b92cd18b373c250892b8d24c1de3033ea9fcc996dd586f155a8bd0fe32794",
+        "context_sha256": "585b92cd18b373c250892b8d24c1de3033ea9fcc996dd586f155a8bd0fe32794",
+        "cut_id": "trainonly-split-v2:968787f490fb526d0fd4bb73b44906941ce1f418a6be3edb588c1fe54b27f135",
+        "dataset_hash": "036e12609e9af821",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 2006,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/036e12609e9af821/f3/585b92cd18b373c250892b8d24c1de3033ea9fcc996dd586f155a8bd0fe32794/41c3eb1ed417543aed44183786fb3f9c4c8f8c3ec8c11fcca999d5c0b26a862d.json",
+          "sha256": "41c3eb1ed417543aed44183786fb3f9c4c8f8c3ec8c11fcca999d5c0b26a862d",
+          "version_id": "D2ELuLeaWFEMia52uL1jIqTBlPKrQCnw"
+        },
+        "kumo_source_sha256": "3629868de9d5e02b802190f0fdee4f2059666f4a26e40688b731b9f98246a7e3",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0b8d7c71a1fe30ce439ee11b84efbff81cfe3ce9fe8b63cc16ef7e0684afa647",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "036e12609e9af821__r0__f3__rowsel2s_66b9d2e0fecf"
+      },
+      "original_encoding_row": 880,
+      "parent_family": "0b8d7c71a1fe30ce439ee11b84efbff81cfe3ce9fe8b63cc16ef7e0684afa647",
+      "role": "train"
+    },
+    {
+      "context_sha256": "3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80",
+      "encoder_input_sha256": "c46381704e78516d490c7d27d54b67582416ca11cdaff9f9bb9f42fed8ad87fb",
+      "original_context": {
+        "context_id": "3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80",
+        "context_sha256": "3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80",
+        "cut_id": "trainonly-split-v2:50d35711068eb8a77cf5f724535abd50bb2f07be88b4895c2090c25c25bffe75",
+        "dataset_hash": "48178b7062a20bb4",
+        "fold": 2,
+        "gp_hwm_ref": {
+          "bytes": 2024,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/48178b7062a20bb4/f2/3961fc363370c7c00e90513b1ecf41983a55806952635f1af313142763039e80/87b359761735ecb2c36f07b6dc181f0c27030fffe59c9a0e605f87fb8c73ad7c.json",
+          "sha256": "87b359761735ecb2c36f07b6dc181f0c27030fffe59c9a0e605f87fb8c73ad7c",
+          "version_id": "0cFNUx3CqF893HXZ.YMeJ_n1ScYMhCMc"
+        },
+        "kumo_source_sha256": "1ae73847397de149c74cda61b8f91aa9b7e58f495382cc53bfba792db4447518",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0b940a9ba05f6c739fc91f8decf02f29ca67a513e4258e83de6b603b4b9fb4cf",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "48178b7062a20bb4__r0__f2__l7asplit2_9f4b6185855e"
+      },
+      "original_encoding_row": 597,
+      "parent_family": "0b940a9ba05f6c739fc91f8decf02f29ca67a513e4258e83de6b603b4b9fb4cf",
+      "role": "train"
+    },
+    {
+      "context_sha256": "0a19ef312ecb52b928f5226e4cab0b61c76f9489e05ddb96018fab26aec8c804",
+      "encoder_input_sha256": "309c7cb4c7c046bb3c4e70a31b17812bb0f97ed2c6b1d831d55064de9c8402f1",
+      "original_context": {
+        "context_id": "0a19ef312ecb52b928f5226e4cab0b61c76f9489e05ddb96018fab26aec8c804",
+        "context_sha256": "0a19ef312ecb52b928f5226e4cab0b61c76f9489e05ddb96018fab26aec8c804",
+        "cut_id": "trainonly-split-v2:174bca1c31a97b4eb8b8f99cb641ec0b37555ddf6ff165c52a3fece333c4e5d7",
+        "dataset_hash": "e68fdd96cc63271b",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 1975,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/e68fdd96cc63271b/f3/0a19ef312ecb52b928f5226e4cab0b61c76f9489e05ddb96018fab26aec8c804/cd8e974222a8aede0c98caa36d57f75850a36343b021d3bda91f964eb363dfe5.json",
+          "sha256": "cd8e974222a8aede0c98caa36d57f75850a36343b021d3bda91f964eb363dfe5",
+          "version_id": "17rg.Qg_GUXd7DA9.PlypXABOB1ASX_w"
+        },
+        "kumo_source_sha256": "b605d33bf974bb3882f7aee25fd8c5b276929e0ed463d8df173e8e784b819ea8",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0b96d5655348b00dec87a67e25fbfdf00a1e3eb649d8c1b18310815b8f9642ee",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "e68fdd96cc63271b__r0__f3__rowselraw1_26530ceff504"
+      },
+      "original_encoding_row": 93,
+      "parent_family": "0b96d5655348b00dec87a67e25fbfdf00a1e3eb649d8c1b18310815b8f9642ee",
+      "role": "train"
+    },
+    {
+      "context_sha256": "2ef295335ec222fdd598178e6f50eec80dc4b91c51ec659e79413f0f1140cc10",
+      "encoder_input_sha256": "fd51345d881d7c36ef8c6b063c7762c4e3278720b0e86bd20c009629107ccefd",
+      "original_context": {
+        "context_id": "2ef295335ec222fdd598178e6f50eec80dc4b91c51ec659e79413f0f1140cc10",
+        "context_sha256": "2ef295335ec222fdd598178e6f50eec80dc4b91c51ec659e79413f0f1140cc10",
+        "cut_id": "trainonly-split-v2g:3f370b486be3ab3a5b7bd49c269ec52cecea1be018e20bcb76056067304bc112",
+        "dataset_hash": "d09059e31c53c07b",
+        "fold": 4,
+        "gp_hwm_ref": {
+          "bytes": 1930,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/d09059e31c53c07b/f4/2ef295335ec222fdd598178e6f50eec80dc4b91c51ec659e79413f0f1140cc10/d3ba2ee81c0b148ecba51659483d8f650db0d7db92215b8a9887cda4716de132.json",
+          "sha256": "d3ba2ee81c0b148ecba51659483d8f650db0d7db92215b8a9887cda4716de132",
+          "version_id": "NA7xU_yCnkUzlZVgdmPFDSzAQsyotvsh"
+        },
+        "kumo_source_sha256": "295ecb9538d1d0cd6e1962df032cc262af1a86f7aa797a6fe428006d2a130bab",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0c5b49aabcc74486b9921567ff31218b1da8ae51e6af823887c447ea3ba39fe6",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "d09059e31c53c07b__r0__f4__rowselraw1_c69a1359bfc8"
+      },
+      "original_encoding_row": 493,
+      "parent_family": "0c5b49aabcc74486b9921567ff31218b1da8ae51e6af823887c447ea3ba39fe6",
+      "role": "train"
+    },
+    {
+      "context_sha256": "4f7a2bc39548331c19a454c847059fd303e045c38e11be3ca72b3891fdad65e5",
+      "encoder_input_sha256": "ef0393a26ba26ce32d3287881766fef848f0163e89fe230b94359f366d0316a3",
+      "original_context": {
+        "context_id": "4f7a2bc39548331c19a454c847059fd303e045c38e11be3ca72b3891fdad65e5",
+        "context_sha256": "4f7a2bc39548331c19a454c847059fd303e045c38e11be3ca72b3891fdad65e5",
+        "cut_id": "trainonly-split-v2:cc2d63548cad1c6be80e147f911168e2f5c51587cb11f1ebfc891bfb34d9570b",
+        "dataset_hash": "496a0d6616986bfb",
+        "fold": 3,
+        "gp_hwm_ref": {
+          "bytes": 1836,
+          "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/496a0d6616986bfb/f3/4f7a2bc39548331c19a454c847059fd303e045c38e11be3ca72b3891fdad65e5/3a2c2ca5ddd0ad2d75c2dfeba65452e1b9aa108cffd08807f54628eefbaa42b5.json",
+          "sha256": "3a2c2ca5ddd0ad2d75c2dfeba65452e1b9aa108cffd08807f54628eefbaa42b5",
+          "version_id": "qbPb7JV1NhfzgM.a_2TtQsra_ilPtT59"
+        },
+        "kumo_source_sha256": "33b64b0c9104a6b4cdc3786cd3926db7aa675d20da5b9f3fc908c33dd4cb9cc0",
+        "observation_dispatch": "pending_native_worker_adapter",
+        "parent_lineage_sha256": "0c8e0e67228914febe368381b57fb0ed4bad57506b79db65a7723d4ca6a53c95",
+        "partition": "train",
+        "source_kind": "native_s1_context",
+        "view_id": "496a0d6616986bfb__r0__f3__rowsel2s_6297f2507758"
+      },
+      "original_encoding_row": 799,
+      "parent_family": "0c8e0e67228914febe368381b57fb0ed4bad57506b79db65a7723d4ca6a53c95",
+      "role": "train"
+    }
+  ],
+  "original_encodings_sha256": "98ee2fe153b41556810861dce52586c26c6f83016e06bc319e715c9c56553238",
+  "original_train_roster_sha256": "51e351bb4259ff4341606789e9aadefc1ca14c043fe5fca1bae0dcfc51622f78",
+  "qualified_use": "BLOCKED_JEPSON",
+  "research_split_only": true,
+  "role_manifest_sha256": "442dfb544df2441948770b64bf510838f233243de555755eee0a3ad80981c790",
+  "schema": "clover.policy-context-roster/v1",
+  "selection": "first24 sorted unique training parents; minimum context SHA within parent; no scores inspected",
+  "source_manifest_sha256": "7dd9955418e0b2e27986b1c9ec247f09321c231e6bad4c6d860f294b8f32d7b7"
+}

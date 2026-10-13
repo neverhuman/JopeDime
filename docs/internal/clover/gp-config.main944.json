@@ -1,0 +1,498 @@
+{
+  "engine_gp": {
+    "duplicate_policy": "canonical program once per search; bounded 10000 proposals per evaluation slot",
+    "evaluations_max": 1000,
+    "fidelity": "single supplied adaptive inner cut; final tests unopened",
+    "generations": null,
+    "islands": 1,
+    "left_parent": "uniform top10 if null weights; otherwise exp(logprob-max), min weight1e-6; missing scores use minimum observed",
+    "max_transforms": 6,
+    "measured_search": "blocked_shipped_namespace_activation",
+    "migration": "none in gp.rs",
+    "operator_draw": {
+      "conditional": "after initial population and with measured survivors; no survivors means fresh_random",
+      "crossover": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "fresh_random": [
+        0,
+        1
+      ],
+      "modulus": 16,
+      "mutation": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    "per_operator_counts": null,
+    "population": 80,
+    "right_parent": "uniform top10",
+    "seconds_max": 600,
+    "seed_sources": "caller supplied80 or ridge+79 independent grammar draws",
+    "survivors": 10,
+    "tournament": "64 neural vs64 generic; shared10 retained +6 exploration slots"
+  },
+  "engine_grammar": {
+    "max_expr_stages": {
+      "featmath": 3
+    },
+    "max_transforms": {
+      "featmath": 6
+    },
+    "operators": [
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "pair_prod",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "polar",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "poly_interact",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "quantile_bins",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "rand_proj",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "rank",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "rff_cos",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "rff_sin",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "robust_scale",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "row_diff_stats",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "row_spectral",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "row_stats",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "sigmoid",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "standardize",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "step",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "svd_project",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "target_bin_encode",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "winsor_clip",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "winsor_moments",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "elasticnet",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "ensemble",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "ensemble_ridge_gbm",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "extra_trees",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "gam_boost",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "gbm",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "gpr",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "histgbm",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "histgbm2",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "krr",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "ksmooth",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "logistic",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "logit_ridge",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "multiclass_diagonal_lda",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "multiclass_nearest_centroid",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "multiclass_ovr_logistic",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "multiclass_ridge",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": false,
+        "name": "portfolio",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "ridge",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": false,
+        "name": "ridge_gcv",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "stack",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "tab_boost",
+        "role": "head",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "bin_onehot",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "blom",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "cheb",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "derive",
+        "role": "transform",
+        "takes_expr": true
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "fft_mag",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "hinge",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "landmark_dist",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "map",
+        "role": "transform",
+        "takes_expr": true
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "norm_features",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "norm_row",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "nystrom",
+        "role": "transform",
+        "takes_expr": false
+      },
+      {
+        "engine": "featmath",
+        "generate": true,
+        "name": "oblique_hinge",
+        "role": "transform",
+        "takes_expr": false
+      }
+    ],
+    "projection": "project_proposal then encode/decode",
+    "sampling_filter": "generate",
+    "task_filter": "head_tasks"
+  },
+  "extraction": "reviewed source fragments + public pipeline constants; drift is an error",
+  "schema": "clover.gp-config/v1",
+  "scratch_pipeline": {
+    "budget_policy": "per_cut_total_attempts_and_active_seconds_nonpreemptive_v1",
+    "duplicate_policy": "once per cut including failures;8 distinct-child draws;8 barren generations stop",
+    "elites": 4,
+    "engine": "feat-math canonical-pipeline GP (in-process)",
+    "evaluations_max": 1000,
+    "fidelity": "same fit rows and adaptive inner holdout for every arm",
+    "generator_heads_with_draw_multiplicity": [
+      "histgbm",
+      "histgbm",
+      "ridge",
+      "ridge_gcv",
+      "elasticnet",
+      "histgbm2",
+      "histgbm2",
+      "gpr",
+      "ksmooth"
+    ],
+    "generator_transforms": [
+      "standardize",
+      "robust_scale",
+      "rank",
+      "blom",
+      "quantile_bins",
+      "bin_onehot",
+      "hinge",
+      "winsor_clip",
+      "cheb",
+      "poly_interact",
+      "rff_cos",
+      "rff_sin",
+      "rand_proj",
+      "oblique_hinge",
+      "row_stats",
+      "pair_prod",
+      "target_bin_encode",
+      "sigmoid"
+    ],
+    "islands": 1,
+    "max_transforms": 4,
+    "migration": "none with one island; engine supports top1 each4 generations when enabled",
+    "operator_policy": "even offspring slots crossover when >=2 parents; remaining slots mutate; no measured parent -> random; fallback mutate-best then bootstrap",
+    "parent_selection": "seed-derived uniform indices over surviving elites",
+    "per_operator_counts": "derived from actual observations in comparison receipt",
+    "population": 12,
+    "qualification": "scratch_only; no native/emitted parity or independent family claim",
+    "seconds_exempt": "generation0 bootstrap and seeds",
+    "seconds_max": 600,
+    "seed_sources": "bootstrap + at most4 admitted seeds + independent random fill",
+    "threads": 1
+  },
+  "source_commit": "944d6cf62b48617ffc262a583be3231ef8f1442f",
+  "source_file_sha256": {
+    "Cargo.lock": "5cce9e3878b7d48f3ebc4a6bc2d6c129d4bf7ed3598c9b812da4c38ebb20daf4",
+    "crates/feat-math/src/evolve.rs": "680cbfa420a12c9e5ebbbd738fbe61aa6be6b9048c9df2f727ff8f18b4ad580e",
+    "crates/jope-engine/assets/grammar/featmath.json": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "crates/jope-engine/src/eval_registry/authority.rs": "dd95fe82b894a53bbb76e5bb95859418ee224f705c6f671f3a7622659e132a19",
+    "crates/jope-engine/src/gp.rs": "300da910d90d69fa013fe7ffae5b8161d9ed8de9aab371a78c0fea93ef0ffea2",
+    "crates/jope-engine/src/gp/selection_replay.rs": "bd70baf39316e0dcc4dce3ba6baa313c2c5f1e1b16c2bd62ef73841f7ef28fa8",
+    "crates/jope-engine/src/grammar.rs": "6a8e6aa43efb8af6aa4806fd5d403ca34c06563436d933266a7377d815625e6a",
+    "crates/jope-engine/src/manifest.rs": "a54e813d4708b6dd49d438dea297f27feee40821cd06a475d1ad60046dd5d88a",
+    "crates/jope-engine/src/tournament.rs": "8610876b5dcb335a327fd5b42e90c028bdad6a713757e2fcf8dd6a08390fccbb",
+    "crates/jope-pipeline/src/islands.rs": "c57b9dd384a78a21de8ccc4fd1c7d708bb5e1a99ddd0cd79ae60ab6cf795cf28",
+    "crates/jope-pipeline/src/search.rs": "5b966dc4b14cc2ff3b776b1874909778fba0348671358236f9b3f110526976d6",
+    "crates/jope-pipeline/src/seeds.rs": "e7286df63e33bc0444aeb52a8b3101dc87b69f2ecde08a6883cd473ae650aea1"
+  }
+}
