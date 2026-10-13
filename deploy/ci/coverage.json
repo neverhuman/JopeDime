@@ -1712,6 +1712,16 @@
       ],
       "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. G03 receipt rows require context_id, arm, epoch, updates, seed, and l6_cost; duplicate identities are refused. J8 controls distinguish restart-only, offline replay, data volume, and fresh feedback; closed scratch pins stay non-qualifying, and a cost above frozen v1 is not an improvement. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/ablations/tests/test_controls.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Data-free J8 control fixtures: restart-only, offline replay, data volume, and fresh feedback stay distinct. Closed scratch pins stay non-qualifying, and a cost above frozen v1 is not an improvement. No corpus, live execution, training or serving qualification."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "discovery": {
         "kind": "python-family"
