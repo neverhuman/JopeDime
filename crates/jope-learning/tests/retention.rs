@@ -564,6 +564,32 @@ fn lifecycle_hazards_and_notes_are_reported() {
         .notes
         .iter()
         .any(|n| n.kind == "lifecycle-not-supplied" && n.detail.contains(SEALED)));
+    // D2 (owner, 2026-10-13T12:42:52Z): 90 d is the T0 noncurrent window too; nothing asks 365 d.
+    let all = |b: &Built| -> Vec<String> {
+        b.summary
+            .hazards
+            .iter()
+            .chain(&b.summary.notes)
+            .map(|n| n.kind.clone())
+            .collect()
+    };
+    assert!(!all(&b)
+        .iter()
+        .any(|k| k.contains("365") || k.contains("noncurrent")));
+    let lc = json!({"Rules": [{"ID": "short", "Status": "Enabled", "Filter": {"Prefix": ""}, "NoncurrentVersionExpiration": {"NoncurrentDays": 60}}]});
+    put(
+        &f.path("lc/veox-jopedime-learning-use2.json"),
+        &serde_json::to_vec(&lc).unwrap(),
+    );
+    let b = build(&config(&f)).unwrap();
+    assert!(
+        b.summary
+            .hazards
+            .iter()
+            .any(|h| h.kind == "t0-noncurrent-below-policy" && h.detail.contains("60d")),
+        "{:?}",
+        b.summary.hazards
+    );
 }
 
 #[test]

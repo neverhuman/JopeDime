@@ -1,6 +1,6 @@
 {
   "schema": "jopedime.retention-policy/v1",
-  "note": "S3_STORAGE_STRATEGY_20261013.md §8 (owner-approved 2026-10-13). Prices are us-east-2 public list prices, not the billed (credited) amounts. Hard T0 rules live in code (classify.rs) and cannot be removed here; this file can only add soft T0 prefixes.",
+  "note": "S3_STORAGE_STRATEGY_20261013.md §8 (owner-approved 2026-10-13). Prices are us-east-2 public list prices, not the billed (credited) amounts. Hard T0 rules live in code (classify.rs) and cannot be removed here; this file can only add soft T0 prefixes. noncurrent_days 90 applies to T0 too: owner ruling D2 (ENG:watcher OWNER 2026-10-13T12:42:52Z) declined 365 d on protected prefixes.",
   "frozen_v1_l6": 0.897327,
   "l6_direction": "lower_is_better",
   "open_run_window_hours": 72,
