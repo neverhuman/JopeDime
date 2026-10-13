@@ -533,6 +533,19 @@ class L6ReceiptTests(unittest.TestCase):
         )
         self.assertTrue(all(math.isfinite(row["l6_cost"]) for row in receipt["l6_rows"]))
 
+    def test_duplicate_identity_is_refused(self):
+        first = self._row(l6_cost=0.5)
+        same = self._row(l6_cost=0.5)
+        conflict = self._row(l6_cost=0.9)
+        with self.assertRaises(ValueError):
+            require_g03_receipt(
+                {"l6_row_fields": list(L6_ROW_FIELDS), "l6_rows": [first, same]}
+            )
+        with self.assertRaises(ValueError):
+            require_g03_receipt(
+                {"l6_row_fields": list(L6_ROW_FIELDS), "l6_rows": [first, conflict]}
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

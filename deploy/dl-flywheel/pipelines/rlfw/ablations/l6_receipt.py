@@ -40,8 +40,17 @@ def require_l6_cost_row(row):
     return row
 
 
+def _row_identity(row):
+    """Identity is context/arm/epoch/updates/seed; cost is not part of it."""
+    return (row["context_id"], row["arm"], row["epoch"], row["updates"], row["seed"])
+
+
 def require_g03_receipt(receipt):
-    """Every receipt carries the per-context rows, not only a mean."""
+    """Every receipt carries the per-context rows, not only a mean.
+
+    Duplicate identities are refused. Two rows with the same identity but
+    different l6_cost values would otherwise silently disagree.
+    """
     if not isinstance(receipt, dict):
         raise ValueError("receipt must be an object")
     if list(receipt.get("l6_row_fields") or ()) != list(L6_ROW_FIELDS):
@@ -49,6 +58,14 @@ def require_g03_receipt(receipt):
     rows = receipt.get("l6_rows")
     if not isinstance(rows, list) or not rows:
         raise ValueError("receipt missing l6_rows")
+    seen = {}
     for row in rows:
         require_l6_cost_row(row)
+        identity = _row_identity(row)
+        prior = seen.get(identity)
+        if prior is not None:
+            if prior != row["l6_cost"]:
+                raise ValueError("conflicting l6_cost for duplicate row identity")
+            raise ValueError("duplicate l6 row identity")
+        seen[identity] = row["l6_cost"]
     return receipt
