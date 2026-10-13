@@ -726,6 +726,14 @@
         "orchestration"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_scoreboard.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
       "reason": "Executed finite-action and pure-library acceptance fixtures. Runtime learning/equal-budget arena and durable integration remain unmeasured.",
       "role": "regression",

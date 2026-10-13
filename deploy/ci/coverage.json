@@ -1802,6 +1802,16 @@
       ],
       "scope": "Unadopted sealed-roster disjointness fixtures via run_rlfw_offline.py. The proposal creates no seal and spends no seal."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_scoreboard.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only proposal, search, and delivered scoreboards plus a paired L6-versus-frozen-v1 report via run_rlfw_offline.py. No seal, promotion, or improvement claim."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
       "discovery": {
         "kind": "python-family"

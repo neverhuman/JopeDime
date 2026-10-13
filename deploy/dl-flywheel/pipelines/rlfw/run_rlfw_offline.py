@@ -24,6 +24,7 @@ MODULES = (
     "rlfw.judge.tests.test_kumo_canaries",
     "rlfw.judge.tests.test_power",
     "rlfw.judge.tests.test_roster",
+    "rlfw.judge.tests.test_scoreboard",
 )
 
 
