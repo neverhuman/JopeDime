@@ -6922,6 +6922,24 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
+    "target:jope-learning/bin/jope_retention": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/src/bin/jope_retention.rs",
+        "test": true
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
     "target:jope-learning/lib/jope_learning": {
       "discovery": {
         "doctest": true,
@@ -7130,6 +7148,38 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/retention": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/retention.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "S3 retention brain fixtures: every action path, hard-T0 guard, reference roles, lifecycle hazards and fail-closed inputs on synthetic ledgers. Offline; no S3 call, no apply path."
+    },
+    "target:jope-learning/test/retention_pack": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/retention_pack.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
     },
     "target:jope-learning/test/schema_agreement": {
       "discovery": {
