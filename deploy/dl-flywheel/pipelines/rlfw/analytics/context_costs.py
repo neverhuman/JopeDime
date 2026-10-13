@@ -15,6 +15,8 @@ from .scratch import (
     r22_points,
 )
 
+NANOSECONDS_PER_SECOND = float(10**9)
+
 SCHEMA = "jope.rlfw-scratch-context-costs/v1"
 IDENTITY = {
     "anchor_parameter_sha256",
@@ -604,7 +606,7 @@ def scope_rows(document, *, consumer_commit, as_of_date, source):
     if seconds is not None and seconds < 0:
         raise ValueError("scope clock precedes start")
     cpu = properties.get("CPUUsageNSec", "[not set]")
-    cpu = int(cpu) / 10**9 if cpu.isdigit() else None
+    cpu = int(cpu) / NANOSECONDS_PER_SECOND if cpu.isdigit() else None
     run = document["run"]
     rows = receipt_rows(
         {
