@@ -1,6 +1,6 @@
 """Family-clean partition proposal. This module does not create or spend a seal.
 
-Roles follow the four boundaries in the 2026-10-11 expert review §8.1.
+Roles follow the four boundaries in the expert review gap-close packet §8.1.
 A family is one parent lineage plus every retained context, cut, and view of
 that parent. Adoption, the alpha budget, and any real seal are Jepson decisions.
 """

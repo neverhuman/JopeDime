@@ -238,7 +238,7 @@ def main(roster_path, evidence_dir, r9_handle, r9_sha=None, r9_bytes=None):
         "validation_roster_sha256": sha256_file(VAL_IDS),
         "closure": closure_meta,
         "development_note": (
-            "The 2026-10-07 role map reclassified dev and heldout to TRAINING. "
+            "The role map that reclassified dev and heldout to TRAINING. "
             "No separate development family list was measured."
         ),
         "confirmation_note": (
