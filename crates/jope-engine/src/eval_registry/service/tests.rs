@@ -915,10 +915,12 @@ fn lost_submit_response_still_commits_original_without_replay() {
 )]
 fn failed_signaled_timed_out_and_replaced_custody_are_terminal() {
     let mut fixture = Fixture::new();
-    // Leave bounded room for debug-binary authentication and custody transfer.
-    // The timeout worker deliberately sleeps 30 seconds, so a two-second cap
-    // still exercises numerical timeout rather than a pre-consumption refusal.
-    fixture.config.fit_deadline = Duration::from_secs(2);
+    // Leave bounded room for debug-binary authentication and custody transfer:
+    // the start token must still be live when the service consumes it, which a
+    // two-second cap missed on a loaded host. The timeout worker deliberately
+    // sleeps 30 seconds, so a ten-second cap still exercises numerical timeout
+    // rather than a pre-consumption refusal.
+    fixture.config.fit_deadline = Duration::from_secs(10);
     // The replaced-custody child deliberately rewrites its own custody file.
     fixture.config.sandbox.mutable_dirs = vec![fixture.root.join("custody")];
     let (stop, service) = fixture.launch();
