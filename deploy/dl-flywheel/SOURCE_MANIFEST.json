@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "0e815d5669319dd0bc875aa56e8d3385aab6fa4457ca0e612b95c45a59d48a75"
+      "sha256": "7c91105aaaac53e9fb8ad06bfcbf0d131cf8c0194540a06639165548069177d5"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "8f90c5e82355dc73cbe0545b5cd51428075fe182f77562528121b2ddd9ea290d"
+      "sha256": "5d1de8f0539ac9c43c7136a6228716e45c5b411aec12b9597f727b6badd62382"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
