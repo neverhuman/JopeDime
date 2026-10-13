@@ -54,9 +54,7 @@ def main():
     if sorted(identities) != expected:
         raise RuntimeError("collection differs from registered exact identities")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
-    head = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=root, text=True
-    ).strip()
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     numerics = []
     for b in (1, 2, 4, 8):
         for g in (b, 2 * b):
@@ -72,9 +70,7 @@ def main():
                     "analytic": truth,
                     "finite_difference": fd,
                     "analytic_max_error": max(abs(x - y) for x, y in zip(exact, truth)),
-                    "finite_difference_max_error": max(
-                        abs(x - y) for x, y in zip(exact, fd)
-                    ),
+                    "finite_difference_max_error": max(abs(x - y) for x, y in zip(exact, fd)),
                 }
             )
     receipt = {
@@ -90,9 +86,7 @@ def main():
         "failed": [t.id() for t, _ in result.failures],
         "errors": [t.id() for t, _ in result.errors],
         "skipped": [(t.id(), reason) for t, reason in result.skipped],
-        "passed": result.wasSuccessful()
-        and result.testsRun == len(identities)
-        and not result.skipped,
+        "passed": result.wasSuccessful() and result.testsRun == len(identities) and not result.skipped,
         "input": {
             "logits": Z,
             "q": Q,
@@ -102,8 +96,7 @@ def main():
         "exact_gradient_checks": numerics,
         "reference_vector_status": "pending original logits/q/h/B; not fabricated from rounded output",
         "environment": {
-            k: os.environ.get(k)
-            for k in ("TMPDIR", "OMP_NUM_THREADS", "PYTHONDONTWRITEBYTECODE")
+            k: os.environ.get(k) for k in ("TMPDIR", "OMP_NUM_THREADS", "PYTHONDONTWRITEBYTECODE")
         },
         "source_sha256": {
             str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -113,7 +106,10 @@ def main():
         "GP_executions": 0,
         "cloud_requests": 0,
         "GPU_work": 0,
-        "runtime_optimizer_updates": 0,
+        "runtime_optimizer_updates": 0,  # no production/runtime updates
+        "GB03_CPU_synthetic_actor_diagnostics": __import__(
+            "rlfw.onpolicy.tests.test_autograd", fromlist=["MEASURED_GB03_PROBE"]
+        ).MEASURED_GB03_PROBE,
     }
     if args.receipt:
         args.receipt.parent.mkdir(parents=True, exist_ok=True)

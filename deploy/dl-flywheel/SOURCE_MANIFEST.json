@@ -1,11 +1,11 @@
 {
   "files": [
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved.",
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "6fe530b4bf60982042d2eaf25633ee4dbe928e87b254591d5b8ea5bed569cd25"
+      "sha256": "4043181b0473a4eaa38648b2815b28a04c6dbda60f14e00edc19986b86521047"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
@@ -21,11 +21,11 @@
       "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
     },
     {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 46 research source classifications; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved.",
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 46 research source classifications; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "83b7584b41c934d7885b32e8624b0513378b5314b70a61da9617a5be460f02a2"
+      "sha256": "e351aa97bd3cf77d9a17da50fe02929ae62f84a72e0cc769efa789e72a69b068"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4732,7 +4732,8 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "e40b147ea783119fea4022c0d16379f72eec7decd0688e5bd1d24075da375f6b",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/INTERFACE.md",
-      "sha256": "cacf1b7bda2d2a95050d9adf30613c1ab5c08f1195c53e810fd5db3cada5bd8e"
+      "sha256": "a60875798769f961c8dec826e4b9619295ac4e2d7ac7c258cbcf21c10b295bc2",
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4762,7 +4763,8 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py",
-      "sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3"
+      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff",
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4774,7 +4776,8 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "6176ce748946a22683efda7cd381a908cf11d294356641c45d079060161831c9",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/test-identities.json",
-      "sha256": "e24a27e541a9bbc9b95115ebaa7c1cb65546d1ebd20d44f41fcd5537eb4c79e0"
+      "sha256": "61c91f3362c4281de42cae0cbd0e7f87fba521b474c60527b0c1c11fd6dfafb3",
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -4792,7 +4795,8 @@
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
       "origin_sha256": "c35af46c58c7d2e0503aed50c942cf075038934e3e915f1541ff628df9991e24",
       "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py",
-      "sha256": "c35af46c58c7d2e0503aed50c942cf075038934e3e915f1541ff628df9991e24"
+      "sha256": "7cb7ceefb567e9219e1511536683678539f1dce1b7617db0b0eb81699fff3e2e",
+      "normalization": "CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows."
     },
     {
       "origin": "CX-OP owner assignment 2026-10-10; new source/fixtures",
@@ -6643,6 +6647,18 @@
       "origin_sha256": "041e87da89dc44b898dd067da31a6cb9c60278450ec9de5ad6bf8449a306f11c",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/windows.py",
       "sha256": "253d10fda99deb153144a820e971bd359929c1bef0f720e75864d04a64977b87"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/archive.py",
+      "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
+      "origin_sha256": "6ca6f16a2440ca04a0a2b869a34924d79242d073d81811ec88c6f4fa6a96aa3c",
+      "sha256": "f0c74484765d5d46cedff540ef066c2b7384bec25e122f974ad54ab03c6271c3"
+    },
+    {
+      "path": "deploy/dl-flywheel/pipelines/rlfw/onpolicy/frozen_round.py",
+      "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
+      "origin_sha256": "50efe03aaaf3d34978af13c37754aa77b70bfeaa5e156eaba3768993e8ccc013",
+      "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
