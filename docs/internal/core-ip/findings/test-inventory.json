@@ -2806,6 +2806,14 @@
         "storage"
       ]
     },
+    "target:jope-learning/test/qualify_gate": {
+      "note": "G23/G36 preparation: flag-off refusal and read-only roster and promotion evaluator fixtures. No seal, adoption or promotion path exists in this build; the owner rulings are pending.",
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/recovery_cli": {
       "role": "regression",
       "subsystems": [
