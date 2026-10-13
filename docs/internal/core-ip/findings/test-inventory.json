@@ -654,6 +654,14 @@
         "policy"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/ablations/tests/test_controls.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "policy"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "role": "regression",
       "subsystems": [
