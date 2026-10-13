@@ -2790,6 +2790,11 @@
       "reason": "J9 shadow-only research fixtures (frozen candidate pools, selector evaluation, parent-cluster statistics). Synthetic inputs only; no live selection, qualification, promotion or L6 claim.",
       "role": "research"
     },
+    "target:jope-learning/bin/jope_retention": {
+      "role": "regression",
+      "subsystems": ["storage"],
+      "note": "S3 retention brain CLI (read-only dry-run plans); behaviour is covered by target:jope-learning/test/retention."
+    },
     "target:jope-learning/lib/jope_learning": {
       "role": "regression",
       "subsystems": [
@@ -2875,6 +2880,16 @@
         "storage",
         "teaching"
       ]
+    },
+    "target:jope-learning/test/retention": {
+      "role": "regression",
+      "subsystems": ["storage", "evidence"],
+      "note": "S3 retention brain: read-only dry-run classifier fixtures (hard T0, roster/val263 pins, fail-closed inputs, lifecycle hazards). Offline fixture proof; no S3 access, not an applied plan."
+    },
+    "target:jope-learning/test/retention_pack": {
+      "role": "regression",
+      "subsystems": ["storage", "evidence"],
+      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration."
     },
     "target:jope-learning/test/schema_agreement": {
       "role": "regression",
