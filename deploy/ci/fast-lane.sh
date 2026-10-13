@@ -213,6 +213,8 @@ uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpoli
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py --receipt "$EVIDENCE/r25-knnce-offline.json" )
     # Analytics uses the locked numpy/pyarrow environment; all inputs are fixtures.
 uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
+    # New ingest data contracts use copied fixtures; no S3 credentials or traffic.
+uv run --project python --no-sync python deploy/dl-flywheel/ingest_joined_roster/run_offline.py --receipt "$EVIDENCE/ingest-offline.json"
     ;;
   rust-test)
     status=0
