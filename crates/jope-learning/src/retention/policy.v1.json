@@ -39,6 +39,11 @@
     "l6": "teacher-CE validation loss on val263; lower is better; frozen v1 = 0.897327"
   },
   "in_scope_bucket_prefixes": ["veox-jopedime-", "jopedime-714044927654-"],
+  "reference_formats": {
+    "prose_roles": ["evidence"],
+    "prose_extensions": ["md", "txt", "log"],
+    "why": "owner decision D1 (ENG:watcher OWNER 2026-10-13T12:36:00Z): structured JSON/JSONL evidence = T0 pin; a prose md/txt/log mention = TV (blocks EXPIRE, allows COMPACT/COLD). Other text formats are not ruled and still pin (fail closed); main-tree refs are not covered by the ruling and still pin."
+  },
   "soft_t0": [
     {"bucket": "veox-jopedime-datasets-use2", "prefix": "datasets/", "why": "product corpus manifests (JOPE_DATASETS_URL default bucket)"},
     {"bucket": "veox-jopedime-datasets-use2", "prefix": "collections/", "why": "product corpus collections"},

@@ -369,7 +369,8 @@ pub fn build(cfg: &Config) -> Result<Built> {
     let mut skip: Vec<&str> = vec![".git", "target", "node_modules", "worktrees", "trash"];
     skip.extend(cfg.scan_skip_dirs.iter().map(String::as_str));
     for (role, root) in &cfg.scans {
-        refs.scan_root(*role, root, cfg.scan_max_bytes, &needles, &skip)?;
+        let prose = policy.prose_extensions_for(*role);
+        refs.scan_root(*role, root, cfg.scan_max_bytes, &needles, &skip, prose)?;
     }
 
     // Map references onto groups.
@@ -912,7 +913,7 @@ fn report(
     }
     for sc in &lock.scans {
         o.push_str(&format!(
-            "- scan {} `{}`: {} files seen, {} not text, {} over cap, {} read ({:.1} GB), {} mention buckets, {} inventories skipped, {} unreadable, {} object refs, {} prefix mentions\n",
+            "- scan {} `{}`: {} files seen, {} not text, {} over cap, {} read ({:.1} GB), {} mention buckets, {} inventories skipped, {} unreadable, {} object refs ({} prose mentions, D1), {} prefix mentions\n",
             sc.role,
             sc.root,
             sc.files_seen,
@@ -924,6 +925,7 @@ fn report(
             sc.inventory_skipped,
             sc.files_unreadable,
             sc.object_refs,
+            sc.prose_refs,
             sc.prefix_mentions
         ));
     }

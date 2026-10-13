@@ -12,6 +12,11 @@
 //!   and prefix mentions in prose are counted separately and pin nothing);
 //! - `context_id`/`context_sha256` and `program_sha256`/`program_sha` fields holding 64 hex
 //!   digits, for declared reference files only.
+//!
+//! Owner decision D1 (ENG:watcher, 2026-10-13T12:36:00Z): in the scan roles the policy names, an
+//! object ref found in a prose file (the policy's extensions, md/txt/log) is a
+//! [`Role::ProseMention`]: training value that blocks EXPIRE, not a T0 pin. Structured JSON/JSONL
+//! refs keep their scan role; formats the ruling does not name stay pins (fail closed).
 
 use anyhow::{bail, Context, Result};
 use serde::Serialize;
@@ -35,6 +40,8 @@ pub enum Role {
     Frozen24,
     Backlog,
     Seed,
+    /// Derived by a scan (D1), never accepted as a declared role.
+    ProseMention,
 }
 
 impl Role {
@@ -64,6 +71,7 @@ impl Role {
             Role::Frozen24 => "frozen24",
             Role::Backlog => "backlog",
             Role::Seed => "seed",
+            Role::ProseMention => "prose-mention",
         }
     }
 
@@ -73,6 +81,19 @@ impl Role {
             self,
             Role::Val263 | Role::Sealed | Role::Prereg | Role::Evidence | Role::MainManifest
         )
+    }
+
+    /// Active rosters and seeds read objects by key: their refs keep a group hot.
+    pub fn is_active(self) -> bool {
+        matches!(
+            self,
+            Role::Train | Role::Frozen24 | Role::Backlog | Role::Seed
+        )
+    }
+
+    /// The scan roles whose prose refs D1 may demote to [`Role::ProseMention`].
+    pub fn is_scan_pin(self) -> bool {
+        matches!(self, Role::Evidence | Role::MainManifest)
     }
 }
 
@@ -100,6 +121,8 @@ pub struct ScanStats {
     pub inventory_skipped: u64,
     pub bytes_read: u64,
     pub object_refs: u64,
+    /// Of `object_refs`, those found in prose files and recorded as [`Role::ProseMention`].
+    pub prose_refs: u64,
     pub prefix_mentions: u64,
     /// sha256 over the sorted `relative path \t size \t sha256` lines of the files that mention
     /// an in-scope bucket: identifies what the scan actually used.
@@ -283,7 +306,8 @@ impl RefSet {
     }
 
     /// Walks a scan root. `needles` are substrings (in-scope bucket name stems) a file must
-    /// contain to be parsed; `skip_dirs` are directory names never entered.
+    /// contain to be parsed; `skip_dirs` are directory names never entered. Object refs in files
+    /// whose extension is in `prose_exts` are recorded as [`Role::ProseMention`] (D1).
     pub fn scan_root(
         &mut self,
         role: Role,
@@ -291,6 +315,7 @@ impl RefSet {
         max_bytes: u64,
         needles: &[String],
         skip_dirs: &[&str],
+        prose_exts: &[String],
     ) -> Result<()> {
         if !root.is_dir() {
             bail!(
@@ -365,6 +390,8 @@ impl RefSet {
             ));
             self.source = rel;
             let mut count = (0, 0);
+            let prose = prose_exts.contains(&ext);
+            let role = if prose { Role::ProseMention } else { role };
             let name = entry.file_name().to_string_lossy();
             let parsed = if name.ends_with(".jsonl") {
                 let mut ok = true;
@@ -399,6 +426,9 @@ impl RefSet {
                 self.scan_text(role, &text, &mut count);
             }
             st.object_refs += count.0;
+            if prose {
+                st.prose_refs += count.0;
+            }
             st.prefix_mentions += count.1;
         }
         listing.sort();
