@@ -1,0 +1,514 @@
+//! Selectors over a frozen pool (CLOVER §6 Experiment A).
+//!
+//! A selector scores the members of a `PoolView`, which carries no outcomes. Fitted selectors
+//! learn only from the training pools of their cross-fitting fold. Every selector records its
+//! exact rule; deterministic selectors are never given a propensity. The uniform baseline is not
+//! a `Selector`: its expected metrics are computed exactly in `metrics::uniform_context`.
+
+use super::pool::{Pool, PoolView};
+use anyhow::{ensure, Context, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+
+/// Whether a selector is a simple baseline or a learned candidate under test. A candidate passes
+/// only against the strongest baseline, never by beating uniform alone (CLOVER §6).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Class {
+    Baseline,
+    Candidate,
+}
+
+pub trait Selector {
+    fn name(&self) -> &str;
+    fn class(&self) -> Class;
+    /// Exact rule and version, recorded in the receipt.
+    fn rule(&self) -> String;
+    /// One score per `view.programs`, higher first; ties are broken by program sha256.
+    fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>>;
+}
+
+/// Within-context normalized training target: the mid-rank percentile of each member's outcome
+/// among its pool, failures tied lowest. It uses only that pool's own (training) outcomes, so it
+/// is fixed before any held-out pool is read.
+pub fn rank_targets(pool: &Pool) -> Vec<f64> {
+    let outcomes = pool.outcomes();
+    let n = outcomes.len();
+    if n < 2 {
+        return vec![0.5; n];
+    }
+    let key = |o: &Option<f64>| o.unwrap_or(f64::NEG_INFINITY);
+    outcomes
+        .iter()
+        .map(|o| {
+            let k = key(o);
+            let below = outcomes.iter().filter(|p| key(p) < k).count() as f64;
+            let ties = outcomes.iter().filter(|p| key(p) == k).count() as f64;
+            (below + (ties - 1.0) / 2.0) / (n - 1) as f64
+        })
+        .collect()
+}
+
+/// Mean training target of each program over the training pools that contain it.
+fn program_means(train: &[&Pool]) -> BTreeMap<String, (f64, usize)> {
+    let mut acc: BTreeMap<String, (f64, usize)> = BTreeMap::new();
+    for pool in train {
+        for (m, t) in pool.members.iter().zip(rank_targets(pool)) {
+            let e = acc.entry(m.program_sha256.clone()).or_insert((0.0, 0));
+            e.0 += t;
+            e.1 += 1;
+        }
+    }
+    acc.into_iter()
+        .map(|(k, (s, c))| (k, (s / c as f64, c)))
+        .collect()
+}
+
+/// Popularity prior: a program's mean within-context percentile on the training pools, shrunk
+/// toward 0.5 by `prior_weight` pseudo-observations. Context-blind.
+pub struct ProgramPrior {
+    means: BTreeMap<String, (f64, usize)>,
+    prior_weight: f64,
+}
+
+impl ProgramPrior {
+    pub fn fit(train: &[&Pool], prior_weight: f64) -> Self {
+        Self {
+            means: program_means(train),
+            prior_weight,
+        }
+    }
+
+    fn score(&self, program: &str) -> f64 {
+        match self.means.get(program) {
+            Some(&(mean, count)) => {
+                let c = count as f64;
+                (mean * c + 0.5 * self.prior_weight) / (c + self.prior_weight)
+            }
+            None => 0.5,
+        }
+    }
+}
+
+impl Selector for ProgramPrior {
+    fn name(&self) -> &str {
+        "program_prior"
+    }
+    fn class(&self) -> Class {
+        Class::Baseline
+    }
+    fn rule(&self) -> String {
+        format!(
+            "program_prior/v1: mean training within-context mid-rank percentile, shrunk to 0.5 by {} pseudo-observations; unseen = 0.5",
+            self.prior_weight
+        )
+    }
+    fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>> {
+        Ok(view.programs.iter().map(|p| self.score(p)).collect())
+    }
+}
+
+/// Dense per-key feature vectors (context encodings or program descriptors).
+#[derive(Clone, Debug, Default)]
+pub struct Features {
+    pub dim: usize,
+    pub rows: BTreeMap<String, Vec<f64>>,
+}
+
+/// One line of a feature file.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FeatureLine {
+    pub id: String,
+    pub vector: Vec<f64>,
+}
+
+impl Features {
+    /// JSON Lines of `{"id": ..., "vector": [...]}`; one dimension, finite values, unique ids.
+    pub fn from_jsonl(text: &str) -> Result<Self> {
+        let mut out = Features::default();
+        for (i, line) in text
+            .lines()
+            .enumerate()
+            .filter(|(_, l)| !l.trim().is_empty())
+        {
+            let row: FeatureLine =
+                serde_json::from_str(line).with_context(|| format!("feature line {}", i + 1))?;
+            ensure!(
+                !row.vector.is_empty(),
+                "empty feature vector for {}",
+                row.id
+            );
+            ensure!(
+                row.vector.iter().all(|v| v.is_finite()),
+                "non-finite feature for {}",
+                row.id
+            );
+            if out.rows.is_empty() {
+                out.dim = row.vector.len();
+            }
+            ensure!(
+                row.vector.len() == out.dim,
+                "feature dimension changes at {}",
+                row.id
+            );
+            ensure!(
+                out.rows.insert(row.id.clone(), row.vector).is_none(),
+                "duplicate feature id {}",
+                row.id
+            );
+        }
+        Ok(out)
+    }
+}
+
+/// `token_bag/v1`: per-token frequency (count / length) over ids `0..=max_id` plus `ln(length)`,
+/// keyed by program sha256. Tokens are pre-measurement descriptors, so the vocabulary may be read
+/// from every pool. `None` unless every member of every pool carries tokens.
+pub fn token_bag_features(pools: &[Pool]) -> Option<Features> {
+    let members = || pools.iter().flat_map(|p| &p.members);
+    let max_id = members()
+        .map(|m| m.tokens.as_ref().and_then(|t| t.iter().max().copied()))
+        .collect::<Option<Vec<u32>>>()?
+        .into_iter()
+        .max()?;
+    let dim = max_id as usize + 2;
+    let mut rows = BTreeMap::new();
+    for m in members() {
+        let tokens = m.tokens.as_ref()?;
+        let mut v = vec![0.0; dim];
+        let len = tokens.len() as f64;
+        for &t in tokens {
+            v[t as usize] += 1.0 / len;
+        }
+        v[dim - 1] = len.ln();
+        rows.insert(m.program_sha256.clone(), v);
+    }
+    Some(Features { dim, rows })
+}
+
+fn cosine(a: &[f64], b: &[f64]) -> f64 {
+    let dot: f64 = a.iter().zip(b).map(|(x, y)| x * y).sum();
+    let na: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
+    let nb: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
+    if na == 0.0 || nb == 0.0 {
+        0.0
+    } else {
+        dot / (na * nb)
+    }
+}
+
+/// Similar-task reuse: score each program by its training targets on the `k` training contexts
+/// whose context features are most cosine-similar, weighting by similarity; programs absent from
+/// those neighbours fall back to the program prior.
+pub struct RetrievalKnn<'a> {
+    k: usize,
+    context_features: &'a Features,
+    train: Vec<(&'a Pool, Vec<f64>)>,
+    prior: ProgramPrior,
+}
+
+impl<'a> RetrievalKnn<'a> {
+    pub fn fit(
+        train: &[&'a Pool],
+        context_features: &'a Features,
+        k: usize,
+        prior_weight: f64,
+    ) -> Result<Self> {
+        ensure!(k >= 1, "k must be positive");
+        for pool in train {
+            ensure!(
+                context_features.rows.contains_key(&pool.context_id),
+                "no context features for training context {}",
+                pool.context_id
+            );
+        }
+        Ok(Self {
+            k,
+            context_features,
+            train: train.iter().map(|p| (*p, rank_targets(p))).collect(),
+            prior: ProgramPrior::fit(train, prior_weight),
+        })
+    }
+}
+
+impl Selector for RetrievalKnn<'_> {
+    fn name(&self) -> &str {
+        "retrieval_knn"
+    }
+    fn class(&self) -> Class {
+        Class::Baseline
+    }
+    fn rule(&self) -> String {
+        format!(
+            "retrieval_knn/v1: k={} cosine over context features, similarity-weighted training percentile, excluding the evaluated parent; fallback program_prior",
+            self.k
+        )
+    }
+    fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>> {
+        let query = self
+            .context_features
+            .rows
+            .get(view.context_id)
+            .with_context(|| format!("no context features for {}", view.context_id))?;
+        let mut neighbours: Vec<(f64, &str, &Pool, &Vec<f64>)> = self
+            .train
+            .iter()
+            .filter(|(p, _)| p.parent_id != view.parent_id)
+            .map(|(p, t)| {
+                (
+                    cosine(query, &self.context_features.rows[&p.context_id]),
+                    p.context_id.as_str(),
+                    *p,
+                    t,
+                )
+            })
+            .collect();
+        neighbours.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(b.1)));
+        neighbours.truncate(self.k);
+        Ok(view
+            .programs
+            .iter()
+            .map(|program| {
+                let (mut num, mut den) = (0.0, 0.0);
+                for (sim, _, pool, targets) in &neighbours {
+                    let w = sim.max(0.0);
+                    if let Ok(i) = pool
+                        .members
+                        .binary_search_by(|m| m.program_sha256.as_str().cmp(program))
+                    {
+                        num += w * targets[i];
+                        den += w;
+                    }
+                }
+                if den > 0.0 {
+                    num / den
+                } else {
+                    self.prior.score(program)
+                }
+            })
+            .collect())
+    }
+}
+
+/// Simple supervised predictor: ridge regression of the training percentile on program
+/// features (with intercept), solved in closed form. Context-blind.
+pub struct RidgeProgram<'a> {
+    lambda: f64,
+    program_features: &'a Features,
+    weights: Vec<f64>,
+}
+
+/// Solve `A x = b` for symmetric positive definite `A` (row-major, `n x n`) by Cholesky.
+fn cholesky_solve(mut a: Vec<f64>, mut b: Vec<f64>, n: usize) -> Result<Vec<f64>> {
+    for j in 0..n {
+        let mut d = a[j * n + j];
+        for k in 0..j {
+            d -= a[j * n + k] * a[j * n + k];
+        }
+        ensure!(d > 0.0, "ridge system is not positive definite");
+        let d = d.sqrt();
+        a[j * n + j] = d;
+        for i in j + 1..n {
+            let mut s = a[i * n + j];
+            for k in 0..j {
+                s -= a[i * n + k] * a[j * n + k];
+            }
+            a[i * n + j] = s / d;
+        }
+    }
+    for i in 0..n {
+        let mut s = b[i];
+        for k in 0..i {
+            s -= a[i * n + k] * b[k];
+        }
+        b[i] = s / a[i * n + i];
+    }
+    for i in (0..n).rev() {
+        let mut s = b[i];
+        for k in i + 1..n {
+            s -= a[k * n + i] * b[k];
+        }
+        b[i] = s / a[i * n + i];
+    }
+    Ok(b)
+}
+
+impl<'a> RidgeProgram<'a> {
+    pub fn fit(train: &[&Pool], program_features: &'a Features, lambda: f64) -> Result<Self> {
+        ensure!(
+            lambda > 0.0 && lambda.is_finite(),
+            "lambda must be positive"
+        );
+        let d = program_features.dim + 1;
+        let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
+        let mut rows = 0usize;
+        for pool in train {
+            for (m, t) in pool.members.iter().zip(rank_targets(pool)) {
+                let phi = program_features
+                    .rows
+                    .get(&m.program_sha256)
+                    .with_context(|| format!("no program features for {}", m.program_sha256))?;
+                let x: Vec<f64> = std::iter::once(1.0).chain(phi.iter().copied()).collect();
+                for i in 0..d {
+                    xty[i] += x[i] * t;
+                    for j in 0..d {
+                        xtx[i * d + j] += x[i] * x[j];
+                    }
+                }
+                rows += 1;
+            }
+        }
+        ensure!(rows > 0, "ridge needs training rows");
+        // The intercept is not penalized.
+        for i in 1..d {
+            xtx[i * d + i] += lambda;
+        }
+        xtx[0] += 1e-12;
+        Ok(Self {
+            lambda,
+            program_features,
+            weights: cholesky_solve(xtx, xty, d)?,
+        })
+    }
+}
+
+impl Selector for RidgeProgram<'_> {
+    fn name(&self) -> &str {
+        "ridge_program"
+    }
+    fn class(&self) -> Class {
+        Class::Baseline
+    }
+    fn rule(&self) -> String {
+        format!(
+            "ridge_program/v1: closed-form ridge (lambda={}, unpenalized intercept) of training percentile on {} program features",
+            self.lambda, self.program_features.dim
+        )
+    }
+    fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>> {
+        view.programs
+            .iter()
+            .map(|p| {
+                let phi = self
+                    .program_features
+                    .rows
+                    .get(*p)
+                    .with_context(|| format!("no program features for {p}"))?;
+                Ok(self.weights[0]
+                    + phi
+                        .iter()
+                        .zip(&self.weights[1..])
+                        .map(|(x, w)| x * w)
+                        .sum::<f64>())
+            })
+            .collect()
+    }
+}
+
+pub const EXTERNAL_SCHEMA: &str = "jope.j9-external-scores/v1";
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExternalScore {
+    pub context_id: String,
+    pub program_sha256: String,
+    pub score: f64,
+}
+
+/// An externally produced score document: the PolicyLM q-head adapter, a native GP ranking
+/// export, or any learned selector. `provenance` (checkpoint, source and input digests) is
+/// carried into the receipt verbatim.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExternalDocument {
+    pub schema: String,
+    pub name: String,
+    pub class: Class,
+    pub rule: String,
+    pub provenance: serde_json::Value,
+    pub scores: Vec<ExternalScore>,
+}
+
+/// One score per (context, program). Missing scores are an error, never a default.
+pub struct External {
+    name: String,
+    class: Class,
+    rule: String,
+    scores: BTreeMap<(String, String), f64>,
+}
+
+impl External {
+    pub fn from_document(doc: &ExternalDocument) -> Result<Self> {
+        ensure!(
+            doc.schema == EXTERNAL_SCHEMA,
+            "unknown external score schema {:?}",
+            doc.schema
+        );
+        ensure!(
+            !doc.name.trim().is_empty() && !doc.rule.trim().is_empty(),
+            "external selector needs a name and rule"
+        );
+        let mut scores = BTreeMap::new();
+        for (i, row) in doc.scores.iter().enumerate() {
+            ensure!(
+                row.score.is_finite(),
+                "{}: non-finite score at {i}",
+                doc.name
+            );
+            ensure!(
+                scores
+                    .insert(
+                        (row.context_id.clone(), row.program_sha256.clone()),
+                        row.score
+                    )
+                    .is_none(),
+                "{}: duplicate score at {i}",
+                doc.name
+            );
+        }
+        Ok(Self {
+            name: doc.name.clone(),
+            class: doc.class,
+            rule: doc.rule.clone(),
+            scores,
+        })
+    }
+}
+
+impl Selector for External {
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn class(&self) -> Class {
+        self.class
+    }
+    fn rule(&self) -> String {
+        self.rule.clone()
+    }
+    fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>> {
+        view.programs
+            .iter()
+            .map(|p| {
+                self.scores
+                    .get(&(view.context_id.to_owned(), (*p).to_owned()))
+                    .copied()
+                    .with_context(|| {
+                        format!("{}: no score for {} / {p}", self.name, view.context_id)
+                    })
+            })
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cholesky_solves_a_small_system() {
+        // [[4,2],[2,3]] x = [2,1] -> x = [0.5, 0]
+        let x = cholesky_solve(vec![4.0, 2.0, 2.0, 3.0], vec![2.0, 1.0], 2).unwrap();
+        assert!((x[0] - 0.5).abs() < 1e-12 && x[1].abs() < 1e-12);
+    }
+}

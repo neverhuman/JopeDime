@@ -3592,6 +3592,30 @@
         "role": "research",
         "reason": "R25-kNN-CE package marker. NON-QUALIFYING scratch arm source."
       }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/__init__.py": {
+      "bytes": 99,
+      "sha256": "ed001383e72a65095b694f548fdcb1163f9659d23988ffe5e6271ec57ba585cb",
+      "classification": {
+        "role": "research",
+        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/qhead.py": {
+      "bytes": 7878,
+      "sha256": "2721f9055c878de19e3d81723aebcac10dd690f4c786beb9e1910448011dc078",
+      "classification": {
+        "role": "research",
+        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/__init__.py": {
+      "bytes": 45,
+      "sha256": "4da15abc71ab51f163cdbed2701076836b70bb7ac8993f43ae952e65fa6fe227",
+      "classification": {
+        "role": "research",
+        "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
+      }
     }
   }
 }

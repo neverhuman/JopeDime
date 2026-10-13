@@ -754,6 +754,10 @@
         "evidence"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/test_qhead.py": {
+      "reason": "Stub-policy CPU fixtures for the J9 torch q-head adapter: outcome-free views, one finite score per program, refusals. No checkpoint, ranking, qualification or L6 claim.",
+      "role": "research"
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py": {
       "reason": "Executed CPU fixtures for the R25-kNN-CE scratch arm source: neighbour-table exclusions/determinism and harness v7 config refusal. The training run, its L6 evaluation and any improvement remain unmeasured and NON-QUALIFYING.",
       "role": "regression",
@@ -2747,6 +2751,10 @@
         "storage"
       ]
     },
+    "target:jope-learning/bin/jope_pools": {
+      "reason": "J9 shadow-only research fixtures (frozen candidate pools, selector evaluation, parent-cluster statistics). Synthetic inputs only; no live selection, qualification, promotion or L6 claim.",
+      "role": "research"
+    },
     "target:jope-learning/lib/jope_learning": {
       "role": "regression",
       "subsystems": [
@@ -2803,6 +2811,10 @@
         "storage",
         "evidence"
       ]
+    },
+    "target:jope-learning/test/pools": {
+      "reason": "J9 shadow-only research fixtures (frozen candidate pools, selector evaluation, parent-cluster statistics). Synthetic inputs only; no live selection, qualification, promotion or L6 claim.",
+      "role": "research"
     },
     "target:jope-learning/test/progress_cli": {
       "role": "regression",
