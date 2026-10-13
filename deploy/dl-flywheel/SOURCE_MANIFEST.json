@@ -168,10 +168,11 @@
       "sha256": "1f27e0455f14a5f9c1e2644d73e1a9c8d4362d6ac5b34452ae7b1ab8b1f362a3"
     },
     {
-      "origin": "outputs/DL_CONTINUAL_MODEL_V1.md",
-      "origin_sha256": "c5b805e327f763d9aa56b8a12dda7d1e761b0589f2575edd3f66c31fe7157e03",
+      "normalization": "Byte copy of the GB-11 model description (2026-10-13): v2.0.0 learner as merged in #292, R23, evidence status, CLOVER direction and the 2026-10-13 scratch results; replaces the v1.0.0 text (previous origin outputs/DL_CONTINUAL_MODEL_V1.md, sha256 c5b805e327f763d9aa56b8a12dda7d1e761b0589f2575edd3f66c31fe7157e03).",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 gb11/pr/deploy/dl-flywheel/docs/model.md (GB-11)",
+      "origin_sha256": "317c2e852fb940fdf7f5f39fe45745d013516a3b5885c32d969996ef53d42e95",
       "path": "deploy/dl-flywheel/docs/model.md",
-      "sha256": "c5b805e327f763d9aa56b8a12dda7d1e761b0589f2575edd3f66c31fe7157e03"
+      "sha256": "317c2e852fb940fdf7f5f39fe45745d013516a3b5885c32d969996ef53d42e95"
     },
     {
       "normalization": "Exact qualified revision2 source bytes where copied; additive nine fixture identities, prior578 identities/mappings preserved. Only affected22 checks executed; no full587 execution claim.",
