@@ -4196,6 +4196,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/inner_fold_leakage": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/inner_fold_leakage.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Held-out row poison for target_bin_encode, quantile_bins, winsor_clip, standardize, impute, and ridge. The complement split scores the original held-out features. No seal and no cv_r2 change."
+    },
     "target:feat-math/test/inverse_links_ingress_v2": {
       "discovery": {
         "doctest": false,
