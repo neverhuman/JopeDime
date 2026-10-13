@@ -60,7 +60,7 @@ class RunnerTests(unittest.TestCase):
             policy.authorize({'domain':'pr'}, self.env())
 
     def test_approved_resources_and_capability_absence(self):
-        for host, lane, domain, gib in [('xbabe1','ci','pr',16), ('xbabe1','ci2','pr',16), ('xbabe2','full','main',48)]:
+        for host, lane, domain, gib in [('xbabe1','ci','pr',16), ('xbabe1','ci2','pr',16), ('xbabe2','full','main',48), ('xbabe3','full','main',48)]:
             p = dict(host=host,lane=lane,domain=domain,memory=f'{gib}g',cpus=16,volume_prefix=f'jope-{domain}-{lane}')
             container.verify(p, str(gib*1024**3), '1600000 100000', '0', [])
             for memory, cpu, swap, devices in [('max','1600000 100000','0',[]), (str(gib*1024**3),'2800000 100000','0',[]), (str(gib*1024**3),'1600000 100000','1',[]), (str(gib*1024**3),'1600000 100000','0',['/dev/nvidia0'])]:
@@ -68,19 +68,20 @@ class RunnerTests(unittest.TestCase):
                     container.verify(p,memory,cpu,swap,devices)
 
     def test_host_roles_and_environment_cannot_raise_budget(self):
-        for host, lane, expected in [('xbabe1','ci','16g 16 pr'),('xbabe1','ci2','16g 16 pr'),('xbabe2','full','48g 16 main')]:
+        for host, lane, expected in [('xbabe1','ci','16g 16 pr'),('xbabe1','ci2','16g 16 pr'),('xbabe2','full','48g 16 main'),('xbabe3','full','48g 16 main')]:
             script = 'JOPE_RUNNER_CPUS=28; JOPE_RUNNER_MEMORY=24g; source deploy/runner/common.sh; jope_runner_role "$1" "$2"; echo "$JOPE_RUNNER_MEMORY $JOPE_RUNNER_CPUS $JOPE_RUNNER_DOMAIN"'
             result = subprocess.run(['bash','-ec',script,'test',host,lane],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(0,result.returncode)
             self.assertEqual(expected,result.stdout.strip())
-        for host, lane in [('xbabe2','ci'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3')]:
+        for host, lane in [('xbabe2','ci'),('xbabe2','gpu'),('xbabe1','full'),('xbabe1','ci3'),('xbabe3','ci'),('xbabe3','ci2'),('xbabe3','gpu')]:
             result = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
             self.assertEqual(2,result.returncode)
 
     def test_orphans_and_legacy_roles_refuse_start(self):
         cases = [('xbabe1','ci','abc ci',2), ('xbabe1','ci','abc ci2',0),
                  ('xbabe2','full','abc full',2), ('xbabe2','full','abc ci',2),
-                 ('xbabe1','ci','abc ',2), ('xbabe2','full','',0)]
+                 ('xbabe1','ci','abc ',2), ('xbabe2','full','',0),
+                 ('xbabe3','full','abc full',2), ('xbabe3','full','abc ci',2), ('xbabe3','full','',0)]
         script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=$1; existing_fixture=$3; docker() { printf "%s\\n" "$existing_fixture"; }; jope_runner_check_existing "$2"'
         for host,lane,existing,code in cases:
             with self.subTest(host=host,lane=lane,existing=existing):
@@ -88,6 +89,19 @@ class RunnerTests(unittest.TestCase):
                 self.assertEqual(code,result.returncode,result.stderr)
         result=subprocess.run(['bash','-c','source deploy/runner/common.sh; docker() { return 23; }; jope_runner_check_existing full'],cwd=ROOT,capture_output=True)
         self.assertEqual(23,result.returncode)
+
+    def test_every_full_lane_and_only_full_lanes_take_the_exclusive_cpu_lock(self):
+        # flock is stubbed to refuse, so no live lock inode is ever taken by this test. A host
+        # without the provisioned inode (a CI container) refuses before flock: still not idle.
+        script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=$1; flock() { echo flock-called; return 1; }; jope_runner_exclusive_cpu "$2"'
+        for host, lane, code in [('xbabe2','full',2), ('xbabe3','full',2), ('xbabe1','ci',0), ('xbabe1','ci2',0)]:
+            with self.subTest(host=host, lane=lane):
+                result = subprocess.run(['bash','-c',script,'test',host,lane],cwd=ROOT,capture_output=True,text=True)
+                self.assertEqual(code, result.returncode, result.stderr)
+                if code == 0:
+                    self.assertNotIn('flock-called', result.stdout)
+                else:
+                    self.assertTrue('flock-called' in result.stdout or 'lock not provisioned' in result.stderr, result.stderr)
 
 
     def test_orphan_asm_cgroup_blocks_exclusive_cpu_reuse(self):

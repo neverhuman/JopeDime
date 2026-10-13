@@ -11,9 +11,11 @@ Branch protection remains procedural until the API readback establishes enforcem
 | --- | --- | --- | --- |
 | xbabe1 | ci, ci2 / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci, pr-ci2 |
 | xbabe2 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full |
+| xbabe3 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full (xbabe3's own volumes) |
 
-The full slot also executes main-guard, serially. No other JopeDime runner role is admitted on
-xbabe2. `common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
+The two full slots run the full-main-cpu matrix groups in parallel and also execute main-guard;
+each slot runs one job at a time. No other JopeDime runner role is admitted on xbabe2 or xbabe3.
+`common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
 GPU and kernel roles. Their live qualification and persistent runner migration remain deferred.
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
 
@@ -54,7 +56,7 @@ From the reviewed checkout, `sudo deploy/runner/provision.sh --skip-sdk` builds 
 creates the role-specific volumes, installs host files/units and writes
 `/var/lib/jope-runner/image.json`. It enables no listener. Initial SDK provisioning follows its
 pinned receipt; the CPU delivery reuses the existing SDK read-only. Re-run provisioning after
-any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2; keep retired timers
+any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2 and xbabe3; keep retired timers
 disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
 operational delivery. `--skip-image` requires an existing correctly built image.
 
@@ -92,8 +94,35 @@ replacing an existing inode. The full listener holds the lock for its whole allo
 including idle time, and refuses populated ASM cgroups left during crash cleanup. Drain
 the owned timer, wait for busy work to finish, then stop an idle owned listener before
 an ASM allocation. Resume the timer afterward. The controller does not alter the runner
-fleet. Both hosts require the same reviewed deployed-file inventory before exact-head
-CI can pass provenance; the new lock must not be used to bypass that check.
+fleet. Each full host has its own lock inode and ASM check. Every runner host requires the
+same reviewed deployed-file inventory before exact-head CI can pass provenance; the new lock
+must not be used to bypass that check.
+
+## Second full lane on xbabe3
+
+xbabe3/full is a second trusted-main slot with the xbabe2/full cap (48 GiB, 16 CPUs, no swap)
+and its own `jope-main-full-*` volumes and SDK volume on xbabe3. It changes `common.sh`, which
+is part of the provenance digest. After that PR merges, every runner host must be re-provisioned
+from merged main in the same post-merge freeze, or every job fails provenance:
+
+1. Pause the merge train and stop the JopeDime timers on xbabe1 and xbabe2. Wait until the
+   GitHub runners are idle (`busy` false), then confirm no JopeDime container is running.
+2. On xbabe1 and xbabe2, as root from a clean checkout of merged main, run
+   `deploy/runner/provision.sh --skip-sdk --skip-image`. This reinstalls host files only;
+   the image is unchanged.
+3. On xbabe3 (`hostname -s` must print `xbabe3`), as root from the same checkout, run
+   `deploy/runner/provision.sh`. This builds the image, provisions the SDK volume from its
+   receipt, creates the volumes and units, and creates an empty
+   `/etc/jope-runner/github-pat` (root:root 0600).
+4. The owner places the runner PAT in that file. Agents never read, print or copy it.
+5. Run `systemctl enable --now jope-runner@full.timer` on xbabe3. Re-enable the stopped
+   timers on xbabe1 and xbabe2.
+6. Verify the GitHub runner list shows `xbabe3-full` online with the `jope-full-cpu` label.
+   Then dispatch `full-main.yml` on main and confirm, for both legs: provenance, the
+   container caps, the `cpu-1` and `cpu-2` legs on different hosts, and a passing aggregate.
+
+xbabe3 also runs GPU and research CPU work outside this fleet. The full lane takes only its
+16-CPU/48 GiB cap and the host-local ASM lock; it does not stop or wait for unrelated work.
 
 ## Evidence and operation
 
@@ -104,8 +133,10 @@ collection/results; GPU, live S3, research scripts and capability qualification 
 A missing SDK is unavailable, a compilation/test failure is failed, and missing counts are
 unknown. Families continue independently; no continue-on-error turns a failing job green.
 
-Every run uploads `full-cpu-RUN-ATTEMPT`, including fresh family receipts, command logs, current
-JUnit/collection reports and inventory.json. Build reuse is measured by Cargo artifact
+Every run uploads one `full-cpu-RUN-ATTEMPT-GROUP` artifact per matrix group (the families
+of `deploy/ci/full-main.py` GROUPS), including fresh family receipts, command logs, current
+JUnit/collection reports and inventory.json; the aggregate job re-verifies every group and
+uploads `full-cpu-aggregate-RUN-ATTEMPT`. Build reuse is measured by Cargo artifact
 `fresh` plus executable digest in full-build-reuse/reuse.json, and is not substituted for fresh
 test execution. The target directory is job-scoped, with one persistent target per lane;
 the image and host do not set CARGO_TARGET_DIR globally. Cargo builds use four compiler jobs,
