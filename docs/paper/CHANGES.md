@@ -1,0 +1,173 @@
+# Changes to the CLOVER write-up: 2026-10-10 draft to 2026-10-13 revision (gap GB-11)
+
+## Inputs and outputs
+
+The previous draft, the LaTeX scaffold (`tex/`), the paper tools (`tools/`) and the internal companion are lane files in `.agent/proposals/claude-rlfw-20261009/paper/` on xbabe2. They are not in this repository.
+
+| | Previous draft | This revision |
+|---|---|---|
+| Write-up | `paper/TECHNICAL_WRITEUP.md`, sha256 `f41abdffb9502a977421d7d5abf394f79d25ae00da740dc19b571ceb97fdedf4` | `docs/paper/TECHNICAL_WRITEUP.md` |
+| Claim ledger | `paper/claims.json`, sha256 `429f72ff7ff4a0f0e3c5e48ed320108c3aadc15597492f7802bba75f2ee6fa09`, 110 claims | `docs/paper/claims.json`, 157 claims |
+
+## Why the draft changed
+
+Gap GB-11 records that the paper and the model description were stale. Its acceptance test requires that the documents reflect the merged v2 learner, the R23 objective and the CLOVER direction.
+
+The 2026-10-10 draft was written before four events:
+
+- **R22, 2026-10-10.** The owner ruling permitted scratch-only training. It produced sweeps 3 to 6, all labelled non-qualifying.
+- **R23, 2026-10-11.** The v2 training objective became L6 + 0.2·KL to the frozen v1 policy, with a KL guard.
+- **Merge of the v2 learner, PR #292, 2026-10-12.** The merge carried the caller-completion work of PR #293 in the same squash.
+- **The CLOVER direction, PR #295, 2026-10-12.** It splits the system into CLOVER-Discover and CLOVER-Learn and states hypotheses H1 to H4.
+
+The old draft described v2 as an L6-only loop whose feedback effect was pending. It also treated that loop as the whole of CLOVER.
+
+## Framing and claims, repositioned
+
+- **CLOVER is now two capabilities.**
+  - CLOVER-Discover, a qualified program-discovery engine, is the foundation.
+  - CLOVER-Learn, a learned controller, is accepted only on controlled evidence of added value.
+  - The v1/v2 policy and its loop are presented as the first CLOVER-Learn candidate, not as the system. [C146, C151]
+- **Title.** Option 1 now follows the direction document: "CLOVER: Qualified Program Discovery with Learned Evaluation Allocation". The old acronym expansion, "Continual Learning from Outcome-VERified execution", no longer appears in the title. Choosing a final title is left to the owner.
+- **Headline claims.**
+  - Old: "the loop exists, and its feedback effect is pre-registered and pending".
+  - New:
+    - the learning candidate and its integrity contracts exist as merged source, with bitwise build qualification;
+    - scratch evidence is non-qualifying;
+    - H1 to H4 are pending;
+    - no objective has been shown to beat frozen v1 under qualified evaluation.
+  - A new Section 1.4 lists what the report does not claim. It quotes the CLOVER rule that no self-improving claim is made until fresh feedback causally improves independently confirmed selection beyond the strongest non-learning baseline. [C142, C148, C153–C158]
+- **Contributions.** These are new:
+  - the anchored objective and the separation of its two identities;
+  - the two sticky guards;
+  - caller-written overlay acceptance with a return witness;
+  - verified-watermark custody with an ordered closure;
+  - an evidence ledger that keeps qualified, non-qualifying and pending results apart.
+
+  Three old contributions are no longer listed as contributions:
+  - **"Bounded closure, measured"** is folded into the custody contribution.
+  - **"A tiered custody policy"** is now explicitly a proposal, because no deletion is authorized.
+  - **"A pre-registered evaluation protocol"** is folded into the evidence ledger.
+
+## Section by section
+
+| Section | Change |
+|---|---|
+| Header | Adds the `non-qualifying` status to the vocabulary. Notes that `tex/` has not been regenerated. |
+| Abstract | Rewritten around the CLOVER split, the merged learner, the build qualification, the non-qualifying scratch results and the pending hypotheses. |
+| Teaser | The panels are tied to H3/E1, H2/E2 and cost. They are filled only from qualified receipts. |
+| 1 | New 1.1 (CLOVER in two parts), 1.2 (the first CLOVER-Learn candidate) and 1.4 (what is not claimed). Contributions revised as above. |
+| 2.2, 2.6 | Expansion beyond the catalog is assigned to CLOVER-Discover and H1. States that L6 is not a success metric [C152]. |
+| 3.3 | Notes that the prefix tree makes the catalog KL exact. |
+| 4 | Retitled "Objectives". 4.3 now lists the three R14 gates [C130]. 4.4 (the R23 anchored objective) and 4.5 (training identity versus label identity) are new. The old sentence placing the guard at "2% above v1's final value" is corrected and moved to 6.6. |
+| 6.2 | v2 emits 1 or 2 proposals per update, and 1 in the build-qualification root [C134]. |
+| 6.3 | Adds the operator acceptance envelope for prepared candidates and the recheck of the authority proof inside the compare-and-swap. Lane fixture counts move to 10.1.6. |
+| 6.4 | Adds caller-written acceptance, the publication candidate and the return witness [C127]. |
+| 6.6 | New: the regression guard (corrected reference [C92] → [C123]) and the KL guard [C124], including the CLOVER note that the threshold does not carry over to expanded support [C150]. |
+| 6.7 | Extends the old 6.6 with the verified watermark, prefix integrity and the ordered terminal records [C125, C126]. |
+| 6.8 | Adds the eight next-update parity receipts [C131], the CPU gap [C162] and the fresh v2 schedule [C129]. Removes the old sentence saying both E1 arms see the same batch order, which no longer has a merged source. |
+| 6.9 | Restores the broker and learner-side timing figures [C54, C55]. Adds that the anchored step's GPU cost is unmeasured [C160]. |
+| 7.2 | The retention table is now labelled a proposal. "Deleted with receipts" is replaced by "would require separate owner authorization" [C159]. |
+| 9.2, 9.3 | Label E1 as an H3 test and E2 as an H2-adjacent test. Note that the shadow control learner is lane source and not merged [C68]. |
+| 9.6, 9.7 | New: the CLOVER gate table (Phases 0 to 5) [C149], and the scratch judge's sample-size rule with its power-unit caveat [C142, C144]. |
+| 10.1.6 | Reports the main fixture roster (230) [C118] and the 213/213 result under two torch versions [C161]. Lane fault-injection figures are labelled lane receipts, and unmerged lane packages are named. |
+| 10.2 | New: v2 build qualification, including partial coverage of the merged bytes [C133]. |
+| 10.3 | New: R22 sweeps 3 to 6, non-qualifying, with three directional readings [C135–C143]. |
+| 10.4 | Adds C154–C158 and C160 to the pending table. |
+| 11 | AutoML is reframed around Discover and Learn. A new paragraph on KL-regularized updates cites Schulman et al. (2015) and Ziegler et al. (2019). The continual-learning paragraph contrasts parameter anchoring with output anchoring. |
+| 12 | Adds limitations: no hypothesis result; non-qualifying scratch; no qualified sample size; two values for frozen v1 L6; catalog-bound anchor; observed-only at-anchor equivalence; partial build coverage; retention is only a proposal. |
+| 13 | Reorganized by CLOVER phase. Expansion beyond the catalog becomes Phase 1. The measured-tilt challenger competes only under Phase 2 or 3 rules. |
+| Appendices | B adds the v2 anchor, guards and emission rows. C adds 11 merged schema names. E adds the scratch judge. F lists the newly pinned sources. G has new counts. H adds 9 glossary terms. |
+
+## Claim ledger (`claims.json`)
+
+- **New status.** `non-qualifying`, for real measurements from owner-labelled scratch runs.
+- **New source roots:**
+  - `MAIN`: a byte copy of `deploy/dl-flywheel` at `origin/main` `e466d1a1`;
+  - `MAINGIT`: byte copies of the three CLOVER documents at the same commit, in the lane directory `gb11/sources/`;
+  - `MAIN302`: a byte copy of the power table corrected by PR #302 (`a2f7e6ecd`, merged 2026-10-13 while this revision was being written), cited by C144;
+  - `COORD`: the coordination board and the scratch-judge record;
+  - `HOST`: the v2 build-qualification roots and parity receipts.
+- **47 new claims, C117–C163:**
+  - 35 established;
+  - 6 non-qualifying (C136–C140, C163);
+  - 6 pending (C154–C158, C160).
+- **Updated claims:**
+  - C10: v1 only, with v2 pointing to C134.
+  - C68: lane-only note added.
+  - C81: merged source added.
+  - C91: proposal, no deletion authorized.
+  - C92: corrected reference, `superseded_by` C123.
+- **Unchanged.** No claim was removed. No pending claim was filled or estimated. Totals: 157 claims (109 established, 19 preliminary, 6 non-qualifying, 23 pending).
+- **Check.** `paper/tools/check_claims.sh` passes on the revised write-up and ledger, together with the unchanged `tex/`: 157 cited in the write-up, 155 hashes checked, 2 unresolvable.
+
+## Not changed in this revision
+
+- **`tex/`** still mirrors the 2026-10-10 draft. It still contains the old guard wording, "deleted with receipts", and no R23 or CLOVER material. It must be regenerated with `tools/gen_claim_macros.sh` and edited before any PDF build. `refs.bib` needs entries for Schulman et al. (2015) and Ziegler et al. (2019).
+- **`IP_SCRUB_REPORT.md`** is superseded by the scrub result recorded in this change's pull request.
+- **`internal/INTERNAL_COMPANION.md`** is unchanged.
+- **Wording.** The public wording rule (R15) is kept. CLOVER-Discover is described as "a conventional offline search" and H1/H4 are paraphrased accordingly; the internal CLOVER documents use the restricted method name.
+
+## Update of 2026-10-13, 11:30Z (still gap GB-11)
+
+The owner asked for the write-up and the model description to be refreshed to R23, R25, R26, R27 and the CLOVER direction, with non-qualifying wording throughout.
+
+**Write-up changes:**
+- **New Section 10.3.1**, covering:
+  - the merges #304, #306 and #307;
+  - the paired looks against frozen v1 for sweep 6, the matched control (four epochs) and R25;
+  - the R26 and R27 telemetry, which has no verdict;
+  - the 1,148-context evaluation set, which is pre-registered and not yet scored;
+  - the closed H1 pilot;
+  - the planned first expert-iteration round.
+
+  Every number is non-qualifying, and every look is INCONCLUSIVE.
+- **Section 9.7** points to the 1,148-context set.
+- **Section 10.3** no longer says sweep 6 is unjudged.
+- **Section 10.4** gains C174.
+- **Wording** follows R15. The pilot arms are described as start conditions for the offline search: nothing, frozen-policy draws, or the context's own verified best program.
+
+**Ledger changes:**
+- **13 new claims, C164–C176:**
+  - 3 established (C164, C165, C173);
+  - 8 non-qualifying (C166–C172, C176);
+  - 1 pending (C174);
+  - 1 preliminary (C175, a plan).
+- **Updated claims:**
+  - C143 now says sweep 6 was judged at 04:47Z.
+  - C170 records both interval types.
+- **Re-pinned claims:** C142–C145, C158 and C159. Their live coordination sources changed after drafting, so they now cite pinned copies under the new root `COORDSNAP`:
+  - the judge record's first 1,446 lines, an append-only prefix whose hash is the original pin;
+  - the gap board as edited at 10:17:15Z, with the cited line 59 now at line 62.
+- **New root `MAIN307`:** byte copies from `origin/main` `0ed1a381`.
+- **Totals:** 170 claims (112 established, 20 preliminary, 14 non-qualifying, 24 pending).
+
+**Model description changes** (`deploy/dl-flywheel/docs/model.md`):
+- a new section, "Evidence status: 2026-10-13 scratch results (NON-QUALIFYING)";
+- an H1 pilot and EI-1 paragraph in "CLOVER direction";
+- the same sweep 6 correction.
+
+`SOURCE_MANIFEST.json` re-pins its row.
+
+## Update of 2026-10-13, 12:00Z: the L6-1148 verdict
+
+The judge scored the pre-registered 1,148-context set at 11:38:25Z.
+
+- **C174** was pending and is now non-qualifying, with its named experiment's result: REGRESSION ALERT for all three checkpoints, with pooled differences of +0.00511, +0.00310 and +0.00333.
+- **New C177** gives the strata, which are reported but do not decide. Validation is near zero; the held-out lineages show +0.0042 to +0.0063.
+- **Write-up sections changed:**
+  - Section 9.7 states the outcome.
+  - Section 10.3.1 adds the verdict table and the forgetting reading. The EI-1 paragraph gains the proposed matched-control primary.
+  - Section 10.4 drops C174.
+- **model.md** gains the verdict table and the EI-1 amendment note.
+- **Branch:** rebased onto `origin/main` `2140b4bd6` (#309). That base changed other SOURCE_MANIFEST rows; only the model.md row is re-pinned here.
+- **Totals:** 171 claims (112 established, 20 preliminary, 16 non-qualifying, 23 pending).
+
+## Update of 2026-10-13, 14:55Z: review corrections (jopedime_clover CHANGES on a5ce00af)
+
+- **Appendix G** now gives the current ledger totals: 171 claims (112 established, 20 preliminary, 16 non-qualifying, 23 pending). It previously said 157 / 109 / 19 / 6 / 23. The earlier sections of this file keep the totals each revision had at the time.
+- **C163, Section 10.3 and model.md.** The six-arm statement had said none of the six arms below frozen v1 has a paired verdict. Now it says:
+  - the two sweep 6 arms at epoch 8 were judged against frozen v1 at 04:47Z, at exactly these checkpoints, and both are INCONCLUSIVE (C176);
+  - the other four have no paired verdict.
+
+  The values and the conclusion (no qualified improvement) are unchanged.
