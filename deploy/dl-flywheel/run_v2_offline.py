@@ -157,6 +157,21 @@ EXPECTED_COUNTS = {'boundary_admission_v2': 24, 'generated_target_preparation_v2
                    'native_result_overlay_v1': 55, 'final_capture_v1': 32, 'continuous_v6': 83}
 OWN_RUNNER = {'final_capture_v1'}
 TOTAL = 230
+
+# GB-10 additive fault roster: the original package hashes/83 identities stay unchanged.
+CONTINUOUS_V6_PINS['tests/test_fault_process_death.py'] = '6db72149a474d04c72b6bea5baadec7c5cc8396bc892692ff1ca082cb8fd05b0'
+GB10_FAULT_IDS = (
+    'pipelines.continuous_v6.tests.test_fault_process_death.RunnerProcessDeathTests.test_death_after_outbox_ack_refuses_resume_and_duplicate_reservation',
+    'pipelines.continuous_v6.tests.test_fault_process_death.RunnerProcessDeathTests.test_death_after_proof_before_commit_never_authenticates_exposure',
+    'pipelines.continuous_v6.tests.test_fault_process_death.RunnerProcessDeathTests.test_death_after_commit_keeps_one_exposure_but_requires_clean_closure',
+    'pipelines.continuous_v6.tests.test_fault_process_death.RunnerProcessDeathTests.test_partial_checkpoint_after_optimizer_never_commits_or_resumes',
+    'pipelines.continuous_v6.tests.test_fault_process_death.BoundaryProcessDeathTests.test_runner_boundary_death_during_cas_holds_after_cas_reconciles_once',
+    'pipelines.continuous_v6.tests.test_fault_process_death.BoundaryProcessDeathTests.test_partial_overlay_pack_refuses_before_runner_adoption',
+    'pipelines.continuous_v6.tests.test_fault_process_death.BoundaryProcessDeathTests.test_death_at_first_selected_overlay_commit_refuses_or_counts_once',
+)
+CONTINUOUS_V6_IDS += GB10_FAULT_IDS
+EXPECTED_COUNTS['continuous_v6'] += len(GB10_FAULT_IDS)
+TOTAL += len(GB10_FAULT_IDS)
 CHILD_SCHEMA = 'jope.v2-learner-offline-child/v1'
 RECEIPT_SCHEMA = 'jope.v2-learner-offline/v1'
 SCOPE = ('Offline CPU fixtures on private temporary worlds only. No live campaign, optimizer launch, planner, '

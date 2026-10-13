@@ -3467,13 +3467,13 @@
       "sha256": "56fe4a8fb0011de726fb28aba51bf6cf1802dc77a9491ba5587be802d84850bd"
     },
     "python:deploy/dl-flywheel/run_v2_offline.py": {
-      "bytes": 19976,
+      "bytes": 21405,
       "classification": {
         "reason": "Isolated exact-roster runner for the five v2.0.0 learner families (213 identities), run as its own python-lane command with its own 600 s budget after the unchanged prior812 run_offline.py identities. Pins each package source roster and the import closure against SOURCE_MANIFEST.json; adds no identities of its own and grants no launch permission.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "59c5b55057c23e64f2216fa761662167772e485432c994580140715955d8bc27"
+      "sha256": "4036f762bc412217d1fb681a13457c191ab38bc7dca75474f5e29a00a4e7512f"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/anchored_step.py": {
       "bytes": 9330,
