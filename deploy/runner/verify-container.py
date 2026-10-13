@@ -20,7 +20,7 @@ def verify(policy, memory, cpu, swap, devices):
     role = (policy["host"], policy["lane"])
     if role in {("xbabe1", "ci"), ("xbabe1", "ci2")}:
         domain, gib = "pr", 16
-    elif role == ("xbabe2", "full"):
+    elif role in {("xbabe2", "full"), ("xbabe3", "full")}:
         domain, gib = "main", 48
     else:
         raise ValueError("unapproved host/lane")

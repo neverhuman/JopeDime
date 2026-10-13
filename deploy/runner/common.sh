@@ -77,12 +77,13 @@ jope_runner_pin_swap() { # <container name>
   return 2
 }
 
-# Fixed host allocation enforces exclusivity among this repository's runner jobs.
-# Historical GPU/kernel/ci3/ci4 lanes remain unavailable in this CPU foundation.
+# Fixed host allocation enforces exclusivity among this repository's runner jobs. xbabe3/full is
+# a second trusted-main slot with the same 48 GiB/16 CPU cap, so full-main-cpu groups run in
+# parallel. Historical GPU/kernel/ci3/ci4 lanes remain unavailable in this CPU foundation.
 jope_runner_role() { # <host> <lane>; callers use actual hostname, never a job variable
   case "$1/$2" in
     xbabe1/ci|xbabe1/ci2) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g ;;
-    xbabe2/full) JOPE_RUNNER_DOMAIN=main; JOPE_RUNNER_MEMORY=48g ;;
+    xbabe2/full|xbabe3/full) JOPE_RUNNER_DOMAIN=main; JOPE_RUNNER_MEMORY=48g ;;
     *) echo "unapproved runner host/lane: $1/$2" >&2; return 2 ;;
   esac
 }
@@ -103,7 +104,7 @@ jope_runner_check_existing() { # requested lane; docker failure is never an empt
   while read -r id running; do
     [[ -n $id ]] || continue
     case "$JOPE_RUNNER_HOST/$running" in
-      xbabe1/ci|xbabe1/ci2|xbabe2/full) ;;
+      xbabe1/ci|xbabe1/ci2|xbabe2/full|xbabe3/full) ;;
       *) echo "unapproved existing JopeDime container: $id lane=$running" >&2; return 2 ;;
     esac
     [[ $running != "$1" ]] || { echo "existing container owns lane $1: $id" >&2; return 2; }
@@ -129,7 +130,11 @@ jope_runner_check_asm_groups() {
 }
 
 jope_runner_exclusive_cpu() {
-  [[ $JOPE_RUNNER_HOST == xbabe2 && $1 == full ]] || return 0
+  # Each full lane takes its own host's lock inode; a host's ASM campaigns use the same one.
+  case $JOPE_RUNNER_HOST/$1 in
+    xbabe2/full|xbabe3/full) ;;
+    *) return 0 ;;
+  esac
   [[ -f /run/lock/jope-exclusive-cpu.lock ]] || {
     echo "shared CPU lock not provisioned" >&2; return 2;
   }

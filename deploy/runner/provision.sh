@@ -28,7 +28,7 @@ for tool in docker jq curl unzip sha256sum systemctl; do
 done
 case $JOPE_RUNNER_HOST in
   xbabe1) lanes=(ci ci2) ;;
-  xbabe2) lanes=(full) ;;
+  xbabe2|xbabe3) lanes=(full) ;;
   *) echo "unapproved CPU runner host" >&2; exit 2 ;;
 esac
 JOPE_VOLUMES=(jope-sdk)
