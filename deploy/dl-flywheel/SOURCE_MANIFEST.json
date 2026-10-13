@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "11a83aa442408d1ebce9a8ba22ad30f214ee4c4e1b76dc9dabc317045721140a"
+      "sha256": "e1793dd89a513f4951f0a01a3130fb9f7675c842cdbe6f672c02872ff532bf4c"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "82138a3285ae898ace2be2446dd381c09fb147854fa0c9122172536a1debec50"
+      "sha256": "001ad87466e70d0128be088fe495e7b231068c1e663fcc166928ce9b5a2927a2"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -5427,7 +5427,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "ca7999181d92fda15a235ec51e0466427584f2bbafe750d6953e4b3b51c7f79f"
+      "sha256": "df89bc5d95740a1e2b1b84a03902496e669e5effb15f13b85c9a238bc653fc3a"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -6281,7 +6281,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2pr-r3.1 (new runner for the v2.0.0 learner families, build r3.1)",
       "origin_sha256": "83439d0e0407c3f0a9c00e8c4beab5b0e3220734c8f9a45aaa4518908cb1287a",
       "path": "deploy/dl-flywheel/run_v2_offline.py",
-      "sha256": "59c5b55057c23e64f2216fa761662167772e485432c994580140715955d8bc27"
+      "sha256": "4036f762bc412217d1fb681a13457c191ab38bc7dca75474f5e29a00a4e7512f"
     },
     {
       "normalization": "Byte copy vendored as the pinned fixture input that native_result_overlay_v1 reads through JOPE_W3_R6_PATH; run_v2_offline.py verifies its sha256 first.",
@@ -6744,6 +6744,13 @@
       "origin_sha256": "1a9cb732cfeb445add136289ebc53db489d08d0336a88de66ef1f197d32e7759",
       "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py",
       "sha256": "1a9cb732cfeb445add136289ebc53db489d08d0336a88de66ef1f197d32e7759"
+    },
+    {
+      "normalization": "New additive synthetic process-death regressions; runner production and original fixture bytes unchanged. No live qualification or recovery authority. Test-only revision rehydrates identical native fixture inputs and restores the existing captured optimizer/RNG checkpoint in a fresh interpreter; original f3cb test bytes retained in Git and custody.",
+      "origin": "JopeDime_cleanup L6 GB10/J3 on main97ba24955143de07d39368f0c7f2cf22ca692908, ENG owner grant2026-10-13T08:23:05Z",
+      "origin_sha256": "50ce8c84eab33eed8ea00c5e0c06d3d947d3f165a9923a7b3fca5d10b53fb4e8",
+      "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py",
+      "sha256": "6db72149a474d04c72b6bea5baadec7c5cc8396bc892692ff1ca082cb8fd05b0"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

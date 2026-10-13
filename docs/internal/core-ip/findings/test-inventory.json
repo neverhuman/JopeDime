@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py": {
+      "role": "research",
+      "reason": "GB10 adds7 synthetic CPU process-death regressions to the isolated run_v2_offline.py roster (230 existing identities unchanged; now237, continuous_v6 now90). Real SIGKILL and separately reopened durable consumers; fixture evidence only, no live training, hardware durability or recovery permission."
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
