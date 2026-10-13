@@ -1,0 +1,56 @@
+{
+  "advantage_clip": 5.0,
+  "alpha": 1.0,
+  "arm_max_epochs": {},
+  "arms": [
+    [
+      "r25_knnce",
+      0.0,
+      0.2,
+      0.25
+    ]
+  ],
+  "batch_contexts": 16,
+  "cpu_threads": 4,
+  "cuda_memory_fraction": 0.45,
+  "data_manifest_sha256": "72fa6c31d2b8106a9c80a87ac9b83734e6901f0c94129dcac685dd7dc39402d7",
+  "device": "cuda",
+  "final_reserve_seconds": 300,
+  "holdout": {
+    "expect_heldout_sha256": "878226d61158ec53c7037bf69f779b2b7e768282d1114da6567b6c679e7f460f",
+    "expect_train_sha256": "4e19996f434572177e633d1569e6dd917bf6866539145227394c5abc9c73d8db",
+    "fraction": 0.39,
+    "min_contexts": 881
+  },
+  "kl_alarm": 0.03,
+  "kl_contexts_per_step": 1,
+  "kl_disqualify": 0.05,
+  "l6_roster": "full_minus_heldout_lineages",
+  "label": "R22 scratch-only, non-qualifying; R25-kNN-CE (ENG:watcher sign-off 2026-10-13T07:42:55Z)",
+  "lambda_kl": 0.2,
+  "learning_rate": 0.0000375,
+  "max_epochs": 8,
+  "max_tokens_per_chunk": 16384,
+  "name": "r25",
+  "owner_rulings": {
+    "R22": "55d9452c9e87c9fb49727de9e5b6fce28d6117758a453d99407673ac8ca8f118",
+    "R23": "8bd7544ae5d9a41e (prefix)"
+  },
+  "paired_sets": [
+    "a"
+  ],
+  "probe_contexts": 64,
+  "resume_v1_moments": true,
+  "schema": "jope.r22-lpi-scratch-config/v7",
+  "smoke_dev_contexts": null,
+  "smoke_eval_contexts": null,
+  "smoke_steps": null,
+  "tau": 0.2,
+  "wall_seconds": 6900,
+  "knn": {
+    "k": 4,
+    "metric": "cosine_frozen_normalised_encoding",
+    "expect_table_digest": "e9feb0ce846dda2ad2cb6a0143601b3be24cfc56496fc20a5709cd5c33f0fcc3"
+  },
+  "max_updates": 2621
+}

@@ -9120,6 +9120,26 @@
       ],
       "lanes": [],
       "scope": "Configured workflow/job; current execution unqualified."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_knn_table.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "R25-kNN-CE CPU fixtures through run_r25_offline.py (exact 9-identity roster): neighbour table never selects held-out-lineage, validation, same-parent-lineage or non-candidate contexts, deterministic id tie order; harness v7 refuses non-v7/unbounded configs before any output; pinned config equals the 2026-10-13 ENG:watcher sign-off. No snapshot, checkpoint, GPU, training run or L6 improvement claim."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "R25-kNN-CE CPU fixtures through run_r25_offline.py (exact 9-identity roster): neighbour table never selects held-out-lineage, validation, same-parent-lineage or non-candidate contexts, deterministic id tie order; harness v7 refuses non-v7/unbounded configs before any output; pinned config equals the 2026-10-13 ENG:watcher sign-off. No snapshot, checkpoint, GPU, training run or L6 improvement claim."
     }
   },
   "lanes": {
@@ -9893,7 +9913,8 @@
         "uv run --no-sync python ../deploy/dl-flywheel/run_offline.py --output \"$EVIDENCE/flywheel-offline\"",
         "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\"",
         "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt \"$EVIDENCE/onpolicy-offline.json\"",
-        "uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output \"$EVIDENCE/flywheel-v2-offline\""
+        "uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output \"$EVIDENCE/flywheel-v2-offline\"",
+        "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py --receipt \"$EVIDENCE/r25-knnce-offline.json\""
       ],
       "command": [
         "bash",
@@ -9913,7 +9934,8 @@
         "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals.",
         "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed.",
         "Flywheel aggregate runner additionally wires native pool21 and RL math9 after original587 (617 total). Collection/execution receipts must prove each family independently; source import ran only the30 added fixtures and does not claim a full617 rerun. RLFW remains a separate lane command.",
-        "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 213 exact identities in five isolated CPU families (continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 38, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim."
+        "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 213 exact identities in five isolated CPU families (continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 38, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim.",
+        "R25-kNN-CE receipt (run_r25_offline.py): 9 exact collected/executed identities, zero skips, source hashes of the harness, neighbour table, data module, launcher and signed-off config. NON-QUALIFYING scratch arm source; no training or evaluation result."
       ],
       "feature_selection": "not-applicable",
       "inputs": [

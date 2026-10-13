@@ -1,0 +1,11 @@
+[
+  "rlfw.r25_knnce.tests.test_harness_gate.HarnessGateTest.test_pinned_r25_config_is_the_signed_off_arm",
+  "rlfw.r25_knnce.tests.test_harness_gate.HarnessGateTest.test_revision_6_config_is_refused",
+  "rlfw.r25_knnce.tests.test_harness_gate.HarnessGateTest.test_unbounded_wall_is_refused",
+  "rlfw.r25_knnce.tests.test_knn_table.KnnTableTest.test_candidates_restrict_neighbours_but_every_anchor_gets_a_row",
+  "rlfw.r25_knnce.tests.test_knn_table.KnnTableTest.test_deterministic_and_tie_break_by_id",
+  "rlfw.r25_knnce.tests.test_knn_table.KnnTableTest.test_excluded_context_cannot_be_an_anchor",
+  "rlfw.r25_knnce.tests.test_knn_table.KnnTableTest.test_neighbours_exclude_heldout_validation_and_same_lineage",
+  "rlfw.r25_knnce.tests.test_knn_table.KnnTableTest.test_too_few_eligible_neighbours_refused",
+  "rlfw.r25_knnce.tests.test_knn_table.KnnTableTest.test_verify_rejects_each_forbidden_neighbour"
+]

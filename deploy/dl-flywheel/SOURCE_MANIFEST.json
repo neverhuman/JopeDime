@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "4043181b0473a4eaa38648b2815b28a04c6dbda60f14e00edc19986b86521047"
+      "sha256": "0e815d5669319dd0bc875aa56e8d3385aab6fa4457ca0e612b95c45a59d48a75"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "fae91b309a804acb5881f9a993b643a54bbf74926892872e30a50c3624704e12"
+      "sha256": "8f90c5e82355dc73cbe0545b5cd51428075fe182f77562528121b2ddd9ea290d"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "e351aa97bd3cf77d9a17da50fe02929ae62f84a72e0cc769efa789e72a69b068"
+      "sha256": "82138a3285ae898ace2be2446dd381c09fb147854fa0c9122172536a1debec50"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -5426,7 +5426,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "4dc703d2269ded58a0ddd1b2c9341089ac2451507ec766aeced18f00750d8118"
+      "sha256": "0b3b435e5300e3fd8630920c9624255939eee3442f204b028ab8b5644596ef33"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -6659,6 +6659,90 @@
       "origin": "CX-OP owner GB-03 assignment 2026-10-12; new source",
       "origin_sha256": "50efe03aaaf3d34978af13c37754aa77b70bfeaa5e156eaba3768993e8ccc013",
       "sha256": "9eda8b846c3faf1b7b346e29d9bb098c5e04bf8a4beeed1ba506628c034288cc"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "jopedime_flywheel R25 J15 source (new)",
+      "origin_sha256": "62c8b7b2c24bb87d3335919de5962080f81317b49bc994e5c9adc308ffcaa0d9",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/__init__.py",
+      "sha256": "62c8b7b2c24bb87d3335919de5962080f81317b49bc994e5c9adc308ffcaa0d9"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "jopedime_flywheel R25 J15 source (new)",
+      "origin_sha256": "b5e354b45475fd83b1160409fdcc48fa2d0ceabc64329500ab7557f948c516e3",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/README.md",
+      "sha256": "b5e354b45475fd83b1160409fdcc48fa2d0ceabc64329500ab7557f948c516e3"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/knn_table.py (CX-KV reviewed bytes)",
+      "origin_sha256": "e26735a4035e291e16be6b3aa93efc14e547fa8d04acc4da2a1858e2b3ab741b",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/knn_table.py",
+      "sha256": "e26735a4035e291e16be6b3aa93efc14e547fa8d04acc4da2a1858e2b3ab741b"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/lpi_scratch_train_v7.py (CX-KV reviewed bytes)",
+      "origin_sha256": "f67089b6f0b8ba8504933d7d8550ea85ea57a3edbff22ab61653e2b085e4099f",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py",
+      "sha256": "f67089b6f0b8ba8504933d7d8550ea85ea57a3edbff22ab61653e2b085e4099f"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/lpi_scratch_data_v4.py (CX-KV reviewed bytes)",
+      "origin_sha256": "e65aed59d67a269024ef3ff74e3e8f0d17b90809de15a8d87f38e6ba4660c745",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_data_v4.py",
+      "sha256": "e65aed59d67a269024ef3ff74e3e8f0d17b90809de15a8d87f38e6ba4660c745"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/x2/code/launch_v7.sh",
+      "origin_sha256": "cd1b0a842a6d76a7054f5a7822c82da9fdd8be8d592413f637ab957da751d77b",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/launch_v7.sh",
+      "sha256": "cd1b0a842a6d76a7054f5a7822c82da9fdd8be8d592413f637ab957da751d77b"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/x2/configs/r25.json (signed-off config, neighbour digest pinned)",
+      "origin_sha256": "adac63e19b717cb1c4f3c2b78d1793b24729af369e1e50e29988ce547663ff9a",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/configs/r25.json",
+      "sha256": "adac63e19b717cb1c4f3c2b78d1793b24729af369e1e50e29988ce547663ff9a"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "jopedime_flywheel R25 J15 source (new)",
+      "origin_sha256": "bfd7633caf03e577c32fbde946b77cc70d28031ec6d270f6bd40ec41f2b1641d",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py",
+      "sha256": "bfd7633caf03e577c32fbde946b77cc70d28031ec6d270f6bd40ec41f2b1641d"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "jopedime_flywheel R25 J15 source (new)",
+      "origin_sha256": "e43a4e99d2dfca62f31f2fe8f9d3f34bb7a0a6120e2f4f2f100e6b1f27678475",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/test-identities.json",
+      "sha256": "e43a4e99d2dfca62f31f2fe8f9d3f34bb7a0a6120e2f4f2f100e6b1f27678475"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "jopedime_flywheel R25 J15 source (new)",
+      "origin_sha256": "6303397b00db10f069bc60043531b7b352d71017ae07011200abbf8672454255",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/__init__.py",
+      "sha256": "6303397b00db10f069bc60043531b7b352d71017ae07011200abbf8672454255"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/test_knn_table.py (package import path only)",
+      "origin_sha256": "5af2207abc2cc2b1bd601e1d27437e57cfb8246cd07a31a98d925b9b2fb2b167",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_knn_table.py",
+      "sha256": "ea79d70ba71cefffadcca8e0b5e38ed904869773f940dbd86451ee85434cf9f7"
+    },
+    {
+      "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
+      "origin": "jopedime_flywheel R25 J15 source (new)",
+      "origin_sha256": "8d0d9078b37f0e920adf10c6cc94a3dfcc8d450ea4867d0dac65b22bf6a41135",
+      "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py",
+      "sha256": "8d0d9078b37f0e920adf10c6cc94a3dfcc8d450ea4867d0dac65b22bf6a41135"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
