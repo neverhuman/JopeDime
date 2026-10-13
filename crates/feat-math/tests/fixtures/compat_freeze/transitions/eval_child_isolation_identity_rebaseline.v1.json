@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for J24/G38 evaluator child isolation. Confining the original fit child changes eval_registry/service.rs (spawn confinement, child lockdown, per-ticket artifact custody), whose source hash the teaching-store semantic dependencies include, so teaching stores packed afterwards get a new lineage. The ADR-0004 evaluator identity, Cargo.lock, the eval-registry query execution identity, evaluator and behavioral fixtures and every earlier transition remain unchanged.",
+  "plan_reference": "Owner ENG:watcher 2026-10-13T09:31:13Z: J24/L9 option A, lineage_sources.v1.json rebaseline",
+  "pr_reference": "rlfw/jg-j24-sandbox",
+  "source_commit": "6102cbc4c52428e38f034629e38612041547569e",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "200723a8f7c7808f3e70254e3e8c64b2c4d5c6fc60a01da16b999a62edffc58e",
+      "after": "0333a90e244ebe43d97d14d8d923b18b5fe475e1a327751b095c9bac1ffe6ba4"
+    }
+  ]
+}
