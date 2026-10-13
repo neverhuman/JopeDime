@@ -67,9 +67,9 @@ fn inner_fold_learned_stages_fit_only_on_fitting_rows() {
             .unwrap();
         let mut x_held = Vec::new();
         let mut held = Vec::new();
-        for r in 0..n {
+        for (r, row) in x.iter().enumerate().take(n) {
             if fold_of(key, r, k) == fold {
-                x_held.push(x[r].clone());
+                x_held.push(row.clone());
                 held.push(r);
             }
         }
