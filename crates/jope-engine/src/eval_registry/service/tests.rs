@@ -356,6 +356,21 @@ fn synthetic_worker() {
         assert!(permit.verify().is_err());
         std::process::exit(11);
     }
+    if program.contains("alpha=6") {
+        // The evaluated program would run here, after lockdown.
+        let root = output.parent().unwrap().parent().unwrap();
+        let unreadable = [
+            PathBuf::from("/etc/passwd"),
+            PathBuf::from(format!("/proc/{}/environ", unsafe { libc::getppid() })),
+            root.join("authority.json"),
+            root.join("registry.sqlite"),
+        ];
+        let found = super::sandbox::tests::violations(&unreadable, root, None);
+        if !found.is_empty() {
+            eprintln!("unconfined original fit child: {found:?}");
+            std::process::exit(13);
+        }
+    }
     let model = feat_math::Model::Symbolic {
         expr: feat_math::math_expr::MathExpr::parse("col(0)").unwrap(),
         a: 1.,
@@ -900,6 +915,8 @@ fn failed_signaled_timed_out_and_replaced_custody_are_terminal() {
     // The timeout worker deliberately sleeps 30 seconds, so a two-second cap
     // still exercises numerical timeout rather than a pre-consumption refusal.
     fixture.config.fit_deadline = Duration::from_secs(2);
+    // The replaced-custody child deliberately rewrites its own custody file.
+    fixture.config.sandbox.mutable_dirs = vec![fixture.root.join("custody")];
     let (stop, service) = fixture.launch();
     for alpha in [2, 3, 4, 5] {
         let original = submit_to(
@@ -929,6 +946,27 @@ fn failed_signaled_timed_out_and_replaced_custody_are_terminal() {
     let stats = service.join().unwrap().unwrap();
     assert_eq!(stats.worker_spawns, 4);
     assert_eq!(stats.committed, 4);
+}
+
+#[test]
+#[cfg_attr(
+    feature = "neural",
+    ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
+)]
+fn original_fit_child_is_confined_while_fitting() {
+    let fixture = Fixture::new();
+    let (stop, service) = fixture.launch();
+    let original = submit_to(
+        &fixture.socket,
+        &fixture.root,
+        &fixture.witness,
+        &inputs(6),
+        provenance(),
+    )
+    .unwrap();
+    assert_eq!(original.receipt.outcome, ExecutionOutcome::Success);
+    stop.store(true, Ordering::SeqCst);
+    assert_eq!(service.join().unwrap().unwrap().worker_spawns, 1);
 }
 
 #[test]
