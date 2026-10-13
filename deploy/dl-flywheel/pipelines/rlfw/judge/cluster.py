@@ -11,11 +11,21 @@ import random
 from rlfw.judge.power import Z_ALPHA_95
 
 
+def _finite_number(value):
+    return (
+        not isinstance(value, bool)
+        and isinstance(value, (int, float))
+        and math.isfinite(value)
+    )
+
+
 def context_interval(values, z=Z_ALPHA_95):
     """Normal interval for the mean. SE is the sample SD with ddof=1, over sqrt(n)."""
     n = len(values)
     if n < 2:
         raise ValueError("need at least two paired contexts")
+    if any(not _finite_number(v) for v in values) or not _finite_number(z):
+        raise ValueError("paired differences must be finite")
     mean = sum(values) / n
     var = sum((v - mean) ** 2 for v in values) / (n - 1)
     se = math.sqrt(var / n)
@@ -36,10 +46,14 @@ def cluster_bootstrap_ci(groups, draws=2000, seed=20261011, alpha=0.05):
     per draw. The returned context interval is the independent-context interval
     on the same pooled values.
     """
-    if draws < 1:
+    if isinstance(draws, bool) or not isinstance(draws, int) or draws < 1:
         raise ValueError("draws must be positive")
     if not groups or any(len(g) == 0 for g in groups):
         raise ValueError("every cluster needs at least one paired difference")
+    if any(not _finite_number(v) for g in groups for v in g):
+        raise ValueError("paired differences must be finite")
+    if not _finite_number(alpha) or not 0 < alpha < 1:
+        raise ValueError("alpha must be between 0 and 1")
     pooled = [v for g in groups for v in g]
     sums = [sum(g) for g in groups]
     counts = [len(g) for g in groups]
@@ -91,6 +105,8 @@ def variance_components(groups):
     g = len(groups)
     if n == g:
         raise ValueError("within variance needs a cluster with two contexts")
+    if any(not _finite_number(v) for g in groups for v in g):
+        raise ValueError("paired differences must be finite")
     grand = sum(sum(group) for group in groups) / n
     sse = 0.0
     ssb = 0.0
@@ -128,12 +144,23 @@ def hierarchical_power(
     Each simulation draws parent effects and within-parent noise, then applies
     the same cluster bootstrap used on the observed series. The context-level
     rate uses the independent normal interval on the simulated contexts. This is
-    a simulation at the supplied variance, not a measured verdict.
+    a simulation at the supplied variance, not a measured verdict. Non-finite
+    variances, effects, and invalid simulation parameters are refused before a
+    rejection rate is computed.
     """
-    if sims < 1 or draws < 1:
+    if isinstance(sims, bool) or not isinstance(sims, int) or sims < 1:
         raise ValueError("sims and draws must be positive")
-    if not cluster_sizes or any(c < 1 for c in cluster_sizes):
+    if isinstance(draws, bool) or not isinstance(draws, int) or draws < 1:
+        raise ValueError("sims and draws must be positive")
+    if (
+        not cluster_sizes
+        or any(isinstance(c, bool) or not isinstance(c, int) or c < 1 for c in cluster_sizes)
+    ):
         raise ValueError("cluster sizes must be positive")
+    if any(not _finite_number(v) for v in (sigma_within, sigma_between, delta, alpha)):
+        raise ValueError("power inputs must be finite")
+    if not 0 < alpha < 1:
+        raise ValueError("alpha must be between 0 and 1")
     if sigma_within < 0 or sigma_between < 0:
         raise ValueError("sigmas must be non-negative")
     rng = random.Random(seed)

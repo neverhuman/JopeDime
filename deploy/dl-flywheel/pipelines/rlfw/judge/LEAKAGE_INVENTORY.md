@@ -2,7 +2,7 @@
 
 Read 2026-10-11. Fixture judgment only. This file does not spend a seal.
 
-The honest inner-fold path is `cv_r2` in `crates/feat-math/src/model.rs`: each fold calls `fit_predict` on the rows whose `fold_of` assignment is not that fold. The fixture is `crates/feat-math/tests/inner_fold_leakage.rs`. It calls those public functions and does not change `cv_r2`. `target_aware_ops_are_oof_in_cv` checks that a noise target keeps CV r² under 0.15 for `target_bin_encode`, `select_corr`, and `pair_ratio`. It does not poison one fold's held-out rows and compare the fitted model. `advanced_v3` `target_bin_encode` with `oof=5` fits fold transforms for the training block and still stores a full-block `fit_op` for the deployed operator (`transforms/mod.rs`). That is not the inner-fold fixture below.
+The honest inner-fold path is `cv_r2` in `crates/feat-math/src/model.rs`: each fold calls `fit_predict` on the rows whose `fold_of` assignment is not that fold. The fixture is `crates/feat-math/tests/inner_fold_leakage.rs`. It calls those public functions and does not change `cv_r2`. The fixture calls `complement_predict`, a manual complement filter, and does not execute `cv_r2`, so it does not guard a `cv_r2` dispatch that fits all rows. `target_aware_ops_are_oof_in_cv` checks that a noise target keeps CV r² under 0.15 for `target_bin_encode`, `select_corr`, and `pair_ratio`. It does not poison one fold's held-out rows and compare the fitted model. `advanced_v3` `target_bin_encode` with `oof=5` fits fold transforms for the training block and still stores a full-block `fit_op` for the deployed operator (`transforms/mod.rs`). That is not the inner-fold fixture below.
 
 | stage | inner-fold fit-only fixture before this change | fixture |
 |---|---|---|

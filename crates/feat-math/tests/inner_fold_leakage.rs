@@ -2,7 +2,9 @@
 //!
 //! `cv_r2` fits each fold with `fit_predict` on the rows whose `fold_of`
 //! assignment is not that fold, then scores the original held-out features.
-//! This test calls those public functions. It does not change `cv_r2`.
+//! This test calls those public functions through `complement_predict`. It does
+//! not call `cv_r2` and does not change it, so a `cv_r2` that fit every row
+//! would not fail this test.
 
 use feat_math::{fit_predict, fold_of, GenomeIr, Rows};
 

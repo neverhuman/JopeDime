@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -80,40 +81,100 @@ def iter_costs(handle):
         yield row
 
 
-def complete_series(handle):
-    """Latest epoch where control, rloo, and pkpo_b8 each have 263 distinct ids."""
+def _finite_cost(row):
+    try:
+        cost = float(row["l6_cost"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("l6_cost is not finite") from exc
+    if not math.isfinite(cost):
+        raise ValueError("l6_cost is not finite")
+    return cost
+
+
+def _provenance(row):
+    return tuple((field, row[field]) for field in ("updates", "seed", "split") if field in row)
+
+
+def _store_cost(bucket, row):
+    context_id = row["context_id"]
+    cost = _finite_cost(row)
+    provenance = _provenance(row)
+    previous = bucket.get(context_id)
+    if previous is None:
+        bucket[context_id] = (cost, provenance)
+        return
+    old_cost, old_provenance = previous
+    if old_cost != cost or old_provenance != provenance:
+        raise ValueError("conflicting duplicate cost identity")
+
+
+def _pinned_roster(val_ids):
+    roster = list(val_ids)
+    expected = set(roster)
+    if len(roster) != 263 or len(expected) != 263:
+        raise ValueError("validation roster is not 263 distinct ids")
+    return roster, expected
+
+
+def validation_cluster_sizes(val_ids, context_parent):
+    """Parent-cluster sizes of the pinned validation ids, in parent order."""
+    counts = defaultdict(int)
+    for context_id in val_ids:
+        counts[context_parent[context_id]] += 1
+    if not counts:
+        raise ValueError("validation roster has no parent clusters")
+    return [counts[key] for key in sorted(counts)]
+
+
+def complete_series(handle, val_ids):
+    """Latest epoch where control, rloo, and pkpo_b8 each equal the pinned ids."""
+    _roster, expected = _pinned_roster(val_ids)
     buckets = defaultdict(dict)
     for row in iter_costs(handle):
-        key = (row["arm"], int(row["epoch"]))
-        buckets[key][row["context_id"]] = float(row["l6_cost"])
+        _store_cost(buckets[(row["arm"], int(row["epoch"]))], row)
     epochs = sorted({epoch for (_arm, epoch) in buckets})
     chosen = None
+    chosen_arms = None
     for epoch in epochs:
         arms = {}
         ok = True
         for arm in ("r23_control", "rloo", "pkpo_b8"):
             series = buckets.get((arm, epoch))
-            if series is None or len(series) != 263:
+            if series is None or set(series) != expected:
                 ok = False
                 break
-            arms[arm] = series
+            arms[arm] = {context_id: series[context_id][0] for context_id in series}
         if ok:
             chosen = epoch
             chosen_arms = arms
     if chosen is None:
-        raise ValueError("no complete 263-id epoch")
+        raise ValueError("no epoch matches the pinned validation roster")
     return chosen, chosen_arms
 
 
-def paired_groups(arms, context_parent, arm):
+def paired_groups(arms, context_parent, arm, val_ids):
+    roster, expected = _pinned_roster(val_ids)
+    control = arms["r23_control"]
+    challenger = arms[arm]
+    if set(control) != expected or set(challenger) != expected:
+        raise ValueError("paired roster is not the pinned validation contexts")
     groups = defaultdict(list)
-    for context_id, control in arms["r23_control"].items():
-        parent = context_parent[context_id]
-        groups[parent].append(control - arms[arm][context_id])
+    for context_id, control_cost in control.items():
+        groups[context_parent[context_id]].append(control_cost - challenger[context_id])
     ordered = [groups[key] for key in sorted(groups)]
-    if sum(len(g) for g in ordered) != 263:
-        raise ValueError("paired roster is not the 263 validation contexts")
+    derived = [len(group) for group in ordered]
+    if derived != validation_cluster_sizes(roster, context_parent) or sum(derived) != 263:
+        raise ValueError("power cluster sizes do not match the paired validation roster")
     return ordered
+
+
+def require_power_sizes(groups, sizes, val_ids, context_parent):
+    """Power uses the paired groups, and those sizes must match the pinned roster."""
+    paired = [len(group) for group in groups]
+    roster_sizes = validation_cluster_sizes(val_ids, context_parent)
+    if paired != list(sizes) or paired != roster_sizes or sum(paired) != 263:
+        raise ValueError("power cluster sizes do not match the paired validation roster")
+    return paired
 
 
 def build_sealed(role):
@@ -211,6 +272,7 @@ def main(roster_path, evidence_dir, r9_handle, r9_sha=None, r9_bytes=None):
     val_lineages = {parents["context_parent"][cid] for cid in val_ids}
     if any(parents["parent_partition"][lin] != "validation" for lin in val_lineages):
         raise SystemExit("a validation context inherits a non-validation parent")
+    sizes = validation_cluster_sizes(val_ids, parents["context_parent"])
     role = json.loads(ROLE.read_text())
     spec = json.loads(SPEC.read_text())
     sealed = build_sealed(role)
@@ -220,9 +282,6 @@ def main(roster_path, evidence_dir, r9_handle, r9_sha=None, r9_bytes=None):
     result = proof_disjoint(sealed, closure)
     if not result["passed"]:
         raise SystemExit("sealed proposal overlaps the training closure: " + json.dumps(result["failures"][:5]))
-    sizes = []
-    for lineage in sorted(val_lineages):
-        sizes.append(len(parents["parent_contexts"][lineage]))
     partition = {
         "meta_training": sorted(
             lineage for lineage, part in parents["parent_partition"].items() if part == "train"
@@ -271,10 +330,12 @@ def main(roster_path, evidence_dir, r9_handle, r9_sha=None, r9_bytes=None):
     reports = []
     for name, path in rounds.items():
         with path.open() as handle:
-            epoch, arms = complete_series(handle)
-        reports.extend(arm_report(name, path, epoch, arms, parents["context_parent"], sizes))
+            epoch, arms = complete_series(handle, val_ids)
+        reports.extend(arm_report(
+            name, path, epoch, arms, parents["context_parent"], sizes, val_ids
+        ))
     if r9_handle is not None:
-        epoch, arms = complete_series(r9_handle)
+        epoch, arms = complete_series(r9_handle, val_ids)
         r9_path = getattr(r9_handle, "name", None)
         reports.extend(arm_report(
             "R9",
@@ -283,6 +344,7 @@ def main(roster_path, evidence_dir, r9_handle, r9_sha=None, r9_bytes=None):
             arms,
             parents["context_parent"],
             sizes,
+            val_ids,
             sha=r9_sha,
             nbytes=r9_bytes,
         ))
@@ -303,14 +365,15 @@ def main(roster_path, evidence_dir, r9_handle, r9_sha=None, r9_bytes=None):
     ]}, indent=2))
 
 
-def arm_report(name, path, epoch, arms, context_parent, sizes, sha=None, nbytes=None):
+def arm_report(name, path, epoch, arms, context_parent, sizes, val_ids, sha=None, nbytes=None):
     out = []
     for arm in ("rloo", "pkpo_b8"):
-        groups = paired_groups(arms, context_parent, arm)
+        groups = paired_groups(arms, context_parent, arm, val_ids)
+        power_sizes = require_power_sizes(groups, sizes, val_ids, context_parent)
         interval = cluster_bootstrap_ci(groups, draws=2000, seed=20261011)
         parts = variance_components(groups)
         power = hierarchical_power(
-            sizes,
+            power_sizes,
             parts["sigma_within"],
             parts["sigma_between"],
             0.005,
@@ -319,7 +382,7 @@ def arm_report(name, path, epoch, arms, context_parent, sizes, sha=None, nbytes=
             seed=20261011,
         )
         null = hierarchical_power(
-            sizes,
+            power_sizes,
             parts["sigma_within"],
             parts["sigma_between"],
             0.0,
