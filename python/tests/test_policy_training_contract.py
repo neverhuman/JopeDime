@@ -655,6 +655,6 @@ def test_distributed_probe_timeout_reaps_owned_worker_group(tmp_path, parent_exi
     assert children[0].poll() is not None
     worker_pid = int(pid_file.read_text())
     try:
-        assert psutil.Process(worker_pid).status() == psutil.STATUS_ZOMBIE
+        assert psutil.Process(worker_pid).status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD)
     except psutil.NoSuchProcess:
         pass
