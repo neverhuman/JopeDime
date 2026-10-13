@@ -357,15 +357,19 @@ fn synthetic_worker() {
         std::process::exit(11);
     }
     if program.contains("alpha=6") {
-        // The evaluated program would run here, after lockdown.
-        let root = output.parent().unwrap().parent().unwrap();
+        // The evaluated program would run here, after lockdown. Its artifact
+        // is <root>/worker-output/<ticket>/output.json.
+        let outputs = output.parent().unwrap().parent().unwrap();
+        let root = outputs.parent().unwrap();
+        let parent = unsafe { libc::getppid() };
         let unreadable = [
             PathBuf::from("/etc/passwd"),
-            PathBuf::from(format!("/proc/{}/environ", unsafe { libc::getppid() })),
+            PathBuf::from(format!("/proc/{parent}/environ")),
+            PathBuf::from(format!("/proc/{parent}/cmdline")),
             root.join("authority.json"),
             root.join("registry.sqlite"),
         ];
-        let found = super::sandbox::tests::violations(&unreadable, root, None);
+        let found = super::sandbox::tests::violations(&unreadable, outputs, None);
         if !found.is_empty() {
             eprintln!("unconfined original fit child: {found:?}");
             std::process::exit(13);

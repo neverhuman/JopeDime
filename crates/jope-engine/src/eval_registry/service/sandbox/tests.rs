@@ -110,6 +110,53 @@ fn spawn_violations() -> Vec<String> {
         libc::EPERM,
         &mut found,
     );
+    // Each call below is harmless if it is wrongly allowed: a read-only
+    // prlimit, an invalid length or mode, or the caller's current priority.
+    let parent = unsafe { libc::getppid() };
+    let mut old = libc::rlimit {
+        rlim_cur: 0,
+        rlim_max: 0,
+    };
+    let other = unsafe {
+        libc::syscall(
+            libc::SYS_prlimit64,
+            parent,
+            libc::RLIMIT_NOFILE,
+            std::ptr::null::<libc::rlimit>(),
+            &mut old as *mut libc::rlimit,
+        )
+    };
+    refused("prlimit another process", other, libc::EPERM, &mut found);
+    let own = unsafe {
+        libc::syscall(
+            libc::SYS_prlimit64,
+            0,
+            libc::RLIMIT_NOFILE,
+            std::ptr::null::<libc::rlimit>(),
+            &mut old as *mut libc::rlimit,
+        )
+    };
+    if own != 0 {
+        found.push("cannot read its own limits".into());
+    }
+    let affinity = unsafe { libc::syscall(libc::SYS_sched_setaffinity, parent, 0, 0) };
+    refused("pin another process", affinity, libc::EPERM, &mut found);
+    let param = unsafe { libc::syscall(libc::SYS_sched_setparam, parent, 0) };
+    refused("schedule another process", param, libc::EPERM, &mut found);
+    let nice = unsafe { libc::getpriority(libc::PRIO_PROCESS, 0) };
+    refused(
+        "setpriority",
+        i64::from(unsafe { libc::setpriority(libc::PRIO_PROCESS, 0, nice) }),
+        libc::EPERM,
+        &mut found,
+    );
+    let ioprio = unsafe { libc::syscall(libc::SYS_ioprio_set, 0, 0, 0) };
+    refused("ioprio_set", ioprio, libc::EPERM, &mut found);
+    let pidfd = unsafe { libc::syscall(libc::SYS_pidfd_open, parent, 0) };
+    if pidfd >= 0 {
+        unsafe { libc::close(pidfd as i32) };
+    }
+    refused("pidfd_open", pidfd, libc::EPERM, &mut found);
     let threads = ["OMP", "RAYON", "OPENBLAS", "MKL"].map(|t| format!("{t}_NUM_THREADS"));
     for (name, _) in std::env::vars_os() {
         let name = name.to_string_lossy();
@@ -194,6 +241,17 @@ pub(crate) fn violations(
     if std::thread::spawn(|| 7).join().ok() != Some(7) {
         found.push("cannot start a thread".into());
     }
+    let mut action = libc::SECCOMP_RET_ALLOW;
+    // SECCOMP_GET_ACTION_AVAIL only queries; it is refused like every operation.
+    let query = unsafe { libc::syscall(libc::SYS_seccomp, 2u32, 0u32, &mut action as *mut u32) };
+    refused("seccomp", query, libc::EPERM, &mut found);
+    let mode = unsafe { libc::prctl(libc::PR_SET_SECCOMP, 99, 0, 0, 0) };
+    refused(
+        "prctl(PR_SET_SECCOMP)",
+        i64::from(mode),
+        libc::EPERM,
+        &mut found,
+    );
     if landlock_abi() > 0 {
         for path in unreadable {
             let what = format!("read {}", path.display());
@@ -206,8 +264,14 @@ pub(crate) fn violations(
                 found.push(format!("cannot create in {}", dir.display()));
             }
         }
-        if open_read(Path::new("/proc/self/exe")) < 0 {
-            found.push("cannot read its own executable".into());
+        for own in [
+            "/proc/self/exe",
+            "/proc/self/maps",
+            "/proc/sys/kernel/random/boot_id",
+        ] {
+            if open_read(Path::new(own)) < 0 {
+                found.push(format!("cannot read {own}"));
+            }
         }
     }
     found
@@ -310,7 +374,8 @@ impl Custody {
     fn new() -> Self {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("authority");
-        fs::create_dir_all(root.join("worker-output")).unwrap();
+        fs::create_dir_all(root.join("worker-output/ticket-a")).unwrap();
+        fs::write(root.join("worker-output/ticket-b.json"), b"{}").unwrap();
         fs::write(root.join("authority.json"), b"{}").unwrap();
         fs::write(temp.path().join("secret"), b"credential").unwrap();
         let config = ServiceConfig::regression(
@@ -322,18 +387,24 @@ impl Custody {
         );
         Self { temp, config }
     }
+    fn ticket(&self) -> PathBuf {
+        self.config.authority_root.join("worker-output/ticket-a")
+    }
     fn spec(&self, writable: bool) -> Value {
         let root = &self.config.authority_root;
-        let output = root.join("worker-output");
+        let outputs = root.join("worker-output");
+        let parent = std::process::id();
         json!({
             "unreadable": [
                 self.temp.path().join("secret"),
                 root.join("authority.json"),
+                outputs.join("ticket-b.json"),
                 "/etc/passwd",
-                format!("/proc/{}/environ", std::process::id()),
+                format!("/proc/{parent}/environ"),
+                format!("/proc/{parent}/cmdline"),
             ],
-            "unwritable": [if writable { root.clone() } else { output.clone() }],
-            "writable": if writable { vec![output] } else { vec![] },
+            "unwritable": [if writable { outputs } else { self.ticket() }],
+            "writable": if writable { vec![self.ticket()] } else { vec![] },
         })
     }
 }
@@ -358,7 +429,7 @@ fn assert_confined(probe: &mut Probe) {
 #[test]
 fn fit_child_is_confined_and_attested_only_after_lockdown() {
     let custody = Custody::new();
-    let confinement = Confinement::fit(&custody.config).unwrap();
+    let confinement = Confinement::fit(&custody.config, &custody.ticket()).unwrap();
     let mut probe = Probe::spawn(confinement, custody.spec(true));
     assert_confined(&mut probe);
     probe.finish();
@@ -378,7 +449,7 @@ fn lockdown_refuses_a_child_with_more_threads_than_allowed() {
     let mut custody = Custody::new();
     // libtest runs the probe on a second thread, which Landlock would not bind.
     custody.config.sandbox.threads = 1;
-    let confinement = Confinement::fit(&custody.config).unwrap();
+    let confinement = Confinement::fit(&custody.config, &custody.ticket()).unwrap();
     let mut probe = Probe::spawn(confinement, custody.spec(true));
     assert_eq!(probe.report()["stage"], "spawn");
     probe.release();
@@ -398,7 +469,9 @@ fn lockdown_refuses_a_child_with_more_threads_than_allowed() {
 #[test]
 fn unconfined_processes_fail_attestation() {
     let custody = Custody::new();
-    let attestation = Confinement::fit(&custody.config).unwrap().attestation();
+    let attestation = Confinement::fit(&custody.config, &custody.ticket())
+        .unwrap()
+        .attestation();
     let error = attestation.verify(std::process::id()).unwrap_err();
     assert!(error.to_string().contains("not locked down"), "{error:#}");
 }

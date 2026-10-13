@@ -992,15 +992,15 @@ fn supervise(
         let _dispatch = state.dispatch_gate()?;
     }
     let ticket = claim.claim_token.clone();
-    let output = state
-        .config
-        .authority_root
-        .join("worker-output")
-        .join(format!("{ticket}.json"));
-    ensure!(!output.exists(), "original worker artifact already exists");
+    // Each child writes only in its own ticket directory.
+    let outputs = state.config.authority_root.join("worker-output");
+    let custody = outputs.join(&ticket);
+    fs::create_dir(&custody).context("original worker artifact already exists")?;
+    File::open(&outputs)?.sync_all()?;
+    let output = custody.join("output.json");
     let fd = input.as_raw_fd();
     let parent = std::process::id();
-    let confinement = sandbox::Confinement::fit(&state.config)?;
+    let confinement = sandbox::Confinement::fit(&state.config, &custody)?;
     let attestation = confinement.attestation();
     let mut command = Command::new(&state.config.worker_executable);
     confinement.configure(&mut command);

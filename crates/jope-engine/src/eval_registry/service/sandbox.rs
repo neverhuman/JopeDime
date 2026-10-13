@@ -1,20 +1,25 @@
 //! Evaluator isolation for original fit and query children (J24/G38, CLOVER §12.4).
 //!
 //! An original child evaluates generated programs, so it must not reach the
-//! network, training-control or custody credentials, other processes, or files
-//! outside its own output custody. Confinement has two layers.
+//! network, read training-control or custody credentials, interfere with other
+//! processes, or write outside its own output custody. Confinement has two layers.
 //!
 //! 1. Spawn. Between fork and exec the service clears the child's environment to
 //!    an allowlist, marks every inherited descriptor except the child's own
 //!    channel close-on-exec, bounds address space, CPU time, file size, open
 //!    files and core dumps, sets `no_new_privs`, and installs a seccomp filter
 //!    that refuses non-local sockets, io_uring, process creation, namespaces,
-//!    mounts, keyrings and cross-process memory access. The child cannot skip it.
+//!    mounts, keyrings, cross-process memory access, and changing another
+//!    process's limits, scheduling or priority. The child cannot skip it.
 //! 2. Lockdown. Before it fits or predicts, the child's own verified code applies
-//!    a Landlock allowlist (read-only runtime files, writes only beneath its
-//!    output custody, no TCP) and a second seccomp filter that refuses every new
-//!    socket, exec, and signals to other processes. Landlock also stops the child
-//!    reading another process's `/proc` entries, such as its environment.
+//!    a Landlock allowlist (read-only runtime files and its own `/proc/<pid>`,
+//!    writes only beneath its own ticket directory, no TCP) and a second seccomp
+//!    filter that refuses every new socket, exec, further seccomp filters, and
+//!    signals to other processes.
+//!
+//! Without Landlock (an older kernel, allowed unless `require_fs_allowlist`)
+//! only the filesystem allowlist is missing: the child can then read whatever
+//! its user can, including credential files and other processes' `/proc`.
 //!
 //! The fit child must read its unconfined parent's `/proc/<pid>/exe` before it
 //! trusts the service, which Landlock forbids, so the filesystem allowlist is
@@ -47,7 +52,8 @@ pub(crate) mod tests;
 const POLICY_ENV: &str = "JOPE_EVAL_SANDBOX";
 const POLICY_SCHEMA: &str = "jope.eval_sandbox.v1";
 /// The only inherited variables. Loader inputs keep the child's mapped runtime
-/// identical to the service's; the Rust ones only shape diagnostics and stacks.
+/// identical to the service's (a preloaded library runs inside the child, so it
+/// is as trusted as the service itself); the Rust ones shape diagnostics and stacks.
 const INHERITED_ENV: [&str; 5] = [
     "LD_LIBRARY_PATH",
     "LD_PRELOAD",
@@ -59,15 +65,17 @@ const ADDRESS_SPACE_BYTES: u64 = 8 * 1024 * 1024 * 1024;
 const OPEN_FILES: u64 = 256;
 /// A query child writes only its sealed predictions (at most 1 MB).
 const QUERY_FILE_BYTES: u64 = 64 * 1024 * 1024;
-/// Readable after lockdown, with the executable and every mapped file.
-/// Nothing beneath a home directory, `/etc`, `/run` or `/tmp` is readable.
-const RUNTIME_TREES: [&str; 9] = [
+/// Readable after lockdown, with the executable and every mapped file. Of
+/// `/proc`, only the child's own `/proc/<pid>` and the boot id its process
+/// identity reads. Nothing beneath a home directory, `/etc`, `/run` or `/tmp`.
+const RUNTIME_TREES: [&str; 10] = [
     "/usr",
     "/lib",
     "/lib64",
     "/lib32",
     "/etc/ld.so.cache",
-    "/proc",
+    "/proc/self",
+    "/proc/sys/kernel/random/boot_id",
     "/sys/devices/system/cpu",
     "/sys/fs/cgroup",
     "/dev/urandom",
@@ -115,6 +123,8 @@ const AUDIT_ARCH: u32 = 0;
 const DATA_NR: u32 = 0;
 const DATA_ARCH: u32 = 4;
 const DATA_ARG0_LOW: u32 = 16;
+/// The kernel's classic-BPF program length limit.
+const BPF_MAXINSNS: usize = 4096;
 
 /// Evaluator isolation settings bound into the service.
 #[derive(Clone, Debug)]
@@ -195,13 +205,15 @@ pub(super) struct Confinement {
     inherited_filters: u64,
 }
 impl Confinement {
-    /// A fit child may create and write files only beneath its output custody.
-    pub(super) fn fit(config: &ServiceConfig) -> Result<Self> {
+    /// A fit child may create and write files only in its own ticket's
+    /// directory, so concurrent children cannot touch each other's artifacts.
+    /// The service discards an artifact larger than `max_descriptor_bytes`.
+    pub(super) fn fit(config: &ServiceConfig, custody: &Path) -> Result<Self> {
         Self::new(
             config,
             config.handshake_timeout + config.fit_deadline,
-            config.max_descriptor_bytes.saturating_mul(2),
-            vec![config.authority_root.join("worker-output")],
+            config.max_descriptor_bytes,
+            vec![custody.to_path_buf()],
         )
     }
     /// A query child writes no files; it returns predictions over its channel.
@@ -522,14 +534,34 @@ fn spawn_filter() -> Vec<libc::sock_filter> {
         libc::SYS_request_key,
         libc::SYS_name_to_handle_at,
         libc::SYS_open_by_handle_at,
+        libc::SYS_pidfd_open,
+        libc::SYS_pidfd_send_signal,
+        libc::SYS_process_mrelease,
+        // Their targets are not the first argument; nothing here needs them.
+        libc::SYS_setpriority,
+        libc::SYS_ioprio_set,
     ];
     #[cfg(target_arch = "x86_64")]
     refused.extend([libc::SYS_fork, libc::SYS_vfork]);
-    Filter::new()
+    let mut filter = Filter::new()
         // Local IPC only; the fit child still connects to the service socket.
         .guard(libc::SYS_socket, libc::BPF_JEQ, libc::AF_UNIX as u32)
         // Threads only, never another process.
-        .guard(libc::SYS_clone, libc::BPF_JSET, libc::CLONE_THREAD as u32)
+        .guard(libc::SYS_clone, libc::BPF_JSET, libc::CLONE_THREAD as u32);
+    // Limits, scheduling and memory placement of the calling process only
+    // (pid 0); glibc's getrlimit and setrlimit are prlimit64(0, ...).
+    for call in [
+        libc::SYS_prlimit64,
+        libc::SYS_sched_setaffinity,
+        libc::SYS_sched_setscheduler,
+        libc::SYS_sched_setparam,
+        libc::SYS_sched_setattr,
+        libc::SYS_migrate_pages,
+        libc::SYS_move_pages,
+    ] {
+        filter = filter.guard(call, libc::BPF_JEQ, 0);
+    }
+    filter
         // clone3 hides its flags from seccomp; libc falls back to clone.
         .refuse(&[libc::SYS_clone3], libc::ENOSYS)
         .refuse(&refused, libc::EPERM)
@@ -543,6 +575,8 @@ fn lockdown_filter(pid: u32) -> Vec<libc::sock_filter> {
         .guard(libc::SYS_tgkill, libc::BPF_JEQ, pid)
         .guard(libc::SYS_rt_sigqueueinfo, libc::BPF_JEQ, pid)
         .guard(libc::SYS_rt_tgsigqueueinfo, libc::BPF_JEQ, pid)
+        // No further filter, so the attested filter count stays exact.
+        .refuse_when(libc::SYS_prctl, libc::PR_SET_SECCOMP as u32)
         .refuse(
             &[
                 libc::SYS_socket,
@@ -555,8 +589,7 @@ fn lockdown_filter(pid: u32) -> Vec<libc::sock_filter> {
                 libc::SYS_execve,
                 libc::SYS_execveat,
                 libc::SYS_tkill,
-                libc::SYS_pidfd_open,
-                libc::SYS_pidfd_send_signal,
+                libc::SYS_seccomp,
             ],
             libc::EPERM,
         )
@@ -620,8 +653,20 @@ impl Filter {
         ]);
         self
     }
+    /// Refuse `call` with EPERM when its first argument's low word is `value`.
+    fn refuse_when(mut self, call: libc::c_long, value: u32) -> Self {
+        self.0.extend([
+            jump(libc::BPF_JEQ, call as u32, 0, 4),
+            load(DATA_ARG0_LOW),
+            jump(libc::BPF_JEQ, value, 0, 1),
+            ret(errno(libc::EPERM)),
+            ret(libc::SECCOMP_RET_ALLOW),
+        ]);
+        self
+    }
     fn finish(mut self) -> Vec<libc::sock_filter> {
         self.0.push(ret(libc::SECCOMP_RET_ALLOW));
+        assert!(self.0.len() <= BPF_MAXINSNS, "seccomp program too long");
         self.0
     }
 }
