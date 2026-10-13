@@ -5,6 +5,7 @@ import json
 import tarfile
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,6 +15,8 @@ from custody_v2.read_only import ReadOnlyS3
 from custody_v2.retention import (
     BYTE_CAP,
     KEEPER_FACTS,
+    MAX_MANIFEST_BYTES,
+    MAX_PHYSICAL_REFS,
     budget_status,
     classify,
     cost_report,
@@ -22,6 +25,7 @@ from custody_v2.retention import (
     pack_local,
     verify_local,
 )
+from custody_v2.run_dry_run import verify_saved
 
 NOW = datetime(2026, 10, 13, tzinfo=timezone.utc)
 PREFIX = "safe/objects/"
@@ -298,6 +302,91 @@ class ReaderTests(unittest.TestCase):
 
 
 class PackTests(unittest.TestCase):
+    def test_pax_metadata_expansion_refuses_before_tar_parsing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            body = b"x"
+            receipt = pack_local(
+                Path(tmp) / "pack", [(row("score_records", body=body), body)]
+            )
+            manifest = json.loads(Path(receipt["manifest"]).read_bytes())
+            stream = io.BytesIO()
+            with gzip.GzipFile(fileobj=stream, mode="wb", mtime=0) as gz:
+                with tarfile.open(fileobj=gz, mode="w") as archive:
+                    item = tarfile.TarInfo(manifest["blobs"][0]["name"])
+                    item.size = len(body)
+                    item.pax_headers = {"comment": "x" * (32 * 1024)}
+                    archive.addfile(item, io.BytesIO(body))
+            raw = stream.getvalue()
+            self.assertLess(len(raw), 1024)
+            Path(receipt["pack"]).write_bytes(raw)
+            manifest["pack_sha256"] = digest(raw)
+            with self.assertRaisesRegex(ValueError, "bounded expanded tar bytes"):
+                verify_local(receipt["pack"], manifest)
+
+    def test_oversized_manifest_refuses_before_json_or_pack_parsing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = Path(tmp) / "manifest.json"
+            manifest.write_bytes(b"{}" + b" " * MAX_MANIFEST_BYTES)
+            with patch("custody_v2.run_dry_run.json.loads") as parse:
+                with patch("custody_v2.run_dry_run.verify_local") as verify:
+                    with self.assertRaisesRegex(ValueError, "bounded manifest bytes"):
+                        verify_saved(manifest)
+            parse.assert_not_called()
+            verify.assert_not_called()
+
+    def test_readback_digest_binds_verified_manifest_despite_replacement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            first = pack_local(
+                Path(tmp) / "first", [(row("score_records"), b"same bytes")]
+            )
+            second = pack_local(
+                Path(tmp) / "second",
+                [(row("evaluation", version="v2", body=b"other"), b"other")],
+            )
+            expected_raw = Path(first["manifest"]).read_bytes()
+            verified_path = Path(second["manifest"])
+            verified_raw = verified_path.read_bytes()
+
+            def replace_after_verification(pack, index):
+                report = verify_local(pack, index)
+                verified_path.write_bytes(expected_raw)
+                return report
+
+            output = io.StringIO()
+            with patch(
+                "custody_v2.run_dry_run.verify_local",
+                side_effect=replace_after_verification,
+            ):
+                with redirect_stdout(output):
+                    verify_saved(verified_path)
+            report = json.loads(output.getvalue())
+            self.assertEqual(report["manifest_sha256"], digest(verified_raw))
+            self.assertNotEqual(report["manifest_sha256"], digest(expected_raw))
+            self.assertTrue(report["all_member_shas_verified"])
+
+    def test_excessive_reference_and_blob_rosters_refuse(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            body = b"same bytes"
+            members = [
+                (row("score_records", version=str(i)), body)
+                for i in range(MAX_PHYSICAL_REFS + 1)
+            ]
+            with self.assertRaisesRegex(
+                ValueError, "bounded physical reference roster"
+            ):
+                pack_local(Path(tmp) / "too-many", members)
+            receipt = pack_local(Path(tmp) / "one", members[:1])
+            manifest = json.loads(Path(receipt["manifest"]).read_bytes())
+            changed = copy.deepcopy(manifest)
+            changed["refs"] *= MAX_PHYSICAL_REFS + 1
+            with self.assertRaisesRegex(
+                ValueError, "bounded physical reference roster"
+            ):
+                verify_local(receipt["pack"], changed)
+            manifest["blobs"] *= MAX_PHYSICAL_REFS + 1
+            with self.assertRaisesRegex(ValueError, "bounded blob roster"):
+                verify_local(receipt["pack"], manifest)
+
     def test_payload_corruption_refuses_even_if_outer_archive_sha_is_updated(self):
         with tempfile.TemporaryDirectory() as tmp:
             receipt = pack_local(

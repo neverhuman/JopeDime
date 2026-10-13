@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from custody_v2.read_only import ReadOnlyS3
 from custody_v2.retention import (
+    MAX_MANIFEST_BYTES,
     budget_status,
     canonical,
     classify,
@@ -34,9 +35,13 @@ PREFIX = "experiments/gp-policy-dl/v2-trainonly/program-results/flywheel/v1/obje
 
 def verify_saved(manifest):
     manifest = Path(manifest)
-    index = json.loads(manifest.read_bytes())
+    with manifest.open("rb") as file:
+        raw = file.read(MAX_MANIFEST_BYTES + 1)
+    need(len(raw) <= MAX_MANIFEST_BYTES, "bounded manifest bytes")
+    index = json.loads(raw)
+    need(type(index) is dict, "pack manifest object")
     report = verify_local(manifest.parent / (index["pack_sha256"] + ".tar.gz"), index)
-    report["manifest_sha256"] = digest(manifest.read_bytes())
+    report["manifest_sha256"] = digest(raw)
     report["remote_calls"] = 0
     print(json.dumps(report, sort_keys=True))
 
@@ -78,7 +83,8 @@ def main(argv=None):
                 not args.output.resolve().is_relative_to(tree),
                 "bulk custody output must be outside all registered checkouts",
             )
-    rates = json.loads(args.rates.read_bytes())
+    rates_raw = args.rates.read_bytes()
+    rates = json.loads(rates_raw)
     args.output.mkdir(mode=0o700)
     started = datetime.now(timezone.utc)
     report = {
@@ -91,7 +97,7 @@ def main(argv=None):
         "remote_mutations": 0,
         "complete": False,
         "actual_billed_usd": None,
-        "rate_card_sha256": digest(args.rates.read_bytes()),
+        "rate_card_sha256": digest(rates_raw),
         "rate_catalog_sha256": rates.get("catalog_sha256"),
         "rate_catalog_url": rates.get("catalog_url"),
     }

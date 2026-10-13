@@ -36,6 +36,8 @@ KEEPER_FACTS = ("new_context_best", "parity_failure", "cited", "sealed_salt_audi
 SHA = re.compile(r"[0-9a-f]{64}")
 MAX_CAPTURE_BYTES = 64 * 1024**2
 MAX_PACK_BYTES = 128 * 1024**2
+MAX_PHYSICAL_REFS = 512
+MAX_MANIFEST_BYTES = 4 * 1024**2
 
 
 def canonical(value):
@@ -221,6 +223,7 @@ def pack_local(destination, members):
     destination.mkdir(mode=0o700)
     refs, blobs, seen = [], {}, set()
     for row, body in members:
+        need(len(refs) < MAX_PHYSICAL_REFS, "bounded physical reference roster")
         ref = identity(row)
         need(ref not in seen, "duplicate physical object version")
         seen.add(ref)
@@ -286,6 +289,16 @@ def pack_local(destination, members):
 
 def verify_local(pack, index):
     """No extraction, links, extra members, aliases or unchecked SHA values."""
+    need(type(index) is dict, "pack manifest object")
+    need(
+        type(index.get("refs")) is list and 0 < len(index["refs"]) <= MAX_PHYSICAL_REFS,
+        "bounded physical reference roster",
+    )
+    need(
+        type(index.get("blobs")) is list
+        and 0 < len(index["blobs"]) <= MAX_PHYSICAL_REFS,
+        "bounded blob roster",
+    )
     with Path(pack).open("rb") as file:
         raw = file.read(MAX_PACK_BYTES + 1)
     need(len(raw) <= MAX_PACK_BYTES, "bounded compressed pack")
@@ -307,12 +320,17 @@ def verify_local(pack, index):
         integer(blob["bytes"], "blob bytes")
         expected[blob["name"]] = blob
     need(expected, "nonempty blob roster")
-    need(
-        sum(b["bytes"] for b in expected.values()) <= MAX_CAPTURE_BYTES,
-        "bounded unpacked bytes",
-    )
+    payload_bytes = sum(b["bytes"] for b in expected.values())
+    need(payload_bytes <= MAX_CAPTURE_BYTES, "bounded unpacked bytes")
+    # Bound the entire inflated stream before tarfile can allocate PAX/GNU
+    # metadata. Our short CAS names need one header and at most 511 padding
+    # bytes each, plus the final tar record; payload-only limits miss metadata.
+    tar_limit = payload_bytes + 1024 * len(expected) + tarfile.RECORDSIZE
+    with gzip.GzipFile(fileobj=io.BytesIO(raw), mode="rb") as gz:
+        decoded = gz.read(tar_limit + 1)
+    need(len(decoded) <= tar_limit, "bounded expanded tar bytes")
     seen = set()
-    with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as archive:
+    with tarfile.open(fileobj=io.BytesIO(decoded), mode="r:") as archive:
         for item in archive:
             need(
                 item.isfile() and item.name in expected and item.name not in seen,
