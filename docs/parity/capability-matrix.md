@@ -24,7 +24,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 16 | 0 | 16 | 0 | 0 | 0 |
+| new-bin | 17 | 0 | 17 | 0 | 0 | 0 |
 | new-example | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **821** | **353** | **58** | **1** | **402** | **7** |
+| **total** | **822** | **353** | **59** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
@@ -872,3 +872,5 @@ you saw.
 | pipeline-subcommand | (new) jope pipeline score | crates/jope-pipeline/src/cli.rs (jope pipeline score) | jope-pipeline test_score::tests::the_test_split_is_scored_once_per_dataset_and_genome; jope-pipeline test_score::tests::a_score_names_the_earlier_looks_at_its_datasets_test_split | new | Phase 5: re-derives a receipt, refits its selected genome on every train.csv row and scores it once on the sha-verified test.csv; writes a separate `jope.pipeline-test-score/v1` to `<registry>/<dataset_hash>/<program_sha256>.json` (created exclusively, so a repeat for the same dataset and genome in that registry is refused before any fit); records `earlier_looks`, the other genomes already scored on that test split in the registry, and warns when there are any; nothing in the tools reads it back into selection |
 
 | new-example | (new) kernel2 pipeline v4 receipt schema | crates/jope-pipeline/examples/receipt_v4_schema.rs (receipt_v4_schema) | jope-pipeline::jope_pipeline kernel2::cli_tests::v4_schema_matches_its_generated_type_and_legacy_schemas_are_unchanged | new | Owning generator for the additive opt-in kernel2 v4 schema; legacy v1-v3 schemas and defaults unchanged. |
+
+| new-bin | (new) jope_support | crates/jope-learning/src/bin/jope_support.rs (jope_support) | jope-learning::support external_winner_freezes_version_with_finite_added_leaf; jope-learning::support actual_v1_policy_golden_matches_sampling_and_eos_likelihood | new | GB05/J13: local create-only versioned action support/import/verify/index/score and mismatch readout. Fixed deployed vocabulary, TRAIN provenance and caller-pinned support. All qualified=false until G12; no program execution or live objective change. |

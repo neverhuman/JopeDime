@@ -9221,6 +9221,40 @@
         "python"
       ],
       "scope": "GB-10/J3: 7 added synthetic CPU process-death cases (9 SIGKILL scenarios) via run_v2_offline.py, retaining all original230 identities (continuous_v6 83 +147 in other families). Full runner outbox ACK, proof-before-commit, commit-before-closure and partial checkpoint; runner BoundaryDriver during/after real manifest CAS, selected overlay first-exposure commit and truncated overlay packet refusal. Fresh runner interpreter; reopened SQLite/planner/outbox consumers, no duplicate reservation/adoption/exposure, unknown outcomes remain unresolved. Continuous family90; combined237. Process-death fixture proof only, no power-loss/live campaign/S3/GPU/launch/recovery authorization."
+    },
+    "target:jope-learning/bin/jope_support": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/src/bin/jope_support.rs",
+        "test": true
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
+    },
+    "target:jope-learning/test/support": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/support.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
     }
   },
   "lanes": {

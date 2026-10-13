@@ -34,6 +34,7 @@ pub mod revocation;
 pub mod scores;
 pub mod sources;
 pub mod state;
+pub mod support;
 pub mod sync;
 
 /// Version stamped into ledger seals.
