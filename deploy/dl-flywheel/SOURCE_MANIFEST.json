@@ -6670,9 +6670,9 @@
     {
       "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
       "origin": "jopedime_flywheel R25 J15 source (new)",
-      "origin_sha256": "b5e354b45475fd83b1160409fdcc48fa2d0ceabc64329500ab7557f948c516e3",
+      "origin_sha256": "a15dcfa7d7889f23a783740284fd355cda842720b3d0ed924b64c1d175ea41ac",
       "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/README.md",
-      "sha256": "b5e354b45475fd83b1160409fdcc48fa2d0ceabc64329500ab7557f948c516e3"
+      "sha256": "a15dcfa7d7889f23a783740284fd355cda842720b3d0ed924b64c1d175ea41ac"
     },
     {
       "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
@@ -6705,9 +6705,9 @@
     {
       "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
       "origin": "Claude RLFW lane claude-rlfw-20261009 rlfw-takeover/lpi-scratch/x2/configs/r25.json (signed-off config, neighbour digest pinned)",
-      "origin_sha256": "adac63e19b717cb1c4f3c2b78d1793b24729af369e1e50e29988ce547663ff9a",
+      "origin_sha256": "269abcd44abf3cb87118fbd9a01e529a12446f5acb63f4f1129219541775c740",
       "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/configs/r25.json",
-      "sha256": "adac63e19b717cb1c4f3c2b78d1793b24729af369e1e50e29988ce547663ff9a"
+      "sha256": "269abcd44abf3cb87118fbd9a01e529a12446f5acb63f4f1129219541775c740"
     },
     {
       "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
@@ -6740,9 +6740,9 @@
     {
       "normalization": "jopedime_flywheel R25-kNN-CE J15 source (MERGE_TRAIN #2; ENG:watcher sign-off 2026-10-13T07:42:55Z, reconfirmed 08:03:31Z). New package; NON-QUALIFYING scratch arm; prior rows unchanged.",
       "origin": "jopedime_flywheel R25 J15 source (new)",
-      "origin_sha256": "8d0d9078b37f0e920adf10c6cc94a3dfcc8d450ea4867d0dac65b22bf6a41135",
+      "origin_sha256": "1a9cb732cfeb445add136289ebc53db489d08d0336a88de66ef1f197d32e7759",
       "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py",
-      "sha256": "8d0d9078b37f0e920adf10c6cc94a3dfcc8d450ea4867d0dac65b22bf6a41135"
+      "sha256": "1a9cb732cfeb445add136289ebc53db489d08d0336a88de66ef1f197d32e7759"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

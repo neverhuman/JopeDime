@@ -32,7 +32,8 @@ class HarnessGateTest(unittest.TestCase):
         self.assertEqual(cfg['knn'], {'k': 4, 'metric': 'cosine_frozen_normalised_encoding',
                                       'expect_table_digest': 'e9feb0ce846dda2ad2cb6a0143601b3be24cfc56496fc20a'
                                                              '5709cd5c33f0fcc3'})
-        self.assertEqual((cfg['max_updates'], cfg['learning_rate'], cfg['batch_contexts']), (2621, 3.75e-5, 16))
+        self.assertEqual((cfg['max_updates'], cfg['max_epochs'], cfg['learning_rate'], cfg['batch_contexts']),
+                         (1408, 4, 3.75e-5, 16))  # option A, ENG:watcher OWNER DECISION 2026-10-13T08:23:05Z
         self.assertTrue(cfg['resume_v1_moments'])
         self.assertEqual(cfg['l6_roster'], 'full_minus_heldout_lineages')
         self.assertEqual((cfg['kl_alarm'], cfg['kl_disqualify']), (0.03, 0.05))

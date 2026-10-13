@@ -8,7 +8,7 @@ H1 (GB-06) seeded GP with each context's *own* HWM, not with neighbours, so it i
 
 ## Approval
 
-- ENG:watcher signed it off (owner decision) at 2026-10-13T07:42:55Z, and reconfirmed it as a new hypothesis at 08:03:31Z.
+- ENG:watcher signed it off (owner decision) at 2026-10-13T07:42:55Z, reconfirmed it as a new hypothesis at 08:03:31Z, and approved option A (1,408 updates plus a KL-guard contingency) at 08:23:05Z.
 - It is **one** run, with no search, and it is evaluated **once**.
 
 ## The arm (`configs/r25.json`)
@@ -18,7 +18,7 @@ H1 (GB-06) seeded GP with each context's *own* HWM, not with neighbours, so it i
 - LR 3.75e-5, batches of 16 contexts;
 - the same 5,628-context L6 roster (full roster minus held-out lineages), with sweep 6's lineage holdout pinned;
 - the same KL guard (alarm 0.03, stop 0.05);
-- a stop at exactly **2,621** updates.
+- a stop at exactly **1,408** updates (4 epochs of 352). The harness caps one run at 7,020 s of wall time, and at the measured ~3.9 s per update 2,621 updates would not fit (option A).
 
 **Objective.** The arm adds a single term:
 
@@ -42,7 +42,8 @@ The evaluation is G-JUDGE's pre-registration (prereg `4e4d2574`, script `6e4ddb3
   - Candidate: the CI upper bound is below 0.
   - Regression alert: the CI lower bound is above 0.
   - Otherwise the result is INCONCLUSIVE.
-- **Secondary.** The paired comparison against the matched `r23` at 2,621 updates.
+- **Secondary.** The paired comparison against sweep 6's `r23` at its epoch-4 checkpoint (`dfe98994`, 1,408 updates).
+- **KL-guard contingency.** The unchanged guard freezes the arm at an epoch boundary when probe KL ≥ 0.05. If it does, the primary look uses that frozen checkpoint, and the secondary compares it with `r23` at the same epoch.
 
 Evaluation telemetry after each epoch, inherited from the v6 harness, is never treated as a look.
 
