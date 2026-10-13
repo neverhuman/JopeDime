@@ -1,0 +1,404 @@
+//! References that pin object groups: rosters, seed packets, the main tree and the evidence store.
+//!
+//! Declared reference files (`--refs ROLE=PATH`) are JSON or JSONL and must parse; a file that
+//! cannot be read is fatal. Scan roots (`--scan ROLE=DIR`) are walked best-effort: every regular
+//! file up to a size cap whose bytes mention an in-scope bucket is parsed as JSON when it can be
+//! and otherwise token-scanned for `s3://` URIs; the counts are reported.
+//!
+//! What counts as a reference:
+//! - an object with string fields `bucket` and `key` (the roster/receipt artifact form), or a
+//!   `key` without `bucket` next to a `sha256`/`version_id` pin (resolved against the ledger);
+//! - an `s3://bucket/key` string whose key does not end in `/` (an object, not a prefix; bucket
+//!   and prefix mentions in prose are counted separately and pin nothing);
+//! - `context_id`/`context_sha256` and `program_sha256`/`program_sha` fields holding 64 hex
+//!   digits, for declared reference files only.
+
+use anyhow::{bail, Context, Result};
+use serde::Serialize;
+use serde_json::Value;
+use sha2::{Digest, Sha256};
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
+use std::path::Path;
+
+/// Why a reference matters. T0 roles make the group NEVER-delete; the others give it training
+/// value and, when they name objects by key, keep it readable in place.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Role {
+    Val263,
+    Sealed,
+    Prereg,
+    Evidence,
+    MainManifest,
+    Train,
+    Frozen24,
+    Backlog,
+    Seed,
+}
+
+impl Role {
+    pub fn parse(s: &str) -> Result<Role> {
+        Ok(match s {
+            "val263" => Role::Val263,
+            "sealed" => Role::Sealed,
+            "prereg" => Role::Prereg,
+            "evidence" => Role::Evidence,
+            "main-manifest" => Role::MainManifest,
+            "train" => Role::Train,
+            "frozen24" => Role::Frozen24,
+            "backlog" => Role::Backlog,
+            "seed" => Role::Seed,
+            _ => bail!("unknown reference role {s:?} (val263 sealed prereg evidence main-manifest train frozen24 backlog seed)"),
+        })
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Role::Val263 => "val263",
+            Role::Sealed => "sealed",
+            Role::Prereg => "prereg",
+            Role::Evidence => "evidence",
+            Role::MainManifest => "main-manifest",
+            Role::Train => "train",
+            Role::Frozen24 => "frozen24",
+            Role::Backlog => "backlog",
+            Role::Seed => "seed",
+        }
+    }
+
+    /// Strategy §7.3 rule 1 / §8.1 "future qualified-eval input": these refs make a group T0.
+    pub fn is_t0(self) -> bool {
+        matches!(
+            self,
+            Role::Val263 | Role::Sealed | Role::Prereg | Role::Evidence | Role::MainManifest
+        )
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ObjRef {
+    pub role: Role,
+    pub bucket: String,
+    pub key: String,
+    /// The file the reference came from (relative to its scan root for scans).
+    pub source: String,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct ScanStats {
+    pub role: String,
+    pub root: String,
+    pub files_seen: u64,
+    pub files_read: u64,
+    pub files_over_cap: u64,
+    /// Files skipped because their extension is not a text format in [`SCAN_EXTENSIONS`].
+    pub files_not_text: u64,
+    pub files_mentioning_buckets: u64,
+    pub files_unreadable: u64,
+    /// JSON files or JSONL lines skipped because they are inventories, not pins.
+    pub inventory_skipped: u64,
+    pub bytes_read: u64,
+    pub object_refs: u64,
+    pub prefix_mentions: u64,
+    /// sha256 over the sorted `relative path \t size \t sha256` lines of the files that mention
+    /// an in-scope bucket: identifies what the scan actually used.
+    pub matched_listing_sha256: String,
+}
+
+#[derive(Debug, Default)]
+pub struct RefSet {
+    pub objects: BTreeSet<ObjRef>,
+    pub contexts: BTreeMap<String, BTreeSet<Role>>,
+    pub programs: BTreeMap<String, BTreeSet<Role>>,
+    pub prefix_mentions: u64,
+    pub scans: Vec<ScanStats>,
+    /// Source label stamped on references while one file is being read.
+    source: String,
+}
+
+/// Text formats a scan reads; anything else (weights, tensors, archives) cannot hold a pin we
+/// could parse and would only cost I/O.
+pub const SCAN_EXTENSIONS: [&str; 16] = [
+    "json", "jsonl", "md", "txt", "tsv", "csv", "yaml", "yml", "toml", "log", "sh", "rs", "py",
+    "html", "sql", "dsl",
+];
+
+/// Documents that list every object (indexes, ledgers, plans) rather than pin a few. Counting
+/// them as references would make everything they list T0.
+pub const INVENTORY_SCHEMAS: [&str; 5] = [
+    "jopedime.gp-results-index/v1",
+    "jopedime.s3-object-ledger/v1",
+    "jopedime.retention-plan-row/v1",
+    "jopedime.retention-plan-summary/v1",
+    "jopedime.retention-brain-inputs/v1",
+];
+
+fn is_inventory(v: &Value) -> bool {
+    v.get("schema")
+        .and_then(Value::as_str)
+        .is_some_and(|s| INVENTORY_SCHEMAS.contains(&s))
+}
+
+fn is_hex64(s: &str) -> bool {
+    s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+/// Splits `s3://bucket/key`; `None` for anything that is not an object URI.
+pub fn parse_s3_uri(s: &str) -> Option<(String, String)> {
+    let rest = s.strip_prefix("s3://")?;
+    let (bucket, key) = rest.split_once('/')?;
+    let bucket_ok = !bucket.is_empty()
+        && bucket
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'.');
+    if !bucket_ok || key.is_empty() || key.ends_with('/') {
+        return None;
+    }
+    Some((bucket.to_string(), key.to_string()))
+}
+
+impl RefSet {
+    fn add_uri(&mut self, role: Role, s: &str, count: &mut (u64, u64)) {
+        match parse_s3_uri(s) {
+            Some((bucket, key)) => {
+                self.objects.insert(ObjRef {
+                    role,
+                    bucket,
+                    key,
+                    source: self.source.clone(),
+                });
+                count.0 += 1;
+            }
+            None => {
+                self.prefix_mentions += 1;
+                count.1 += 1;
+            }
+        }
+    }
+
+    /// Collects references from one JSON value. `ids` enables context/program id pins.
+    pub fn walk_json(&mut self, role: Role, v: &Value, ids: bool, count: &mut (u64, u64)) {
+        match v {
+            Value::Object(m) => {
+                if let (Some(Value::String(bucket)), Some(Value::String(key))) =
+                    (m.get("bucket"), m.get("key"))
+                {
+                    if !key.is_empty() && !key.ends_with('/') {
+                        self.objects.insert(ObjRef {
+                            role,
+                            bucket: bucket.clone(),
+                            key: key.clone(),
+                            source: self.source.clone(),
+                        });
+                        count.0 += 1;
+                    }
+                } else if let (None, Some(Value::String(key))) = (m.get("bucket"), m.get("key")) {
+                    // `{key, sha256|version_id}` without a bucket (e.g. frozen24 gp_hwm_ref): the
+                    // bucket is resolved later from the ledger, and only when exactly one matches.
+                    let pinned = m.contains_key("sha256") || m.contains_key("version_id");
+                    if pinned && key.contains('/') && !key.ends_with('/') {
+                        self.objects.insert(ObjRef {
+                            role,
+                            bucket: String::new(),
+                            key: key.clone(),
+                            source: self.source.clone(),
+                        });
+                        count.0 += 1;
+                    }
+                }
+                if ids {
+                    for (field, target) in [
+                        ("context_id", 0u8),
+                        ("context_sha256", 0),
+                        ("program_sha256", 1),
+                        ("program_sha", 1),
+                    ] {
+                        if let Some(Value::String(s)) = m.get(field) {
+                            if is_hex64(s) {
+                                let map = if target == 0 {
+                                    &mut self.contexts
+                                } else {
+                                    &mut self.programs
+                                };
+                                map.entry(s.to_ascii_lowercase()).or_default().insert(role);
+                            }
+                        }
+                    }
+                }
+                for child in m.values() {
+                    self.walk_json(role, child, ids, count);
+                }
+            }
+            Value::Array(a) => {
+                for child in a {
+                    self.walk_json(role, child, ids, count);
+                }
+            }
+            Value::String(s) if s.starts_with("s3://") => self.add_uri(role, s, count),
+            _ => {}
+        }
+    }
+
+    /// Token-scans text for `s3://` URIs.
+    pub fn scan_text(&mut self, role: Role, text: &str, count: &mut (u64, u64)) {
+        let mut rest = text;
+        while let Some(i) = rest.find("s3://") {
+            let tail = &rest[i..];
+            let end = tail
+                .find(|c: char| c.is_whitespace() || "\"'`<>()[]{},;|\\".contains(c))
+                .unwrap_or(tail.len());
+            let token = tail[..end].trim_end_matches(['.', ':']);
+            self.add_uri(role, token, count);
+            rest = &tail[5..];
+        }
+    }
+
+    /// A declared reference file: JSON, or JSONL when the name ends in `.jsonl`. Must parse.
+    pub fn add_file(&mut self, role: Role, name: &str, bytes: &[u8]) -> Result<(u64, u64)> {
+        self.source = name.to_string();
+        let mut count = (0, 0);
+        if name.ends_with(".jsonl") {
+            let text =
+                std::str::from_utf8(bytes).with_context(|| format!("{name} is not UTF-8"))?;
+            for (n, line) in text.lines().enumerate() {
+                if line.trim().is_empty() {
+                    continue;
+                }
+                let v: Value = serde_json::from_str(line)
+                    .with_context(|| format!("{name} line {} does not parse", n + 1))?;
+                self.walk_json(role, &v, true, &mut count);
+            }
+        } else {
+            let v: Value = serde_json::from_slice(bytes)
+                .with_context(|| format!("{name} does not parse as JSON"))?;
+            self.walk_json(role, &v, true, &mut count);
+        }
+        Ok(count)
+    }
+
+    /// Walks a scan root. `needles` are substrings (in-scope bucket name stems) a file must
+    /// contain to be parsed; `skip_dirs` are directory names never entered.
+    pub fn scan_root(
+        &mut self,
+        role: Role,
+        root: &Path,
+        max_bytes: u64,
+        needles: &[String],
+        skip_dirs: &[&str],
+    ) -> Result<()> {
+        if !root.is_dir() {
+            bail!(
+                "scan root {} ({}) is not a directory",
+                root.display(),
+                role.as_str()
+            );
+        }
+        let mut st = ScanStats {
+            role: role.as_str().into(),
+            root: root.display().to_string(),
+            ..Default::default()
+        };
+        let mut listing: Vec<String> = Vec::new();
+        let walker = walkdir::WalkDir::new(root)
+            .follow_links(false)
+            .sort_by_file_name()
+            .into_iter();
+        let walker = walker.filter_entry(|e| {
+            !(e.file_type().is_dir()
+                && e.depth() > 0
+                && skip_dirs.iter().any(|d| e.file_name() == *d))
+        });
+        for entry in walker {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(_) => {
+                    st.files_unreadable += 1;
+                    continue;
+                }
+            };
+            if !entry.file_type().is_file() {
+                continue;
+            }
+            st.files_seen += 1;
+            let ext = entry
+                .path()
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or_default()
+                .to_ascii_lowercase();
+            if !SCAN_EXTENSIONS.contains(&ext.as_str()) {
+                st.files_not_text += 1;
+                continue;
+            }
+            let len = entry.metadata().map(|m| m.len()).unwrap_or(u64::MAX);
+            if len > max_bytes {
+                st.files_over_cap += 1;
+                continue;
+            }
+            let Ok(bytes) = fs::read(entry.path()) else {
+                st.files_unreadable += 1;
+                continue;
+            };
+            st.files_read += 1;
+            st.bytes_read += bytes.len() as u64;
+            let text = String::from_utf8_lossy(&bytes);
+            if !needles.iter().any(|n| text.contains(n.as_str())) {
+                continue;
+            }
+            st.files_mentioning_buckets += 1;
+            let rel = entry
+                .path()
+                .strip_prefix(root)
+                .unwrap_or(entry.path())
+                .display()
+                .to_string();
+            listing.push(format!(
+                "{rel}\t{}\t{}",
+                bytes.len(),
+                hex::encode(Sha256::digest(&bytes))
+            ));
+            self.source = rel;
+            let mut count = (0, 0);
+            let name = entry.file_name().to_string_lossy();
+            let parsed = if name.ends_with(".jsonl") {
+                let mut ok = true;
+                for line in text.lines().filter(|l| !l.trim().is_empty()) {
+                    match serde_json::from_str::<Value>(line) {
+                        Ok(v) if is_inventory(&v) => st.inventory_skipped += 1,
+                        Ok(v) => self.walk_json(role, &v, false, &mut count),
+                        Err(_) => {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+                ok
+            } else if name.ends_with(".json") {
+                match serde_json::from_str::<Value>(&text) {
+                    Ok(v) if is_inventory(&v) => {
+                        st.inventory_skipped += 1;
+                        true
+                    }
+                    Ok(v) => {
+                        self.walk_json(role, &v, false, &mut count);
+                        true
+                    }
+                    Err(_) => false,
+                }
+            } else {
+                false
+            };
+            if !parsed {
+                count = (0, 0);
+                self.scan_text(role, &text, &mut count);
+            }
+            st.object_refs += count.0;
+            st.prefix_mentions += count.1;
+        }
+        listing.sort();
+        st.matched_listing_sha256 = hex::encode(Sha256::digest(listing.join("\n").as_bytes()));
+        self.scans.push(st);
+        Ok(())
+    }
+}
