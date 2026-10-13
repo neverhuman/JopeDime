@@ -7,48 +7,59 @@ deadline. A fake runner (DL_OFFLINE_RUNNER) sleeps per step, with seconds standi
 import os
 from pathlib import Path
 import subprocess
-import sys
 import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().with_name("dl-offline-group.sh")
-FAKE = """import os, sys, time
-log, args = os.environ["FAKE_LOG"], sys.argv[1:]
-step = "combine" if "--combine" in args else "shard " + args[args.index("--shard") + 1]
-with open(log, "a") as f:
-    f.write("start " + step + " " + args[args.index("--output") + 1] + "\\n")
-time.sleep(float(os.environ["FAKE_COMBINE_S" if step == "combine" else "FAKE_SHARD_S"]))
-with open(log, "a") as f:
-    f.write("end " + step + "\\n")
+# A shell fake, not Python. Import startup under load consumed the old sub-second
+# slack and the group reported "passed before" instead of "expired during".
+FAKE = """#!/bin/bash
+set -euo pipefail
+log=$FAKE_LOG
+step=""
+output=""
+args=("$@")
+i=0
+while (( i < ${#args[@]} )); do
+  case "${args[$i]}" in
+    --combine) step=combine ;;
+    --shard) i=$((i + 1)); step="shard ${args[$i]}" ;;
+    --output) i=$((i + 1)); output="${args[$i]}" ;;
+  esac
+  i=$((i + 1))
+done
+printf 'start %s %s\\n' "$step" "$output" >> "$log"
+if [[ $step == combine ]]; then sleep "$FAKE_COMBINE_S"; else sleep "$FAKE_SHARD_S"; fi
+printf 'end %s\\n' "$step" >> "$log"
 """
 
 
 class CommonDeadline(unittest.TestCase):
     def run_group(self, budget, shard_s, combine_s):
         tmp = Path(tempfile.mkdtemp(prefix="dl-offline-group-"))
-        fake = tmp / "fake_runner.py"
+        fake = tmp / "fake_runner.sh"
         fake.write_text(FAKE)
         log = tmp / "steps.log"
-        env = dict(os.environ, DL_OFFLINE_RUNNER=f"{sys.executable} {fake}", FAKE_LOG=str(log),
+        env = dict(os.environ, DL_OFFLINE_RUNNER=f"bash {fake}", FAKE_LOG=str(log),
                    FAKE_SHARD_S=str(shard_s), FAKE_COMBINE_S=str(combine_s))
         r = subprocess.run(["bash", str(SCRIPT), str(budget), str(tmp / "out")], env=env, capture_output=True, text=True, timeout=60)
         steps = log.read_text().splitlines() if log.exists() else []
         return r, steps, tmp / "out"
 
     def test_each_step_fits_but_the_total_exceeds_the_deadline(self):
-        # every step (0.8 s) is far below the 2 s budget; 3 shards alone already need 2.4 s
-        r, steps, _ = self.run_group(2, 0.8, 0.1)
+        # 3 s fits in the 8 s budget. Two shards leave 2 s, so shard 3 starts and the deadline fires during it.
+        r, steps, _ = self.run_group(8, 3.0, 0.1)
         self.assertEqual(r.returncode, 124, r.stderr)
-        self.assertIn("common 2s deadline expired during: --shard 3/3", r.stderr)
+        self.assertIn("common 8s deadline expired during: --shard 3/3", r.stderr)
         self.assertIn("start shard 3/3", " ".join(steps))
         self.assertNotIn("end shard 3/3", steps)
         self.assertFalse(any(s.startswith("start combine") for s in steps), steps)
 
     def test_combine_runs_inside_the_same_deadline(self):
-        # the shards fit (1.5 s of 2 s); combine (0.9 s) pushes the group past the deadline
-        r, steps, _ = self.run_group(2, 0.5, 0.9)
+        # three 1.5 s shards fit in 8 s; combine at 4 s starts with time left and is killed during it.
+        r, steps, _ = self.run_group(8, 1.5, 4.0)
         self.assertEqual(r.returncode, 124, r.stderr)
-        self.assertIn("common 2s deadline expired during: --combine", r.stderr)
+        self.assertIn("common 8s deadline expired during: --combine", r.stderr)
         self.assertIn("end shard 3/3", steps)
         self.assertNotIn("end combine", steps)
 
