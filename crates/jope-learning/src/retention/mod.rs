@@ -1,0 +1,102 @@
+//! S3 retention brain (gap S3-RET; `S3_STORAGE_STRATEGY_20261013.md` §7 and the binding §8).
+//!
+//! A read-only, fail-closed classifier. It maps every S3 object group to exactly one action and
+//! writes a dry-run plan; it never calls S3 and has no code path that tags, transitions, copies
+//! or deletes anything. Applying a plan is a separate, owner-approved step keyed by the plan's
+//! sha256.
+//!
+//! Inputs are local snapshots, each pinned by sha256 in `brain-inputs.lock.json`:
+//! - the uncapped S3 object ledger (`jopedime.s3-object-ledger/v1`), flattened into prefix groups
+//!   ([`groups`]); S3 Inventory replaces it once the daily reports exist;
+//! - the GP results index (`jopedime.gp-results-index/v1`), aggregated per group ([`index`]);
+//! - rosters, seed packets and reference scans of the main tree and the evidence store
+//!   ([`refs`]);
+//! - each bucket's lifecycle configuration ([`lifecycle`]);
+//! - the retention policy ([`policy`]): prices, thresholds and the prefix-to-kind map.
+//!
+//! The rules (§8): "poor", "dominated", "old" or "NON-QUAL" is never a reason to delete; training
+//! value TV(g) is computed first and fails closed to true. A group may only EXPIRE when TV(g) is
+//! false, an E1–E5 rule is proven with object-level evidence, and an independent reference scan
+//! agrees. The ledger only gives prefix-level counts, where no E-rule can be proven, so this
+//! version never emits EXPIRE; [`classify::expire_allowed`] states the gate.
+
+pub mod classify;
+pub mod groups;
+pub mod index;
+pub mod inputs;
+pub mod lifecycle;
+pub mod plan;
+pub mod policy;
+pub mod refs;
+
+use serde::Serialize;
+
+pub const PLAN_ROW_SCHEMA: &str = "jopedime.retention-plan-row/v1";
+pub const PLAN_SUMMARY_SCHEMA: &str = "jopedime.retention-plan-summary/v1";
+pub const INPUTS_LOCK_SCHEMA: &str = "jopedime.retention-brain-inputs/v1";
+
+/// The one action a group gets. Serialized names follow strategy §8.4 and §8.7.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub enum Action {
+    /// Never delete; no transition proposed by this plan (T0).
+    #[serde(rename = "KEEP_T0")]
+    KeepT0,
+    /// Keep readable in its current class (T1): live writer, active roster input, encodings.
+    #[serde(rename = "KEEP_HOT")]
+    KeepHot,
+    /// Pack small objects into >= 64 MiB zstd shards plus an index; stays readable (T2).
+    #[serde(rename = "COMPACT")]
+    Compact,
+    /// Distill rows into `gp_distilled/v1`, then pack the raw bytes and archive them (T3).
+    #[serde(rename = "DISTILL+COLD")]
+    DistillCold,
+    /// Opaque archive (tarball, git bundle): cold storage only, nothing to distill (T3).
+    #[serde(rename = "COLD")]
+    Cold,
+    /// No change; flagged for review (default rule, owner decision pending, or out of scope).
+    #[serde(rename = "HOLD")]
+    Hold,
+    /// Provably redundant bytes (E1–E5 with object-level evidence). Never emitted by this version.
+    #[serde(rename = "EXPIRE")]
+    Expire,
+}
+
+impl Action {
+    pub const ALL: [Action; 7] = [
+        Action::KeepT0,
+        Action::KeepHot,
+        Action::Compact,
+        Action::DistillCold,
+        Action::Cold,
+        Action::Hold,
+        Action::Expire,
+    ];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Action::KeepT0 => "KEEP_T0",
+            Action::KeepHot => "KEEP_HOT",
+            Action::Compact => "COMPACT",
+            Action::DistillCold => "DISTILL+COLD",
+            Action::Cold => "COLD",
+            Action::Hold => "HOLD",
+            Action::Expire => "EXPIRE",
+        }
+    }
+
+    pub fn tier(self) -> &'static str {
+        match self {
+            Action::KeepT0 => "T0",
+            Action::KeepHot => "T1",
+            Action::Compact => "T2",
+            Action::DistillCold | Action::Cold => "T3",
+            Action::Hold => "HOLD",
+            Action::Expire => "T4",
+        }
+    }
+}
+
+/// Rounds a dollar or GB figure so plan bytes do not depend on float noise.
+pub fn round4(x: f64) -> f64 {
+    (x * 1e4).round() / 1e4
+}
