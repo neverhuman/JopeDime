@@ -1352,6 +1352,26 @@
       ],
       "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
+    "python:deploy/dl-flywheel/ingest_joined_roster/tests/test_roster.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Read-only S3 adapter and manifest-last native roster data contracts: version/hash/role/family/identity checks, dedupe/idempotency, source drift and crash recovery. Offline fixtures only; no AWS/model/evaluator."
+    },
+    "python:deploy/dl-flywheel/ingest_joined_roster/tests/test_s3.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Read-only S3 adapter and manifest-last native roster data contracts: version/hash/role/family/identity checks, dedupe/idempotency, source drift and crash recovery. Offline fixtures only; no AWS/model/evaluator."
+    },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py": {
       "discovery": {
         "kind": "python-family"
