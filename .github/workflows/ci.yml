@@ -109,12 +109,20 @@ jobs:
     if: needs.changes.outputs.rust == 'true'
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 45
+    # Two deterministic nextest slices of the unchanged selection, one per jope-ci runner. Both
+    # always finish so every failure is reported; the aggregate job proves (check_test_partition.py)
+    # that the slices select and execute the unsharded rust-test set exactly once between them.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     env:
       JOPE_PARITY_STRICT: "1"
       OMP_NUM_THREADS: "1"
       RAYON_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
+      JOPE_RUST_TEST_PARTITION: slice:${{ matrix.shard }}/2
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -128,14 +136,16 @@ jobs:
         id: lane
         run: |
           set -euo pipefail
-          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB-$SHARD"
           python3 deploy/ci/receipt.py --lane rust-test --output "$evidence" --backend nextest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh rust-test
+        env:
+          SHARD: ${{ matrix.shard }}
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
         with:
-          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}-${{ matrix.shard }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}-${{ matrix.shard }}/
 
   emitters:
     needs: changes
@@ -308,6 +318,14 @@ jobs:
           mkdir -p "$output"
           printf '%s\n' "$NEEDS_JSON" > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
+      # aggregate.py already fails on this; the separate report is the retained proof.
+      - name: Rust test slices cover the unsharded rust-test set exactly once
+        if: always() && needs.changes.outputs.rust == 'true'
+        run: |
+          set -euo pipefail
+          output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$output"
+          python3 deploy/ci/check_test_partition.py rust-shards --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --output "$output/rust-test-partition.json"
       - name: Upload aggregate inventory
         if: always()
         uses: ./.github/actions/upload-ci-evidence

@@ -176,8 +176,104 @@ sys.exit(int(a.status))
             self.assertEqual(['bash','deploy/ci/full-lane.sh',name],command[4:])
             total += int(command[3][:-1]) + 15
         workflow = (ROOT/'.github/workflows/full-main.yml').read_text()
+        # The cpu job keeps the single job's deadline, which fits every family, so it fits each group.
         job_minutes = int(re.search(r'^    timeout-minutes: (\d+)$', workflow, re.M)[1])
+        self.assertEqual(130, job_minutes)
         self.assertLessEqual(total, (job_minutes - 5) * 60)
+        self.assertEqual([], full.partition_errors(lanes, full.GROUPS))
+        self.assertEqual(['cpu-1', 'cpu-2'], list(full.GROUPS))
+        self.assertEqual(1, workflow.count('        group: [cpu-1, cpu-2]\n'))
+
+    def test_groups_run_only_their_families_in_declared_order(self):
+        mapping = copy.deepcopy(self.mapping)
+        for name in ('full-two', 'full-three'):
+            mapping['lanes'][name] = dict(self.mapping['lanes']['full-one'])
+        calls = []
+        def execute(name, command, destination, backend, junit):
+            calls.append(name)
+            return 0
+        groups = {'cpu-1': ('full-three', 'full-one'), 'cpu-2': ('full-two',)}
+        with tempfile.TemporaryDirectory() as scratch, patch.object(full, 'GROUPS', groups):
+            self.assertEqual(0, full.run(mapping, Path(scratch)/'one', execute, 'cpu-1'))
+            self.assertEqual(['full-one', 'full-three'], calls)
+            self.assertEqual(0, full.run(mapping, Path(scratch)/'all', execute))
+            self.assertEqual(['full-one', 'full-three', 'full-one', 'full-two', 'full-three'], calls)
+            for broken in ({'cpu-1': ('full-one', 'full-three')},
+                           {'cpu-1': ('full-one', 'full-three'), 'cpu-2': ('full-two', 'full-one')},
+                           {'cpu-1': ('full-one', 'full-three'), 'cpu-2': ('full-two', 'full-four')}):
+                with self.subTest(broken=broken), patch.object(full, 'GROUPS', broken):
+                    with self.assertRaisesRegex(ValueError, 'do not partition'):
+                        full.run(mapping, Path(scratch)/'never', execute, 'cpu-1')
+                    self.assertFalse((Path(scratch)/'never').exists())
+            with self.assertRaisesRegex(ValueError, 'unknown full CPU group'):
+                full.run(mapping, Path(scratch)/'never', execute, 'cpu-3')
+
+
+class FullAggregateTests(unittest.TestCase):
+    setUp = FullMainTests.setUp
+
+    def downloads(self, root, groups):
+        mapping = copy.deepcopy(self.mapping)
+        for group, names in groups.items():
+            folder = root / f'full-cpu-123-1-{group}'
+            folder.mkdir()
+            for name in names:
+                mapping['lanes'][name] = dict(self.mapping['lanes']['full-one'], command=['fixture', name])
+                (folder / name).mkdir()
+                (folder / name / 'command.log').write_text('fixture\n')
+                data = self.passing_receipt(name)
+                data['evidence'] = {'command.log': receipt.digest(folder / name / 'command.log')}
+                (folder / name / 'receipt.json').write_text(json.dumps(data))
+        return mapping
+
+    def passing_receipt(self, name):
+        return dict(schema='jope.ci-receipt/v1', **self.expected, lane=name, command=['fixture', name], dirty_source=[], dirty_source_after=[],
+                    status='passed', exit_status=0, finished_at='2026-09-22T00:00:01+00:00',
+                    inputs={name: receipt.digest(ROOT/name) for name in receipt.INPUTS},
+                    counts=dict.fromkeys(('collected','executed','passed','failed','skipped','excluded')), evidence={})
+
+    def inventories(self, root, mapping, groups):
+        for group in groups:
+            report = full.summarize(mapping, root / f'full-cpu-123-1-{group}', self.expected, group)
+            (root / f'full-cpu-123-1-{group}' / 'inventory.json').write_text(json.dumps(report))
+
+    def test_every_family_once_across_groups_or_fail(self):
+        groups = {'cpu-1': ('full-one', 'full-three'), 'cpu-2': ('full-two',)}
+        needs = {'cpu': {'result': 'success', 'outputs': {}}}
+        with patch.object(full, 'GROUPS', groups):
+            with tempfile.TemporaryDirectory() as scratch:
+                root = Path(scratch)
+                mapping = self.downloads(root, groups)
+                self.inventories(root, mapping, groups)
+                report = full.aggregate(mapping, root, needs, self.expected)
+                self.assertEqual([], report['errors'])
+                self.assertEqual(['full-one', 'full-three', 'full-two'], report['partition']['executed'])
+                self.assertEqual('failed', full.aggregate(mapping, root, {'cpu': {'result': 'failure'}}, self.expected)['status'])
+                self.assertEqual('failed', full.aggregate(mapping, root, needs, dict(self.expected, attempt=2))['status'])
+                (root / 'full-cpu-123-1-cpu-1' / 'full-three' / 'command.log').write_text('tampered')
+                report = full.aggregate(mapping, root, needs, self.expected)
+                self.assertIn('cpu-1: full-three: unsafe or changed evidence: command.log', report['errors'])
+            with tempfile.TemporaryDirectory() as scratch:
+                root = Path(scratch)
+                mapping = self.downloads(root, groups)
+                self.inventories(root, mapping, {'cpu-1': groups['cpu-1']})
+                report = full.aggregate(mapping, root, needs, self.expected)
+                self.assertIn('family full-two has no verified receipt', report['errors'])
+                self.inventories(root, mapping, {'cpu-2': groups['cpu-2']})
+                self.assertEqual('passed', full.aggregate(mapping, root, needs, self.expected)['status'])
+                (root / 'full-cpu-123-1-cpu-3').mkdir()
+                self.assertIn('unexpected artifact full-cpu-123-1-cpu-3', full.aggregate(mapping, root, needs, self.expected)['errors'])
+                (root / 'full-cpu-123-1-cpu-3').rmdir()
+                recorded = json.loads((root / 'full-cpu-123-1-cpu-2' / 'inventory.json').read_text())
+                (root / 'full-cpu-123-1-cpu-2' / 'inventory.json').write_text(json.dumps(dict(recorded, group='cpu-1')))
+                self.assertEqual('failed', full.aggregate(mapping, root, needs, self.expected)['status'])
+            # A family a group does not hold is never reported as verified by another group.
+            overlap = {'cpu-1': ('full-one', 'full-three'), 'cpu-2': ('full-two', 'full-three')}
+            with patch.object(full, 'GROUPS', overlap), tempfile.TemporaryDirectory() as scratch:
+                root = Path(scratch)
+                mapping = self.downloads(root, overlap)
+                report = full.aggregate(mapping, root, needs, self.expected)
+                self.assertIn('family full-three is in 2 groups', report['errors'])
 
     def test_scratch_family_covers_main_test_deadline_and_collection(self):
         mapping = json.loads((ROOT/'deploy/ci/coverage.json').read_text())

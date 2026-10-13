@@ -30,6 +30,9 @@ python3 deploy/ci/test-status.py
 python3 deploy/ci/test-runner.py
 python3 deploy/ci/test-provenance.py
 python3 deploy/ci/test-full-main.py
+    # Split jobs cover the families and rust-test slices of the single jobs they replaced (and,
+    # on a pull request, nothing the base declared is missing)
+python3 deploy/ci/check_test_partition.py static --base "${BASE_SHA:-}" --output "$EVIDENCE/test-partition-static.json"
 python3 deploy/ci/test-training-proof.py
 python3 deploy/ci/test-install-private.py
 python3 deploy/ci/test-qualify-demo.py
@@ -216,9 +219,13 @@ uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analy
 rustup show active-toolchain
     # cargo-nextest from the image
 cargo nextest --version | grep -qF 'cargo-nextest 0.9.133' || { cargo nextest --version >&2; echo 'expected the image-pinned cargo-nextest 0.9.133' >&2; exit 1; }
-    # Product-crate tests (blocking)
+    # Product-crate tests (blocking), one slice of them per ci.yml matrix leg
 set -euo pipefail
 mkdir -p "$EVIDENCE"
+partition=${JOPE_RUST_TEST_PARTITION:?ci.yml sets the slice:M/N partition of each rust-test leg}
+if ! [[ $partition =~ ^slice:([1-9][0-9]*)/([1-9][0-9]*)$ ]] || (( BASH_REMATCH[1] > BASH_REMATCH[2] )); then
+  echo "invalid rust-test partition: $partition" >&2; exit 1
+fi
 # Capture first so a failing scope script aborts here: inside `read -ra pkgs <<< "$(...)"`
 # the command substitution's exit status is discarded, pkgs would be empty, and cargo
 # would silently run UNSCOPED — straight back into the 72 GB link this lane exists to avoid.
@@ -238,6 +245,7 @@ runner="$(uname -srm)"
   echo "runner=${runner}"
   echo "toolchain=${toolchain}"
   echo "packages=${scope}"
+  echo "partition=${partition}"
 } | tee "$EVIDENCE"/identity.txt
 df -B1 --output=source,size,used,avail,pcent / | tee "$EVIDENCE"/disk-before.txt
 # Marks that nextest was reached, so the retention step can tell "the report is missing"
@@ -248,11 +256,16 @@ junit="$target/nextest/pr/junit.xml"
 # upload it as this run's test result from the persistent target.
 if [ -f "$junit" ]; then mv "$junit" "$EVIDENCE"/prior-junit.xml; fi
 cargo run -q --locked -p jope-ci -- cargo-artifact nextest-config --output "$EVIDENCE"/nextest.toml
-cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context" --message-format json > "$EVIDENCE/collection.json"
+selection=(--config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context")
+# The unpartitioned listing is the whole pre-split rust-test selection. The aggregate job's
+# check_test_partition.py proves the slices select and execute it exactly once between them.
+cargo nextest list "${selection[@]}" --message-format json > "$EVIDENCE/collection-unsharded.json"
+cargo nextest list "${selection[@]}" --partition "$partition" --message-format json > "$EVIDENCE/collection.json"
 touch "$EVIDENCE"/nextest-started
 # Bound simultaneous compiler fixtures while retaining their original deadlines.
-cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context" --test-threads 4
-python3 deploy/ci/training-proof.py rust --collection "$EVIDENCE/collection.json" --junit "$junit"
+cargo nextest run "${selection[@]}" --partition "$partition" --test-threads 4
+# Required training proofs outside this slice are proven in the other one (aggregate job).
+python3 deploy/ci/training-proof.py rust --partitioned --collection "$EVIDENCE/collection.json" --junit "$junit"
     ;;
   e2e-smoke)
     # Toolchain (from rust-toolchain.toml)

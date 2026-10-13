@@ -122,6 +122,59 @@ class TrainingProofTests(unittest.TestCase):
         self.save(*self.fixture("python"))
         self.assertEqual(proof.verify("python", self.junit)["required_executed"], 40)
 
+    def slices(self, owners):
+        """owners[i]: the slice (1 or 2) whose partition selects REQUIRED['rust'][i]."""
+        pairs = []
+        for shard in (1, 2):
+            root, collection = self.fixture("rust")
+            suite = root.find("testsuite")
+            for (binary, name), owner in zip(proof.REQUIRED["rust"], owners):
+                if owner != shard:
+                    collection["rust-suites"][binary]["testcases"][name]["filter-match"] = {"status": "mismatch", "reason": "partition"}
+                    suite.remove(next(case for case in suite.iter("testcase") if case.get("classname") == binary and case.get("name") == name))
+            junit, listing = self.root / f"junit-{shard}.xml", self.root / f"collection-{shard}.json"
+            ET.ElementTree(root).write(junit)
+            listing.write_text(json.dumps(collection))
+            pairs.append((listing, junit))
+        return pairs
+
+    def test_partitioned_slices_prove_every_case_exactly_once(self):
+        owners = [1 + i % 2 for i in range(len(proof.REQUIRED["rust"]))]
+        pairs = self.slices(owners)
+        first = proof.verify("rust", pairs[0][1], pairs[0][0], partitioned=True)
+        self.assertEqual((first["required_executed"], first["outside_partition"]), (15, 14))
+        self.assertEqual(proof.union("rust", pairs)["required_executed"], 29)
+        # Unpartitioned, a slice still fails: a case outside it is not selected.
+        with self.assertRaisesRegex(ValueError, "not selected"):
+            proof.verify("rust", pairs[0][1], pairs[0][0])
+        # A case its own slice also leaves to the partition runs nowhere: not proven.
+        listing = json.loads(pairs[0][0].read_text())
+        binary, name = proof.REQUIRED["rust"][0]
+        listing["rust-suites"][binary]["testcases"][name]["filter-match"] = {"status": "mismatch", "reason": "partition"}
+        pairs[0][0].write_text(json.dumps(listing))
+        root = ET.parse(pairs[0][1]).getroot()
+        suite = root.find("testsuite")
+        suite.remove(next(case for case in suite.iter("testcase") if case.get("classname") == binary and case.get("name") == name))
+        ET.ElementTree(root).write(pairs[0][1])
+        with self.assertRaisesRegex(ValueError, "not executed exactly once"):
+            proof.union("rust", pairs)
+        # Only the partition may exclude a case; any other filter still fails the slice.
+        for match in ({"status": "mismatch", "reason": "default-filter"}, {"status": "mismatch", "reason": "ignored"}):
+            listing["rust-suites"][binary]["testcases"][name]["filter-match"] = match
+            pairs[0][0].write_text(json.dumps(listing))
+            with self.assertRaisesRegex(ValueError, "not selected"):
+                proof.verify("rust", pairs[0][1], pairs[0][0], partitioned=True)
+
+    def test_case_outside_the_slice_must_not_be_reported_there(self):
+        owners = [1] * len(proof.REQUIRED["rust"])
+        pairs = self.slices(owners)
+        root = ET.parse(pairs[1][1]).getroot()
+        binary, name = proof.REQUIRED["rust"][0]
+        ET.SubElement(root.find("testsuite"), "testcase", classname=binary, name=name, time="0.01")
+        ET.ElementTree(root).write(pairs[1][1])
+        with self.assertRaisesRegex(ValueError, "outside this partition was reported"):
+            proof.verify("rust", pairs[1][1], pairs[1][0], partitioned=True)
+
 
 if __name__ == "__main__":
     unittest.main()
