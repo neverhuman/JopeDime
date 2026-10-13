@@ -144,6 +144,11 @@ fn is_hex64(s: &str) -> bool {
     s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
+/// An object key, not a prefix (`.../`) or a pattern/placeholder (`*`, `?`, `{}`, `$`, `<>`).
+pub fn is_object_key(key: &str) -> bool {
+    !key.is_empty() && !key.ends_with('/') && !key.contains(['*', '?', '{', '}', '$', '<', '>'])
+}
+
 /// Splits `s3://bucket/key`; `None` for anything that is not an object URI.
 pub fn parse_s3_uri(s: &str) -> Option<(String, String)> {
     let rest = s.strip_prefix("s3://")?;
@@ -152,7 +157,7 @@ pub fn parse_s3_uri(s: &str) -> Option<(String, String)> {
         && bucket
             .bytes()
             .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'.');
-    if !bucket_ok || key.is_empty() || key.ends_with('/') {
+    if !bucket_ok || !is_object_key(key) {
         return None;
     }
     Some((bucket.to_string(), key.to_string()))
@@ -184,7 +189,7 @@ impl RefSet {
                 if let (Some(Value::String(bucket)), Some(Value::String(key))) =
                     (m.get("bucket"), m.get("key"))
                 {
-                    if !key.is_empty() && !key.ends_with('/') {
+                    if is_object_key(key) {
                         self.objects.insert(ObjRef {
                             role,
                             bucket: bucket.clone(),
@@ -197,7 +202,7 @@ impl RefSet {
                     // `{key, sha256|version_id}` without a bucket (e.g. frozen24 gp_hwm_ref): the
                     // bucket is resolved later from the ledger, and only when exactly one matches.
                     let pinned = m.contains_key("sha256") || m.contains_key("version_id");
-                    if pinned && key.contains('/') && !key.ends_with('/') {
+                    if pinned && key.contains('/') && is_object_key(key) {
                         self.objects.insert(ObjRef {
                             role,
                             bucket: String::new(),

@@ -305,7 +305,7 @@ fn fixture() -> Fixture {
     put(
         &root.join("repo/docs/notes.md"),
         format!(
-            "See s3://{LEARN}/experiments/mystery/file.json and the bucket s3://{LEARN}/ itself.\n"
+            "See s3://{LEARN}/experiments/mystery/file.json and the bucket s3://{LEARN}/ itself; globs s3://{LEARN}/progress/* and s3://{LEARN}/experiments/${{RUN}}/x.json pin nothing.\n"
         )
         .as_bytes(),
     );
@@ -469,6 +469,17 @@ fn every_action_path_matches_the_binding_rules() {
         ledger()["totals"]["objects"].as_u64().unwrap()
     );
     assert_eq!(b.summary.refs_bucketless_resolved, 1);
+    assert_eq!(
+        b.summary.refs_unmatched_in_scope, 0,
+        "globs and placeholders are prefix mentions"
+    );
+    assert!(b.summary.prefix_mentions >= 3);
+    for g in ["#direct", "experiments/#direct"] {
+        assert!(
+            row(&b, &l(g)).refs_by_role.is_empty(),
+            "{g}: a glob/placeholder must not pin a group"
+        );
+    }
 }
 
 #[test]
