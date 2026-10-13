@@ -45,6 +45,12 @@ No engine code or activation rule is changed. The scratch result explicitly name
 the functional pipeline engine. It cannot be used as evidence that the fenced
 80-program engine measured these seeds.
 
+[gp-config.post300.json](gp-config.post300.json) is the owning test's source audit
+at `e9f07496c2d0b2f864a84f58099115edd0447454`, after owner PR #300 restored
+the evaluator's lockfile identity. It binds all twelve audited files.
+[gp-config.main944.json](gp-config.main944.json) remains a dated pre-revert audit;
+its lockfile pin does not describe the current main source.
+
 ## Current PolicyLM bridge
 
 [policy_gp_seeds.py](policy_gp_seeds.py) uses the existing `PinnedPolicy`, actual
@@ -156,10 +162,41 @@ CPU, 4 GiB RAM, zero swap, 64 tasks and a finite supervisor deadline. Parameters
 remain `ea078456…`, with zero optimizer updates. No real-context program was
 fitted by this inference proof.
 
-Pending evidence: legal real-context fitting/inner-holdout tables, preprocessing
-and retrieval ancestry from the data owner; real-cut search resource receipts;
-repeated independent parity-qualified discoveries; GB-07's analysis threshold.
-Those gaps remain open. Main identity
-repair belongs to owner PR #300; rebase after it merges before publishing GB-06.
+CX-KV subsequently supplied the selected context's original outer-training prefix:
+889 rows and three features, unchanged labels, complementary ordered inner folds,
+preprocessing identity and training-only retrieval ancestry. No outer-test suffix
+was read or exported. The dated machine record is
+[gp-evidence.20261013.json](gp-evidence.20261013.json). Raw tables, encoder vectors,
+weights, full observations and resource logs remain in the outside-checkout
+`clover-gb06` custody archive.
+
+Real pilot A declared sixteen fits per arm, 45 active seconds per arm and a
+55-second supervised cut deadline. Its ordinary arm completed five measured fits
+in 49.62 active seconds; one nonpreemptive fit crossed the admission-time limit.
+The supervisor terminated the worker at the deadline. Remaining arm execution is
+unknown without a terminal comparison, and the second cut was not started.
+The evolutionary comparison is inconclusive. No retry or extension followed.
+
+A separately declared minimal smoke B used two fits per arm on the first cut:
+bootstrap plus one random, PolicyLM or retrieval program. All six fits were
+measured, and both original offered seeds were consumed. Its supervised wall time
+was 0.503 seconds, with one CPU, 4 GiB RAM, zero swap and a 55-second deadline.
+Pilot A and smoke B stay within the original aggregate 110-second/96-fit
+allocation; unknown work from A is retained in that accounting. This proves real
+seed ingestion at equal attempt caps. It contains no offspring or evidence of
+learned guidance improving evolutionary search. Resource comparability remains
+false because the study's complete inference and per-arm costs are not closed.
+
+The production novelty API compared seven unique measured programs with the
+frozen 6,640-program catalog. Five are outside that catalog; this includes a
+previously measured retrieval seed. Training-probe behavior and independent
+parity qualification remain unknown. Catalog absence alone does not establish
+a newly discovered or useful program.
+
+Pending evidence: supervised evolutionary comparisons with complete terminal
+resource receipts; frozen training-probe measurements; repeated independent
+parity-qualified discoveries; GB-07's preregistered effect/cost threshold. Those
+requirements remain open. PR #300 is merged; refresh the private branch after
+each main merge and wait for the owner's open queue and main CI before publishing.
 No S3 calls/settings, training runs, other screens, main checkout source changes,
 seal, adoption or promotion are part of this implementation.

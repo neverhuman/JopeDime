@@ -45,11 +45,12 @@
     ],
     "order": "cyclic arm order by seed index",
     "original_catalog_program_count": 6640,
-    "catalog_sha256": null,
+    "catalog_sha256": "541248fb31e90eec17d3b49edf35a553969122a08898973ec297f1c3a619e366",
     "permitted_cache_snapshot_sha256": null,
     "all_failed_and_attempted_fits_charged": true,
     "inference_cost_included_in_resource_comparison": true,
-    "external_resource_receipt_required": true
+    "external_resource_receipt_required": true,
+    "catalog_hash_kind": "original immutable trie-programs.json bytes; novelty receipt also binds canonical program-set hash"
   },
   "novelty": {
     "syntactic": "canonical identity outside frozen catalog",
@@ -72,5 +73,6 @@
   "statistical_plan_owner": "GB-07",
   "qualified_rewards": 0,
   "h1_established": false,
-  "promotion": false
+  "promotion": false,
+  "dated_scratch_evidence": "gp-evidence.20261013.json"
 }

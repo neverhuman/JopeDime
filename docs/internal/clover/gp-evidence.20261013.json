@@ -1,0 +1,159 @@
+{
+  "base_commit": "c18582136d85feae07fceaa25a2eb608e9903e10",
+  "custody": "clover-gb06 outside-checkout evidence archive; raw tables, vectors and weights are excluded from Git",
+  "distinct_seed_ingestion_smoke_B": {
+    "arms": [
+      {
+        "active_seconds": 0.022076171,
+        "arm": "ordinary",
+        "attempted": 2,
+        "measured": 2,
+        "operator_counts": {
+          "bootstrap": 1,
+          "random": 1
+        },
+        "seed_consumed": false
+      },
+      {
+        "active_seconds": 0.031101119,
+        "arm": "policy_seeded",
+        "attempted": 2,
+        "measured": 2,
+        "operator_counts": {
+          "bootstrap": 1,
+          "incumbent": 1
+        },
+        "seed_consumed": true
+      },
+      {
+        "active_seconds": 0.223403012,
+        "arm": "retrieval_seeded",
+        "attempted": 2,
+        "measured": 2,
+        "operator_counts": {
+          "bootstrap": 1,
+          "incumbent": 1
+        },
+        "seed_consumed": true
+      }
+    ],
+    "attempts_per_arm": 2,
+    "charged_within_original_A_plus_B_110second_96fit_allocation": true,
+    "claim": "seed consumption only; no evolution, guided-search benefit or repeated-family result",
+    "cpu_quota": 1,
+    "equal_attempts": true,
+    "equal_resource_comparison": false,
+    "first_policy_seed_consumed": true,
+    "first_retrieval_seed_consumed": true,
+    "generation": 0,
+    "gnu_time_worker_cpu_seconds": 0.3,
+    "gnu_time_worker_wall_seconds": 0.32,
+    "memory_cap_bytes": 4294967296,
+    "receipt": {
+      "artifact": "real-gp-smoke-b/real-cut-receipt.json",
+      "sha256": "a7b4e284c73e68faf47de86b67c7e432e6ce4a8c2ed24d4545446a30589c6239"
+    },
+    "scope_wall_seconds": 55,
+    "supervised_wall_seconds": 0.503343157004565,
+    "supervisor_exit": 0,
+    "swap_cap_bytes": 0,
+    "terminal_receipt": {
+      "artifact": "real-gp-smoke-b-terminal.json",
+      "sha256": "241a9ebcb4e7ae9e935bd34dacb5b9d0400fee6e3b767ee10b1e4d65e46791f8"
+    },
+    "total_attempted": 6,
+    "total_measured": 6,
+    "within_wall_cap": true,
+    "worker_peak_rss_kib": 4096
+  },
+  "frozen_v1_inference": {
+    "batch": {
+      "artifact": "frozen-v1-train-seeds.json",
+      "sha256": "ac573e5917951f29c1dcf9e99fbb940aab4e6f01f7323c8b666d8cc4588b9343"
+    },
+    "byte_identical": true,
+    "original_draws": 4,
+    "parameter_sha256": "ea078456690b0665592652b2ed5b04a0deb39b9e604de97a513dc885e467f9fb",
+    "policy_optimizer_updates": 0,
+    "replay": {
+      "artifact": "frozen-v1-train-seeds-replay.json",
+      "sha256": "ac573e5917951f29c1dcf9e99fbb940aab4e6f01f7323c8b666d8cc4588b9343"
+    }
+  },
+  "h1_established": false,
+  "novelty": {
+    "behavioral_novelty": "UNKNOWN_NO_PROBE_MEASUREMENTS",
+    "canonical_catalog_programs": 6640,
+    "catalog_file_sha256": "541248fb31e90eec17d3b49edf35a553969122a08898973ec297f1c3a619e366",
+    "new_fits": 0,
+    "qualification": "unqualified",
+    "receipt": {
+      "artifact": "real-syntactic-novelty.json",
+      "sha256": "8917897171099394be1220a7da6c41de7c2df7a0d41a08c00e399d8dfa7b81fb"
+    },
+    "syntactically_novel": 5,
+    "unique_measured_programs": 7
+  },
+  "observed_at": "2026-10-13",
+  "policy_optimizer_updates": 0,
+  "promotion": false,
+  "qualification": "scratch_only",
+  "qualified_rewards": 0,
+  "real_fit_inputs": {
+    "context_sha256": "0c9c7558482d3d3b1ddf1b25302515099819998cdde7c29016f3f2caefbc177a",
+    "data_owner_manifest_sha256": "3ddec37314d9d7c1cddb79e80f31a98eeacbe3b72042bb355735ff3a94c21d17",
+    "dataset_training_prefix_sha256": "00976d34d52ea1c4adb05a1e342e8df3b9a10310e7f620366abdba59d95e7f90",
+    "features": 3,
+    "inner_cut_count": 2,
+    "labels": "original, unchanged",
+    "outer_test_rows_read_or_exported": 0,
+    "outer_training_rows": 889,
+    "preprocessing_sha256": "60c943a5f98234bdd7b710a6028828eac922b388b7b5e0b5c6e3e9630551ad9a",
+    "scratch_envelope_sha256": "63d6630a6b69817c78e0d5446d12a711f7c0caddd9ea2d277a081e5dea3c54a6"
+  },
+  "real_gp_pilot_A": {
+    "arm_active_seconds": 45,
+    "attempts_per_arm": 16,
+    "cpu_quota": 1,
+    "declared_attempt_caps": 96,
+    "declared_wall_seconds": 110,
+    "equal_budget_result": "INCONCLUSIVE",
+    "exit": -15,
+    "memory_cap_bytes": 4294967296,
+    "ordinary_active_seconds": 49.621526475,
+    "ordinary_attempted": 5,
+    "ordinary_measured": 5,
+    "receipt": {
+      "artifact": "real-gp-pilot-terminal.json",
+      "sha256": "062e622f57a6a23ab57342b36ae8f7a7e354792ced7d3d96f374af538619fd00"
+    },
+    "remaining_arm_execution": "UNKNOWN; no terminal comparison receipt",
+    "retry": "none",
+    "scope_wall_seconds": 55,
+    "second_cut": "NOT_STARTED_AFTER_STOP"
+  },
+  "remaining_requirements": [
+    "supervised multi-arm evolutionary search with complete attempt and terminal cost accounting",
+    "legal frozen probe and independent native/emitted parity qualification",
+    "repeated useful discoveries across independent training parents",
+    "GB-07 preregistered effect/cost threshold and family-cluster analysis"
+  ],
+  "schema": "clover.gp-expansion-evidence/v1",
+  "source_commit": "e9f07496c2d0b2f864a84f58099115edd0447454",
+  "source_config": {
+    "audited_files": 12,
+    "engine_namespace_measured": false,
+    "file": "gp-config.post300.json"
+  },
+  "stage": "source, initialized-PolicyLM fixture, frozen-v1 inference and minimal real-cut seed-ingestion smoke",
+  "train_roster": {
+    "contexts": 24,
+    "file": "frozen-train24-roster.json",
+    "parents": 24,
+    "selection_used_scores": false,
+    "sha256": "42f5caa7fba059bf40a28720380379e4fc4b01e5a2fe6f3b969db8c161617043",
+    "source_contexts": 2267,
+    "source_parents": 430,
+    "split": "research split; untouched holdout not established"
+  }
+}
