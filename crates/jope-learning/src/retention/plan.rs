@@ -521,17 +521,22 @@ pub fn build(cfg: &Config) -> Result<Built> {
                 gb,
             );
         }
+        // Owner ruling D2 (ENG:watcher, 2026-10-13T12:42:52Z): T0 keeps the 90-day noncurrent
+        // window like everything else (365 d declined), so only a shorter rule is a hazard.
         if r.action == Action::KeepT0
-            && r.lifecycle.noncurrent_days.is_some_and(|d| d < 365)
+            && r.lifecycle
+                .noncurrent_days
+                .is_some_and(|d| d < policy.noncurrent_days)
             && policy.in_scope(&r.bucket)
         {
             add_note(
-                &mut notes,
-                "t0-noncurrent-below-365d",
+                &mut hazards,
+                "t0-noncurrent-below-policy",
                 format!(
-                    "{}: T0 groups under noncurrent expiry {}d (§8.6 asks 365d on T0)",
+                    "{}: T0 groups under noncurrent expiry {}d, below the policy's {}d",
                     r.bucket,
-                    r.lifecycle.noncurrent_days.unwrap_or(0)
+                    r.lifecycle.noncurrent_days.unwrap_or(0),
+                    policy.noncurrent_days
                 ),
                 gb,
             );
