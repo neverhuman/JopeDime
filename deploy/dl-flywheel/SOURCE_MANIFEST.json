@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "4043181b0473a4eaa38648b2815b28a04c6dbda60f14e00edc19986b86521047"
+      "sha256": "adb8c37c3ac6128f045c20a39c7aa2834eaaaf64e28e804d3d5f7a2d77dc49d0"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "fae91b309a804acb5881f9a993b643a54bbf74926892872e30a50c3624704e12"
+      "sha256": "9b19a8457766cc2b08c998deffd62313d96d6b2da527adb9a65d04bcd112a344"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -5426,7 +5426,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "4dc703d2269ded58a0ddd1b2c9341089ac2451507ec766aeced18f00750d8118"
+      "sha256": "4bf9543dfb1ddcc3d9eb59a9b72bce36d83aecce17dbfdd8d9753cf7abd67684"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
