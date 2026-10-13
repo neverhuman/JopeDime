@@ -711,3 +711,52 @@ fn expire_needs_all_three_conditions() {
     assert!(!expire_allowed(&no_tv, false, true));
     assert!(!expire_allowed(&no_tv, true, false));
 }
+
+#[test]
+fn retention_sources_have_no_s3_write_or_delete_path() {
+    // The brain and the write-side library are read-only/offline by construction: no S3 client,
+    // no process spawning, no filesystem deletion. An apply path must be a separate reviewed tool.
+    let sources = [
+        ("mod.rs", include_str!("../src/retention/mod.rs")),
+        ("classify.rs", include_str!("../src/retention/classify.rs")),
+        (
+            "distilled.rs",
+            include_str!("../src/retention/distilled.rs"),
+        ),
+        ("groups.rs", include_str!("../src/retention/groups.rs")),
+        ("index.rs", include_str!("../src/retention/index.rs")),
+        ("inputs.rs", include_str!("../src/retention/inputs.rs")),
+        (
+            "lifecycle.rs",
+            include_str!("../src/retention/lifecycle.rs"),
+        ),
+        ("pack.rs", include_str!("../src/retention/pack.rs")),
+        ("parquet.rs", include_str!("../src/retention/parquet.rs")),
+        ("plan.rs", include_str!("../src/retention/plan.rs")),
+        ("policy.rs", include_str!("../src/retention/policy.rs")),
+        ("refs.rs", include_str!("../src/retention/refs.rs")),
+        ("tags.rs", include_str!("../src/retention/tags.rs")),
+        (
+            "bin/jope_retention.rs",
+            include_str!("../src/bin/jope_retention.rs"),
+        ),
+    ];
+    let forbidden = [
+        "object_store",
+        "jope_datasets",
+        "remove_file",
+        "remove_dir",
+        "process::Command",
+        "DeleteObject",
+        "delete_object",
+        "PutObject",
+        "put_object",
+        "PutBucketLifecycle",
+        "CopyObject",
+    ];
+    for (name, text) in sources {
+        for f in forbidden {
+            assert!(!text.contains(f), "{name} contains forbidden {f:?}");
+        }
+    }
+}
