@@ -1,0 +1,20 @@
+[
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_all_seeds_are_primary_and_lower_loss_is_better",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_bootstrap_controls_refuse_invalid_or_unbounded_work",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_bootstrap_is_deterministic_and_input_order_does_not_change_results",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_comparison_update_model_and_reference_drift_are_refused",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_context_macro_and_parent_sensitivity_are_separate",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_crossed_replication_preserves_seed_effect_across_parents",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_incomplete_duplicate_unknown_and_extra_rows_are_refused",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_nonfinite_bool_negative_cost_and_bad_hashes_are_refused",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_planning_never_authorizes_training_or_fills_unmeasured_power",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_relabelling_reference_or_reusing_one_seed_does_not_make_multiple_seeds",
+  "rlfw.multiseed.tests.test_multiseed.MultiSeedTests.test_seed_cardinality_roles_and_roster_are_checked_at_public_boundary",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_exact_null_toy_shows_winner_optimism_and_heldout_correction",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_fitting_exposure_duplicate_programs_mutable_rows_and_bad_q_are_refused",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_judge_rows_cannot_overlap_any_fit_or_selection_exposure",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_large_inner_winner_can_lose_on_independent_judge_rows",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_post_selection_program_comparison_commitment_or_fit_change_is_refused",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_subgaussian_bound_is_an_assumption_not_a_numeric_reward_correction",
+  "rlfw.multiseed.tests.test_multiseed.TeacherTests.test_ties_choose_stable_program_hash_without_judge_feedback"
+]

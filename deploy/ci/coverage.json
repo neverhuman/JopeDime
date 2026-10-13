@@ -9285,6 +9285,16 @@
         "full-default"
       ],
       "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/test_multiseed.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
     }
   },
   "lanes": {
@@ -10082,7 +10092,8 @@
         "python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt \"$EVIDENCE/rlfw-offline.json\"",
         "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py --receipt \"$EVIDENCE/onpolicy-offline.json\"",
         "uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --output \"$EVIDENCE/flywheel-v2-offline\"",
-        "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py --receipt \"$EVIDENCE/r25-knnce-offline.json\""
+        "uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py --receipt \"$EVIDENCE/r25-knnce-offline.json\"",
+        "python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --receipt \"$EVIDENCE/multiseed-offline.json\""
       ],
       "command": [
         "bash",
@@ -10103,7 +10114,8 @@
         "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed.",
         "Flywheel aggregate runner additionally wires native pool21 and RL math9 after original587 (617 total). Collection/execution receipts must prove each family independently; source import ran only the30 added fixtures and does not claim a full617 rerun. RLFW remains a separate lane command.",
         "Flywheel v2.0.0 learner receipt (run_v2_offline.py, own 600 s budget): 213 exact identities in five isolated CPU families (continuous_v6 83, boundary_admission_v2 24, generated_target_preparation_v2 36, native_result_overlay_v1 38, final_capture_v1 32), package source and import-closure pins, zero skips; separate from the 812 run_offline.py identities and from pytest totals. No launch claim.",
-        "R25-kNN-CE receipt (run_r25_offline.py): 9 exact collected/executed identities, zero skips, source hashes of the harness, neighbour table, data module, launcher and signed-off config. NON-QUALIFYING scratch arm source; no training or evaluation result."
+        "R25-kNN-CE receipt (run_r25_offline.py): 9 exact collected/executed identities, zero skips, source hashes of the harness, neighbour table, data module, launcher and signed-off config. NON-QUALIFYING scratch arm source; no training or evaluation result.",
+        "J22 multiseed-offline.json: 18 exact synthetic fixture identities, source hashes, collected/executed/failure/skip counts; no training or qualification."
       ],
       "feature_selection": "not-applicable",
       "inputs": [

@@ -3664,6 +3664,16 @@
     "target:jope-learning/test/support": {
       "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
       "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/test_multiseed.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "teaching",
+        "evaluation",
+        "evidence"
+      ],
+      "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

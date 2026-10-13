@@ -2876,8 +2876,8 @@
       }
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py": {
-      "bytes": 4234,
-      "sha256": "f98fcaf84fa6ccf43f22313ed7320e947f89cf95751e2641a1730b01036c3ba3",
+      "bytes": 4352,
+      "sha256": "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff",
       "classification": {
         "role": "research",
         "reason": "CX-OP C4/S7/S8 pure-library source and CPU fixture support. No runtime adoption, production closure verifier, campaign launch or improvement claim."
@@ -3615,6 +3615,38 @@
       "classification": {
         "role": "research",
         "reason": "J9 torch q-head adapter and its fixture package: frozen PolicyLM CPU inference over outcome-free pool views for crates/jope-learning/src/pools. Shadow-only; no training, selection authority, qualification or L6 claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/__init__.py": {
+      "bytes": 74,
+      "sha256": "ab51a80abdd48d981cc65e231d931b1c330a22cbcc09b446c56675d41c509032",
+      "classification": {
+        "role": "research",
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/analysis.py": {
+      "bytes": 13237,
+      "sha256": "3ed91409b65e1d7b0114f85f4c13389216fb39b3a1da5d71877255e621053821",
+      "classification": {
+        "role": "research",
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py": {
+      "bytes": 2720,
+      "sha256": "8f403f9834f410d63c3271e59e49938f63fe9af4bda6b08298fe0922a7f0f3b8",
+      "classification": {
+        "role": "research",
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
+      }
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/__init__.py": {
+      "bytes": 70,
+      "sha256": "d30ccdbde0723da097dbfacd89e3a31db1eeed8e13728567680f76e6188ddff9",
+      "classification": {
+        "role": "research",
+        "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
       }
     }
   }
