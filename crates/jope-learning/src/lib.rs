@@ -27,6 +27,7 @@ pub mod ledger;
 pub mod metric;
 pub mod mirror;
 pub mod progress;
+pub mod qualify;
 pub mod record;
 pub mod revocation;
 pub mod scores;

@@ -7025,6 +7025,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-learning/test/qualify_gate": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/qualify_gate.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "G23/G36 flag-off qualify gate fixtures: JOPE_SEAL_GATE_ENABLED is off by default and only the exact value 1 turns it on; seal and promotion requests are refused before their input is read, and still refused with the flag on (not ready, or owner ruling pending: this build has no seal or promotion path). Read-only roster readiness on synthetic proposals and the committed judge/SEALED_ROSTER_PROPOSAL.json; Gate F promotion verdicts on synthetic confirmation arenas. No seal, adoption, promotion, corpus, network or GPU."
+    },
     "target:jope-learning/test/recovery_cli": {
       "discovery": {
         "doctest": false,
