@@ -666,6 +666,14 @@
         "storage"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_cluster.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane.py": {
       "role": "regression",
       "subsystems": [
@@ -683,6 +691,14 @@
       ]
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_power.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_roster.py": {
       "role": "regression",
       "subsystems": [
         "evaluation",
@@ -1853,6 +1869,12 @@
         "fitting",
         "gp",
         "policy"
+      ]
+    },
+    "target:feat-math/test/inner_fold_leakage": {
+      "role": "regression",
+      "subsystems": [
+        "fitting"
       ]
     },
     "target:feat-math/test/inverse_links_ingress_v2": {

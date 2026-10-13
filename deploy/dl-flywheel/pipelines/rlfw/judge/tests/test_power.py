@@ -6,11 +6,14 @@ import unittest
 from pathlib import Path
 
 from rlfw.judge.power import (
+    OWNER_ROUNDED_SE_PAIR,
     SPEC_POWER_FACTOR,
     UNMEASURED_JUDGE_NOISE,
     comparison_power,
     families_needed,
+    interpret_noise,
     minimum_detectable_effect,
+    n_at_power,
     publish_document,
     tier_for_counts,
 )
@@ -49,6 +52,23 @@ class PowerFormulaTest(unittest.TestCase):
         self.assertEqual(tier_for_counts(100, 200), "internal_promotion")
         self.assertEqual(tier_for_counts(200, 399), "internal_promotion")
         self.assertEqual(tier_for_counts(200, 400), "sealed_count_floor")
+
+    def test_se_pair_is_not_a_paired_sd_and_n_882_is_the_misread(self):
+        as_sd = interpret_noise(OWNER_ROUNDED_SE_PAIR, 0.005, "paired_sd")
+        as_se = interpret_noise(OWNER_ROUNDED_SE_PAIR, 0.005, "standard_error")
+        self.assertEqual(as_sd["n80"], 882)
+        self.assertEqual(n_at_power(0.05296631946624709, 0.005), 881)
+        self.assertFalse(as_se["applicable"])
+        self.assertIsNone(as_se["n80"])
+        self.assertEqual(as_se["n80_if_misread_as_paired_sd"], 882)
+        check = publish_document()["se_pair_unit_check"]
+        self.assertEqual(check["unit"], "standard_error")
+        self.assertFalse(check["paired_sd"])
+        self.assertIsNone(check["n80"])
+        self.assertIsNone(check["families_needed_for_power_80"])
+        self.assertEqual(check["n80_if_misread_as_paired_sd_owner_round"], 882)
+        self.assertEqual(check["n80_if_misread_as_paired_sd_exact"], 881)
+        self.assertEqual(check["status"], "not_a_sample_size")
 
 
 if __name__ == "__main__":

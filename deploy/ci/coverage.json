@@ -1722,6 +1722,16 @@
       ],
       "scope": "Read-only scratch receipts: native schema and JSONL reconciliation, immutable remote copies, unknown costs, equal-budget deltas, distinct KL panels, actual Parquet/HTML; no training or live state."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_cluster.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Parent-cluster percentile intervals and a hierarchical power simulation via run_rlfw_offline.py. Fixture groups only. No seal, corpus, or promotion."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane.py": {
       "discovery": {
         "kind": "python-family"
@@ -1751,6 +1761,16 @@
         "python"
       ],
       "scope": "Lane B power-table fixtures via run_rlfw_offline.py. The 7.84 factor is the spec constant. Observed judge sigma stays unmeasured. No corpus or live comparison."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_roster.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Unadopted sealed-roster disjointness fixtures via run_rlfw_offline.py. The proposal creates no seal and spends no seal."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
       "discovery": {
@@ -4175,6 +4195,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/inner_fold_leakage": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/inner_fold_leakage.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Held-out row poison for target_bin_encode, quantile_bins, winsor_clip, standardize, impute, and ridge. The complement split scores the original held-out features. No seal and no cv_r2 change."
     },
     "target:feat-math/test/inverse_links_ingress_v2": {
       "discovery": {
