@@ -64,6 +64,17 @@ class J8ControlTests(unittest.TestCase):
         mixed = _arm("fresh_feedback", observation_count_matched=True, preexisting_observations=True)
         self.assertEqual(classify_arm(mixed), "fresh_feedback")
 
+    def test_frozen_reference_tie_and_near_boundary(self):
+        pinned = 0.8973272357035962
+        self.assertEqual(FROZEN_V1_FULL_VAL_L6, pinned)
+        self.assertEqual(direction(pinned), "tied_not_a_claim")
+        below_the_pin = 0.8973271178517981
+        self.assertLess(below_the_pin, pinned)
+        self.assertGreater(below_the_pin, 0.897327)
+        self.assertEqual(direction(below_the_pin), "below_v1_not_a_claim")
+        self.assertEqual(direction(0.9022044512849824), "worse")
+        self.assertEqual(direction(0.9003862184454733), "worse")
+
     def test_closed_scratch_is_above_v1_and_not_an_improvement(self):
         for name in ("restart_only", "offline_replay"):
             row = require_closed_scratch(name)

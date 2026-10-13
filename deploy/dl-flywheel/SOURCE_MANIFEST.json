@@ -25,7 +25,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "7d3bf2b6c9defdb737da9d979dab4b14612387ee67dc1bd4a2cfc7e936ccbb24"
+      "sha256": "15cba11715cd80a681e79fd9f7dfdfe11df06e8783cf9da0b263cd36bda77172"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
