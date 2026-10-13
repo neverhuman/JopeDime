@@ -145,9 +145,13 @@ fn tv_for(f: &Facts, kind: Option<Kind>, t0: bool, p: &Policy) -> Tv {
     if t0 {
         uses.push("future-eval-input");
     }
-    let active = |m: &BTreeMap<Role, u64>| m.keys().any(|r| !r.is_t0() || *r == Role::Val263);
+    let active = |m: &BTreeMap<Role, u64>| m.keys().any(|r| r.is_active() || *r == Role::Val263);
     if active(&f.refs_by_role) || active(&f.ctx_roles) || !f.prog_roles.is_empty() {
         uses.push("ce-target");
+    }
+    // D1: a prose mention is not a pin, but someone may still want those bytes.
+    if f.refs_by_role.contains_key(&Role::ProseMention) {
+        uses.push("prose-mention");
     }
     let ix = f.index;
     if ix.is_some_and(|i| i.scored_by_context.values().any(|p| p.len() >= 2)) {
@@ -334,7 +338,7 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
     let active_key_refs: BTreeMap<Role, u64> = f
         .refs_by_role
         .iter()
-        .filter(|(r, _)| !r.is_t0())
+        .filter(|(r, _)| r.is_active())
         .map(|(r, n)| (*r, *n))
         .collect();
 

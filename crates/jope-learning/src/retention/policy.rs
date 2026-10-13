@@ -4,6 +4,7 @@
 //! every plan. It can classify prefixes and add soft T0 prefixes; it cannot remove a hard T0 rule,
 //! which lives in code (`classify::hard_t0`).
 
+use super::refs::{Role, SCAN_EXTENSIONS};
 use anyhow::{bail, ensure, Context, Result};
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -108,6 +109,16 @@ pub struct E1Candidate {
     pub why: String,
 }
 
+/// Which scanned refs pin (owner decision D1). Refs found by a scan of one of `prose_roles` in a
+/// file whose extension is in `prose_extensions` are training-value mentions, not T0 pins.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReferenceFormats {
+    pub prose_roles: Vec<String>,
+    pub prose_extensions: Vec<String>,
+    pub why: String,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Policy {
@@ -130,6 +141,7 @@ pub struct Policy {
     pub prices: Prices,
     pub known_score_identities: BTreeMap<String, String>,
     pub in_scope_bucket_prefixes: Vec<String>,
+    pub reference_formats: ReferenceFormats,
     pub soft_t0: Vec<PrefixNote>,
     pub class_overrides: Vec<ClassOverride>,
     pub e1_candidates: Vec<E1Candidate>,
@@ -184,6 +196,24 @@ impl Policy {
             p.known_score_identities.contains_key("l6"),
             "policy lacks the l6 score identity"
         );
+        let rf = &p.reference_formats;
+        for r in &rf.prose_roles {
+            let role = Role::parse(r)?;
+            ensure!(
+                role.is_scan_pin(),
+                "reference_formats.prose_roles: {r} refs can never be demoted to prose mentions"
+            );
+        }
+        for e in &rf.prose_extensions {
+            ensure!(
+                SCAN_EXTENSIONS.contains(&e.as_str()) && *e == e.to_ascii_lowercase(),
+                "reference_formats.prose_extensions: {e:?} is not a scanned text extension"
+            );
+            ensure!(
+                !matches!(e.as_str(), "json" | "jsonl"),
+                "reference_formats.prose_extensions: structured {e} refs are T0 pins (D1)"
+            );
+        }
         let mut seen = BTreeSet::new();
         for r in &p.rules {
             if !seen.insert((r.bucket.clone(), r.prefix.clone())) {
@@ -203,6 +233,16 @@ impl Policy {
             );
         }
         Ok(p)
+    }
+
+    /// The prose extensions a scan of `role` demotes to mentions (empty: every ref pins).
+    pub fn prose_extensions_for(&self, role: Role) -> &[String] {
+        let rf = &self.reference_formats;
+        if rf.prose_roles.iter().any(|r| r == role.as_str()) {
+            &rf.prose_extensions
+        } else {
+            &[]
+        }
     }
 
     pub fn in_scope(&self, bucket: &str) -> bool {
