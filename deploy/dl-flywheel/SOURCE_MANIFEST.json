@@ -6920,8 +6920,8 @@
       "path": "crates/jope-learning/tests/custody.rs",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/custody.rs",
       "origin_sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
-      "sha256": "df7562460a85fb9525d372137b61792acd9c16c59f3d699f9f575c553c09b3e5",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures."
+      "sha256": "dd5e2ad0f05a0784bff10315baa792d3c421feca30fd8d76424cc22d6300effe",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged."
     },
     {
       "path": "crates/jope-learning/tests/fixtures/custody_v2/budget.json",
@@ -7039,8 +7039,29 @@
       "path": "crates/jope-records/src/custody_archive.rs",
       "origin": "native:GB02-custody-v2/crates/jope-records/src/custody_archive.rs",
       "origin_sha256": "424e33733c9cb6a42782a96263c5e935143a21328dc5f521cda7fe6890b70a8d",
-      "sha256": "424e33733c9cb6a42782a96263c5e935143a21328dc5f521cda7fe6890b70a8d",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "sha256": "0491466a47a44914d12f600c3bde3592a4030284228e52658098d23ac6e5a760",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-layout-index.json",
+      "origin": "native:GB02-custody-v2/GNU-tar-1.35/gnu-layout-index.json",
+      "origin_sha256": "45ab422f2b0b777564755d92df13af058088b24fe24dda4f9b264bc2a542966e",
+      "sha256": "45ab422f2b0b777564755d92df13af058088b24fe24dda4f9b264bc2a542966e",
+      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-ustar-8705.tar.gz",
+      "origin": "native:GB02-custody-v2/GNU-tar-1.35/gnu-ustar-8705.tar.gz",
+      "origin_sha256": "4e0a5fdea75fc202067ea13805a8464d0404570a58bdce431c71615cdf684a26",
+      "sha256": "4e0a5fdea75fc202067ea13805a8464d0404570a58bdce431c71615cdf684a26",
+      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gnu-pax-3x8705.tar.gz",
+      "origin": "native:GB02-custody-v2/GNU-tar-1.35/gnu-pax-3x8705.tar.gz",
+      "origin_sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
+      "sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
+      "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
