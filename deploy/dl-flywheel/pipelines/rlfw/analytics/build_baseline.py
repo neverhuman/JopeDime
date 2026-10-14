@@ -101,6 +101,7 @@ def build(manifest, output, *, commit, source_dirty=False, scope=None):
         raise ValueError("explicit utc_day or whole_run window required")
     exports = {}
     sources = dict.fromkeys(DOMAINS, f"{manifest}:1 sha256:{digest(manifest_copy)}")
+    sources["manifest"] = f"{manifest}:1 sha256:{digest(manifest_copy)}"
     if set(spec.get("exports", {})) - set(DOMAINS):
         raise ValueError("unknown export domain")
     for domain, ref in spec.get("exports", {}).items():

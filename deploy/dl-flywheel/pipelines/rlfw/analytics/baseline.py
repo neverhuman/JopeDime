@@ -9,7 +9,7 @@ import math
 import statistics
 from collections import Counter
 
-from .operational import FEEDBACK_STAGES, row
+from .operational import FEEDBACK_STAGES, UNMEASURED, row
 
 DOMAINS = ("throughput", "arrivals", "feedback", "phases", "cache", "cost")
 COMPARISON = (
@@ -128,7 +128,9 @@ class Baseline:
                 value,
                 date=self.date,
                 commit=self.commit,
-                source=self.sources.get(domain, "unmeasured"),
+                source=self.sources.get(
+                    domain, self.sources.get("manifest", "unmeasured")
+                ),
                 unit=unit,
                 scope=export.get("scope", "baseline/" + domain),
                 n=n,
@@ -410,6 +412,7 @@ class Baseline:
             for stage in FEEDBACK_STAGES:
                 self.add("feedback", "feedback_timestamp:" + stage, None, "UTC seconds")
         complete_values, qualified_values, exposure_values, censored = [], [], [], []
+        censored_episodes, unknown_latency = 0, 0
         for episode in episodes:
             if not all(
                 episode.get(k)
@@ -460,6 +463,10 @@ class Baseline:
             exposure, _ = duration(proposed, clocks.get("first_exposure"))
             if elapsed is not None:
                 complete_values.append(elapsed)
+            elif trained is not None:
+                unknown_latency += 1
+            if trained is None:
+                censored_episodes += 1
             if qualified is not None:
                 qualified_values.append(qualified)
             if exposure is not None:
@@ -529,7 +536,7 @@ class Baseline:
                     "seconds",
                     n=len(values),
                     completed_only=True,
-                    censored_n=len(censored),
+                    censored_n=censored_episodes,
                     episodes=len(episodes),
                 )
         self.add(
@@ -541,7 +548,13 @@ class Baseline:
         self.add(
             "feedback",
             "feedback_censored_n",
-            len(censored) if self.complete("feedback") else None,
+            censored_episodes if self.complete("feedback") else None,
+            "episodes",
+        )
+        self.add(
+            "feedback",
+            "feedback_unknown_latency_n",
+            unknown_latency if self.complete("feedback") else None,
             "episodes",
         )
         self.add(
@@ -766,7 +779,11 @@ class Baseline:
             "cost",
             "stock_bytes",
             sum(r["bytes"] for r in stock)
-            if stock and all(r.get("bytes") is not None for r in stock)
+            if stock
+            and all(
+                r.get("bytes") is not None and r.get("stock_as_of") == self.end
+                for r in stock
+            )
             else None,
             "stock bytes",
             not_daily_additions=True,
@@ -802,4 +819,14 @@ def baseline_rows(exports, *, window, date, commit, sources):
     result = Baseline(exports, window=window, date=date, commit=commit, sources=sources)
     for domain in DOMAINS:
         getattr(result, domain)()
+    available = {record["metric"] for record in result.rows}
+    for metric, unit in UNMEASURED.items():
+        if metric not in available:
+            result.add(
+                "availability",
+                metric,
+                None,
+                unit,
+                reason="no_current_identity_bound_owner_export",
+            )
     return result.rows
