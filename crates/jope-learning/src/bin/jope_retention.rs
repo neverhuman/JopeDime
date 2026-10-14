@@ -60,8 +60,9 @@ struct ClassifyArgs {
     /// Directory scanned best-effort for s3 references, ROLE=DIR (repeatable).
     #[arg(long = "scan")]
     scans: Vec<String>,
-    /// Files larger than this are counted but not read by --scan.
-    #[arg(long, default_value_t = 4 * 1024 * 1024)]
+    /// Files larger than this are not parsed by --scan. They are streamed for in-scope bucket
+    /// names instead, and one that names a bucket fails the run (it could hide a pin).
+    #[arg(long, default_value_t = 512 * 1024 * 1024)]
     scan_max_bytes: u64,
     /// Directory name never entered by --scan, e.g. this lane's own output dir (repeatable).
     #[arg(long = "scan-skip-dir")]

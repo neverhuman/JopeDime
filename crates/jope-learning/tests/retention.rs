@@ -828,6 +828,43 @@ fn prose_evidence_mentions_are_tv_not_pins() {
 }
 
 #[test]
+fn oversized_scan_files_that_name_a_bucket_fail_closed() {
+    // A file over the scan cap is not parsed. One that names no in-scope bucket could not pin
+    // anything and is only counted; one that does fails the run, because skipping it could hide
+    // a T0 pin (the 2026-10-06 archive cursors pinned a COMPACT group that way).
+    let f = fixture();
+    let cc = format!("s3://{LEARN}/experiments/gp-teacher-v6/contexts/cccc/");
+    let filler = "x".repeat(10_000);
+    put(
+        &f.path("evid/big-unrelated.jsonl"),
+        format!("{{\"note\": \"{filler}\"}}\n").as_bytes(),
+    );
+    let mut cfg = config(&f);
+    cfg.scans.push((Role::Evidence, f.path("evid")));
+    cfg.scan_max_bytes = 4096;
+    let b = build(&cfg).unwrap();
+    let ev = b.lock.scans.iter().find(|s| s.role == "evidence").unwrap();
+    assert_eq!((ev.files_over_cap, ev.files_read), (1, 0));
+    assert_eq!(action(&b, &cc), Action::Compact);
+
+    put(
+        &f.path("evid/archive-cursor.json"),
+        &serde_json::to_vec(&json!({"note": filler, "objects": [
+            {"bucket": LEARN, "key": "experiments/gp-teacher-v6/contexts/cccc/x7"}
+        ]}))
+        .unwrap(),
+    );
+    let err = format!("{:#}", build(&cfg).err().unwrap());
+    assert!(
+        err.contains("archive-cursor.json") && err.contains("over the scan cap"),
+        "{err}"
+    );
+    // With a cap that covers it the pin is read and cccc is T0.
+    cfg.scan_max_bytes = 1 << 20;
+    assert_eq!(action(&build(&cfg).unwrap(), &cc), Action::KeepT0);
+}
+
+#[test]
 fn expire_needs_all_three_conditions() {
     let no_tv = Tv {
         value: false,

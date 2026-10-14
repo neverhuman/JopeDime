@@ -3,7 +3,9 @@
 //! Declared reference files (`--refs ROLE=PATH`) are JSON or JSONL and must parse; a file that
 //! cannot be read is fatal. Scan roots (`--scan ROLE=DIR`) are walked best-effort: every regular
 //! file up to a size cap whose bytes mention an in-scope bucket is parsed as JSON when it can be
-//! and otherwise token-scanned for `s3://` URIs; the counts are reported.
+//! and otherwise token-scanned for `s3://` URIs; the counts are reported. A file over the cap is
+//! streamed for the bucket names: one that names none could not have pinned anything, and one
+//! that does fails the run (fail closed), because skipping it could hide a T0 pin.
 //!
 //! What counts as a reference:
 //! - an object with string fields `bucket` and `key` (the roster/receipt artifact form), or a
@@ -24,6 +26,7 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
+use std::io::Read;
 use std::path::Path;
 
 /// Why a reference matters. T0 roles make the group NEVER-delete; the others give it training
@@ -112,6 +115,7 @@ pub struct ScanStats {
     pub root: String,
     pub files_seen: u64,
     pub files_read: u64,
+    /// Files over the size cap, streamed and found to name no in-scope bucket.
     pub files_over_cap: u64,
     /// Files skipped because their extension is not a text format in [`SCAN_EXTENSIONS`].
     pub files_not_text: u64,
@@ -161,6 +165,30 @@ fn is_inventory(v: &Value) -> bool {
     v.get("schema")
         .and_then(Value::as_str)
         .is_some_and(|s| INVENTORY_SCHEMAS.contains(&s))
+}
+
+/// Whether a file contains any of `needles`, read in 8 MiB chunks that overlap by one needle
+/// length so a match across a chunk boundary is still seen. Same test as for files under the
+/// cap (lossy UTF-8, substring), without holding the file in memory.
+fn mentions_any(path: &Path, needles: &[String]) -> std::io::Result<bool> {
+    let keep = needles.iter().map(String::len).max().unwrap_or(0);
+    let mut file = fs::File::open(path)?;
+    let mut buf = vec![0u8; (8 << 20) + keep];
+    let mut have = 0;
+    loop {
+        let n = file.read(&mut buf[have..])?;
+        if n == 0 {
+            return Ok(false);
+        }
+        have += n;
+        let text = String::from_utf8_lossy(&buf[..have]);
+        if needles.iter().any(|nd| text.contains(nd.as_str())) {
+            return Ok(true);
+        }
+        let tail = have.min(keep);
+        buf.copy_within(have - tail..have, 0);
+        have = tail;
+    }
 }
 
 fn is_hex64(s: &str) -> bool {
@@ -366,7 +394,15 @@ impl RefSet {
             }
             let len = entry.metadata().map(|m| m.len()).unwrap_or(u64::MAX);
             if len > max_bytes {
-                st.files_over_cap += 1;
+                match mentions_any(entry.path(), needles) {
+                    Ok(false) => st.files_over_cap += 1,
+                    Ok(true) => bail!(
+                        "{} ({len} bytes, scan {}) names an in-scope bucket but is over the scan cap of {max_bytes} bytes, so it would be skipped and could hide a pin: raise --scan-max-bytes",
+                        entry.path().display(),
+                        role.as_str()
+                    ),
+                    Err(_) => st.files_unreadable += 1,
+                }
                 continue;
             }
             let Ok(bytes) = fs::read(entry.path()) else {
@@ -438,5 +474,33 @@ impl RefSet {
         st.matched_listing_sha256 = hex::encode(Sha256::digest(listing.join("\n").as_bytes()));
         self.scans.push(st);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mentions_any;
+    use std::fs;
+
+    #[test]
+    fn oversized_files_are_streamed_across_chunk_boundaries() {
+        let dir = tempfile::tempdir().unwrap();
+        let needles = vec!["needle-0123456".to_string(), "other".to_string()];
+        let chunk = (8 << 20) + needles[0].len();
+        // The needle straddles the end of the first read.
+        let mut bytes = vec![b'x'; chunk + 100];
+        let at = chunk - 5;
+        bytes[at..at + needles[0].len()].copy_from_slice(needles[0].as_bytes());
+        let hit = dir.path().join("hit.txt");
+        fs::write(&hit, &bytes).unwrap();
+        assert!(mentions_any(&hit, &needles).unwrap());
+        // Invalid UTF-8 around it does not hide it either.
+        bytes[at - 1] = 0xff;
+        fs::write(&hit, &bytes).unwrap();
+        assert!(mentions_any(&hit, &needles).unwrap());
+        let miss = dir.path().join("miss.txt");
+        fs::write(&miss, vec![b'x'; chunk * 2]).unwrap();
+        assert!(!mentions_any(&miss, &needles).unwrap());
+        assert!(mentions_any(&dir.path().join("absent"), &needles).is_err());
     }
 }
