@@ -1,0 +1,279 @@
+{
+  "cases": [
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "body_bytes": 0,
+        "closed": true,
+        "outcome": "refuse",
+        "physical_requests": 1
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.returned_version_mismatch",
+      "input": {
+        "bytes": 10,
+        "requested_version": "v1",
+        "returned_version": "v2"
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_wrong_returned_version_refuses_without_consuming_body"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "dispatched": 0,
+        "outcome": "refuse"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.mutations",
+      "input": {
+        "direct_unowned_dispatch": true,
+        "operations": [
+          "DeleteObject",
+          "DeleteObjects",
+          "PutObject",
+          "CopyObject",
+          "PutBucketLifecycleConfiguration"
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_all_mutations_are_refused_before_any_fake_dispatch"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "dispatched": 0,
+        "outcome": "refuse"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.scope_or_unversioned",
+      "input": {
+        "outside_prefix": "outside/",
+        "version_id": "null",
+        "wrong_bucket": "other"
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_wrong_scope_and_unversioned_get_refuse_before_dispatch"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "complete_listing": true,
+        "outcome": "accept",
+        "physical_requests": 2,
+        "point_in_time_snapshot": false,
+        "versions": 2
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.two_pages",
+      "input": {
+        "pages": [
+          {
+            "IsTruncated": true,
+            "NextKeyMarker": "next",
+            "NextVersionIdMarker": "old"
+          },
+          {
+            "IsTruncated": false
+          }
+        ],
+        "versions": [
+          "old",
+          "new"
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_full_pagination_and_every_version_is_retained"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "complete_listing": false,
+        "outcome": "refuse"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.repeated_cursor",
+      "input": {
+        "cursors": [
+          "x",
+          "x"
+        ],
+        "request_cap": 10,
+        "versions": [
+          "a",
+          "b"
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_repeated_cursor_duplicate_version_and_request_cap_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "complete_listing": false,
+        "outcome": "refuse"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.duplicate_version",
+      "input": {
+        "request_cap": 10,
+        "versions": [
+          "a",
+          "a"
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_repeated_cursor_duplicate_version_and_request_cap_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "complete_listing": false,
+        "dispatched": 1,
+        "outcome": "refuse"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.request_cap",
+      "input": {
+        "request_cap": 1,
+        "versions": [
+          "a",
+          "b"
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_repeated_cursor_duplicate_version_and_request_cap_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "dispatched": 0,
+        "outcome": "refuse"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.deadline_or_body_cap",
+      "input": {
+        "body_cap": 1,
+        "clock_expired": true,
+        "listed_bytes": 10,
+        "nonfinite_seconds": "Infinity"
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_nonfinite_expired_and_body_budget_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "etag_is_sha256": false,
+        "object_body_bytes": 10,
+        "outcome": "accept"
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.capture",
+      "input": {
+        "body_hex": "73616d65206279746573",
+        "etag": "not-a-sha",
+        "version_id": "v1"
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.ReaderTests.test_capture_records_real_body_bytes_and_never_uses_etag_as_sha"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "digest_source": "verified_B_bytes",
+        "outcome": "accept",
+        "remote_calls": 0
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.manifest_replacement",
+      "input": {
+        "events": [
+          "read manifest B bytes",
+          "verify B archive",
+          "replace manifest path with A",
+          "report digest of original B bytes"
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.PackTests.test_readback_digest_binds_verified_manifest_despite_replacement"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "manifest_published": false,
+        "outcome": "refuse",
+        "success_receipt": false
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.fsync_failure",
+      "input": {
+        "inject": "file or parent directory fsync returns EIO"
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.PackTests.test_fsync_failure_never_returns_a_success_or_publishes_manifest"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "overwrite": false
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.existing_output",
+      "input": {
+        "output_exists": true
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.PackTests.test_existing_destination_and_qualified_manifest_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "json_parse_calls": 0,
+        "outcome": "refuse",
+        "pack_reads": 0
+      },
+      "group": "schedule",
+      "id": "gb02.schedule.oversized_manifest",
+      "input": {
+        "max_manifest_bytes": 4194304,
+        "recipe": {
+          "padding_byte": 32,
+          "padding_length": 4194304,
+          "prefix_utf8": "{}"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.PackTests.test_oversized_manifest_refuses_before_json_or_pack_parsing"
+      ],
+      "qualified": false
+    }
+  ],
+  "group": "schedule",
+  "schema": "jope.gb02-rust-port-fixtures/v1"
+}
