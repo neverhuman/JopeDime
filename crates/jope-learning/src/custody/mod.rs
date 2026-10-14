@@ -1,26 +1,44 @@
 //! Local, nonqualifying custody-v2 observations. No S3 client or retention executor.
-pub mod reader;
 pub mod cost;
+pub mod reader;
 
 use crate::canon::{canonical_json, is_hex64, sha256_hex};
 use anyhow::{ensure, Context, Result};
 use jope_records::custody_archive::{self, Blob, MAX_MEMBERS, MAX_PAYLOAD};
 use serde_json::{json, Value};
-use std::{collections::{BTreeMap, BTreeSet}, fs::{self, File, OpenOptions}, io::{Read, Write}, os::unix::fs::{DirBuilderExt, OpenOptionsExt}, path::Path, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs::{self, File, OpenOptions},
+    io::{Read, Write},
+    os::unix::fs::{DirBuilderExt, OpenOptionsExt},
+    path::Path,
+    sync::Arc,
+};
 
 pub const MAX_MANIFEST: u64 = 4 * 1024 * 1024;
 pub const BYTE_CAP: u64 = 25_000_000_000;
 pub const HOT_CAP: u64 = 1_000_000_000_000;
 pub const PUT_CAP: u64 = 1_500_000;
-pub const KEEPER_FACTS: [&str; 4] = ["new_context_best", "parity_failure", "cited", "sealed_salt_audit"];
+pub const KEEPER_FACTS: [&str; 4] = [
+    "new_context_best",
+    "parity_failure",
+    "cited",
+    "sealed_salt_audit",
+];
 
 pub fn unsigned(value: &Value, name: &str) -> Result<u64> {
-    value.as_u64().with_context(|| format!("{name} must be a nonnegative integer"))
+    value
+        .as_u64()
+        .with_context(|| format!("{name} must be a nonnegative integer"))
 }
 pub fn identity(row: &Value) -> Result<[String; 3]> {
     let mut result = [String::new(), String::new(), String::new()];
     for (i, field) in ["bucket", "key", "version_id"].iter().enumerate() {
-        result[i] = row[*field].as_str().filter(|s| !s.is_empty()).context("complete object version identity")?.to_owned();
+        result[i] = row[*field]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .context("complete object version identity")?
+            .to_owned();
     }
     Ok(result)
 }
@@ -33,28 +51,64 @@ pub fn classify(row: &Value, facts: Option<&Value>) -> Result<Value> {
     let role = key.rsplit('/').next().unwrap_or_default();
     let mut kind = "keeper";
     let mut reason = "unmeasured_keeper_or_hold_facts";
-    if id[2] == "null" { reason = "immutable_version_unavailable"; }
-    else if !latest { reason = "noncurrent_version_review"; }
-    else if key.split('/').any(|p| ["sealed", "judge", "checkpoints", "gp-hwm", "provenance"].contains(&p)) { reason = "protected_evidence"; }
-    else if ["score_records", "evaluation", "rust_parity", "input", "program", "rust_source", "record.json"].contains(&role) { reason = "permanent_ledger_or_small_artifact"; }
-    else if role != "rust_executable" { reason = "unknown_role"; }
-    else if let Some(facts) = facts.filter(|f| !f.is_null()) {
+    if id[2] == "null" {
+        reason = "immutable_version_unavailable";
+    } else if !latest {
+        reason = "noncurrent_version_review";
+    } else if key
+        .split('/')
+        .any(|p| ["sealed", "judge", "checkpoints", "gp-hwm", "provenance"].contains(&p))
+    {
+        reason = "protected_evidence";
+    } else if [
+        "score_records",
+        "evaluation",
+        "rust_parity",
+        "input",
+        "program",
+        "rust_source",
+        "record.json",
+    ]
+    .contains(&role)
+    {
+        reason = "permanent_ledger_or_small_artifact";
+    } else if role != "rust_executable" {
+        reason = "unknown_role";
+    } else if let Some(facts) = facts.filter(|f| !f.is_null()) {
         ensure!(facts.is_object(), "keeper facts object");
-        ensure!(facts["identity"] == json!(id), "keeper facts bind the exact physical version");
-        let measured = facts["legal_hold_checked"] == true && facts["retention_checked"] == true
+        ensure!(
+            facts["identity"] == json!(id),
+            "keeper facts bind the exact physical version"
+        );
+        let measured = facts["legal_hold_checked"] == true
+            && facts["retention_checked"] == true
             && KEEPER_FACTS.iter().all(|k| facts[*k].is_boolean())
-            && facts["audit_salt_commitment"].as_str().is_some_and(is_hex64)
-            && facts.as_object().is_some_and(|o| o.contains_key("retention_until"));
+            && facts["audit_salt_commitment"]
+                .as_str()
+                .is_some_and(is_hex64)
+            && facts
+                .as_object()
+                .is_some_and(|o| o.contains_key("retention_until"));
         if measured {
-            if facts["legal_hold"] != "OFF" || !facts["retention_until"].is_null() { reason = "protected_or_unknown_hold"; }
-            else if KEEPER_FACTS.iter().any(|k| facts[*k] == true) { reason = "verified_keeper_fact"; }
-            else { kind = "other"; reason = "complete_negative_keeper_facts"; }
+            if facts["legal_hold"] != "OFF" || !facts["retention_until"].is_null() {
+                reason = "protected_or_unknown_hold";
+            } else if KEEPER_FACTS.iter().any(|k| facts[*k] == true) {
+                reason = "verified_keeper_fact";
+            } else {
+                kind = "other";
+                reason = "complete_negative_keeper_facts";
+            }
         }
     }
     let mut result = row.as_object().context("object version row")?.clone();
-    result.extend(json!({"role":role,"retention_class":kind,"reason":reason,
+    result.extend(
+        json!({"role":role,"retention_class":kind,"reason":reason,
         "proposed_retention_days":if kind == "other" {Some(14)} else {None},
-        "applied":false,"qualified":false}).as_object().context("classification")?.clone());
+        "applied":false,"qualified":false})
+        .as_object()
+        .context("classification")?
+        .clone(),
+    );
     Ok(Value::Object(result))
 }
 
@@ -63,18 +117,29 @@ pub fn budget_status(values: &Value) -> Result<Value> {
     let mut unknown = Vec::new();
     let mut alarm = Vec::new();
     let mut exhausted = Vec::new();
-    for (name, cap) in [("new_version_bytes", BYTE_CAP), ("raw_hot_bytes", HOT_CAP), ("puts", PUT_CAP)] {
-        if values[name].is_null() { unknown.push(name); }
-        else {
+    for (name, cap) in [
+        ("new_version_bytes", BYTE_CAP),
+        ("raw_hot_bytes", HOT_CAP),
+        ("puts", PUT_CAP),
+    ] {
+        if values[name].is_null() {
+            unknown.push(name);
+        } else {
             let n = unsigned(&values[name], name)?;
-            if n >= cap * 4 / 5 { alarm.push(name); }
-            if n >= cap { exhausted.push(name); }
+            if n >= cap * 4 / 5 {
+                alarm.push(name);
+            }
+            if n >= cap {
+                exhausted.push(name);
+            }
         }
     }
-    Ok(json!({"caps":{"new_version_bytes":BYTE_CAP,"raw_hot_bytes":HOT_CAP,"puts":PUT_CAP},
+    Ok(
+        json!({"caps":{"new_version_bytes":BYTE_CAP,"raw_hot_bytes":HOT_CAP,"puts":PUT_CAP},
         "values":{"new_version_bytes":values["new_version_bytes"],"raw_hot_bytes":values["raw_hot_bytes"],"puts":values["puts"]},
         "admit_new_scoring":unknown.is_empty() && exhausted.is_empty(),
-        "unknown":unknown,"alarm":alarm,"exhausted":exhausted,"control_applied":false}))
+        "unknown":unknown,"alarm":alarm,"exhausted":exhausted,"control_applied":false}),
+    )
 }
 
 pub fn bounded_read(path: &Path, limit: u64) -> Result<Vec<u8>> {
@@ -88,32 +153,69 @@ fn manifest(raw: &[u8]) -> Result<(Value, Vec<Blob>)> {
     ensure!(raw.len() as u64 <= MAX_MANIFEST, "bounded manifest bytes");
     let index: Value = serde_json::from_slice(raw)?;
     ensure!(index.is_object(), "pack manifest object");
-    ensure!(index["schema"] == "jope.custody-local-pack/v2" && index["qualified"] == false && index["remote_publication"] == false, "closed non-qualifying pack");
-    let refs = index["refs"].as_array().context("bounded physical reference roster")?;
+    ensure!(
+        index["schema"] == "jope.custody-local-pack/v2"
+            && index["qualified"] == false
+            && index["remote_publication"] == false,
+        "closed non-qualifying pack"
+    );
+    let refs = index["refs"]
+        .as_array()
+        .context("bounded physical reference roster")?;
     let blobs = index["blobs"].as_array().context("bounded blob roster")?;
-    ensure!(!refs.is_empty() && refs.len() <= MAX_MEMBERS, "bounded physical reference roster");
-    ensure!(!blobs.is_empty() && blobs.len() <= MAX_MEMBERS, "bounded blob roster");
-    ensure!(index["pack_sha256"].as_str().is_some_and(is_hex64), "content-addressed pack SHA");
+    ensure!(
+        !refs.is_empty() && refs.len() <= MAX_MEMBERS,
+        "bounded physical reference roster"
+    );
+    ensure!(
+        !blobs.is_empty() && blobs.len() <= MAX_MEMBERS,
+        "bounded blob roster"
+    );
+    ensure!(
+        index["pack_sha256"].as_str().is_some_and(is_hex64),
+        "content-addressed pack SHA"
+    );
     let mut roster = Vec::new();
     let mut expected = BTreeMap::new();
     for b in blobs {
         let sha = b["sha256"].as_str().context("safe content member")?;
-        ensure!(is_hex64(sha) && b["name"] == format!("members/{sha}"), "safe content member");
+        ensure!(
+            is_hex64(sha) && b["name"] == format!("members/{sha}"),
+            "safe content member"
+        );
         let bytes = unsigned(&b["bytes"], "blob bytes")?;
-        ensure!(expected.insert(sha.to_owned(), bytes).is_none(), "duplicate blob declaration");
-        roster.push(Blob {name: format!("members/{sha}"), sha256:sha.to_owned(), bytes});
+        ensure!(
+            expected.insert(sha.to_owned(), bytes).is_none(),
+            "duplicate blob declaration"
+        );
+        roster.push(Blob {
+            name: format!("members/{sha}"),
+            sha256: sha.to_owned(),
+            bytes,
+        });
     }
     let mut physical = BTreeSet::new();
     let mut used = BTreeSet::new();
     for row in refs {
         let id = identity(row)?;
-        ensure!(id[2] != "null" && physical.insert(id), "unique immutable captured reference");
-        let sha = row["sha256"].as_str().context("every reference joins a verified blob")?;
+        ensure!(
+            id[2] != "null" && physical.insert(id),
+            "unique immutable captured reference"
+        );
+        let sha = row["sha256"]
+            .as_str()
+            .context("every reference joins a verified blob")?;
         let bytes = unsigned(&row["bytes"], "reference bytes")?;
-        ensure!(expected.get(sha) == Some(&bytes), "every reference joins a verified blob");
+        ensure!(
+            expected.get(sha) == Some(&bytes),
+            "every reference joins a verified blob"
+        );
         used.insert(sha.to_owned());
     }
-    ensure!(used.len() == expected.len(), "every blob has a source reference");
+    ensure!(
+        used.len() == expected.len(),
+        "every blob has a source reference"
+    );
     Ok((index, roster))
 }
 
@@ -121,7 +223,12 @@ fn manifest(raw: &[u8]) -> Result<(Value, Vec<Blob>)> {
 pub fn verify_manifest_bytes(raw: &[u8], directory: &Path) -> Result<Value> {
     let (index, roster) = manifest(raw)?;
     let sha = index["pack_sha256"].as_str().context("pack SHA")?;
-    verify_parsed(File::open(directory.join(format!("{sha}.tar.gz")))?, raw, &index, &roster)
+    verify_parsed(
+        File::open(directory.join(format!("{sha}.tar.gz")))?,
+        raw,
+        &index,
+        &roster,
+    )
 }
 
 pub fn verify_pack(path: &Path, raw: &[u8]) -> Result<Value> {
@@ -130,10 +237,16 @@ pub fn verify_pack(path: &Path, raw: &[u8]) -> Result<Value> {
 }
 
 fn verify_parsed(file: File, raw: &[u8], index: &Value, roster: &[Blob]) -> Result<Value> {
-    custody_archive::verify(file, index["pack_sha256"].as_str().context("pack SHA")?, roster)?;
-    Ok(json!({"physical_refs":index["refs"].as_array().context("refs")?.len(),
+    custody_archive::verify(
+        file,
+        index["pack_sha256"].as_str().context("pack SHA")?,
+        roster,
+    )?;
+    Ok(
+        json!({"physical_refs":index["refs"].as_array().context("refs")?.len(),
         "verified_blobs":roster.len(),"all_member_shas_verified":true,
-        "manifest_sha256":sha256_hex(raw),"qualified":false,"remote_calls":0}))
+        "manifest_sha256":sha256_hex(raw),"qualified":false,"remote_calls":0}),
+    )
 }
 pub fn verify_saved(path: &Path) -> Result<Value> {
     let raw = bounded_read(path, MAX_MANIFEST).context("bounded manifest bytes")?;
@@ -141,15 +254,30 @@ pub fn verify_saved(path: &Path) -> Result<Value> {
 }
 
 #[derive(Clone)]
-pub struct CapturedMember { pub row: Value, pub body: Arc<[u8]> }
+pub struct CapturedMember {
+    pub row: Value,
+    pub body: Arc<[u8]>,
+}
 
 /// Fault hooks run before the real operation; they cannot skip persistence.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PersistStep { Write, FileSync, ParentSync }
+pub enum PersistStep {
+    Write,
+    FileSync,
+    ParentSync,
+}
 
-pub fn durable_file(path: &Path, raw: &[u8], hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>) -> Result<()> {
+pub fn durable_file(
+    path: &Path,
+    raw: &[u8],
+    hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>,
+) -> Result<()> {
     hook(path, PersistStep::Write)?;
-    let mut file = OpenOptions::new().write(true).create_new(true).mode(0o600).open(path)?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(path)?;
     file.write_all(raw)?;
     hook(path, PersistStep::FileSync)?;
     file.sync_all()?;
@@ -162,21 +290,37 @@ pub fn pack_local(destination: &Path, members: &[CapturedMember]) -> Result<Valu
     pack_with(destination, members, &mut |_, _| Ok(()))
 }
 
-pub fn pack_with(destination: &Path, members: &[CapturedMember], hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>) -> Result<Value> {
-    ensure!(!members.is_empty() && members.len() <= MAX_MEMBERS, "bounded physical reference roster");
+pub fn pack_with(
+    destination: &Path,
+    members: &[CapturedMember],
+    hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>,
+) -> Result<Value> {
+    ensure!(
+        !members.is_empty() && members.len() <= MAX_MEMBERS,
+        "bounded physical reference roster"
+    );
     let mut refs = Vec::new();
     let mut physical = BTreeSet::new();
     let mut blobs = BTreeMap::new();
     let mut unique_bytes = 0u64;
     for m in members {
         let id = identity(&m.row)?;
-        ensure!(physical.insert(id.clone()), "duplicate physical object version");
+        ensure!(
+            physical.insert(id.clone()),
+            "duplicate physical object version"
+        );
         ensure!(id[2] != "null", "immutable version required for capture");
-        ensure!(unsigned(&m.row["bytes"], "member bytes")? == m.body.len() as u64, "captured size mismatch");
+        ensure!(
+            unsigned(&m.row["bytes"], "member bytes")? == m.body.len() as u64,
+            "captured size mismatch"
+        );
         let sha = sha256_hex(&m.body);
-        if let Some(old) = blobs.get(&sha) { ensure!(old == &m.body, "content digest collision"); }
-        else {
-            unique_bytes = unique_bytes.checked_add(m.body.len() as u64).context("payload overflow")?;
+        if let Some(old) = blobs.get(&sha) {
+            ensure!(old == &m.body, "content digest collision");
+        } else {
+            unique_bytes = unique_bytes
+                .checked_add(m.body.len() as u64)
+                .context("payload overflow")?;
             ensure!(unique_bytes <= MAX_PAYLOAD, "local pack raw-byte cap");
             blobs.insert(sha.clone(), m.body.clone());
         }
@@ -195,34 +339,67 @@ pub fn pack_with(destination: &Path, members: &[CapturedMember], hook: &mut impl
         let manifest_raw = canonical_json(&index)?;
         let verified = verify_manifest_bytes(&manifest_raw, destination)?;
         durable_file(&destination.join("manifest.json"), &manifest_raw, hook)?;
-        Ok(json!({"manifest_sha256":verified["manifest_sha256"],"physical_refs":refs.len(),
-            "unique_blobs":blobs.len(),"pack_bytes":raw.len(),"qualified":false,"remote_writes":0}))
+        Ok(
+            json!({"manifest_sha256":verified["manifest_sha256"],"physical_refs":refs.len(),
+            "unique_blobs":blobs.len(),"pack_bytes":raw.len(),"qualified":false,"remote_writes":0}),
+        )
     })();
-    if result.is_err() { mark_aborted(destination); }
+    if result.is_err() {
+        mark_aborted(destination);
+    }
     result
 }
 
 fn mark_aborted(directory: &Path) {
     // This witness is defensive. Failure to persist it never turns an error into success.
-    let _ = durable_file(&directory.join("ABORTED"), b"incomplete custody publication\n", &mut |_,_| Ok(()));
+    let _ = durable_file(
+        &directory.join("ABORTED"),
+        b"incomplete custody publication\n",
+        &mut |_, _| Ok(()),
+    );
 }
 
 /// Verify completion with the receipt SHA returned by a successful publisher, not a directory guess.
 pub fn verify_complete(directory: &Path, receipt_sha: &str) -> Result<Value> {
-    ensure!(is_hex64(receipt_sha) && !directory.join("ABORTED").exists(), "completed publication identity required");
+    ensure!(
+        is_hex64(receipt_sha) && !directory.join("ABORTED").exists(),
+        "completed publication identity required"
+    );
     let raw = bounded_read(&directory.join("receipt.json"), MAX_MANIFEST)?;
-    ensure!(sha256_hex(&raw) == receipt_sha, "terminal receipt SHA mismatch");
+    ensure!(
+        sha256_hex(&raw) == receipt_sha,
+        "terminal receipt SHA mismatch"
+    );
     let receipt: Value = serde_json::from_slice(&raw)?;
-    ensure!(receipt["schema"] == "jope.custody-v2-local-dry-run/v1" && receipt["complete"] == true && receipt["qualified"] == false && receipt["remote_calls"] == 0 && receipt["remote_mutations"] == 0, "nonqualifying completed receipt required");
+    ensure!(
+        receipt["schema"] == "jope.custody-v2-local-dry-run/v1"
+            && receipt["complete"] == true
+            && receipt["qualified"] == false
+            && receipt["remote_calls"] == 0
+            && receipt["remote_mutations"] == 0,
+        "nonqualifying completed receipt required"
+    );
     let ledger = bounded_read(&directory.join("object-ledger.json"), 32 * 1024 * 1024)?;
-    ensure!(receipt["ledger_sha256"] == sha256_hex(&ledger), "ledger SHA mismatch");
+    ensure!(
+        receipt["ledger_sha256"] == sha256_hex(&ledger),
+        "ledger SHA mismatch"
+    );
     let verified = verify_saved(&directory.join("pack/manifest.json"))?;
-    ensure!(receipt["pack_sample"]["manifest_sha256"] == verified["manifest_sha256"], "manifest receipt join");
-    Ok(json!({"receipt_sha256":receipt_sha,"readback":verified,"complete":true,"qualified":false,"remote_calls":0}))
+    ensure!(
+        receipt["pack_sample"]["manifest_sha256"] == verified["manifest_sha256"],
+        "manifest receipt join"
+    );
+    Ok(
+        json!({"receipt_sha256":receipt_sha,"readback":verified,"complete":true,"qualified":false,"remote_calls":0}),
+    )
 }
 
 /// Local capture only. Budget status is reported and never authorizes scoring or storage policy.
-pub struct Pricing<'a> { pub requests: &'a [Value], pub rates: &'a Value, pub as_of: &'a str }
+pub struct Pricing<'a> {
+    pub requests: &'a [Value],
+    pub rates: &'a Value,
+    pub as_of: &'a str,
+}
 pub struct DryRunRequest<'a> {
     pub rows: &'a [Value],
     pub facts: &'a [Value],
@@ -232,13 +409,29 @@ pub struct DryRunRequest<'a> {
     pub pricing: Option<Pricing<'a>>,
 }
 
-pub fn dry_run(destination: &Path, request: &DryRunRequest<'_>, hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>) -> Result<Value> {
-    let DryRunRequest {rows,facts,budgets,members,input_sha,pricing} = request;
-    if let Some(sha) = input_sha { ensure!(is_hex64(sha), "pinned input SHA required"); }
-    let estimated_cost = pricing.as_ref().map(|p|cost::report(rows,p.requests,p.rates,p.as_of)).transpose()?;
+pub fn dry_run(
+    destination: &Path,
+    request: &DryRunRequest<'_>,
+    hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>,
+) -> Result<Value> {
+    let DryRunRequest {
+        rows,
+        facts,
+        budgets,
+        members,
+        input_sha,
+        pricing,
+    } = request;
+    if let Some(sha) = input_sha {
+        ensure!(is_hex64(sha), "pinned input SHA required");
+    }
+    let estimated_cost = pricing
+        .as_ref()
+        .map(|p| cost::report(rows, p.requests, p.rates, p.as_of))
+        .transpose()?;
     let mut known = BTreeMap::new();
     for fact in *facts {
-        let id: [String;3] = serde_json::from_value(fact["identity"].clone())?;
+        let id: [String; 3] = serde_json::from_value(fact["identity"].clone())?;
         ensure!(known.insert(id, fact).is_none(), "duplicate keeper facts");
     }
     let mut seen = BTreeSet::new();
@@ -248,11 +441,20 @@ pub fn dry_run(destination: &Path, request: &DryRunRequest<'_>, hook: &mut impl 
         ensure!(seen.insert(id.clone()), "duplicate ledger physical version");
         ledger.push(classify(row, known.get(&id).copied())?);
     }
-    ensure!(known.keys().all(|id| seen.contains(id)), "facts outside observed ledger");
+    ensure!(
+        known.keys().all(|id| seen.contains(id)),
+        "facts outside observed ledger"
+    );
     for member in *members {
         let id = identity(&member.row)?;
-        let original = rows.iter().find(|r| identity(r).ok().as_ref() == Some(&id)).context("captured version outside observed ledger")?;
-        ensure!(original["bytes"] == member.row["bytes"], "capture joins ledger size");
+        let original = rows
+            .iter()
+            .find(|r| identity(r).ok().as_ref() == Some(&id))
+            .context("captured version outside observed ledger")?;
+        ensure!(
+            original["bytes"] == member.row["bytes"],
+            "capture joins ledger size"
+        );
     }
     let guard = budget_status(budgets)?;
     let ledger_raw = canonical_json(&ledger)?;
@@ -272,6 +474,8 @@ pub fn dry_run(destination: &Path, request: &DryRunRequest<'_>, hook: &mut impl 
         verify_complete(destination, &pin)?;
         Ok(json!({"receipt":receipt,"receipt_sha256":pin}))
     })();
-    if result.is_err() { mark_aborted(destination); }
+    if result.is_err() {
+        mark_aborted(destination);
+    }
     result
 }

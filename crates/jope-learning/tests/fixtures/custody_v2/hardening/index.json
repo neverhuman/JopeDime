@@ -1,0 +1,28 @@
+{
+  "schema": "jope.custody-archive-hardening/v1",
+  "member_name": "members/58100dc8fc06562ce3e578231dc948e083520ee49c4b4ee5a5a28bb4b4003feb",
+  "member_sha256": "58100dc8fc06562ce3e578231dc948e083520ee49c4b4ee5a5a28bb4b4003feb",
+  "member_bytes": 10,
+  "archives": {
+    "valid-pax.tar.gz": {
+      "sha256": "85272167b15e2ebaf0375a311953b2c95d8e860ce040e5eb1af3ccbe5e1cb8c7",
+      "bytes": 214,
+      "accept": true
+    },
+    "gzip-second-member-with-data.tar.gz": {
+      "sha256": "55c73973ac7ba040b0b07b1786a4b5b8a12589832043cd75031a5aebff441680",
+      "bytes": 245,
+      "accept": false
+    },
+    "tar-nonzero-tail.tar.gz": {
+      "sha256": "b2dcc042d7835f807c01cfb9f34e8c8f7c6143f217dfadef44e945635c9c0bfd",
+      "bytes": 225,
+      "accept": false
+    },
+    "unsafe-pax-name.tar.gz": {
+      "sha256": "636ef0072c6a306880a4d0d10eba625eacf0ac31baaf69d9d0f6685e58e101a9",
+      "bytes": 172,
+      "accept": false
+    }
+  }
+}
