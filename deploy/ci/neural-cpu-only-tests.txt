@@ -9,6 +9,7 @@ jope-parallel	eval_registry::service::tests::forged_executor_ticket_does_not_con
 jope-parallel	eval_registry::service::tests::lost_start_permission_remains_consumed_and_terminal
 jope-parallel	eval_registry::service::tests::lost_submit_response_still_commits_original_without_replay
 jope-parallel	eval_registry::service::tests::missing_authority_and_replaced_socket_cannot_start_service
+jope-parallel	eval_registry::service::tests::original_fit_child_is_confined_while_fitting
 jope-parallel	eval_registry::service::tests::query_ambiguous_acceptance_stays_unavailable_after_restart
 jope-parallel	eval_registry::service::tests::query_changed_descriptor_cannot_extend_original_deadline_or_replace_result
 jope-parallel	eval_registry::service::tests::query_client_deadline_bounds_unserved_authority_without_acceptance
