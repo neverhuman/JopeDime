@@ -5,13 +5,13 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "0d20f64fb7a20d948a0c242179c6ab82d320ac6b09916d50563b345f7a749afb"
+      "sha256": "0016752e69cb4c57a8f3231d17aa3ae6ab7a8ebc16462721c2105ab8bef84eaa"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "1db9d9f6e2da6ace11d766bb92ab3cce3c72d2c9a80043e557c0c22b1a6d6908"
+      "sha256": "8c2e9b5a74ea3fa8f9a13683353b84a27da8106a1c2cfcb97319402742cb206f"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -5427,7 +5427,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "1443582f2ab462cf0031f7f7d7c4f911316e983121a06166aa5b5218e6193216"
+      "sha256": "7bf253a224233a213556bea1dc048175cb710913b957e7855c51fd36d52804ab"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -6751,6 +6751,60 @@
       "origin_sha256": "50ce8c84eab33eed8ea00c5e0c06d3d947d3f165a9923a7b3fca5d10b53fb4e8",
       "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py",
       "sha256": "6db72149a474d04c72b6bea5baadec7c5cc8396bc892692ff1ca082cb8fd05b0"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "aae05b5113f43730eccfe98728c233fe37a03cc6c3b1747d7a7c075107c3f39b",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/README.md",
+      "sha256": "aae05b5113f43730eccfe98728c233fe37a03cc6c3b1747d7a7c075107c3f39b"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "2cbda9b3452322d073e6f279d5f6d87689041ec4787c41e0baf0c9b45bbdb8d7",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/__init__.py",
+      "sha256": "2cbda9b3452322d073e6f279d5f6d87689041ec4787c41e0baf0c9b45bbdb8d7"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "718ccb69e9289b06d25ff51a940454235324a88f5a307f20a253ec63848c9124",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/__main__.py",
+      "sha256": "718ccb69e9289b06d25ff51a940454235324a88f5a307f20a253ec63848c9124"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "6ba69dfe17bf4ac12b672cc27a4833275d87ba79119dc316a9b8236900295a34",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/roster.py",
+      "sha256": "05848d5f48d531062ce5136310de447277eaf4ea3c5f55f1dbd38915fd46bb06"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "40a5068fc7d830c0ea063b77002e49be7e66b05e6401d72ca3d2b2b134659cad",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/run_offline.py",
+      "sha256": "40a5068fc7d830c0ea063b77002e49be7e66b05e6401d72ca3d2b2b134659cad"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "b93e2545c8e9fd218df3341941551f6f4c505806b991816cb7da8e299f9ce14d",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/s3.py",
+      "sha256": "b93e2545c8e9fd218df3341941551f6f4c505806b991816cb7da8e299f9ce14d"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "6d5bd97a2839a3f338b1ce44617bec41ffb228c3d1439c5ef1b8ad546cfc458a",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/tests/__init__.py",
+      "sha256": "6d5bd97a2839a3f338b1ce44617bec41ffb228c3d1439c5ef1b8ad546cfc458a"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "7096c314141d1f58ebe5dcdb5d852765efde0bfbe3bca55b0f7bb16d975d3a01",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/tests/test_roster.py",
+      "sha256": "ca35009ef520e9e4623b0ce33158ff41d6e527e79af6319c64d71c736385f2b7"
+    },
+    {
+      "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
+      "origin_sha256": "92172a0b908198828711118259cbb2eb4db039f1911c2e5ff09356c333289a88",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/tests/test_s3.py",
+      "sha256": "92172a0b908198828711118259cbb2eb4db039f1911c2e5ff09356c333289a88"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
