@@ -100,6 +100,9 @@ pub struct Facts<'a> {
     /// The inventory's current objects and bytes equal the ledger's, so its exact dates and
     /// classes describe this group (the report is older than the ledger).
     pub inv_fresh: bool,
+    /// The inventory and the ledger disagree although the ledger shows no write after the report
+    /// (`GroupInv::conflicts_with_ledger`): one input is wrong for this group.
+    pub inv_conflict: bool,
     /// Key/size/ETag overlap of this group's E1 candidate pair, when both sides are inventoried.
     pub e1: Option<&'a E1Overlap>,
 }
@@ -422,6 +425,19 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
                 roles_str(&active_key_refs)
             ),
         )
+    } else if let Some(i) = f.inv.filter(|_| f.inv_conflict) {
+        (
+            Action::Hold,
+            format!(
+                "the ledger ({} obj, {}, last write {}) and the S3 Inventory report ({} current obj, {}, {} latest delete markers) disagree with no write after the report: one input is wrong, so no change until they agree",
+                g.objects,
+                human_bytes(g.bytes),
+                g.max_last_modified.as_deref().unwrap_or("?"),
+                i.current_objects,
+                human_bytes(i.current_bytes),
+                i.delete_markers_latest
+            ),
+        )
     } else if live && g.direct && exact.is_none() {
         // A direct group only knows its parent prefix's date range unless an unchanged
         // inventory listed its objects.
@@ -530,6 +546,8 @@ pub fn decide(f: &Facts, p: &Policy) -> Result<Decision> {
             "; inventory {} ({} noncurrent versions{})",
             if f.inv_fresh {
                 "unchanged since report"
+            } else if f.inv_conflict {
+                "disagrees with the ledger without a later write"
             } else {
                 "changed since report"
             },
