@@ -295,9 +295,15 @@ fn durable_directory(
     hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>,
 ) -> Result<()> {
     fs::DirBuilder::new().mode(0o700).create(path)?;
-    hook(path, PersistStep::ParentSync)?;
-    File::open(path.parent().context("directory parent")?)?.sync_all()?;
-    Ok(())
+    let result = (|| {
+        hook(path, PersistStep::ParentSync)?;
+        File::open(path.parent().context("directory parent")?)?.sync_all()?;
+        Ok(())
+    })();
+    if result.is_err() {
+        mark_aborted(path);
+    }
+    result
 }
 
 pub fn pack_with(
