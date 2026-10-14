@@ -9275,6 +9275,16 @@
         "full-default"
       ],
       "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Read-only GB08 baseline fixtures through analytics/run_offline.py: allocation vs active CPU, qualified arrivals, clock proof/censoring, queues/phases, cache identity, owner ledger cost and immutable Parquet/dashboard readback. No training/evaluation/S3."
     }
   },
   "lanes": {
