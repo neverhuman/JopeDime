@@ -1302,7 +1302,7 @@ fn report(
     }
     for sc in &lock.scans {
         o.push_str(&format!(
-            "- scan {} `{}`: {} files seen, {} not text, {} over cap, {} read ({:.1} GB), {} mention buckets, {} inventories skipped, {} unreadable, {} object refs ({} prose mentions, D1), {} prefix mentions\n",
+            "- scan {} `{}`: {} files seen, {} not text, {} over cap (streamed, name no in-scope bucket), {} read ({:.1} GB), {} mention buckets, {} inventories skipped, {} unreadable, {} object refs ({} prose mentions, D1), {} prefix mentions\n",
             sc.role,
             sc.root,
             sc.files_seen,
