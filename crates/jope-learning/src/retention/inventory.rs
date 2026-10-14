@@ -375,6 +375,26 @@ impl GroupInv {
         self.min_last_modified = self.min_ms.map(rfc3339_ms);
         self.max_last_modified = self.max_ms.map(rfc3339_ms);
     }
+
+    /// The ledger and this report cannot both be right. With no write after the report (by the
+    /// ledger's own dates) the current set can only shrink by deletes or regain keys whose latest
+    /// version was a delete marker, and no object changes size. A ledger without dates proves
+    /// nothing either way.
+    pub fn conflicts_with_ledger(
+        &self,
+        ledger_objects: u64,
+        ledger_bytes: u64,
+        ledger_max_last_modified: Option<&str>,
+        report_created_at: &str,
+    ) -> bool {
+        if ledger_max_last_modified.is_none_or(|m| m > report_created_at) {
+            return false;
+        }
+        ledger_objects > self.current_objects + self.delete_markers_latest
+            || (ledger_objects == self.current_objects
+                && ledger_bytes != self.current_bytes
+                && self.delete_markers_latest == 0)
+    }
 }
 
 /// What the inventory says about one pinned key.
@@ -568,4 +588,36 @@ pub fn aggregate(
         pins,
         e1,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GroupInv;
+
+    #[test]
+    fn ledger_conflict_needs_a_difference_no_later_write_can_explain() {
+        const REPORT: &str = "2026-10-12T01:00:00Z";
+        let inv = |objects, bytes, latest_markers| GroupInv {
+            current_objects: objects,
+            current_bytes: bytes,
+            delete_markers_latest: latest_markers,
+            ..GroupInv::default()
+        };
+        let before = Some("2026-09-18T19:14:33Z");
+        let after = Some("2026-10-12T01:00:01Z");
+        // The archive git/ case: every key counted twice by the ledger.
+        assert!(inv(5, 22, 0).conflicts_with_ledger(10, 44, before, REPORT));
+        // A write after the report, or no ledger dates, explains anything.
+        assert!(!inv(5, 22, 0).conflicts_with_ledger(10, 44, after, REPORT));
+        assert!(!inv(5, 22, 0).conflicts_with_ledger(10, 44, None, REPORT));
+        // Deletes after the report only shrink the current set.
+        assert!(!inv(5, 22, 0).conflicts_with_ledger(3, 9, before, REPORT));
+        // Removing delete markers can bring back at most that many keys.
+        assert!(!inv(4, 16, 1).conflicts_with_ledger(5, 20, before, REPORT));
+        assert!(inv(4, 16, 1).conflicts_with_ledger(6, 24, before, REPORT));
+        // Same count, other bytes: impossible without a write, unless a delete met an undelete.
+        assert!(inv(5, 22, 0).conflicts_with_ledger(5, 23, before, REPORT));
+        assert!(!inv(5, 22, 1).conflicts_with_ledger(5, 23, before, REPORT));
+        assert!(!inv(5, 22, 0).conflicts_with_ledger(5, 22, before, REPORT));
+    }
 }

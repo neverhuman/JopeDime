@@ -1072,7 +1072,34 @@ fn learn_inventory_rows() -> Vec<InvRow> {
             "DEEP_ARCHIVE",
         ));
     }
-    // cccc changed after the report: the ledger has 2000 objects, the inventory 1999.
+    // The rest of aaaa and gp-hwm, so their ledger counts match the report.
+    for i in 0..1000 {
+        rows.push(o(
+            format!("experiments/gp-teacher-v6/contexts/aaaa/k{i}"),
+            50_000,
+            "2026-10-01T00:00:00Z",
+            "STANDARD",
+        ));
+    }
+    for i in 0..49 {
+        rows.push(o(
+            format!("experiments/gp-policy-dl/v2-trainonly/gp-hwm/ds/f0/extra{i}.json"),
+            2_000,
+            "2026-10-07T00:00:00Z",
+            "STANDARD",
+        ));
+    }
+    // bbbb was written after the report (ledger: 10 objects, last write 2026-10-13); 9 are here.
+    for i in 0..9 {
+        rows.push(o(
+            format!("experiments/gp-teacher-v6/contexts/bbbb/y{i}"),
+            100_000,
+            "2026-10-10T00:00:00Z",
+            "STANDARD",
+        ));
+    }
+    // cccc: the ledger has 2000 objects, the report 1999 and no delete marker, yet the ledger's
+    // last write (2026-10-01) predates the report. No later write explains that: a conflict.
     for i in 0..1999 {
         rows.push(o(
             format!("experiments/gp-teacher-v6/contexts/cccc/x{i}"),
@@ -1183,11 +1210,54 @@ fn inventory_report_adds_object_facts_and_pin_checks() {
             > 0.4
     );
 
-    // A group that changed after the report keeps prefix-level reasoning.
-    let c = row(&b, &l("experiments/gp-teacher-v6/contexts/cccc/"));
+    // A group written after the report keeps prefix-level reasoning.
+    let bb = l("experiments/gp-teacher-v6/contexts/bbbb/");
+    let c = row(&b, &bb);
     assert!(!c.inventory.as_ref().unwrap().unchanged_since_report);
     assert_eq!(c.storage_class_basis, "inventory-changed-since-report");
-    assert_eq!(c.action, Action::Compact);
+    assert_eq!(c.action, row(&without, &bb).action);
+    assert!(
+        c.reason.contains("inventory changed since report"),
+        "{}",
+        c.reason
+    );
+
+    // A difference no later write explains: one input is wrong, so COMPACT becomes HOLD and the
+    // group is a hazard. Only cccc is such a group, and only it carries the row field.
+    let cc = l("experiments/gp-teacher-v6/contexts/cccc/");
+    let c = row(&b, &cc);
+    assert_eq!(row(&without, &cc).action, Action::Compact);
+    assert_eq!(c.action, Action::Hold, "{}", c.reason);
+    assert_eq!(c.storage_class_basis, "inventory-ledger-conflict");
+    assert!(
+        c.reason.contains("disagree with no write after the report")
+            && c.reason
+                .contains("disagrees with the ledger without a later write"),
+        "{}",
+        c.reason
+    );
+    let flagged: Vec<String> = b
+        .rows
+        .iter()
+        .filter_map(|r| {
+            let v = serde_json::to_value(r).unwrap();
+            (v["inventory"]["ledger_conflict"] == json!(true)).then(|| r.group_id.clone())
+        })
+        .collect();
+    assert_eq!(flagged, vec![cc.clone()]);
+    assert!(b
+        .summary
+        .hazards
+        .iter()
+        .any(|h| h.kind == "ledger-inventory-conflict" && h.groups == 1));
+    let sv = serde_json::to_value(&b.summary).unwrap();
+    assert!(
+        sv["inventory"]["ledger_conflicts"][0]
+            .as_str()
+            .is_some_and(
+                |s| s.contains("ledger 2000 obj") && s.contains("inventory 1999 current obj")
+            )
+    );
 
     // Noncurrent versions: counted per group; inside T0 groups they are a D2 note.
     let pr = row(
@@ -1240,7 +1310,7 @@ fn inventory_report_adds_object_facts_and_pin_checks() {
             lb.noncurrent_versions,
             lb.delete_markers
         ),
-        (2115, 2109, 5, 1)
+        (3173, 3167, 5, 1)
     );
     assert_eq!(
         s.ledger_buckets_without_report,

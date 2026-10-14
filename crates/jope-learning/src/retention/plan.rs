@@ -56,6 +56,10 @@ pub struct RowInventory {
     pub report_created_at: String,
     /// Current objects and bytes equal the ledger's: dates and classes are exact for the group.
     pub unchanged_since_report: bool,
+    /// The ledger disagrees with the report although it shows no write after it (written only
+    /// when true): one input is wrong, so the group gets no changing action.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub ledger_conflict: bool,
     #[serde(flatten)]
     pub facts: GroupInv,
 }
@@ -94,6 +98,9 @@ pub struct InventorySummary {
     pub ledger_buckets_without_report: Vec<String>,
     pub groups_with_inventory: u64,
     pub groups_unchanged_since_report: u64,
+    /// Groups whose ledger counts disagree with the report without a later write (hazard
+    /// `ledger-inventory-conflict`), with both sides' numbers.
+    pub ledger_conflicts: Vec<String>,
     pub noncurrent_bytes_in_t0_groups: u64,
     pub noncurrent_bytes_in_other_groups: u64,
     /// role -> pin state -> distinct keys, for pins into inventoried buckets.
@@ -546,6 +553,22 @@ pub fn build(cfg: &Config) -> Result<Built> {
             .and_then(|i| i.per_group[gi].as_ref())
             .is_some_and(|x| x.current_objects == g.objects && x.current_bytes == g.bytes)
     };
+    let conflict = |gi: usize| -> bool {
+        let g = &ledger.groups[gi];
+        inv.as_ref().is_some_and(|i| {
+            i.per_group[gi]
+                .as_ref()
+                .zip(i.buckets.get(&g.bucket))
+                .is_some_and(|(x, b)| {
+                    x.conflicts_with_ledger(
+                        g.objects,
+                        g.bytes,
+                        g.max_last_modified.as_deref(),
+                        &b.report_created_at,
+                    )
+                })
+        })
+    };
     if let Some(i) = &inv {
         for (gi, x) in i.per_group.iter().enumerate() {
             let Some(x) = x else { continue };
@@ -554,6 +577,8 @@ pub fn build(cfg: &Config) -> Result<Built> {
                     class.clone(),
                     if fresh(gi) {
                         "inventory"
+                    } else if conflict(gi) {
+                        "inventory-ledger-conflict"
                     } else {
                         "inventory-changed-since-report"
                     },
@@ -602,6 +627,7 @@ pub fn build(cfg: &Config) -> Result<Built> {
             as_of_unix,
             inv: inv.as_ref().and_then(|i| i.per_group[gi].as_ref()),
             inv_fresh: fresh(gi),
+            inv_conflict: conflict(gi),
             e1: inv.as_ref().and_then(|i| {
                 let c = policy.e1_candidate_for(&g.bucket, &g.prefix)?;
                 i.e1.iter()
@@ -634,6 +660,7 @@ pub fn build(cfg: &Config) -> Result<Built> {
                 .map(|b| b.report_created_at.clone())
                 .unwrap_or_default(),
             unchanged_since_report: facts.inv_fresh,
+            ledger_conflict: facts.inv_conflict,
             facts: x.clone(),
         });
         rows.push(r);
@@ -735,10 +762,33 @@ pub fn build(cfg: &Config) -> Result<Built> {
         None => None,
         Some(i) => {
             let (mut nc_t0, mut nc_other, mut with, mut unchanged) = (0u64, 0u64, 0u64, 0u64);
+            let mut ledger_conflicts = Vec::new();
             for r in &rows {
                 let Some(x) = &r.inventory else { continue };
                 with += 1;
                 unchanged += u64::from(x.unchanged_since_report);
+                if x.ledger_conflict {
+                    add_note(
+                        &mut hazards,
+                        "ledger-inventory-conflict",
+                        format!(
+                            "{}: ledger and S3 Inventory disagree with no write after the report (one input is wrong; these groups get no changing action)",
+                            r.bucket
+                        ),
+                        r.bytes as f64 / 1e9,
+                    );
+                    ledger_conflicts.push(format!(
+                        "{} ({}): ledger {} obj / {} B, last write {}; inventory {} current obj / {} B, {} latest delete markers",
+                        r.group_id,
+                        r.action.as_str(),
+                        r.objects,
+                        r.bytes,
+                        r.max_last_modified.as_deref().unwrap_or("?"),
+                        x.facts.current_objects,
+                        x.facts.current_bytes,
+                        x.facts.delete_markers_latest
+                    ));
+                }
                 if r.action == Action::KeepT0 {
                     nc_t0 += x.facts.noncurrent_bytes;
                     if x.facts.noncurrent_versions > 0 {
@@ -856,6 +906,7 @@ pub fn build(cfg: &Config) -> Result<Built> {
                     .collect(),
                 groups_with_inventory: with,
                 groups_unchanged_since_report: unchanged,
+                ledger_conflicts,
                 noncurrent_bytes_in_t0_groups: nc_t0,
                 noncurrent_bytes_in_other_groups: nc_other,
                 pins: pin_counts,
@@ -1284,6 +1335,16 @@ fn report(
             inv.noncurrent_bytes_in_t0_groups as f64 / 1e9,
             inv.noncurrent_bytes_in_other_groups as f64 / 1e9
         ));
+        if !inv.ledger_conflicts.is_empty() {
+            o.push_str(&format!(
+                "{} groups disagree with the ledger although the ledger shows no write after the report (hazard ledger-inventory-conflict; no changing action):\n\n",
+                inv.ledger_conflicts.len()
+            ));
+            for c in &inv.ledger_conflicts {
+                o.push_str(&format!("- {c}\n"));
+            }
+            o.push('\n');
+        }
         o.push_str("| Bucket | Report | Rows | Current obj | Current GB | Noncurrent ver | Noncurrent GB | Delete markers | Ledger - inventory (obj / GB) |\n|---|---|---:|---:|---:|---:|---:|---:|---:|\n");
         for b in &inv.buckets {
             o.push_str(&format!(
