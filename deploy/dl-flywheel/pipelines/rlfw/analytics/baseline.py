@@ -312,12 +312,30 @@ class Baseline:
             self.complete("arrivals") and data.get("lifetime_novelty_complete") is True
         )
         pairs, programs = set(), set()
-        catalog_complete = complete and bool(data.get("frozen_catalog_sha256"))
+        catalog = data.get("frozen_catalog_sha256")
+        catalog_complete = complete and bool(catalog)
+        catalog_membership = {}
         identities, first_qualification, first_program = {}, {}, {}
         roles = {event.get("role") for event in records if event.get("role")}
         if len(roles) > 1:
             raise ValueError("mixed role cohorts must be reported separately")
         for event in records:
+            # Frozen catalog membership does not depend on context or report window.
+            program = event.get("canonical_program_sha256")
+            membership = event.get("in_frozen_catalog")
+            if (
+                catalog
+                and program
+                and event.get("catalog_membership_proof_sha256")
+                and type(membership) is bool
+            ):
+                catalog_key = (catalog, program)
+                if (
+                    catalog_key in catalog_membership
+                    and catalog_membership[catalog_key] != membership
+                ):
+                    raise ValueError("conflicting frozen catalog membership")
+                catalog_membership[catalog_key] = membership
             identity = event.get("comparison_identity", {})
             if not all(identity.get(k) for k in COMPARISON) or not all(
                 event.get(k)
@@ -734,13 +752,8 @@ class Baseline:
                 a, b = interval(record["interval"])
                 c, d = interval(other["interval"])
                 p, q = record["prefix"], other["prefix"]
-                overlaps = (
-                    not p
-                    or not q
-                    or p == q
-                    or p.rstrip("/") + "/" == q[: len(p.rstrip("/")) + 1]
-                    or q.rstrip("/") + "/" == p[: len(q.rstrip("/")) + 1]
-                )
+                # Object-store prefixes are literal, including the empty root.
+                overlaps = p.startswith(q) or q.startswith(p)
                 if overlaps and max(a, c) < min(b, d):
                     raise ValueError("scope_double_count")
         known = [r["usd"] for r in eligible if r.get("usd") is not None]
