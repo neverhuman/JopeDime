@@ -16,15 +16,13 @@ with them fails the gate. Two lanes adding a row of the same kind each bump the 
 same number, so git reports no conflict — update this table from the rows, not from the last value
 you saw.
 
-| kind | rows | moved | new | pending | dropped | lost |
-|---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
 | engine-subcommand | 104 | 88 | 16 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 17 | 0 | 17 | 0 | 0 | 0 |
+| new-bin | 18 | 0 | 18 | 0 | 0 | 0 |
 | new-example | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,7 +40,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **822** | **353** | **59** | **1** | **402** | **7** |
+| **total** | **823** | **353** | **60** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
@@ -874,3 +872,5 @@ you saw.
 | new-example | (new) kernel2 pipeline v4 receipt schema | crates/jope-pipeline/examples/receipt_v4_schema.rs (receipt_v4_schema) | jope-pipeline::jope_pipeline kernel2::cli_tests::v4_schema_matches_its_generated_type_and_legacy_schemas_are_unchanged | new | Owning generator for the additive opt-in kernel2 v4 schema; legacy v1-v3 schemas and defaults unchanged. |
 
 | new-bin | (new) jope_support | crates/jope-learning/src/bin/jope_support.rs (jope_support) | jope-learning::support external_winner_freezes_version_with_finite_added_leaf; jope-learning::support actual_v1_policy_golden_matches_sampling_and_eos_likelihood | new | GB05/J13: local create-only versioned action support/import/verify/index/score and mismatch readout. Fixed deployed vocabulary, TRAIN provenance and caller-pinned support. All qualified=false until G12; no program execution or live objective change. |
+
+| new-bin | (new) local custody v2 | crates/jope-learning/src/bin/jope_custody.rs (jope_custody) | jope-learning::custody dry_run_and_fresh_process_completion_authenticate_all_files; jope-learning::custody all_publication_write_and_sync_failures_refuse_completed_readers | new | GB02: local pinned-input pack/readback/SHA, conservative keeper and25GB-day guard reports, bounded v2 archive verification and completion receipts. Research/source-only, qualified=false; no live S3 adapter, remote mutation, retention application or scoring/training authority. |
