@@ -32,6 +32,8 @@ pub fn execute_query_worker() -> Result<()> {
         authenticated_peer(&channel)? == parent,
         "query channel is not owned by original parent"
     );
+    // Confine this child before it reports readiness and receives inputs.
+    super::sandbox::lockdown()?;
     send_json(
         &mut channel,
         &ProcessIdentity::current()?,
@@ -95,7 +97,11 @@ pub(super) fn predict(
     let (mut channel, child_channel) = UnixStream::pair()?;
     let fd = child_channel.as_raw_fd();
     let parent = std::process::id();
+    let confinement =
+        super::sandbox::Confinement::query(&state.config, remaining_request(deadline)?)?;
+    let attestation = confinement.attestation();
     let mut command = Command::new(&state.config.worker_executable);
+    confinement.configure(&mut command);
     #[cfg(not(test))]
     command.arg("registry-service-query");
     #[cfg(test)]
@@ -127,18 +133,10 @@ pub(super) fn predict(
             if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
                 || libc::getppid() as u32 != parent
                 || libc::setpgid(0, 0) != 0
-                || libc::fcntl(fd, libc::F_SETFD, 0) != 0
             {
                 return Err(std::io::Error::last_os_error());
             }
-            let limit = libc::rlimit {
-                rlim_cur: 8 * 1024 * 1024 * 1024,
-                rlim_max: 8 * 1024 * 1024 * 1024,
-            };
-            if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 {
-                return Err(std::io::Error::last_os_error());
-            }
-            Ok(())
+            confinement.enter(fd)
         });
     }
     let mut child = command.spawn()?;
@@ -160,6 +158,7 @@ pub(super) fn predict(
     let result = (|| {
         let ready: ProcessIdentity = receive_json(&mut channel, remaining_request(deadline)?)?;
         ensure!(ready == process, "query child readiness identity changed");
+        attestation.verify(process.pid)?;
         ensure!(
             sha(&fs::read(format!("/proc/{}/exe", process.pid))?)
                 == state.identity.executable_sha256

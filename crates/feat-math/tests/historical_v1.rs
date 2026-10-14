@@ -428,6 +428,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/fitted_runtime_sealed_identity_rebaseline.v1.json");
     assert_eq!(sealed_runtime["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(sealed_runtime["fixtures"][0]["path"], changed_fixtures[0]);
+    // Evaluator child isolation (J24): teaching-store lineage source identity only.
+    let eval_isolation =
+        old_fixture("transitions/eval_child_isolation_identity_rebaseline.v1.json");
+    assert_eq!(eval_isolation["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(eval_isolation["fixtures"][0]["path"], changed_fixtures[1]);
     let identity_chain = [
         transition,
         successor,
@@ -442,6 +447,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         corpus_bounds,
         executable_cache,
         sealed_runtime,
+        eval_isolation,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
