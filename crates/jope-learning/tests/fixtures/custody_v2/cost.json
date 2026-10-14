@@ -1,0 +1,362 @@
+{
+  "cases": [
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "actual_billed_usd": null,
+          "all_storage_priced": true,
+          "data_transfer_usd": null,
+          "days_in_utc_month": 31,
+          "discounts_free_tier_account_aggregate_tier": "unmeasured",
+          "http_requests": {
+            "GetObject": 1,
+            "ListObjectVersions": 1
+          },
+          "qualified": false,
+          "request_usd_estimate": "0.0000054000",
+          "standard_storage_usd_day_estimate": "0.0007419354838709677419354838710",
+          "standard_version_bytes": 1073741824,
+          "storage_rate_assumption": "first 50 TiB tier; calendar-month daily normalization",
+          "unsupported_storage_classes": {}
+        }
+      },
+      "group": "cost",
+      "id": "gb02.cost.october_binary_gb",
+      "input": {
+        "as_of": "2026-10-13T00:00:00+00:00",
+        "rates": {
+          "actual_billed_usd": null,
+          "catalog_publication_date": "2026-10-12T23:11:02Z",
+          "catalog_sha256": "2570b88a4c2311360cab777b6f698384c0005744c7db37b60a953bdf9ab141db",
+          "catalog_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+          "catalog_version": "20261012231102",
+          "get_request": "0.0000004000",
+          "list_request": "0.0000050000",
+          "region": "us-east-2",
+          "retrieved_at": "2026-10-13T01:36:50.444120+00:00",
+          "schema": "jope.aws-s3-standard-ohio-rate-card/v1",
+          "standard_gb_month": "0.0230000000",
+          "storage_bytes_per_gb": 1073741824
+        },
+        "requests": [
+          {
+            "operation": "ListObjectVersions"
+          },
+          {
+            "operation": "GetObject"
+          }
+        ],
+        "rows": [
+          {
+            "bucket": "bucket",
+            "bytes": 1073741824,
+            "etag": "not-a-sha",
+            "is_latest": true,
+            "key": "safe/objects/rust_executable",
+            "last_modified": "2026-10-13T00:00:00+00:00",
+            "storage_class": "STANDARD",
+            "version_id": "v1"
+          }
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "actual_billed_usd": null,
+          "all_storage_priced": false,
+          "data_transfer_usd": null,
+          "days_in_utc_month": 31,
+          "discounts_free_tier_account_aggregate_tier": "unmeasured",
+          "http_requests": {},
+          "qualified": false,
+          "request_usd_estimate": "0E-10",
+          "standard_storage_usd_day_estimate": "0E-10",
+          "standard_version_bytes": 0,
+          "storage_rate_assumption": "first 50 TiB tier; calendar-month daily normalization",
+          "unsupported_storage_classes": {
+            "GLACIER": 1
+          }
+        }
+      },
+      "group": "cost",
+      "id": "gb02.cost.unsupported_glacier",
+      "input": {
+        "as_of": "2026-10-13T00:00:00+00:00",
+        "rates": {
+          "actual_billed_usd": null,
+          "catalog_publication_date": "2026-10-12T23:11:02Z",
+          "catalog_sha256": "2570b88a4c2311360cab777b6f698384c0005744c7db37b60a953bdf9ab141db",
+          "catalog_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+          "catalog_version": "20261012231102",
+          "get_request": "0.0000004000",
+          "list_request": "0.0000050000",
+          "region": "us-east-2",
+          "retrieved_at": "2026-10-13T01:36:50.444120+00:00",
+          "schema": "jope.aws-s3-standard-ohio-rate-card/v1",
+          "standard_gb_month": "0.0230000000",
+          "storage_bytes_per_gb": 1073741824
+        },
+        "requests": [],
+        "rows": [
+          {
+            "bucket": "bucket",
+            "bytes": 1073741824,
+            "etag": "not-a-sha",
+            "is_latest": true,
+            "key": "safe/objects/rust_executable",
+            "last_modified": "2026-10-13T00:00:00+00:00",
+            "storage_class": "GLACIER",
+            "version_id": "v1"
+          }
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "actual_billed_usd": null,
+          "all_storage_priced": true,
+          "data_transfer_usd": null,
+          "days_in_utc_month": 29,
+          "discounts_free_tier_account_aggregate_tier": "unmeasured",
+          "http_requests": {
+            "GetObject": 1,
+            "ListObjectVersions": 1
+          },
+          "qualified": false,
+          "request_usd_estimate": "0.0000054000",
+          "standard_storage_usd_day_estimate": "0.0007931034482758620689655172414",
+          "standard_version_bytes": 1073741824,
+          "storage_rate_assumption": "first 50 TiB tier; calendar-month daily normalization",
+          "unsupported_storage_classes": {}
+        }
+      },
+      "group": "cost",
+      "id": "gb02.cost.leap_february",
+      "input": {
+        "as_of": "2028-02-01T00:00:00+00:00",
+        "rates": {
+          "actual_billed_usd": null,
+          "catalog_publication_date": "2026-10-12T23:11:02Z",
+          "catalog_sha256": "2570b88a4c2311360cab777b6f698384c0005744c7db37b60a953bdf9ab141db",
+          "catalog_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+          "catalog_version": "20261012231102",
+          "get_request": "0.0000004000",
+          "list_request": "0.0000050000",
+          "region": "us-east-2",
+          "retrieved_at": "2026-10-13T01:36:50.444120+00:00",
+          "schema": "jope.aws-s3-standard-ohio-rate-card/v1",
+          "standard_gb_month": "0.0230000000",
+          "storage_bytes_per_gb": 1073741824
+        },
+        "requests": [
+          {
+            "operation": "ListObjectVersions"
+          },
+          {
+            "operation": "GetObject"
+          }
+        ],
+        "rows": [
+          {
+            "bucket": "bucket",
+            "bytes": 1073741824,
+            "etag": "not-a-sha",
+            "is_latest": true,
+            "key": "safe/objects/rust_executable",
+            "last_modified": "2026-10-13T00:00:00+00:00",
+            "storage_class": "STANDARD",
+            "version_id": "v1"
+          }
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "actual_billed_usd": null,
+          "all_storage_priced": true,
+          "data_transfer_usd": null,
+          "days_in_utc_month": 31,
+          "discounts_free_tier_account_aggregate_tier": "unmeasured",
+          "http_requests": {
+            "GetObject": 2,
+            "ListObjectVersions": 1
+          },
+          "qualified": false,
+          "request_usd_estimate": "0.0000058000",
+          "standard_storage_usd_day_estimate": "0.0007419354838709677419354838710",
+          "standard_version_bytes": 1073741824,
+          "storage_rate_assumption": "first 50 TiB tier; calendar-month daily normalization",
+          "unsupported_storage_classes": {}
+        }
+      },
+      "group": "cost",
+      "id": "gb02.cost.physical_retries",
+      "input": {
+        "as_of": "2026-10-13T00:00:00+00:00",
+        "rates": {
+          "actual_billed_usd": null,
+          "catalog_publication_date": "2026-10-12T23:11:02Z",
+          "catalog_sha256": "2570b88a4c2311360cab777b6f698384c0005744c7db37b60a953bdf9ab141db",
+          "catalog_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+          "catalog_version": "20261012231102",
+          "get_request": "0.0000004000",
+          "list_request": "0.0000050000",
+          "region": "us-east-2",
+          "retrieved_at": "2026-10-13T01:36:50.444120+00:00",
+          "schema": "jope.aws-s3-standard-ohio-rate-card/v1",
+          "standard_gb_month": "0.0230000000",
+          "storage_bytes_per_gb": 1073741824
+        },
+        "requests": [
+          {
+            "operation": "ListObjectVersions"
+          },
+          {
+            "operation": "GetObject"
+          },
+          {
+            "operation": "GetObject"
+          }
+        ],
+        "rows": [
+          {
+            "bucket": "bucket",
+            "bytes": 1073741824,
+            "etag": "not-a-sha",
+            "is_latest": true,
+            "key": "safe/objects/rust_executable",
+            "last_modified": "2026-10-13T00:00:00+00:00",
+            "storage_class": "STANDARD",
+            "version_id": "v1"
+          }
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "reason": "read-only request roster"
+      },
+      "group": "cost",
+      "id": "gb02.cost.mutation_roster",
+      "input": {
+        "as_of": "2026-10-13T00:00:00+00:00",
+        "rates": {
+          "actual_billed_usd": null,
+          "catalog_publication_date": "2026-10-12T23:11:02Z",
+          "catalog_sha256": "2570b88a4c2311360cab777b6f698384c0005744c7db37b60a953bdf9ab141db",
+          "catalog_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+          "catalog_version": "20261012231102",
+          "get_request": "0.0000004000",
+          "list_request": "0.0000050000",
+          "region": "us-east-2",
+          "retrieved_at": "2026-10-13T01:36:50.444120+00:00",
+          "schema": "jope.aws-s3-standard-ohio-rate-card/v1",
+          "standard_gb_month": "0.0230000000",
+          "storage_bytes_per_gb": 1073741824
+        },
+        "requests": [
+          {
+            "operation": "DeleteObject"
+          }
+        ],
+        "rows": [
+          {
+            "bucket": "bucket",
+            "bytes": 1073741824,
+            "etag": "not-a-sha",
+            "is_latest": true,
+            "key": "safe/objects/rust_executable",
+            "last_modified": "2026-10-13T00:00:00+00:00",
+            "storage_class": "STANDARD",
+            "version_id": "v1"
+          }
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "reason": "positive finite price"
+      },
+      "group": "cost",
+      "id": "gb02.cost.invalid_price_nan",
+      "input": {
+        "as_of": "2026-10-13T00:00:00+00:00",
+        "rates": {
+          "actual_billed_usd": null,
+          "catalog_publication_date": "2026-10-12T23:11:02Z",
+          "catalog_sha256": "2570b88a4c2311360cab777b6f698384c0005744c7db37b60a953bdf9ab141db",
+          "catalog_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+          "catalog_version": "20261012231102",
+          "get_request": "NaN",
+          "list_request": "0.0000050000",
+          "region": "us-east-2",
+          "retrieved_at": "2026-10-13T01:36:50.444120+00:00",
+          "schema": "jope.aws-s3-standard-ohio-rate-card/v1",
+          "standard_gb_month": "0.0230000000",
+          "storage_bytes_per_gb": 1073741824
+        },
+        "requests": [
+          {
+            "operation": "ListObjectVersions"
+          },
+          {
+            "operation": "GetObject"
+          }
+        ],
+        "rows": [
+          {
+            "bucket": "bucket",
+            "bytes": 1073741824,
+            "etag": "not-a-sha",
+            "is_latest": true,
+            "key": "safe/objects/rust_executable",
+            "last_modified": "2026-10-13T00:00:00+00:00",
+            "storage_class": "STANDARD",
+            "version_id": "v1"
+          }
+        ]
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns"
+      ],
+      "qualified": false
+    }
+  ],
+  "group": "cost",
+  "schema": "jope.gb02-rust-port-fixtures/v1"
+}
