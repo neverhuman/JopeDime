@@ -10,7 +10,7 @@ use jope_learning::{
 };
 use serde_json::{json, Value};
 use std::{
-    collections::{BTreeSet, VecDeque},
+    collections::{BTreeMap, BTreeSet, VecDeque},
     fs,
     io::{Cursor, Read},
     path::{Path, PathBuf},
@@ -671,6 +671,66 @@ fn valid_pax_compatibility_and_entire_gzip_tar_tails_are_checked() {
             entry["accept"].as_bool().unwrap(),
             "{name}: {result:?}"
         );
+    }
+}
+
+#[test]
+fn archive_round_trips_cross_block_and_record_size_boundaries() {
+    use jope_records::custody_archive::{encode, verify, Blob};
+
+    for size in [
+        0, 1, 511, 512, 513, 8192, 8704, 8705, 9215, 9216, 9728, 10239, 10240, 10241, 17409, 19968,
+        20479, 20480,
+    ] {
+        for count in 1..=3 {
+            let mut bodies = BTreeMap::new();
+            for i in 0..count {
+                let bytes = (size + i * 513) % 20481;
+                let body = Arc::<[u8]>::from(vec![(i + 1) as u8; bytes]);
+                bodies.insert(sha256_hex(&body), body);
+            }
+            assert_eq!(bodies.len(), count);
+            let blobs: Vec<_> = bodies
+                .iter()
+                .map(|(sha, body)| Blob {
+                    name: format!("members/{sha}"),
+                    sha256: sha.clone(),
+                    bytes: body.len() as u64,
+                })
+                .collect();
+            let encoded = encode(&bodies).unwrap();
+            verify(encoded.as_slice(), &sha256_hex(&encoded), &blobs)
+                .unwrap_or_else(|error| panic!("size={size} count={count}: {error}"));
+        }
+    }
+}
+
+#[test]
+fn external_gnu_ustar_and_pax_record_padding_verify() {
+    use jope_records::custody_archive::{verify, Blob};
+
+    let index = fixture("hardening/gnu-layout-index.json");
+    for archive in index["archives"].as_array().unwrap() {
+        let raw = fs::read(
+            fixtures()
+                .join("hardening")
+                .join(archive["file"].as_str().unwrap()),
+        )
+        .unwrap();
+        assert_eq!(raw.len() as u64, archive["bytes"].as_u64().unwrap());
+        assert_eq!(sha256_hex(&raw), archive["sha256"].as_str().unwrap());
+        let blobs: Vec<_> = archive["blobs"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|blob| Blob {
+                name: blob["name"].as_str().unwrap().into(),
+                sha256: blob["sha256"].as_str().unwrap().into(),
+                bytes: blob["bytes"].as_u64().unwrap(),
+            })
+            .collect();
+        verify(raw.as_slice(), archive["sha256"].as_str().unwrap(), &blobs)
+            .unwrap_or_else(|error| panic!("{}: {error}", archive["file"]));
     }
 }
 

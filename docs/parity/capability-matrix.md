@@ -16,6 +16,8 @@ with them fails the gate. Two lanes adding a row of the same kind each bump the 
 same number, so git reports no conflict — update this table from the rows, not from the last value
 you saw.
 
+| kind | rows | moved | new | pending | dropped | lost |
+|---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
 | engine-subcommand | 104 | 88 | 16 | 0 | 0 | 0 |

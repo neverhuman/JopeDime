@@ -1,0 +1,55 @@
+{
+  "schema": "jope.custody-gnu-layout-fixtures/v1",
+  "archives": [
+    {
+      "file": "gnu-ustar-8705.tar.gz",
+      "sha256": "4e0a5fdea75fc202067ea13805a8464d0404570a58bdce431c71615cdf684a26",
+      "bytes": 163,
+      "tar_bytes": 20480,
+      "blobs": [
+        {
+          "name": "members/627c470fe464d803a9944afa269832e03e580b2ca680f2bcd4ff500b0a2deb93",
+          "sha256": "627c470fe464d803a9944afa269832e03e580b2ca680f2bcd4ff500b0a2deb93",
+          "bytes": 8705
+        }
+      ],
+      "producer": "tar (GNU tar) 1.35",
+      "format": "ustar",
+      "blocking_factor": 20
+    },
+    {
+      "file": "gnu-pax-3x8705.tar.gz",
+      "sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
+      "bytes": 397,
+      "tar_bytes": 40960,
+      "blobs": [
+        {
+          "name": "members/627c470fe464d803a9944afa269832e03e580b2ca680f2bcd4ff500b0a2deb93",
+          "sha256": "627c470fe464d803a9944afa269832e03e580b2ca680f2bcd4ff500b0a2deb93",
+          "bytes": 8705
+        },
+        {
+          "name": "members/817ff14816ce10568992088f94376af90ba0d5f84e8d9dc074c083763fd21417",
+          "sha256": "817ff14816ce10568992088f94376af90ba0d5f84e8d9dc074c083763fd21417",
+          "bytes": 8705
+        },
+        {
+          "name": "members/e6019137c25c66e7fc235eb15a1af0e5f76335bd73dc156df6daf9153a1e161b",
+          "sha256": "e6019137c25c66e7fc235eb15a1af0e5f76335bd73dc156df6daf9153a1e161b",
+          "bytes": 8705
+        }
+      ],
+      "producer": "tar (GNU tar) 1.35",
+      "header_types": [
+        "x",
+        "0",
+        "x",
+        "0",
+        "x",
+        "0"
+      ],
+      "format": "pax",
+      "blocking_factor": 20
+    }
+  ]
+}

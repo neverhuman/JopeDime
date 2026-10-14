@@ -11,6 +11,10 @@ use std::{
 pub const MAX_PAYLOAD: u64 = 64 * 1024 * 1024;
 pub const MAX_COMPRESSED: u64 = 128 * 1024 * 1024;
 pub const MAX_MEMBERS: usize = 512;
+const TAR_BLOCK_BYTES: u64 = 512;
+const TAR_RECORD_BYTES: u64 = 10240;
+// Aggregate allowance for bounded extended headers, including their block padding.
+const PAX_OVERHEAD_PER_BLOB: u64 = 2048;
 
 #[derive(Clone, Debug)]
 pub struct Blob {
@@ -140,7 +144,7 @@ fn pax(raw: &[u8], state: &mut Pax) -> Result<()> {
 /// Authenticate the outer bytes, entire gzip stream, and every declared payload.
 pub fn verify(mut reader: impl Read, outer_sha: &str, blobs: &[Blob]) -> Result<()> {
     check(is_digest(outer_sha), "content-addressed pack SHA")?;
-    let (expected, payload) = expected(blobs)?;
+    let (expected, _) = expected(blobs)?;
     let mut compressed = Vec::new();
     reader
         .by_ref()
@@ -152,7 +156,25 @@ pub fn verify(mut reader: impl Read, outer_sha: &str, blobs: &[Blob]) -> Result<
         "bounded compressed pack",
     )?;
     check(digest(&compressed) == outer_sha, "pack SHA mismatch")?;
-    let limit = payload + 1024 * blobs.len() as u64 + 10240;
+    // Header + padded body for each declared blob, bounded PAX overhead, and two
+    // end blocks. Writers round the entire layout to 20-block TAR records.
+    let mut limit = 2 * TAR_BLOCK_BYTES;
+    for blob in blobs {
+        let padded_body = blob
+            .bytes
+            .checked_add(TAR_BLOCK_BYTES - 1)
+            .and_then(|n| (n / TAR_BLOCK_BYTES).checked_mul(TAR_BLOCK_BYTES))
+            .ok_or_else(|| invalid("TAR layout overflow"))?;
+        limit = limit
+            .checked_add(TAR_BLOCK_BYTES)
+            .and_then(|n| n.checked_add(padded_body))
+            .and_then(|n| n.checked_add(PAX_OVERHEAD_PER_BLOB))
+            .ok_or_else(|| invalid("TAR layout overflow"))?;
+    }
+    let limit = limit
+        .checked_add(TAR_RECORD_BYTES - 1)
+        .and_then(|n| (n / TAR_RECORD_BYTES).checked_mul(TAR_RECORD_BYTES))
+        .ok_or_else(|| invalid("TAR layout overflow"))?;
     let mut decoded = Vec::new();
     MultiGzDecoder::new(compressed.as_slice())
         .take(limit + 1)
