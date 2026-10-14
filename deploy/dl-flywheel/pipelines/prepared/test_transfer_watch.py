@@ -42,6 +42,9 @@ class WatchTests(unittest.TestCase):
         real_read=Path.read_text
         def text(p,*args,**kwargs):
             if str(p).endswith('/test-owned-cgroup/cgroup.events'):return 'frozen 1\n'
+            # This control-plane fixture mocks eligible GPU/load resources too.
+            # Host memory pressure must not turn a refusal probe into a live wait.
+            if str(p)=='/proc/meminfo':return 'MemAvailable: 67108864 kB\n'
             return real_read(p,*args,**kwargs)
         def call(*args):
             self.calls.append(args)
