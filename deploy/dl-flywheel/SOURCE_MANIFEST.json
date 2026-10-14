@@ -6847,6 +6847,200 @@
       "sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296",
       "origin": "CX-OP L10/J22 owner assignment 2026-10-13; new source/fixtures",
       "origin_sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296"
+    },
+    {
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
+      "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
+      "path": "deploy/ci/coverage.json",
+      "sha256": "65ebc19045e589b93aba2573d5c1dc4c9ba79d40b686c2bb29a66d43e42ac09b"
+    },
+    {
+      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
+      "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
+      "path": "deploy/ci/fast-lane.sh",
+      "sha256": "8c2e9b5a74ea3fa8f9a13683353b84a27da8106a1c2cfcb97319402742cb206f"
+    },
+    {
+      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 46 research source classifications; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
+      "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
+      "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
+      "sha256": "8d096c3fe15c8fee56e2309993c6893047c4b0bb8f12f5fce04d8e92f602f80c"
+    },
+    {
+      "origin": "work/heartbeat-20261009-0616/recovery5/test_transfer_watch.py",
+      "origin_sha256": "156fc76c9cf8f3a153743ed117e4f8af66fc85086a780b7a4896b800c27517d1",
+      "path": "deploy/dl-flywheel/pipelines/prepared/test_transfer_watch.py",
+      "sha256": "156fc76c9cf8f3a153743ed117e4f8af66fc85086a780b7a4896b800c27517d1"
+    },
+    {
+      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged.",
+      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
+      "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
+      "path": "docs/internal/core-ip/findings/test-inventory.json",
+      "sha256": "3d896ea1c50219cbcc296124bdfdff1e398745d4df872171cbdcc858f165526f"
+    },
+    {
+      "path": "crates/jope-learning/src/bin/jope_custody.rs",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/src/bin/jope_custody.rs",
+      "origin_sha256": "30de2ad3e3a13504f4e45d7447b447cff1449ebc8cae40ef3b08addbe2d08a6a",
+      "sha256": "30de2ad3e3a13504f4e45d7447b447cff1449ebc8cae40ef3b08addbe2d08a6a",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/src/custody/README.md",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/README.md",
+      "origin_sha256": "e59036b6cab2d1b709ed67a82a5598c2d7eedb2ddc063f717e358f230c4b9da3",
+      "sha256": "e59036b6cab2d1b709ed67a82a5598c2d7eedb2ddc063f717e358f230c4b9da3",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/src/custody/cost.rs",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/cost.rs",
+      "origin_sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97",
+      "sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/src/custody/mod.rs",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/mod.rs",
+      "origin_sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
+      "sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/src/custody/reader.rs",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/reader.rs",
+      "origin_sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae",
+      "sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/custody.rs",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/custody.rs",
+      "origin_sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
+      "sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/budget.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/budget.json",
+      "origin_sha256": "42939836122984d06e86801ef234c77689d976303456ae7cedecd2287bca1c06",
+      "sha256": "42939836122984d06e86801ef234c77689d976303456ae7cedecd2287bca1c06",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/classify.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/classify.json",
+      "origin_sha256": "f606a3ff0a40ae83886131c84396ed3b7d0a99274789f74cf0600694808f9133",
+      "sha256": "f606a3ff0a40ae83886131c84396ed3b7d0a99274789f74cf0600694808f9133",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/cost.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/cost.json",
+      "origin_sha256": "dd216eae176958abbbd1834da0ba185e4b816dbe8a53b4b046c50bab896d1610",
+      "sha256": "dd216eae176958abbbd1834da0ba185e4b816dbe8a53b4b046c50bab896d1610",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/fixture-index.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/fixture-index.json",
+      "origin_sha256": "3ff9f0ca617eb3c5710b364929eff8c59901afc108845beef06d5383b1e4d6d5",
+      "sha256": "3ff9f0ca617eb3c5710b364929eff8c59901afc108845beef06d5383b1e4d6d5",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/gzip-second-member-with-data.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/gzip-second-member-with-data.tar.gz",
+      "origin_sha256": "55c73973ac7ba040b0b07b1786a4b5b8a12589832043cd75031a5aebff441680",
+      "sha256": "55c73973ac7ba040b0b07b1786a4b5b8a12589832043cd75031a5aebff441680",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/index.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/index.json",
+      "origin_sha256": "5a9676b49e5ce1acdf59bfd414716b653fd4e9756c79c4084bbec70a98d0b0d8",
+      "sha256": "5a9676b49e5ce1acdf59bfd414716b653fd4e9756c79c4084bbec70a98d0b0d8",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/tar-nonzero-tail.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/tar-nonzero-tail.tar.gz",
+      "origin_sha256": "b2dcc042d7835f807c01cfb9f34e8c8f7c6143f217dfadef44e945635c9c0bfd",
+      "sha256": "b2dcc042d7835f807c01cfb9f34e8c8f7c6143f217dfadef44e945635c9c0bfd",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/unsafe-pax-name.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/unsafe-pax-name.tar.gz",
+      "origin_sha256": "636ef0072c6a306880a4d0d10eba625eacf0ac31baaf69d9d0f6685e58e101a9",
+      "sha256": "636ef0072c6a306880a4d0d10eba625eacf0ac31baaf69d9d0f6685e58e101a9",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/hardening/valid-pax.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/hardening/valid-pax.tar.gz",
+      "origin_sha256": "85272167b15e2ebaf0375a311953b2c95d8e860ce040e5eb1af3ccbe5e1cb8c7",
+      "sha256": "85272167b15e2ebaf0375a311953b2c95d8e860ce040e5eb1af3ccbe5e1cb8c7",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/pack.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/pack.json",
+      "origin_sha256": "f9df415a8dd502cfa70d48a830137fc04dff0410666313440155e4dfcfadfe97",
+      "sha256": "f9df415a8dd502cfa70d48a830137fc04dff0410666313440155e4dfcfadfe97",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_outer.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_outer.tar.gz",
+      "origin_sha256": "11d510e067d2cdcd7559bd86d27a2f4c20babd43670346b97af99b522c1f0075",
+      "sha256": "11d510e067d2cdcd7559bd86d27a2f4c20babd43670346b97af99b522c1f0075",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_payload_updated_outer_sha.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/corrupt_payload_updated_outer_sha.tar.gz",
+      "origin_sha256": "e5e31d59fb7a8d23718179e963b35cb9cb4ea62d93354cdfde0f2134da1a6af5",
+      "sha256": "e5e31d59fb7a8d23718179e963b35cb9cb4ea62d93354cdfde0f2134da1a6af5",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/pax_inflation.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/pax_inflation.tar.gz",
+      "origin_sha256": "a54254ada24b6e1b446e552673600461cb8ec4c6faa48766108ba51ccbd5596e",
+      "sha256": "a54254ada24b6e1b446e552673600461cb8ec4c6faa48766108ba51ccbd5596e",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/valid/4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5.tar.gz",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/valid/4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5.tar.gz",
+      "origin_sha256": "4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5",
+      "sha256": "4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/packs/valid/manifest.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/packs/valid/manifest.json",
+      "origin_sha256": "1162795d4a3e27e154e2d524b0260f5222aac8250ee19d04fedd8f9297a57726",
+      "sha256": "1162795d4a3e27e154e2d524b0260f5222aac8250ee19d04fedd8f9297a57726",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-learning/tests/fixtures/custody_v2/schedule.json",
+      "origin": "native:GB02-custody-v2/crates/jope-learning/tests/fixtures/custody_v2/schedule.json",
+      "origin_sha256": "7485b5882d7902a3ff732cfa1d3820d23858cdbde2262d7511a0fefe1417c7d0",
+      "sha256": "7485b5882d7902a3ff732cfa1d3820d23858cdbde2262d7511a0fefe1417c7d0",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+    },
+    {
+      "path": "crates/jope-records/src/custody_archive.rs",
+      "origin": "native:GB02-custody-v2/crates/jope-records/src/custody_archive.rs",
+      "origin_sha256": "424e33733c9cb6a42782a96263c5e935143a21328dc5f521cda7fe6890b70a8d",
+      "sha256": "424e33733c9cb6a42782a96263c5e935143a21328dc5f521cda7fe6890b70a8d",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
     }
   ],
   "schema": "jope.flywheel-source-map/v1",

@@ -1783,7 +1783,10 @@
     },
     "target:feat-math/test/clover_quantile": {
       "role": "regression",
-      "subsystems": ["fitting", "export"],
+      "subsystems": [
+        "fitting",
+        "export"
+      ],
       "note": "CLOVER Phase 0 independent v1 quantile fixtures check runtime and actual generated Rust/Python semantics, including repeated edges and exact ties. Offline CPU only; no live evaluator qualification."
     },
     "target:feat-math/test/advanced_v3_parity": {
@@ -2827,7 +2830,11 @@
     },
     "target:jope-learning/test/clover_phase0": {
       "role": "regression",
-      "subsystems": ["preparation", "encoders", "storage"],
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "storage"
+      ],
       "note": "CLOVER Phase 0 canonical complete identities and conflicting lane refusals; encoder label/future boundaries; persistent HOLD, charged UNKNOWN recovery and immutable manifest-last publication under faults. Offline CPU fixture proof, not campaign or training qualification."
     },
     "target:jope-learning/test/pipeline_bank": {
@@ -3682,6 +3689,14 @@
         "evidence"
       ],
       "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
+    },
+    "target:jope-learning/bin/jope_custody": {
+      "role": "research",
+      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
+    },
+    "target:jope-learning/test/custody": {
+      "role": "research",
+      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
