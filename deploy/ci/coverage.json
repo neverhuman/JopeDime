@@ -1692,6 +1692,16 @@
       ],
       "scope": "Explicit data-free C11 fixtures via run_rlfw_offline.py: measured-pair refusal, IPO/DPO, trie PUCT/Gumbel, ESS and lineage verdicts on synthetic rows. G03 receipt rows require context_id, arm, epoch, updates, seed, and l6_cost; duplicate identities are refused. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Read-only GB08 baseline fixtures through analytics/run_offline.py: allocation vs active CPU, qualified arrivals, clock proof/censoring, queues/phases, cache identity, owner ledger cost and immutable Parquet/dashboard readback. No training/evaluation/S3."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "discovery": {
         "kind": "python-family"

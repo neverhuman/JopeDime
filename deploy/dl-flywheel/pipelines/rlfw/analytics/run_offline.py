@@ -24,6 +24,7 @@ def main():
             "rlfw.analytics.tests.test_io",
             "rlfw.analytics.tests.test_scratch",
             "rlfw.analytics.tests.test_context_costs",
+            "rlfw.analytics.tests.test_baseline",
         )
     )
     collected = list(flatten(suite))
