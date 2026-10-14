@@ -9339,6 +9339,16 @@
         "full-default"
       ],
       "scope": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Read-only GB08 baseline fixtures through analytics/run_offline.py: allocation vs active CPU, qualified arrivals, clock proof/censoring, queues/phases, cache identity, owner ledger cost and immutable Parquet/dashboard readback. No training/evaluation/S3."
     }
   },
   "lanes": {
