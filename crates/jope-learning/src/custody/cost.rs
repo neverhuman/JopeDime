@@ -73,7 +73,7 @@ impl Decimal {
         .rounded()
     }
     fn divide(mut self, divisor: u128) -> Result<Self> {
-        if self.coefficient == 0 || self.coefficient % divisor == 0 {
+        if self.coefficient == 0 || self.coefficient.is_multiple_of(divisor) {
             self.coefficient /= divisor;
             return Ok(self);
         }
