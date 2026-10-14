@@ -429,10 +429,6 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
-    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py": {
-      "role": "research",
-      "reason": "GB10 adds7 synthetic CPU process-death regressions to the isolated run_v2_offline.py roster (230 existing identities unchanged; now237, continuous_v6 now90). Real SIGKILL and separately reopened durable consumers; fixture evidence only, no live training, hardware durability or recovery permission."
-    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
@@ -524,6 +520,10 @@
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_anchored_step.py": {
       "reason": "Research v2.0.0 continual-learner fixtures, build r3.1: 83 isolated CPU cases (9 runner, 31 custody, 31 KL guard, 12 anchored step; closure, clock, owner and learning-guard cases) through run_v2_offline.py, additive to prior812. Fixture proof only; live launch, drain and serving remain separate owner-approved operational receipts, and the CUDA next-update parity receipt is lane evidence outside this fixture set.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py": {
+      "reason": "GB10 adds7 synthetic CPU process-death regressions to the isolated run_v2_offline.py roster (230 existing identities unchanged; now237, continuous_v6 now90). Real SIGKILL and separately reopened durable consumers; fixture evidence only, no live training, hardware durability or recovery permission.",
       "role": "research"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_kl_guard.py": {
@@ -662,6 +662,14 @@
         "policy"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "storage"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "role": "regression",
       "subsystems": [
@@ -742,6 +750,16 @@
         "orchestration"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/test_multiseed.py": {
+      "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim.",
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "teaching",
+        "evaluation",
+        "evidence"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py": {
       "reason": "Executed finite-action and pure-library acceptance fixtures. Runtime learning/equal-budget arena and durable integration remain unmeasured.",
       "role": "regression",
@@ -778,7 +796,11 @@
         "evidence"
       ]
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_knn_table.py": {
+    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/test_qhead.py": {
+      "reason": "Stub-policy CPU fixtures for the J9 torch q-head adapter: outcome-free views, one finite score per program, refusals. No checkpoint, ranking, qualification or L6 claim.",
+      "role": "research"
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py": {
       "reason": "Executed CPU fixtures for the R25-kNN-CE scratch arm source: neighbour-table exclusions/determinism and harness v7 config refusal. The training run, its L6 evaluation and any improvement remain unmeasured and NON-QUALIFYING.",
       "role": "regression",
       "subsystems": [
@@ -786,11 +808,7 @@
         "evidence"
       ]
     },
-    "python:deploy/dl-flywheel/pipelines/rlfw/pools/tests/test_qhead.py": {
-      "reason": "Stub-policy CPU fixtures for the J9 torch q-head adapter: outcome-free views, one finite score per program, refusals. No checkpoint, ranking, qualification or L6 claim.",
-      "role": "research"
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_harness_gate.py": {
+    "python:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/tests/test_knn_table.py": {
       "reason": "Executed CPU fixtures for the R25-kNN-CE scratch arm source: neighbour-table exclusions/determinism and harness v7 config refusal. The training run, its L6 evaluation and any improvement remain unmeasured and NON-QUALIFYING.",
       "role": "regression",
       "subsystems": [
@@ -1781,14 +1799,6 @@
       "reason": "binary/multiclass/time-series specialized scope deferred by the regression plan",
       "role": "deferred-classification"
     },
-    "target:feat-math/test/clover_quantile": {
-      "role": "regression",
-      "subsystems": [
-        "fitting",
-        "export"
-      ],
-      "note": "CLOVER Phase 0 independent v1 quantile fixtures check runtime and actual generated Rust/Python semantics, including repeated edges and exact ties. Offline CPU only; no live evaluator qualification."
-    },
     "target:feat-math/test/advanced_v3_parity": {
       "role": "regression",
       "subsystems": [
@@ -1817,6 +1827,14 @@
     "target:feat-math/test/champion_parity": {
       "role": "regression",
       "subsystems": [
+        "export"
+      ]
+    },
+    "target:feat-math/test/clover_quantile": {
+      "note": "CLOVER Phase 0 independent v1 quantile fixtures check runtime and actual generated Rust/Python semantics, including repeated edges and exact ties. Offline CPU only; no live evaluator qualification.",
+      "role": "regression",
+      "subsystems": [
+        "fitting",
         "export"
       ]
     },
@@ -2786,14 +2804,24 @@
         "storage"
       ]
     },
+    "target:jope-learning/bin/jope_custody": {
+      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority.",
+      "role": "research"
+    },
     "target:jope-learning/bin/jope_pools": {
       "reason": "J9 shadow-only research fixtures (frozen candidate pools, selector evaluation, parent-cluster statistics). Synthetic inputs only; no live selection, qualification, promotion or L6 claim.",
       "role": "research"
     },
     "target:jope-learning/bin/jope_retention": {
+      "note": "S3 retention brain CLI (read-only dry-run plans); behaviour is covered by target:jope-learning/test/retention.",
       "role": "regression",
-      "subsystems": ["storage"],
-      "note": "S3 retention brain CLI (read-only dry-run plans); behaviour is covered by target:jope-learning/test/retention."
+      "subsystems": [
+        "storage"
+      ]
+    },
+    "target:jope-learning/bin/jope_support": {
+      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
+      "role": "research"
     },
     "target:jope-learning/lib/jope_learning": {
       "role": "regression",
@@ -2807,6 +2835,19 @@
       "subsystems": [
         "teaching"
       ]
+    },
+    "target:jope-learning/test/clover_phase0": {
+      "note": "CLOVER Phase 0 canonical complete identities and conflicting lane refusals; encoder label/future boundaries; persistent HOLD, charged UNKNOWN recovery and immutable manifest-last publication under faults. Offline CPU fixture proof, not campaign or training qualification.",
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "encoders",
+        "storage"
+      ]
+    },
+    "target:jope-learning/test/custody": {
+      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority.",
+      "role": "research"
     },
     "target:jope-learning/test/ledger_tamper": {
       "role": "regression",
@@ -2832,15 +2873,6 @@
       "subsystems": [
         "teaching"
       ]
-    },
-    "target:jope-learning/test/clover_phase0": {
-      "role": "regression",
-      "subsystems": [
-        "preparation",
-        "encoders",
-        "storage"
-      ],
-      "note": "CLOVER Phase 0 canonical complete identities and conflicting lane refusals; encoder label/future boundaries; persistent HOLD, charged UNKNOWN recovery and immutable manifest-last publication under faults. Offline CPU fixture proof, not campaign or training qualification."
     },
     "target:jope-learning/test/pipeline_bank": {
       "role": "regression",
@@ -2882,14 +2914,20 @@
       ]
     },
     "target:jope-learning/test/retention": {
+      "note": "S3 retention brain: read-only dry-run classifier fixtures (hard T0, roster/val263 pins, fail-closed inputs, lifecycle hazards). Offline fixture proof; no S3 access, not an applied plan.",
       "role": "regression",
-      "subsystems": ["storage", "evidence"],
-      "note": "S3 retention brain: read-only dry-run classifier fixtures (hard T0, roster/val263 pins, fail-closed inputs, lifecycle hazards). Offline fixture proof; no S3 access, not an applied plan."
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
     },
     "target:jope-learning/test/retention_pack": {
+      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
       "role": "regression",
-      "subsystems": ["storage", "evidence"],
-      "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration."
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
     },
     "target:jope-learning/test/schema_agreement": {
       "role": "regression",
@@ -2914,6 +2952,10 @@
       "subsystems": [
         "storage"
       ]
+    },
+    "target:jope-learning/test/support": {
+      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
+      "role": "research"
     },
     "target:jope-models/bin/jope-models": {
       "role": "regression",
@@ -3685,40 +3727,6 @@
       "role": "regression",
       "subsystems": [
         "encoders"
-      ]
-    },
-    "target:jope-learning/bin/jope_support": {
-      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
-      "role": "research"
-    },
-    "target:jope-learning/test/support": {
-      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
-      "role": "research"
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/multiseed/tests/test_multiseed.py": {
-      "role": "regression",
-      "subsystems": [
-        "training",
-        "teaching",
-        "evaluation",
-        "evidence"
-      ],
-      "reason": "J22 synthetic CPU fixtures: complete all-seed L6 panel, crossed seed/parent resampling, inner-only committed teacher selection and separate judge rows. Analysis/plan only; no training, actual score authentication, qualified rewards or improvement claim."
-    },
-    "target:jope-learning/bin/jope_custody": {
-      "role": "research",
-      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
-    },
-    "target:jope-learning/test/custody": {
-      "role": "research",
-      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
-    },
-    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py": {
-      "role": "regression",
-      "subsystems": [
-        "evaluation",
-        "evidence",
-        "storage"
       ]
     }
   },

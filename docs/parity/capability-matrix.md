@@ -24,7 +24,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 18 | 0 | 18 | 0 | 0 | 0 |
+| new-bin | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-example | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **823** | **353** | **60** | **1** | **402** | **7** |
+| **total** | **824** | **353** | **61** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
