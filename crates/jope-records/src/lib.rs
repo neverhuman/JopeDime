@@ -39,6 +39,7 @@ pub mod claim_inventory;
 pub mod claims;
 pub mod conformance;
 pub mod coverage;
+pub mod custody_archive;
 pub mod dispositions;
 pub mod elo_history;
 mod error;
