@@ -1,0 +1,262 @@
+{
+  "file_sha256": {
+    "budget.json": "42939836122984d06e86801ef234c77689d976303456ae7cedecd2287bca1c06",
+    "classify.json": "f606a3ff0a40ae83886131c84396ed3b7d0a99274789f74cf0600694808f9133",
+    "cost.json": "dd216eae176958abbbd1834da0ba185e4b816dbe8a53b4b046c50bab896d1610",
+    "pack.json": "f9df415a8dd502cfa70d48a830137fc04dff0410666313440155e4dfcfadfe97",
+    "packs/corrupt_outer.tar.gz": "11d510e067d2cdcd7559bd86d27a2f4c20babd43670346b97af99b522c1f0075",
+    "packs/corrupt_payload_updated_outer_sha.tar.gz": "e5e31d59fb7a8d23718179e963b35cb9cb4ea62d93354cdfde0f2134da1a6af5",
+    "packs/pax_inflation.tar.gz": "a54254ada24b6e1b446e552673600461cb8ec4c6faa48766108ba51ccbd5596e",
+    "packs/valid/4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5.tar.gz": "4f66d7002d96b4f58da5efdfa21d96d66fbb59b24689ed25df8d262fdeb23cc5",
+    "packs/valid/manifest.json": "1162795d4a3e27e154e2d524b0260f5222aac8250ee19d04fedd8f9297a57726",
+    "schedule.json": "7485b5882d7902a3ff732cfa1d3820d23858cdbde2262d7511a0fefe1417c7d0"
+  },
+  "gb10_held_head": "ff7d5c74e92b86a61158226397dff67cdbe1a892",
+  "original_test_count": 28,
+  "original_test_ids": [
+    "custody_v2.tests.test_retention.PackTests.test_boolean_reference_bytes_refuse",
+    "custody_v2.tests.test_retention.PackTests.test_corrupt_pack_bad_member_hash_and_unknown_refs_refuse",
+    "custody_v2.tests.test_retention.PackTests.test_deduplicated_pack_preserves_all_physical_refs_and_reopens",
+    "custody_v2.tests.test_retention.PackTests.test_duplicate_physical_version_and_incomplete_body_refuse",
+    "custody_v2.tests.test_retention.PackTests.test_excessive_reference_and_blob_rosters_refuse",
+    "custody_v2.tests.test_retention.PackTests.test_existing_destination_and_qualified_manifest_refuse",
+    "custody_v2.tests.test_retention.PackTests.test_fsync_failure_never_returns_a_success_or_publishes_manifest",
+    "custody_v2.tests.test_retention.PackTests.test_invalid_pack_digest_refuses_before_pack_file_access",
+    "custody_v2.tests.test_retention.PackTests.test_oversized_manifest_refuses_before_json_or_pack_parsing",
+    "custody_v2.tests.test_retention.PackTests.test_pax_metadata_expansion_refuses_before_tar_parsing",
+    "custody_v2.tests.test_retention.PackTests.test_payload_corruption_refuses_even_if_outer_archive_sha_is_updated",
+    "custody_v2.tests.test_retention.PackTests.test_readback_digest_binds_verified_manifest_despite_replacement",
+    "custody_v2.tests.test_retention.ReaderTests.test_all_mutations_are_refused_before_any_fake_dispatch",
+    "custody_v2.tests.test_retention.ReaderTests.test_capture_records_real_body_bytes_and_never_uses_etag_as_sha",
+    "custody_v2.tests.test_retention.ReaderTests.test_full_pagination_and_every_version_is_retained",
+    "custody_v2.tests.test_retention.ReaderTests.test_nonfinite_expired_and_body_budget_refuse",
+    "custody_v2.tests.test_retention.ReaderTests.test_repeated_cursor_duplicate_version_and_request_cap_refuse",
+    "custody_v2.tests.test_retention.ReaderTests.test_wrong_returned_version_refuses_without_consuming_body",
+    "custody_v2.tests.test_retention.ReaderTests.test_wrong_scope_and_unversioned_get_refuse_before_dispatch",
+    "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent",
+    "custody_v2.tests.test_retention.RetentionTests.test_complete_negative_facts_are_only_a_non_applied_proposal",
+    "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns",
+    "custody_v2.tests.test_retention.RetentionTests.test_each_keeper_reason_wins",
+    "custody_v2.tests.test_retention.RetentionTests.test_keeper_facts_cannot_be_borrowed_from_another_version",
+    "custody_v2.tests.test_retention.RetentionTests.test_missing_counters_and_boolean_counts_refuse",
+    "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes",
+    "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever",
+    "custody_v2.tests.test_retention.RetentionTests.test_unknown_facts_and_null_versions_keep_everything"
+  ],
+  "original_to_scenarios": {
+    "custody_v2.tests.test_retention.PackTests.test_boolean_reference_bytes_refuse": [
+      "gb02.pack.bool_reference_bytes"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_corrupt_pack_bad_member_hash_and_unknown_refs_refuse": [
+      "gb02.pack.unknown_ref",
+      "gb02.pack.bad_blob_sha",
+      "gb02.pack.corrupt_outer"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_deduplicated_pack_preserves_all_physical_refs_and_reopens": [
+      "gb02.pack.valid_deduplicated"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_duplicate_physical_version_and_incomplete_body_refuse": [
+      "gb02.pack.duplicate_version",
+      "gb02.pack.incomplete_body"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_excessive_reference_and_blob_rosters_refuse": [
+      "gb02.pack.oversized_refs",
+      "gb02.pack.oversized_blobs"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_existing_destination_and_qualified_manifest_refuse": [
+      "gb02.schedule.existing_output",
+      "gb02.pack.qualified"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_fsync_failure_never_returns_a_success_or_publishes_manifest": [
+      "gb02.schedule.fsync_failure"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_invalid_pack_digest_refuses_before_pack_file_access": [
+      "gb02.pack.digest_traversal",
+      "gb02.pack.digest_uppercase"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_oversized_manifest_refuses_before_json_or_pack_parsing": [
+      "gb02.schedule.oversized_manifest"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_pax_metadata_expansion_refuses_before_tar_parsing": [
+      "gb02.pack.pax_inflation"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_payload_corruption_refuses_even_if_outer_archive_sha_is_updated": [
+      "gb02.pack.corrupt_payload_updated_outer_sha"
+    ],
+    "custody_v2.tests.test_retention.PackTests.test_readback_digest_binds_verified_manifest_despite_replacement": [
+      "gb02.schedule.manifest_replacement"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_all_mutations_are_refused_before_any_fake_dispatch": [
+      "gb02.schedule.mutations"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_capture_records_real_body_bytes_and_never_uses_etag_as_sha": [
+      "gb02.schedule.capture"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_full_pagination_and_every_version_is_retained": [
+      "gb02.schedule.two_pages"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_nonfinite_expired_and_body_budget_refuse": [
+      "gb02.schedule.deadline_or_body_cap"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_repeated_cursor_duplicate_version_and_request_cap_refuse": [
+      "gb02.schedule.repeated_cursor",
+      "gb02.schedule.duplicate_version",
+      "gb02.schedule.request_cap"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_wrong_returned_version_refuses_without_consuming_body": [
+      "gb02.schedule.returned_version_mismatch"
+    ],
+    "custody_v2.tests.test_retention.ReaderTests.test_wrong_scope_and_unversioned_get_refuse_before_dispatch": [
+      "gb02.schedule.scope_or_unversioned"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent": [
+      "gb02.budget.new_version_bytes_below_alarm",
+      "gb02.budget.new_version_bytes_alarm",
+      "gb02.budget.new_version_bytes_below_cap",
+      "gb02.budget.new_version_bytes_at_cap",
+      "gb02.budget.raw_hot_bytes_below_alarm",
+      "gb02.budget.raw_hot_bytes_alarm",
+      "gb02.budget.raw_hot_bytes_below_cap",
+      "gb02.budget.raw_hot_bytes_at_cap",
+      "gb02.budget.puts_below_alarm",
+      "gb02.budget.puts_alarm",
+      "gb02.budget.puts_below_cap",
+      "gb02.budget.puts_at_cap"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_complete_negative_facts_are_only_a_non_applied_proposal": [
+      "gb02.classify.complete_negative"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_cost_uses_binary_gb_actual_request_counts_and_explicit_unknowns": [
+      "gb02.cost.october_binary_gb",
+      "gb02.cost.unsupported_glacier",
+      "gb02.cost.leap_february",
+      "gb02.cost.physical_retries",
+      "gb02.cost.mutation_roster",
+      "gb02.cost.invalid_price_nan"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_each_keeper_reason_wins": [
+      "gb02.classify.keeper_new_context_best",
+      "gb02.classify.keeper_parity_failure",
+      "gb02.classify.keeper_cited",
+      "gb02.classify.keeper_sealed_salt_audit"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_keeper_facts_cannot_be_borrowed_from_another_version": [
+      "gb02.classify.borrowed_facts"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_missing_counters_and_boolean_counts_refuse": [
+      "gb02.budget.unknown",
+      "gb02.budget.bool",
+      "gb02.budget.negative",
+      "gb02.budget.float"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes": [
+      "gb02.classify.missing_audit_salt_commitment",
+      "gb02.classify.missing_legal_hold_checked",
+      "gb02.classify.missing_retention_checked",
+      "gb02.classify.missing_new_context_best",
+      "gb02.classify.missing_parity_failure",
+      "gb02.classify.missing_cited",
+      "gb02.classify.missing_sealed_salt_audit"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever": [
+      "gb02.classify.role_score_records",
+      "gb02.classify.role_input",
+      "gb02.classify.role_rust_source",
+      "gb02.classify.role_unknown",
+      "gb02.classify.noncurrent"
+    ],
+    "custody_v2.tests.test_retention.RetentionTests.test_unknown_facts_and_null_versions_keep_everything": [
+      "gb02.classify.unknown_facts",
+      "gb02.classify.null_version"
+    ]
+  },
+  "preparation_base": "0ed1a381174b86e1a2d6d624e77af6916451d8f8",
+  "qualified": false,
+  "remote_calls": 0,
+  "rust_port_executed_cases": 0,
+  "rust_port_implemented": false,
+  "salvage_head": "81b294f2e6536af3d38d7e0a7484423a06d48555",
+  "scenario_count": 69,
+  "scenario_ids": [
+    "gb02.budget.bool",
+    "gb02.budget.float",
+    "gb02.budget.negative",
+    "gb02.budget.new_version_bytes_alarm",
+    "gb02.budget.new_version_bytes_at_cap",
+    "gb02.budget.new_version_bytes_below_alarm",
+    "gb02.budget.new_version_bytes_below_cap",
+    "gb02.budget.puts_alarm",
+    "gb02.budget.puts_at_cap",
+    "gb02.budget.puts_below_alarm",
+    "gb02.budget.puts_below_cap",
+    "gb02.budget.raw_hot_bytes_alarm",
+    "gb02.budget.raw_hot_bytes_at_cap",
+    "gb02.budget.raw_hot_bytes_below_alarm",
+    "gb02.budget.raw_hot_bytes_below_cap",
+    "gb02.budget.unknown",
+    "gb02.classify.borrowed_facts",
+    "gb02.classify.complete_negative",
+    "gb02.classify.keeper_cited",
+    "gb02.classify.keeper_new_context_best",
+    "gb02.classify.keeper_parity_failure",
+    "gb02.classify.keeper_sealed_salt_audit",
+    "gb02.classify.missing_audit_salt_commitment",
+    "gb02.classify.missing_cited",
+    "gb02.classify.missing_legal_hold_checked",
+    "gb02.classify.missing_new_context_best",
+    "gb02.classify.missing_parity_failure",
+    "gb02.classify.missing_retention_checked",
+    "gb02.classify.missing_sealed_salt_audit",
+    "gb02.classify.noncurrent",
+    "gb02.classify.null_version",
+    "gb02.classify.role_input",
+    "gb02.classify.role_rust_source",
+    "gb02.classify.role_score_records",
+    "gb02.classify.role_unknown",
+    "gb02.classify.unknown_facts",
+    "gb02.cost.invalid_price_nan",
+    "gb02.cost.leap_february",
+    "gb02.cost.mutation_roster",
+    "gb02.cost.october_binary_gb",
+    "gb02.cost.physical_retries",
+    "gb02.cost.unsupported_glacier",
+    "gb02.pack.bad_blob_sha",
+    "gb02.pack.bool_reference_bytes",
+    "gb02.pack.corrupt_outer",
+    "gb02.pack.corrupt_payload_updated_outer_sha",
+    "gb02.pack.digest_traversal",
+    "gb02.pack.digest_uppercase",
+    "gb02.pack.duplicate_version",
+    "gb02.pack.incomplete_body",
+    "gb02.pack.oversized_blobs",
+    "gb02.pack.oversized_refs",
+    "gb02.pack.pax_inflation",
+    "gb02.pack.qualified",
+    "gb02.pack.unknown_ref",
+    "gb02.pack.valid_deduplicated",
+    "gb02.schedule.capture",
+    "gb02.schedule.deadline_or_body_cap",
+    "gb02.schedule.duplicate_version",
+    "gb02.schedule.existing_output",
+    "gb02.schedule.fsync_failure",
+    "gb02.schedule.manifest_replacement",
+    "gb02.schedule.mutations",
+    "gb02.schedule.oversized_manifest",
+    "gb02.schedule.repeated_cursor",
+    "gb02.schedule.request_cap",
+    "gb02.schedule.returned_version_mismatch",
+    "gb02.schedule.scope_or_unversioned",
+    "gb02.schedule.two_pages"
+  ],
+  "schema": "jope.gb02-rust-port-fixture-index/v1",
+  "source_file_sha256": {
+    "deploy/dl-flywheel/custody_v2/README.md": "0e9e1f684085dfb4a48389d6d201fe57fdb270bc2327428ee2e77e67a1b4d4cb",
+    "deploy/dl-flywheel/custody_v2/__init__.py": "413f0635bfafdc54b4b981e8edafa2fa8768bd09d8877fb23060c1da6a5f2e05",
+    "deploy/dl-flywheel/custody_v2/read_only.py": "6a233f2e8ac6294ef475b66a99a366951dabbd574e0fa50973fd764b939016ac",
+    "deploy/dl-flywheel/custody_v2/retention.py": "328af0e1faf9edf53c016d0ab5117899c2aa4927c74da8652a8fab782ef90225",
+    "deploy/dl-flywheel/custody_v2/run_dry_run.py": "874eff9bfbaf0d88b6a0f2049dd67beca6f8765a487b98a1378df6388fd54762",
+    "deploy/dl-flywheel/custody_v2/run_offline.py": "96ad3bc281b4f67df393e97c0523714264d0f461a445dca68bbef0f9cd739eb2",
+    "deploy/dl-flywheel/custody_v2/tests/__init__.py": "24944e286642b6e53ba3576ed837082268f592ca5a09df7325f5d9ebcc6a6ce3",
+    "deploy/dl-flywheel/custody_v2/tests/test_retention.py": "624f02d987dbf34f0b5a5ff22951ccd42b216cad4f72a88ed7c5c4a441b6485b"
+  }
+}

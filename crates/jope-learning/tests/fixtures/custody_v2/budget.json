@@ -1,0 +1,529 @@
+{
+  "cases": [
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 19999999999,
+            "puts": 0,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.new_version_bytes_below_alarm",
+      "input": {
+        "new_version_bytes": 19999999999,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [
+            "new_version_bytes"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 20000000000,
+            "puts": 0,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.new_version_bytes_alarm",
+      "input": {
+        "new_version_bytes": 20000000000,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [
+            "new_version_bytes"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 24999999999,
+            "puts": 0,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.new_version_bytes_below_cap",
+      "input": {
+        "new_version_bytes": 24999999999,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": false,
+          "alarm": [
+            "new_version_bytes"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [
+            "new_version_bytes"
+          ],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 25000000000,
+            "puts": 0,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.new_version_bytes_at_cap",
+      "input": {
+        "new_version_bytes": 25000000000,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 0,
+            "raw_hot_bytes": 799999999999
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.raw_hot_bytes_below_alarm",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 0,
+        "raw_hot_bytes": 799999999999
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [
+            "raw_hot_bytes"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 0,
+            "raw_hot_bytes": 800000000000
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.raw_hot_bytes_alarm",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 0,
+        "raw_hot_bytes": 800000000000
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [
+            "raw_hot_bytes"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 0,
+            "raw_hot_bytes": 999999999999
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.raw_hot_bytes_below_cap",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 0,
+        "raw_hot_bytes": 999999999999
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": false,
+          "alarm": [
+            "raw_hot_bytes"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [
+            "raw_hot_bytes"
+          ],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 0,
+            "raw_hot_bytes": 1000000000000
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.raw_hot_bytes_at_cap",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 0,
+        "raw_hot_bytes": 1000000000000
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 1199999,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.puts_below_alarm",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 1199999,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [
+            "puts"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 1200000,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.puts_alarm",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 1200000,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": true,
+          "alarm": [
+            "puts"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 1499999,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.puts_below_cap",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 1499999,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": false,
+          "alarm": [
+            "puts"
+          ],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [
+            "puts"
+          ],
+          "unknown": [],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": 1500000,
+            "raw_hot_bytes": 0
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.puts_at_cap",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": 1500000,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_alarm_at_80_percent_and_refusal_at_100_percent"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "admit_new_scoring": false,
+          "alarm": [],
+          "caps": {
+            "new_version_bytes": 25000000000,
+            "puts": 1500000,
+            "raw_hot_bytes": 1000000000000
+          },
+          "control_applied": false,
+          "exhausted": [],
+          "unknown": [
+            "raw_hot_bytes",
+            "puts"
+          ],
+          "values": {
+            "new_version_bytes": 0,
+            "puts": null,
+            "raw_hot_bytes": null
+          }
+        }
+      },
+      "group": "budget",
+      "id": "gb02.budget.unknown",
+      "input": {
+        "new_version_bytes": 0,
+        "puts": null,
+        "raw_hot_bytes": null
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_counters_and_boolean_counts_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "reason": "new_version_bytes must be a nonnegative integer"
+      },
+      "group": "budget",
+      "id": "gb02.budget.bool",
+      "input": {
+        "new_version_bytes": true,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_counters_and_boolean_counts_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "reason": "new_version_bytes must be a nonnegative integer"
+      },
+      "group": "budget",
+      "id": "gb02.budget.negative",
+      "input": {
+        "new_version_bytes": -1,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_counters_and_boolean_counts_refuse"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "reason": "new_version_bytes must be a nonnegative integer"
+      },
+      "group": "budget",
+      "id": "gb02.budget.float",
+      "input": {
+        "new_version_bytes": 1.0,
+        "puts": 0,
+        "raw_hot_bytes": 0
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_counters_and_boolean_counts_refuse"
+      ],
+      "qualified": false
+    }
+  ],
+  "group": "budget",
+  "schema": "jope.gb02-rust-port-fixtures/v1"
+}

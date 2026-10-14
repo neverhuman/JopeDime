@@ -1,0 +1,1014 @@
+{
+  "cases": [
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.unknown_facts",
+      "input": {
+        "facts": null,
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_unknown_facts_and_null_versions_keep_everything"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "immutable_version_unavailable",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "null"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.null_version",
+      "input": {
+        "facts": null,
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "null"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_unknown_facts_and_null_versions_keep_everything"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": 14,
+          "qualified": false,
+          "reason": "complete_negative_keeper_facts",
+          "retention_class": "other",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.complete_negative",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_complete_negative_facts_are_only_a_non_applied_proposal"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "refuse",
+        "reason": "keeper facts bind the exact physical version"
+      },
+      "group": "classify",
+      "id": "gb02.classify.borrowed_facts",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "old"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "new"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_keeper_facts_cannot_be_borrowed_from_another_version"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "verified_keeper_fact",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.keeper_new_context_best",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": true,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_each_keeper_reason_wins"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "verified_keeper_fact",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.keeper_parity_failure",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": true,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_each_keeper_reason_wins"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "verified_keeper_fact",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.keeper_cited",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": true,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_each_keeper_reason_wins"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "verified_keeper_fact",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.keeper_sealed_salt_audit",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": true
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_each_keeper_reason_wins"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_audit_salt_commitment",
+      "input": {
+        "facts": {
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_legal_hold_checked",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_retention_checked",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_new_context_best",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_parity_failure",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_cited",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unmeasured_keeper_or_hold_facts",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.missing_sealed_salt_audit",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_missing_salt_or_hold_facts_cannot_release_bytes"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/score_records",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "permanent_ledger_or_small_artifact",
+          "retention_class": "keeper",
+          "role": "score_records",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.role_score_records",
+      "input": {
+        "facts": null,
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/score_records",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/input",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "permanent_ledger_or_small_artifact",
+          "retention_class": "keeper",
+          "role": "input",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.role_input",
+      "input": {
+        "facts": null,
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/input",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_source",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "permanent_ledger_or_small_artifact",
+          "retention_class": "keeper",
+          "role": "rust_source",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.role_rust_source",
+      "input": {
+        "facts": null,
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/rust_source",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/unknown",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "unknown_role",
+          "retention_class": "keeper",
+          "role": "unknown",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.role_unknown",
+      "input": {
+        "facts": null,
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": true,
+          "key": "safe/objects/unknown",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever"
+      ],
+      "qualified": false
+    },
+    {
+      "executed_rust_port": false,
+      "expected": {
+        "outcome": "accept",
+        "result": {
+          "applied": false,
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": false,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "proposed_retention_days": null,
+          "qualified": false,
+          "reason": "noncurrent_version_review",
+          "retention_class": "keeper",
+          "role": "rust_executable",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "group": "classify",
+      "id": "gb02.classify.noncurrent",
+      "input": {
+        "facts": {
+          "audit_salt_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cited": false,
+          "identity": [
+            "bucket",
+            "safe/objects/rust_executable",
+            "v1"
+          ],
+          "legal_hold": "OFF",
+          "legal_hold_checked": true,
+          "new_context_best": false,
+          "parity_failure": false,
+          "retention_checked": true,
+          "retention_until": null,
+          "sealed_salt_audit": false
+        },
+        "row": {
+          "bucket": "bucket",
+          "bytes": 10,
+          "etag": "not-a-sha",
+          "is_latest": false,
+          "key": "safe/objects/rust_executable",
+          "last_modified": "2026-10-13T00:00:00+00:00",
+          "storage_class": "STANDARD",
+          "version_id": "v1"
+        }
+      },
+      "original_test_ids": [
+        "custody_v2.tests.test_retention.RetentionTests.test_noncurrent_unknown_and_small_artifacts_stay_forever"
+      ],
+      "qualified": false
+    }
+  ],
+  "group": "classify",
+  "schema": "jope.gb02-rust-port-fixtures/v1"
+}
