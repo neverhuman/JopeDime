@@ -425,6 +425,10 @@ class ArrivalTests(unittest.TestCase):
 class FeedbackTests(unittest.TestCase):
     def test_missing_episodes_have_seven_explicit_null_clocks(self):
         result = values("feedback", {})
+        self.assertIn("feedback_to_first_update_seconds", result)
+        self.assertIsNone(result["feedback_to_first_update_seconds"])
+        self.assertIsNone(result["contexts_receiving_actor_targets"])
+        self.assertIsNone(result["heldout_gain_per_declared_resource_budget"])
         for stage in (
             "proposed",
             "compute_started",
@@ -484,6 +488,12 @@ class FeedbackTests(unittest.TestCase):
 
     def test_cross_host_without_bound_is_unmeasured(self):
         self.assertEqual(duration(clock(0), clock(10, "host-b")), (None, None))
+        e = episode()
+        e["clocks"]["first_trained"]["domain"] = "host-b"
+        result = values("feedback", feedback(e))
+        self.assertEqual(result["feedback_completed_n"], 0)
+        self.assertEqual(result["feedback_censored_n"], 0)
+        self.assertEqual(result["feedback_unknown_latency_n"], 1)
 
     def test_cross_host_bound_is_preserved(self):
         self.assertEqual(
@@ -675,7 +685,13 @@ class CostTests(unittest.TestCase):
         result = values(
             "cost",
             {
-                "records": [cost(window_kind="month", bytes_measure_kind="stock")],
+                "records": [
+                    cost(
+                        window_kind="month",
+                        bytes_measure_kind="stock",
+                        stock_as_of=WINDOW[1],
+                    )
+                ],
                 "expected_categories": ["storage"],
             },
         )
