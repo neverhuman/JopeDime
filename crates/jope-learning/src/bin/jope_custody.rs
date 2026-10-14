@@ -3,7 +3,7 @@ use anyhow::{ensure, Context, Result};
 use clap::{Parser, Subcommand};
 use jope_learning::{
     canon::{is_hex64, sha256_hex},
-    custody::{self, CapturedMember, MAX_MANIFEST},
+    custody::{self, CapturedMember},
 };
 use serde::Deserialize;
 use serde_json::Value;
