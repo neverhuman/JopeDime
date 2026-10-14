@@ -6906,8 +6906,8 @@
       "path": "crates/jope-learning/src/custody/mod.rs",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/mod.rs",
       "origin_sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
-      "sha256": "2df9915193fcefa57a50b509ff9bcc15060cf8f21ddea174d1fa47054860c71d",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures."
+      "sha256": "a9598adcf9ffa38be99c3b7bacfc9867e9af79fb956f92eb67c81d572bf601f5",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. Preserve an abort witness when a newly created directory parent fsync fails; never write into an existing unowned directory."
     },
     {
       "path": "crates/jope-learning/src/custody/reader.rs",
