@@ -311,6 +311,70 @@ class ThroughputTests(unittest.TestCase):
 
 
 class ArrivalTests(unittest.TestCase):
+    def test_conflicting_catalog_membership_across_contexts_refuses(self):
+        for first, second in [(True, False), (False, True)]:
+            with (
+                self.subTest(first=first),
+                self.assertRaisesRegex(ValueError, "catalog membership"),
+            ):
+                rows(
+                    "arrivals",
+                    arrivals(
+                        [
+                            outcome(in_frozen_catalog=first),
+                            outcome("two", context="c2", in_frozen_catalog=second),
+                        ]
+                    ),
+                )
+
+    def test_catalog_membership_conflict_outside_window_refuses(self):
+        with self.assertRaisesRegex(ValueError, "catalog membership"):
+            rows(
+                "arrivals",
+                arrivals(
+                    [
+                        outcome(
+                            at=-1,
+                            first_program_seen_at=START - 10,
+                            in_frozen_catalog=True,
+                        ),
+                        outcome("two", context="c2", in_frozen_catalog=False),
+                    ]
+                ),
+            )
+
+    def test_distinct_program_catalog_memberships_remain_valid(self):
+        a = outcome(in_frozen_catalog=True)
+        b = outcome("two", context="c2", program="b" * 64)
+        result = values("arrivals", arrivals([a, a, b]))
+        self.assertEqual(result["new_qualified_context_program_outcomes"], 2)
+        self.assertEqual(result["new_qualified_non_catalog_programs"], 1)
+
+    def test_unknown_catalog_membership_is_not_inferred_from_peer(self):
+        for unknown in [
+            {"in_frozen_catalog": None},
+            {"catalog_membership_proof_sha256": None, "in_frozen_catalog": True},
+        ]:
+            with self.subTest(unknown=unknown):
+                result = values(
+                    "arrivals",
+                    arrivals([outcome(), outcome("two", context="c2", **unknown)]),
+                )
+                self.assertEqual(result["new_qualified_context_program_outcomes"], 2)
+                self.assertIsNone(result["new_qualified_non_catalog_programs"])
+                self.assertIsNone(result["qualified_non_catalog_programs_per_hour"])
+
+    def test_frozen_catalog_identity_scopes_membership(self):
+        for catalog, membership, expected in [
+            ("a" * 64, False, 1),
+            ("b" * 64, True, 0),
+        ]:
+            with self.subTest(catalog=catalog):
+                data = arrivals([outcome(in_frozen_catalog=membership)])
+                data["frozen_catalog_sha256"] = catalog
+                result = values("arrivals", data)
+                self.assertEqual(result["new_qualified_non_catalog_programs"], expected)
+
     def test_missing_vocabulary_or_canonicalizer_prevents_qualified_join(self):
         for field in ("task", "vocabulary_sha256", "canonicalizer_sha256"):
             event = outcome()
@@ -633,6 +697,77 @@ class PhaseCacheTests(unittest.TestCase):
 
 
 class CostTests(unittest.TestCase):
+    def test_literal_prefix_overlap_without_directory_delimiter_refuses(self):
+        for left, right in [
+            ("root/a", "root/ab/"),
+            ("root", "root-child"),
+            ("root/a", "root/a"),
+            ("", "anything"),
+            ("root/", "root/child/"),
+        ]:
+            for first, second in [(left, right), (right, left)]:
+                with (
+                    self.subTest(first=first, second=second),
+                    self.assertRaisesRegex(ValueError, "scope_double_count"),
+                ):
+                    rows(
+                        "cost",
+                        {"records": [cost(prefix=first), cost("b", prefix=second)]},
+                    )
+
+    def test_literal_disjoint_prefixes_and_aliases_preserve_total(self):
+        for first, second in [
+            ("root/a/", "root/ab/"),
+            ("root/a", "root/b"),
+            ("Root/a", "root/a"),
+        ]:
+            with self.subTest(first=first, second=second):
+                a, b = cost(prefix=first), cost("b", prefix=second, usd=0.2)
+                result = values(
+                    "cost", {"records": [a, a, b], "expected_categories": ["storage"]}
+                )
+                self.assertAlmostEqual(result["total_usd"], 0.3)
+
+    def test_literal_prefixes_are_separate_across_bucket_or_category(self):
+        for difference, categories in [
+            ({"bucket": "other"}, ["storage"]),
+            ({"category": "requests"}, ["storage", "requests"]),
+        ]:
+            with self.subTest(difference=difference):
+                result = values(
+                    "cost",
+                    {
+                        "records": [
+                            cost(prefix="root"),
+                            cost("b", prefix="root-child", usd=0.2, **difference),
+                        ],
+                        "expected_categories": categories,
+                    },
+                )
+                self.assertAlmostEqual(result["total_usd"], 0.3)
+
+    def test_disjoint_times_with_overlapping_prefixes_stay_unmeasured(self):
+        result = values(
+            "cost",
+            {
+                "records": [
+                    cost(prefix="root", interval=[START, START + 1800]),
+                    cost("b", prefix="root-child", interval=[START + 1800, WINDOW[1]]),
+                ],
+                "expected_categories": ["storage"],
+            },
+        )
+        self.assertIsNone(result["total_usd"])
+        self.assertIsNone(result["known_partial_usd"])
+
+    def test_disjoint_unknown_prefix_cost_keeps_total_null(self):
+        a, b = cost(prefix="root/a"), cost("b", prefix="root/b", usd=None)
+        result = values(
+            "cost", {"records": [a, a, b], "expected_categories": ["storage"]}
+        )
+        self.assertIsNone(result["total_usd"])
+        self.assertEqual(result["known_partial_usd"], 0.1)
+
     def test_physical_requests_aliases_count_once(self):
         a = cost(request_operations=3)
         result = values("cost", {"records": [a, a], "requests_complete": True})
