@@ -9275,6 +9275,40 @@
         "full-default"
       ],
       "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
+    },
+    "target:jope-learning/bin/jope_custody": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-learning/src/bin/jope_custody.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
+    },
+    "target:jope-learning/test/custody": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-learning/tests/custody.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
     }
   },
   "lanes": {

@@ -3656,6 +3656,14 @@
     "target:jope-learning/test/support": {
       "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
       "role": "research"
+    },
+    "target:jope-learning/bin/jope_custody": {
+      "role": "research",
+      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
+    },
+    "target:jope-learning/test/custody": {
+      "role": "research",
+      "reason": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
