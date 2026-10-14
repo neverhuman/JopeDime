@@ -290,6 +290,16 @@ pub fn pack_local(destination: &Path, members: &[CapturedMember]) -> Result<Valu
     pack_with(destination, members, &mut |_, _| Ok(()))
 }
 
+fn durable_directory(
+    path: &Path,
+    hook: &mut impl FnMut(&Path, PersistStep) -> Result<()>,
+) -> Result<()> {
+    fs::DirBuilder::new().mode(0o700).create(path)?;
+    hook(path, PersistStep::ParentSync)?;
+    File::open(path.parent().context("directory parent")?)?.sync_all()?;
+    Ok(())
+}
+
 pub fn pack_with(
     destination: &Path,
     members: &[CapturedMember],
@@ -332,7 +342,7 @@ pub fn pack_with(
     let index = json!({"schema":"jope.custody-local-pack/v2","refs":refs,
         "blobs":blobs.iter().map(|(h,b)|json!({"name":format!("members/{h}"),"sha256":h,"bytes":b.len()})).collect::<Vec<_>>(),
         "pack_sha256":pack_sha,"qualified":false,"remote_publication":false});
-    fs::DirBuilder::new().mode(0o700).create(destination)?;
+    durable_directory(destination, hook)?;
     // Retain incomplete bytes and an abort witness on every caught persistence/readback error.
     let result = (|| {
         durable_file(&destination.join(format!("{pack_sha}.tar.gz")), &raw, hook)?;
@@ -459,7 +469,7 @@ pub fn dry_run(
     let guard = budget_status(budgets)?;
     let ledger_raw = canonical_json(&ledger)?;
     ensure!(ledger_raw.len() <= 32 * 1024 * 1024, "bounded ledger bytes");
-    fs::DirBuilder::new().mode(0o700).create(destination)?;
+    durable_directory(destination, hook)?;
     let result = (|| {
         durable_file(&destination.join("object-ledger.json"), &ledger_raw, hook)?;
         let pack = pack_with(&destination.join("pack"), members, hook)?;
