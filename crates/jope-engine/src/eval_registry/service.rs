@@ -38,12 +38,10 @@ mod query_worker;
 pub use query_worker::execute_query_worker;
 mod funding_ipc;
 mod native_scq;
-mod sandbox;
 pub use funding_ipc::{
     funding_admission, funding_request, FundingRequest, VerifiedFundingAdmission,
 };
 pub(crate) use native_scq::submit as submit_native;
-pub use sandbox::WorkerSandbox;
 
 const MAX_FRAME: usize = 65536;
 const SEALS: i32 = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
@@ -111,7 +109,6 @@ pub struct ServiceConfig {
     pub event_witness: Option<super::witness::WitnessClientConfig>,
     pub funding_config: Option<PathBuf>,
     pub native_fit_policy: Option<PathBuf>,
-    pub sandbox: WorkerSandbox,
     #[cfg(test)]
     funding_fixture: Option<super::funding_config::InstalledFunding>,
     #[cfg(test)]
@@ -159,7 +156,6 @@ impl ServiceConfig {
             event_witness: None,
             funding_config: None,
             native_fit_policy: None,
-            sandbox: WorkerSandbox::default(),
             #[cfg(test)]
             funding_fixture: None,
             #[cfg(test)]
@@ -426,7 +422,6 @@ impl Service {
                 && !config.handshake_timeout.is_zero(),
             "invalid bounded service configuration"
         );
-        sandbox::check(&config.sandbox)?;
         #[cfg(not(test))]
         ensure!(
             config.event_witness.is_some(),
@@ -992,18 +987,15 @@ fn supervise(
         let _dispatch = state.dispatch_gate()?;
     }
     let ticket = claim.claim_token.clone();
-    // Each child writes only in its own ticket directory.
-    let outputs = state.config.authority_root.join("worker-output");
-    let custody = outputs.join(&ticket);
-    fs::create_dir(&custody).context("original worker artifact already exists")?;
-    File::open(&outputs)?.sync_all()?;
-    let output = custody.join("output.json");
+    let output = state
+        .config
+        .authority_root
+        .join("worker-output")
+        .join(format!("{ticket}.json"));
+    ensure!(!output.exists(), "original worker artifact already exists");
     let fd = input.as_raw_fd();
     let parent = std::process::id();
-    let confinement = sandbox::Confinement::fit(&state.config, &custody)?;
-    let attestation = confinement.attestation();
     let mut command = Command::new(&state.config.worker_executable);
-    confinement.configure(&mut command);
     command
         .env_remove("SCQ_CONTROL_FD")
         .args(&state.config.worker_arguments)
@@ -1035,10 +1027,18 @@ fn supervise(
             if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
                 || libc::getppid() as u32 != parent
                 || libc::setpgid(0, 0) != 0
+                || libc::fcntl(fd, libc::F_SETFD, 0) != 0
             {
                 return Err(std::io::Error::last_os_error());
             }
-            confinement.enter(fd)
+            let limit = libc::rlimit {
+                rlim_cur: 8 * 1024 * 1024 * 1024,
+                rlim_max: 8 * 1024 * 1024 * 1024,
+            };
+            if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
         });
     }
     let child = command.spawn()?;
@@ -1106,7 +1106,6 @@ fn supervise(
         reported_key == fit.key(),
         "worker descriptor/runtime differs from service"
     );
-    attestation.verify(process.pid)?;
     // Verify the actual original executor, not a caller-supplied digest. This
     // expensive work occurs outside the authority mutex and only on new fits.
     let actual = VerifiedFit::for_executor_process(
@@ -1370,8 +1369,6 @@ pub fn await_start_from_environment() -> Result<(VerifiedFit, WorkerPermit, Path
         authenticated_peer(&stream)? == launch.service.process,
         "worker service peer changed"
     );
-    // Confine this child before it requests start permission and fits.
-    sandbox::lockdown()?;
     send_json(
         &mut stream,
         &Request::Consume {
