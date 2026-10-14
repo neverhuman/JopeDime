@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "9ee7eb19ed8547e62d1f36d503c74be005dc62fbcf594207924c2d6c41f6f1ff"
+      "sha256": "0082eb8f39eaced73b24abfc439a622874e15d4c53cd380998cc2a22b399ac93"
     },
     {
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
@@ -5427,7 +5427,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "c894f75518a1d81528e20d1f3c6212b154cfbd944831df3f3cd9f16fd986099e"
+      "sha256": "49f0f312cd6b1c79bc697fd4a34ca19fe89ce008a74ea23946768d6a945e868c"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -6593,7 +6593,7 @@
       "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "05bcfb59b02cccade629551ad428fc22869158d44207db8d0f6954578b5180cd",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py",
-      "sha256": "9eda882bd42cc04979428ee32f36d3cd9fe55a38cf090b758773ddc17b5794f5"
+      "sha256": "3a6481529f77e0fc1fc15d700fc3f16fcedda1e5a889b5db067a97d7ff6f7cd9"
     },
     {
       "origin": "CX-MET retained analytics source/artifacts; provenance in METRICS.md and receipt.json",
@@ -6849,39 +6849,6 @@
       "origin_sha256": "8837c667d79a209dce0a2dd3ec95aa1aba3b1ecff89aa006cb8a770e65a8d296"
     },
     {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
-      "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
-      "path": "deploy/ci/coverage.json",
-      "sha256": "65ebc19045e589b93aba2573d5c1dc4c9ba79d40b686c2bb29a66d43e42ac09b"
-    },
-    {
-      "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
-      "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
-      "path": "deploy/ci/fast-lane.sh",
-      "sha256": "8c2e9b5a74ea3fa8f9a13683353b84a27da8106a1c2cfcb97319402742cb206f"
-    },
-    {
-      "normalization": "Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 46 research source classifications; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
-      "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
-      "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "8d096c3fe15c8fee56e2309993c6893047c4b0bb8f12f5fce04d8e92f602f80c"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/recovery5/test_transfer_watch.py",
-      "origin_sha256": "156fc76c9cf8f3a153743ed117e4f8af66fc85086a780b7a4896b800c27517d1",
-      "path": "deploy/dl-flywheel/pipelines/prepared/test_transfer_watch.py",
-      "sha256": "156fc76c9cf8f3a153743ed117e4f8af66fc85086a780b7a4896b800c27517d1"
-    },
-    {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
-      "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
-      "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "3d896ea1c50219cbcc296124bdfdff1e398745d4df872171cbdcc858f165526f"
-    },
-    {
       "path": "crates/jope-learning/src/bin/jope_custody.rs",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/bin/jope_custody.rs",
       "origin_sha256": "30de2ad3e3a13504f4e45d7447b447cff1449ebc8cae40ef3b08addbe2d08a6a",
@@ -7062,26 +7029,6 @@
       "origin_sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
       "sha256": "905f4eac575a4f55390942831410655898467690f5e770f470bfce53f39b560d",
       "normalization": "GNU tar external layout fixture for J24 F1. Source/offline only; original corpus identities preserved; no live storage or qualification."
-    },
-    {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 python-family items and one python-lane check and evidence entry for run_v2_offline.py; no existing item, lane value or disposition removed or changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate test row (flag-off gate); prior entries unchanged.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
-      "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
-      "path": "deploy/ci/coverage.json",
-      "sha256": "21d1a3290255a39b21d87077ef0e4bf69a148ba08177b6913b6e4ce8189bb2c0"
-    },
-    {
-      "normalization": "Narrow five stale callback-discovery assignments to one actual executable adapter; all frozen fixture identities/source paths and all other map values preserved. See hygiene-assignment-correction custody. G-S3GP additive executable-cache and lifecycle registration. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 11 research test-family items; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. jg_g23_seal L5 G23/G36: additive jope-learning qualify_gate row; prior entries unchanged.",
-      "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
-      "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
-      "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "0b4dca16fc5fe84b74d8ba34f7ba2d81c1c378631343a22616a0c4b5626422c4"
-    },
-    {
-      "origin": "CX-MET owner BUILD ONLY assignment; fresh product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
-      "origin_sha256": "05bcfb59b02cccade629551ad428fc22869158d44207db8d0f6954578b5180cd",
-      "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py",
-      "sha256": "3a6481529f77e0fc1fc15d700fc3f16fcedda1e5a889b5db067a97d7ff6f7cd9"
     },
     {
       "origin": "CX-MET GB-08 baseline source; contract in analytics/BASELINE.md",
