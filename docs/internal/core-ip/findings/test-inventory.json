@@ -638,6 +638,14 @@
         "policy"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "storage"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py": {
       "role": "regression",
       "subsystems": [
