@@ -618,6 +618,39 @@ fn failed_read_attempts_remain_counted_and_unknown() {
 }
 
 #[test]
+fn newly_created_root_and_pack_directory_parent_failures_refuse_success() {
+    for directory in ["custody", "pack"] {
+        let temp = tempfile::tempdir().unwrap();
+        let destination = temp.path().join("custody");
+        let rows = [row("v1")];
+        let members = [member("v1")];
+        let budgets = json!({});
+        let result = custody::dry_run(
+            &destination,
+            &DryRunRequest {
+                rows: &rows,
+                facts: &[],
+                budgets: &budgets,
+                members: &members,
+                input_sha: None,
+                pricing: None,
+            },
+            &mut |path, step| {
+                if path.file_name().is_some_and(|n| n == directory)
+                    && step == PersistStep::ParentSync
+                {
+                    bail!("injected directory entry fsync failure");
+                }
+                Ok(())
+            },
+        );
+        assert!(result.is_err());
+        assert!(!destination.join("receipt.json").exists());
+        assert!(custody::verify_complete(&destination, &"a".repeat(64)).is_err());
+    }
+}
+
+#[test]
 fn valid_pax_compatibility_and_entire_gzip_tar_tails_are_checked() {
     let index = fixture("hardening/index.json");
     let blob = jope_records::custody_archive::Blob {

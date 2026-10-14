@@ -6906,8 +6906,8 @@
       "path": "crates/jope-learning/src/custody/mod.rs",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/mod.rs",
       "origin_sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
-      "sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "sha256": "2df9915193fcefa57a50b509ff9bcc15060cf8f21ddea174d1fa47054860c71d",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures."
     },
     {
       "path": "crates/jope-learning/src/custody/reader.rs",
@@ -6920,8 +6920,8 @@
       "path": "crates/jope-learning/tests/custody.rs",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/custody.rs",
       "origin_sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
-      "sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
-      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json."
+      "sha256": "df7562460a85fb9525d372137b61792acd9c16c59f3d699f9f575c553c09b3e5",
+      "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures."
     },
     {
       "path": "crates/jope-learning/tests/fixtures/custody_v2/budget.json",
