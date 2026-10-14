@@ -3632,6 +3632,14 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "target:jope-learning/bin/jope_support": {
+      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
+      "role": "research"
+    },
+    "target:jope-learning/test/support": {
+      "reason": "GB05/J13 build-only nonqualifying successor support and probability fixtures, including a pinned frozen-v1 forward golden. No program execution, measurement-body authentication, learner integration, G12 qualification, promotion or L6 improvement claim.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

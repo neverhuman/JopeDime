@@ -1,5 +1,6 @@
 [package]
 name = "jope-learning"
+default-run = "jope-learning"
 publish = false
 version.workspace = true
 edition.workspace = true

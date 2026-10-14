@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4172,
+  "count": 4189,
   "ignored": 66,
   "packages": {
    "battle-gpu": {
@@ -3683,7 +3683,7 @@
     }
    },
    "jope-learning": {
-    "count": 211,
+    "count": 228,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
@@ -4000,6 +4000,36 @@
        "state_flag_wins_over_every_variable",
        "xdg_state_home_wins_over_home"
       ]
+     },
+     "jope-learning::support": {
+      "kind": "test",
+      "count": 17,
+      "ignored": 0,
+      "tests": [
+       "actual_v1_policy_golden_matches_sampling_and_eos_likelihood",
+       "all_complete_leaves_normalize_and_trace_equals_eos_teacher_forcing",
+       "canonical_hash_tokens_vocabulary_and_length_are_bound",
+       "categorical_sampler_is_supported_and_added_action_sampleable",
+       "changed_role_map_or_receipt_and_missing_provenance_refused",
+       "cli_freezes_verifies_and_refuses_overwrite_bad_pin_and_torn_artifact",
+       "consuming_path_checks_rehashed_role_poison_and_qualification",
+       "duplicate_inputs_are_idempotent_and_reference_provenance_is_retained",
+       "exact_deployed_catalog_flag_rejects_fixture_parent",
+       "external_winner_freezes_version_with_finite_added_leaf",
+       "heldout_validation_sealed_unknown_and_missing_roles_refused",
+       "immutable_read_requires_caller_pin_and_detects_semantic_and_byte_changes",
+       "kl_requires_same_support_and_frozen_parameter_identity",
+       "mismatch_keeps_sign_sequence_units_and_missing_outcomes_unknown",
+       "nonfinite_evidence_cannot_become_availability_or_zero_reward",
+       "unknown_or_partial_actions_and_nonfinite_supported_logits_refused",
+       "weighted_ce_is_sequence_sum_not_length_mean_and_bad_targets_refused"
+      ]
+     },
+     "jope-learning::bin/jope_support": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
      }
     }
    },
