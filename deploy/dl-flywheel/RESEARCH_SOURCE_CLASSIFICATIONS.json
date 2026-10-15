@@ -2762,6 +2762,15 @@
       "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
       "sha256": "5768a04ec55b3fd6d0a06fc2d9a8436fa7a923ff4a3f709b1968217ad1341580"
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/ablations/controls.py": {
+      "bytes": 7778,
+      "classification": {
+        "reason": "J8 matched-feedback controls: restart-only, offline replay, data volume, and fresh feedback stay distinct. Closed scratch pins are non-qualifying and are not an improvement. Data-free fixtures are a separate family. No launch or promotion.",
+        "role": "research"
+      },
+      "migration": "New supporting research source; the test family is classified separately. No source or test removed.",
+      "sha256": "bfeb3b1d761d23ed7a01ca23d2b2858a804fe7135ca7e1f1e8c95ce7cbc41ab4"
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/ablations/exact.py": {
       "bytes": 3015,
       "classification": {
