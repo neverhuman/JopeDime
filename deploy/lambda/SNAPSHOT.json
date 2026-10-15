@@ -984,10 +984,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/Cargo.lock",
-      "tree_sha256": "700dbae09762216b4aeb308d485543d6216dd9d0e01195fbc454fb0cb59fc980",
+      "tree_sha256": "08d81b8f8e14cff6e44bd2c550c2c06dbf4d64df1a1dd3f0ab340b44ff8f8608",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.3.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "csv",
@@ -1797,10 +1797,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression/rust/Cargo.lock",
-      "tree_sha256": "3d877abc739e90bcd93f05459ec35e26ca5c863077e657e115a8ca995ff1bda2",
+      "tree_sha256": "d090dc14fd6fa2ef014af43b45c644731e1212a25cc2880067bda53b0a090a07",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.3.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression",
@@ -2351,10 +2351,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/regression-ops/rust/Cargo.lock",
-      "tree_sha256": "4b7f4004466d7c7faf7abb0720fc9e6b2d615c87805c836a806daed4d9add1a9",
+      "tree_sha256": "736b3edf1f6301452c89be40f15785014472c731cc028774c5b7cdad1af9eae6",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.3.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression-ops",
@@ -2627,10 +2627,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/Cargo.lock",
-      "tree_sha256": "9a6320d1e688e7f179c31de1df00557f7d19b53670d29a38bbdf41ea28856d74",
+      "tree_sha256": "0f04c3ef83833a8f1afe4862fe647c2934246a1c6b85e664d8138313a40a1b2b",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.3.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "teacher-v2",
@@ -3229,10 +3229,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/training/teacher-v2/rust/s1-proposal/Cargo.lock",
-      "tree_sha256": "cfc1ec01abfd73e9117c1f9b68be130e264a0e69cbcdc7fafb809807c53500ed",
+      "tree_sha256": "4f64ba8e4f52470636f3a3abe5a02f066d9bb89c328517434a40d1c61a9791bb",
       "custody_tarball": null,
       "reason": "new workspace lock with current feat-math0.2 and unique package; historical proposal lock retained separately",
-      "tree_change": "cargo update -p feat-math --offline: feat-math 0.2.0 path entry adds its already-locked libc dependency for the sealed runtime; frozen original sha256 retained; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 0.3.0, the workspace version of this release; no other package moves"
     }
   ],
   "excluded": [
