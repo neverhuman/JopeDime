@@ -22,10 +22,10 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 
 ## At a glance
 
-| What | 0.2.0 |
+| What | 0.2.3 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 0.2.0` <sup>1</sup> |
-| Workspace | 26 members: 19 crates at 0.2.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 0.2.3` <sup>1</sup> |
+| Workspace | 26 members: 19 crates at 0.2.3 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 5: `python`, `rust`, `cpp17`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
 | Rust tests | 3,796 listed in 26 packages, 62 of them ignored; a listing, not a run <sup>5</sup> |
@@ -196,7 +196,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.2.0
+# jope 0.2.3
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -216,6 +216,32 @@ Prove emitters on this SHA:
 
 ```sh
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
+```
+
+### CLOVER self-play flywheel quick start
+
+`jope-learning` drives the CLOVER self-play ratchet (`run_selfplay_ratchet`), surrogate-screened seed selection (`select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), non-parametric measured-tilt leaf proposal (`measured_tilt_leaf_log_probs` bounded by `decomposed_support_kl`), and the `gp_distilled/v1` S3 Parquet distillation bridge into `ContextualSurrogateQHat`:
+
+```sh
+# 1. Verify the multi-round self-play ratchet, surrogate funnel, and measured-tilt leaf policy:
+cargo test --locked -p jope-learning --lib clover::expansion::tests::
+
+# 2. Verify the gp_distilled/v1 S3 Parquet distillation bridge and ContextualSurrogateQHat loop:
+cargo test --locked -p jope-learning --lib retention::distilled::tests::
+cargo test --locked -p jope-learning --test retention --test retention_pack --test pools
+
+# 3. Build, freeze, and evaluate frozen shadow pools with jope_pools:
+cargo run --locked -p jope-learning --bin jope_pools -- ingest-coverage \
+  --index target/pools/coverage-index.json --datasets-root datasets/test --out target/pools/measurements.jsonl
+cargo run --locked -p jope-learning --bin jope_pools -- freeze \
+  --measurements target/pools/measurements.jsonl --out-dir target/pools/frozen
+cargo run --locked -p jope-learning --bin jope_pools -- evaluate \
+  --pools target/pools/frozen/pools.jsonl --manifest target/pools/frozen/manifest.json \
+  --context-features target/pools/context-features.jsonl --out target/pools/eval-receipt.json
+
+# 4. Inspect and verify a distilled gp_distilled/v1 S3 Parquet table with jope_retention:
+cargo run --locked -p jope-learning --bin jope_retention -- inspect-parquet \
+  --parquet target/retention/gp_distilled.parquet --out target/retention/inspect.json
 ```
 
 Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jope-ci` runners.
