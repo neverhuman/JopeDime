@@ -671,14 +671,14 @@ pub fn pre_screen_funnel(
         scores.len() == view.programs.len() && scores.iter().all(|s| s.is_finite()),
         "selector must return one finite score per view program"
     );
-    let capped_k = view.programs.len().min(proposal_pool_k);
     let mut seen = BTreeSet::new();
     let mut ranked: Vec<(f64, &str)> = scores
         .into_iter()
         .zip(view.programs.iter().copied())
-        .take(capped_k)
         .filter(|(_, prog_sha)| seen.insert(*prog_sha))
+        .take(proposal_pool_k)
         .collect();
+    let capped_k = ranked.len();
     ranked.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(b.1)));
     ranked.truncate(eval_budget_b);
     Ok(FunnelAllocation {
