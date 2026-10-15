@@ -229,7 +229,7 @@ cargo test --locked -p jope-learning --lib clover::expansion::tests::
 # 2. Verify the gp_distilled/v1 S3 Parquet distillation bridge and ContextualSurrogateQHat loop:
 cargo test --locked -p jope-learning --test retention --test retention_pack --test pools
 
-# 3. Adapt coverage, freeze candidate pools, and evaluate selectors with jope_pools:
+# 3. Adapt coverage, freeze candidate pools, extract context vectors, and evaluate selectors:
 cargo run --locked -p jope-learning --bin jope_pools -- ingest-coverage \
   --coverage target/pools/coverage.json \
   --protocol-sha256 0000000000000000000000000000000000000000000000000000000000000000 \
@@ -238,10 +238,15 @@ cargo run --locked -p jope-learning --bin jope_pools -- freeze \
   --rows target/pools/measurements.jsonl \
   --source-grade train_cv_geomean_rmse_ratio \
   --out target/pools/frozen
+cargo run --locked -p jope-learning --bin jope_pools -- ingest-roster-features \
+  --roster target/pools/roster.jsonl \
+  --pack target/pools/roster-vectors.f32 \
+  --manifest target/pools/frozen/manifest.json \
+  --out target/pools/context-features.jsonl
 cargo run --locked -p jope-learning --bin jope_pools -- evaluate \
   --pools target/pools/frozen/pools.jsonl \
   --manifest target/pools/frozen/manifest.json \
-  --reference hwm \
+  --reference pool-floor \
   --context-features target/pools/context-features.jsonl \
   --source-commit "$(git rev-parse HEAD)" \
   --out target/pools/eval-receipt.json
