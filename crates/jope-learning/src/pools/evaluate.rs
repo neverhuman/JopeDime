@@ -219,13 +219,13 @@ pub fn evaluate(
                     });
                     false
                 } else {
-                    match ContextualSurrogateQHat::design_dim(cf.dim, pf.dim) {
+                    match ContextualSurrogateQHat::effective_design_dim(cf.dim, pf.dim) {
                         Some(d) if d <= MAX_SURROGATE_DESIGN_DIM => true,
                         Some(d) => {
                             unavailable_selectors.push(Unavailable {
                                 name: "contextual_surrogate_qhat".into(),
                                 reason: format!(
-                                    "bilinear design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM})"
+                                    "effective design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM})"
                                 ),
                             });
                             false
@@ -234,7 +234,7 @@ pub fn evaluate(
                             unavailable_selectors.push(Unavailable {
                                 name: "contextual_surrogate_qhat".into(),
                                 reason: format!(
-                                    "bilinear design dimension overflow (d_ctx={}, d_prog={})",
+                                    "effective design dimension overflow (d_ctx={}, d_prog={})",
                                     cf.dim, pf.dim
                                 ),
                             });

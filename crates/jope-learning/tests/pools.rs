@@ -662,3 +662,128 @@ fn reloaded_valid_pools_pass_and_rehashed_invalid_pools_are_refused() {
     stale.pools[0].measured += 1;
     assert_refused(&pools, &stale, "metadata differs");
 }
+
+#[test]
+fn high_dim_surrogate_and_distilled_flywheel_establish_multi_round_lift() {
+    use jope_learning::clover::expansion::MeasuredTiltPolicyConfig;
+    use jope_learning::pools::flywheel::{
+        run_distilled_flywheel, FlywheelConfig, FLYWHEEL_RECEIPT_SCHEMA,
+    };
+    use jope_learning::pools::selectors::{ContextualSurrogateQHat, MAX_SURROGATE_DESIGN_DIM};
+
+    // Verify 2,051-d Kumo context features x 292-d token_bag features compress within MAX_SURROGATE_DESIGN_DIM.
+    assert!(ContextualSurrogateQHat::design_dim(2051, 292).unwrap() > MAX_SURROGATE_DESIGN_DIM);
+    let eff = ContextualSurrogateQHat::effective_design_dim(2051, 292).unwrap();
+    assert!(eff <= MAX_SURROGATE_DESIGN_DIM);
+
+    // Construct 40 contexts across 20 parents with 2,051-d context vectors and 16 candidate programs per context.
+    // Only the top-variance context coordinate (coord 0) and program coordinate (coord 0) carry the true
+    // interaction signal `z_0 * phi_0`, plus a secondary interaction `z_1 * phi_1` discovered once more programs
+    // are acquired across flywheel rounds.
+    let mut rows = Vec::new();
+    let mut cf_rows = std::collections::BTreeMap::new();
+    let mut pf_rows = std::collections::BTreeMap::new();
+    for c in 0..40usize {
+        let parent = format!("fw-parent-{}", c / 2);
+        let ctx_sha = h(&format!("fw-ctx-{c}"));
+        let z0 = if (c / 2) % 2 == 0 { 1.5 } else { -1.5 };
+        let z1 = if (c / 4) % 2 == 0 { 1.2 } else { -1.2 };
+        let mut vec_z = vec![0.0; 2051];
+        vec_z[0] = z0;
+        vec_z[1] = z1;
+        cf_rows.insert(ctx_sha.clone(), vec_z);
+        let cohort = c / 2;
+        for p in 0..16usize {
+            let prog_sha = h(&format!("fw-prog-{cohort}-{p}"));
+            let phi0 = if p % 2 == 0 { 1.5 } else { -1.5 };
+            let phi1 = if (p / 2) % 2 == 0 { 1.2 } else { -1.2 };
+            let mut vec_p = vec![0.0; 64];
+            vec_p[0] = phi0;
+            vec_p[1] = phi1;
+            pf_rows.insert(prog_sha.clone(), vec_p);
+            let q =
+                0.50 + 0.22 * (z0 * phi0) + 0.14 * (z1 * phi1) + 0.01 * u(&format!("fw-n-{c}-{p}"));
+            rows.push(MeasurementRow {
+                context_id: ctx_sha.clone(),
+                parent_id: parent.clone(),
+                role: "train".into(),
+                program_sha256: prog_sha,
+                status: Status::Complete,
+                q: Some(q),
+                incumbent_q: Some(0.20),
+                protocol_sha256: h(PROTOCOL),
+                tokens: Some(vec![1, 3 + (p % 8) as u32, 2]),
+            });
+        }
+    }
+    let (pools, manifest) = freeze(&rows, &rule(), &h("fw-input")).unwrap();
+    let cf = Features {
+        dim: 2051,
+        rows: cf_rows,
+    };
+    let pf = Features {
+        dim: 64,
+        rows: pf_rows,
+    };
+
+    let temp = tempfile::tempdir().unwrap();
+    let parquet_dir = temp.path().join("shards");
+    let fw_cfg = FlywheelConfig {
+        eval: Config {
+            reference: Reference::PoolFloor,
+            budget: 1,
+            folds: 5,
+            fold_salt: "fw-folds".into(),
+            prior_weight: 2.0,
+            knn_k: 4,
+            ridge_lambda: 1.0,
+            bootstrap_draws: 400,
+            bootstrap_seed: 19,
+            alpha: 0.05,
+        },
+        eval_budgets: vec![1, 4, 8],
+        rounds: 4,
+        initial_budget_per_context: 2,
+        step_budget_per_context: 4,
+        proposal_pool_k: 16,
+        score_name: "cv_geomean_rmse_ratio".into(),
+        tilt: MeasuredTiltPolicyConfig {
+            temperature_tau: 0.25,
+            advantage_clip: 2.0,
+            ref_new_support_mass: 0.05,
+            policy_new_support_cap: 0.12,
+            step_size_eta: 0.20,
+        },
+        max_conditional_base_kl: 0.20,
+        max_new_support_mass: 0.15,
+    };
+
+    let receipt = run_distilled_flywheel(
+        &pools,
+        &manifest,
+        &cf,
+        Some(&pf),
+        &[],
+        &fw_cfg,
+        Some(&parquet_dir),
+    )
+    .unwrap();
+
+    assert_eq!(receipt.schema, FLYWHEEL_RECEIPT_SCHEMA);
+    assert!(receipt.shadow_only && !receipt.qualified_claim && !receipt.l6_claim);
+    assert_eq!(receipt.rounds.len(), 4);
+    assert!(receipt.monotonic_train_hwm_gain);
+    assert!(receipt.all_rounds_kl_admissible);
+    assert_eq!(
+        receipt.final_round_receipt.ranking_learnability,
+        "ESTABLISHED_SHADOW"
+    );
+    for r in 0..4 {
+        let shard = parquet_dir.join(format!("round-{r:02}.parquet"));
+        assert!(shard.exists(), "missing parquet shard {}", shard.display());
+    }
+    assert!(
+        receipt.rounds[3].heldout_by_budget[&1].mean_realized_gain
+            >= receipt.rounds[0].heldout_by_budget[&1].mean_realized_gain
+    );
+}
