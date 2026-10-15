@@ -1,21 +1,29 @@
 //! Multi-round `gp_distilled/v1` self-play flywheel over frozen shadow pools (CLOVER Phase 3 / J9).
 //!
+//! Each outer cross-fitting fold `k = 0..K-1` maintains its own strictly isolated training-split
+//! acquisition trajectory over `{ j : fold(j) != k }` across rounds `r = 0..R-1`, so held-out fold
+//! `k` (`{ i : fold(i) == k }`) never enters or influences outer fold `k`'s training archive at
+//! any round.
+//!
 //! Each round `r = 0..R-1`:
-//! 1. Distills the cumulative acquired self-play observations across contexts into a validated
+//! 1. Distills the cumulative acquired training observations per outer fold into a validated
 //!    `gp_distilled/v1` Parquet shard (`retention::distilled::write`), reads the shard back
 //!    (`retention::distilled::read`), verifies E3 key reconciliation (`retention::distilled::reconcile`),
-//!    and bridges the rows into `MeasurementRow`s (`distilled_rows_to_measurement_rows`).
+//!    and reconstructs each outer fold's training sub-pools from the reloaded Parquet rows.
 //! 2. Checks closed-loop measured-tilt leaf distributions (`measured_tilt_leaf_log_probs`) and
-//!    `decomposed_support_kl` admissibility over each context's base vs newly acquired support.
-//! 3. Fits `ContextualSurrogateQHat` per parent-grouped fold `k` using only training folds `!= k`
-//!    from the Round-`r` distilled sub-pools, evaluates held-out fold `k` on the full frozen
-//!    shadow pools across budgets `B`, and uses `pre_screen_funnel` to acquire the next batch of
-//!    unmeasured candidate programs for Round `r + 1`.
+//!    `decomposed_support_kl` contract admissibility over each training sub-pool's base vs newly
+//!    acquired support.
+//! 3. Fits `ContextualSurrogateQHat` per outer fold `k` using only its reconstructed training
+//!    sub-pools (`fold != k`), evaluates held-out fold `k` on the full frozen shadow pools across
+//!    budgets `B`, and uses `pre_screen_funnel` strictly within outer fold `k`'s training split
+//!    (`fold != k`) to acquire the next batch of unmeasured candidate programs for Round `r + 1`.
 //!
 //! Shadow-only: never claims `qualified = true` or `l6`.
 
 use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
-use super::evaluate::{evaluate, fold_of, Config as EvalConfig, Inputs, Summary};
+use super::evaluate::{
+    evaluate_with_fold_train_pools, fold_of, Config as EvalConfig, Inputs, Summary,
+};
 use super::metrics::{score_context, ContextMetrics};
 use super::pool::{verify, Manifest, Member, Pool, PoolView, Status, POOL_SCHEMA};
 use super::selectors::{
@@ -91,6 +99,7 @@ pub struct FlywheelReceipt {
     pub round_lifts: Vec<RoundLiftComparison>,
     pub final_round_receipt: super::evaluate::Receipt,
     pub final_vs_round0_primary_verdict: Verdict,
+    pub final_vs_round0_pairwise_verdict: Verdict,
     pub flywheel_established: bool,
 }
 
@@ -224,9 +233,13 @@ pub fn run_distilled_flywheel(
         .iter()
         .map(|p| p.reference(cfg.eval.reference))
         .collect::<Result<_>>()?;
+    let pool_idx_by_ctx: BTreeMap<&str, usize> = pools
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.context_id.as_str(), i))
+        .collect();
 
-    // Track acquired member indices per pool (and which were acquired in Round 0 as base support).
-    let mut acquired: Vec<BTreeSet<usize>> = vec![BTreeSet::new(); pools.len()];
+    // Deterministic outcome-blind Round 0 seed subset per context (hash-ordered by context_id and program_sha256).
     let mut base_acquired: Vec<BTreeSet<usize>> = vec![BTreeSet::new(); pools.len()];
     for (i, pool) in pools.iter().enumerate() {
         let mut order: Vec<(String, usize)> = pool
@@ -265,83 +278,96 @@ pub fn run_distilled_flywheel(
             }
         }
         for idx in chosen {
-            acquired[i].insert(idx);
             base_acquired[i].insert(idx);
         }
     }
+
+    // Strictly isolated per-outer-fold acquisition state: outer fold `k` only ever updates or reads
+    // `acquired_by_fold[k][j]` for training contexts `j` with `folds[j] != k`.
+    let mut acquired_by_fold: Vec<Vec<BTreeSet<usize>>> =
+        vec![base_acquired.clone(); cfg.eval.folds];
 
     let mut round_summaries = Vec::with_capacity(cfg.rounds);
     let mut round_metrics_by_budget: Vec<BTreeMap<usize, Vec<ContextMetrics>>> =
         Vec::with_capacity(cfg.rounds);
     let mut all_rounds_kl_admissible = true;
+    let mut final_train_sub_pools: Vec<Vec<Pool>> = Vec::new();
 
     for r in 0..cfg.rounds {
-        // 1. Distill all currently acquired observations into gp_distilled/v1 Parquet and read back.
+        // 1. Distill each outer fold's currently acquired training observations into gp_distilled/v1 Parquet and read back.
         let mut round_distilled = Vec::new();
         let mut raw_keys = BTreeSet::new();
         let mut tokens_by_prog: BTreeMap<String, Option<Vec<u32>>> = BTreeMap::new();
 
-        for (i, pool) in pools.iter().enumerate() {
-            let spec = SelfPlayDistillSpec {
-                dataset: pool.parent_id.clone(),
-                context_sha256: pool.context_id.clone(),
-                fold: Some(folds[i] as i64),
-                split_role: SplitRole::Train,
-                score_name: cfg.score_name.clone(),
-                policylm_ckpt: None,
-                campaign: Some("clover-s3-distilled-flywheel".into()),
-                run_id: format!("flywheel-round-{r:02}"),
-                family: "clover-selfplay".into(),
-                source_bucket: "veox-jopedime-learning-use2".into(),
-            };
-            let mut obs = Vec::with_capacity(acquired[i].len());
-            for &m_idx in &acquired[i] {
-                let m = &pool.members[m_idx];
-                tokens_by_prog
-                    .entry(m.program_sha256.clone())
-                    .or_insert_with(|| m.tokens.clone());
-                let (outcome, raw_score) = match (m.status, m.q) {
-                    (Status::Complete, Some(q)) => {
-                        let s = match direction {
-                            ScoreDirection::LowerIsBetter => {
-                                if q == 0.0 {
-                                    0.0
-                                } else {
-                                    -q
-                                }
-                            }
-                            ScoreDirection::HigherIsBetter => q,
-                        };
-                        (Outcome::Ok, Some(s))
-                    }
-                    (Status::Timeout, _) => (Outcome::Timeout, None),
-                    _ => (Outcome::Failed, None),
+        for (k, fold_acquired) in acquired_by_fold.iter().enumerate() {
+            let run_id = format!("flywheel-r{r:02}-fold{k}");
+            for (j, pool) in pools.iter().enumerate() {
+                if folds[j] == k {
+                    // Held-out fold `k` is strictly excluded from outer fold `k`'s training archive.
+                    continue;
+                }
+                let spec = SelfPlayDistillSpec {
+                    dataset: pool.parent_id.clone(),
+                    context_sha256: pool.context_id.clone(),
+                    fold: Some(folds[j] as i64),
+                    split_role: SplitRole::Train,
+                    score_name: cfg.score_name.clone(),
+                    policylm_ckpt: None,
+                    campaign: Some("clover-s3-distilled-flywheel".into()),
+                    run_id: run_id.clone(),
+                    family: "clover-selfplay".into(),
+                    source_bucket: "veox-jopedime-learning-use2".into(),
                 };
-                let key = format!(
-                    "experiments/clover-selfplay/round-{r:02}/{}/{}.json",
-                    pool.context_id, m.program_sha256
-                );
-                let src_sha = sha256_hex(
-                    format!("{}:{}:{}:{r}", pool.context_id, m.program_sha256, m_idx).as_bytes(),
-                );
-                raw_keys.insert(key.clone());
-                obs.push(SelfPlayDistillObservation {
-                    program_sha: m.program_sha256.clone(),
-                    program: None,
-                    outcome,
-                    score: raw_score,
-                    seed_packet: Some(if base_acquired[i].contains(&m_idx) {
-                        "round0_cold_start".into()
-                    } else {
-                        format!("surrogate_funnel_up_to_r{r}")
-                    }),
-                    source_key: key,
-                    source_version_id: Some(format!("r{r}")),
-                    source_sha256: src_sha,
-                });
+                let mut obs = Vec::with_capacity(fold_acquired[j].len());
+                for &m_idx in &fold_acquired[j] {
+                    let m = &pool.members[m_idx];
+                    tokens_by_prog
+                        .entry(m.program_sha256.clone())
+                        .or_insert_with(|| m.tokens.clone());
+                    let (outcome, raw_score) = match (m.status, m.q) {
+                        (Status::Complete, Some(q)) => {
+                            let s = match direction {
+                                ScoreDirection::LowerIsBetter => {
+                                    if q == 0.0 {
+                                        0.0
+                                    } else {
+                                        -q
+                                    }
+                                }
+                                ScoreDirection::HigherIsBetter => q,
+                            };
+                            (Outcome::Ok, Some(s))
+                        }
+                        (Status::Timeout, _) => (Outcome::Timeout, None),
+                        _ => (Outcome::Failed, None),
+                    };
+                    let key = format!(
+                        "experiments/clover-selfplay/round-{r:02}/fold-{k}/{}/{}.json",
+                        pool.context_id, m.program_sha256
+                    );
+                    let src_sha = sha256_hex(
+                        format!("{}:{}:{}:{r}:{k}", pool.context_id, m.program_sha256, m_idx)
+                            .as_bytes(),
+                    );
+                    raw_keys.insert(key.clone());
+                    obs.push(SelfPlayDistillObservation {
+                        program_sha: m.program_sha256.clone(),
+                        program: None,
+                        outcome,
+                        score: raw_score,
+                        seed_packet: Some(if base_acquired[j].contains(&m_idx) {
+                            "round0_cold_start".into()
+                        } else {
+                            format!("surrogate_funnel_up_to_r{r}")
+                        }),
+                        source_key: key,
+                        source_version_id: Some(format!("r{r}-k{k}")),
+                        source_sha256: src_sha,
+                    });
+                }
+                let batch = distill_selfplay_observations(&spec, &obs, &scores_set)?;
+                round_distilled.extend(batch);
             }
-            let batch = distill_selfplay_observations(&spec, &obs, &scores_set)?;
-            round_distilled.extend(batch);
         }
 
         let parquet_bytes = distilled::write(
@@ -367,91 +393,121 @@ pub fn run_distilled_flywheel(
         }
         let reloaded = distilled::read(&parquet_bytes, &scores_set)?;
         distilled::reconcile(&reloaded, &raw_keys)?;
-        let m_rows = distilled_rows_to_measurement_rows(
-            &reloaded,
-            &cfg.score_name,
-            &pools[0].protocol_sha256,
-            &scores_set,
-        )?;
 
-        // Group reloaded MeasurementRows by context_id to form the Round-r distilled sub-pools.
-        let mut by_ctx: BTreeMap<String, Vec<Member>> = BTreeMap::new();
-        for row in m_rows {
-            by_ctx.entry(row.context_id).or_default().push(Member {
-                tokens: tokens_by_prog
-                    .get(&row.program_sha256)
-                    .cloned()
-                    .unwrap_or(None),
-                program_sha256: row.program_sha256,
-                status: row.status,
-                q: row.q,
-            });
+        // Partition reloaded rows by outer fold `run_id` and bridge each fold's training rows via distilled_rows_to_measurement_rows.
+        let mut rows_by_run_id: BTreeMap<String, Vec<distilled::DistilledRow>> = BTreeMap::new();
+        for row in reloaded.iter().cloned() {
+            rows_by_run_id
+                .entry(row.run_id.clone())
+                .or_default()
+                .push(row);
         }
 
-        let mut sub_pools = Vec::with_capacity(pools.len());
-        let mut train_hwm_gains = Vec::with_capacity(pools.len());
+        let mut train_sub_pools_by_fold: Vec<Vec<Pool>> = Vec::with_capacity(cfg.eval.folds);
+        let mut train_hwm_gains = Vec::new();
         let mut kl_admissible_contexts = 0usize;
         let mut max_cond_kl = 0.0f64;
         let mut max_new_mass = 0.0f64;
-        let mut ce_losses = Vec::with_capacity(pools.len());
+        let mut ce_losses = Vec::new();
 
-        for (i, pool) in pools.iter().enumerate() {
-            let mut members = by_ctx
-                .remove(&pool.context_id)
-                .with_context(|| format!("missing distilled sub-pool for {}", pool.context_id))?;
-            members.sort_by(|a, b| a.program_sha256.cmp(&b.program_sha256));
-            let best_q = members
-                .iter()
-                .filter_map(Member::outcome)
-                .fold(refs[i], f64::max);
-            train_hwm_gains.push((best_q - refs[i]).max(0.0));
-
-            // Evaluate measured-tilt leaf distribution and decomposed support KL on base vs newly acquired leaves.
-            let base_shas: BTreeSet<&str> = base_acquired[i]
-                .iter()
-                .map(|&idx| pool.members[idx].program_sha256.as_str())
-                .collect();
-            let mut base_q = Vec::new();
-            let mut arch_q = Vec::new();
-            for m in &members {
-                let q_val = m.outcome().unwrap_or(refs[i]);
-                if base_shas.contains(m.program_sha256.as_str()) {
-                    base_q.push(q_val);
-                } else {
-                    arch_q.push(q_val);
-                }
-            }
-            let (pol_lp, ref_lp, ce) =
-                measured_tilt_leaf_log_probs(&base_q, &arch_q, refs[i], &cfg.tilt)?;
-            let is_base_leaf: Vec<bool> = (0..pol_lp.len()).map(|idx| idx < base_q.len()).collect();
-            let kl = decomposed_support_kl(
-                &pol_lp,
-                &ref_lp,
-                &is_base_leaf,
-                cfg.max_conditional_base_kl,
-                cfg.max_new_support_mass,
+        for k in 0..cfg.eval.folds {
+            let run_id = format!("flywheel-r{r:02}-fold{k}");
+            let fold_rows = rows_by_run_id
+                .remove(&run_id)
+                .with_context(|| format!("missing reloaded Parquet rows for {run_id}"))?;
+            let m_rows = distilled_rows_to_measurement_rows(
+                &fold_rows,
+                &cfg.score_name,
+                &pools[0].protocol_sha256,
+                &scores_set,
             )?;
-            if kl.admissible {
-                kl_admissible_contexts += 1;
-            } else {
-                all_rounds_kl_admissible = false;
+            let mut by_ctx: BTreeMap<String, Vec<Member>> = BTreeMap::new();
+            for row in m_rows {
+                by_ctx.entry(row.context_id).or_default().push(Member {
+                    tokens: tokens_by_prog
+                        .get(&row.program_sha256)
+                        .cloned()
+                        .unwrap_or(None),
+                    program_sha256: row.program_sha256,
+                    status: row.status,
+                    q: row.q,
+                });
             }
-            max_cond_kl = max_cond_kl.max(kl.conditional_base_kl);
-            max_new_mass = max_new_mass.max(kl.new_support_mass);
-            ce_losses.push(ce);
 
-            sub_pools.push(Pool {
-                schema: POOL_SCHEMA.into(),
-                context_id: pool.context_id.clone(),
-                parent_id: pool.parent_id.clone(),
-                role: pool.role.clone(),
-                protocol_sha256: pool.protocol_sha256.clone(),
-                incumbent_q: pool.incumbent_q,
-                members,
-            });
+            let mut fold_pools = Vec::new();
+            for (j, pool) in pools.iter().enumerate() {
+                if folds[j] == k {
+                    continue;
+                }
+                let idx_check = *pool_idx_by_ctx
+                    .get(pool.context_id.as_str())
+                    .expect("known context_id");
+                debug_assert_eq!(j, idx_check);
+                let mut members = by_ctx.remove(&pool.context_id).with_context(|| {
+                    format!(
+                        "missing distilled training sub-pool for fold {k} context {}",
+                        pool.context_id
+                    )
+                })?;
+                members.sort_by(|a, b| a.program_sha256.cmp(&b.program_sha256));
+                let best_q = members
+                    .iter()
+                    .filter_map(Member::outcome)
+                    .fold(refs[j], f64::max);
+                train_hwm_gains.push((best_q - refs[j]).max(0.0));
+
+                // Evaluate measured-tilt leaf distribution and decomposed support KL on base vs newly acquired leaves.
+                let base_shas: BTreeSet<&str> = base_acquired[j]
+                    .iter()
+                    .map(|&idx| pool.members[idx].program_sha256.as_str())
+                    .collect();
+                let mut base_q = Vec::new();
+                let mut arch_q = Vec::new();
+                for m in &members {
+                    let q_val = m.outcome().unwrap_or(refs[j]);
+                    if base_shas.contains(m.program_sha256.as_str()) {
+                        base_q.push(q_val);
+                    } else {
+                        arch_q.push(q_val);
+                    }
+                }
+                let base_floor = base_q.iter().copied().fold(f64::INFINITY, f64::min);
+                let (pol_lp, ref_lp, ce) =
+                    measured_tilt_leaf_log_probs(&base_q, &arch_q, base_floor, &cfg.tilt)?;
+                let is_base_leaf: Vec<bool> =
+                    (0..pol_lp.len()).map(|idx| idx < base_q.len()).collect();
+                let kl = decomposed_support_kl(
+                    &pol_lp,
+                    &ref_lp,
+                    &is_base_leaf,
+                    cfg.max_conditional_base_kl,
+                    cfg.max_new_support_mass,
+                )?;
+                if kl.admissible {
+                    kl_admissible_contexts += 1;
+                } else {
+                    all_rounds_kl_admissible = false;
+                }
+                max_cond_kl = max_cond_kl.max(kl.conditional_base_kl);
+                max_new_mass = max_new_mass.max(kl.new_support_mass);
+                ce_losses.push(ce);
+
+                fold_pools.push(Pool {
+                    schema: POOL_SCHEMA.into(),
+                    context_id: pool.context_id.clone(),
+                    parent_id: pool.parent_id.clone(),
+                    role: pool.role.clone(),
+                    protocol_sha256: pool.protocol_sha256.clone(),
+                    incumbent_q: pool.incumbent_q,
+                    members,
+                });
+            }
+            train_sub_pools_by_fold.push(fold_pools);
         }
 
-        // 2. Cross-fit ContextualSurrogateQHat on Round-r sub_pools and evaluate on full held-out pools.
+        // 2. Fit ContextualSurrogateQHat per outer fold k strictly on train_sub_pools_by_fold[k],
+        //    score held-out fold k on full pools, and acquire Round r+1 candidates strictly within
+        //    outer fold k's training split (folds[j] != k).
         let mut metrics_for_round: BTreeMap<usize, Vec<ContextMetrics>> = cfg
             .eval_budgets
             .iter()
@@ -472,14 +528,10 @@ pub fn run_distilled_flywheel(
                 )
             })
             .collect();
-        let mut next_acquisitions: Vec<Vec<usize>> = vec![Vec::new(); pools.len()];
 
         for k in 0..cfg.eval.folds {
             let held: Vec<usize> = (0..pools.len()).filter(|&i| folds[i] == k).collect();
-            let train: Vec<&Pool> = (0..pools.len())
-                .filter(|&i| folds[i] != k)
-                .map(|i| &sub_pools[i])
-                .collect();
+            let train: Vec<&Pool> = train_sub_pools_by_fold[k].iter().collect();
             if held.is_empty() {
                 continue;
             }
@@ -493,33 +545,48 @@ pub fn run_distilled_flywheel(
                 cfg.eval.ridge_lambda,
             )?;
 
+            // Evaluate held-out fold `k` on full pools (never used for training or training-split acquisitions).
             for &i in &held {
                 let full_pool = &pools[i];
                 let view = full_pool.view();
                 let scores = surrogate.scores(&view)?;
+                ensure!(
+                    scores.len() == view.programs.len(),
+                    "contextual_surrogate_qhat: one score per member"
+                );
+                ensure!(
+                    scores.iter().all(|s| s.is_finite()),
+                    "contextual_surrogate_qhat: non-finite score in {}",
+                    full_pool.context_id
+                );
                 let outcomes = full_pool.outcomes();
                 for &b in &cfg.eval_budgets {
                     let m = score_context(&outcomes, refs[i], &scores, &view.programs, b);
                     metrics_for_round.get_mut(&b).unwrap()[i] = m;
                 }
+            }
 
-                // Use pre_screen_funnel over the remaining unmeasured candidates to acquire for Round r+1.
-                let unmeasured_indices: Vec<usize> = (0..full_pool.members.len())
-                    .filter(|m_idx| !acquired[i].contains(m_idx))
+            // Acquire Round r+1 candidates strictly inside outer fold `k`'s training split (`folds[j] != k`).
+            for (j, train_pool) in pools.iter().enumerate() {
+                if folds[j] == k {
+                    continue;
+                }
+                let unmeasured_indices: Vec<usize> = (0..train_pool.members.len())
+                    .filter(|m_idx| !acquired_by_fold[k][j].contains(m_idx))
                     .collect();
                 if !unmeasured_indices.is_empty() {
                     let unmeasured_progs: Vec<&str> = unmeasured_indices
                         .iter()
-                        .map(|&m_idx| full_pool.members[m_idx].program_sha256.as_str())
+                        .map(|&m_idx| train_pool.members[m_idx].program_sha256.as_str())
                         .collect();
                     let unmeasured_tokens: Vec<Option<&[u32]>> = unmeasured_indices
                         .iter()
-                        .map(|&m_idx| full_pool.members[m_idx].tokens.as_deref())
+                        .map(|&m_idx| train_pool.members[m_idx].tokens.as_deref())
                         .collect();
                     let rem_view = PoolView {
-                        context_id: &full_pool.context_id,
-                        parent_id: &full_pool.parent_id,
-                        incumbent_q: full_pool.incumbent_q,
+                        context_id: &train_pool.context_id,
+                        parent_id: &train_pool.parent_id,
+                        incumbent_q: train_pool.incumbent_q,
                         programs: unmeasured_progs,
                         tokens: unmeasured_tokens,
                     };
@@ -527,11 +594,11 @@ pub fn run_distilled_flywheel(
                     let prop_k = cfg.proposal_pool_k.max(eval_b);
                     let funnel = pre_screen_funnel(&rem_view, &surrogate, prop_k, eval_b)?;
                     for sel_sha in &funnel.selected_program_sha256 {
-                        if let Ok(m_idx) = full_pool
+                        if let Ok(m_idx) = train_pool
                             .members
                             .binary_search_by(|m| m.program_sha256.as_str().cmp(sel_sha.as_str()))
                         {
-                            next_acquisitions[i].push(m_idx);
+                            acquired_by_fold[k][j].insert(m_idx);
                         }
                     }
                 }
@@ -557,9 +624,8 @@ pub fn run_distilled_flywheel(
             heldout_by_budget,
         });
         round_metrics_by_budget.push(metrics_for_round);
-
-        for (i, next) in next_acquisitions.into_iter().enumerate() {
-            acquired[i].extend(next);
+        if r + 1 == cfg.rounds {
+            final_train_sub_pools = train_sub_pools_by_fold;
         }
     }
 
@@ -602,18 +668,31 @@ pub fn run_distilled_flywheel(
         .find(|l| l.budget == primary_b)
         .map(|l| l.realized_gain_lift.verdict)
         .unwrap_or(Verdict::Inconclusive);
+    let final_vs_round0_pairwise_verdict = round_lifts
+        .iter()
+        .find(|l| l.budget == primary_b)
+        .and_then(|l| l.pairwise_accuracy_lift.as_ref())
+        .map(|c| c.verdict)
+        .unwrap_or(Verdict::Inconclusive);
 
-    // Run full frozen-pool evaluation at the primary budget for the final receipt comparison against baselines & externals.
+    // Evaluate Round R-1's outer-fold distilled training sub-pools against the full held-out pools
+    // at the primary budget so `final_round_receipt` matches Round R-1's held-out evaluation bit-for-bit.
     let eval_inputs = Inputs {
         context_features: Some(context_features),
-        program_features: Some(pf),
+        program_features,
         external: external.to_vec(),
         unavailable: Vec::new(),
     };
-    let final_round_receipt = evaluate(pools, manifest, &eval_inputs, &cfg.eval)?;
-    let flywheel_established = monotonic_train_hwm_gain
-        && all_rounds_kl_admissible
+    let final_round_receipt = evaluate_with_fold_train_pools(
+        pools,
+        Some(&final_train_sub_pools),
+        manifest,
+        &eval_inputs,
+        &cfg.eval,
+    )?;
+    let flywheel_established = monotonic_heldout_pairwise_accuracy
         && final_vs_round0_primary_verdict == Verdict::Greater
+        && final_vs_round0_pairwise_verdict == Verdict::Greater
         && final_round_receipt.ranking_learnability == "ESTABLISHED_SHADOW";
 
     Ok(FlywheelReceipt {
@@ -630,6 +709,7 @@ pub fn run_distilled_flywheel(
         round_lifts,
         final_round_receipt,
         final_vs_round0_primary_verdict,
+        final_vs_round0_pairwise_verdict,
         flywheel_established,
     })
 }

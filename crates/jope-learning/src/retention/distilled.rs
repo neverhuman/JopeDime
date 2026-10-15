@@ -669,6 +669,16 @@ pub fn distilled_rows_to_measurement_rows(
     Ok(out)
 }
 
+/// Accounting summary for [`distill_gp_results_index_with_stats`].
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct GpIndexDistillStats {
+    pub total_index_runs: usize,
+    pub distilled_rows: usize,
+    pub skipped_unscored_runs: usize,
+    pub skipped_incomplete_provenance_runs: usize,
+    pub reconciled_s3_keys: usize,
+}
+
 /// Distills all S3 context-level GP records from a `jopedime.gp-results-index/v1` document
 /// (`GP_RESULTS_INDEX.json`) into validated `gp_distilled/v1` rows and returns both the rows and
 /// the set of distilled S3 object keys (`raw_keys`) after checking [`reconcile`].
@@ -677,6 +687,19 @@ pub fn distill_gp_results_index(
     default_split_role: SplitRole,
     known_scores: &BTreeSet<String>,
 ) -> Result<(Vec<DistilledRow>, BTreeSet<String>)> {
+    let (rows, raw_keys, _) =
+        distill_gp_results_index_with_stats(index, default_split_role, known_scores)?;
+    Ok((rows, raw_keys))
+}
+
+/// Distills all S3 context-level GP records from a `jopedime.gp-results-index/v1` document
+/// (`GP_RESULTS_INDEX.json`) into validated `gp_distilled/v1` rows and returns the rows,
+/// reconciled S3 keys, and exact row-accounting statistics across all `runs` entries.
+pub fn distill_gp_results_index_with_stats(
+    index: &serde_json::Value,
+    default_split_role: SplitRole,
+    known_scores: &BTreeSet<String>,
+) -> Result<(Vec<DistilledRow>, BTreeSet<String>, GpIndexDistillStats)> {
     ensure!(
         index.get("schema").and_then(serde_json::Value::as_str)
             == Some("jopedime.gp-results-index/v1"),
@@ -690,30 +713,27 @@ pub fn distill_gp_results_index(
     type GroupKey = (String, String, Option<i64>, String, String, String, String);
     let mut grouped: BTreeMap<GroupKey, Vec<SelfPlayDistillObservation>> = BTreeMap::new();
     let mut raw_keys = BTreeSet::new();
+    let mut skipped_unscored_runs = 0usize;
+    let mut skipped_incomplete_provenance_runs = 0usize;
 
     for (idx, r) in runs.iter().enumerate() {
-        let Some(bucket) = r.get("bucket").and_then(serde_json::Value::as_str) else {
-            continue;
-        };
-        let Some(key) = r.get("key").and_then(serde_json::Value::as_str) else {
-            continue;
-        };
-        let Some(obj_sha) = r.get("object_sha256").and_then(serde_json::Value::as_str) else {
-            continue;
-        };
-        let Some(prog_sha) = r.get("program_sha").and_then(serde_json::Value::as_str) else {
-            continue;
-        };
-        let Some(dataset) = r.get("dataset").and_then(serde_json::Value::as_str) else {
-            continue;
-        };
-        let Some(ctx_sha) = r.get("context_sha256").and_then(serde_json::Value::as_str) else {
-            continue;
-        };
         let Some(score_name) = r.get("score_name").and_then(serde_json::Value::as_str) else {
+            skipped_unscored_runs += 1;
             continue;
         };
         let Some(score) = r.get("score").and_then(serde_json::Value::as_f64) else {
+            skipped_unscored_runs += 1;
+            continue;
+        };
+        let (Some(bucket), Some(key), Some(obj_sha), Some(prog_sha), Some(dataset), Some(ctx_sha)) = (
+            r.get("bucket").and_then(serde_json::Value::as_str),
+            r.get("key").and_then(serde_json::Value::as_str),
+            r.get("object_sha256").and_then(serde_json::Value::as_str),
+            r.get("program_sha").and_then(serde_json::Value::as_str),
+            r.get("dataset").and_then(serde_json::Value::as_str),
+            r.get("context_sha256").and_then(serde_json::Value::as_str),
+        ) else {
+            skipped_incomplete_provenance_runs += 1;
             continue;
         };
         ensure!(
@@ -797,5 +817,19 @@ pub fn distill_gp_results_index(
         rows.append(&mut batch);
     }
     reconcile(&rows, &raw_keys)?;
-    Ok((rows, raw_keys))
+    let stats = GpIndexDistillStats {
+        total_index_runs: runs.len(),
+        distilled_rows: rows.len(),
+        skipped_unscored_runs,
+        skipped_incomplete_provenance_runs,
+        reconciled_s3_keys: raw_keys.len(),
+    };
+    ensure!(
+        stats.total_index_runs
+            == stats.distilled_rows
+                + stats.skipped_unscored_runs
+                + stats.skipped_incomplete_provenance_runs,
+        "gp-results-index row accounting mismatch"
+    );
+    Ok((rows, raw_keys, stats))
 }

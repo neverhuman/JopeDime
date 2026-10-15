@@ -620,11 +620,30 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
                 "qualified": false,
                 "grain": "campaign-summary",
                 "family": "gp-evolution"
+            },
+            {
+                "bucket": "local-disk",
+                "key": "local://xbabe3/row.json",
+                "object_sha256": null,
+                "program_sha": null,
+                "dataset": "ds1",
+                "context_sha256": null,
+                "score": 0.42,
+                "score_name": "validation_rmse",
+                "qualified": false,
+                "grain": "local-summary",
+                "family": "xbabe3-scratch"
             }
         ]
     });
-    let (idx_rows, idx_keys) =
-        distilled::distill_gp_results_index(&fake_index, SplitRole::Train, &scores).unwrap();
+    let (idx_rows, idx_keys, stats) =
+        distilled::distill_gp_results_index_with_stats(&fake_index, SplitRole::Train, &scores)
+            .unwrap();
+    assert_eq!(stats.total_index_runs, 3);
+    assert_eq!(stats.distilled_rows, 1);
+    assert_eq!(stats.skipped_unscored_runs, 1);
+    assert_eq!(stats.skipped_incomplete_provenance_runs, 1);
+    assert_eq!(stats.reconciled_s3_keys, 1);
     assert_eq!(idx_rows.len(), 1);
     assert_eq!(idx_keys.len(), 1);
     let idx_parquet = distilled::write(&idx_rows, &scores, &[]).unwrap();

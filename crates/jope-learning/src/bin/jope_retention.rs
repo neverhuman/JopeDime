@@ -42,6 +42,10 @@ enum Cmd {
         #[arg(long, default_value = "train")]
         split_role: String,
         #[arg(long)]
+        source_commit: Option<String>,
+        #[arg(long)]
+        receipt: Option<PathBuf>,
+        #[arg(long)]
         out: PathBuf,
     },
 }
@@ -181,8 +185,17 @@ fn main() {
         Cmd::DistillGpIndex {
             gp_index,
             split_role,
+            source_commit,
+            receipt,
             out,
-        } => distill_gp_index(&gp_index, &split_role, &out).map_err(|e| format!("{e:#}")),
+        } => distill_gp_index(
+            &gp_index,
+            &split_role,
+            source_commit.as_deref(),
+            receipt.as_deref(),
+            &out,
+        )
+        .map_err(|e| format!("{e:#}")),
     };
     if let Err(e) = res {
         eprintln!("jope_retention: {e}");
@@ -193,15 +206,24 @@ fn main() {
 fn distill_gp_index(
     gp_index: &std::path::Path,
     split_role: &str,
+    source_commit: Option<&str>,
+    receipt_path: Option<&std::path::Path>,
     out: &std::path::Path,
 ) -> Result<()> {
+    use anyhow::ensure;
     use jope_learning::retention::distilled::{
-        distill_gp_results_index, read, reconcile, write, SplitRole,
+        distill_gp_results_index_with_stats, read, reconcile, write, SplitRole,
     };
     use std::collections::BTreeSet;
     use std::fs::OpenOptions;
     use std::io::Write;
 
+    if let Some(sc) = source_commit {
+        ensure!(
+            sc.len() == 40 && sc.bytes().all(|b| b.is_ascii_hexdigit()),
+            "--source-commit must be a 40-hex commit digest"
+        );
+    }
     let bytes =
         std::fs::read(gp_index).with_context(|| format!("cannot read {}", gp_index.display()))?;
     let index: serde_json::Value = serde_json::from_slice(&bytes)
@@ -217,7 +239,7 @@ fn distill_gp_index(
     .map(str::to_owned)
     .collect();
     let index_sha = jope_learning::canon::sha256_hex(&bytes);
-    let (rows, raw_keys) = distill_gp_results_index(&index, role, &known)?;
+    let (rows, raw_keys, stats) = distill_gp_results_index_with_stats(&index, role, &known)?;
     let parquet_bytes = write(
         &rows,
         &known,
@@ -232,15 +254,41 @@ fn distill_gp_index(
         .with_context(|| format!("create {} (outputs are never overwritten)", out.display()))?;
     f.write_all(&parquet_bytes)?;
     f.sync_all()?;
-    let line = serde_json::json!({
+    let parquet_sha = jope_learning::canon::sha256_hex(&parquet_bytes);
+    let body = serde_json::json!({
+        "schema": "jope.gp-index-distill-receipt/v1",
         "out": out.display().to_string(),
         "parquet_bytes": parquet_bytes.len(),
-        "parquet_sha256": jope_learning::canon::sha256_hex(&parquet_bytes),
+        "parquet_sha256": parquet_sha,
         "gp_results_index_sha256": index_sha,
-        "distilled_rows": readback.len(),
-        "reconciled_s3_keys": raw_keys.len(),
+        "total_index_runs": stats.total_index_runs,
+        "distilled_rows": stats.distilled_rows,
+        "skipped_unscored_runs": stats.skipped_unscored_runs,
+        "skipped_incomplete_provenance_runs": stats.skipped_incomplete_provenance_runs,
+        "reconciled_s3_keys": stats.reconciled_s3_keys,
     });
-    println!("{line}");
+    if let Some(rp) = receipt_path {
+        let exe = std::env::current_exe().context("current_exe")?;
+        let bin_sha = jope_learning::canon::sha256_hex(&std::fs::read(&exe)?);
+        let receipt_sha =
+            jope_learning::canon::sha256_hex(&jope_learning::canon::canonical_json(&body)?);
+        let doc = serde_json::json!({
+            "receipt_sha256": receipt_sha,
+            "source_commit": source_commit,
+            "binary_sha256": bin_sha,
+            "receipt": body,
+        });
+        let mut rf = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(rp)
+            .with_context(|| format!("create {} (outputs are never overwritten)", rp.display()))?;
+        let mut pretty = serde_json::to_vec_pretty(&doc)?;
+        pretty.push(b'\n');
+        rf.write_all(&pretty)?;
+        rf.sync_all()?;
+    }
+    println!("{body}");
     Ok(())
 }
 
