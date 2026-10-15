@@ -3,9 +3,15 @@ use std::collections::BTreeMap;
 use std::fs;
 
 pub(crate) fn physical_cores() -> Result<Vec<usize>> {
+    physical_cores_from(
+        std::path::Path::new("/sys/devices/system/cpu"),
+        &allowed_cpus()?,
+    )
+}
+
+fn physical_cores_from(cpu_root: &std::path::Path, allowed: &[usize]) -> Result<Vec<usize>> {
     let mut cores = BTreeMap::<(i32, i32), usize>::new();
-    let allowed = allowed_cpus()?;
-    for entry in fs::read_dir("/sys/devices/system/cpu")? {
+    for entry in fs::read_dir(cpu_root)? {
         let entry = entry?;
         let name = entry.file_name();
         let Some(number) = name.to_str().and_then(|text| text.strip_prefix("cpu")) else {
@@ -52,7 +58,10 @@ fn read_i32(path: &std::path::Path) -> Result<i32> {
 }
 
 pub(crate) fn require_core_plan(count: usize) -> Result<Vec<usize>> {
-    let cores = physical_cores()?;
+    core_plan(physical_cores()?, count)
+}
+
+fn core_plan(cores: Vec<usize>, count: usize) -> Result<Vec<usize>> {
     if cores.len() < count {
         bail!(
             "campaign requires {count} distinct physical cores, Linux affinity exposes {}",
@@ -120,12 +129,57 @@ mod tests {
 
     #[test]
     fn core_plan_is_distinct_and_large_enough_on_campaign_host() {
-        let plan = require_core_plan(60).unwrap();
+        let available = physical_cores().unwrap();
+        if available.len() < 60 {
+            assert_eq!(
+                require_core_plan(60).unwrap_err().to_string(),
+                format!(
+                    "campaign requires 60 distinct physical cores, Linux affinity exposes {}",
+                    available.len()
+                )
+            );
+        } else {
+            assert_distinct_plan(&require_core_plan(60).unwrap(), 60);
+        }
+        let requested = available.len().min(60);
+        let plan = require_core_plan(requested).unwrap();
+        assert_distinct_plan(&plan, requested);
+        assert!(plan.iter().all(|cpu| available.contains(cpu)));
+
+        // A fixed 64-core, two-thread topology exercises the real enumeration and
+        // planning code even when this process has fewer than 60 physical cores.
+        let topology = tempfile::tempdir().unwrap();
+        for cpu in 0..128 {
+            let path = topology.path().join(format!("cpu{cpu}/topology"));
+            fs::create_dir_all(&path).unwrap();
+            fs::write(path.join("physical_package_id"), "0").unwrap();
+            fs::write(path.join("core_id"), (cpu % 64).to_string()).unwrap();
+        }
+        let reserved = (0..51).chain(64..115).collect::<Vec<_>>();
+        let cores = physical_cores_from(topology.path(), &reserved).unwrap();
+        assert_eq!(cores.len(), 51);
+        assert_eq!(
+            core_plan(cores, 60).unwrap_err().to_string(),
+            "campaign requires 60 distinct physical cores, Linux affinity exposes 51"
+        );
+        let all = (0..128).collect::<Vec<_>>();
+        let cores = physical_cores_from(topology.path(), &all).unwrap();
+        assert_eq!(cores.len(), 64);
+        let plan = core_plan(cores, 60).unwrap();
+        assert_distinct_plan(&plan, 60);
+        let physical_ids = plan
+            .iter()
+            .map(|cpu| cpu % 64)
+            .collect::<std::collections::HashSet<_>>();
+        assert_eq!(physical_ids.len(), 60);
+    }
+
+    fn assert_distinct_plan(plan: &[usize], expected: usize) {
         let unique = plan
             .iter()
             .copied()
             .collect::<std::collections::HashSet<_>>();
-        assert_eq!(plan.len(), 60);
-        assert_eq!(unique.len(), 60);
+        assert_eq!(plan.len(), expected);
+        assert_eq!(unique.len(), expected);
     }
 }
