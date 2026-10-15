@@ -182,10 +182,38 @@ pub fn evaluate(
     inputs: &Inputs<'_>,
     cfg: &Config,
 ) -> Result<Receipt> {
+    evaluate_with_fold_train_pools(pools, None, manifest, inputs, cfg)
+}
+
+pub fn evaluate_with_fold_train_pools(
+    pools: &[Pool],
+    fold_train_pools: Option<&[Vec<Pool>]>,
+    manifest: &Manifest,
+    inputs: &Inputs<'_>,
+    cfg: &Config,
+) -> Result<Receipt> {
     verify(pools, manifest)?;
     ensure!(cfg.budget >= 1, "budget must be positive");
     ensure!(cfg.folds >= 2, "cross-fitting needs at least two folds");
     ensure!(!pools.is_empty(), "no frozen pools");
+    if let Some(custom) = fold_train_pools {
+        ensure!(
+            custom.len() == cfg.folds,
+            "fold_train_pools length {} must match cfg.folds {}",
+            custom.len(),
+            cfg.folds
+        );
+        for (k, fold_pools) in custom.iter().enumerate() {
+            for tp in fold_pools {
+                ensure!(
+                    fold_of(&cfg.fold_salt, &tp.parent_id, cfg.folds) != k,
+                    "fold {k} training pool {} (parent {}) belongs to held-out fold {k}",
+                    tp.context_id,
+                    tp.parent_id
+                );
+            }
+        }
+    }
     let folds: Vec<usize> = pools
         .iter()
         .map(|p| fold_of(&cfg.fold_salt, &p.parent_id, cfg.folds))
@@ -327,10 +355,13 @@ pub fn evaluate(
     let mut fold_training_pools = Vec::with_capacity(cfg.folds);
     for k in 0..cfg.folds {
         let held: Vec<usize> = (0..pools.len()).filter(|&i| folds[i] == k).collect();
-        let train: Vec<&Pool> = (0..pools.len())
-            .filter(|&i| folds[i] != k)
-            .map(|i| &pools[i])
-            .collect();
+        let train: Vec<&Pool> = match fold_train_pools {
+            Some(custom) => custom[k].iter().collect(),
+            None => (0..pools.len())
+                .filter(|&i| folds[i] != k)
+                .map(|i| &pools[i])
+                .collect(),
+        };
         fold_training_pools.push(train.len());
         if held.is_empty() {
             continue;
