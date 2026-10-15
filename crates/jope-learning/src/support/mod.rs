@@ -11,7 +11,10 @@ mod trie;
 mod version;
 
 pub use mismatch::{require_same_support_reference, MismatchReport, MismatchRow};
-pub use probability::{weighted_archive_ce, Distribution, Likelihood, LogitsRow};
+pub use probability::{
+    decomposed_support_kl, weighted_archive_ce, DecomposedSupportKl, Distribution, Likelihood,
+    LogitsRow,
+};
 pub use tokenizer::{fixed_vocabulary_sha256, Vocabulary};
 pub use trie::Trie;
 pub use version::{

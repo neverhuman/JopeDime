@@ -6,8 +6,10 @@ from rlfw.judge.scoreboard import (
     automated_report,
     delivered_generalization,
     l6_vs_frozen_v1,
+    multi_round_ratchet_summary,
     proposal_quality,
     search_quality,
+    select_admissible_endpoint,
 )
 
 
@@ -150,3 +152,77 @@ class ScoreboardTest(unittest.TestCase):
         self.assertFalse(report["l6_vs_frozen_v1"]["l6_is_program_quality"])
         self.assertFalse(report["improvement_claim"])
         self.assertFalse(report["seal_spent"])
+
+    def test_admissible_endpoint_selects_last_valid_epoch_under_kl_guard(self):
+        ei3_rows = [
+            {"epoch": 0, "kl": 0.0, "l6": 0.908227, "archive_ce": 10.7541},
+            {"epoch": 1, "kl": 0.01766, "l6": 0.908301, "archive_ce": 10.5204},
+            {"epoch": 2, "kl": 0.03630, "l6": 0.908379, "archive_ce": 10.2219},
+            {"epoch": 3, "kl": 0.05638, "l6": 0.908458, "archive_ce": 9.9301, "kl_disqualified": True},
+            {"epoch": 4, "kl": 0.05638, "l6": 0.908458, "archive_ce": 9.9301, "kl_disqualified": True},
+        ]
+        ei3 = select_admissible_endpoint(ei3_rows, max_kl=0.05)
+        self.assertEqual(ei3["rule"], "E_last_valid")
+        self.assertEqual(ei3["selected_epoch"], 2)
+        self.assertTrue(ei3["stopped_early"])
+        self.assertEqual(ei3["first_violation_epoch"], 3)
+        self.assertAlmostEqual(ei3["selected_l6"], 0.908379)
+        self.assertAlmostEqual(ei3["selected_archive_ce"], 10.2219)
+        self.assertFalse(ei3["promotion"])
+
+        ei4_rows = [
+            {"epoch": 0, "kl": 0.0, "base_kl": 0.0, "l6": 0.908227, "archive_ce": 10.7541},
+            {"epoch": 1, "kl": 0.00442, "base_kl": 0.0031, "l6": 0.908266, "archive_ce": 10.3358},
+            {"epoch": 2, "kl": 0.00807, "base_kl": 0.0054, "l6": 0.908297, "archive_ce": 9.9355},
+            {"epoch": 3, "kl": 0.00948, "base_kl": 0.0061, "l6": 0.908319, "archive_ce": 9.5750},
+            {"epoch": 4, "kl": 0.00876, "base_kl": 0.0057, "l6": 0.908333, "archive_ce": 9.2470},
+        ]
+        ei4 = select_admissible_endpoint(ei4_rows, max_kl=0.05)
+        self.assertEqual(ei4["selected_epoch"], 4)
+        self.assertFalse(ei4["stopped_early"])
+        self.assertIsNone(ei4["first_violation_epoch"])
+        self.assertAlmostEqual(ei4["selected_archive_ce"], 9.2470)
+
+    def test_multi_round_ratchet_summary_checks_monotonicity_and_kl_guard(self):
+        rounds = [
+            {
+                "round_index": 0,
+                "support_size": 3,
+                "admitted_winners": 1,
+                "mean_search_q": 0.145,
+                "mean_delivered_q": 0.130,
+                "base_kl": 0.0,
+                "new_winner_mass": 0.0,
+            },
+            {
+                "round_index": 1,
+                "support_size": 4,
+                "admitted_winners": 1,
+                "mean_search_q": 0.255,
+                "mean_delivered_q": 0.235,
+                "base_kl": 0.0052,
+                "new_winner_mass": 0.048,
+            },
+            {
+                "round_index": 2,
+                "support_size": 5,
+                "admitted_winners": 0,
+                "mean_search_q": 0.340,
+                "mean_delivered_q": 0.315,
+                "base_kl": 0.0068,
+                "new_winner_mass": 0.082,
+            },
+        ]
+        summary = multi_round_ratchet_summary(rounds, max_base_kl=0.05)
+        self.assertEqual(summary["num_rounds"], 3)
+        self.assertEqual(summary["initial_support_size"], 3)
+        self.assertEqual(summary["final_support_size"], 5)
+        self.assertEqual(summary["total_admitted_winners"], 2)
+        self.assertTrue(summary["support_monotonic"])
+        self.assertTrue(summary["ratchet_monotonic_delivered_q"])
+        self.assertTrue(summary["kl_guarded"])
+        self.assertGreater(summary["search_q_gain"], 0.19)
+        self.assertGreater(summary["delivered_q_gain"], 0.18)
+        self.assertFalse(summary["promotion"])
+        self.assertFalse(summary["seal_spent"])
+

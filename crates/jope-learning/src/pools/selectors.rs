@@ -501,8 +501,186 @@ impl Selector for External {
     }
 }
 
+/// Contextual + program-interaction ridge surrogate (`GB-09` / `J9`) trained on dense GP trajectories.
+///
+/// Combines intercept, program token-bag features `\phi(p)`, dataset context features `z(c)`,
+/// bilinear context-program interactions `z_i(c) * \phi_j(p)`, and kNN retrieval score into a
+/// closed-form ridge predictor capable of ranking unseen `N+1` candidate programs on new contexts.
+pub struct ContextualSurrogateQHat<'a> {
+    lambda: f64,
+    context_features: &'a Features,
+    program_features: &'a Features,
+    knn: RetrievalKnn<'a>,
+    weights: Vec<f64>,
+}
+
+impl<'a> ContextualSurrogateQHat<'a> {
+    fn design_row(z: &[f64], phi: &[f64], knn_score: f64) -> Vec<f64> {
+        let mut x = Vec::with_capacity(2 + z.len() + phi.len() + z.len() * phi.len());
+        x.push(1.0);
+        x.push(knn_score);
+        x.extend_from_slice(z);
+        x.extend_from_slice(phi);
+        for &zi in z {
+            for &pj in phi {
+                x.push(zi * pj);
+            }
+        }
+        x
+    }
+
+    pub fn fit(
+        train: &[&'a Pool],
+        context_features: &'a Features,
+        program_features: &'a Features,
+        k_neighbours: usize,
+        prior_weight: f64,
+        lambda: f64,
+    ) -> Result<Self> {
+        ensure!(
+            lambda > 0.0 && lambda.is_finite(),
+            "lambda must be positive and finite"
+        );
+        ensure!(
+            context_features.dim > 0 && program_features.dim > 0,
+            "non-empty context and program feature dimensions required"
+        );
+        let knn = RetrievalKnn::fit(train, context_features, k_neighbours, prior_weight)?;
+        let d = 2
+            + context_features.dim
+            + program_features.dim
+            + context_features.dim * program_features.dim;
+        let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
+        let mut rows = 0usize;
+        for pool in train {
+            let z = context_features
+                .rows
+                .get(&pool.context_id)
+                .with_context(|| format!("no context features for {}", pool.context_id))?;
+            let view = pool.view();
+            let knn_scores = knn.scores(&view)?;
+            for ((m, t), knn_s) in pool.members.iter().zip(rank_targets(pool)).zip(knn_scores) {
+                let phi = program_features
+                    .rows
+                    .get(&m.program_sha256)
+                    .with_context(|| format!("no program features for {}", m.program_sha256))?;
+                let x = Self::design_row(z, phi, knn_s);
+                for i in 0..d {
+                    xty[i] += x[i] * t;
+                    for j in 0..d {
+                        xtx[i * d + j] += x[i] * x[j];
+                    }
+                }
+                rows += 1;
+            }
+        }
+        ensure!(rows > 0, "contextual surrogate q_hat needs training rows");
+        for i in 1..d {
+            xtx[i * d + i] += lambda;
+        }
+        xtx[0] += 1e-12;
+        Ok(Self {
+            lambda,
+            context_features,
+            program_features,
+            knn,
+            weights: cholesky_solve(xtx, xty, d)?,
+        })
+    }
+}
+
+impl Selector for ContextualSurrogateQHat<'_> {
+    fn name(&self) -> &str {
+        "contextual_surrogate_qhat"
+    }
+    fn class(&self) -> Class {
+        Class::Candidate
+    }
+    fn rule(&self) -> String {
+        format!(
+            "contextual_surrogate_qhat/v1: closed-form bilinear context x program ridge (lambda={}, d_ctx={}, d_prog={}) + kNN prior",
+            self.lambda, self.context_features.dim, self.program_features.dim
+        )
+    }
+    fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>> {
+        let z = self
+            .context_features
+            .rows
+            .get(view.context_id)
+            .with_context(|| format!("no context features for {}", view.context_id))?;
+        let knn_scores = self.knn.scores(view)?;
+        view.programs
+            .iter()
+            .zip(knn_scores)
+            .map(|(p, knn_s)| {
+                let phi = self
+                    .program_features
+                    .rows
+                    .get(*p)
+                    .with_context(|| format!("no program features for {p}"))?;
+                let x = Self::design_row(z, phi, knn_s);
+                Ok(x.iter()
+                    .zip(&self.weights)
+                    .map(|(xi, wi)| xi * wi)
+                    .sum::<f64>())
+            })
+            .collect()
+    }
+}
+
+/// Two-stage proposal funnel (`K -> B`, e.g. `K=64 -> B=8`) that pre-screens candidate proposals
+/// using a `Selector` before running expensive 2-fold CV evaluation and Rust parity compilation.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FunnelAllocation {
+    pub context_id: String,
+    pub selector_name: String,
+    pub proposal_pool_k: usize,
+    pub eval_budget_b: usize,
+    pub selected_program_sha256: Vec<String>,
+    pub selected_scores: Vec<f64>,
+}
+
+pub fn pre_screen_funnel(
+    view: &PoolView<'_>,
+    selector: &dyn Selector,
+    proposal_pool_k: usize,
+    eval_budget_b: usize,
+) -> Result<FunnelAllocation> {
+    ensure!(
+        eval_budget_b >= 1 && proposal_pool_k >= eval_budget_b,
+        "funnel requires 1 <= eval_budget_b <= proposal_pool_k"
+    );
+    ensure!(
+        !view.programs.is_empty(),
+        "cannot pre-screen an empty candidate view"
+    );
+    let scores = selector.scores(view)?;
+    ensure!(
+        scores.len() == view.programs.len() && scores.iter().all(|s| s.is_finite()),
+        "selector must return one finite score per view program"
+    );
+    let capped_k = view.programs.len().min(proposal_pool_k);
+    let mut ranked: Vec<(f64, &str)> = scores
+        .into_iter()
+        .zip(view.programs.iter().copied())
+        .take(capped_k)
+        .collect();
+    ranked.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(b.1)));
+    ranked.truncate(eval_budget_b);
+    Ok(FunnelAllocation {
+        context_id: view.context_id.to_owned(),
+        selector_name: selector.name().to_owned(),
+        proposal_pool_k: capped_k,
+        eval_budget_b: ranked.len(),
+        selected_program_sha256: ranked.iter().map(|(_, p)| (*p).to_owned()).collect(),
+        selected_scores: ranked.iter().map(|(s, _)| *s).collect(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
+    use super::super::pool::{Member, Pool, Status, POOL_SCHEMA};
     use super::*;
 
     #[test]
@@ -510,5 +688,81 @@ mod tests {
         // [[4,2],[2,3]] x = [2,1] -> x = [0.5, 0]
         let x = cholesky_solve(vec![4.0, 2.0, 2.0, 3.0], vec![2.0, 1.0], 2).unwrap();
         assert!((x[0] - 0.5).abs() < 1e-12 && x[1].abs() < 1e-12);
+    }
+
+    #[test]
+    fn contextual_surrogate_qhat_learns_context_program_interactions_and_screens_funnel() {
+        // Construct 4 training pools where contexts with z > 0 reward token 1 and contexts with z < 0 reward token 2.
+        // Marginal popularity of token 1 and token 2 is identical (0.5 each), so context-blind selectors tie at 0.5,
+        // while ContextualSurrogateQHat learns the bilinear z * phi interaction and ranks the held-out pool accurately.
+        let mk_hex = |b: u8| format!("{b:02x}").repeat(32);
+        let p_pos_a = mk_hex(0x11);
+        let p_neg_a = mk_hex(0x22);
+        let p_pos_b = mk_hex(0x33);
+        let p_neg_b = mk_hex(0x44);
+
+        let mk_pool = |cid: u8, parent: &str, pos_wins: bool, use_b: bool| -> Pool {
+            let (p1, p2) = if use_b {
+                (p_pos_b.clone(), p_neg_b.clone())
+            } else {
+                (p_pos_a.clone(), p_neg_a.clone())
+            };
+            let (q1, q2) = if pos_wins { (0.9, 0.1) } else { (0.1, 0.9) };
+            Pool {
+                schema: POOL_SCHEMA.into(),
+                context_id: mk_hex(cid),
+                parent_id: parent.into(),
+                role: "train".into(),
+                protocol_sha256: mk_hex(0xaa),
+                incumbent_q: Some(0.0),
+                members: vec![
+                    Member {
+                        program_sha256: p1,
+                        status: Status::Complete,
+                        q: Some(q1),
+                        tokens: Some(vec![1, 1, 0]),
+                    },
+                    Member {
+                        program_sha256: p2,
+                        status: Status::Complete,
+                        q: Some(q2),
+                        tokens: Some(vec![2, 2, 0]),
+                    },
+                ],
+            }
+        };
+
+        let all_pools = vec![
+            mk_pool(1, "p1", true, false),
+            mk_pool(2, "p2", false, false),
+            mk_pool(3, "p3", true, true),
+            mk_pool(4, "p4", false, true),
+            mk_pool(5, "p5", true, true),
+        ];
+        let prog_feats = token_bag_features(&all_pools).unwrap();
+        let mut ctx_rows = BTreeMap::new();
+        ctx_rows.insert(mk_hex(1), vec![1.0]);
+        ctx_rows.insert(mk_hex(2), vec![-1.0]);
+        ctx_rows.insert(mk_hex(3), vec![1.0]);
+        ctx_rows.insert(mk_hex(4), vec![-1.0]);
+        ctx_rows.insert(mk_hex(5), vec![1.0]);
+        let ctx_feats = Features {
+            dim: 1,
+            rows: ctx_rows,
+        };
+
+        let train_refs = vec![&all_pools[0], &all_pools[1], &all_pools[2], &all_pools[3]];
+        let qhat = ContextualSurrogateQHat::fit(&train_refs, &ctx_feats, &prog_feats, 2, 2.0, 1e-2)
+            .unwrap();
+
+        let test_view = all_pools[4].view();
+        let scores = qhat.scores(&test_view).unwrap();
+        assert!(
+            scores[0] > scores[1],
+            "expected positive-z context to rank token-1 program higher: {scores:?}"
+        );
+
+        let funnel = pre_screen_funnel(&test_view, &qhat, 64, 1).unwrap();
+        assert_eq!(funnel.selected_program_sha256, vec![p_pos_b]);
     }
 }

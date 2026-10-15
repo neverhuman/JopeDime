@@ -263,3 +263,101 @@ fn real_equal_attempt_scratch_measures_policy_seeds_and_never_qualifies() {
         std::fs::write(path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
     }
 }
+
+#[test]
+fn multi_round_selfplay_ratchet_maintains_monotonic_q_and_kl_guard() {
+    // Construct a nonlinear regression cut where feature interactions / stats improve over plain ridge.
+    let cut = Cut {
+        index: 0,
+        train_x: (0..24)
+            .map(|i| {
+                let u = (i as f64 - 12.0) * 0.25;
+                vec![u, u * u + 0.5 * u.sin(), (i % 5) as f64 - 2.0]
+            })
+            .collect(),
+        train_y: (0..24)
+            .map(|i| {
+                let u = (i as f64 - 12.0) * 0.25;
+                2.0 + 1.5 * u + 0.8 * (u * u) - 0.3 * ((i % 5) as f64 - 2.0).abs()
+            })
+            .collect(),
+        hold_x: (24..32)
+            .map(|i| {
+                let u = (i as f64 - 20.0) * 0.25;
+                vec![u, u * u + 0.5 * u.sin(), (i % 5) as f64 - 2.0]
+            })
+            .collect(),
+        hold_y: (24..32)
+            .map(|i| {
+                let u = (i as f64 - 20.0) * 0.25;
+                2.0 + 1.5 * u + 0.8 * (u * u) - 0.3 * ((i % 5) as f64 - 2.0).abs()
+            })
+            .collect(),
+        hold_indices: (24..32).collect(),
+    };
+    let context = DiscoveryContext {
+        context_sha256: pin("nonlinear-ratchet-context"),
+        parent_family: "synthetic-linear-parent".into(),
+        role: "train".into(),
+        dataset_sha256: pin("nonlinear-ratchet-data"),
+        cut: 0,
+        training_sha256: rows_digest(&cut.train_x, &cut.train_y).unwrap(),
+        inner_holdout_sha256: rows_digest(&cut.hold_x, &cut.hold_y).unwrap(),
+        preprocessing_sha256: pin("fixture-preprocessing"),
+        encoder_input_sha256: jope_pipeline::sha256_hex(&vec![0; 2051 * 8]),
+    };
+    let (_, _, mut policy, mut retrieval) = fixture();
+    policy.context_sha256 = context.context_sha256.clone();
+    policy.encoder_input_sha256 = context.encoder_input_sha256.clone();
+    retrieval.seeds[0].source_context_sha256 = context.context_sha256.clone();
+    let roster = TrainingRoster {
+        schema: "clover.discovery-roster/v1".into(),
+        role_manifest_sha256: jope_pipeline::sha256_hex(&roles()),
+        contexts: vec![context.clone()],
+    };
+
+    let temp = tempfile::tempdir().unwrap();
+    let output = temp.path().join("ratchet");
+    let round_budgets = vec![
+        ScratchBudget {
+            evaluations_per_arm: 16,
+            seconds_per_arm: 30,
+            rng_seed: 20261001,
+        },
+        ScratchBudget {
+            evaluations_per_arm: 16,
+            seconds_per_arm: 30,
+            rng_seed: 20261002,
+        },
+        ScratchBudget {
+            evaluations_per_arm: 16,
+            seconds_per_arm: 30,
+            rng_seed: 20261003,
+        },
+    ];
+    let role_bytes = roles();
+    let req = SelfPlayRatchetRequest {
+        roster: &roster,
+        role_manifest: &role_bytes,
+        context_sha256: &context.context_sha256,
+        cut: &cut,
+        initial_policy: &policy,
+        initial_retrieval: &retrieval,
+        round_budgets: &round_budgets,
+        seed_cap_b: 4,
+        archive_mass_per_round: 0.04,
+        max_conditional_base_kl: 0.05,
+        max_new_support_mass: 0.15,
+    };
+    let receipt = run_selfplay_ratchet(req, &output).unwrap();
+    assert_eq!(receipt["schema"], "clover.selfplay-ratchet/v1");
+    assert_eq!(receipt["monotonic_non_decreasing_best_q"], true);
+    assert_eq!(receipt["beat_ordinary_in_final_round"], true);
+    assert_eq!(receipt["all_rounds_kl_admissible"], true);
+    let rounds = receipt["rounds"].as_array().unwrap();
+    assert_eq!(rounds.len(), 3);
+    let q0 = rounds[0]["ratchet_best_q"].as_f64().unwrap();
+    let q1 = rounds[1]["ratchet_best_q"].as_f64().unwrap();
+    let q2 = rounds[2]["ratchet_best_q"].as_f64().unwrap();
+    assert!(q1 + 1e-12 >= q0 && q2 + 1e-12 >= q1);
+}

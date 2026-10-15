@@ -224,3 +224,122 @@ def automated_report(proposal_rows, search_rows, delivered_rows, arm, frozen, gr
         "promotion": False,
         "seal_spent": False,
     }
+
+
+def select_admissible_endpoint(epoch_rows, max_kl=0.05):
+    """Pre-registered E_last_valid endpoint selector for KL-guarded training arms.
+
+    Evaluates ordered epochs and selects the highest epoch prior to the first
+    KL disqualification (using base_kl when decomposed support KL is present,
+    otherwise total kl). Never promotes or spends a seal.
+    """
+    if not _finite(max_kl) or max_kl <= 0.0:
+        raise ValueError("max_kl must be finite and positive")
+    rows = list(epoch_rows)
+    if not rows:
+        raise ValueError("epoch_rows must not be empty")
+    by_epoch = {}
+    for row in rows:
+        epoch = row["epoch"]
+        if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 0:
+            raise ValueError("epoch must be a non-negative integer")
+        if epoch in by_epoch:
+            raise ValueError("duplicate epoch in endpoint selection")
+        kl = row["kl"]
+        l6 = row["l6"]
+        if not _finite(kl) or kl < 0.0 or not _finite(l6):
+            raise ValueError("epoch kl and l6 must be finite")
+        if "base_kl" in row and (not _finite(row["base_kl"]) or row["base_kl"] < 0.0):
+            raise ValueError("base_kl must be finite and non-negative")
+        if "archive_ce" in row and not _finite(row["archive_ce"]):
+            raise ValueError("archive_ce must be finite when provided")
+        by_epoch[epoch] = row
+
+    ordered_epochs = sorted(by_epoch)
+    if ordered_epochs[0] != 0:
+        raise ValueError("epoch_rows must include epoch 0 anchor")
+
+    first_violation_epoch = None
+    last_valid_epoch = 0
+    for epoch in ordered_epochs:
+        row = by_epoch[epoch]
+        effective_kl = row.get("base_kl", row["kl"])
+        alarmed = bool(row.get("kl_disqualified", False)) or effective_kl > max_kl
+        if alarmed:
+            first_violation_epoch = epoch
+            break
+        last_valid_epoch = epoch
+
+    chosen = by_epoch[last_valid_epoch]
+    report = {
+        "schema": "jope.j21-admissible-endpoint/v1",
+        "rule": "E_last_valid",
+        "max_kl": max_kl,
+        "selected_epoch": last_valid_epoch,
+        "stopped_early": first_violation_epoch is not None,
+        "first_violation_epoch": first_violation_epoch,
+        "selected_l6": chosen["l6"],
+        "selected_kl": chosen.get("base_kl", chosen["kl"]),
+        "promotion": False,
+        "seal_spent": False,
+    }
+    if "archive_ce" in chosen:
+        report["selected_archive_ce"] = chosen["archive_ce"]
+    return report
+
+
+def multi_round_ratchet_summary(rounds, max_base_kl=0.05):
+    """Multi-round self-play ratchet summary across expanding support rounds."""
+    if not _finite(max_base_kl) or max_base_kl <= 0.0:
+        raise ValueError("max_base_kl must be finite and positive")
+    items = list(rounds)
+    if len(items) < 2:
+        raise ValueError("multi-round ratchet requires at least 2 rounds")
+
+    for expected_idx, item in enumerate(items):
+        if item.get("round_index") != expected_idx:
+            raise ValueError("rounds must have sequential round_index starting at 0")
+        for key in ("mean_search_q", "mean_delivered_q", "base_kl", "new_winner_mass"):
+            if not _finite(item.get(key)):
+                raise ValueError(f"round {key} must be finite")
+        if item["base_kl"] < 0.0 or not (0.0 <= item["new_winner_mass"] <= 1.0):
+            raise ValueError("round base_kl and new_winner_mass must be valid")
+        support_size = item.get("support_size")
+        admitted = item.get("admitted_winners")
+        if (
+            isinstance(support_size, bool)
+            or not isinstance(support_size, int)
+            or support_size <= 0
+            or isinstance(admitted, bool)
+            or not isinstance(admitted, int)
+            or admitted < 0
+        ):
+            raise ValueError("support_size and admitted_winners must be valid integers")
+
+    support_monotonic = all(
+        items[i]["support_size"] >= items[i - 1]["support_size"]
+        for i in range(1, len(items))
+    )
+    delivered_monotonic = all(
+        items[i]["mean_delivered_q"] >= items[i - 1]["mean_delivered_q"]
+        for i in range(1, len(items))
+    )
+    kl_guarded = all(item["base_kl"] <= max_base_kl for item in items)
+
+    return {
+        "schema": "jope.j21-selfplay-ratchet/v1",
+        "num_rounds": len(items),
+        "initial_support_size": items[0]["support_size"],
+        "final_support_size": items[-1]["support_size"],
+        "total_admitted_winners": sum(item["admitted_winners"] for item in items),
+        "search_q_gain": items[-1]["mean_search_q"] - items[0]["mean_search_q"],
+        "delivered_q_gain": items[-1]["mean_delivered_q"] - items[0]["mean_delivered_q"],
+        "support_monotonic": support_monotonic,
+        "ratchet_monotonic_delivered_q": delivered_monotonic,
+        "kl_guarded": kl_guarded,
+        "max_base_kl_observed": max(item["base_kl"] for item in items),
+        "not_an_l6_verdict": True,
+        "promotion": False,
+        "seal_spent": False,
+    }
+
