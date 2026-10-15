@@ -142,3 +142,186 @@ pub fn weighted_archive_ce(log_probabilities: &[f64], weights: &[f64]) -> Result
         .map(|(w, p)| w * p)
         .sum::<f64>())
 }
+
+/// Exact KL decomposition for support-expanding (`N -> N+1`) policy updates (`J13` / `EI-1b`).
+///
+/// Separates conditional drift on the original base catalog (`conditional_base_kl`) from probability
+/// mass allocated to newly discovered GP winners (`new_support_mass` and `bernoulli_allocation_kl`).
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct DecomposedSupportKl {
+    /// KL(pi_theta(. | A_base) || pi_ref(. | A_base)) over the base catalog leaves.
+    pub conditional_base_kl: f64,
+    /// Total probability mass allocated by pi_theta to newly admitted N+1 leaves.
+    pub new_support_mass: f64,
+    /// Total probability mass allocated by pi_ref to newly admitted N+1 leaves.
+    pub ref_new_support_mass: f64,
+    /// Binary KL(Ber(new_support_mass) || Ber(ref_new_support_mass)).
+    pub bernoulli_allocation_kl: f64,
+    /// Exact total KL(pi_theta || pi_ref) over the full N+1 support.
+    pub total_kl: f64,
+    /// True iff conditional_base_kl <= max_conditional_base_kl and new_support_mass <= max_new_support_mass.
+    pub admissible: bool,
+}
+
+pub fn decomposed_support_kl(
+    policy_leaf_logprobs: &[f64],
+    ref_leaf_logprobs: &[f64],
+    is_base_leaf: &[bool],
+    max_conditional_base_kl: f64,
+    max_new_support_mass: f64,
+) -> Result<DecomposedSupportKl> {
+    let n = policy_leaf_logprobs.len();
+    ensure!(
+        n > 0 && ref_leaf_logprobs.len() == n && is_base_leaf.len() == n,
+        "aligned non-empty policy, reference, and base-mask arrays required"
+    );
+    ensure!(
+        is_base_leaf.iter().any(|&b| b),
+        "at least one base support leaf required"
+    );
+    ensure!(
+        policy_leaf_logprobs.iter().all(|x| x.is_finite())
+            && ref_leaf_logprobs.iter().all(|x| x.is_finite()),
+        "finite leaf log-probabilities required"
+    );
+    ensure!(
+        max_conditional_base_kl.is_finite()
+            && max_conditional_base_kl >= 0.0
+            && max_new_support_mass.is_finite()
+            && (0.0..=1.0).contains(&max_new_support_mass),
+        "valid KL and new-support mass bounds required"
+    );
+
+    let log_sum_exp = |xs: &[f64]| -> f64 {
+        let m = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        m + xs.iter().map(|&x| (x - m).exp()).sum::<f64>().ln()
+    };
+    let z_p = log_sum_exp(policy_leaf_logprobs);
+    let z_q = log_sum_exp(ref_leaf_logprobs);
+
+    let mut total_kl = 0.0_f64;
+    let mut base_mass_p = 0.0_f64;
+    let mut new_mass_p = 0.0_f64;
+    let mut base_mass_q = 0.0_f64;
+    let mut new_mass_q = 0.0_f64;
+
+    let mut base_log_p = Vec::new();
+    let mut base_log_q = Vec::new();
+
+    for i in 0..n {
+        let lp = policy_leaf_logprobs[i] - z_p;
+        let lq = ref_leaf_logprobs[i] - z_q;
+        let p = lp.exp();
+        let q = lq.exp();
+        if p > 0.0 {
+            total_kl += p * (lp - lq);
+        }
+        if is_base_leaf[i] {
+            base_mass_p += p;
+            base_mass_q += q;
+            base_log_p.push(lp);
+            base_log_q.push(lq);
+        } else {
+            new_mass_p += p;
+            new_mass_q += q;
+        }
+    }
+
+    ensure!(
+        base_mass_p > 0.0 && base_mass_q > 0.0,
+        "positive base support mass required"
+    );
+
+    let log_base_p = base_mass_p.ln();
+    let log_base_q = base_mass_q.ln();
+    let mut conditional_base_kl = 0.0_f64;
+    for (lp, lq) in base_log_p.iter().zip(base_log_q.iter()) {
+        let cond_lp = *lp - log_base_p;
+        let cond_lq = *lq - log_base_q;
+        let cond_p = cond_lp.exp();
+        if cond_p > 0.0 {
+            conditional_base_kl += cond_p * (cond_lp - cond_lq);
+        }
+    }
+    conditional_base_kl = conditional_base_kl.max(0.0);
+    total_kl = total_kl.max(0.0);
+
+    let p_new = new_mass_p.clamp(0.0, 1.0);
+    let q_new = new_mass_q.clamp(1e-15, 1.0 - 1e-15);
+    let p_base = (1.0 - p_new).clamp(0.0, 1.0);
+    let q_base = (1.0 - q_new).clamp(1e-15, 1.0 - 1e-15);
+
+    let term_new = if p_new > 0.0 {
+        p_new * (p_new / q_new).ln()
+    } else {
+        0.0
+    };
+    let term_base = if p_base > 0.0 {
+        p_base * (p_base / q_base).ln()
+    } else {
+        0.0
+    };
+    let bernoulli_allocation_kl = (term_new + term_base).max(0.0);
+    let admissible =
+        conditional_base_kl <= max_conditional_base_kl && p_new <= max_new_support_mass;
+
+    Ok(DecomposedSupportKl {
+        conditional_base_kl,
+        new_support_mass: p_new,
+        ref_new_support_mass: new_mass_q.clamp(0.0, 1.0),
+        bernoulli_allocation_kl,
+        total_kl,
+        admissible,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decomposed_kl_distinguishes_new_winner_allocation_from_base_drift() {
+        // Suppose base catalog has 4 leaves (uniform under ref and conditionally uniform under policy)
+        // and 1 new N+1 GP winner leaf that had tiny prior mass 1e-4 under ref, but gets 4% mass under policy.
+        // Conditional base KL is identically 0, even though total KL > 0.19 due to new-winner mass allocation.
+        let p_base_each: f64 = 0.96 / 4.0;
+        let p_new: f64 = 0.04;
+        let q_base_each: f64 = 0.9999 / 4.0;
+        let q_new: f64 = 0.0001;
+
+        let policy_lp = vec![
+            p_base_each.ln(),
+            p_base_each.ln(),
+            p_base_each.ln(),
+            p_base_each.ln(),
+            p_new.ln(),
+        ];
+        let ref_lp = vec![
+            q_base_each.ln(),
+            q_base_each.ln(),
+            q_base_each.ln(),
+            q_base_each.ln(),
+            q_new.ln(),
+        ];
+        let is_base = vec![true, true, true, true, false];
+
+        let report = decomposed_support_kl(&policy_lp, &ref_lp, &is_base, 0.05, 0.15).unwrap();
+        assert!(report.conditional_base_kl < 1e-12);
+        assert!((report.new_support_mass - 0.04).abs() < 1e-12);
+        assert!(report.total_kl > 0.15);
+        assert!((report.total_kl - report.bernoulli_allocation_kl).abs() < 1e-9);
+        assert!(report.admissible);
+    }
+
+    #[test]
+    fn decomposed_kl_rejects_excessive_base_drift_or_excessive_new_mass() {
+        let policy_lp = vec![0.85_f64.ln(), 0.05_f64.ln(), 0.10_f64.ln()];
+        let ref_lp = vec![0.45_f64.ln(), 0.45_f64.ln(), 0.10_f64.ln()];
+        let is_base = vec![true, true, false];
+
+        let report = decomposed_support_kl(&policy_lp, &ref_lp, &is_base, 0.05, 0.15).unwrap();
+        assert!(report.conditional_base_kl > 0.20);
+        assert!(!report.admissible);
+    }
+}
