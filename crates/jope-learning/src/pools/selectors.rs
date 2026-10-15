@@ -610,7 +610,7 @@ impl Selector for ContextualSurrogateQHat<'_> {
     }
     fn rule(&self) -> String {
         format!(
-            "contextual_surrogate_qhat/v1: closed-form bilinear context x program ridge (lambda={}, d_ctx={}, d_prog={}) + kNN prior",
+            "contextual_surrogate_qhat/v1: internal cross-fitted bilinear context x program ridge (lambda={}, d_ctx={}, d_prog={}) + kNN prior (shadow-only candidate; no multiplicity adjustment)",
             self.lambda, self.context_features.dim, self.program_features.dim
         )
     }

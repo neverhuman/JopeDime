@@ -392,14 +392,36 @@ pub fn reconcile(rows: &[DistilledRow], raw_keys: &BTreeSet<String>) -> Result<(
     Ok(())
 }
 
+/// Orientation of a registered `gp_distilled/v1` score identity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ScoreDirection {
+    /// Loss or error metric where smaller finite values are better
+    /// (`cv_geomean_rmse_ratio`, `best_rust_rmse`, `validation_rmse`, `l6`).
+    LowerIsBetter,
+    /// Reward or utility metric where larger finite values are better.
+    HigherIsBetter,
+}
+
+/// Returns the explicit orientation of a registered score identity, refusing any identity
+/// without a declared orientation.
+pub fn score_direction(score_name: &str) -> Result<ScoreDirection> {
+    match score_name {
+        "cv_geomean_rmse_ratio" | "best_rust_rmse" | "validation_rmse" | "l6" => {
+            Ok(ScoreDirection::LowerIsBetter)
+        }
+        other => bail!("score identity {other:?} has no declared ScoreDirection"),
+    }
+}
+
 /// One self-play or GP inner-cut observation to be distilled into `gp_distilled/v1`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SelfPlayDistillObservation {
     pub program_sha: String,
     pub program: Option<String>,
     pub outcome: Outcome,
-    /// Measured quality `q` (higher is better; required iff `outcome == Outcome::Ok`).
-    pub q: Option<f64>,
+    /// Measured score under `spec.score_name`, oriented according to
+    /// [`score_direction`]`(&spec.score_name)` (required iff `outcome == Outcome::Ok`).
+    pub score: Option<f64>,
     /// Seed provenance label (e.g. `"ordinary_gp"`, `"bootstrap_warm_start"`, `"selfplay_archive_r1"`).
     pub seed_packet: Option<String>,
     pub source_key: String,
@@ -423,9 +445,10 @@ pub struct SelfPlayDistillSpec {
 }
 
 /// Distills a batch of self-play / GP inner-cut observations for one context into validated
-/// `gp_distilled/v1` rows, assigning deterministic within-context rank (`rank_ctx = 1..=M`) and
-/// recording the rank-1 `champion_id` (with `qualified = false` and `superseded_by = None`
-/// because inner-cut self-play rewards are never paired L6 qualifications).
+/// `gp_distilled/v1` rows, assigning deterministic within-context rank (`rank_ctx = 1..=M`)
+/// according to [`score_direction`]`(&spec.score_name)` and recording the rank-1 `champion_id`
+/// (with `qualified = false` and `superseded_by = None` because inner-cut self-play measurements
+/// are never paired L6 qualifications).
 pub fn distill_selfplay_observations(
     spec: &SelfPlayDistillSpec,
     observations: &[SelfPlayDistillObservation],
@@ -449,24 +472,31 @@ pub fn distill_selfplay_observations(
         spec.score_name != "l6",
         "self-play inner-cut distillation may not claim score_name \"l6\""
     );
+    let direction = score_direction(&spec.score_name)?;
 
-    // Rank all successful observations by descending q, breaking ties by ascending program_sha.
+    // Rank all successful observations by best score under `direction`, breaking ties by ascending program_sha.
     let mut ok_indices: Vec<usize> = Vec::new();
     for (idx, obs) in observations.iter().enumerate() {
-        match (obs.outcome, obs.q) {
-            (Outcome::Ok, Some(q)) => {
-                ensure!(q.is_finite(), "observation {idx}: non-finite q");
+        match (obs.outcome, obs.score) {
+            (Outcome::Ok, Some(s)) => {
+                ensure!(s.is_finite(), "observation {idx}: non-finite score");
                 ok_indices.push(idx);
             }
-            (Outcome::Ok, None) => bail!("observation {idx}: outcome ok requires finite q"),
-            (_, Some(_)) => bail!("observation {idx}: failed/timeout observation must not carry q"),
+            (Outcome::Ok, None) => bail!("observation {idx}: outcome ok requires finite score"),
+            (_, Some(_)) => {
+                bail!("observation {idx}: failed/timeout observation must not carry score")
+            }
             (_, None) => {}
         }
     }
     ok_indices.sort_by(|&a, &b| {
-        let qa = observations[a].q.unwrap();
-        let qb = observations[b].q.unwrap();
-        qb.total_cmp(&qa).then_with(|| {
+        let sa = observations[a].score.unwrap();
+        let sb = observations[b].score.unwrap();
+        let primary = match direction {
+            ScoreDirection::LowerIsBetter => sa.total_cmp(&sb),
+            ScoreDirection::HigherIsBetter => sb.total_cmp(&sa),
+        };
+        primary.then_with(|| {
             observations[a]
                 .program_sha
                 .cmp(&observations[b].program_sha)
@@ -491,10 +521,10 @@ pub fn distill_selfplay_observations(
             fold: spec.fold,
             split_role: spec.split_role,
             outcome: obs.outcome,
-            score: obs.q,
-            score_name: obs.q.map(|_| spec.score_name.clone()),
+            score: obs.score,
+            score_name: obs.score.map(|_| spec.score_name.clone()),
             rank_ctx: rank_by_idx[idx],
-            champion_id: obs.q.as_ref().and(champion_id.clone()),
+            champion_id: obs.score.as_ref().and(champion_id.clone()),
             superseded_by: None,
             seed_packet: obs.seed_packet.clone(),
             policylm_ckpt: spec.policylm_ckpt.clone(),
@@ -533,13 +563,14 @@ fn program_expr_tokens(expr: &str) -> Vec<u32> {
     tokens
 }
 
-/// Bridges validated `gp_distilled/v1` rows for a single score identity into
-/// [`crate::pools::pool::MeasurementRow`] records for shadow pool freezing and cross-fitted
-/// surrogate (`ContextualSurrogateQHat`) training.
+/// Bridges validated `gp_distilled/v1` rows for a single non-`l6` score identity into
+/// [`crate::pools::pool::MeasurementRow`] records (where `q` is higher-is-better) for shadow pool
+/// freezing and cross-fitted surrogate (`ContextualSurrogateQHat`) training.
 ///
-/// Refuses mixed score identities, missing `context_sha256`, or `SplitRole::None` / `Unknown`.
-/// Non-train roles (`Val263`, `Sealed`, `TestExposed`) preserve their split label so
-/// `pools::pool::freeze` enforces its held-out leakage refusal.
+/// Lower-is-better identities (`cv_geomean_rmse_ratio`, `best_rust_rmse`, `validation_rmse`) are
+/// negated (`q = -score`) so lower loss/RMSE maps strictly monotonically to higher pool reward `q`.
+/// Refuses `"l6"`, unknown/unoriented score identities, mixed score identities, mixed `fold`
+/// values within one `context_sha256`, missing `context_sha256`, or `SplitRole::None` / `Unknown`.
 pub fn distilled_rows_to_measurement_rows(
     rows: &[DistilledRow],
     score_name: &str,
@@ -558,6 +589,12 @@ pub fn distilled_rows_to_measurement_rows(
         known_scores.contains(score_name),
         "unknown score identity {score_name:?}"
     );
+    ensure!(
+        score_name != "l6",
+        "held-out l6 validation loss rows may not be bridged into shadow training pools"
+    );
+    let direction = score_direction(score_name)?;
+    let mut fold_by_ctx: BTreeMap<&str, Option<i64>> = BTreeMap::new();
     let mut out = Vec::with_capacity(rows.len());
     for (idx, r) in rows.iter().enumerate() {
         validate(r, known_scores).with_context(|| format!("distilled row {idx}"))?;
@@ -575,6 +612,15 @@ pub fn distilled_rows_to_measurement_rows(
             crate::canon::is_hex64(ctx_sha) && crate::canon::is_hex64(&r.program_sha),
             "row {idx}: context_sha256 and program_sha must be lowercase 64-hex"
         );
+        if let Some(&prev_fold) = fold_by_ctx.get(ctx_sha.as_str()) {
+            ensure!(
+                prev_fold == r.fold,
+                "row {idx}: context_sha256 {ctx_sha} mixes multiple fold values ({prev_fold:?} vs {:?})",
+                r.fold
+            );
+        } else {
+            fold_by_ctx.insert(ctx_sha.as_str(), r.fold);
+        }
         let role = match r.split_role {
             SplitRole::Train => "train",
             SplitRole::Val263 => "val",
@@ -588,13 +634,22 @@ pub fn distilled_rows_to_measurement_rows(
             }
         };
         let (status, q) = match r.outcome {
-            Outcome::Ok => (
-                crate::pools::pool::Status::Complete,
-                Some(
-                    r.score
-                        .with_context(|| format!("row {idx}: complete row missing score"))?,
-                ),
-            ),
+            Outcome::Ok => {
+                let raw_score = r
+                    .score
+                    .with_context(|| format!("row {idx}: complete row missing score"))?;
+                let oriented_q = match direction {
+                    ScoreDirection::LowerIsBetter => {
+                        if raw_score == 0.0 {
+                            0.0
+                        } else {
+                            -raw_score
+                        }
+                    }
+                    ScoreDirection::HigherIsBetter => raw_score,
+                };
+                (crate::pools::pool::Status::Complete, Some(oriented_q))
+            }
             Outcome::Failed | Outcome::Partial => (crate::pools::pool::Status::ProgramFailed, None),
             Outcome::Timeout => (crate::pools::pool::Status::Timeout, None),
         };
