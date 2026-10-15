@@ -37,7 +37,7 @@ impl SplitRole {
             SplitRole::Unknown => "unknown",
         }
     }
-    fn parse(s: &str) -> Result<SplitRole> {
+    pub fn parse(s: &str) -> Result<SplitRole> {
         Ok(match s {
             "train" => SplitRole::Train,
             "val263" => SplitRole::Val263,
@@ -667,4 +667,135 @@ pub fn distilled_rows_to_measurement_rows(
         });
     }
     Ok(out)
+}
+
+/// Distills all S3 context-level GP records from a `jopedime.gp-results-index/v1` document
+/// (`GP_RESULTS_INDEX.json`) into validated `gp_distilled/v1` rows and returns both the rows and
+/// the set of distilled S3 object keys (`raw_keys`) after checking [`reconcile`].
+pub fn distill_gp_results_index(
+    index: &serde_json::Value,
+    default_split_role: SplitRole,
+    known_scores: &BTreeSet<String>,
+) -> Result<(Vec<DistilledRow>, BTreeSet<String>)> {
+    ensure!(
+        index.get("schema").and_then(serde_json::Value::as_str)
+            == Some("jopedime.gp-results-index/v1"),
+        "expected schema \"jopedime.gp-results-index/v1\""
+    );
+    let runs = index
+        .get("runs")
+        .and_then(serde_json::Value::as_array)
+        .context("gp-results-index missing runs array")?;
+
+    type GroupKey = (String, String, Option<i64>, String, String, String, String);
+    let mut grouped: BTreeMap<GroupKey, Vec<SelfPlayDistillObservation>> = BTreeMap::new();
+    let mut raw_keys = BTreeSet::new();
+
+    for (idx, r) in runs.iter().enumerate() {
+        let Some(bucket) = r.get("bucket").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(key) = r.get("key").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(obj_sha) = r.get("object_sha256").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(prog_sha) = r.get("program_sha").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(dataset) = r.get("dataset").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(ctx_sha) = r.get("context_sha256").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(score_name) = r.get("score_name").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let Some(score) = r.get("score").and_then(serde_json::Value::as_f64) else {
+            continue;
+        };
+        ensure!(
+            r.get("qualified")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false)
+                == (score_name == "l6"),
+            "gp-results-index row {idx}: inner GP record may not set qualified=true"
+        );
+        let fold = r.get("fold").and_then(serde_json::Value::as_i64);
+        let family = r
+            .get("family")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("gp-policy-dl");
+        let run_id = r
+            .get("run_id")
+            .and_then(serde_json::Value::as_str)
+            .or_else(|| r.get("eval").and_then(serde_json::Value::as_str))
+            .or_else(|| r.get("grain").and_then(serde_json::Value::as_str))
+            .unwrap_or("gp-hwm");
+        let program = r
+            .get("program")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+        let version_id = r
+            .get("version_id")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+        let grain = r
+            .get("grain")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+
+        ensure!(
+            raw_keys.insert(key.to_owned()),
+            "gp-results-index row {idx}: duplicate S3 key {key:?}"
+        );
+        grouped
+            .entry((
+                dataset.to_owned(),
+                ctx_sha.to_owned(),
+                fold,
+                score_name.to_owned(),
+                family.to_owned(),
+                run_id.to_owned(),
+                bucket.to_owned(),
+            ))
+            .or_default()
+            .push(SelfPlayDistillObservation {
+                program_sha: prog_sha.to_owned(),
+                program,
+                outcome: Outcome::Ok,
+                score: Some(score),
+                seed_packet: grain,
+                source_key: key.to_owned(),
+                source_version_id: version_id,
+                source_sha256: obj_sha.to_owned(),
+            });
+    }
+
+    ensure!(
+        !grouped.is_empty(),
+        "gp-results-index contained no distillable S3 context-level GP records"
+    );
+    let mut rows = Vec::with_capacity(raw_keys.len());
+    for ((dataset, context_sha256, fold, score_name, family, run_id, source_bucket), obs) in grouped
+    {
+        let spec = SelfPlayDistillSpec {
+            dataset,
+            context_sha256,
+            fold,
+            split_role: default_split_role,
+            score_name,
+            policylm_ckpt: None,
+            campaign: None,
+            run_id,
+            family,
+            source_bucket,
+        };
+        let mut batch = distill_selfplay_observations(&spec, &obs, known_scores)?;
+        rows.append(&mut batch);
+    }
+    reconcile(&rows, &raw_keys)?;
+    Ok((rows, raw_keys))
 }

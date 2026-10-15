@@ -6,6 +6,7 @@
 
 pub mod bootstrap;
 pub mod evaluate;
+pub mod flywheel;
 pub mod metrics;
 pub mod pool;
 pub mod selectors;

@@ -34,6 +34,16 @@ enum Cmd {
         #[arg(long, default_value_t = 3)]
         sample: usize,
     },
+    /// Distill S3 context-level GP records from `GP_RESULTS_INDEX.json` into a validated
+    /// `gp_distilled/v1` Parquet file and verify readback + E3 key reconciliation.
+    DistillGpIndex {
+        #[arg(long)]
+        gp_index: PathBuf,
+        #[arg(long, default_value = "train")]
+        split_role: String,
+        #[arg(long)]
+        out: PathBuf,
+    },
 }
 
 #[derive(clap::Args)]
@@ -168,11 +178,70 @@ fn main() {
         Cmd::InspectParquet { files, sample } => {
             inspect(&files, sample).map_err(|e| format!("{e:#}"))
         }
+        Cmd::DistillGpIndex {
+            gp_index,
+            split_role,
+            out,
+        } => distill_gp_index(&gp_index, &split_role, &out).map_err(|e| format!("{e:#}")),
     };
     if let Err(e) = res {
         eprintln!("jope_retention: {e}");
         std::process::exit(2);
     }
+}
+
+fn distill_gp_index(
+    gp_index: &std::path::Path,
+    split_role: &str,
+    out: &std::path::Path,
+) -> Result<()> {
+    use jope_learning::retention::distilled::{
+        distill_gp_results_index, read, reconcile, write, SplitRole,
+    };
+    use std::collections::BTreeSet;
+    use std::fs::OpenOptions;
+    use std::io::Write;
+
+    let bytes =
+        std::fs::read(gp_index).with_context(|| format!("cannot read {}", gp_index.display()))?;
+    let index: serde_json::Value = serde_json::from_slice(&bytes)
+        .with_context(|| format!("cannot parse {}", gp_index.display()))?;
+    let role = SplitRole::parse(split_role)?;
+    let known: BTreeSet<String> = [
+        "cv_geomean_rmse_ratio",
+        "best_rust_rmse",
+        "validation_rmse",
+        "l6",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect();
+    let index_sha = jope_learning::canon::sha256_hex(&bytes);
+    let (rows, raw_keys) = distill_gp_results_index(&index, role, &known)?;
+    let parquet_bytes = write(
+        &rows,
+        &known,
+        &[("gp_results_index_sha256".into(), index_sha.clone())],
+    )?;
+    let readback = read(&parquet_bytes, &known)?;
+    reconcile(&readback, &raw_keys)?;
+    let mut f = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(out)
+        .with_context(|| format!("create {} (outputs are never overwritten)", out.display()))?;
+    f.write_all(&parquet_bytes)?;
+    f.sync_all()?;
+    let line = serde_json::json!({
+        "out": out.display().to_string(),
+        "parquet_bytes": parquet_bytes.len(),
+        "parquet_sha256": jope_learning::canon::sha256_hex(&parquet_bytes),
+        "gp_results_index_sha256": index_sha,
+        "distilled_rows": readback.len(),
+        "reconciled_s3_keys": raw_keys.len(),
+    });
+    println!("{line}");
+    Ok(())
 }
 
 fn show(v: &Values, i: usize) -> serde_json::Value {

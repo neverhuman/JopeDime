@@ -587,4 +587,47 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
         distilled_rows_to_measurement_rows(&leaked, "best_rust_rmse", &protocol_sha, &scores)
             .unwrap();
     assert!(freeze(&leaked_m, &freeze_rule, &sha256_hex(&parquet_bytes)).is_err());
+
+    // Verify distill_gp_results_index distills S3 context-hwm records and reconciles every S3 key.
+    let fake_index = serde_json::json!({
+        "schema": "jopedime.gp-results-index/v1",
+        "runs": [
+            {
+                "bucket": "veox-jopedime-learning-use2",
+                "key": "experiments/gp-policy-dl/v2-trainonly/gp-hwm/ds1/f0/ctx1/obj1.json",
+                "version_id": "v1",
+                "object_sha256": "11".repeat(32),
+                "program_sha": "22".repeat(32),
+                "program": "(pipe X (standardize) (ridge alpha=1))",
+                "dataset": "ds1",
+                "context_sha256": "33".repeat(32),
+                "fold": 0,
+                "score": 0.58,
+                "score_name": "cv_geomean_rmse_ratio",
+                "qualified": false,
+                "grain": "context-hwm",
+                "eval": "jope.s1-two-fold/v1",
+                "family": "gp-policy-dl"
+            },
+            {
+                "bucket": "veox-jopedime-learning-use2",
+                "key": "experiments/gp-evolution/v1/discoveries/CLOSE.json",
+                "object_sha256": "44".repeat(32),
+                "program_sha": null,
+                "dataset": null,
+                "score": null,
+                "score_name": null,
+                "qualified": false,
+                "grain": "campaign-summary",
+                "family": "gp-evolution"
+            }
+        ]
+    });
+    let (idx_rows, idx_keys) =
+        distilled::distill_gp_results_index(&fake_index, SplitRole::Train, &scores).unwrap();
+    assert_eq!(idx_rows.len(), 1);
+    assert_eq!(idx_keys.len(), 1);
+    let idx_parquet = distilled::write(&idx_rows, &scores, &[]).unwrap();
+    let idx_readback = distilled::read(&idx_parquet, &scores).unwrap();
+    distilled::reconcile(&idx_readback, &idx_keys).unwrap();
 }

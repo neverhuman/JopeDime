@@ -503,20 +503,34 @@ impl Selector for External {
 
 /// Contextual + program-interaction ridge surrogate (`GB-09` / `J9`) trained on dense GP trajectories.
 ///
-/// Combines intercept, program token-bag features `\phi(p)`, dataset context features `z(c)`,
-/// bilinear context-program interactions `z_i(c) * \phi_j(p)`, and kNN retrieval score into a
-/// closed-form ridge predictor capable of ranking unseen `N+1` candidate programs on new contexts.
+/// Combines unpenalized intercept, full-dimensional token-bag `RidgeProgram` prediction,
+/// leave-one-parent-out `ProgramPrior`, full-dimensional cosine `RetrievalKnn`, hierarchical
+/// Empirical-Bayes program/kNN shrinkage, program novelty gating, and standardized compact
+/// bilinear context-program interactions `\tilde{z}_i(c) * \tilde{\phi}_j(p)` into a closed-form
+/// ridge predictor capable of ranking unseen `N+1` candidate programs on high-dimensional (2,051-d)
+/// S3 contexts without exceeding `MAX_SURROGATE_DESIGN_DIM`.
 pub struct ContextualSurrogateQHat<'a> {
     lambda: f64,
+    prior_weight: f64,
+    k_neighbours: usize,
     context_features: &'a Features,
     program_features: &'a Features,
-    knn: RetrievalKnn<'a>,
+    ridge: RidgeProgram<'a>,
+    train_targets: Vec<(&'a Pool, Vec<f64>)>,
+    tot_stats: BTreeMap<String, (f64, usize)>,
+    parent_stats: BTreeMap<(String, String), (f64, usize)>,
+    ctx_proj: Vec<(usize, f64, f64)>,
+    prog_proj: Vec<(usize, f64, f64)>,
     weights: Vec<f64>,
 }
 
 pub const MAX_SURROGATE_DESIGN_DIM: usize = 512;
+pub const MAX_BILINEAR_CTX_DIM: usize = 8;
+pub const MAX_BILINEAR_PROG_DIM: usize = 8;
+const SURROGATE_BASE_FEATURES: usize = 8;
 
 impl<'a> ContextualSurrogateQHat<'a> {
+    /// Raw unprojected bilinear design dimension (`2 + d_ctx + d_prog + d_ctx * d_prog`).
     pub fn design_dim(d_ctx: usize, d_prog: usize) -> Option<usize> {
         let cross = d_ctx.checked_mul(d_prog)?;
         2usize
@@ -525,18 +539,149 @@ impl<'a> ContextualSurrogateQHat<'a> {
             .and_then(|v| v.checked_add(cross))
     }
 
-    fn design_row(z: &[f64], phi: &[f64], knn_score: f64) -> Vec<f64> {
-        let mut x = Vec::with_capacity(2 + z.len() + phi.len() + z.len() * phi.len());
+    /// Effective design dimension after training-fold variance projection to at most
+    /// `MAX_BILINEAR_CTX_DIM x MAX_BILINEAR_PROG_DIM` bilinear coordinates.
+    pub fn effective_design_dim(d_ctx: usize, d_prog: usize) -> Option<usize> {
+        if d_ctx == 0 || d_prog == 0 {
+            return None;
+        }
+        let dz = d_ctx.min(MAX_BILINEAR_CTX_DIM);
+        let dp = d_prog.min(MAX_BILINEAR_PROG_DIM);
+        let cross = dz.checked_mul(dp)?;
+        SURROGATE_BASE_FEATURES
+            .checked_add(dz)
+            .and_then(|v| v.checked_add(dp))
+            .and_then(|v| v.checked_add(cross))
+    }
+
+    fn select_top_variance_coords(
+        vectors: &[&[f64]],
+        dim: usize,
+        max_coords: usize,
+    ) -> Vec<(usize, f64, f64)> {
+        let n = vectors.len().max(1) as f64;
+        let mut stats: Vec<(usize, f64, f64)> = (0..dim)
+            .map(|j| {
+                let mean = vectors.iter().map(|v| v[j]).sum::<f64>() / n;
+                let var = vectors
+                    .iter()
+                    .map(|v| {
+                        let d = v[j] - mean;
+                        d * d
+                    })
+                    .sum::<f64>()
+                    / n;
+                (j, mean, var.sqrt())
+            })
+            .collect();
+        stats.sort_by(|a, b| b.2.total_cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+        stats.truncate(dim.min(max_coords));
+        stats
+            .into_iter()
+            .map(|(j, mean, std)| (j, mean, if std > 1e-8 { std } else { 1.0 }))
+            .collect()
+    }
+
+    fn project(v: &[f64], proj: &[(usize, f64, f64)]) -> Vec<f64> {
+        proj.iter()
+            .map(|&(j, mean, scale)| (v[j] - mean) / scale)
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn design_row(
+        zt: &[f64],
+        pt: &[f64],
+        r_s: f64,
+        prior_s: f64,
+        knn_s: f64,
+        eb_prior: f64,
+        eb_knn: f64,
+        nov: f64,
+    ) -> Vec<f64> {
+        let mut x =
+            Vec::with_capacity(SURROGATE_BASE_FEATURES + zt.len() + pt.len() + zt.len() * pt.len());
         x.push(1.0);
-        x.push(knn_score);
-        x.extend_from_slice(z);
-        x.extend_from_slice(phi);
-        for &zi in z {
-            for &pj in phi {
+        x.push(r_s);
+        x.push(prior_s);
+        x.push(knn_s);
+        x.push(eb_prior);
+        x.push(eb_knn);
+        x.push(nov);
+        x.push(nov * r_s);
+        x.extend_from_slice(zt);
+        x.extend_from_slice(pt);
+        for &zi in zt {
+            for &pj in pt {
                 x.push(zi * pj);
             }
         }
         x
+    }
+
+    fn view_design_rows(&self, view: &PoolView<'_>) -> Result<Vec<Vec<f64>>> {
+        let z = self
+            .context_features
+            .rows
+            .get(view.context_id)
+            .with_context(|| format!("no context features for {}", view.context_id))?;
+        let zt = Self::project(z, &self.ctx_proj);
+        let ridge_scores = self.ridge.scores(view)?;
+
+        let mut neighbours: Vec<(f64, &str, &Pool, &Vec<f64>)> = self
+            .train_targets
+            .iter()
+            .filter(|(p, _)| p.parent_id != view.parent_id)
+            .map(|(p, t)| {
+                (
+                    cosine(z, &self.context_features.rows[&p.context_id]),
+                    p.context_id.as_str(),
+                    *p,
+                    t,
+                )
+            })
+            .collect();
+        neighbours.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(b.1)));
+        neighbours.truncate(self.k_neighbours);
+
+        let mut rows = Vec::with_capacity(view.programs.len());
+        for (&prog_sha, r_s) in view.programs.iter().zip(ridge_scores) {
+            let phi = self
+                .program_features
+                .rows
+                .get(prog_sha)
+                .with_context(|| format!("no program features for {prog_sha}"))?;
+            let pt = Self::project(phi, &self.prog_proj);
+            let (tot_s, tot_c) = self.tot_stats.get(prog_sha).copied().unwrap_or((0.0, 0));
+            let (par_s, par_c) = self
+                .parent_stats
+                .get(&(view.parent_id.to_owned(), prog_sha.to_owned()))
+                .copied()
+                .unwrap_or((0.0, 0));
+            let s_p = tot_s - par_s;
+            let c_p = tot_c.saturating_sub(par_c);
+            let prior_s = (s_p + 0.5 * self.prior_weight) / (c_p as f64 + self.prior_weight);
+            let eb_prior = (s_p + self.prior_weight * r_s) / (c_p as f64 + self.prior_weight);
+
+            let (mut num, mut den) = (0.0, 0.0);
+            for (sim, _, pool, targets) in &neighbours {
+                let w = sim.max(0.0);
+                if let Ok(i) = pool
+                    .members
+                    .binary_search_by(|m| m.program_sha256.as_str().cmp(prog_sha))
+                {
+                    num += w * targets[i];
+                    den += w;
+                }
+            }
+            let knn_s = if den > 0.0 { num / den } else { prior_s };
+            let eb_knn = (num + 1.5 * eb_prior) / (den + 1.5);
+            let nov = 1.0 / (1.0 + c_p as f64);
+            rows.push(Self::design_row(
+                &zt, &pt, r_s, prior_s, knn_s, eb_prior, eb_knn, nov,
+            ));
+        }
+        Ok(rows)
     }
 
     pub fn fit(
@@ -547,6 +692,11 @@ impl<'a> ContextualSurrogateQHat<'a> {
         prior_weight: f64,
         lambda: f64,
     ) -> Result<Self> {
+        ensure!(k_neighbours >= 1, "k_neighbours must be positive");
+        ensure!(
+            prior_weight > 0.0 && prior_weight.is_finite(),
+            "prior_weight must be positive and finite"
+        );
         ensure!(
             lambda > 0.0 && lambda.is_finite(),
             "lambda must be positive and finite"
@@ -555,28 +705,77 @@ impl<'a> ContextualSurrogateQHat<'a> {
             context_features.dim > 0 && program_features.dim > 0,
             "non-empty context and program feature dimensions required"
         );
-        let d = Self::design_dim(context_features.dim, program_features.dim)
+        let d = Self::effective_design_dim(context_features.dim, program_features.dim)
             .context("design dimension overflow")?;
         ensure!(
             d <= MAX_SURROGATE_DESIGN_DIM,
-            "bilinear design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM}); project context/program features first"
+            "effective design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM})"
         );
-        let knn = RetrievalKnn::fit(train, context_features, k_neighbours, prior_weight)?;
-        let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
-        let mut rows = 0usize;
-        for pool in train {
+
+        let ridge = RidgeProgram::fit(train, program_features, lambda)?;
+        let mut train_targets = Vec::with_capacity(train.len());
+        let mut tot_stats: BTreeMap<String, (f64, usize)> = BTreeMap::new();
+        let mut parent_stats: BTreeMap<(String, String), (f64, usize)> = BTreeMap::new();
+        let mut z_vecs: Vec<&[f64]> = Vec::with_capacity(train.len());
+        let mut p_vecs: Vec<&[f64]> = Vec::new();
+
+        for &pool in train {
             let z = context_features
                 .rows
                 .get(&pool.context_id)
                 .with_context(|| format!("no context features for {}", pool.context_id))?;
-            let view = pool.view();
-            let knn_scores = knn.scores(&view)?;
-            for ((m, t), knn_s) in pool.members.iter().zip(rank_targets(pool)).zip(knn_scores) {
+            z_vecs.push(z.as_slice());
+            let targets = rank_targets(pool);
+            for (m, &t) in pool.members.iter().zip(&targets) {
                 let phi = program_features
                     .rows
                     .get(&m.program_sha256)
                     .with_context(|| format!("no program features for {}", m.program_sha256))?;
-                let x = Self::design_row(z, phi, knn_s);
+                p_vecs.push(phi.as_slice());
+                let tot = tot_stats
+                    .entry(m.program_sha256.clone())
+                    .or_insert((0.0, 0));
+                tot.0 += t;
+                tot.1 += 1;
+                let par = parent_stats
+                    .entry((pool.parent_id.clone(), m.program_sha256.clone()))
+                    .or_insert((0.0, 0));
+                par.0 += t;
+                par.1 += 1;
+            }
+            train_targets.push((pool, targets));
+        }
+        ensure!(
+            !p_vecs.is_empty(),
+            "contextual surrogate q_hat needs training rows"
+        );
+
+        let ctx_proj =
+            Self::select_top_variance_coords(&z_vecs, context_features.dim, MAX_BILINEAR_CTX_DIM);
+        let prog_proj =
+            Self::select_top_variance_coords(&p_vecs, program_features.dim, MAX_BILINEAR_PROG_DIM);
+
+        let mut model = Self {
+            lambda,
+            prior_weight,
+            k_neighbours,
+            context_features,
+            program_features,
+            ridge,
+            train_targets,
+            tot_stats,
+            parent_stats,
+            ctx_proj,
+            prog_proj,
+            weights: vec![0.0; d],
+        };
+
+        let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
+        let mut rows = 0usize;
+        for (pool, targets) in &model.train_targets {
+            let view = pool.view();
+            let design_rows = model.view_design_rows(&view)?;
+            for (x, &t) in design_rows.iter().zip(targets) {
                 for i in 0..d {
                     xty[i] += x[i] * t;
                     for j in 0..d {
@@ -587,17 +786,17 @@ impl<'a> ContextualSurrogateQHat<'a> {
             }
         }
         ensure!(rows > 0, "contextual surrogate q_hat needs training rows");
-        for i in 1..d {
+        let cross_terms = (model.ctx_proj.len() * model.prog_proj.len()).max(1);
+        let bilinear_lambda = lambda * (cross_terms as f64 / 2.5).max(1.0);
+        for i in 1..SURROGATE_BASE_FEATURES.min(d) {
             xtx[i * d + i] += lambda;
         }
+        for i in SURROGATE_BASE_FEATURES..d {
+            xtx[i * d + i] += bilinear_lambda;
+        }
         xtx[0] += 1e-12;
-        Ok(Self {
-            lambda,
-            context_features,
-            program_features,
-            knn,
-            weights: cholesky_solve(xtx, xty, d)?,
-        })
+        model.weights = cholesky_solve(xtx, xty, d)?;
+        Ok(model)
     }
 }
 
@@ -610,33 +809,25 @@ impl Selector for ContextualSurrogateQHat<'_> {
     }
     fn rule(&self) -> String {
         format!(
-            "contextual_surrogate_qhat/v1: internal cross-fitted bilinear context x program ridge (lambda={}, d_ctx={}, d_prog={}) + kNN prior (shadow-only candidate; no multiplicity adjustment)",
-            self.lambda, self.context_features.dim, self.program_features.dim
+            "contextual_surrogate_qhat/v2: internal cross-fitted LOPO Empirical-Bayes + compact bilinear context x program ridge (lambda={}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
+            self.lambda,
+            self.context_features.dim,
+            self.ctx_proj.len(),
+            self.program_features.dim,
+            self.prog_proj.len()
         )
     }
     fn scores(&self, view: &PoolView<'_>) -> Result<Vec<f64>> {
-        let z = self
-            .context_features
-            .rows
-            .get(view.context_id)
-            .with_context(|| format!("no context features for {}", view.context_id))?;
-        let knn_scores = self.knn.scores(view)?;
-        view.programs
-            .iter()
-            .zip(knn_scores)
-            .map(|(p, knn_s)| {
-                let phi = self
-                    .program_features
-                    .rows
-                    .get(*p)
-                    .with_context(|| format!("no program features for {p}"))?;
-                let x = Self::design_row(z, phi, knn_s);
-                Ok(x.iter()
+        let rows = self.view_design_rows(view)?;
+        Ok(rows
+            .into_iter()
+            .map(|x| {
+                x.iter()
                     .zip(&self.weights)
                     .map(|(xi, wi)| xi * wi)
-                    .sum::<f64>())
+                    .sum::<f64>()
             })
-            .collect()
+            .collect())
     }
 }
 
