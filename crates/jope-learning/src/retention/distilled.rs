@@ -391,3 +391,225 @@ pub fn reconcile(rows: &[DistilledRow], raw_keys: &BTreeSet<String>) -> Result<(
     );
     Ok(())
 }
+
+/// One self-play or GP inner-cut observation to be distilled into `gp_distilled/v1`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SelfPlayDistillObservation {
+    pub program_sha: String,
+    pub program: Option<String>,
+    pub outcome: Outcome,
+    /// Measured quality `q` (higher is better; required iff `outcome == Outcome::Ok`).
+    pub q: Option<f64>,
+    /// Seed provenance label (e.g. `"ordinary_gp"`, `"bootstrap_warm_start"`, `"selfplay_archive_r1"`).
+    pub seed_packet: Option<String>,
+    pub source_key: String,
+    pub source_version_id: Option<String>,
+    pub source_sha256: String,
+}
+
+/// Context-level metadata for distilling a self-play / GP evaluation batch into `gp_distilled/v1`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SelfPlayDistillSpec {
+    pub dataset: String,
+    pub context_sha256: String,
+    pub fold: Option<i64>,
+    pub split_role: SplitRole,
+    pub score_name: String,
+    pub policylm_ckpt: Option<String>,
+    pub campaign: Option<String>,
+    pub run_id: String,
+    pub family: String,
+    pub source_bucket: String,
+}
+
+/// Distills a batch of self-play / GP inner-cut observations for one context into validated
+/// `gp_distilled/v1` rows, assigning deterministic within-context rank (`rank_ctx = 1..=M`) and
+/// recording the rank-1 `champion_id` (with `qualified = false` and `superseded_by = None`
+/// because inner-cut self-play rewards are never paired L6 qualifications).
+pub fn distill_selfplay_observations(
+    spec: &SelfPlayDistillSpec,
+    observations: &[SelfPlayDistillObservation],
+    known_scores: &BTreeSet<String>,
+) -> Result<Vec<DistilledRow>> {
+    ensure!(
+        !observations.is_empty(),
+        "cannot distill an empty self-play observation batch"
+    );
+    ensure!(
+        crate::canon::is_hex64(&spec.context_sha256),
+        "context_sha256 {:?} must be lowercase 64-hex",
+        spec.context_sha256
+    );
+    ensure!(
+        known_scores.contains(&spec.score_name),
+        "unknown score_name {:?}",
+        spec.score_name
+    );
+    ensure!(
+        spec.score_name != "l6",
+        "self-play inner-cut distillation may not claim score_name \"l6\""
+    );
+
+    // Rank all successful observations by descending q, breaking ties by ascending program_sha.
+    let mut ok_indices: Vec<usize> = Vec::new();
+    for (idx, obs) in observations.iter().enumerate() {
+        match (obs.outcome, obs.q) {
+            (Outcome::Ok, Some(q)) => {
+                ensure!(q.is_finite(), "observation {idx}: non-finite q");
+                ok_indices.push(idx);
+            }
+            (Outcome::Ok, None) => bail!("observation {idx}: outcome ok requires finite q"),
+            (_, Some(_)) => bail!("observation {idx}: failed/timeout observation must not carry q"),
+            (_, None) => {}
+        }
+    }
+    ok_indices.sort_by(|&a, &b| {
+        let qa = observations[a].q.unwrap();
+        let qb = observations[b].q.unwrap();
+        qb.total_cmp(&qa).then_with(|| {
+            observations[a]
+                .program_sha
+                .cmp(&observations[b].program_sha)
+        })
+    });
+
+    let champion_id = ok_indices
+        .first()
+        .map(|&i| observations[i].program_sha.clone());
+    let mut rank_by_idx = vec![None; observations.len()];
+    for (rank_zero, &obs_idx) in ok_indices.iter().enumerate() {
+        rank_by_idx[obs_idx] = Some((rank_zero + 1) as i64);
+    }
+
+    let mut out = Vec::with_capacity(observations.len());
+    for (idx, obs) in observations.iter().enumerate() {
+        let row = DistilledRow {
+            program_sha: obs.program_sha.clone(),
+            program: obs.program.clone(),
+            dataset: spec.dataset.clone(),
+            context_sha256: Some(spec.context_sha256.clone()),
+            fold: spec.fold,
+            split_role: spec.split_role,
+            outcome: obs.outcome,
+            score: obs.q,
+            score_name: obs.q.map(|_| spec.score_name.clone()),
+            rank_ctx: rank_by_idx[idx],
+            champion_id: obs.q.as_ref().and(champion_id.clone()),
+            superseded_by: None,
+            seed_packet: obs.seed_packet.clone(),
+            policylm_ckpt: spec.policylm_ckpt.clone(),
+            campaign: spec.campaign.clone(),
+            run_id: spec.run_id.clone(),
+            family: spec.family.clone(),
+            qualified: false,
+            l6_delta: None,
+            source_bucket: spec.source_bucket.clone(),
+            source_key: obs.source_key.clone(),
+            source_version_id: obs.source_version_id.clone(),
+            source_sha256: obs.source_sha256.clone(),
+            pack_key: None,
+            pack_entry: None,
+        };
+        validate(&row, known_scores).with_context(|| format!("self-play distilled row {idx}"))?;
+        out.push(row);
+    }
+    Ok(out)
+}
+
+fn program_expr_tokens(expr: &str) -> Vec<u32> {
+    let mut tokens = vec![1u32];
+    for part in expr
+        .split(|c: char| c.is_whitespace() || c == '(' || c == ')')
+        .filter(|s| !s.is_empty())
+    {
+        let mut h = 2166136261u32;
+        for b in part.bytes() {
+            h ^= u32::from(b);
+            h = h.wrapping_mul(16777619);
+        }
+        tokens.push(3 + (h % 61));
+    }
+    tokens.push(2u32);
+    tokens
+}
+
+/// Bridges validated `gp_distilled/v1` rows for a single score identity into
+/// [`crate::pools::pool::MeasurementRow`] records for shadow pool freezing and cross-fitted
+/// surrogate (`ContextualSurrogateQHat`) training.
+///
+/// Refuses mixed score identities, missing `context_sha256`, or `SplitRole::None` / `Unknown`.
+/// Non-train roles (`Val263`, `Sealed`, `TestExposed`) preserve their split label so
+/// `pools::pool::freeze` enforces its held-out leakage refusal.
+pub fn distilled_rows_to_measurement_rows(
+    rows: &[DistilledRow],
+    score_name: &str,
+    protocol_sha256: &str,
+    known_scores: &BTreeSet<String>,
+) -> Result<Vec<crate::pools::pool::MeasurementRow>> {
+    ensure!(
+        !rows.is_empty(),
+        "cannot convert empty distilled row slice to measurement rows"
+    );
+    ensure!(
+        crate::canon::is_hex64(protocol_sha256),
+        "protocol_sha256 must be lowercase 64-hex"
+    );
+    ensure!(
+        known_scores.contains(score_name),
+        "unknown score identity {score_name:?}"
+    );
+    let mut out = Vec::with_capacity(rows.len());
+    for (idx, r) in rows.iter().enumerate() {
+        validate(r, known_scores).with_context(|| format!("distilled row {idx}"))?;
+        if let Some(name) = &r.score_name {
+            ensure!(
+                name == score_name,
+                "row {idx}: cannot mix score_name {name:?} with requested {score_name:?}"
+            );
+        }
+        let ctx_sha = r
+            .context_sha256
+            .as_ref()
+            .with_context(|| format!("row {idx}: context_sha256 is required for pool freezing"))?;
+        ensure!(
+            crate::canon::is_hex64(ctx_sha) && crate::canon::is_hex64(&r.program_sha),
+            "row {idx}: context_sha256 and program_sha must be lowercase 64-hex"
+        );
+        let role = match r.split_role {
+            SplitRole::Train => "train",
+            SplitRole::Val263 => "val",
+            SplitRole::Sealed => "sealed",
+            SplitRole::TestExposed => "test",
+            SplitRole::None | SplitRole::Unknown => {
+                bail!(
+                    "row {idx}: split_role {} may not enter a measurement row",
+                    r.split_role.as_str()
+                )
+            }
+        };
+        let (status, q) = match r.outcome {
+            Outcome::Ok => (
+                crate::pools::pool::Status::Complete,
+                Some(
+                    r.score
+                        .with_context(|| format!("row {idx}: complete row missing score"))?,
+                ),
+            ),
+            Outcome::Failed | Outcome::Partial => (crate::pools::pool::Status::ProgramFailed, None),
+            Outcome::Timeout => (crate::pools::pool::Status::Timeout, None),
+        };
+        let tokens = r.program.as_deref().map(program_expr_tokens);
+        out.push(crate::pools::pool::MeasurementRow {
+            context_id: ctx_sha.clone(),
+            parent_id: r.dataset.clone(),
+            role: role.into(),
+            program_sha256: r.program_sha.clone(),
+            status,
+            q,
+            incumbent_q: None,
+            protocol_sha256: protocol_sha256.to_owned(),
+            tokens,
+        });
+    }
+    Ok(out)
+}

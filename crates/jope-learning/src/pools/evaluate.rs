@@ -10,7 +10,8 @@ use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
 use super::metrics::{score_context, uniform_context, ContextMetrics};
 use super::pool::{verify, Manifest, Pool, Reference};
 use super::selectors::{
-    token_bag_features, Class, Features, ProgramPrior, RetrievalKnn, RidgeProgram, Selector,
+    token_bag_features, Class, ContextualSurrogateQHat, Features, ProgramPrior, RetrievalKnn,
+    RidgeProgram, Selector, MAX_SURROGATE_DESIGN_DIM,
 };
 use crate::canon::canonical_sha256;
 use anyhow::{ensure, Result};
@@ -199,6 +200,30 @@ pub fn evaluate(
         None => token_bag_features(pools),
     };
     let program_features = inputs.program_features.or(derived.as_ref());
+    let mut unavailable_selectors = inputs.unavailable.clone();
+    let can_fit_surrogate = match (inputs.context_features, program_features) {
+        (Some(cf), Some(pf)) if cf.dim > 0 && pf.dim > 0 => {
+            match ContextualSurrogateQHat::design_dim(cf.dim, pf.dim) {
+                Some(d) if d <= MAX_SURROGATE_DESIGN_DIM => true,
+                Some(d) => {
+                    if !unavailable_selectors
+                        .iter()
+                        .any(|u| u.name == "contextual_surrogate_qhat")
+                    {
+                        unavailable_selectors.push(Unavailable {
+                            name: "contextual_surrogate_qhat".into(),
+                            reason: format!(
+                                "bilinear design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM})"
+                            ),
+                        });
+                    }
+                    false
+                }
+                None => false,
+            }
+        }
+        _ => false,
+    };
     let mut contexts: Vec<ContextRecord> = pools
         .iter()
         .zip(&folds)
@@ -299,6 +324,19 @@ pub fn evaluate(
             let ridge = RidgeProgram::fit(&train, pf, cfg.ridge_lambda)?;
             score_with(&ridge, &held, &mut contexts)?;
         }
+        if can_fit_surrogate {
+            if let (Some(cf), Some(pf)) = (inputs.context_features, program_features) {
+                let surrogate = ContextualSurrogateQHat::fit(
+                    &train,
+                    cf,
+                    pf,
+                    cfg.knn_k,
+                    cfg.prior_weight,
+                    cfg.ridge_lambda,
+                )?;
+                score_with(&surrogate, &held, &mut contexts)?;
+            }
+        }
     }
     let all: Vec<usize> = (0..pools.len()).collect();
     for sel in &inputs.external {
@@ -367,7 +405,7 @@ pub fn evaluate(
         manifest_sha256: manifest.sha256()?,
         config: cfg.clone(),
         selectors,
-        unavailable_selectors: inputs.unavailable.clone(),
+        unavailable_selectors,
         program_features: match (inputs.program_features, &derived) {
             (Some(f), _) => format!("supplied: {} dimensions", f.dim),
             (None, Some(f)) => format!(

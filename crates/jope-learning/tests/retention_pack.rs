@@ -394,3 +394,125 @@ fn parquet_subset_round_trips_every_type_and_null() {
         std::fs::write(&out, parquet::write(&table, true, "test").unwrap()).unwrap();
     }
 }
+
+#[test]
+fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
+    use jope_learning::pools::evaluate::{evaluate, Config, Inputs};
+    use jope_learning::pools::pool::{freeze, FreezeRule, Reference};
+    use jope_learning::pools::selectors::Features;
+    use jope_learning::retention::distilled::{
+        distill_selfplay_observations, distilled_rows_to_measurement_rows,
+        SelfPlayDistillObservation, SelfPlayDistillSpec,
+    };
+
+    let mut scores = known();
+    scores.insert("inner_cut_q".into());
+
+    let mut all_distilled = Vec::new();
+    let mut cf_rows = std::collections::BTreeMap::new();
+    for c in 0..8usize {
+        let parent = format!("dataset-parent-{}", c / 2);
+        let ctx_sha = sha256_hex(format!("selfplay-ctx-{c}").as_bytes());
+        let z = if (c / 2) % 2 == 0 { 1.0 } else { -1.0 };
+        cf_rows.insert(ctx_sha.clone(), vec![z]);
+        let spec = SelfPlayDistillSpec {
+            dataset: parent,
+            context_sha256: ctx_sha.clone(),
+            fold: Some((c % 2) as i64),
+            split_role: SplitRole::Train,
+            score_name: "inner_cut_q".into(),
+            policylm_ckpt: None,
+            campaign: Some("selfplay-flywheel-phase3".into()),
+            run_id: format!("run-sp-{c}"),
+            family: "clover-selfplay".into(),
+            source_bucket: "veox-jopedime-learning-use2".into(),
+        };
+        let mut obs = Vec::new();
+        for p in 0..10usize {
+            let expr = if p % 2 == 0 {
+                format!("(pipe X (standardize) (ridge alpha={}))", p + 1)
+            } else {
+                format!("(pipe X ( winsorize ) (lasso alpha={}))", p + 1)
+            };
+            let prog_sha = sha256_hex(expr.as_bytes());
+            let failed = p == 9;
+            let phi = if p % 2 == 0 { 1.0 } else { -1.0 };
+            let q = (!failed).then_some(0.5 + 0.3 * (z * phi) + 0.01 * (p as f64));
+            obs.push(SelfPlayDistillObservation {
+                program_sha: prog_sha,
+                program: Some(expr),
+                outcome: if failed { Outcome::Failed } else { Outcome::Ok },
+                q,
+                seed_packet: Some(if p < 2 {
+                    "selfplay_archive_r1".into()
+                } else {
+                    "ordinary_gp".into()
+                }),
+                source_key: format!("experiments/clover-selfplay/ctx-{c}/eval-{p}.json"),
+                source_version_id: Some("v1".into()),
+                source_sha256: sha256_hex(format!("raw-{c}-{p}").as_bytes()),
+            });
+        }
+        let batch = distill_selfplay_observations(&spec, &obs, &scores).unwrap();
+        // Verify rank_ctx = 1..=9 on the 9 completed evaluations and None on the failed one.
+        let ranks: BTreeSet<i64> = batch.iter().filter_map(|r| r.rank_ctx).collect();
+        assert_eq!(ranks, (1..=9).collect());
+        assert!(batch
+            .iter()
+            .filter(|r| r.outcome == Outcome::Ok)
+            .all(|r| r.champion_id.is_some() && !r.qualified && r.superseded_by.is_none()));
+        all_distilled.extend(batch);
+    }
+
+    // Round-trip through gp_distilled/v1 Parquet.
+    let parquet_bytes = distilled::write(&all_distilled, &scores, &[]).unwrap();
+    let reloaded = distilled::read(&parquet_bytes, &scores).unwrap();
+    assert_eq!(reloaded.len(), all_distilled.len());
+
+    // Convert into MeasurementRows and freeze into shadow pools.
+    let protocol_sha = sha256_hex(b"selfplay-inner-cut-protocol-v1");
+    let m_rows =
+        distilled_rows_to_measurement_rows(&reloaded, "inner_cut_q", &protocol_sha, &scores)
+            .unwrap();
+    let freeze_rule = FreezeRule {
+        min_pool: 9,
+        max_pool: None,
+        salt: "distilled-bridge".into(),
+        min_distinct_measured: 2,
+        source_grade: "gp_distilled_v1".into(),
+    };
+    let (pools, manifest) = freeze(&m_rows, &freeze_rule, &sha256_hex(&parquet_bytes)).unwrap();
+    assert_eq!(pools.len(), 8);
+
+    let cf = Features {
+        dim: 1,
+        rows: cf_rows,
+    };
+    let eval_cfg = Config {
+        reference: Reference::PoolFloor,
+        budget: 2,
+        folds: 2,
+        fold_salt: "distilled-folds".into(),
+        prior_weight: 2.0,
+        knn_k: 2,
+        ridge_lambda: 1.0,
+        bootstrap_draws: 200,
+        bootstrap_seed: 11,
+        alpha: 0.05,
+    };
+    let inputs = Inputs {
+        context_features: Some(&cf),
+        program_features: None,
+        external: vec![],
+        unavailable: vec![],
+    };
+    let receipt = evaluate(&pools, &manifest, &inputs, &eval_cfg).unwrap();
+    assert!(receipt.summaries.contains_key("contextual_surrogate_qhat"));
+
+    // Verify held-out Val263 rows are preserved as "val" and refused by freeze.
+    let mut leaked = reloaded.clone();
+    leaked[0].split_role = SplitRole::Val263;
+    let leaked_m =
+        distilled_rows_to_measurement_rows(&leaked, "inner_cut_q", &protocol_sha, &scores).unwrap();
+    assert!(freeze(&leaked_m, &freeze_rule, &sha256_hex(&parquet_bytes)).is_err());
+}
