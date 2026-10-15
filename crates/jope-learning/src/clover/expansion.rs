@@ -535,6 +535,236 @@ pub fn novelty(
     )
 }
 
+/// Pre-screens a candidate genome pool (`proposal_pool_k -> eval_budget_b`) for a target
+/// `DiscoveryContext` using a fitted `Selector` (such as `ContextualSurrogateQHat`) and packages
+/// the selected genomes into a validated [`PolicySeeds`] batch.
+pub fn select_seeds_with_surrogate_funnel(
+    context: &DiscoveryContext,
+    snapshot: PolicySnapshot,
+    batch_protocol_sha256: &str,
+    temperature: f64,
+    candidate_genomes: &[String],
+    selector: &dyn crate::pools::selectors::Selector,
+    proposal_pool_k: usize,
+    eval_budget_b: usize,
+) -> Result<(PolicySeeds, crate::pools::selectors::FunnelAllocation)> {
+    ensure!(
+        !candidate_genomes.is_empty(),
+        "candidate_genomes must not be empty"
+    );
+    ensure!(
+        temperature.is_finite() && (0.1..=2.0).contains(&temperature),
+        "temperature must be in 0.1..=2.0"
+    );
+    let mut sha_to_genome = std::collections::BTreeMap::new();
+    let mut ordered_shas = Vec::with_capacity(candidate_genomes.len());
+    for raw in candidate_genomes {
+        let canonical = canonical_genome(raw)?;
+        ensure!(
+            canonical != search::BOOTSTRAP_GENOME,
+            "candidate_genomes must not include bootstrap genome"
+        );
+        let sha = jope_pipeline::sha256_hex(canonical.as_bytes());
+        sha_to_genome.entry(sha.clone()).or_insert(canonical);
+        ordered_shas.push(sha);
+    }
+    let prog_refs: Vec<&str> = ordered_shas.iter().map(String::as_str).collect();
+    let view = crate::pools::pool::PoolView {
+        context_id: &context.context_sha256,
+        parent_id: &context.parent_family,
+        incumbent_q: None,
+        programs: prog_refs,
+        tokens: vec![None; ordered_shas.len()],
+    };
+    let funnel = crate::pools::selectors::pre_screen_funnel(
+        &view,
+        selector,
+        proposal_pool_k,
+        eval_budget_b,
+    )?;
+    let scaled: Vec<f64> = funnel
+        .selected_scores
+        .iter()
+        .map(|&s| s / temperature)
+        .collect();
+    let max_s = scaled.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let lse = max_s + scaled.iter().map(|&s| (s - max_s).exp()).sum::<f64>().ln();
+    let proposals: Vec<PolicyProposal> = funnel
+        .selected_program_sha256
+        .iter()
+        .zip(&scaled)
+        .enumerate()
+        .map(|(idx, (sha, &s))| {
+            let genome = sha_to_genome
+                .get(sha)
+                .expect("selected program sha came from candidate_genomes")
+                .clone();
+            PolicyProposal {
+                genome,
+                program_sha256: sha.clone(),
+                draw_seed: (idx + 1) as u64,
+                behavior_logprob: (s - lse).min(0.0),
+            }
+        })
+        .collect();
+    let seeds = PolicySeeds {
+        schema: "clover.policy-seeds/v1".into(),
+        snapshot,
+        context_sha256: context.context_sha256.clone(),
+        encoder_input_sha256: context.encoder_input_sha256.clone(),
+        sampling_protocol: "trie_children_temperature_v1".into(),
+        batch_protocol_sha256: batch_protocol_sha256.to_owned(),
+        temperature,
+        proposals,
+    };
+    seeds.validate(context)?;
+    Ok((seeds, funnel))
+}
+
+/// Configuration for closed-loop measured-tilt (`L_PI` / AWR) policy updates across self-play rounds.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MeasuredTiltPolicyConfig {
+    /// Positive temperature `tau > 0` scaling inner-cut advantages `(q - b_c) / tau`.
+    pub temperature_tau: f64,
+    /// Positive symmetric clipping bound `A_max > 0` on scaled advantages.
+    pub advantage_clip: f64,
+    /// Reference probability mass `q_new in (0, 1)` reserved for newly discovered archive leaves when `|S_new| > 0`.
+    pub ref_new_support_mass: f64,
+    /// Maximum policy probability mass `p_new_cap in [q_new, 1)` allocated to newly discovered archive leaves when `|S_new| > 0`.
+    pub policy_new_support_cap: f64,
+    /// Per-round step size `eta in (0, 1]` damping advantage logits (`u_i = eta * clip((q_i - b_c)/tau, -A_max, A_max)`).
+    pub step_size_eta: f64,
+}
+
+impl MeasuredTiltPolicyConfig {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.temperature_tau.is_finite() && self.temperature_tau > 0.0,
+            "temperature_tau must be finite and > 0"
+        );
+        ensure!(
+            self.advantage_clip.is_finite() && self.advantage_clip > 0.0,
+            "advantage_clip must be finite and > 0"
+        );
+        ensure!(
+            self.ref_new_support_mass.is_finite()
+                && self.ref_new_support_mass > 0.0
+                && self.ref_new_support_mass < 1.0,
+            "ref_new_support_mass must be in (0, 1)"
+        );
+        ensure!(
+            self.policy_new_support_cap.is_finite()
+                && self.policy_new_support_cap >= self.ref_new_support_mass
+                && self.policy_new_support_cap < 1.0,
+            "policy_new_support_cap must be in [ref_new_support_mass, 1)"
+        );
+        ensure!(
+            self.step_size_eta.is_finite() && self.step_size_eta > 0.0 && self.step_size_eta <= 1.0,
+            "step_size_eta must be in (0, 1]"
+        );
+        Ok(())
+    }
+}
+
+/// Evaluates the closed-loop measured-tilt (`L_PI` / AWR) policy and reference leaf
+/// log-probabilities over `S_base U S_new` together with the weighted archive cross-entropy
+/// objective value (`crate::support::weighted_archive_ce`) against the undamped advantage-tilted
+/// target distribution `w_i propto pi_ref(i) * exp(clip((q_i - b_c)/tau, -A_max, A_max))`.
+pub fn measured_tilt_leaf_log_probs(
+    base_leaf_q: &[f64],
+    archive_leaf_q: &[f64],
+    bootstrap_q: f64,
+    cfg: &MeasuredTiltPolicyConfig,
+) -> Result<(Vec<f64>, Vec<f64>, f64)> {
+    cfg.validate()?;
+    ensure!(!base_leaf_q.is_empty(), "base_leaf_q must not be empty");
+    ensure!(
+        bootstrap_q.is_finite()
+            && base_leaf_q.iter().all(|q| q.is_finite())
+            && archive_leaf_q.iter().all(|q| q.is_finite()),
+        "finite base, archive, and bootstrap q values required"
+    );
+    let log_softmax = |logits: &[f64]| -> Vec<f64> {
+        let m = logits.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        let lse = m + logits.iter().map(|&x| (x - m).exp()).sum::<f64>().ln();
+        logits.iter().map(|&x| x - lse).collect()
+    };
+    let clipped_base_adv: Vec<f64> = base_leaf_q
+        .iter()
+        .map(|&q| {
+            ((q - bootstrap_q) / cfg.temperature_tau).clamp(-cfg.advantage_clip, cfg.advantage_clip)
+        })
+        .collect();
+    let base_logits: Vec<f64> = clipped_base_adv
+        .iter()
+        .map(|&a| cfg.step_size_eta * a)
+        .collect();
+    let pol_base_cond_lp = log_softmax(&base_logits);
+    let ref_base_cond_lp = -(base_leaf_q.len() as f64).ln();
+
+    let (pol_lp, ref_lp, target_adv) = if archive_leaf_q.is_empty() {
+        (
+            pol_base_cond_lp,
+            vec![ref_base_cond_lp; base_leaf_q.len()],
+            clipped_base_adv,
+        )
+    } else {
+        let clipped_arch_adv: Vec<f64> = archive_leaf_q
+            .iter()
+            .map(|&q| {
+                ((q - bootstrap_q) / cfg.temperature_tau)
+                    .clamp(-cfg.advantage_clip, cfg.advantage_clip)
+            })
+            .collect();
+        let arch_logits: Vec<f64> = clipped_arch_adv
+            .iter()
+            .map(|&a| cfg.step_size_eta * a)
+            .collect();
+        let pol_arch_cond_lp = log_softmax(&arch_logits);
+        let ref_arch_cond_lp = -(archive_leaf_q.len() as f64).ln();
+        let mean_pos_adv = archive_leaf_q
+            .iter()
+            .map(|&q| ((q - bootstrap_q) / cfg.temperature_tau).max(0.0))
+            .sum::<f64>()
+            / (archive_leaf_q.len() as f64);
+        let p_new = (cfg.ref_new_support_mass
+            + (cfg.policy_new_support_cap - cfg.ref_new_support_mass)
+                * (cfg.step_size_eta * mean_pos_adv).tanh())
+        .clamp(cfg.ref_new_support_mass, cfg.policy_new_support_cap);
+        let p_base = 1.0 - p_new;
+        let q_new = cfg.ref_new_support_mass;
+        let q_base = 1.0 - q_new;
+
+        let mut pol = Vec::with_capacity(base_leaf_q.len() + archive_leaf_q.len());
+        let mut rlp = Vec::with_capacity(base_leaf_q.len() + archive_leaf_q.len());
+        for &cl in &pol_base_cond_lp {
+            pol.push(p_base.ln() + cl);
+            rlp.push(q_base.ln() + ref_base_cond_lp);
+        }
+        for &cl in &pol_arch_cond_lp {
+            pol.push(p_new.ln() + cl);
+            rlp.push(q_new.ln() + ref_arch_cond_lp);
+        }
+        let mut all_adv = clipped_base_adv;
+        all_adv.extend(clipped_arch_adv);
+        (pol, rlp, all_adv)
+    };
+
+    // Compute normalized AWR target weights w_i propto pi_ref(i) * exp(clipped_adv_i)
+    let target_logits: Vec<f64> = ref_lp
+        .iter()
+        .zip(&target_adv)
+        .map(|(&rlp, &adv)| rlp + adv)
+        .collect();
+    let target_lp = log_softmax(&target_logits);
+    let raw_w: Vec<f64> = target_lp.into_iter().map(f64::exp).collect();
+    let w_sum: f64 = raw_w.iter().sum();
+    let weights: Vec<f64> = raw_w.into_iter().map(|w| w / w_sum).collect();
+    let ce_loss = crate::support::weighted_archive_ce(&pol_lp, &weights)?;
+    Ok((pol_lp, ref_lp, ce_loss))
+}
+
 /// Per-round policy and reference log-probability evaluator over the actual runtime leaf set:
 /// `(round_index, ordered_base_genomes, ordered_archive_genomes) -> (policy_leaf_log_probs, reference_leaf_log_probs)`
 /// where each returned vector must have length `ordered_base_genomes.len() + ordered_archive_genomes.len()`
@@ -554,6 +784,7 @@ pub struct SelfPlayRatchetRequest<'a> {
     pub max_conditional_base_kl: f64,
     pub max_new_support_mass: f64,
     pub round_leaf_log_prob_fn: Option<RoundLeafLogProbFn<'a>>,
+    pub measured_tilt_policy: Option<MeasuredTiltPolicyConfig>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -562,6 +793,7 @@ pub struct SelfPlayRoundReceipt {
     pub round: usize,
     pub evaluations_per_arm: usize,
     pub rng_seed: u64,
+    pub bootstrap_anchor_source: String,
     pub active_support_leaves: usize,
     pub base_leaf_genomes: Vec<String>,
     pub archive_leaf_genomes: Vec<String>,
@@ -586,6 +818,8 @@ pub struct SelfPlayRoundReceipt {
     pub cumulative_prior_rounds: usize,
     pub equal_resource_across_rounds: bool,
     pub kl_source: String,
+    pub kl_malformed_reason: Option<String>,
+    pub policy_archive_ce_loss: Option<f64>,
     pub decomposed_kl: Option<crate::support::DecomposedSupportKl>,
     pub seed_update_frozen_by_kl_guard: Option<bool>,
 }
@@ -597,15 +831,14 @@ pub struct SelfPlayRoundReceipt {
 /// round `t`, newly discovered non-base genomes whose measured inner-cut RMSE strictly improves
 /// over the Round-0 bootstrap baseline are admitted into the round archive `A_{t+1}`.
 ///
-/// When `round_leaf_log_prob_fn` is `Some(eval_fn)`, it is invoked after each round with
-/// `(t, &base_leaf_genomes, &archive_leaf_genomes)` (both recorded in [`SelfPlayRoundReceipt`]),
-/// and the returned policy/reference leaf log-probabilities are evaluated by
-/// [`crate::support::decomposed_support_kl`]. If admissible, the top `seed_cap_b` archive + base
-/// winners (admitted through `seeds::admit`) seed Round `t+1`; if the guard trips or `eval_fn`
-/// returns a malformed vector, `seed_update_frozen_by_kl_guard` is set to `Some(true)` and the
-/// prior round's seeds are retained without aborting the run.
+/// Policy KL guard evaluation supports two mutually exclusive runtime modes:
+/// 1. `measured_tilt_policy: Some(cfg)`: Closed-loop measured-tilt (`L_PI` / AWR) policy update
+///    from the runtime measured inner-cut qualities `base_best_q` and `archive_best_rmse`,
+///    recording `policy_archive_ce_loss` (`weighted_archive_ce`) and `decomposed_support_kl`.
+/// 2. `round_leaf_log_prob_fn: Some(eval_fn)`: Custom caller callback invoked with
+///    `(t, &base_leaf_genomes, &archive_leaf_genomes)`.
 ///
-/// When `round_leaf_log_prob_fn` is `None`, no policy KL guard is evaluated
+/// When both are `None`, no policy KL guard is evaluated
 /// (`kl_source: "unmeasured_no_policy_log_probs"`, `decomposed_kl: None`,
 /// `kl_guard_evaluated: false`, `all_rounds_kl_admissible: null`).
 pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) -> Result<Value> {
@@ -621,6 +854,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         max_conditional_base_kl,
         max_new_support_mass,
         round_leaf_log_prob_fn,
+        measured_tilt_policy,
     } = request;
     ensure!(
         round_budgets.len() >= 2,
@@ -639,6 +873,13 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         max_new_support_mass.is_finite() && (0.0..=1.0).contains(&max_new_support_mass),
         "max_new_support_mass must be in [0, 1]"
     );
+    ensure!(
+        !(round_leaf_log_prob_fn.is_some() && measured_tilt_policy.is_some()),
+        "cannot specify both round_leaf_log_prob_fn and measured_tilt_policy"
+    );
+    if let Some(ref tilt_cfg) = measured_tilt_policy {
+        tilt_cfg.validate()?;
+    }
     roster.verify_roles(role_manifest)?;
     let context = roster.bound_context(context_sha256, cut)?;
     let offered = initial_policy.pipeline_seeds(context)?;
@@ -698,7 +939,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
     // Archive maps non-base canonical genome (strictly beating bootstrap_rmse) -> best inner-cut RMSE.
     let mut archive_best_rmse: std::collections::BTreeMap<String, f64> =
         std::collections::BTreeMap::new();
-    let mut bootstrap_rmse_anchor: Option<f64> = None;
+    let mut bootstrap_rmse_anchor: Option<(f64, &'static str)> = None;
 
     let mut current_seeds: Vec<String> = admitted_initial
         .seeds
@@ -708,6 +949,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         .collect();
 
     let mut round_receipts: Vec<SelfPlayRoundReceipt> = Vec::with_capacity(round_budgets.len());
+    let mut policy_optimizer_updates = 0usize;
 
     for (round_idx, budget) in round_budgets.iter().enumerate() {
         let limits = search::Budget {
@@ -758,16 +1000,18 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         );
 
         if bootstrap_rmse_anchor.is_none() {
-            let boot_r = ratchet
+            let measured_boot = ratchet
                 .observations
                 .iter()
                 .chain(ordinary.observations.iter())
                 .find(|o| o.measured() && o.origin == search::BOOTSTRAP && o.rmse.is_some())
-                .and_then(|o| o.rmse)
-                .unwrap_or(ordinary_best_rmse);
-            bootstrap_rmse_anchor = Some(boot_r);
+                .and_then(|o| o.rmse);
+            bootstrap_rmse_anchor = Some(match measured_boot {
+                Some(r) => (r, "measured_bootstrap"),
+                None => (ordinary_best_rmse, "ordinary_best_fallback"),
+            });
         }
-        let bootstrap_rmse = bootstrap_rmse_anchor.unwrap();
+        let (bootstrap_rmse, bootstrap_anchor_source) = bootstrap_rmse_anchor.unwrap();
         let bootstrap_q = 1.0 / (1.0 + bootstrap_rmse);
 
         let mut ratchet_best_rmse = f64::INFINITY;
@@ -841,7 +1085,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             })
             .collect::<Vec<_>>();
 
-        // 3. Evaluate decomposed support KL if a policy log-probability evaluator was provided.
+        // 3. Evaluate decomposed support KL if a policy evaluator or measured-tilt config was provided.
         let archive_leaf_genomes: Vec<String> = archive_best_rmse.keys().cloned().collect();
         let n_new = archive_leaf_genomes.len();
         let active_support_leaves = base_leaf_count + n_new;
@@ -849,9 +1093,13 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         is_base.extend(std::iter::repeat_n(true, base_leaf_count));
         is_base.extend(std::iter::repeat_n(false, n_new));
 
-        let (kl_source, decomposed_kl, seed_update_frozen_by_kl_guard) = if let Some(eval_fn) =
-            round_leaf_log_prob_fn
-        {
+        let (
+            kl_source,
+            kl_malformed_reason,
+            policy_archive_ce_loss,
+            decomposed_kl,
+            seed_update_frozen_by_kl_guard,
+        ) = if let Some(eval_fn) = round_leaf_log_prob_fn {
             let (pol_lp, ref_lp) = eval_fn(round_idx, &base_catalog_ordered, &archive_leaf_genomes);
             if pol_lp.len() == active_support_leaves && ref_lp.len() == active_support_leaves {
                 match crate::support::decomposed_support_kl(
@@ -865,12 +1113,16 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
                         let frozen = !report.admissible;
                         (
                             "caller_evaluated_leaf_log_probs".to_string(),
+                            None,
+                            None,
                             Some(report),
                             Some(frozen),
                         )
                     }
-                    Err(_) => (
+                    Err(err) => (
                         "caller_evaluated_leaf_log_probs_malformed".to_string(),
+                        Some(format!("{err:#}")),
+                        None,
                         None,
                         Some(true),
                     ),
@@ -878,12 +1130,54 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             } else {
                 (
                     "caller_evaluated_leaf_log_probs_malformed".to_string(),
+                    Some(format!(
+                        "expected {} leaf log-probs, got policy={} ref={}",
+                        active_support_leaves,
+                        pol_lp.len(),
+                        ref_lp.len()
+                    )),
+                    None,
                     None,
                     Some(true),
                 )
             }
+        } else if let Some(ref tilt_cfg) = measured_tilt_policy {
+            let base_q_vec: Vec<f64> = base_catalog_ordered
+                .iter()
+                .map(|g| base_best_q.get(g).copied().unwrap_or(bootstrap_q))
+                .collect();
+            let arch_q_vec: Vec<f64> = archive_leaf_genomes
+                .iter()
+                .map(|g| 1.0 / (1.0 + archive_best_rmse[g]))
+                .collect();
+            let (pol_lp, ref_lp, ce_loss) =
+                measured_tilt_leaf_log_probs(&base_q_vec, &arch_q_vec, bootstrap_q, tilt_cfg)?;
+            let report = crate::support::decomposed_support_kl(
+                &pol_lp,
+                &ref_lp,
+                &is_base,
+                max_conditional_base_kl,
+                max_new_support_mass,
+            )?;
+            let frozen = !report.admissible;
+            if report.admissible {
+                policy_optimizer_updates += 1;
+            }
+            (
+                "measured_tilt_leaf_policy".to_string(),
+                None,
+                Some(ce_loss),
+                Some(report),
+                Some(frozen),
+            )
         } else {
-            ("unmeasured_no_policy_log_probs".to_string(), None, None)
+            (
+                "unmeasured_no_policy_log_probs".to_string(),
+                None,
+                None,
+                None,
+                None,
+            )
         };
 
         // 4. Select top `seed_cap_b` archive + base winners through `seeds::admit` to seed Round `t+1`,
@@ -923,6 +1217,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             round: round_idx,
             evaluations_per_arm: budget.evaluations_per_arm,
             rng_seed: budget.rng_seed,
+            bootstrap_anchor_source: bootstrap_anchor_source.to_string(),
             active_support_leaves,
             base_leaf_genomes: base_catalog_ordered.clone(),
             archive_leaf_genomes,
@@ -947,6 +1242,8 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             cumulative_prior_rounds: round_idx,
             equal_resource_across_rounds: round_idx == 0,
             kl_source,
+            kl_malformed_reason,
+            policy_archive_ce_loss,
             decomposed_kl,
             seed_update_frozen_by_kl_guard,
         });
@@ -965,7 +1262,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         last_round.ratchet_best_q > last_round.ordinary_best_q + 1e-12;
     let matched_or_beat_ordinary_in_final_round =
         last_round.ratchet_best_q + 1e-12 >= last_round.ordinary_best_q;
-    let kl_guard_evaluated = round_leaf_log_prob_fn.is_some();
+    let kl_guard_evaluated = round_leaf_log_prob_fn.is_some() || measured_tilt_policy.is_some();
     let all_rounds_kl_admissible: Option<bool> = kl_guard_evaluated.then(|| {
         round_receipts
             .iter()
@@ -1001,7 +1298,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         "budget_caveat": "in-process fits are nonpreemptive; bootstrap/seeds are seconds-exempt; round t>0 reuses prior rounds' inner-holdout archive champions",
         "qualified_rewards": 0,
         "h1_established": false,
-        "policy_optimizer_updates": 0,
+        "policy_optimizer_updates": policy_optimizer_updates,
     }))
 }
 

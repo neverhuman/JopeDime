@@ -360,6 +360,7 @@ fn folds_keep_whole_parents_together_and_every_selector_scores_every_context() {
         "program_prior",
         "retrieval_knn",
         "ridge_program",
+        "contextual_surrogate_qhat",
         "spy",
     ] {
         assert!(names.contains(n), "{n} missing");
@@ -377,6 +378,87 @@ fn folds_keep_whole_parents_together_and_every_selector_scores_every_context() {
     // Same inputs, same receipt.
     let again = evaluate(&pools, &manifest, &inputs, &cfg).unwrap();
     assert_eq!(receipt.sha256().unwrap(), again.sha256().unwrap());
+}
+
+#[test]
+fn contextual_surrogate_qhat_establishes_h2_on_interaction_pools() {
+    // 16 parents, 32 contexts, 10 programs per context drawn from two context-disjoint cohorts
+    // (cohort A vs cohort B) so kNN exact program-ID overlap across cohorts is zero, and equal
+    // numbers of z=+1 and z=-1 contexts so marginal program_prior and context-blind ridge_program
+    // tie around 0.5. Only the bilinear context x program surrogate learns sign(z) * phi(p).
+    let mut rows = Vec::new();
+    let mut cf_rows = std::collections::BTreeMap::new();
+    let mut pf_rows = std::collections::BTreeMap::new();
+    for p in 0..20 {
+        let prog_sha = h(&format!("inter-prog-{p}"));
+        let phi = if p % 2 == 0 { 1.0 } else { -1.0 };
+        pf_rows.insert(prog_sha, vec![phi]);
+    }
+    for c in 0..32 {
+        let parent = format!("inter-parent-{}", c / 2);
+        let ctx_sha = h(&format!("inter-ctx-{c}"));
+        let z = if (c / 2) % 2 == 0 { 1.0 } else { -1.0 };
+        cf_rows.insert(ctx_sha.clone(), vec![z]);
+        // Alternate cohort (0..10 vs 10..20) by context parity within parent so nearest-z
+        // neighbours in other parents include disjoint program IDs.
+        let cohort_start = if c % 2 == 0 { 0 } else { 10 };
+        for p in cohort_start..(cohort_start + 10) {
+            let prog_sha = h(&format!("inter-prog-{p}"));
+            let phi = if p % 2 == 0 { 1.0 } else { -1.0 };
+            let q = 0.5 + 0.35 * (z * phi) + 0.02 * u(&format!("inter-noise-{c}-{p}"));
+            rows.push(MeasurementRow {
+                context_id: ctx_sha.clone(),
+                parent_id: parent.clone(),
+                role: "train".into(),
+                program_sha256: prog_sha,
+                status: Status::Complete,
+                q: Some(q),
+                incumbent_q: Some(0.5),
+                protocol_sha256: h(PROTOCOL),
+                tokens: Some(vec![1, if p % 2 == 0 { 3 } else { 4 }, 2]),
+            });
+        }
+    }
+    let (pools, manifest) = freeze(&rows, &rule(), &h("inter-input")).unwrap();
+    let cf = Features {
+        dim: 1,
+        rows: cf_rows,
+    };
+    let pf = Features {
+        dim: 1,
+        rows: pf_rows,
+    };
+    let inputs = Inputs {
+        context_features: Some(&cf),
+        program_features: Some(&pf),
+        external: vec![],
+        unavailable: vec![],
+    };
+    let eval_cfg = Config {
+        budget: 2,
+        knn_k: 1,
+        ..cfg()
+    };
+    let receipt = evaluate(&pools, &manifest, &inputs, &eval_cfg).unwrap();
+    assert_eq!(receipt.ranking_learnability, "ESTABLISHED_SHADOW");
+    let primary = receipt
+        .comparisons
+        .iter()
+        .find(|c| {
+            c.candidate == "contextual_surrogate_qhat" && c.baseline == receipt.strongest_baseline
+        })
+        .unwrap();
+    assert_eq!(primary.realized_gain.verdict, Verdict::Greater);
+    assert_eq!(
+        primary.pairwise_accuracy.as_ref().unwrap().verdict,
+        Verdict::Greater
+    );
+    assert!(
+        receipt.summaries["contextual_surrogate_qhat"]
+            .mean_pairwise_accuracy
+            .unwrap()
+            > 0.70
+    );
 }
 
 #[test]

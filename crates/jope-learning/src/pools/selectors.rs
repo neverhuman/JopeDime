@@ -517,6 +517,14 @@ pub struct ContextualSurrogateQHat<'a> {
 pub const MAX_SURROGATE_DESIGN_DIM: usize = 512;
 
 impl<'a> ContextualSurrogateQHat<'a> {
+    pub fn design_dim(d_ctx: usize, d_prog: usize) -> Option<usize> {
+        let cross = d_ctx.checked_mul(d_prog)?;
+        2usize
+            .checked_add(d_ctx)
+            .and_then(|v| v.checked_add(d_prog))
+            .and_then(|v| v.checked_add(cross))
+    }
+
     fn design_row(z: &[f64], phi: &[f64], knn_score: f64) -> Vec<f64> {
         let mut x = Vec::with_capacity(2 + z.len() + phi.len() + z.len() * phi.len());
         x.push(1.0);
@@ -547,14 +555,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
             context_features.dim > 0 && program_features.dim > 0,
             "non-empty context and program feature dimensions required"
         );
-        let cross = context_features
-            .dim
-            .checked_mul(program_features.dim)
-            .context("bilinear feature dimension overflow")?;
-        let d = 2usize
-            .checked_add(context_features.dim)
-            .and_then(|v| v.checked_add(program_features.dim))
-            .and_then(|v| v.checked_add(cross))
+        let d = Self::design_dim(context_features.dim, program_features.dim)
             .context("design dimension overflow")?;
         ensure!(
             d <= MAX_SURROGATE_DESIGN_DIM,
@@ -777,5 +778,51 @@ mod tests {
 
         let funnel = pre_screen_funnel(&test_view, &qhat, 64, 1).unwrap();
         assert_eq!(funnel.selected_program_sha256, vec![p_pos_b]);
+    }
+
+    #[test]
+    fn pre_screen_funnel_deduplicates_before_proposal_pool_truncation() {
+        struct FixedScores(Vec<f64>);
+        impl Selector for FixedScores {
+            fn name(&self) -> &str {
+                "fixed"
+            }
+            fn class(&self) -> Class {
+                Class::Candidate
+            }
+            fn rule(&self) -> String {
+                "fixed".into()
+            }
+            fn scores(&self, _view: &PoolView<'_>) -> Result<Vec<f64>> {
+                Ok(self.0.clone())
+            }
+        }
+
+        let mk_hex = |b: u8| format!("{b:02x}").repeat(32);
+        let p1 = mk_hex(0x01);
+        let p2 = mk_hex(0x02);
+        let p3 = mk_hex(0x03);
+        // Feed 3 duplicate entries of p1 first, followed by p2 (highest score) and p3.
+        // With proposal_pool_k = 2 and eval_budget_b = 2, deduplication BEFORE .take(proposal_pool_k)
+        // must retain p1 and p2 rather than starving the proposal pool to 1 distinct program.
+        let programs = vec![
+            p1.as_str(),
+            p1.as_str(),
+            p1.as_str(),
+            p2.as_str(),
+            p3.as_str(),
+        ];
+        let view = PoolView {
+            context_id: &mk_hex(0xaa),
+            parent_id: "parent",
+            incumbent_q: None,
+            programs,
+            tokens: vec![None; 5],
+        };
+        let selector = FixedScores(vec![0.2, 0.2, 0.2, 0.9, 0.5]);
+        let funnel = pre_screen_funnel(&view, &selector, 2, 2).unwrap();
+        assert_eq!(funnel.proposal_pool_k, 2);
+        assert_eq!(funnel.eval_budget_b, 2);
+        assert_eq!(funnel.selected_program_sha256, vec![p2, p1]);
     }
 }
