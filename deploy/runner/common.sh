@@ -79,7 +79,9 @@ jope_runner_pin_swap() { # <container name>
 
 # Fixed host allocation enforces exclusivity among this repository's runner jobs. xbabe3/full is
 # a second trusted-main slot with the same 48 GiB/16 CPU cap, so full-main-cpu groups run in
-# parallel. Historical GPU/kernel/ci3/ci4 lanes remain unavailable in this CPU foundation.
+# parallel. Full lanes also register the jope-ci label (owner permanent 2026-10-14) so PR/manual
+# ci.yml can use xbabe2/xbabe3 full capacity. Historical GPU/kernel/ci3/ci4 lanes remain
+# unavailable in this CPU foundation.
 jope_runner_role() { # <host> <lane>; callers use actual hostname, never a job variable
   case "$1/$2" in
     xbabe1/ci|xbabe1/ci2) JOPE_RUNNER_DOMAIN="pr"; JOPE_RUNNER_MEMORY=16g ;;
@@ -92,7 +94,7 @@ jope_runner_labels() {
   jope_runner_role "$JOPE_RUNNER_HOST" "$1" || return
   case $1 in
     ci|ci2) echo "$JOPE_RUNNER_HOST-$1,jope-ci" ;;
-    full) echo "$JOPE_RUNNER_HOST-full,jope-full-cpu" ;;
+    full) echo "$JOPE_RUNNER_HOST-full,jope-full-cpu,jope-ci" ;;
   esac
 }
 

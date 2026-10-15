@@ -121,3 +121,4 @@ chmod 0640 "$JOPE_RUNNER_STATE/image.json"
 echo "recorded $JOPE_RUNNER_STATE/image.json: image_id=$image_id scripts_sha256=$scripts_sha"
 
 echo "installed units: jope-runner@{ci,ci2,full}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"
+echo "full-lane labels: jope-full-cpu,jope-ci (owner permanent; lockstep provision all hosts after merge)"
