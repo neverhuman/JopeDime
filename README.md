@@ -22,19 +22,19 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 
 ## At a glance
 
-| What | 0.2.3 |
+| What | 0.2.0 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 0.2.3` <sup>1</sup> |
-| Workspace | 26 members: 19 crates at 0.2.3 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 0.2.0` <sup>1</sup> |
+| Workspace | 26 members: 19 crates at 0.2.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 5: `python`, `rust`, `cpp17`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
-| Rust tests | 3,796 listed in 26 packages, 62 of them ignored; a listing, not a run <sup>5</sup> |
-| Python tests | 172, found by a static scan, not collected or run <sup>5</sup> |
+| Rust tests | 4,189 listed in 26 packages, 66 of them ignored; a listing, not a run <sup>5</sup> |
+| Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
-| Coverage map | 425 items over 23 lanes <sup>7</sup> |
-| Capability matrix | 818 rows: 353 moved, 55 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Coverage map | 678 items over 24 lanes <sup>7</sup> |
+| Capability matrix | 824 rows: 353 moved, 61 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 216 `.py` files, 157 of them under `python/` <sup>10</sup> |
+| Python still tracked | 1,184 `.py` files, 159 of them under `python/` <sup>10</sup> |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -196,7 +196,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.2.3
+# jope 0.2.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -227,21 +227,28 @@ JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 cargo test --locked -p jope-learning --lib clover::expansion::tests::
 
 # 2. Verify the gp_distilled/v1 S3 Parquet distillation bridge and ContextualSurrogateQHat loop:
-cargo test --locked -p jope-learning --lib retention::distilled::tests::
 cargo test --locked -p jope-learning --test retention --test retention_pack --test pools
 
-# 3. Build, freeze, and evaluate frozen shadow pools with jope_pools:
+# 3. Adapt coverage, freeze candidate pools, and evaluate selectors with jope_pools:
 cargo run --locked -p jope-learning --bin jope_pools -- ingest-coverage \
-  --index target/pools/coverage-index.json --datasets-root datasets/test --out target/pools/measurements.jsonl
+  --coverage target/pools/coverage.json \
+  --protocol-sha256 0000000000000000000000000000000000000000000000000000000000000000 \
+  --out target/pools/measurements.jsonl
 cargo run --locked -p jope-learning --bin jope_pools -- freeze \
-  --measurements target/pools/measurements.jsonl --out-dir target/pools/frozen
+  --rows target/pools/measurements.jsonl \
+  --source-grade train_cv_geomean_rmse_ratio \
+  --out target/pools/frozen
 cargo run --locked -p jope-learning --bin jope_pools -- evaluate \
-  --pools target/pools/frozen/pools.jsonl --manifest target/pools/frozen/manifest.json \
-  --context-features target/pools/context-features.jsonl --out target/pools/eval-receipt.json
+  --pools target/pools/frozen/pools.jsonl \
+  --manifest target/pools/frozen/manifest.json \
+  --reference hwm \
+  --context-features target/pools/context-features.jsonl \
+  --source-commit "$(git rev-parse HEAD)" \
+  --out target/pools/eval-receipt.json
 
-# 4. Inspect and verify a distilled gp_distilled/v1 S3 Parquet table with jope_retention:
+# 4. Decode and inspect local Parquet pages (e.g. S3 Inventory or gp_distilled/v1 shards) with jope_retention:
 cargo run --locked -p jope-learning --bin jope_retention -- inspect-parquet \
-  --parquet target/retention/gp_distilled.parquet --out target/retention/inspect.json
+  --sample 3 target/retention/gp_distilled.parquet
 ```
 
 Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jope-ci` runners.
