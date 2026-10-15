@@ -535,19 +535,34 @@ pub fn novelty(
     )
 }
 
+#[derive(Clone, Copy)]
+pub struct SurrogateSeedRequest<'a> {
+    pub context: &'a DiscoveryContext,
+    pub snapshot: &'a PolicySnapshot,
+    pub batch_protocol_sha256: &'a str,
+    pub temperature: f64,
+    pub candidate_genomes: &'a [String],
+    pub selector: &'a dyn crate::pools::selectors::Selector,
+    pub proposal_pool_k: usize,
+    pub eval_budget_b: usize,
+}
+
 /// Pre-screens a candidate genome pool (`proposal_pool_k -> eval_budget_b`) for a target
 /// `DiscoveryContext` using a fitted `Selector` (such as `ContextualSurrogateQHat`) and packages
 /// the selected genomes into a validated [`PolicySeeds`] batch.
 pub fn select_seeds_with_surrogate_funnel(
-    context: &DiscoveryContext,
-    snapshot: PolicySnapshot,
-    batch_protocol_sha256: &str,
-    temperature: f64,
-    candidate_genomes: &[String],
-    selector: &dyn crate::pools::selectors::Selector,
-    proposal_pool_k: usize,
-    eval_budget_b: usize,
+    request: SurrogateSeedRequest<'_>,
 ) -> Result<(PolicySeeds, crate::pools::selectors::FunnelAllocation)> {
+    let SurrogateSeedRequest {
+        context,
+        snapshot,
+        batch_protocol_sha256,
+        temperature,
+        candidate_genomes,
+        selector,
+        proposal_pool_k,
+        eval_budget_b,
+    } = request;
     ensure!(
         !candidate_genomes.is_empty(),
         "candidate_genomes must not be empty"
@@ -609,7 +624,7 @@ pub fn select_seeds_with_surrogate_funnel(
         .collect();
     let seeds = PolicySeeds {
         schema: "clover.policy-seeds/v1".into(),
-        snapshot,
+        snapshot: snapshot.clone(),
         context_sha256: context.context_sha256.clone(),
         encoder_input_sha256: context.encoder_input_sha256.clone(),
         sampling_protocol: "trie_children_temperature_v1".into(),

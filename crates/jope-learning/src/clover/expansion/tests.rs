@@ -722,16 +722,16 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
     let qhat =
         ContextualSurrogateQHat::fit(&train_refs, &ctx_feats, &prog_feats, 2, 2.0, 1e-2).unwrap();
 
-    let (screened_policy, funnel) = select_seeds_with_surrogate_funnel(
-        target_ctx,
-        base_policy.snapshot.clone(),
-        &base_policy.batch_protocol_sha256,
-        1.0,
-        &candidate_genomes,
-        &qhat,
-        4,
-        2,
-    )
+    let (screened_policy, funnel) = select_seeds_with_surrogate_funnel(SurrogateSeedRequest {
+        context: target_ctx,
+        snapshot: &base_policy.snapshot,
+        batch_protocol_sha256: &base_policy.batch_protocol_sha256,
+        temperature: 1.0,
+        candidate_genomes: &candidate_genomes,
+        selector: &qhat,
+        proposal_pool_k: 4,
+        eval_budget_b: 2,
+    })
     .unwrap();
     assert_eq!(funnel.proposal_pool_k, 4);
     assert_eq!(funnel.eval_budget_b, 2);
