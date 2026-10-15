@@ -211,6 +211,8 @@ uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpoli
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_kv_offline.py --receipt "$EVIDENCE/kv-trie-offline.json" )
     # R25-kNN-CE neighbour-table and harness-gate CPU fixtures (torch CPU; no data, checkpoint or GPU).
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/r25_knnce/run_r25_offline.py --receipt "$EVIDENCE/r25-knnce-offline.json" )
+    # J22 pure CPU analysis fixtures; no training or evaluator execution.
+python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --receipt "$EVIDENCE/multiseed-offline.json"
     # Analytics uses the locked numpy/pyarrow environment; all inputs are fixtures.
 uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
     # New ingest data contracts use copied fixtures; no S3 credentials or traffic.
