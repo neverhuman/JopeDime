@@ -2,7 +2,7 @@
 //!
 //! Search measurements here are adaptive inner-cut measurements, never qualified rewards.
 use crate::canon::{canonical_sha256, is_hex64};
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use jope_pipeline::{prepare::Cut, search, seeds};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -182,6 +182,18 @@ pub struct PolicyProposal {
     pub behavior_logprob: f64,
 }
 
+pub const SAMPLING_TRIE_TEMPERATURE_V1: &str = "trie_children_temperature_v1";
+pub const SAMPLING_SURROGATE_FUNNEL_TOPB_V1: &str = "surrogate_funnel_topb_v1";
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SurrogateFunnelProvenance {
+    pub selector_name: String,
+    pub selector_rule: String,
+    pub candidate_catalog_sha256: String,
+    pub allocation: crate::pools::selectors::FunnelAllocation,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PolicySeeds {
@@ -194,6 +206,8 @@ pub struct PolicySeeds {
     pub temperature: f64,
     /// Original draws in order; duplicates remain here for honest draw accounting.
     pub proposals: Vec<PolicyProposal>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub surrogate_funnel: Option<SurrogateFunnelProvenance>,
 }
 
 fn canonical_genome(raw: &str) -> Result<String> {
@@ -223,33 +237,93 @@ impl PolicySeeds {
                 && self.encoder_input_sha256 == context.encoder_input_sha256,
             "policy context identity mismatch"
         );
-        ensure!(
-            self.sampling_protocol == "trie_children_temperature_v1",
-            "undeclared behavior sampler"
-        );
-        ensure!(
-            is_hex64(&self.batch_protocol_sha256),
-            "decoder batch protocol pin missing"
-        );
-        ensure!(
-            self.temperature.is_finite() && (0.1..=2.0).contains(&self.temperature),
-            "invalid temperature"
-        );
-        ensure!(
-            !self.proposals.is_empty() && self.proposals.len() <= 1024,
-            "bounded policy draws required"
-        );
-        for p in &self.proposals {
-            ensure!(p.draw_seed < 1 << 63, "decoder seed outside CPU RNG domain");
-            ensure!(
-                p.behavior_logprob.is_finite() && p.behavior_logprob <= 0.,
-                "invalid behavior likelihood"
-            );
-            ensure!(
-                p.program_sha256 == jope_pipeline::sha256_hex(p.genome.as_bytes())
-                    && canonical_genome(&p.genome)? == p.genome,
-                "policy program must be canonical and hash-bound"
-            );
+        match self.sampling_protocol.as_str() {
+            SAMPLING_TRIE_TEMPERATURE_V1 => {
+                ensure!(
+                    self.surrogate_funnel.is_none(),
+                    "trie_children_temperature_v1 must not carry surrogate_funnel provenance"
+                );
+                ensure!(
+                    is_hex64(&self.batch_protocol_sha256),
+                    "decoder batch protocol pin missing"
+                );
+                ensure!(
+                    self.temperature.is_finite() && (0.1..=2.0).contains(&self.temperature),
+                    "invalid temperature"
+                );
+                ensure!(
+                    !self.proposals.is_empty() && self.proposals.len() <= 1024,
+                    "bounded policy draws required"
+                );
+                for p in &self.proposals {
+                    ensure!(p.draw_seed < 1 << 63, "decoder seed outside CPU RNG domain");
+                    ensure!(
+                        p.behavior_logprob.is_finite() && p.behavior_logprob <= 0.,
+                        "invalid behavior likelihood"
+                    );
+                    ensure!(
+                        p.program_sha256 == jope_pipeline::sha256_hex(p.genome.as_bytes())
+                            && canonical_genome(&p.genome)? == p.genome,
+                        "policy program must be canonical and hash-bound"
+                    );
+                }
+            }
+            SAMPLING_SURROGATE_FUNNEL_TOPB_V1 => {
+                let prov = self
+                    .surrogate_funnel
+                    .as_ref()
+                    .context("surrogate_funnel_topb_v1 requires surrogate_funnel provenance")?;
+                ensure!(
+                    !prov.selector_name.trim().is_empty() && !prov.selector_rule.trim().is_empty(),
+                    "surrogate_funnel provenance requires non-empty selector_name and selector_rule"
+                );
+                ensure!(
+                    is_hex64(&prov.candidate_catalog_sha256),
+                    "surrogate_funnel candidate_catalog_sha256 must be lowercase 64-hex"
+                );
+                ensure!(
+                    prov.allocation.context_id == self.context_sha256,
+                    "surrogate_funnel allocation context_id mismatch"
+                );
+                ensure!(
+                    self.batch_protocol_sha256 == canonical_sha256(prov)?,
+                    "surrogate_funnel batch_protocol_sha256 must equal canonical_sha256(surrogate_funnel)"
+                );
+                ensure!(
+                    self.temperature == 0.0,
+                    "deterministic surrogate_funnel_topb_v1 requires temperature == 0.0"
+                );
+                ensure!(
+                    !self.proposals.is_empty() && self.proposals.len() <= 1024,
+                    "bounded policy draws required"
+                );
+                ensure!(
+                    prov.allocation.selected_program_sha256.len() == self.proposals.len()
+                        && prov.allocation.selected_scores.len() == self.proposals.len()
+                        && prov
+                            .allocation
+                            .selected_scores
+                            .iter()
+                            .all(|s| s.is_finite()),
+                    "surrogate_funnel allocation lengths/scores must match proposals"
+                );
+                for (idx, p) in self.proposals.iter().enumerate() {
+                    ensure!(
+                        p.draw_seed == 0 && p.behavior_logprob == 0.0,
+                        "deterministic surrogate_funnel_topb_v1 requires draw_seed == 0 and behavior_logprob == 0.0"
+                    );
+                    ensure!(
+                        p.program_sha256 == prov.allocation.selected_program_sha256[idx],
+                        "proposal {idx} program_sha256 does not match surrogate_funnel allocation"
+                    );
+                    ensure!(
+                        p.program_sha256 == jope_pipeline::sha256_hex(p.genome.as_bytes())
+                            && canonical_genome(&p.genome)? == p.genome,
+                        "policy program must be canonical and hash-bound"
+                    );
+                }
+            }
+            _ => bail!("undeclared behavior sampler"),
         }
         Ok(())
     }
@@ -539,8 +613,6 @@ pub fn novelty(
 pub struct SurrogateSeedRequest<'a> {
     pub context: &'a DiscoveryContext,
     pub snapshot: &'a PolicySnapshot,
-    pub batch_protocol_sha256: &'a str,
-    pub temperature: f64,
     pub candidate_genomes: &'a [String],
     pub selector: &'a dyn crate::pools::selectors::Selector,
     pub proposal_pool_k: usize,
@@ -549,15 +621,14 @@ pub struct SurrogateSeedRequest<'a> {
 
 /// Pre-screens a candidate genome pool (`proposal_pool_k -> eval_budget_b`) for a target
 /// `DiscoveryContext` using a fitted `Selector` (such as `ContextualSurrogateQHat`) and packages
-/// the selected genomes into a validated [`PolicySeeds`] batch.
+/// the selected genomes into a validated [`PolicySeeds`] batch under
+/// [`SAMPLING_SURROGATE_FUNNEL_TOPB_V1`] with explicit [`SurrogateFunnelProvenance`].
 pub fn select_seeds_with_surrogate_funnel(
     request: SurrogateSeedRequest<'_>,
 ) -> Result<(PolicySeeds, crate::pools::selectors::FunnelAllocation)> {
     let SurrogateSeedRequest {
         context,
         snapshot,
-        batch_protocol_sha256,
-        temperature,
         candidate_genomes,
         selector,
         proposal_pool_k,
@@ -566,10 +637,6 @@ pub fn select_seeds_with_surrogate_funnel(
     ensure!(
         !candidate_genomes.is_empty(),
         "candidate_genomes must not be empty"
-    );
-    ensure!(
-        temperature.is_finite() && (0.1..=2.0).contains(&temperature),
-        "temperature must be in 0.1..=2.0"
     );
     let mut sha_to_genome = std::collections::BTreeMap::new();
     let mut ordered_shas = Vec::with_capacity(candidate_genomes.len());
@@ -583,6 +650,7 @@ pub fn select_seeds_with_surrogate_funnel(
         sha_to_genome.entry(sha.clone()).or_insert(canonical);
         ordered_shas.push(sha);
     }
+    let candidate_catalog_sha256 = canonical_sha256(&ordered_shas)?;
     let prog_refs: Vec<&str> = ordered_shas.iter().map(String::as_str).collect();
     let view = crate::pools::pool::PoolView {
         context_id: &context.context_sha256,
@@ -597,19 +665,10 @@ pub fn select_seeds_with_surrogate_funnel(
         proposal_pool_k,
         eval_budget_b,
     )?;
-    let scaled: Vec<f64> = funnel
-        .selected_scores
-        .iter()
-        .map(|&s| s / temperature)
-        .collect();
-    let max_s = scaled.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    let lse = max_s + scaled.iter().map(|&s| (s - max_s).exp()).sum::<f64>().ln();
     let proposals: Vec<PolicyProposal> = funnel
         .selected_program_sha256
         .iter()
-        .zip(&scaled)
-        .enumerate()
-        .map(|(idx, (sha, &s))| {
+        .map(|sha| {
             let genome = sha_to_genome
                 .get(sha)
                 .expect("selected program sha came from candidate_genomes")
@@ -617,20 +676,28 @@ pub fn select_seeds_with_surrogate_funnel(
             PolicyProposal {
                 genome,
                 program_sha256: sha.clone(),
-                draw_seed: (idx + 1) as u64,
-                behavior_logprob: (s - lse).min(0.0),
+                draw_seed: 0,
+                behavior_logprob: 0.0,
             }
         })
         .collect();
+    let provenance = SurrogateFunnelProvenance {
+        selector_name: selector.name().to_owned(),
+        selector_rule: selector.rule(),
+        candidate_catalog_sha256,
+        allocation: funnel.clone(),
+    };
+    let batch_protocol_sha256 = canonical_sha256(&provenance)?;
     let seeds = PolicySeeds {
         schema: "clover.policy-seeds/v1".into(),
         snapshot: snapshot.clone(),
         context_sha256: context.context_sha256.clone(),
         encoder_input_sha256: context.encoder_input_sha256.clone(),
-        sampling_protocol: "trie_children_temperature_v1".into(),
-        batch_protocol_sha256: batch_protocol_sha256.to_owned(),
-        temperature,
+        sampling_protocol: SAMPLING_SURROGATE_FUNNEL_TOPB_V1.into(),
+        batch_protocol_sha256,
+        temperature: 0.0,
         proposals,
+        surrogate_funnel: Some(provenance),
     };
     seeds.validate(context)?;
     Ok((seeds, funnel))
@@ -837,6 +904,7 @@ pub struct SelfPlayRoundReceipt {
     pub policy_archive_ce_loss: Option<f64>,
     pub decomposed_kl: Option<crate::support::DecomposedSupportKl>,
     pub seed_update_frozen_by_kl_guard: Option<bool>,
+    pub next_round_seed_selector: String,
 }
 
 /// Execute a multi-round (`Round 0 -> Round 1 -> ...`) algorithmic self-play regression ratchet.
@@ -847,9 +915,12 @@ pub struct SelfPlayRoundReceipt {
 /// over the Round-0 bootstrap baseline are admitted into the round archive `A_{t+1}`.
 ///
 /// Policy KL guard evaluation supports two mutually exclusive runtime modes:
-/// 1. `measured_tilt_policy: Some(cfg)`: Closed-loop measured-tilt (`L_PI` / AWR) policy update
-///    from the runtime measured inner-cut qualities `base_best_q` and `archive_best_rmse`,
-///    recording `policy_archive_ce_loss` (`weighted_archive_ce`) and `decomposed_support_kl`.
+/// 1. `measured_tilt_policy: Some(cfg)`: Closed-form non-parametric measured-tilt (`L_PI` / AWR)
+///    leaf policy over `S_base U S_new` derived from runtime measured inner-cut qualities
+///    `base_best_q` and `archive_best_rmse`, recording `policy_archive_ce_loss`
+///    (`weighted_archive_ce`), `decomposed_support_kl`, `measured_tilt_rounds_admissible`, and
+///    selecting next-round seeds by descending tilted leaf log-probability when admissible
+///    (`policy_optimizer_updates` remains `0` because no neural checkpoint parameters change).
 /// 2. `round_leaf_log_prob_fn: Some(eval_fn)`: Custom caller callback invoked with
 ///    `(t, &base_leaf_genomes, &archive_leaf_genomes)`.
 ///
@@ -964,7 +1035,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         .collect();
 
     let mut round_receipts: Vec<SelfPlayRoundReceipt> = Vec::with_capacity(round_budgets.len());
-    let mut policy_optimizer_updates = 0usize;
+    let mut measured_tilt_rounds_admissible = 0usize;
 
     for (round_idx, budget) in round_budgets.iter().enumerate() {
         let limits = search::Budget {
@@ -1108,6 +1179,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         is_base.extend(std::iter::repeat_n(true, base_leaf_count));
         is_base.extend(std::iter::repeat_n(false, n_new));
 
+        let mut tilted_leaf_log_probs: Option<Vec<f64>> = None;
         let (
             kl_source,
             kl_malformed_reason,
@@ -1165,26 +1237,39 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
                 .iter()
                 .map(|g| 1.0 / (1.0 + archive_best_rmse[g]))
                 .collect();
-            let (pol_lp, ref_lp, ce_loss) =
-                measured_tilt_leaf_log_probs(&base_q_vec, &arch_q_vec, bootstrap_q, tilt_cfg)?;
-            let report = crate::support::decomposed_support_kl(
-                &pol_lp,
-                &ref_lp,
-                &is_base,
-                max_conditional_base_kl,
-                max_new_support_mass,
-            )?;
-            let frozen = !report.admissible;
-            if report.admissible {
-                policy_optimizer_updates += 1;
+            match measured_tilt_leaf_log_probs(&base_q_vec, &arch_q_vec, bootstrap_q, tilt_cfg)
+                .and_then(|(pol_lp, ref_lp, ce_loss)| {
+                    let report = crate::support::decomposed_support_kl(
+                        &pol_lp,
+                        &ref_lp,
+                        &is_base,
+                        max_conditional_base_kl,
+                        max_new_support_mass,
+                    )?;
+                    Ok((pol_lp, ce_loss, report))
+                }) {
+                Ok((pol_lp, ce_loss, report)) => {
+                    let frozen = !report.admissible;
+                    if report.admissible {
+                        measured_tilt_rounds_admissible += 1;
+                        tilted_leaf_log_probs = Some(pol_lp);
+                    }
+                    (
+                        "measured_tilt_leaf_policy".to_string(),
+                        None,
+                        Some(ce_loss),
+                        Some(report),
+                        Some(frozen),
+                    )
+                }
+                Err(err) => (
+                    "measured_tilt_leaf_policy_malformed".to_string(),
+                    Some(format!("{err:#}")),
+                    None,
+                    None,
+                    Some(true),
+                ),
             }
-            (
-                "measured_tilt_leaf_policy".to_string(),
-                None,
-                Some(ce_loss),
-                Some(report),
-                Some(frozen),
-            )
         } else {
             (
                 "unmeasured_no_policy_log_probs".to_string(),
@@ -1197,7 +1282,50 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
 
         // 4. Select top `seed_cap_b` archive + base winners through `seeds::admit` to seed Round `t+1`,
         // unless a policy KL guard tripped and froze seed updates.
-        if seed_update_frozen_by_kl_guard != Some(true) {
+        let next_round_seed_selector = if seed_update_frozen_by_kl_guard == Some(true) {
+            "frozen_by_kl_guard".to_string()
+        } else if let Some(ref pol_lp) = tilted_leaf_log_probs {
+            // Rank eligible leaves in S_base U S_new by descending tilted leaf log-probability,
+            // breaking ties by ascending measured RMSE and ascending genome.
+            let current_seed_set: BTreeSet<&str> =
+                current_seeds.iter().map(String::as_str).collect();
+            let mut tilted_candidates: Vec<(String, f64, f64)> = Vec::new();
+            for (idx, g) in base_catalog_ordered.iter().enumerate() {
+                if g != search::BOOTSTRAP_GENOME && current_seed_set.contains(g.as_str()) {
+                    let q = base_best_q.get(g).copied().unwrap_or(bootstrap_q);
+                    let r = (1.0 / q) - 1.0;
+                    tilted_candidates.push((g.clone(), pol_lp[idx], r));
+                }
+            }
+            for (offset, g) in archive_leaf_genomes.iter().enumerate() {
+                if g != search::BOOTSTRAP_GENOME {
+                    let r = archive_best_rmse[g];
+                    tilted_candidates.push((g.clone(), pol_lp[base_leaf_count + offset], r));
+                }
+            }
+            tilted_candidates.sort_by(|a, b| {
+                b.1.total_cmp(&a.1)
+                    .then_with(|| a.2.total_cmp(&b.2))
+                    .then_with(|| a.0.cmp(&b.0))
+            });
+            let candidate_pairs: Vec<(String, &'static str)> = tilted_candidates
+                .into_iter()
+                .map(|(g, _, _)| (g, seeds::FROM_SEEDS_FILE))
+                .collect();
+            if !candidate_pairs.is_empty() {
+                let admitted_next = seeds::admit(&candidate_pairs)?;
+                let next_seeds: Vec<String> = admitted_next
+                    .seeds
+                    .into_iter()
+                    .take(seed_cap_b)
+                    .map(|s| s.genome)
+                    .collect();
+                if !next_seeds.is_empty() {
+                    current_seeds = next_seeds;
+                }
+            }
+            "measured_tilt_leaf_policy".to_string()
+        } else {
             let mut ranked_candidates: Vec<(String, f64)> = archive_best_rmse
                 .iter()
                 .map(|(g, &r)| (g.clone(), r))
@@ -1226,7 +1354,8 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
                     current_seeds = next_seeds;
                 }
             }
-        }
+            "archive_best_rmse_greedy".to_string()
+        };
 
         round_receipts.push(SelfPlayRoundReceipt {
             round: round_idx,
@@ -1261,6 +1390,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             policy_archive_ce_loss,
             decomposed_kl,
             seed_update_frozen_by_kl_guard,
+            next_round_seed_selector,
         });
     }
 
@@ -1308,12 +1438,13 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         "all_rounds_kl_admissible": all_rounds_kl_admissible,
         "any_round_frozen_by_kl_guard": any_round_frozen_by_kl_guard,
         "total_admitted_new_winners": total_admitted_new_winners,
+        "measured_tilt_rounds_admissible": measured_tilt_rounds_admissible,
         "equal_resource_comparison": false,
         "stop_policy": "no_extension_on_timeout_failure_or_missing_measurement",
         "budget_caveat": "in-process fits are nonpreemptive; bootstrap/seeds are seconds-exempt; round t>0 reuses prior rounds' inner-holdout archive champions",
         "qualified_rewards": 0,
         "h1_established": false,
-        "policy_optimizer_updates": policy_optimizer_updates,
+        "policy_optimizer_updates": 0,
     }))
 }
 

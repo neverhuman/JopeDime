@@ -459,6 +459,26 @@ fn contextual_surrogate_qhat_establishes_h2_on_interaction_pools() {
             .unwrap()
             > 0.70
     );
+
+    // Caller-supplied Unavailable{contextual_surrogate_qhat} skips fitting the internal surrogate.
+    let disabled_inputs = Inputs {
+        context_features: Some(&cf),
+        program_features: Some(&pf),
+        external: vec![],
+        unavailable: vec![Unavailable {
+            name: "contextual_surrogate_qhat".into(),
+            reason: "caller_disabled".into(),
+        }],
+    };
+    let disabled_receipt = evaluate(&pools, &manifest, &disabled_inputs, &eval_cfg).unwrap();
+    assert!(!disabled_receipt
+        .summaries
+        .contains_key("contextual_surrogate_qhat"));
+    assert_eq!(disabled_receipt.unavailable_selectors.len(), 1);
+    assert_eq!(
+        disabled_receipt.unavailable_selectors[0].reason,
+        "caller_disabled"
+    );
 }
 
 #[test]

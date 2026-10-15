@@ -201,28 +201,50 @@ pub fn evaluate(
     };
     let program_features = inputs.program_features.or(derived.as_ref());
     let mut unavailable_selectors = inputs.unavailable.clone();
-    let can_fit_surrogate = match (inputs.context_features, program_features) {
-        (Some(cf), Some(pf)) if cf.dim > 0 && pf.dim > 0 => {
-            match ContextualSurrogateQHat::design_dim(cf.dim, pf.dim) {
-                Some(d) if d <= MAX_SURROGATE_DESIGN_DIM => true,
-                Some(d) => {
-                    if !unavailable_selectors
-                        .iter()
-                        .any(|u| u.name == "contextual_surrogate_qhat")
-                    {
-                        unavailable_selectors.push(Unavailable {
-                            name: "contextual_surrogate_qhat".into(),
-                            reason: format!(
-                                "bilinear design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM})"
-                            ),
-                        });
-                    }
+    let already_marked_unavailable = unavailable_selectors
+        .iter()
+        .any(|u| u.name == "contextual_surrogate_qhat");
+    let can_fit_surrogate = if already_marked_unavailable {
+        false
+    } else {
+        match (inputs.context_features, program_features) {
+            (Some(cf), Some(pf)) => {
+                if cf.dim == 0 || pf.dim == 0 {
+                    unavailable_selectors.push(Unavailable {
+                        name: "contextual_surrogate_qhat".into(),
+                        reason: format!(
+                            "non-empty feature dimensions required (d_ctx={}, d_prog={})",
+                            cf.dim, pf.dim
+                        ),
+                    });
                     false
+                } else {
+                    match ContextualSurrogateQHat::design_dim(cf.dim, pf.dim) {
+                        Some(d) if d <= MAX_SURROGATE_DESIGN_DIM => true,
+                        Some(d) => {
+                            unavailable_selectors.push(Unavailable {
+                                name: "contextual_surrogate_qhat".into(),
+                                reason: format!(
+                                    "bilinear design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM})"
+                                ),
+                            });
+                            false
+                        }
+                        None => {
+                            unavailable_selectors.push(Unavailable {
+                                name: "contextual_surrogate_qhat".into(),
+                                reason: format!(
+                                    "bilinear design dimension overflow (d_ctx={}, d_prog={})",
+                                    cf.dim, pf.dim
+                                ),
+                            });
+                            false
+                        }
+                    }
                 }
-                None => false,
             }
+            _ => false,
         }
-        _ => false,
     };
     let mut contexts: Vec<ContextRecord> = pools
         .iter()

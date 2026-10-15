@@ -54,6 +54,7 @@ fn fixture() -> (TrainingRoster, Cut, PolicySeeds, RetrievalSeeds) {
             draw_seed: 101,
             behavior_logprob: -3.,
         }],
+        surrogate_funnel: None,
     };
     let retrieval = RetrievalSeeds {
         seeds: vec![RetrievalSeed {
@@ -725,8 +726,6 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
     let (screened_policy, funnel) = select_seeds_with_surrogate_funnel(SurrogateSeedRequest {
         context: target_ctx,
         snapshot: &base_policy.snapshot,
-        batch_protocol_sha256: &base_policy.batch_protocol_sha256,
-        temperature: 1.0,
         candidate_genomes: &candidate_genomes,
         selector: &qhat,
         proposal_pool_k: 4,
@@ -736,6 +735,29 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
     assert_eq!(funnel.proposal_pool_k, 4);
     assert_eq!(funnel.eval_budget_b, 2);
     assert_eq!(screened_policy.proposals.len(), 2);
+    assert_eq!(
+        screened_policy.sampling_protocol,
+        SAMPLING_SURROGATE_FUNNEL_TOPB_V1
+    );
+    assert_eq!(screened_policy.temperature, 0.0);
+    assert!(screened_policy
+        .proposals
+        .iter()
+        .all(|p| p.draw_seed == 0 && p.behavior_logprob == 0.0));
+    let prov = screened_policy.surrogate_funnel.as_ref().unwrap();
+    assert_eq!(prov.selector_name, "contextual_surrogate_qhat");
+    assert_eq!(prov.allocation, funnel);
+    assert_eq!(
+        screened_policy.batch_protocol_sha256,
+        canonical_sha256(prov).unwrap()
+    );
+    // Tampering with deterministic funnel invariants is rejected by validate.
+    let mut bad_funnel_policy = screened_policy.clone();
+    bad_funnel_policy.proposals[0].draw_seed = 1;
+    assert!(bad_funnel_policy.validate(target_ctx).is_err());
+    let mut bad_trie_policy = base_policy.clone();
+    bad_trie_policy.surrogate_funnel = Some(prov.clone());
+    assert!(bad_trie_policy.validate(target_ctx).is_err());
 
     // 2. Run 3-round closed-loop self-play ratchet with MeasuredTiltPolicyConfig.
     let temp = tempfile::tempdir().unwrap();
@@ -785,7 +807,8 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
     assert_eq!(receipt["any_round_frozen_by_kl_guard"], false);
     assert_eq!(receipt["monotonic_non_decreasing_best_q"], true);
     assert_eq!(receipt["matched_or_beat_ordinary_in_final_round"], true);
-    assert_eq!(receipt["policy_optimizer_updates"], 3);
+    assert_eq!(receipt["policy_optimizer_updates"], 0);
+    assert_eq!(receipt["measured_tilt_rounds_admissible"], 3);
     for r in receipt["rounds"].as_array().unwrap() {
         assert_eq!(r["kl_source"], "measured_tilt_leaf_policy");
         assert!(r["kl_malformed_reason"].is_null());
@@ -793,5 +816,6 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
         assert!(ce.is_finite() && ce > 0.0);
         assert_eq!(r["decomposed_kl"]["admissible"], true);
         assert_eq!(r["seed_update_frozen_by_kl_guard"], false);
+        assert_eq!(r["next_round_seed_selector"], "measured_tilt_leaf_policy");
     }
 }

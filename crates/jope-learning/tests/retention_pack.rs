@@ -397,20 +397,26 @@ fn parquet_subset_round_trips_every_type_and_null() {
 
 #[test]
 fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
+    use jope_learning::pools::bootstrap::Verdict;
     use jope_learning::pools::evaluate::{evaluate, Config, Inputs};
     use jope_learning::pools::pool::{freeze, FreezeRule, Reference};
     use jope_learning::pools::selectors::Features;
     use jope_learning::retention::distilled::{
-        distill_selfplay_observations, distilled_rows_to_measurement_rows,
-        SelfPlayDistillObservation, SelfPlayDistillSpec,
+        distill_selfplay_observations, distilled_rows_to_measurement_rows, score_direction,
+        ScoreDirection, SelfPlayDistillObservation, SelfPlayDistillSpec,
     };
 
-    let mut scores = known();
-    scores.insert("inner_cut_q".into());
+    let scores = known();
+    assert_eq!(
+        score_direction("best_rust_rmse").unwrap(),
+        ScoreDirection::LowerIsBetter
+    );
+    assert!(score_direction("unregistered_metric").is_err());
 
     let mut all_distilled = Vec::new();
     let mut cf_rows = std::collections::BTreeMap::new();
-    for c in 0..8usize {
+    let mut pf_rows = std::collections::BTreeMap::new();
+    for c in 0..32usize {
         let parent = format!("dataset-parent-{}", c / 2);
         let ctx_sha = sha256_hex(format!("selfplay-ctx-{c}").as_bytes());
         let z = if (c / 2) % 2 == 0 { 1.0 } else { -1.0 };
@@ -420,29 +426,50 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
             context_sha256: ctx_sha.clone(),
             fold: Some((c % 2) as i64),
             split_role: SplitRole::Train,
-            score_name: "inner_cut_q".into(),
+            score_name: "best_rust_rmse".into(),
             policylm_ckpt: None,
             campaign: Some("selfplay-flywheel-phase3".into()),
             run_id: format!("run-sp-{c}"),
             family: "clover-selfplay".into(),
             source_bucket: "veox-jopedime-learning-use2".into(),
         };
+        // Disjoint program cohort per parent so cross-parent ID memorization (ProgramPrior / RetrievalKnn)
+        // has zero overlap across folds and context-blind RidgeProgram averages out across z=+1/-1,
+        // while ContextualSurrogateQHat generalizes via z * phi(program) on negated best_rust_rmse.
+        let cohort = c / 2;
         let mut obs = Vec::new();
-        for p in 0..10usize {
+        let mut best_expected_sha = String::new();
+        let mut best_expected_rmse = f64::INFINITY;
+        for p in 0..11usize {
             let expr = if p % 2 == 0 {
-                format!("(pipe X (standardize) (ridge alpha={}))", p + 1)
+                format!(
+                    "(pipe X (standardize) (ridge alpha={}))",
+                    cohort * 100 + p + 1
+                )
             } else {
-                format!("(pipe X ( winsorize ) (lasso alpha={}))", p + 1)
+                format!(
+                    "(pipe X ( winsorize ) (lasso alpha={}))",
+                    cohort * 100 + p + 1
+                )
             };
             let prog_sha = sha256_hex(expr.as_bytes());
-            let failed = p == 9;
+            let failed = p == 10;
             let phi = if p % 2 == 0 { 1.0 } else { -1.0 };
-            let q = (!failed).then_some(0.5 + 0.3 * (z * phi) + 0.01 * (p as f64));
+            pf_rows.insert(prog_sha.clone(), vec![phi]);
+            // Lower RMSE is better: when z * phi > 0, RMSE is ~0.20 (best); when z * phi < 0, RMSE is ~0.80 (worst).
+            let rmse = (!failed).then(|| {
+                let val = 0.50 - 0.30 * (z * phi) + 0.001 * (p as f64);
+                if val < best_expected_rmse {
+                    best_expected_rmse = val;
+                    best_expected_sha = prog_sha.clone();
+                }
+                val
+            });
             obs.push(SelfPlayDistillObservation {
                 program_sha: prog_sha,
                 program: Some(expr),
                 outcome: if failed { Outcome::Failed } else { Outcome::Ok },
-                q,
+                score: rmse,
                 seed_packet: Some(if p < 2 {
                     "selfplay_archive_r1".into()
                 } else {
@@ -454,13 +481,18 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
             });
         }
         let batch = distill_selfplay_observations(&spec, &obs, &scores).unwrap();
-        // Verify rank_ctx = 1..=9 on the 9 completed evaluations and None on the failed one.
+        // Verify rank_ctx = 1..=10 on the 10 completed evaluations and None on the failed one.
         let ranks: BTreeSet<i64> = batch.iter().filter_map(|r| r.rank_ctx).collect();
-        assert_eq!(ranks, (1..=9).collect());
-        assert!(batch
-            .iter()
-            .filter(|r| r.outcome == Outcome::Ok)
-            .all(|r| r.champion_id.is_some() && !r.qualified && r.superseded_by.is_none()));
+        assert_eq!(ranks, (1..=10).collect());
+        // Verify rank 1 and champion_id belong to the LOWEST-RMSE program (not highest RMSE).
+        let rank1 = batch.iter().find(|r| r.rank_ctx == Some(1)).unwrap();
+        assert_eq!(rank1.program_sha, best_expected_sha);
+        assert!((rank1.score.unwrap() - best_expected_rmse).abs() < 1e-12);
+        assert!(batch.iter().filter(|r| r.outcome == Outcome::Ok).all(|r| {
+            r.champion_id.as_deref() == Some(best_expected_sha.as_str())
+                && !r.qualified
+                && r.superseded_by.is_none()
+        }));
         all_distilled.extend(batch);
     }
 
@@ -469,50 +501,90 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
     let reloaded = distilled::read(&parquet_bytes, &scores).unwrap();
     assert_eq!(reloaded.len(), all_distilled.len());
 
-    // Convert into MeasurementRows and freeze into shadow pools.
+    // Convert into MeasurementRows and verify lower-is-better RMSE is negated into higher-is-better q.
     let protocol_sha = sha256_hex(b"selfplay-inner-cut-protocol-v1");
     let m_rows =
-        distilled_rows_to_measurement_rows(&reloaded, "inner_cut_q", &protocol_sha, &scores)
+        distilled_rows_to_measurement_rows(&reloaded, "best_rust_rmse", &protocol_sha, &scores)
             .unwrap();
+    for (d_row, m_row) in reloaded.iter().zip(&m_rows) {
+        if let Some(rmse) = d_row.score {
+            assert_eq!(m_row.q, Some(-rmse));
+        } else {
+            assert_eq!(m_row.q, None);
+        }
+    }
+
     let freeze_rule = FreezeRule {
-        min_pool: 9,
+        min_pool: 10,
         max_pool: None,
         salt: "distilled-bridge".into(),
         min_distinct_measured: 2,
         source_grade: "gp_distilled_v1".into(),
     };
     let (pools, manifest) = freeze(&m_rows, &freeze_rule, &sha256_hex(&parquet_bytes)).unwrap();
-    assert_eq!(pools.len(), 8);
+    assert_eq!(pools.len(), 32);
 
     let cf = Features {
         dim: 1,
         rows: cf_rows,
     };
+    let pf = Features {
+        dim: 1,
+        rows: pf_rows,
+    };
     let eval_cfg = Config {
         reference: Reference::PoolFloor,
         budget: 2,
-        folds: 2,
+        folds: 5,
         fold_salt: "distilled-folds".into(),
         prior_weight: 2.0,
-        knn_k: 2,
+        knn_k: 1,
         ridge_lambda: 1.0,
-        bootstrap_draws: 200,
+        bootstrap_draws: 500,
         bootstrap_seed: 11,
         alpha: 0.05,
     };
     let inputs = Inputs {
         context_features: Some(&cf),
-        program_features: None,
+        program_features: Some(&pf),
         external: vec![],
         unavailable: vec![],
     };
     let receipt = evaluate(&pools, &manifest, &inputs, &eval_cfg).unwrap();
-    assert!(receipt.summaries.contains_key("contextual_surrogate_qhat"));
+    assert_eq!(receipt.ranking_learnability, "ESTABLISHED_SHADOW");
+    let cmp = receipt
+        .comparisons
+        .iter()
+        .find(|c| {
+            c.candidate == "contextual_surrogate_qhat" && c.baseline == receipt.strongest_baseline
+        })
+        .unwrap();
+    assert_eq!(cmp.realized_gain.verdict, Verdict::Greater);
+    assert_eq!(
+        cmp.pairwise_accuracy.as_ref().unwrap().verdict,
+        Verdict::Greater
+    );
+
+    // Verify l6 and mixed-fold rows are refused by distilled_rows_to_measurement_rows.
+    assert!(
+        distilled_rows_to_measurement_rows(&reloaded, "l6", &protocol_sha, &scores).is_err(),
+        "l6 must be refused for shadow training pool bridging"
+    );
+    let mut mixed_fold = reloaded.clone();
+    mixed_fold[0].fold = Some(99);
+    assert!(distilled_rows_to_measurement_rows(
+        &mixed_fold,
+        "best_rust_rmse",
+        &protocol_sha,
+        &scores
+    )
+    .is_err());
 
     // Verify held-out Val263 rows are preserved as "val" and refused by freeze.
     let mut leaked = reloaded.clone();
     leaked[0].split_role = SplitRole::Val263;
     let leaked_m =
-        distilled_rows_to_measurement_rows(&leaked, "inner_cut_q", &protocol_sha, &scores).unwrap();
+        distilled_rows_to_measurement_rows(&leaked, "best_rust_rmse", &protocol_sha, &scores)
+            .unwrap();
     assert!(freeze(&leaked_m, &freeze_rule, &sha256_hex(&parquet_bytes)).is_err());
 }
