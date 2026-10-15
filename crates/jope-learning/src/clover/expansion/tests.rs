@@ -336,6 +336,7 @@ fn multi_round_selfplay_ratchet_maintains_monotonic_q_and_kl_guard() {
         },
     ];
     let role_bytes = roles();
+    // Test exact boundary: archive_mass_per_round = 0.05 * 3 rounds = 0.15 == max_new_support_mass.
     let req = SelfPlayRatchetRequest {
         roster: &roster,
         role_manifest: &role_bytes,
@@ -345,19 +346,38 @@ fn multi_round_selfplay_ratchet_maintains_monotonic_q_and_kl_guard() {
         initial_retrieval: &retrieval,
         round_budgets: &round_budgets,
         seed_cap_b: 4,
-        archive_mass_per_round: 0.04,
+        archive_mass_per_round: 0.05,
         max_conditional_base_kl: 0.05,
         max_new_support_mass: 0.15,
+        round_leaf_log_probs: None,
     };
     let receipt = run_selfplay_ratchet(req, &output).unwrap();
     assert_eq!(receipt["schema"], "clover.selfplay-ratchet/v1");
     assert_eq!(receipt["monotonic_non_decreasing_best_q"], true);
-    assert_eq!(receipt["beat_ordinary_in_final_round"], true);
+    assert_eq!(receipt["matched_or_beat_ordinary_in_final_round"], true);
     assert_eq!(receipt["all_rounds_kl_admissible"], true);
+    assert_eq!(receipt["any_round_frozen_by_kl_guard"], false);
+    assert_eq!(receipt["equal_resource_comparison"], false);
     let rounds = receipt["rounds"].as_array().unwrap();
     assert_eq!(rounds.len(), 3);
+    assert_eq!(rounds[0]["equal_resource_across_rounds"], true);
+    assert_eq!(rounds[1]["equal_resource_across_rounds"], false);
     let q0 = rounds[0]["ratchet_best_q"].as_f64().unwrap();
     let q1 = rounds[1]["ratchet_best_q"].as_f64().unwrap();
     let q2 = rounds[2]["ratchet_best_q"].as_f64().unwrap();
     assert!(q1 + 1e-12 >= q0 && q2 + 1e-12 >= q1);
+
+    // Verify that exceeding max_new_support_mass records an inadmissible round and freezes seed updates
+    // rather than aborting with Err.
+    let output_over = temp.path().join("ratchet_over_kl");
+    let req_over = SelfPlayRatchetRequest {
+        archive_mass_per_round: 0.12,
+        max_new_support_mass: 0.15,
+        ..req
+    };
+    let receipt_over = run_selfplay_ratchet(req_over, &output_over).unwrap();
+    if receipt_over["total_admitted_new_winners"].as_u64().unwrap() > 0 {
+        assert_eq!(receipt_over["all_rounds_kl_admissible"], false);
+        assert_eq!(receipt_over["any_round_frozen_by_kl_guard"], true);
+    }
 }

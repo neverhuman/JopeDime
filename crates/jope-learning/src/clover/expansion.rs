@@ -535,6 +535,8 @@ pub fn novelty(
     )
 }
 
+pub type LeafLogProbPair = (Vec<f64>, Vec<f64>);
+
 #[derive(Clone, Copy)]
 pub struct SelfPlayRatchetRequest<'a> {
     pub roster: &'a TrainingRoster,
@@ -548,6 +550,7 @@ pub struct SelfPlayRatchetRequest<'a> {
     pub archive_mass_per_round: f64,
     pub max_conditional_base_kl: f64,
     pub max_new_support_mass: f64,
+    pub round_leaf_log_probs: Option<&'a [LeafLogProbPair]>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -559,25 +562,40 @@ pub struct SelfPlayRoundReceipt {
     pub active_support_leaves: usize,
     pub newly_admitted_winners: usize,
     pub seeded_genomes: Vec<String>,
+    pub seed_consumption: Vec<Value>,
     pub ordinary_best_rmse: f64,
     pub ordinary_best_q: f64,
+    pub ordinary_evals_to_best: usize,
+    pub ordinary_search_sha256: String,
+    pub ordinary_observations_sha256: String,
     pub ratchet_best_rmse: f64,
     pub ratchet_best_q: f64,
     pub ratchet_champion_genome: String,
+    pub ratchet_search_sha256: String,
+    pub ratchet_observations_sha256: String,
     pub surplus_q_vs_ordinary: f64,
     pub evals_to_match_ordinary_final: Option<usize>,
     pub speedup_vs_ordinary: Option<f64>,
+    pub equal_attempts_in_round: bool,
+    pub within_wall_cap: bool,
+    pub cumulative_prior_rounds: usize,
+    pub equal_resource_across_rounds: bool,
+    pub kl_source: String,
     pub decomposed_kl: crate::support::DecomposedSupportKl,
+    pub seed_update_frozen_by_kl_guard: bool,
 }
 
 /// Execute a multi-round (`Round 0 -> Round 1 -> ...`) algorithmic self-play regression ratchet.
 ///
-/// In Round 0, `selfplay_ratchet` is seeded from `initial_policy` + `initial_retrieval` (capped to
-/// `seed_cap_b`). After each round `t`, newly discovered measured genomes that improve over the
-/// bootstrap baseline are admitted into the round archive `A_{t+1}`, checked against the
-/// decomposed support-KL guard (`conditional_base_kl <= max_conditional_base_kl` and
-/// `new_support_mass <= max_new_support_mass`), and the top `seed_cap_b` archive champions seed
-/// Round `t+1` GP evolution.
+/// In Round 0, `selfplay_ratchet` is seeded from interleaved `initial_policy` and `initial_retrieval`
+/// genomes admitted through `seeds::admit` (capped to `seed_cap_b <= seeds::ELITES`). After each
+/// round `t`, newly discovered non-base genomes whose measured inner-cut RMSE strictly improves
+/// over the Round-0 bootstrap baseline are admitted into the round archive `A_{t+1}`. The round
+/// leaf distribution (either caller-supplied in `round_leaf_log_probs` or the unclamped empirical
+/// inner-`q` Boltzmann distribution over `S_base U A_{t+1}`) is evaluated by `decomposed_support_kl`.
+/// If `decomposed_kl.admissible` holds, the top `seed_cap_b` archive winners (admitted through
+/// `seeds::admit`) seed Round `t+1`; if the guard trips, `seed_update_frozen_by_kl_guard` is set
+/// and the prior round's seeds are retained.
 pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) -> Result<Value> {
     let SelfPlayRatchetRequest {
         roster,
@@ -591,21 +609,29 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         archive_mass_per_round,
         max_conditional_base_kl,
         max_new_support_mass,
+        round_leaf_log_probs,
     } = request;
     ensure!(
         round_budgets.len() >= 2,
         "self-play ratchet requires at least 2 rounds"
     );
     ensure!(
-        (1..=16).contains(&seed_cap_b),
-        "seed_cap_b must be in 1..=16"
+        (1..=search::ELITES).contains(&seed_cap_b),
+        "seed_cap_b must be in 1..={}",
+        search::ELITES
     );
     ensure!(
         archive_mass_per_round.is_finite()
             && archive_mass_per_round > 0.0
-            && archive_mass_per_round <= max_new_support_mass,
-        "archive_mass_per_round must be in (0, max_new_support_mass]"
+            && archive_mass_per_round <= 0.5,
+        "archive_mass_per_round must be finite and in (0, 0.5]"
     );
+    if let Some(custom) = round_leaf_log_probs {
+        ensure!(
+            custom.len() == round_budgets.len(),
+            "round_leaf_log_probs length must equal round_budgets length"
+        );
+    }
     roster.verify_roles(role_manifest)?;
     let context = roster.bound_context(context_sha256, cut)?;
     let offered = initial_policy.pipeline_seeds(context)?;
@@ -613,30 +639,61 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
     retrieval_input.check()?;
     ensure!(!output.exists(), "self-play ratchet output must be fresh");
 
-    // Build initial Round-0 seed pool from policy + retrieval proposals.
-    let mut initial_pairs = Vec::new();
-    for g in &offered.genomes {
-        initial_pairs.push((g.genome.clone(), seeds::FROM_SEEDS_FILE));
+    // Admit policy and retrieval seeds separately first so policy cannot starve retrieval.
+    let admitted_policy = seeds::admit(
+        &offered
+            .genomes
+            .iter()
+            .map(|g| (g.genome.clone(), seeds::FROM_SEEDS_FILE))
+            .collect::<Vec<_>>(),
+    )?;
+    let admitted_retrieval = seeds::admit(
+        &retrieval_input
+            .genomes
+            .iter()
+            .map(|g| (g.genome.clone(), seeds::FROM_SEEDS_FILE))
+            .collect::<Vec<_>>(),
+    )?;
+    let mut interleaved_pairs = Vec::new();
+    let max_len = admitted_policy
+        .seeds
+        .len()
+        .max(admitted_retrieval.seeds.len());
+    for i in 0..max_len {
+        if let Some(p) = admitted_policy.seeds.get(i) {
+            interleaved_pairs.push((p.genome.clone(), seeds::FROM_SEEDS_FILE));
+        }
+        if let Some(r) = admitted_retrieval.seeds.get(i) {
+            interleaved_pairs.push((r.genome.clone(), seeds::FROM_SEEDS_FILE));
+        }
     }
-    for g in &retrieval_input.genomes {
-        initial_pairs.push((g.genome.clone(), seeds::FROM_SEEDS_FILE));
-    }
-    let admitted_initial = seeds::admit(&initial_pairs)?;
+    let admitted_initial = seeds::admit(&interleaved_pairs)?;
     ensure!(
         !admitted_initial.seeds.is_empty(),
         "initial policy+retrieval seeds must not be empty"
     );
 
+    let bootstrap_canonical = canonical_genome(search::BOOTSTRAP_GENOME)?;
+    let mut base_catalog_ordered: Vec<String> = Vec::new();
     let mut base_catalog: BTreeSet<String> = BTreeSet::new();
-    base_catalog.insert(canonical_genome(search::BOOTSTRAP_GENOME)?);
+    base_catalog.insert(bootstrap_canonical.clone());
+    base_catalog_ordered.push(bootstrap_canonical);
     for s in &admitted_initial.seeds {
-        base_catalog.insert(s.genome.clone());
+        if base_catalog.insert(s.genome.clone()) {
+            base_catalog_ordered.push(s.genome.clone());
+        }
     }
-    let base_leaf_count = base_catalog.len();
+    let base_leaf_count = base_catalog_ordered.len();
 
-    // Archive maps canonical genome -> best (lowest) measured inner-cut RMSE.
+    let mut base_best_q: std::collections::BTreeMap<String, f64> =
+        std::collections::BTreeMap::new();
+    let mut ref_base_q: std::collections::BTreeMap<String, f64> = std::collections::BTreeMap::new();
+
+    // Archive maps non-base canonical genome (strictly beating bootstrap_rmse) -> best inner-cut RMSE.
     let mut archive_best_rmse: std::collections::BTreeMap<String, f64> =
         std::collections::BTreeMap::new();
+    let mut bootstrap_rmse_anchor: Option<f64> = None;
+
     let mut current_seeds: Vec<String> = admitted_initial
         .seeds
         .iter()
@@ -666,15 +723,21 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             ordinary.successful_measurements > 0,
             "ordinary arm produced no measured candidates in round {round_idx}"
         );
-        let ordinary_best_rmse = ordinary
-            .observations
-            .iter()
-            .filter(|o| o.measured())
-            .filter_map(|o| o.rmse)
-            .fold(f64::INFINITY, f64::min);
+        let mut ordinary_best_rmse = f64::INFINITY;
+        let mut ordinary_evals_to_best = 1usize;
+        for (idx, obs) in ordinary.observations.iter().enumerate() {
+            if obs.measured() {
+                if let Some(r) = obs.rmse {
+                    if r + 1e-12 < ordinary_best_rmse {
+                        ordinary_best_rmse = r;
+                        ordinary_evals_to_best = idx + 1;
+                    }
+                }
+            }
+        }
         let ordinary_best_q = 1.0 / (1.0 + ordinary_best_rmse);
 
-        // 2. Run self-play ratchet GP arm seeded with `current_seeds`.
+        // 2. Run self-play ratchet GP arm seeded with `current_seeds` (already admitted via seeds::admit).
         let mut ratchet_opts = search::SearchOptions::new(limits, budget.rng_seed);
         ratchet_opts.seeds = current_seeds.clone();
         let ratchet_res = search::run_cuts_with(
@@ -688,6 +751,19 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             "selfplay_ratchet arm produced no measured candidates in round {round_idx}"
         );
 
+        if bootstrap_rmse_anchor.is_none() {
+            let boot_r = ratchet
+                .observations
+                .iter()
+                .chain(ordinary.observations.iter())
+                .find(|o| o.measured() && o.origin == search::BOOTSTRAP && o.rmse.is_some())
+                .and_then(|o| o.rmse)
+                .unwrap_or(ordinary_best_rmse);
+            bootstrap_rmse_anchor = Some(boot_r);
+        }
+        let bootstrap_rmse = bootstrap_rmse_anchor.unwrap();
+        let bootstrap_q = 1.0 / (1.0 + bootstrap_rmse);
+
         let mut ratchet_best_rmse = f64::INFINITY;
         let mut ratchet_champion_genome = String::new();
         let mut evals_to_match_ordinary_final: Option<usize> = None;
@@ -698,6 +774,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
                 continue;
             }
             if let Some(r) = obs.rmse {
+                let q = 1.0 / (1.0 + r);
                 if r < ratchet_best_rmse {
                     ratchet_best_rmse = r;
                     ratchet_champion_genome = obs.genome.clone();
@@ -705,90 +782,184 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
                 if evals_to_match_ordinary_final.is_none() && r <= ordinary_best_rmse + 1e-12 {
                     evals_to_match_ordinary_final = Some(eval_idx + 1);
                 }
-                let is_new_winner = !base_catalog.contains(&obs.genome)
-                    && !archive_best_rmse.contains_key(&obs.genome)
-                    && r <= ordinary_best_rmse + 1e-12;
-                if is_new_winner {
-                    newly_admitted += 1;
+                if base_catalog.contains(&obs.genome) {
+                    base_best_q
+                        .entry(obs.genome.clone())
+                        .and_modify(|prev| {
+                            if q > *prev {
+                                *prev = q;
+                            }
+                        })
+                        .or_insert(q);
+                } else if r + 1e-12 < bootstrap_rmse {
+                    if !archive_best_rmse.contains_key(&obs.genome) {
+                        newly_admitted += 1;
+                    }
+                    archive_best_rmse
+                        .entry(obs.genome.clone())
+                        .and_modify(|prev| {
+                            if r < *prev {
+                                *prev = r;
+                            }
+                        })
+                        .or_insert(r);
                 }
-                archive_best_rmse
-                    .entry(obs.genome.clone())
-                    .and_modify(|prev| {
-                        if r < *prev {
-                            *prev = r;
-                        }
-                    })
-                    .or_insert(r);
             }
         }
+        if round_idx == 0 {
+            for g in &base_catalog_ordered {
+                let q = base_best_q.get(g).copied().unwrap_or(bootstrap_q);
+                base_best_q.entry(g.clone()).or_insert(q);
+                ref_base_q.insert(g.clone(), q);
+            }
+        }
+
         let ratchet_best_q = 1.0 / (1.0 + ratchet_best_rmse);
         let surplus_q_vs_ordinary = ratchet_best_q - ordinary_best_q;
         let speedup_vs_ordinary =
-            evals_to_match_ordinary_final.map(|k| budget.evaluations_per_arm as f64 / k as f64);
+            evals_to_match_ordinary_final.map(|k| ordinary_evals_to_best as f64 / k as f64);
+
+        let equal_attempts_in_round = ordinary.completed_evaluations
+            == budget.evaluations_per_arm as u64
+            && ratchet.completed_evaluations == budget.evaluations_per_arm as u64
+            && ordinary.stopped_by == search::STOPPED_BY_EVALUATIONS
+            && ratchet.stopped_by == search::STOPPED_BY_EVALUATIONS;
+        let within_wall_cap = ordinary.seconds <= budget.seconds_per_arm as f64
+            && ratchet.seconds <= budget.seconds_per_arm as f64;
+        let seed_consumption = current_seeds
+            .iter()
+            .map(|g| {
+                json!({
+                    "genome": g,
+                    "consumed": ratchet.observations.iter().any(|o| o.genome == *g && o.origin == search::INCUMBENT),
+                })
+            })
+            .collect::<Vec<_>>();
 
         // 3. Compute decomposed support KL over base catalog leaves + newly admitted archive winners.
-        let non_base_winners: Vec<(&String, &f64)> = archive_best_rmse
-            .iter()
-            .filter(|(g, _)| !base_catalog.contains(*g))
-            .collect();
-        let n_new = non_base_winners.len();
+        let n_new = archive_best_rmse.len();
         let active_support_leaves = base_leaf_count + n_new;
+        let mut is_base = Vec::with_capacity(active_support_leaves);
+        is_base.extend(std::iter::repeat_n(true, base_leaf_count));
+        is_base.extend(std::iter::repeat_n(false, n_new));
 
-        let decomposed_kl = if n_new == 0 {
-            let lp = vec![-(base_leaf_count as f64).ln(); base_leaf_count];
-            let mask = vec![true; base_leaf_count];
-            crate::support::decomposed_support_kl(
-                &lp,
-                &lp,
-                &mask,
-                max_conditional_base_kl,
-                max_new_support_mass,
-            )?
+        let (kl_source, decomposed_kl) = if let Some(custom) = round_leaf_log_probs {
+            let (ref pol_lp, ref r_lp) = custom[round_idx];
+            ensure!(
+                pol_lp.len() == active_support_leaves && r_lp.len() == active_support_leaves,
+                "custom round_leaf_log_probs at round {round_idx} has length {} vs active_support_leaves {active_support_leaves}",
+                pol_lp.len()
+            );
+            (
+                "caller_supplied_leaf_logprobs".to_string(),
+                crate::support::decomposed_support_kl(
+                    pol_lp,
+                    r_lp,
+                    &is_base,
+                    max_conditional_base_kl,
+                    max_new_support_mass,
+                )?,
+            )
         } else {
-            let new_mass =
-                (archive_mass_per_round * (round_idx as f64 + 1.0)).min(max_new_support_mass);
-            let base_mass = 1.0 - new_mass;
-            let ref_new_mass = 1e-4_f64;
-            let ref_base_mass = 1.0 - ref_new_mass;
+            let beta = 2.0_f64;
+            let base_raw_pol: Vec<f64> = base_catalog_ordered
+                .iter()
+                .map(|g| beta * base_best_q.get(g).copied().unwrap_or(bootstrap_q))
+                .collect();
+            let base_raw_ref: Vec<f64> = base_catalog_ordered
+                .iter()
+                .map(|g| beta * ref_base_q.get(g).copied().unwrap_or(bootstrap_q))
+                .collect();
+            let log_sum_exp = |xs: &[f64]| -> f64 {
+                let m = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+                m + xs.iter().map(|&x| (x - m).exp()).sum::<f64>().ln()
+            };
+            let z_base_pol = log_sum_exp(&base_raw_pol);
+            let z_base_ref = log_sum_exp(&base_raw_ref);
 
-            let mut policy_lp = Vec::with_capacity(active_support_leaves);
-            let mut ref_lp = Vec::with_capacity(active_support_leaves);
-            let mut is_base = Vec::with_capacity(active_support_leaves);
+            if n_new == 0 {
+                let pol_lp: Vec<f64> = base_raw_pol.iter().map(|&x| x - z_base_pol).collect();
+                let ref_lp: Vec<f64> = base_raw_ref.iter().map(|&x| x - z_base_ref).collect();
+                (
+                    "empirical_inner_q_boltzmann".to_string(),
+                    crate::support::decomposed_support_kl(
+                        &pol_lp,
+                        &ref_lp,
+                        &is_base,
+                        max_conditional_base_kl,
+                        max_new_support_mass,
+                    )?,
+                )
+            } else {
+                let unclamped_new_mass =
+                    (archive_mass_per_round * (round_idx as f64 + 1.0)).min(0.95);
+                let base_mass = 1.0 - unclamped_new_mass;
+                let ref_new_mass = 1e-4_f64;
+                let ref_base_mass = 1.0 - ref_new_mass;
 
-            for _ in 0..base_leaf_count {
-                policy_lp.push((base_mass / base_leaf_count as f64).ln());
-                ref_lp.push((ref_base_mass / base_leaf_count as f64).ln());
-                is_base.push(true);
+                let new_raw_pol: Vec<f64> = archive_best_rmse
+                    .values()
+                    .map(|&r| beta * (1.0 / (1.0 + r)))
+                    .collect();
+                let z_new_pol = log_sum_exp(&new_raw_pol);
+
+                let mut policy_lp = Vec::with_capacity(active_support_leaves);
+                let mut ref_lp = Vec::with_capacity(active_support_leaves);
+                for (&bp, &br) in base_raw_pol.iter().zip(base_raw_ref.iter()) {
+                    policy_lp.push(base_mass.ln() + (bp - z_base_pol));
+                    ref_lp.push(ref_base_mass.ln() + (br - z_base_ref));
+                }
+                for &np in &new_raw_pol {
+                    policy_lp.push(unclamped_new_mass.ln() + (np - z_new_pol));
+                    ref_lp.push((ref_new_mass / n_new as f64).ln());
+                }
+                (
+                    "empirical_inner_q_boltzmann".to_string(),
+                    crate::support::decomposed_support_kl(
+                        &policy_lp,
+                        &ref_lp,
+                        &is_base,
+                        max_conditional_base_kl,
+                        max_new_support_mass,
+                    )?,
+                )
             }
-            for _ in 0..n_new {
-                policy_lp.push((new_mass / n_new as f64).ln());
-                ref_lp.push((ref_new_mass / n_new as f64).ln());
-                is_base.push(false);
-            }
-            crate::support::decomposed_support_kl(
-                &policy_lp,
-                &ref_lp,
-                &is_base,
-                max_conditional_base_kl,
-                max_new_support_mass,
-            )?
         };
-        ensure!(
-            decomposed_kl.admissible,
-            "round {round_idx} tripped decomposed support KL guard: {decomposed_kl:?}"
-        );
 
-        // 4. Select top `seed_cap_b` measured archive genomes (lowest RMSE, tie-broken by genome)
-        // to seed Round `t+1`.
-        let mut ranked_archive: Vec<(&String, f64)> =
-            archive_best_rmse.iter().map(|(g, &r)| (g, r)).collect();
-        ranked_archive.sort_by(|a, b| a.1.total_cmp(&b.1).then_with(|| a.0.cmp(b.0)));
-        let next_seeds: Vec<String> = ranked_archive
-            .into_iter()
-            .filter(|(g, _)| *g != search::BOOTSTRAP_GENOME)
-            .take(seed_cap_b)
-            .map(|(g, _)| g.clone())
-            .collect();
+        let seed_update_frozen_by_kl_guard = !decomposed_kl.admissible;
+
+        // 4. If KL guard is admissible, select top `seed_cap_b` archive + base winners through `seeds::admit`
+        // to seed Round `t+1`. If the guard tripped, freeze `current_seeds`.
+        if !seed_update_frozen_by_kl_guard {
+            let mut ranked_candidates: Vec<(String, f64)> = archive_best_rmse
+                .iter()
+                .map(|(g, &r)| (g.clone(), r))
+                .collect();
+            for g in &current_seeds {
+                if let Some(&q) = base_best_q.get(g) {
+                    let r = (1.0 / q) - 1.0;
+                    ranked_candidates.push((g.clone(), r));
+                }
+            }
+            ranked_candidates.sort_by(|a, b| a.1.total_cmp(&b.1).then_with(|| a.0.cmp(&b.0)));
+            let candidate_pairs: Vec<(String, &'static str)> = ranked_candidates
+                .into_iter()
+                .filter(|(g, _)| g != search::BOOTSTRAP_GENOME)
+                .map(|(g, _)| (g, seeds::FROM_SEEDS_FILE))
+                .collect();
+            if !candidate_pairs.is_empty() {
+                let admitted_next = seeds::admit(&candidate_pairs)?;
+                let next_seeds: Vec<String> = admitted_next
+                    .seeds
+                    .into_iter()
+                    .take(seed_cap_b)
+                    .map(|s| s.genome)
+                    .collect();
+                if !next_seeds.is_empty() {
+                    current_seeds = next_seeds;
+                }
+            }
+        }
 
         round_receipts.push(SelfPlayRoundReceipt {
             round: round_idx,
@@ -796,21 +967,29 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             rng_seed: budget.rng_seed,
             active_support_leaves,
             newly_admitted_winners: newly_admitted,
-            seeded_genomes: current_seeds.clone(),
+            seeded_genomes: ratchet_opts.seeds,
+            seed_consumption,
             ordinary_best_rmse,
             ordinary_best_q,
+            ordinary_evals_to_best,
+            ordinary_search_sha256: ordinary.search_sha256.clone(),
+            ordinary_observations_sha256: ordinary.observations_sha256.clone(),
             ratchet_best_rmse,
             ratchet_best_q,
             ratchet_champion_genome,
+            ratchet_search_sha256: ratchet.search_sha256.clone(),
+            ratchet_observations_sha256: ratchet.observations_sha256.clone(),
             surplus_q_vs_ordinary,
             evals_to_match_ordinary_final,
             speedup_vs_ordinary,
+            equal_attempts_in_round,
+            within_wall_cap,
+            cumulative_prior_rounds: round_idx,
+            equal_resource_across_rounds: round_idx == 0,
+            kl_source,
             decomposed_kl,
+            seed_update_frozen_by_kl_guard,
         });
-
-        if !next_seeds.is_empty() {
-            current_seeds = next_seeds;
-        }
     }
 
     let monotonic_non_decreasing_best_q = round_receipts
@@ -823,8 +1002,13 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
     let last_round = round_receipts.last().unwrap();
     let strictly_improved_over_round0 = last_round.ratchet_best_q > first_q + 1e-12;
     let beat_ordinary_in_final_round =
+        last_round.ratchet_best_q > last_round.ordinary_best_q + 1e-12;
+    let matched_or_beat_ordinary_in_final_round =
         last_round.ratchet_best_q + 1e-12 >= last_round.ordinary_best_q;
     let all_rounds_kl_admissible = round_receipts.iter().all(|r| r.decomposed_kl.admissible);
+    let any_round_frozen_by_kl_guard = round_receipts
+        .iter()
+        .any(|r| r.seed_update_frozen_by_kl_guard);
     let total_admitted_new_winners: usize = round_receipts
         .iter()
         .map(|r| r.newly_admitted_winners)
@@ -840,10 +1024,16 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         "monotonic_non_decreasing_best_q": monotonic_non_decreasing_best_q,
         "strictly_improved_over_round0": strictly_improved_over_round0,
         "beat_ordinary_in_final_round": beat_ordinary_in_final_round,
+        "matched_or_beat_ordinary_in_final_round": matched_or_beat_ordinary_in_final_round,
         "all_rounds_kl_admissible": all_rounds_kl_admissible,
+        "any_round_frozen_by_kl_guard": any_round_frozen_by_kl_guard,
         "total_admitted_new_winners": total_admitted_new_winners,
+        "equal_resource_comparison": false,
+        "stop_policy": "no_extension_on_timeout_failure_or_missing_measurement",
+        "budget_caveat": "in-process fits are nonpreemptive; bootstrap/seeds are seconds-exempt; round t>0 reuses prior rounds' inner-holdout archive champions",
         "qualified_rewards": 0,
-        "h1_established": false
+        "h1_established": false,
+        "policy_optimizer_updates": 0,
     }))
 }
 
