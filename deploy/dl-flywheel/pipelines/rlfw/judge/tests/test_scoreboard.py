@@ -183,6 +183,19 @@ class ScoreboardTest(unittest.TestCase):
         self.assertIsNone(ei4["first_violation_epoch"])
         self.assertAlmostEqual(ei4["selected_archive_ce"], 9.2470)
 
+        with self.assertRaises(ValueError):
+            select_admissible_endpoint([{"epoch": 0, "kl": 0.06, "l6": 0.9}], max_kl=0.05)
+        with self.assertRaises(ValueError):
+            select_admissible_endpoint([{"epoch": 0, "kl": 0.0}], max_kl=0.05)
+        with self.assertRaises(ValueError):
+            select_admissible_endpoint(
+                [
+                    {"epoch": 0, "kl": 0.0, "base_kl": 0.0, "l6": 0.9},
+                    {"epoch": 1, "kl": 0.01, "l6": 0.9},
+                ],
+                max_kl=0.05,
+            )
+
     def test_multi_round_ratchet_summary_checks_monotonicity_and_kl_guard(self):
         rounds = [
             {
@@ -213,7 +226,7 @@ class ScoreboardTest(unittest.TestCase):
                 "new_winner_mass": 0.082,
             },
         ]
-        summary = multi_round_ratchet_summary(rounds, max_base_kl=0.05)
+        summary = multi_round_ratchet_summary(rounds, max_base_kl=0.05, max_new_winner_mass=0.15)
         self.assertEqual(summary["num_rounds"], 3)
         self.assertEqual(summary["initial_support_size"], 3)
         self.assertEqual(summary["final_support_size"], 5)
@@ -221,8 +234,13 @@ class ScoreboardTest(unittest.TestCase):
         self.assertTrue(summary["support_monotonic"])
         self.assertTrue(summary["ratchet_monotonic_delivered_q"])
         self.assertTrue(summary["kl_guarded"])
+        self.assertAlmostEqual(summary["max_new_winner_mass_observed"], 0.082)
         self.assertGreater(summary["search_q_gain"], 0.19)
         self.assertGreater(summary["delivered_q_gain"], 0.18)
         self.assertFalse(summary["promotion"])
         self.assertFalse(summary["seal_spent"])
 
+        summary_over_mass = multi_round_ratchet_summary(
+            rounds, max_base_kl=0.05, max_new_winner_mass=0.05
+        )
+        self.assertFalse(summary_over_mass["kl_guarded"])

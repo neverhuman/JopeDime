@@ -8,7 +8,7 @@
 use super::pool::{Pool, PoolView};
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Whether a selector is a simple baseline or a learned candidate under test. A candidate passes
 /// only against the strongest baseline, never by beating uniform alone (CLOVER §6).
@@ -514,6 +514,8 @@ pub struct ContextualSurrogateQHat<'a> {
     weights: Vec<f64>,
 }
 
+pub const MAX_SURROGATE_DESIGN_DIM: usize = 512;
+
 impl<'a> ContextualSurrogateQHat<'a> {
     fn design_row(z: &[f64], phi: &[f64], knn_score: f64) -> Vec<f64> {
         let mut x = Vec::with_capacity(2 + z.len() + phi.len() + z.len() * phi.len());
@@ -545,11 +547,20 @@ impl<'a> ContextualSurrogateQHat<'a> {
             context_features.dim > 0 && program_features.dim > 0,
             "non-empty context and program feature dimensions required"
         );
+        let cross = context_features
+            .dim
+            .checked_mul(program_features.dim)
+            .context("bilinear feature dimension overflow")?;
+        let d = 2usize
+            .checked_add(context_features.dim)
+            .and_then(|v| v.checked_add(program_features.dim))
+            .and_then(|v| v.checked_add(cross))
+            .context("design dimension overflow")?;
+        ensure!(
+            d <= MAX_SURROGATE_DESIGN_DIM,
+            "bilinear design dimension {d} exceeds MAX_SURROGATE_DESIGN_DIM ({MAX_SURROGATE_DESIGN_DIM}); project context/program features first"
+        );
         let knn = RetrievalKnn::fit(train, context_features, k_neighbours, prior_weight)?;
-        let d = 2
-            + context_features.dim
-            + program_features.dim
-            + context_features.dim * program_features.dim;
         let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
         let mut rows = 0usize;
         for pool in train {
@@ -661,10 +672,12 @@ pub fn pre_screen_funnel(
         "selector must return one finite score per view program"
     );
     let capped_k = view.programs.len().min(proposal_pool_k);
+    let mut seen = BTreeSet::new();
     let mut ranked: Vec<(f64, &str)> = scores
         .into_iter()
         .zip(view.programs.iter().copied())
         .take(capped_k)
+        .filter(|(_, prog_sha)| seen.insert(*prog_sha))
         .collect();
     ranked.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(b.1)));
     ranked.truncate(eval_budget_b);

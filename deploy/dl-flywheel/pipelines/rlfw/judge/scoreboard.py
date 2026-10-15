@@ -230,16 +230,19 @@ def select_admissible_endpoint(epoch_rows, max_kl=0.05):
     """Pre-registered E_last_valid endpoint selector for KL-guarded training arms.
 
     Evaluates ordered epochs and selects the highest epoch prior to the first
-    KL disqualification (using base_kl when decomposed support KL is present,
-    otherwise total kl). Never promotes or spends a seal.
+    KL disqualification (using base_kl when decomposed support KL is present on
+    every row, otherwise total kl). Never promotes or spends a seal.
     """
     if not _finite(max_kl) or max_kl <= 0.0:
         raise ValueError("max_kl must be finite and positive")
     rows = list(epoch_rows)
     if not rows:
         raise ValueError("epoch_rows must not be empty")
+    has_base_kl = None
     by_epoch = {}
     for row in rows:
+        if not isinstance(row, dict) or not {"epoch", "kl", "l6"} <= set(row):
+            raise ValueError("each epoch row must contain epoch, kl, and l6")
         epoch = row["epoch"]
         if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 0:
             raise ValueError("epoch must be a non-negative integer")
@@ -249,7 +252,12 @@ def select_admissible_endpoint(epoch_rows, max_kl=0.05):
         l6 = row["l6"]
         if not _finite(kl) or kl < 0.0 or not _finite(l6):
             raise ValueError("epoch kl and l6 must be finite")
-        if "base_kl" in row and (not _finite(row["base_kl"]) or row["base_kl"] < 0.0):
+        row_has_base = "base_kl" in row
+        if has_base_kl is None:
+            has_base_kl = row_has_base
+        elif has_base_kl != row_has_base:
+            raise ValueError("base_kl must be present on all epoch rows or none")
+        if row_has_base and (not _finite(row["base_kl"]) or row["base_kl"] < 0.0):
             raise ValueError("base_kl must be finite and non-negative")
         if "archive_ce" in row and not _finite(row["archive_ce"]):
             raise ValueError("archive_ce must be finite when provided")
@@ -263,12 +271,15 @@ def select_admissible_endpoint(epoch_rows, max_kl=0.05):
     last_valid_epoch = 0
     for epoch in ordered_epochs:
         row = by_epoch[epoch]
-        effective_kl = row.get("base_kl", row["kl"])
+        effective_kl = row["base_kl"] if has_base_kl else row["kl"]
         alarmed = bool(row.get("kl_disqualified", False)) or effective_kl > max_kl
         if alarmed:
             first_violation_epoch = epoch
             break
         last_valid_epoch = epoch
+
+    if first_violation_epoch == 0:
+        raise ValueError("epoch 0 anchor violates KL guard; no admissible endpoint exists")
 
     chosen = by_epoch[last_valid_epoch]
     report = {
@@ -279,7 +290,7 @@ def select_admissible_endpoint(epoch_rows, max_kl=0.05):
         "stopped_early": first_violation_epoch is not None,
         "first_violation_epoch": first_violation_epoch,
         "selected_l6": chosen["l6"],
-        "selected_kl": chosen.get("base_kl", chosen["kl"]),
+        "selected_kl": chosen["base_kl"] if has_base_kl else chosen["kl"],
         "promotion": False,
         "seal_spent": False,
     }
@@ -288,16 +299,18 @@ def select_admissible_endpoint(epoch_rows, max_kl=0.05):
     return report
 
 
-def multi_round_ratchet_summary(rounds, max_base_kl=0.05):
+def multi_round_ratchet_summary(rounds, max_base_kl=0.05, max_new_winner_mass=0.25):
     """Multi-round self-play ratchet summary across expanding support rounds."""
     if not _finite(max_base_kl) or max_base_kl <= 0.0:
         raise ValueError("max_base_kl must be finite and positive")
+    if not _finite(max_new_winner_mass) or not (0.0 < max_new_winner_mass <= 1.0):
+        raise ValueError("max_new_winner_mass must be finite and in (0, 1]")
     items = list(rounds)
     if len(items) < 2:
         raise ValueError("multi-round ratchet requires at least 2 rounds")
 
     for expected_idx, item in enumerate(items):
-        if item.get("round_index") != expected_idx:
+        if not isinstance(item, dict) or item.get("round_index") != expected_idx:
             raise ValueError("rounds must have sequential round_index starting at 0")
         for key in ("mean_search_q", "mean_delivered_q", "base_kl", "new_winner_mass"):
             if not _finite(item.get(key)):
@@ -324,7 +337,10 @@ def multi_round_ratchet_summary(rounds, max_base_kl=0.05):
         items[i]["mean_delivered_q"] >= items[i - 1]["mean_delivered_q"]
         for i in range(1, len(items))
     )
-    kl_guarded = all(item["base_kl"] <= max_base_kl for item in items)
+    kl_guarded = all(
+        item["base_kl"] <= max_base_kl and item["new_winner_mass"] <= max_new_winner_mass
+        for item in items
+    )
 
     return {
         "schema": "jope.j21-selfplay-ratchet/v1",
@@ -338,8 +354,8 @@ def multi_round_ratchet_summary(rounds, max_base_kl=0.05):
         "ratchet_monotonic_delivered_q": delivered_monotonic,
         "kl_guarded": kl_guarded,
         "max_base_kl_observed": max(item["base_kl"] for item in items),
+        "max_new_winner_mass_observed": max(item["new_winner_mass"] for item in items),
         "not_an_l6_verdict": True,
         "promotion": False,
         "seal_spent": False,
     }
-
