@@ -7,34 +7,60 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [0.3.0] - 2026-10-15
 
+Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then
+curated by pull request: #126 to #336.
+
 ### feat-math and emitters
 
-- feat-math: a compatibility freeze of the shipped numerics, emitted bytes, serialized models, pinned files and generator streams, the boundary input corpus, and the current scalar semantics pinned before the kernel2 work (#126)
-- feat-math, bench: a bit-exact parity test of the runtime against the emitted Rust, Python and fitted C++17 programs, and an equal-budget search ablation harness (#127)
+- feat-math: a compatibility freeze of the shipped numerics, emitted bytes, serialized models, pinned files and generator streams, the boundary input corpus, and the current scalar semantics pinned before the kernel2 work (#126, #138)
+- feat-math, bench: a bit-exact parity test of the runtime against the emitted Rust, Python and fitted C++17 programs, and an equal-budget search ablation harness (#127, #221)
 - feat-math: the scalar evaluator reports which of its guards fired, as append-only fault classes with severities, beside unchanged values, in the interpreter and the compiled form (#128)
-- feat-math: fits and predictions can report per-stage fault counts beside unchanged stage outputs, models and predictions, and that reporting path refuses zero-width input (#130)
-- feat-math: a static scope and width check that names the stage, the fault class and the reason before any evaluation, and search caps for expression scopes (15 nodes, depth 4); library only, nothing calls them yet (#131)
-- feat-math: a fitted-width contract: the input width each fitted stage and head requires and the width each stage produces, a checked prediction entry point that refuses a mismatched width before any stage runs where the unchecked one panics or misreads, and errors instead of panics for the legacy, corr_screen and pls_project stages of a schema-bound pipeline; predictions on accepted inputs are unchanged (#132)
-- feat-math: opt-in fault policies for the library search: a scope check before any fit, Hard faults rejected, and domain and saturation faulted cells counted once per severity for penalties and an optional tie-break; the default policy keeps every search unchanged (#133)
-- feat-math, ci: fitted C++17 revision 3 checks fitted column reads, returns status 8 for invalid fitted widths, matches the runtime on empty rows and tied intervals, and reloads revision-2 containers through regeneration; the emitters lane exercises sanitizers and C++20 (#134)
-- feat-math: a declared capability manifest and four revisioned search profiles, checked against frozen grammars, generator draws, emitter routes and profile hashes (kernel2 PR 09)
-- feat-math: the capability manifest settles grammar drift under one authority rule, reports each program's export support by route, and gates the first closure checks for kernel2 profiles (kernel2 PR 10)
-- feat-math: typed scalar planner, three-language recipe/fitted adapters (`cpp17-recipe-v2`), sparse Goertzel bank (wire 61), parent-selection and certified scoring seams, and pinned sealed embedded fitted runtime (#253–#262)
+- feat-math: fits and predictions can report per-stage fault counts beside unchanged stage outputs, models and predictions, and that reporting path refuses zero-width input (#130, #146, #150)
+- feat-math: a static scope and width check that names the stage, the fault class and the reason before any evaluation, and search caps for expression scopes (15 nodes, depth 4) (#131)
+- feat-math: a fitted-width contract: the input width each fitted stage and head requires and the width each stage produces, a checked prediction entry point that refuses a mismatched width before any stage runs, and errors instead of panics for the legacy, corr_screen and pls_project stages of a schema-bound pipeline (#132)
+- feat-math: opt-in fault policies for the library search: a scope check before any fit, Hard faults rejected, and domain and saturation faulted cells counted once per severity for penalties and an optional tie-break (#133)
+- feat-math, ci: fitted C++17 revision 3 checks fitted column reads, returns status 8 for invalid fitted widths, matches the runtime on empty rows and tied intervals, and reloads revision-2 containers through regeneration; the emitters lane exercises sanitizers and C++20 (#134, #145, #162)
+- feat-math: a declared capability manifest and four revisioned search profiles, checked against frozen grammars, generator draws, emitter routes and profile hashes, with profile-aware pipeline wrappers and v4 recipe artifacts (#135, #136, #153, #155, #163, #164, #165, #166)
+- feat-math: expression and three-language recipe export (`cpp17-recipe-v2`), wire recipe and genome form conversions, and versioned program/model conversion boundaries (#140, #143, #144, #149, #151, #152, #177, #186, #190, #198, #201, #207)
+- feat-math: version-2 operator identities, inverse-link and guarded portable exponential kernels, and explicit scalar numerical policies (#141, #142, #154, #167, #168, #169, #170, #171, #172, #173, #174, #178, #223, #231, #238)
+- feat-math: ordered-axis admission, causal integer and irregular-grid difference kernels, Savitzky-Golay row filter, sparse Goertzel bank (wire 61), causal cumulative integration, and fixed-five causal realized path statistics (#139, #176, #182, #183, #184, #185, #191, #192, #196, #203)
+- feat-math: opt-in epsilon-lexicase parent selection (#188), certified fast ridge scoring (#189), damped least-squares / Levenberg-Marquardt constant refinement (#156, #157, #158, #161, #195, #208, #227, #252), loss-by-complexity Pareto archive (#197, #230, #252), bounded minimax Remez linearizations (#200, #247), and protected-semantics e-graph simplification (#202, #232)
+- feat-math: pin and seal the embedded fitted runtime before loading (#262)
+
+### Engine, security and runtime
+
+- engine(eval_registry): confine the fit authority's evaluator children with Landlock, two-stage seccomp filters, isolated per-ticket worker output directories, and process-control refusals (J24/G38) (#320, #322)
+- engine: synthetic executor authorization separation, daemon state polling bounds, lost-ACK deadline synchronization, manifest hash comparison, deterministic authority race under neural load, CPU affinity bounds, corpus mapping dimension checks, sealed-IPC descriptor cleanup, and crash recovery bounds (#175, #181, #187, #212, #215, #217, #222, #228, #229, #253, #254, #255, #258, #259, #260, #314, #315, #317, #329)
+- gpu: enforce device copy bounds, scalar representations, and ridge dimension validation before backend routing (#226, #237)
 
 ### Campaigns, self-play and learning
 
-- learning(clover): closed-loop algorithmic self-play flywheel with multi-round monotonic ratchet (`run_selfplay_ratchet`), surrogate-screened seed funnel (`select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), non-parametric measured-tilt leaf proposal (`measured_tilt_leaf_log_probs` bounded by `decomposed_support_kl`), and `gp_distilled/v1` S3 Parquet distillation bridge into `ContextualSurrogateQHat` (`distill_selfplay_observations`, `distilled_rows_to_measurement_rows`) (#334)
-- learning(pools, retention): frozen candidate pools (`jope_pools`) and S3 retention brain + native Parquet reader/writer (`jope_retention`) with `gp_distilled/v1` verification
+- learning, rlfw: research high-water ledger, exact trie log-prob and decision trace v2 (#278), matched-budget arena and KPI harness (#280), best-of-32 predicted rerank slates (#281), guarded train-only first-label bootstrap (#282), continual GP learning and experiment dashboard (#283), reproducible Rust cache and S3 lifecycle proposals (#284), Lane B judge seal and power table (#285), offline C11 IPO/DPO, trie PUCT/Gumbel and OPE (#286), verified RLOO/PKPO objectives (#287), read-only D9 metrics (#288), exact trie readouts and KV analysis (#289), monitor evidence sources (#290), R5 parity outcome charging and rediscovery KPI (#291), and durable caller return before overlay admission (#293)
+- policy, rlfw: v2.0.0 learner source (build r3.1, `runner_v6` with custody, R23 anchored objective, T12 KL guard, and 213 offline CPU fixtures) (#292) and R25-kNN-CE scratch arm source (#307)
+- clover, learning: Phase 0 comparable-experiment foundations (#295, #296), per-context L6 cost rows (#301), `SE_pair` cluster and leakage checks (#302), floating CPU-counter conversion (#303), verified archive targets and frozen actor updates (#304), bounded GP expansion and PolicyLM seed receipts (#306), J8 restart-only and offline-replay controls (#327), J21 three scoreboards and paired L6-vs-v1 report (#324), J22 multi-seed panel validation (#328), and GB-02 custody dry-run + GB-08 baseline metrics + S3-RET retention classifier (`jope_retention`) (#332)
+- learning(pools): frozen candidate pools (`jope_pools`) and shadow ranking-learnability evaluation (#316), plus read-only native roster ingest with verified local publication (#323)
+- learning(clover): freeze successor support and align sampling probabilities (#319), decomposed support KL (`decomposed_support_kl`), contextual surrogate funnel (`ContextualSurrogateQHat`, `select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), multi-round self-play ratchet (`run_selfplay_ratchet`), cross-fitted surrogate H2, non-parametric measured-tilt leaf policy (`measured_tilt_leaf_log_probs`), and `gp_distilled/v1` S3 Parquet distillation bridge (`distill_selfplay_observations`, `distilled_rows_to_measurement_rows`) (#333, #334)
+- campaigns: remove disabled duplicate final CV loop, bound projected GP census by completed observations, and share campaign bin flock safety boundary (#233, #243, #264, #265)
+
+### DL flywheel and train-only custody
+
+- dl: train-only GPU budget, output evidence and encoder pins (#199), S1 teacher selection independent of test scores (#204, #214), pinned train-only builder source custody (#216, #218), outer-test target stripping from JTT1 payloads (#224), S1 GP HWM create-only publication (#236, #256), raw GPU encoding manifests (#239), raw-route group hook and `LINEAR-DETERMINED` per-fold gate (#246, #250, #251), train-only feature reduction for fixed-width consumers (#257), heldout S1 finals under `ONE-HOLDOUT` (#267), clean-license HWM data bundle (#268), and `dlhwm` wave-0/wave-1/feature-subset baselines (#274, #275)
 
 ### CI, build and release
 
-- release: bump workspace and product crate versions from `0.2.0` to `0.3.0`, syncing standalone Lambda workspace locks (`deploy/lambda/SNAPSHOT.json`); `jope` prints `jope 0.3.0`
-- lambda: import the teacher campaign's second stage (frozen snapshot): its host-side search engine and Lambda worker as two more standalone Cargo workspaces under `deploy/lambda/training/teacher-v2`, built and tested in the hygiene lane; its Python stays in custody with the same tracked hash manifest (#129)
+- release: bump workspace and product crate versions from `0.2.0` to `0.3.0`, syncing standalone Lambda workspace locks (`deploy/lambda/SNAPSHOT.json`) and rebaselining the ADR-0004 evaluator identity (#336); `jope` prints `jope 0.3.0`
+- lambda: import the teacher campaign's second stage (frozen snapshot): its host-side search engine and Lambda worker as standalone Cargo workspaces under `deploy/lambda/training/teacher-v2`, built and tested in the hygiene lane; its Python stays in custody with the same tracked hash manifest (#129)
+- ci, runner: 7-day CI artifact retention (#179), full-scratch golden test deadline (#194), runner `swap=0` systemd unit, base-ref provenance, and shallow lock / fetch-timeout guards (#205, #206, #210, #211, #213), workspace Clippy burn-down (#209, #219, #240, #241), durable fixture work limits (#225), full-main golden tail ordering, build worker caps, trusted library compilation cache, and contention reduction (#242, #244, #248, #266), fast-lane source manifest repin (#305), split `full-main-cpu` into groups and `rust-test` into slices with a partition proof (#309, #313), and admit `xbabe3/full` as a second `jope-full-cpu` lane (#310, #326)
 
 ### Documentation
 
 - docs(readme): refresh `At a glance` counts and add the CLOVER self-play flywheel quick start (#335)
-- docs(records): the teacher v2 import record and the owner's ruling on its source directory (#129)
+- docs(paper, rlfw): refresh `model.md` and the CLOVER write-up (#311), and assess lineage-A self-play reuse for J26 (#330)
+- docs(release, datasets, records): teacher v2 import record (#129), `ALL-DATA-RESEARCH` owner ruling (#220), Jankurai audit findings and agent contract links (#234), and feasibility probe allocator safety (#261)
+
+### Dependencies
+
+- build(deps): astral-sh/setup-uv 10.1.0 to 10.2.0 (#159), taiki-e/install-action 2.87.18 to 2.87.22 (#160) (`#298` dependency bump reverted in `#300` to preserve the recorded evaluator identity)
 
 ## [0.2.0] - 2026-09-29
 
