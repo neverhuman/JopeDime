@@ -59,6 +59,11 @@ class RunnerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             policy.authorize({'domain':'pr'}, self.env())
 
+    def test_main_domain_admits_ci_yml_on_full_jope_ci(self):
+        # Owner permanent 2026-10-14: full hosts register jope-ci and may run ci.yml.
+        policy.authorize({'domain':'main'}, self.env('ci', 'pull_request', 'refs/pull/61/merge'))
+        policy.authorize({'domain':'main'}, self.env('ci', 'workflow_dispatch', 'refs/heads/feature'))
+
     def test_approved_resources_and_capability_absence(self):
         for host, lane, domain, gib in [('xbabe1','ci','pr',16), ('xbabe1','ci2','pr',16), ('xbabe2','full','main',48), ('xbabe3','full','main',48)]:
             p = dict(host=host,lane=lane,domain=domain,memory=f'{gib}g',cpus=16,volume_prefix=f'jope-{domain}-{lane}')
@@ -66,6 +71,16 @@ class RunnerTests(unittest.TestCase):
             for memory, cpu, swap, devices in [('max','1600000 100000','0',[]), (str(gib*1024**3),'2800000 100000','0',[]), (str(gib*1024**3),'1600000 100000','1',[]), (str(gib*1024**3),'1600000 100000','0',['/dev/nvidia0'])]:
                 with self.assertRaises(ValueError):
                     container.verify(p,memory,cpu,swap,devices)
+
+    def test_full_lane_registers_jope_ci(self):
+        script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=$1; jope_runner_labels "$2"'
+        for host in ('xbabe2', 'xbabe3'):
+            result = subprocess.run(['bash','-ec',script,'test',host,'full'],cwd=ROOT,capture_output=True,text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(f'{host}-full,jope-full-cpu,jope-ci', result.stdout.strip())
+        result = subprocess.run(['bash','-ec',script,'test','xbabe1','ci'],cwd=ROOT,capture_output=True,text=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual('xbabe1-ci,jope-ci', result.stdout.strip())
 
     def test_host_roles_and_environment_cannot_raise_budget(self):
         for host, lane, expected in [('xbabe1','ci','16g 16 pr'),('xbabe1','ci2','16g 16 pr'),('xbabe2','full','48g 16 main'),('xbabe3','full','48g 16 main')]:

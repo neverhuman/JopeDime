@@ -15,12 +15,19 @@ def authorize(policy, env):
     workflow = env.get("GITHUB_WORKFLOW_REF", "")
     event = env.get("GITHUB_EVENT_NAME")
     if policy["domain"] == "main":
-        if env.get("GITHUB_REF") != "refs/heads/main":
-            raise ValueError("trusted storage requires main")
-        allowed = {f"{repo}/.github/workflows/full-main.yml@refs/heads/main": {"push", "workflow_dispatch"},
-                   f"{repo}/.github/workflows/main-guard.yml@refs/heads/main": {"push"}}
-        if event not in allowed.get(workflow, set()):
-            raise ValueError("workflow/event is not admitted to trusted storage")
+        # Full hosts also carry jope-ci (owner permanent 2026-10-14). Admit ci.yml
+        # PR/manual onto the full lane in addition to trusted main workflows.
+        ci_ok = (
+            workflow.startswith(f"{repo}/.github/workflows/ci.yml@")
+            and event in {"pull_request", "workflow_dispatch"}
+        )
+        if not ci_ok:
+            if env.get("GITHUB_REF") != "refs/heads/main":
+                raise ValueError("trusted storage requires main")
+            allowed = {f"{repo}/.github/workflows/full-main.yml@refs/heads/main": {"push", "workflow_dispatch"},
+                       f"{repo}/.github/workflows/main-guard.yml@refs/heads/main": {"push"}}
+            if event not in allowed.get(workflow, set()):
+                raise ValueError("workflow/event is not admitted to trusted storage")
     elif policy["domain"] == "pr":
         if not workflow.startswith(f"{repo}/.github/workflows/ci.yml@") or event not in {"pull_request", "workflow_dispatch"}:
             raise ValueError("fast storage admits only ci PR/manual jobs")
