@@ -433,6 +433,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/eval_child_isolation_identity_rebaseline.v1.json");
     assert_eq!(eval_isolation["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(eval_isolation["fixtures"][0]["path"], changed_fixtures[1]);
+    // Workspace version bump to 0.3.0 (just bump 0.3.0): evaluator identity only.
+    let release_0_3_0 = old_fixture("transitions/release_0_3_0_identity_rebaseline.v1.json");
+    assert_eq!(release_0_3_0["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(release_0_3_0["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -448,6 +452,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         executable_cache,
         sealed_runtime,
         eval_isolation,
+        release_0_3_0,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
