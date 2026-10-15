@@ -27,7 +27,7 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 | `jope` with no arguments | prints `jope 0.2.0` <sup>1</sup> |
 | Workspace | 26 members: 19 crates at 0.2.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
-| Emit targets | 5: `python`, `rust`, `cpp17`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
+| Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
 | Rust tests | 4,189 listed in 26 packages, 66 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 182, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 9 jobs per pull request in `ci.yml`; 11 `full-main-cpu` families on every push to `main` <sup>6</sup> |
@@ -218,6 +218,17 @@ Prove emitters on this SHA:
 JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math
 ```
 
+Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jope-ci` runners.
+Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
+(`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
+(formatting, the coverage map, the prose rule, the repository layout and the README's generated
+blocks) and builds and tests the standalone AWS Lambda workspaces under `deploy/lambda`
+(`deploy/ci/lambda.sh`). Every push to `main` runs `main-guard` and `full-main-cpu`. Locally,
+`just ci-pr` (alias `just required`) runs `check.sh`, `cargo fmt --check`, clippy with
+`-D warnings`, the pull-request nextest tier, and ruff and pytest over the remaining Python; each
+tool must be installed.
+`just lint-paths` runs only the absolute-home-path check.
+
 ### CLOVER self-play flywheel quick start
 
 `jope-learning` drives the CLOVER self-play ratchet (`run_selfplay_ratchet`), surrogate-screened seed selection (`select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), non-parametric measured-tilt leaf proposal (`measured_tilt_leaf_log_probs` bounded by `decomposed_support_kl`), and the `gp_distilled/v1` S3 Parquet distillation bridge into `ContextualSurrogateQHat`:
@@ -229,14 +240,15 @@ cargo test --locked -p jope-learning --lib clover::expansion::tests::
 # 2. Verify the gp_distilled/v1 S3 Parquet distillation bridge and ContextualSurrogateQHat loop:
 cargo test --locked -p jope-learning --test retention --test retention_pack --test pools
 
-# 3. Adapt coverage, freeze candidate pools, extract context vectors, and evaluate selectors:
+# 3. Adapt coverage (jope.r22-lpi-scratch-coverage/v1), freeze candidate pools, extract
+#    joined-roster context vectors (jope.joined-native-roster/v1), and evaluate selectors:
 cargo run --locked -p jope-learning --bin jope_pools -- ingest-coverage \
   --coverage target/pools/coverage.json \
-  --protocol-sha256 0000000000000000000000000000000000000000000000000000000000000000 \
+  --protocol-sha256 "$(sha256sum target/pools/protocol.json | cut -d' ' -f1)" \
   --out target/pools/measurements.jsonl
 cargo run --locked -p jope-learning --bin jope_pools -- freeze \
   --rows target/pools/measurements.jsonl \
-  --source-grade train_cv_geomean_rmse_ratio \
+  --source-grade native_nonqualifying_R22 \
   --out target/pools/frozen
 cargo run --locked -p jope-learning --bin jope_pools -- ingest-roster-features \
   --roster target/pools/roster.jsonl \
@@ -255,17 +267,6 @@ cargo run --locked -p jope-learning --bin jope_pools -- evaluate \
 cargo run --locked -p jope-learning --bin jope_retention -- inspect-parquet \
   --sample 3 target/retention/gp_distilled.parquet
 ```
-
-Pull-request CI is `.github/workflows/ci.yml`: nine jobs on the self-hosted `jope-ci` runners.
-Eight each run one lane of `deploy/ci/fast-lane.sh`, and `aggregate` validates their receipts
-(`deploy/ci/aggregate.py`). The hygiene lane includes `deploy/ci/check.sh`
-(formatting, the coverage map, the prose rule, the repository layout and the README's generated
-blocks) and builds and tests the standalone AWS Lambda workspaces under `deploy/lambda`
-(`deploy/ci/lambda.sh`). Every push to `main` runs `main-guard` and `full-main-cpu`. Locally,
-`just ci-pr` (alias `just required`) runs `check.sh`, `cargo fmt --check`, clippy with
-`-D warnings`, the pull-request nextest tier, and ruff and pytest over the remaining Python; each
-tool must be installed.
-`just lint-paths` runs only the absolute-home-path check.
 
 ## Releases
 
