@@ -14,7 +14,7 @@ SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. 
 encodings→program neural policy will ship because the product needs a router; it is
 **not** a held-out SOTA claim.
 
-What changed in 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
+What changed in 0.3.0 and 0.2.0 is in [`CHANGELOG.md`](CHANGELOG.md). The current direction and the landing
 record are in [`MASTER_PLAN.md`](MASTER_PLAN.md). How to verify a release is in
 [`docs/release/README.md`](docs/release/README.md).
 
@@ -22,10 +22,10 @@ Contributors and agents should read [AGENTS.md](AGENTS.md) before changing this 
 
 ## At a glance
 
-| What | 0.2.0 |
+| What | 0.3.0 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 0.2.0` <sup>1</sup> |
-| Workspace | 26 members: 19 crates at 0.2.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 0.3.0` <sup>1</sup> |
+| Workspace | 26 members: 19 crates at 0.3.0 and 7 vendored SmartCluster crates at 8.0.0; 8 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 6: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20) and `javascript` <sup>4</sup> |
 | Rust tests | 4,189 listed in 26 packages, 66 of them ignored; a listing, not a run <sup>5</sup> |
@@ -196,7 +196,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.2.0
+# jope 0.3.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -277,7 +277,7 @@ annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release hol
 SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
 by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
 [`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
-source of v0.2.0; the release exists only once `release.sh --publish` has run.
+source of v0.3.0; the release exists only once `release.sh --publish` has run.
 
 To verify one, take `signing.pub` from the tag and check its fingerprint as
 [docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
@@ -326,7 +326,7 @@ The 26 workspace members, by directory under `crates/`; the package name follows
 
 ## Further reading
 
-- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.2.0
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed in 0.3.0 and 0.2.0
 - [`MASTER_PLAN.md`](MASTER_PLAN.md) — current direction and the landing record
 - [`docs/release/README.md`](docs/release/README.md) — how a release is cut, signed and verified
 - [`docs/pipeline.md`](docs/pipeline.md) — the pipeline's budget, selection, seeding, parallelism and test-split contracts

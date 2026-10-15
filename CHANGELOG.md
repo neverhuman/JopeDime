@@ -5,6 +5,8 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-15
+
 ### feat-math and emitters
 
 - feat-math: a compatibility freeze of the shipped numerics, emitted bytes, serialized models, pinned files and generator streams, the boundary input corpus, and the current scalar semantics pinned before the kernel2 work (#126)
@@ -17,13 +19,21 @@ the commit areas (crate or lane) named in each subject line.
 - feat-math, ci: fitted C++17 revision 3 checks fitted column reads, returns status 8 for invalid fitted widths, matches the runtime on empty rows and tied intervals, and reloads revision-2 containers through regeneration; the emitters lane exercises sanitizers and C++20 (#134)
 - feat-math: a declared capability manifest and four revisioned search profiles, checked against frozen grammars, generator draws, emitter routes and profile hashes (kernel2 PR 09)
 - feat-math: the capability manifest settles grammar drift under one authority rule, reports each program's export support by route, and gates the first closure checks for kernel2 profiles (kernel2 PR 10)
+- feat-math: typed scalar planner, three-language recipe/fitted adapters (`cpp17-recipe-v2`), sparse Goertzel bank (wire 61), parent-selection and certified scoring seams, and pinned sealed embedded fitted runtime (#253–#262)
+
+### Campaigns, self-play and learning
+
+- learning(clover): closed-loop algorithmic self-play flywheel with multi-round monotonic ratchet (`run_selfplay_ratchet`), surrogate-screened seed funnel (`select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), non-parametric measured-tilt leaf proposal (`measured_tilt_leaf_log_probs` bounded by `decomposed_support_kl`), and `gp_distilled/v1` S3 Parquet distillation bridge into `ContextualSurrogateQHat` (`distill_selfplay_observations`, `distilled_rows_to_measurement_rows`) (#334)
+- learning(pools, retention): frozen candidate pools (`jope_pools`) and S3 retention brain + native Parquet reader/writer (`jope_retention`) with `gp_distilled/v1` verification
 
 ### CI, build and release
 
-- lambda: import the teacher campaign's second stage (frozen snapshot): its host-side search engine and Lambda worker as two more standalone Cargo workspaces under `deploy/lambda/training/teacher-v2`, the worker's lock at the 0.2.0 `feat-math`, built and tested in the hygiene lane; its Python stays in custody with the same tracked hash manifest (#129)
+- release: bump workspace and product crate versions from `0.2.0` to `0.3.0`, syncing standalone Lambda workspace locks (`deploy/lambda/SNAPSHOT.json`); `jope` prints `jope 0.3.0`
+- lambda: import the teacher campaign's second stage (frozen snapshot): its host-side search engine and Lambda worker as two more standalone Cargo workspaces under `deploy/lambda/training/teacher-v2`, built and tested in the hygiene lane; its Python stays in custody with the same tracked hash manifest (#129)
 
 ### Documentation
 
+- docs(readme): refresh `At a glance` counts and add the CLOVER self-play flywheel quick start (#335)
 - docs(records): the teacher v2 import record and the owner's ruling on its source directory (#129)
 
 ## [0.2.0] - 2026-09-29
