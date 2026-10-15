@@ -10,7 +10,7 @@ Branch protection remains procedural until the API readback establishes enforcem
 | Host | Slots / labels | Per-job cap | Writable storage domain |
 | --- | --- | --- | --- |
 | xbabe1 | ci, ci2 / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci, pr-ci2 |
-| xbabe2 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full |
+| xbabe2 | full / jope-full-cpu, jope-ci | 48 GiB, 16 CPUs, no swap | main-full |
 | xbabe3 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full (xbabe3's own volumes) |
 
 The two full slots run the full-main-cpu matrix groups in parallel and also execute main-guard;
@@ -20,8 +20,9 @@ GPU and kernel roles. Their live qualification and persistent runner migration r
 The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
 
 Each domain has separate named work, Cargo registry, target and uv volumes, for example
-`jope-pr-ci-target` and `jope-main-full-target`. PR/manual fast CI is always treated as untrusted,
-including a manual ci.yml dispatch of main; trusted main workflows use only the full domain.
+`jope-pr-ci-target` and `jope-main-full-target`. PR/manual fast CI is untrusted code even when it lands on a full host via `jope-ci`;
+trusted main workflows continue to use the full domain. Full-lane volumes may therefore
+see both trusted main jobs and untrusted ci.yml jobs (owner permanent 2026-10-14).
 An ephemeral registration does not clean persistent volumes. Never share these writable domains
 or mount the legacy models volume into CPU jobs. Existing old volumes/evidence are retained
 until the independent custody procedure permits removal.
@@ -32,9 +33,9 @@ Docker socket, host PAT, training, publishing or S3 credentials. The SDK volume 
 The root PAT is used only by the host to request a single-use JIT configuration; do not print
 JIT arguments, process arguments or Docker Config.Env during inspection.
 
-The read-only root-installed `job-started.sh`/`job-policy.py` hook admits only ci.yml PR/manual
-jobs to the fast domain, and main-branch push/manual full-main or push main-guard jobs to the
-trusted domain. It reads a root-selected policy file and Actions context, not checkout code or
+The read-only root-installed `job-started.sh`/`job-policy.py` hook admits ci.yml PR/manual
+jobs to the fast (pr) domain and, on full hosts that also carry `jope-ci`, to the trusted
+full lane; main-branch push/manual full-main or push main-guard jobs use the trusted domain. It reads a root-selected policy file and Actions context, not checkout code or
 workflow overrides. Rejection kills the container's same-uid Listener/Worker processes before
 an `always()` step could run. Runner v2.337.0 reads the hook path from its process environment,
 invokes it before action pre-steps, and supplies GitHub context through the hook handler:
