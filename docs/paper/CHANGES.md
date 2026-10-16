@@ -192,5 +192,6 @@ Every claim was traced back to its source on xbabe2. [`NUMBERS_TRACE.md`](NUMBER
 - **Scope.** The header states that the report covers events up to 2026-10-13T12:00Z. EI-1 is marked as planned "as of this revision".
 - **Totals.** 177 claims (118 established, 20 preliminary, 16 non-qualifying, 23 pending).
 - **Check.** `jope-records paper-trace` now runs in CI. It checks every printed number against the claims cited in its line or section, the Appendix G totals, the Section 10.4 pending table, and this file's claim trace and exemption tables.
+- **Figure 1 on page 1.** It shows why the work matters, using only established measurements of the frozen first generation: (a) the full validation plateau [C26, C27], (b) the outcome head's ranking accuracy on fresh programs at chance [C76]. The planned teaser stays a specification: its panels need qualified receipts that do not exist [C114]. `paper-trace` renders the figure from `figures/v1_full_validation.dat`, the file C27 pins, and from C76's value, and fails when the committed SVG, its data or those claims disagree.
 
 `tex/` is still not regenerated.

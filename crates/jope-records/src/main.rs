@@ -161,6 +161,10 @@ enum Command {
         /// xbabe2, under the roots `docs/paper/claims.json` declares).
         #[arg(long)]
         sources: bool,
+        /// Re-render Figure 1 (`docs/paper/figures/why-it-matters.svg`) from its data and the
+        /// ledger before checking.
+        #[arg(long)]
+        write_figure: bool,
     },
     /// Render the README's measured-results blocks from committed evidence.
     ReadmeBenchmarks {
@@ -348,8 +352,11 @@ fn run(cli: Cli) -> jope_records::Result<Output> {
             };
             return Ok(report(repo_layout::run(&root, print_temp_dir)?));
         }
-        Command::PaperTrace { sources } => {
-            return Ok(report(paper_trace::check(&repo()?, sources)?));
+        Command::PaperTrace {
+            sources,
+            write_figure,
+        } => {
+            return Ok(report(paper_trace::check(&repo()?, sources, write_figure)?));
         }
         Command::ReadmeBenchmarks { write, .. } => {
             let (message, ok) = readme::run(&repo()?, write)?;

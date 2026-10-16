@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" font-family="Helvetica, Arial, sans-serif">
+<rect x="0" y="0" width="800" height="300" fill="white"/>
+<text x="26.0" y="28.0" text-anchor="start" font-size="13" fill="#222222">(a) First generation: full validation loss by epoch</text>
+<rect x="174.5" y="52.0" width="295.5" height="184.0" fill="#e3efe6"/>
+<text x="322.2" y="74.0" text-anchor="middle" font-size="12" fill="#222222">31 epochs (10–40) within</text>
+<text x="322.2" y="90.0" text-anchor="middle" font-size="12" fill="#222222">[0.8968, 0.8978]</text>
+<line x1="76.0" y1="52.0" x2="76.0" y2="236.0" stroke="#555555" stroke-width="1"/>
+<line x1="76.0" y1="236.0" x2="470.0" y2="236.0" stroke="#555555" stroke-width="1"/>
+<line x1="72.0" y1="236.0" x2="76.0" y2="236.0" stroke="#555555" stroke-width="1"/>
+<text x="69.0" y="240.0" text-anchor="end" font-size="11" fill="#222222">0.88</text>
+<line x1="72.0" y1="183.4" x2="76.0" y2="183.4" stroke="#555555" stroke-width="1"/>
+<text x="69.0" y="187.4" text-anchor="end" font-size="11" fill="#222222">0.92</text>
+<line x1="72.0" y1="130.9" x2="76.0" y2="130.9" stroke="#555555" stroke-width="1"/>
+<text x="69.0" y="134.9" text-anchor="end" font-size="11" fill="#222222">0.96</text>
+<line x1="72.0" y1="78.3" x2="76.0" y2="78.3" stroke="#555555" stroke-width="1"/>
+<text x="69.0" y="82.3" text-anchor="end" font-size="11" fill="#222222">1.00</text>
+<text x="32.0" y="144.0" text-anchor="middle" font-size="12" fill="#222222" transform="rotate(-90 32.0 144.0)">full validation loss</text>
+<line x1="76.0" y1="236.0" x2="76.0" y2="240.0" stroke="#555555" stroke-width="1"/>
+<text x="76.0" y="253.0" text-anchor="middle" font-size="11" fill="#222222">0</text>
+<line x1="174.5" y1="236.0" x2="174.5" y2="240.0" stroke="#555555" stroke-width="1"/>
+<text x="174.5" y="253.0" text-anchor="middle" font-size="11" fill="#222222">10</text>
+<line x1="273.0" y1="236.0" x2="273.0" y2="240.0" stroke="#555555" stroke-width="1"/>
+<text x="273.0" y="253.0" text-anchor="middle" font-size="11" fill="#222222">20</text>
+<line x1="371.5" y1="236.0" x2="371.5" y2="240.0" stroke="#555555" stroke-width="1"/>
+<text x="371.5" y="253.0" text-anchor="middle" font-size="11" fill="#222222">30</text>
+<line x1="470.0" y1="236.0" x2="470.0" y2="240.0" stroke="#555555" stroke-width="1"/>
+<text x="470.0" y="253.0" text-anchor="middle" font-size="11" fill="#222222">40</text>
+<text x="273.0" y="272.0" text-anchor="middle" font-size="12" fill="#222222">closed epoch</text>
+<polyline points="95.7,71.0 105.5,141.2 115.4,173.8 125.2,175.7 135.1,169.3 144.9,207.2 154.8,211.2 164.7,208.2 174.5,213.7 184.4,212.7 194.2,213.1 204.1,213.0 213.9,212.9 223.8,212.8 233.6,212.6 243.4,212.6 253.3,213.1 263.1,213.0 273.0,213.4 282.9,213.1 292.7,213.3 302.5,212.7 312.4,213.5 322.2,212.9 332.1,213.2 342.0,213.4 351.8,213.9 361.6,213.5 371.5,213.6 381.4,213.7 391.2,213.8 401.0,213.3 410.9,213.0 420.8,213.1 430.6,213.7 440.5,213.1 450.3,213.7 460.1,213.8 470.0,213.0" fill="none" stroke="#1f4e79" stroke-width="1.5"/>
+<circle cx="95.7" cy="71.0" r="2.2" fill="#1f4e79"/>
+<circle cx="105.5" cy="141.2" r="2.2" fill="#1f4e79"/>
+<circle cx="115.4" cy="173.8" r="2.2" fill="#1f4e79"/>
+<circle cx="125.2" cy="175.7" r="2.2" fill="#1f4e79"/>
+<circle cx="135.1" cy="169.3" r="2.2" fill="#1f4e79"/>
+<circle cx="144.9" cy="207.2" r="2.2" fill="#1f4e79"/>
+<circle cx="154.8" cy="211.2" r="2.2" fill="#1f4e79"/>
+<circle cx="164.7" cy="208.2" r="2.2" fill="#1f4e79"/>
+<circle cx="174.5" cy="213.7" r="2.2" fill="#1f4e79"/>
+<circle cx="184.4" cy="212.7" r="2.2" fill="#1f4e79"/>
+<circle cx="194.2" cy="213.1" r="2.2" fill="#1f4e79"/>
+<circle cx="204.1" cy="213.0" r="2.2" fill="#1f4e79"/>
+<circle cx="213.9" cy="212.9" r="2.2" fill="#1f4e79"/>
+<circle cx="223.8" cy="212.8" r="2.2" fill="#1f4e79"/>
+<circle cx="233.6" cy="212.6" r="2.2" fill="#1f4e79"/>
+<circle cx="243.4" cy="212.6" r="2.2" fill="#1f4e79"/>
+<circle cx="253.3" cy="213.1" r="2.2" fill="#1f4e79"/>
+<circle cx="263.1" cy="213.0" r="2.2" fill="#1f4e79"/>
+<circle cx="273.0" cy="213.4" r="2.2" fill="#1f4e79"/>
+<circle cx="282.9" cy="213.1" r="2.2" fill="#1f4e79"/>
+<circle cx="292.7" cy="213.3" r="2.2" fill="#1f4e79"/>
+<circle cx="302.5" cy="212.7" r="2.2" fill="#1f4e79"/>
+<circle cx="312.4" cy="213.5" r="2.2" fill="#1f4e79"/>
+<circle cx="322.2" cy="212.9" r="2.2" fill="#1f4e79"/>
+<circle cx="332.1" cy="213.2" r="2.2" fill="#1f4e79"/>
+<circle cx="342.0" cy="213.4" r="2.2" fill="#1f4e79"/>
+<circle cx="351.8" cy="213.9" r="2.2" fill="#1f4e79"/>
+<circle cx="361.6" cy="213.5" r="2.2" fill="#1f4e79"/>
+<circle cx="371.5" cy="213.6" r="2.2" fill="#1f4e79"/>
+<circle cx="381.4" cy="213.7" r="2.2" fill="#1f4e79"/>
+<circle cx="391.2" cy="213.8" r="2.2" fill="#1f4e79"/>
+<circle cx="401.0" cy="213.3" r="2.2" fill="#1f4e79"/>
+<circle cx="410.9" cy="213.0" r="2.2" fill="#1f4e79"/>
+<circle cx="420.8" cy="213.1" r="2.2" fill="#1f4e79"/>
+<circle cx="430.6" cy="213.7" r="2.2" fill="#1f4e79"/>
+<circle cx="440.5" cy="213.1" r="2.2" fill="#1f4e79"/>
+<circle cx="450.3" cy="213.7" r="2.2" fill="#1f4e79"/>
+<circle cx="460.1" cy="213.8" r="2.2" fill="#1f4e79"/>
+<circle cx="470.0" cy="213.0" r="2.2" fill="#1f4e79"/>
+<text x="552.0" y="28.0" text-anchor="start" font-size="13" fill="#222222">(b) Outcome head on fresh programs</text>
+<line x1="612.0" y1="52.0" x2="612.0" y2="236.0" stroke="#555555" stroke-width="1"/>
+<line x1="612.0" y1="236.0" x2="772.0" y2="236.0" stroke="#555555" stroke-width="1"/>
+<line x1="608.0" y1="236.0" x2="612.0" y2="236.0" stroke="#555555" stroke-width="1"/>
+<text x="605.0" y="240.0" text-anchor="end" font-size="11" fill="#222222">0.40</text>
+<line x1="608.0" y1="174.7" x2="612.0" y2="174.7" stroke="#555555" stroke-width="1"/>
+<text x="605.0" y="178.7" text-anchor="end" font-size="11" fill="#222222">0.50</text>
+<line x1="608.0" y1="113.3" x2="612.0" y2="113.3" stroke="#555555" stroke-width="1"/>
+<text x="605.0" y="117.3" text-anchor="end" font-size="11" fill="#222222">0.60</text>
+<line x1="608.0" y1="52.0" x2="612.0" y2="52.0" stroke="#555555" stroke-width="1"/>
+<text x="605.0" y="56.0" text-anchor="end" font-size="11" fill="#222222">0.70</text>
+<text x="568.0" y="144.0" text-anchor="middle" font-size="12" fill="#222222" transform="rotate(-90 568.0 144.0)">pairwise ranking accuracy</text>
+<line x1="612.0" y1="174.7" x2="772.0" y2="174.7" stroke="#555555" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="616.0" y="169.7" text-anchor="start" font-size="11" fill="#222222">chance</text>
+<line x1="676.0" y1="210.7" x2="676.0" y2="132.7" stroke="#1f4e79" stroke-width="1.5"/>
+<line x1="670.0" y1="210.7" x2="682.0" y2="210.7" stroke="#1f4e79" stroke-width="1.5"/>
+<line x1="670.0" y1="132.7" x2="682.0" y2="132.7" stroke="#1f4e79" stroke-width="1.5"/>
+<circle cx="676.0" cy="171.2" r="4" fill="#1f4e79"/>
+<text x="688.0" y="136.7" text-anchor="start" font-size="12" fill="#222222">0.506</text>
+<text x="688.0" y="151.7" text-anchor="start" font-size="11" fill="#222222">[0.441, 0.568]</text>
+<text x="692.0" y="253.0" text-anchor="middle" font-size="11" fill="#222222">32 lineages</text>
+</svg>

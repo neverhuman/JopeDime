@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 16",
-  "count": 4989,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json",
+  "count": 4992,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -6890,12 +6890,12 @@
     }
    },
    "jope-records": {
-    "count": 183,
+    "count": 186,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 76,
+      "count": 79,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -6909,6 +6909,9 @@
        "coverage::tests::unassigned_and_stale_items_fail",
        "coverage::tests::workflow_comments_flow_values_and_indentation",
        "layout::tests::a_checkout_whose_path_is_not_utf8_is_found_as_it_is",
+       "paper_figure::tests::the_figure_follows_its_data_and_its_claims",
+       "paper_figure::tests::the_plateau_is_recomputed_from_epoch_ten",
+       "paper_figure::tests::the_rendering_is_deterministic_and_draws_every_epoch",
        "paper_trace::tests::a_drifted_ledger_value_fails",
        "paper_trace::tests::a_drifted_printed_number_fails",
        "paper_trace::tests::a_range_dash_is_not_a_minus_sign",
@@ -7587,7 +7590,7 @@
   }
  },
  "totals": {
-  "rust": 4989,
+  "rust": 4992,
   "python": 182
  }
 }
