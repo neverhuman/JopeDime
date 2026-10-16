@@ -29,14 +29,25 @@ if [ -n "${JOPE_EVIDENCE_S3_URI:-}" ]; then
   s3="$JOPE_EVIDENCE_S3_URI/${repo//\//_}/$name/"
   aws s3 cp --recursive --no-follow-symlinks --only-show-errors "$src" "$s3"
 fi
-# Bounded disk: retained evidence older than JOPE_LOCAL_EVIDENCE_DAYS (default 14) is pruned,
-# and every removal is logged.
+# Age identifies review candidates, never deletion authority. Reclamation requires
+# preserved and independently restore-verified bytes plus a fresh consumer check.
+# Publication leaves every prior evidence directory intact.
 days=${JOPE_LOCAL_EVIDENCE_DAYS:-14}
 [[ $days =~ ^[0-9]+$ ]] || { echo "invalid JOPE_LOCAL_EVIDENCE_DAYS: $days" >&2; exit 1; }
-find "$root/${repo//\//_}" -mindepth 1 -maxdepth 1 -type d -mtime "+$days" -print -exec rm -rf -- {} + | sed 's/^/pruned retained evidence older than '"$days"'d: /'
+candidates=$(find "$root/${repo//\//_}" -mindepth 1 -maxdepth 1 -type d -mtime "+$days" -print)
+if [ -n "$candidates" ]; then
+  printf '%s\n' "$candidates" | sed 's/^/retained evidence candidate older than '"$days"'d: /'
+fi
 echo "evidence $name retained at $where ${s3:+and $s3}"
 echo "sha256 manifest:"; cat "$manifest"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   { echo "### Evidence \`$name\`"; echo "- local: \`$where\`"; [ -z "$s3" ] || echo "- s3: \`$s3\`"
     echo '```'; cat "$manifest"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+fi
+
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ] && [ -n "$candidates" ]; then
+  {
+    echo "- Aged directories retained for custody review (older than ${days}d):"
+    printf '%s\n' "$candidates"
+  } >> "$GITHUB_STEP_SUMMARY"
 fi

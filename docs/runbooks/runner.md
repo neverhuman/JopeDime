@@ -11,7 +11,7 @@ Branch protection remains procedural until the API readback establishes enforcem
 | --- | --- | --- | --- |
 | xbabe1 | ci, ci2 / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci, pr-ci2 |
 | xbabe2 | full / jope-full-cpu, jope-ci | 48 GiB, 16 CPUs, no swap | main-full |
-| xbabe3 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full (xbabe3's own volumes) |
+| xbabe3 | full / jope-full-cpu, jope-ci | 48 GiB, 16 CPUs, no swap | main-full (xbabe3's own volumes) |
 
 The two full slots run the full-main-cpu matrix groups in parallel and also execute main-guard;
 each slot runs one job at a time. No other JopeDime runner role is admitted on xbabe2 or xbabe3.
@@ -134,10 +134,20 @@ collection/results; GPU, live S3, research scripts and capability qualification 
 A missing SDK is unavailable, a compilation/test failure is failed, and missing counts are
 unknown. Families continue independently; no continue-on-error turns a failing job green.
 
-Every run uploads one `full-cpu-RUN-ATTEMPT-GROUP` artifact per matrix group (the families
-of `deploy/ci/full-main.py` GROUPS), including fresh family receipts, command logs, current
-JUnit/collection reports and inventory.json; the aggregate job re-verifies every group and
-uploads `full-cpu-aggregate-RUN-ATTEMPT`. Build reuse is measured by Cargo artifact
+Every run retains each group's evidence on its runner's persistent target volume under
+/var/cache/jope/target/ci-evidence-retained/REPOSITORY/NAME/. Names include run and attempt;
+a failed local copy or SHA-256 readback fails the job. Logs and step summaries record host,
+lane, destination and the SHA-256 manifest. Retain these logs as the independent hash reference:
+later untrusted jobs can write their lane volume, so a manifest beside the files alone does
+not establish tamper-evident custody. Age produces review candidates only, in both log and
+summary. Publication never deletes evidence. Reclamation requires the separate preservation,
+independent recovery and fresh consumer checks in AGENTS.md.
+
+Run/attempt-scoped Actions caches hand receipts to the aggregate without GitHub artifact
+storage. Save warnings are checked through lookup before publication succeeds. Save and restore
+use the same workspace-relative paths across ci, ci2 and full. The full-main download uses
+logical group names, preserving its verifier's layout. The aggregate re-verifies the declared
+families; unavailable, stale or changed evidence fails closed. Build reuse is measured by Cargo artifact
 `fresh` plus executable digest in full-build-reuse/reuse.json, and is not substituted for fresh
 test execution. The target directory is job-scoped, with one persistent target per lane;
 the image and host do not set CARGO_TARGET_DIR globally. Cargo builds use four compiler jobs,
