@@ -245,12 +245,9 @@ fn ledger(text: &str, problems: &mut Vec<String>) -> Result<Vec<Claim>> {
                 ));
             }
         }
-        let record = [
-            field(claim, "statement"),
-            field(claim, "value"),
-            field(claim, "tex"),
-        ]
-        .join(" | ");
+        // TeX formats the record; it is not another source of accepted values.
+        // A stale display value must not silently whitelist numeric drift.
+        let record = [field(claim, "statement"), field(claim, "value")].join(" | ");
         claims.push(Claim {
             id,
             status,
@@ -1030,10 +1027,10 @@ Illustrative: q = log 10 ≈ 2.303.
 
     #[test]
     fn a_drifted_ledger_value_fails() {
+        // Leave the TeX at its old value: formatting must not mask the drift.
         let l = LEDGER_OK
             .replace("893,957 parameters", "894,000 parameters")
-            .replace("\"893,957\"", "\"894,000\"")
-            .replace("893{,}957", "894{,}000");
+            .replace("\"893,957\"", "\"894,000\"");
         let p = problems(WRITEUP_OK, &l, TRACE_OK);
         assert!(
             p.iter().any(|m| m.contains("893957 is not in any claim")),
@@ -1235,6 +1232,22 @@ The 26 workspace members, by directory.
             .expect("C140");
         assert!(accounted(&printed_numbers("0.8963")[0], &c140.numbers));
         assert!(!accounted(&printed_numbers("0.8964")[0], &c140.numbers));
+        let raw = pyjson::parse_str(&ledger_text).expect("raw ledger parses");
+        let raw_claims = raw.get("claims").and_then(Value::as_list).expect("claims");
+        for id in ["C140", "C168"] {
+            let presentation = raw_claims
+                .iter()
+                .find(|entry| field(entry, "id") == id)
+                .expect("claim");
+            let canonical = claims.iter().find(|entry| entry.id == id).expect("record");
+            for printed in numbers(&normalize(field(presentation, "tex"))) {
+                assert!(
+                    accounted(&printed, &canonical.numbers),
+                    "{id} TeX introduces {}",
+                    printed.text
+                );
+            }
+        }
     }
 
     #[test]
