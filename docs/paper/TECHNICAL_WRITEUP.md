@@ -53,7 +53,19 @@ No objective has been shown to beat the frozen first-generation policy under qua
 - whether learned selection beats simple selectors;
 - whether fresh feedback helps.
 
-## Page-1 teaser (specification only; no data yet)
+## Page-1 figure
+
+### Figure 1: why this matters
+
+![Figure 1. Left: the first generation's full validation loss by closed epoch, flat after its first few epochs. Right: its outcome head's pairwise ranking accuracy on freshly executed programs, at chance.](figures/why-it-matters.svg)
+
+**Figure 1. The first generation plateaued, and its outcome head ranked new programs at chance.** (a) Full validation loss over all 263 validation contexts fell from 1.0055 at epoch 2 [C26], then stayed within [0.8968, 0.8978] for all 31 closed epochs from epoch 10 to epoch 40 [C27], over 17,773 updates in total [C22]. (b) On the 32 kept development contexts, one lineage each, its outcome head ranked freshly executed programs with pairwise accuracy 0.506 [0.441, 0.568]; chance is 0.5 [C76].
+
+Both panels are established measurements of the frozen first generation. They show the gap that learning from verified outcomes is meant to close. They are not a result of the second generation: no objective has yet been shown to beat the frozen policy under qualified evaluation [C142, C158].
+
+`jope-records paper-trace --write-figure` renders the figure from `figures/v1_full_validation.dat`, which is byte for byte the file C27 pins, and from C76's value. `paper-trace` fails if the picture, its data or those claims disagree.
+
+### The planned teaser (specification only; no data yet)
 
 One row of three panels, CLOVER in green, one shared legend below, and a closing value sentence in the caption. **Panels are filled only from qualified receipts [C114].**
 
@@ -61,7 +73,7 @@ One row of three panels, CLOVER in green, one shared legend below, and a closing
 2. H2 / E2: expected best-of-8 verified score for the frozen first generation, the live learner and the control on the 27 D-confirm contexts [C102, C103].
 3. Cost per verified outcome [C110].
 
-Until those receipts exist, the teaser slot shows a framed placeholder naming its claim ids.
+Until those receipts exist, page 1 carries Figure 1 instead, and the teaser panels have no data.
 
 ---
 

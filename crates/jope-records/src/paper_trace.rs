@@ -17,7 +17,8 @@
 //!    exemption table whose text still occurs in the write-up;
 //! 5. the trace: one row per claim, carrying the ledger's status;
 //! 6. the README: the version and the "At a glance" counts, recomputed from the committed files
-//!    their footnotes name.
+//!    their footnotes name;
+//! 7. Figure 1: its data, the claims it draws and its rendering ([`crate::paper_figure`]).
 //!
 //! Numbers inside identifiers (`C26`, `R23`, `H1`, `v2`, `r3.1`, `p50`, `float32`, `SHA-256`),
 //! inline code, author-year references, dates, clock times and single-digit integers are not
@@ -893,13 +894,21 @@ pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
     Ok((problems, summary))
 }
 
-/// The report and whether the paper and the README agree with their records; with `sources`,
-/// also whether every claim source on this host still hashes to its pin.
-pub fn check(root: &Path, sources: bool) -> Result<(String, bool)> {
+/// The report and whether the paper, its Figure 1 and the README agree with their records; with
+/// `sources`, also whether every claim source on this host still hashes to its pin. With
+/// `write_figure`, Figure 1 is re-rendered first.
+pub fn check(root: &Path, sources: bool, write_figure: bool) -> Result<(String, bool)> {
     let writeup = py::read_text(&root.join(WRITEUP))?;
     let ledger_text = py::read_text(&root.join(LEDGER))?;
     let trace = py::read_text(&root.join(TRACE))?;
     let (mut problems, mut summary) = check_paper(&writeup, &ledger_text, &trace)?;
+    problems.extend(crate::paper_figure::check(
+        root,
+        &writeup,
+        &ledger_text,
+        write_figure,
+    )?);
+    summary = format!("{summary}; Figure 1 against its data and C26, C27 and C76");
     if sources {
         let (found, line) = check_sources(&ledger_text)?;
         problems.extend(found);
@@ -1162,12 +1171,12 @@ The 26 workspace members, by directory.
         assert_eq!(grouped(1234567), "1,234,567");
     }
 
-    /// The committed paper, ledger, trace and README agree with each other and with the files
-    /// the README's footnotes name. A number edited on one side only fails here.
+    /// The committed paper, ledger, trace, Figure 1 and README agree with each other and with the
+    /// files the README's footnotes name. A number edited on one side only fails here.
     #[test]
     fn the_committed_documents_agree() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let (report, ok) = check(&root, false).expect("readable");
+        let (report, ok) = check(&root, false, false).expect("readable");
         assert!(ok, "{report}");
     }
 

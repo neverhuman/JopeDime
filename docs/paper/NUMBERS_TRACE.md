@@ -92,7 +92,7 @@ the `--help` count, which needs a build; the fresh-clone run printed it.
 | 26 members; 19 at 0.3.0, 7 at 8.0.0; 8 default | `cargo metadata --locked --no-deps` | 26; 19 + 7; 8 |
 | 17 subcommands plus hidden `motifs` | `jope --help` (fresh clone) | 17 plus `help` |
 | 6 emit targets | the single-language arms of `fn languages` in `crates/jope-cli/src/kernel.rs` | 6 |
-| Rust 4,989 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (it recorded 4,189 and 66; 800 listed tests were missing) | 4,989; 26; 72; 182 |
+| Rust 4,992 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (it recorded 4,189 and 66, and missed 785 tests that `main` lists) | 4,992; 26; 72; 182 |
 | 9 PR jobs; 11 `full-` families | `.github/workflows/ci.yml` jobs; `deploy/ci/coverage.json` lanes | 9; 11 |
 | 678 coverage items, 24 lanes | `deploy/ci/coverage.json` | 678; 24 |
 | Capability matrix 824 / 353 / 61 / 1 / 402 / 7 | the total row of `docs/parity/capability-matrix.md` | as printed |
@@ -108,7 +108,7 @@ reproduced their committed ladders byte for byte from a fresh clone.
 | Where | Problem | Change |
 | --- | --- | --- |
 | Arena block (generated) | cited `python/src/jope/research/index_combined_regression_evolution.py:183`, a file the Python removal archived | the renderer writes archived references as `8a55c4fef:<path>:<line>`, which `git show` reads; line 183 is the `best_rmse` minimum |
-| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` on this tree lists 4,989 (72 ignored), 800 more, 15 of them added by this change | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
+| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` on this tree lists 4,992 (72 ignored): 785 that `main` already had and the inventory missed, and 18 added by this change | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
 | Install and check | `pipeline run --emit rust,python,cpp17,cpp20,js` emitted 2 artifacts in the fresh-clone run (the selected head has no C++ or JavaScript emitter) and the README did not say this can happen | a comment says unsupported targets are reported as not emitted |
 | CLOVER quick start, steps 3–5 | their inputs (`coverage.json`, `protocol.json`, the roster and its pack, `GP_RESULTS_INDEX.json`) are not in Git, so they cannot run from a clone; `ingest-coverage` left out the held-out context list that the pre-registered J9 run excluded | a host-inputs table; `--exclude-contexts`; the protocol identity read from the run receipt instead of hashing a `protocol.json` |
 | Intended pipeline | listed the foundation and target encoders without their status | a note on their research-only status |
@@ -117,6 +117,28 @@ reproduced their committed ladders byte for byte from a fresh clone.
 
 
 The quick start was run from fresh clones; see [Fresh-clone run](#fresh-clone-run).
+
+## Figure 1
+
+Figure 1 (`figures/why-it-matters.svg`, under the abstract) is drawn only from established claims.
+It shows why the work matters: what the frozen first generation could not do.
+
+| Panel | Data | How it was checked |
+| --- | --- | --- |
+| (a) full validation loss by closed epoch, the plateau shaded | `figures/v1_full_validation.dat`, SHA-256 `8155223d…35e3`: C27's pin | `extract_v1_curves.sh` (scaffold, `tex/figures/scripts/`) re-run on 2026-10-16 against the CAPTURE root's `copy/training/`. It reproduced the file byte for byte, and its 40 input hashes match the scaffold's `SOURCES.sha256`. |
+| (b) the outcome head's pairwise ranking accuracy on fresh programs, chance marked | C76's value and lineage count, read from `claims.json` | C76's pin re-hashed on xbabe2 (Claim trace below) |
+
+`paper-trace` re-renders the SVG from those two inputs and fails when:
+
+- the data file is not C27's pin;
+- the plateau recomputed from the data is not C27's value (`[0.8968201, 0.8978393] over 31 epochs` from epoch 10, with epoch 9 outside the band);
+- the first, best and last losses are not C26's value;
+- C76 cannot be read;
+- the committed SVG differs from the rendering;
+- the write-up no longer shows the figure.
+
+`jope-records paper-trace --write-figure` rewrites the SVG. The planned three-panel teaser is still
+only a specification, because its panels need qualified receipts that do not exist yet (C114).
 
 ## Other documents
 
