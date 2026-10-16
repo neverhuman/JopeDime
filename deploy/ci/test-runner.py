@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -317,10 +318,28 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
 
     def test_no_workflow_depends_on_github_artifact_storage(self):
-        for path in sorted((ROOT/'.github').rglob('*.yml')):
+        paths = sorted(p for p in (ROOT/'.github').rglob('*') if p.suffix in ('.yml', '.yaml'))
+        self.assertTrue(paths)
+        for path in paths:
             text = path.read_text()
-            self.assertNotIn('actions/upload-artifact@', text, path)
-            self.assertNotIn('actions/download-artifact@', text, path)
+            self.assertIsNone(re.search(r'actions/[\w-]*artifact[\w/-]*@', text), path)
+            self.assertNotIn('gh run download', text, path)
+            for line in text.splitlines():
+                if re.match(r'\s*upload-artifact:', line):
+                    self.assertEqual('upload-artifact: false', line.strip(), path)
+
+    def test_cache_evidence_paths_are_workspace_relative_and_match(self):
+        for name in ('ci.yml', 'full-main.yml'):
+            text = (ROOT/'.github/workflows'/name).read_text()
+            saved = re.findall(r'uses: \./\.github/actions/upload-ci-evidence\n\s+with:\n\s+name: (.+)\n\s+path: (.+)', text)
+            restored = re.findall(r'uses: \./\.github/actions/download-ci-evidence\n\s+with:\n\s+name: (.+)\n\s+path: (.+)', text)
+            self.assertTrue(saved and restored, name)
+            for _, path in saved + restored:
+                self.assertTrue(path.startswith('target/'), (name, path))
+            lanes = {n: p for n, p in saved}
+            for n, p in restored:
+                generic = re.sub(r'(cpu-\d|rust-test-\d|[a-z0-9-]+)/$', '', p)
+                self.assertTrue(any(sp.startswith(generic) for sp in lanes.values()), (name, p))
 
 
 class LocalRetentionTests(unittest.TestCase):

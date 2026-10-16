@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   hygiene:
     runs-on: [self-hosted, linux, x64, jope-ci]
@@ -75,7 +75,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   rust-check:
     needs: changes
@@ -102,7 +102,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   rust-test:
     needs: changes
@@ -145,7 +145,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}-${{ matrix.shard }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}-${{ matrix.shard }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}-${{ matrix.shard }}/
 
   emitters:
     needs: changes
@@ -174,7 +174,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   inputs:
     needs: changes
@@ -201,7 +201,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   python:
     needs: changes
@@ -228,7 +228,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   e2e-smoke:
     needs: changes
@@ -255,7 +255,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
   aggregate:
     needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke]
@@ -276,55 +276,55 @@ jobs:
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-changes
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect hygiene evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-hygiene
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/hygiene/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/hygiene/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect rust-check evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-rust-check
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-check/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-check/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect rust-test-1 evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-rust-test-1
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-test-1/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-test-1/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect rust-test-2 evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-rust-test-2
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-test-2/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-test-2/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect emitters evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-emitters
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/emitters/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/emitters/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect inputs evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-inputs
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/inputs/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/inputs/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect python evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-python
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/python/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/python/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect e2e-smoke evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-e2e-smoke
-          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/e2e-smoke/
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/e2e-smoke/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Validate every required result
         if: always()

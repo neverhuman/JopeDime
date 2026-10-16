@@ -3,13 +3,14 @@ description: >-
   Retain lane evidence on the runner's local disk and hand it to the aggregate job through a
   run/attempt-scoped Actions cache entry. No GitHub artifact storage is used (the org artifact
   quota is exhausted; caches are a separate, self-evicting store). Retries use distinct keys so an
-  earlier publication is never overwritten.
+  earlier publication is never overwritten. The path must be workspace-relative: the cache version
+  hashes the literal path, and the workspace differs per runner lane.
 inputs:
   name:
     description: Run/attempt-specific logical evidence name
     required: true
   path:
-    description: Completed evidence directory (inside the workspace)
+    description: Completed evidence directory, relative to the workspace
     required: true
 runs:
   using: composite
@@ -20,31 +21,66 @@ runs:
       env:
         NAME: ${{ inputs.name }}
         SRC: ${{ inputs.path }}
-      run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
+      run: |
+        case "$SRC" in /*|*'${{'*) echo "evidence path must be workspace-relative: $SRC" >&2; exit 1 ;; esac
+        bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
     - name: Publication attempt 1
-      id: first
+      id: save-1
       if: ${{ !cancelled() }}
       continue-on-error: true
       uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         key: ${{ inputs.name }}-pub-1
         path: ${{ inputs.path }}
+    # cache/save only warns on failure, so prove the entry exists before counting the attempt.
+    - name: Verify publication 1
+      id: first
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ inputs.name }}-pub-1
+        path: ${{ inputs.path }}
+        lookup-only: true
+        fail-on-cache-miss: true
     - name: Publication attempt 2
-      id: second
+      id: save-2
       if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
       continue-on-error: true
       uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         key: ${{ inputs.name }}-pub-2
         path: ${{ inputs.path }}
+    # cache/save only warns on failure, so prove the entry exists before counting the attempt.
+    - name: Verify publication 2
+      id: second
+      if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
+      continue-on-error: true
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ inputs.name }}-pub-2
+        path: ${{ inputs.path }}
+        lookup-only: true
+        fail-on-cache-miss: true
     - name: Publication attempt 3
-      id: third
+      id: save-3
       if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
       continue-on-error: true
       uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         key: ${{ inputs.name }}-pub-3
         path: ${{ inputs.path }}
+    # cache/save only warns on failure, so prove the entry exists before counting the attempt.
+    - name: Verify publication 3
+      id: third
+      if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
+      continue-on-error: true
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ inputs.name }}-pub-3
+        path: ${{ inputs.path }}
+        lookup-only: true
+        fail-on-cache-miss: true
     - name: Require successful publication
       if: always()
       shell: bash

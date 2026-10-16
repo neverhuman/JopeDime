@@ -196,10 +196,13 @@ jobs:
             dist/*.spdx.json
             dist/*.cdx.json
 
-      - name: Retain evidence on the runner's local disk (no GitHub artifact storage)
+      # Hosted VM: this copy is a traceable manifest in the log/summary only; the durable copies
+      # are the release assets attached below (no GitHub artifact storage is used).
+      - name: Record release evidence manifest (no GitHub artifact storage)
         if: always()
         env:
-          NAME: release-${{ github.ref_name }}
+          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-evidence
+          NAME: release-${{ github.ref_name }}-${{ github.run_attempt }}
           SRC: dist/
         run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
 

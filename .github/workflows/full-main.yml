@@ -68,7 +68,7 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.group }}
-          path: ${{ github.workspace }}/target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/${{ matrix.group }}/
+          path: target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/${{ matrix.group }}/
 
   aggregate:
     needs: cpu
@@ -86,13 +86,15 @@ jobs:
         uses: ./.github/actions/download-ci-evidence
         with:
           name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-cpu-1
-          path: ${{ github.workspace }}/target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/cpu-1/
+          path: target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/cpu-1/
+          layout: name
           into: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect cpu-2 evidence
         uses: ./.github/actions/download-ci-evidence
         with:
           name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-cpu-2
-          path: ${{ github.workspace }}/target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/cpu-2/
+          path: target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/cpu-2/
+          layout: name
           into: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Every declared family verified exactly once across the groups
         if: always()
@@ -109,4 +111,4 @@ jobs:
         uses: ./.github/actions/upload-ci-evidence
         with:
           name: full-cpu-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ github.workspace }}/target/full-cpu-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
+          path: target/full-cpu-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/

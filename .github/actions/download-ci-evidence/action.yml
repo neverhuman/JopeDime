@@ -8,11 +8,15 @@ inputs:
     description: Logical evidence name used at publication
     required: true
   path:
-    description: Exact workspace path used at publication (cache paths must match)
+    description: Exact workspace-relative path used at publication (cache versions hash the literal path)
     required: true
   into:
     description: Download root for this run and attempt
     required: true
+  layout:
+    description: "key = one directory per publication (<name>-pub-N, aggregate.py); name = <name> (full-main.py)"
+    required: false
+    default: key
 runs:
   using: composite
   steps:
@@ -42,11 +46,13 @@ runs:
         NAME: ${{ inputs.name }}
         SRC: ${{ inputs.path }}
         INTO: ${{ inputs.into }}
+        LAYOUT: ${{ inputs.layout }}
         KEY: ${{ steps.first.outputs.cache-matched-key || steps.second.outputs.cache-matched-key || steps.third.outputs.cache-matched-key }}
       run: |
         set -euo pipefail
         mkdir -p "$INTO"
         if [ -z "$KEY" ]; then echo "no published evidence for $NAME"; exit 0; fi
-        [ ! -e "$INTO/$KEY" ] || { echo "duplicate evidence $KEY" >&2; exit 1; }
-        cp -a "$SRC" "$INTO/$KEY"
-        echo "restored $KEY -> $INTO/$KEY"
+        case "$LAYOUT" in key) dir=$KEY ;; name) dir=$NAME ;; *) echo "bad layout $LAYOUT" >&2; exit 1 ;; esac
+        [ ! -e "$INTO/$dir" ] || { echo "duplicate evidence $dir" >&2; exit 1; }
+        cp -a "$SRC" "$INTO/$dir"
+        echo "restored $KEY -> $INTO/$dir"
