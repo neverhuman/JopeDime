@@ -9,7 +9,7 @@
 `clover::round_qual::qualify_rounds` checks a caller-supplied bundle of:
 
 1. an [`ExperimentIdentity`](../../../crates/jope-learning/src/clover/identity.rs) (`clover.experiment/v1`) whose canonical SHA-256 equals `plan.experiment_identity_sha256` and whose `data_roster_sha256` equals every ratchet output's `roster_sha256`,
-2. a [`RoundQualPlan`](../../../crates/jope-learning/src/clover/round_qual.rs) carrying a 64-hex `prereg_sha256`, `pinned_test_score_registry`, `min_parent_clusters >= 2`, `practical_margin_log_ratio >= 0`, `bootstrap_resamples >= 1000`, and `alpha in (0, 0.025]`,
+2. a [`RoundQualPlan`](../../../crates/jope-learning/src/clover/round_qual.rs) carrying a 64-hex `prereg_sha256`, `pinned_test_score_registry`, `min_parent_clusters >= 2`, `practical_margin_log_ratio >= 0`, `bootstrap_resamples >= 1000`, `alpha in (0, 0.025]`, `max_conditional_base_kl >= 0`, and `max_new_support_mass in [0, 1]`,
 3. strict held-out test-split score receipts (`QualTestScore`, schema `jope.pipeline-test-score/v1`) preserving raw `earlier_looks` presence (`Option<Vec<String>>`),
 4. R5 cross-language / runtime parity records (`ParityRecord`), and
 5. a duplicate-checked context-to-parent-cluster mapping (`parent_of_context`) for parent-cluster bootstrap inference (`cluster_bootstrap_ci`).
@@ -24,7 +24,7 @@ Hashing a supplied `ExperimentIdentity` and checking a 64-hex `prereg_sha256` fo
 
 - `ExperimentIdentity::validate()` fails or `identity.sha256() != plan.experiment_identity_sha256`.
 - `plan.prereg_sha256` is not a 64-character lowercase hex digest, or `plan.pinned_test_score_registry` is empty.
-- `plan.min_parent_clusters < 2`, `plan.practical_margin_log_ratio` is non-finite or negative, `plan.bootstrap_resamples < 1000` (`qualify::promotion::MIN_RESAMPLES`), or `plan.alpha` is outside `(0, 0.025]` (`MAX_SINGLE_ENDPOINT_ALPHA`, required because joint Holm-Bonferroni adjustment is unimplemented).
+- `plan.min_parent_clusters < 2`, `plan.practical_margin_log_ratio` is non-finite or negative, `plan.bootstrap_resamples < 1000` (`qualify::promotion::MIN_RESAMPLES`), `plan.alpha` is outside `(0, 0.025]` (`MAX_SINGLE_ENDPOINT_ALPHA`, required because joint Holm-Bonferroni adjustment is unimplemented), `plan.max_conditional_base_kl` is non-finite or negative, or `plan.max_new_support_mass` is outside `[0, 1]`.
 - `plan.endpoint == Endpoint::RatchetVsOrdinaryFinalRound` (unsupported because `SelfPlayRoundReceipt` does not emit `ordinary_champion_genome`).
 - `parent_map` is empty, contains duplicate context keys in JSON or TSV, or has TSV lines with fewer or more than 2 tab-separated columns.
 - `ratchet_outputs` is empty, has `schema != "clover.selfplay-ratchet/v1"`, omits or repeats `context_sha256`, has `roster_sha256 != identity.data_roster_sha256`, omits integer `policy_optimizer_updates`, omits the `rounds` array, has non-contiguous/reordered `rounds[i].round != i` or `cumulative_prior_rounds != i`, or contains non-finite (`NaN`/`inf`) round metrics.
@@ -48,7 +48,7 @@ Hashing a supplied `ExperimentIdentity` and checking a 64-hex `prereg_sha256` fo
 | `unreferenced_parity_records` | `parity` contains records not referenced by any context's reference or candidate arm (`n_unreferenced_parity_records > 0`). |
 | `unequal_attempts_in_round` | Any round has `equal_attempts_in_round != true` (`n_unequal_attempt_rounds > 0`). |
 | `unequal_resource_comparison` | Any ratchet output has `equal_resource_comparison == false` (`n_unequal_resource_contexts > 0`). |
-| `kl_guard_unmeasured` | Top-level `kl_guard_evaluated != Some(true)`, `any_round_frozen_by_kl_guard` is missing or inconsistent with the rounds, or any round lacks an allowlisted `kl_source` (`"measured_tilt_leaf_policy"` or `"caller_evaluated_leaf_log_probs"`), has non-null `kl_malformed_reason`, lacks a valid finite `decomposed_kl`, or has `seed_update_frozen_by_kl_guard != Some(!decomposed_kl.admissible)` (`n_unmeasured_kl_contexts > 0`). Never excused by `allow_kl_frozen_rounds`. |
+| `kl_guard_unmeasured` | Top-level `kl_guard_evaluated != Some(true)`, `any_round_frozen_by_kl_guard` is missing or inconsistent with the rounds, or any round lacks an allowlisted `kl_source` (`"measured_tilt_leaf_policy"` or `"caller_evaluated_leaf_log_probs"`), has non-null `kl_malformed_reason`, lacks a valid finite `decomposed_kl` with probability masses in `[0, 1 + 1e-12]`, `|base_support_mass + new_support_mass - 1.0| <= 1e-9`, and chain-rule `total_kl` decomposition within `1e-9`, has `decomposed_kl.admissible != (conditional_base_kl <= plan.max_conditional_base_kl + 1e-12 && new_support_mass <= plan.max_new_support_mass + 1e-12)`, or has `seed_update_frozen_by_kl_guard != Some(!expected_admissible)` (`n_unmeasured_kl_contexts > 0`). Never excused by `allow_kl_frozen_rounds`. |
 | `kl_guard_frozen_round` | Any valid measured round has `seed_update_frozen_by_kl_guard == true` when `plan.allow_kl_frozen_rounds == false` (`n_kl_frozen_contexts > 0`). |
 | `insufficient_parent_clusters` | Complete paired parent clusters `< plan.min_parent_clusters`. |
 | `paired_interval_not_computed` | Fewer than 2 complete paired contexts or fewer than 2 observed parent clusters. |
@@ -89,4 +89,4 @@ cargo run --locked -p jope-learning --bin jope_pools -- qualify-rounds \
   --out path/to/report.json
 ```
 
-`--out` is created with `O_EXCL` (`create_new(true)`) and refuses to overwrite an existing file.
+`--ratchets`, `--test-scores`, and `--parity` accept either a top-level JSON array (`[...]`) or JSONL with one compact JSON object per line (multi-line pretty-printed objects outside a `[...]` array are rejected). `--out` is created with `O_EXCL` (`create_new(true)`) and refuses to overwrite an existing file.
