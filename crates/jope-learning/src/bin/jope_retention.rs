@@ -233,6 +233,7 @@ fn distill_gp_index(
         "cv_geomean_rmse_ratio",
         "best_rust_rmse",
         "validation_rmse",
+        "shadow_pool_q",
         "l6",
     ]
     .into_iter()
@@ -257,6 +258,8 @@ fn distill_gp_index(
     let parquet_sha = jope_learning::canon::sha256_hex(&parquet_bytes);
     let body = serde_json::json!({
         "schema": "jope.gp-index-distill-receipt/v1",
+        "gp_index_path": gp_index.display().to_string(),
+        "split_role": role.as_str(),
         "out": out.display().to_string(),
         "parquet_bytes": parquet_bytes.len(),
         "parquet_sha256": parquet_sha,

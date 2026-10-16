@@ -501,9 +501,16 @@ impl Selector for External {
     }
 }
 
+/// Cross-family S3 `gp_distilled/v1` program prior statistics restricted to an outer training split.
+#[derive(Clone, Debug, Default)]
+pub struct ExternalProgramPrior {
+    pub tot_stats: BTreeMap<String, (f64, usize)>,
+    pub parent_stats: BTreeMap<(String, String), (f64, usize)>,
+}
+
 /// Contextual + program-interaction ridge surrogate (`GB-09` / `J9`) trained on dense GP trajectories.
 ///
-/// Combines unpenalized intercept, full-dimensional token-bag `RidgeProgram` prediction,
+/// Combines unpenalized intercept, inner-CV cross-fitted `RidgeProgram` prediction,
 /// leave-one-parent-out `ProgramPrior`, full-dimensional cosine `RetrievalKnn`, hierarchical
 /// Empirical-Bayes program/kNN shrinkage, program novelty gating, and standardized compact
 /// bilinear context-program interactions `\tilde{z}_i(c) * \tilde{\phi}_j(p)` into a closed-form
@@ -519,6 +526,7 @@ pub struct ContextualSurrogateQHat<'a> {
     train_targets: Vec<(&'a Pool, Vec<f64>)>,
     tot_stats: BTreeMap<String, (f64, usize)>,
     parent_stats: BTreeMap<(String, String), (f64, usize)>,
+    external_prior: Option<ExternalProgramPrior>,
     ctx_proj: Vec<(usize, f64, f64)>,
     prog_proj: Vec<(usize, f64, f64)>,
     weights: Vec<f64>,
@@ -619,14 +627,17 @@ impl<'a> ContextualSurrogateQHat<'a> {
         x
     }
 
-    fn view_design_rows(&self, view: &PoolView<'_>) -> Result<Vec<Vec<f64>>> {
+    fn view_design_rows_with_ridge(
+        &self,
+        view: &PoolView<'_>,
+        ridge_scores: &[f64],
+    ) -> Result<Vec<Vec<f64>>> {
         let z = self
             .context_features
             .rows
             .get(view.context_id)
             .with_context(|| format!("no context features for {}", view.context_id))?;
         let zt = Self::project(z, &self.ctx_proj);
-        let ridge_scores = self.ridge.scores(view)?;
 
         let mut neighbours: Vec<(f64, &str, &Pool, &Vec<f64>)> = self
             .train_targets
@@ -645,7 +656,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         neighbours.truncate(self.k_neighbours);
 
         let mut rows = Vec::with_capacity(view.programs.len());
-        for (&prog_sha, r_s) in view.programs.iter().zip(ridge_scores) {
+        for (&prog_sha, &r_s) in view.programs.iter().zip(ridge_scores) {
             let phi = self
                 .program_features
                 .rows
@@ -660,7 +671,28 @@ impl<'a> ContextualSurrogateQHat<'a> {
                 .unwrap_or((0.0, 0));
             let s_p = tot_s - par_s;
             let c_p = tot_c.saturating_sub(par_c);
-            let prior_s = (s_p + 0.5 * self.prior_weight) / (c_p as f64 + self.prior_weight);
+            let s3_backoff = if c_p == 0 {
+                if let Some(ext) = &self.external_prior {
+                    let (es, ec) = ext.tot_stats.get(prog_sha).copied().unwrap_or((0.0, 0));
+                    let (eps, epc) = ext
+                        .parent_stats
+                        .get(&(view.parent_id.to_owned(), prog_sha.to_owned()))
+                        .copied()
+                        .unwrap_or((0.0, 0));
+                    let sc = ec.saturating_sub(epc);
+                    if sc > 0 {
+                        let sm = ((es - eps) / (sc as f64)).clamp(0.0, 1.0);
+                        0.5 + 0.05 * (sm - 0.5)
+                    } else {
+                        0.5
+                    }
+                } else {
+                    0.5
+                }
+            } else {
+                0.5
+            };
+            let prior_s = (s_p + s3_backoff * self.prior_weight) / (c_p as f64 + self.prior_weight);
             let eb_prior = (s_p + self.prior_weight * r_s) / (c_p as f64 + self.prior_weight);
 
             let (mut num, mut den) = (0.0, 0.0);
@@ -684,6 +716,11 @@ impl<'a> ContextualSurrogateQHat<'a> {
         Ok(rows)
     }
 
+    fn view_design_rows(&self, view: &PoolView<'_>) -> Result<Vec<Vec<f64>>> {
+        let ridge_scores = self.ridge.scores(view)?;
+        self.view_design_rows_with_ridge(view, &ridge_scores)
+    }
+
     pub fn fit(
         train: &[&'a Pool],
         context_features: &'a Features,
@@ -691,6 +728,26 @@ impl<'a> ContextualSurrogateQHat<'a> {
         k_neighbours: usize,
         prior_weight: f64,
         lambda: f64,
+    ) -> Result<Self> {
+        Self::fit_with_prior(
+            train,
+            context_features,
+            program_features,
+            k_neighbours,
+            prior_weight,
+            lambda,
+            None,
+        )
+    }
+
+    pub fn fit_with_prior(
+        train: &[&'a Pool],
+        context_features: &'a Features,
+        program_features: &'a Features,
+        k_neighbours: usize,
+        prior_weight: f64,
+        lambda: f64,
+        external_prior: Option<&ExternalProgramPrior>,
     ) -> Result<Self> {
         ensure!(k_neighbours >= 1, "k_neighbours must be positive");
         ensure!(
@@ -713,6 +770,35 @@ impl<'a> ContextualSurrogateQHat<'a> {
         );
 
         let ridge = RidgeProgram::fit(train, program_features, lambda)?;
+        // Compute parent-grouped 5-fold out-of-fold RidgeProgram predictions so the meta-ridge stack
+        // does not over-weight in-sample r_s predictions relative to out-of-sample test contexts.
+        const INNER_RIDGE_FOLDS: usize = 5;
+        let inner_folds: Vec<usize> = train
+            .iter()
+            .map(|p| {
+                super::evaluate::fold_of(
+                    "jope.j9-inner-ridge-folds/v1",
+                    &p.parent_id,
+                    INNER_RIDGE_FOLDS,
+                )
+            })
+            .collect();
+        let mut oof_ridges: Vec<Option<RidgeProgram<'a>>> = Vec::with_capacity(INNER_RIDGE_FOLDS);
+        for f in 0..INNER_RIDGE_FOLDS {
+            let sub_train: Vec<&'a Pool> = train
+                .iter()
+                .copied()
+                .zip(&inner_folds)
+                .filter_map(|(p, &ifv)| (ifv != f).then_some(p))
+                .collect();
+            let sub_model = if !sub_train.is_empty() && sub_train.len() < train.len() {
+                RidgeProgram::fit(&sub_train, program_features, lambda).ok()
+            } else {
+                None
+            };
+            oof_ridges.push(sub_model);
+        }
+
         let mut train_targets = Vec::with_capacity(train.len());
         let mut tot_stats: BTreeMap<String, (f64, usize)> = BTreeMap::new();
         let mut parent_stats: BTreeMap<(String, String), (f64, usize)> = BTreeMap::new();
@@ -765,6 +851,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
             train_targets,
             tot_stats,
             parent_stats,
+            external_prior: external_prior.cloned(),
             ctx_proj,
             prog_proj,
             weights: vec![0.0; d],
@@ -772,9 +859,13 @@ impl<'a> ContextualSurrogateQHat<'a> {
 
         let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
         let mut rows = 0usize;
-        for (pool, targets) in &model.train_targets {
+        for (pool_idx, (pool, targets)) in model.train_targets.iter().enumerate() {
             let view = pool.view();
-            let design_rows = model.view_design_rows(&view)?;
+            let oof_ridge = oof_ridges[inner_folds[pool_idx]]
+                .as_ref()
+                .unwrap_or(&model.ridge);
+            let ridge_scores = oof_ridge.scores(&view)?;
+            let design_rows = model.view_design_rows_with_ridge(&view, &ridge_scores)?;
             for (x, &t) in design_rows.iter().zip(targets) {
                 for i in 0..d {
                     xty[i] += x[i] * t;
