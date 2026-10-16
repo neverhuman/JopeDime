@@ -30,5 +30,5 @@ Execution of this pre-registration is blocked until all of the following are bou
 | `sample_size_and_margin.min_parent_clusters` | `G-JUDGE` (`C158`) + Owner | `UNPINNED` | Pre-registered parent-cluster power calculation (`SE_pair` at parent-cluster level). |
 | `sample_size_and_margin.practical_margin_log_ratio` | `G-JUDGE` (`C158`) + Owner | `UNPINNED` | Minimum practically important log-RMSE reduction margin. |
 | `experiment_identity_sha256` | Admitted writer lane | `UNPINNED` | Pinned `clover.experiment/v1` manifest once source, roster, and receipt bridge are frozen. |
-| `equal_resource_accounting_ closure` | Engine/learning writer lane | `UNPINNED` | Closing the `jope.pipeline-receipt` emission gap for ratchet champions and preemptive wall/CPU budget parity (`J12`). |
+| `equal_resource_accounting_closure` | Engine/learning writer lane | `UNPINNED` | Closing the `jope.pipeline-receipt` emission gap for ratchet champions and preemptive wall/CPU budget parity (`J12`). |
 | `resource_and_budget_grant` | Owner | `UNPINNED` | Host list, CPU/memory caps, wall-clock deadline, and budget admission. |
