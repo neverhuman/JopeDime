@@ -318,8 +318,8 @@ function choleskySolve(a,b,p){
 }
 function sortedColumn(x,j){const out=x.map(row=>row[j]);out.sort(totalCompare);return out;}
 function quantile(s,q){if(s.length===0)return 0.0;const pos=q*(s.length-1),lo=Math.trunc(pos),hi=Math.min(lo+1,s.length-1),f=pos-lo;return s[lo]*(1.0-f)+s[hi]*f;}
-function lowerBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<v)lo=mid+1;else hi=mid;}return lo;}
-function upperBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<=v)lo=mid+1;else hi=mid;}return lo;}
+function lowerBound(s,v){let size=s.length;if(size===0)return 0;let base=0;while(size>1){const half=Math.trunc(size/2),mid=base+half;if(s[mid]<v)base=mid;size-=half;}return base+(s[base]<v?1:0);}
+function upperBound(s,v){let size=s.length;if(size===0)return 0;let base=0;while(size>1){const half=Math.trunc(size/2),mid=base+half;if(s[mid]<=v)base=mid;size-=half;}return base+(s[base]<=v?1:0);}
 function midRank(s,v){return (lowerBound(s,v)+upperBound(s,v))/(2.0*s.length);}
 function probit(p){
   const a=[-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239],

@@ -373,6 +373,19 @@ def raw_keys(row, order):
     ordered = tuple(semantic_key(row[index], kind) for index, kind in order["order_columns"])
     return group, ordered
 
+def lower_bound(sorted_values, v):
+    size = len(sorted_values)
+    if size == 0:
+        return 0
+    base = 0
+    while size > 1:
+        half = size // 2
+        mid = base + half
+        if sorted_values[mid] < v:
+            base = mid
+        size -= half
+    return base + (1 if sorted_values[base] < v else 0)
+
 def apply_ops(rows, masks, raw_rows):
     for wrapped in OPS:
         name, state = next(iter(wrapped.items()))
@@ -455,7 +468,7 @@ def apply_ops(rows, masks, raw_rows):
                 elif name == "TargetBinEncode":
                     out = []
                     for value, edges, encoded in zip(x, state["edges"], state["enc"]):
-                        index = sum(edge < value for edge in edges)
+                        index = lower_bound(edges, value)
                         out.append(encoded[min(index, len(encoded)-1)])
                     out_mask = mask[:]
                 elif name == "Sigmoid":
@@ -533,7 +546,7 @@ def predict_head(wrapped, x):
         raw = model["base"]
         for term in model["terms"]:
             item = x[term["feature"]]
-            index = sum(edge < item for edge in term["edges"])
+            index = lower_bound(term["edges"], item)
             raw += model["learning_rate"] * term["values"][min(index, len(term["values"])-1)]
         value = sigmoid(raw) if model["binary"] else (raw if math.isfinite(raw) else 0.0)
     elif tag == "ClassificationPortfolio":
@@ -563,7 +576,7 @@ def predict_numeric(x):
         value = sigmoid(spec["slope"] * math.log(p/(1.0-p)) + spec["intercept"])
     elif "Isotonic" in cal:
         spec = cal["Isotonic"]
-        index = sum(bound < value for bound in spec["upper"])
+        index = lower_bound(spec["upper"], value)
         value = spec["values"][min(index, len(spec["values"])-1)]
     if TARGET is not None:
         if TARGET == "Log1p":
@@ -583,7 +596,7 @@ def predict_numeric(x):
             elif value >= scores[-1]:
                 value = values[-1]
             else:
-                hi = sum(score < value for score in scores)
+                hi = lower_bound(scores, value)
                 lo = hi - 1
                 value = values[lo] + (value-scores[lo])/(scores[hi]-scores[lo])*(values[hi]-values[lo])
             value = clamp(value, -60.0, 60.0)
