@@ -8,12 +8,15 @@
 //! clone can check, and it fails when a printed number drifts from its record:
 //!
 //! 1. the ledger: unique ids, a known status, a statement, value and source per claim, a 64-hex
-//!    pin unless the claim is derived, and a declared root for every `ROOT:` prefix;
+//!    pin unless the claim is derived, a declared root for every `ROOT:` prefix, and no number
+//!    in a claim's `tex` that is not one of its statement or value numbers at the precision the
+//!    `tex` prints;
 //! 2. citations: every explicitly cited id exists and every ledger id is cited;
 //! 3. totals: the Appendix G sentence equals the ledger's status counts, and the Section 10.4
 //!    table lists exactly the pending claims;
-//! 4. numbers: every number the write-up prints is accounted for by a claim cited on its line or
-//!    in its section (verbatim, or rounded at the precision printed), or by a row of the trace's
+//! 4. numbers: every number the write-up prints is accounted for by the statement or value of a
+//!    claim cited on its line or in its section (verbatim, or rounded at the precision printed;
+//!    `tex` never widens this), or by a row of the trace's
 //!    exemption table whose text still occurs in the write-up;
 //! 5. the trace: one row per claim, carrying the ledger's status;
 //! 6. the README: the version and the "At a glance" counts, recomputed from the committed files
@@ -54,6 +57,9 @@ static GROUPED: LazyLock<Regex> = LazyLock::new(|| re(r"(\d),(\d{3})\b"));
 static SCIENTIFIC: LazyLock<Regex> =
     LazyLock::new(|| re(r"(\d+(?:\.\d+)?)\s*(?:\\times|×)\s*10\^\{?(-?\d+)\}?"));
 static POWER: LazyLock<Regex> = LazyLock::new(|| re(r"\b10\^\{?(-?\d+)\}?"));
+/// `±10`, `$\pm 10$` and `+/-10` print both bounds.
+static PLUS_MINUS: LazyLock<Regex> =
+    LazyLock::new(|| re(r"(?:\\pm|±|\+/-)\s*(\d+(?:\.\d+)?(?:e-?\d+)?)"));
 static NOT_NUMBERS: LazyLock<Regex> = LazyLock::new(|| {
     re(concat!(
         r"`[^`]*`",
@@ -79,11 +85,12 @@ static UNFILLED: LazyLock<Regex> =
     LazyLock::new(|| re(r"\b[A-Z0-9_]*PLACEHOLDER[A-Z0-9_]*\b|\bTODO\b|\bTBD\b"));
 static NUMBER: LazyLock<Regex> = LazyLock::new(|| re(r"[-+]?\d+(?:\.\d+)?(?:e[-+]?\d+)?[MkK]?"));
 
-/// Commas between digit groups, LaTeX thin spaces, Unicode minus and en dash, and `a×10^{b}` are
-/// written one way on both sides of a comparison.
+/// Commas between digit groups, LaTeX thin spaces, Unicode minus and en dash, `a×10^{b}` (also
+/// `a{\times}10^{b}`) and `±a` are written one way on both sides of a comparison.
 fn normalize(text: &str) -> String {
     let mut text = text
         .replace("{,}", "")
+        .replace("{\\times}", "\\times")
         .replace(['\u{2212}', '\u{2013}'], "-");
     loop {
         let next = GROUPED.replace_all(&text, "${1}${2}").into_owned();
@@ -93,7 +100,8 @@ fn normalize(text: &str) -> String {
         text = next;
     }
     let text = SCIENTIFIC.replace_all(&text, "${1}e${2}");
-    POWER.replace_all(&text, "1e${1}").into_owned()
+    let text = POWER.replace_all(&text, "1e${1}");
+    PLUS_MINUS.replace_all(&text, "-${1} ${1}").into_owned()
 }
 
 /// One printed number: its text, value and the half-width of the interval it rounds from (zero
@@ -245,13 +253,24 @@ fn ledger(text: &str, problems: &mut Vec<String>) -> Result<Vec<Claim>> {
                 ));
             }
         }
-        // TeX formats the record; it is not another source of accepted values.
-        // A stale display value must not silently whitelist numeric drift.
-        let record = [field(claim, "statement"), field(claim, "value")].join(" | ");
+        // The write-up is checked against the statement and value only. `tex` is the LaTeX
+        // display of the same claim, so every number it prints must be one of theirs at the
+        // precision it prints; a stale `tex` is reported rather than accepted.
+        let record = numbers(&normalize(
+            &[field(claim, "statement"), field(claim, "value")].join(" | "),
+        ));
+        for n in numbers(&normalize(field(claim, "tex"))) {
+            if !accounted(&n, &record) {
+                problems.push(format!(
+                    "ledger: {id} tex prints {}, which is not in its statement or value",
+                    n.text
+                ));
+            }
+        }
         claims.push(Claim {
             id,
             status,
-            numbers: numbers(&normalize(&record)),
+            numbers: record,
         });
     }
     Ok(claims)
@@ -1036,6 +1055,39 @@ Illustrative: q = log 10 ≈ 2.303.
             p.iter().any(|m| m.contains("893957 is not in any claim")),
             "{p:?}"
         );
+    }
+
+    #[test]
+    fn a_tex_that_disagrees_with_its_record_fails() {
+        // C01's statement and value move to 893,958 while its tex keeps 893{,}957: the stale tex
+        // is reported, and it no longer accounts for the write-up's 893,957.
+        let l = LEDGER_OK
+            .replace("893,957 parameters", "893,958 parameters")
+            .replace("\"893,957\"", "\"893,958\"");
+        let p = problems(WRITEUP_OK, &l, TRACE_OK);
+        assert!(
+            p.iter().any(|m| m.contains("C01 tex prints 893957")),
+            "{p:?}"
+        );
+        assert!(
+            p.iter().any(|m| m.contains("893957 is not in any claim")),
+            "{p:?}"
+        );
+    }
+
+    #[test]
+    fn latex_times_and_plus_minus_are_normalized() {
+        let n = |s: &str| {
+            numbers(&normalize(s))
+                .into_iter()
+                .map(|p| p.text)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(n("$3.3{\\times}10^{-8}$"), ["3.3e-8"]);
+        assert_eq!(n("$1.24\\times10^5$/h"), ["1.24e5"]);
+        assert_eq!(n("clip +/-10"), ["-10", "10"]);
+        assert_eq!(n("$\\pm 10$"), ["-10", "10"]);
+        assert_eq!(n("±10"), ["-10", "10"]);
     }
 
     #[test]

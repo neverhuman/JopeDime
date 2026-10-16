@@ -179,7 +179,9 @@ Every claim was traced back to its source on xbabe2. [`NUMBERS_TRACE.md`](NUMBER
 - **Source pins.** 175 of 177 claims re-hash to their pin. C24 is derived, and C115 is pending and names a directory. Three roots (CAPTURE, ARENA, HOST) had moved under `/home/ubuntu/jope-evidence/` on 2026-10-15; `claims.json` now records the new paths. The REPO root is written as a path, and the new roots PROBE and CANON are added.
 - **Corrected values:**
   - C140: the range of last evaluated epochs is 0.8963 to 0.9022, not 0.8964;
-  - C137 and the Section 10.3 table: sweep 4a L_PI 0.01 is 0.011–0.020, and sweep 6 L6 only is 0.031 at both epochs.
+  - C137 and the Section 10.3 table: sweep 4a L_PI 0.01 is 0.011–0.020, and sweep 6 L6 only is 0.031 at both epochs;
+  - C93 and Section 6.4: about 98.5% of proposals are on native contexts, the recorded value, not 98%;
+  - the `tex` of C140 and C93 now prints its own record, and C168's statement and value now hold the 17 of 24 planned contexts its `tex` prints.
 - **Corrected scope or wording:**
   - C139, C141, C170, C173 and C177;
   - Sections 9.7, 10.3 and 10.3.1: the 885 held-out contexts were not held out of sweeps 3 and 4a; the L6-1148 look is a regression alert, not a finding that "the fine-tune forgot"; and "no paired verdict" means against frozen v1.
@@ -191,7 +193,7 @@ Every claim was traced back to its source on xbabe2. [`NUMBERS_TRACE.md`](NUMBER
   - C183: the consistency check's pre-look amendment.
 - **Scope.** The header states that the report covers events up to 2026-10-13T12:00Z. EI-1 is marked as planned "as of this revision".
 - **Totals.** 177 claims (118 established, 20 preliminary, 16 non-qualifying, 23 pending).
-- **Check.** `jope-records paper-trace` now runs in CI. It checks every printed number against the claims cited in its line or section, the Appendix G totals, the Section 10.4 pending table, and this file's claim trace and exemption tables.
+- **Check.** `jope-records paper-trace` now runs in CI. It checks every printed number against the statements and values of the claims cited in its line or section, each claim's `tex` against its own statement and value, the Appendix G totals, the Section 10.4 pending table, and this file's claim trace and exemption tables.
 - **Figure 1 on page 1.** It shows why the work matters, using only established measurements of the frozen first generation: (a) the full validation plateau [C26, C27], (b) the outcome head's ranking accuracy on fresh programs at chance [C76]. The planned teaser stays a specification: its panels need qualified receipts that do not exist [C114]. `paper-trace` renders the figure from `figures/v1_full_validation.dat`, the file C27 pins, and from C76's value, and fails when the committed SVG, its data or those claims disagree.
 
 `tex/` is still not regenerated.
