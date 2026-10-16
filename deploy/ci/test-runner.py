@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -311,9 +312,75 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertNotIn('timeout-minutes:', action)
         for number in range(1, 4):
             self.assertIn('${{ inputs.name }}-pub-'+str(number), action)
-        self.assertEqual(3, action.count('retention-days: 7'))
-        self.assertEqual(3, action.count('if-no-files-found: error'))
+        self.assertNotIn('upload-artifact', action)
+        self.assertEqual(3, action.count('actions/cache/save@'))
+        self.assertIn('deploy/ci/retain-local-evidence.sh', action)
         self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
+
+    def test_no_workflow_depends_on_github_artifact_storage(self):
+        paths = sorted(p for p in (ROOT/'.github').rglob('*') if p.suffix in ('.yml', '.yaml'))
+        self.assertTrue(paths)
+        for path in paths:
+            text = path.read_text()
+            self.assertIsNone(re.search(r'actions/[\w-]*artifact[\w/-]*@', text), path)
+            self.assertNotIn('gh run download', text, path)
+            for line in text.splitlines():
+                if re.match(r'\s*upload-artifact:', line):
+                    self.assertEqual('upload-artifact: false', line.strip(), path)
+
+    def test_cache_evidence_paths_are_workspace_relative_and_match(self):
+        for name in ('ci.yml', 'full-main.yml'):
+            text = (ROOT/'.github/workflows'/name).read_text()
+            saved = re.findall(r'uses: \./\.github/actions/upload-ci-evidence\n\s+with:\n\s+name: (.+)\n\s+path: (.+)', text)
+            restored = re.findall(r'uses: \./\.github/actions/download-ci-evidence\n\s+with:\n\s+name: (.+)\n\s+path: (.+)', text)
+            self.assertTrue(saved and restored, name)
+            for _, path in saved + restored:
+                self.assertTrue(path.startswith('target/'), (name, path))
+            lanes = {n: p for n, p in saved}
+            for n, p in restored:
+                generic = re.sub(r'(cpu-\d|rust-test-\d|[a-z0-9-]+)/$', '', p)
+                self.assertTrue(any(sp.startswith(generic) for sp in lanes.values()), (name, p))
+
+
+class LocalRetentionTests(unittest.TestCase):
+    def retain(self, base, blocked=False):
+        import os
+        source = base/'source'
+        source.mkdir()
+        (source/'receipt.json').write_text('{"probe":"required-custody"}\n')
+        root = base/'retained'
+        if blocked:
+            root.write_text('not a directory\n')
+        env = dict(os.environ, JOPE_LOCAL_EVIDENCE_ROOT=str(root),
+                   GITHUB_REPOSITORY='neverhuman/JopeDime',
+                   JOPE_EVIDENCE_S3_URI='', GITHUB_STEP_SUMMARY='',
+                   TMPDIR=str(base))
+        result = subprocess.run(
+            ['bash', str(ROOT/'deploy/ci/retain-local-evidence.sh'), 'fixture', str(source)],
+            cwd=ROOT, env=env, capture_output=True, text=True)
+        return result, source, root/'neverhuman_JopeDime'/'fixture'
+
+    def test_local_retention_failure_is_fatal(self):
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='retention-blocked-', dir=scratch) as name:
+            result, _, destination = self.retain(Path(name), blocked=True)
+            self.assertNotEqual(0, result.returncode, result.stdout)
+            self.assertNotIn('retained at', result.stdout)
+            self.assertFalse(destination.exists())
+
+    def test_local_retention_success_has_verified_recoverable_bytes(self):
+        scratch = ROOT/'target'/'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='retention-ok-', dir=scratch) as name:
+            result, source, destination = self.retain(Path(name))
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual((source/'receipt.json').read_bytes(),
+                             (destination/'receipt.json').read_bytes())
+            verified = subprocess.run(['sha256sum', '--check', 'MANIFEST.sha256'],
+                                      cwd=destination, capture_output=True, text=True)
+            self.assertEqual(0, verified.returncode, verified.stderr)
+            self.assertIn('receipt.json: OK', result.stdout)
 
 
 if __name__ == '__main__':
