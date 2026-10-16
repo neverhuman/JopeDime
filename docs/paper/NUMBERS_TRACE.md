@@ -386,7 +386,7 @@ JSON path. Rows with a note were derived or corrected as the note says.
 | C165 | established | merged source; one pre-registered arm | `MAIN307:deploy/dl-flywheel/pipelines/rlfw/r25_knnce/README.md:1-30` | matches | re-derived from the receipts (Section 10 pass) |
 | C166 | non-qualifying | 10/2/5; 16/1/0; 8, 10, 11 of 17 | `MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:222-236` | matches | re-derived from the receipts (Section 10 pass) |
 | C167 | non-qualifying | 40/51 outside catalog; 48/51 bitwise parity | `MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:239-245` | matches | re-derived from the receipts (Section 10 pass) |
-| C168 | non-qualifying | 53 completed, 18 interrupted, 6 contexts incomplete | `MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:213-220,251-254` | matches | re-derived from the receipts (Section 10 pass) |
+| C168 | non-qualifying | 53 completed, 18 interrupted, 6 contexts incomplete; coordinator-only paired summary 17/24 contexts (complete-case) | `MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:89-91,213-224,251-254` | matches | arm totals re-derived; paired coverage from pinned protocol/readout (complete-case, non-qualifying) |
 | C169 | non-qualifying | d = +0.000124 [-0.00331, 0.00303]; KL 0.1079 | `COORD:lanes/G-JUDGE/r25-e1-verdict-de66cb6a.json` | matches | re-derived from the receipts (Section 10 pass) |
 | C170 | non-qualifying | 6 arms INCONCLUSIVE; d from -0.00321 to +0.00399 | `COORD:lanes/G-JUDGE/j21-paired-verdict-98fa563d.json` | matches | j21 verdict: epochs at 352 / 704 / 1,056 / 1,408 updates added |
 | C171 | non-qualifying | E4 0.8951989 (telemetry) | `COORD:lanes/CX-OP/r26-seedrep/TRAIN_EXEC_EXIT.json#.epochs` | matches | re-derived from the receipts (Section 10 pass) |

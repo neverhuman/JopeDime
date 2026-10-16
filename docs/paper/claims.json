@@ -1487,10 +1487,10 @@
   },
   {
    "id": "C168",
-   "statement": "Pilot coverage: 53 completed arm receipts and 18 interrupted arms; all three arms of six contexts are incomplete with unknown outcomes; no retry, extension or replacement. H1 remains unestablished and qualified rewards remain zero",
-   "value": "53 completed, 18 interrupted, 6 contexts incomplete",
+   "statement": "Pilot coverage: 53 completed arm receipts and 18 interrupted arms; all three arms of six contexts are incomplete with unknown outcomes; no retry, extension or replacement. H1 remains unestablished and qualified rewards remain zero The coordinator-only paired summary covers 17 of the 24 planned contexts after excluding context 00 and the six incomplete contexts; this is a complete-case, non-qualifying readout.",
+   "value": "53 completed, 18 interrupted, 6 contexts incomplete; coordinator-only paired summary 17/24 contexts (complete-case)",
    "tex": "17 of 24",
-   "source": "MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:213-220,251-254",
+   "source": "MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:89-91,213-224,251-254",
    "sha256": "d18ee52994ea4f1e0baa083a935e93de85f90d644abc8a58483f86dd374d7fa9",
    "status": "non-qualifying"
   },
