@@ -683,7 +683,7 @@
       "ignored": 0,
       "tests": [
        "emitted_rust_and_python_match_independent_oracles",
-       "exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta",
+       "exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_point",
        "runtime_matches_independent_quantile_and_binning_oracles",
        "versioned_contract_detects_shared_wrong_tie_semantics"
       ]

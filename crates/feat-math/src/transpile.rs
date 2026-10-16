@@ -105,6 +105,12 @@ pub struct EmitOptions {
     /// empty feature row before fitting or predicting. The legacy default
     /// keeps its source bytes for already pinned artifacts.
     pub guard_zero_width_roll: bool,
+    /// Versioned opt-in recipe profile. Programs containing `LowerBound` or
+    /// `UpperBound` helpers (`QuantileBins`, `BinOnehot`, `TargetBinEncode`,
+    /// `Rank`, `Blom`) emit the exact `(base, size)` `slice::partition_point`
+    /// binary search instead of the legacy `(lo, hi)` `mid + 1` search. The
+    /// legacy default keeps its source bytes for already pinned artifacts.
+    pub partition_point_quantile_bounds: bool,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -244,6 +250,15 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
                 if stages.iter().any(|stage| matches!(stage.op, crate::spec::PlannedOp::Roll { .. })))
         {
             "feat-math-roll-width-guard-v1"
+        } else if opts.partition_point_quantile_bounds
+            && crate::spec::helper_set(&plan).iter().any(|h| {
+                matches!(
+                    h,
+                    crate::spec::Helper::LowerBound | crate::spec::Helper::UpperBound
+                )
+            })
+        {
+            "feat-math-quantile-partition-point-v1"
         } else if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip) {
             "feat-math-clip-safety-v2"
         } else {

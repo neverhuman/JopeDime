@@ -4062,7 +4062,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Offline CPU CLOVER v1 quantile semantics against independent fixtures, runtime and generated Rust/Python; toolchain absence fails. No GPU or live evaluator qualification."
+      "scope": "Offline CPU CLOVER v1 quantile semantics against independent fixtures, runtime and generated Rust/Python/C++/JavaScript; toolchain absence fails. No GPU or live evaluator qualification."
     },
     "target:feat-math/test/compat_freeze": {
       "discovery": {

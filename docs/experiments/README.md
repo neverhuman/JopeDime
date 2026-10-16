@@ -13,7 +13,7 @@ This directory provides a **curated, non-exhaustive 18-record digest (`EXP-001`â
 | [`README.md`](README.md) | Markdown | Scope and known omissions, status taxonomy, master matrix (`EXP-001`..`EXP-018`), compressed experiment cards, and validation commands. |
 | [`experiments.jsonl`](experiments.jsonl) | JSON Lines (`1` record/line) | Machine- and LLM-consumable digest of the 18 curated records conforming to [`schema.v1.json`](schema.v1.json). |
 | [`schema.v1.json`](schema.v1.json) | JSON Schema (Draft 2020-12) | Strict schema (`jope.experiment-record/v1`) enforcing 40-hex or `"unknown"` `source_commit`, `catalog_snapshot_commit`, `claim_ids`, and typed `metrics`. |
-| [`SYNTHESIS_AND_NEXT_EXPERIMENTS.md`](SYNTHESIS_AND_NEXT_EXPERIMENTS.md) | Markdown | Five scope-bounded working hypotheses (non-qualifying) and a prioritized roadmap of next-step proposals (`EXP-NEXT-01`..`EXP-NEXT-04`) with explicit admission gates. |
+| [`SYNTHESIS_AND_NEXT_EXPERIMENTS.md`](SYNTHESIS_AND_NEXT_EXPERIMENTS.md) | Markdown | Five scope-bounded working hypotheses (non-qualifying) and a prioritized roadmap (`EXP-NEXT-01` done, `EXP-NEXT-04` emitter fix + synthetic 4-language/bound-model regression landed with original `EXP-008` context replay outstanding, and `EXP-NEXT-02`..`EXP-NEXT-03` proposals with explicit admission gates). |
 
 ---
 

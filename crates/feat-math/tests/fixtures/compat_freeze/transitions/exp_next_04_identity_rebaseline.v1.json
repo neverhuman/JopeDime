@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for EXP-NEXT-04 opt-in partition_point quantile emitters (EmitOptions::partition_point_quantile_bounds). Updating crates/feat-math/src/{transpile.rs,emit_py.rs,emit_rs.rs} moves the ADR-0004 evaluator identity. All default v1/v2 emitted bytes, behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md §EXP-NEXT-04",
+  "pr_reference": "PR #346: fix(feat-math): align emitter quantile LowerBound/UpperBound with slice::partition_point (EXP-NEXT-04)",
+  "source_commit": "00890ffad0d9436e3c34371e3783b2f266ef0620",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "0a0e07c4bb9a8f45ba0d65708d7ca9777084b5f5b8ebcc376590d116830058d8",
+      "after": "4da7177c7ffa99f4e69c3c7b1ddf7ce4e1865cbd9d618a1b85bbff8a328c16d2"
+    }
+  ]
+}
