@@ -884,16 +884,28 @@ fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior() {
             family: "gp-results-index".into(),
             source_bucket: "jope-data".into(),
         };
-        let obs = vec![SelfPlayDistillObservation {
-            program_sha: pool.members[0].program_sha256.clone(),
-            program: Some("x0 x1 +".into()),
-            outcome: Outcome::Ok,
-            score: Some(0.75),
-            seed_packet: None,
-            source_key: format!("results/{idx}.json"),
-            source_version_id: None,
-            source_sha256: h(&format!("s3-src-{idx}")),
-        }];
+        let obs = vec![
+            SelfPlayDistillObservation {
+                program_sha: pool.members[0].program_sha256.clone(),
+                program: Some("x0 x1 +".into()),
+                outcome: Outcome::Ok,
+                score: Some(0.20),
+                seed_packet: None,
+                source_key: format!("results/{idx}-a.json"),
+                source_version_id: None,
+                source_sha256: h(&format!("s3-src-{idx}-a")),
+            },
+            SelfPlayDistillObservation {
+                program_sha: pool.members[1].program_sha256.clone(),
+                program: Some("x0 x1 -".into()),
+                outcome: Outcome::Ok,
+                score: Some(0.80),
+                seed_packet: None,
+                source_key: format!("results/{idx}-b.json"),
+                source_version_id: None,
+                source_sha256: h(&format!("s3-src-{idx}-b")),
+            },
+        ];
         s3_rows.extend(distill_selfplay_observations(&spec, &obs, &scores_set).unwrap());
     }
     let unknown_spec = SelfPlayDistillSpec {
@@ -951,7 +963,9 @@ fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior() {
         max_new_support_mass: 0.15,
     };
 
-    // Verify fold isolation of S3 priors: held-out fold 0 parents and unknown parents are excluded from fold 0 prior.
+    // Verify fold isolation and continuous score-aware differentiation of S3 priors:
+    // held-out fold 0 parents and unknown parents are excluded from fold 0 prior, and lower RMSE ratio (0.20)
+    // yields a higher prior target (0.80) than higher RMSE ratio (0.80 -> 0.20).
     let (fold_priors, fold_counts) = build_fold_s3_priors(&pools, &fw_cfg.eval, &s3_rows).unwrap();
     assert_eq!(fold_priors.len(), 5);
     assert!(fold_counts.iter().all(|&c| c > 0));
@@ -966,6 +980,18 @@ fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior() {
             "held-out fold 0 program leaked into fold 0 S3 prior"
         );
     }
+    let train_pool_for_fold0 = pools
+        .iter()
+        .find(|p| fold_of("iso-folds", &p.parent_id, 5) != 0)
+        .unwrap();
+    let (s_better, c_better) =
+        fold_priors[0].tot_stats[&train_pool_for_fold0.members[0].program_sha256];
+    let (s_worse, c_worse) =
+        fold_priors[0].tot_stats[&train_pool_for_fold0.members[1].program_sha256];
+    assert!(
+        (s_better / c_better as f64) > (s_worse / c_worse as f64) + 0.4,
+        "expected continuous S3 score quality to rank rmse_ratio=0.20 above rmse_ratio=0.80"
+    );
 
     // Perturb all outcomes in held-out fold 0 (`fold_of == 0`) and verify outer fold 0's
     // training acquisition rows (`run_id == "flywheel-r{r:02}-fold0"`) are 100% identical across all rounds.

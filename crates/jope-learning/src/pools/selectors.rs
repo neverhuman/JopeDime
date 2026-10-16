@@ -523,9 +523,11 @@ pub struct ContextualSurrogateQHat<'a> {
     context_features: &'a Features,
     program_features: &'a Features,
     ridge: RidgeProgram<'a>,
-    train_targets: Vec<(&'a Pool, Vec<f64>)>,
+    train_targets: Vec<(&'a Pool, Vec<f64>, Vec<f64>)>,
     tot_stats: BTreeMap<String, (f64, usize)>,
     parent_stats: BTreeMap<(String, String), (f64, usize)>,
+    sos_tot_stats: BTreeMap<String, (f64, usize)>,
+    sos_parent_stats: BTreeMap<(String, String), (f64, usize)>,
     external_prior: Option<ExternalProgramPrior>,
     ctx_proj: Vec<(usize, f64, f64)>,
     prog_proj: Vec<(usize, f64, f64)>,
@@ -535,7 +537,9 @@ pub struct ContextualSurrogateQHat<'a> {
 pub const MAX_SURROGATE_DESIGN_DIM: usize = 512;
 pub const MAX_BILINEAR_CTX_DIM: usize = 8;
 pub const MAX_BILINEAR_PROG_DIM: usize = 8;
-const SURROGATE_BASE_FEATURES: usize = 8;
+const SURROGATE_BASE_FEATURES: usize = 12;
+const SOS_CALIBRATION_ITERS: usize = 3;
+const SOS_OPPONENT_WEIGHT: f64 = 0.4;
 
 impl<'a> ContextualSurrogateQHat<'a> {
     /// Raw unprojected bilinear design dimension (`2 + d_ctx + d_prog + d_ctx * d_prog`).
@@ -560,6 +564,44 @@ impl<'a> ContextualSurrogateQHat<'a> {
             .checked_add(dz)
             .and_then(|v| v.checked_add(dp))
             .and_then(|v| v.checked_add(cross))
+    }
+
+    /// Iterative leave-one-program-out Strength-of-Schedule (`SoS`) sub-pool target calibration.
+    ///
+    /// Adjusts within-pool rank targets `t(c, p)` for the average global quality of the opponent
+    /// programs in pool `c` (`c \ {p}`), correcting the downward rank compression suffered by
+    /// elite programs when active self-play concentrates strong programs into the same sub-pools.
+    fn compute_sos_targets(raw_targets: &[(&'a Pool, Vec<f64>)]) -> Vec<Vec<f64>> {
+        let mut sos_targets: Vec<Vec<f64>> = raw_targets.iter().map(|(_, t)| t.clone()).collect();
+        for _ in 0..SOS_CALIBRATION_ITERS {
+            let mut tot: BTreeMap<&str, (f64, usize)> = BTreeMap::new();
+            for ((pool, _), st) in raw_targets.iter().zip(&sos_targets) {
+                for (m, &t) in pool.members.iter().zip(st) {
+                    let entry = tot.entry(m.program_sha256.as_str()).or_insert((0.0, 0));
+                    entry.0 += t;
+                    entry.1 += 1;
+                }
+            }
+            let mu: BTreeMap<&str, f64> = tot
+                .into_iter()
+                .map(|(sha, (s, c))| (sha, (s + 1.0) / (c as f64 + 2.0)))
+                .collect();
+            for ((pool, base_t), st) in raw_targets.iter().zip(&mut sos_targets) {
+                let nm = pool.members.len();
+                let msum: f64 = pool
+                    .members
+                    .iter()
+                    .map(|m| mu.get(m.program_sha256.as_str()).copied().unwrap_or(0.5))
+                    .sum();
+                let opp_denom = nm.saturating_sub(1).max(1) as f64;
+                for ((m, &bt), dst) in pool.members.iter().zip(base_t).zip(st.iter_mut()) {
+                    let self_mu = mu.get(m.program_sha256.as_str()).copied().unwrap_or(0.5);
+                    let opp_mean = (msum - self_mu) / opp_denom;
+                    *dst = (bt + SOS_OPPONENT_WEIGHT * (opp_mean - 0.5)).clamp(0.0, 1.0);
+                }
+            }
+        }
+        sos_targets
     }
 
     fn select_top_variance_coords(
@@ -602,9 +644,13 @@ impl<'a> ContextualSurrogateQHat<'a> {
         pt: &[f64],
         r_s: f64,
         prior_s: f64,
+        sos_prior_s: f64,
         knn_s: f64,
+        sos_knn_s: f64,
         eb_prior: f64,
+        eb_sos_prior: f64,
         eb_knn: f64,
+        eb_sos_knn: f64,
         nov: f64,
     ) -> Vec<f64> {
         let mut x =
@@ -612,9 +658,13 @@ impl<'a> ContextualSurrogateQHat<'a> {
         x.push(1.0);
         x.push(r_s);
         x.push(prior_s);
+        x.push(sos_prior_s);
         x.push(knn_s);
+        x.push(sos_knn_s);
         x.push(eb_prior);
+        x.push(eb_sos_prior);
         x.push(eb_knn);
+        x.push(eb_sos_knn);
         x.push(nov);
         x.push(nov * r_s);
         x.extend_from_slice(zt);
@@ -639,16 +689,18 @@ impl<'a> ContextualSurrogateQHat<'a> {
             .with_context(|| format!("no context features for {}", view.context_id))?;
         let zt = Self::project(z, &self.ctx_proj);
 
-        let mut neighbours: Vec<(f64, &str, &Pool, &Vec<f64>)> = self
+        type NeighbourRow<'b> = (f64, &'b str, &'b Pool, &'b [f64], &'b [f64]);
+        let mut neighbours: Vec<NeighbourRow<'_>> = self
             .train_targets
             .iter()
-            .filter(|(p, _)| p.parent_id != view.parent_id)
-            .map(|(p, t)| {
+            .filter(|(p, _, _)| p.parent_id != view.parent_id)
+            .map(|(p, t, st)| {
                 (
                     cosine(z, &self.context_features.rows[&p.context_id]),
                     p.context_id.as_str(),
                     *p,
-                    t,
+                    t.as_slice(),
+                    st.as_slice(),
                 )
             })
             .collect();
@@ -671,46 +723,77 @@ impl<'a> ContextualSurrogateQHat<'a> {
                 .unwrap_or((0.0, 0));
             let s_p = tot_s - par_s;
             let c_p = tot_c.saturating_sub(par_c);
-            let s3_backoff = if c_p == 0 {
-                if let Some(ext) = &self.external_prior {
-                    let (es, ec) = ext.tot_stats.get(prog_sha).copied().unwrap_or((0.0, 0));
-                    let (eps, epc) = ext
-                        .parent_stats
-                        .get(&(view.parent_id.to_owned(), prog_sha.to_owned()))
-                        .copied()
-                        .unwrap_or((0.0, 0));
-                    let sc = ec.saturating_sub(epc);
-                    if sc > 0 {
-                        let sm = ((es - eps) / (sc as f64)).clamp(0.0, 1.0);
-                        0.5 + 0.05 * (sm - 0.5)
-                    } else {
-                        0.5
-                    }
+
+            let (sos_tot_s, _) = self
+                .sos_tot_stats
+                .get(prog_sha)
+                .copied()
+                .unwrap_or((0.0, 0));
+            let (sos_par_s, _) = self
+                .sos_parent_stats
+                .get(&(view.parent_id.to_owned(), prog_sha.to_owned()))
+                .copied()
+                .unwrap_or((0.0, 0));
+            let sos_s_p = sos_tot_s - sos_par_s;
+
+            let s3_prior = if let Some(ext) = &self.external_prior {
+                let (es, ec) = ext.tot_stats.get(prog_sha).copied().unwrap_or((0.0, 0));
+                let (eps, epc) = ext
+                    .parent_stats
+                    .get(&(view.parent_id.to_owned(), prog_sha.to_owned()))
+                    .copied()
+                    .unwrap_or((0.0, 0));
+                let sc = ec.saturating_sub(epc);
+                if sc > 0 {
+                    let sm = ((es - eps) / (sc as f64)).clamp(0.0, 1.0);
+                    0.5 + 0.25 * (sm - 0.5)
                 } else {
                     0.5
                 }
             } else {
                 0.5
             };
-            let prior_s = (s_p + s3_backoff * self.prior_weight) / (c_p as f64 + self.prior_weight);
+            let prior_s = (s_p + s3_prior * self.prior_weight) / (c_p as f64 + self.prior_weight);
+            let sos_prior_s =
+                (sos_s_p + s3_prior * self.prior_weight) / (c_p as f64 + self.prior_weight);
             let eb_prior = (s_p + self.prior_weight * r_s) / (c_p as f64 + self.prior_weight);
+            let eb_sos_prior =
+                (sos_s_p + self.prior_weight * r_s) / (c_p as f64 + self.prior_weight);
 
-            let (mut num, mut den) = (0.0, 0.0);
-            for (sim, _, pool, targets) in &neighbours {
+            let (mut num, mut sos_num, mut den) = (0.0, 0.0, 0.0);
+            for (sim, _, pool, targets, sos_targets) in &neighbours {
                 let w = sim.max(0.0);
                 if let Ok(i) = pool
                     .members
                     .binary_search_by(|m| m.program_sha256.as_str().cmp(prog_sha))
                 {
                     num += w * targets[i];
+                    sos_num += w * sos_targets[i];
                     den += w;
                 }
             }
             let knn_s = if den > 0.0 { num / den } else { prior_s };
+            let sos_knn_s = if den > 0.0 {
+                sos_num / den
+            } else {
+                sos_prior_s
+            };
             let eb_knn = (num + 1.5 * eb_prior) / (den + 1.5);
+            let eb_sos_knn = (sos_num + 1.5 * eb_sos_prior) / (den + 1.5);
             let nov = 1.0 / (1.0 + c_p as f64);
             rows.push(Self::design_row(
-                &zt, &pt, r_s, prior_s, knn_s, eb_prior, eb_knn, nov,
+                &zt,
+                &pt,
+                r_s,
+                prior_s,
+                sos_prior_s,
+                knn_s,
+                sos_knn_s,
+                eb_prior,
+                eb_sos_prior,
+                eb_knn,
+                eb_sos_knn,
+                nov,
             ));
         }
         Ok(rows)
@@ -799,12 +882,9 @@ impl<'a> ContextualSurrogateQHat<'a> {
             oof_ridges.push(sub_model);
         }
 
-        let mut train_targets = Vec::with_capacity(train.len());
-        let mut tot_stats: BTreeMap<String, (f64, usize)> = BTreeMap::new();
-        let mut parent_stats: BTreeMap<(String, String), (f64, usize)> = BTreeMap::new();
+        let mut raw_train_targets: Vec<(&'a Pool, Vec<f64>)> = Vec::with_capacity(train.len());
         let mut z_vecs: Vec<&[f64]> = Vec::with_capacity(train.len());
         let mut p_vecs: Vec<&[f64]> = Vec::new();
-
         for &pool in train {
             let z = context_features
                 .rows
@@ -812,12 +892,29 @@ impl<'a> ContextualSurrogateQHat<'a> {
                 .with_context(|| format!("no context features for {}", pool.context_id))?;
             z_vecs.push(z.as_slice());
             let targets = rank_targets(pool);
-            for (m, &t) in pool.members.iter().zip(&targets) {
+            for m in &pool.members {
                 let phi = program_features
                     .rows
                     .get(&m.program_sha256)
                     .with_context(|| format!("no program features for {}", m.program_sha256))?;
                 p_vecs.push(phi.as_slice());
+            }
+            raw_train_targets.push((pool, targets));
+        }
+        ensure!(
+            !p_vecs.is_empty(),
+            "contextual surrogate q_hat needs training rows"
+        );
+
+        let sos_all = Self::compute_sos_targets(&raw_train_targets);
+        let mut train_targets = Vec::with_capacity(train.len());
+        let mut tot_stats: BTreeMap<String, (f64, usize)> = BTreeMap::new();
+        let mut parent_stats: BTreeMap<(String, String), (f64, usize)> = BTreeMap::new();
+        let mut sos_tot_stats: BTreeMap<String, (f64, usize)> = BTreeMap::new();
+        let mut sos_parent_stats: BTreeMap<(String, String), (f64, usize)> = BTreeMap::new();
+
+        for ((pool, targets), sos_targets) in raw_train_targets.into_iter().zip(sos_all) {
+            for ((m, &t), &tsos) in pool.members.iter().zip(&targets).zip(&sos_targets) {
                 let tot = tot_stats
                     .entry(m.program_sha256.clone())
                     .or_insert((0.0, 0));
@@ -828,13 +925,20 @@ impl<'a> ContextualSurrogateQHat<'a> {
                     .or_insert((0.0, 0));
                 par.0 += t;
                 par.1 += 1;
+
+                let stot = sos_tot_stats
+                    .entry(m.program_sha256.clone())
+                    .or_insert((0.0, 0));
+                stot.0 += tsos;
+                stot.1 += 1;
+                let spar = sos_parent_stats
+                    .entry((pool.parent_id.clone(), m.program_sha256.clone()))
+                    .or_insert((0.0, 0));
+                spar.0 += tsos;
+                spar.1 += 1;
             }
-            train_targets.push((pool, targets));
+            train_targets.push((pool, targets, sos_targets));
         }
-        ensure!(
-            !p_vecs.is_empty(),
-            "contextual surrogate q_hat needs training rows"
-        );
 
         let ctx_proj =
             Self::select_top_variance_coords(&z_vecs, context_features.dim, MAX_BILINEAR_CTX_DIM);
@@ -851,6 +955,8 @@ impl<'a> ContextualSurrogateQHat<'a> {
             train_targets,
             tot_stats,
             parent_stats,
+            sos_tot_stats,
+            sos_parent_stats,
             external_prior: external_prior.cloned(),
             ctx_proj,
             prog_proj,
@@ -859,16 +965,16 @@ impl<'a> ContextualSurrogateQHat<'a> {
 
         let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
         let mut rows = 0usize;
-        for (pool_idx, (pool, targets)) in model.train_targets.iter().enumerate() {
+        for (pool_idx, (pool, _targets, sos_targets)) in model.train_targets.iter().enumerate() {
             let view = pool.view();
             let oof_ridge = oof_ridges[inner_folds[pool_idx]]
                 .as_ref()
                 .unwrap_or(&model.ridge);
             let ridge_scores = oof_ridge.scores(&view)?;
             let design_rows = model.view_design_rows_with_ridge(&view, &ridge_scores)?;
-            for (x, &t) in design_rows.iter().zip(targets) {
+            for (x, &t_sos) in design_rows.iter().zip(sos_targets) {
                 for i in 0..d {
-                    xty[i] += x[i] * t;
+                    xty[i] += x[i] * t_sos;
                     for j in 0..d {
                         xtx[i * d + j] += x[i] * x[j];
                     }
@@ -877,15 +983,30 @@ impl<'a> ContextualSurrogateQHat<'a> {
             }
         }
         ensure!(rows > 0, "contextual surrogate q_hat needs training rows");
+        let sample_scale = (rows as f64 / 9000.0).clamp(0.01, 1.09);
+        let lin_terms = (model.ctx_proj.len() + model.prog_proj.len()).max(1);
         let cross_terms = (model.ctx_proj.len() * model.prog_proj.len()).max(1);
-        let bilinear_lambda = lambda * (cross_terms as f64 / 2.5).max(1.0);
+        let lin_proj_lambda = lambda * (lin_terms as f64 * 6.0 * sample_scale).max(1.0);
+        let bilinear_lambda = lambda * (cross_terms as f64 * 2.5 * sample_scale).max(1.0);
         for i in 1..SURROGATE_BASE_FEATURES.min(d) {
             xtx[i * d + i] += lambda;
         }
-        for i in SURROGATE_BASE_FEATURES..d {
+        let lin_end =
+            (SURROGATE_BASE_FEATURES + model.ctx_proj.len() + model.prog_proj.len()).min(d);
+        for i in SURROGATE_BASE_FEATURES..lin_end {
+            xtx[i * d + i] += lin_proj_lambda;
+        }
+        for i in lin_end..d {
             xtx[i * d + i] += bilinear_lambda;
         }
         xtx[0] += 1e-12;
+        if d >= SURROGATE_BASE_FEATURES {
+            // Empirical-Bayes novelty-gated ridge prior anchor w_0 on nov * (r_s - 0.60):
+            // penalizes low-count candidates with mediocre ridge predictions while rewarding
+            // unseen candidates with strong ridge predictions.
+            xty[10] += lambda * sample_scale * (-0.34 * 0.60);
+            xty[11] += lambda * sample_scale * 0.34;
+        }
         model.weights = cholesky_solve(xtx, xty, d)?;
         Ok(model)
     }
@@ -900,7 +1021,7 @@ impl Selector for ContextualSurrogateQHat<'_> {
     }
     fn rule(&self) -> String {
         format!(
-            "contextual_surrogate_qhat/v2: internal cross-fitted LOPO Empirical-Bayes + compact bilinear context x program ridge (lambda={}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
+            "contextual_surrogate_qhat/v2: internal cross-fitted LOPO SoS-debiased Empirical-Bayes + compact bilinear context x program ridge (lambda={}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
             self.lambda,
             self.context_features.dim,
             self.ctx_proj.len(),
@@ -1059,7 +1180,68 @@ mod tests {
         );
 
         let funnel = pre_screen_funnel(&test_view, &qhat, 64, 1).unwrap();
-        assert_eq!(funnel.selected_program_sha256, vec![p_pos_b]);
+        assert_eq!(funnel.selected_program_sha256, vec![p_pos_b.clone()]);
+
+        // Verify Strength-of-Schedule (SoS) target calibration: when `p_pos_a` beats `p_neg_a` in two pools
+        // (`t(p_pos_a) = 1.0`, `t(p_neg_a) = 0.0`), a program `p_pos_b` that ties `0.5` against elite `p_pos_a`
+        // receives a strictly higher SoS-calibrated target than `p_neg_b` tying `0.5` against weak `p_neg_a`.
+        let sos_pools = [
+            mk_pool(10, "sp1", true, false),
+            mk_pool(11, "sp2", true, false),
+            Pool {
+                schema: POOL_SCHEMA.into(),
+                context_id: mk_hex(12),
+                parent_id: "sp3".into(),
+                role: "train".into(),
+                protocol_sha256: mk_hex(0xaa),
+                incumbent_q: Some(0.0),
+                members: vec![
+                    Member {
+                        program_sha256: p_pos_a.clone(),
+                        status: Status::Complete,
+                        q: Some(0.85),
+                        tokens: None,
+                    },
+                    Member {
+                        program_sha256: p_pos_b.clone(),
+                        status: Status::Complete,
+                        q: Some(0.85),
+                        tokens: None,
+                    },
+                ],
+            },
+            Pool {
+                schema: POOL_SCHEMA.into(),
+                context_id: mk_hex(13),
+                parent_id: "sp4".into(),
+                role: "train".into(),
+                protocol_sha256: mk_hex(0xaa),
+                incumbent_q: Some(0.0),
+                members: vec![
+                    Member {
+                        program_sha256: p_neg_a.clone(),
+                        status: Status::Complete,
+                        q: Some(0.15),
+                        tokens: None,
+                    },
+                    Member {
+                        program_sha256: p_neg_b.clone(),
+                        status: Status::Complete,
+                        q: Some(0.15),
+                        tokens: None,
+                    },
+                ],
+            },
+        ];
+        let raw_sos: Vec<(&Pool, Vec<f64>)> =
+            sos_pools.iter().map(|p| (p, rank_targets(p))).collect();
+        let calibrated = ContextualSurrogateQHat::compute_sos_targets(&raw_sos);
+        assert!(
+            calibrated[2][1] > 0.5 && calibrated[3][1] < 0.5 && calibrated[2][1] > calibrated[3][1],
+            "expected SoS calibration to boost target against elite opponent ({}) above weak opponent ({})",
+            calibrated[2][1],
+            calibrated[3][1]
+        );
     }
 
     #[test]

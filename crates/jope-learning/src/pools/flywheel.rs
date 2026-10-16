@@ -209,11 +209,25 @@ pub fn build_fold_s3_priors(
         let Some((parent_id, row_fold)) = resolved else {
             continue;
         };
-        // Context-HWM winners in GP_RESULTS_INDEX have rank_ctx == 1 (top rank target = 1.0).
-        let target_val = match r.rank_ctx {
-            Some(1) => 1.0,
-            Some(rk) if rk > 1 => (1.0 / (rk as f64)).clamp(0.0, 1.0),
-            _ => 0.75,
+        // Continuous score quality when present (e.g. `1.0 - rmse_ratio` for LowerIsBetter
+        // HWM winners where `rank_ctx == 1` is constant), falling back to rank_ctx / default.
+        let target_val = match r.score {
+            Some(s) if s.is_finite() => {
+                let dir = r
+                    .score_name
+                    .as_deref()
+                    .and_then(|n| score_direction(n).ok())
+                    .unwrap_or(ScoreDirection::LowerIsBetter);
+                match dir {
+                    ScoreDirection::LowerIsBetter => (1.0 - s.clamp(0.0, 1.0)).clamp(0.0, 1.0),
+                    ScoreDirection::HigherIsBetter => 1.0 / (1.0 + (-s.clamp(-20.0, 20.0)).exp()),
+                }
+            }
+            _ => match r.rank_ctx {
+                Some(1) => 1.0,
+                Some(rk) if rk > 1 => (1.0 / (rk as f64)).clamp(0.0, 1.0),
+                _ => 0.75,
+            },
         };
         for k in 0..cfg.folds {
             if row_fold == k {
