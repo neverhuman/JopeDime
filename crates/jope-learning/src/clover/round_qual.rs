@@ -93,6 +93,10 @@ pub struct RoundQualPlan {
     pub alpha: f64,
     pub endpoint: Endpoint,
     pub allow_kl_frozen_rounds: bool,
+    /// Maximum admissible `KL(pi_theta(. | S_base) || pi_ref(. | S_base))` (`>= 0.0`, e.g. `0.20`).
+    pub max_conditional_base_kl: f64,
+    /// Maximum admissible probability mass allocated to newly admitted `N+1` leaves (`in [0, 1]`, e.g. `0.15`).
+    pub max_new_support_mass: f64,
     /// Optional explicit list of expected context SHA-256 identifiers; when empty, the keys of
     /// `parent_of_context` define the expected context set.
     #[serde(default)]
@@ -190,6 +194,8 @@ pub struct RoundQualReport {
     pub min_parent_clusters: usize,
     pub practical_margin_log_ratio: f64,
     pub allow_kl_frozen_rounds: bool,
+    pub max_conditional_base_kl: f64,
+    pub max_new_support_mass: f64,
     pub n_ratchet_contexts: usize,
     pub n_missing_expected_contexts: usize,
     pub n_complete_paired_contexts: usize,
@@ -355,6 +361,16 @@ fn validate_plan_and_identity(
         "plan.alpha ({}) must be finite and in (0, {MAX_SINGLE_ENDPOINT_ALPHA}] while joint Holm-Bonferroni adjustment is unimplemented",
         plan.alpha
     );
+    ensure!(
+        plan.max_conditional_base_kl.is_finite() && plan.max_conditional_base_kl >= 0.0,
+        "plan.max_conditional_base_kl ({}) must be finite and >= 0",
+        plan.max_conditional_base_kl
+    );
+    ensure!(
+        plan.max_new_support_mass.is_finite() && (0.0..=1.0).contains(&plan.max_new_support_mass),
+        "plan.max_new_support_mass ({}) must be finite and in [0, 1]",
+        plan.max_new_support_mass
+    );
     if plan.endpoint == Endpoint::RatchetVsOrdinaryFinalRound {
         bail!(
             "Endpoint::RatchetVsOrdinaryFinalRound is unsupported: clover.selfplay-ratchet/v1 SelfPlayRoundReceipt does not emit ordinary_champion_genome"
@@ -462,7 +478,11 @@ fn ensure_valid_round_structure(context_id: &str, round_idx: usize, round: &Valu
 
 /// Validate a single round's KL guard fields fail-closed.
 /// Returns `(kl_measured_and_valid, frozen_by_kl_guard)`.
-fn evaluate_round_kl_guard(round: &Value) -> (bool, bool) {
+fn evaluate_round_kl_guard(
+    round: &Value,
+    max_conditional_base_kl: f64,
+    max_new_support_mass: f64,
+) -> (bool, bool) {
     let Some(kl_source) = round.get("kl_source").and_then(Value::as_str) else {
         return (false, false);
     };
@@ -513,13 +533,18 @@ fn evaluate_round_kl_guard(round: &Value) -> (bool, bool) {
     if !numbers_valid || !masses_valid || !chain_rule_valid {
         return (false, false);
     }
+    let expected_admissible = decomposed.conditional_base_kl <= max_conditional_base_kl + 1e-12
+        && decomposed.new_support_mass <= max_new_support_mass + 1e-12;
+    if decomposed.admissible != expected_admissible {
+        return (false, false);
+    }
     let Some(frozen) = round
         .get("seed_update_frozen_by_kl_guard")
         .and_then(Value::as_bool)
     else {
         return (false, false);
     };
-    if frozen != !decomposed.admissible {
+    if frozen != !expected_admissible {
         return (false, frozen);
     }
     (true, frozen)
@@ -811,7 +836,11 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
                 equal_attempts_all_rounds = false;
                 n_unequal_attempt_rounds += 1;
             }
-            let (kl_valid, kl_frozen) = evaluate_round_kl_guard(round);
+            let (kl_valid, kl_frozen) = evaluate_round_kl_guard(
+                round,
+                plan.max_conditional_base_kl,
+                plan.max_new_support_mass,
+            );
             if !kl_valid {
                 any_round_unmeasured_kl = true;
             }
@@ -1136,6 +1165,8 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
         min_parent_clusters: plan.min_parent_clusters,
         practical_margin_log_ratio: plan.practical_margin_log_ratio,
         allow_kl_frozen_rounds: plan.allow_kl_frozen_rounds,
+        max_conditional_base_kl: plan.max_conditional_base_kl,
+        max_new_support_mass: plan.max_new_support_mass,
         n_ratchet_contexts: ratchet_outputs.len(),
         n_missing_expected_contexts,
         n_complete_paired_contexts,
@@ -1224,6 +1255,8 @@ mod tests {
             alpha: 0.025,
             endpoint: Endpoint::FinalVsRound0Incumbent,
             allow_kl_frozen_rounds: false,
+            max_conditional_base_kl: 0.20,
+            max_new_support_mass: 0.15,
             expected_contexts: Vec::new(),
         }
     }

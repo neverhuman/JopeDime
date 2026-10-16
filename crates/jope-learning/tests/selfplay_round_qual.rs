@@ -63,6 +63,8 @@ fn fixture_plan(identity: &ExperimentIdentity) -> RoundQualPlan {
         alpha: 0.025,
         endpoint: Endpoint::FinalVsRound0Incumbent,
         allow_kl_frozen_rounds: false,
+        max_conditional_base_kl: 0.20,
+        max_new_support_mass: 0.15,
         expected_contexts: Vec::new(),
     }
 }
@@ -712,6 +714,52 @@ fn b5_kl_guard_fails_closed_on_malformed_unknown_or_missing_even_when_allow_froz
             .disqualification_reasons
             .contains(&"kl_guard_unmeasured".to_owned()));
         assert!(!rep_bad_mass.caller_asserted_diagnostic_checks_passed);
+    }
+
+    // 4. Forged admissible=true / unfrozen when conditional_base_kl > max_conditional_base_kl (0.35 > 0.20)
+    // or new_support_mass > max_new_support_mass (0.20 > 0.15) must fail closed as unmeasured KL.
+    for forged_admissible in [
+        json!({
+            "conditional_base_kl": 0.35,
+            "conditional_new_kl": 0.01,
+            "base_support_mass": 0.90,
+            "new_support_mass": 0.10,
+            "ref_new_support_mass": 0.08,
+            "bernoulli_allocation_kl": 0.002,
+            "total_kl": 0.002 + 0.90 * 0.35 + 0.10 * 0.01,
+            "admissible": true
+        }),
+        json!({
+            "conditional_base_kl": 0.04,
+            "conditional_new_kl": 0.01,
+            "base_support_mass": 0.80,
+            "new_support_mass": 0.20,
+            "ref_new_support_mass": 0.08,
+            "bernoulli_allocation_kl": 0.002,
+            "total_kl": 0.002 + 0.80 * 0.04 + 0.20 * 0.01,
+            "admissible": true
+        }),
+    ] {
+        let mut forged_ratchets = ratchets.clone();
+        forged_ratchets[0]["rounds"][0]["decomposed_kl"] = forged_admissible;
+        forged_ratchets[0]["rounds"][0]["seed_update_frozen_by_kl_guard"] = json!(false);
+        let rep_forged = qualify_rounds(RoundQualInputs {
+            plan: &plan,
+            identity: &identity,
+            ratchet_outputs: &forged_ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        })
+        .expect("report");
+        assert_eq!(
+            rep_forged.n_unmeasured_kl_contexts, 1,
+            "forged admissible=true exceeding KL or new-support mass caps must be unmeasured"
+        );
+        assert!(rep_forged
+            .disqualification_reasons
+            .contains(&"kl_guard_unmeasured".to_owned()));
+        assert!(!rep_forged.caller_asserted_diagnostic_checks_passed);
     }
 }
 
