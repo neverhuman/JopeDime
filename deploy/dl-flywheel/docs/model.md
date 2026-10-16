@@ -219,24 +219,24 @@ The results are directional only. In the table, "probe KL" is the mean over 64 t
 | Sweep | Receipt | LR | Probe KL by arm |
 |---|---|---|---|
 | 3 | `ccdc9e17` | 1e-5 | L6 control 0.012–0.044; L_PI 0.01 + 0.2·KL 0.004–0.008; L_PI 0.03 0.020–0.036; L_PI 0.1 0.102 at epoch 1 (frozen) |
-| 4a | `f8b54e53` | 3.75e-5 | control 0.031 then 0.053 (frozen at 2); `kl_only` (L6 + 0.2·KL) 0.004–0.011 over 8; L_PI 0.01 0.012–0.020; L_PI 0.03 reached 0.057 at 4 (frozen) |
+| 4a | `f8b54e53` | 3.75e-5 | control 0.031 then 0.053 (frozen at 2); `kl_only` (L6 + 0.2·KL) 0.004–0.011 over 8; L_PI 0.01 0.011–0.020; L_PI 0.03 reached 0.057 at 4 (frozen) |
 | 4b | `ad010b1e` | 1e-5 | control 0.011–0.041; L_PI 0.01 0.005–0.010; L_PI 0.03 0.024–0.042 |
 | 5 | `71493c89` | 3.75e-5 | control 0.035 then 0.052 (frozen at 2); `r23` 0.004–0.008; `r23_lpi01` 0.009–0.016 |
-| 6 | `773040d5` | 3.75e-5 | control 0.031–0.032 (2 epochs by design); `r23` 0.006–0.014; `r23_lpi01` 0.013–0.036 (7 complete epochs; the 8th was cut by the deadline) |
+| 6 | `773040d5` | 3.75e-5 | control 0.031 at both epochs (2 by design); `r23` 0.006–0.014; `r23_lpi01` 0.013–0.036 (7 complete epochs; the 8th was cut by the deadline) |
 
 Sweeps 4b, 5 and 6 also scored a held-out split of 885 train contexts from 167 parent lineages, excluded from their training. Read directionally:
 
-- **The KL anchor bounds drift.** At 3.75e-5, pure L6 reached a probe KL of 0.052–0.053 within two epochs in sweeps 4a and 5 (0.032 in sweep 6). The L6 + 0.2·KL arms stayed at or below 0.014 for up to eight epochs. At 1e-5, pure L6 still drifted to 0.041–0.044 by epoch 8. Drift grows with the L_PI weight: 0.03 reached 0.057, and 0.1 reached 0.102 in one epoch.
+- **The KL anchor bounds drift.** At 3.75e-5, pure L6 reached a probe KL of 0.052–0.053 within two epochs in sweeps 4a and 5 (0.031 in sweep 6, stopped at 2 by design). The L6 + 0.2·KL arms stayed at or below 0.014 for up to eight epochs. At 1e-5, pure L6 still drifted to 0.041–0.044 by epoch 8. Drift grows with the L_PI weight: 0.03 reached 0.057, and 0.1 reached 0.102 in one epoch.
 - **L_PI improves held-out L_PI.**
   - Held-out L_PI starts at 7.080. At the last complete epoch, the L_PI arms ended below their comparators:
     - sweep 4b: 6.813 (weight 0.01) and 6.591 (0.03), against 7.211 for the control;
     - sweep 5: 6.865, against 7.066 for `r23`;
     - sweep 6: 6.675, against 7.088 at epoch 7.
   - L_PI is the trained objective, and its targets lack the seven-artifact closure. Held-out L_PI is not a measure of executed-program quality.
-  - Held-out L6 did not improve in any arm: it moved from 0.8610 to between 0.8621 and 0.8660.
+  - Held-out L6 did not improve in any arm by its last evaluated epoch: it moved from 0.8610 to between 0.8621 and 0.8660.
 - **No objective has beaten frozen v1 L6 under qualified evaluation; no qualified evaluation exists yet.**
-  - Frozen v1's full-validation L6 is 0.8973272 over 263 contexts. The scratch arms' last evaluated epochs range from 0.8964 to 0.9022.
-  - Six arms ended below frozen v1, by 0.00003 to 0.00098; the lowest is sweep 6's `r23` arm at 0.8963494. Two of them, the sweep 6 arms at epoch 8, were judged against frozen v1 at 04:47Z and are INCONCLUSIVE (next section). The other four have no paired verdict. None of the six is a result.
+  - Frozen v1's full-validation L6 is 0.8973272 over 263 contexts. The scratch arms' last evaluated epochs range from 0.8963 to 0.9022.
+  - Six arms ended below frozen v1, by 0.00003 to 0.00098; the lowest is sweep 6's `r23` arm at 0.8963494. Two of them, the sweep 6 arms at epoch 8, were judged against frozen v1 at 04:47Z and are INCONCLUSIVE (next section). The other four have no paired verdict against frozen v1; sweep 3's two were judged only against their own L6 control, at epochs 1–3. None of the six is a result.
   - The `kl_only` arm's 16-context fixed panel moved from 0.8712 to 0.8649, while its full validation moved from 0.8973 to 0.8977.
   - The G-JUDGE scratch judge requires paired per-context series over at least 881 contexts before it labels a comparison GREATER or WORSE. Full validation has 263 contexts. So every comparison it judged through 2026-10-13T00:06Z is INCONCLUSIVE and none is GREATER. That covers sweep 3, the CX-OP RLOO/PKPO arms and the G-ABL IPO/DPO arms.
   - Sweeps 4a, 4b and 5 have no G-JUDGE verdict. Sweep 6 was judged at 04:47Z and is INCONCLUSIVE (next section).
@@ -246,7 +246,7 @@ Sweeps 4b, 5 and 6 also scored a held-out split of 885 train contexts from 167 p
 
 Since the sweeps above, three PRs merged and three more R22 scratch training runs completed. The judge recorded three more paired looks. None of it is qualifying, and none of it shows an objective beating frozen v1 L6. L6 is a validation loss: lower is better.
 
-**The first look large enough for G-JUDGE's rule (L6-1148, 11:38Z) found the anchored fine-tune WORSE than frozen v1** (REGRESSION ALERT for all three checkpoints; details at the end of this section).
+**The first look large enough for G-JUDGE's rule (L6-1148, 11:38Z) raised a REGRESSION ALERT against frozen v1 for all three checkpoints it judged**: two runs of the anchored recipe, and R25, which adds kNN-CE (details at the end of this section).
 
 **Merged:**
 - #304 (GB-03): verified archive targets and frozen-round actor updates. Build-only libraries with CPU fixtures.
@@ -280,10 +280,10 @@ All records are under `.agent/rlfw-coord/lanes/G-JUDGE/`. Reading the table:
 Further seed replicates (R28, R29) started at 11:16–11:17Z.
 
 **L6-1148**, a larger pre-registered set. G-JUDGE adopted it at 10:43:44Z (`lanes/G-JUDGE/l6-1148-prereg.json`, `5db24253`), before any paired look on it.
-- Contents: val263 plus the 885 lineage-held-out TRAIN contexts that every fine-tuning arm excluded. That is 1,148 contexts in 221 parent clusters.
+- Contents: val263 plus the 885 lineage-held-out TRAIN contexts that sweeps 4b–6 and every later fine-tuning run excluded (sweeps 3 and 4a had no holdout). That is 1,148 contexts in 221 parent clusters.
 - Pre-registered looks: three checkpoints, cluster bootstrap, Holm correction.
 - Conservative for a challenger: the held-out lineages were in v1's own training, so this is not an unseen-family test.
-- Rows: CPU-evaluated per context for v1 and the three checkpoints. The per-term consistency check against the training-time numerators passed for all 6,888 terms, under the amended tolerance (relative ≤ 1e-5 or absolute ≤ 1e-7).
+- Rows: CPU-evaluated per context for v1 and the three checkpoints. The per-term consistency check against the training-time numerators passed all 6,888 checks of each checkpoint under the amended tolerance (relative ≤ 1e-5 or absolute ≤ 1e-7), registered at 11:20:58Z, before the look. Under the relative test alone, 4 feasibility terms (absolute differences about 1.3e-8) failed.
 
 **L6-1148 verdict** (`lanes/G-JUDGE/l6-1148-verdict.json`, `370b5e09`, 11:38:25Z). Differences are arm − v1 on the contract cost over all 1,148 contexts, with the 221-cluster bootstrap interval:
 
@@ -295,7 +295,7 @@ Further seed replicates (R28, R29) started at 11:16–11:17Z.
 
 Reading:
 - The L6 + 0.2·KL fine-tune gives no detectable change on validation lineages.
-- It is clearly worse on the lineages that v1 trained on and the fine-tune excluded. That is forgetting, which the 0.2 KL anchor did not prevent.
+- It is clearly worse on the lineages that v1 trained on and the fine-tunes excluded. Both strata are reported and marked not decisive; read directionally, the pattern is consistent with forgetting, which the 0.2 KL anchor did not prevent.
 - The verdict is scored non-qualifying: no claim, no seal, no promotion.
 - It rules out "this objective beats frozen v1" for these checkpoints.
 

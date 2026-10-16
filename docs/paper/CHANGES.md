@@ -171,3 +171,26 @@ The judge scored the pre-registered 1,148-context set at 11:38:25Z.
   - the other four have no paired verdict.
 
   The values and the conclusion (no qualified improvement) are unchanged.
+
+## Update of 2026-10-16: source audit (screen jopedime_paper)
+
+Every claim was traced back to its source on xbabe2. [`NUMBERS_TRACE.md`](NUMBERS_TRACE.md) records the method, each claim's pin and value check, and the corrections. In summary:
+
+- **Source pins.** 175 of 177 claims re-hash to their pin. C24 is derived, and C115 is pending and names a directory. Three roots (CAPTURE, ARENA, HOST) had moved under `/home/ubuntu/jope-evidence/` on 2026-10-15; `claims.json` now records the new paths. The REPO root is written as a path, and the new roots PROBE and CANON are added.
+- **Corrected values:**
+  - C140: the range of last evaluated epochs is 0.8963 to 0.9022, not 0.8964;
+  - C137 and the Section 10.3 table: sweep 4a L_PI 0.01 is 0.011–0.020, and sweep 6 L6 only is 0.031 at both epochs.
+- **Corrected scope or wording:**
+  - C139, C141, C170, C173 and C177;
+  - Sections 9.7, 10.3 and 10.3.1: the 885 held-out contexts were not held out of sweeps 3 and 4a; the L6-1148 look is a regression alert, not a finding that "the fine-tune forgot"; and "no paired verdict" means against frozen v1.
+- **New established claims, C178–C183:**
+  - C178 and C179: the LightGBM comparator's pool and metrics (row R² 0.752 and beat10 AUC 0.903 on the corrected pool; R² 0.718 and AUC 0.903 at repeat 0 on the original pool);
+  - C180: the one-holdout ruling;
+  - C181: the two frozen v1 L6 values come from steps 17,416 and 17,773;
+  - C182: four post-sweep runs and five judge records;
+  - C183: the consistency check's pre-look amendment.
+- **Scope.** The header states that the report covers events up to 2026-10-13T12:00Z. EI-1 is marked as planned "as of this revision".
+- **Totals.** 177 claims (118 established, 20 preliminary, 16 non-qualifying, 23 pending).
+- **Check.** `jope-records paper-trace` now runs in CI. It checks every printed number against the claims cited in its line or section, the Appendix G totals, the Section 10.4 pending table, and this file's claim trace and exemption tables.
+
+`tex/` is still not regenerated.

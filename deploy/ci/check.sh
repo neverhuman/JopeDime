@@ -50,6 +50,7 @@ step "no absolute home paths in python (informational until WP6 lands)"; pyabs=$
 step "rust-test scope partitions the workspace (deploy/ci/rust-test-scope.sh)"; if ! cargo run -q --locked -p jope-records -- rust-scope-check; then fail=1; fi
 step "repository layout (jope-records repo-layout; exceptions in deploy/ci/repo-layout-allow.txt)"; if ! cargo run -q --locked -p jope-records -- repo-layout; then fail=1; fi
 step "README benchmark blocks match committed evidence (jope-records readme-benchmarks)"; if ! cargo run -q --locked -p jope-records -- readme-benchmarks --check; then fail=1; fi
+step "paper and README numbers trace (jope-records paper-trace; docs/paper/NUMBERS_TRACE.md)"; if ! cargo run -q --locked -p jope-records -- paper-trace; then fail=1; fi
 # A family shorter than one of its own tests can never pass: full-scratch was killed at 600 s
 # inside feat-math::golden fast_profile_portfolio_head (~580-619 s). Budgets are argv[3] of each
 # family's `timeout ... <N>s` command in the coverage map.

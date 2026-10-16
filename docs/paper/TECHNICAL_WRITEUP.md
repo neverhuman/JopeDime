@@ -1,6 +1,6 @@
 # CLOVER: technical write-up (venue-neutral master draft)
 
-Status: **draft for the owner's review**, revised 2026-10-13. This revision replaces the 2026-10-10 draft. `CHANGES.md` lists what changed and why.
+Status: **draft for the owner's review**, revised 2026-10-13 and audited against its sources on 2026-10-16. This revision replaces the 2026-10-10 draft. `CHANGES.md` lists what changed and why, and `NUMBERS_TRACE.md` records where every claim was re-hashed and re-derived. The report covers events up to 2026-10-13T12:00Z; nothing later is reported here.
 
 Every number carries a claim id in square brackets, for example `[C26]`. Each id resolves to an entry in `claims.json`, which gives the statement, the exact value, the source (`path:line`, a JSON path, or a receipt SHA-256) and a status:
 
@@ -9,7 +9,7 @@ Every number carries a claim id in square brackets, for example `[C26]`. Each id
 - **non-qualifying**: a real measurement from an owner-labelled scratch run (ruling R22). It is directional only and never a headline, a promotion input or a qualification result;
 - **pending**: a pre-registered or planned result that does not exist yet.
 
-Nothing pending has been estimated, extrapolated or filled in. The LaTeX scaffold (`tex/`), its figure scripts and the claim checker (`tools/`) are lane files in `.agent/proposals/claude-rlfw-20261009/paper/` on xbabe2, not in this repository. The scaffold mirrors the 2026-10-10 draft and has not been regenerated for this revision; in it, a pending value renders as `\pending{Cnn}`. Most claim sources resolve through the host-local roots in `claims.json` (`source_conventions.roots`), so their hashes can be re-checked on xbabe2, not from a clone.
+Nothing pending has been estimated, extrapolated or filled in. The LaTeX scaffold (`tex/`), its figure scripts and the claim checker (`tools/`) are lane files in `.agent/proposals/claude-rlfw-20261009/paper/` on xbabe2, not in this repository. The scaffold mirrors the 2026-10-10 draft and has not been regenerated for this revision; in it, a pending value renders as `\pending{Cnn}`. Most claim sources resolve through the host-local roots in `claims.json` (`source_conventions.roots`), so their hashes can be re-checked on xbabe2, not from a clone. Three roots (CAPTURE, ARENA and HOST) moved under xbabe2's evidence store on 2026-10-15, and `claims.json` records their new paths. From a clone, `cargo run -p jope-records -- paper-trace` checks that every number printed here is accounted for by a claim it cites; on xbabe2, `paper-trace --sources` also re-hashes every claim source against its pin.
 
 The public wording rule applies to this file. Teacher programs are called **verified high-water-mark programs from an offline search**. How those programs, or new ones, are found is out of scope here. It lives in the internal companion and in the internal direction documents.
 
@@ -684,6 +684,7 @@ The real tier of the dataset bucket holds 3,859 datasets: 2,611 regression, 843 
 - Parent lineages never straddle roles.
 - A changed feature, target or split needs a fresh encoding and fresh measurements; parent labels are never copied.
 - Sealed and excluded families stay outside the training closure.
+- The sealed families are the single holdout, under the 2026-10-07 one-holdout ruling: the corpus authority accepts only the one-holdout role map [C180]. Every evaluation set in this report (the 263 validation contexts, D-tune and D-confirm, the 885 held-out-lineage training contexts [C173]) is drawn from the training and validation roles, not from that holdout.
 
 **Licences.** 3,755 of the 3,859 real datasets have licence status *unknown*, and 104 are *recorded* [C16]. An owner ruling (ALL-DATA-RESEARCH) permits their use in this research pipeline regardless of licence [C17]. The test-row leak rule and the holdout and sealed denylists stay in force, and **no redistribution or production use is granted** [C17]. This limits what can be released (Section 12).
 
@@ -780,7 +781,7 @@ Otherwise the label is INCONCLUSIVE, and panel means or single epochs stay unmea
 
 A later review, merged on 2026-10-13, found that the figure of 881 came from reading a single pair's standard error as the paired standard deviation across contexts. It is not an applicable sample size [C144]. The adequate, pre-registered sample size for a qualified comparison is itself pending [C158].
 
-To reach the 881 the rule still requires, the judge adopted a 1,148-context set: the validation contexts plus training contexts from parent lineages held out of every fine-tuning arm, in 221 parent clusters. It was adopted before any paired look on it, with a parent-cluster bootstrap and Holm correction over three checkpoints [C173]. Its first look found all three fine-tuned checkpoints worse than the frozen v1 policy (Section 10.3.1) [C174].
+To reach the 881 the rule still requires, the judge adopted a 1,148-context set: the validation contexts plus training contexts from parent lineages held out of the training of sweeps 4b to 6 and of every later fine-tuning run (sweeps 3 and 4a had no holdout), in 221 parent clusters. It was adopted before any paired look on it, with a parent-cluster bootstrap and Holm correction over three checkpoints [C173]. Its first look raised a regression alert for all three fine-tuned checkpoints against the frozen v1 policy (Section 10.3.1) [C174].
 
 ---
 
@@ -822,7 +823,7 @@ Accordingly, reranking 32 policy samples by $\hat q$ and executing the top 8 did
 - the best-of-8 difference was 0.0187 [−0.0320, 0.0811];
 - the recorded decision is **inconclusive**.
 
-An earlier, separate outcome-prediction model told a similar story. On equal-lineage $R^2$ it trailed a LightGBM comparator, 0.690 against 0.785, with a paired difference interval of [−0.133, −0.056] [C78]. Under the CLOVER direction, this is exactly the comparison H2 formalizes: a learned ranker must beat simple predictors before anything more elaborate competes [C147, C148].
+An earlier, separate outcome-prediction model told a similar story. On the corrected 7,120-view pool it trailed a LightGBM comparator on equal-lineage $R^2$, 0.690 against 0.785, with a paired difference interval of [−0.133, −0.056] [C78]. On row-weighted $R^2$ the two scored 0.652 and 0.752, and on beat10 AUC 0.901 and 0.903, a difference whose interval includes zero [C178]. That 0.785 is not the 5,363-context clean-pool reference of the same value, and on the original 7,087-view pool the LightGBM yardstick scored $R^2$ 0.718 and beat10 AUC 0.903 at repeat 0 [C179]. Under the CLOVER direction, this is exactly the comparison H2 formalizes: a learned ranker must beat simple predictors before anything more elaborate competes [C147, C148].
 
 #### 10.1.3 Restore, determinism and closure
 
@@ -913,10 +914,10 @@ Owner ruling R22 permitted scratch training on native detail-shard measurements 
 | Sweep | LR | Arms and probe KL (range) |
 |---|---|---|
 | 3 | $10^{-5}$ | L6 only 0.012–0.044 · L_PI 0.01 + 0.2·KL 0.004–0.008 · L_PI 0.03 + 0.2·KL 0.020–0.036 · L_PI 0.1 + 0.2·KL 0.102 at epoch 1 (stopped) |
-| 4a | $3.75\times10^{-5}$ | L6 only 0.031 → 0.053 (stopped at 2) · **L6 + 0.2·KL 0.004–0.011 over 8** · L_PI 0.01 0.012–0.020 · L_PI 0.03 up to 0.057 (stopped at 4) |
+| 4a | $3.75\times10^{-5}$ | L6 only 0.031 → 0.053 (stopped at 2) · **L6 + 0.2·KL 0.004–0.011 over 8** · L_PI 0.01 0.011–0.020 · L_PI 0.03 up to 0.057 (stopped at 4) |
 | 4b | $10^{-5}$ | L6 only 0.011–0.041 · L_PI 0.01 0.005–0.010 · L_PI 0.03 0.024–0.042 |
 | 5 | $3.75\times10^{-5}$ | L6 only 0.035 → 0.052 (stopped at 2) · **L6 + 0.2·KL 0.004–0.008** · plus L_PI 0.01 0.009–0.016 |
-| 6 | $3.75\times10^{-5}$ | L6 only 0.031–0.032 (2 epochs by design) · **L6 + 0.2·KL 0.006–0.014** · plus L_PI 0.01 0.013–0.036 (7 complete epochs) |
+| 6 | $3.75\times10^{-5}$ | L6 only 0.031 at both epochs (2 by design) · **L6 + 0.2·KL 0.006–0.014** · plus L_PI 0.01 0.013–0.036 (7 complete epochs) |
 
 Sweeps 4b, 5 and 6 also scored a held-out split of 885 training contexts from 167 parent lineages, kept out of their training. Read directionally, the receipts show three things.
 
@@ -930,11 +931,11 @@ Sweeps 4b, 5 and 6 also scored a held-out split of 885 training contexts from 16
      - sweep 5: 6.865, against 7.066 for L6 + 0.2·KL;
      - sweep 6: 6.675, against 7.088.
    - L_PI is the term being trained, on targets without the qualified closure. Held-out L_PI is not executed-program quality.
-   - Held-out L6 did not improve in any arm: it went from 0.8610 to between 0.8621 and 0.8660 [C139].
+   - Held-out L6 did not improve in any arm by its last evaluated epoch: it went from 0.8610 to between 0.8621 and 0.8660 [C139].
 3. **No objective has beaten the frozen v1 policy on L6 under qualified evaluation** [C140–C143, C158].
    - The frozen v1 parameters score 0.8973272 on the 263-context full validation set when re-evaluated by these harnesses [C141].
-   - The arms' last evaluated epochs range from 0.8964 to 0.9022 [C140].
-   - Six of those arms ended below the frozen value, by 0.00003 to 0.00098. The lowest is sweep 6's L6 + 0.2·KL arm at 0.8963494. Two of the six, the sweep 6 arms at epoch 8, were later judged against frozen v1 and are INCONCLUSIVE (Section 10.3.1) [C176]. The other four have no paired verdict. None of the six is a result [C163].
+   - The arms' last evaluated epochs range from 0.8963 to 0.9022 [C140].
+   - Six of those arms ended below the frozen value, by 0.00003 to 0.00098. The lowest is sweep 6's L6 + 0.2·KL arm at 0.8963494. Two of the six, the sweep 6 arms at epoch 8, were later judged against frozen v1 and are INCONCLUSIVE (Section 10.3.1) [C176]. The other four have no paired verdict against frozen v1; sweep 3's two were judged only against their own L6 control, at epochs 1 to 3. None of the six is a result [C163].
    - The L6 + 0.2·KL arm of sweep 4a moved its 16-context fixed panel from 0.8712 to 0.8649, while its full validation moved from 0.8973 to 0.8977 [C140].
    - Every comparison the scratch judge has labelled, through 2026-10-13T00:06Z, is INCONCLUSIVE, and none is GREATER [C142]. That covers sweep 3, the RLOO and PKPO arms and the IPO and DPO arms of other lanes.
    - Sweeps 4a, 4b and 5 have no judge verdict. Sweep 6 was judged later and is INCONCLUSIVE (Section 10.3.1) [C143, C176].
@@ -944,7 +945,7 @@ These runs motivated R23 [C119]. They are not evidence that the anchored learner
 
 ### 10.3.1 Update of 2026-10-13 (non-qualifying)
 
-Three merges, three further scratch training runs and three judge looks followed the sweeps above. All of them are non-qualifying. One look, on a pre-registered set of 1,148 contexts, is the first large enough for the judge's rule. **It found the anchored fine-tune worse than the frozen v1 policy** [C174]. No objective has beaten frozen v1 on L6, and no qualified evaluation exists yet [C158].
+Three merges, four further scratch training runs and five judge records followed the sweeps above [C182]. All of them are non-qualifying. One look, on a pre-registered set of 1,148 contexts, is the first large enough for the judge's rule. **It raised a regression alert for all three fine-tuned checkpoints it judged against the frozen v1 policy**: two runs of the anchored recipe, and R25, which adds a neighbour term [C174]. No objective has beaten frozen v1 on L6, and no qualified evaluation exists yet [C158].
 
 **Merged source.**
 
@@ -981,9 +982,9 @@ Three things in this table matter more than any single row.
 
 These are single-run aggregates with no paired look, so they are not results. R26's held-out L6 rose from 0.8610 to between 0.8633 and 0.8656, as in the earlier sweeps [C171].
 
-**A larger pre-registered evaluation set.** The judge adopted a 1,148-context set before any paired look on it [C173]. It contains the 263 validation contexts and 885 training contexts from 167 parent lineages held out of every fine-tuning arm, in 221 parent clusters. Three checkpoints are pre-registered for one look each, with Holm correction. The held-out lineages were in frozen v1's own training, so the set is conservative for a challenger and is not an unseen-family test.
+**A larger pre-registered evaluation set.** The judge adopted a 1,148-context set before any paired look on it [C173]. It contains the 263 validation contexts and 885 training contexts from 167 parent lineages, in 221 parent clusters. The 885 were held out of the training of all three judged checkpoints, and of sweeps 4b to 6; sweeps 3 and 4a had no holdout. Three checkpoints are pre-registered for one look each, with Holm correction. The held-out lineages were in frozen v1's own training, so the set is conservative for a challenger and is not an unseen-family test.
 
-**The first adequately sized look: regression.** Each difference is the arm minus frozen v1 over all 1,148 contexts, with the parent-cluster 95% interval. All three Holm steps reject, each at p = 1/2000, and the per-term consistency check between evaluation and training numerators passed for all 6,888 terms [C174].
+**The first adequately sized look: regression.** Each difference is the arm minus frozen v1 over all 1,148 contexts, with the parent-cluster 95% interval. All three Holm steps reject, each at p = 1/2000 [C174]. The per-term consistency check between evaluation and training numerators passed all 6,888 checks of each checkpoint under an absolute-error escape registered before the look; under the original relative rule alone, 4 feasibility terms with absolute differences near $1.3\times10^{-8}$ would have failed [C183].
 
 | Checkpoint | Updates | Difference | Cluster interval | Label |
 |---|---|---|---|---|
@@ -995,9 +996,9 @@ The strata are reported but do not decide [C177]:
 - **The 263 validation contexts.** Each difference is near zero: +0.00119, −0.00070 and −0.00108. Every interval includes zero.
 - **The 885 held-out-lineage contexts.** Every difference is clearly positive, from +0.0042 to +0.0063.
 
-**The fine-tune forgot lineages it did not revisit and showed no detectable gain on unseen validation lineages.** The KL anchor at weight 0.2 bounded drift on the training probes (Section 10.3), but it did not prevent this forgetting.
+**Read directionally, the alert comes from lineages the fine-tunes did not revisit, with no detectable change on the validation lineages.** The strata are reported, not decided [C177]. The pattern is consistent with forgetting. The KL anchor at weight 0.2 bounded drift on the training probes (Section 10.3), but it did not prevent this.
 
-It is a regression alert, not a qualified result. The decisive comparison runs against a policy that had trained on the held-out lineages. It still rules out any claim that this objective improves on frozen v1.
+It is a regression alert, not a qualified result, and the comparison runs against a policy that had trained on the held-out lineages. It leaves no basis for a claim that this objective improves on frozen v1.
 
 **A closed pilot of the offline search (H1).** On a frozen roster of training contexts, three arms started the offline search differently: from nothing, from draws of the frozen v1 policy, and from the context's own previously verified best program. Selected programs were scored on the same training inner folds; lower loss is better. 17 contexts completed all three arms [C166, C168].
 
@@ -1013,7 +1014,7 @@ It is a regression alert, not a qualified result. The decisive comparison runs a
 
 Read directionally: **draws from the frozen policy did no better as starting points than no start at all**, and starting from a verified program helped. That is a baseline for H4, not evidence for it. H1 remains unestablished, and no qualified reward exists [C168].
 
-**Next: one expert-iteration round (EI-1), planned only** [C175]. Its steps:
+**Next, as of this revision: one expert-iteration round (EI-1), planned only** [C175]. Its steps:
 
 1. Search a fresh frozen roster of 48 training contexts whose parents are disjoint from the held-out stratum above.
 2. Qualify the winners.
@@ -1024,7 +1025,7 @@ Read directionally: **draws from the frozen policy did no better as starting poi
 
 The regression above changes how the round has to be judged. EI-1 fine-tunes with the same anchored recipe. A comparison against frozen v1 would therefore mostly measure that recipe's forgetting. The proposed primary is the EI-1 arm against its matched control, which is the same run with the new targets at weight zero, so the base recipe cancels. Forgetting mitigation would be a separately pre-registered question [C174, C175].
 
-Nothing runs before the successor-support work merges and the owner signs off.
+At this revision, nothing was to run before the successor-support work merged and the owner signed off.
 
 ### 10.4 Pending (pre-registered or planned)
 
@@ -1121,7 +1122,7 @@ R23's anchor is a penalty toward a frozen earlier generation. Its KL is exact ov
 
   Their drift and held-out L_PI results are directional only [C136–C140].
 - **No qualified sample size.** The scratch judge's 881-context rule rests on a unit misreading [C144]. The full validation set has 263 contexts. An adequately powered, pre-registered comparison does not yet exist [C158].
-- **Two values for frozen v1 full-validation L6.** v1's own epoch-40 validation record reads 0.8975 [C26]. The scratch harnesses' re-evaluation of the final parameters reads 0.8973 [C141]. The two are not reconciled here. The epoch-40 record precedes the final step, so they may describe different checkpoints.
+- **Two values for frozen v1 full-validation L6, from two checkpoints.** v1's own epoch-40 validation record reads 0.8975 [C26]. It evaluates the parameters after step 17,416, the last update of epoch 40. The scratch harnesses' re-evaluation reads 0.8973 and evaluates the terminal step 17,773, 357 updates later [C141, C181]. Section 10.3 compares against the terminal value.
 - **The anchor is defined on the current catalog.** The 0.05 KL threshold and the exact catalog KL do not transfer to an expanded support [C150].
 - **At-anchor equivalence is observed, not guaranteed.** It depends on gradient residuals being absorbed below float32 resolution [C122].
 - **Partial build coverage of the merged bytes.** Two overlay runtime files changed after the R23 build qualification. CPU next-update parity, and the GPU cost of the KL term, are unmeasured [C133, C160, C162].
@@ -1257,7 +1258,7 @@ Model checkpoints, raw datasets and per-row artifacts are not released (Section 
 
 ## Appendix G. Claim ledger summary
 
-`claims.json` holds 171 claims: 112 established, 20 preliminary, 16 non-qualifying and 23 pending. One preliminary claim (C92) is kept with its correction and points to the merged implementation (C123). In the tex:
+`claims.json` holds 177 claims: 118 established, 20 preliminary, 16 non-qualifying and 23 pending. One preliminary claim (C92) is kept with its correction and points to the merged implementation (C123). In the tex:
 
 - the macro `\cval{Cnn}` prints a claim's display value from the ledger;
 - `\pending{Cnn}` marks an absent result.
