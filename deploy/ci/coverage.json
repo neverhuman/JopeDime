@@ -7325,6 +7325,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-learning/test/selfplay_round_qual": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/selfplay_round_qual.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "SPQ-1 offline self-play round qualification fixtures (jope.selfplay-round-qualification/v1): schema/identity/resamples/NaN/unmapped/duplicate refusals, scratch/reused-development/earlier-looks/feeds-selection/parity/equal-attempt/equal-resource/KL-freeze/cluster-margin downgrades, and jope_pools qualify-rounds create-only CLI."
+    },
     "target:jope-learning/test/sources": {
       "discovery": {
         "doctest": false,

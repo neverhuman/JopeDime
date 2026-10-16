@@ -193,10 +193,74 @@ enum Command {
         #[arg(long)]
         out: PathBuf,
     },
+    /// Offline self-play round qualification report (`jope.selfplay-round-qualification/v1`).
+    QualifyRounds {
+        /// JSON file of `RoundQualPlan`.
+        #[arg(long)]
+        plan: PathBuf,
+        /// JSON file of `ExperimentIdentity` (`clover.experiment/v1`).
+        #[arg(long)]
+        identity: PathBuf,
+        /// JSON array or JSON Lines of `clover.selfplay-ratchet/v1` outputs.
+        #[arg(long)]
+        ratchets: PathBuf,
+        /// JSON array or JSON Lines of `jope.pipeline-test-score/v1` receipts.
+        #[arg(long)]
+        test_scores: PathBuf,
+        /// JSON array or JSON Lines of `ParityRecord` objects.
+        #[arg(long)]
+        parity: PathBuf,
+        /// JSON object (`{"context_id": "parent_cluster_id"}`) or TSV (`context_id<TAB>parent_id`).
+        #[arg(long)]
+        parent_map: PathBuf,
+        /// New report path; must not exist.
+        #[arg(long)]
+        out: PathBuf,
+    },
 }
 
 fn read(path: &Path) -> Result<Vec<u8>> {
     fs::read(path).with_context(|| format!("read {}", path.display()))
+}
+
+fn parse_json_or_jsonl<T: serde::de::DeserializeOwned>(bytes: &[u8], what: &str) -> Result<Vec<T>> {
+    let text = std::str::from_utf8(bytes).with_context(|| format!("{what}: invalid UTF-8"))?;
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+    if trimmed.starts_with('[') {
+        return serde_json::from_str(trimmed).with_context(|| format!("{what}: JSON array"));
+    }
+    trimmed
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty())
+        .map(|(i, l)| serde_json::from_str(l).with_context(|| format!("{what} line {}", i + 1)))
+        .collect()
+}
+
+fn parse_parent_map(bytes: &[u8]) -> Result<std::collections::BTreeMap<String, String>> {
+    let text = std::str::from_utf8(bytes).context("parent_map: invalid UTF-8")?;
+    let trimmed = text.trim();
+    if trimmed.starts_with('{') {
+        return serde_json::from_str(trimmed).context("parent_map: JSON object");
+    }
+    let mut map = std::collections::BTreeMap::new();
+    for (i, line) in trimmed.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let (ctx, parent) = line.split_once('\t').with_context(|| {
+            format!(
+                "parent_map line {}: expected context_id<TAB>parent_id",
+                i + 1
+            )
+        })?;
+        map.insert(ctx.trim().to_owned(), parent.trim().to_owned());
+    }
+    Ok(map)
 }
 
 fn create_new(path: &Path, bytes: &[u8]) -> Result<()> {
@@ -614,6 +678,53 @@ fn main() -> Result<()> {
                 receipt.flywheel_established,
                 receipt.final_round_receipt.ranking_learnability,
                 output.receipt_sha256
+            );
+        }
+        Command::QualifyRounds {
+            plan,
+            identity,
+            ratchets,
+            test_scores,
+            parity,
+            parent_map,
+            out,
+        } => {
+            use jope_learning::clover::round_qual::{
+                qualify_rounds, ParityRecord, RoundQualInputs, RoundQualPlan,
+            };
+            use jope_learning::clover::ExperimentIdentity;
+            use jope_pipeline::test_score::TestScore;
+
+            let plan: RoundQualPlan =
+                serde_json::from_slice(&read(&plan)?).context("parse --plan")?;
+            let identity: ExperimentIdentity =
+                serde_json::from_slice(&read(&identity)?).context("parse --identity")?;
+            let ratchets: Vec<serde_json::Value> =
+                parse_json_or_jsonl(&read(&ratchets)?, "--ratchets")?;
+            let test_scores: Vec<TestScore> =
+                parse_json_or_jsonl(&read(&test_scores)?, "--test-scores")?;
+            let parity: Vec<ParityRecord> = parse_json_or_jsonl(&read(&parity)?, "--parity")?;
+            let parent_map = parse_parent_map(&read(&parent_map)?)?;
+
+            let report = qualify_rounds(RoundQualInputs {
+                plan: &plan,
+                identity: &identity,
+                ratchet_outputs: &ratchets,
+                test_scores: &test_scores,
+                parity: &parity,
+                parent_of_context: &parent_map,
+            })?;
+            let digest = report.canonical_sha256()?;
+            create_new(&out, &pretty(&report)?)?;
+            println!(
+                "{} contexts ({} complete paired across {} parent clusters); verdict {:?}; margin_cleared {}; qualified_claim {}; report_sha256 {}",
+                report.n_ratchet_contexts,
+                report.n_complete_paired_contexts,
+                report.n_observed_parent_clusters,
+                report.verdict,
+                report.margin_cleared,
+                report.qualified_claim,
+                digest
             );
         }
     }

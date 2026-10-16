@@ -5,6 +5,16 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Campaigns, self-play and learning
+
+- learning(clover): full-S3 `gp_distilled/v1` self-play flywheel and high-dimensional `ContextualSurrogateQHat` (#337), active-vs-passive flywheel control, S3 prior warm-start, and inner-CV meta-ridge (#338), and SoS sub-pool debiasing, continuous S3 priors, and decoupled projection ridge (#339)
+- learning(clover, pools): self-play round qualification contract (`jope.selfplay-round-qualification/v1`, `clover::round_qual`, and `jope_pools qualify-rounds`) with dataset-clustered `SE_pair` round deltas (`Delta_10`, `Delta_21`, `Delta_final_0`), F10 tie tolerance (`1e-12`), active-vs-passive control delta, L6 budget parity audit, `round0 -> round1 -> round2` lineage verification, support-KL bound check, and Round-1 pre-registration (`SELFPLAY_ROUND_QUALIFICATION.md`, `SELFPLAY_ROUND1_PREREG.md`, `selfplay-round1-prereg.v1.json`)
+
+### CI, build and release
+
+- ci: keep CI evidence on runner local disk without GitHub Actions artifact uploads (#341), and report aged evidence in `retention.py` without deleting retained records (#342)
+- records(paper-trace): enforce claim-level TeX statement/value parity and numeric drift checks in CI (#340), and reject `..` (`ParentDir`), root, and absolute paths in `sources` `source_file` entries before filesystem resolution
+
 ## [0.3.0] - 2026-10-15
 
 Generated with git-cliff 2.14.1 and `cliff.toml` over the commits after `v0.2.0` (`#125`), then

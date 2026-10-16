@@ -841,14 +841,28 @@ pub fn check_readme(readme: &str, g: &Glance) -> Vec<String> {
     problems
 }
 
-/// The file a `ROOT:path[:lines|#jq]` source part names, or `None` when its root is undeclared
-/// or the part names no single file (a commit, a brace range, a glob).
+fn has_unsafe_path_component(path: &str) -> bool {
+    let p = Path::new(path);
+    p.is_absolute()
+        || p.components().any(|c| {
+            matches!(
+                c,
+                std::path::Component::ParentDir
+                    | std::path::Component::RootDir
+                    | std::path::Component::Prefix(_)
+            )
+        })
+}
+
+/// The file a `ROOT:path[:lines|#jq]` source part names, or `None` when its root is undeclared,
+/// the relative path is unsafe (`..` or absolute), or the part names no single file (a commit, a
+/// brace range, a glob).
 fn source_file(part: &str, roots: &BTreeMap<String, String>) -> Option<std::path::PathBuf> {
     let (root, rest) = part.split_once(':')?;
     let base = roots.get(root)?;
     let end = rest.find([':', '#', ' ']).unwrap_or(rest.len());
     let path = &rest[..end];
-    if path.is_empty() || path.contains(['{', '*']) {
+    if path.is_empty() || path.contains(['{', '*']) || has_unsafe_path_component(path) {
         return None;
     }
     Some(Path::new(base).join(path))
@@ -894,7 +908,21 @@ pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
         let pin = field(claim, "sha256");
         let mut resolved = 0;
         let mut ok = false;
+        let mut unsafe_part = false;
         for part in field(claim, "source").split(';').map(str::trim) {
+            if let Some((root, rest)) = part.split_once(':') {
+                if roots.contains_key(root) {
+                    let end = rest.find([':', '#', ' ']).unwrap_or(rest.len());
+                    let rel = &rest[..end];
+                    if !rel.is_empty() && has_unsafe_path_component(rel) {
+                        problems.push(format!(
+                            "sources: {id} cites unsafe path {rel:?} under root {root}"
+                        ));
+                        unsafe_part = true;
+                        continue;
+                    }
+                }
+            }
             let Some(file) = source_file(part, &roots).filter(|f| f.is_file()) else {
                 continue;
             };
@@ -914,6 +942,7 @@ pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
             ok |= digest == pin;
         }
         match (resolved, ok) {
+            (_, _) if unsafe_part => {}
             (0, _) => unresolvable.push(id.to_owned()),
             (_, true) => matched += 1,
             (_, false) => problems.push(format!(
@@ -1319,5 +1348,28 @@ The 26 workspace members, by directory.
         assert_eq!(file("LANE:r2*.json"), None);
         assert_eq!(file("NOPE:a.json"), None);
         assert_eq!(file("derived from C10 and C23"), None);
+        assert_eq!(file("LANE:../outside.json"), None);
+        assert_eq!(file("LANE:a/../../outside.json"), None);
+        assert_eq!(file("LANE:/etc/passwd"), None);
+
+        let ledger = r#"{"source_conventions": {"roots": {"LANE": "/usr"}}, "claims": [
+          {"id": "C01", "statement": "s", "value": "1", "source": "LANE:../etc/passwd",
+           "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "status": "established"},
+          {"id": "C02", "statement": "s", "value": "2", "source": "LANE:/etc/passwd",
+           "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "status": "established"}
+        ]}"#;
+        let (problems, _) = check_sources(ledger).expect("parses");
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.contains("C01 cites unsafe path") && p.contains("../etc/passwd")),
+            "{problems:?}"
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.contains("C02 cites unsafe path") && p.contains("/etc/passwd")),
+            "{problems:?}"
+        );
     }
 }

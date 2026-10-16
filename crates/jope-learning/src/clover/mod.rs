@@ -1,6 +1,7 @@
 //! CLOVER identity, evidence and bounded discovery contracts. No optimizer training.
 pub mod expansion;
 mod identity;
+pub mod round_qual;
 mod store;
 mod visibility;
 
