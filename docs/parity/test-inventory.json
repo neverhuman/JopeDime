@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4993,
+  "count": 4995,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -6890,12 +6890,12 @@
     }
    },
    "jope-records": {
-    "count": 187,
+    "count": 189,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 80,
+      "count": 82,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -6917,9 +6917,11 @@
        "paper_trace::tests::a_drifted_printed_number_fails",
        "paper_trace::tests::a_range_dash_is_not_a_minus_sign",
        "paper_trace::tests::a_stale_exemption_fails",
+       "paper_trace::tests::a_tex_that_disagrees_with_its_record_fails",
        "paper_trace::tests::citations_must_resolve_and_cover_the_ledger",
        "paper_trace::tests::consistent_documents_pass",
        "paper_trace::tests::identifiers_and_references_are_not_numbers",
+       "paper_trace::tests::latex_times_and_plus_minus_are_normalized",
        "paper_trace::tests::ledger_rules",
        "paper_trace::tests::number_words_and_grouping",
        "paper_trace::tests::readme_glance_drift_fails",
@@ -7591,7 +7593,7 @@
   }
  },
  "totals": {
-  "rust": 4993,
+  "rust": 4995,
   "python": 182
  }
 }
