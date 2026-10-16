@@ -311,9 +311,16 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertNotIn('timeout-minutes:', action)
         for number in range(1, 4):
             self.assertIn('${{ inputs.name }}-pub-'+str(number), action)
-        self.assertEqual(3, action.count('retention-days: 7'))
-        self.assertEqual(3, action.count('if-no-files-found: error'))
+        self.assertNotIn('upload-artifact', action)
+        self.assertEqual(3, action.count('actions/cache/save@'))
+        self.assertIn('deploy/ci/retain-local-evidence.sh', action)
         self.assertIn('bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"', action)
+
+    def test_no_workflow_depends_on_github_artifact_storage(self):
+        for path in sorted((ROOT/'.github').rglob('*.yml')):
+            text = path.read_text()
+            self.assertNotIn('actions/upload-artifact@', text, path)
+            self.assertNotIn('actions/download-artifact@', text, path)
 
 
 if __name__ == '__main__':

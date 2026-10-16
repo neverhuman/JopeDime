@@ -1,0 +1,52 @@
+name: Collect CI evidence
+description: >-
+  Restore one execution unit's evidence (published by upload-ci-evidence) into the aggregate's
+  download directory, one immediate directory per publication, as aggregate.py expects. A missing
+  unit is not an error here; aggregate.py decides against the needs results.
+inputs:
+  name:
+    description: Logical evidence name used at publication
+    required: true
+  path:
+    description: Exact workspace path used at publication (cache paths must match)
+    required: true
+  into:
+    description: Download root for this run and attempt
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Restore publication 1
+      id: first
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ inputs.name }}-pub-1
+        path: ${{ inputs.path }}
+    - name: Restore publication 2
+      id: second
+      if: ${{ steps.first.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ inputs.name }}-pub-2
+        path: ${{ inputs.path }}
+    - name: Restore publication 3
+      id: third
+      if: ${{ steps.first.outputs.cache-matched-key == '' && steps.second.outputs.cache-matched-key == '' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        key: ${{ inputs.name }}-pub-3
+        path: ${{ inputs.path }}
+    - name: Place restored evidence
+      shell: bash
+      env:
+        NAME: ${{ inputs.name }}
+        SRC: ${{ inputs.path }}
+        INTO: ${{ inputs.into }}
+        KEY: ${{ steps.first.outputs.cache-matched-key || steps.second.outputs.cache-matched-key || steps.third.outputs.cache-matched-key }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$INTO"
+        if [ -z "$KEY" ]; then echo "no published evidence for $NAME"; exit 0; fi
+        [ ! -e "$INTO/$KEY" ] || { echo "duplicate evidence $KEY" >&2; exit 1; }
+        cp -a "$SRC" "$INTO/$KEY"
+        echo "restored $KEY -> $INTO/$KEY"

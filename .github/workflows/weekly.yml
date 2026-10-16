@@ -49,14 +49,12 @@ jobs:
           RECEIPTS_DIR: ${{ github.workspace }}/target/regression
           JOPE_REGISTRY: ${{ github.workspace }}/datasets/by-id
         run: bash deploy/ci/regression-suite.sh all
-      - name: Upload receipts
+      - name: Retain evidence on the runner's local disk (no GitHub artifact storage)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: regression-suite-${{ github.run_id }}
-          path: target/regression
-          if-no-files-found: error
-          retention-days: 90
+        env:
+          NAME: regression-suite-${{ github.run_id }}
+          SRC: target/regression
+        run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
 
   restore-drill:
     runs-on: [self-hosted, linux, x64, xbabe2-gpu]
@@ -77,11 +75,9 @@ jobs:
         env:
           RECEIPTS_DIR: ${{ github.workspace }}/target/restore-drill
         run: bash deploy/ci/restore-drill.sh
-      - name: Upload receipts
+      - name: Retain evidence on the runner's local disk (no GitHub artifact storage)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: restore-drill-${{ github.run_id }}
-          path: target/restore-drill
-          if-no-files-found: error
-          retention-days: 90
+        env:
+          NAME: restore-drill-${{ github.run_id }}
+          SRC: target/restore-drill
+        run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
