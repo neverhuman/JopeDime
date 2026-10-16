@@ -319,6 +319,7 @@ The 26 workspace members, by directory under `crates/`; the package name follows
 - [`docs/datasets.md`](docs/datasets.md) — dataset store layout, licence rule and `datasets/test`
 - [`docs/campaigns.md`](docs/campaigns.md) — benchmark campaigns
 - [`docs/paper/TECHNICAL_WRITEUP.md`](docs/paper/TECHNICAL_WRITEUP.md) — the CLOVER technical write-up (a draft), its [claim ledger](docs/paper/claims.json) and [numbers trace](docs/paper/NUMBERS_TRACE.md)
+- [`docs/experiments/README.md`](docs/experiments/README.md) — curated 18-record experiment digest ([`experiments.jsonl`](docs/experiments/experiments.jsonl), [`schema.v1.json`](docs/experiments/schema.v1.json) and [synthesis roadmap](docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md))
 - [`docs/runbooks/`](docs/runbooks/) — operator runbooks, the W7 three-host proof among them
 - [Private maintainer manual](docs/asm-maintainer-manual.md) — detailed PDF, section Markdown, current evidence, dataset inventories and acceptance checklist
 - [`docs/quickstart.md`](docs/quickstart.md) — the ASM build and the feat-math quickstart (timings measured at `4235db6`, not this SHA)

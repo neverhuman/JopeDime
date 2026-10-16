@@ -1,6 +1,6 @@
 # Cross-Experiment Working Hypotheses & Next-Experiment Roadmap
 
-This document summarizes **five scope-bounded working hypotheses (non-qualifying)** drawn from [`experiments.jsonl`](experiments.jsonl) (`EXP-001`–`EXP-012`) and outlines a prioritized sequence of next steps (`EXP-NEXT-01`–`EXP-NEXT-04`) with their exact blocking gates.
+This document summarizes **five scope-bounded working hypotheses (non-qualifying)** drawn from [`experiments.jsonl`](experiments.jsonl) (`EXP-001`–`EXP-018`) and outlines a prioritized sequence of next steps (`EXP-NEXT-01`–`EXP-NEXT-04`) with their exact blocking gates.
 
 ---
 
@@ -21,19 +21,23 @@ This document summarizes **five scope-bounded working hypotheses (non-qualifying
   - `ordinary`, `policy_seeded`, and `retrieval_seeded` beat the remeasured incumbent in `8`, `10`, and `11` of the `17` contexts, with total search attempts `1,913`, `1,714`, and `2,082` (`actual_equal_attempt_counts: false`).
 - **Scope & Limitations**: Non-qualifying training inner-fold comparison with `6` interrupted contexts (`18` arms at `~900 s`) and unequal search attempt counts. Any retrieval-seeded or hybrid-seeded multi-round self-play design requires equal resource/attempt accounting and a dedicated pre-registration amendment.
 
-### Working Hypothesis 3 — Anchored Fine-Tunes Excluding the `885` Training Contexts Raised a `REGRESSION ALERT` on `L6-1148`, with Directional Degradation on the Excluded Stratum (`NON_QUALIFYING` `C137, C174, C177`)
+### Working Hypothesis 3 — Continuation Fine-Tunes Excluding the `885` Training Contexts Showed KL/Weight Trade-Offs Across `R22` (`EXP-006`/`EXP-007`) and `EI-0..EI-4` (`EXP-013`–`EXP-017`) (`NON_QUALIFYING` `C137, C163, C174, C175, C177`)
 - **Recorded Observations**:
   - In `EXP-006` (`NON_QUALIFYING` `C136–C137`), pure `L6 + 0.2*KL` kept mean probe KL at or below `0.014` across complete epochs in sweeps `4a`, `5`, and `6` (whereas `L6` alone reached `0.052–0.053` by epoch 2 at `3.75e-5`, and `L_PI + 0.2*KL` arms reached `0.020–0.057` and `0.102`).
-  - In `EXP-007` (`NON_QUALIFYING` `C174`), on the `L6-1148` paired judge (`1,148` contexts, `221` parent clusters = `54` validation + `167` held-out training clusters, `K = 3` Holm), all three judged checkpoints raised a non-qualifying **`REGRESSION ALERT`** against frozen `v1`: `R25` epoch 1 `+0.00511 [+0.00413, +0.00611]`, `L6 + 0.2*KL` epoch 4 (`r25control`) `+0.00310 [+0.00195, +0.00434]`, and `R26` epoch 4 `+0.00333 [+0.00214, +0.00461]`.
-  - In the strata breakdown (`C177`, **explicitly marked reported and not decisive / directional** per [`NUMBERS_TRACE.md`](../paper/NUMBERS_TRACE.md#findings-and-corrections) correction #7), differences on the `263` validation contexts (`54` clusters) had intervals including zero (`+0.00119`, `-0.00070`, `-0.00108`), whereas on the `885` held-out-lineage training contexts (`167` clusters, which `v1` trained on and all three fine-tunes excluded) differences were `+0.00628`, `+0.00423`, and `+0.00463`.
-- **Scope & Limitations**: Both strata in `C177` are directional and not decisive (`C158` notes that a qualified, pre-registered paired comparison of any `v2` objective with frozen `v1` remains pending as of `2026-10-13`, and the `2026-10-14/15` host-local `EI-0..EI-4` studies must be audited first).
+  - In `EXP-007` (`NON_QUALIFYING` `C174`), on `L6-1148` (`1,148` contexts, `221` parent clusters = `54` validation + `167` held-out training clusters, `K = 3` Holm), all three judged checkpoints raised a non-qualifying **`REGRESSION ALERT`** against frozen `v1`: `R25` epoch 1 `+0.00511 [+0.00413, +0.00611]`, `L6 + 0.2*KL` epoch 4 (`r25control`) `+0.00310 [+0.00195, +0.00434]`, and `R26` epoch 4 `+0.00333 [+0.00214, +0.00461]`, with directional degradation concentrated on the `885` held-out training contexts (`+0.00628`, `+0.00423`, `+0.00463` in `C177`).
+  - In `EXP-013` (`EI-0`, `24` paired runs / `96` checkpoint slots, `0` unresolved), `P_EI0` ($\lambda_{\text{PI}}=0.01, \lambda_{\text{KL}}=3.0$, seeds `26–27` E4) was `INCONCLUSIVE` vs. its matched `L6 + 3.0*KL` control (`Stratum H -0.000096`, `pooled +0.000004`), replication `P_EI0r` (seeds `28–29` E4) degraded on Stratum H (`+0.000596 [+0.000115, +0.001087]`, `p=0.0105`), and descriptive higher doses ($\lambda_{\text{PI}}=0.03, 0.10$ on seeds `28–29` E4) had negative pooled differences (`-0.000416 [-0.000780, -0.000082]` and `-0.000377 [-0.000723, -0.000024]`).
+  - In `EXP-014` (`EI-1`) and `EXP-016` (`EI-3` 3-host panel), archive-CE oversampling at $\lambda_{\text{ar}}=0.10, \lambda_{\text{KL}}=3.0$ (`m=4` or `m=8` with $\lambda_{\pi}=0.05$) triggered epoch-2 KL alarms (`0.038850` in `EI-1`, `0.039816` on `xbabe2` in `EI-3`) and froze at epoch 3 (`1,056` updates, `kl_stop`, `kl_mean = 0.079634` and `0.080342` `> 0.05`), with equal-exposure epoch-3 `L6-1148` pooled deltas of `+0.003854` (`EI-1`) and `+0.003962 [+0.003222, +0.004744]` (`EI-3` 3-seed panel mean).
+  - Lowering $\lambda_{\text{ar}}$ and/or raising $\lambda_{\text{KL}}$ eliminated KL stops across all `4` epochs (`1,408` updates) in `EXP-015` (`EI-2`/`EI-2X`, $\lambda_{\text{ar}}=0.03, \lambda_{\text{KL}}=3.0, m=4$, 3-host panel mean pooled delta `+0.000378 [+0.000021, +0.000744]`) and `EXP-017` (`EI-4`, $\lambda_{\text{ar}}=0.025, \lambda_{\text{KL}}=5.0, m=8$, `xbabe2` ep 3 delta `+0.000518`, ep 4 delta `+0.000106`), without achieving a negative `L6-1148` reduction vs. matched control.
+- **Scope & Limitations**: All `R22` and `EI-0..EI-4` continuation runs are non-qualifying; strata breakdowns (`C177`) are directional and not decisive.
 
-### Working Hypothesis 4 — The `v1` Neural Outcome Head (`q-hat`) Ranked Fresh Programs at Chance on `D5b`, While Separate LV4 Outcome Prediction Favored LightGBM on Equal-Lineage $R^2$ (`ESTABLISHED` lookup `C28, C75–C78, C178` / `PRELIMINARY` `D5b` panel scope)
+### Working Hypothesis 4 — Frozen `v1` `q-hat` Ranked Fresh Programs at Chance on `D5b` (`EXP-002`), Whereas Leave-One-Out Context-Debiased (`SoS`) S3 Distillation Achieved `ESTABLISHED_SHADOW` Top-1 Gain Lifts Over `program_prior` and `ridge_program` (`EXP-018`)
 - **Recorded Observations**:
-  - In `EXP-001` (`C28`), the `v1` `q` regression validation term was `0.1804` at epoch 2 and `0.1809` at epoch 40.
-  - In `EXP-002` (`C75–C76`, pre-`R6` `D5b` `32` kept contexts), `q`-head pairwise ranking accuracy on freshly executed programs was `0.506 [0.441, 0.568]` (chance is `0.5`), and `32 -> 8` reranking minus plain policy sampling was `INCONCLUSIVE` (`dScore = 0.031 [-0.0625, 0.125]`, `dBestQ = 0.0187 [-0.0320, 0.0811]`, censoring bounds `[-0.353, 0.392]` over `53` roster contexts).
-  - In `C78` / `C178` (`7,120`-view pool, `1,068` lineages, `3x5` lineage-grouped folds), an earlier separate DL outcome-prediction ensemble trailed LightGBM on raw LV4 features in equal-lineage $R^2$ (`0.690235` vs. `0.784889`, paired difference `[-0.132907, -0.056273]`) and row-weighted $R^2$ (`0.651858` vs. `0.751845`), with similar `beat10` AUC (`0.900874` vs. `0.903092`, difference `-0.002217 [-0.010492, +0.006826]`).
-- **Scope & Limitations**: `D5b` predates the `R6` split seal (`PRELIMINARY` match scope), `C78/C178` evaluates a separate outcome-prediction model rather than the `v1` PolicyLM `q`-head, and `EXP-009`'s `ridge_program` printout is an `R22` scratch command-verification output rather than a qualified `H2` benchmark result.
+  - In `EXP-001` (`C28`), the `v1` `q` regression validation term was `0.1804` at epoch 2 and `0.1809` at epoch 40. In `EXP-002` (`C75–C76`, pre-`R6` `D5b` `32` kept contexts), `q`-head pairwise ranking accuracy on freshly executed programs was `0.506 [0.441, 0.568]` (chance is `0.5`), and `32 -> 8` reranking minus plain policy sampling was `INCONCLUSIVE` (`dScore = 0.031 [-0.0625, 0.125]`). In `C78` / `C178` (`7,120`-view pool), an earlier separate DL outcome ensemble trailed LightGBM on raw LV4 features in equal-lineage $R^2$ (`0.690235` vs. `0.784889`).
+  - In `EXP-018` (`NON_QUALIFYING` offline shadow-pool study, `PR #339`, `d222807a9f...`), distilling all `8,908` scored S3 `GP_RESULTS_INDEX.json` rows (`13` program hashes across `1,579` contexts) with leave-one-out context-baseline (`SoS`) target debiasing (`u_hat(c, p) = q(c, p) - b_loo(c)`) and `d = 21` `z_norm` context-interaction ridge features in `ContextualSurrogateQHat` yielded on `shadow-pool-v2` (`1,136` contexts, `255` parent clusters, `all_rounds_kl_admissible: true`):
+    - `R0 -> R4` `B=1` top-1 gain lift **`+0.134751 [+0.067497, +0.215110]` (`GREATER`)** (`0.541982 -> 0.676734`) and pairwise accuracy lift **`+0.046025 [+0.036932, +0.056603]` (`GREATER`)** (`0.634318 -> 0.680342`).
+    - `R1 -> R4` active discovery `B=1` gain lift **`+0.035792 [+0.018341, +0.057848]` (`GREATER`)** and `R4` Active vs. Passive `B=1` gain **`+0.034743 [+0.000512, +0.075291]` (`GREATER`)**.
+    - **`ESTABLISHED_SHADOW`** at `R4` against both `program_prior` (`B=1` `+0.043596` `GREATER`, pairwise `+0.007620` `GREATER`) and `ridge_program` (`B=1` `+0.066919` `GREATER`, pairwise `+0.029398` `GREATER`), replicated on `shadow-pool-v1` (`1,222` contexts, `273` clusters).
+- **Scope & Limitations**: On `shadow-pool-v2`, `R4` Active vs. Passive pairwise accuracy (`+0.001880 [-0.001673, +0.005612]`) and `B=8` gain (`+0.005136 [-0.015513, +0.025782]`) remained `INCONCLUSIVE`, so `flywheel_established = false` under the strict 4-criterion shadow gate; and in one-shot `evaluate` at `B=8`, `ContextualSurrogateQHat` (`1.190377`) trailed `program_prior` (`1.201319`).
 
 ### Working Hypothesis 5 — Recorded Native/Emitted Parity Failures Fall into Two Distinct Categories: `v1` Catalog Quantile-Binning One-ULP Binary-Search Disagreements (`C41–C45, C47, C49`) and Three Out-of-Catalog `GB-06` Champion Discrepancies (`C167`)
 - **Recorded Observations**:
@@ -45,21 +49,20 @@ This document summarizes **five scope-bounded working hypotheses (non-qualifying
 
 ## 2. Prioritized Next-Step Roadmap (`EXP-NEXT-01` – `EXP-NEXT-04`)
 
-> **Governance Gate**: All items below (`EXP-NEXT-01`–`EXP-NEXT-04`) are **roadmap proposals only (`no execution grant`)** and require explicit owner admission before any source change, benchmark execution, or compute run.
+> **Governance Gate**: `EXP-NEXT-01` is completed (`EXP-013`–`EXP-018`). Remaining items (`EXP-NEXT-02`–`EXP-NEXT-04`) are **roadmap proposals only (`no execution grant`)** and require explicit owner admission before any source change, benchmark execution, or compute run.
 
 ```mermaid
 flowchart TD
-    A["EXP-NEXT-01 (Ledger & Evidence Audit)<br/>Ingest and verify 2026-10-14/15 EI-0..EI-4 1,148-context<br/>paired studies from /home/ubuntu/jope-evidence/"] --> B["EXP-NEXT-02 (SPQ-1 Gate Closure)<br/>Bind UNPINNED fields in selfplay-round1-prereg.v1.json,<br/>provenance bridge, ordinary_champion_genome & owner admission"]
+    A["EXP-NEXT-01 (COMPLETED 2026-10-16)<br/>Cataloged EI-0..EI-4 (EXP-013..017) & PR #339 S3<br/>SoS-debiased flywheel (EXP-018) in experiments.jsonl"] --> B["EXP-NEXT-02 (SPQ-1 Gate Closure)<br/>Bind UNPINNED fields in selfplay-round1-prereg.v1.json,<br/>provenance bridge, ordinary_champion_genome & owner admission"]
     C["EXP-NEXT-04 (Parity Audit & R5 Hygiene)<br/>Audit quantile semantics/pinned search under new protocol ID (C149)<br/>and inspect EXP-008 context 14 & 18 parity failures"] --> B
-    D["EXP-NEXT-03 (Post-R6 H2 Selector Evaluation)<br/>Evaluate ridge_program and GBDT/linear selectors on<br/>sealed post-R6 pools (distinct from R22 scratch smoke inputs)"] --> B
+    D["EXP-NEXT-03 (Post-R6 H2 Selector Evaluation)<br/>Evaluate ContextualSurrogateQHat, ridge_program & GBDT on<br/>sealed post-R6 pools at B=1 and B=8"] --> B
 ```
 
-### Priority 1: `EXP-NEXT-01` — Audit and Catalog the Executed `2026-10-14/15` `EI-0..EI-4` `1,148`-Context Studies (`H3` Evidence Closure)
-- **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
-- **Why first**: Before proposing any new continuation training run, the catalog must incorporate the already-executed `2026-10-14/15` `EI-0`, `EI-1`, `EI-2`, `EI-2X`, `EI-3`, and `EI-4` `1,148`-context paired studies stored under `/home/ubuntu/jope-evidence/{jopedime-flywheel-ei0,jopedime-flywheel-ei1,jopedime-flywheel-ei2,ei3-study-20261015,ei4-study-20261015}` (as noted in [`README.md`](README.md#known-omissions-not-yet-indexed-as-standalone-rows-in-experimentsjsonl), `C175`'s `"EI-1 planned only"` entry in `claims.json` is scope-dated `2026-10-13`).
-- **Actionable Scope**:
-  1. Read and verify the SHA-256 pins, commit SHAs, and paired `L6-1148` cluster-bootstrap verdicts of `EI-0..EI-4` from `/home/ubuntu/jope-evidence/` (read-only, zero GPU/CPU training cost).
-  2. Append verified `EXP-013+` records to [`experiments.jsonl`](experiments.jsonl) so all executed expert-iteration rounds are represented alongside `EXP-006` and `EXP-007`.
+### Priority 1: `EXP-NEXT-01` — Audit and Catalog the Executed `2026-10-14/15` `EI-0..EI-4` `1,148`-Context Studies & `PR #339` S3 Flywheel (**COMPLETED `2026-10-16`**)
+- **Status**: **DONE (`2026-10-16`)** — Recorded in [`experiments.jsonl`](experiments.jsonl) and [`README.md`](README.md) as `EXP-013` (`EI-0`), `EXP-014` (`EI-1`), `EXP-015` (`EI-2`/`EI-2X`), `EXP-016` (`EI-3`), `EXP-017` (`EI-4`), and `EXP-018` (`PR #339` S3 `8,908`-row SoS-debiased surrogate flywheel).
+- **Delivered Scope**:
+  1. Verified SHA-256 pins, commit SHAs, KL trajectories, and paired `L6-1148` cluster-bootstrap verdicts across `/home/ubuntu/jope-evidence/{rlfw-g-abl,jopedime-flywheel-ei0,jopedime-flywheel-ei1,jopedime-flywheel-ei2,ei3-study-20261015,ei4-study-20261015,selfplay-s3-sos-debiased-flywheel-20261016}`.
+  2. Appended schema-valid `EXP-013`–`EXP-018` records to [`experiments.jsonl`](experiments.jsonl) and updated Working Hypotheses 3 and 4 above.
 
 ### Priority 2: `EXP-NEXT-04` — Quantile Binary-Search Audit and Investigation of `EXP-008` Context `14` & `18` Parity Failures (`Phase 0` / `R5`)
 - **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
@@ -80,6 +83,6 @@ flowchart TD
 
 ### Priority 4: `EXP-NEXT-03` — Qualified Post-`R6` Frozen-Pool Selector Study (`H2`)
 - **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
-- **Why fourth**: While `EXP-009` verified that `jope_pools evaluate` runs in `44–51 s` with `--release`, its inputs were non-qualifying `R22` scratch data (`NUMBERS_TRACE.md#fresh-clone-run`). A genuine `H2` test requires evaluating `ridge_program` and candidate tabular/linear selectors on a lineage-sealed post-`R6` pool with pinned non-scratch provenance.
+- **Why fourth**: While `EXP-018` demonstrated `ESTABLISHED_SHADOW` top-1 (`B=1`) and pairwise gains for `ContextualSurrogateQHat` with SoS debiasing over `program_prior` and `ridge_program` at `R4` on `shadow-pool-v2` and `shadow-pool-v1`, `R4` Active vs. Passive at `B=8` (`+0.005136`) and one-shot `B=8` vs. `program_prior` (`1.190377` vs. `1.201319`) remained unestablished.
 - **Actionable Scope**:
-  - Export a pinned post-`R6` candidate pool with parent-cluster split provenance, run `jope_pools evaluate` in `--release` mode across pre-registered `eval_budgets`, and record whether any learned selector beats `ridge_program` under parent-cluster bootstrap CIs.
+  - Evaluate `ContextualSurrogateQHat` (with SoS debiasing and `z_norm` interaction features), `ridge_program`, and candidate GBDT/linear selectors on a lineage-sealed post-`R6` pool with broader multi-program GP coverage per context (`> 13` distinct programs) across `B=1` and `B=8`.
