@@ -497,7 +497,20 @@ fn evaluate_round_kl_guard(round: &Value) -> (bool, bool) {
     ]
     .into_iter()
     .all(|x| x.is_finite() && x >= 0.0);
-    if !numbers_valid {
+    let masses_valid = [
+        decomposed.base_support_mass,
+        decomposed.new_support_mass,
+        decomposed.ref_new_support_mass,
+    ]
+    .into_iter()
+    .all(|m| m <= 1.0 + 1e-12)
+        && (decomposed.base_support_mass + decomposed.new_support_mass - 1.0).abs() <= 1e-9;
+    let expected_total_kl = decomposed.bernoulli_allocation_kl
+        + decomposed.base_support_mass * decomposed.conditional_base_kl
+        + decomposed.new_support_mass * decomposed.conditional_new_kl;
+    let chain_rule_valid =
+        expected_total_kl.is_finite() && (decomposed.total_kl - expected_total_kl).abs() <= 1e-9;
+    if !numbers_valid || !masses_valid || !chain_rule_valid {
         return (false, false);
     }
     let Some(frozen) = round
@@ -1216,14 +1229,23 @@ mod tests {
     }
 
     fn sample_decomposed_kl(admissible: bool) -> Value {
+        let conditional_base_kl = if admissible { 0.05 } else { 0.35 };
+        let conditional_new_kl = 0.01;
+        let base_support_mass = 0.90;
+        let new_support_mass = 0.10;
+        let ref_new_support_mass = 0.08;
+        let bernoulli_allocation_kl = 0.002;
+        let total_kl = bernoulli_allocation_kl
+            + base_support_mass * conditional_base_kl
+            + new_support_mass * conditional_new_kl;
         json!({
-            "conditional_base_kl": if admissible { 0.05 } else { 0.35 },
-            "conditional_new_kl": 0.01,
-            "base_support_mass": 0.90,
-            "new_support_mass": 0.10,
-            "ref_new_support_mass": 0.08,
-            "bernoulli_allocation_kl": 0.002,
-            "total_kl": if admissible { 0.055 } else { 0.36 },
+            "conditional_base_kl": conditional_base_kl,
+            "conditional_new_kl": conditional_new_kl,
+            "base_support_mass": base_support_mass,
+            "new_support_mass": new_support_mass,
+            "ref_new_support_mass": ref_new_support_mass,
+            "bernoulli_allocation_kl": bernoulli_allocation_kl,
+            "total_kl": total_kl,
             "admissible": admissible
         })
     }

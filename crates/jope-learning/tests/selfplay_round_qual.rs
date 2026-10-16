@@ -68,14 +68,23 @@ fn fixture_plan(identity: &ExperimentIdentity) -> RoundQualPlan {
 }
 
 fn fixture_decomposed_kl(admissible: bool) -> Value {
+    let conditional_base_kl = if admissible { 0.04 } else { 0.35 };
+    let conditional_new_kl = 0.01;
+    let base_support_mass = 0.90;
+    let new_support_mass = 0.10;
+    let ref_new_support_mass = 0.08;
+    let bernoulli_allocation_kl = 0.002;
+    let total_kl = bernoulli_allocation_kl
+        + base_support_mass * conditional_base_kl
+        + new_support_mass * conditional_new_kl;
     json!({
-        "conditional_base_kl": if admissible { 0.04 } else { 0.35 },
-        "conditional_new_kl": 0.01,
-        "base_support_mass": 0.90,
-        "new_support_mass": 0.10,
-        "ref_new_support_mass": 0.08,
-        "bernoulli_allocation_kl": 0.002,
-        "total_kl": if admissible { 0.045 } else { 0.36 },
+        "conditional_base_kl": conditional_base_kl,
+        "conditional_new_kl": conditional_new_kl,
+        "base_support_mass": base_support_mass,
+        "new_support_mass": new_support_mass,
+        "ref_new_support_mass": ref_new_support_mass,
+        "bernoulli_allocation_kl": bernoulli_allocation_kl,
+        "total_kl": total_kl,
         "admissible": admissible
     })
 }
@@ -649,6 +658,61 @@ fn b5_kl_guard_fails_closed_on_malformed_unknown_or_missing_even_when_allow_froz
     })
     .expect("report");
     assert_eq!(rep_missing_top.n_unmeasured_kl_contexts, 1);
+
+    // 3. Probability mass > 1.0, non-unit support mass sum (base + new != 1.0), or broken
+    // total_kl chain-rule identity must fail closed as unmeasured KL.
+    for bad_decomposed in [
+        json!({
+            "conditional_base_kl": 0.04,
+            "conditional_new_kl": 0.01,
+            "base_support_mass": 2.0,
+            "new_support_mass": 2.0,
+            "ref_new_support_mass": 2.0,
+            "bernoulli_allocation_kl": 0.002,
+            "total_kl": 0.102,
+            "admissible": true
+        }),
+        json!({
+            "conditional_base_kl": 0.04,
+            "conditional_new_kl": 0.01,
+            "base_support_mass": 0.50,
+            "new_support_mass": 0.20,
+            "ref_new_support_mass": 0.08,
+            "bernoulli_allocation_kl": 0.002,
+            "total_kl": 0.024,
+            "admissible": true
+        }),
+        json!({
+            "conditional_base_kl": 0.04,
+            "conditional_new_kl": 0.01,
+            "base_support_mass": 0.90,
+            "new_support_mass": 0.10,
+            "ref_new_support_mass": 0.08,
+            "bernoulli_allocation_kl": 0.002,
+            "total_kl": 0.999,
+            "admissible": true
+        }),
+    ] {
+        let mut bad_mass_ratchets = ratchets.clone();
+        bad_mass_ratchets[0]["rounds"][0]["decomposed_kl"] = bad_decomposed;
+        let rep_bad_mass = qualify_rounds(RoundQualInputs {
+            plan: &plan,
+            identity: &identity,
+            ratchet_outputs: &bad_mass_ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        })
+        .expect("report");
+        assert_eq!(
+            rep_bad_mass.n_unmeasured_kl_contexts, 1,
+            "invalid DecomposedSupportKl probability mass or chain-rule total_kl must be unmeasured"
+        );
+        assert!(rep_bad_mass
+            .disqualification_reasons
+            .contains(&"kl_guard_unmeasured".to_owned()));
+        assert!(!rep_bad_mass.caller_asserted_diagnostic_checks_passed);
+    }
 }
 
 #[test]
