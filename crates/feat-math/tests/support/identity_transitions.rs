@@ -8,15 +8,22 @@ pub fn verify_fixture(
     current_hash: &str,
     transitions: &[Value],
 ) -> Result<(), String> {
-    let allowed = [
+    let identity_allowed = [
         "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
         "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
     ];
+    let emitter_allowed = [
+        "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+        "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+        "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+    ];
     let mut expected = historical_hash;
     for transition in transitions {
-        if transition["schema"] != "feat-math.compat-freeze.identity-rebaseline.v1" {
-            return Err("identity transition schema".into());
-        }
+        let allowed: &[&str] = match transition["schema"].as_str() {
+            Some("feat-math.compat-freeze.identity-rebaseline.v1") => &identity_allowed,
+            Some("feat-math.compat-freeze.emitter-rebaseline.v1") => &emitter_allowed,
+            _ => return Err("identity transition schema".into()),
+        };
         let entries = transition["fixtures"]
             .as_array()
             .ok_or("identity fixture list")?;

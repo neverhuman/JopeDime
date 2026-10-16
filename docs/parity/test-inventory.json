@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5006,
+  "count": 5007,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -40,7 +40,7 @@
     }
    },
    "feat-math": {
-    "count": 1180,
+    "count": 1181,
     "ignored": 12,
     "binaries": {
      "feat-math": {
@@ -679,10 +679,11 @@
      },
      "feat-math::clover_quantile": {
       "kind": "test",
-      "count": 3,
+      "count": 4,
       "ignored": 0,
       "tests": [
        "emitted_rust_and_python_match_independent_oracles",
+       "exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta",
        "runtime_matches_independent_quantile_and_binning_oracles",
        "versioned_contract_detects_shared_wrong_tie_semantics"
       ]
@@ -7611,7 +7612,7 @@
   }
  },
  "totals": {
-  "rust": 5006,
+  "rust": 5007,
   "python": 182
  }
 }

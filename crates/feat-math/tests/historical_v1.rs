@@ -351,9 +351,24 @@ fn historical_v1_golden_matches() {
     );
     assert_eq!(actual["negative_cases"]["roll_zero_width"], ledger["after"]);
     expected["negative_cases"]["roll_zero_width"] = ledger["after"].clone();
+    let js_ledger: Value = serde_json::from_slice(
+        &std::fs::read(
+            root()
+                .parent()
+                .unwrap()
+                .join("transitions/exp_next_04_js_partition_point.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(js_ledger["schema"], "feat-math.historical-v1-transition.v1");
+    assert_eq!(js_ledger["path"], "emitted[4]");
+    assert_eq!(expected["emitted"][4], js_ledger["before"]);
+    assert_eq!(actual["emitted"][4], js_ledger["after"]);
+    expected["emitted"][4] = js_ledger["after"].clone();
     assert_eq!(
         actual, expected,
-        "historical_v1 byte and bit drift outside B02's one-case ledger"
+        "historical_v1 byte and bit drift outside B02 and EXP-NEXT-04 ledgers"
     );
 }
 

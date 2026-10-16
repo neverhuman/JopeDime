@@ -505,33 +505,39 @@ fn quantile(sorted_values: &[f64], q: f64) -> f64 {
         Helper::LowerBound => {
             r#"/// Count of elements strictly less than v (hand-rolled binary search).
 fn lower_bound(sorted_values: &[f64], v: f64) -> usize {
-    let mut lo = 0usize;
-    let mut hi = sorted_values.len();
-    while lo < hi {
-        let mid = (lo + hi) / 2;
-        if sorted_values[mid] < v {
-            lo = mid + 1;
-        } else {
-            hi = mid;
-        }
+    let mut size = sorted_values.len();
+    if size == 0 {
+        return 0;
     }
-    lo
+    let mut base = 0usize;
+    while size > 1 {
+        let half = size / 2;
+        let mid = base + half;
+        if sorted_values[mid] < v {
+            base = mid;
+        }
+        size -= half;
+    }
+    base + usize::from(sorted_values[base] < v)
 }"#
         }
         Helper::UpperBound => {
             r#"/// Count of elements less than or equal to v (hand-rolled binary search).
 fn upper_bound(sorted_values: &[f64], v: f64) -> usize {
-    let mut lo = 0usize;
-    let mut hi = sorted_values.len();
-    while lo < hi {
-        let mid = (lo + hi) / 2;
-        if sorted_values[mid] <= v {
-            lo = mid + 1;
-        } else {
-            hi = mid;
-        }
+    let mut size = sorted_values.len();
+    if size == 0 {
+        return 0;
     }
-    lo
+    let mut base = 0usize;
+    while size > 1 {
+        let half = size / 2;
+        let mid = base + half;
+        if sorted_values[mid] <= v {
+            base = mid;
+        }
+        size -= half;
+    }
+    base + usize::from(sorted_values[base] <= v)
 }"#
         }
         Helper::MidRank => {

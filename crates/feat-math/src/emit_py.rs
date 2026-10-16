@@ -446,26 +446,32 @@ fn helper_src(h: Helper) -> &'static str {
         Helper::LowerBound => {
             r#"def _lower_bound(sorted_values, v):
     """Count of elements strictly less than v (hand-rolled binary search)."""
-    lo, hi = 0, len(sorted_values)
-    while lo < hi:
-        mid = (lo + hi) // 2
+    size = len(sorted_values)
+    if size == 0:
+        return 0
+    base = 0
+    while size > 1:
+        half = size // 2
+        mid = base + half
         if sorted_values[mid] < v:
-            lo = mid + 1
-        else:
-            hi = mid
-    return lo"#
+            base = mid
+        size -= half
+    return base + (1 if sorted_values[base] < v else 0)"#
         }
         Helper::UpperBound => {
             r#"def _upper_bound(sorted_values, v):
     """Count of elements less than or equal to v (hand-rolled binary search)."""
-    lo, hi = 0, len(sorted_values)
-    while lo < hi:
-        mid = (lo + hi) // 2
+    size = len(sorted_values)
+    if size == 0:
+        return 0
+    base = 0
+    while size > 1:
+        half = size // 2
+        mid = base + half
         if sorted_values[mid] <= v:
-            lo = mid + 1
-        else:
-            hi = mid
-    return lo"#
+            base = mid
+        size -= half
+    return base + (1 if sorted_values[base] <= v else 0)"#
         }
         Helper::MidRank => {
             r#"def _mid_rank(sorted_values, v):
