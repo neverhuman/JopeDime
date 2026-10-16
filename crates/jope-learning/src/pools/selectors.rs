@@ -518,6 +518,9 @@ pub struct ExternalProgramPrior {
 /// S3 contexts without exceeding `MAX_SURROGATE_DESIGN_DIM`.
 pub struct ContextualSurrogateQHat<'a> {
     lambda: f64,
+    base_mult: f64,
+    proj_mult: f64,
+    inner_cv_loss: f64,
     prior_weight: f64,
     k_neighbours: usize,
     context_features: &'a Features,
@@ -540,6 +543,17 @@ pub const MAX_BILINEAR_PROG_DIM: usize = 8;
 const SURROGATE_BASE_FEATURES: usize = 13;
 
 impl<'a> ContextualSurrogateQHat<'a> {
+    /// Returns the `(base_mult, proj_mult)` ridge regularization multipliers selected by 5-fold
+    /// parent-grouped inner cross-validation on `train`.
+    pub fn selected_multipliers(&self) -> (f64, f64) {
+        (self.base_mult, self.proj_mult)
+    }
+
+    /// Returns the mean inner cross-validation loss achieved by `selected_multipliers()` on `train`.
+    pub fn inner_cv_loss(&self) -> f64 {
+        self.inner_cv_loss
+    }
+
     /// Raw unprojected bilinear design dimension (`2 + d_ctx + d_prog + d_ctx * d_prog`).
     pub fn design_dim(d_ctx: usize, d_prog: usize) -> Option<usize> {
         let cross = d_ctx.checked_mul(d_prog)?;
@@ -566,9 +580,12 @@ impl<'a> ContextualSurrogateQHat<'a> {
 
     /// Leave-one-parent-cluster-out Strength-of-Schedule (`SoS`) context-difficulty calibration.
     ///
-    /// Estimates each context pool's opponent difficulty offset from out-of-parent-cluster program
-    /// rank means shrunk toward `0.5` with `prior_weight`, shifting all members in context `c` by
-    /// the same context-level difficulty offset so within-pool winner-loser gaps are preserved.
+    /// Estimates each context pool's difficulty offset `ctx_offset` from out-of-parent-cluster
+    /// program rank means `mu_p` shrunk toward `0.5` with `prior_weight`, shifting all members in
+    /// context `c` additively by `bt + ctx_offset` (without top/bottom clamping) so all within-pool
+    /// pairwise target differences `bt_i - bt_j` are identically preserved. Single-member pools
+    /// (`bt = 0.5`) evaluate to `0.5 + ctx_offset = mu_p` (`0.5` when unseen outside the parent
+    /// cluster).
     fn compute_sos_targets(
         raw_targets: &[(&'a Pool, Vec<f64>)],
         prior_weight: f64,
@@ -613,10 +630,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
                     })
                     .sum();
                 let ctx_offset = diff_sum / (nm as f64);
-                base_t
-                    .iter()
-                    .map(|&bt| (bt + ctx_offset).clamp(0.0, 1.0))
-                    .collect()
+                base_t.iter().map(|&bt| bt + ctx_offset).collect()
             })
             .collect()
     }
@@ -964,6 +978,9 @@ impl<'a> ContextualSurrogateQHat<'a> {
 
         let mut model = Self {
             lambda,
+            base_mult: 1.0,
+            proj_mult: 1.0,
+            inner_cv_loss: 0.0,
             prior_weight,
             k_neighbours,
             context_features,
@@ -1015,15 +1032,17 @@ impl<'a> ContextualSurrogateQHat<'a> {
         let lin_end =
             (SURROGATE_BASE_FEATURES + model.ctx_proj.len() + model.prog_proj.len()).min(d);
 
-        // Select summary-block and projected-block ridge multipliers strictly via 5-fold
-        // parent-grouped inner cross-validation on `train` (no outer-fold tuning).
+        // Select summary-block and projected-block ridge multipliers via 5-fold parent-grouped
+        // inner cross-validation on `train` (outer held-out folds are never consulted; inner-fold
+        // normal equations subtract `fold_xtx[f]` / `fold_xty[f]` on the outer training fold's
+        // leave-one-parent-out design rows).
         let valid_inner_folds: Vec<usize> = (0..INNER_RIDGE_FOLDS)
             .filter(|&f| fold_pool_counts[f] > 0 && fold_pool_counts[f] < model.train_targets.len())
             .collect();
-        let (best_base_mult, best_proj_mult) = if valid_inner_folds.len() >= 2 {
+        let (best_base_mult, best_proj_mult, best_cv_loss) = if valid_inner_folds.len() >= 2 {
             const BASE_MULTS: [f64; 4] = [1.0, 10.0, 100.0, 1000.0];
             const PROJ_MULTS: [f64; 6] = [1.0, 10.0, 100.0, 1000.0, 10_000.0, 100_000.0];
-            let mut best_pair = (1.0, 100.0);
+            let mut best_pair = (1.0, 1.0);
             let mut best_loss = f64::INFINITY;
             for &bm in &BASE_MULTS {
                 for &pm in &PROJ_MULTS {
@@ -1072,7 +1091,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
                         };
                         if drows.is_empty() {
                             continue;
-                        }
+                        };
                         let preds: Vec<f64> = drows
                             .iter()
                             .map(|x| x.iter().zip(w).map(|(xi, wi)| xi * wi).sum::<f64>())
@@ -1095,10 +1114,21 @@ impl<'a> ContextualSurrogateQHat<'a> {
                     }
                 }
             }
-            best_pair
+            (
+                best_pair.0,
+                best_pair.1,
+                if best_loss.is_finite() {
+                    best_loss
+                } else {
+                    0.0
+                },
+            )
         } else {
-            (1.0, 1.0)
+            (1.0, 1.0, 0.0)
         };
+        model.base_mult = best_base_mult;
+        model.proj_mult = best_proj_mult;
+        model.inner_cv_loss = best_cv_loss;
 
         let base_lambda = lambda * best_base_mult;
         let lin_proj_lambda = lambda * best_proj_mult * (lin_terms as f64);
@@ -1127,8 +1157,11 @@ impl Selector for ContextualSurrogateQHat<'_> {
     }
     fn rule(&self) -> String {
         format!(
-            "contextual_surrogate_qhat/v2: inner-CV LOPO SoS-debiased Empirical-Bayes + compact bilinear context x program ridge (lambda={}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
+            "contextual_surrogate_qhat/v2: inner-CV LOPO SoS-debiased Empirical-Bayes + compact bilinear context x program ridge (lambda={}, base_mult={}, proj_mult={}, inner_cv_loss={:.6}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
             self.lambda,
+            self.base_mult,
+            self.proj_mult,
+            self.inner_cv_loss,
             self.context_features.dim,
             self.ctx_proj.len(),
             self.program_features.dim,
@@ -1277,6 +1310,23 @@ mod tests {
         let train_refs = vec![&all_pools[0], &all_pools[1], &all_pools[2], &all_pools[3]];
         let qhat = ContextualSurrogateQHat::fit(&train_refs, &ctx_feats, &prog_feats, 2, 2.0, 1e-2)
             .unwrap();
+        let (bm, pm) = qhat.selected_multipliers();
+        assert!(
+            [1.0, 10.0, 100.0, 1000.0].contains(&bm)
+                && [1.0, 10.0, 100.0, 1000.0, 10_000.0, 100_000.0].contains(&pm)
+                && pm >= bm
+                && qhat.inner_cv_loss().is_finite()
+                && qhat.inner_cv_loss() >= 0.0,
+            "expected inner-CV selected multipliers in grid with pm >= bm, got ({bm}, {pm})"
+        );
+        assert!(qhat
+            .rule()
+            .contains(&format!("base_mult={bm}, proj_mult={pm}")));
+        let single_parent_qhat =
+            ContextualSurrogateQHat::fit(&[&all_pools[0]], &ctx_feats, &prog_feats, 2, 2.0, 1e-2)
+                .unwrap();
+        assert_eq!(single_parent_qhat.selected_multipliers(), (1.0, 1.0));
+        assert_eq!(single_parent_qhat.inner_cv_loss(), 0.0);
 
         let test_view = all_pools[4].view();
         let scores = qhat.scores(&test_view).unwrap();
@@ -1290,7 +1340,8 @@ mod tests {
 
         // Verify Strength-of-Schedule (SoS) target calibration: when `p_pos_a` beats `p_neg_a` in two pools
         // (`t(p_pos_a) = 1.0`, `t(p_neg_a) = 0.0`), a program `p_pos_b` that ties `0.5` against elite `p_pos_a`
-        // receives a strictly higher SoS-calibrated target than `p_neg_b` tying `0.5` against weak `p_neg_a`.
+        // receives a strictly higher SoS-calibrated target than `p_neg_b` tying `0.5` against weak `p_neg_a`,
+        // and non-tied pools with nonzero `ctx_offset` preserve their exact 1.0 winner-loser gap without clamping.
         let sos_pools = [
             mk_pool(10, "sp1", true, false),
             mk_pool(11, "sp2", true, false),
@@ -1338,6 +1389,28 @@ mod tests {
                     },
                 ],
             },
+            Pool {
+                schema: POOL_SCHEMA.into(),
+                context_id: mk_hex(15),
+                parent_id: "sp6".into(),
+                role: "train".into(),
+                protocol_sha256: mk_hex(0xaa),
+                incumbent_q: Some(0.0),
+                members: vec![
+                    Member {
+                        program_sha256: p_pos_a.clone(),
+                        status: Status::Complete,
+                        q: Some(0.95),
+                        tokens: None,
+                    },
+                    Member {
+                        program_sha256: p_pos_b.clone(),
+                        status: Status::Complete,
+                        q: Some(0.75),
+                        tokens: None,
+                    },
+                ],
+            },
         ];
         let raw_sos: Vec<(&Pool, Vec<f64>)> =
             sos_pools.iter().map(|p| (p, rank_targets(p))).collect();
@@ -1351,6 +1424,11 @@ mod tests {
         assert!(
             (calibrated[2][0] - calibrated[2][1]).abs() < 1e-12,
             "expected equal-q members in the same context pool to retain identical calibrated targets"
+        );
+        assert!(
+            calibrated[4][0] > 1.0 && (calibrated[4][0] - calibrated[4][1] - 1.0).abs() < 1e-12,
+            "expected non-tied pool with positive ctx_offset to preserve exact 1.0 winner-loser gap: {:?}",
+            calibrated[4]
         );
         let single_pool = Pool {
             schema: POOL_SCHEMA.into(),
@@ -1371,6 +1449,32 @@ mod tests {
             2.0,
         );
         assert_eq!(single_cal, vec![vec![0.5]]);
+        let seen_single_pool = Pool {
+            schema: POOL_SCHEMA.into(),
+            context_id: mk_hex(16),
+            parent_id: "sp7".into(),
+            role: "train".into(),
+            protocol_sha256: mk_hex(0xaa),
+            incumbent_q: Some(0.0),
+            members: vec![Member {
+                program_sha256: p_pos_a.clone(),
+                status: Status::Complete,
+                q: Some(0.5),
+                tokens: None,
+            }],
+        };
+        let seen_single_cal = ContextualSurrogateQHat::compute_sos_targets(
+            &[
+                (&sos_pools[0], rank_targets(&sos_pools[0])),
+                (&seen_single_pool, rank_targets(&seen_single_pool)),
+            ],
+            2.0,
+        );
+        assert!(
+            (seen_single_cal[1][0] - (1.0 + 0.5 * 2.0) / (1.0 + 2.0)).abs() < 1e-12,
+            "expected single-member pool with out-of-parent history to equal mu_p=2/3, got {}",
+            seen_single_cal[1][0]
+        );
     }
 
     #[test]
