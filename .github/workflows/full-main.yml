@@ -65,13 +65,10 @@ jobs:
           python3 deploy/ci/full-main.py cache-stats --output "target/full-cpu/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GROUP/compiler-cache"
       - name: Upload fresh run evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.group }}
-          path: target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/${{ matrix.group }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 7
+          path: ${{ github.workspace }}/target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/${{ matrix.group }}/
 
   aggregate:
     needs: cpu
@@ -85,43 +82,18 @@ jobs:
           persist-credentials: false
       - name: Runner provenance and approved resources
         uses: ./.github/actions/runner-provenance
-      # Same bounded download as ci.yml's aggregate: at most three attempts, each from an empty
-      # directory, and exactly one complete attempt is required.
-      - name: Download this run and attempt only (attempt 1)
-        id: download-first
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
+      - name: Collect cpu-1 evidence
+        uses: ./.github/actions/download-ci-evidence
         with:
-          pattern: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-*
-          path: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Clear the partial download before attempt 2
-        if: steps.download-first.outcome == 'failure'
-        run: rm -rf -- "target/full-cpu-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-      - name: Download this run and attempt only (attempt 2)
-        id: download-second
-        if: steps.download-first.outcome == 'failure'
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
+          name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-cpu-1
+          path: ${{ github.workspace }}/target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/cpu-1/
+          into: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Collect cpu-2 evidence
+        uses: ./.github/actions/download-ci-evidence
         with:
-          pattern: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-*
-          path: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Clear the partial download before attempt 3
-        if: steps.download-first.outcome == 'failure' && steps.download-second.outcome == 'failure'
-        run: rm -rf -- "target/full-cpu-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-      - name: Download this run and attempt only (attempt 3)
-        id: download-third
-        if: steps.download-first.outcome == 'failure' && steps.download-second.outcome == 'failure'
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
-        with:
-          pattern: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-*
-          path: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Require one complete bounded download
-        env:
-          FIRST: ${{ steps.download-first.outcome }}
-          SECOND: ${{ steps.download-second.outcome }}
-          THIRD: ${{ steps.download-third.outcome }}
-        run: bash deploy/ci/publication-status.sh "$FIRST" "$SECOND" "$THIRD"
+          name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-cpu-2
+          path: ${{ github.workspace }}/target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/cpu-2/
+          into: target/full-cpu-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Every declared family verified exactly once across the groups
         if: always()
         env:
@@ -134,10 +106,7 @@ jobs:
           python3 deploy/ci/full-main.py aggregate --downloads "target/full-cpu-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output"
       - name: Upload aggregate inventory
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: ./.github/actions/upload-ci-evidence
         with:
           name: full-cpu-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
-          path: target/full-cpu-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 7
+          path: ${{ github.workspace }}/target/full-cpu-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/

@@ -196,13 +196,12 @@ jobs:
             dist/*.spdx.json
             dist/*.cdx.json
 
-      - name: Upload artefacts (30 days)
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: release-${{ github.ref_name }}
-          path: dist/
-          retention-days: 30
-          if-no-files-found: error
+      - name: Retain evidence on the runner's local disk (no GitHub artifact storage)
+        if: always()
+        env:
+          NAME: release-${{ github.ref_name }}
+          SRC: dist/
+        run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
 
       - name: GitHub release
         env:
