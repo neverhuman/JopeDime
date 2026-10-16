@@ -240,29 +240,6 @@ fn parse_json_or_jsonl<T: serde::de::DeserializeOwned>(bytes: &[u8], what: &str)
         .collect()
 }
 
-fn parse_parent_map(bytes: &[u8]) -> Result<std::collections::BTreeMap<String, String>> {
-    let text = std::str::from_utf8(bytes).context("parent_map: invalid UTF-8")?;
-    let trimmed = text.trim();
-    if trimmed.starts_with('{') {
-        return serde_json::from_str(trimmed).context("parent_map: JSON object");
-    }
-    let mut map = std::collections::BTreeMap::new();
-    for (i, line) in trimmed.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        let (ctx, parent) = line.split_once('\t').with_context(|| {
-            format!(
-                "parent_map line {}: expected context_id<TAB>parent_id",
-                i + 1
-            )
-        })?;
-        map.insert(ctx.trim().to_owned(), parent.trim().to_owned());
-    }
-    Ok(map)
-}
-
 fn create_new(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut f = OpenOptions::new()
         .write(true)
@@ -690,10 +667,10 @@ fn main() -> Result<()> {
             out,
         } => {
             use jope_learning::clover::round_qual::{
-                qualify_rounds, ParityRecord, RoundQualInputs, RoundQualPlan,
+                parse_parent_map, qualify_rounds, ParityRecord, QualTestScore, RoundQualInputs,
+                RoundQualPlan,
             };
             use jope_learning::clover::ExperimentIdentity;
-            use jope_pipeline::test_score::TestScore;
 
             let plan: RoundQualPlan =
                 serde_json::from_slice(&read(&plan)?).context("parse --plan")?;
@@ -701,7 +678,7 @@ fn main() -> Result<()> {
                 serde_json::from_slice(&read(&identity)?).context("parse --identity")?;
             let ratchets: Vec<serde_json::Value> =
                 parse_json_or_jsonl(&read(&ratchets)?, "--ratchets")?;
-            let test_scores: Vec<TestScore> =
+            let test_scores: Vec<QualTestScore> =
                 parse_json_or_jsonl(&read(&test_scores)?, "--test-scores")?;
             let parity: Vec<ParityRecord> = parse_json_or_jsonl(&read(&parity)?, "--parity")?;
             let parent_map = parse_parent_map(&read(&parent_map)?)?;

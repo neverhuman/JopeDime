@@ -3,12 +3,15 @@
   "study_id": "clover-selfplay-round1-confirmatory",
   "status": "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
   "qualification_report_schema": "jope.selfplay-round-qualification/v1",
+  "provenance_binding_status": "unverified_caller_asserted_inputs",
   "experiment_identity_sha256": "UNPINNED",
   "source_commit_at_draft": "525be65b38540eb64b84c9bf36f7da6812812f2f",
   "endpoints": {
     "primary": "final_vs_round0_incumbent",
     "secondary": "ratchet_vs_ordinary_final_round",
-    "multiplicity_procedure": "holm_bonferroni_k2",
+    "secondary_status": "UNSUPPORTED_PENDING_PRODUCER_ORDINARY_CHAMPION_GENOME",
+    "multiplicity_procedure": "manual_g_judge_holm_bonferroni_k2_unimplemented_in_cli",
+    "cli_single_endpoint_alpha_cap": 0.025,
     "alpha_total": 0.05,
     "alpha_primary_strict": 0.025,
     "f10_tie_tolerance_log_ratio": 1e-12
@@ -43,15 +46,27 @@
     "kl_guard": {
       "max_conditional_base_kl": 0.20,
       "max_new_support_mass": 0.15,
-      "allow_kl_frozen_rounds": false
+      "allow_kl_frozen_rounds": false,
+      "allowlisted_measured_sources": [
+        "measured_tilt_leaf_policy",
+        "caller_evaluated_leaf_log_probs"
+      ]
     }
   },
   "held_out_and_parity_rules": {
     "test_score_schema": "jope.pipeline-test-score/v1",
-    "once_only_test_split_look": true,
-    "require_empty_earlier_looks": true,
+    "pinned_test_score_registry": "UNPINNED",
+    "sequential_same_registry_looks": {
+      "reference_earlier_looks": [],
+      "candidate_earlier_looks_when_distinct": [
+        "<reference.program_sha256>"
+      ],
+      "reject_omitted_earlier_looks_field": true,
+      "reject_registry_reset_both_empty_when_distinct": true
+    },
     "require_feeds_selection_false": true,
-    "r5_parity_failure_disposition": "charge_as_program_failure_never_drop"
+    "r5_parity_failure_disposition": "charge_as_program_failure_never_drop",
+    "reject_unreferenced_score_or_parity_records": true
   },
   "execution_grant": {
     "authorized": false,

@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5005,
+  "count": 5006,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -4343,7 +4343,7 @@
     }
    },
    "jope-learning": {
-    "count": 408,
+    "count": 409,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
@@ -4368,8 +4368,8 @@
        "clover::expansion::tests::real_equal_attempt_scratch_measures_policy_seeds_and_never_qualifies",
        "clover::expansion::tests::retrieval_ancestry_is_train_only",
        "clover::expansion::tests::roster_rejects_validation_sealed_duplicates_and_changed_labels",
-       "clover::round_qual::tests::clean_synthetic_fixture_passes_rubric_modulo_sealed_boundary",
-       "clover::round_qual::tests::f10_tie_tolerance_maps_tiny_log_ratio_to_zero",
+       "clover::round_qual::tests::clean_synthetic_fixture_passes_caller_asserted_diagnostics_only",
+       "clover::round_qual::tests::f10_tie_tolerance_and_extreme_positive_rmse_log_difference",
        "eligibility::tests::all_tasks_require_measured_aggregate_and_four_of_five_fold_gains",
        "eligibility::tests::burns_rejections_guard_margin_and_unqualified_incumbents_are_durable",
        "eligibility::tests::fitted::a_fitted_artifact_naming_another_input_is_refused",
@@ -4877,16 +4877,17 @@
      },
      "jope-learning::selfplay_round_qual": {
       "kind": "test",
-      "count": 8,
+      "count": 9,
       "ignored": 0,
       "tests": [
-       "downgrades_earlier_looks_and_feeds_selection_violations",
-       "downgrades_insufficient_parent_clusters_and_unmet_practical_margin",
+       "b1_sequential_same_registry_looks_and_violations",
+       "b3_b4_m1_m2_m4_m5_safety_guards",
+       "b5_kl_guard_fails_closed_on_malformed_unknown_or_missing_even_when_allow_frozen",
+       "cli_qualify_rounds_create_only_and_canonical_digest",
        "downgrades_missing_or_failed_parity_without_dropping_r5_failures",
        "downgrades_scratch_and_reused_development_sources",
        "downgrades_unequal_attempts_unequal_resources_and_insufficient_rounds",
-       "downgrades_unmeasured_kl_and_kl_frozen_rounds_unless_allowed",
-       "ratchet_vs_ordinary_final_round_endpoint_and_cli_create_only",
+       "m3_requires_at_least_two_parent_clusters_and_checks_practical_margin",
        "refuses_malformed_inputs_and_identity_mismatch"
       ]
      },
@@ -7610,7 +7611,7 @@
   }
  },
  "totals": {
-  "rust": 5005,
+  "rust": 5006,
   "python": 182
  }
 }
