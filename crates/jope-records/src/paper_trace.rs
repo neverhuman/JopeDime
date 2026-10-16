@@ -1222,6 +1222,19 @@ The 26 workspace members, by directory.
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (report, ok) = check(&root, false, false).expect("readable");
         assert!(ok, "{report}");
+
+        // C140's old TeX bound widened the accepted set despite the corrected record.
+        // Keep the recorded bound accepted, and reject the old double-rounded value.
+        let ledger_text = std::fs::read_to_string(root.join(LEDGER)).expect("ledger readable");
+        let mut issues = Vec::new();
+        let claims = ledger(&ledger_text, &mut issues).expect("ledger parses");
+        assert!(issues.is_empty(), "{issues:?}");
+        let c140 = claims
+            .iter()
+            .find(|claim| claim.id == "C140")
+            .expect("C140");
+        assert!(accounted(&printed_numbers("0.8963")[0], &c140.numbers));
+        assert!(!accounted(&printed_numbers("0.8964")[0], &c140.numbers));
     }
 
     #[test]
