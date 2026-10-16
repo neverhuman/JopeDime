@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "jope.experiment-record/v1",
   "title": "JopeDime / CLOVER Compressed Experiment Record (v1)",
-  "description": "Machine- and LLM-consumable schema for each experiment row in docs/experiments/experiments.jsonl.",
+  "description": "Machine- and LLM-consumable schema for each curated experiment row in docs/experiments/experiments.jsonl.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,6 +12,8 @@
     "phase_hypothesis",
     "date_utc",
     "source_commit",
+    "catalog_snapshot_commit",
+    "claim_ids",
     "qualification_status",
     "summary",
     "data",
@@ -29,7 +31,7 @@
     "id": {
       "type": "string",
       "pattern": "^EXP-[0-9]{3}-[a-z0-9-]+$",
-      "description": "Stable chronological identifier, e.g. EXP-001-v1-flywheel-baseline."
+      "description": "Stable identifier in this curated digest, e.g. EXP-001-v1-flywheel-baseline."
     },
     "title": {
       "type": "string",
@@ -48,11 +50,26 @@
     },
     "date_utc": {
       "type": "string",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "UTC date of the recorded run, verdict, or fresh-clone verification."
     },
     "source_commit": {
       "type": "string",
-      "description": "Git SHA or tag pinning the code/receipt state."
+      "pattern": "^([0-9a-f]{40}|unknown)$",
+      "description": "Exact 40-hex Git commit SHA recorded in the execution receipt, or 'unknown' when the underlying receipt pins artifact/file SHA-256 digests without a 40-hex repo commit."
+    },
+    "catalog_snapshot_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Exact 40-hex Git commit SHA on main from which this catalog entry was compiled."
+    },
+    "claim_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^C[0-9]{2,3}$"
+      },
+      "description": "Referenced claim IDs in docs/paper/claims.json (empty array if backed by a standalone receipt outside claims.json)."
     },
     "qualification_status": {
       "type": "string",
@@ -67,7 +84,8 @@
     },
     "summary": {
       "type": "string",
-      "description": "1-2 sentence compressed summary of hypothesis and experimental design."
+      "minLength": 10,
+      "description": "1-2 sentence compressed summary of the experiment design and scope."
     },
     "data": {
       "type": "object",
@@ -91,6 +109,7 @@
         },
         "sources": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -111,6 +130,7 @@
       "properties": {
         "arms_or_configs": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -125,7 +145,16 @@
     },
     "metrics": {
       "type": "object",
-      "description": "Compact key-value map of exact primary quantitative results, confidence intervals, and counts."
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": [
+          "number",
+          "string",
+          "boolean",
+          "array"
+        ]
+      },
+      "description": "Compact key-value map of exact primary quantitative results, confidence intervals, and counts taken from claims.json or the named receipt."
     },
     "outcome": {
       "type": "object",
@@ -154,6 +183,7 @@
         },
         "non_claims": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -162,17 +192,19 @@
     },
     "artifacts": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "string"
       },
-      "description": "Tracked repository paths, S3 keys, or SHA-256 digests backing the record."
+      "description": "Tracked repository paths or receipt locators backing the record."
     },
     "next_experiment_implications": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "string"
       },
-      "description": "Concrete lessons and hypotheses generated for future experiments."
+      "description": "Concrete lessons and working hypotheses generated for future experiments."
     }
   }
 }
