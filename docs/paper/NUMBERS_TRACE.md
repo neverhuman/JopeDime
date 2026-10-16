@@ -34,6 +34,12 @@ It fails when:
 - this file's claim table or exemption table is out of step with the ledger or the write-up;
 - the README's version or an "At a glance" count disagrees with the file its footnote names.
 
+What it does not check: a printed number passes if it equals, at the printed precision, any number of
+any claim cited in its line or section, so a value swapped for another cited claim's value passes.
+Single-digit integers and numbers inside inline code are not checked. Claim values are compared with
+their sources only by the record in this file; `--sources` re-hashes each source file, it does not
+re-read the value.
+
 On xbabe2, `paper-trace --sources` also re-hashes every claim source under the roots that
 `claims.json` declares. On 2026-10-16 it reported: 175 claims re-hashed to their pin, and 2 that
 name no single file (C24 is derived from C10 and C23; C115 is a pending result that names a
@@ -92,7 +98,7 @@ the `--help` count, which needs a build; the fresh-clone run printed it.
 | 26 members; 19 at 0.3.0, 7 at 8.0.0; 8 default | `cargo metadata --locked --no-deps` | 26; 19 + 7; 8 |
 | 17 subcommands plus hidden `motifs` | `jope --help` and `jope motifs --help` from the fresh clone of `73f9327fc` (logs in the audit directory, `fresh-clone-73f9327fc-help/`) | 17 listed, plus clap's own `help`; `motifs` is hidden and its help works |
 | 6 emit targets | the single-language arms of `fn languages` in `crates/jope-cli/src/kernel.rs` | 6 |
-| Rust 4,992 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (it recorded 4,189 and 66, and missed 785 tests that `main` lists) | 4,992; 26; 72; 182 |
+| Rust 4,993 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (it recorded 4,189 and 66, and missed 785 tests that `main` lists) | 4,993; 26; 72; 182 |
 | 9 PR jobs; 11 `full-` families | `.github/workflows/ci.yml` jobs; `deploy/ci/coverage.json` lanes | 9; 11 |
 | 678 coverage items, 24 lanes | `deploy/ci/coverage.json` | 678; 24 |
 | Capability matrix 824 / 353 / 61 / 1 / 402 / 7 | the total row of `docs/parity/capability-matrix.md` | as printed |
@@ -108,7 +114,7 @@ reproduced their committed ladders byte for byte from a fresh clone.
 | Where | Problem | Change |
 | --- | --- | --- |
 | Arena block (generated) | cited `python/src/jope/research/index_combined_regression_evolution.py:183`, a file the Python removal archived | the renderer writes archived references as `8a55c4fef:<path>:<line>`, which `git show` reads; line 183 is the `best_rmse` minimum |
-| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` on this tree lists 4,992 (72 ignored): 785 that `main` already had and the inventory missed, and 18 added by this change | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
+| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` on this tree lists 4,993 (72 ignored): 785 that `main` already had and the inventory missed, and 19 added by this change | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
 | Install and check | `pipeline run --emit rust,python,cpp17,cpp20,js` emitted 2 artifacts in the fresh-clone run (the selected head has no C++ or JavaScript emitter) and the README did not say this can happen | a comment says unsupported targets are reported as not emitted |
 | CLOVER quick start, steps 3–5 | their inputs (`coverage.json`, `protocol.json`, the roster and its pack, `GP_RESULTS_INDEX.json`) are not in Git, so they cannot run from a clone; `ingest-coverage` left out the held-out context list that the pre-registered J9 run excluded | a host-inputs table; `--exclude-contexts`; the protocol identity read from the run receipt instead of hashing a `protocol.json` |
 | CLOVER quick start, steps 3–5 | `cargo run` without `--release`: in the fresh-clone run, `evaluate` took 767 s and `flywheel-distill` 8,125 s (2 h 15 min) in the debug profile, against 44 s and 570 s in release | the commands use `--release`, and a sentence gives both timings |
@@ -153,7 +159,8 @@ only a specification, because its panels need qualified receipts that do not exi
 ## Fresh-clone run
 
 On 2026-10-16 the README's shell blocks were run on xbabe2 from fresh clones in a scratch
-directory under `/tmp`, as the audit brief asked. The clones held no unique work. Each command ran
+directory under `/tmp`. The audit brief asked for that, but it departs from the repository rule
+(AGENTS.md: never clone into `/tmp`); the clones held no unique work. Each command ran
 from the clone's root, in README order, and its exit status, wall time and output were recorded.
 Copies of the logs are in `/home/ubuntu/jope-evidence/paper-readme-audit-20261016/` on xbabe2.
 

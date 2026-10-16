@@ -64,7 +64,11 @@ static NOT_NUMBERS: LazyLock<Regex> = LazyLock::new(|| {
         r"|\bfloat\d+\b",
         r"|SHA-256",
         r"|\b(?:Sections?|Figure|Appendix|Phase|Equations?) \d+(?:\.\d+)*(?:(?:, | and | to |–|-)\d+(?:\.\d+)*)*",
-        r"|[A-Z][\p{L}'-]+(?: et al\.| and [A-Z][\p{L}'-]+)?,? \(?(?:19|20)\d{2}\)?",
+        // Author-year references only in their citation shapes: "(Chen et al., 2021;", "Hutter,
+        // 2017)" and the narrative "Parisi et al. (2019)". A bare capitalised word before a
+        // number ("At 2,000", read as "At 2000" after normalisation) is not a reference.
+        r"|[A-Z][\p{L}'-]+(?: et al\.| and [A-Z][\p{L}'-]+)?, (?:19|20)\d{2}[a-z]?[);]",
+        r"|[A-Z][\p{L}'-]+(?: et al\.| and [A-Z][\p{L}'-]+) \((?:19|20)\d{2}[a-z]?\)",
     ))
 });
 /// Dates and clock times, removed before [`NOT_NUMBERS`] so that "The 2026-10-12 direction" is
@@ -298,7 +302,7 @@ fn trace_rows(trace: &str) -> BTreeMap<String, String> {
     rows
 }
 
-/// Rules 1-5 over the three paper documents; the problems found and a one-line summary.
+/// Rules 1-5 and 8 over the three paper documents; the problems found and a one-line summary.
 pub fn check_paper(writeup: &str, ledger_text: &str, trace: &str) -> Result<(Vec<String>, String)> {
     let mut problems = vec![];
     // A section left as a marker to fill in later is not a record.
@@ -1061,6 +1065,24 @@ Illustrative: q = log 10 ≈ 2.303.
     fn identifiers_and_references_are_not_numbers() {
         let line = "R23 and C26 (Section 10.3.1; Loshchilov and Hutter, 2017) at 2026-10-13T00:06Z, `v2/r3.1` p50 float32 SHA-256 [C140–C143]. The 2026-10-12 direction";
         assert_eq!(printed_numbers(line), vec![]);
+    }
+
+    /// "At 2,000" (read as "At 2000" once grouping commas go) is a number to check, not an
+    /// author-year reference; the citation shapes around it stay excluded.
+    #[test]
+    fn a_capitalised_word_before_a_number_is_not_a_reference() {
+        let line = "At 2,000 evaluations per hour (Loshchilov and Hutter, 2017; Chen et al., 2021), as Parisi et al. (2019) note.";
+        let texts: Vec<String> = printed_numbers(line).into_iter().map(|p| p.text).collect();
+        assert_eq!(texts, ["2000"]);
+        let w = WRITEUP_OK.replace(
+            "PolicyLM has 893,957 parameters [C01].",
+            "PolicyLM has 893,957 parameters [C01]. At 2,048 evaluations per hour [C01].",
+        );
+        let p = problems(&w, LEDGER_OK, TRACE_OK);
+        assert!(
+            p.iter().any(|m| m.contains("2048 is not in any claim")),
+            "{p:?}"
+        );
     }
 
     #[test]
