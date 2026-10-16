@@ -1234,7 +1234,7 @@ The 26 workspace members, by directory.
         assert!(!accounted(&printed_numbers("0.8964")[0], &c140.numbers));
         let raw = pyjson::parse_str(&ledger_text).expect("raw ledger parses");
         let raw_claims = raw.get("claims").and_then(Value::as_list).expect("claims");
-        for id in ["C140", "C168"] {
+        for id in ["C04", "C93", "C140", "C168"] {
             let presentation = raw_claims
                 .iter()
                 .find(|entry| field(entry, "id") == id)

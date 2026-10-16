@@ -228,7 +228,7 @@ JSON path. Rows with a note were derived or corrected as the note says.
 | C01 | established | 893,957 | `LANE:w10/operator/evidence/r17-final-capture.json#.checkpoint.manifest.body.parameters` | matches | value found at the cited locator |
 | C02 | established | d=128, L=2, H=4, d_ff=512, p=0.1, V=282, T_max=640 | `LANE:w10/operator/evidence/r17-final-capture.json#.checkpoint.manifest.body.model_config` | matches | value found at the cited locator |
 | C03 | established | 2,051 = 2,048 + 3 | `REPO:deploy/dl-flywheel/docs/model.md:27` | matches | value found at the cited locator |
-| C04 | established | clip +/-10 | `REPO:deploy/dl-flywheel/docs/model.md:31` | matches | value found at the cited locator |
+| C04 | established | clip [-10, 10] | `REPO:deploy/dl-flywheel/docs/model.md:31` | matches | value found at the cited locator |
 | C05 | established | 6,640 | `CAPTURE:copy/training/progress.json#.proposal_catalog` | matches | value found at the cited locator |
 | C06 | established | lr 3e-4; wd 0.01; clip 1; x0.5, patience 5, floor 1e-6 | `REPO:deploy/dl-flywheel/docs/model.md:35` | matches | 3e-4 is printed 0.0003 at model.md:35 |
 | C07 | established | 16 contexts; 8,192 tokens; <=8 candidates | `REPO:deploy/dl-flywheel/docs/model.md:39` | matches | value found at the cited locator |
