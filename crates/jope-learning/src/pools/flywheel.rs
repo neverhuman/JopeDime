@@ -209,25 +209,30 @@ pub fn build_fold_s3_priors(
         let Some((parent_id, row_fold)) = resolved else {
             continue;
         };
-        // Continuous score quality when present (e.g. `1.0 - rmse_ratio` for LowerIsBetter
-        // HWM winners where `rank_ctx == 1` is constant), falling back to rank_ctx / default.
-        let target_val = match r.score {
-            Some(s) if s.is_finite() => {
-                let dir = r
-                    .score_name
-                    .as_deref()
-                    .and_then(|n| score_direction(n).ok())
-                    .unwrap_or(ScoreDirection::LowerIsBetter);
-                match dir {
-                    ScoreDirection::LowerIsBetter => (1.0 - s.clamp(0.0, 1.0)).clamp(0.0, 1.0),
-                    ScoreDirection::HigherIsBetter => 1.0 / (1.0 + (-s.clamp(-20.0, 20.0)).exp()),
-                }
+        // Continuous score quality when present (e.g. `1.0 - rmse_ratio` for bounded
+        // `cv_geomean_rmse_ratio` HWM winners where `rank_ctx == 1` is constant, or `1 / (1 + s)`
+        // for unbounded non-negative LowerIsBetter losses), falling back to `rank_ctx` when
+        // score or known score direction is absent.
+        let rank_fallback = match r.rank_ctx {
+            Some(1) => 1.0,
+            Some(rk) if rk > 1 => (1.0 / (rk as f64)).clamp(0.0, 1.0),
+            _ => 0.75,
+        };
+        let target_val = match (
+            r.score.filter(|s| s.is_finite()),
+            r.score_name.as_deref(),
+            r.score_name
+                .as_deref()
+                .and_then(|n| score_direction(n).ok()),
+        ) {
+            (Some(s), Some("cv_geomean_rmse_ratio"), Some(ScoreDirection::LowerIsBetter)) => {
+                (1.0 - s.clamp(0.0, 1.0)).clamp(0.0, 1.0)
             }
-            _ => match r.rank_ctx {
-                Some(1) => 1.0,
-                Some(rk) if rk > 1 => (1.0 / (rk as f64)).clamp(0.0, 1.0),
-                _ => 0.75,
-            },
+            (Some(s), _, Some(ScoreDirection::LowerIsBetter)) => 1.0 / (1.0 + s.max(0.0)),
+            (Some(s), _, Some(ScoreDirection::HigherIsBetter)) => {
+                1.0 / (1.0 + (-s.clamp(-20.0, 20.0)).exp())
+            }
+            _ => rank_fallback,
         };
         for k in 0..cfg.folds {
             if row_fold == k {
