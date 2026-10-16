@@ -351,24 +351,9 @@ fn historical_v1_golden_matches() {
     );
     assert_eq!(actual["negative_cases"]["roll_zero_width"], ledger["after"]);
     expected["negative_cases"]["roll_zero_width"] = ledger["after"].clone();
-    let js_ledger: Value = serde_json::from_slice(
-        &std::fs::read(
-            root()
-                .parent()
-                .unwrap()
-                .join("transitions/exp_next_04_js_partition_point.json"),
-        )
-        .unwrap(),
-    )
-    .unwrap();
-    assert_eq!(js_ledger["schema"], "feat-math.historical-v1-transition.v1");
-    assert_eq!(js_ledger["path"], "emitted[4]");
-    assert_eq!(expected["emitted"][4], js_ledger["before"]);
-    assert_eq!(actual["emitted"][4], js_ledger["after"]);
-    expected["emitted"][4] = js_ledger["after"].clone();
     assert_eq!(
         actual, expected,
-        "historical_v1 byte and bit drift outside B02 and EXP-NEXT-04 ledgers"
+        "historical_v1 byte and bit drift outside B02's one-case ledger"
     );
 }
 
@@ -452,10 +437,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let release_0_3_0 = old_fixture("transitions/release_0_3_0_identity_rebaseline.v1.json");
     assert_eq!(release_0_3_0["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(release_0_3_0["fixtures"][0]["path"], changed_fixtures[0]);
-    // EXP-NEXT-04: align all emitters with slice::partition_point on 1-ULP tie plateaus.
-    let exp_next_04 =
-        old_fixture("transitions/exp_next_04_emitter_partition_point_rebaseline.v1.json");
-    assert_eq!(exp_next_04["fixtures"].as_array().unwrap().len(), 4);
+    // EXP-NEXT-04 opt-in partition_point quantile emitters: evaluator identity only.
+    let exp_next_04 = old_fixture("transitions/exp_next_04_identity_rebaseline.v1.json");
+    assert_eq!(exp_next_04["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(exp_next_04["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,

@@ -43,7 +43,7 @@ pub fn emit_rust(plan: &Plan, opts: &EmitOptions) -> String {
         out.push("#![forbid(unsafe_code)]\n#![allow(dead_code)]");
     }
     for h in helper_set(plan) {
-        let src = helper_src(h);
+        let src = helper_src(h, opts.partition_point_quantile_bounds);
         if !src.is_empty() {
             out.push(src);
         }
@@ -203,7 +203,7 @@ fn rs_fast_predict_wrapper() -> Vec<String> {
 
 // -------------------------------- helpers ---------------------------------
 
-fn helper_src(h: Helper) -> &'static str {
+fn helper_src(h: Helper, partition_point_bounds: bool) -> &'static str {
     match h {
         // Python-only guards; Rust uses the native f64 methods, which already
         // carry the reference semantics.
@@ -503,7 +503,8 @@ fn quantile(sorted_values: &[f64], q: f64) -> f64 {
 }"#
         }
         Helper::LowerBound => {
-            r#"/// Count of elements strictly less than v (hand-rolled binary search).
+            if partition_point_bounds {
+                r#"/// Count of elements strictly less than v (hand-rolled binary search).
 fn lower_bound(sorted_values: &[f64], v: f64) -> usize {
     let mut size = sorted_values.len();
     if size == 0 {
@@ -520,9 +521,26 @@ fn lower_bound(sorted_values: &[f64], v: f64) -> usize {
     }
     base + usize::from(sorted_values[base] < v)
 }"#
+            } else {
+                r#"/// Count of elements strictly less than v (hand-rolled binary search).
+fn lower_bound(sorted_values: &[f64], v: f64) -> usize {
+    let mut lo = 0usize;
+    let mut hi = sorted_values.len();
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        if sorted_values[mid] < v {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    lo
+}"#
+            }
         }
         Helper::UpperBound => {
-            r#"/// Count of elements less than or equal to v (hand-rolled binary search).
+            if partition_point_bounds {
+                r#"/// Count of elements less than or equal to v (hand-rolled binary search).
 fn upper_bound(sorted_values: &[f64], v: f64) -> usize {
     let mut size = sorted_values.len();
     if size == 0 {
@@ -539,6 +557,22 @@ fn upper_bound(sorted_values: &[f64], v: f64) -> usize {
     }
     base + usize::from(sorted_values[base] <= v)
 }"#
+            } else {
+                r#"/// Count of elements less than or equal to v (hand-rolled binary search).
+fn upper_bound(sorted_values: &[f64], v: f64) -> usize {
+    let mut lo = 0usize;
+    let mut hi = sorted_values.len();
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        if sorted_values[mid] <= v {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    lo
+}"#
+            }
         }
         Helper::MidRank => {
             r#"/// Average of the strict and non-strict ranks of v, scaled to [0, 1].

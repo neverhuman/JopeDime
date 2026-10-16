@@ -116,7 +116,7 @@ fn emit_cpp_inner(
             // The shared expression helper block supplies this same scalar.
             continue;
         }
-        let body = helper_cpp(helper);
+        let body = helper_cpp(helper, opts.partition_point_quantile_bounds);
         if !body.is_empty() {
             sections.push(body.to_string());
         }
@@ -264,7 +264,7 @@ fn head_calls_cpp(head: &PlannedHead) -> (String, String, &'static str) {
 /// `RngUniform`/`RngRange`/`RngGaussian` return "" because C++ cannot reopen a
 /// struct across definitions the way Rust's `impl` blocks do, so those draw
 /// methods are bundled into the single `Pcg32` definition.
-fn helper_cpp(helper: Helper) -> &'static str {
+fn helper_cpp(helper: Helper, partition_point_bounds: bool) -> &'static str {
     match helper {
         Helper::Sanitize => H_SANITIZE,
         Helper::FinishStage => H_FINISH_STAGE,
@@ -272,8 +272,20 @@ fn helper_cpp(helper: Helper) -> &'static str {
         Helper::CholeskySolve => H_CHOLESKY,
         Helper::SortedColumn => H_SORTED_COLUMN,
         Helper::Quantile => H_QUANTILE,
-        Helper::LowerBound => H_LOWER_BOUND,
-        Helper::UpperBound => H_UPPER_BOUND,
+        Helper::LowerBound => {
+            if partition_point_bounds {
+                H_LOWER_BOUND_PARTITION_POINT
+            } else {
+                H_LOWER_BOUND
+            }
+        }
+        Helper::UpperBound => {
+            if partition_point_bounds {
+                H_UPPER_BOUND_PARTITION_POINT
+            } else {
+                H_UPPER_BOUND
+            }
+        }
         Helper::MidRank => H_MID_RANK,
         Helper::Probit => H_PROBIT,
         Helper::MathSigmoid => H_MATH_SIGMOID,
@@ -815,6 +827,36 @@ static double quantile(const std::vector<double>& sorted_values, double q) {
 
 const H_LOWER_BOUND: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
 static std::size_t lower_bound(const std::vector<double>& sorted_values, double v) {
+    std::size_t lo = 0;
+    std::size_t hi = sorted_values.size();
+    while (lo < hi) {
+        std::size_t mid = (lo + hi) / 2;
+        if (sorted_values[mid] < v) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return lo;
+}"#;
+
+const H_UPPER_BOUND: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
+static std::size_t upper_bound(const std::vector<double>& sorted_values, double v) {
+    std::size_t lo = 0;
+    std::size_t hi = sorted_values.size();
+    while (lo < hi) {
+        std::size_t mid = (lo + hi) / 2;
+        if (sorted_values[mid] <= v) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return lo;
+}"#;
+
+const H_LOWER_BOUND_PARTITION_POINT: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
+static std::size_t lower_bound(const std::vector<double>& sorted_values, double v) {
     std::size_t size = sorted_values.size();
     if (size == 0) {
         return 0;
@@ -831,7 +873,7 @@ static std::size_t lower_bound(const std::vector<double>& sorted_values, double 
     return base + static_cast<std::size_t>(sorted_values[base] < v);
 }"#;
 
-const H_UPPER_BOUND: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
+const H_UPPER_BOUND_PARTITION_POINT: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
 static std::size_t upper_bound(const std::vector<double>& sorted_values, double v) {
     std::size_t size = sorted_values.size();
     if (size == 0) {

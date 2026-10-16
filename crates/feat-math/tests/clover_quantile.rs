@@ -241,11 +241,102 @@ for c in json.load(open(sys.argv[3]))['cases']:
 }
 
 #[test]
-fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
+fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_point() {
     use feat_math::{
-        fit,
+        emit_bound, fit, fit_table,
         transpile::{emit_cpp17, emit_javascript},
+        ColumnSpec, DataSchema, Objective, RawTable, RowSemantics, TaskSpec,
     };
+
+    for tool in ["python3", "rustc", "g++", "node"] {
+        let out = Command::new(tool)
+            .arg("--version")
+            .output()
+            .unwrap_or_else(|e| panic!("{tool} must be available on PATH: {e}"));
+        assert!(out.status.success(), "{tool} --version failed");
+    }
+
+    let check_finite_and_pointwise_equal =
+        |expected: &[f64], actual: &[f64], allow_signed_zero_equivalence: bool| -> Result<(), String> {
+            if expected.len() != actual.len() {
+                return Err(format!(
+                    "length mismatch: expected {}, got {}",
+                    expected.len(),
+                    actual.len()
+                ));
+            }
+            for (idx, (&e, &a)) in expected.iter().zip(actual).enumerate() {
+                if !e.is_finite() {
+                    return Err(format!("row {idx}: expected prediction {e} is not finite"));
+                }
+                if !(e == a || (e.is_nan() && a.is_nan())) {
+                    return Err(format!("row {idx}: value mismatch expected={e:?} actual={a:?}"));
+                }
+                if e.to_bits() != a.to_bits()
+                    && !(allow_signed_zero_equivalence && e == 0.0 && a == 0.0)
+                {
+                    return Err(format!(
+                        "row {idx}: bit mismatch expected={:#018x} ({e:?}) actual={:#018x} ({a:?})",
+                        e.to_bits(),
+                        a.to_bits()
+                    ));
+                }
+            }
+            Ok(())
+        };
+
+    // Counterexample proving the old `fold(0.0_f64, f64::max)` reduction is NaN-blind
+    // whereas `check_finite_and_pointwise_equal` rejects NaN-vs-finite and length mismatches.
+    let nan_blind_max_abs = |a: &[f64], b: &[f64]| -> f64 {
+        a.iter()
+            .zip(b)
+            .map(|(x, y)| (x - y).abs())
+            .fold(0.0_f64, f64::max)
+    };
+    assert_eq!(nan_blind_max_abs(&[1.0, 2.0], &[1.0, f64::NAN]), 0.0);
+    assert!(check_finite_and_pointwise_equal(&[1.0, 2.0], &[1.0, f64::NAN], false).is_err());
+    assert!(check_finite_and_pointwise_equal(&[1.0], &[1.0, 2.0], false).is_err());
+    assert!(check_finite_and_pointwise_equal(&[1.0, -0.0], &[1.0, 0.0], false).is_err());
+    assert!(check_finite_and_pointwise_equal(&[1.0, -0.0], &[1.0, 0.0], true).is_ok());
+
+    // Verify the versioned recipe transition fixture for `partition_point_quantile_bounds`.
+    let transition_genome =
+        GenomeIr::parse("(pipe X (quantile_bins append=false bins=27) (ridge))").unwrap();
+    let legacy_transition_emit = emit(&transition_genome, &EmitOptions::default()).unwrap();
+    let fixed_transition_emit = emit(
+        &transition_genome,
+        &EmitOptions {
+            partition_point_quantile_bounds: true,
+            ..EmitOptions::default()
+        },
+    )
+    .unwrap();
+    let legacy_manifest: serde_json::Value =
+        serde_json::from_str(&legacy_transition_emit.manifest).unwrap();
+    let fixed_manifest: serde_json::Value =
+        serde_json::from_str(&fixed_transition_emit.manifest).unwrap();
+    let source_transition: serde_json::Value = serde_json::from_slice(
+        &fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/compat_freeze/transitions/exp_next_04_emitted_quantile_partition_point.v1.json"
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        source_transition["schema"],
+        "feat-math.emitted-quantile-partition-point-transition.v1"
+    );
+    assert_eq!(source_transition["program"], fixed_manifest["program"]);
+    assert_eq!(source_transition["before"], legacy_manifest);
+    assert_eq!(source_transition["after"], fixed_manifest);
+    assert_eq!(legacy_manifest["emitter_version"], "2.2.0");
+    assert_eq!(
+        fixed_manifest["emitter_version"],
+        "feat-math-quantile-partition-point-v1"
+    );
+    assert_ne!(legacy_transition_emit.rust, fixed_transition_emit.rust);
+    assert_ne!(legacy_transition_emit.python, fixed_transition_emit.python);
 
     // Build a deterministic 24x3 dataset whose three columns each have a tie
     // plateau that triggers the 1-ULP non-monotone dip in `s_lo * (1.0 - f) + s_hi * f`
@@ -263,7 +354,9 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
         } else {
             v0 + ((i - 21) as f64) * 0.5
         };
-        let c1 = if i < 22 {
+        let c1 = if i < 4 {
+            -10.0 + (i as f64)
+        } else if i < 22 {
             v1
         } else {
             v1 + ((i - 21) as f64) * 0.5
@@ -299,8 +392,10 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
         lo
     };
 
-    // Verify the 1-ULP tie-plateau non-monotonicity and that the old `(lo, hi)`
-    // `mid + 1` search diverges from `slice::partition_point` for all three bin counts.
+    // Verify the 1-ULP tie-plateau non-monotonicity and that both the legacy `(lo, hi)`
+    // `mid + 1` search and the old bound-Python linear scan diverge from
+    // `slice::partition_point` for all three bin counts.
+    let mut non_monotone_edges = Vec::new();
     for (col, bins, probe) in [
         (0usize, 27i64, v0),
         (1usize, 16i64, v1),
@@ -317,10 +412,40 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
             edges.windows(2).any(|w| w[0] > w[1]),
             "col {col} (bins={bins}) tie plateau must trigger 1-ULP non-monotone quantile edges"
         );
+        let native_idx = edges.partition_point(|e| *e < probe);
+        let legacy_idx = legacy_lo_hi(edges, probe);
+        let linear_idx = edges.iter().filter(|&&e| e < probe).count();
         assert_ne!(
-            legacy_lo_hi(edges, probe),
-            edges.partition_point(|e| *e < probe),
+            legacy_idx, native_idx,
             "col {col} (bins={bins}) fixture must reproduce old lo/hi vs partition_point divergence"
+        );
+        if col >= 1 {
+            assert_ne!(
+                linear_idx, native_idx,
+                "col {col} (bins={bins}) fixture must reproduce old bound-Python linear scan vs partition_point divergence"
+            );
+        }
+        non_monotone_edges.push((col, bins, probe, edges.clone(), native_idx));
+    }
+
+    // Also verify directly that `target_bin_encode bins=13` on `train` has the 1-ULP
+    // non-monotone edge on col 2 (`v2`) where legacy `(lo, hi)` diverges from `partition_point`.
+    {
+        let mut tbe_stage = Stage::new("target_bin_encode");
+        tbe_stage.params.insert("bins".into(), ParamValue::Int(13));
+        let fitted_tbe = fit_op(&tbe_stage, &train, &y).unwrap();
+        let tbe_edges = match &fitted_tbe {
+            FittedOp::TargetBinEncode { edges, .. } => &edges[2],
+            _ => unreachable!(),
+        };
+        assert!(
+            tbe_edges.windows(2).any(|w| w[0] > w[1]),
+            "target_bin_encode bins=13 col 2 must trigger 1-ULP non-monotone quantile edges"
+        );
+        assert_ne!(
+            legacy_lo_hi(tbe_edges, v2),
+            tbe_edges.partition_point(|e| *e < v2),
+            "target_bin_encode bins=13 col 2 must diverge between legacy lo/hi and partition_point"
         );
     }
 
@@ -330,6 +455,132 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
     let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let cpp_driver = fs::read_to_string(repo_root.join("deploy/ci/emitters/driver.cpp")).unwrap();
     let js_driver = fs::read_to_string(repo_root.join("deploy/ci/emitters/driver.js")).unwrap();
+
+    // Verify `advanced_v3::emit::emit_bound` (bound Python & Rust) on the 24x3 dataset
+    // and directly test bound Python's `lower_bound` on the three non-monotone edge arrays.
+    {
+        let schema = DataSchema {
+            columns: vec![
+                ColumnSpec::numeric("c0"),
+                ColumnSpec::numeric("c1"),
+                ColumnSpec::numeric("c2"),
+            ],
+            row_semantics: RowSemantics::Iid,
+        };
+        let to_raw_table = |rows: &[Vec<f64>]| -> RawTable {
+            RawTable::new(
+                vec!["c0".into(), "c1".into(), "c2".into()],
+                rows.iter()
+                    .map(|r| {
+                        vec![
+                            format!("{:.17e}", r[0]),
+                            format!("{:.17e}", r[1]),
+                            format!("{:.17e}", r[2]),
+                        ]
+                    })
+                    .collect(),
+            )
+            .unwrap()
+        };
+        let train_table = to_raw_table(&train);
+        let holdout_table = to_raw_table(&holdout);
+        let v3_genome = GenomeIr::parse(
+            "(pipe X (input numeric=median categorical=frequency) (target_bin_encode bins=13 prior=10 oof=5) (ridge))",
+        )
+        .unwrap();
+        let v3_model = fit_table(
+            &v3_genome,
+            &TaskSpec::regression(Objective::R2).unwrap(),
+            &schema,
+            &train_table,
+            &y,
+        )
+        .unwrap();
+        let v3_expected = v3_model.predict_table(&holdout_table).unwrap();
+        let bound = emit_bound(&v3_model, &EmitOptions::default()).unwrap();
+        let bound_py_path = tmp.path().join("bound_v3.py");
+        let bound_rs_path = tmp.path().join("bound_v3.rs");
+        let bound_rs_bin = tmp.path().join("bound_v3_bin");
+        let bound_csv_path = tmp.path().join("bound_test.csv");
+        let mut bound_csv = String::from("c0,c1,c2\n");
+        for row in &holdout {
+            bound_csv.push_str(&format!("{:.17e},{:.17e},{:.17e}\n", row[0], row[1], row[2]));
+        }
+        fs::write(&bound_py_path, &bound.python).unwrap();
+        fs::write(&bound_rs_path, &bound.rust).unwrap();
+        fs::write(&bound_csv_path, &bound_csv).unwrap();
+
+        let bound_py_out = Command::new("python3")
+            .arg(&bound_py_path)
+            .arg(&bound_csv_path)
+            .output()
+            .unwrap();
+        assert!(
+            bound_py_out.status.success(),
+            "bound v3 py: {}",
+            String::from_utf8_lossy(&bound_py_out.stderr)
+        );
+        let bound_py_preds: Vec<f64> = String::from_utf8_lossy(&bound_py_out.stdout)
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .map(|l| l.trim().parse::<f64>().unwrap())
+            .collect();
+        check_finite_and_pointwise_equal(&v3_expected, &bound_py_preds, false)
+            .expect("bound v3 Python must match runtime bitwise");
+
+        let bound_rs_compile = Command::new("rustc")
+            .args(["--edition=2021", "-O", "-Awarnings"])
+            .arg(&bound_rs_path)
+            .arg("-o")
+            .arg(&bound_rs_bin)
+            .output()
+            .unwrap();
+        assert!(
+            bound_rs_compile.status.success(),
+            "bound v3 rustc: {}",
+            String::from_utf8_lossy(&bound_rs_compile.stderr)
+        );
+        let bound_rs_out = Command::new(&bound_rs_bin)
+            .arg(&bound_csv_path)
+            .output()
+            .unwrap();
+        assert!(
+            bound_rs_out.status.success(),
+            "bound v3 rs: {}",
+            String::from_utf8_lossy(&bound_rs_out.stderr)
+        );
+        let bound_rs_preds: Vec<f64> = String::from_utf8_lossy(&bound_rs_out.stdout)
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .map(|l| l.trim().parse::<f64>().unwrap())
+            .collect();
+        check_finite_and_pointwise_equal(&v3_expected, &bound_rs_preds, false)
+            .expect("bound v3 Rust must match runtime bitwise");
+
+        // Also invoke `lower_bound` from the emitted `bound_v3.py` module directly on the
+        // non-monotone 1-ULP edge arrays for `bins=27`, `bins=16`, and `bins=13`.
+        let probes_json = serde_json::to_string(
+            &non_monotone_edges
+                .iter()
+                .map(|(_, _, probe, edges, expected_idx)| (edges, *probe, *expected_idx))
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
+        let py_probe = Command::new("python3")
+            .args([
+                "-c",
+                "import json, runpy, sys\nmod = runpy.run_path(sys.argv[1], run_name='bound_v3_mod')\nlb = mod['lower_bound']\nfor edges, probe, expected in json.loads(sys.argv[2]):\n    got = lb(edges, probe)\n    assert got == expected, f'bound lower_bound got {got}, expected {expected}'\n",
+                bound_py_path.to_str().unwrap(),
+                &probes_json,
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            py_probe.status.success(),
+            "bound v3 lower_bound non-monotone probe failed: {}",
+            String::from_utf8_lossy(&py_probe.stderr)
+        );
+    }
 
     let mut train_csv = String::new();
     for (row, target) in train.iter().zip(&y) {
@@ -350,31 +601,35 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
     fs::write(&train_path, &train_csv).unwrap();
     fs::write(&test_path, &test_csv).unwrap();
 
-    // The 3 EXP-008 failing champion contexts:
-    let exp008_cases = [
+    // Representative pipelines using the EXP-008 failing operator families
+    // (`quantile_bins`, `bin_onehot`, `target_bin_encode`), NOT the pinned
+    // EXP-008 champion genomes. In the `target_bin_encode` cases, `(target_bin_encode bins=13)`
+    // runs on the raw 24x3 columns first so column 2 (`v2 = 31.0 / 19.0`) directly hits the
+    // 1-ULP tie-plateau dip and diverges under the legacy `(lo, hi)` helper.
+    let representative_cases = [
         (
-            "ctx_14_retrieval_seeded",
+            "rep_exp008_ctx14_quantile_bins_elasticnet",
             "(pipe X (quantile_bins append=false bins=27) (quantile_bins append=true bins=25) (quantile_bins append=true bins=11) (cheb degree=7) (elasticnet alpha=0.05 l1_ratio=0.9))",
             true,
         ),
         (
-            "ctx_18_ordinary",
-            "(pipe X (bin_onehot append=true bins=16) (blom) (histgbm2 bags=2 leaves=15 lr=0.08 max_iter=110 min_leaf=8))",
+            "rep_exp008_ctx18_bin_onehot_histgbm2",
+            "(pipe X (bin_onehot append=false bins=16) (blom) (histgbm2 bags=2 leaves=15 lr=0.08 max_iter=110 min_leaf=1))",
             false,
         ),
         (
-            "ctx_18_policy_seeded",
-            "(pipe X (cheb degree=3) (poly_interact append=true) (poly_interact append=true) (target_bin_encode bins=13) (histgbm leaves=15 lr=0.08 max_iter=60))",
+            "rep_exp008_ctx18_target_bin_encode_histgbm",
+            "(pipe X (target_bin_encode bins=13) (cheb degree=3) (poly_interact append=true) (histgbm leaves=15 lr=0.08 max_iter=60 min_leaf=1))",
             false,
         ),
         (
-            "ctx_18_ordinary_4lang_head",
-            "(pipe X (bin_onehot append=true bins=16) (blom) (ridge))",
+            "rep_exp008_ctx18_bin_onehot_ridge_4lang",
+            "(pipe X (bin_onehot append=false bins=16) (blom) (ridge))",
             true,
         ),
         (
-            "ctx_18_policy_seeded_4lang_head",
-            "(pipe X (cheb degree=3) (poly_interact append=true) (poly_interact append=true) (target_bin_encode bins=13) (ridge))",
+            "rep_exp008_ctx18_target_bin_encode_ridge_4lang",
+            "(pipe X (target_bin_encode bins=13) (cheb degree=3) (poly_interact append=true) (ridge))",
             true,
         ),
     ];
@@ -387,23 +642,75 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
             .map(|l| l.trim().parse::<f64>().expect(label))
             .collect()
     };
-    let max_abs_delta = |a: &[f64], b: &[f64]| -> f64 {
-        assert_eq!(a.len(), b.len());
-        a.iter()
-            .zip(b)
-            .map(|(x, y)| (x - y).abs())
-            .fold(0.0_f64, f64::max)
+
+    let fixed_opts = EmitOptions {
+        partition_point_quantile_bounds: true,
+        ..EmitOptions::default()
     };
 
-    for (name, dsl, check_cpp_js) in exp008_cases {
+    for (name, dsl, check_cpp_js) in representative_cases {
         let genome = GenomeIr::parse(dsl).expect(name);
         let native_preds = fit(&genome, &train, &y)
             .expect(name)
             .predict(&holdout)
             .expect(name);
-        let emitted = emit(&genome, &EmitOptions::default()).expect(name);
 
-        // 1. Emitted Python
+        // First verify that legacy `EmitOptions::default()` (the base `aad22f8` `(lo, hi)`
+        // helper) diverges from `native_preds` on every representative pipeline across
+        // every covered language.
+        let legacy_emitted = emit(&genome, &EmitOptions::default()).expect(name);
+        let legacy_py_path = tmp.path().join(format!("{name}_legacy.py"));
+        let legacy_py_pred_path = tmp.path().join(format!("{name}_legacy_py_pred.csv"));
+        fs::write(&legacy_py_path, &legacy_emitted.python).unwrap();
+        let legacy_py_out = Command::new("python3")
+            .arg(&legacy_py_path)
+            .arg(&train_path)
+            .arg(&test_path)
+            .arg(&legacy_py_pred_path)
+            .output()
+            .expect("python3");
+        assert!(
+            legacy_py_out.status.success(),
+            "{name} legacy py: {}",
+            String::from_utf8_lossy(&legacy_py_out.stderr)
+        );
+        let legacy_py_preds = parse_preds(&legacy_py_pred_path, name);
+        let legacy_py_err =
+            check_finite_and_pointwise_equal(&native_preds, &legacy_py_preds, false)
+                .expect_err(&format!(
+                    "{name}: legacy Python helper must diverge from native partition_point"
+                ));
+        assert!(legacy_py_err.contains("mismatch"), "{legacy_py_err}");
+
+        if check_cpp_js {
+            let mut legacy_js_src =
+                emit_javascript(&genome, &EmitOptions::default()).expect(name);
+            legacy_js_src.push_str(&js_driver);
+            let legacy_js_path = tmp.path().join(format!("{name}_legacy.js"));
+            let legacy_js_pred_path = tmp.path().join(format!("{name}_legacy_js_pred.csv"));
+            fs::write(&legacy_js_path, &legacy_js_src).unwrap();
+            let legacy_js_out = Command::new("node")
+                .arg(&legacy_js_path)
+                .arg(&train_path)
+                .arg(&test_path)
+                .arg(&legacy_js_pred_path)
+                .output()
+                .expect("node");
+            assert!(
+                legacy_js_out.status.success(),
+                "{name} legacy js: {}",
+                String::from_utf8_lossy(&legacy_js_out.stderr)
+            );
+            let legacy_js_preds = parse_preds(&legacy_js_pred_path, name);
+            assert!(
+                check_finite_and_pointwise_equal(&native_preds, &legacy_js_preds, true).is_err(),
+                "{name}: legacy JS helper must diverge from native partition_point"
+            );
+        }
+
+        let emitted = emit(&genome, &fixed_opts).expect(name);
+
+        // 1. Emitted Python (`partition_point_quantile_bounds: true`)
         let py_path = tmp.path().join(format!("{name}.py"));
         let py_pred_path = tmp.path().join(format!("{name}_py_pred.csv"));
         fs::write(&py_path, &emitted.python).unwrap();
@@ -420,13 +727,10 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
             String::from_utf8_lossy(&py_out.stderr)
         );
         let py_preds = parse_preds(&py_pred_path, name);
-        let py_delta = max_abs_delta(&native_preds, &py_preds);
-        assert_eq!(
-            py_delta, 0.0,
-            "{name}: Python max_absolute_delta={py_delta} (expected 0.0)"
-        );
+        check_finite_and_pointwise_equal(&native_preds, &py_preds, false)
+            .unwrap_or_else(|e| panic!("{name} Python parity failed: {e}"));
 
-        // 2. Emitted Rust
+        // 2. Emitted Rust (`partition_point_quantile_bounds: true`)
         let rs_path = tmp.path().join(format!("{name}.rs"));
         let rs_bin = tmp.path().join(format!("{name}_rs"));
         let rs_pred_path = tmp.path().join(format!("{name}_rs_pred.csv"));
@@ -455,15 +759,12 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
             String::from_utf8_lossy(&rs_out.stderr)
         );
         let rs_preds = parse_preds(&rs_pred_path, name);
-        let rs_delta = max_abs_delta(&native_preds, &rs_preds);
-        assert_eq!(
-            rs_delta, 0.0,
-            "{name}: Rust max_absolute_delta={rs_delta} (expected 0.0)"
-        );
+        check_finite_and_pointwise_equal(&native_preds, &rs_preds, false)
+            .unwrap_or_else(|e| panic!("{name} Rust parity failed: {e}"));
 
         if check_cpp_js {
-            // 3. Emitted C++17
-            let mut cpp_src = emit_cpp17(&genome, &EmitOptions::default()).expect(name);
+            // 3. Emitted C++17 (`partition_point_quantile_bounds: true`)
+            let mut cpp_src = emit_cpp17(&genome, &fixed_opts).expect(name);
             cpp_src.push_str(&cpp_driver);
             let cpp_path = tmp.path().join(format!("{name}.cpp"));
             let cpp_bin = tmp.path().join(format!("{name}_cpp"));
@@ -493,14 +794,11 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
                 String::from_utf8_lossy(&cpp_out.stderr)
             );
             let cpp_preds = parse_preds(&cpp_pred_path, name);
-            let cpp_delta = max_abs_delta(&native_preds, &cpp_preds);
-            assert_eq!(
-                cpp_delta, 0.0,
-                "{name}: C++17 max_absolute_delta={cpp_delta} (expected 0.0)"
-            );
+            check_finite_and_pointwise_equal(&native_preds, &cpp_preds, false)
+                .unwrap_or_else(|e| panic!("{name} C++17 parity failed: {e}"));
 
-            // 4. Emitted JavaScript
-            let mut js_src = emit_javascript(&genome, &EmitOptions::default()).expect(name);
+            // 4. Emitted JavaScript (`partition_point_quantile_bounds: true`)
+            let mut js_src = emit_javascript(&genome, &fixed_opts).expect(name);
             js_src.push_str(&js_driver);
             let js_path = tmp.path().join(format!("{name}.js"));
             let js_pred_path = tmp.path().join(format!("{name}_js_pred.csv"));
@@ -518,11 +816,8 @@ fn exp_next_04_tie_plateau_and_exp008_contexts_have_zero_emitter_delta() {
                 String::from_utf8_lossy(&js_out.stderr)
             );
             let js_preds = parse_preds(&js_pred_path, name);
-            let js_delta = max_abs_delta(&native_preds, &js_preds);
-            assert_eq!(
-                js_delta, 0.0,
-                "{name}: JS max_absolute_delta={js_delta} (expected 0.0)"
-            );
+            check_finite_and_pointwise_equal(&native_preds, &js_preds, true)
+                .unwrap_or_else(|e| panic!("{name} JS parity failed: {e}"));
         }
     }
 }

@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.emitted-quantile-partition-point-transition.v1",
+  "program": "(pipe X (quantile_bins append=false bins=27) (ridge))",
+  "before": {
+    "schema": "battle-artifact-v1",
+    "program": "(pipe X (quantile_bins append=false bins=27) (ridge))",
+    "program_sha256": "6defbd371c0b33fb3e063c1210dc5c1dfeb77a86b34da6658c27c9680de54770",
+    "dsl": "(pipe X (quantile_bins append=false bins=27) (ridge))",
+    "genome_sha256": "6defbd371c0b33fb3e063c1210dc5c1dfeb77a86b34da6658c27c9680de54770",
+    "flavor": "pipeline",
+    "emitter_version": "2.2.0",
+    "py_sha256": "2207fade949a1c6e81b8c6ad0125d8df3a4d6ba24a4df943a302eefdd3c36572",
+    "rs_sha256": "ac6b4a72a24802511067ed0446fae195a85428693d4d6c05a65a2d265a5d6a3d"
+  },
+  "after": {
+    "schema": "battle-artifact-v1",
+    "program": "(pipe X (quantile_bins append=false bins=27) (ridge))",
+    "program_sha256": "6defbd371c0b33fb3e063c1210dc5c1dfeb77a86b34da6658c27c9680de54770",
+    "dsl": "(pipe X (quantile_bins append=false bins=27) (ridge))",
+    "genome_sha256": "6defbd371c0b33fb3e063c1210dc5c1dfeb77a86b34da6658c27c9680de54770",
+    "flavor": "pipeline",
+    "emitter_version": "feat-math-quantile-partition-point-v1",
+    "py_sha256": "b39365f1479630bd032d75ff48cc8cd431cee2c5b565c740df0e586cd3b419b0",
+    "rs_sha256": "f1edb5141956cf969acfabf7f025831afc19eb51c42bb73177b8f0efc3827898"
+  }
+}
