@@ -16,6 +16,7 @@ pub fn verify_fixture(
         "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
         "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
         "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+        "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
     ];
     let mut expected = historical_hash;
     for transition in transitions {
