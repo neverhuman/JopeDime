@@ -111,7 +111,7 @@ reproduced their committed ladders byte for byte from a fresh clone.
 | At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` on this tree lists 4,992 (72 ignored): 785 that `main` already had and the inventory missed, and 18 added by this change | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
 | Install and check | `pipeline run --emit rust,python,cpp17,cpp20,js` emitted 2 artifacts in the fresh-clone run (the selected head has no C++ or JavaScript emitter) and the README did not say this can happen | a comment says unsupported targets are reported as not emitted |
 | CLOVER quick start, steps 3–5 | their inputs (`coverage.json`, `protocol.json`, the roster and its pack, `GP_RESULTS_INDEX.json`) are not in Git, so they cannot run from a clone; `ingest-coverage` left out the held-out context list that the pre-registered J9 run excluded | a host-inputs table; `--exclude-contexts`; the protocol identity read from the run receipt instead of hashing a `protocol.json` |
-| CLOVER quick start, steps 3–5 | `cargo run` without `--release`: in the fresh-clone run, `evaluate` took 767 s and `flywheel-distill` more than 90 minutes in the debug profile, against 44 s and 570 s in release | the commands use `--release`, and a sentence gives both timings |
+| CLOVER quick start, steps 3–5 | `cargo run` without `--release`: in the fresh-clone run, `evaluate` took 767 s and `flywheel-distill` 8,125 s (2 h 15 min) in the debug profile, against 44 s and 570 s in release | the commands use `--release`, and a sentence gives both timings |
 | Intended pipeline | listed the foundation and target encoders without their status | a note on their research-only status |
 | S3 row, layout table, CI paragraph, further reading | no mention of the offline CLOVER tools, the numbers trace or the paper | added |
 
@@ -151,7 +151,62 @@ only a specification, because its panels need qualified receipts that do not exi
   and all 197 render inputs it pins are unchanged. Their content was not re-audited here.
 ## Fresh-clone run
 
-FRESH_RUN_PLACEHOLDER
+On 2026-10-16 the README's shell blocks were run on xbabe2 from fresh clones in a scratch
+directory under `/tmp`, as the audit brief asked. The clones held no unique work. Each command ran
+from the clone's root, in README order, and its exit status, wall time and output were recorded.
+Copies of the logs are in `/home/ubuntu/jope-evidence/paper-readme-audit-20261016/` on xbabe2.
+
+| Clone | Commit | Source |
+| --- | --- | --- |
+| `main` | `827881ef7` | `git clone https://github.com/neverhuman/JopeDime.git` |
+| first audit commit | `9fdff904c` | `git clone --no-local` of this branch |
+| README `--release` change | `73f9327fc` | `git clone --no-local` of this branch |
+
+| README block | `main` `827881ef7` | this branch |
+| --- | --- | --- |
+| Arena ladders: 2 × `jope-arena elo --check` | exit 0; both ladders byte-identical to the committed files | at `9fdff904c`: the same |
+| Same-cut reproduction: 3 commands | not run | at `9fdff904c`: all exit 0. The 10-dataset run took 273 s, and `elo --check` found the deep ladder byte-identical to `assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv` |
+| Install and check: 11 commands | all exit 0. `jope 0.3.0`; `Verified 40 synthetic datasets, 828029 bytes, offline.`; `pipeline run` wrote 2 artifacts and reported `cpp17`, `cpp20` and `javascript` as not emitted for the selected head; `verify-receipt` ok (7 stages, 2 artifacts) | at `9fdff904c`: the same |
+| Emitter proof: `JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math` | exit 0; 1,168 passed, 12 ignored, 0 failed; 1,854 s | at `9fdff904c`: the same counts; 1,720 s |
+| CLOVER steps 1–2: 2 × `cargo test` | exit 0; 46 passed | at `9fdff904c`: the same |
+| CLOVER steps 3–5: 7 commands | all 7 fail (exit 1 or 2): their inputs are not in Git, and the README did not list them | at `73f9327fc`, exactly as the README now reads (`cargo run --release`): all 7 exit 0 in 820 s, build included. At `9fdff904c`, in the debug profile: all 7 exit 0, `flywheel-distill` after 8,125 s |
+| Release verification | not run: it needs a published tag, and v0.3.0 is not tagged | not run, for the same reason |
+
+At `73f9327fc` only the CLOVER steps 3–5 block was run again. The commits after `9fdff904c` change `jope-records`, the paper and README prose, plus the `--release` flag of those seven commands; the other blocks run none of them.
+
+The CLOVER host inputs were copied from xbabe2's lane records into the clone. They are R22
+scratch data: scratch-only and non-qualifying. The outputs below show only that the commands
+run; they are not results.
+
+| README path | Copied from | SHA-256 |
+| --- | --- | --- |
+| `target/pools/coverage.json` | `LANE:rlfw-takeover/lpi-scratch/receipts/runs/coverage.json` | `73c15fbb6a70de91…` |
+| `target/pools/heldout.ids` (885 ids) | `LANE:rlfw-takeover/lpi-scratch/work/heldout.ids` | `74442da022b58cc4…` |
+| `target/pools/roster.jsonl` | `COORD:lanes/CX-MET/ingest/joined-roster-v2/train.jsonl` | `104849d13aebb4f0…` |
+| `target/pools/roster-vectors.f32` | `COORD:lanes/CX-MET/ingest/joined-roster-v2/train-vectors.f32` | `99959f86866260aa…` |
+| `target/retention/GP_RESULTS_INDEX.json` | `COORD:lanes/GP-INDEX/GP_RESULTS_INDEX.json` | `9c6e6cb3f99ca9c9…` |
+| `PROTOCOL_SHA256` | `.inputs.snapshot_spec_sha256` of `LANE:rlfw-takeover/lpi-scratch/receipts/runs/claude-rlfw-lpi-scratch-20261010T174612Z/receipt.json`, the run that wrote the coverage document | `05dc9558e3646106…` (the value itself) |
+
+What the seven commands printed:
+
+1. `ingest-coverage`: 2,267 train contexts, 885 left out by the list, 1,382 emitted.
+2. `freeze`: 1,222 pools (160 excluded) from 21,199 rows.
+3. `ingest-roster-features`: 1,222 context vectors.
+4. `evaluate`: strongest baseline `ridge_program`, `ranking_learnability NOT_ESTABLISHED`. The
+   receipt (`b9f6dd48…`) was the same from the debug and the release build.
+5. `distill-gp-index`: 8,908 rows.
+6. `flywheel-distill`: 5 rounds, `flywheel_established false`, `ranking_learnability NOT_ESTABLISHED`;
+   the same receipt id (`bed5ad79…`) from the debug run and both release runs.
+7. `inspect-parquet`: the shard's column and page summary.
+
+Timings:
+
+| Command | debug profile, `9fdff904c` | release binary, `9fdff904c` | `cargo run --release`, `73f9327fc` |
+| --- | --- | --- | --- |
+| `evaluate` | 767 s | 44 s | 51 s |
+| `flywheel-distill` | 8,125 s (2 h 15 min) | 570 s | 558 s |
+
+That gap is why the commands now use `--release`.
 
 ## Claim trace
 
