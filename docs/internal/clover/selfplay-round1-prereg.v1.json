@@ -1,0 +1,65 @@
+{
+  "schema": "jope.selfplay-round1-prereg/v1",
+  "study_id": "clover-selfplay-round1-confirmatory",
+  "status": "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
+  "qualification_report_schema": "jope.selfplay-round-qualification/v1",
+  "experiment_identity_sha256": "UNPINNED",
+  "source_commit_at_draft": "525be65b38540eb64b84c9bf36f7da6812812f2f",
+  "endpoints": {
+    "primary": "final_vs_round0_incumbent",
+    "secondary": "ratchet_vs_ordinary_final_round",
+    "multiplicity_procedure": "holm_bonferroni_k2",
+    "alpha_total": 0.05,
+    "alpha_primary_strict": 0.025,
+    "f10_tie_tolerance_log_ratio": 1e-12
+  },
+  "roster_and_families": {
+    "unit_of_inference": "parent_dataset_cluster",
+    "roster_role": "confirmation_family_held_out",
+    "sealed_roster_sha256": "UNPINNED",
+    "parent_cluster_map_sha256": "UNPINNED",
+    "g23_sealed_boundary_ruling": "UNPINNED"
+  },
+  "sample_size_and_margin": {
+    "min_parent_clusters": "UNPINNED",
+    "practical_margin_log_ratio": "UNPINNED",
+    "c158_g_judge_binding_receipt": "UNPINNED",
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 20261016,
+    "bootstrap_method": "parent_cluster_percentile_splitmix64"
+  },
+  "arms_and_rounds": {
+    "rounds": 4,
+    "seed_cap_b": 8,
+    "equal_attempts_per_round_required": true,
+    "equal_resource_comparison_required": true,
+    "measured_tilt_policy": {
+      "temperature_tau": 0.25,
+      "advantage_clip": 2.0,
+      "ref_new_support_mass": 0.05,
+      "policy_new_support_cap": 0.12,
+      "step_size_eta": 0.20
+    },
+    "kl_guard": {
+      "max_conditional_base_kl": 0.20,
+      "max_new_support_mass": 0.15,
+      "allow_kl_frozen_rounds": false
+    }
+  },
+  "held_out_and_parity_rules": {
+    "test_score_schema": "jope.pipeline-test-score/v1",
+    "once_only_test_split_look": true,
+    "require_empty_earlier_looks": true,
+    "require_feeds_selection_false": true,
+    "r5_parity_failure_disposition": "charge_as_program_failure_never_drop"
+  },
+  "execution_grant": {
+    "authorized": false,
+    "owner_admission_locator": "UNPINNED",
+    "hosts": "UNPINNED",
+    "cpu_ceiling_percent": "UNPINNED",
+    "memory_floor_free_percent": 15,
+    "gpu_seconds_budget": 0,
+    "deadline_utc": "UNPINNED"
+  }
+}

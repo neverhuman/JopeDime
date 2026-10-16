@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 4995,
+  "count": 5005,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -4343,12 +4343,12 @@
     }
    },
    "jope-learning": {
-    "count": 398,
+    "count": 408,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
       "kind": "lib",
-      "count": 204,
+      "count": 206,
       "ignored": 0,
       "tests": [
        "canon::tests::sha256_vector",
@@ -4368,6 +4368,8 @@
        "clover::expansion::tests::real_equal_attempt_scratch_measures_policy_seeds_and_never_qualifies",
        "clover::expansion::tests::retrieval_ancestry_is_train_only",
        "clover::expansion::tests::roster_rejects_validation_sealed_duplicates_and_changed_labels",
+       "clover::round_qual::tests::clean_synthetic_fixture_passes_rubric_modulo_sealed_boundary",
+       "clover::round_qual::tests::f10_tie_tolerance_maps_tiny_log_ratio_to_zero",
        "eligibility::tests::all_tasks_require_measured_aggregate_and_four_of_five_fold_gains",
        "eligibility::tests::burns_rejections_guard_margin_and_unqualified_incumbents_are_durable",
        "eligibility::tests::fitted::a_fitted_artifact_naming_another_input_is_refused",
@@ -4871,6 +4873,21 @@
        "an_append_without_store_reports_no_mirror",
        "an_archive_path_through_a_symlink_is_refused_before_anything_is_created",
        "one_unsafe_version_refuses_the_whole_import"
+      ]
+     },
+     "jope-learning::selfplay_round_qual": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "downgrades_earlier_looks_and_feeds_selection_violations",
+       "downgrades_insufficient_parent_clusters_and_unmet_practical_margin",
+       "downgrades_missing_or_failed_parity_without_dropping_r5_failures",
+       "downgrades_scratch_and_reused_development_sources",
+       "downgrades_unequal_attempts_unequal_resources_and_insufficient_rounds",
+       "downgrades_unmeasured_kl_and_kl_frozen_rounds_unless_allowed",
+       "ratchet_vs_ordinary_final_round_endpoint_and_cli_create_only",
+       "refuses_malformed_inputs_and_identity_mismatch"
       ]
      },
      "jope-learning::sources": {
@@ -7593,7 +7610,7 @@
   }
  },
  "totals": {
-  "rust": 4995,
+  "rust": 5005,
   "python": 182
  }
 }
