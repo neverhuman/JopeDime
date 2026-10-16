@@ -1237,7 +1237,7 @@
    "id": "C140",
    "statement": "Full-validation L6 (263 contexts) at each arm's last evaluated epoch across sweeps 3-6 ranged from 0.8963 (sweep 6 L6 + 0.2 KL, 0.8963494 at its incomplete epoch 8) to 0.9022, against 0.8973272 for the frozen v1 parameters; the sweep 4a L6 + 0.2 KL arm moved its 16-context fixed panel from 0.8712 to 0.8649 while its full validation moved from 0.8973 to 0.8977",
    "value": "[0.8963, 0.9022]; panel 0.8712 -> 0.8649; full 0.8973 -> 0.8977",
-   "tex": "$[0.8964, 0.9022]$",
+   "tex": "$[0.8963, 0.9022]$",
    "source": "COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ccdc9e175b57f647ee5bf657e916dba3fb14f2ddf91c49dda323f4b34a66cf8d; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep4a-20261010T225200Z/receipt.json; COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ad010b1e4bef57c99ae26d920427938f3ce72ce07573a680fe6482f57af28c29; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep5-20261011T013835Z/receipt.json; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep6-20261011T024759Z/receipt.json",
    "sha256": "f8b54e534f2aa74e18787abba7e8045df613ff17b85879f61bbc67a94c27a23f",
    "status": "non-qualifying"
