@@ -409,6 +409,7 @@ pub fn score_direction(score_name: &str) -> Result<ScoreDirection> {
         "cv_geomean_rmse_ratio" | "best_rust_rmse" | "validation_rmse" | "l6" => {
             Ok(ScoreDirection::LowerIsBetter)
         }
+        "shadow_pool_q" => Ok(ScoreDirection::HigherIsBetter),
         other => bail!("score identity {other:?} has no declared ScoreDirection"),
     }
 }
@@ -741,7 +742,7 @@ pub fn distill_gp_results_index_with_stats(
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false)
                 == (score_name == "l6"),
-            "gp-results-index row {idx}: inner GP record may not set qualified=true"
+            "gp-results-index row {idx}: qualified must equal (score_name == \"l6\")"
         );
         let fold = r.get("fold").and_then(serde_json::Value::as_i64);
         let family = r

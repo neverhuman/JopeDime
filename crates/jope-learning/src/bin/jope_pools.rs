@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use jope_learning::canon::sha256_hex;
-use jope_learning::pools::evaluate::{evaluate, Config, Inputs, Unavailable};
+use jope_learning::pools::evaluate::{Config, Inputs, Unavailable};
 use jope_learning::pools::pool::{
     export_views, freeze, FreezeRule, Manifest, MeasurementRow, Pool, Reference,
 };
@@ -101,6 +101,9 @@ enum Command {
         context_features: Option<PathBuf>,
         #[arg(long)]
         program_features: Option<PathBuf>,
+        /// Optional S3 `gp_distilled/v1` Parquet archive for fold-isolated cross-family program priors.
+        #[arg(long)]
+        s3_prior_parquet: Option<PathBuf>,
         /// External score documents (`jope.j9-external-scores/v1`), repeatable.
         #[arg(long)]
         external: Vec<PathBuf>,
@@ -145,6 +148,9 @@ enum Command {
         context_features: PathBuf,
         #[arg(long)]
         program_features: Option<PathBuf>,
+        /// Optional S3 `gp_distilled/v1` Parquet archive for fold-isolated cross-family program priors.
+        #[arg(long)]
+        s3_prior_parquet: Option<PathBuf>,
         /// External score documents (`jope.j9-external-scores/v1`), repeatable.
         #[arg(long)]
         external: Vec<PathBuf>,
@@ -154,13 +160,13 @@ enum Command {
         eval_budgets: Vec<usize>,
         #[arg(long, default_value_t = 5)]
         rounds: usize,
-        #[arg(long, default_value_t = 3)]
+        #[arg(long, default_value_t = 2)]
         initial_budget: usize,
-        #[arg(long, default_value_t = 4)]
+        #[arg(long, default_value_t = 2)]
         step_budget: usize,
         #[arg(long, default_value_t = 64)]
         proposal_pool_k: usize,
-        #[arg(long, default_value = "cv_geomean_rmse_ratio")]
+        #[arg(long, default_value = "shadow_pool_q")]
         score_name: String,
         #[arg(long, default_value_t = 5)]
         folds: usize,
@@ -357,6 +363,7 @@ fn main() -> Result<()> {
             reference,
             context_features,
             program_features,
+            s3_prior_parquet,
             external,
             unavailable,
             budget,
@@ -394,6 +401,14 @@ fn main() -> Result<()> {
                 .transpose()?;
             let pf = program_features
                 .map(|p| Features::from_jsonl(std::str::from_utf8(&load(&p)?)?))
+                .transpose()?;
+            let s3_rows = s3_prior_parquet
+                .map(|p| {
+                    jope_learning::retention::distilled::read(
+                        &load(&p)?,
+                        &jope_learning::pools::flywheel::known_scores(),
+                    )
+                })
                 .transpose()?;
             let docs: Vec<ExternalDocument> = external
                 .iter()
@@ -433,7 +448,23 @@ fn main() -> Result<()> {
                 bootstrap_seed,
                 alpha,
             };
-            let receipt = evaluate(&pools, &manifest, &inputs, &cfg)?;
+            let fold_priors = match s3_rows.as_deref() {
+                Some(rows) => {
+                    let (p, _) =
+                        jope_learning::pools::flywheel::build_fold_s3_priors(&pools, &cfg, rows)?;
+                    Some(p)
+                }
+                None => None,
+            };
+            let receipt =
+                jope_learning::pools::evaluate::evaluate_with_fold_train_pools_and_priors(
+                    &pools,
+                    None,
+                    fold_priors.as_deref(),
+                    &manifest,
+                    &inputs,
+                    &cfg,
+                )?;
             let output = EvaluationOutput {
                 receipt_sha256: receipt.sha256()?,
                 source_commit: source_commit.clone(),
@@ -457,6 +488,7 @@ fn main() -> Result<()> {
             reference,
             context_features,
             program_features,
+            s3_prior_parquet,
             external,
             budget,
             eval_budgets,
@@ -499,6 +531,14 @@ fn main() -> Result<()> {
             let pf = program_features
                 .map(|p| Features::from_jsonl(std::str::from_utf8(&load(&p)?)?))
                 .transpose()?;
+            let s3_rows = s3_prior_parquet
+                .map(|p| {
+                    jope_learning::retention::distilled::read(
+                        &load(&p)?,
+                        &jope_learning::pools::flywheel::known_scores(),
+                    )
+                })
+                .transpose()?;
             let docs: Vec<ExternalDocument> = external
                 .iter()
                 .map(|p| Ok(serde_json::from_slice(&load(p)?)?))
@@ -538,12 +578,13 @@ fn main() -> Result<()> {
                 max_conditional_base_kl: 0.20,
                 max_new_support_mass: 0.15,
             };
-            let receipt = jope_learning::pools::flywheel::run_distilled_flywheel(
+            let receipt = jope_learning::pools::flywheel::run_distilled_flywheel_with_s3_prior(
                 &pools,
                 &manifest,
                 &cf,
                 pf.as_ref(),
                 &ext_refs,
+                s3_rows.as_deref(),
                 &cfg,
                 parquet_dir.as_deref(),
             )?;
@@ -566,8 +607,10 @@ fn main() -> Result<()> {
             };
             create_new(&out, &pretty(&output)?)?;
             println!(
-                "{} rounds; flywheel_established {}; ranking_learnability {}; receipt {}",
+                "{} rounds; active_discovery_established {}; data_accumulation_lift_established {}; flywheel_established {}; ranking_learnability {}; receipt {}",
                 receipt.rounds.len(),
+                receipt.active_discovery_established,
+                receipt.data_accumulation_lift_established,
                 receipt.flywheel_established,
                 receipt.final_round_receipt.ranking_learnability,
                 output.receipt_sha256

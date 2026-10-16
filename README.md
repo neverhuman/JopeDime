@@ -263,9 +263,31 @@ cargo run --locked -p jope-learning --bin jope_pools -- evaluate \
   --source-commit "$(git rev-parse HEAD)" \
   --out target/pools/eval-receipt.json
 
-# 4. Decode and inspect local Parquet pages (e.g. S3 Inventory or gp_distilled/v1 shards) with jope_retention:
+# 4. Distill a GP results index into a gp_distilled/v1 Parquet shard and run the multi-round
+#    surrogate-guided self-play flywheel against a matched-budget passive control:
+cargo run --locked -p jope-learning --bin jope_retention -- distill-gp-index \
+  --gp-index target/retention/GP_RESULTS_INDEX.json \
+  --split-role train \
+  --source-commit "$(git rev-parse HEAD)" \
+  --receipt target/retention/gp-results-index-s3-receipt.json \
+  --out target/retention/gp-results-index-s3.parquet
+cargo run --locked -p jope-learning --bin jope_pools -- flywheel-distill \
+  --pools target/pools/frozen/pools.jsonl \
+  --manifest target/pools/frozen/manifest.json \
+  --reference pool-floor \
+  --context-features target/pools/context-features.jsonl \
+  --s3-prior-parquet target/retention/gp-results-index-s3.parquet \
+  --rounds 5 \
+  --initial-budget 2 \
+  --step-budget 2 \
+  --eval-budgets 1,4,8 \
+  --parquet-dir target/pools/flywheel-shards \
+  --source-commit "$(git rev-parse HEAD)" \
+  --out target/pools/flywheel-receipt.json
+
+# 5. Decode and inspect local Parquet pages (e.g. S3 Inventory or gp_distilled/v1 shards) with jope_retention:
 cargo run --locked -p jope-learning --bin jope_retention -- inspect-parquet \
-  --sample 3 target/retention/gp_distilled.parquet
+  --sample 3 target/retention/gp-results-index-s3.parquet
 ```
 
 ## Releases

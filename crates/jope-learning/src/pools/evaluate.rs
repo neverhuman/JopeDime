@@ -10,8 +10,8 @@ use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
 use super::metrics::{score_context, uniform_context, ContextMetrics};
 use super::pool::{verify, Manifest, Pool, Reference};
 use super::selectors::{
-    token_bag_features, Class, ContextualSurrogateQHat, Features, ProgramPrior, RetrievalKnn,
-    RidgeProgram, Selector, MAX_SURROGATE_DESIGN_DIM,
+    token_bag_features, Class, ContextualSurrogateQHat, ExternalProgramPrior, Features,
+    ProgramPrior, RetrievalKnn, RidgeProgram, Selector, MAX_SURROGATE_DESIGN_DIM,
 };
 use crate::canon::canonical_sha256;
 use anyhow::{ensure, Result};
@@ -192,6 +192,17 @@ pub fn evaluate_with_fold_train_pools(
     inputs: &Inputs<'_>,
     cfg: &Config,
 ) -> Result<Receipt> {
+    evaluate_with_fold_train_pools_and_priors(pools, fold_train_pools, None, manifest, inputs, cfg)
+}
+
+pub fn evaluate_with_fold_train_pools_and_priors(
+    pools: &[Pool],
+    fold_train_pools: Option<&[Vec<Pool>]>,
+    fold_external_priors: Option<&[ExternalProgramPrior]>,
+    manifest: &Manifest,
+    inputs: &Inputs<'_>,
+    cfg: &Config,
+) -> Result<Receipt> {
     verify(pools, manifest)?;
     ensure!(cfg.budget >= 1, "budget must be positive");
     ensure!(cfg.folds >= 2, "cross-fitting needs at least two folds");
@@ -210,6 +221,22 @@ pub fn evaluate_with_fold_train_pools(
                     "fold {k} training pool {} (parent {}) belongs to held-out fold {k}",
                     tp.context_id,
                     tp.parent_id
+                );
+            }
+        }
+    }
+    if let Some(priors) = fold_external_priors {
+        ensure!(
+            priors.len() == cfg.folds,
+            "fold_external_priors length {} must match cfg.folds {}",
+            priors.len(),
+            cfg.folds
+        );
+        for (k, ext) in priors.iter().enumerate() {
+            for (parent_id, _) in ext.parent_stats.keys() {
+                ensure!(
+                    fold_of(&cfg.fold_salt, parent_id, cfg.folds) != k,
+                    "fold {k} external prior parent {parent_id} belongs to held-out fold {k}"
                 );
             }
         }
@@ -379,13 +406,15 @@ pub fn evaluate_with_fold_train_pools(
         }
         if can_fit_surrogate {
             if let (Some(cf), Some(pf)) = (inputs.context_features, program_features) {
-                let surrogate = ContextualSurrogateQHat::fit(
+                let ext_prior = fold_external_priors.map(|ps| &ps[k]);
+                let surrogate = ContextualSurrogateQHat::fit_with_prior(
                     &train,
                     cf,
                     pf,
                     cfg.knn_k,
                     cfg.prior_weight,
                     cfg.ridge_lambda,
+                    ext_prior,
                 )?;
                 score_with(&surrogate, &held, &mut contexts)?;
             }
