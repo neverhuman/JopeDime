@@ -90,7 +90,7 @@ the `--help` count, which needs a build; the fresh-clone run printed it.
 | --- | --- | --- |
 | `jope 0.3.0` | `cargo run --locked --bin jope` (fresh clone) | `jope 0.3.0` |
 | 26 members; 19 at 0.3.0, 7 at 8.0.0; 8 default | `cargo metadata --locked --no-deps` | 26; 19 + 7; 8 |
-| 17 subcommands plus hidden `motifs` | `jope --help` (fresh clone) | 17 plus `help` |
+| 17 subcommands plus hidden `motifs` | `jope --help` and `jope motifs --help` from the fresh clone of `73f9327fc` (logs in the audit directory, `fresh-clone-73f9327fc-help/`) | 17 listed, plus clap's own `help`; `motifs` is hidden and its help works |
 | 6 emit targets | the single-language arms of `fn languages` in `crates/jope-cli/src/kernel.rs` | 6 |
 | Rust 4,992 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (it recorded 4,189 and 66, and missed 785 tests that `main` lists) | 4,992; 26; 72; 182 |
 | 9 PR jobs; 11 `full-` families | `.github/workflows/ci.yml` jobs; `deploy/ci/coverage.json` lanes | 9; 11 |
@@ -112,6 +112,7 @@ reproduced their committed ladders byte for byte from a fresh clone.
 | Install and check | `pipeline run --emit rust,python,cpp17,cpp20,js` emitted 2 artifacts in the fresh-clone run (the selected head has no C++ or JavaScript emitter) and the README did not say this can happen | a comment says unsupported targets are reported as not emitted |
 | CLOVER quick start, steps 3–5 | their inputs (`coverage.json`, `protocol.json`, the roster and its pack, `GP_RESULTS_INDEX.json`) are not in Git, so they cannot run from a clone; `ingest-coverage` left out the held-out context list that the pre-registered J9 run excluded | a host-inputs table; `--exclude-contexts`; the protocol identity read from the run receipt instead of hashing a `protocol.json` |
 | CLOVER quick start, steps 3–5 | `cargo run` without `--release`: in the fresh-clone run, `evaluate` took 767 s and `flywheel-distill` 8,125 s (2 h 15 min) in the debug profile, against 44 s and 570 s in release | the commands use `--release`, and a sentence gives both timings |
+| README length | 395 lines at `73f9327fc`, against 368 on `main`; the owner asked for a short README, and a review of `73f9327fc` flagged it | steps 3–5, which need host inputs and cannot run from a clone, moved unchanged to `docs/clover-host-steps.md`; the encoder note shortened; 331 lines |
 | Intended pipeline | listed the foundation and target encoders without their status | a note on their research-only status |
 | S3 row, layout table, CI paragraph, further reading | no mention of the offline CLOVER tools, the numbers trace or the paper | added |
 
@@ -169,10 +170,10 @@ Copies of the logs are in `/home/ubuntu/jope-evidence/paper-readme-audit-2026101
 | Install and check: 11 commands | all exit 0. `jope 0.3.0`; `Verified 40 synthetic datasets, 828029 bytes, offline.`; `pipeline run` wrote 2 artifacts and reported `cpp17`, `cpp20` and `javascript` as not emitted for the selected head; `verify-receipt` ok (7 stages, 2 artifacts) | at `9fdff904c`: the same |
 | Emitter proof: `JOPE_PARITY_STRICT=1 cargo test --locked -p feat-math` | exit 0; 1,168 passed, 12 ignored, 0 failed; 1,854 s | at `9fdff904c`: the same counts; 1,720 s |
 | CLOVER steps 1–2: 2 × `cargo test` | exit 0; 46 passed | at `9fdff904c`: the same |
-| CLOVER steps 3–5: 7 commands | all 7 fail (exit 1 or 2): their inputs are not in Git, and the README did not list them | at `73f9327fc`, exactly as the README now reads (`cargo run --release`): all 7 exit 0 in 820 s, build included. At `9fdff904c`, in the debug profile: all 7 exit 0, `flywheel-distill` after 8,125 s |
+| CLOVER steps 3–5: 7 commands | all 7 fail (exit 1 or 2): their inputs are not in Git, and the README did not list them | at `73f9327fc`, exactly as written (`cargo run --release`; then in the README, now byte for byte in `docs/clover-host-steps.md`): all 7 exit 0 in 820 s, build included. At `9fdff904c`, in the debug profile: all 7 exit 0, `flywheel-distill` after 8,125 s |
 | Release verification | not run: it needs a published tag, and v0.3.0 is not tagged | not run, for the same reason |
 
-At `73f9327fc` only the CLOVER steps 3–5 block was run again. The commits after `9fdff904c` change `jope-records`, the paper and README prose, plus the `--release` flag of those seven commands; the other blocks run none of them.
+At `73f9327fc` only the CLOVER steps 3–5 block was run again. The commits after `9fdff904c` change `jope-records`, the paper and README prose, plus the `--release` flag of those seven commands; the other blocks run none of them. Moving steps 3–5 to `docs/clover-host-steps.md` afterwards left the seven commands byte-identical.
 
 The CLOVER host inputs were copied from xbabe2's lane records into the clone. They are R22
 scratch data: scratch-only and non-qualifying. The outputs below show only that the commands

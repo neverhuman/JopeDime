@@ -18,7 +18,8 @@
 //! 5. the trace: one row per claim, carrying the ledger's status;
 //! 6. the README: the version and the "At a glance" counts, recomputed from the committed files
 //!    their footnotes name;
-//! 7. Figure 1: its data, the claims it draws and its rendering ([`crate::paper_figure`]).
+//! 7. Figure 1: its data, the claims it draws and its rendering ([`crate::paper_figure`]);
+//! 8. no unfilled marker (`...PLACEHOLDER...`, `TODO`, `TBD`) in the write-up or the trace.
 //!
 //! Numbers inside identifiers (`C26`, `R23`, `H1`, `v2`, `r3.1`, `p50`, `float32`, `SHA-256`),
 //! inline code, author-year references, dates, clock times and single-digit integers are not
@@ -70,6 +71,8 @@ static NOT_NUMBERS: LazyLock<Regex> = LazyLock::new(|| {
 /// not read as an author-year reference followed by `-10-12`.
 static DATES: LazyLock<Regex> =
     LazyLock::new(|| re(r"\b20\d{2}-\d{2}-\d{2}(?:T[0-9:.]+Z?)?|\b\d{2}:\d{2}(?::\d{2})?Z?\b"));
+static UNFILLED: LazyLock<Regex> =
+    LazyLock::new(|| re(r"\b[A-Z0-9_]*PLACEHOLDER[A-Z0-9_]*\b|\bTODO\b|\bTBD\b"));
 static NUMBER: LazyLock<Regex> = LazyLock::new(|| re(r"[-+]?\d+(?:\.\d+)?(?:e[-+]?\d+)?[MkK]?"));
 
 /// Commas between digit groups, LaTeX thin spaces, Unicode minus and en dash, and `a×10^{b}` are
@@ -298,6 +301,18 @@ fn trace_rows(trace: &str) -> BTreeMap<String, String> {
 /// Rules 1-5 over the three paper documents; the problems found and a one-line summary.
 pub fn check_paper(writeup: &str, ledger_text: &str, trace: &str) -> Result<(Vec<String>, String)> {
     let mut problems = vec![];
+    // A section left as a marker to fill in later is not a record.
+    for (name, text) in [(WRITEUP, writeup), (TRACE, trace)] {
+        for (i, line) in text.lines().enumerate() {
+            if UNFILLED.is_match(line) {
+                problems.push(format!(
+                    "{name}:{}: unfilled placeholder: {}",
+                    i + 1,
+                    line.trim()
+                ));
+            }
+        }
+    }
     let claims = ledger(ledger_text, &mut problems)?;
     let by_id: BTreeMap<&str, &Claim> = claims.iter().map(|c| (c.id.as_str(), c)).collect();
 
@@ -1083,6 +1098,13 @@ Illustrative: q = log 10 ≈ 2.303.
         let p = problems(WRITEUP_OK, LEDGER_OK, &t);
         assert!(
             p.iter().any(|m| m.contains("no Claim trace row for C03")),
+            "{p:?}"
+        );
+        let t = format!("{TRACE_OK}\n## Fresh-clone run\n\nFRESH_RUN_PLACEHOLDER\n");
+        let p = problems(WRITEUP_OK, LEDGER_OK, &t);
+        assert!(
+            p.iter()
+                .any(|m| m.contains("unfilled placeholder: FRESH_RUN_PLACEHOLDER")),
             "{p:?}"
         );
     }
