@@ -12,12 +12,13 @@ root=${JOPE_LOCAL_EVIDENCE_ROOT:-/var/cache/jope/target/ci-evidence-retained}
 repo=${GITHUB_REPOSITORY:-local}; dest="$root/${repo//\//_}/$name"
 manifest=$(mktemp)
 (cd "$src" && find . -type f -print0 | sort -z | xargs -0 -r sha256sum) > "$manifest"
-if mkdir -p "$dest" 2>/dev/null && cp -a "$src/." "$dest/"; then
-  cp "$manifest" "$dest/MANIFEST.sha256"
-  where="${JOPE_RUNNER_HOST:-$(hostname -s)}:${JOPE_RUNNER_LANE:-unknown}:$dest"
-else
-  where="(local retention unavailable on this runner)"
-fi
+# The cache is only the hand-off, not durable custody. A missing or corrupt local
+# copy must fail the job rather than report an unavailable location as success.
+mkdir -p "$dest"
+cp -a "$src/." "$dest/"
+cp "$manifest" "$dest/MANIFEST.sha256"
+(cd "$dest" && sha256sum --check MANIFEST.sha256)
+where="${JOPE_RUNNER_HOST:-$(hostname -s)}:${JOPE_RUNNER_LANE:-unknown}:$dest"
 s3=""
 if [ -n "${JOPE_EVIDENCE_S3_URI:-}" ] && command -v aws >/dev/null 2>&1 && aws sts get-caller-identity >/dev/null 2>&1; then
   aws s3 cp --recursive --only-show-errors "$src" "$JOPE_EVIDENCE_S3_URI/${repo//\//_}/$name/" && s3="$JOPE_EVIDENCE_S3_URI/${repo//\//_}/$name/"
