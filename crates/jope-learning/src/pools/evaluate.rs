@@ -380,6 +380,7 @@ pub fn evaluate_with_fold_train_pools_and_priors(
             Ok(())
         };
     let mut fold_training_pools = Vec::with_capacity(cfg.folds);
+    let mut surrogate_fold_cv = Vec::with_capacity(cfg.folds);
     for k in 0..cfg.folds {
         let held: Vec<usize> = (0..pools.len()).filter(|&i| folds[i] == k).collect();
         let train: Vec<&Pool> = match fold_train_pools {
@@ -416,6 +417,9 @@ pub fn evaluate_with_fold_train_pools_and_priors(
                     cfg.ridge_lambda,
                     ext_prior,
                 )?;
+                let (bm, pm) = surrogate.selected_multipliers();
+                surrogate_fold_cv
+                    .push(format!("f{k}=({bm},{pm},{:.6})", surrogate.inner_cv_loss()));
                 score_with(&surrogate, &held, &mut contexts)?;
             }
         }
@@ -423,6 +427,14 @@ pub fn evaluate_with_fold_train_pools_and_priors(
     let all: Vec<usize> = (0..pools.len()).collect();
     for sel in &inputs.external {
         score_with(*sel, &all, &mut contexts)?;
+    }
+    if !surrogate_fold_cv.is_empty() {
+        if let Some(rec) = records.get_mut("contextual_surrogate_qhat") {
+            rec.rule.push_str(&format!(
+                "; fold_inner_cv=[{}]",
+                surrogate_fold_cv.join(", ")
+            ));
+        }
     }
     let selectors: Vec<SelectorRecord> = records.into_values().collect();
     for c in &contexts {

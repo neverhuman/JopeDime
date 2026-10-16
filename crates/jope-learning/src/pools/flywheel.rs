@@ -209,11 +209,30 @@ pub fn build_fold_s3_priors(
         let Some((parent_id, row_fold)) = resolved else {
             continue;
         };
-        // Context-HWM winners in GP_RESULTS_INDEX have rank_ctx == 1 (top rank target = 1.0).
-        let target_val = match r.rank_ctx {
+        // Continuous score quality when present (e.g. `1.0 - rmse_ratio` for bounded
+        // `cv_geomean_rmse_ratio` HWM winners where `rank_ctx == 1` is constant, or `1 / (1 + s)`
+        // for unbounded non-negative LowerIsBetter losses), falling back to `rank_ctx` when
+        // score or known score direction is absent.
+        let rank_fallback = match r.rank_ctx {
             Some(1) => 1.0,
             Some(rk) if rk > 1 => (1.0 / (rk as f64)).clamp(0.0, 1.0),
             _ => 0.75,
+        };
+        let target_val = match (
+            r.score.filter(|s| s.is_finite()),
+            r.score_name.as_deref(),
+            r.score_name
+                .as_deref()
+                .and_then(|n| score_direction(n).ok()),
+        ) {
+            (Some(s), Some("cv_geomean_rmse_ratio"), Some(ScoreDirection::LowerIsBetter)) => {
+                (1.0 - s.clamp(0.0, 1.0)).clamp(0.0, 1.0)
+            }
+            (Some(s), _, Some(ScoreDirection::LowerIsBetter)) => 1.0 / (1.0 + s.max(0.0)),
+            (Some(s), _, Some(ScoreDirection::HigherIsBetter)) => {
+                1.0 / (1.0 + (-s.clamp(-20.0, 20.0)).exp())
+            }
+            _ => rank_fallback,
         };
         for k in 0..cfg.folds {
             if row_fold == k {
@@ -468,6 +487,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
     let mut final_passive_discovery_hwm = vec![0.0; pools.len()];
     let mut all_rounds_kl_admissible = true;
     let mut final_train_sub_pools: Vec<Vec<Pool>> = Vec::new();
+    let mut round_cv_trace: Vec<String> = Vec::with_capacity(cfg.rounds * cfg.eval.folds);
 
     for r in 0..cfg.rounds {
         // 1. Distill each outer fold's currently acquired training observations into gp_distilled/v1 Parquet and read back.
@@ -788,6 +808,13 @@ pub fn run_distilled_flywheel_with_s3_prior(
                 cfg.eval.ridge_lambda,
                 ext_prior,
             )?;
+            let (abm, apm) = surrogate.selected_multipliers();
+            let (pbm, ppm) = passive_surrogate.selected_multipliers();
+            round_cv_trace.push(format!(
+                "r{r}:f{k}=act({abm},{apm},{:.6})/pas({pbm},{ppm},{:.6})",
+                surrogate.inner_cv_loss(),
+                passive_surrogate.inner_cv_loss()
+            ));
 
             // Evaluate held-out fold `k` on full pools (never used for training or training-split acquisitions).
             for &i in &held {
@@ -1059,7 +1086,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
         external: external.to_vec(),
         unavailable: Vec::new(),
     };
-    let final_round_receipt = evaluate_with_fold_train_pools_and_priors(
+    let mut final_round_receipt = evaluate_with_fold_train_pools_and_priors(
         pools,
         Some(&final_train_sub_pools),
         fold_s3_priors.as_deref(),
@@ -1067,6 +1094,18 @@ pub fn run_distilled_flywheel_with_s3_prior(
         &eval_inputs,
         &cfg.eval,
     )?;
+    if !round_cv_trace.is_empty() {
+        if let Some(sel_rec) = final_round_receipt
+            .selectors
+            .iter_mut()
+            .find(|s| s.name == "contextual_surrogate_qhat")
+        {
+            sel_rec.rule.push_str(&format!(
+                "; flywheel_round_cv=[{}]",
+                round_cv_trace.join(", ")
+            ));
+        }
+    }
     let surrogate_beats_strongest_baseline = final_round_receipt
         .comparisons
         .iter()
