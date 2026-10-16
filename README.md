@@ -244,7 +244,7 @@ cargo test --locked -p jope-learning --lib clover::expansion::tests::
 cargo test --locked -p jope-learning --test retention --test retention_pack --test pools
 ```
 
-Steps 3 to 5 read host inputs that are not in Git. Put them in place first; each command stops at the first file it cannot read. They are built with `--release`: on xbabe2 on 2026-10-16, `evaluate` took 44 s that way and 767 s in the default debug profile, and `flywheel-distill` took 570 s that way and more than 90 minutes in debug.
+Steps 3 to 5 read host inputs that are not in Git. Put them in place first; each command stops at the first file it cannot read. They are built with `--release`: on xbabe2 on 2026-10-16, `evaluate` took 44 s that way and 767 s in the default debug profile, and `flywheel-distill` took 570 s that way and 8,125 s in debug.
 
 | Input | What it is |
 | --- | --- |
