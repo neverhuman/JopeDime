@@ -27,8 +27,10 @@ cargo run -q --locked -p jope-records -- paper-trace
 
 It fails when:
 
-- a number printed in the write-up is not a cited claim's number, or that number at the
-  precision printed;
+- a number printed in the write-up is not a number of a cited claim's statement or value, or
+  that number at the precision printed;
+- a claim's `tex` prints a number that is not one of its own statement or value numbers at the
+  precision the `tex` prints, so a stale LaTeX display fails instead of widening what passes;
 - the Appendix G totals or the Section 10.4 pending table disagree with the ledger;
 - a cited claim id is missing, or a ledger claim is never cited;
 - this file's claim table or exemption table is out of step with the ledger or the write-up;
@@ -66,6 +68,8 @@ write-up. No pending claim was filled, and no sealed or held-out data was opened
 | 12 | Section 8 | the sealed families' role was implicit | the corpus authority accepts only the one-holdout role map (2026-10-07 ruling) | stated, new claim C180 |
 | 13 | `claims.json` roots | CAPTURE, ARENA, HOST at `/home/ubuntu/jopedime_*` | moved to `/home/ubuntu/jope-evidence/` on 2026-10-15 | paths updated; REPO written as a path; PROBE and CANON added |
 | 14 | Header, Section 10.3.1 | EI-1 "planned only" with no date | true at the 2026-10-13 revision | the scope date is stated; EI-1 marked "as of this revision" |
+| 15 | Section 6.4, C93 | "About 98% of proposals" | about 98.5% of outbox rows (line 43); the "about 98% native" at line 39 counts verified outcomes, not proposals | 98.5% |
+| 16 | `claims.json` `tex`, C140, C93, C168 | C140 $[0.8964, 0.9022]$; C93 ≈98%; C168 "17 of 24", which its statement and value did not hold | the corrected record; for C168, the paired summary covers 17 of the 24 planned contexts (`GP_EXPANSION_STUDY.md:89-91,222`) | C140 and C93 `tex` print their record: $[0.8963, 0.9022]$, ≈98.5%; C168's statement and value now hold the 17 of 24 |
 
 Ledger totals move from 171 claims (112 established, 20 preliminary, 16 non-qualifying,
 23 pending) to 177 (118, 20, 16, 23), with the six new established claims C178–C183.
