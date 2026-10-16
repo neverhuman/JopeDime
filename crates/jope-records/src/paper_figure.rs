@@ -176,9 +176,14 @@ pub fn figure(dat: &[u8], ledger_text: &str, problems: &mut Vec<String>) -> Resu
 }
 
 const WIDTH: f64 = 800.0;
-const HEIGHT: f64 = 300.0;
-const TOP: f64 = 52.0;
-const BOTTOM: f64 = 236.0;
+const HEIGHT: f64 = 324.0;
+/// The baseline of the panel titles, under the takeaway line.
+const PANEL_TITLE: f64 = 52.0;
+const TOP: f64 = 76.0;
+const BOTTOM: f64 = 260.0;
+/// The figure's one-line takeaway, so the image keeps its point when it is shown alone.
+const TAKEAWAY: &str =
+    "Why it matters: the first generation stopped improving, and its outcome head ranked new programs at chance.";
 const INK: &str = "#222222";
 const AXIS: &str = "#555555";
 const LINE: &str = "#1f4e79";
@@ -230,6 +235,10 @@ pub fn render(f: &Figure) -> String {
         svg,
         r#"<rect x="0" y="0" width="{WIDTH}" height="{HEIGHT}" fill="white"/>"#
     );
+    let _ = writeln!(
+        svg,
+        r#"<text x="26.0" y="24.0" text-anchor="start" font-size="13" font-weight="bold" fill="{INK}">{TAKEAWAY}</text>"#
+    );
 
     // (a) Full validation loss by closed epoch, the plateau shaded.
     let (xs, ys) = ((76.0, 470.0), (0.88, 1.02));
@@ -239,7 +248,7 @@ pub fn render(f: &Figure) -> String {
     label(
         &mut svg,
         xs.0 - 50.0,
-        28.0,
+        PANEL_TITLE,
         "start",
         13,
         "(a) First generation: full validation loss by epoch",
@@ -314,7 +323,7 @@ pub fn render(f: &Figure) -> String {
     label(
         &mut svg,
         xs.0 - 60.0,
-        28.0,
+        PANEL_TITLE,
         "start",
         13,
         "(b) Outcome head on fresh programs",
