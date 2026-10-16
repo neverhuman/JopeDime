@@ -3,7 +3,8 @@ name: weekly
 # Plan WP12 / "CI additions": the weekly regression suite on the self-hosted xbabe2 runner —
 # one Golden42 panel cell, encoder parity, policy parity, the emitter bench — and the restore
 # drill from a fresh directory. Both scripts fail with the exact missing prerequisite; nothing is
-# skipped silently. Receipts are uploaded as artifacts.
+# skipped silently. Receipts are retained on the runner's local disk
+# (deploy/ci/retain-local-evidence.sh); no GitHub artifact storage is used.
 
 on:
   schedule:
@@ -52,7 +53,7 @@ jobs:
       - name: Retain evidence on the runner's local disk (no GitHub artifact storage)
         if: always()
         env:
-          NAME: regression-suite-${{ github.run_id }}
+          NAME: regression-suite-${{ github.run_id }}-${{ github.run_attempt }}
           SRC: target/regression
         run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
 
@@ -78,6 +79,6 @@ jobs:
       - name: Retain evidence on the runner's local disk (no GitHub artifact storage)
         if: always()
         env:
-          NAME: restore-drill-${{ github.run_id }}
+          NAME: restore-drill-${{ github.run_id }}-${{ github.run_attempt }}
           SRC: target/restore-drill
         run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
