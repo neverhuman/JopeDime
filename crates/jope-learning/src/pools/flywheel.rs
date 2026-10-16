@@ -487,6 +487,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
     let mut final_passive_discovery_hwm = vec![0.0; pools.len()];
     let mut all_rounds_kl_admissible = true;
     let mut final_train_sub_pools: Vec<Vec<Pool>> = Vec::new();
+    let mut round_cv_trace: Vec<String> = Vec::with_capacity(cfg.rounds * cfg.eval.folds);
 
     for r in 0..cfg.rounds {
         // 1. Distill each outer fold's currently acquired training observations into gp_distilled/v1 Parquet and read back.
@@ -807,6 +808,13 @@ pub fn run_distilled_flywheel_with_s3_prior(
                 cfg.eval.ridge_lambda,
                 ext_prior,
             )?;
+            let (abm, apm) = surrogate.selected_multipliers();
+            let (pbm, ppm) = passive_surrogate.selected_multipliers();
+            round_cv_trace.push(format!(
+                "r{r}:f{k}=act({abm},{apm},{:.6})/pas({pbm},{ppm},{:.6})",
+                surrogate.inner_cv_loss(),
+                passive_surrogate.inner_cv_loss()
+            ));
 
             // Evaluate held-out fold `k` on full pools (never used for training or training-split acquisitions).
             for &i in &held {
@@ -1078,7 +1086,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
         external: external.to_vec(),
         unavailable: Vec::new(),
     };
-    let final_round_receipt = evaluate_with_fold_train_pools_and_priors(
+    let mut final_round_receipt = evaluate_with_fold_train_pools_and_priors(
         pools,
         Some(&final_train_sub_pools),
         fold_s3_priors.as_deref(),
@@ -1086,6 +1094,18 @@ pub fn run_distilled_flywheel_with_s3_prior(
         &eval_inputs,
         &cfg.eval,
     )?;
+    if !round_cv_trace.is_empty() {
+        if let Some(sel_rec) = final_round_receipt
+            .selectors
+            .iter_mut()
+            .find(|s| s.name == "contextual_surrogate_qhat")
+        {
+            sel_rec.rule.push_str(&format!(
+                "; flywheel_round_cv=[{}]",
+                round_cv_trace.join(", ")
+            ));
+        }
+    }
     let surrogate_beats_strongest_baseline = final_round_receipt
         .comparisons
         .iter()
