@@ -196,13 +196,15 @@ jobs:
             dist/*.spdx.json
             dist/*.cdx.json
 
-      - name: Upload artefacts (30 days)
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: release-${{ github.ref_name }}
-          path: dist/
-          retention-days: 30
-          if-no-files-found: error
+      # Hosted VM: this copy is a traceable manifest in the log/summary only; the durable copies
+      # are the release assets attached below (no GitHub artifact storage is used).
+      - name: Record release evidence manifest (no GitHub artifact storage)
+        if: always()
+        env:
+          JOPE_LOCAL_EVIDENCE_ROOT: ${{ runner.temp }}/jope-evidence
+          NAME: release-${{ github.ref_name }}-${{ github.run_attempt }}
+          SRC: dist/
+        run: bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
 
       - name: GitHub release
         env:
