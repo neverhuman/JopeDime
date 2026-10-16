@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jope.experiment-record/v1",
+  "title": "JopeDime / CLOVER Compressed Experiment Record (v1)",
+  "description": "Machine- and LLM-consumable schema for each experiment row in docs/experiments/experiments.jsonl.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "phase_hypothesis",
+    "date_utc",
+    "source_commit",
+    "qualification_status",
+    "summary",
+    "data",
+    "protocol",
+    "metrics",
+    "outcome",
+    "artifacts",
+    "next_experiment_implications"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "jope.experiment-record/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^EXP-[0-9]{3}-[a-z0-9-]+$",
+      "description": "Stable chronological identifier, e.g. EXP-001-v1-flywheel-baseline."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5
+    },
+    "phase_hypothesis": {
+      "type": "string",
+      "enum": [
+        "Phase_0_Evidence_and_Parity",
+        "H1_GP_Vocabulary_Expansion",
+        "H2_Outcome_Prediction_and_Selection",
+        "H3_Closed_Loop_Distillation",
+        "H4_End_to_End_Task_Win",
+        "Benchmarks_and_Infrastructure"
+      ]
+    },
+    "date_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "source_commit": {
+      "type": "string",
+      "description": "Git SHA or tag pinning the code/receipt state."
+    },
+    "qualification_status": {
+      "type": "string",
+      "enum": [
+        "ESTABLISHED",
+        "PRELIMINARY",
+        "NON_QUALIFYING",
+        "DIAGNOSTIC_ONLY",
+        "PENDING",
+        "FAILED_BEFORE_EXECUTION"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "description": "1-2 sentence compressed summary of hypothesis and experimental design."
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "splits_and_contexts",
+        "parent_clusters",
+        "candidate_or_catalog_size",
+        "sources",
+        "contamination_controls"
+      ],
+      "properties": {
+        "splits_and_contexts": {
+          "type": "string"
+        },
+        "parent_clusters": {
+          "type": "string"
+        },
+        "candidate_or_catalog_size": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contamination_controls": {
+          "type": "string"
+        }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arms_or_configs",
+        "compute_budget",
+        "evaluation_metric"
+      ],
+      "properties": {
+        "arms_or_configs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "compute_budget": {
+          "type": "string"
+        },
+        "evaluation_metric": {
+          "type": "string"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Compact key-value map of exact primary quantitative results, confidence intervals, and counts."
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "what_worked",
+        "what_failed",
+        "non_claims"
+      ],
+      "properties": {
+        "verdict": {
+          "type": "string"
+        },
+        "what_worked": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "what_failed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "non_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tracked repository paths, S3 keys, or SHA-256 digests backing the record."
+    },
+    "next_experiment_implications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Concrete lessons and hypotheses generated for future experiments."
+    }
+  }
+}
