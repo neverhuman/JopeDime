@@ -35,9 +35,9 @@ This document summarizes **five scope-bounded working hypotheses (non-qualifying
   - In `C78` / `C178` (`7,120`-view pool, `1,068` lineages, `3x5` lineage-grouped folds), an earlier separate DL outcome-prediction ensemble trailed LightGBM on raw LV4 features in equal-lineage $R^2$ (`0.690235` vs. `0.784889`, paired difference `[-0.132907, -0.056273]`) and row-weighted $R^2$ (`0.651858` vs. `0.751845`), with similar `beat10` AUC (`0.900874` vs. `0.903092`, difference `-0.002217 [-0.010492, +0.006826]`).
 - **Scope & Limitations**: `D5b` predates the `R6` split seal (`PRELIMINARY` match scope), `C78/C178` evaluates a separate outcome-prediction model rather than the `v1` PolicyLM `q`-head, and `EXP-009`'s `ridge_program` printout is an `R22` scratch command-verification output rather than a qualified `H2` benchmark result.
 
-### Working Hypothesis 5 — Recorded Native/Emitted Parity Failures Fall into Two Distinct Categories: `v1` Catalog Quantile-Binning One-ULP Binary-Search Disagreements (`C41–C45`) and Three Out-of-Catalog `GB-06` Champion Discrepancies (`C167`)
+### Working Hypothesis 5 — Recorded Native/Emitted Parity Failures Fall into Two Distinct Categories: `v1` Catalog Quantile-Binning One-ULP Binary-Search Disagreements (`C41–C45, C47, C49`) and Three Out-of-Catalog `GB-06` Champion Discrepancies (`C167`)
 - **Recorded Observations**:
-  - In `EXP-004` (`ESTABLISHED` `C41–C45`, [`TECHNICAL_WRITEUP.md` §5.5](../paper/TECHNICAL_WRITEUP.md#55-case-study-a-one-ulp-disagreement-between-two-binary-searches)), `41 / 1,554` (`2.6%`) evaluated pairs failed parity deterministically (`41 / 342 = 12.0%` with quantile binning; `0 / 1,212` without binning). The documented mechanism is a one-ulp non-monotone inversion in linearly interpolated interior quantile edges (`low + frac * (high - low)`) paired with two different binary searches (Rust 1.82's branchless partition search vs. the emitters' classical midpoint loop in `crates/feat-math/src/emit_rs.rs` and `crates/feat-math/src/emit_py.rs`).
+  - In `EXP-004` (`ESTABLISHED` `C41–C45, C47, C49`, [`TECHNICAL_WRITEUP.md` §5.5](../paper/TECHNICAL_WRITEUP.md#55-case-study-a-one-ulp-disagreement-between-two-binary-searches)), `41 / 1,554` (`2.6%`) evaluated pairs failed parity deterministically (`41 / 342 = 12.0%` with quantile binning; `0 / 1,212` without binning). The documented mechanism is a one-ulp non-monotone inversion in interior quantile edges computed as `s_lo*(1-f) + s_hi*f` (`sorted[lo] * (1.0 - frac) + sorted[hi] * frac` in `crates/feat-math/src/gpr.rs:68` and `crates/feat-math/src/emit_rs.rs:502`; on a tie plateau `s_lo == s_hi == a`, the two-product form can land one ulp below or above `a`, `C47`) paired with two different binary searches: the standard-library partition search whose probe sequence changed in Rust 1.82.0, while all four emitters keep the classic midpoint loop (`C49`, `crates/feat-math/src/emit_rs.rs` and `crates/feat-math/src/emit_py.rs`).
   - In `EXP-008` (`NON_QUALIFYING` `C167`, [`gp-h1-readout.20261013.json`](../internal/clover/gp-h1-readout.20261013.json)), `48 / 51` selected GP champions matched bitwise on both training probes, while `3 / 51` failed parity: context `14` (`dataset 51d5e3d9bca34669`, `retrieval_seeded`, cut 1 max abs delta `0.0021133743`) and context `18` (`dataset 72c1bdcbd2d62359`, `ordinary` cut 0 max abs delta `0.0321004556` and `policy_seeded` cut 0 max abs delta `0.1367213160`).
 - **Scope & Limitations**: The root cause of the `3` `EXP-008` parity failures is not diagnosed in `gp-h1-readout.20261013.json` or `GP_EXPANSION_STUDY.md`; under `R5` (`SELFPLAY_ROUND1_PREREG.md`), any parity failure remains visible and is charged as a program failure (`charge_as_program_failure_never_drop`).
 
@@ -45,26 +45,31 @@ This document summarizes **five scope-bounded working hypotheses (non-qualifying
 
 ## 2. Prioritized Next-Step Roadmap (`EXP-NEXT-01` – `EXP-NEXT-04`)
 
+> **Governance Gate**: All items below (`EXP-NEXT-01`–`EXP-NEXT-04`) are **roadmap proposals only (`no execution grant`)** and require explicit owner admission before any source change, benchmark execution, or compute run.
+
 ```mermaid
 flowchart TD
     A["EXP-NEXT-01 (Ledger & Evidence Audit)<br/>Ingest and verify 2026-10-14/15 EI-0..EI-4 1,148-context<br/>paired studies from /home/ubuntu/jope-evidence/"] --> B["EXP-NEXT-02 (SPQ-1 Gate Closure)<br/>Bind UNPINNED fields in selfplay-round1-prereg.v1.json,<br/>provenance bridge, ordinary_champion_genome & owner admission"]
-    C["EXP-NEXT-04 (Parity Investigation & R5 Hygiene)<br/>Align quantile edge/search in crates/feat-math/src/emit_*.rs<br/>and inspect EXP-008 context 14 & 18 parity failures"] --> B
+    C["EXP-NEXT-04 (Parity Audit & R5 Hygiene)<br/>Audit quantile semantics/pinned search under new protocol ID (C149)<br/>and inspect EXP-008 context 14 & 18 parity failures"] --> B
     D["EXP-NEXT-03 (Post-R6 H2 Selector Evaluation)<br/>Evaluate ridge_program and GBDT/linear selectors on<br/>sealed post-R6 pools (distinct from R22 scratch smoke inputs)"] --> B
 ```
 
 ### Priority 1: `EXP-NEXT-01` — Audit and Catalog the Executed `2026-10-14/15` `EI-0..EI-4` `1,148`-Context Studies (`H3` Evidence Closure)
+- **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
 - **Why first**: Before proposing any new continuation training run, the catalog must incorporate the already-executed `2026-10-14/15` `EI-0`, `EI-1`, `EI-2`, `EI-2X`, `EI-3`, and `EI-4` `1,148`-context paired studies stored under `/home/ubuntu/jope-evidence/{jopedime-flywheel-ei0,jopedime-flywheel-ei1,jopedime-flywheel-ei2,ei3-study-20261015,ei4-study-20261015}` (as noted in [`README.md`](README.md#known-omissions-not-yet-indexed-as-standalone-rows-in-experimentsjsonl), `C175`'s `"EI-1 planned only"` entry in `claims.json` is scope-dated `2026-10-13`).
 - **Actionable Scope**:
   1. Read and verify the SHA-256 pins, commit SHAs, and paired `L6-1148` cluster-bootstrap verdicts of `EI-0..EI-4` from `/home/ubuntu/jope-evidence/` (read-only, zero GPU/CPU training cost).
   2. Append verified `EXP-013+` records to [`experiments.jsonl`](experiments.jsonl) so all executed expert-iteration rounds are represented alongside `EXP-006` and `EXP-007`.
 
-### Priority 2: `EXP-NEXT-04` — Quantile Binary-Search Alignment and Investigation of `EXP-008` Context `14` & `18` Parity Failures (`Phase 0` / `R5`)
-- **Why second**: Directly addresses the two documented parity failure modes (`EXP-004` and `EXP-008`) using deterministic offline tests in `crates/feat-math`.
+### Priority 2: `EXP-NEXT-04` — Quantile Binary-Search Audit and Investigation of `EXP-008` Context `14` & `18` Parity Failures (`Phase 0` / `R5`)
+- **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
+- **Why second**: Directly addresses the two documented parity failure modes (`EXP-004` and `EXP-008`) while respecting `v1` score-cache comparability (`C149`).
 - **Actionable Scope**:
-  1. **Quantile binning (`EXP-004`, `TECHNICAL_WRITEUP.md` §5.5)**: Align interior quantile edge interpolation (`low + frac * (high - low)`) and binary-search traversal between the native evaluator and `crates/feat-math/src/emit_rs.rs` / `crates/feat-math/src/emit_py.rs` so one-ulp boundary inversions cannot diverge between partition search and midpoint search.
+  1. **Quantile binning (`EXP-004`, `TECHNICAL_WRITEUP.md` §5.5, `C47`, `C49`, `C149`)**: Audit evaluator quantile semantics (`s_lo*(1-f) + s_hi*f` in `crates/feat-math/src/gpr.rs:68` and `crates/feat-math/src/emit_rs.rs:502`, `C47`) and a single pinned search emitted identically everywhere (versus the standard-library partition search whose probe sequence changed in Rust 1.82.0 while all four emitters keep the classic midpoint loop, `C49`). Because changing the native search would alter the training score of affected programs and invalidate stored score caches (`C149`), any change must be gated under a new evaluator protocol identity rather than mutating historical `v1` comparability.
   2. **Out-of-catalog GP champions (`EXP-008`, `gp-h1-readout.20261013.json`)**: Inspect the three failing champion ASTs from context `14` (`retrieval_seeded`, program `d2177047...`) and context `18` (`ordinary` program `14882a74...` and `policy_seeded` program `6165e86c...`), add reproducing regression fixtures in `crates/feat-math`, and keep `R5` parity charging (`charge_as_program_failure_never_drop`) enforced in `jope-learning`.
 
 ### Priority 3: `EXP-NEXT-02` — Close `UNPINNED` Prerequisites for `SPQ-1` Round-1 Confirmatory Self-Play (`H1` / `H4`)
+- **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
 - **Why third**: `EXP-012` merged the offline diagnostic verifier (`jope-pools qualify-rounds`, `crates/jope-learning/src/clover/round_qual.rs`) and [`selfplay-round1-prereg.v1.json`](../internal/clover/selfplay-round1-prereg.v1.json) (`status: PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT`), where `RoundQualReport` currently sets `qualified_claim: false`, `promotion: false`, and `l6_claim: false` unconditionally.
 - **Required Prerequisites Before Any Execution Grant ([`SELFPLAY_ROUND1_PREREG.md` §3](../internal/clover/SELFPLAY_ROUND1_PREREG.md))**:
   1. **Bind all `UNPINNED` fields in `selfplay-round1-prereg.v1.json`**: `sealed_roster_sha256`, `parent_cluster_map_sha256`, and `g23_sealed_boundary_ruling` (`G23`); `min_parent_clusters` and `practical_margin_log_ratio` (`G-JUDGE` `C158`); `pinned_test_score_registry`; `experiment_identity_sha256`; and `owner_admission_locator` (`execution_grant.authorized: true`).
@@ -74,6 +79,7 @@ flowchart TD
   3. **Optional Seeding Amendment (Requires Separate Preregistration & Owner Admission)**: If a retrieval-warm-started or hybrid retrieval+policy seeding arm (motivated by `EXP-008`) is added, register it as an explicit pre-registration amendment with matched per-round attempt and wall-clock caps (`J12`).
 
 ### Priority 4: `EXP-NEXT-03` — Qualified Post-`R6` Frozen-Pool Selector Study (`H2`)
+- **Admission Gate**: Proposal only (`no execution grant`) — requires explicit owner admission before any source change, benchmark execution, or compute run.
 - **Why fourth**: While `EXP-009` verified that `jope_pools evaluate` runs in `44–51 s` with `--release`, its inputs were non-qualifying `R22` scratch data (`NUMBERS_TRACE.md#fresh-clone-run`). A genuine `H2` test requires evaluating `ridge_program` and candidate tabular/linear selectors on a lineage-sealed post-`R6` pool with pinned non-scratch provenance.
 - **Actionable Scope**:
   - Export a pinned post-`R6` candidate pool with parent-cluster split provenance, run `jope_pools evaluate` in `--release` mode across pre-registered `eval_budgets`, and record whether any learned selector beats `ridge_program` under parent-cluster bootstrap CIs.
