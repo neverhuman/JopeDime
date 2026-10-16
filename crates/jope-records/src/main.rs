@@ -11,7 +11,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use jope_records::pyjson::{self, Value};
 use jope_records::{
     claim_inventory, claims, conformance, coverage, dispositions, elo_history, findings, inventory,
-    layout, parity, progress_view, py, readme, repo_layout, scope_check, task_status,
+    layout, paper_trace, parity, progress_view, py, readme, repo_layout, scope_check, task_status,
     test_inventory,
 };
 
@@ -153,6 +153,14 @@ enum Command {
         /// (the generator of the allowlist's temp-dir entries).
         #[arg(long)]
         print_temp_dir: bool,
+    },
+    /// Check the white paper's printed numbers against its claim ledger and trace, and the
+    /// README's version and "At a glance" counts against the files their footnotes name.
+    PaperTrace {
+        /// Also re-hash every claim source against its pin (host mode: the sources live on
+        /// xbabe2, under the roots `docs/paper/claims.json` declares).
+        #[arg(long)]
+        sources: bool,
     },
     /// Render the README's measured-results blocks from committed evidence.
     ReadmeBenchmarks {
@@ -339,6 +347,9 @@ fn run(cli: Cli) -> jope_records::Result<Output> {
                 None => repo()?,
             };
             return Ok(report(repo_layout::run(&root, print_temp_dir)?));
+        }
+        Command::PaperTrace { sources } => {
+            return Ok(report(paper_trace::check(&repo()?, sources)?));
         }
         Command::ReadmeBenchmarks { write, .. } => {
             let (message, ok) = readme::run(&repo()?, write)?;

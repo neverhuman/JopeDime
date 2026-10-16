@@ -40,6 +40,7 @@ const VALID_LEADERBOARD: &str =
     "assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv";
 const VALID_SNAPSHOT: &str = "assets/regression/elo-tabular-regression-v2.benchmark-valid.json";
 const CORRECTIONS: &str = "assets/regression/protocol-corrections-tabular-regression-v2.json";
+const ARCHIVE_MANIFEST: &str = "docs/archive/python-archive-manifest.json";
 const BENCH: &str = "assets/regression/bench-baseline.json";
 const README: &str = "README.md";
 const SAMECUT: &str = "assets/same-cut/v2";
@@ -80,6 +81,30 @@ impl Paths {
     fn json(&self, rel: &str) -> Result<Value> {
         py::load_json(&self.at(rel))
     }
+}
+
+/// A `path:lines` evidence reference whose file the Python removal archived, written
+/// `<commit>:path:lines` so a reader can `git show` it; any other reference unchanged. The
+/// SHA-pinned corrections file keeps the paths it was written with (`assets/regression/SOURCES.md`).
+/// A tree without the archive manifest (the Python-parity fixtures) renders the reference as
+/// written, as the Python renderer did.
+fn archived(p: &Paths, reference: &str) -> Result<String> {
+    let path = reference.split(':').next().unwrap_or(reference);
+    if path.is_empty() || p.at(path).exists() || !p.at(ARCHIVE_MANIFEST).is_file() {
+        return Ok(reference.to_owned());
+    }
+    let manifest = p.json(ARCHIVE_MANIFEST)?;
+    let commit = manifest
+        .get("files")
+        .and_then(Value::as_list)
+        .into_iter()
+        .flatten()
+        .find(|f| f.get("path").and_then(Value::as_str) == Some(path))
+        .and_then(|f| f.get("source_commit").and_then(Value::as_str));
+    Ok(match commit {
+        Some(c) => format!("{}:{reference}", &c[..c.len().min(9)]),
+        None => reference.to_owned(),
+    })
 }
 
 /// `refuse(why)`: the committed evidence disagrees with itself.
@@ -942,7 +967,7 @@ fn render_arena(p: &Paths) -> Result<String> {
                 py::exception::no_attribute(&first, "split"),
             )
         })?;
-        Ok(text.split(' ').next().unwrap_or_default().to_owned())
+        archived(p, text.split(' ').next().unwrap_or_default())
     };
     let public = if get(split, "test_labels_public").truthy() {
         "public"

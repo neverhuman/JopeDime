@@ -1,8 +1,8 @@
 {
  "schema": "jope.paper-claim-ledger/v1",
- "document": "CLOVER technical write-up (TECHNICAL_WRITEUP.md, revision 2026-10-13, GB-11) and its LaTeX scaffold (tex/, not yet regenerated)",
+ "document": "CLOVER technical write-up (TECHNICAL_WRITEUP.md, revision 2026-10-13, GB-11, audited 2026-10-16) and its LaTeX scaffold (tex/, not yet regenerated)",
  "drafted_utc": "2026-10-10T05:00Z",
- "revised_utc": "2026-10-13T12:00Z",
+ "revised_utc": "2026-10-16T06:00Z",
  "supersedes": {
   "path": "LANE:paper/claims.json",
   "sha256": "429f72ff7ff4a0f0e3c5e48ed320108c3aadc15597492f7802bba75f2ee6fa09"
@@ -18,17 +18,19 @@
   "sha256": "sha256 of the whole source file at drafting time; a later edit of the source invalidates the claim until re-verified",
   "roots": {
    "LANE": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009",
-   "REPO": "JopeDime repository at commit 0dac0b21ae0b1763383ced64725a6bfc45703d2e (PR #283 head, merged to main); byte copy at LANE/w7/reviews/pr283-0dac0b21ae0b/head",
-   "CAPTURE": "/home/ubuntu/jopedime_flywheel_v2/v1-final-capture/20261010T011722Z (sealed private copy of the v1 terminal state; read-only)",
-   "ARENA": "/home/ubuntu/jopedime_probe_exp/rlfw-20261009 (development-panel match records; read-only)",
+   "REPO": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/w7/reviews/pr283-0dac0b21ae0b/head (byte copy of the JopeDime repository at commit 0dac0b21ae0b1763383ced64725a6bfc45703d2e, the PR #283 head merged to main)",
+   "CAPTURE": "/home/ubuntu/jope-evidence/jopedime_flywheel_v2/v1-final-capture/20261010T011722Z (sealed private copy of the v1 terminal state; read-only; at /home/ubuntu/jopedime_flywheel_v2/... until the 2026-10-15 consolidation moved it)",
+   "ARENA": "/home/ubuntu/jope-evidence/jopedime_probe_exp/rlfw-20261009 (development-panel match records; read-only; at /home/ubuntu/jopedime_probe_exp/rlfw-20261009 until the 2026-10-15 consolidation moved it)",
    "PLAN": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-claude-collaboration-20261009-v1",
    "MAIN": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/v2build/main-e466d1a1 (byte copy of deploy/dl-flywheel at JopeDime origin/main e466d1a12698e53f93e435c2878ccc6bb77c2d92)",
    "MAINGIT": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/gb11/sources/main-e466d1a1 (byte copies of docs/internal/clover/*.md from git show e466d1a12698e53f93e435c2878ccc6bb77c2d92:<path>; MAINGIT:commit refers to that commit object)",
    "MAIN302": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/gb11/sources/main-a2f7e6ec (byte copy of files changed by PR #302 at origin/main a2f7e6ecd2cfd416643bf402dca96b9be8d36e45)",
    "COORD": "/home/ubuntu/JopeDime/.agent/rlfw-coord (coordination board, scratch-judge record and copied lane inputs; read-only here)",
-   "HOST": "/home/ubuntu/jopedime_flywheel_v2 (v2 build-qualification roots and parity receipts on xbabe2; read-only)",
+   "HOST": "/home/ubuntu/jope-evidence/jopedime_flywheel_v2 (v2 build-qualification roots and parity receipts on xbabe2; read-only; at /home/ubuntu/jopedime_flywheel_v2 until the 2026-10-15 consolidation moved it)",
    "MAIN307": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/gb11/sources/main-0ed1a381 (byte copies from git show 0ed1a381174b86e1a2d6d624e77af6916451d8f8:<path>, origin/main after #307)",
-   "COORDSNAP": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/gb11/sources/coord-20261013T1130Z (pinned copies of live coordination files: scratch-verdicts.md is its first 1,446 lines, the append-only prefix that the drafting pins hashed; GAP_BOARD_20261012.md is the board as edited at 2026-10-13T10:17:15Z; lanes/G-JUDGE/l6-1148-verdict.json is the verdict as judged at 2026-10-13T11:38:25Z)"
+   "COORDSNAP": "/home/ubuntu/JopeDime/.agent/proposals/claude-rlfw-20261009/gb11/sources/coord-20261013T1130Z (pinned copies of live coordination files: scratch-verdicts.md is its first 1,446 lines, the append-only prefix that the drafting pins hashed; GAP_BOARD_20261012.md is the board as edited at 2026-10-13T10:17:15Z; lanes/G-JUDGE/l6-1148-verdict.json is the verdict as judged at 2026-10-13T11:38:25Z)",
+   "PROBE": "/home/ubuntu/jope-evidence/jopedime_probe_exp (outcome-predictor research records of 2026-10-07 to 2026-10-09; read-only)",
+   "CANON": "/home/ubuntu/JopeDime (the canonical checkout on xbabe2; its untracked coordination records, read-only here)"
   },
   "restricted_locators": "sources whose paths would break the public wording rule are cited by sha256 only; their paths are listed in the internal companion"
  },
@@ -728,7 +730,7 @@
   },
   {
    "id": "C78",
-   "statement": "An earlier, separate outcome-prediction model trailed a LightGBM comparator on equal-lineage R-squared: 0.690235 vs 0.784889; paired difference 95% interval [-0.132907, -0.056273]",
+   "statement": "An earlier, separate outcome-prediction model trailed a LightGBM comparator on equal-lineage R-squared, on the corrected 7,120-view pool (C178): 0.690235 vs 0.784889; paired difference 95% interval [-0.132907, -0.056273]",
    "value": "0.690 vs 0.785; [-0.133, -0.056]",
    "tex": "$0.690$ vs.\\ $0.785$",
    "source": "REPO:deploy/dl-flywheel/docs/evidence.md:7",
@@ -1206,7 +1208,7 @@
   },
   {
    "id": "C137",
-   "statement": "Drift across R22 sweeps 3-6 (probe KL mean over 64 train probes, range over complete epochs): at 3.75e-5 L6 alone reached 0.052-0.053 within two epochs in sweeps 4a and 5 (0.031-0.032 in sweep 6, stopped at 2 epochs by design); L6 + 0.2 KL arms 0.004-0.011 (4a), 0.004-0.008 (5), 0.006-0.014 (6); at 1e-5 L6 alone 0.012-0.044 (3) and 0.011-0.041 (4b); measured-tilt weight 0.03 reached 0.057 (4a) and weight 0.1 reached 0.102 at epoch 1 (3)",
+   "statement": "Drift across R22 sweeps 3-6 (probe KL mean over 64 train probes, range over each arm's complete epochs): sweep 3 (1e-5) L6 only 0.012-0.044, L_PI 0.01 + 0.2 KL 0.004-0.008, L_PI 0.03 + 0.2 KL 0.020-0.036, L_PI 0.1 + 0.2 KL 0.102 at epoch 1 (stopped); sweep 4a (3.75e-5) L6 only 0.031 -> 0.053 (stopped at 2), L6 + 0.2 KL 0.004-0.011 over 8, L_PI 0.01 0.011-0.020, L_PI 0.03 up to 0.057 (stopped at 4); sweep 4b (1e-5) L6 only 0.011-0.041, L_PI 0.01 0.005-0.010, L_PI 0.03 0.024-0.042; sweep 5 (3.75e-5) L6 only 0.035 -> 0.052 (stopped at 2), L6 + 0.2 KL 0.004-0.008, plus L_PI 0.01 0.009-0.016; sweep 6 (3.75e-5) L6 only 0.031 at both of its 2 epochs (by design), L6 + 0.2 KL 0.006-0.014, plus L_PI 0.01 0.013-0.036 over 7 complete epochs. So at 3.75e-5 L6 alone reached 0.052-0.053 within two epochs in sweeps 4a and 5, every L6 + 0.2 KL arm stayed at or below 0.014, and at 1e-5 L6 alone reached 0.044 (3) and 0.041 (4b)",
    "value": "L6+0.2KL <= 0.014; L6 alone >= 0.052 by epoch 2 at 3.75e-5",
    "tex": "$\\le 0.014$",
    "source": "COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ccdc9e175b57f647ee5bf657e916dba3fb14f2ddf91c49dda323f4b34a66cf8d; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep4a-20261010T225200Z/receipt.json; COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ad010b1e4bef57c99ae26d920427938f3ce72ce07573a680fe6482f57af28c29; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep5-20261011T013835Z/receipt.json; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep6-20261011T024759Z/receipt.json",
@@ -1224,7 +1226,7 @@
   },
   {
    "id": "C139",
-   "statement": "Held-out L6 on the same 885-context split did not improve in any arm of sweeps 4b-6: 0.8610 at the start, 0.8621-0.8660 at each arm's last evaluated epoch",
+   "statement": "Held-out L6 on the same 885-context split did not improve in any arm of sweeps 4b-6 at its last evaluated epoch: 0.8610 at the start, 0.8621-0.8660 at each arm's last evaluated epoch (two sweep 4b arms were marginally below the start at epoch 1)",
    "value": "0.8610 -> 0.8621-0.8660",
    "tex": "$0.8610 \\rightarrow [0.8621, 0.8660]$",
    "source": "COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ad010b1e4bef57c99ae26d920427938f3ce72ce07573a680fe6482f57af28c29; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep5-20261011T013835Z/receipt.json; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep6-20261011T024759Z/receipt.json#.epochs[].eval[].heldout_l6",
@@ -1233,8 +1235,8 @@
   },
   {
    "id": "C140",
-   "statement": "Full-validation L6 (263 contexts) at each arm's last evaluated epoch across sweeps 3-6 ranged from 0.8964 to 0.9022, against 0.8973272 for the frozen v1 parameters; the sweep 4a L6 + 0.2 KL arm moved its 16-context fixed panel from 0.8712 to 0.8649 while its full validation moved from 0.8973 to 0.8977",
-   "value": "[0.8964, 0.9022]; panel 0.8712 -> 0.8649; full 0.8973 -> 0.8977",
+   "statement": "Full-validation L6 (263 contexts) at each arm's last evaluated epoch across sweeps 3-6 ranged from 0.8963 (sweep 6 L6 + 0.2 KL, 0.8963494 at its incomplete epoch 8) to 0.9022, against 0.8973272 for the frozen v1 parameters; the sweep 4a L6 + 0.2 KL arm moved its 16-context fixed panel from 0.8712 to 0.8649 while its full validation moved from 0.8973 to 0.8977",
+   "value": "[0.8963, 0.9022]; panel 0.8712 -> 0.8649; full 0.8973 -> 0.8977",
    "tex": "$[0.8964, 0.9022]$",
    "source": "COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ccdc9e175b57f647ee5bf657e916dba3fb14f2ddf91c49dda323f4b34a66cf8d; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep4a-20261010T225200Z/receipt.json; COORD:lanes/CX-MET/daily-20261011/final/20261011T195459Z-000/inputs/ad010b1e4bef57c99ae26d920427938f3ce72ce07573a680fe6482f57af28c29; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep5-20261011T013835Z/receipt.json; LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep6-20261011T024759Z/receipt.json",
    "sha256": "f8b54e534f2aa74e18787abba7e8045df613ff17b85879f61bbc67a94c27a23f",
@@ -1242,7 +1244,7 @@
   },
   {
    "id": "C141",
-   "statement": "Frozen v1 terminal parameters (ea078456...) score 0.8973272 on the 263-context full validation set when re-evaluated by the R22 harnesses and the paired exporters (v1's own epoch-40 validation record, C26, reads 0.8974925; not reconciled here)",
+   "statement": "Frozen v1 terminal parameters (ea078456..., step 17,773) score 0.8973272 on the 263-context full validation set when re-evaluated by the R22 harnesses and the paired exporters (v1's own epoch-40 validation record, C26, reads 0.8974925 and evaluates the step-17,416 parameters; C181)",
    "value": "0.8973272",
    "tex": "$0.8973$",
    "source": "LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-sweep4a-20261010T225200Z/receipt.json#.initial_eval[0].l6_full_validation.loss; COORD:lanes/G-JUDGE/scratch-verdicts.md:1141",
@@ -1503,7 +1505,7 @@
   },
   {
    "id": "C170",
-   "statement": "Scratch judge J21 (2026-10-13T10:12:25Z), 263 validation contexts and 54 parent clusters, arm minus frozen v1 (lower is better), per-context 95% interval then cluster interval: L6 + 0.2 KL matched control epoch 1 -0.00107 [-0.00335, +0.00121] [-0.00437, +0.00198]; epoch 2 +0.00399 [+0.00119, +0.00679] [+0.000056, +0.00947]; epoch 3 -0.00321 [-0.00600, -0.00042] [-0.00746, +0.00043]; epoch 4 -0.00163 [-0.00414, +0.00088] [-0.00492, +0.00124], bitwise the same checkpoint as sweep 6 L6 + 0.2 KL at 1,408 updates; R25 epoch 1 +0.00012 [-0.00189, +0.00213] [-0.00331, +0.00303]. All six are INCONCLUSIVE because n < 881 (the rule labels LOWER or HIGHER only at n >= 881; a cluster interval never decides). Epoch 2 context interval lies above zero and epoch 3 below zero",
+   "statement": "Scratch judge J21 (2026-10-13T10:12:25Z), 263 validation contexts and 54 parent clusters, arm minus frozen v1 (lower is better), per-context 95% interval then cluster interval: L6 + 0.2 KL matched control epoch 1 (352 updates) -0.00107 [-0.00335, +0.00121] [-0.00437, +0.00198]; epoch 2 (704) +0.00399 [+0.00119, +0.00679] [+0.000056, +0.00947]; epoch 3 (1,056) -0.00321 [-0.00600, -0.00042] [-0.00746, +0.00043]; epoch 4 (1,408) -0.00163 [-0.00414, +0.00088] [-0.00492, +0.00124], bitwise the same checkpoint as sweep 6 L6 + 0.2 KL at 1,408 updates; R25 epoch 1 +0.00012 [-0.00189, +0.00213] [-0.00331, +0.00303]. All six are INCONCLUSIVE because n < 881 (the rule labels LOWER or HIGHER only at n >= 881; a cluster interval never decides). Epoch 2 context interval lies above zero and epoch 3 below zero",
    "value": "6 arms INCONCLUSIVE; d from -0.00321 to +0.00399",
    "tex": "6/6 INCONCLUSIVE",
    "source": "COORD:lanes/G-JUDGE/j21-paired-verdict-98fa563d.json",
@@ -1530,7 +1532,7 @@
   },
   {
    "id": "C173",
-   "statement": "The scratch judge adopted the L6-1148 evaluation set before any paired look on it (2026-10-13T10:43:44Z): the 263 validation contexts (54 parents) plus 885 training contexts from 167 parent lineages held out of every fine-tuning arm, 1,148 contexts in 221 parent clusters, with a parent-cluster bootstrap and Holm correction over three checkpoints. Status ADOPTED_NOT_SCORED. The held-out lineages were in frozen v1's own training, so the set is conservative for a challenger and is not an unseen-family test",
+   "statement": "The scratch judge adopted the L6-1148 evaluation set before any paired look on it (2026-10-13T10:43:44Z): the 263 validation contexts (54 parents) plus 885 training contexts from 167 parent lineages held out of the training of sweeps 4b-6 and of every later fine-tuning run (R25, the matched control, R26, R27; sweeps 3 and 4a had no holdout), 1,148 contexts in 221 parent clusters, with a parent-cluster bootstrap and Holm correction over three checkpoints. Status ADOPTED_NOT_SCORED. The held-out lineages were in frozen v1's own training, so the set is conservative for a challenger and is not an unseen-family test",
    "value": "n = 1,148; 221 clusters; K = 3",
    "tex": "1{,}148",
    "source": "COORD:lanes/G-JUDGE/l6-1148-prereg.json",
@@ -1566,12 +1568,66 @@
   },
   {
    "id": "C177",
-   "statement": "L6-1148 strata, reported and not decisive (cluster intervals, arm minus v1): on the 263 validation contexts (54 clusters) R25 epoch 1 +0.00119 [-0.00073, +0.00294], the L6 + 0.2 KL arm at epoch 4 -0.00070 [-0.00214, +0.00060], R26 epoch 4 -0.00108 [-0.00277, +0.00044], all intervals including zero; on the 885 held-out-lineage training contexts (167 clusters), which frozen v1 trained on and every fine-tune excluded, +0.00628 [+0.00524, +0.00737], +0.00423 [+0.00286, +0.00563] and +0.00463 [+0.00329, +0.00609]",
+   "statement": "L6-1148 strata, reported and not decisive (cluster intervals, arm minus v1): on the 263 validation contexts (54 clusters) R25 epoch 1 +0.00119 [-0.00073, +0.00294], the L6 + 0.2 KL arm at epoch 4 -0.00070 [-0.00214, +0.00060], R26 epoch 4 -0.00108 [-0.00277, +0.00044], all intervals including zero; on the 885 held-out-lineage training contexts (167 clusters), which frozen v1 trained on and all three judged fine-tunes excluded, +0.00628 [+0.00524, +0.00737], +0.00423 [+0.00286, +0.00563] and +0.00463 [+0.00329, +0.00609]",
    "value": "validation about 0; held-out lineages +0.0042 to +0.0063",
    "tex": "$+0.0042$ to $+0.0063$",
    "source": "COORDSNAP:lanes/G-JUDGE/l6-1148-verdict.json#.arms[].stratum_a,.arms[].stratum_h; COORD:lanes/G-JUDGE/l6-1148-verdict.json",
    "sha256": "370b5e09f2c21ccb0c8f3baf5fcfb187b452357edf11ddf7870aa742350f7f11",
    "status": "non-qualifying"
+  },
+  {
+   "id": "C178",
+   "statement": "Corrected 45-fit outcome-predictor comparison on the 7,120-view pool (1,579 datasets, 1,068 lineages; 3 repeats x 5 lineage-grouped folds; paired lineage bootstrap, 2,000 regression and 1,000 AUC resamples), DL ensemble vs LightGBM on raw LV4 features: outcome-score R-squared, row-weighted, 0.651858 vs 0.751845; outcome-score R-squared, equal-lineage, 0.690235 vs 0.784889; beat10 AUC 0.900874 vs 0.903092 (difference -0.002217 [-0.010492, +0.006826])",
+   "value": "row R2 0.652 vs 0.752; equal-lineage R2 0.690 vs 0.785; beat10 AUC 0.901 vs 0.903",
+   "tex": "$0.652$ vs.\\ $0.752$; $0.690$ vs.\\ $0.785$; AUC $0.901$ vs.\\ $0.903$",
+   "source": "PROBE:ofm-20261008/dashboard_codex/DL_wave4_full_comparison.json#.ensemble_delta_vs_lgb; PROBE:ofm-20261008/dashboard_codex/DL_wave4_full_comparison.md:5-11",
+   "sha256": "439fe74961661002ed01166ea253a6977dc7c16f562cee389bb1583c02824660",
+   "status": "established"
+  },
+  {
+   "id": "C179",
+   "statement": "LightGBM yardstick (bag 3) on the original 7,087-view data_v1 pool, per repeat r0 / r1 / r2: outcome-score R-squared 0.7176 / 0.7603 / 0.7450 and beat10 AUC 0.9031 / 0.9038 / 0.9031. A different pool from C178 and from the 5,363-context clean-pool reference (LV4 + LightGBM bag 5: R-squared 0.785, beat10 AUC 0.911), whose 0.785 is a different pool and weighting from C178's equal-lineage 0.785",
+   "value": "0.718 / 0.760 / 0.745; AUC 0.903 / 0.904 / 0.903",
+   "tex": "$0.718$; AUC $0.903$",
+   "source": "PROBE:ofm-20261008/figs/dl_waves/confirm_report.json#.lgb; PROBE:ofm-20261008/ENCODER_RESEARCH_MASTER_SUMMARY.md:34,124-134,271-279",
+   "sha256": "56675e9ee1a2dc96defe5a07f99aed47bf3368d76cc141ca77879a8a625806bc",
+   "status": "established"
+  },
+  {
+   "id": "C180",
+   "statement": "Owner one-holdout ruling (2026-10-07): the sealed families are the single holdout. The v1 corpus authority accepts only the one-holdout role map (jope.dltrain-one-holdout-role-map/v1) and the target built after the training-exclusion layers, which applies the sealed and rights rules; rows held out under earlier decisions are training rows under that role authority",
+   "value": "one holdout: sealed families",
+   "tex": "one holdout",
+   "source": "REPO:deploy/dl-flywheel/pipelines/continuous/native_corpus_authority.py:25,34-41; CANON:DEEP_LEARNING_AGENT_CHAT.md:9860 (2026-10-07T23:29Z: the create-only ONE-HOLDOUT role map is written)",
+   "sha256": "681dcefb572b904da370e31389031c3f6188366216e4a2c4b121dfa0ebdac0d9",
+   "status": "established"
+  },
+  {
+   "id": "C181",
+   "statement": "v1 epoch 40 ended at absolute step 17,416 (batches 16,980-17,416) and epoch 41 ran 357 updates (17,417-17,773) before the stop; the runner writes validation-original-epoch-N.json right after the update that completes epoch N, so the epoch-40 record (0.8974925, C26) evaluates the step-17,416 parameters, while the re-evaluated 0.8973272 (C141) is the terminal step 17,773, 357 updates later",
+   "value": "17,416 vs 17,773; 357 updates",
+   "tex": "$17{,}416$ vs.\\ $17{,}773$",
+   "source": "CAPTURE:copy/training/optimizer-history.jsonl (rows with epoch 40 and 41); REPO:deploy/dl-flywheel/pipelines/continuous/continuous_runner.py:164-168",
+   "sha256": "e5e26ce3658ccf9e042b7c0a89c8c8969144485f603fe8687a7ca934c445b591",
+   "status": "established"
+  },
+  {
+   "id": "C182",
+   "statement": "After sweeps 3-6, four further scratch training runs (the L6 + 0.2 KL matched control r25control with 1,408 updates, R25 with 352, R26 with 1,408 and R27 with 1,408) and five judge records on 2026-10-13 (sweep 6 at 04:47:23Z; the R23 epoch-4 look at 09:00:45Z; R25 epoch 1 at 09:36:04Z; J21 at 10:12:25Z, which re-presents earlier rows and is not an extra R25 look; L6-1148 at 11:38:25Z)",
+   "value": "4 runs; 5 judge records",
+   "tex": "four runs; five judge records",
+   "source": "LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-r25control-20261013T083136Z/receipt.json; COORD:lanes/G-JUDGE/sweep6-verdict-8b7aaead.json; COORD:lanes/G-JUDGE/r23e4-v1-verdict-de48c164.json; COORD:lanes/G-JUDGE/r25-e1-verdict-de66cb6a.json; COORD:lanes/G-JUDGE/j21-paired-verdict-98fa563d.json; COORD:lanes/G-JUDGE/l6-1148-verdict.json",
+   "sha256": "37d57d36b63fbf6aab68076fd7d7f5e6466cbbaf77f5a01b2dc1f6abb12ee7ea",
+   "status": "established"
+  },
+  {
+   "id": "C183",
+   "statement": "L6-1148 numerator consistency: 0 failures in 6,888 checks per checkpoint (1,148 contexts x 6 terms) under amendment rule A (relative error <= 1e-5 or absolute difference <= 1e-7), registered at 2026-10-13T11:20:58Z, before the look; under the relative rule alone 4 checks failed, all feasibility terms, with absolute differences 1.32e-8 to 1.33e-8",
+   "value": "6,888 per checkpoint; 4 relative-only failures (feas, 1.3e-8)",
+   "tex": "$6{,}888$",
+   "source": "COORD:lanes/G-JUDGE/l6-1148-prereg-amendment-abs.json; COORD:lanes/G-JUDGE/l6-1148-consistency-selfcheck.json#.relative_failures; COORD:lanes/G-JUDGE/l6-1148-verdict.json#.numerator_consistency",
+   "sha256": "57d9dbf06b4ee346dd500305a0407192b7aaac813834418191f2d2c695f6e831",
+   "status": "established"
   }
  ]
 }
