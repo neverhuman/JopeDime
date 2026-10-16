@@ -992,6 +992,29 @@ fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior() {
         (s_better / c_better as f64) > (s_worse / c_worse as f64) + 0.4,
         "expected continuous S3 score quality to rank rmse_ratio=0.20 above rmse_ratio=0.80"
     );
+    let mut non_ratio_row = s3_rows[0].clone();
+    non_ratio_row.context_sha256 = Some(train_pool_for_fold0.context_id.clone());
+    non_ratio_row.program_sha = train_pool_for_fold0.members[0].program_sha256.clone();
+    non_ratio_row.score_name = Some("validation_rmse".into());
+    non_ratio_row.score = Some(3.0);
+    non_ratio_row.rank_ctx = Some(2);
+    let mut unknown_dir_row = non_ratio_row.clone();
+    unknown_dir_row.program_sha = train_pool_for_fold0.members[1].program_sha256.clone();
+    unknown_dir_row.score_name = Some("unregistered_metric".into());
+    unknown_dir_row.score = Some(3.0);
+    unknown_dir_row.rank_ctx = Some(2);
+    let (edge_priors, _) =
+        build_fold_s3_priors(&pools, &fw_cfg.eval, &[non_ratio_row, unknown_dir_row]).unwrap();
+    assert!(
+        (edge_priors[0].tot_stats[&train_pool_for_fold0.members[0].program_sha256].0 - 0.25).abs()
+            < 1e-12,
+        "expected unbounded LowerIsBetter validation_rmse=3.0 to map to 1/(1+3)=0.25 without collapsing to 0"
+    );
+    assert!(
+        (edge_priors[0].tot_stats[&train_pool_for_fold0.members[1].program_sha256].0 - 0.5).abs()
+            < 1e-12,
+        "expected unknown score_name to fall back to 1/rank_ctx=0.5"
+    );
 
     // Perturb all outcomes in held-out fold 0 (`fold_of == 0`) and verify outer fold 0's
     // training acquisition rows (`run_id == "flywheel-r{r:02}-fold0"`) are 100% identical across all rounds.

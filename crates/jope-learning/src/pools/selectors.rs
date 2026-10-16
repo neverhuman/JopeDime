@@ -537,9 +537,7 @@ pub struct ContextualSurrogateQHat<'a> {
 pub const MAX_SURROGATE_DESIGN_DIM: usize = 512;
 pub const MAX_BILINEAR_CTX_DIM: usize = 8;
 pub const MAX_BILINEAR_PROG_DIM: usize = 8;
-const SURROGATE_BASE_FEATURES: usize = 12;
-const SOS_CALIBRATION_ITERS: usize = 3;
-const SOS_OPPONENT_WEIGHT: f64 = 0.4;
+const SURROGATE_BASE_FEATURES: usize = 13;
 
 impl<'a> ContextualSurrogateQHat<'a> {
     /// Raw unprojected bilinear design dimension (`2 + d_ctx + d_prog + d_ctx * d_prog`).
@@ -566,42 +564,61 @@ impl<'a> ContextualSurrogateQHat<'a> {
             .and_then(|v| v.checked_add(cross))
     }
 
-    /// Iterative leave-one-program-out Strength-of-Schedule (`SoS`) sub-pool target calibration.
+    /// Leave-one-parent-cluster-out Strength-of-Schedule (`SoS`) context-difficulty calibration.
     ///
-    /// Adjusts within-pool rank targets `t(c, p)` for the average global quality of the opponent
-    /// programs in pool `c` (`c \ {p}`), correcting the downward rank compression suffered by
-    /// elite programs when active self-play concentrates strong programs into the same sub-pools.
-    fn compute_sos_targets(raw_targets: &[(&'a Pool, Vec<f64>)]) -> Vec<Vec<f64>> {
-        let mut sos_targets: Vec<Vec<f64>> = raw_targets.iter().map(|(_, t)| t.clone()).collect();
-        for _ in 0..SOS_CALIBRATION_ITERS {
-            let mut tot: BTreeMap<&str, (f64, usize)> = BTreeMap::new();
-            for ((pool, _), st) in raw_targets.iter().zip(&sos_targets) {
-                for (m, &t) in pool.members.iter().zip(st) {
-                    let entry = tot.entry(m.program_sha256.as_str()).or_insert((0.0, 0));
-                    entry.0 += t;
-                    entry.1 += 1;
-                }
-            }
-            let mu: BTreeMap<&str, f64> = tot
-                .into_iter()
-                .map(|(sha, (s, c))| (sha, (s + 1.0) / (c as f64 + 2.0)))
-                .collect();
-            for ((pool, base_t), st) in raw_targets.iter().zip(&mut sos_targets) {
-                let nm = pool.members.len();
-                let msum: f64 = pool
-                    .members
-                    .iter()
-                    .map(|m| mu.get(m.program_sha256.as_str()).copied().unwrap_or(0.5))
-                    .sum();
-                let opp_denom = nm.saturating_sub(1).max(1) as f64;
-                for ((m, &bt), dst) in pool.members.iter().zip(base_t).zip(st.iter_mut()) {
-                    let self_mu = mu.get(m.program_sha256.as_str()).copied().unwrap_or(0.5);
-                    let opp_mean = (msum - self_mu) / opp_denom;
-                    *dst = (bt + SOS_OPPONENT_WEIGHT * (opp_mean - 0.5)).clamp(0.0, 1.0);
-                }
+    /// Estimates each context pool's opponent difficulty offset from out-of-parent-cluster program
+    /// rank means shrunk toward `0.5` with `prior_weight`, shifting all members in context `c` by
+    /// the same context-level difficulty offset so within-pool winner-loser gaps are preserved.
+    fn compute_sos_targets(
+        raw_targets: &[(&'a Pool, Vec<f64>)],
+        prior_weight: f64,
+    ) -> Vec<Vec<f64>> {
+        let mut tot: BTreeMap<&str, (f64, usize)> = BTreeMap::new();
+        let mut par: BTreeMap<(&str, &str), (f64, usize)> = BTreeMap::new();
+        for (pool, targets) in raw_targets {
+            for (m, &t) in pool.members.iter().zip(targets) {
+                let te = tot.entry(m.program_sha256.as_str()).or_insert((0.0, 0));
+                te.0 += t;
+                te.1 += 1;
+                let pe = par
+                    .entry((pool.parent_id.as_str(), m.program_sha256.as_str()))
+                    .or_insert((0.0, 0));
+                pe.0 += t;
+                pe.1 += 1;
             }
         }
-        sos_targets
+        raw_targets
+            .iter()
+            .map(|(pool, base_t)| {
+                let nm = pool.members.len();
+                if nm == 0 {
+                    return Vec::new();
+                }
+                let diff_sum: f64 = pool
+                    .members
+                    .iter()
+                    .map(|m| {
+                        let (ts, tc) = tot
+                            .get(m.program_sha256.as_str())
+                            .copied()
+                            .unwrap_or((0.0, 0));
+                        let (ps, pc) = par
+                            .get(&(pool.parent_id.as_str(), m.program_sha256.as_str()))
+                            .copied()
+                            .unwrap_or((0.0, 0));
+                        let s_p = ts - ps;
+                        let c_p = tc.saturating_sub(pc);
+                        let mu_p = (s_p + 0.5 * prior_weight) / (c_p as f64 + prior_weight);
+                        mu_p - 0.5
+                    })
+                    .sum();
+                let ctx_offset = diff_sum / (nm as f64);
+                base_t
+                    .iter()
+                    .map(|&bt| (bt + ctx_offset).clamp(0.0, 1.0))
+                    .collect()
+            })
+            .collect()
     }
 
     fn select_top_variance_coords(
@@ -645,6 +662,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         r_s: f64,
         prior_s: f64,
         sos_prior_s: f64,
+        s3_prior: f64,
         knn_s: f64,
         sos_knn_s: f64,
         eb_prior: f64,
@@ -659,6 +677,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         x.push(r_s);
         x.push(prior_s);
         x.push(sos_prior_s);
+        x.push(s3_prior);
         x.push(knn_s);
         x.push(sos_knn_s);
         x.push(eb_prior);
@@ -666,7 +685,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         x.push(eb_knn);
         x.push(eb_sos_knn);
         x.push(nov);
-        x.push(nov * r_s);
+        x.push(nov * (r_s - 0.5));
         x.extend_from_slice(zt);
         x.extend_from_slice(pt);
         for &zi in zt {
@@ -744,18 +763,14 @@ impl<'a> ContextualSurrogateQHat<'a> {
                     .copied()
                     .unwrap_or((0.0, 0));
                 let sc = ec.saturating_sub(epc);
-                if sc > 0 {
-                    let sm = ((es - eps) / (sc as f64)).clamp(0.0, 1.0);
-                    0.5 + 0.25 * (sm - 0.5)
-                } else {
-                    0.5
-                }
+                let ss = (es - eps).clamp(0.0, sc as f64);
+                (ss + 0.5 * self.prior_weight) / (sc as f64 + self.prior_weight)
             } else {
                 0.5
             };
-            let prior_s = (s_p + s3_prior * self.prior_weight) / (c_p as f64 + self.prior_weight);
+            let prior_s = (s_p + 0.5 * self.prior_weight) / (c_p as f64 + self.prior_weight);
             let sos_prior_s =
-                (sos_s_p + s3_prior * self.prior_weight) / (c_p as f64 + self.prior_weight);
+                (sos_s_p + 0.5 * self.prior_weight) / (c_p as f64 + self.prior_weight);
             let eb_prior = (s_p + self.prior_weight * r_s) / (c_p as f64 + self.prior_weight);
             let eb_sos_prior =
                 (sos_s_p + self.prior_weight * r_s) / (c_p as f64 + self.prior_weight);
@@ -778,8 +793,9 @@ impl<'a> ContextualSurrogateQHat<'a> {
             } else {
                 sos_prior_s
             };
-            let eb_knn = (num + 1.5 * eb_prior) / (den + 1.5);
-            let eb_sos_knn = (sos_num + 1.5 * eb_sos_prior) / (den + 1.5);
+            let eb_knn = (num + self.prior_weight * eb_prior) / (den + self.prior_weight);
+            let eb_sos_knn =
+                (sos_num + self.prior_weight * eb_sos_prior) / (den + self.prior_weight);
             let nov = 1.0 / (1.0 + c_p as f64);
             rows.push(Self::design_row(
                 &zt,
@@ -787,6 +803,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
                 r_s,
                 prior_s,
                 sos_prior_s,
+                s3_prior,
                 knn_s,
                 sos_knn_s,
                 eb_prior,
@@ -906,7 +923,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
             "contextual surrogate q_hat needs training rows"
         );
 
-        let sos_all = Self::compute_sos_targets(&raw_train_targets);
+        let sos_all = Self::compute_sos_targets(&raw_train_targets, prior_weight);
         let mut train_targets = Vec::with_capacity(train.len());
         let mut tot_stats: BTreeMap<String, (f64, usize)> = BTreeMap::new();
         let mut parent_stats: BTreeMap<(String, String), (f64, usize)> = BTreeMap::new();
@@ -964,35 +981,131 @@ impl<'a> ContextualSurrogateQHat<'a> {
         };
 
         let (mut xtx, mut xty) = (vec![0.0; d * d], vec![0.0; d]);
+        let mut fold_xtx = vec![vec![0.0; d * d]; INNER_RIDGE_FOLDS];
+        let mut fold_xty = vec![vec![0.0; d]; INNER_RIDGE_FOLDS];
+        let mut fold_pool_counts = [0usize; INNER_RIDGE_FOLDS];
+        let mut pool_design_cache: Vec<(usize, Vec<Vec<f64>>)> =
+            Vec::with_capacity(model.train_targets.len());
         let mut rows = 0usize;
         for (pool_idx, (pool, _targets, sos_targets)) in model.train_targets.iter().enumerate() {
             let view = pool.view();
-            let oof_ridge = oof_ridges[inner_folds[pool_idx]]
-                .as_ref()
-                .unwrap_or(&model.ridge);
+            let f = inner_folds[pool_idx];
+            fold_pool_counts[f] += 1;
+            let oof_ridge = oof_ridges[f].as_ref().unwrap_or(&model.ridge);
             let ridge_scores = oof_ridge.scores(&view)?;
             let design_rows = model.view_design_rows_with_ridge(&view, &ridge_scores)?;
             for (x, &t_sos) in design_rows.iter().zip(sos_targets) {
                 for i in 0..d {
-                    xty[i] += x[i] * t_sos;
+                    let xit = x[i] * t_sos;
+                    xty[i] += xit;
+                    fold_xty[f][i] += xit;
                     for j in 0..d {
-                        xtx[i * d + j] += x[i] * x[j];
+                        let xixj = x[i] * x[j];
+                        xtx[i * d + j] += xixj;
+                        fold_xtx[f][i * d + j] += xixj;
                     }
                 }
                 rows += 1;
             }
+            pool_design_cache.push((f, design_rows));
         }
         ensure!(rows > 0, "contextual surrogate q_hat needs training rows");
-        let sample_scale = (rows as f64 / 9000.0).clamp(0.01, 1.09);
         let lin_terms = (model.ctx_proj.len() + model.prog_proj.len()).max(1);
         let cross_terms = (model.ctx_proj.len() * model.prog_proj.len()).max(1);
-        let lin_proj_lambda = lambda * (lin_terms as f64 * 6.0 * sample_scale).max(1.0);
-        let bilinear_lambda = lambda * (cross_terms as f64 * 2.5 * sample_scale).max(1.0);
-        for i in 1..SURROGATE_BASE_FEATURES.min(d) {
-            xtx[i * d + i] += lambda;
-        }
         let lin_end =
             (SURROGATE_BASE_FEATURES + model.ctx_proj.len() + model.prog_proj.len()).min(d);
+
+        // Select summary-block and projected-block ridge multipliers strictly via 5-fold
+        // parent-grouped inner cross-validation on `train` (no outer-fold tuning).
+        let valid_inner_folds: Vec<usize> = (0..INNER_RIDGE_FOLDS)
+            .filter(|&f| fold_pool_counts[f] > 0 && fold_pool_counts[f] < model.train_targets.len())
+            .collect();
+        let (best_base_mult, best_proj_mult) = if valid_inner_folds.len() >= 2 {
+            const BASE_MULTS: [f64; 4] = [1.0, 10.0, 100.0, 1000.0];
+            const PROJ_MULTS: [f64; 6] = [1.0, 10.0, 100.0, 1000.0, 10_000.0, 100_000.0];
+            let mut best_pair = (1.0, 100.0);
+            let mut best_loss = f64::INFINITY;
+            for &bm in &BASE_MULTS {
+                for &pm in &PROJ_MULTS {
+                    if pm < bm {
+                        continue;
+                    }
+                    let base_l = lambda * bm;
+                    let lin_l = lambda * pm * (lin_terms as f64);
+                    let bil_l = lambda * pm * (cross_terms as f64);
+                    let mut fold_ws: Vec<Option<Vec<f64>>> = vec![None; INNER_RIDGE_FOLDS];
+                    let mut ok = true;
+                    for &f in &valid_inner_folds {
+                        let mut f_xtx: Vec<f64> =
+                            xtx.iter().zip(&fold_xtx[f]).map(|(&a, &b)| a - b).collect();
+                        let f_xty: Vec<f64> =
+                            xty.iter().zip(&fold_xty[f]).map(|(&a, &b)| a - b).collect();
+                        f_xtx[0] += 1e-12;
+                        for i in 1..SURROGATE_BASE_FEATURES.min(d) {
+                            f_xtx[i * d + i] += base_l;
+                        }
+                        for i in SURROGATE_BASE_FEATURES..lin_end {
+                            f_xtx[i * d + i] += lin_l;
+                        }
+                        for i in lin_end..d {
+                            f_xtx[i * d + i] += bil_l;
+                        }
+                        match cholesky_solve(f_xtx, f_xty, d) {
+                            Ok(w) => fold_ws[f] = Some(w),
+                            Err(_) => {
+                                ok = false;
+                                break;
+                            }
+                        }
+                    }
+                    if !ok {
+                        continue;
+                    }
+                    // Evaluate within-pool demeaned squared ranking error across held-out inner folds.
+                    let mut sq_err = 0.0;
+                    let mut count = 0usize;
+                    for ((f, drows), (_pool, raw_t, _sos_t)) in
+                        pool_design_cache.iter().zip(&model.train_targets)
+                    {
+                        let Some(w) = fold_ws[*f].as_ref() else {
+                            continue;
+                        };
+                        if drows.is_empty() {
+                            continue;
+                        }
+                        let preds: Vec<f64> = drows
+                            .iter()
+                            .map(|x| x.iter().zip(w).map(|(xi, wi)| xi * wi).sum::<f64>())
+                            .collect();
+                        let n_m = preds.len() as f64;
+                        let p_mean = preds.iter().sum::<f64>() / n_m;
+                        let t_mean = raw_t.iter().sum::<f64>() / n_m;
+                        for (&p_i, &t_i) in preds.iter().zip(raw_t) {
+                            let diff = (p_i - p_mean) - (t_i - t_mean);
+                            sq_err += diff * diff;
+                            count += 1;
+                        }
+                    }
+                    if count > 0 {
+                        let loss = sq_err / (count as f64);
+                        if loss < best_loss {
+                            best_loss = loss;
+                            best_pair = (bm, pm);
+                        }
+                    }
+                }
+            }
+            best_pair
+        } else {
+            (1.0, 1.0)
+        };
+
+        let base_lambda = lambda * best_base_mult;
+        let lin_proj_lambda = lambda * best_proj_mult * (lin_terms as f64);
+        let bilinear_lambda = lambda * best_proj_mult * (cross_terms as f64);
+        for i in 1..SURROGATE_BASE_FEATURES.min(d) {
+            xtx[i * d + i] += base_lambda;
+        }
         for i in SURROGATE_BASE_FEATURES..lin_end {
             xtx[i * d + i] += lin_proj_lambda;
         }
@@ -1000,13 +1113,6 @@ impl<'a> ContextualSurrogateQHat<'a> {
             xtx[i * d + i] += bilinear_lambda;
         }
         xtx[0] += 1e-12;
-        if d >= SURROGATE_BASE_FEATURES {
-            // Empirical-Bayes novelty-gated ridge prior anchor w_0 on nov * (r_s - 0.60):
-            // penalizes low-count candidates with mediocre ridge predictions while rewarding
-            // unseen candidates with strong ridge predictions.
-            xty[10] += lambda * sample_scale * (-0.34 * 0.60);
-            xty[11] += lambda * sample_scale * 0.34;
-        }
         model.weights = cholesky_solve(xtx, xty, d)?;
         Ok(model)
     }
@@ -1021,7 +1127,7 @@ impl Selector for ContextualSurrogateQHat<'_> {
     }
     fn rule(&self) -> String {
         format!(
-            "contextual_surrogate_qhat/v2: internal cross-fitted LOPO SoS-debiased Empirical-Bayes + compact bilinear context x program ridge (lambda={}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
+            "contextual_surrogate_qhat/v2: inner-CV LOPO SoS-debiased Empirical-Bayes + compact bilinear context x program ridge (lambda={}, d_ctx={}->{}, d_prog={}->{}) + kNN/ridge stack (shadow-only candidate; no multiplicity adjustment)",
             self.lambda,
             self.context_features.dim,
             self.ctx_proj.len(),
@@ -1235,13 +1341,36 @@ mod tests {
         ];
         let raw_sos: Vec<(&Pool, Vec<f64>)> =
             sos_pools.iter().map(|p| (p, rank_targets(p))).collect();
-        let calibrated = ContextualSurrogateQHat::compute_sos_targets(&raw_sos);
+        let calibrated = ContextualSurrogateQHat::compute_sos_targets(&raw_sos, 2.0);
         assert!(
             calibrated[2][1] > 0.5 && calibrated[3][1] < 0.5 && calibrated[2][1] > calibrated[3][1],
             "expected SoS calibration to boost target against elite opponent ({}) above weak opponent ({})",
             calibrated[2][1],
             calibrated[3][1]
         );
+        assert!(
+            (calibrated[2][0] - calibrated[2][1]).abs() < 1e-12,
+            "expected equal-q members in the same context pool to retain identical calibrated targets"
+        );
+        let single_pool = Pool {
+            schema: POOL_SCHEMA.into(),
+            context_id: mk_hex(14),
+            parent_id: "sp5".into(),
+            role: "train".into(),
+            protocol_sha256: mk_hex(0xaa),
+            incumbent_q: Some(0.0),
+            members: vec![Member {
+                program_sha256: mk_hex(0x99),
+                status: Status::Complete,
+                q: Some(0.5),
+                tokens: None,
+            }],
+        };
+        let single_cal = ContextualSurrogateQHat::compute_sos_targets(
+            &[(&single_pool, rank_targets(&single_pool))],
+            2.0,
+        );
+        assert_eq!(single_cal, vec![vec![0.5]]);
     }
 
     #[test]
