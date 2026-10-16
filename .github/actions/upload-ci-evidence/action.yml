@@ -22,9 +22,9 @@ runs:
         NAME: ${{ inputs.name }}
         SRC: ${{ inputs.path }}
       run: |
-        # Build forbidden expression marker without contiguous ${ + { for Actions templating.
-        needle="${"
-        needle+="{"
+        # Reject absolute / expression-shaped paths; single-quote needle for bash + Actions.
+        needle='${'
+        needle+='{'
         case "$SRC" in /*|*"$needle"*) echo "evidence path must be workspace-relative: $SRC" >&2; exit 1 ;; esac
         bash deploy/ci/retain-local-evidence.sh "$NAME" "$SRC"
     - name: Publication attempt 1
