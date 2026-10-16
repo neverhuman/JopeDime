@@ -65,7 +65,7 @@
   {
    "id": "C04",
    "statement": "Input normalizer: means and scales frozen from training contexts only, zero scales set to one, standardized inputs clipped at +/-10",
-   "value": "clip +/-10",
+   "value": "clip [-10, 10]",
    "tex": "$\\pm 10$",
    "source": "REPO:deploy/dl-flywheel/docs/model.md:31",
    "sha256": "c5b805e327f763d9aa56b8a12dda7d1e761b0589f2575edd3f66c31fe7157e03",
@@ -858,7 +858,7 @@
    "id": "C93",
    "statement": "Share of proposals on original (native) contexts: about 98.5% of outbox rows, the rest on derived variant contexts; a stored context's base window rotates through about 1,248 measured rows",
    "value": "~98.5% native; ~1,248 rows",
-   "tex": "${\\approx}98\\%$",
+   "tex": "${\\approx}98.5\\%$",
    "source": "PLAN:CLAUDE_PLAN_v2_0.md:39,43,112",
    "sha256": "2b2f33e765b12b70a6f61988ae7b3c9b7fbee452ebcb7e4e006f6167ebed7db4",
    "status": "preliminary"
@@ -1487,7 +1487,7 @@
   },
   {
    "id": "C168",
-   "statement": "Pilot coverage: 53 completed arm receipts and 18 interrupted arms; all three arms of six contexts are incomplete with unknown outcomes; no retry, extension or replacement. H1 remains unestablished and qualified rewards remain zero The coordinator-only paired summary covers 17 of the 24 planned contexts after excluding context 00 and the six incomplete contexts; this is a complete-case, non-qualifying readout.",
+   "statement": "Pilot coverage: 53 completed arm receipts and 18 interrupted arms; all three arms of six contexts are incomplete with unknown outcomes; no retry, extension or replacement. H1 remains unestablished and qualified rewards remain zero. The coordinator-only paired summary covers 17 of the 24 planned contexts after excluding context 00 and the six incomplete contexts; this is a complete-case, non-qualifying readout.",
    "value": "53 completed, 18 interrupted, 6 contexts incomplete; coordinator-only paired summary 17/24 contexts (complete-case)",
    "tex": "17 of 24",
    "source": "MAIN307:docs/internal/clover/GP_EXPANSION_STUDY.md:89-91,213-224,251-254",

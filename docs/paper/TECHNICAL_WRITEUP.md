@@ -493,7 +493,7 @@ The adopted manifest is the variant manifest with only its snapshot hash replace
 
 ### 6.4 The native-result overlay and caller-written acceptance
 
-About 98% of proposals fall on original (native) contexts [C93], whose stored training data cannot be rewritten. The **overlay** turns verified native results into append-only, train-only packets.
+About 98.5% of proposals fall on original (native) contexts [C93], whose stored training data cannot be rewritten. The **overlay** turns verified native results into append-only, train-only packets.
 
 **Per-row verification.**
 1. Emission identity, re-derived from the stored emission bytes.
