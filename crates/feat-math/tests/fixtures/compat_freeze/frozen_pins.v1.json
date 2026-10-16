@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.frozen-pins.v1",
-  "generated_at_sha": "629e69d865a674222e00224cebf45c1ffddc8dea",
+  "generated_at_sha": "6b7e68c9585349f0e6204c6701dccb07e7ae7a40",
   "files": [
     {
       "path": "crates/jope-engine/assets/grammar/featmath.json",
@@ -44,11 +44,11 @@
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.py.sha256",
-      "sha256": "252ec83581b8a4f2437805627d6d9daa71c533cec4c4cea3776fd9a8c3d2523e"
+      "sha256": "8b13ed5dd7d4b4dcbf9531227f6258c932ec9876357697cd6b1f89f39e327cfb"
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.rs.sha256",
-      "sha256": "2b002d9ff4bda876e8f1545b594e67d2f467ae25f1fd7c690504ebd5b5b89271"
+      "sha256": "11e33520dca662d49537b0ceb154c0b0eaf07ad65e5aa6775835cc04afd2d9f4"
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.targets.sha256",
@@ -56,7 +56,7 @@
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.cpp.sha256",
-      "sha256": "02d63aaf80c760abc27b29b047037729be393a77fdabd3863d54e9b77027a340"
+      "sha256": "a7426d0535e3055e4ba2b6b3c4767e407f2e8ddfe89efaa33a89d6bf6def3229"
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.dsl",
@@ -64,7 +64,7 @@
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.js.sha256",
-      "sha256": "fe08ba16f04cb504f50d4eb44c9f32976ef3ec2385ced16e35ec572f0a444d3f"
+      "sha256": "5929cab11d3e5e12c6328b18bdd994da404a18e4163260c6056253e07b6a9d45"
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.predictions.sha256",
@@ -72,11 +72,11 @@
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256",
-      "sha256": "21c1b8391df4566c3aaf2795315388cdb5f29ea500bf1f9a49010045854cc085"
+      "sha256": "da0236aa8353603b34b520ab7dd64c8659e562aae64da5520e8ac0f91845a2fe"
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256",
-      "sha256": "8f772f009d0cbab5ea6c25e1eaaaece97ca2a3a92eeaacbcd4c59e8d7d9397cd"
+      "sha256": "7a5a976ffd982d92a353106ed3251726b90e56229e8d3a2ec18e901d7948e089"
     },
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256",

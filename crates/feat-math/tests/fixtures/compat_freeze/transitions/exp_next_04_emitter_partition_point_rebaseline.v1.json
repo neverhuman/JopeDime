@@ -1,0 +1,25 @@
+{
+  "schema": "feat-math.compat-freeze.emitter-rebaseline.v1",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/emitted_bytes.v1.json",
+      "before": "6d7c48c21f9d331f3a1e3e73d7230bae507bfa2e10d18a271b1a1ad91515e0c1",
+      "after": "04768df2692b8e61b4332a51ff0fe1993408bff219dfdd6b16da5ef97a1c1a51"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "0a0e07c4bb9a8f45ba0d65708d7ca9777084b5f5b8ebcc376590d116830058d8",
+      "after": "e2476e0d4f7cccbe25757481400d04a432238b2025846c1b930adc5908cb26dc"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json",
+      "before": "1b565534581afeea66411d90929e9f554c55b6e440ebea086742e89845a47443",
+      "after": "671144e23b3eb1d9d1f6005ca9bf27c821882fa9d8f622e10bb84f9ea0d3c9b5"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/generator_streams.v1.json",
+      "before": "9ce8cb7034ed4ec9bf39e2057a3a673cd3bc4039d3b9bb4c104c81561be541a0",
+      "after": "0f8aafe264654643912c0970a19331f495f99f9cfd1636419ca36b6e4d228635"
+    }
+  ]
+}
