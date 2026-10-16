@@ -353,8 +353,8 @@ class LocalRetentionTests(unittest.TestCase):
             root.write_text('not a directory\n')
         env = dict(os.environ, JOPE_LOCAL_EVIDENCE_ROOT=str(root),
                    GITHUB_REPOSITORY='neverhuman/JopeDime',
-                   JOPE_EVIDENCE_S3_URI='', GITHUB_STEP_SUMMARY='',
-                   TMPDIR=str(base))
+                   JOPE_EVIDENCE_S3_URI='', GITHUB_STEP_SUMMARY=str(base/'summary.md'),
+                   JOPE_LOCAL_EVIDENCE_DAYS='14', TMPDIR=str(base))
         result = subprocess.run(
             ['bash', str(ROOT/'deploy/ci/retain-local-evidence.sh'), 'fixture', str(source)],
             cwd=ROOT, env=env, capture_output=True, text=True)
@@ -373,8 +373,26 @@ class LocalRetentionTests(unittest.TestCase):
         scratch = ROOT/'target'/'tmp'
         scratch.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix='retention-ok-', dir=scratch) as name:
-            result, source, destination = self.retain(Path(name))
+            import hashlib
+            import os
+            import time
+
+            base = Path(name)
+            previous = base/'retained'/'neverhuman_JopeDime'/'previous-qualified-run'
+            previous.mkdir(parents=True)
+            data = b'prior qualified evidence\n'
+            manifest = (hashlib.sha256(data).hexdigest() + '  receipt.json\n').encode()
+            (previous/'receipt.json').write_bytes(data)
+            (previous/'MANIFEST.sha256').write_bytes(manifest)
+            old_time = time.time() - 40 * 86400
+            os.utime(previous, (old_time, old_time))
+
+            result, source, destination = self.retain(base)
             self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(data, (previous/'receipt.json').read_bytes())
+            self.assertEqual(manifest, (previous/'MANIFEST.sha256').read_bytes())
+            self.assertIn('retained evidence candidate older than 14d:', result.stdout)
+            self.assertIn(str(previous), (base/'summary.md').read_text())
             self.assertEqual((source/'receipt.json').read_bytes(),
                              (destination/'receipt.json').read_bytes())
             verified = subprocess.run(['sha256sum', '--check', 'MANIFEST.sha256'],
