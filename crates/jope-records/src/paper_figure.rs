@@ -10,8 +10,7 @@
 //! 2. the plateau recomputed from the data (its band, its length and the epoch it starts at) is
 //!    not C27's value;
 //! 3. the epoch-2, best and last losses recomputed from the data are not C26's value;
-//! 4. C76's value or lineage count (or C190's shadow-pool-v2 pairwise values when present) cannot
-//!    be read;
+//! 4. C76's value or lineage count, or C190's shadow-pool-v2 pairwise values, cannot be read;
 //! 5. the committed SVG is not the rendering of the data and the ledger
 //!    (`jope-records paper-trace --write-figure` rewrites it), or the write-up does not show it.
 
@@ -60,7 +59,7 @@ struct Surrogate {
 }
 
 /// What the figure draws: every epoch's loss, the plateau band, C76 ranking accuracy, and
-/// optional C190 shadow-pool surrogate progression.
+/// C190 shadow-pool surrogate progression (non-qualifying).
 #[derive(Debug)]
 pub struct Figure {
     epochs: Vec<Epoch>,
@@ -231,7 +230,7 @@ const BOTTOM: f64 = 260.0;
 const TAKEAWAY: &str =
     "Why it matters: the first generation stopped improving, and its outcome head ranked new programs at chance.";
 const TAKEAWAY_SURROGATE: &str =
-    "Why it matters: v1 plateaued with its outcome head at chance (0.506); SoS surrogate distillation lifts ranking (0.634 to 0.680).";
+    "Why it matters: v1 plateaued with fresh-program q-hat at chance (0.506); shadow surrogate rose 0.634 to 0.680 (non-qualifying).";
 const INK: &str = "#222222";
 const AXIS: &str = "#555555";
 const LINE: &str = "#1f4e79";
@@ -371,17 +370,17 @@ pub fn render(f: &Figure) -> String {
         );
     }
 
-    // (b) Pairwise ranking accuracy on freshly executed programs.
+    // (b) Pairwise ranking: v1 outcome head on fresh programs vs. shadow-pool surrogate.
     if let Some(s) = &f.surrogate {
         let (xs, ys) = ((566.0, 776.0), (0.40, 0.72));
         let y = |a: f64| scale(a, ys, (BOTTOM, TOP));
         label(
             &mut svg,
-            xs.0 - 44.0,
+            xs.0 - 52.0,
             PANEL_TITLE,
             "start",
             13,
-            "(b) Fresh-program pairwise ranking accuracy",
+            "(b) Ranking: fresh programs vs. shadow pool",
         );
         axes(
             &mut svg,
@@ -398,9 +397,15 @@ pub fn render(f: &Figure) -> String {
             r#" stroke-dasharray="4 3""#,
         );
         label(&mut svg, xs.0 + 4.0, chance - 5.0, "start", 11, "chance");
+        line(
+            &mut svg,
+            (660.0, TOP),
+            (660.0, BOTTOM),
+            r#" stroke-dasharray="2 3""#,
+        );
 
         let (value, low, high) = f.ranking;
-        let cx1 = 612.0;
+        let cx1 = 608.0;
         let _ = writeln!(
             svg,
             r#"<line x1="{cx1:.1}" y1="{:.1}" x2="{cx1:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
@@ -438,33 +443,30 @@ pub fn render(f: &Figure) -> String {
             10,
             &format!("[{low:.3}, {high:.3}]"),
         );
-        label(&mut svg, cx1, BOTTOM + 17.0, "middle", 11, "v1 q-hat");
+        label(
+            &mut svg,
+            cx1,
+            BOTTOM + 17.0,
+            "middle",
+            10,
+            "v1 q-hat (fresh)",
+        );
         label(
             &mut svg,
             cx1,
             BOTTOM + 31.0,
             "middle",
-            10,
+            9,
             &format!("({} lineages)", f.lineages),
         );
 
-        let cx2 = 716.0;
+        let cx2 = 720.0;
         let _ = writeln!(
             svg,
             r#"<line x1="{cx2:.1}" y1="{:.1}" x2="{cx2:.1}" y2="{:.1}" stroke="{SURR}" stroke-width="1.5"/>"#,
             y(s.r0),
             y(s.r4)
         );
-        for end in [s.r0 + s.low, s.r0 + s.high] {
-            let _ = writeln!(
-                svg,
-                r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" stroke="{SURR}" stroke-width="1.5"/>"#,
-                cx2 - 6.0,
-                y(end),
-                cx2 + 6.0,
-                y(end)
-            );
-        }
         let _ = writeln!(
             svg,
             r#"<circle cx="{cx2:.1}" cy="{:.1}" r="3.5" fill="white" stroke="{SURR}" stroke-width="1.5"/>"#,
@@ -478,7 +480,7 @@ pub fn render(f: &Figure) -> String {
         label(
             &mut svg,
             cx2,
-            y(s.r4) - 18.0,
+            y(s.r4) - 22.0,
             "middle",
             11,
             &format!("R0 {:.3} -> R4 {:.3}", s.r0, s.r4),
@@ -486,17 +488,17 @@ pub fn render(f: &Figure) -> String {
         label(
             &mut svg,
             cx2,
-            y(s.r4) - 5.0,
+            y(s.r4) - 9.0,
             "middle",
             10,
-            &format!("+{:.3} [+{:.3}, +{:.3}]", s.lift, s.low, s.high),
+            &format!("lift +{:.3} [+{:.3}, +{:.3}]", s.lift, s.low, s.high),
         );
         label(
             &mut svg,
             cx2,
             BOTTOM + 17.0,
             "middle",
-            11,
+            10,
             "SoS surrogate (shadow)",
         );
         label(
@@ -504,8 +506,8 @@ pub fn render(f: &Figure) -> String {
             cx2,
             BOTTOM + 31.0,
             "middle",
-            10,
-            &format!("({} clusters, R0–R4)", s.clusters),
+            9,
+            &format!("({} clusters, non-qualifying)", s.clusters),
         );
     } else {
         let (xs, ys) = ((612.0, 772.0), (0.40, 0.70));
@@ -680,9 +682,15 @@ mod tests {
         let mut found = vec![];
         let f = figure(DAT.as_bytes(), &with_c190, &mut found).expect("parses");
         let svg = render(&f);
+        assert!(svg.contains("(b) Ranking: fresh programs vs. shadow pool"));
+        assert!(svg.contains("shadow surrogate rose 0.634 to 0.680 (non-qualifying)"));
+        assert!(svg.contains("v1 q-hat (fresh)"));
         assert!(svg.contains("R0 0.634 -> R4 0.680"));
-        assert!(svg.contains("+0.046 [+0.040, +0.052]"));
-        assert!(svg.contains("(255 clusters, R0–R4)"));
+        assert!(svg.contains("lift +0.046 [+0.040, +0.052]"));
+        assert!(svg.contains("(255 clusters, non-qualifying)"));
+        assert!(!svg.contains("(b) Fresh-program pairwise ranking accuracy"));
+        // Only the vertical R0->R4 segment uses the surrogate stroke on <line>; no level caps around R4.
+        assert_eq!(svg.matches(r##"stroke="#2e6b3e""##).count(), 2);
 
         let bad_c190 = with_c190.replace("R0->R4 pairwise", "broken");
         let found = problems(DAT, &bad_c190);

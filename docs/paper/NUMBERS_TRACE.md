@@ -43,9 +43,10 @@ their sources only by the record in this file; `--sources` re-hashes each source
 re-read the value.
 
 On xbabe2, `paper-trace --sources` also re-hashes every claim source under the roots that
-`claims.json` declares. On 2026-10-16 it reported: 182 claims re-hashed to their pin, and 2 that
-name no single file (C24 is derived from C10 and C23; C115 is a pending result that names a
-directory).
+`claims.json` declares. On the initial 2026-10-16 audit of `C01`–`C183` (177 claims) it reported
+175 claims re-hashed to their pin, and with the `C184`–`C190` addendum (184 claims total) it
+reports 182 claims re-hashed to their pin, plus 2 that name no single file (C24 is derived from C10
+and C23; C115 is a pending result that names a directory).
 
 ## Findings and corrections
 
@@ -406,13 +407,13 @@ JSON path. Rows with a note were derived or corrected as the note says.
 | C181 | established | 17,416 vs 17,773; 357 updates | `CAPTURE:copy/training/optimizer-history.jsonl (rows with epoch 40 and 41)` | matches | new: epoch 40 = batches 16,980-17,416; epoch 41 = 17,417-17,773 (357); continuous_runner.py:164-168 validates on epoch completion |
 | C182 | established | 4 runs; 5 judge records | `LANE:rlfw-takeover/lpi-scratch/x2/run/claude-rlfw-lpi-scratch-r25control-20261013T083136Z/` | matches | new: receipts r25control, R25, R26, R27; five G-JUDGE verdict files dated 2026-10-13 |
 | C183 | established | 6,888 per checkpoint; 4 relative-only failures (feas, 1.3e-8) | `COORD:lanes/G-JUDGE/l6-1148-prereg-amendment-abs.json` | matches | new: amendment rule A at 11:20:58Z; selfcheck relative_failure_count 4, all feas |
-| C184 | established | PR #343; 11 tests; 4 rounds, B=8, 2,000 draws, alpha <= 0.025, KL <= 0.20, mass <= 0.15; UNPINNED, 0 GPU s | `CANON:docs/internal/clover/selfplay-round1-prereg.v1.json` | matches | new: SPQ-1 prereg and round_qual.rs / selfplay_round_qual.rs |
-| C185 | non-qualifying | 24 runs, 96 slots (0 unresolved); P_EI0 +0.000004 [-0.000362, +0.000389] INCONCLUSIVE; P_EI0r Stratum H +0.000596 [+0.000115, +0.001087]; descriptive 0.03/0.10 s28-29 pooled -0.000416 / -0.000377 | `EVIDENCE:rlfw-g-abl/ei0-fate-96-20261014.json` | matches | new: ei0-fate-96-20261014.json + l6-1148-pei0.json, l6-1148-pei0r.json, l6-1148-ei0-dose-descriptive.json |
-| C186 | non-qualifying | ei1_arm frozen at ep 3 (1,056 updates, KL 0.079634 > 0.05); PRIMARY_NOT_COMPUTED; descriptive ep-3 delta +0.003854 (H +0.003565, A +0.004825) | `EVIDENCE:jopedime-flywheel-ei1/v8-run/EI1_RUN_RECEIPT.json` | matches | new: EI1_RUN_RECEIPT.json, paired-rows.jsonl and G-JUDGE klstop rulings |
-| C187 | non-qualifying | 3 hosts x 1,408 updates, 0 KL stops; 3-seed L6-1148 mean +0.000378 [+0.000021, +0.000744] (H +0.000407, A +0.000281) | `EVIDENCE:ei3-study-20261015/EI2_EI2X_3HOST_SUMMARY.json` | matches | new: EI2_EI2X_3HOST_SUMMARY.json and EI2_RUN_RECEIPT.json |
-| C188 | non-qualifying | 3 hosts frozen at ep 3 (1,056 updates, kl_stop); ep-3 3-seed L6-1148 mean +0.003962 [+0.003222, +0.004744] (H +0.003969, A +0.003940) | `EVIDENCE:ei3-study-20261015/EI3_3HOST_SUMMARY.json` | matches | new: EI3_3HOST_SUMMARY.json and xbabe2 receipt.json |
-| C189 | non-qualifying | 1,408 updates, 0 KL alarms; L6-1148 delta +0.000518 at ep 3, +0.000106 at ep 4 (H +0.000051, A +0.000291) | `EVIDENCE:ei4-study-20261015/xbabe2-run/ei4-xbabe2-armctrl-20261015/receipt.json` | matches | new: ei4-xbabe2-armctrl-20261015/receipt.json and E4 row receipts |
-| C190 | non-qualifying | 8,908 S3 rows; shadow-pool-v2 (1,136 contexts, 255 clusters) R0->R4 pairwise 0.634318 -> 0.680342 (+0.046025 [+0.039928, +0.051692] GREATER), B=1 gain 0.785168 -> 0.919919 (+0.134751 [+0.067497, +0.215110] GREATER), ESTABLISHED_SHADOW, flywheel_established = false | `EVIDENCE:selfplay-s3-sos-debiased-flywheel-20261016/flywheel-v2-receipt.json` | matches | new: flywheel-v2-receipt.json, flywheel-v1-receipt.json and gp-results-index-s3-receipt.json |
+| C184 | established | PR #343 (`c402b21183670d3e4df73b835292a385a04db30f`); 11 tests; 4 rounds, B=8, 2,000 draws, alpha <= 0.025, KL <= 0.20, mass <= 0.15; UNPINNED, 0 GPU s | `CANON:docs/internal/clover/selfplay-round1-prereg.v1.json` | matches | new: SPQ-1 prereg and round_qual.rs / selfplay_round_qual.rs |
+| C185 | non-qualifying | 24 runs, 96 slots (0 unresolved); P_EI0 +0.000004 [-0.000362, +0.000389] INCONCLUSIVE; P_EI0r Stratum H +0.000596 [+0.000115, +0.001087]; dose 0.01 s30-31 H +0.000338, pooled +0.000110; descriptive 0.03/0.10 s28-29 pooled -0.000416 / -0.000377 | `EVIDENCE:rlfw-g-abl/ei0-fate-96-20261014.json` | matches | new: ei0-fate-96-20261014.json + l6-1148-pei0.json, l6-1148-pei0r.json, l6-1148-ei0-dose-descriptive.json |
+| C186 | non-qualifying | ei1_arm frozen at ep 3 (1,056 updates, KL 0.079634 > 0.05); PRIMARY_NOT_COMPUTED (`do_not_open_paired_primary = true`, r69e3/r70e3 unopened); in-run ep-3 receipt delta +0.004297 (H +0.003565, A +0.006758) | `EVIDENCE:jopedime-flywheel-ei1/v8-run/EI1_RUN_RECEIPT.json` | matches | new: EI1_RUN_RECEIPT.json, claude-ei1-v8-armctrl-20261014T191054Z/receipt.json and G-JUDGE klstop rulings |
+| C187 | non-qualifying | 3 hosts x 1,408 updates, 0 KL stops (xbabe2 max probe KL 0.022950); 3-seed L6-1148 mean +0.000378 [+0.000021, +0.000744] (H +0.000407, A +0.000281) | `EVIDENCE:ei3-study-20261015/EI2_EI2X_3HOST_SUMMARY.json` | matches | new: EI2_EI2X_3HOST_SUMMARY.json and xbabe2 EI2_RUN_RECEIPT.json / receipt.json |
+| C188 | non-qualifying | 3 hosts frozen at ep 3 (1,056 updates, kl_stop; xbabe2 KL 0.039816 ep2, 0.080342 ep3); ep-3 3-seed L6-1148 mean +0.003962 [+0.003222, +0.004744] (H +0.003969, A +0.003940) | `EVIDENCE:ei3-study-20261015/EI3_3HOST_SUMMARY.json` | matches | new: EI3_3HOST_SUMMARY.json and xbabe2 receipt.json |
+| C189 | non-qualifying | 1,408 updates, 0 KL alarms; in-run receipt delta +0.000720 at ep 3 (H +0.000378, A +0.001870), +0.000082 at ep 4 (H +0.000051, A +0.000187); CPU row-file delta +0.000518 ep 3, +0.000106 ep 4 | `EVIDENCE:ei4-study-20261015/xbabe2-run/ei4-xbabe2-armctrl-20261015/receipt.json` | matches | new: ei4-xbabe2-armctrl-20261015/receipt.json (49.5 KiB) |
+| C190 | non-qualifying | 8,908 S3 rows; shadow-pool-v2 (1,136 contexts, 255 clusters) R0->R4 pairwise 0.634318 -> 0.680342 (+0.046025 [+0.039928, +0.051692] GREATER), B=1 gain 0.785168 -> 0.919919 (+0.134751 [+0.067497, +0.215110] GREATER), ESTABLISHED_SHADOW, flywheel_established = false | `EVIDENCE:selfplay-s3-sos-debiased-flywheel-20261016/gp-results-index-s3-receipt.json` | matches | new: gp-results-index-s3-receipt.json and bounded PR #339 r3 review extracts (`scratch-r3-extract.txt`, `scratch-extract-rounds.txt`, `VERDICT-source.md`) |
 
 ## Exempt numbers
 
