@@ -72,7 +72,7 @@ For each context with complete candidate and reference test scores and passing p
 
 Every `RoundQualReport` sets:
 
-- `provenance_binding_status`: `"unverified_caller_asserted_inputs"` (no `--prereg`), `"prereg_contract_fields_checked_unpinned_no_execution_grant"` (`--prereg` checked with `UNPINNED` fields and `authorized: false`), or `"prereg_contract_fields_checked_receipts_and_grant_caller_asserted_unverified"` (`--prereg` contract fields checked with all fields pinned and `authorized: true`; round search/observation SHA-256 strings and the execution grant remain caller-asserted)
+- `provenance_binding_status`: `"unverified_caller_asserted_inputs"` (no `--prereg`), `"prereg_contract_fields_checked_unpinned_no_execution_grant"` (`--prereg` checked with `UNPINNED` fields or `authorized: false`), or `"prereg_contract_fields_checked_receipts_and_grant_caller_asserted_unverified"` (`--prereg` contract fields checked with all fields pinned and `authorized: true`; round search/observation SHA-256 strings and the execution grant remain caller-asserted)
 - `multiplicity_adjustment: "unimplemented_single_endpoint_alpha_cap_0_025"`
 - `qualified_claim: false` (unconditionally literal `false` in this offline verifier)
 - `promotion: false` (unconditionally literal `false`)
