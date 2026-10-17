@@ -3077,7 +3077,10 @@
       "acceptance_cases": [
         "Paginated associated author/committer eligibility versus reviewer",
         "Full-attempt CI not mixed partial rerun or stale head",
-        "Original rebase command/result receipt plus receiving main guard retained"
+        "Original rebase command/result receipt plus receiving main guard retained",
+        "All 66 validation matrix rows render in actual GitHub GFM; literal row delimiters cannot pass.",
+        "Unscoped whitespace exit 2 for byte-identical references is reported honestly; authored-doc-only check must exit 0.",
+        "The exact GitHub approval ID must match the actual independent Claude process's reported posted review and APPROVE verdict; a concurrent unattributed approval cannot qualify."
       ],
       "completion_criterion": "One PR, exact-head source tests and genuine independent review; receiving evidence before any completion claim.",
       "source_sections": [

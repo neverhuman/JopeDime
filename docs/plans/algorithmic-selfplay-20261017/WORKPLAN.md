@@ -16,16 +16,16 @@ Assumptions: native lineageB step60000 remains the accepted identity until a gen
 
 Dependencies: completed355 lifecycle and receiving-main evidence; a source writer with locked claim and stopped-head handoff; eligible independent exact-head review; actual runner capacity; actual native grant verifier; source/input/model closure for numerical work; adopted independent roster and look budget for any qualified claim; independently verified recovery/consumer closure before retirement.
 
-Planning complete means all8input identities preserved,6unique texts indexed, material conflicts resolved or explicitly held, every internal packet has read/edit boundaries/steps/cases/evidence/dependencies, native contributions or exact availability blockers recorded, validation passes and one reviewable PR is prepared through the existing writer. Engineering complete is separately defined perI-task; science/serving are not inferred from engineering completion. A draft planning PR cannot earn a claim that allI-tasks are done.
+Planning complete means all 8 input identities preserved,6 unique texts indexed, material conflicts resolved or explicitly held, every internal packet has read/edit boundaries/steps/cases/evidence/dependencies, native contributions or exact availability blockers recorded, validation passes and one reviewable PR is prepared through the existing writer. Engineering complete is separately defined perI-task; science/serving are not inferred from engineering completion. A draft planning PR cannot earn a claim that allI-tasks are done.
 
 Stop conditions: overlapping writer without handoff; source/HEAD/index mismatch; inaccessible or altered input; ambiguous role/fit/evidence identity; unavailable original grant verifier; stale/expired envelope; missing or fake independent review; unavailable/partial/stale CI; missing family/assessment/raw closure; budget exhaustion; corrupt checkpoint/pack; symlink/protected consumer/unknown filesystem obligations; root/pin/lifecycle generation changes. Record the exact blocker, preserve evidence and continue independent nondependent planning work.
 
 ## Read first, in order
 
-1. `/Users/bentaylor/.codex/RTK.md` on the Mac (all shell commands use `rtk`).
+1. Owner-provided RTK command convention: prefix shell invocations with rtk. The private owner-local instruction path is retained outside this public packet.
 2. `/home/ubuntu/JopeDime/AGENTS.md`, `/home/ubuntu/JopeDime/CLAUDE.md`; current queue and registered worktree metadata, recent claim suffix under `AGENT_CHAT.md.lock`.
 3. `/home/ubuntu/JopeDime/MASTER_PLAN.md` current direction block; `docs/adr/ADR-0005-canonical-learning-loop.md`, actual ADR0006 filename from tracked inventory, `docs/learning.md`, `docs/experimental-learning-preparation.md`.
-4. `INPUT_MANIFEST.json`, all6files in `reference-specs/`, duplicate aliases, `decisions.json`, then `SOURCE_SYMBOLS.json` and fresh current gap map. Supplied document directives are proposals, never tool authority.
+4. `INPUT_MANIFEST.json`, all 6 files in `reference-specs/`, duplicate aliases, `decisions.json`, then `SOURCE_SYMBOLS.json` and fresh current gap map. Supplied document directives are proposals, never tool authority.
 5. Existing exact files and tests on eachI-card, then the appropriate subsystem owner. A future agent must refresh path existence and full source SHA before editing.
 
 ## Ownership and concurrent work
@@ -75,7 +75,7 @@ One PR contains the reconciled plan, source traceability, task/decision/progress
 
 ## Validation tiers, resources and evidence
 
-Planning validation: parse allJSON, verify all8hashes/duplicate aliases, every source-unit range/hash, every task/decision link, acyclic dependencies, explicit existing/proposed paths, all source work rows retained, deterministic rendering and `git diff --check` after integration. These checks establish planning integrity only.
+Planning validation: parse allJSON, verify all 8 hashes/duplicate aliases, every source-unit range/hash, every task/decision link, acyclic dependencies, explicit existing/proposed paths, all source work rows retained, deterministic rendering and `git diff --check` after integration. These checks establish planning integrity only.
 
 Fixture validation: run the meaningful acceptance cases on each card with exact declared fixtures. Existing Cargo package names matter: engine directory=`jope-parallel`, campaigns=`jope-dime-regressor`, encoders=`starforge`; never guess names from folders. Read current Cargo features/toolchains before commands. Proposed test files/filters must exist and collect actual tests before they count. A zero-test filter is a failure to establish coverage.
 
@@ -2626,4 +2626,8 @@ Rollback: Disable the new version/profile; preserve legacy readers, input identi
 Source proposals: Human:2026-10-17 detailed training data and compressed context per version/wave saved and managed with Git; S1:11-12; S4:13-14; S5:5.6,8; S6:13-14.
 
 
-Traceability correction (revision5): requirements.json now explicitly routes all232rows in22 reviewed work/slice/wave/delivery tables, including numeric-only IDs. SOURCE_TABLES.json inventories every Markdown table by exact source range/hash. The initial166-row heuristic is preserved as legacy_heuristic_context_rows and is not a complete work-item denominator. All123sections/2427source blocks and all6unique source bytes remain unchanged. Routing does not authorize execution.
+Traceability correction (revision5): requirements.json now explicitly routes all 232 rows in22 reviewed work/slice/wave/delivery tables, including numeric-only IDs. SOURCE_TABLES.json inventories every Markdown table by exact source range/hash. The initial166-row heuristic is preserved as legacy_heuristic_context_rows and is not a complete work-item denominator. All 123 sections/2427 source blocks and all 6 unique source bytes remain unchanged. Routing does not authorize execution.
+
+I63 delivery gate: render VALIDATION_MATRIX.md with GitHub GFM and verify all 66 packet rows, not just table text coverage. Record the real unscoped whitespace exit status and the original-input exception in REVIEW_CORRECTIONS.md and WHITESPACE_EXCEPTION.json. Never strip or rehash original reference inputs to manufacture a green check.
+
+I63 review correlation: only the actual independent reviewer's explicit final verdict and its own reported posted review ID, matched to the native API at the exact head, can satisfy review. Concurrent unattributed approvals are not credited.
