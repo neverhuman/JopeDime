@@ -342,6 +342,59 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
     assert_ne!(legacy_transition_emit.rust, fixed_transition_emit.rust);
     assert_ne!(legacy_transition_emit.python, fixed_transition_emit.python);
 
+    // Verify unambiguous combined `Manifest.emitter_version` labels when
+    // `partition_point_quantile_bounds` is enabled alongside `guard_zero_width_roll`
+    // and/or `MathClip`, while `partition_point_quantile_bounds: false` retains
+    // the exact legacy labels and bytes.
+    for (dsl, guard_roll, expected_legacy, expected_opt_in) in [
+        (
+            "(pipe X (roll k=3) (quantile_bins bins=8) (ridge))",
+            true,
+            "feat-math-roll-width-guard-v1",
+            "feat-math-roll-width-guard-v1+quantile-partition-point-v1",
+        ),
+        (
+            "(pipe X (quantile_bins bins=8) (map expr=\"clip(x,-1,1)\") (ridge))",
+            false,
+            "feat-math-clip-safety-v2",
+            "feat-math-quantile-partition-point-v1+clip-safety-v2",
+        ),
+        (
+            "(pipe X (roll k=3) (quantile_bins bins=8) (map expr=\"clip(x,-1,1)\") (ridge))",
+            true,
+            "feat-math-roll-width-guard-v1",
+            "feat-math-roll-width-guard-v1+quantile-partition-point-v1+clip-safety-v2",
+        ),
+    ] {
+        let g = GenomeIr::parse(dsl).unwrap();
+        let legacy_combo = emit(
+            &g,
+            &EmitOptions {
+                guard_zero_width_roll: guard_roll,
+                partition_point_quantile_bounds: false,
+                ..EmitOptions::default()
+            },
+        )
+        .unwrap();
+        let opt_in_combo = emit(
+            &g,
+            &EmitOptions {
+                guard_zero_width_roll: guard_roll,
+                partition_point_quantile_bounds: true,
+                ..EmitOptions::default()
+            },
+        )
+        .unwrap();
+        let legacy_combo_manifest: serde_json::Value =
+            serde_json::from_str(&legacy_combo.manifest).unwrap();
+        let opt_in_combo_manifest: serde_json::Value =
+            serde_json::from_str(&opt_in_combo.manifest).unwrap();
+        assert_eq!(legacy_combo_manifest["emitter_version"], expected_legacy);
+        assert_eq!(opt_in_combo_manifest["emitter_version"], expected_opt_in);
+        assert_ne!(legacy_combo.python, opt_in_combo.python);
+        assert_ne!(legacy_combo.rust, opt_in_combo.rust);
+    }
+
     // Build a deterministic 24x3 dataset whose three columns each have a tie
     // plateau that triggers the 1-ULP non-monotone dip in `s_lo * (1.0 - f) + s_hi * f`
     // for `bins=27` (col 0, `v0 = 9.0 / 19.0`), `bins=16` (col 1, `v1 = 7.0 / 19.0`),
@@ -500,11 +553,29 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
             &y,
         )
         .unwrap();
+        // Verify directly on the fitted BoundModel that its `TargetBinEncode(bins=13)`
+        // edges on numeric column `c2` (`edges[4]`, since `input` with default
+        // `missing=indicator` emits `[c0, c0_missing, c1, c1_missing, c2, c2_missing]`)
+        // contain the 1-ULP non-monotone dip and diverge between legacy linear scan
+        // (`sum(edge < v for edge in edges)`) and `partition_point`.
+        let v3_model_json = serde_json::to_value(&v3_model).unwrap();
+        let v3_tbe_edges: Vec<f64> = serde_json::from_value(
+            v3_model_json["predictor"]["Pipeline"]["ops"][0]["Legacy"]["TargetBinEncode"]["edges"]
+                [4]
+            .clone(),
+        )
+        .unwrap();
+        assert!(
+            v3_tbe_edges.windows(2).any(|w| w[0] > w[1]),
+            "fitted BoundModel TargetBinEncode edges[4] (c2) must contain the 1-ULP non-monotone dip"
+        );
+        assert_ne!(
+            v3_tbe_edges.iter().filter(|&&e| e < v2).count(),
+            v3_tbe_edges.partition_point(|e| *e < v2),
+            "fitted BoundModel TargetBinEncode edges[4] (c2) must diverge between default sum() and partition_point"
+        );
+
         let v3_expected = v3_model.predict_table(&holdout_table).unwrap();
-        let bound = emit_bound(&v3_model, &EmitOptions::default()).unwrap();
-        let bound_py_path = tmp.path().join("bound_v3.py");
-        let bound_rs_path = tmp.path().join("bound_v3.rs");
-        let bound_rs_bin = tmp.path().join("bound_v3_bin");
         let bound_csv_path = tmp.path().join("bound_test.csv");
         let mut bound_csv = String::from("c0,c1,c2\n");
         for row in &holdout {
@@ -513,9 +584,67 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
                 row[0], row[1], row[2]
             ));
         }
+        fs::write(&bound_csv_path, &bound_csv).unwrap();
+
+        // 1. Default `EmitOptions::default()` preserves legacy bound Python bytes and
+        // `emitter_version: "2.2.0"`, which diverges numerically on the 1-ULP tie plateau.
+        let bound_default = emit_bound(&v3_model, &EmitOptions::default()).unwrap();
+        let bound_default_manifest: serde_json::Value =
+            serde_json::from_str(&bound_default.manifest).unwrap();
+        assert_eq!(bound_default_manifest["emitter_version"], "2.2.0");
+        assert!(!bound_default.python.contains("def lower_bound("));
+        assert!(bound_default
+            .python
+            .contains("sum(edge < value for edge in edges)"));
+        let bound_default_py_path = tmp.path().join("bound_v3_default.py");
+        fs::write(&bound_default_py_path, &bound_default.python).unwrap();
+        let bound_default_py_out = Command::new("python3")
+            .arg(&bound_default_py_path)
+            .arg(&bound_csv_path)
+            .output()
+            .unwrap();
+        assert!(
+            bound_default_py_out.status.success(),
+            "bound v3 default py: {}",
+            String::from_utf8_lossy(&bound_default_py_out.stderr)
+        );
+        let bound_default_py_preds: Vec<f64> =
+            String::from_utf8_lossy(&bound_default_py_out.stdout)
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .map(|l| l.trim().parse::<f64>().unwrap())
+                .collect();
+        let bound_default_err =
+            check_finite_and_pointwise_equal(&v3_expected, &bound_default_py_preds, false)
+                .expect_err("default legacy bound v3 Python must diverge on 1-ULP tie plateau");
+        assert!(
+            bound_default_err.contains("value mismatch")
+                || bound_default_err.contains("bit mismatch"),
+            "{bound_default_err}"
+        );
+
+        // 2. Opt-in `partition_point_quantile_bounds: true` emits `lower_bound` with
+        // `emitter_version: "feat-math-quantile-partition-point-v1"` and matches bitwise.
+        let bound = emit_bound(
+            &v3_model,
+            &EmitOptions {
+                partition_point_quantile_bounds: true,
+                ..EmitOptions::default()
+            },
+        )
+        .unwrap();
+        let bound_manifest: serde_json::Value = serde_json::from_str(&bound.manifest).unwrap();
+        assert_eq!(
+            bound_manifest["emitter_version"],
+            "feat-math-quantile-partition-point-v1"
+        );
+        assert_ne!(bound_default.python, bound.python);
+        assert_eq!(bound_default.rust, bound.rust);
+        let bound_py_path = tmp.path().join("bound_v3.py");
+        let bound_rs_path = tmp.path().join("bound_v3.rs");
+        let bound_rs_bin = tmp.path().join("bound_v3_bin");
         fs::write(&bound_py_path, &bound.python).unwrap();
         fs::write(&bound_rs_path, &bound.rust).unwrap();
-        fs::write(&bound_csv_path, &bound_csv).unwrap();
 
         let bound_py_out = Command::new("python3")
             .arg(&bound_py_path)
@@ -533,7 +662,7 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
             .map(|l| l.trim().parse::<f64>().unwrap())
             .collect();
         check_finite_and_pointwise_equal(&v3_expected, &bound_py_preds, false)
-            .expect("bound v3 Python must match runtime bitwise");
+            .expect("opt-in bound v3 Python must match runtime bitwise");
 
         let bound_rs_compile = Command::new("rustc")
             .args(["--edition=2021", "-O", "-Awarnings"])
@@ -663,8 +792,9 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
             .expect(name);
 
         // First verify that legacy `EmitOptions::default()` (the base `aad22f8` `(lo, hi)`
-        // helper) diverges from `native_preds` on every representative pipeline across
-        // every covered language.
+        // helper) diverges numerically (`value mismatch` or `bit mismatch`) from `native_preds`
+        // on every representative pipeline across every covered language (Python, Rust, and
+        // C++17 + JS for the 4-language heads).
         let legacy_emitted = emit(&genome, &EmitOptions::default()).expect(name);
         let legacy_py_path = tmp.path().join(format!("{name}_legacy.py"));
         let legacy_py_pred_path = tmp.path().join(format!("{name}_legacy_py_pred.csv"));
@@ -686,9 +816,90 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
             check_finite_and_pointwise_equal(&native_preds, &legacy_py_preds, false).expect_err(
                 &format!("{name}: legacy Python helper must diverge from native partition_point"),
             );
-        assert!(legacy_py_err.contains("mismatch"), "{legacy_py_err}");
+        assert!(
+            legacy_py_err.contains("value mismatch") || legacy_py_err.contains("bit mismatch"),
+            "{legacy_py_err}"
+        );
+
+        let legacy_rs_path = tmp.path().join(format!("{name}_legacy.rs"));
+        let legacy_rs_bin = tmp.path().join(format!("{name}_legacy_rs"));
+        let legacy_rs_pred_path = tmp.path().join(format!("{name}_legacy_rs_pred.csv"));
+        fs::write(&legacy_rs_path, &legacy_emitted.rust).unwrap();
+        let legacy_rs_compile = Command::new("rustc")
+            .args(["--edition=2021", "-O", "-Awarnings"])
+            .arg(&legacy_rs_path)
+            .arg("-o")
+            .arg(&legacy_rs_bin)
+            .output()
+            .expect("rustc");
+        assert!(
+            legacy_rs_compile.status.success(),
+            "{name} legacy rustc: {}",
+            String::from_utf8_lossy(&legacy_rs_compile.stderr)
+        );
+        let legacy_rs_out = Command::new(&legacy_rs_bin)
+            .arg(&train_path)
+            .arg(&test_path)
+            .arg(&legacy_rs_pred_path)
+            .output()
+            .expect("legacy emitted rust bin");
+        assert!(
+            legacy_rs_out.status.success(),
+            "{name} legacy rs: {}",
+            String::from_utf8_lossy(&legacy_rs_out.stderr)
+        );
+        let legacy_rs_preds = parse_preds(&legacy_rs_pred_path, name);
+        let legacy_rs_err =
+            check_finite_and_pointwise_equal(&native_preds, &legacy_rs_preds, false).expect_err(
+                &format!("{name}: legacy Rust helper must diverge from native partition_point"),
+            );
+        assert!(
+            legacy_rs_err.contains("value mismatch") || legacy_rs_err.contains("bit mismatch"),
+            "{legacy_rs_err}"
+        );
 
         if check_cpp_js {
+            let mut legacy_cpp_src = emit_cpp17(&genome, &EmitOptions::default()).expect(name);
+            legacy_cpp_src.push_str(&cpp_driver);
+            let legacy_cpp_path = tmp.path().join(format!("{name}_legacy.cpp"));
+            let legacy_cpp_bin = tmp.path().join(format!("{name}_legacy_cpp"));
+            let legacy_cpp_pred_path = tmp.path().join(format!("{name}_legacy_cpp_pred.csv"));
+            fs::write(&legacy_cpp_path, &legacy_cpp_src).unwrap();
+            let legacy_cpp_compile = Command::new("g++")
+                .args(["-std=c++17", "-O2", "-ffp-contract=off"])
+                .arg(&legacy_cpp_path)
+                .arg("-o")
+                .arg(&legacy_cpp_bin)
+                .output()
+                .expect("g++");
+            assert!(
+                legacy_cpp_compile.status.success(),
+                "{name} legacy g++: {}",
+                String::from_utf8_lossy(&legacy_cpp_compile.stderr)
+            );
+            let legacy_cpp_out = Command::new(&legacy_cpp_bin)
+                .arg(&train_path)
+                .arg(&test_path)
+                .arg(&legacy_cpp_pred_path)
+                .output()
+                .expect("legacy emitted cpp bin");
+            assert!(
+                legacy_cpp_out.status.success(),
+                "{name} legacy cpp: {}",
+                String::from_utf8_lossy(&legacy_cpp_out.stderr)
+            );
+            let legacy_cpp_preds = parse_preds(&legacy_cpp_pred_path, name);
+            let legacy_cpp_err =
+                check_finite_and_pointwise_equal(&native_preds, &legacy_cpp_preds, false)
+                    .expect_err(&format!(
+                        "{name}: legacy C++17 helper must diverge from native partition_point"
+                    ));
+            assert!(
+                legacy_cpp_err.contains("value mismatch")
+                    || legacy_cpp_err.contains("bit mismatch"),
+                "{legacy_cpp_err}"
+            );
+
             let mut legacy_js_src = emit_javascript(&genome, &EmitOptions::default()).expect(name);
             legacy_js_src.push_str(&js_driver);
             let legacy_js_path = tmp.path().join(format!("{name}_legacy.js"));
@@ -707,9 +918,13 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
                 String::from_utf8_lossy(&legacy_js_out.stderr)
             );
             let legacy_js_preds = parse_preds(&legacy_js_pred_path, name);
+            let legacy_js_err =
+                check_finite_and_pointwise_equal(&native_preds, &legacy_js_preds, true).expect_err(
+                    &format!("{name}: legacy JS helper must diverge from native partition_point"),
+                );
             assert!(
-                check_finite_and_pointwise_equal(&native_preds, &legacy_js_preds, true).is_err(),
-                "{name}: legacy JS helper must diverge from native partition_point"
+                legacy_js_err.contains("value mismatch") || legacy_js_err.contains("bit mismatch"),
+                "{legacy_js_err}"
             );
         }
 
