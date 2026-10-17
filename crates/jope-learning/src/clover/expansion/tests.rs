@@ -450,6 +450,17 @@ fn multi_round_selfplay_ratchet_maintains_monotonic_q_and_kl_guard() {
         assert!(r["decomposed_kl"]["conditional_base_kl"].as_f64().unwrap() > 1e-4);
         assert_eq!(r["decomposed_kl"]["admissible"], true);
         assert_eq!(r["seed_update_frozen_by_kl_guard"], false);
+        let round_rec: SelfPlayRoundReceipt = serde_json::from_value(r.clone()).unwrap();
+        assert!(!round_rec.ordinary_champion_genome.is_empty());
+        assert_eq!(
+            canonical_genome(&round_rec.ordinary_champion_genome).unwrap(),
+            round_rec.ordinary_champion_genome
+        );
+        assert!(!round_rec.ratchet_champion_genome.is_empty());
+        assert_eq!(
+            canonical_genome(&round_rec.ratchet_champion_genome).unwrap(),
+            round_rec.ratchet_champion_genome
+        );
     }
     let q0 = rounds[0]["ratchet_best_q"].as_f64().unwrap();
     let q1 = rounds[1]["ratchet_best_q"].as_f64().unwrap();

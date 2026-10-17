@@ -3,11 +3,12 @@
 use std::collections::BTreeMap;
 use std::process::Command;
 
-use jope_learning::canon::sha256_hex;
+use jope_learning::canon::{canonical_sha256, sha256_hex};
 use jope_learning::clover::round_qual::{
-    parse_parent_map, qualify_rounds, Endpoint, ParityRecord, QualTestScore, RoundQualInputs,
-    RoundQualPlan, SourceGrade, MULTIPLICITY_ADJUSTMENT_STATUS, PROVENANCE_BINDING_STATUS,
-    RATCHET_SCHEMA, ROUND_QUAL_SCHEMA,
+    parse_parent_map, qualify_rounds, qualify_rounds_with_prereg, Endpoint, ParityRecord,
+    QualTestScore, RoundQualInputs, RoundQualPlan, SelfPlayPrereg, SourceGrade, UnpinnedOr,
+    MULTIPLICITY_ADJUSTMENT_STATUS, PREREG_PINNED_BINDING_STATUS, PREREG_SCHEMA,
+    PREREG_UNPINNED_BINDING_STATUS, PROVENANCE_BINDING_STATUS, RATCHET_SCHEMA, ROUND_QUAL_SCHEMA,
 };
 use jope_learning::clover::{Budget, ExperimentIdentity, InitialState, SourceIdentity, SCHEMA};
 use jope_learning::pools::bootstrap::Verdict;
@@ -1042,4 +1043,559 @@ fn cli_qualify_rounds_create_only_and_canonical_digest() {
         .output()
         .expect("re-run jope_pools qualify-rounds");
     assert!(!second.status.success());
+}
+
+#[test]
+fn exp_next_02_secondary_endpoint_and_prereg_binding_verification() {
+    let identity = fixture_identity();
+    let mut plan = fixture_plan(&identity);
+    plan.bootstrap_resamples = 2000;
+    plan.bootstrap_seed = 20_261_016;
+    plan.endpoint = Endpoint::RatchetVsOrdinaryFinalRound;
+
+    let prereg_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../docs/internal/clover/selfplay-round1-prereg.v1.json");
+    let committed_prereg_bytes =
+        std::fs::read(&prereg_path).expect("read committed selfplay-round1-prereg.v1.json");
+    let parsed_committed: SelfPlayPrereg =
+        serde_json::from_slice(&committed_prereg_bytes).expect("parse SelfPlayPrereg");
+    assert_eq!(parsed_committed.schema, PREREG_SCHEMA);
+    assert!(parsed_committed.has_unpinned_fields());
+    assert!(!parsed_committed.execution_grant.authorized);
+
+    plan.prereg_sha256 = sha256_hex(&committed_prereg_bytes);
+
+    let mut parent_map = BTreeMap::new();
+    let mut ratchets = Vec::new();
+    let mut scores = Vec::new();
+    let mut parity = Vec::new();
+
+    for (ctx, parent, ord_rmse, cand_rmse) in [
+        ("ctx1", "parent_a", 1.00, 0.72),
+        ("ctx2", "parent_b", 1.10, 0.78),
+        ("ctx3", "parent_c", 0.90, 0.64),
+        ("ctx4", "parent_c", 1.20, 0.84),
+    ] {
+        parent_map.insert(ctx.to_owned(), parent.to_owned());
+        let g_r0 = format!("g_r0_{ctx}");
+        let g_ord_final = format!("g_ord_final_{ctx}");
+        let g_rat_final = format!("g_rat_final_{ctx}");
+
+        let ref_score = make_score(ctx, &g_ord_final, ord_rmse, Vec::new());
+        let cand_score = make_score(
+            ctx,
+            &g_rat_final,
+            cand_rmse,
+            vec![ref_score.program_sha256.clone()],
+        );
+        scores.push(ref_score);
+        scores.push(cand_score);
+        for g in [&g_ord_final, &g_rat_final] {
+            parity.push(ParityRecord {
+                dataset_id: ctx.to_owned(),
+                genome: (*g).clone(),
+                passed: true,
+                failure_reason: None,
+            });
+        }
+
+        let rounds: Vec<Value> = (0..4)
+            .map(|r_idx| {
+                let is_last = r_idx == 3;
+                let rat_g = if is_last { &g_rat_final } else { &g_r0 };
+                let ord_g = if is_last { &g_ord_final } else { &g_r0 };
+                json!({
+                    "round": r_idx,
+                    "cumulative_prior_rounds": r_idx,
+                    "ordinary_best_rmse": 1.00 - 0.01 * (r_idx as f64),
+                    "ordinary_best_q": 0.50 + 0.005 * (r_idx as f64),
+                    "ordinary_champion_genome": ord_g,
+                    "ordinary_search_sha256": sha256_hex(format!("ord_s:{ctx}:{r_idx}").as_bytes()),
+                    "ordinary_observations_sha256": sha256_hex(format!("ord_o:{ctx}:{r_idx}").as_bytes()),
+                    "ratchet_best_rmse": 1.00 - 0.08 * (r_idx as f64),
+                    "ratchet_best_q": 0.50 + 0.03 * (r_idx as f64),
+                    "ratchet_champion_genome": rat_g,
+                    "ratchet_search_sha256": sha256_hex(format!("rat_s:{ctx}:{r_idx}").as_bytes()),
+                    "ratchet_observations_sha256": sha256_hex(format!("rat_o:{ctx}:{r_idx}").as_bytes()),
+                    "surplus_q_vs_ordinary": 0.025 * (r_idx as f64),
+                    "equal_attempts_in_round": true,
+                    "kl_source": "measured_tilt_leaf_policy",
+                    "kl_malformed_reason": Value::Null,
+                    "decomposed_kl": fixture_decomposed_kl(true),
+                    "seed_update_frozen_by_kl_guard": false
+                })
+            })
+            .collect();
+
+        ratchets.push(json!({
+            "schema": RATCHET_SCHEMA,
+            "qualification": "qualified",
+            "roster_sha256": identity.data_roster_sha256,
+            "context_sha256": ctx,
+            "seed_cap_b": 8,
+            "equal_resource_comparison": true,
+            "kl_guard_evaluated": true,
+            "any_round_frozen_by_kl_guard": false,
+            "policy_optimizer_updates": 0,
+            "rounds": rounds
+        }));
+    }
+
+    // 1. Verify Endpoint::RatchetVsOrdinaryFinalRound with committed UNPINNED prereg packet.
+    let rep_unpinned = qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &plan,
+            identity: &identity,
+            ratchet_outputs: &ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&committed_prereg_bytes),
+    )
+    .expect("valid report with committed unpinned prereg");
+
+    assert_eq!(rep_unpinned.endpoint, Endpoint::RatchetVsOrdinaryFinalRound);
+    assert_eq!(
+        rep_unpinned.contexts[0].candidate_genome.as_deref(),
+        Some("g_rat_final_ctx1")
+    );
+    assert_eq!(
+        rep_unpinned.contexts[0].reference_genome.as_deref(),
+        Some("g_ord_final_ctx1")
+    );
+    assert_eq!(rep_unpinned.verdict, Verdict::Greater);
+    assert!(rep_unpinned.margin_cleared);
+    assert!(rep_unpinned.caller_asserted_diagnostic_checks_passed);
+    assert_eq!(
+        rep_unpinned.provenance_binding_status,
+        PREREG_UNPINNED_BINDING_STATUS
+    );
+    assert!(!rep_unpinned.qualified_claim);
+    assert!(!rep_unpinned.promotion);
+    assert!(!rep_unpinned.l6_claim);
+    assert_eq!(
+        rep_unpinned.disqualification_reasons,
+        vec![
+            "prereg_unpinned_or_no_execution_grant".to_owned(),
+            "no_adopted_sealed_family_boundary".to_owned(),
+        ]
+    );
+
+    // 2. Verify CLI `jope_pools qualify-rounds --prereg <PATH>` produces the exact same canonical digest.
+    let dir = tempfile::tempdir().expect("tempdir");
+    let plan_file = dir.path().join("plan.json");
+    let id_file = dir.path().join("id.json");
+    let ratchets_file = dir.path().join("ratchets.json");
+    let scores_file = dir.path().join("scores.json");
+    let parity_file = dir.path().join("parity.json");
+    let parents_file = dir.path().join("parents.json");
+    let out_file = dir.path().join("report_prereg.json");
+    std::fs::write(&plan_file, serde_json::to_vec(&plan).unwrap()).unwrap();
+    std::fs::write(&id_file, serde_json::to_vec(&identity).unwrap()).unwrap();
+    std::fs::write(&ratchets_file, serde_json::to_vec(&ratchets).unwrap()).unwrap();
+    std::fs::write(&scores_file, serde_json::to_vec(&scores).unwrap()).unwrap();
+    std::fs::write(&parity_file, serde_json::to_vec(&parity).unwrap()).unwrap();
+    std::fs::write(&parents_file, serde_json::to_vec(&parent_map).unwrap()).unwrap();
+
+    let bin = env!("CARGO_BIN_EXE_jope_pools");
+    let cli_out = Command::new(bin)
+        .args([
+            "qualify-rounds",
+            "--plan",
+            plan_file.to_str().unwrap(),
+            "--identity",
+            id_file.to_str().unwrap(),
+            "--ratchets",
+            ratchets_file.to_str().unwrap(),
+            "--test-scores",
+            scores_file.to_str().unwrap(),
+            "--parity",
+            parity_file.to_str().unwrap(),
+            "--parent-map",
+            parents_file.to_str().unwrap(),
+            "--prereg",
+            prereg_path.to_str().unwrap(),
+            "--out",
+            out_file.to_str().unwrap(),
+        ])
+        .output()
+        .expect("run jope_pools qualify-rounds --prereg");
+    assert!(
+        cli_out.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&cli_out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&cli_out.stdout);
+    assert!(stdout.contains(&rep_unpinned.canonical_sha256().unwrap()));
+
+    // 3. Construct a fully pinned SelfPlayPrereg packet and verify provenance_binding_status transitions
+    // to PREREG_PINNED_BINDING_STATUS while qualified_claim stays false under no_adopted_sealed_family_boundary.
+    let mut pinned_prereg = parsed_committed.clone();
+    pinned_prereg.status = "PRE_REGISTERED_PINNED_SYNTHETIC_FIXTURE".to_owned();
+    pinned_prereg.provenance_binding_status = PREREG_PINNED_BINDING_STATUS.to_owned();
+    pinned_prereg.experiment_identity_sha256 =
+        UnpinnedOr::Pinned(plan.experiment_identity_sha256.clone());
+    pinned_prereg.roster_and_families.sealed_roster_sha256 =
+        UnpinnedOr::Pinned(identity.data_roster_sha256.clone());
+    pinned_prereg.roster_and_families.parent_cluster_map_sha256 =
+        UnpinnedOr::Pinned(canonical_sha256(&parent_map).unwrap());
+    pinned_prereg.roster_and_families.g23_sealed_boundary_ruling =
+        UnpinnedOr::Pinned("g23-synthetic-ruling-fixture".to_owned());
+    pinned_prereg.sample_size_and_margin.min_parent_clusters =
+        UnpinnedOr::Pinned(plan.min_parent_clusters);
+    pinned_prereg
+        .sample_size_and_margin
+        .practical_margin_log_ratio = UnpinnedOr::Pinned(plan.practical_margin_log_ratio);
+    pinned_prereg
+        .sample_size_and_margin
+        .c158_g_judge_binding_receipt = UnpinnedOr::Pinned("c158-synthetic-receipt".to_owned());
+    pinned_prereg
+        .held_out_and_parity_rules
+        .pinned_test_score_registry = UnpinnedOr::Pinned(plan.pinned_test_score_registry.clone());
+    pinned_prereg.execution_grant.authorized = true;
+    pinned_prereg.execution_grant.owner_admission_locator =
+        UnpinnedOr::Pinned("synthetic-test-only".to_owned());
+    pinned_prereg.execution_grant.hosts = UnpinnedOr::Pinned(vec!["xbabe2".to_owned()]);
+    pinned_prereg.execution_grant.cpu_ceiling_percent = UnpinnedOr::Pinned(50);
+    pinned_prereg.execution_grant.deadline_utc =
+        UnpinnedOr::Pinned("2026-10-18T00:00:00Z".to_owned());
+    assert!(!pinned_prereg.has_unpinned_fields());
+
+    let pinned_bytes = serde_json::to_vec_pretty(&pinned_prereg).unwrap();
+    let mut pinned_plan = plan.clone();
+    pinned_plan.prereg_sha256 = sha256_hex(&pinned_bytes);
+
+    let rep_pinned = qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &pinned_plan,
+            identity: &identity,
+            ratchet_outputs: &ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&pinned_bytes),
+    )
+    .expect("valid report with pinned prereg");
+    assert_eq!(
+        rep_pinned.provenance_binding_status,
+        PREREG_PINNED_BINDING_STATUS
+    );
+    assert!(rep_pinned.caller_asserted_diagnostic_checks_passed);
+    assert!(!rep_pinned.qualified_claim);
+    assert_eq!(
+        rep_pinned.disqualification_reasons,
+        vec!["no_adopted_sealed_family_boundary".to_owned()]
+    );
+
+    // 4. Fail-closed refusal checks on tampered prereg packets or mismatched ratchet provenance:
+    // (a) Digest mismatch against plan.prereg_sha256
+    assert!(qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &plan,
+            identity: &identity,
+            ratchet_outputs: &ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&pinned_bytes),
+    )
+    .is_err());
+
+    // (b) Contradictory execution_grant.authorized = true while a field remains UNPINNED
+    let mut forged_grant = pinned_prereg.clone();
+    forged_grant.roster_and_families.sealed_roster_sha256 = UnpinnedOr::Unpinned;
+    let forged_bytes = serde_json::to_vec(&forged_grant).unwrap();
+    let mut forged_plan = pinned_plan.clone();
+    forged_plan.prereg_sha256 = sha256_hex(&forged_bytes);
+    assert!(qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &forged_plan,
+            identity: &identity,
+            ratchet_outputs: &ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&forged_bytes),
+    )
+    .is_err());
+
+    // (c) Pinned parent_cluster_map_sha256 mismatch
+    let mut bad_parent_prereg = pinned_prereg.clone();
+    bad_parent_prereg
+        .roster_and_families
+        .parent_cluster_map_sha256 = UnpinnedOr::Pinned("0".repeat(64));
+    let bad_parent_bytes = serde_json::to_vec(&bad_parent_prereg).unwrap();
+    let mut bad_parent_plan = pinned_plan.clone();
+    bad_parent_plan.prereg_sha256 = sha256_hex(&bad_parent_bytes);
+    assert!(qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &bad_parent_plan,
+            identity: &identity,
+            ratchet_outputs: &ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&bad_parent_bytes),
+    )
+    .is_err());
+
+    // (d) Ratchet seed_cap_b or round search/observations SHA-256 mismatch when prereg is supplied
+    let mut bad_seed_ratchets = ratchets.clone();
+    bad_seed_ratchets[0]["seed_cap_b"] = json!(4);
+    assert!(qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &pinned_plan,
+            identity: &identity,
+            ratchet_outputs: &bad_seed_ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&pinned_bytes),
+    )
+    .is_err());
+
+    let mut bad_sha_ratchets = ratchets.clone();
+    bad_sha_ratchets[0]["rounds"][2]["ordinary_search_sha256"] = json!("not-64-hex");
+    assert!(qualify_rounds_with_prereg(
+        RoundQualInputs {
+            plan: &pinned_plan,
+            identity: &identity,
+            ratchet_outputs: &bad_sha_ratchets,
+            test_scores: &scores,
+            parity: &parity,
+            parent_of_context: &parent_map,
+        },
+        Some(&pinned_bytes),
+    )
+    .is_err());
+}
+
+#[test]
+fn exp_next_02_producer_selfplay_ratchet_to_round_qual_bridge() {
+    use jope_learning::clover::expansion::{
+        canonical_genome, rows_digest, run_selfplay_ratchet, DiscoveryContext,
+        MeasuredTiltPolicyConfig, PolicyProposal, PolicySeeds, PolicySnapshot, RetrievalSeed,
+        RetrievalSeeds, ScratchBudget, SelfPlayRatchetRequest, SelfPlayRoundReceipt,
+        TrainingRoster,
+    };
+    use jope_pipeline::prepare::Cut;
+
+    let role_bytes = serde_json::to_vec(&json!({
+        "schema": "clover.discovery-family-roles/v1",
+        "families": {
+            "parent_family_a": "train",
+            "parent_family_b": "train"
+        }
+    }))
+    .unwrap();
+    let role_sha = sha256_hex(&role_bytes);
+
+    let make_cut = |offset: f64| Cut {
+        index: 0,
+        train_x: (0..20)
+            .map(|i| {
+                let u = (i as f64 - 10.0) * 0.25 + offset;
+                vec![u, u * u + 0.3 * u.sin()]
+            })
+            .collect(),
+        train_y: (0..20)
+            .map(|i| {
+                let u = (i as f64 - 10.0) * 0.25 + offset;
+                1.5 + 1.2 * u + 0.6 * u * u
+            })
+            .collect(),
+        hold_x: (20..26)
+            .map(|i| {
+                let u = (i as f64 - 16.0) * 0.25 + offset;
+                vec![u, u * u + 0.3 * u.sin()]
+            })
+            .collect(),
+        hold_y: (20..26)
+            .map(|i| {
+                let u = (i as f64 - 16.0) * 0.25 + offset;
+                1.5 + 1.2 * u + 0.6 * u * u
+            })
+            .collect(),
+        hold_indices: (20..26).collect(),
+    };
+
+    let cut_a = make_cut(0.0);
+    let cut_b = make_cut(0.5);
+    let ctx_a = DiscoveryContext {
+        context_sha256: sha256_hex(b"bridge-ctx-a"),
+        parent_family: "parent_family_a".into(),
+        role: "train".into(),
+        dataset_sha256: sha256_hex(b"bridge-data-a"),
+        cut: 0,
+        training_sha256: rows_digest(&cut_a.train_x, &cut_a.train_y).unwrap(),
+        inner_holdout_sha256: rows_digest(&cut_a.hold_x, &cut_a.hold_y).unwrap(),
+        preprocessing_sha256: sha256_hex(b"bridge-prep"),
+        encoder_input_sha256: sha256_hex(&vec![0u8; 2051 * 8]),
+    };
+    let ctx_b = DiscoveryContext {
+        context_sha256: sha256_hex(b"bridge-ctx-b"),
+        parent_family: "parent_family_b".into(),
+        role: "train".into(),
+        dataset_sha256: sha256_hex(b"bridge-data-b"),
+        cut: 0,
+        training_sha256: rows_digest(&cut_b.train_x, &cut_b.train_y).unwrap(),
+        inner_holdout_sha256: rows_digest(&cut_b.hold_x, &cut_b.hold_y).unwrap(),
+        preprocessing_sha256: sha256_hex(b"bridge-prep"),
+        encoder_input_sha256: sha256_hex(&vec![0u8; 2051 * 8]),
+    };
+    let roster = TrainingRoster {
+        schema: "clover.discovery-roster/v1".into(),
+        role_manifest_sha256: role_sha,
+        contexts: vec![ctx_a.clone(), ctx_b.clone()],
+    };
+    let roster_digest = roster.digest().unwrap();
+
+    let seed_g1 = canonical_genome("(pipe X (standardize append=false) (ridge))").unwrap();
+    let seed_g2 = canonical_genome("(pipe X (row_stats append=true) (ridge))").unwrap();
+    let budgets = vec![
+        ScratchBudget {
+            evaluations_per_arm: 12,
+            seconds_per_arm: 30,
+            rng_seed: 20261011,
+        },
+        ScratchBudget {
+            evaluations_per_arm: 12,
+            seconds_per_arm: 30,
+            rng_seed: 20261012,
+        },
+    ];
+    let tilt_cfg = MeasuredTiltPolicyConfig {
+        temperature_tau: 0.25,
+        advantage_clip: 2.0,
+        ref_new_support_mass: 0.05,
+        policy_new_support_cap: 0.12,
+        step_size_eta: 0.20,
+    };
+
+    let temp = tempfile::tempdir().unwrap();
+    let mut produced_ratchets = Vec::new();
+    let mut scores = Vec::new();
+    let mut parity = Vec::new();
+    let mut parent_map = BTreeMap::new();
+
+    for (idx, (ctx, cut)) in [(&ctx_a, &cut_a), (&ctx_b, &cut_b)].into_iter().enumerate() {
+        parent_map.insert(ctx.context_sha256.clone(), ctx.parent_family.clone());
+        let policy = PolicySeeds {
+            schema: "clover.policy-seeds/v1".into(),
+            snapshot: PolicySnapshot {
+                model_class: "PolicyLM".into(),
+                context_width: 2051,
+                parameter_sha256: sha256_hex(b"bridge-params"),
+                checkpoint_sha256: sha256_hex(b"bridge-ckpt"),
+                code_sha256: sha256_hex(b"bridge-code"),
+                tokenizer_sha256: sha256_hex(b"bridge-tok"),
+                support_sha256: sha256_hex(b"bridge-sup"),
+                normalizer_sha256: sha256_hex(b"bridge-norm"),
+            },
+            context_sha256: ctx.context_sha256.clone(),
+            encoder_input_sha256: ctx.encoder_input_sha256.clone(),
+            sampling_protocol: "trie_children_temperature_v1".into(),
+            batch_protocol_sha256: sha256_hex(b"bridge-batch"),
+            temperature: 1.0,
+            proposals: vec![PolicyProposal {
+                program_sha256: sha256_hex(seed_g1.as_bytes()),
+                genome: seed_g1.clone(),
+                draw_seed: 1,
+                behavior_logprob: -2.0,
+            }],
+            surrogate_funnel: None,
+        };
+        let retrieval = RetrievalSeeds {
+            seeds: vec![RetrievalSeed {
+                genome: seed_g2.clone(),
+                source_context_sha256: ctx.context_sha256.clone(),
+                measurement_receipt_sha256: sha256_hex(b"bridge-ret-rec"),
+            }],
+        };
+        let out_dir = temp.path().join(format!("ratchet_{idx}"));
+        let receipt = run_selfplay_ratchet(
+            SelfPlayRatchetRequest {
+                roster: &roster,
+                role_manifest: &role_bytes,
+                context_sha256: &ctx.context_sha256,
+                cut,
+                initial_policy: &policy,
+                initial_retrieval: &retrieval,
+                round_budgets: &budgets,
+                seed_cap_b: 4,
+                max_conditional_base_kl: 0.20,
+                max_new_support_mass: 0.15,
+                round_leaf_log_prob_fn: None,
+                measured_tilt_policy: Some(tilt_cfg),
+            },
+            &out_dir,
+        )
+        .unwrap();
+
+        let round_recs: Vec<SelfPlayRoundReceipt> =
+            serde_json::from_value(receipt["rounds"].clone()).unwrap();
+        assert_eq!(round_recs.len(), 2);
+        let final_round = round_recs.last().unwrap();
+        assert!(!final_round.ordinary_champion_genome.is_empty());
+        assert!(!final_round.ratchet_champion_genome.is_empty());
+
+        let ref_g = &final_round.ordinary_champion_genome;
+        let cand_g = &final_round.ratchet_champion_genome;
+        if ref_g == cand_g {
+            scores.push(make_score(&ctx.context_sha256, ref_g, 0.80, Vec::new()));
+            parity.push(ParityRecord {
+                dataset_id: ctx.context_sha256.clone(),
+                genome: ref_g.clone(),
+                passed: true,
+                failure_reason: None,
+            });
+        } else {
+            let ref_s = make_score(&ctx.context_sha256, ref_g, 0.95, Vec::new());
+            let cand_s = make_score(
+                &ctx.context_sha256,
+                cand_g,
+                0.70,
+                vec![ref_s.program_sha256.clone()],
+            );
+            scores.push(ref_s);
+            scores.push(cand_s);
+            for g in [ref_g, cand_g] {
+                parity.push(ParityRecord {
+                    dataset_id: ctx.context_sha256.clone(),
+                    genome: g.clone(),
+                    passed: true,
+                    failure_reason: None,
+                });
+            }
+        }
+        produced_ratchets.push(receipt);
+    }
+
+    let mut identity = fixture_identity();
+    identity.data_roster_sha256 = roster_digest;
+    let mut plan = fixture_plan(&identity);
+    plan.min_parent_clusters = 2;
+    plan.endpoint = Endpoint::RatchetVsOrdinaryFinalRound;
+
+    let report = qualify_rounds(RoundQualInputs {
+        plan: &plan,
+        identity: &identity,
+        ratchet_outputs: &produced_ratchets,
+        test_scores: &scores,
+        parity: &parity,
+        parent_of_context: &parent_map,
+    })
+    .expect("qualify real run_selfplay_ratchet outputs on RatchetVsOrdinaryFinalRound");
+
+    assert_eq!(report.n_ratchet_contexts, 2);
+    assert_eq!(report.n_complete_paired_contexts, 2);
+    assert_eq!(report.n_observed_parent_clusters, 2);
+    assert_eq!(report.n_unmeasured_kl_contexts, 0);
+    assert!(!report.qualified_claim);
 }

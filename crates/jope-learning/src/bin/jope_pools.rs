@@ -213,6 +213,9 @@ enum Command {
         /// JSON object (`{"context_id": "parent_cluster_id"}`) or TSV (`context_id<TAB>parent_id`).
         #[arg(long)]
         parent_map: PathBuf,
+        /// Optional JSON file of `SelfPlayPrereg` (`jope.selfplay-round1-prereg/v1`) bound by `plan.prereg_sha256`.
+        #[arg(long)]
+        prereg: Option<PathBuf>,
         /// New report path; must not exist.
         #[arg(long)]
         out: PathBuf,
@@ -664,11 +667,12 @@ fn main() -> Result<()> {
             test_scores,
             parity,
             parent_map,
+            prereg,
             out,
         } => {
             use jope_learning::clover::round_qual::{
-                parse_parent_map, qualify_rounds, ParityRecord, QualTestScore, RoundQualInputs,
-                RoundQualPlan,
+                parse_parent_map, qualify_rounds_with_prereg, ParityRecord, QualTestScore,
+                RoundQualInputs, RoundQualPlan,
             };
             use jope_learning::clover::ExperimentIdentity;
 
@@ -682,15 +686,22 @@ fn main() -> Result<()> {
                 parse_json_or_jsonl(&read(&test_scores)?, "--test-scores")?;
             let parity: Vec<ParityRecord> = parse_json_or_jsonl(&read(&parity)?, "--parity")?;
             let parent_map = parse_parent_map(&read(&parent_map)?)?;
+            let prereg_bytes = match prereg.as_deref() {
+                Some(p) => Some(read(p)?),
+                None => None,
+            };
 
-            let report = qualify_rounds(RoundQualInputs {
-                plan: &plan,
-                identity: &identity,
-                ratchet_outputs: &ratchets,
-                test_scores: &test_scores,
-                parity: &parity,
-                parent_of_context: &parent_map,
-            })?;
+            let report = qualify_rounds_with_prereg(
+                RoundQualInputs {
+                    plan: &plan,
+                    identity: &identity,
+                    ratchet_outputs: &ratchets,
+                    test_scores: &test_scores,
+                    parity: &parity,
+                    parent_of_context: &parent_map,
+                },
+                prereg_bytes.as_deref(),
+            )?;
             let digest = report.canonical_sha256()?;
             create_new(&out, &pretty(&report)?)?;
             println!(

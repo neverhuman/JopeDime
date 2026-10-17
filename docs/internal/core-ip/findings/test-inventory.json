@@ -2942,7 +2942,7 @@
       ]
     },
     "target:jope-learning/test/selfplay_round_qual": {
-      "note": "SPQ-1 self-play round diagnostic verifier (jope.selfplay-round-qualification/v1) and jope_pools qualify-rounds CLI fixtures: paired log-ratio and log-reduction parent-cluster intervals, F10 tie tolerance, sequential same-registry looks, strict KL/parity/budget/provenance downgrades, and create-only report output. Non-promoting offline fixture proof; no live Round-1 self-play claim.",
+      "note": "SPQ-1 & EXP-NEXT-02 self-play round diagnostic verifier (jope.selfplay-round-qualification/v1), SelfPlayPrereg (jope.selfplay-round1-prereg/v1), SelfPlayRoundReceipt::ordinary_champion_genome (Endpoint::RatchetVsOrdinaryFinalRound), and jope_pools qualify-rounds [--prereg <PATH>] CLI fixtures: paired log-ratio and log-reduction parent-cluster intervals, F10 tie tolerance, sequential same-registry looks, strict KL/parity/budget/provenance/prereg downgrades, and create-only report output. Non-promoting offline fixture proof; no live Round-1 self-play claim.",
       "role": "regression",
       "subsystems": [
         "evaluation",
