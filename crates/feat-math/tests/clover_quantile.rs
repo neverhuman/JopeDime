@@ -256,34 +256,38 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
         assert!(out.status.success(), "{tool} --version failed");
     }
 
-    let check_finite_and_pointwise_equal =
-        |expected: &[f64], actual: &[f64], allow_signed_zero_equivalence: bool| -> Result<(), String> {
-            if expected.len() != actual.len() {
+    let check_finite_and_pointwise_equal = |expected: &[f64],
+                                            actual: &[f64],
+                                            allow_signed_zero_equivalence: bool|
+     -> Result<(), String> {
+        if expected.len() != actual.len() {
+            return Err(format!(
+                "length mismatch: expected {}, got {}",
+                expected.len(),
+                actual.len()
+            ));
+        }
+        for (idx, (&e, &a)) in expected.iter().zip(actual).enumerate() {
+            if !e.is_finite() {
+                return Err(format!("row {idx}: expected prediction {e} is not finite"));
+            }
+            if !(e == a || (e.is_nan() && a.is_nan())) {
                 return Err(format!(
-                    "length mismatch: expected {}, got {}",
-                    expected.len(),
-                    actual.len()
+                    "row {idx}: value mismatch expected={e:?} actual={a:?}"
                 ));
             }
-            for (idx, (&e, &a)) in expected.iter().zip(actual).enumerate() {
-                if !e.is_finite() {
-                    return Err(format!("row {idx}: expected prediction {e} is not finite"));
-                }
-                if !(e == a || (e.is_nan() && a.is_nan())) {
-                    return Err(format!("row {idx}: value mismatch expected={e:?} actual={a:?}"));
-                }
-                if e.to_bits() != a.to_bits()
-                    && !(allow_signed_zero_equivalence && e == 0.0 && a == 0.0)
-                {
-                    return Err(format!(
-                        "row {idx}: bit mismatch expected={:#018x} ({e:?}) actual={:#018x} ({a:?})",
-                        e.to_bits(),
-                        a.to_bits()
-                    ));
-                }
+            if e.to_bits() != a.to_bits()
+                && !(allow_signed_zero_equivalence && e == 0.0 && a == 0.0)
+            {
+                return Err(format!(
+                    "row {idx}: bit mismatch expected={:#018x} ({e:?}) actual={:#018x} ({a:?})",
+                    e.to_bits(),
+                    a.to_bits()
+                ));
             }
-            Ok(())
-        };
+        }
+        Ok(())
+    };
 
     // Counterexample proving the old `fold(0.0_f64, f64::max)` reduction is NaN-blind
     // whereas `check_finite_and_pointwise_equal` rejects NaN-vs-finite and length mismatches.
@@ -504,7 +508,10 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
         let bound_csv_path = tmp.path().join("bound_test.csv");
         let mut bound_csv = String::from("c0,c1,c2\n");
         for row in &holdout {
-            bound_csv.push_str(&format!("{:.17e},{:.17e},{:.17e}\n", row[0], row[1], row[2]));
+            bound_csv.push_str(&format!(
+                "{:.17e},{:.17e},{:.17e}\n",
+                row[0], row[1], row[2]
+            ));
         }
         fs::write(&bound_py_path, &bound.python).unwrap();
         fs::write(&bound_rs_path, &bound.rust).unwrap();
@@ -676,15 +683,13 @@ fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_p
         );
         let legacy_py_preds = parse_preds(&legacy_py_pred_path, name);
         let legacy_py_err =
-            check_finite_and_pointwise_equal(&native_preds, &legacy_py_preds, false)
-                .expect_err(&format!(
-                    "{name}: legacy Python helper must diverge from native partition_point"
-                ));
+            check_finite_and_pointwise_equal(&native_preds, &legacy_py_preds, false).expect_err(
+                &format!("{name}: legacy Python helper must diverge from native partition_point"),
+            );
         assert!(legacy_py_err.contains("mismatch"), "{legacy_py_err}");
 
         if check_cpp_js {
-            let mut legacy_js_src =
-                emit_javascript(&genome, &EmitOptions::default()).expect(name);
+            let mut legacy_js_src = emit_javascript(&genome, &EmitOptions::default()).expect(name);
             legacy_js_src.push_str(&js_driver);
             let legacy_js_path = tmp.path().join(format!("{name}_legacy.js"));
             let legacy_js_pred_path = tmp.path().join(format!("{name}_legacy_js_pred.csv"));
