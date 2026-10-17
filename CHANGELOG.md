@@ -14,7 +14,7 @@ the commit areas (crate or lane) named in each subject line.
 ### CI, build and release
 
 - ci: keep CI evidence on runner local disk without GitHub Actions artifact uploads (#341), and report aged evidence in `retention.py` without deleting retained records (#342)
-- records(paper-trace): enforce claim-level TeX statement/value parity and numeric drift checks in CI (#340, #347, #350), sync `C191`–`C192` across `docs/paper/` and `docs/experiments/` for `#346`/`#349`/`#351` (#352), add deterministic `README.md` and Section 10.3.2 `docs/paper/figures/` overview SVGs built from committed evidence (#353), enforce `NUMBERS_TRACE.md` `## Committed SVG figures` SHA-256/link/metric parity and `docs/experiments/experiments.jsonl` schema/claim/artifact invariants in `jope-records paper-trace`, and reject `..` (`ParentDir`), root, and absolute paths in `sources` `source_file` entries before filesystem resolution
+- records(paper-trace): enforce claim-level TeX statement/value parity and numeric drift checks in CI (#340, #347, #350), sync `C191`–`C192` across `docs/paper/` and `docs/experiments/` for `#346`/`#349`/`#351` (#352), add deterministic `README.md` and Section 10.3.2 `docs/paper/figures/` overview SVGs built from committed evidence (#353), enforce `NUMBERS_TRACE.md` `## Committed SVG figures` SHA-256/link/metric parity and `docs/experiments/{experiments.jsonl,README.md,SYNTHESIS_AND_NEXT_EXPERIMENTS.md}` schema/matrix/card/claim/anchor invariants in `jope-records paper-trace` (#354), and reject `..` (`ParentDir`), root, and absolute paths in `sources` `source_file` entries before filesystem resolution
 
 ## [0.3.0] - 2026-10-15
 
