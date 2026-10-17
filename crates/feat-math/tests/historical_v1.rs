@@ -437,6 +437,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let release_0_3_0 = old_fixture("transitions/release_0_3_0_identity_rebaseline.v1.json");
     assert_eq!(release_0_3_0["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(release_0_3_0["fixtures"][0]["path"], changed_fixtures[0]);
+    // EXP-NEXT-04 opt-in partition_point quantile emitters: evaluator identity only.
+    let exp_next_04 = old_fixture("transitions/exp_next_04_identity_rebaseline.v1.json");
+    assert_eq!(exp_next_04["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(exp_next_04["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -453,6 +457,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         sealed_runtime,
         eval_isolation,
         release_0_3_0,
+        exp_next_04,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

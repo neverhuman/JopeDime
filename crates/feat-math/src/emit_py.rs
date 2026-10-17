@@ -29,7 +29,7 @@ pub fn emit_python(plan: &Plan, opts: &EmitOptions) -> String {
             out.push(&pcg32_class(&helpers));
             continue;
         }
-        let src = helper_src(*h);
+        let src = helper_src(*h, opts.partition_point_quantile_bounds);
         if !src.is_empty() {
             out.push(src);
         }
@@ -207,7 +207,7 @@ fn pcg32_class(helpers: &std::collections::BTreeSet<Helper>) -> String {
     src
 }
 
-fn helper_src(h: Helper) -> &'static str {
+fn helper_src(h: Helper, partition_point_bounds: bool) -> &'static str {
     match h {
         Helper::Clamp => {
             r#"def _clamp(value, lo, hi):
@@ -444,7 +444,22 @@ fn helper_src(h: Helper) -> &'static str {
     return sorted_values[lo] * (1.0 - frac) + sorted_values[hi] * frac"#
         }
         Helper::LowerBound => {
-            r#"def _lower_bound(sorted_values, v):
+            if partition_point_bounds {
+                r#"def _lower_bound(sorted_values, v):
+    """Count of elements strictly less than v (hand-rolled binary search)."""
+    size = len(sorted_values)
+    if size == 0:
+        return 0
+    base = 0
+    while size > 1:
+        half = size // 2
+        mid = base + half
+        if sorted_values[mid] < v:
+            base = mid
+        size -= half
+    return base + (1 if sorted_values[base] < v else 0)"#
+            } else {
+                r#"def _lower_bound(sorted_values, v):
     """Count of elements strictly less than v (hand-rolled binary search)."""
     lo, hi = 0, len(sorted_values)
     while lo < hi:
@@ -454,9 +469,25 @@ fn helper_src(h: Helper) -> &'static str {
         else:
             hi = mid
     return lo"#
+            }
         }
         Helper::UpperBound => {
-            r#"def _upper_bound(sorted_values, v):
+            if partition_point_bounds {
+                r#"def _upper_bound(sorted_values, v):
+    """Count of elements less than or equal to v (hand-rolled binary search)."""
+    size = len(sorted_values)
+    if size == 0:
+        return 0
+    base = 0
+    while size > 1:
+        half = size // 2
+        mid = base + half
+        if sorted_values[mid] <= v:
+            base = mid
+        size -= half
+    return base + (1 if sorted_values[base] <= v else 0)"#
+            } else {
+                r#"def _upper_bound(sorted_values, v):
     """Count of elements less than or equal to v (hand-rolled binary search)."""
     lo, hi = 0, len(sorted_values)
     while lo < hi:
@@ -466,6 +497,7 @@ fn helper_src(h: Helper) -> &'static str {
         else:
             hi = mid
     return lo"#
+            }
         }
         Helper::MidRank => {
             r#"def _mid_rank(sorted_values, v):

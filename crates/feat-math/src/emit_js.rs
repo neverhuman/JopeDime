@@ -47,7 +47,22 @@ pub fn emit_js(plan: &Plan, opts: &EmitOptions) -> Result<String, Vec<String>> {
         source.push_str(PLATFORM_MATH_BINDINGS);
     }
     source.push('\n');
-    source.push_str(CORE);
+    if opts.partition_point_quantile_bounds {
+        let needle = "function lowerBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<v)lo=mid+1;else hi=mid;}return lo;}\nfunction upperBound(s,v){let lo=0,hi=s.length;while(lo<hi){const mid=Math.trunc((lo+hi)/2);if(s[mid]<=v)lo=mid+1;else hi=mid;}return lo;}";
+        assert_eq!(
+            CORE.matches(needle).count(),
+            1,
+            "CORE template must contain the legacy lowerBound/upperBound needle exactly once"
+        );
+        let core = CORE.replacen(
+            needle,
+            "function lowerBound(s,v){let size=s.length;if(size===0)return 0;let base=0;while(size>1){const half=Math.trunc(size/2),mid=base+half;if(s[mid]<v)base=mid;size-=half;}return base+(s[base]<v?1:0);}\nfunction upperBound(s,v){let size=s.length;if(size===0)return 0;let base=0;while(size>1){const half=Math.trunc(size/2),mid=base+half;if(s[mid]<=v)base=mid;size-=half;}return base+(s[base]<=v?1:0);}",
+            1,
+        );
+        source.push_str(&core);
+    } else {
+        source.push_str(CORE);
+    }
     source.push('\n');
     source.push_str(&model_js(stages, head));
     source.push('\n');

@@ -105,6 +105,14 @@ pub struct EmitOptions {
     /// empty feature row before fitting or predicting. The legacy default
     /// keeps its source bytes for already pinned artifacts.
     pub guard_zero_width_roll: bool,
+    /// Versioned opt-in recipe and bound-Python profile. Recipe programs
+    /// containing `LowerBound` or `UpperBound` helpers (`QuantileBins`,
+    /// `BinOnehot`, `TargetBinEncode`, `Rank`, `Blom`) and bound Python
+    /// artifacts (`advanced_v3::emit::emit_bound`) emit the exact `(base, size)`
+    /// `slice::partition_point` binary search instead of the legacy default
+    /// helpers. The legacy default (`false`) keeps its source bytes and
+    /// `emitter_version` labels for already pinned artifacts.
+    pub partition_point_quantile_bounds: bool,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -232,6 +240,33 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         GenomeIr::Portfolio(_) => "portfolio",
     };
     let canonical = genome.canonical();
+    let helpers = crate::spec::helper_set(&plan);
+    let has_roll_guard = opts.guard_zero_width_roll
+        && matches!(&plan, crate::spec::Plan::Pipeline { stages, .. }
+            if stages.iter().any(|stage| matches!(stage.op, crate::spec::PlannedOp::Roll { .. })));
+    let has_quantile_partition_point = opts.partition_point_quantile_bounds
+        && helpers.iter().any(|h| {
+            matches!(
+                h,
+                crate::spec::Helper::LowerBound | crate::spec::Helper::UpperBound
+            )
+        });
+    let has_clip_safety = helpers.contains(&crate::spec::Helper::MathClip);
+    let emitter_version = match (
+        has_roll_guard,
+        has_quantile_partition_point,
+        has_clip_safety,
+    ) {
+        (true, true, true) => {
+            "feat-math-roll-width-guard-v1+quantile-partition-point-v1+clip-safety-v2"
+        }
+        (true, true, false) => "feat-math-roll-width-guard-v1+quantile-partition-point-v1",
+        (false, true, true) => "feat-math-quantile-partition-point-v1+clip-safety-v2",
+        (false, true, false) => "feat-math-quantile-partition-point-v1",
+        (true, false, _) => "feat-math-roll-width-guard-v1",
+        (false, false, true) => "feat-math-clip-safety-v2",
+        (false, false, false) => EMITTER_VERSION,
+    };
     let manifest = serde_json::to_string(&Manifest {
         schema: "battle-artifact-v1",
         program: canonical.clone(),
@@ -239,16 +274,7 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         genome_sha256: sha256_hex(&canonical),
         dsl: canonical,
         flavor,
-        emitter_version: if opts.guard_zero_width_roll
-            && matches!(&plan, crate::spec::Plan::Pipeline { stages, .. }
-                if stages.iter().any(|stage| matches!(stage.op, crate::spec::PlannedOp::Roll { .. })))
-        {
-            "feat-math-roll-width-guard-v1"
-        } else if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip) {
-            "feat-math-clip-safety-v2"
-        } else {
-            EMITTER_VERSION
-        },
+        emitter_version,
         py_sha256: sha256_hex(&python),
         rs_sha256: sha256_hex(&rust),
     })?;

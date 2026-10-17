@@ -134,7 +134,7 @@ pub fn emit_bound(
     let portfolio = matches!(head, V3Head::ClassificationPortfolio(_));
     let user = user_text(model);
     let start = std::time::Instant::now();
-    let python = emit_bound_python(model)?;
+    let python = emit_bound_python(model, options.partition_point_quantile_bounds)?;
     let rust = emit_bound_rust(model)?;
     let elapsed = start.elapsed().as_nanos().max(1);
     for (lang, text) in [("Python", &python), ("Rust", &rust)] {
@@ -150,6 +150,11 @@ pub fn emit_bound(
     let rs_tokens = crate::tokens::count_tokens(&rust, crate::tokens::Lang::Rust);
     let py_total = py_tokens.code_tokens + py_tokens.doc_tokens;
     let rs_total = rs_tokens.code_tokens + rs_tokens.doc_tokens;
+    let emitter_version = if options.partition_point_quantile_bounds {
+        "feat-math-quantile-partition-point-v1"
+    } else {
+        crate::transpile::EMITTER_VERSION
+    };
     let manifest = serde_json::to_string(&BoundManifest {
         schema: ARTIFACT_SCHEMA,
         task: &model.task,
@@ -157,7 +162,7 @@ pub fn emit_bound(
         schema_sha256: &model.schema_sha256,
         vocabulary_sha256: &model.vocabulary_sha256,
         program_sha256: &model.genome_sha256,
-        emitter_version: crate::transpile::EMITTER_VERSION,
+        emitter_version,
         python_sha256: text_hash(&python),
         rust_sha256: text_hash(&rust),
     })?;
@@ -183,7 +188,7 @@ pub fn emit_bound(
     })
 }
 
-fn emit_bound_python(model: &BoundModel) -> Result<String> {
+fn emit_bound_python(model: &BoundModel, partition_point_quantile_bounds: bool) -> Result<String> {
     let BoundPredictor::Pipeline {
         target,
         ops,
@@ -228,6 +233,29 @@ fn emit_bound_python(model: &BoundModel) -> Result<String> {
         }
         V3Head::Legacy(FittedHead::Ridge(_)) => "ridge",
         V3Head::Legacy(_) => bail!("this fitted legacy head is not supported by bound emission"),
+    };
+    let (
+        lower_bound_helper,
+        tbe_index_expr,
+        gam_index_expr,
+        isotonic_index_expr,
+        rankgauss_hi_expr,
+    ) = if partition_point_quantile_bounds {
+        (
+            "\ndef lower_bound(sorted_values, v):\n    size = len(sorted_values)\n    if size == 0:\n        return 0\n    base = 0\n    while size > 1:\n        half = size // 2\n        mid = base + half\n        if sorted_values[mid] < v:\n            base = mid\n        size -= half\n    return base + (1 if sorted_values[base] < v else 0)\n",
+            "lower_bound(edges, value)",
+            "lower_bound(term[\"edges\"], item)",
+            "lower_bound(spec[\"upper\"], value)",
+            "lower_bound(scores, value)",
+        )
+    } else {
+        (
+            "",
+            "sum(edge < value for edge in edges)",
+            "sum(edge < item for edge in term[\"edges\"])",
+            "sum(bound < value for bound in spec[\"upper\"])",
+            "sum(score < value for score in scores)",
+        )
     };
     Ok(format!(
         r#"#!/usr/bin/env python3
@@ -372,7 +400,7 @@ def raw_keys(row, order):
     group = tuple(semantic_key(row[index], kind) for index, kind in order["group_columns"])
     ordered = tuple(semantic_key(row[index], kind) for index, kind in order["order_columns"])
     return group, ordered
-
+{lower_bound_helper}
 def apply_ops(rows, masks, raw_rows):
     for wrapped in OPS:
         name, state = next(iter(wrapped.items()))
@@ -455,7 +483,7 @@ def apply_ops(rows, masks, raw_rows):
                 elif name == "TargetBinEncode":
                     out = []
                     for value, edges, encoded in zip(x, state["edges"], state["enc"]):
-                        index = sum(edge < value for edge in edges)
+                        index = {tbe_index_expr}
                         out.append(encoded[min(index, len(encoded)-1)])
                     out_mask = mask[:]
                 elif name == "Sigmoid":
@@ -533,7 +561,7 @@ def predict_head(wrapped, x):
         raw = model["base"]
         for term in model["terms"]:
             item = x[term["feature"]]
-            index = sum(edge < item for edge in term["edges"])
+            index = {gam_index_expr}
             raw += model["learning_rate"] * term["values"][min(index, len(term["values"])-1)]
         value = sigmoid(raw) if model["binary"] else (raw if math.isfinite(raw) else 0.0)
     elif tag == "ClassificationPortfolio":
@@ -563,7 +591,7 @@ def predict_numeric(x):
         value = sigmoid(spec["slope"] * math.log(p/(1.0-p)) + spec["intercept"])
     elif "Isotonic" in cal:
         spec = cal["Isotonic"]
-        index = sum(bound < value for bound in spec["upper"])
+        index = {isotonic_index_expr}
         value = spec["values"][min(index, len(spec["values"])-1)]
     if TARGET is not None:
         if TARGET == "Log1p":
@@ -583,7 +611,7 @@ def predict_numeric(x):
             elif value >= scores[-1]:
                 value = values[-1]
             else:
-                hi = sum(score < value for score in scores)
+                hi = {rankgauss_hi_expr}
                 lo = hi - 1
                 value = values[lo] + (value-scores[lo])/(scores[hi]-scores[lo])*(values[hi]-values[lo])
             value = clamp(value, -60.0, 60.0)
