@@ -1,6 +1,6 @@
 # JopeDime plan brief
 
-Status: planning PR356 open, one source branch from main0b7eb890; implementation/science separate.66ordered packets,30decisions,8inputs/6unique,123sections/2427sourceblocks. WORKPLAN/TODO hold full details. Original packetv1 remains immutable; final review amendment preserves it.
+Status: planning PR356 open, one source branch from main0b7eb890; implementation/science separate.66ordered packets,30 decisions,8 inputs/6 unique,123 sections/2427sourceblocks. WORKPLAN/TODO hold full details. Original packetv1 remains immutable; final review amendment preserves it.
 
 Next: freeze samePR after amendment; exact-head CI once, independent eligible native approval, reviewed rebase and receiving-main verification. No stack. Currentxbabe1/2/3CI online; recheck at dispatch. Canonical797f/private notes and custody/whole-filesystem/source/transcript/native-grant/roster holds remain. No Root cleanup or new training campaign.
 
@@ -10,8 +10,8 @@ First engineering path: truth/contracts/roles → existing native lineage/intent
 
 Every version/wave: detailed immutable training/outcome/consumption/checkpoint traces in existing state/store, columnarZstd packs, compact deterministic Git manifest/card/context/metrics. Ordinary Git review target≤32KiB; exact pointers retain complete detailed evidence. Failed/truncated/partial waves retained honestly. Git context obeys role/disclosure policy; reuse existing experiment records/paper_trace. See WAVE_DATA_AND_GIT_CONTEXT.md.
 
-Do not: changeF10 by proposal; call adaptive/missing-support arena exact; treat fingerprints as equality, Thompson scores as propensities or spec scores as progress; publish sealed summaries; delete by age/low value; weaken guards; forcepush; restart expired campaigns. New numeric/ABI semantics versioned. Protected links and recovery evidence remain.
+Do not: change F10 by proposal; call adaptive/missing-support arena exact; treat fingerprints as equality, Thompson scores as propensities or spec scores as progress; publish sealed summaries; delete by age/low value; weaken guards; forcepush; restart expired campaigns. New numeric/ABI semantics versioned. Protected links and recovery evidence remain.
 
 Static planning integrity passes; new programme implementation verified0/66 so far does not mean existing substrate missing. Qualified-science percentage unknown; no new benchmark or promotion claimed.
 
-Traceability correction (revision5): requirements.json now explicitly routes all232rows in22 reviewed work/slice/wave/delivery tables, including numeric-only IDs. SOURCE_TABLES.json inventories every Markdown table by exact source range/hash. The initial166-row heuristic is preserved as legacy_heuristic_context_rows and is not a complete work-item denominator. All123sections/2427source blocks and all6unique source bytes remain unchanged. Routing does not authorize execution.
+Traceability correction (revision5): requirements.json now explicitly routes all 232 rows in22 reviewed work/slice/wave/delivery tables, including numeric-only IDs. SOURCE_TABLES.json inventories every Markdown table by exact source range/hash. The initial166-row heuristic is preserved as legacy_heuristic_context_rows and is not a complete work-item denominator. All 123 sections/2427 source blocks and all 6 unique source bytes remain unchanged. Routing does not authorize execution.

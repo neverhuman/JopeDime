@@ -7,82 +7,75 @@
     {
       "id": "S1",
       "name": "JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17 (1).md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17 (1).md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17 (1).md",
       "bytes": 233292,
       "lines": 1719,
       "sha256": "63b7a39e4bcfc854bb809f459c6408cf4d5c03c76ce773bec6404a210b5c5b1f",
-      "identical_to": null
+      "identical_to": null,
+      "repository_copy": "reference-specs/S1.md"
     },
     {
       "id": "S2",
       "name": "JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17.md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17.md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17.md",
       "bytes": 233292,
       "lines": 1719,
       "sha256": "63b7a39e4bcfc854bb809f459c6408cf4d5c03c76ce773bec6404a210b5c5b1f",
-      "identical_to": "S1"
+      "identical_to": "S1",
+      "repository_copy": "reference-specs/S1.md"
     },
     {
       "id": "S3",
       "name": "JOPEDIME_FINAL_AUTHORITATIVE_ENGINEERING_SPEC.md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_FINAL_AUTHORITATIVE_ENGINEERING_SPEC.md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_FINAL_AUTHORITATIVE_ENGINEERING_SPEC.md",
       "bytes": 27150,
       "lines": 372,
       "sha256": "ca505ef920804f832d5f8141d691766d058ad5931742b29979dcd180e4f2a90a",
-      "identical_to": null
+      "identical_to": null,
+      "repository_copy": "reference-specs/S3.md"
     },
     {
       "id": "S4",
       "name": "JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17 (1).md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17 (1).md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17 (1).md",
       "bytes": 310695,
       "lines": 3334,
       "sha256": "1c0623bc809f4e95109dafd99ed415ca97a00a0b185b6c87174fcc28f1870b16",
-      "identical_to": null
+      "identical_to": null,
+      "repository_copy": "reference-specs/S4.md"
     },
     {
       "id": "S5",
       "name": "JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17.md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17.md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17.md",
       "bytes": 278223,
       "lines": 1758,
       "sha256": "2f0651d23a11b7b151b64210807a560f614b706f08ed5b5cff1ec6eab50d89a5",
-      "identical_to": null
+      "identical_to": null,
+      "repository_copy": "reference-specs/S5.md"
     },
     {
       "id": "S6",
       "name": "JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC (1).md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC (1).md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC (1).md",
       "bytes": 195700,
       "lines": 1824,
       "sha256": "ffce4d7d4b1045cbd70e005d8b59b0229f12bcec01422d2b58d5fa443898d2b1",
-      "identical_to": null
+      "identical_to": null,
+      "repository_copy": "reference-specs/S6.md"
     },
     {
       "id": "S7",
       "name": "JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC.md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC.md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC.md",
       "bytes": 195700,
       "lines": 1824,
       "sha256": "ffce4d7d4b1045cbd70e005d8b59b0229f12bcec01422d2b58d5fa443898d2b1",
-      "identical_to": "S6"
+      "identical_to": "S6",
+      "repository_copy": "reference-specs/S6.md"
     },
     {
       "id": "S8",
       "name": "JOPEDIME_ULTIMATE_FINAL_ENGINEERING_SPEC.md",
-      "requested_path": "/Users/bentaylor/Downloads/JOPEDIME_ULTIMATE_FINAL_ENGINEERING_SPEC.md",
-      "resolved_path": "/Users/bentaylor/Downloads/scratch/jopedime/xfinal/JOPEDIME_ULTIMATE_FINAL_ENGINEERING_SPEC.md",
       "bytes": 35445,
       "lines": 461,
       "sha256": "836ff49ef3f34c74f9594c493d4cfa45a4eec444d548bb317c5d1fd9ecb4afb8",
-      "identical_to": null
+      "identical_to": null,
+      "repository_copy": "reference-specs/S8.md"
     }
-  ]
+  ],
+  "local_intake_path_policy": "Owner-local source locations are held with the original private intake manifest outside this public packet. Source names, bytes, hashes and duplicate aliases are unchanged. Prior published Git history is not rewritten."
 }

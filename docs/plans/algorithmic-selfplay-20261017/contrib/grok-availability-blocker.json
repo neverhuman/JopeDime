@@ -5,5 +5,8 @@
   "message": "HTTP402 Payment Required: Grok Build usage balance exhausted",
   "review_coverage": 0,
   "no_retry_or_purchase": true,
-  "launch_receipt": "contrib/grok-launch-status.json"
+  "external_launch_receipt": "contrib/grok-launch-status.json",
+  "evidence_location_policy": "The external_launch_receipt is relative to the private xbabe2 preparation evidence root, not a repository link. Provider error and zero review coverage are preserved inline; no missing repository artifact is claimed.",
+  "external_launch_receipt_sha256": "7f63c4831fe9bb75c14d23cb2f3ec42162c19651864639dcccfbb3c19e4f04ac",
+  "external_launch_receipt_bytes": 444
 }

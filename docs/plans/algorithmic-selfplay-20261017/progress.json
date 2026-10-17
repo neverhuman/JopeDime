@@ -1,7 +1,7 @@
 {
   "schema": "jope.unified-workplan.progress/v1",
-  "revision": 5,
-  "updated_at": "2026-10-17T20:52:42.607366+00:00",
+  "revision": 6,
+  "updated_at": "2026-10-17T21:36:28.975459+00:00",
   "planning": {
     "input_files_verified": 8,
     "unique_inputs": 6,
@@ -10,19 +10,21 @@
     "semantic_review": "COMPLETE_TEXT_RECONCILIATION_WITH_EXPLICIT_LIMITS; see SEMANTIC_REVIEW.md",
     "detailed_implementation_packets": 66,
     "decisions": 30,
-    "validation": "See final VALIDATION.json; static integrity only",
+    "validation": "See final VALIDATION.json and RENDER_CHECK.json; static/render integrity, not science or product implementation",
     "pr": {
       "number": 356,
       "url": "https://github.com/neverhuman/JopeDime/pull/356",
       "initial_head": "15c0c9120d14d0ca40bf8906735a252db44c187d",
-      "state": "OPEN_FINAL_TRACEABILITY_AMENDMENT",
-      "full_CI": "HOLD_UNTIL_FINAL_HEAD_FREEZE",
-      "last_published_head": "f383d1231a6e7f015016c8c5c549b4918445246c"
+      "state": "DRAFT_GENUINE_REVIEW_CORRECTION_V4",
+      "full_CI": "NEW_HEAD_REQUIRES_FRESH_FULL_CI;v3manual39068904904A1passed10/10 but genuine review blocked",
+      "last_published_head": "3f9b8200f5b79d0fcb3a5ff5ab25cc695b918322"
     },
     "source_and_test_anchors_verified": 134,
     "original_work_rows": 232,
     "all_source_tables": 178,
-    "work_tables": 22
+    "work_tables": 22,
+    "snapshot_semantics": "PRE_PUBLICATION_SNAPSHOT. Live final CI/review/merge evidence is external; this file cannot contain its own final commit hash.",
+    "delivery_review": "Actual fresh Claude4b5e9a23 NOT_APPROVED, COMMENT5560179600; B1/B2 corrected in v4; new exact-head genuine review still required. ConcurrentAPP5560157745 origin unverified and not credited."
   },
   "implementation": {
     "tasks": 66,
