@@ -1,0 +1,3330 @@
+{
+  "schema": "jope.unified-workplan.file-map/v2",
+  "task_id": "I01",
+  "title": "Refresh the executable baseline and capability gaps",
+  "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+  "source_tree": "885189fe077e4a23acd7333370c1e95b57193bc4",
+  "parent_sha": "0e063f4ce110dd142f18f8482867c2d3d237598c",
+  "historical_baseline_pins": [
+    {
+      "role": "initial_workplan_symbol_and_spec_pin",
+      "source_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+      "note": "Initial planning source pin recorded in WORKPLAN.md, tasks.json, and SOURCE_SYMBOLS.json after PR #354."
+    },
+    {
+      "role": "post_pr355_receiving_main_pin",
+      "source_sha": "0b7eb89075b8186f1aacf1643725432e75e8fe56",
+      "tree_sha": "1244b1bf83141c3f6a456107c788cfc7a17ef7dc",
+      "note": "Receiving main after PR #355 merge (2026-10-17T17:35:17Z), verified in BASELINE_CURRENT.md and FILE_MAP.json with receiving runs 39054417420 and 39054417434 green."
+    },
+    {
+      "role": "post_pr356_receiving_main_pin",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "tree_sha": "885189fe077e4a23acd7333370c1e95b57193bc4",
+      "reviewed_pr_head_sha": "e127b5f01cacf0d98717241fcfdb0101d61a11d1",
+      "note": "Receiving main after PR #356 rebase merge (2026-10-17T22:30:53Z), publishing docs/plans/algorithmic-selfplay-20261017/ (PACKET_MANIFEST.v4.json sha256 921643bc3ae0b7d75bbab13434f4d8211bc3c8638154c45ac00fc7df184750d5) with receiving main-guard 39075385530 and full-main-cpu 39075385526 green."
+    }
+  ],
+  "immutable_v4_packet": {
+    "manifest_path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v4.json",
+    "manifest_sha256": "921643bc3ae0b7d75bbab13434f4d8211bc3c8638154c45ac00fc7df184750d5",
+    "payload_file_count": 39,
+    "previous_file_map_path": "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.json",
+    "previous_file_map_sha256": "7c2eca800309a520aacf38c6fdf0af0929d9a8c497efcc08d03d9d98954cb2c2",
+    "immutable_payload_files_modified": false
+  },
+  "symbols": [
+    {
+      "symbol": "native_loop::verify_successor",
+      "defining_path": "crates/jope-engine/src/native_loop.rs",
+      "defining_line": 82,
+      "defining_file_sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3",
+      "package_name": "jope-parallel",
+      "callers": [
+        "crates/jope-engine/src/native_loop.rs:1435",
+        "crates/jope-engine/src/native_loop.rs:2263",
+        "crates/jope-engine/src/native_loop.rs:2266",
+        "crates/jope-engine/src/native_loop.rs:2269",
+        "crates/jope-engine/src/native_loop.rs:2314"
+      ],
+      "related_witness_constraint": {
+        "path": "crates/jope-engine/src/eval_registry/witness/epochs.rs",
+        "line": 85,
+        "file_sha256": "780680be582fe4c818b4eafcc32b85d8d3e0fe8bb197b0e7bf0f866d367d5aaf",
+        "symbol": "validate_effective_shape",
+        "rule": "d.initial_optimizer_step >= 60000 && (d.initial_optimizer_step - 60000) % 6000 == 0"
+      },
+      "current_behavior": "Requires previous.schema == jope.native_loop.v1 (refusing jope.native_loop.v2 weight-warm-start runs), completion.schema == jope.native_loop_completion.v1, target_optimizer_step == initial_optimizer_step + 6000, and identical scientific_policy/label_admission_policy/qualification/cuts/budgets.",
+      "capability_gap": "Refuses jope.native_loop.v2 weight-warm-start successors and non-6000-step windows (e.g. 0->3000->6000); addressed by I11-I14 and D07/D28/C02 via explicit additive versioned ancestry without weakening legacy 60000/6000 checks."
+    },
+    {
+      "symbol": "CheckpointBinding::require_challenger_identity",
+      "defining_path": "crates/jope-policy/src/config.rs",
+      "defining_line": 584,
+      "defining_file_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
+      "package_name": "jope-policy",
+      "callers": [
+        "crates/jope-policy/src/config.rs:576",
+        "crates/jope-policy/src/seeds.rs:542",
+        "crates/jope-policy/src/challenger_tests.rs:287",
+        "crates/jope-policy/src/challenger_tests.rs:291"
+      ],
+      "current_behavior": "Refuses rejected checkpoints, requires self.step > ACCEPTED_STEP (60000) && self.step != REJECTED_STEP (60100), self.model_sha256 != ACCEPTED_MODEL_SHA256, exact state/parameter/config/policy_safetensors SHA-256 matches, and self.vocabulary_sha256 == CHECKPOINT_VOCABULARY_SHA256.",
+      "capability_gap": "Numeric step check self.step > 60000 rejects legitimate low-step warm-start descendants (e.g. 3000-step optimizer-reset epochs) while numeric step alone would not prove ancestry without state/parent chain; addressed by I11 and I14 while keeping accepted serving checks strict."
+    },
+    {
+      "symbol": "require_original_gpu_grant",
+      "defining_path": "crates/jope-engine/src/task_contract.rs",
+      "defining_line": 313,
+      "defining_file_sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d",
+      "package_name": "jope-parallel",
+      "callers": [
+        "crates/jope-engine/src/task_contract.rs:308 (require_qualified_gpu_experiment)",
+        "crates/jope-engine/src/campaign.rs:192 (learning-campaign)",
+        "crates/jope-engine/src/components.rs:163 (target-rank)",
+        "crates/jope-engine/src/components.rs:274 (component-service)",
+        "crates/jope-engine/src/components.rs:492 (foundation-rank)",
+        "crates/jope-engine/src/contexts.rs:131 (assemble-contexts)",
+        "crates/jope-engine/src/contexts.rs:686 (apply-contexts)",
+        "crates/jope-engine/src/contexts.rs:737 (apply-contexts-numerical)",
+        "crates/jope-engine/src/controller.rs:185 (proposal-controller)",
+        "crates/jope-engine/src/controller.rs:612 (training-controller)",
+        "crates/jope-engine/src/encoding.rs:83 (encode-cut)",
+        "crates/jope-engine/src/gpu_worker.rs:276 (native-gpu-rank)",
+        "crates/jope-engine/src/gpu_worker.rs:337 (resident-submit)",
+        "crates/jope-engine/src/gpu_worker.rs:476 (resident-dispatch)",
+        "crates/jope-engine/src/monitoring.rs:20 (monitor-checkpoint)",
+        "crates/jope-engine/src/pipeline.rs:360 (learning-cycle)",
+        "crates/jope-engine/src/proposals.rs:33 (proposal-rank)",
+        "crates/jope-engine/src/training.rs:491 (train-rank)"
+      ],
+      "current_behavior": "Shared dispatch hold across 17 native GPU routes; unconditionally returns Err(\"{route}: original native GPU grant verifier unavailable; numerical dispatch is held\").",
+      "capability_gap": "Intentional fail-closed hold; requires genuine issuer/verifier contract and explicit human/resource admission (I12, I65) before any live native GPU dispatch."
+    },
+    {
+      "symbol": "RoundQualReport",
+      "defining_path": "crates/jope-learning/src/clover/round_qual.rs",
+      "defining_line": 537,
+      "defining_file_sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5",
+      "package_name": "jope-learning",
+      "callers": [
+        "crates/jope-learning/src/clover/round_qual.rs:1359 (qualify_rounds)",
+        "crates/jope-learning/src/clover/round_qual.rs:1364 (qualify_rounds_with_prereg)",
+        "crates/jope-learning/src/bin/jope_pools.rs (jope_pools qualify-rounds)"
+      ],
+      "current_behavior": "Offline diagnostic verifier (jope.selfplay-round-qualification/v1) that unconditionally sets qualified_claim: false, promotion: false, and l6_claim: false, checking either unpinned/no-grant prereg contracts or caller-asserted receipts with create-only O_EXCL output.",
+      "capability_gap": "Offline verifier does not re-hash raw search/observation payloads or authenticate external execution grants; prospective estimand/roster/exposure/authority authentication is scheduled in I41-I43."
+    }
+  ],
+  "profile_and_model_reconciliation": {
+    "search_vocabulary_vs_strategy": {
+      "vocabulary_symbol": "SearchProfile",
+      "vocabulary_path": "crates/feat-math/src/kernel/profile.rs",
+      "vocabulary_file_sha256": "b6da43c9990e80fde3f4dea5f00c662379b53e201aeb72e64faffa5db911f756",
+      "shipped_profile_factories": [
+        "legacy(false) -> legacy_v1",
+        "legacy(true) -> legacy_v2",
+        "kernel2(\"kernel2_default\")",
+        "kernel2(\"kernel2_conservative\")",
+        "kernel2(\"kernel2_wide\")",
+        "expression_operators",
+        "pipeline_operators"
+      ],
+      "strategy_axis_status": "PROPOSED_SEPARATE_AXIS_I17_D08",
+      "reconciliation_rule": "SearchProfile defines operator vocabulary, expression pools, and complexity limits; SearchStrategy (I17-I19, D08) defines the search algorithm (frozen legacy, lite-race, candidate modern GP) and must never be conflated with SearchProfile."
+    },
+    "model_lineages": [
+      {
+        "lineage_id": "lineage_b_native_accepted_step60000",
+        "architecture": "512x6 PolicyLM (native tch / Candle)",
+        "vocabulary_tokens": 401,
+        "context_length": 2048,
+        "accepted_step": 60000,
+        "rejected_continuation_step": 60100,
+        "state_sha256": "8ac80c26856734696935852f29500263a9703802505966a58e13a9769699e083",
+        "defining_path": "crates/jope-policy/src/config.rs",
+        "defining_file_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
+        "status": "CONFIRMED_ACCEPTED_SERVING_BASELINE"
+      },
+      {
+        "lineage_id": "clover_rlfw_prefix_trie_282",
+        "architecture": "CLOVER / RLFW prefix-trie policy (282 tokens, 2051 trie nodes)",
+        "vocabulary_tokens": 282,
+        "trie_nodes": 2051,
+        "defining_path": "crates/jope-learning/src/support/mod.rs",
+        "defining_file_sha256": "fa138dd6203b7bed0cc296193fdefaced2b66293b462c2ba56ed3d6bc12160bb",
+        "status": "CONFIRMED_RESEARCH_SHADOW_NON_SERVING"
+      },
+      {
+        "lineage_id": "native_loop_v2_weight_warm_start",
+        "architecture": "Experimental 256x2 / weight-warm-start native loop (jope.native_loop.v2)",
+        "vocabulary_tokens": 401,
+        "context_length": 2048,
+        "defining_path": "crates/jope-engine/src/native_loop/warm_start.rs",
+        "defining_file_sha256": "a833660625ccedd7b592192d8b918b85ff8576fb3a328467a4898308d07f6025",
+        "status": "CONFIRMED_EXPERIMENTAL_NO_SUCCESSOR_PROTOCOL"
+      }
+    ]
+  },
+  "source_findings": [
+    {
+      "id": "SF01",
+      "statement": "Receiving main 22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d includes all 134 existing source/test paths from FILE_MAP.json plus all 40 v4 planning packet files under docs/plans/algorithmic-selfplay-20261017/.",
+      "classification": "confirmed",
+      "category": "current_ci",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v4.json"
+    },
+    {
+      "id": "SF02",
+      "statement": "native_loop::verify_successor enforces jope.native_loop.v1 and +6000 optimizer step windows, and witness::epochs::validate_effective_shape enforces initial_optimizer_step >= 60000 && (initial_optimizer_step - 60000) % 6000 == 0.",
+      "classification": "confirmed",
+      "category": "current_ci",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "crates/jope-engine/src/native_loop.rs"
+    },
+    {
+      "id": "SF03",
+      "statement": "CheckpointBinding::require_challenger_identity requires step > 60000, step != 60100, and exact state/parameter/config/safetensors/vocabulary SHA-256 matches.",
+      "classification": "confirmed",
+      "category": "current_ci",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "crates/jope-policy/src/config.rs"
+    },
+    {
+      "id": "SF04",
+      "statement": "require_original_gpu_grant is an unconditional fail-closed hold across 17 routes in crates/jope-engine/src/.",
+      "classification": "confirmed",
+      "category": "current_ci",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "crates/jope-engine/src/task_contract.rs"
+    },
+    {
+      "id": "SF05",
+      "statement": "RoundQualReport in crates/jope-learning/src/clover/round_qual.rs is an offline diagnostic verifier that unconditionally sets qualified_claim, promotion, and l6_claim to false.",
+      "classification": "confirmed",
+      "category": "current_ci",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "crates/jope-learning/src/clover/round_qual.rs"
+    },
+    {
+      "id": "SF06",
+      "statement": "Lineage B step-60000 (8ac80c26...) is the accepted serving policy; step-60100 is a historical unchanged-corpus RTX 3090 continuation (REJECTED_STEP) and not a serving promotion.",
+      "classification": "confirmed",
+      "category": "historical_run",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "docs/adr/ADR-0005-canonical-learning-loop.md"
+    },
+    {
+      "id": "SF07",
+      "statement": "Claim that all prior learning runs had zero optimizer updates or that planning PR #356 implements the 66 I-tasks.",
+      "classification": "rejected",
+      "category": "proposed_protocol",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "docs/plans/algorithmic-selfplay-20261017/WORKPLAN.md"
+    },
+    {
+      "id": "SF08",
+      "statement": "Claim that historical test_adaptive data can be used for representation pretraining by default or that Thompson posterior draws equal action propensities.",
+      "classification": "rejected",
+      "category": "proposed_protocol",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "docs/plans/algorithmic-selfplay-20261017/decisions.json"
+    },
+    {
+      "id": "SF09",
+      "statement": "Prospective policy-discovery primary endpoint choice (D05/D26: terminal regularized log-MSE vs selected-artifact log-RMSE AUC vs linear q-AUC/best-of-B), sealed G23 family boundary, and C158 G-JUDGE margin/power binding.",
+      "classification": "unknown",
+      "category": "proposed_protocol",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "docs/internal/clover/selfplay-round1-prereg.v1.json"
+    },
+    {
+      "id": "SF10",
+      "statement": "External provisioning of append-only dev/prod S3 writer IAM roles, separate dataset-curator IAM credentials, and full-filesystem restore/consumer closure for locked /home/ubuntu/jopedime-paper-wt.",
+      "classification": "unknown",
+      "category": "proposed_protocol",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
+      "path": "AGENTS.md"
+    }
+  ],
+  "skipped_and_unavailable_runtimes": [
+    {
+      "id": "RT01",
+      "combination": "jope-parallel integration tests with crate-level #![cfg(feature = \"neural\")] run without --features neural",
+      "status": "SKIPPED_ZERO_TESTS_WITHOUT_FEATURE",
+      "package_name": "jope-parallel",
+      "required_flag": "--features neural",
+      "affected_targets": [
+        "ablation_ranking",
+        "bounded_assignment",
+        "checkpoint_commit",
+        "committed_updates",
+        "continuation_modes",
+        "frozen_inputs",
+        "gpu_entry_guards",
+        "lossless_partition",
+        "objective_fixtures",
+        "partition_wiring",
+        "proposal_ranking",
+        "ranked_proposals",
+        "replay_training",
+        "resident_worker",
+        "reward_sequence",
+        "trainer_topology",
+        "training",
+        "training_ancestry"
+      ],
+      "source_path": "crates/jope-engine/Cargo.toml",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    },
+    {
+      "id": "RT02",
+      "combination": "jope-policy challenger_tests filter run as external integration filter without --features testing",
+      "status": "GATED_BY_TESTING_FEATURE",
+      "package_name": "jope-policy",
+      "required_flag": "--features testing",
+      "affected_targets": [
+        "challenger_tests"
+      ],
+      "source_path": "crates/jope-policy/Cargo.toml",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    },
+    {
+      "id": "RT03",
+      "combination": "Live native GPU dispatch across 17 jope-parallel routes guarded by require_original_gpu_grant",
+      "status": "HELD_ORIGINAL_GPU_GRANT_UNAVAILABLE",
+      "package_name": "jope-parallel",
+      "required_flag": "genuine VerifiedFundingAdmission + human/resource admission (training_authorized=false)",
+      "affected_targets": [
+        "learning-campaign",
+        "target-rank",
+        "component-service",
+        "foundation-rank",
+        "assemble-contexts",
+        "apply-contexts",
+        "apply-contexts-numerical",
+        "proposal-controller",
+        "training-controller",
+        "encode-cut",
+        "native-gpu-rank",
+        "resident-submit",
+        "resident-dispatch",
+        "monitor-checkpoint",
+        "learning-cycle",
+        "proposal-rank",
+        "train-rank"
+      ],
+      "source_path": "crates/jope-engine/src/task_contract.rs",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    },
+    {
+      "id": "RT04",
+      "combination": "Docs-only pull_request CI path filter exclusions (inputs, e2e-smoke, python, rust-check, emitters, rust-test)",
+      "status": "SKIPPED_BY_PATH_NOT_EXECUTED_COVERAGE",
+      "package_name": "workspace",
+      "required_flag": "workflow_dispatch ci.yml (full 10-job 3-host run)",
+      "affected_targets": [
+        "inputs",
+        "e2e-smoke",
+        "python",
+        "rust-check",
+        "emitters",
+        "rust-test"
+      ],
+      "source_path": ".github/workflows/ci.yml",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    },
+    {
+      "id": "RT05",
+      "combination": "Native Grok provider screen 1061374.rlfw_g_judge",
+      "status": "BLOCKED_PROVIDER_CREDITS_HTTP_402",
+      "package_name": "external-provider",
+      "required_flag": "fresh provider-supported credit restoration (no retry or substitute model attribution)",
+      "affected_targets": [
+        "1061374.rlfw_g_judge"
+      ],
+      "source_path": "docs/plans/algorithmic-selfplay-20261017/README.md",
+      "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d"
+    }
+  ],
+  "workspace_packages": [
+    {
+      "member_dir": "crates/feat-math",
+      "cargo_toml_path": "crates/feat-math/Cargo.toml",
+      "cargo_toml_sha256": "d5230fc7d1f22192332abd2387af8d328bbafea6e7e3c65c0da8d28a0ccdf8c0",
+      "package_name": "feat-math",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [
+        "default",
+        "gpr-scratch-reuse"
+      ],
+      "bins": [],
+      "integration_tests": [
+        "advanced_v3_conformance",
+        "advanced_v3_fitted_cpp",
+        "advanced_v3_multiclass",
+        "advanced_v3_parity",
+        "advanced_v3_property",
+        "bench",
+        "capability_manifest",
+        "champion_parity",
+        "clover_quantile",
+        "compat_freeze",
+        "conversion_boundary",
+        "conversion_calibration_winner",
+        "conversion_expression_matrix",
+        "conversion_roundtrip",
+        "conversion_wire_matrix",
+        "cumulative_integration_v2",
+        "export_report",
+        "fault_trace",
+        "finite_difference_v2",
+        "fitted_width",
+        "golden",
+        "gp_emitter_determinism",
+        "gp_language_tricks",
+        "historical_v1",
+        "inner_fold_leakage",
+        "inverse_links_ingress_v2",
+        "inverse_links_v2",
+        "ip_scrub",
+        "kernel2_closure",
+        "kernel2_expression_search",
+        "kernel2_pipeline_search",
+        "kernel2_refinement_control",
+        "kernel2_search",
+        "kernel_codec",
+        "kernel_emission_safety",
+        "kernel_expression",
+        "kernel_pipeline",
+        "legacy_v2_freeze",
+        "linear_scaling_recipes",
+        "linear_scaling_v2",
+        "mathexpr_boundary_parity",
+        "mathexpr_current_semantics",
+        "numerical_policy_execution",
+        "numerical_policy_ingress",
+        "numerical_policy_v2",
+        "ordered_axis_contract",
+        "parity_bits",
+        "portable_parity",
+        "realized_path_stats_v2",
+        "registry_vocabulary",
+        "ridge_press_oracle",
+        "roll_zero_width",
+        "scope_validation",
+        "search_admission",
+        "stable_exponential_execution_v2",
+        "stable_exponential_ingress_v2",
+        "stable_exponential_v2",
+        "stage_telemetry",
+        "timescale_nabla_v2",
+        "tokens",
+        "versioned_conversion"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/hyperion",
+      "cargo_toml_path": "crates/hyperion/Cargo.toml",
+      "cargo_toml_sha256": "e898b174fa3eb71ab5e4429d24add1afc4e454a5486e3ce5ae1a0c476ce95a12",
+      "package_name": "hyperion",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [
+        "batch-worker",
+        "default",
+        "hyperion-cpu",
+        "hyperion-cuda"
+      ],
+      "bins": [
+        "hyperion-batch-worker",
+        "hyperion-v5-reference"
+      ],
+      "integration_tests": [
+        "weights_smoke"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-policy",
+      "cargo_toml_path": "crates/jope-policy/Cargo.toml",
+      "cargo_toml_sha256": "68132587fbde2d390b7cfa08de77aa07a62a5a7321c49f1f32fd7beb3c1e6450",
+      "package_name": "jope-policy",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [
+        "context-producer",
+        "cuda",
+        "default",
+        "inference-cuda",
+        "testing"
+      ],
+      "bins": [
+        "jope-context-worker",
+        "jope-policy-producer"
+      ],
+      "integration_tests": [
+        "decode_outcomes",
+        "grammar_differential",
+        "jope_dime",
+        "scorer_dependencies"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/battle-gpu",
+      "cargo_toml_path": "crates/battle-gpu/Cargo.toml",
+      "cargo_toml_sha256": "f0b3c3e77af3ef830df1a4e3135801b1671565f9f836b11b2fe6b598bf80b87e",
+      "package_name": "battle-gpu",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-arena",
+      "cargo_toml_path": "crates/jope-arena/Cargo.toml",
+      "cargo_toml_sha256": "89fb968f269f9ed71c726650a5de611924dd13b6a522145e30a34a591f1d8b98",
+      "package_name": "jope-arena",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [
+        "default",
+        "s3"
+      ],
+      "bins": [
+        "jope-arena"
+      ],
+      "integration_tests": [
+        "elo_regression"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-bench",
+      "cargo_toml_path": "crates/jope-bench/Cargo.toml",
+      "cargo_toml_sha256": "aa1826347e22ea047d06c4b4ffeed910d32e5e9abeec93917bba61a8c2c11bfa",
+      "package_name": "jope-bench",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [
+        "asm",
+        "default",
+        "inference-cuda"
+      ],
+      "bins": [
+        "jope-bench"
+      ],
+      "integration_tests": [
+        "adapter_contract",
+        "classification",
+        "committed_evidence",
+        "pwlinear",
+        "transfer_independent"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-engine",
+      "cargo_toml_path": "crates/jope-engine/Cargo.toml",
+      "cargo_toml_sha256": "e540ed90aea2d4e76258575a91df35b0e5c20fa887016c44625435dd64280aea",
+      "package_name": "jope-parallel",
+      "version": "0.3.0",
+      "in_default_members": false,
+      "directory_matches_package_name": false,
+      "features": [
+        "default",
+        "gpr-scratch-reuse",
+        "neural"
+      ],
+      "bins": [
+        "jope-build-receipt",
+        "jope-continuation-corpus",
+        "jope-gp-population",
+        "jope-gp-selection-replay",
+        "jope-native-graph",
+        "jope-native-loop",
+        "jope-native-observer",
+        "jope-native-provisioner",
+        "jope-native-recovery",
+        "jope-parallel",
+        "jope-prove-native-grant-request",
+        "jope-smartcluster-worker",
+        "jope-witness-ssh"
+      ],
+      "integration_tests": [
+        "ablation_ranking",
+        "atomic_write",
+        "binary_preparation",
+        "bounded_agent",
+        "bounded_assignment",
+        "bounded_census",
+        "bounded_grants",
+        "bounded_launch",
+        "bounded_preflight_cli",
+        "bounded_run",
+        "bounded_run_recovery",
+        "bounded_smartcluster",
+        "bounded_training",
+        "bounded_transport",
+        "checkpoint_commit",
+        "committed_updates",
+        "continuation_modes",
+        "corpus",
+        "corpus_incremental",
+        "corpus_progress",
+        "corpus_projection",
+        "counterfactual_boundaries",
+        "dashboard",
+        "data_contracts",
+        "experiment_cli",
+        "experiment_isolation",
+        "families",
+        "fit_boundary",
+        "frozen_inputs",
+        "gp_admission",
+        "gp_contracts",
+        "gpu_entry_guards",
+        "grammar",
+        "label_release",
+        "learning_history",
+        "lossless_partition",
+        "native_loop_continuation",
+        "objective_fixtures",
+        "outer_release_cli",
+        "partition_wiring",
+        "preparation_semantics",
+        "projected_export",
+        "proposal_ranking",
+        "queue",
+        "ranked_proposals",
+        "receiver_roots",
+        "replay_training",
+        "request_integrity",
+        "resident_protocol",
+        "resident_worker",
+        "reward_sequence",
+        "sealed_storage",
+        "service_continuous",
+        "teacher_counterfactuals",
+        "trainer_topology",
+        "training",
+        "training_ancestry",
+        "training_inputs",
+        "view_contracts"
+      ],
+      "neural_gated_integration_tests": [
+        "ablation_ranking",
+        "bounded_assignment",
+        "checkpoint_commit",
+        "committed_updates",
+        "continuation_modes",
+        "frozen_inputs",
+        "gpu_entry_guards",
+        "lossless_partition",
+        "objective_fixtures",
+        "partition_wiring",
+        "proposal_ranking",
+        "ranked_proposals",
+        "replay_training",
+        "resident_worker",
+        "reward_sequence",
+        "trainer_topology",
+        "training",
+        "training_ancestry"
+      ]
+    },
+    {
+      "member_dir": "crates/jope-campaigns",
+      "cargo_toml_path": "crates/jope-campaigns/Cargo.toml",
+      "cargo_toml_sha256": "42cf949c8ca8ceb8c3fdc6ce9b5d02bad8543ebd43ff72ef7d7a6b4a466e30e6",
+      "package_name": "jope-dime-regressor",
+      "version": "0.3.0",
+      "in_default_members": false,
+      "directory_matches_package_name": false,
+      "features": [
+        "gpr-scratch-reuse",
+        "gpu"
+      ],
+      "bins": [
+        "aspfm_recovery_evolve",
+        "corpus_eval",
+        "jope-dime-regressor",
+        "jope_canary_executor",
+        "jope_capacity",
+        "jope_causal_evidence",
+        "jope_causal_pair_repair",
+        "jope_compile_cache",
+        "jope_dlgp_best5",
+        "jope_dlgp_best5_worker",
+        "jope_dlgp_budget_supervisor",
+        "jope_effective_unit_audit",
+        "jope_encoder_supervisor",
+        "jope_encoder_v2_capacity",
+        "jope_encoder_v2_import",
+        "jope_expanded_catalog",
+        "jope_flywheel_liveness",
+        "jope_generalized_gp",
+        "jope_gp_bridge",
+        "jope_gpu_lane_admission",
+        "jope_hyperion_cache",
+        "jope_hyperion_gate",
+        "jope_ledger_reconciler",
+        "jope_ops_health_check",
+        "jope_queue_control",
+        "jope_reporting",
+        "jope_sealed_zeroshot",
+        "jope_selfplay_alarms",
+        "jope_selfplay_bundle",
+        "jope_selfplay_corpus_freezer",
+        "jope_selfplay_expansion_driver",
+        "jope_selfplay_freshness",
+        "jope_selfplay_gc",
+        "jope_selfplay_mcp",
+        "jope_selfplay_promotion",
+        "jope_selfplay_propose_driver",
+        "jope_selfplay_queue",
+        "jope_selfplay_shadow",
+        "jope_selfplay_status",
+        "jope_selfplay_supply",
+        "jope_selfplay_trainer_watchdog",
+        "jope_selfplay_tui",
+        "jope_selfplay_wave",
+        "jope_spec_drift",
+        "jope_strategy_screen",
+        "jope_task_elo",
+        "jope_task_learning_controller",
+        "jope_task_rating",
+        "jope_timeseries_export",
+        "jope_training_archive",
+        "jope_training_history",
+        "jope_training_replica",
+        "jope_utilization_supervisor",
+        "jope_v3_control",
+        "scq_runs_gc",
+        "search-v3"
+      ],
+      "integration_tests": [
+        "dlgp_best5",
+        "dlgp_budget_campaign",
+        "encoder_v2_recovery",
+        "epoch6_foundation",
+        "epoch6_waves",
+        "generalized_gp",
+        "hyperion_gate",
+        "router_contracts_v2",
+        "search_v3",
+        "selfplay_shadow_integration",
+        "systemd_unit_paths"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-ci",
+      "cargo_toml_path": "crates/jope-ci/Cargo.toml",
+      "cargo_toml_sha256": "50625512346d1764887b97d65e0ff4594f3aada0900b3bb086f1d3ab544fa41b",
+      "package_name": "jope-ci",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jope-ci"
+      ],
+      "integration_tests": [
+        "build_report",
+        "build_report_python_parity",
+        "cargo_artifact",
+        "cargo_artifact_python_parity"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-cli",
+      "cargo_toml_path": "crates/jope-cli/Cargo.toml",
+      "cargo_toml_sha256": "9938640d451da0a3e0dffd820cbcbee01d108755f4aa31996d052df4d7454a25",
+      "package_name": "jope-cli",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [
+        "asm",
+        "default",
+        "inference-cuda",
+        "qualified-training-context"
+      ],
+      "bins": [
+        "jope",
+        "jope-cli"
+      ],
+      "integration_tests": [
+        "fitted_cpp_cli",
+        "offline_cli",
+        "pipeline_cli"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-datasets",
+      "cargo_toml_path": "crates/jope-datasets/Cargo.toml",
+      "cargo_toml_sha256": "1ff3ed50b116c5a9e48e772638c1669947f275a7560af0e77f9b93a142a9dbfc",
+      "package_name": "jope-datasets",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jope-datasets"
+      ],
+      "integration_tests": [
+        "ingest_dry_run",
+        "input_closure",
+        "pinned_catalog",
+        "regression_release",
+        "repo_verify",
+        "roundtrip",
+        "schema_agreement",
+        "staging_disposition"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-encoders",
+      "cargo_toml_path": "crates/jope-encoders/Cargo.toml",
+      "cargo_toml_sha256": "6ccf8298c8b8b47508693315d561549a15bcd7227add0f31a8d501300cc5b0c9",
+      "package_name": "starforge",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": false,
+      "features": [
+        "cuda",
+        "default"
+      ],
+      "bins": [
+        "model_bundle_pack",
+        "starforge"
+      ],
+      "integration_tests": [
+        "foundation_parity",
+        "golden_parity",
+        "jope_policy_parity",
+        "novel_input_differential",
+        "target_encoder_parity"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-models",
+      "cargo_toml_path": "crates/jope-models/Cargo.toml",
+      "cargo_toml_sha256": "c7d0432ad3bec3d119dceb51cfa43bb0c0cc08943a242ec5d67a61c153b6a0bf",
+      "package_name": "jope-models",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jope-models"
+      ],
+      "integration_tests": [
+        "roundtrip"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-learning",
+      "cargo_toml_path": "crates/jope-learning/Cargo.toml",
+      "cargo_toml_sha256": "fc6127c457bc469ba4dc7f9b356fcfb1bdafc9df938c937bb3e8c32c06fa27c9",
+      "package_name": "jope-learning",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jope-learning",
+        "jope_custody",
+        "jope_pools",
+        "jope_retention",
+        "jope_support"
+      ],
+      "integration_tests": [
+        "champions_fixture",
+        "clover_phase0",
+        "custody",
+        "ledger_tamper",
+        "mirror_lost_update",
+        "mirror_reconcile",
+        "nonfinite_scores",
+        "pipeline_bank",
+        "pipeline_hwm",
+        "pools",
+        "progress_cli",
+        "qualify_gate",
+        "recovery_cli",
+        "retention",
+        "retention_pack",
+        "schema_agreement",
+        "score_import",
+        "selfplay_round_qual",
+        "sources",
+        "state_resolve",
+        "support"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-motifs",
+      "cargo_toml_path": "crates/jope-motifs/Cargo.toml",
+      "cargo_toml_sha256": "72e02f1d6c81c9d8115e847655488370a5ecfb3fc8c04f0ae45c7743127c18c0",
+      "package_name": "jope-motifs",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-paths",
+      "cargo_toml_path": "crates/jope-paths/Cargo.toml",
+      "cargo_toml_sha256": "ac0b277d8fec6c6f8356db24d1da25c957c10c6d69c026139f0fe4d269bfc0f6",
+      "package_name": "jope-paths",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jope-units-render"
+      ],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-pipeline",
+      "cargo_toml_path": "crates/jope-pipeline/Cargo.toml",
+      "cargo_toml_sha256": "dd572ab2b38ce6fb2dff1f64c7401fbaa22dabec6c9cdac61e7e4e5494c81812",
+      "package_name": "jope-pipeline",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": true,
+      "directory_matches_package_name": true,
+      "features": [
+        "default",
+        "neural-search",
+        "qualified-context",
+        "timing-study"
+      ],
+      "bins": [
+        "jope-context-proof"
+      ],
+      "integration_tests": [
+        "dependency_fence",
+        "schema_agreement"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/jope-records",
+      "cargo_toml_path": "crates/jope-records/Cargo.toml",
+      "cargo_toml_sha256": "7d486b12d8fbfd2f025c42749a74f927359667bf78ac7267314e7335419d867c",
+      "package_name": "jope-records",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jope-records"
+      ],
+      "integration_tests": [
+        "python_parity"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/numpy-pcg64",
+      "cargo_toml_path": "crates/numpy-pcg64/Cargo.toml",
+      "cargo_toml_sha256": "d351bdffc06d00f08f48522bba1b21eec8c6a7e63f841351ee354193d51e6949",
+      "package_name": "numpy-pcg64",
+      "version": {
+        "workspace": true
+      },
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [],
+      "integration_tests": [
+        "first_outputs",
+        "sampling_golden"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/jain-smartcluster-core",
+      "cargo_toml_path": "crates/smartcluster/jain-smartcluster-core/Cargo.toml",
+      "cargo_toml_sha256": "12475bde19b2964ffee0a800b9a87e7d250fb36567185c10b079aea964003117",
+      "package_name": "jain-smartcluster-core",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/jain-smartcluster",
+      "cargo_toml_path": "crates/smartcluster/jain-smartcluster/Cargo.toml",
+      "cargo_toml_sha256": "56e129400caee1b94b7330d6cdf24177e37ebbf0e23d56eaa40782044481f29a",
+      "package_name": "jain-smartcluster",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [],
+      "integration_tests": [
+        "native_fit_protocol",
+        "wire_contract"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/jain-smartcluster-fabric",
+      "cargo_toml_path": "crates/smartcluster/jain-smartcluster-fabric/Cargo.toml",
+      "cargo_toml_sha256": "83bcdec7cc070327609517e8a4fb2b19e8300f2cb6a478445b13f95971690510",
+      "package_name": "jain-smartcluster-fabric",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/jain-smartcluster-daemon",
+      "cargo_toml_path": "crates/smartcluster/jain-smartcluster-daemon/Cargo.toml",
+      "cargo_toml_sha256": "abe6222bbb39b2886ce7748bca9f5e8935443eb4716b0c104b797e0af5e74bac",
+      "package_name": "jain-smartcluster-daemon",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "scqd"
+      ],
+      "integration_tests": [
+        "daemon_e2e",
+        "gpu_host",
+        "linux_cgroup",
+        "performance",
+        "resident_kernel",
+        "restart_chaos",
+        "soak"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/jain-worker",
+      "cargo_toml_path": "crates/smartcluster/jain-worker/Cargo.toml",
+      "cargo_toml_sha256": "40b4a6e61f7d3783257bf27f5e89e3edaf4bb56288269bc531b64bbd6fd082ca",
+      "package_name": "jain-worker",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jain-worker"
+      ],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/jainnode",
+      "cargo_toml_path": "crates/smartcluster/jainnode/Cargo.toml",
+      "cargo_toml_sha256": "7df934768e7b4ae0e003f681dcc2b131c226395ad144233dd388802f7fd31991",
+      "package_name": "jainnode",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "jainnode"
+      ],
+      "integration_tests": [
+        "rustls_provider"
+      ],
+      "neural_gated_integration_tests": []
+    },
+    {
+      "member_dir": "crates/smartcluster/scq",
+      "cargo_toml_path": "crates/smartcluster/scq/Cargo.toml",
+      "cargo_toml_sha256": "f7f4c43d57c8c84bb8decf09951a5aae1d2b04b6c9795dd00fce5c26cb2b3354",
+      "package_name": "scq",
+      "version": "8.0.0",
+      "in_default_members": false,
+      "directory_matches_package_name": true,
+      "features": [],
+      "bins": [
+        "scq"
+      ],
+      "integration_tests": [],
+      "neural_gated_integration_tests": []
+    }
+  ],
+  "schemas": [
+    {
+      "path": "schemas/jope.benchmark-panel.v1.schema.json",
+      "bytes": 5134,
+      "sha256": "bb641dfb8190053c10dcc5484bcc58b484048a2b5178ea0163fb152f010d5369",
+      "schema_id": "Panel",
+      "title": "Panel"
+    },
+    {
+      "path": "schemas/jope.dataset-catalog.v1.schema.json",
+      "bytes": 7490,
+      "sha256": "6a226b627c9d28fb04b7ca520d37ec3c8def6ac6a2d14d6b131b0a8ed08aa563",
+      "schema_id": "https://veox.ai/schemas/jope.dataset-catalog.v1.schema.json",
+      "title": "jope.dataset-catalog/v1"
+    },
+    {
+      "path": "schemas/jope.dataset-collection.v1.schema.json",
+      "bytes": 1857,
+      "sha256": "34f85f5a076beb7f0daaaad25ba9e63c905e3d062538adabfba4bed8efb75b29",
+      "schema_id": "https://veox.ai/schemas/jope.dataset-collection.v1.schema.json",
+      "title": "jope.dataset-collection/v1"
+    },
+    {
+      "path": "schemas/jope.evaluation-request.v1.schema.json",
+      "bytes": 2402,
+      "sha256": "7f2fbb3c8a1e55a405690fda421836be499c0e7388759fb96a163de0c70556b1",
+      "schema_id": "EvaluationRequest",
+      "title": "EvaluationRequest"
+    },
+    {
+      "path": "schemas/jope.evaluation-result.v1.schema.json",
+      "bytes": 2049,
+      "sha256": "b539f787dd163267c09b0edd2c7988af63ae7b88018b4739eac39dfe17346858",
+      "schema_id": "EvaluationResult",
+      "title": "EvaluationResult"
+    },
+    {
+      "path": "schemas/jope.evaluation-result.v2.schema.json",
+      "bytes": 2942,
+      "sha256": "c29d719be53781abad28b046298ea9c7046584434f56aa75f492116159387925",
+      "schema_id": "EvaluationResult",
+      "title": "EvaluationResult"
+    },
+    {
+      "path": "schemas/jope.experiment.v1.schema.json",
+      "bytes": 2608,
+      "sha256": "84c3309caeca4226bcb1a0aa16ca194b1194a3e114efbf958bc153c6af604f62",
+      "schema_id": "Experiment",
+      "title": "Experiment"
+    },
+    {
+      "path": "schemas/jope.hwm.v1.schema.json",
+      "bytes": 9917,
+      "sha256": "65a11eafdca127d5c6d14dc4a041f135a155526fb051b91df205457985267f30",
+      "schema_id": "https://veox.ai/schemas/jope.hwm.v1.schema.json",
+      "title": "jope.hwm/v1"
+    },
+    {
+      "path": "schemas/jope.model-bundle.v2.schema.json",
+      "bytes": 2799,
+      "sha256": "886f20d17290c9c31b163785543a240c6befd71d144a0fc5e48ab5c899032a75",
+      "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.model-bundle.v2.schema.json",
+      "title": "jope.model-bundle/v2"
+    },
+    {
+      "path": "schemas/jope.pipeline-receipt.v1.schema.json",
+      "bytes": 13547,
+      "sha256": "d7e34e5835f87ff7203f9818d1c91c162b7741896f730c7b90945f50febb35a2",
+      "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v1.schema.json",
+      "title": "jope.pipeline-receipt/v1"
+    },
+    {
+      "path": "schemas/jope.pipeline-receipt.v2.schema.json",
+      "bytes": 16938,
+      "sha256": "830f424e09ec8ea13f2506cd47fc9773ac1a85e028b14b01f22f1ff6611d98b4",
+      "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v2.schema.json",
+      "title": "jope.pipeline-receipt/v2"
+    },
+    {
+      "path": "schemas/jope.pipeline-receipt.v3.schema.json",
+      "bytes": 21750,
+      "sha256": "1f5909a1ed5ff9f92e24ef7644f014104b9ec6a260406484d4a104ea70dfa19f",
+      "schema_id": "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v3.schema.json",
+      "title": "jope.pipeline-receipt/v3"
+    },
+    {
+      "path": "schemas/jope.pipeline-receipt.v4.schema.json",
+      "bytes": 21783,
+      "sha256": "d71906664e8e0818831af228416dbd763350d670b68092b4f2c9aa3547c3501b",
+      "schema_id": "https://github.com/neverhuman/JopeDime/schemas/jope.pipeline-receipt.v4.schema.json",
+      "title": "jope.pipeline-receipt/v4"
+    },
+    {
+      "path": "schemas/jope.score.v1.schema.json",
+      "bytes": 4602,
+      "sha256": "4d897333f6cd85348a1f062cddde8c1a7efc99c45a36145739019bac949632b4",
+      "schema_id": "https://veox.ai/schemas/jope.score.v1.schema.json",
+      "title": "jope.score/v1"
+    }
+  ],
+  "verified_existing_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "exists": true,
+      "bytes": 15970,
+      "sha256": "c8c44f74a0fb292f8207c2bb5ef21af487339108c5aeb5377fff60f650ea1106"
+    },
+    {
+      "path": ".github/workflows/full-main.yml",
+      "exists": true,
+      "bytes": 4890,
+      "sha256": "22c164ac7bfd980711eb6c7975b0db3e899a3cbb8f2ed6d7c8535ca84f6cfc0f"
+    },
+    {
+      "path": "AGENTS.md",
+      "exists": true,
+      "bytes": 32260,
+      "sha256": "df66cbdccad23c9c19965e38f9984b04b711fdbcf1ed4db9b1d54853afb3a097"
+    },
+    {
+      "path": "CLAUDE.md",
+      "exists": true,
+      "bytes": 4562,
+      "sha256": "0cb60a757de6abb17f4c833068f7af6ab5213e6138d876a9d7a132617a562486"
+    },
+    {
+      "path": "Cargo.toml",
+      "exists": true,
+      "bytes": 3360,
+      "sha256": "ff28ab372a01d11ac55a578b383a52c19e6c6b4d93d279930cb4ff0a271bf037"
+    },
+    {
+      "path": "MASTER_CLEAN_UP.md",
+      "exists": true,
+      "bytes": 131872,
+      "sha256": "db580b2911f067ba3c44438a1a9c53f4a6b3015943a331fbefb9a7e9b748496e"
+    },
+    {
+      "path": "MASTER_PLAN.md",
+      "exists": true,
+      "bytes": 180119,
+      "sha256": "d9118bfcd13f68e421721189f5d0d05bf25042ed2de829b1fee0399326f15b70"
+    },
+    {
+      "path": "crates/feat-math/build.rs",
+      "exists": true,
+      "bytes": 1539,
+      "sha256": "ef4a93cb3df0a1195107ca02104de31d517620f3a69043a7b1a3d6049062e69d"
+    },
+    {
+      "path": "crates/feat-math/src/advanced_v3/grammar.rs",
+      "exists": true,
+      "bytes": 85508,
+      "sha256": "1cf6df651b9a5cb972eed6c7396d1000b221683579a8ca676838d128c0ef0160"
+    },
+    {
+      "path": "crates/feat-math/src/evolve.rs",
+      "exists": true,
+      "bytes": 309615,
+      "sha256": "680cbfa420a12c9e5ebbbd738fbe61aa6be6b9048c9df2f727ff8f18b4ad580e"
+    },
+    {
+      "path": "crates/feat-math/src/genome.rs",
+      "exists": true,
+      "bytes": 9018,
+      "sha256": "f6db05df29345f508d7ef8270a81dc64e09fd2951e648906f31da91bf99473b7"
+    },
+    {
+      "path": "crates/feat-math/src/heads.rs",
+      "exists": true,
+      "bytes": 61931,
+      "sha256": "7bc1281a76c0ab7e397c0ef9743a098623cbf6c9c9b2382bb4fd83cb58e38425"
+    },
+    {
+      "path": "crates/feat-math/src/kernel/capabilities.rs",
+      "exists": true,
+      "bytes": 58259,
+      "sha256": "dfb0bb5055914f6a4288fe150ce3fd84caf4ee771b32d6ef365ed73637504d8c"
+    },
+    {
+      "path": "crates/feat-math/src/kernel/lexicase.rs",
+      "exists": true,
+      "bytes": 40882,
+      "sha256": "e2f6f70045f0e7df61c6d94a0f9a9acf2e4c6693320210c9d3cf192f209a72c2"
+    },
+    {
+      "path": "crates/feat-math/src/kernel/profile.rs",
+      "exists": true,
+      "bytes": 29424,
+      "sha256": "b6da43c9990e80fde3f4dea5f00c662379b53e201aeb72e64faffa5db911f756"
+    },
+    {
+      "path": "crates/feat-math/src/kernel/search.rs",
+      "exists": true,
+      "bytes": 8377,
+      "sha256": "1ab332fa547f4848e5aded983d5b0ac7cbe3b5b0fc5db7673289ee3750e78841"
+    },
+    {
+      "path": "crates/feat-math/src/lib.rs",
+      "exists": true,
+      "bytes": 3687,
+      "sha256": "c774ba7440180bda8032854e670e9b31d9b19e7b08d84c00f7471af41a1f97f0"
+    },
+    {
+      "path": "crates/feat-math/src/math_expr.rs",
+      "exists": true,
+      "bytes": 34029,
+      "sha256": "47bc9ba5a7e7627d998bca5429f1c593fe364a132e84375bc20840e66baf1e57"
+    },
+    {
+      "path": "crates/feat-math/src/math_expr/evolution/v2/mod.rs",
+      "exists": true,
+      "bytes": 5712,
+      "sha256": "5431a1d2648a4f6a9a29c1365ce2b7dd34b39bfa082a6dc2138c81993c2c80fb"
+    },
+    {
+      "path": "crates/feat-math/src/math_expr/evolution/v2/refinement/lm.rs",
+      "exists": true,
+      "bytes": 106078,
+      "sha256": "4a34736e4ea310712c94c46c5470a1826a0ada802c332c7be123fb47441b8cbd"
+    },
+    {
+      "path": "crates/feat-math/src/members.rs",
+      "exists": true,
+      "bytes": 17692,
+      "sha256": "79e7108b090aeba61156f5b123ea7efe7891167c309698c2c6b625f416fdf1a9"
+    },
+    {
+      "path": "crates/feat-math/src/model.rs",
+      "exists": true,
+      "bytes": 28413,
+      "sha256": "28354e4b746dbd4700a31665a49748a8aa56041fe483bd2739d9aebd814f84cd"
+    },
+    {
+      "path": "crates/feat-math/src/ops.rs",
+      "exists": true,
+      "bytes": 71348,
+      "sha256": "0cdb6cb817239af8715af995b67f5327548f6db49b292ea2f6303ab23d063106"
+    },
+    {
+      "path": "crates/feat-math/src/registry.rs",
+      "exists": true,
+      "bytes": 32537,
+      "sha256": "337700af92862c8ef79f81ed04283870d3953333577896c37ac1fa883ffaf38c"
+    },
+    {
+      "path": "crates/feat-math/src/spec.rs",
+      "exists": true,
+      "bytes": 87443,
+      "sha256": "c3934e9a0ff9041b01c334b0676aa99d3bf8a24daf690af0de220707963b7caa"
+    },
+    {
+      "path": "crates/feat-math/src/stack.rs",
+      "exists": true,
+      "bytes": 8618,
+      "sha256": "5f368863f0df4b0554cf72a1b27cf632cc3b86b7b72f4fcc31c9b715f938cd61"
+    },
+    {
+      "path": "crates/feat-math/src/stage_cache.rs",
+      "exists": true,
+      "bytes": 21078,
+      "sha256": "f33106270371891c5493ed7b59cc6b68d8203710786977da86725d99568680f4"
+    },
+    {
+      "path": "crates/feat-math/src/transpile.rs",
+      "exists": true,
+      "bytes": 59062,
+      "sha256": "5d8f29c0c3b09d1ea7c7cb7f1bd9aa7628050cdd6880c33dada63d94ae314f22"
+    },
+    {
+      "path": "crates/feat-math/tests/clover_quantile.rs",
+      "exists": true,
+      "bytes": 67554,
+      "sha256": "2cae8c651859a7a6d9c9b8b35ff5aa0e504031adf4cac27b9fa9446c5b7d534a"
+    },
+    {
+      "path": "crates/feat-math/tests/inner_fold_leakage.rs",
+      "exists": true,
+      "bytes": 3985,
+      "sha256": "c6c9c16287fdd7c617bd1330c64f1d7bf4408d78cdfa5c56c869258b4ac09ec9"
+    },
+    {
+      "path": "crates/feat-math/tests/kernel2_search.rs",
+      "exists": true,
+      "bytes": 8752,
+      "sha256": "ae5a67f00d1412af0585f6dd809d5d89d1370f6eb264544b217452aafea94dca"
+    },
+    {
+      "path": "crates/feat-math/tests/kernel_codec.rs",
+      "exists": true,
+      "bytes": 12423,
+      "sha256": "db87692008f93130c2fbee2ec230022acbfd38a715c4c3ef6ca12e18f3635d2e"
+    },
+    {
+      "path": "crates/feat-math/tests/search_admission.rs",
+      "exists": true,
+      "bytes": 54291,
+      "sha256": "d352edc0166db7ccef6cbb98fb19f1669f13164d7627d9460fd978426e2f240a"
+    },
+    {
+      "path": "crates/jope-arena/src/lib.rs",
+      "exists": true,
+      "bytes": 1864,
+      "sha256": "bc7e820ca279850064c038a20d3a8a4879327ac15158dbe3d7d3046c4d8825b2"
+    },
+    {
+      "path": "crates/jope-bench/src/methods.rs",
+      "exists": true,
+      "bytes": 9448,
+      "sha256": "fe9e077adafee4afbfd7dc7b4e0ff151d42c2041d5119b41117ed2a99d606d1a"
+    },
+    {
+      "path": "crates/jope-bench/tests/committed_evidence.rs",
+      "exists": true,
+      "bytes": 12781,
+      "sha256": "2fde1e3626af9dcaf74b7a3115ce2fca5ae3000b04e729a1926b0828a6525793"
+    },
+    {
+      "path": "crates/jope-campaigns/known-evaluator-identities.json",
+      "exists": true,
+      "bytes": 1704,
+      "sha256": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+    },
+    {
+      "path": "crates/jope-campaigns/src/evaluation_v2.rs",
+      "exists": true,
+      "bytes": 74847,
+      "sha256": "865ad21acae020fd6b9966a98315420f16b814af6b0b9860ada76988f5c65965"
+    },
+    {
+      "path": "crates/jope-cli/src/generator/mod.rs",
+      "exists": true,
+      "bytes": 5544,
+      "sha256": "098804df2d145bc25d277b11b24d20c2fe91ab09fad815d01a6139352388f4fc"
+    },
+    {
+      "path": "crates/jope-cli/src/kernel.rs",
+      "exists": true,
+      "bytes": 13709,
+      "sha256": "4ba618aaa8fd3dc25baedf79ce9bdbcc2b90d038784cacadffa845dd041fdb8f"
+    },
+    {
+      "path": "crates/jope-cli/src/main.rs",
+      "exists": true,
+      "bytes": 19844,
+      "sha256": "e5c51acfa5ed34f3156659ce45037ad896c8ae2f496772b2d0df3541a4602419"
+    },
+    {
+      "path": "crates/jope-datasets/src/credentials.rs",
+      "exists": true,
+      "bytes": 13074,
+      "sha256": "322d58e2ebcc3b4139c711589b4fc96afc789981913e76605339774e73577ded"
+    },
+    {
+      "path": "crates/jope-datasets/src/store.rs",
+      "exists": true,
+      "bytes": 21307,
+      "sha256": "dd61c6aa27c616ca4b5d4865658edb679c181287844cbfea38c6df535de53a85"
+    },
+    {
+      "path": "crates/jope-encoders/src/foundation.rs",
+      "exists": true,
+      "bytes": 15391,
+      "sha256": "0e945ced727a0335a99f896ad6eba5420599d8bdd14377e3e5fee9bfb60acd9c"
+    },
+    {
+      "path": "crates/jope-engine/src/checkpoint_recovery.rs",
+      "exists": true,
+      "bytes": 29387,
+      "sha256": "806af33bbbbaabc8b339a34b53b3297736f9c9e5de573a5b2b7e1830b020ef53"
+    },
+    {
+      "path": "crates/jope-engine/src/eval_registry/witness/epochs.rs",
+      "exists": true,
+      "bytes": 32602,
+      "sha256": "780680be582fe4c818b4eafcc32b85d8d3e0fe8bb197b0e7bf0f866d367d5aaf"
+    },
+    {
+      "path": "crates/jope-engine/src/native_loop.rs",
+      "exists": true,
+      "bytes": 96002,
+      "sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3"
+    },
+    {
+      "path": "crates/jope-engine/src/native_loop/warm_start.rs",
+      "exists": true,
+      "bytes": 18031,
+      "sha256": "a833660625ccedd7b592192d8b918b85ff8576fb3a328467a4898308d07f6025"
+    },
+    {
+      "path": "crates/jope-engine/src/native_observer/science.rs",
+      "exists": true,
+      "bytes": 53055,
+      "sha256": "dd1a845a87e538899844e820a5b72ce55c2fa5337c4f8f9893f979bff4b5305a"
+    },
+    {
+      "path": "crates/jope-engine/src/neural.rs",
+      "exists": true,
+      "bytes": 69570,
+      "sha256": "a570dea9f8f4657f9daaa99b8e276bd07fea7c65a151b69af709860d2552a6e7"
+    },
+    {
+      "path": "crates/jope-engine/src/policy_export.rs",
+      "exists": true,
+      "bytes": 73243,
+      "sha256": "ef70087b496f8d08afff03edc69369505d2527aad61eaf8d9fd3c7dde6001ba2"
+    },
+    {
+      "path": "crates/jope-engine/src/task_contract.rs",
+      "exists": true,
+      "bytes": 25921,
+      "sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d"
+    },
+    {
+      "path": "crates/jope-engine/src/training.rs",
+      "exists": true,
+      "bytes": 100419,
+      "sha256": "36ef49a933e8eba12842f3be7ce8ec9c35c4f199c92345a07d78d2f1a6ca9835"
+    },
+    {
+      "path": "crates/jope-engine/src/training/ancestry.rs",
+      "exists": true,
+      "bytes": 21341,
+      "sha256": "bfcd59e1b0894163459e40afbd036118818562b80c87e8bc3fc633d6fc45215a"
+    },
+    {
+      "path": "crates/jope-engine/src/training/checkpoint_commit.rs",
+      "exists": true,
+      "bytes": 18864,
+      "sha256": "99fa5de1af38adedf2f5c02b0434f5d7c2c1df5cb31d15dead4401bee3be7610"
+    },
+    {
+      "path": "crates/jope-engine/src/training/consumption.rs",
+      "exists": true,
+      "bytes": 31085,
+      "sha256": "0c29a897b82babe2a206cff66ac038582cc3a2b83eabd44961d9c561383081c5"
+    },
+    {
+      "path": "crates/jope-engine/src/training/continuation.rs",
+      "exists": true,
+      "bytes": 10647,
+      "sha256": "d8127bbdab9a268e72f0cdddb67212b8a0d5103f2df60368d3a8dea05374b4d8"
+    },
+    {
+      "path": "crates/jope-engine/src/training/inputs.rs",
+      "exists": true,
+      "bytes": 9791,
+      "sha256": "775897f842389bc6f2ad15c0ead1a670896d7aea3987acd74ed5934b2cbca0c6"
+    },
+    {
+      "path": "crates/jope-engine/src/training/objective.rs",
+      "exists": true,
+      "bytes": 21250,
+      "sha256": "51911fff834fe5a51d8a77add5f787b6e526764b1516cead67f754ca891c23aa"
+    },
+    {
+      "path": "crates/jope-engine/tests/objective_fixtures.rs",
+      "exists": true,
+      "bytes": 48231,
+      "sha256": "c324eedff1d2526a32f09af664d73e229104dd5270338ec3a7df995a9a6f884f"
+    },
+    {
+      "path": "crates/jope-engine/tests/partition_wiring.rs",
+      "exists": true,
+      "bytes": 31742,
+      "sha256": "865198658ddc44ba872e798f43e4b926268c65e86b5feb6756c416fe65545369"
+    },
+    {
+      "path": "crates/jope-learning/src/bank.rs",
+      "exists": true,
+      "bytes": 15919,
+      "sha256": "24ac3e0b44d8e52939b3732114020699a4e132f0f6d904778c32a49620653c65"
+    },
+    {
+      "path": "crates/jope-learning/src/canon.rs",
+      "exists": true,
+      "bytes": 1708,
+      "sha256": "d20cb4d5fce1b6b12bcf57723fb8f10f3ec74c32ad6a4a0ab2614d649da5b249"
+    },
+    {
+      "path": "crates/jope-learning/src/clover/round_qual.rs",
+      "exists": true,
+      "bytes": 95113,
+      "sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5"
+    },
+    {
+      "path": "crates/jope-learning/src/eligibility.rs",
+      "exists": true,
+      "bytes": 119849,
+      "sha256": "d959a645056802d8d7c847b0a5dc304fa39913857fc8aa4a4328942d1d54d953"
+    },
+    {
+      "path": "crates/jope-learning/src/eligibility/context.rs",
+      "exists": true,
+      "bytes": 39428,
+      "sha256": "f6e05cf971e760e630a249d9b82696ca1552b4365f457d8edae330f1a75fca95"
+    },
+    {
+      "path": "crates/jope-learning/src/main.rs",
+      "exists": true,
+      "bytes": 39028,
+      "sha256": "4bce2cce06bfed2c9828e45a80938917463e63bf6714e47bf3b2572747bd579f"
+    },
+    {
+      "path": "crates/jope-learning/src/mirror.rs",
+      "exists": true,
+      "bytes": 4716,
+      "sha256": "8c0c3f3279b0892a4af58e0b0a889d9d93c571dd28d7cd9526298a8d1884db9a"
+    },
+    {
+      "path": "crates/jope-learning/src/pools/bootstrap.rs",
+      "exists": true,
+      "bytes": 7572,
+      "sha256": "df44a1972eb91133c5d3458a7a6c4a5d6e595f7f30c32ba17c03939fcbc6f01c"
+    },
+    {
+      "path": "crates/jope-learning/src/pools/selectors.rs",
+      "exists": true,
+      "bytes": 56914,
+      "sha256": "07cf0155b7587f1101a2d775848ef467cc2216b83f2704c72034641a8c8afedf"
+    },
+    {
+      "path": "crates/jope-learning/src/pools/source.rs",
+      "exists": true,
+      "bytes": 12096,
+      "sha256": "1b5b51061589dd689ebfd94b5d284a28648c8f95419d5e912ab863b352e2204f"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/census.rs",
+      "exists": true,
+      "bytes": 19597,
+      "sha256": "ecb2fd7d44c3fe8db22c75f9ef3eccf596a33bed4ff99f13d71a0681df0c60a7"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/engine.rs",
+      "exists": true,
+      "bytes": 20896,
+      "sha256": "09d85d41fdaaa6c02ad0ac986b818c503ca8437c89e6bdcd14fa2c5773ecaa92"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/outbox.rs",
+      "exists": true,
+      "bytes": 31751,
+      "sha256": "21526e350ceb518fc775e4c1c96cf3e3171e22a872d900ec8da89671a9ff6649"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/publish.rs",
+      "exists": true,
+      "bytes": 26119,
+      "sha256": "d781d5712a93b2a3bc52471e4e72712adec65a5c56066c76c12b59ddd974242c"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/rebuild.rs",
+      "exists": true,
+      "bytes": 16682,
+      "sha256": "1e15291698f026a8d8e74702b11cfba4af5719469c975c2a4caeb47d811f04f6"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/reconcile.rs",
+      "exists": true,
+      "bytes": 9193,
+      "sha256": "09be220ef198c7a4c0e9e370f1fce0202ba84dccc5d683ce46721edf7ea7100b"
+    },
+    {
+      "path": "crates/jope-learning/src/progress/tests/faults.rs",
+      "exists": true,
+      "bytes": 28432,
+      "sha256": "93f40879a7686a9a42fcb3ad76f615ecf862c196010b5be3b8824dc400ed35ed"
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/gate.rs",
+      "exists": true,
+      "bytes": 2017,
+      "sha256": "3c109333a27ff4f85c757f55cffbcdc057bcad2c61312d1fd636ed8912b05308"
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/promotion.rs",
+      "exists": true,
+      "bytes": 26946,
+      "sha256": "7cbe6443d01a5ca28608bfd729da7031ba69b7737c642f0fdc9e902376ca47f3"
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/roster.rs",
+      "exists": true,
+      "bytes": 11691,
+      "sha256": "755c9c01e08ffaa918c55c6a600d39fc0a8c16c5c58b4d69d517c9bb8684b773"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/classify.rs",
+      "exists": true,
+      "bytes": 21690,
+      "sha256": "9e5e38166f8957fc840f607327c35ca73bb28e288079f022d66831d74ea58e58"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/distilled.rs",
+      "exists": true,
+      "bytes": 30493,
+      "sha256": "6db7a7d78db01f42ae2e34166c087bbaf4375b871fe531628e7e5b36dac86080"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/lifecycle.rs",
+      "exists": true,
+      "bytes": 7598,
+      "sha256": "920a71cb16eb96c00a05d5ae464e8fb611a88d1a6af2f215029caff7ebba6911"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/pack.rs",
+      "exists": true,
+      "bytes": 11467,
+      "sha256": "edd140fe0ed2cda13e7202c9df47598361d9923c552d05c490c75a18b838fe52"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/parquet.rs",
+      "exists": true,
+      "bytes": 50785,
+      "sha256": "6cf6560301bbd3df0db5e58ec1fd7baa08957c5a76eebc211a4a0dcb5714a6a0"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/plan.rs",
+      "exists": true,
+      "bytes": 55718,
+      "sha256": "85c4699674e0d5e76b2a09bde0041e8202728c64498533726e4b6cadb56a9220"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/policy.rs",
+      "exists": true,
+      "bytes": 9267,
+      "sha256": "4f3bf57ef61dac72d028054a89f66856a0e1f759b0102cc11c010ba2ae8e98be"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/refs.rs",
+      "exists": true,
+      "bytes": 19611,
+      "sha256": "c60c2f681e3b46bf41f59ee5b387a607f84562e847491a893fd3ee8058587ec6"
+    },
+    {
+      "path": "crates/jope-learning/src/retention/tags.rs",
+      "exists": true,
+      "bytes": 5168,
+      "sha256": "35b0132fc1b16ec4c52101a98409f63f3339fad24ca6a8a038f7195446648d97"
+    },
+    {
+      "path": "crates/jope-learning/src/support/mod.rs",
+      "exists": true,
+      "bytes": 821,
+      "sha256": "fa138dd6203b7bed0cc296193fdefaced2b66293b462c2ba56ed3d6bc12160bb"
+    },
+    {
+      "path": "crates/jope-learning/src/support/version.rs",
+      "exists": true,
+      "bytes": 11300,
+      "sha256": "620b27fa8628bc39f7dda588c8c1ca1f19b15ceabc6d7f182dd9b16d415044b3"
+    },
+    {
+      "path": "crates/jope-learning/src/sync.rs",
+      "exists": true,
+      "bytes": 6703,
+      "sha256": "a85713af37160ce4e01f396f594f94c10d0f72eee0866d4b7343ddf247f78796"
+    },
+    {
+      "path": "crates/jope-learning/tests/mirror_lost_update.rs",
+      "exists": true,
+      "bytes": 11683,
+      "sha256": "4636128cc0b1a3577129555cb60690800f88d31a85bbf9ae34512af80100aed0"
+    },
+    {
+      "path": "crates/jope-learning/tests/mirror_reconcile.rs",
+      "exists": true,
+      "bytes": 35239,
+      "sha256": "cbbe5ff6cd338df5de09b6390058c4541ebeca70b64acf23c6acec3dddf98cbd"
+    },
+    {
+      "path": "crates/jope-learning/tests/pools.rs",
+      "exists": true,
+      "bytes": 40643,
+      "sha256": "93a3c7597d4c71ec73d1a11576a6a78fc68eb1ccf8c434f0dc98da230cecbb7c"
+    },
+    {
+      "path": "crates/jope-learning/tests/retention.rs",
+      "exists": true,
+      "bytes": 53105,
+      "sha256": "ee25d47db1f6c1f8634a76fc958887a43cf8b9bded7026908218480d5df19c45"
+    },
+    {
+      "path": "crates/jope-learning/tests/retention_pack.rs",
+      "exists": true,
+      "bytes": 24180,
+      "sha256": "8f3f23881d007b0e60a59f101f3c9f05028a07e1188fd2f7c9503814bc957c6f"
+    },
+    {
+      "path": "crates/jope-learning/tests/schema_agreement.rs",
+      "exists": true,
+      "bytes": 4994,
+      "sha256": "160a4f14dc51db0bee32fb4c82e8c9b69d88bf55f997a8048f2899211c6e3f82"
+    },
+    {
+      "path": "crates/jope-learning/tests/selfplay_round_qual.rs",
+      "exists": true,
+      "bytes": 82646,
+      "sha256": "afc46554576f3d4a26c49658a8440712f61dbdd562ca015c5ef582e6444a43e2"
+    },
+    {
+      "path": "crates/jope-learning/tests/support.rs",
+      "exists": true,
+      "bytes": 16192,
+      "sha256": "1bf1df986e53f69f56ab82d14fb3ce7856c4cb4d409d74176a6c41175e2b98d9"
+    },
+    {
+      "path": "crates/jope-models/src/publish.rs",
+      "exists": true,
+      "bytes": 3225,
+      "sha256": "2782b46bf9b7041fb7d48bcd9ea7e0df1dab9b14d39908cdcb579b409d726bec"
+    },
+    {
+      "path": "crates/jope-motifs/src/export.rs",
+      "exists": true,
+      "bytes": 13440,
+      "sha256": "528e3e83f58114af642b8493ec7451b89c6103375206b8a820c47918c662c1b8"
+    },
+    {
+      "path": "crates/jope-motifs/src/mine.rs",
+      "exists": true,
+      "bytes": 30136,
+      "sha256": "3358c9abf91a40fb33179d1a22598fb20c2d8193714b6c8cc24c1c88d5d9671e"
+    },
+    {
+      "path": "crates/jope-motifs/src/validate.rs",
+      "exists": true,
+      "bytes": 54283,
+      "sha256": "a1d55a7988e928da69efb876f857855eff6c49c4a02a2821e6f7e0e89a30982f"
+    },
+    {
+      "path": "crates/jope-pipeline/src/emit.rs",
+      "exists": true,
+      "bytes": 20375,
+      "sha256": "3e3477106dadde4a7af7a70190fc1d652b379608f3e58491b60b25dbba04d3c5"
+    },
+    {
+      "path": "crates/jope-pipeline/src/execution.rs",
+      "exists": true,
+      "bytes": 146912,
+      "sha256": "439eb414e1d4a6f3e0b02e7429691eb25aa5ca968491ca03c04579cf1be565e7"
+    },
+    {
+      "path": "crates/jope-pipeline/src/kernel2/measurement.rs",
+      "exists": true,
+      "bytes": 6769,
+      "sha256": "0aa26b6c8f3056f0612a6b0bab57ef6f43195bbaa2f7177861a4694c17350794"
+    },
+    {
+      "path": "crates/jope-pipeline/src/kernel2/publication.rs",
+      "exists": true,
+      "bytes": 21661,
+      "sha256": "d7cb2565603c58dd778fdbbdbd8be76b6a4ea320a3188b2788808243cce771ba"
+    },
+    {
+      "path": "crates/jope-pipeline/src/kernel2/search.rs",
+      "exists": true,
+      "bytes": 8122,
+      "sha256": "e19bc7d5c796dc4b0c520987735fd5263cea67f3609bccc061c9f864d2c5638d"
+    },
+    {
+      "path": "crates/jope-pipeline/src/search.rs",
+      "exists": true,
+      "bytes": 79309,
+      "sha256": "5b966dc4b14cc2ff3b776b1874909778fba0348671358236f9b3f110526976d6"
+    },
+    {
+      "path": "crates/jope-pipeline/src/seeds.rs",
+      "exists": true,
+      "bytes": 10124,
+      "sha256": "e7286df63e33bc0444aeb52a8b3101dc87b69f2ecde08a6883cd473ae650aea1"
+    },
+    {
+      "path": "crates/jope-policy/src/challenger_tests.rs",
+      "exists": true,
+      "bytes": 26406,
+      "sha256": "ebb3c377e8b8d31a873f69fde4ed907b32e38fe75f087a3f51160104f216208e"
+    },
+    {
+      "path": "crates/jope-policy/src/config.rs",
+      "exists": true,
+      "bytes": 31142,
+      "sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490"
+    },
+    {
+      "path": "crates/jope-policy/src/grammar.rs",
+      "exists": true,
+      "bytes": 37757,
+      "sha256": "ae642e60646cfd54ea3337dcfdd64b17956b9fac2e905cfe48c40a6b172238e3"
+    },
+    {
+      "path": "crates/jope-policy/src/model.rs",
+      "exists": true,
+      "bytes": 26313,
+      "sha256": "092e1c97cdf9b966506043c4a95f185090043a65abe52fd55d2a9bc6a41567b3"
+    },
+    {
+      "path": "crates/jope-policy/src/producer.rs",
+      "exists": true,
+      "bytes": 66088,
+      "sha256": "0f7b8e9ae560c149fea887e05995cfb8a6fb9fd9014b8e52c62aa9a0c694bc41"
+    },
+    {
+      "path": "crates/jope-policy/src/proposal_ledger.rs",
+      "exists": true,
+      "bytes": 42344,
+      "sha256": "64c3b930b66332f4ac7b437c8a983ed35128445432f445f8ce423c2bbb5adc52"
+    },
+    {
+      "path": "crates/jope-policy/tests/grammar_differential.rs",
+      "exists": true,
+      "bytes": 18392,
+      "sha256": "5246badf57dca44ec53d3d5f44d500d22e7ec11bb813dadbab0a3b25fbb31bf2"
+    },
+    {
+      "path": "crates/jope-records/src/claims.rs",
+      "exists": true,
+      "bytes": 21122,
+      "sha256": "e4666117fd7f6dc1e244e7c18640c5b556530c8cb5b9c4d8f59e7ffb44387b95"
+    },
+    {
+      "path": "crates/jope-records/src/main.rs",
+      "exists": true,
+      "bytes": 14888,
+      "sha256": "f96fc5d5392d887ed6b0f97b530af5282fbea4a449cc1d0fc252bd877eedffb8"
+    },
+    {
+      "path": "crates/jope-records/src/paper_trace.rs",
+      "exists": true,
+      "bytes": 87440,
+      "sha256": "ff109fe8693b0d39362e5d2eb5d3a850f0a16cf9347d3e440466246ea4c24332"
+    },
+    {
+      "path": "deploy/maintenance/README.md",
+      "exists": true,
+      "bytes": 6359,
+      "sha256": "186d586059f04447c750032fe74dd2c464e9c49bb0c93c4b809c9088acc26c2c"
+    },
+    {
+      "path": "docs/adr/ADR-0005-canonical-learning-loop.md",
+      "exists": true,
+      "bytes": 11608,
+      "sha256": "5dc627eeb0ea602b9808aa960d9e46e8ebd42aefe1903f607fa59303dca7b6d4"
+    },
+    {
+      "path": "docs/adr/ADR-0006-rust-only-stack.md",
+      "exists": true,
+      "bytes": 7959,
+      "sha256": "57450c4962d8518b872ecc3125cf99ae869f8bf45ebc3a7e6ef0aa7d4800a529"
+    },
+    {
+      "path": "docs/emitters.md",
+      "exists": true,
+      "bytes": 9073,
+      "sha256": "6e2e05b720cf95f57f932f08d881cddcafc3c827e4f2ba6c51d2225a8e2805d4"
+    },
+    {
+      "path": "docs/experiments/experiments.jsonl",
+      "exists": true,
+      "bytes": 102532,
+      "sha256": "6f46175bbee9009e3c7621ca122a9be0ef94aa5902cc347c87a0f236c5bdaac3"
+    },
+    {
+      "path": "docs/internal/clover/selfplay-round1-prereg.v1.json",
+      "exists": true,
+      "bytes": 2913,
+      "sha256": "83600d4c12467ddc3ffc9977cd5d073ef166e080f3ff69adc90447818e31d34a"
+    },
+    {
+      "path": "docs/learning.md",
+      "exists": true,
+      "bytes": 29785,
+      "sha256": "eaad2f7a89d05e180e941875d1ca8e3b4b296947438337b32be4d8c5c4a41392"
+    },
+    {
+      "path": "docs/parity/capability-matrix.md",
+      "exists": true,
+      "bytes": 263172,
+      "sha256": "f91a4a7944eb28f3f90f661878bebec6dee04c74171c6128e89723d4961d2296"
+    },
+    {
+      "path": "docs/pipeline.md",
+      "exists": true,
+      "bytes": 15510,
+      "sha256": "a6ffdf5526837f2e0a2b598ebfd541d96e249526240e06fc5f410a22f721a61d"
+    },
+    {
+      "path": "docs/runbooks/rotate-credentials.md",
+      "exists": true,
+      "bytes": 4951,
+      "sha256": "a40ce008a4996517641e13963b570740030437b9b76c3eb268de042a380995f9"
+    },
+    {
+      "path": "docs/runbooks/runner.md",
+      "exists": true,
+      "bytes": 15536,
+      "sha256": "3f71701f88b576eb70c91636fff96ffb063fdd66c01b42753091780eab6b067a"
+    },
+    {
+      "path": "schemas/jope.hwm.v1.schema.json",
+      "exists": true,
+      "bytes": 9917,
+      "sha256": "65a11eafdca127d5c6d14dc4a041f135a155526fb051b91df205457985267f30"
+    }
+  ],
+  "verified_v4_packet_files": [
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/BASELINE_CURRENT.md",
+      "exists": true,
+      "bytes": 2184,
+      "sha256": "8b24d7301c9410a7d70c88800901e3a6833d7bc48830571d44430032e0ef02fc"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/CLAUDE_RECONCILIATION.md",
+      "exists": true,
+      "bytes": 2851,
+      "sha256": "34cfc3014af34ea67a12c3357fdeadb20a818981f24aa72c7f71be7eace39e92"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/CURRENT_SOURCE_SLOT_AND_RUNNERS.json",
+      "exists": true,
+      "bytes": 2311,
+      "sha256": "b87c8faa790d897d4f383423e825d25713cef543ef7217885dfd485d768ef2b1"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.json",
+      "exists": true,
+      "bytes": 12046,
+      "sha256": "7c2eca800309a520aacf38c6fdf0af0929d9a8c497efcc08d03d9d98954cb2c2"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/INPUT_MANIFEST.json",
+      "exists": true,
+      "bytes": 3028,
+      "sha256": "031257c164df7e6ad147f31bf1d982e522fd3a8b711c6dd000ab9e059a21e953"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v1.json",
+      "exists": true,
+      "bytes": 4528,
+      "sha256": "ba0bbdd20d58fbfa4fedf6cca0e70ebb6029ea70c412e621d6ab492977b7918e"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v2.json",
+      "exists": true,
+      "bytes": 5435,
+      "sha256": "92f4946ca59c1a379708c92d5aba80322f914a65d9048f5250111a822414307f"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v3.json",
+      "exists": true,
+      "bytes": 5747,
+      "sha256": "3132d4c6eed6771979da814fb7e1c419b5d9f61ed8a78a00c8029b48ea78d85f"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/PLAN_BRIEF.md",
+      "exists": true,
+      "bytes": 2767,
+      "sha256": "bebee6ae63b8f708178e66be742ad385b8b11ffe71b8acb3b6e2ca8d04955da1"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/README.md",
+      "exists": true,
+      "bytes": 2503,
+      "sha256": "28cd5c8da02404f2458585fd0d8ff7d2b19ce03044cbb7b5295d64e9e14920d4"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/RENDER_CHECK.json",
+      "exists": true,
+      "bytes": 2396,
+      "sha256": "a682af099ada35c8c4576b7ba9d3e71a317937bba456295aabe56ab6d6496634"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/REVIEW_CORRECTIONS.md",
+      "exists": true,
+      "bytes": 2753,
+      "sha256": "4832806c55e82f5cc4b97de8ae39308ef84addd520e63e6846f524563713874e"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/SEMANTIC_REVIEW.md",
+      "exists": true,
+      "bytes": 3665,
+      "sha256": "49694643583457f75ce05f68bbe36de8521d4348dafabc6745fd0d8b19357268"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/SOURCE_SYMBOLS.json",
+      "exists": true,
+      "bytes": 67023,
+      "sha256": "5920d412f1b582195bcab5096afd862e6a1737b9f6f70091bb2831e614714518"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/SOURCE_TABLES.json",
+      "exists": true,
+      "bytes": 66042,
+      "sha256": "acf4104fe1fa973ef0924dcbe270a510cc8c6b55f365de30b883efb3464b92d3"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/TODO.md",
+      "exists": true,
+      "bytes": 17875,
+      "sha256": "0524b9eb6e1cf95ae7524cd2fcd0080831a7d28a55d37353990970c883cb4467"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/VALIDATION.json",
+      "exists": true,
+      "bytes": 392,
+      "sha256": "8efa42e9b08f1e37e2ae7f839a302d2d7629179ec11937a47025436a768f5431"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/VALIDATION_MATRIX.md",
+      "exists": true,
+      "bytes": 21986,
+      "sha256": "2d4e5b942d84f8ac05847b2448efdf219ffd77f59e84c7c26bec257f6d76d183"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/WAVE_DATA_AND_GIT_CONTEXT.md",
+      "exists": true,
+      "bytes": 10455,
+      "sha256": "241fa5d97e147e65d78e17f9bb367b1f247c09222991b340f7d0743d22dbe55e"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/WHITESPACE_EXCEPTION.json",
+      "exists": true,
+      "bytes": 7172,
+      "sha256": "c9cdd80d6c26a0c66e0bc8b94bd27e7cdbdf22dd3e40b92436b166d3431686ed"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/WORKPLAN.md",
+      "exists": true,
+      "bytes": 158514,
+      "sha256": "45862904a0404f4ba83f58f7bfb9d424322a4a5dbe238783847dbcf2726adbc9"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/PR355-disposition.json",
+      "exists": true,
+      "bytes": 4611,
+      "sha256": "e8486a00ca33a453e356decddf5f53e77c8e3c550fcb7b8e00dec04691b5509c"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/claude-review.json",
+      "exists": true,
+      "bytes": 23941,
+      "sha256": "ba4b86ad7d81dea8451c18dd8eaa8af3980d347beddb94e38c3e70b155af2e2a"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/codex-review.json",
+      "exists": true,
+      "bytes": 40209,
+      "sha256": "793cf6cd6b7814f9eb0c5f55cb7d9069d492fda4c4db9eea20016b2a649352d6"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/current-repo-gap-map.json",
+      "exists": true,
+      "bytes": 18569,
+      "sha256": "5a6eaefe70c1d3b34df489deaca05b2ff9bb437503d9b0406d2ec425f66c63c1"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/grok-availability-blocker.json",
+      "exists": true,
+      "bytes": 705,
+      "sha256": "d35715d1cb86b765ad20dd5f990b9fc6b26e93c17cb7ff084f3299fc4fa5bd21"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/jopedime_agy-intake.json",
+      "exists": true,
+      "bytes": 10103,
+      "sha256": "c3a79d46842b5847100993ed97c813e03f89e7d09c317787cf24e005128e568d"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/contrib/screen-owner-attestations.json",
+      "exists": true,
+      "bytes": 6362,
+      "sha256": "60a656dcfd581ade2587f5c78dbd33a0c81cebe4efc3191a4a7a3700f5dc0929"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/decisions.json",
+      "exists": true,
+      "bytes": 13329,
+      "sha256": "e7bf91b12b96413328789bf1636b834b0e4e22e6ae10bba2ac47b316aaee25ac"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/events.jsonl",
+      "exists": true,
+      "bytes": 3479,
+      "sha256": "d74c8a78c2abe8aafccf7d3195dcd8a4925f0f5e173d9532ab48e9e491dbc59f"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/progress.json",
+      "exists": true,
+      "bytes": 2925,
+      "sha256": "154397ba25533d6ba547f7d2d8e44abab04b53807b295945c242443cf3b4fb8e"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/reference-specs/S1.md",
+      "exists": true,
+      "bytes": 233292,
+      "sha256": "63b7a39e4bcfc854bb809f459c6408cf4d5c03c76ce773bec6404a210b5c5b1f"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/reference-specs/S3.md",
+      "exists": true,
+      "bytes": 27150,
+      "sha256": "ca505ef920804f832d5f8141d691766d058ad5931742b29979dcd180e4f2a90a"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/reference-specs/S4.md",
+      "exists": true,
+      "bytes": 310695,
+      "sha256": "1c0623bc809f4e95109dafd99ed415ca97a00a0b185b6c87174fcc28f1870b16"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/reference-specs/S5.md",
+      "exists": true,
+      "bytes": 278223,
+      "sha256": "2f0651d23a11b7b151b64210807a560f614b706f08ed5b5cff1ec6eab50d89a5"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/reference-specs/S6.md",
+      "exists": true,
+      "bytes": 195700,
+      "sha256": "ffce4d7d4b1045cbd70e005d8b59b0229f12bcec01422d2b58d5fa443898d2b1"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/reference-specs/S8.md",
+      "exists": true,
+      "bytes": 35445,
+      "sha256": "836ff49ef3f34c74f9594c493d4cfa45a4eec444d548bb317c5d1fd9ecb4afb8"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/requirements.json",
+      "exists": true,
+      "bytes": 886787,
+      "sha256": "cc5dc2337b2b99d68b80cdc9b1bc478b7340be8bd46ba47ade12d53f240f728f"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/tasks.json",
+      "exists": true,
+      "bytes": 135634,
+      "sha256": "97fad0eee5011cdf41e4f11ede0ff15db13a732e5564ef97c912b551df3c4c46"
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/PACKET_MANIFEST.v4.json",
+      "exists": true,
+      "bytes": 6373,
+      "sha256": "921643bc3ae0b7d75bbab13434f4d8211bc3c8638154c45ac00fc7df184750d5"
+    }
+  ],
+  "proposed_task_write_paths": [
+    {
+      "path": "crates/feat-math/registry/operators.toml",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I07"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/combinators/residual.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I54"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/combinators/route.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I55"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/combinators/union.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I55"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/fm_oof.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I57"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/ir/canon.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I08"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/ir/edit.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I08"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/ir/effects.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I08"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/ir/graph.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I08"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/ir/legacy_bridge.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I08"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/ir/mod.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I08"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/restricted_candidate.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I58"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/bandit.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I23"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/fingerprint.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I22"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/gumbel_root.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I39"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/legacy.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I18"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/lite_race.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I18"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/migration.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I19"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/mod.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I17"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/modern_gp.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I19"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/qd.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I24"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/race.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I19"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/recorder.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I17"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/residual.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I25"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/selection.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I19"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/strategy/state.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I17"
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/registry/generated.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I07"
+      ]
+    },
+    {
+      "path": "crates/feat-math/tests/artifact_target_binding.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I09"
+      ]
+    },
+    {
+      "path": "crates/feat-math/tests/numeric_profile_v2.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I10"
+      ]
+    },
+    {
+      "path": "crates/feat-math/tests/registry_agreement.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I07"
+      ]
+    },
+    {
+      "path": "crates/jope-cli/src/generator/planted.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I37"
+      ]
+    },
+    {
+      "path": "crates/jope-datasets/src/verified_object.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I46"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/native_loop/lineage.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I11"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/neural/critic.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I33"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/neural/edit_policy.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I34"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/intent.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I12"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/loss_admission.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I35"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/optimizer_recipe.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I35"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/replay_bridge.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I31"
+      ]
+    },
+    {
+      "path": "crates/jope-engine/tests/lineage_checkpoint_recovery.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I13"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/arena_exact.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I30"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/exe_cache.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I47"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/lake/archive.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I24"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/lake/mod.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I28"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/lake/reader.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I28"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/lake/roles.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I28"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/lake/writer.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I28"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/progress/checkpoint.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I48"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/progress/segment.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I48"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/proposals/mod.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I26"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/proposals/outbox.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I26"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/evidence.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I42"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/exposure.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I42"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/teacher.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I38"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/replay/admission.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I04"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/replay/observation.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I27"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/replay/sample.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I36"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/research/wave_archive.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I66"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/retention/executor_candidate.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I52"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/retention/index_producer.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I27"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/retention/obligations.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I50"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/retention/value.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I51"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/authority.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I15"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/curriculum.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I59"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/league.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I60"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/pins.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I15"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/promote.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I43"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/ranked.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I59"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/selfplay/snapshot.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I15"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/universe.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I29"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/tests/arena_exact.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I30"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/tests/pools_cv_unavailable.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I03"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/tests/replay_sampling_design.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I36"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/tests/research_loop_smoke.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I32"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/tests/retrieval_exposure.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I20"
+      ]
+    },
+    {
+      "path": "crates/jope-learning/tests/support_transition.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I06"
+      ]
+    },
+    {
+      "path": "crates/jope-motifs/src/promote.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I56"
+      ]
+    },
+    {
+      "path": "crates/jope-pipeline/tests/fingerprint_false_hits.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I22"
+      ]
+    },
+    {
+      "path": "crates/jope-pipeline/tests/resource_accounting.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I16"
+      ]
+    },
+    {
+      "path": "crates/jope-pipeline/tests/stage_cache_identity.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I21"
+      ]
+    },
+    {
+      "path": "crates/jope-policy/src/config/lineage.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I14"
+      ]
+    },
+    {
+      "path": "crates/jope-policy/src/edit_policy.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I34"
+      ]
+    },
+    {
+      "path": "crates/jope-policy/src/model/structured_critic.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I33"
+      ]
+    },
+    {
+      "path": "crates/jope-records/src/research/capsule.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I44"
+      ]
+    },
+    {
+      "path": "crates/jope-records/src/research/compile.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I44"
+      ]
+    },
+    {
+      "path": "crates/jope-records/src/research/mod.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I44"
+      ]
+    },
+    {
+      "path": "crates/jope-records/src/research/render.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I44"
+      ]
+    },
+    {
+      "path": "crates/jope-records/src/research/state.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I45"
+      ]
+    },
+    {
+      "path": "crates/jope-records/src/research/wave_git.rs",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I66"
+      ]
+    },
+    {
+      "path": "deploy/iam/jope-research-role-candidates.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I49"
+      ]
+    },
+    {
+      "path": "docs/STATE.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I45"
+      ]
+    },
+    {
+      "path": "docs/contracts/algorithmic-selfplay-identity.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I02"
+      ]
+    },
+    {
+      "path": "docs/contracts/foundation-operator-admission.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I57"
+      ]
+    },
+    {
+      "path": "docs/contracts/restricted-kernel-candidate.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I58"
+      ]
+    },
+    {
+      "path": "docs/contracts/wave-evidence-and-git-context.v1.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I66"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/ARCHIVE_CANDIDATES.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I62"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/BASELINE.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I01"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/CI_PLACEMENT.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I64"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/EXPERIMENT_QUEUE.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I65"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.json",
+      "exists_at_receiving_main": true,
+      "sha256_at_receiving_main": "7c2eca800309a520aacf38c6fdf0af0929d9a8c497efcc08d03d9d98954cb2c2",
+      "tasks": [
+        "I01"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/LOCAL_CUSTODY_CHECKLIST.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I53"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/PR_ACCEPTANCE.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I63"
+      ]
+    },
+    {
+      "path": "docs/plans/algorithmic-selfplay-20261017/SMOKE_PROTOCOL.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I32"
+      ]
+    },
+    {
+      "path": "docs/protocols/policy-discovery-qualification.v1.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I41"
+      ]
+    },
+    {
+      "path": "docs/research/INDEX.tsv",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I45"
+      ]
+    },
+    {
+      "path": "docs/research/beliefs.jsonl",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I45"
+      ]
+    },
+    {
+      "path": "docs/research/hypotheses.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I45"
+      ]
+    },
+    {
+      "path": "docs/research/waves/INDEX.jsonl",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I66"
+      ]
+    },
+    {
+      "path": "docs/runbooks/research-role-admission.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I49"
+      ]
+    },
+    {
+      "path": "docs/runbooks/research-workflow.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I61"
+      ]
+    },
+    {
+      "path": "docs/runbooks/retention-execution-candidate.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I52"
+      ]
+    },
+    {
+      "path": "docs/subsystems/algorithmic-selfplay.md",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I62"
+      ]
+    },
+    {
+      "path": "schemas/jope.battle-artifact.v3.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I09"
+      ]
+    },
+    {
+      "path": "schemas/jope.canonical-json.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I02"
+      ]
+    },
+    {
+      "path": "schemas/jope.checkpoint-export.v2.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I14"
+      ]
+    },
+    {
+      "path": "schemas/jope.dream-task.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I37"
+      ]
+    },
+    {
+      "path": "schemas/jope.edit-transition.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I05"
+      ]
+    },
+    {
+      "path": "schemas/jope.learning-authority.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I15"
+      ]
+    },
+    {
+      "path": "schemas/jope.learning-snapshot.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I15"
+      ]
+    },
+    {
+      "path": "schemas/jope.measured-universe.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I29"
+      ]
+    },
+    {
+      "path": "schemas/jope.native-loop-completion.v3.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I40"
+      ]
+    },
+    {
+      "path": "schemas/jope.native-loop.v3.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I40"
+      ]
+    },
+    {
+      "path": "schemas/jope.pipeline-seeds.v2.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I20"
+      ]
+    },
+    {
+      "path": "schemas/jope.policy-arena.v2.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I41"
+      ]
+    },
+    {
+      "path": "schemas/jope.policy-lineage.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I11"
+      ]
+    },
+    {
+      "path": "schemas/jope.replay-observation.v2.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I04"
+      ]
+    },
+    {
+      "path": "schemas/jope.research-capsule.v2.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I44"
+      ]
+    },
+    {
+      "path": "schemas/jope.resource-ledger.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I16"
+      ]
+    },
+    {
+      "path": "schemas/jope.retention-plan.v2.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I50"
+      ]
+    },
+    {
+      "path": "schemas/jope.search-decision.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I05"
+      ]
+    },
+    {
+      "path": "schemas/jope.support-transition.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I06"
+      ]
+    },
+    {
+      "path": "schemas/jope.training-intent.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I11"
+      ]
+    },
+    {
+      "path": "schemas/jope.wave-evidence.v1.schema.json",
+      "exists_at_receiving_main": false,
+      "sha256_at_receiving_main": null,
+      "tasks": [
+        "I66"
+      ]
+    }
+  ]
+}
