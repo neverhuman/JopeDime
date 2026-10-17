@@ -197,3 +197,16 @@ Every claim was traced back to its source on xbabe2. [`NUMBERS_TRACE.md`](NUMBER
 - **Figure 1 on page 1.** It shows why the work matters, using only established measurements of the frozen first generation: (a) the full validation plateau [C26, C27], (b) the outcome head's ranking accuracy on fresh programs at chance [C76]. The planned teaser stays a specification: its panels need qualified receipts that do not exist [C114]. `paper-trace` renders the figure from `figures/v1_full_validation.dat`, the file C27 pins, and from C76's value, and fails when the committed SVG, its data or those claims disagree.
 
 `tex/` is still not regenerated.
+
+## Update of 2026-10-16 (addendum): post-C183 studies C184–C190 and Figure 1 panel (b)
+
+- **New source root `EVIDENCE`:** `/home/ubuntu/jope-evidence` on xbabe2, declared in `claims.json` (`source_conventions.roots`) so `jope-records paper-trace --sources` re-hashes the post-C183 host receipts.
+- **7 new claims, C184–C190:**
+  - 1 established (`C184`: `SPQ-1` offline round-qualification verifier `jope-pools qualify-rounds` and unpinned `selfplay-round1-prereg.v1.json`);
+  - 6 non-qualifying (`C185`: `EI-0` 24-run / 96-slot continuation dose probes under $\lambda_{\mathrm{KL}} = 3.0$; `C186`: `EI-1` v8 archive-CE `kl_stop` at epoch 3 and `PRIMARY_NOT_COMPUTED`; `C187`: `EI-2`/`EI-2X` 3-host $\lambda_{\mathrm{ar}} = 0.03$ panel; `C188`: `EI-3` 3-host $\lambda_{\pi} = 0.05, \lambda_{\mathrm{ar}} = 0.10, m = 8$ `kl_stop` panel; `C189`: `EI-4` $\lambda_{\mathrm{KL}} = 5.0, \lambda_{\mathrm{ar}} = 0.025, m = 8$ run; `C190`: `PR #339` S3 SoS-debiased contextual surrogate 5-round shadow-pool flywheel).
+- **Write-up changes:**
+  - **New Section 10.3.2** summarizes `C184`–`C190` with non-qualifying and shadow-only scope preserved.
+  - **Figure 1 panel (b)** and `crates/jope-records/src/paper_figure.rs` now plot both the v1 outcome head at chance (`0.506 [0.441, 0.568]`, 32 lineages) [C76] and the S3 SoS-debiased contextual surrogate shadow progression (`R0 0.634 -> R4 0.680`, `+0.046 [+0.040, +0.052]`, 255 parent clusters on `shadow-pool-v2`) [C190].
+  - **Appendix G** updates the claim ledger totals to **184 claims: 119 established, 20 preliminary, 22 non-qualifying and 23 pending**.
+- **Experiment ledger (`docs/experiments/experiments.jsonl`):** binds `EXP-012`–`EXP-018` to `C184`–`C190` and records outer receipt file SHA-256 digests alongside inner self-hashes on `EXP-018`.
+
