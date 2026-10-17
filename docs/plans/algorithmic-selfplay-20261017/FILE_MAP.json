@@ -1,0 +1,537 @@
+{
+  "source_sha": "0b7eb89075b8186f1aacf1643725432e75e8fe56",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "exists": true
+    },
+    {
+      "path": ".github/workflows/full-main.yml",
+      "exists": true
+    },
+    {
+      "path": "AGENTS.md",
+      "exists": true
+    },
+    {
+      "path": "CLAUDE.md",
+      "exists": true
+    },
+    {
+      "path": "Cargo.toml",
+      "exists": true
+    },
+    {
+      "path": "MASTER_CLEAN_UP.md",
+      "exists": true
+    },
+    {
+      "path": "MASTER_PLAN.md",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/build.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/advanced_v3/grammar.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/evolve.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/genome.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/heads.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/kernel/capabilities.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/kernel/lexicase.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/kernel/profile.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/kernel/search.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/lib.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/math_expr.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/math_expr/evolution/v2/mod.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/math_expr/evolution/v2/refinement/lm.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/members.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/model.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/ops.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/registry.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/spec.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/stack.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/stage_cache.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/src/transpile.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/tests/clover_quantile.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/tests/inner_fold_leakage.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/tests/kernel2_search.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/tests/kernel_codec.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/feat-math/tests/search_admission.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-arena/src/lib.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-bench/src/methods.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-bench/tests/committed_evidence.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-campaigns/known-evaluator-identities.json",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-campaigns/src/evaluation_v2.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-cli/src/generator/mod.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-cli/src/kernel.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-cli/src/main.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-datasets/src/credentials.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-datasets/src/store.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-encoders/src/foundation.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/checkpoint_recovery.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/native_loop.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/native_loop/warm_start.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/native_observer/science.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/neural.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/policy_export.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/task_contract.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training/ancestry.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training/checkpoint_commit.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training/consumption.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training/continuation.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training/inputs.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/src/training/objective.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/tests/objective_fixtures.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-engine/tests/partition_wiring.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/bank.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/canon.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/clover/round_qual.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/eligibility.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/eligibility/context.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/main.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/mirror.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/pools/bootstrap.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/pools/selectors.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/pools/source.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/census.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/engine.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/outbox.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/publish.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/rebuild.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/reconcile.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/progress/tests/faults.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/gate.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/promotion.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/roster.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/classify.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/distilled.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/lifecycle.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/pack.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/parquet.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/plan.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/policy.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/refs.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/retention/tags.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/support/mod.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/support/version.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/src/sync.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/mirror_lost_update.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/mirror_reconcile.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/pools.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/retention.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/retention_pack.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/schema_agreement.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/selfplay_round_qual.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-learning/tests/support.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-models/src/publish.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-motifs/src/export.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-motifs/src/mine.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-motifs/src/validate.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/emit.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/execution.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/kernel2/measurement.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/kernel2/publication.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/kernel2/search.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/search.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-pipeline/src/seeds.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/src/challenger_tests.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/src/config.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/src/grammar.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/src/model.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/src/producer.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/src/proposal_ledger.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-policy/tests/grammar_differential.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-records/src/claims.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-records/src/main.rs",
+      "exists": true
+    },
+    {
+      "path": "crates/jope-records/src/paper_trace.rs",
+      "exists": true
+    },
+    {
+      "path": "deploy/maintenance/README.md",
+      "exists": true
+    },
+    {
+      "path": "docs/adr/ADR-0005-canonical-learning-loop.md",
+      "exists": true
+    },
+    {
+      "path": "docs/adr/ADR-0006-rust-only-stack.md",
+      "exists": true
+    },
+    {
+      "path": "docs/emitters.md",
+      "exists": true
+    },
+    {
+      "path": "docs/experiments/experiments.jsonl",
+      "exists": true
+    },
+    {
+      "path": "docs/internal/clover/selfplay-round1-prereg.v1.json",
+      "exists": true
+    },
+    {
+      "path": "docs/learning.md",
+      "exists": true
+    },
+    {
+      "path": "docs/parity/capability-matrix.md",
+      "exists": true
+    },
+    {
+      "path": "docs/pipeline.md",
+      "exists": true
+    },
+    {
+      "path": "docs/runbooks/rotate-credentials.md",
+      "exists": true
+    },
+    {
+      "path": "docs/runbooks/runner.md",
+      "exists": true
+    },
+    {
+      "path": "schemas/jope.hwm.v1.schema.json",
+      "exists": true
+    }
+  ]
+}

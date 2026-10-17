@@ -1,0 +1,2427 @@
+{
+  "head": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+  "files": [
+    {
+      "path": "crates/jope-engine/src/native_loop.rs",
+      "exists": true,
+      "bytes": 96002,
+      "sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3",
+      "symbols": [
+        {
+          "line": 35,
+          "text": "pub struct Config {"
+        },
+        {
+          "line": 71,
+          "text": "pub struct RunCompletion {"
+        },
+        {
+          "line": 82,
+          "text": "fn verify_successor(next: &Config, previous: &Config, completion: &RunCompletion) -> Result<()> {"
+        },
+        {
+          "line": 112,
+          "text": "pub struct ScientificPolicy {"
+        },
+        {
+          "line": 126,
+          "text": "pub enum Role {"
+        },
+        {
+          "line": 137,
+          "text": "pub struct Request {"
+        },
+        {
+          "line": 148,
+          "text": "pub struct Binding {"
+        },
+        {
+          "line": 154,
+          "text": "pub struct Progress {"
+        },
+        {
+          "line": 165,
+          "text": "pub struct Loop {"
+        },
+        {
+          "line": 174,
+          "text": "fn now() -> Result<u64> {"
+        },
+        {
+          "line": 177,
+          "text": "fn read(path: &Path) -> Result<Vec<u8>> {"
+        },
+        {
+          "line": 191,
+          "text": "fn physical_directory(root: &Path, path: &Path) -> Result<()> {"
+        },
+        {
+          "line": 213,
+          "text": "fn immutable(root: &Path, path: &Path, bytes: &[u8]) -> Result<Artifact> {"
+        },
+        {
+          "line": 253,
+          "text": "fn frozen<T: Serialize>(root: &Path, path: &Path, value: &T) -> Result<Artifact> {"
+        },
+        {
+          "line": 256,
+          "text": "fn artifact(root: &Path, path: &Path) -> Result<Artifact> {"
+        },
+        {
+          "line": 263,
+          "text": "fn identity(run: &str, generation: u64, id: &str) -> Result<String> {"
+        },
+        {
+          "line": 266,
+          "text": "pub fn generation_seed(run: &str, generation: u64, checkpoint: &str) -> Result<u64> {"
+        },
+        {
+          "line": 277,
+          "text": "pub(crate) fn train_window(&self, generation: u64) -> Result<warm_start::Window> {"
+        },
+        {
+          "line": 280,
+          "text": "fn validate(&self) -> Result<()> {"
+        },
+        {
+          "line": 330,
+          "text": "pub fn open(root: &Path, state: &Path, graph_state: &Path, config: &Artifact) -> Result<Self> {"
+        },
+        {
+          "line": 333,
+          "text": "fn open_mode("
+        },
+        {
+          "line": 446,
+          "text": "fn request("
+        },
+        {
+          "line": 474,
+          "text": "pub fn bind(&self, binding: &Binding) -> Result<()> {"
+        },
+        {
+          "line": 499,
+          "text": "pub fn bind_parent_decision(&self, reference: &Artifact) -> Result<()> {"
+        },
+        {
+          "line": 526,
+          "text": "fn validate_binding(&self, r: &Request, b: &Binding) -> Result<TaskManifest> {"
+        },
+        {
+          "line": 731,
+          "text": "fn binding(&self, r: &Request) -> Result<Option<Binding>> {"
+        },
+        {
+          "line": 741,
+          "text": "async fn result("
+        },
+        {
+          "line": 783,
+          "text": "async fn failed("
+        },
+        {
+          "line": 794,
+          "text": "async fn offer("
+        },
+        {
+          "line": 865,
+          "text": "fn freeze_genome("
+        },
+        {
+          "line": 1012,
+          "text": "async fn aggregate("
+        },
+        {
+          "line": 1104,
+          "text": "fn recorded_candidate(&self, path: &Path, bytes: &[u8]) -> Result<Artifact> {"
+        },
+        {
+          "line": 1118,
+          "text": "fn candidates("
+        },
+        {
+          "line": 1281,
+          "text": "async fn verify_completed_predecessor("
+        },
+        {
+          "line": 1419,
+          "text": "pub async fn tick(&self, graph: &Graph, client: &Client) -> Result<Progress> {"
+        },
+        {
+          "line": 1778,
+          "text": "fn submitted(&self, r: &Request) -> Result<bool> {"
+        },
+        {
+          "line": 1789,
+          "text": "fn matched_comparisons(root: &Path, generation: u64, artifacts: &[Artifact]) -> Result<Value> {"
+        },
+        {
+          "line": 1820,
+          "text": "pub struct ProposalParentDecision {"
+        },
+        {
+          "line": 1831,
+          "text": "fn verify_result_binding("
+        },
+        {
+          "line": 1849,
+          "text": "struct ParentEvidence<'a> {"
+        },
+        {
+          "line": 1856,
+          "text": "fn verify_parent_decision("
+        },
+        {
+          "line": 1897,
+          "text": "fn comparison_outcomes("
+        },
+        {
+          "line": 1967,
+          "text": "pub fn replenish("
+        },
+        {
+          "line": 1994,
+          "text": "fn r(g: u64, n: &str, role: Role) -> Request {"
+        },
+        {
+          "line": 2006,
+          "text": "fn independently_valid_graph_admission_with_same_ids_cannot_replace_loop_binding() {"
+        },
+        {
+          "line": 2044,
+          "text": "fn committed_training_is_not_a_quality_or_serving_acceptance() {"
+        },
+        {
+          "line": 2104,
+          "text": "fn unequal_valid_arms_remain_preserved_but_do_not_invent_matches() {"
+        },
+        {
+          "line": 2158,
+          "text": "fn shared_backlog_counts_and_continuation_quarter_cap() {"
+        },
+        {
+          "line": 2174,
+          "text": "fn generations_not_newest_first_and_no_continuation_starvation() {"
+        },
+        {
+          "line": 2187,
+          "text": "fn generation_seed_replays_but_changes_on_parent_or_generation() {"
+        },
+        {
+          "line": 2194,
+          "text": "fn conflicting_durable_intent_cannot_extend_original_window() {"
+        },
+        {
+          "line": 2201,
+          "text": "fn successor_requires_exact_completed_window_and_new_run_identity() {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/native_loop/warm_start.rs",
+      "exists": true,
+      "bytes": 18031,
+      "sha256": "a833660625ccedd7b592192d8b918b85ff8576fb3a328467a4898308d07f6025",
+      "symbols": [
+        {
+          "line": 39,
+          "text": "pub struct Window {"
+        },
+        {
+          "line": 48,
+          "text": "pub fn window(schema: &str, base: u64, generation: u64) -> Result<Window> {"
+        },
+        {
+          "line": 72,
+          "text": "pub fn train_parameters("
+        },
+        {
+          "line": 98,
+          "text": "pub fn request_mode(parameters: &Value, parent_state: &Value) -> Result<Option<u64>> {"
+        },
+        {
+          "line": 129,
+          "text": "fn is_digest(value: &str) -> bool {"
+        },
+        {
+          "line": 138,
+          "text": "pub fn binding(parent_checkpoint_sha256: &str, parent_state: &Value) -> Result<Value> {"
+        },
+        {
+          "line": 158,
+          "text": "pub fn warm_start_policy(mut carry: Value, binding: Value) -> Value {"
+        },
+        {
+          "line": 167,
+          "text": "pub fn policy_mode("
+        },
+        {
+          "line": 203,
+          "text": "pub fn check_trained("
+        },
+        {
+          "line": 241,
+          "text": "fn accepted() -> Value {"
+        },
+        {
+          "line": 246,
+          "text": "fn artifact(name: &str) -> Value {"
+        },
+        {
+          "line": 251,
+          "text": "fn v1_windows_and_request_bytes_are_unchanged() {"
+        },
+        {
+          "line": 276,
+          "text": "fn v2_starts_a_fresh_optimizer_from_the_accepted_parent_then_carries_its_own() {"
+        },
+        {
+          "line": 325,
+          "text": "fn mixed_forged_or_continuing_warm_start_requests_are_refused() {"
+        },
+        {
+          "line": 368,
+          "text": "fn mixed_or_forged_warm_start_policies_are_refused() {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/consumption.rs",
+      "exists": true,
+      "bytes": 31085,
+      "sha256": "0c29a897b82babe2a206cff66ac038582cc3a2b83eabd44961d9c561383081c5",
+      "symbols": [
+        {
+          "line": 43,
+          "text": "pub fn dropout_seed(seed: u64, local_step: u64, rank: usize, microbatch: usize) -> i64 {"
+        },
+        {
+          "line": 51,
+          "text": "pub fn sampler_serial("
+        },
+        {
+          "line": 72,
+          "text": "pub struct Header {"
+        },
+        {
+          "line": 97,
+          "text": "fn validate(&self, shard: Option<&Shard>) -> Result<()> {"
+        },
+        {
+          "line": 145,
+          "text": "pub fn serial(&self, step: u64, microbatch: usize) -> Result<u64> {"
+        },
+        {
+          "line": 159,
+          "text": "pub fn dropout_seed(&self, step: u64, microbatch: usize) -> Result<i64> {"
+        },
+        {
+          "line": 170,
+          "text": "pub fn serial_in(&self, shard: Option<&Shard>, step: u64, microbatch: usize) -> Result<u64> {"
+        },
+        {
+          "line": 193,
+          "text": "pub fn rows_in(&self, shard: Option<&Shard>, microbatch: usize) -> Result<usize> {"
+        },
+        {
+          "line": 210,
+          "text": "pub enum Outcome {"
+        },
+        {
+          "line": 217,
+          "text": "pub enum Event {"
+        },
+        {
+          "line": 248,
+          "text": "fn key(&self) -> String {"
+        },
+        {
+          "line": 264,
+          "text": "pub struct Units {"
+        },
+        {
+          "line": 271,
+          "text": "fn add(&mut self, other: &Self) -> Result<()> {"
+        },
+        {
+          "line": 284,
+          "text": "struct Pending {"
+        },
+        {
+          "line": 290,
+          "text": "struct Tracker {"
+        },
+        {
+          "line": 309,
+          "text": "fn accept(&mut self, event: &Event) -> Result<()> {"
+        },
+        {
+          "line": 442,
+          "text": "fn commit_through(&mut self, step: u64) -> Result<()> {"
+        },
+        {
+          "line": 460,
+          "text": "pub struct Binding {"
+        },
+        {
+          "line": 467,
+          "text": "pub struct Journal {"
+        },
+        {
+          "line": 478,
+          "text": "pub fn create(path: &Path, header: Header) -> Result<Self> {"
+        },
+        {
+          "line": 483,
+          "text": "pub fn create_with_shard(path: &Path, header: Header, shard: Option<Shard>) -> Result<Self> {"
+        },
+        {
+          "line": 506,
+          "text": "pub fn path(&self) -> &Path {"
+        },
+        {
+          "line": 510,
+          "text": "fn append(&mut self, event: &Event) -> Result<()> {"
+        },
+        {
+          "line": 530,
+          "text": "pub fn microbatch("
+        },
+        {
+          "line": 549,
+          "text": "pub fn applied(&mut self, step: u64, gradient_norm: f64) -> Result<()> {"
+        },
+        {
+          "line": 562,
+          "text": "pub fn rejected(&mut self, step: u64, reason: &str) -> Result<()> {"
+        },
+        {
+          "line": 578,
+          "text": "pub fn sync(&mut self) -> Result<Binding> {"
+        },
+        {
+          "line": 592,
+          "text": "pub fn commit(&mut self, step: u64, state_sha256: &str) -> Result<Binding> {"
+        },
+        {
+          "line": 600,
+          "text": "pub fn applied_through(&self) -> u64 {"
+        },
+        {
+          "line": 607,
+          "text": "pub struct Cursor {"
+        },
+        {
+          "line": 614,
+          "text": "pub struct Reconciliation {"
+        },
+        {
+          "line": 646,
+          "text": "fn is_sha256(value: &str) -> bool {"
+        },
+        {
+          "line": 654,
+          "text": "fn complete_lines(bytes: &[u8]) -> (Vec<&[u8]>, bool) {"
+        },
+        {
+          "line": 668,
+          "text": "pub fn reconcile(bytes: &[u8], durable_step: Option<u64>) -> Result<Reconciliation> {"
+        },
+        {
+          "line": 744,
+          "text": "pub fn verify_binding(bytes: &[u8], binding: &Binding) -> Result<()> {"
+        },
+        {
+          "line": 756,
+          "text": "pub fn verify_records("
+        },
+        {
+          "line": 785,
+          "text": "pub struct RunTotals {"
+        },
+        {
+          "line": 801,
+          "text": "pub fn reconcile_run(attempts: &[Reconciliation]) -> Result<RunTotals> {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/checkpoint_commit.rs",
+      "exists": true,
+      "bytes": 18864,
+      "sha256": "99fa5de1af38adedf2f5c02b0434f5d7c2c1df5cb31d15dead4401bee3be7610",
+      "symbols": [
+        {
+          "line": 70,
+          "text": "pub fn required_object_names() -> Vec<&'static str> {"
+        },
+        {
+          "line": 77,
+          "text": "pub enum Phase {"
+        },
+        {
+          "line": 96,
+          "text": "pub fn no_stop(_: Phase) -> Result<()> {"
+        },
+        {
+          "line": 100,
+          "text": "fn unique_suffix() -> Result<String> {"
+        },
+        {
+          "line": 112,
+          "text": "fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {"
+        },
+        {
+          "line": 123,
+          "text": "fn sync_dir(path: &Path) -> Result<()> {"
+        },
+        {
+          "line": 129,
+          "text": "pub fn replace_json(path: &Path, value: &impl serde::Serialize) -> Result<()> {"
+        },
+        {
+          "line": 147,
+          "text": "pub fn commit("
+        },
+        {
+          "line": 196,
+          "text": "pub struct Expectation<'a> {"
+        },
+        {
+          "line": 206,
+          "text": "pub enum Format {"
+        },
+        {
+          "line": 214,
+          "text": "pub struct Committed {"
+        },
+        {
+          "line": 222,
+          "text": "fn plain_file(path: &Path) -> Result<()> {"
+        },
+        {
+          "line": 234,
+          "text": "pub fn load_latest(root: &Path, run: &Path, expect: &Expectation) -> Result<Committed> {"
+        },
+        {
+          "line": 261,
+          "text": "fn field_present(state: &Value, field: &str) -> bool {"
+        },
+        {
+          "line": 268,
+          "text": "pub fn verify_dir(root: &Path, dir: &Path, step: u64, expect: &Expectation) -> Result<Committed> {"
+        },
+        {
+          "line": 405,
+          "text": "fn verify_partition_state(state: &Value, step: u64, plan: &super::partition::Plan) -> Result<()> {"
+        },
+        {
+          "line": 434,
+          "text": "fn verify_complete("
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/training/continuation.rs",
+      "exists": true,
+      "bytes": 10647,
+      "sha256": "d8127bbdab9a268e72f0cdddb67212b8a0d5103f2df60368d3a8dea05374b4d8",
+      "symbols": [
+        {
+          "line": 41,
+          "text": "pub fn declared_lineage("
+        },
+        {
+          "line": 82,
+          "text": "pub struct Current<'a> {"
+        },
+        {
+          "line": 100,
+          "text": "pub fn check_parent("
+        },
+        {
+          "line": 120,
+          "text": "pub fn check_parent_partition("
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/policy_export.rs",
+      "exists": true,
+      "bytes": 73243,
+      "sha256": "ef70087b496f8d08afff03edc69369505d2527aad61eaf8d9fd3c7dde6001ba2",
+      "symbols": [
+        {
+          "line": 41,
+          "text": "pub struct ExportRequest {"
+        },
+        {
+          "line": 54,
+          "text": "struct Named {"
+        },
+        {
+          "line": 61,
+          "text": "struct Verified {"
+        },
+        {
+          "line": 76,
+          "text": "pub(crate) fn require_cpu_only(value: Option<&str>) -> Result<()> {"
+        },
+        {
+          "line": 84,
+          "text": "fn is_lower_sha256(value: &str) -> bool {"
+        },
+        {
+          "line": 91,
+          "text": "fn dtype_name(kind: Kind) -> Result<&'static str> {"
+        },
+        {
+          "line": 107,
+          "text": "fn raw_bytes(tensor: &Tensor) -> Result<Vec<u8>> {"
+        },
+        {
+          "line": 122,
+          "text": "fn load_tensors(path: &Path) -> Result<Vec<Named>> {"
+        },
+        {
+          "line": 147,
+          "text": "fn parameter_sha256(tensors: &[Named]) -> String {"
+        },
+        {
+          "line": 159,
+          "text": "fn require_policy_architecture(config: &Config, tensors: &[Named]) -> Result<()> {"
+        },
+        {
+          "line": 204,
+          "text": "fn load_checkpoint(dir: &Path, expect: Option<&str>) -> Result<Verified> {"
+        },
+        {
+          "line": 309,
+          "text": "fn f32_values(bytes: &[u8]) -> impl Iterator<Item = f32> + '_ {"
+        },
+        {
+          "line": 316,
+          "text": "fn ratio(change: f64, parent: f64) -> Value {"
+        },
+        {
+          "line": 326,
+          "text": "fn relative_change(parent: &Verified, child: &Verified) -> Result<Value> {"
+        },
+        {
+          "line": 386,
+          "text": "fn tensor_entries(tensors: &[Named]) -> Result<Vec<Value>> {"
+        },
+        {
+          "line": 406,
+          "text": "fn safetensors_header(data: &[u8]) -> Result<(usize, BTreeMap<String, Value>)> {"
+        },
+        {
+          "line": 422,
+          "text": "fn parse_safetensors(path: &Path) -> Result<BTreeMap<String, RawTensor>> {"
+        },
+        {
+          "line": 460,
+          "text": "fn absent(path: &Path) -> bool {"
+        },
+        {
+          "line": 466,
+          "text": "struct StillPublished {"
+        },
+        {
+          "line": 473,
+          "text": "fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {"
+        },
+        {
+          "line": 486,
+          "text": "fn unpublish(err: std::io::Error, what: String, published: &Path) -> anyhow::Error {"
+        },
+        {
+          "line": 500,
+          "text": "fn publish_no_replace(partial: &Path, target: &Path) -> Result<()> {"
+        },
+        {
+          "line": 522,
+          "text": "fn verify_round_trip(tensors: &[Named], path: &Path) -> Result<()> {"
+        },
+        {
+          "line": 569,
+          "text": "fn write_and_verify(tensors: &[Named], output: &Path) -> Result<Value> {"
+        },
+        {
+          "line": 629,
+          "text": "fn write_receipt(path: &Path, receipt: &Value) -> Result<String> {"
+        },
+        {
+          "line": 658,
+          "text": "fn runtime_section() -> Value {"
+        },
+        {
+          "line": 676,
+          "text": "pub fn export(request: &ExportRequest) -> Result<Value> {"
+        },
+        {
+          "line": 685,
+          "text": "fn nearest_existing(path: &Path) -> Result<&Path> {"
+        },
+        {
+          "line": 704,
+          "text": "fn weights_partial(output: &Path) -> Result<PathBuf> {"
+        },
+        {
+          "line": 715,
+          "text": "fn receipt_partial(path: &Path) -> PathBuf {"
+        },
+        {
+          "line": 722,
+          "text": "fn after_receipt_failure(err: anyhow::Error, receipt: &Path, weights: &Path) -> anyhow::Error {"
+        },
+        {
+          "line": 761,
+          "text": "fn require_durable_path(path: &Path) -> Result<()> {"
+        },
+        {
+          "line": 786,
+          "text": "fn export_on_cpu(request: &ExportRequest) -> Result<Value> {"
+        },
+        {
+          "line": 932,
+          "text": "fn tiny() -> Config {"
+        },
+        {
+          "line": 943,
+          "text": "fn scratch() -> tempfile::TempDir {"
+        },
+        {
+          "line": 953,
+          "text": "fn policy_store(config: &Config) -> nn::VarStore {"
+        },
+        {
+          "line": 960,
+          "text": "fn named(store: &nn::VarStore) -> Vec<(String, Tensor)> {"
+        },
+        {
+          "line": 966,
+          "text": "fn shallow(tensors: &[(String, Tensor)]) -> Vec<(String, Tensor)> {"
+        },
+        {
+          "line": 973,
+          "text": "fn tensor_of(tensors: &[(String, Tensor)], name: &str) -> Tensor {"
+        },
+        {
+          "line": 982,
+          "text": "fn replaced(tensors: &[(String, Tensor)], name: &str, tensor: Tensor) -> Vec<(String, Tensor)> {"
+        },
+        {
+          "line": 998,
+          "text": "fn archive_parameter_hash(tensors: &[(String, Tensor)]) -> String {"
+        },
+        {
+          "line": 1011,
+          "text": "fn write_state(dir: &Path, state: &Value) -> String {"
+        },
+        {
+          "line": 1020,
+          "text": "fn write_checkpoint("
+        },
+        {
+          "line": 1044,
+          "text": "fn request(checkpoint: &Path, output: &Path, receipt: &Path, expect: &str) -> ExportRequest {"
+        },
+        {
+          "line": 1054,
+          "text": "fn refused<T>(result: Result<T>, needle: &str) {"
+        },
+        {
+          "line": 1062,
+          "text": "fn assert_no_partials(dir: &Path) {"
+        },
+        {
+          "line": 1076,
+          "text": "fn export_is_bit_exact_and_binds_the_state() {"
+        },
+        {
+          "line": 1173,
+          "text": "fn export_refuses_identity_mismatch() {"
+        },
+        {
+          "line": 1244,
+          "text": "fn export_refuses_architecture_drift() {"
+        },
+        {
+          "line": 1311,
+          "text": "fn export_never_overwrites_or_leaves_partials() {"
+        },
+        {
+          "line": 1388,
+          "text": "fn export_removes_the_weights_when_the_receipt_cannot_be_written() {"
+        },
+        {
+          "line": 1433,
+          "text": "fn export_refuses_stale_temporaries_before_any_write() {"
+        },
+        {
+          "line": 1472,
+          "text": "fn export_refuses_a_dangling_symlink_at_the_receipt_or_policy_path() {"
+        },
+        {
+          "line": 1506,
+          "text": "fn export_refuses_a_receipt_that_aliases_the_policy_file_through_a_symlink() {"
+        },
+        {
+          "line": 1540,
+          "text": "fn export_refuses_tmp_through_parent_components_and_symlinks() {"
+        },
+        {
+          "line": 1587,
+          "text": "fn relative_change_per_tensor() {"
+        },
+        {
+          "line": 1716,
+          "text": "fn anchor_step_60000_reproduces_the_accepted_export() {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-policy/src/config.rs",
+      "exists": true,
+      "bytes": 31142,
+      "sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
+      "symbols": [
+        {
+          "line": 21,
+          "text": "pub struct PolicyConfig {"
+        },
+        {
+          "line": 39,
+          "text": "pub fn regression(vocab_size: usize) -> Self {"
+        },
+        {
+          "line": 58,
+          "text": "pub fn from_json(bytes: &[u8]) -> Result<Self> {"
+        },
+        {
+          "line": 65,
+          "text": "pub fn validate(&self) -> Result<()> {"
+        },
+        {
+          "line": 94,
+          "text": "pub fn sha256(&self) -> Result<String> {"
+        },
+        {
+          "line": 101,
+          "text": "pub fn context_len(&self) -> usize {"
+        },
+        {
+          "line": 109,
+          "text": "pub struct TensorEntry {"
+        },
+        {
+          "line": 133,
+          "text": "pub struct ChallengerIdentity {"
+        },
+        {
+          "line": 147,
+          "text": "pub fn validate(&self) -> Result<()> {"
+        },
+        {
+          "line": 178,
+          "text": "pub struct CheckpointBinding {"
+        },
+        {
+          "line": 192,
+          "text": "fn text<'a>(value: &'a Value, path: &[&str]) -> Result<&'a str> {"
+        },
+        {
+          "line": 203,
+          "text": "fn digest(value: &Value, path: &[&str]) -> Result<String> {"
+        },
+        {
+          "line": 382,
+          "text": "fn refuse_unpinned_fields(value: &Value, path: &str, pinned: FieldSet, kind: &str) -> Result<()> {"
+        },
+        {
+          "line": 428,
+          "text": "pub struct DerivedReexport {"
+        },
+        {
+          "line": 441,
+          "text": "pub fn from_receipt_bytes(bytes: &[u8]) -> Result<Self> {"
+        },
+        {
+          "line": 448,
+          "text": "pub fn from_challenger_receipt_bytes("
+        },
+        {
+          "line": 457,
+          "text": "pub fn for_proposal(bytes: &[u8], challenger: Option<&ChallengerIdentity>) -> Result<Self> {"
+        },
+        {
+          "line": 468,
+          "text": "fn parse(bytes: &[u8], challenger: Option<&ChallengerIdentity>) -> Result<Self> {"
+        },
+        {
+          "line": 584,
+          "text": "pub fn require_challenger_identity(&self, identity: &ChallengerIdentity) -> Result<()> {"
+        },
+        {
+          "line": 620,
+          "text": "pub fn receipt_sha256(&self) -> &str {"
+        },
+        {
+          "line": 624,
+          "text": "pub fn step(&self) -> u64 {"
+        },
+        {
+          "line": 629,
+          "text": "pub fn state_sha256(&self) -> &str {"
+        },
+        {
+          "line": 633,
+          "text": "pub fn model_sha256(&self) -> &str {"
+        },
+        {
+          "line": 637,
+          "text": "pub fn config_sha256(&self) -> &str {"
+        },
+        {
+          "line": 642,
+          "text": "pub fn parameter_sha256(&self) -> &str {"
+        },
+        {
+          "line": 646,
+          "text": "pub fn vocabulary_sha256(&self) -> &str {"
+        },
+        {
+          "line": 650,
+          "text": "pub fn corpus_sha256(&self) -> &str {"
+        },
+        {
+          "line": 654,
+          "text": "pub fn policy_safetensors_sha256(&self) -> &str {"
+        },
+        {
+          "line": 658,
+          "text": "pub fn config(&self) -> &PolicyConfig {"
+        },
+        {
+          "line": 665,
+          "text": "pub fn require_accepted_identity(&self) -> Result<()> {"
+        },
+        {
+          "line": 723,
+          "text": "pub fn tensors(&self) -> &[TensorEntry] {"
+        },
+        {
+          "line": 734,
+          "text": "pub fn derived_reexport(&self, bytes: &[u8]) -> Result<DerivedReexport> {"
+        },
+        {
+          "line": 777,
+          "text": "pub fn unbound_for_testing(config: PolicyConfig, vocabulary_sha256: &str) -> Self {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-engine/src/task_contract.rs",
+      "exists": true,
+      "bytes": 25921,
+      "sha256": "3db950b577c53838b32b53d2736bdd82beb715657508ba39aa1100c6196a7a5d",
+      "symbols": [
+        {
+          "line": 12,
+          "text": "pub struct CommonTaskDescriptor {"
+        },
+        {
+          "line": 27,
+          "text": "pub enum ContinuationMode {"
+        },
+        {
+          "line": 35,
+          "text": "pub fn as_str(self) -> &'static str {"
+        },
+        {
+          "line": 44,
+          "text": "pub fn parse(text: &str) -> Result<Self> {"
+        },
+        {
+          "line": 57,
+          "text": "pub fn classify_continuation("
+        },
+        {
+          "line": 87,
+          "text": "pub fn training_partition(world: usize, micro: usize, global: usize) -> Result<Value> {"
+        },
+        {
+          "line": 122,
+          "text": "pub struct PartitionShard {"
+        },
+        {
+          "line": 133,
+          "text": "pub fn microbatch_first_group(&self, mb: usize) -> usize {"
+        },
+        {
+          "line": 140,
+          "text": "pub fn assign_partition("
+        },
+        {
+          "line": 176,
+          "text": "pub fn training_partition_v2(world: usize, micro: usize, global: usize) -> Result<Value> {"
+        },
+        {
+          "line": 214,
+          "text": "pub fn training_partition_of("
+        },
+        {
+          "line": 229,
+          "text": "pub fn recompute_partition(record: &Value) -> Result<Value> {"
+        },
+        {
+          "line": 247,
+          "text": "pub fn partition_rows_per_rank(record: &Value) -> Result<Vec<usize>> {"
+        },
+        {
+          "line": 269,
+          "text": "pub fn verify_resume_metadata(state: &Value, expected: &Value, optimizer: &Value) -> Result<()> {"
+        },
+        {
+          "line": 289,
+          "text": "pub fn gpu_task_deadline_ms() -> Result<u64> {"
+        },
+        {
+          "line": 307,
+          "text": "pub fn require_qualified_gpu_experiment(route: &str) -> Result<()> {"
+        },
+        {
+          "line": 313,
+          "text": "pub fn require_original_gpu_grant(route: &str) -> Result<()> {"
+        },
+        {
+          "line": 327,
+          "text": "pub fn verify_gpu_task_grant("
+        },
+        {
+          "line": 346,
+          "text": "pub fn verify_resident_funding_demand("
+        },
+        {
+          "line": 384,
+          "text": "pub fn supported_task(task: &str) -> bool {"
+        },
+        {
+          "line": 388,
+          "text": "pub fn require_task(task: &str) -> Result<()> {"
+        },
+        {
+          "line": 398,
+          "text": "pub fn primary_metric(task: &str) -> Result<&'static str> {"
+        },
+        {
+          "line": 408,
+          "text": "pub fn metric_units(task: &str) -> Result<&'static str> {"
+        },
+        {
+          "line": 417,
+          "text": "pub fn cut_units(task: &str) -> Result<&'static str> {"
+        },
+        {
+          "line": 426,
+          "text": "pub fn observation_primary(metrics: &Value) -> Result<f64> {"
+        },
+        {
+          "line": 472,
+          "text": "pub fn score_predictions("
+        },
+        {
+          "line": 543,
+          "text": "fn multiclass_logloss(actual: &[f64], predicted: &[f64]) -> f64 {"
+        },
+        {
+          "line": 572,
+          "text": "fn multiclass_accuracy(actual: &[f64], predicted: &[f64]) -> f64 {"
+        },
+        {
+          "line": 584,
+          "text": "fn native_world_and_kind_cannot_outgrow_signed_funding() {"
+        },
+        {
+          "line": 627,
+          "text": "fn experiment_metadata_cannot_grant_missing_native_gpu_qualification() {"
+        },
+        {
+          "line": 634,
+          "text": "fn exact_training_partition_binds_microbatch_and_accumulation() {"
+        },
+        {
+          "line": 644,
+          "text": "fn regression_primary_is_rmse_and_zero_is_legal() {"
+        },
+        {
+          "line": 652,
+          "text": "fn binary_execution_is_not_qualified() {"
+        },
+        {
+          "line": 657,
+          "text": "fn timeseries_execution_is_not_qualified() {"
+        },
+        {
+          "line": 663,
+          "text": "fn unsupported_task_is_rejected() {"
+        },
+        {
+          "line": 668,
+          "text": "fn resume_partition_and_optimizer_step_reject_before_any_runtime_is_needed() {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/clover/round_qual.rs",
+      "exists": true,
+      "bytes": 95113,
+      "sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5",
+      "symbols": [
+        {
+          "line": 97,
+          "text": "fn default_alpha() -> f64 {"
+        },
+        {
+          "line": 103,
+          "text": "fn is_placeholder_sentinel(s: &str) -> bool {"
+        },
+        {
+          "line": 112,
+          "text": "fn value_contains_placeholder_sentinel(v: &Value) -> Option<String> {"
+        },
+        {
+          "line": 124,
+          "text": "struct StrictJsonValue(Value);"
+        },
+        {
+          "line": 127,
+          "text": "fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {"
+        },
+        {
+          "line": 128,
+          "text": "struct StrictValueVisitor;"
+        },
+        {
+          "line": 133,
+          "text": "fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {"
+        },
+        {
+          "line": 137,
+          "text": "fn visit_bool<E>(self, v: bool) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 141,
+          "text": "fn visit_i64<E>(self, v: i64) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 145,
+          "text": "fn visit_u64<E>(self, v: u64) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 149,
+          "text": "fn visit_f64<E: de::Error>(self, v: f64) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 155,
+          "text": "fn visit_str<E>(self, v: &str) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 159,
+          "text": "fn visit_string<E>(self, v: String) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 163,
+          "text": "fn visit_none<E>(self) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 167,
+          "text": "fn visit_unit<E>(self) -> std::result::Result<Self::Value, E> {"
+        },
+        {
+          "line": 171,
+          "text": "fn visit_some<D: Deserializer<'de>>("
+        },
+        {
+          "line": 178,
+          "text": "fn visit_seq<A: SeqAccess<'de>>("
+        },
+        {
+          "line": 189,
+          "text": "fn visit_map<M: MapAccess<'de>>("
+        },
+        {
+          "line": 210,
+          "text": "pub fn parse_strict_json_value(bytes: &[u8], what: &str) -> Result<Value> {"
+        },
+        {
+          "line": 221,
+          "text": "pub enum UnpinnedOr<T> {"
+        },
+        {
+          "line": 227,
+          "text": "pub fn is_unpinned(&self) -> bool {"
+        },
+        {
+          "line": 231,
+          "text": "pub fn as_pinned(&self) -> Option<&T> {"
+        },
+        {
+          "line": 240,
+          "text": "fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {"
+        },
+        {
+          "line": 249,
+          "text": "fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {"
+        },
+        {
+          "line": 267,
+          "text": "pub struct PreregEndpoints {"
+        },
+        {
+          "line": 280,
+          "text": "pub struct PreregRosterAndFamilies {"
+        },
+        {
+          "line": 290,
+          "text": "pub struct PreregSampleSizeAndMargin {"
+        },
+        {
+          "line": 301,
+          "text": "pub struct PreregKlGuard {"
+        },
+        {
+          "line": 310,
+          "text": "pub struct PreregArmsAndRounds {"
+        },
+        {
+          "line": 321,
+          "text": "pub struct PreregSequentialLooks {"
+        },
+        {
+          "line": 330,
+          "text": "pub struct PreregHeldOutAndParityRules {"
+        },
+        {
+          "line": 341,
+          "text": "pub struct PreregExecutionGrant {"
+        },
+        {
+          "line": 354,
+          "text": "pub struct SelfPlayPrereg {"
+        },
+        {
+          "line": 372,
+          "text": "pub fn has_unpinned_fields(&self) -> bool {"
+        },
+        {
+          "line": 409,
+          "text": "pub enum SourceGrade {"
+        },
+        {
+          "line": 421,
+          "text": "pub enum Endpoint {"
+        },
+        {
+          "line": 432,
+          "text": "pub struct RoundQualPlan {"
+        },
+        {
+          "line": 466,
+          "text": "pub struct QualTestScore {"
+        },
+        {
+          "line": 488,
+          "text": "pub struct ParityRecord {"
+        },
+        {
+          "line": 497,
+          "text": "pub struct RoundQualInputs<'a> {"
+        },
+        {
+          "line": 509,
+          "text": "pub struct ContextQualRow {"
+        },
+        {
+          "line": 537,
+          "text": "pub struct RoundQualReport {"
+        },
+        {
+          "line": 591,
+          "text": "pub fn canonical_sha256(&self) -> Result<String> {"
+        },
+        {
+          "line": 599,
+          "text": "pub fn parse_parent_map(bytes: &[u8]) -> Result<BTreeMap<String, String>> {"
+        },
+        {
+          "line": 604,
+          "text": "struct NoDupMapVisitor;"
+        },
+        {
+          "line": 608,
+          "text": "fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {"
+        },
+        {
+          "line": 614,
+          "text": "fn visit_map<M>(self, mut access: M) -> std::result::Result<Self::Value, M::Error>"
+        },
+        {
+          "line": 675,
+          "text": "fn validate_plan_and_identity("
+        },
+        {
+          "line": 730,
+          "text": "fn validate_and_bind_prereg("
+        },
+        {
+          "line": 1064,
+          "text": "fn ensure_prereg_round_provenance("
+        },
+        {
+          "line": 1178,
+          "text": "fn find_unique_test_score<'a>("
+        },
+        {
+          "line": 1205,
+          "text": "fn find_unique_parity<'a>("
+        },
+        {
+          "line": 1230,
+          "text": "fn ensure_valid_round_structure(context_id: &str, round_idx: usize, round: &Value) -> Result<()> {"
+        },
+        {
+          "line": 1285,
+          "text": "fn evaluate_round_kl_guard("
+        },
+        {
+          "line": 1359,
+          "text": "pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {"
+        },
+        {
+          "line": 1365,
+          "text": "pub fn qualify_rounds_with_prereg("
+        },
+        {
+          "line": 2074,
+          "text": "fn sample_identity() -> ExperimentIdentity {"
+        },
+        {
+          "line": 2110,
+          "text": "fn sample_plan(identity: &ExperimentIdentity) -> RoundQualPlan {"
+        },
+        {
+          "line": 2129,
+          "text": "fn sample_decomposed_kl(admissible: bool) -> Value {"
+        },
+        {
+          "line": 2151,
+          "text": "fn sample_ratchet_output("
+        },
+        {
+          "line": 2204,
+          "text": "fn sample_test_score("
+        },
+        {
+          "line": 2237,
+          "text": "fn clean_synthetic_fixture_passes_caller_asserted_diagnostics_only() {"
+        },
+        {
+          "line": 2308,
+          "text": "fn f10_tie_tolerance_and_extreme_positive_rmse_log_difference() {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/promotion.rs",
+      "exists": true,
+      "bytes": 26946,
+      "sha256": "7cbe6443d01a5ca28608bfd729da7031ba69b7737c642f0fdc9e902376ca47f3",
+      "symbols": [
+        {
+          "line": 54,
+          "text": "pub struct Metric {"
+        },
+        {
+          "line": 61,
+          "text": "pub struct Contender {"
+        },
+        {
+          "line": 68,
+          "text": "pub struct Look {"
+        },
+        {
+          "line": 75,
+          "text": "pub struct Bootstrap {"
+        },
+        {
+          "line": 84,
+          "text": "pub struct Safety {"
+        },
+        {
+          "line": 93,
+          "text": "pub struct ArenaManifest {"
+        },
+        {
+          "line": 119,
+          "text": "pub enum Selection {"
+        },
+        {
+          "line": 129,
+          "text": "pub struct ContextRow {"
+        },
+        {
+          "line": 144,
+          "text": "pub struct PriorLook {"
+        },
+        {
+          "line": 151,
+          "text": "pub struct Cost {"
+        },
+        {
+          "line": 159,
+          "text": "pub struct SafetyResult {"
+        },
+        {
+          "line": 167,
+          "text": "pub struct ArenaResults {"
+        },
+        {
+          "line": 181,
+          "text": "pub enum Verdict {"
+        },
+        {
+          "line": 197,
+          "text": "pub fn stops(self) -> bool {"
+        },
+        {
+          "line": 203,
+          "text": "fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {"
+        },
+        {
+          "line": 216,
+          "text": "pub struct ChampionReport {"
+        },
+        {
+          "line": 264,
+          "text": "fn finite(name: &str, value: f64) -> Result<f64, String> {"
+        },
+        {
+          "line": 272,
+          "text": "fn validate_manifest(manifest: &ArenaManifest) -> Result<(), String> {"
+        },
+        {
+          "line": 392,
+          "text": "struct SplitMix64(u64);"
+        },
+        {
+          "line": 395,
+          "text": "fn next(&mut self) -> u64 {"
+        },
+        {
+          "line": 404,
+          "text": "fn below(&mut self, n: u64) -> u64 {"
+        },
+        {
+          "line": 416,
+          "text": "fn mean(values: &[f64]) -> f64 {"
+        },
+        {
+          "line": 420,
+          "text": "fn median(sorted: &[f64]) -> f64 {"
+        },
+        {
+          "line": 435,
+          "text": "fn quantile(sorted: &[f64], p: f64) -> f64 {"
+        },
+        {
+          "line": 441,
+          "text": "fn bootstrap_bounds(effects: &[f64], bootstrap: Bootstrap, alpha: f64) -> (f64, f64) {"
+        },
+        {
+          "line": 465,
+          "text": "pub fn decide(manifest_bytes: &[u8], results_bytes: &[u8]) -> Result<ChampionReport, String> {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/roster.rs",
+      "exists": true,
+      "bytes": 11691,
+      "sha256": "755c9c01e08ffaa918c55c6a600d39fc0a8c16c5c58b4d69d517c9bb8684b773",
+      "symbols": [
+        {
+          "line": 43,
+          "text": "struct Proposal {"
+        },
+        {
+          "line": 61,
+          "text": "struct FamilyRecord {"
+        },
+        {
+          "line": 73,
+          "text": "struct Proof {"
+        },
+        {
+          "line": 80,
+          "text": "struct Sources {"
+        },
+        {
+          "line": 85,
+          "text": "struct Closure {"
+        },
+        {
+          "line": 92,
+          "text": "pub struct RosterReport {"
+        },
+        {
+          "line": 110,
+          "text": "pub fn adoptable(&self) -> bool {"
+        },
+        {
+          "line": 116,
+          "text": "pub fn reasons(&self) -> Vec<String> {"
+        },
+        {
+          "line": 126,
+          "text": "fn named(ids: &BTreeSet<&str>) -> String {"
+        },
+        {
+          "line": 144,
+          "text": "pub fn check(proposal: &[u8]) -> Result<RosterReport, String> {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/qualify/gate.rs",
+      "exists": true,
+      "bytes": 2017,
+      "sha256": "3c109333a27ff4f85c757f55cffbcdc057bcad2c61312d1fd636ed8912b05308",
+      "symbols": [
+        {
+          "line": 19,
+          "text": "pub enum Gate {"
+        },
+        {
+          "line": 32,
+          "text": "pub fn from_value(value: Option<&OsStr>) -> Self {"
+        },
+        {
+          "line": 43,
+          "text": "pub fn from_env() -> Self {"
+        },
+        {
+          "line": 49,
+          "text": "pub fn is_on(&self) -> bool {"
+        },
+        {
+          "line": 55,
+          "text": "fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-pipeline/src/search.rs",
+      "exists": true,
+      "bytes": 79309,
+      "sha256": "5b966dc4b14cc2ff3b776b1874909778fba0348671358236f9b3f110526976d6",
+      "symbols": [
+        {
+          "line": 146,
+          "text": "pub struct SearchOptions {"
+        },
+        {
+          "line": 180,
+          "text": "pub fn new(budget: Budget, rng_seed: u64) -> Self {"
+        },
+        {
+          "line": 194,
+          "text": "pub fn workers(&self) -> usize {"
+        },
+        {
+          "line": 198,
+          "text": "pub fn cancelled(&self) -> bool {"
+        },
+        {
+          "line": 204,
+          "text": "fn check_cancelled(&self) -> Result<()> {"
+        },
+        {
+          "line": 221,
+          "text": "pub fn seconds_exempt(generation: usize, origin: &str) -> bool {"
+        },
+        {
+          "line": 227,
+          "text": "pub fn exploration_limit(budget: Budget, cuts: usize) -> usize {"
+        },
+        {
+          "line": 236,
+          "text": "pub struct Budget {"
+        },
+        {
+          "line": 242,
+          "text": "fn default() -> Self {"
+        },
+        {
+          "line": 252,
+          "text": "pub fn parse(value: &str) -> Result<Budget> {"
+        },
+        {
+          "line": 278,
+          "text": "pub fn check(&self) -> Result<()> {"
+        },
+        {
+          "line": 298,
+          "text": "pub struct Observation {"
+        },
+        {
+          "line": 326,
+          "text": "pub fn measured(&self) -> bool {"
+        },
+        {
+          "line": 334,
+          "text": "pub struct ObservationRecord {"
+        },
+        {
+          "line": 357,
+          "text": "pub fn into_observation(self) -> Result<Observation> {"
+        },
+        {
+          "line": 397,
+          "text": "pub struct CutSearch {"
+        },
+        {
+          "line": 440,
+          "text": "struct Island {"
+        },
+        {
+          "line": 449,
+          "text": "fn migrate("
+        },
+        {
+          "line": 493,
+          "text": "pub(crate) fn stream(rng_seed: u64, cut: usize, generation: usize, slot: usize, salt: u64) -> u64 {"
+        },
+        {
+          "line": 507,
+          "text": "pub(crate) fn evaluate("
+        },
+        {
+          "line": 600,
+          "text": "fn offspring("
+        },
+        {
+          "line": 655,
+          "text": "pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Result<CutSearch> {"
+        },
+        {
+          "line": 670,
+          "text": "pub fn run_cuts("
+        },
+        {
+          "line": 695,
+          "text": "pub fn run_cuts_with("
+        },
+        {
+          "line": 725,
+          "text": "fn evaluate_admitted("
+        },
+        {
+          "line": 762,
+          "text": "fn run_cut_allocated("
+        },
+        {
+          "line": 1004,
+          "text": "pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<()> {"
+        },
+        {
+          "line": 1020,
+          "text": "fn remeasure_in("
+        },
+        {
+          "line": 1055,
+          "text": "fn remeasure_with("
+        },
+        {
+          "line": 1078,
+          "text": "fn open_comparison(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<Option<Vec<String>>> {"
+        },
+        {
+          "line": 1142,
+          "text": "fn remeasure_cut("
+        },
+        {
+          "line": 1182,
+          "text": "fn close_comparison(searches: &mut [CutSearch]) -> Result<()> {"
+        },
+        {
+          "line": 1212,
+          "text": "fn publish_cut_search(search: &mut CutSearch) -> Result<()> {"
+        },
+        {
+          "line": 1246,
+          "text": "fn linear_rows(n: usize) -> Vec<Vec<f64>> {"
+        },
+        {
+          "line": 1255,
+          "text": "fn one_cut(temp: &Path, dataset: &str) -> prepare::Cut {"
+        },
+        {
+          "line": 1263,
+          "text": "fn budgets_parse_and_are_bounded() {"
+        },
+        {
+          "line": 1287,
+          "text": "fn the_search_measures_and_records_per_candidate_evidence() {"
+        },
+        {
+          "line": 1328,
+          "text": "fn the_bootstrap_genome_is_always_measured_first() {"
+        },
+        {
+          "line": 1349,
+          "text": "fn comparison_stays_within_total_budget_and_keeps_a_common_pool() {"
+        },
+        {
+          "line": 1404,
+          "text": "fn comparison_fixture(temp: &Path, reserve: bool) -> (Vec<Cut>, Vec<CutSearch>) {"
+        },
+        {
+          "line": 1437,
+          "text": "fn comparison_never_admits_a_fit_after_the_total_evaluation_limit() {"
+        },
+        {
+          "line": 1450,
+          "text": "fn comparison_never_admits_a_fit_after_the_total_seconds_limit() {"
+        },
+        {
+          "line": 1470,
+          "text": "fn a_nonpreemptible_overrun_prevents_the_next_fit() {"
+        },
+        {
+          "line": 1488,
+          "text": "fn comparison_failures_spend_budget_and_are_not_retried() {"
+        },
+        {
+          "line": 1530,
+          "text": "fn a_one_evaluation_budget_has_explicit_bootstrap_only_coverage() {"
+        },
+        {
+          "line": 1561,
+          "text": "fn the_evaluation_bound_stops_the_search_and_is_recorded() {"
+        },
+        {
+          "line": 1579,
+          "text": "fn the_seconds_bound_stops_the_search_and_is_recorded() {"
+        },
+        {
+          "line": 1604,
+          "text": "fn the_same_seed_replays_the_same_search() {"
+        },
+        {
+          "line": 1639,
+          "text": "fn published(searches: &[CutSearch]) -> Vec<(usize, Vec<u8>, Vec<u8>)> {"
+        },
+        {
+          "line": 1656,
+          "text": "fn eight_threads_publish_exactly_what_one_thread_publishes() {"
+        },
+        {
+          "line": 1691,
+          "text": "fn island_options(islands: usize, threads: usize, rng_seed: u64) -> SearchOptions {"
+        },
+        {
+          "line": 1711,
+          "text": "fn islands_migrate_record_and_replay_on_any_worker_count() {"
+        },
+        {
+          "line": 1764,
+          "text": "fn one_island_is_the_plain_search() {"
+        },
+        {
+          "line": 1798,
+          "text": "fn a_migrant_enters_only_an_island_it_improves() {"
+        },
+        {
+          "line": 1843,
+          "text": "fn thread_count_changes_no_decision_when_the_evaluation_budget_binds() {"
+        },
+        {
+          "line": 1890,
+          "text": "fn seeds_are_remeasured_on_every_cut_even_past_the_seconds_bound() {"
+        },
+        {
+          "line": 1954,
+          "text": "fn a_different_seed_searches_a_different_population() {"
+        },
+        {
+          "line": 1973,
+          "text": "fn no_candidate_is_fitted_twice_on_one_cut() {"
+        },
+        {
+          "line": 2001,
+          "text": "fn an_empty_parent_set_draws_a_fresh_candidate_instead_of_panicking() {"
+        },
+        {
+          "line": 2010,
+          "text": "fn a_single_parent_still_produces_a_child() {"
+        },
+        {
+          "line": 2027,
+          "text": "fn a_search_that_measures_nothing_fails_loudly_instead_of_falling_back() {"
+        },
+        {
+          "line": 2061,
+          "text": "fn a_republished_search_is_refused_rather_than_overwritten() {"
+        }
+      ]
+    },
+    {
+      "path": "crates/feat-math/src/kernel/profile.rs",
+      "exists": true,
+      "bytes": 29424,
+      "sha256": "b6da43c9990e80fde3f4dea5f00c662379b53e201aeb72e64faffa5db911f756",
+      "symbols": [
+        {
+          "line": 10,
+          "text": "pub enum ElementKind {"
+        },
+        {
+          "line": 21,
+          "text": "pub struct ProfileElement {"
+        },
+        {
+          "line": 28,
+          "text": "pub enum TextChoice {"
+        },
+        {
+          "line": 35,
+          "text": "pub enum ParamDomain {"
+        },
+        {
+          "line": 57,
+          "text": "pub enum Limit {"
+        },
+        {
+          "line": 64,
+          "text": "pub enum CountRule {"
+        },
+        {
+          "line": 69,
+          "text": "pub struct MaxTransforms {"
+        },
+        {
+          "line": 75,
+          "text": "pub struct ExprStages {"
+        },
+        {
+          "line": 82,
+          "text": "pub enum Negation {"
+        },
+        {
+          "line": 87,
+          "text": "pub struct ExprPool {"
+        },
+        {
+          "line": 104,
+          "text": "pub enum ExpressionArm {"
+        },
+        {
+          "line": 127,
+          "text": "pub struct ExpressionArmWeight {"
+        },
+        {
+          "line": 134,
+          "text": "pub enum Arm {"
+        },
+        {
+          "line": 144,
+          "text": "pub struct ArmWeight {"
+        },
+        {
+          "line": 152,
+          "text": "pub enum PipelineArm {"
+        },
+        {
+          "line": 167,
+          "text": "fn from(arm: Arm) -> Self {"
+        },
+        {
+          "line": 180,
+          "text": "pub struct PipelineArmWeight {"
+        },
+        {
+          "line": 186,
+          "text": "pub struct PipelineOperators {"
+        },
+        {
+          "line": 198,
+          "text": "pub enum JitterVersion {"
+        },
+        {
+          "line": 205,
+          "text": "pub enum SimplifyFallback {"
+        },
+        {
+          "line": 211,
+          "text": "pub struct EditSpec {"
+        },
+        {
+          "line": 225,
+          "text": "pub enum SpliceKind {"
+        },
+        {
+          "line": 230,
+          "text": "pub struct SpliceSpec {"
+        },
+        {
+          "line": 238,
+          "text": "pub struct SearchProfile {"
+        },
+        {
+          "line": 263,
+          "text": "pub fn canonical_json(&self) -> String {"
+        },
+        {
+          "line": 266,
+          "text": "pub fn sha256(&self) -> String {"
+        },
+        {
+          "line": 276,
+          "text": "pub fn elements(&self) -> Vec<ProfileElement> {"
+        },
+        {
+          "line": 354,
+          "text": "fn int_range(lo: i64, hi: i64) -> ParamDomain {"
+        },
+        {
+          "line": 357,
+          "text": "fn float_range(lo: f64, hi: f64) -> ParamDomain {"
+        },
+        {
+          "line": 360,
+          "text": "fn ints(values: &[i64]) -> ParamDomain {"
+        },
+        {
+          "line": 363,
+          "text": "fn floats(values: &[f64]) -> ParamDomain {"
+        },
+        {
+          "line": 366,
+          "text": "fn flag() -> ParamDomain {"
+        },
+        {
+          "line": 372,
+          "text": "fn row(entries: &[(&'static str, ParamDomain)]) -> DomainRow {"
+        },
+        {
+          "line": 375,
+          "text": "fn put("
+        },
+        {
+          "line": 388,
+          "text": "fn common_domains() -> BTreeMap<&'static str, DomainRow> {"
+        },
+        {
+          "line": 509,
+          "text": "fn expansion_domains() -> BTreeMap<&'static str, DomainRow> {"
+        },
+        {
+          "line": 554,
+          "text": "fn redraw_domains(v2: bool) -> BTreeMap<&'static str, DomainRow> {"
+        },
+        {
+          "line": 594,
+          "text": "fn arms(v2: bool) -> Vec<ArmWeight> {"
+        },
+        {
+          "line": 625,
+          "text": "fn edits(v2: bool, kernel2: bool) -> EditSpec {"
+        },
+        {
+          "line": 648,
+          "text": "fn splice() -> SpliceSpec {"
+        },
+        {
+          "line": 657,
+          "text": "fn legacy(v2: bool) -> SearchProfile {"
+        },
+        {
+          "line": 692,
+          "text": "fn kernel2(id: &'static str) -> SearchProfile {"
+        },
+        {
+          "line": 714,
+          "text": "fn expression_operators(id: &'static str) -> SearchProfile {"
+        },
+        {
+          "line": 727,
+          "text": "pub fn profiles() -> Vec<SearchProfile> {"
+        },
+        {
+          "line": 740,
+          "text": "pub fn profile(id: &str, revision: u32) -> Option<SearchProfile> {"
+        },
+        {
+          "line": 748,
+          "text": "pub fn shipped_kernel2_profiles() -> Vec<SearchProfile> {"
+        },
+        {
+          "line": 755,
+          "text": "fn pipeline_operators(id: &'static str) -> SearchProfile {"
+        },
+        {
+          "line": 778,
+          "text": "pub fn render_profiles() -> String {"
+        },
+        {
+          "line": 800,
+          "text": "fn revision_one_profiles_are_finite_and_distinct() {"
+        },
+        {
+          "line": 836,
+          "text": "fn has_null(value: &serde_json::Value) -> bool {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/retention/distilled.rs",
+      "exists": true,
+      "bytes": 30493,
+      "sha256": "6db7a7d78db01f42ae2e34166c087bbaf4375b871fe531628e7e5b36dac86080",
+      "symbols": [
+        {
+          "line": 20,
+          "text": "pub enum SplitRole {"
+        },
+        {
+          "line": 30,
+          "text": "pub fn as_str(self) -> &'static str {"
+        },
+        {
+          "line": 40,
+          "text": "pub fn parse(s: &str) -> Result<SplitRole> {"
+        },
+        {
+          "line": 54,
+          "text": "pub enum Outcome {"
+        },
+        {
+          "line": 62,
+          "text": "pub fn as_str(self) -> &'static str {"
+        },
+        {
+          "line": 70,
+          "text": "fn parse(s: &str) -> Result<Outcome> {"
+        },
+        {
+          "line": 82,
+          "text": "pub struct DistilledRow {"
+        },
+        {
+          "line": 111,
+          "text": "pub fn columns() -> Vec<ColumnSpec> {"
+        },
+        {
+          "line": 147,
+          "text": "fn is_hex64(s: &str) -> bool {"
+        },
+        {
+          "line": 152,
+          "text": "pub fn validate(r: &DistilledRow, known_scores: &BTreeSet<String>) -> Result<()> {"
+        },
+        {
+          "line": 214,
+          "text": "fn s(v: &Option<String>) -> Cell {"
+        },
+        {
+          "line": 217,
+          "text": "fn i(v: Option<i64>) -> Cell {"
+        },
+        {
+          "line": 220,
+          "text": "fn f(v: Option<f64>) -> Cell {"
+        },
+        {
+          "line": 224,
+          "text": "fn to_cells(r: &DistilledRow) -> Vec<Cell> {"
+        },
+        {
+          "line": 254,
+          "text": "fn sort_key(r: &DistilledRow) -> (String, String, i64, String, String) {"
+        },
+        {
+          "line": 266,
+          "text": "pub fn write("
+        },
+        {
+          "line": 296,
+          "text": "fn cell_str(c: &Cell, col: &str) -> Result<Option<String>> {"
+        },
+        {
+          "line": 305,
+          "text": "pub fn read(bytes: &[u8], known_scores: &BTreeSet<String>) -> Result<Vec<DistilledRow>> {"
+        },
+        {
+          "line": 384,
+          "text": "pub fn reconcile(rows: &[DistilledRow], raw_keys: &BTreeSet<String>) -> Result<()> {"
+        },
+        {
+          "line": 397,
+          "text": "pub enum ScoreDirection {"
+        },
+        {
+          "line": 407,
+          "text": "pub fn score_direction(score_name: &str) -> Result<ScoreDirection> {"
+        },
+        {
+          "line": 419,
+          "text": "pub struct SelfPlayDistillObservation {"
+        },
+        {
+          "line": 435,
+          "text": "pub struct SelfPlayDistillSpec {"
+        },
+        {
+          "line": 453,
+          "text": "pub fn distill_selfplay_observations("
+        },
+        {
+          "line": 550,
+          "text": "fn program_expr_tokens(expr: &str) -> Vec<u32> {"
+        },
+        {
+          "line": 575,
+          "text": "pub fn distilled_rows_to_measurement_rows("
+        },
+        {
+          "line": 675,
+          "text": "pub struct GpIndexDistillStats {"
+        },
+        {
+          "line": 686,
+          "text": "pub fn distill_gp_results_index("
+        },
+        {
+          "line": 699,
+          "text": "pub fn distill_gp_results_index_with_stats("
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/progress/outbox.rs",
+      "exists": true,
+      "bytes": 31751,
+      "sha256": "21526e350ceb518fc775e4c1c96cf3e3171e22a872d900ec8da89671a9ff6649",
+      "symbols": [
+        {
+          "line": 76,
+          "text": "pub struct Limits {"
+        },
+        {
+          "line": 95,
+          "text": "pub fn check(&self) -> Result<()> {"
+        },
+        {
+          "line": 110,
+          "text": "pub enum Refused {"
+        },
+        {
+          "line": 134,
+          "text": "pub enum Admission {"
+        },
+        {
+          "line": 145,
+          "text": "pub struct Record {"
+        },
+        {
+          "line": 158,
+          "text": "pub enum Outcome {"
+        },
+        {
+          "line": 168,
+          "text": "pub struct Ack {"
+        },
+        {
+          "line": 179,
+          "text": "pub enum Appended {"
+        },
+        {
+          "line": 190,
+          "text": "pub fn seq(self) -> u64 {"
+        },
+        {
+          "line": 199,
+          "text": "pub struct Recovery {"
+        },
+        {
+          "line": 211,
+          "text": "pub struct Pending {"
+        },
+        {
+          "line": 218,
+          "text": "pub struct DeliveryFailure {"
+        },
+        {
+          "line": 225,
+          "text": "pub struct Delivery {"
+        },
+        {
+          "line": 239,
+          "text": "pub(crate) enum Boundary {"
+        },
+        {
+          "line": 251,
+          "text": "struct Entry {"
+        },
+        {
+          "line": 258,
+          "text": "pub struct Outbox {"
+        },
+        {
+          "line": 272,
+          "text": "fn seq_name(seq: u64) -> String {"
+        },
+        {
+          "line": 276,
+          "text": "fn parse_seq_name(name: &str) -> Option<u64> {"
+        },
+        {
+          "line": 284,
+          "text": "fn is_temporary(name: &str) -> bool {"
+        },
+        {
+          "line": 290,
+          "text": "fn scan_seqs(root: &Path, dir: &str, uncommitted: &mut Vec<String>) -> Result<Vec<u64>> {"
+        },
+        {
+          "line": 310,
+          "text": "fn write_create_only(path: &Path, bytes: &[u8]) -> Result<()> {"
+        },
+        {
+          "line": 325,
+          "text": "fn read_canonical<T: Serialize + for<'de> Deserialize<'de>>(path: &Path) -> Result<(T, Vec<u8>)> {"
+        },
+        {
+          "line": 339,
+          "text": "pub fn dir(state: &State) -> PathBuf {"
+        },
+        {
+          "line": 347,
+          "text": "pub fn open(state: &State, limits: Limits) -> Result<Outbox> {"
+        },
+        {
+          "line": 386,
+          "text": "fn load(&mut self) -> Result<()> {"
+        },
+        {
+          "line": 462,
+          "text": "fn check_record(&self, record: &Record, seq: u64) -> Result<()> {"
+        },
+        {
+          "line": 507,
+          "text": "fn index(&mut self, record: Record, record_sha256: String) {"
+        },
+        {
+          "line": 520,
+          "text": "fn record_path(&self, seq: u64) -> PathBuf {"
+        },
+        {
+          "line": 524,
+          "text": "fn ack_path(&self, seq: u64) -> PathBuf {"
+        },
+        {
+          "line": 528,
+          "text": "fn object_path(&self, kind: Kind, digest: &str) -> PathBuf {"
+        },
+        {
+          "line": 535,
+          "text": "fn read_payload(&self, item: &Dependency) -> Result<Vec<u8>> {"
+        },
+        {
+          "line": 548,
+          "text": "fn crash_point(&self, at: Boundary) -> Result<()> {"
+        },
+        {
+          "line": 557,
+          "text": "pub fn root(&self) -> &Path {"
+        },
+        {
+          "line": 563,
+          "text": "pub fn state(&self) -> &State {"
+        },
+        {
+          "line": 567,
+          "text": "pub fn limits(&self) -> Limits {"
+        },
+        {
+          "line": 572,
+          "text": "pub fn recovery(&self) -> &Recovery {"
+        },
+        {
+          "line": 576,
+          "text": "pub fn records(&self) -> u64 {"
+        },
+        {
+          "line": 580,
+          "text": "pub fn pending_entries(&self) -> u64 {"
+        },
+        {
+          "line": 584,
+          "text": "pub fn pending_bytes(&self) -> u64 {"
+        },
+        {
+          "line": 589,
+          "text": "pub fn pending(&self) -> Vec<Pending> {"
+        },
+        {
+          "line": 602,
+          "text": "pub fn seq_of(&self, item: &Dependency) -> Option<u64> {"
+        },
+        {
+          "line": 606,
+          "text": "pub fn record(&self, seq: u64) -> Option<&Record> {"
+        },
+        {
+          "line": 610,
+          "text": "pub fn ack(&self, seq: u64) -> Option<&Ack> {"
+        },
+        {
+          "line": 616,
+          "text": "pub fn object(&self, seq: u64) -> Result<Option<Encoded>> {"
+        },
+        {
+          "line": 632,
+          "text": "fn entry(&self, seq: u64) -> Option<&Entry> {"
+        },
+        {
+          "line": 640,
+          "text": "pub fn admission(&self) -> Admission {"
+        },
+        {
+          "line": 653,
+          "text": "fn admit(&self, opens_work: bool, item_bytes: u64) -> Result<()> {"
+        },
+        {
+          "line": 681,
+          "text": "fn require_dependencies(&self, item: &Dependency, deps: &[Dependency]) -> Result<()> {"
+        },
+        {
+          "line": 700,
+          "text": "pub fn append_object(&mut self, object: &Encoded) -> Result<Appended> {"
+        },
+        {
+          "line": 737,
+          "text": "pub fn append_result(&mut self, bytes: &[u8], expected: &BlobRef) -> Result<Appended> {"
+        },
+        {
+          "line": 751,
+          "text": "pub fn append_blob(&mut self, bytes: &[u8]) -> Result<Appended> {"
+        },
+        {
+          "line": 762,
+          "text": "fn commit("
+        },
+        {
+          "line": 795,
+          "text": "pub fn redeliver(&self, remote: &dyn Remote, key: &str) -> Result<bool> {"
+        },
+        {
+          "line": 815,
+          "text": "pub fn deliver(&mut self, remote: &dyn Remote, limit: Option<u64>) -> Result<Delivery> {"
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/progress/engine.rs",
+      "exists": true,
+      "bytes": 20896,
+      "sha256": "09d85d41fdaaa6c02ad0ac986b818c503ca8437c89e6bdcd14fa2c5773ecaa92",
+      "symbols": [
+        {
+          "line": 72,
+          "text": "pub struct Mapped {"
+        },
+        {
+          "line": 79,
+          "text": "fn read_plain(path: &Path, max_bytes: u64) -> Result<Vec<u8>> {"
+        },
+        {
+          "line": 104,
+          "text": "fn real_path(root: &Path, rel: &Path, last_is_dir: bool) -> Result<PathBuf> {"
+        },
+        {
+          "line": 130,
+          "text": "fn json(bytes: &[u8], what: &str) -> Result<Value> {"
+        },
+        {
+          "line": 134,
+          "text": "fn text<'a>(v: &'a Value, field: &str, what: &str) -> Result<&'a str> {"
+        },
+        {
+          "line": 140,
+          "text": "fn unsigned(v: &Value, field: &str, what: &str) -> Result<u64> {"
+        },
+        {
+          "line": 146,
+          "text": "fn planned(manifest: &Decoded<RunManifest>, work_id: &str) -> Result<()> {"
+        },
+        {
+          "line": 161,
+          "text": "pub struct EngineCorpus {"
+        },
+        {
+          "line": 173,
+          "text": "pub fn corpus("
+        },
+        {
+          "line": 276,
+          "text": "pub struct Published {"
+        },
+        {
+          "line": 287,
+          "text": "pub fn published(root: &Path, run: &Path) -> Result<Option<Published>> {"
+        },
+        {
+          "line": 316,
+          "text": "pub struct Previous {"
+        },
+        {
+          "line": 323,
+          "text": "pub struct EngineCheckpoint {"
+        },
+        {
+          "line": 333,
+          "text": "pub fn checkpoint("
+        },
+        {
+          "line": 434,
+          "text": "pub fn checkpoint_step(state_json: &[u8]) -> Result<u64> {"
+        },
+        {
+          "line": 451,
+          "text": "pub fn recovery("
+        },
+        {
+          "line": 507,
+          "text": "pub fn result("
+        }
+      ]
+    },
+    {
+      "path": "crates/jope-learning/src/support/mod.rs",
+      "exists": true,
+      "bytes": 821,
+      "sha256": "fa138dd6203b7bed0cc296193fdefaced2b66293b462c2ba56ed3d6bc12160bb",
+      "symbols": []
+    },
+    {
+      "path": "crates/jope-policy/src/sampling.rs",
+      "exists": false,
+      "bytes": 0,
+      "sha256": null,
+      "symbols": []
+    }
+  ]
+}

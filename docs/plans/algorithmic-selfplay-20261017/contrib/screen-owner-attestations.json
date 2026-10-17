@@ -1,0 +1,92 @@
+{
+  "excluded_non_jope_screens_not_touched": [
+    "300394.dope_gemini (DOPE planning coordinator; only contacted via COMMS.md for independent neverhumanbot PR #355 review)",
+    "1730618.agy_dope (DOPE)",
+    "2641262.dope_fb_codex_1 (DOPE)",
+    "2641266.dope_fb_codex_2 (DOPE)",
+    "2641273.dope_fb_grok_1 (DOPE)",
+    "1061491.dope_paper_grok (DOPE)",
+    "1061468.dope_paper_claude (DOPE)",
+    "2132048.codex_jarambit (Jarambit)",
+    "4108240.jarambit_paper (Jarambit)",
+    "2291514.agy_jarambit_screen (Jarambit)",
+    "2745834.joil_evidence (Joil)",
+    "2745829.joil_truth (Joil)",
+    "726593.joil_paper (Joil)",
+    "726591.joil_ir (Joil)",
+    "3791793.agy_joil (Joil)",
+    "2930826.google_agy (Google/AGY)",
+    "1507543.disk_janitor (disk-reclaim)"
+  ],
+  "host": "xbabe2",
+  "jopedime_writer_attestation": {
+    "active_pr": 355,
+    "active_slot": "/home/ubuntu/JopeDime/.agent/worktrees/paper-readme-sync-20261017",
+    "agent_pid": 2843538,
+    "cli": "agy --dangerously-skip-permissions",
+    "conversation_id": "63b73e0d-b9d7-468e-9a65-65a1925fe756",
+    "github_role_helper": "/home/ubuntu/.local/bin/gh-role writer -> jepsontaylor",
+    "model_family": "Google Antigravity (agy)",
+    "role": "Canonical JopeDime implementation writer & PR lifecycle owner",
+    "screen_name": "2830191.jopedime_agy",
+    "screen_pid": 2830191,
+    "status": "ACTIVE_AVAILABLE"
+  },
+  "native_jope_routes": {
+    "claude_security_custody_semantics": {
+      "agent_pid": 157720,
+      "assigned_disjoint_packet": {
+        "canonical_ledger_or_source_writes_allowed": false,
+        "owned_contrib_target": "/home/ubuntu/jope-evidence/spec-integration-20261017/contrib/claude-security-custody-semantics-review.json",
+        "packet_scope": "Security, S3 custody, and program semantics across S1-S8: (1) crates/jope-models/src/publish.rs:48-51 pre-existing blob size-only check vs full SHA-256 readback verification (S5 F06); (2) S3 retention plan/apply boundary, VersionId reference preservation, and E1-E5 object-level proof requirements in crates/jope-learning/src/retention/ (S4 F08-F09, S5 PR26-PR29, S6 PR31); (3) additive ProgramGraphV2 / FitTargetAware OOF effect checking in crates/feat-math/ preserving legacy ADR-0004 hashes (S1 PR-18..20, S4 P13-P15, S6 PR02-PR06, PR14, S8 A02/A09/A11); (4) all-target emitter digest binding (battle-artifact/v2-v3) and opt-in vs default partition_point_quantile_bounds transition (S1 PR-03, S5 F05/PR17, S6 PR04-PR05)."
+      },
+      "availability_status": "EXISTING_JOPE_SCREEN_PRESENT_DETACHED; notified via COMMS.md under flock (no screen injection or protected transcript scan performed).",
+      "cli": "claude --dangerously-skip-permissions --resume b6575f28-dc1b-4afd-a7e4-29b8ac34d4f8",
+      "role": "JopeDime flywheel security, S3 custody, and program-language semantics reviewer",
+      "screen_name": "1061448.jopedime_flywheel",
+      "screen_pid": 1061448,
+      "working_directory": "/home/ubuntu/JopeDime"
+    },
+    "codex_repo_gaps_tests_ci": {
+      "app_server_root_coordinator": {
+        "app_server_pid": 1193468,
+        "code_mode_host_pid": 1202906,
+        "daemon_pid": 1067233,
+        "owner_id": "Codex Root chat01a13a98",
+        "role": "Root coordinator owning WORKPLAN.md, TODO.md, tasks.json, progress.json, events.jsonl, requirements.json, decisions.json"
+      },
+      "assigned_disjoint_packet": {
+        "canonical_ledger_or_source_writes_allowed": false,
+        "owned_contrib_target": "/home/ubuntu/jope-evidence/spec-integration-20261017/contrib/codex-repo-gaps-tests-ci-review.json",
+        "packet_scope": "Repository gaps, test matrix, and CI verification across S1-S8 (consolidated directly in contrib/current-repo-gap-map.json for Root consumption because no separate non-Root Jope Codex screen exists)."
+      },
+      "availability_blocker": "NO_SEPARATE_JOPE_CODEX_SCREEN: Aside from Codex Root chat01a13a98 (app-server PID 1193468, which owns the Root ledger), all 7 screen-hosted Codex processes on xbabe2 belong to non-JopeDime repositories/lanes (2641262.dope_fb_codex_1 and 2641266.dope_fb_codex_2 on /home/ubuntu/dope; 2132048.codex_jarambit and 4108240.jarambit_paper on jarambit; 2745829.joil_truth and 2745834.joil_evidence on joil; 1507543.disk_janitor on ~/disk-reclaim). Per OWNER_REQUEST.json, DOPE/other workers were not taken and no duplicate Codex owner was spawned.",
+      "screen_name": null
+    },
+    "grok_scientific_statistical": {
+      "agent_pid": 1219719,
+      "assigned_disjoint_packet": {
+        "canonical_ledger_or_source_writes_allowed": false,
+        "owned_contrib_target": "/home/ubuntu/jope-evidence/spec-integration-20261017/contrib/grok-scientific-review.json",
+        "packet_scope": "Scientific & statistical decisions across S1-S8: (1) inner-CV ridge fallback and fold-local target-derived feature refit in crates/jope-learning/src/pools/selectors.rs (S4 F01); (2) prospective multi-family promotion rubric & min_families >= 2 gate in crates/jope-learning/src/qualify/promotion.rs and round_qual.rs (S4 P10-P11, S5 PR08, S6 PR25); (3) equal-fit teacher-qualification gate before search-output distillation L_pi (S6 PR28); (4) within-block vs full-support KL guard math under measured tilt (S6 K4) and seed_cap_b <= ELITES reconciliation (S6 K5)."
+      },
+      "availability_status": "EXISTING_JOPE_SCREEN_PRESENT_DETACHED; notified via COMMS.md under flock (no screen injection or protected transcript scan performed).",
+      "cli": "/home/ubuntu/.grok/downloads/grok-1.0.50-linux-x86_64 --always-approve --no-subagents --session-id 1c603d4f-30e7-46fa-af03-8901b6b64...",
+      "resumed_from": "01a12613-d9d7-7...",
+      "role": "JopeDime G-JUDGE scientific & statistical reviewer",
+      "screen_name": "1061374.rlfw_g_judge",
+      "screen_pid": 1061374,
+      "working_directory": "/home/ubuntu/JopeDime"
+    },
+    "independent_pr_reviewer_route": {
+      "agent_pid": 2044012,
+      "jope_ownership_transfer": false,
+      "role": "Primary DOPE planning coordinator (separate repo); also acts as independent neverhumanbot exact-head PR reviewer for JopeDime via COMMS.md",
+      "screen_name": "300394.dope_gemini",
+      "screen_pid": 300394
+    }
+  },
+  "request_id": "JOPEDIME-8SPEC-20261017",
+  "schema": "jope.8spec-screen-owner-attestations/v1",
+  "timestamp_utc": "2026-10-17T17:34:30Z"
+}

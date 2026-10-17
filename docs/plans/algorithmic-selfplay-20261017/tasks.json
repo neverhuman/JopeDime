@@ -1,0 +1,3249 @@
+{
+  "schema": "jope.unified-workplan.tasks/v1",
+  "created_at": "2026-10-17T20:22:03.975510+00:00",
+  "baseline_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+  "tasks": [
+    {
+      "id": "I01",
+      "title": "Refresh the executable baseline and capability gaps",
+      "area": "baseline",
+      "dependencies": [],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        "MASTER_PLAN.md",
+        "docs/adr/ADR-0005-canonical-learning-loop.md",
+        "docs/learning.md",
+        "Cargo.toml",
+        "docs/parity/capability-matrix.md"
+      ],
+      "proposed_write_paths": [
+        "docs/plans/algorithmic-selfplay-20261017/BASELINE.md",
+        "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.json"
+      ],
+      "symbols": [
+        "native_loop::verify_successor",
+        "CheckpointBinding::require_challenger_identity",
+        "require_original_gpu_grant",
+        "RoundQualReport"
+      ],
+      "steps": [
+        "Pin receiving main after355; retain old8fc baseline as dated evidence",
+        "Read current instructions and claims under flock; classify every source finding as confirmed/rejected/unknown",
+        "Enumerate Cargo package identities, feature gates, actual callers and tests without executing campaigns",
+        "Produce current versus proposed capability map; source existence is not live qualification"
+      ],
+      "acceptance_cases": [
+        "Reconcile benchmark/product profile identities",
+        "Distinguish current CI, historical runs and proposed protocols",
+        "Record all skipped/unavailable runtime combinations"
+      ],
+      "completion_criterion": "Every load-bearing current-state statement has a full source SHA and path; unresolved facts remain unknown.",
+      "source_sections": [
+        "S1:2,4,AppendixD",
+        "S4:2,4",
+        "S5:2,9",
+        "S6:2",
+        "S3:2",
+        "S8:2"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I02",
+      "title": "Freeze one additive wire-contract catalogue",
+      "area": "contracts",
+      "dependencies": [
+        "I01"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/canon.rs",
+        "crates/jope-learning/tests/schema_agreement.rs",
+        "crates/jope-records/src/claims.rs"
+      ],
+      "proposed_write_paths": [
+        "docs/contracts/algorithmic-selfplay-identity.md",
+        "schemas/jope.canonical-json.v1.schema.json"
+      ],
+      "symbols": [
+        "CanonicalPayload",
+        "DomainSeparatedId",
+        "VerifiedMeasuredOutcome",
+        "PredictedOutcome"
+      ],
+      "steps": [
+        "Inventory existing schemas and versions before allocating names",
+        "Freeze one canonical encoding for new envelopes using cross-language vectors; keep all historical hash rules",
+        "Separate payload, own ID and signature envelope to avoid self-reference",
+        "Define measured, predicted, synthetic and missing outcome types; prohibit unchecked deserialization into verified authority types"
+      ],
+      "acceptance_cases": [
+        "Duplicate JSON keys, unknown enums, Unicode, signed zero, subnormals and overflow",
+        "Native/inference/storage same golden bytes",
+        "Prediction cannot enter measured claim APIs"
+      ],
+      "completion_criterion": "One agreed catalogue with explicit old/new readers and independent conformance vectors; no legacy rehash.",
+      "source_sections": [
+        "S1:AppendixB,C",
+        "S4:6,19",
+        "S5:9",
+        "S6:12",
+        "S3:3,4",
+        "S8:AppendixA"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I03",
+      "title": "Remove unavailable-score and nested-CV ambiguity",
+      "area": "evaluation",
+      "dependencies": [
+        "I01",
+        "I02"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/pools/selectors.rs",
+        "crates/feat-math/src/model.rs",
+        "crates/feat-math/tests/inner_fold_leakage.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/tests/pools_cv_unavailable.rs"
+      ],
+      "symbols": [
+        "ContextualSurrogateQHat",
+        "cv_mean_loss",
+        "fit_context_features",
+        "TypedUnavailable"
+      ],
+      "steps": [
+        "Verify actual selector helper names at the implementation pin",
+        "Return typed unavailable on insufficient parents/singular fit instead of a perfect zero",
+        "Refit target-derived context/ranking features inside every inner training closure",
+        "Carry explicit denominator and failure counts into comparisons"
+      ],
+      "acceptance_cases": [
+        "Tiny/singular/failing folds never score as perfect",
+        "Perturb held labels: fitted features and pre-score predictions unchanged",
+        "Cut0-train statistics cannot silently be reused across other held folds"
+      ],
+      "completion_criterion": "Positive supported OOF path and leakage/unavailable refusals both demonstrated under the same source.",
+      "source_sections": [
+        "S4:4,5,18",
+        "S5:4,9",
+        "S6:7.4,9.3"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I04",
+      "title": "Enforce roles and exposure ancestry per label",
+      "area": "evaluation",
+      "dependencies": [
+        "I02",
+        "I03"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/eligibility.rs",
+        "crates/jope-learning/src/eligibility/context.rs",
+        "crates/jope-learning/src/qualify/roster.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/replay/admission.rs",
+        "schemas/jope.replay-observation.v2.schema.json"
+      ],
+      "symbols": [
+        "LabelEligibility",
+        "ExposureClosure",
+        "ReplayAdmission"
+      ],
+      "steps": [
+        "Keep source role independent of fidelity and local episode permissions",
+        "Mask quality/runtime/failure/policy labels separately; unknown proposal has no fabricated outcome",
+        "Enforce train-only global replay/retrieval and inherited restricted derivatives",
+        "Record later governed unsealing prospectively; never relabel old claims"
+      ],
+      "acceptance_cases": [
+        "Sealed/judge summaries and test_adaptive representation use refused by default",
+        "Timeout only supplies censored cost/failure where valid",
+        "Missing exposure proof remains held"
+      ],
+      "completion_criterion": "No caller Boolean or copied role string can upgrade protected evidence into training eligibility.",
+      "source_sections": [
+        "S1:6.5,9.3,11.3",
+        "S4:5,13",
+        "S5:5.5,8",
+        "S6:11,13"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I05",
+      "title": "Log all draws, requests, attempts and edit transitions",
+      "area": "events",
+      "dependencies": [
+        "I02",
+        "I04"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-pipeline/src/search.rs",
+        "crates/jope-policy/src/proposal_ledger.rs",
+        "crates/jope-learning/src/progress/engine.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.search-decision.v1.schema.json",
+        "schemas/jope.edit-transition.v1.schema.json"
+      ],
+      "symbols": [
+        "run_cut_allocated",
+        "offspring",
+        "migrate",
+        "SearchDecision",
+        "EditTransition"
+      ],
+      "steps": [
+        "Use separate draw_id, logical request_id and physical attempt_id",
+        "Record both parents/donor, legal-set identity, source, fidelity, sibling group and actual behavior law",
+        "Add observational recording without consuming RNG or changing admission order",
+        "Count retries and every physical effort while retaining logical multiplicity"
+      ],
+      "acceptance_cases": [
+        "Four draws including duplicate plus one retry reconcile all counters",
+        "Logging on/off has identical discrete selections/RNG",
+        "GP child never inherits seed log-probability as its own density"
+      ],
+      "completion_criterion": "Every measured child/failure resolves to an event and cost; no winner-only evidence loss.",
+      "source_sections": [
+        "S1:4.3,7.5,AppendixB.2",
+        "S4:6,9",
+        "S5:5.5",
+        "S6:11.7,12"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I06",
+      "title": "Bridge representable support and exact sampler/scorer law",
+      "area": "policy",
+      "dependencies": [
+        "I02",
+        "I04",
+        "I05"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/support/mod.rs",
+        "crates/jope-policy/src/grammar.rs",
+        "crates/jope-policy/src/proposal_ledger.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.support-transition.v1.schema.json",
+        "crates/jope-learning/tests/support_transition.rs"
+      ],
+      "symbols": [
+        "SupportTransition",
+        "BehaviorLaw",
+        "NovelLeafAdmission"
+      ],
+      "steps": [
+        "Preserve401-token native and282-token CLOVER identities as distinct lineages",
+        "Export admitted TRAIN-only new leaves or typed edit support without changing old leaf meaning",
+        "Specify EOS, legal masks, temperature, mixture branch and probability/density base measure",
+        "Use two novel alternatives to prove learnable allocation; singleton fixed mass proves only reachability"
+      ],
+      "acceptance_cases": [
+        "Tiny support exact normalization and sampled frequency conformance",
+        "Overlength/unexecutable new leaves refused",
+        "Unknown propensity cannot earn on-policy/off-policy unbiasedness claim"
+      ],
+      "completion_criterion": "A learner can represent each admitted teacher and evaluate the exact law it samples.",
+      "source_sections": [
+        "S1:4.2,9",
+        "S4:9,10,18",
+        "S5:5.4,5.5",
+        "S6:9,10"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I07",
+      "title": "Generate one capability and operator registry",
+      "area": "language",
+      "dependencies": [
+        "I01",
+        "I02"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/registry.rs",
+        "crates/feat-math/src/spec.rs",
+        "crates/feat-math/src/evolve.rs",
+        "crates/feat-math/src/advanced_v3/grammar.rs",
+        "crates/feat-math/src/kernel/capabilities.rs",
+        "crates/feat-math/build.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/registry/operators.toml",
+        "crates/feat-math/src/registry/generated.rs",
+        "crates/feat-math/tests/registry_agreement.rs"
+      ],
+      "symbols": [
+        "OpDescriptor",
+        "HEAD_OPS",
+        "OperationDescriptor",
+        "SearchAdmission"
+      ],
+      "steps": [
+        "Census all lists and preserve stable IDs0-52 plus dialect distinctions",
+        "Represent valid versus frozen-generatable subsets and explicit duplicate draw weights",
+        "Generate new profile tables and capability reports; preserve old vocabulary bytes and RNG modulus",
+        "Reject unknown/no-op parameters in new profiles with versioned compatibility"
+      ],
+      "acceptance_cases": [
+        "Portfolio/hurdle2/ridge_gcv head reachability",
+        "Frozen legacy arrays and grammar hashes unchanged",
+        "lag column semantics distinct from ordered time lag"
+      ],
+      "completion_criterion": "One source of new operator facts; legacy replay and unsupported-target honesty retained.",
+      "source_sections": [
+        "S1:7.2,7.4",
+        "S4:7",
+        "S5:6,9",
+        "S6:7.2,7.3"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I08",
+      "title": "Add typed graph, effects and legal edit ABI",
+      "area": "language",
+      "dependencies": [
+        "I02",
+        "I07"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/genome.rs",
+        "crates/feat-math/src/advanced_v3/grammar.rs",
+        "crates/feat-math/src/kernel/search.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/ir/mod.rs",
+        "crates/feat-math/src/ir/graph.rs",
+        "crates/feat-math/src/ir/effects.rs",
+        "crates/feat-math/src/ir/canon.rs",
+        "crates/feat-math/src/ir/edit.rs",
+        "crates/feat-math/src/ir/legacy_bridge.rs"
+      ],
+      "symbols": [
+        "ProgramGraph",
+        "legal_edits",
+        "apply",
+        "FitPlan",
+        "ProgramIdV2"
+      ],
+      "steps": [
+        "Adapt existing representations incrementally; unsupported legacy stays explicitly untyped",
+        "Propagate FitX/FitXY/ordered/seeded/width effects and require nested cross-fitting at composition boundaries",
+        "Implement pure typed edits and both-parent lineage using existing move primitives",
+        "Canonicalize without assuming floating operations commute; retain legacy IDs and equivalence witnesses"
+      ],
+      "acceptance_cases": [
+        "Roundtrip committed historical fixtures and available qualified winner sets",
+        "Target-aware stack/residual leakage canaries",
+        "Wide-column schema addressing and illegal edits fail before fit"
+      ],
+      "completion_criterion": "New legal actions are executable and effect-safe; old receipts and old byte identities remain resolvable.",
+      "source_sections": [
+        "S1:7.3,7.5",
+        "S3:4",
+        "S4:7",
+        "S5:6",
+        "S6:7.4",
+        "S8:5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I09",
+      "title": "Bind every requested emitted target",
+      "area": "emitters",
+      "dependencies": [
+        "I02",
+        "I07"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/transpile.rs",
+        "crates/jope-pipeline/src/emit.rs",
+        "crates/jope-pipeline/src/kernel2/publication.rs",
+        "crates/jope-cli/src/kernel.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.battle-artifact.v3.schema.json",
+        "crates/feat-math/tests/artifact_target_binding.rs"
+      ],
+      "symbols": [
+        "read_identity",
+        "EmitOptions",
+        "ArtifactManifestV3"
+      ],
+      "steps": [
+        "Census v1/v2 existing manifests before reserving v3",
+        "Bind program/emitter/toolchain and digest for every requested target plus fitted codec",
+        "Refuse missing or substituted requested bytes; represent unsupported with reason",
+        "Keep legacy reader explicitly grandfathered/non-upgraded"
+      ],
+      "acceptance_cases": [
+        "Substitute C++/JS file; verify refusal for each target",
+        "Missing requested artifact cannot continue silently",
+        "Recipe C++, fitted C++ and C++20 build identities stay distinct"
+      ],
+      "completion_criterion": "No target claim without exact bound bytes and declared support.",
+      "source_sections": [
+        "S1:7.2G4,14PR03",
+        "S3:4",
+        "S4:7",
+        "S5:9",
+        "S6:7.6,12.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I10",
+      "title": "Version numeric correctness repairs and emitter rollout",
+      "area": "evaluation",
+      "dependencies": [
+        "I07",
+        "I08",
+        "I09"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/lib.rs",
+        "crates/feat-math/src/ops.rs",
+        "crates/feat-math/src/heads.rs",
+        "crates/feat-math/src/stack.rs",
+        "crates/feat-math/src/transpile.rs",
+        "crates/feat-math/tests/clover_quantile.rs",
+        "crates/jope-campaigns/known-evaluator-identities.json"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/tests/numeric_profile_v2.rs"
+      ],
+      "symbols": [
+        "apply_op_train",
+        "EmitOptions::default",
+        "target_transform",
+        "NumericProfileV2"
+      ],
+      "steps": [
+        "Reproduce zero/missing, raw-target clamp, ignored parameter and column truncation defects separately",
+        "Keep legacy numerics frozen; assign new operator/evaluator versions for intentional changes",
+        "Roll out partition-point quantiles only through full caller census and version binding",
+        "Use seeded shuffled inner folds where IID is declared; preserve ordered-data semantics"
+      ],
+      "acceptance_cases": [
+        "Raw targets beyond60, genuine zeros versusNaN, columns17/63",
+        "Near-tie plateau quantile cases through actual emit callers",
+        "Old/new identity transition receipt and rollback path"
+      ],
+      "completion_criterion": "Every changed numeric behavior has a reproducer, explicit identity transition and real-path parity evidence.",
+      "source_sections": [
+        "S1:7.2G5-G14",
+        "S4:7,18",
+        "S5:6,9",
+        "S6:7.2L3-L10"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I11",
+      "title": "Represent ancestry and optimizer epochs explicitly",
+      "area": "native",
+      "dependencies": [
+        "I02",
+        "I04"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-engine/src/native_loop.rs",
+        "crates/jope-engine/src/native_loop/warm_start.rs",
+        "crates/jope-engine/src/training/continuation.rs",
+        "crates/jope-engine/src/training/ancestry.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-engine/src/native_loop/lineage.rs",
+        "schemas/jope.policy-lineage.v1.schema.json",
+        "schemas/jope.training-intent.v1.schema.json"
+      ],
+      "symbols": [
+        "verify_successor",
+        "ContinuationMode",
+        "PolicyLineage",
+        "OptimizerEpoch"
+      ],
+      "steps": [
+        "Preserve existing cold-init/weight-warm-start/new-corpus/exact-resume wire values; add architecture-migration only in a new version",
+        "Bind anchor, immediate parent, objective/recipe, intent and committed exposure",
+        "Version-dispatch v3 successor validation; preserve v1/v2 windows and refusal tests",
+        "Verify bounded acyclic ancestry and positive committed delta without numeric-step impersonation"
+      ],
+      "acceptance_cases": [
+        "60000 anchor→fresh epoch3000→6000→v3 successor fixture",
+        "Random70000 and relabeled3000 rejected",
+        "Objective mismatch, overflow, missing edge and reused update credit rejected"
+      ],
+      "completion_criterion": "Legitimate low-step warm-start descendants are representable without pretending old optimizer moments survived.",
+      "source_sections": [
+        "S5:5.1-5.3,5.9,5.10",
+        "S4:6,10",
+        "S6:10.1"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I12",
+      "title": "Freeze replay, numerical recipe and execution intent",
+      "area": "native",
+      "dependencies": [
+        "I04",
+        "I06",
+        "I11",
+        "I16"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-engine/src/training.rs",
+        "crates/jope-engine/src/training/inputs.rs",
+        "crates/jope-engine/src/task_contract.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-engine/src/training/intent.rs"
+      ],
+      "symbols": [
+        "TrainingIntent",
+        "sample_replay_fresh",
+        "require_original_gpu_grant"
+      ],
+      "steps": [
+        "Bind complete corpus, support, architecture, objective, partition, RNG/sampler cursor, deadline and window",
+        "Keep actual original GPU verifier hold until a separately reviewed authentic scoped grant verifier exists",
+        "Freeze per-head eligibility and fresh/replay occurrence IDs before numerical work",
+        "Refuse source/input/corpus/recipe/window mutation after intent freeze"
+      ],
+      "acceptance_cases": [
+        "Epoch/moment mismatch refused before CUDA and before mutation",
+        "Expired/fake/callerBoolean grant remains refused",
+        "New outcomes enter later intent rather than hot-changing corpus"
+      ],
+      "completion_criterion": "Numerical launch has one immutable validated intent and genuine admission; this task itself grants no GPU run.",
+      "source_sections": [
+        "S1:9.7",
+        "S4:10,17",
+        "S5:5.5,5.8",
+        "S6:10,11"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I13",
+      "title": "Extend atomic checkpoint and consumption closure",
+      "area": "native",
+      "dependencies": [
+        "I11",
+        "I12"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-engine/src/training/checkpoint_commit.rs",
+        "crates/jope-engine/src/training/consumption.rs",
+        "crates/jope-engine/src/checkpoint_recovery.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-engine/tests/lineage_checkpoint_recovery.rs"
+      ],
+      "symbols": [
+        "checkpoint_commit::commit",
+        "checkpoint_commit::Format",
+        "consumption::reconcile",
+        "Computed",
+        "Applied",
+        "Committed"
+      ],
+      "steps": [
+        "Add new complete commit format binding lineage/intent/journal prefixes without rewriting old states",
+        "Preserve staging→verify→fsync→rename→latest→ack ordering",
+        "Reconcile published-before-ack without duplicate logical update; charge physical retry again",
+        "Fence common applied boundary across ranks and stale attempt adoption"
+      ],
+      "acceptance_cases": [
+        "Crash injection at every existing Phase",
+        "Journal ahead/behind impossible checkpoint refusal",
+        "Missing rank and stale writer cannot advance accepted root"
+      ],
+      "completion_criterion": "Restore yields one coherent old/new committed state and exactly-once exposure accounting.",
+      "source_sections": [
+        "S4:6,10,18",
+        "S5:5.6,5.10",
+        "S6:11.4,12.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I14",
+      "title": "Export ancestry-aware challengers without weakening accepted identity",
+      "area": "native",
+      "dependencies": [
+        "I11",
+        "I13"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-engine/src/policy_export.rs",
+        "crates/jope-policy/src/config.rs",
+        "crates/jope-policy/src/challenger_tests.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-policy/src/config/lineage.rs",
+        "schemas/jope.checkpoint-export.v2.schema.json"
+      ],
+      "symbols": [
+        "ChallengerIdentityV2",
+        "CheckpointBinding::require_challenger_identity",
+        "require_accepted_identity"
+      ],
+      "steps": [
+        "Add explicit v2 export/parser branch instead of adding fields to strict v1",
+        "Check every tensor name/shape/dtype/finite value, independent readback and parameter digest",
+        "Use verified descent plus committed delta for new challengers only",
+        "Compare complete likelihood/EOS, legal masks, logits and deterministic proposals under declared runtime tolerance"
+      ],
+      "acceptance_cases": [
+        "3000/6000 descendant export/load positive path",
+        "70000 impostor and rejected checkpoint refused",
+        "Accepted release constants and old unknown-field refusals retained"
+      ],
+      "completion_criterion": "Candidate can load in a qualified backend; candidate identity never passes accepted-serving checks.",
+      "source_sections": [
+        "S5:5.4,5.10",
+        "S4:9,18",
+        "S6:9.7"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I15",
+      "title": "Publish compatible snapshots through one authority adapter",
+      "area": "publication",
+      "dependencies": [
+        "I02",
+        "I11",
+        "I14",
+        "I27"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/src/progress/publish.rs",
+        "crates/jope-learning/src/progress/reconcile.rs",
+        "crates/jope-learning/src/mirror.rs",
+        "crates/jope-learning/src/sync.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/selfplay/snapshot.rs",
+        "crates/jope-learning/src/selfplay/authority.rs",
+        "crates/jope-learning/src/selfplay/pins.rs",
+        "schemas/jope.learning-snapshot.v1.schema.json",
+        "schemas/jope.learning-authority.v1.schema.json"
+      ],
+      "symbols": [
+        "LearningSnapshot",
+        "LearningAuthority",
+        "CandidateExecutionManifest",
+        "LearningPayloadManifest"
+      ],
+      "steps": [
+        "Distinguish local committed, remote pending, research-parent and serving states",
+        "Order candidate execution→raw result→payload→assessment→capsule→snapshot→external publication; avoid cycles",
+        "Bind compatible checkpoint/support/critic/replay/library and required physical versions",
+        "CAS expected generation/previous roots with pin and retired-generation fence; aliases never authorize adoption"
+      ],
+      "acceptance_cases": [
+        "Two eligible children: one CAS winner, preserved loser",
+        "Mixed vocabulary or retired live VersionId refused",
+        "Denied remote upload leaves truthful local pending state"
+      ],
+      "completion_criterion": "Only a complete compatible snapshot can become an authorized root; no new promotion authority from a filename.",
+      "source_sections": [
+        "S3:3,7",
+        "S4:6,14",
+        "S5:5.1,5.6,5.7,8",
+        "S6:11,13"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I16",
+      "title": "Charge all effort with bounded reservations",
+      "area": "resources",
+      "dependencies": [
+        "I02",
+        "I05"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-pipeline/src/search.rs",
+        "crates/jope-pipeline/src/execution.rs",
+        "crates/jope-learning/src/progress/census.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.resource-ledger.v1.schema.json",
+        "crates/jope-pipeline/tests/resource_accounting.rs"
+      ],
+      "symbols": [
+        "Budget",
+        "Reservation",
+        "AttemptCost",
+        "getrusage"
+      ],
+      "steps": [
+        "Track CPU core-seconds, exact GPU device-seconds, wall, memory, storage, evaluations, compile/custody/retry effort separately",
+        "Reserve before heavy work and retain completion/publication headroom",
+        "Record cold/warm cache and lifetime versus per-task cost independently",
+        "Enforce child-process resource bounds for uninterruptible heavy fits"
+      ],
+      "acceptance_cases": [
+        "Killed/retried/failed compile work still charged",
+        "Worker cannot reserve beyond deadline/cap",
+        "GPU/CPU seconds not added without preregistered credit conversion"
+      ],
+      "completion_criterion": "Requested, reserved, computed and retained resources reconcile; unavailable telemetry is unknown, not zero.",
+      "source_sections": [
+        "S1:6.4,11.2",
+        "S3:5",
+        "S4:5,17",
+        "S5:5.3,7",
+        "S6:8.8,11.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I17",
+      "title": "Separate strategy from vocabulary and share the search kernel",
+      "area": "search",
+      "dependencies": [
+        "I05",
+        "I07",
+        "I16"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/kernel/profile.rs",
+        "crates/feat-math/src/kernel/search.rs",
+        "crates/jope-pipeline/src/search.rs",
+        "crates/jope-bench/src/methods.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/mod.rs",
+        "crates/feat-math/src/kernel/strategy/state.rs",
+        "crates/feat-math/src/kernel/strategy/recorder.rs"
+      ],
+      "symbols": [
+        "SearchStrategy",
+        "SearchProfile",
+        "Proposer",
+        "Allocator",
+        "Recorder"
+      ],
+      "steps": [
+        "Freeze vocabulary SearchProfile versus algorithm SearchStrategy as orthogonal axes",
+        "Place pure strategy logic below pipeline and learning; inject interfaces to avoid learning→pipeline→learning cycle",
+        "Keep I/O, storage and authority in drivers",
+        "Bind both digests, evaluator, seed policy and cost profile into each receipt"
+      ],
+      "acceptance_cases": [
+        "Dependency graph remains acyclic",
+        "Identical driver inputs produce same trace in bench and product",
+        "No stale benchmark row relabeled as current product evidence"
+      ],
+      "completion_criterion": "Bench and product can execute the same declared algorithm through one implementation.",
+      "source_sections": [
+        "S1:8.1",
+        "S3:5",
+        "S4:16",
+        "S5:9",
+        "S6:8.2,8.9"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I18",
+      "title": "Port frozen legacy and lite-race as control strategies",
+      "area": "search",
+      "dependencies": [
+        "I17"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/evolve.rs",
+        "crates/jope-pipeline/src/search.rs",
+        "crates/jope-bench/src/methods.rs",
+        "crates/jope-bench/tests/committed_evidence.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/legacy.rs",
+        "crates/feat-math/src/kernel/strategy/lite_race.rs"
+      ],
+      "symbols": [
+        "run_cut_allocated",
+        "evolve_lite_race_impl"
+      ],
+      "steps": [
+        "Preserve legacy RNG consumption, slot ordering and admitted seeds exactly",
+        "Port lite-race without silently changing rungs or head proxies",
+        "Run committed synthetic/test fixture golden traces through both drivers",
+        "Retain old loops as frozen reference until equivalence proof is complete"
+      ],
+      "acceptance_cases": [
+        "Legacy observation/champion identities unchanged",
+        "Lite-race same-cut fixture agrees under exact original protocol",
+        "Old receipts remain historical rather than retroqualified"
+      ],
+      "completion_criterion": "Two stable control strategies with proven driver equivalence and explicit limits.",
+      "source_sections": [
+        "S1:8.1,14PR11-12",
+        "S5:9",
+        "S6:16PR08"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I19",
+      "title": "Implement a candidate modern GP strategy incrementally",
+      "area": "search",
+      "dependencies": [
+        "I08",
+        "I18",
+        "I20",
+        "I21"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/feat-math/src/kernel/lexicase.rs",
+        "crates/jope-pipeline/src/kernel2/search.rs",
+        "crates/feat-math/src/stage_cache.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/modern_gp.rs",
+        "crates/feat-math/src/kernel/strategy/race.rs",
+        "crates/feat-math/src/kernel/strategy/selection.rs",
+        "crates/feat-math/src/kernel/strategy/migration.rs"
+      ],
+      "symbols": [
+        "modern_gp_candidate_v1",
+        "FidelityPlan",
+        "ChampionEligibility"
+      ],
+      "steps": [
+        "Treat island128 versus steady-state16-64 proposals as distinct candidates, not conflicting defaults",
+        "Start from head-aware final confirmation and existing lexicase/refinement primitives",
+        "Pin deterministic async admission/tie rules and full resource ladder",
+        "Enable one component/version at a time; no default switch until prospective matched study"
+      ],
+      "acceptance_cases": [
+        "Cheap-rung winner reversal cannot name final champion",
+        "Budget exhaustion returns verified incumbent or explicit unavailable",
+        "Absent source mass and realized mixture recorded"
+      ],
+      "completion_criterion": "Candidate runs under bounded fixtures; scientific default adoption remains separately held.",
+      "source_sections": [
+        "S1:8.2",
+        "S4:8",
+        "S5:6",
+        "S6:8.2"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I20",
+      "title": "Disentangle incumbent reuse, retrieval and neural seed value",
+      "area": "search",
+      "dependencies": [
+        "I04",
+        "I05",
+        "I06",
+        "I17"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-pipeline/src/seeds.rs",
+        "crates/jope-policy/src/producer.rs",
+        "crates/jope-learning/src/pools/source.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.pipeline-seeds.v2.schema.json",
+        "crates/jope-learning/tests/retrieval_exposure.rs"
+      ],
+      "symbols": [
+        "SeedSetV2",
+        "ProposalSource",
+        "SeedAncestry"
+      ],
+      "steps": [
+        "Separate own_incumbent from other-lineage kNN retrieval and policy draws",
+        "Exclude own parent/dataset-family ancestry in transfer arm",
+        "Record requested/realized shares before/after dedup and every draw law",
+        "Keep retrieval/archive loading outside pipeline through immutable SeedSet and injected source"
+      ],
+      "acceptance_cases": [
+        "Own HWM cannot masquerade as transfer retrieval",
+        "Legacy seed cap4 preserved; new cap explicit",
+        "Cold/warm retrieval and shuffled-context controls use same eligible support"
+      ],
+      "completion_criterion": "A future retrieval/neural benefit contrast is identifiable and resource matched.",
+      "source_sections": [
+        "S1:4.2b,14PR04,W04",
+        "S4:9,12",
+        "S5:7",
+        "S6:8.2,11.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I21",
+      "title": "Use stage caches with complete fit identity",
+      "area": "search",
+      "dependencies": [
+        "I03",
+        "I08",
+        "I16"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/stage_cache.rs",
+        "crates/feat-math/src/model.rs",
+        "crates/jope-pipeline/src/search.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-pipeline/tests/stage_cache_identity.rs"
+      ],
+      "symbols": [
+        "fit_with_stage_cache",
+        "CacheKey",
+        "evaluate"
+      ],
+      "steps": [
+        "Key by exact prefix, registry/evaluator, training rows/order, fold plan, seed and effect closure",
+        "Reuse one bounded cache per lane; never share incompatible fit state",
+        "Separate cache-hit effort from counterfactual full-fit estimate",
+        "Log warm/cold profile and actual memory ceiling"
+      ],
+      "acceptance_cases": [
+        "Held fold/row order/seed change cannot hit wrong entry",
+        "Cache on/off selects identical champions",
+        "Eviction and interruption do not alter scientific identity"
+      ],
+      "completion_criterion": "Performance optimization preserves executed semantics and complete resource accounting.",
+      "source_sections": [
+        "S1:8.2",
+        "S4:8",
+        "S5:6",
+        "S6:8.8"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I22",
+      "title": "Keep fingerprints advisory until equivalence is proven",
+      "area": "search",
+      "dependencies": [
+        "I08",
+        "I19",
+        "I21"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/kernel/capabilities.rs",
+        "crates/jope-pipeline/src/kernel2/measurement.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/fingerprint.rs",
+        "crates/jope-pipeline/tests/fingerprint_false_hits.rs"
+      ],
+      "symbols": [
+        "BehaviorFingerprint",
+        "EquivalenceWitness",
+        "ScreeningAudit"
+      ],
+      "steps": [
+        "Separate byte identity, canonical identity and behavior similarity",
+        "Use frozen train-only probes for novelty or advisory screen",
+        "Do not copy F2/F4 measured outcomes solely from a rounded probe hash",
+        "If experimental screening saves fits, version it and preregister random full-evaluation audit with charged cost"
+      ],
+      "acceptance_cases": [
+        "Construct equal-probe/different-held-behavior collision",
+        "Probe roles cannot leak sealed rows",
+        "No fingerprint creates a measured receipt or semantic equality proof"
+      ],
+      "completion_criterion": "No correctness or no-regression guarantee rests on finite probe equality.",
+      "source_sections": [
+        "S1:8.8",
+        "S4:7,18",
+        "S5:6",
+        "S6:7.4,8.8"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I23",
+      "title": "Add an operator allocator with a defensible behavior law",
+      "area": "search",
+      "dependencies": [
+        "I05",
+        "I19",
+        "I16"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/kernel/search.rs",
+        "crates/feat-math/src/evolve.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/bandit.rs"
+      ],
+      "symbols": [
+        "OperatorBandit",
+        "BehaviorProbability",
+        "ExplorationFloor"
+      ],
+      "steps": [
+        "Start with explicit categorical/EXP3 law when exact propensity is required",
+        "Treat Thompson winner probability as unknown unless an independently validated integration computes it",
+        "Pin context features, reward scaling, delayed credit and uniform floor",
+        "Preserve all chosen/rejected attempts and adapt only from eligible measured outcomes"
+      ],
+      "acceptance_cases": [
+        "Known-law tiny distribution normalization",
+        "Zero gain, all ties, delayed failures and empty legal arms",
+        "Unknown behavior law cannot feed unbiased PG/OPE"
+      ],
+      "completion_criterion": "Logged propensity means actual action probability, not sampled posterior score.",
+      "source_sections": [
+        "S1:8.3",
+        "S4:8,10",
+        "S5:9",
+        "S6:8.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I24",
+      "title": "Version a bounded quality-diversity archive",
+      "area": "search",
+      "dependencies": [
+        "I04",
+        "I08",
+        "I19"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/bank.rs",
+        "crates/jope-learning/src/pools/source.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/qd.rs",
+        "crates/jope-learning/src/lake/archive.rs"
+      ],
+      "symbols": [
+        "QDDescriptor",
+        "ArchiveSnapshot",
+        "CellAdmission"
+      ],
+      "steps": [
+        "Choose and freeze2-4 descriptor axes; do not silently mix per-context and per-family variants",
+        "Keep complete evaluator/fidelity/role identity for elites",
+        "Bound cells/bytes and deterministic tie handling",
+        "Use archive as proposal memory only; qualification remains independent"
+      ],
+      "acceptance_cases": [
+        "Descriptor version change creates new archive identity",
+        "Low-fidelity elite cannot become final champion unmeasured",
+        "Specialist retrieval respects exposure constraints"
+      ],
+      "completion_criterion": "Reproducible archive improves access/diversity only if a separately admitted ablation supports it.",
+      "source_sections": [
+        "S1:8.7",
+        "S3:4",
+        "S4:8",
+        "S5:6",
+        "S6:8.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I25",
+      "title": "Add residual-guided edits within fit closures",
+      "area": "search",
+      "dependencies": [
+        "I03",
+        "I08",
+        "I19"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-pipeline/src/kernel2/measurement.rs",
+        "crates/feat-math/src/math_expr/evolution/v2/refinement/lm.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/residual.rs"
+      ],
+      "symbols": [
+        "ResidualFeatures",
+        "ResidualEditProposal"
+      ],
+      "steps": [
+        "Compute residual correlations/heteroscedasticity inside current permitted training closure",
+        "Bind residual producer/fold and feature selection into context ABI",
+        "Propose legal typed edits through same ABI and logged source",
+        "Ablate residual features separately from architecture/model changes"
+      ],
+      "acceptance_cases": [
+        "Perturbed held labels cannot change pre-score proposals",
+        "Ordered-time features require declared row semantics",
+        "Heavy residual diagnostics consume budget"
+      ],
+      "completion_criterion": "Residual guidance provides no backdoor from outer evaluation into learning or selection.",
+      "source_sections": [
+        "S1:8.4",
+        "S4:7,11",
+        "S5:6",
+        "S6:9.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I26",
+      "title": "Build proposal delivery over existing draw records",
+      "area": "storage",
+      "dependencies": [
+        "I05",
+        "I16"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/progress/outbox.rs",
+        "crates/jope-policy/src/proposal_ledger.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/proposals/mod.rs",
+        "crates/jope-learning/src/proposals/outbox.rs"
+      ],
+      "symbols": [
+        "ProposalDelivery",
+        "Lease",
+        "Ack",
+        "PendingLimits"
+      ],
+      "steps": [
+        "Reuse progress durability patterns but distinguish neural proposal queue from event outbox",
+        "Preserve one draw ledger and add delivery state rather than duplicate record authority",
+        "Use exact physical request key, attempt fencing, lease expiry and content-addressed ack",
+        "Reserve inflight completion capacity and bound pending rows/bytes/startup work"
+      ],
+      "acceptance_cases": [
+        "10000 duplicate deliveries retain all logical draws and one authorized physical fit",
+        "Crash after upload before ack replays idempotently",
+        "Stale lease cannot double-charge committed exposure"
+      ],
+      "completion_criterion": "No lost proposals, hidden draws or unbounded delivery state.",
+      "source_sections": [
+        "S1:11.2",
+        "S3:3,9",
+        "S4:6,13",
+        "S5:9PR10",
+        "S6:11.7"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I27",
+      "title": "Preserve failed and provenance-incomplete observations",
+      "area": "storage",
+      "dependencies": [
+        "I04",
+        "I05"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/retention/distilled.rs",
+        "crates/jope-learning/src/retention/parquet.rs",
+        "crates/jope-learning/src/progress/census.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/replay/observation.rs",
+        "crates/jope-learning/src/retention/index_producer.rs"
+      ],
+      "symbols": [
+        "distill_gp_results_index_with_stats",
+        "DistilledRow",
+        "SplitRole",
+        "Outcome"
+      ],
+      "steps": [
+        "Commit index producer provenance before claiming complete input census",
+        "Retain scored, failed, timed-out, unscored and provenance-incomplete classes with reasons",
+        "Do not default missing role to train",
+        "Add multi-row-group/statistics support using existing writer first; dependency changes require identity review"
+      ],
+      "acceptance_cases": [
+        "Historical18380 count is a dated fixture target, not current estate assertion",
+        "Scored subset reproduces original values exactly",
+        "Unknown failure reason remains unknown and denominator retained"
+      ],
+      "completion_criterion": "Importer never turns absence into success/failure or silently drops negative evidence.",
+      "source_sections": [
+        "S1:11.1,11.3",
+        "S4:13",
+        "S5:9PR03",
+        "S6:2K3,13"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I28",
+      "title": "Expose role-filtered lake views from immutable receipts",
+      "area": "storage",
+      "dependencies": [
+        "I04",
+        "I26",
+        "I27"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-datasets/src/store.rs",
+        "crates/jope-learning/src/mirror.rs",
+        "crates/jope-learning/src/sync.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/lake/mod.rs",
+        "crates/jope-learning/src/lake/reader.rs",
+        "crates/jope-learning/src/lake/roles.rs",
+        "crates/jope-learning/src/lake/writer.rs"
+      ],
+      "symbols": [
+        "OutcomeView",
+        "RoleFilter",
+        "ManifestCommit"
+      ],
+      "steps": [
+        "Use one additive research/v2 authority namespace; lake tables are rebuildable analytics views",
+        "Pin table manifest/version/evaluator and verify source hashes on read",
+        "Enforce train/dev/confirm/sealed access by principal and row roles",
+        "Keep existing object transport/CAS; avoid second object-store layer or mandatory DuckDB dependency"
+      ],
+      "acceptance_cases": [
+        "Denied role and forged row role fail closed",
+        "Missing/corrupt blob excludes row with reason",
+        "Stale listing is never transaction authority"
+      ],
+      "completion_criterion": "Queryable evidence is cheaper without changing who can read or certify it.",
+      "source_sections": [
+        "S1:11.3",
+        "S3:7",
+        "S4:13,14",
+        "S5:8",
+        "S6:13.2"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I29",
+      "title": "Construct a measured-universe development table",
+      "area": "evaluation",
+      "dependencies": [
+        "I03",
+        "I09",
+        "I27",
+        "I28"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/pools/source.rs",
+        "crates/jope-learning/src/support/version.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/universe.rs",
+        "schemas/jope.measured-universe.v1.schema.json"
+      ],
+      "symbols": [
+        "Universe",
+        "OutcomeKey",
+        "CoverageReport"
+      ],
+      "steps": [
+        "Key by context/program/evaluator/fidelity/role; preserve failures and unknowns",
+        "Backfill only identity-compatible, permitted observations",
+        "Report missing support explicitly; do not fill it with surrogate predictions",
+        "Provide tiny fully measured fixture first; full6640×26 campaign is separately budgeted and held"
+      ],
+      "acceptance_cases": [
+        "Mismatched evaluator or role cannot join",
+        "Duplicate equal keys with conflicting values quarantine",
+        "Full versus partial support reported per context/checkpoint"
+      ],
+      "completion_criterion": "An exact finite table exists only for the declared measured support; no free claim outside it.",
+      "source_sections": [
+        "S1:6.5,W01",
+        "S4:12",
+        "S5:7",
+        "S6:12"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I30",
+      "title": "Implement an exact finite-support arena with honest scope",
+      "area": "evaluation",
+      "dependencies": [
+        "I06",
+        "I16",
+        "I29"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/src/pools/bootstrap.rs",
+        "crates/jope-learning/src/support/mod.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/arena_exact.rs",
+        "crates/jope-learning/tests/arena_exact.rs"
+      ],
+      "symbols": [
+        "exact_best_of_b",
+        "coverage",
+        "ArenaScope",
+        "DiscoveryAuc"
+      ],
+      "steps": [
+        "Compute F(x)^B only for IID replacement draws from frozen fully measured probability law",
+        "Mark conditional renormalization and partial mass as different estimands;95percent coverage is not full-policy exactness",
+        "Use different validated algorithms for without-replacement, adaptive or correlated search",
+        "Validate AUC with explicit clock/tie/failure/censoring conventions; keep result development-only"
+      ],
+      "acceptance_cases": [
+        "Enumerate tiny table exactly; compare independent MonteCarlo within stated SE",
+        "B0, all failures, missing mass, duplicates and numerical underflow",
+        "No off-table prediction or table result becomes live promotion proof"
+      ],
+      "completion_criterion": "Exact means exact for the declared finite law; generalization and live-search claims remain distinct.",
+      "source_sections": [
+        "S1:6.4,6.5,10",
+        "S4:12",
+        "S5:7",
+        "S6:11"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I31",
+      "title": "Adapt admitted fresh replay to the existing native trainer",
+      "area": "native",
+      "dependencies": [
+        "I04",
+        "I06",
+        "I12",
+        "I27"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-engine/src/training.rs",
+        "crates/jope-engine/src/training/objective.rs",
+        "crates/jope-learning/src/progress/engine.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-engine/src/training/replay_bridge.rs"
+      ],
+      "symbols": [
+        "sample_replay_fresh",
+        "LabelMask",
+        "TrainingBundle"
+      ],
+      "steps": [
+        "Use existing supervised native composite as first closure baseline",
+        "Bind actual fresh occurrence IDs and eligible per-head supervision",
+        "Freeze bundle and retain chosen/rejected examples, multiplicity and denominators",
+        "Require nonzero active-gradient update and subsequent actor consumption; changed index or decay-only change is insufficient"
+      ],
+      "acceptance_cases": [
+        "Fresh-label perturbation affects intended gradient",
+        "Masked heads receive no invented supervision",
+        "Frozen/no-fresh/restart controls remain distinguishable"
+      ],
+      "completion_criterion": "Fresh measured evidence reaches actual native committed updates without adding a trainer.",
+      "source_sections": [
+        "S3:6",
+        "S4:9,10",
+        "S5:5.5,5.10",
+        "S6:10"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I32",
+      "title": "Prove one offline synthetic engineering closure",
+      "area": "integration",
+      "dependencies": [
+        "I09",
+        "I13",
+        "I14",
+        "I15",
+        "I26",
+        "I30",
+        "I31"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/tests/selfplay_round_qual.rs",
+        "crates/jope-engine/tests/objective_fixtures.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/tests/research_loop_smoke.rs",
+        "docs/plans/algorithmic-selfplay-20261017/SMOKE_PROTOCOL.md"
+      ],
+      "symbols": [
+        "DevelopmentRound",
+        "MechanismReceipt"
+      ],
+      "steps": [
+        "Use synthetic TRAIN-only fixture and explicitly nonqualifying permission",
+        "Run propose→exact eval→admission→real tiny CPU update→commit→reload→next actor→dry-run judge→capsule",
+        "Include rejection and interruption branch",
+        "Record implemented/fixture/CI/live/science/serving stages separately"
+      ],
+      "acceptance_cases": [
+        "Changed child parameters plus changed declared actor behavior",
+        "Leakage canary and publication crash",
+        "Rejected child leaves accepted parent unchanged"
+      ],
+      "completion_criterion": "A complete truthful mechanism trace; no scientific benefit or serving-promotion claim.",
+      "source_sections": [
+        "S3:12",
+        "S4:17.2,18",
+        "S5:5.10",
+        "S8:14"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I33",
+      "title": "Evaluate a structural critic as a separate candidate",
+      "area": "ml",
+      "dependencies": [
+        "I03",
+        "I06",
+        "I14",
+        "I30",
+        "I31"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-engine/src/neural.rs",
+        "crates/jope-policy/src/model.rs",
+        "crates/jope-learning/src/pools/selectors.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-engine/src/neural/critic.rs",
+        "crates/jope-policy/src/model/structured_critic.rs"
+      ],
+      "symbols": [
+        "StructuredRankV1",
+        "CriticManifest",
+        "OutcomeCalibration"
+      ],
+      "steps": [
+        "Freeze actor for first critic experiment and preserve order-aware CLOVER versus order-blind native diagnosis",
+        "Start bounded128-wide2-layer profile as a proposed ablation, not canonical new family",
+        "Compare classical contextual ridge/GBDT and structural-feature baseline on identical LOPO pools",
+        "Qualify native/Candle ABI and resource cost before any allocator replacement"
+      ],
+      "acceptance_cases": [
+        "Same-token-multiset different-order semantic fixture",
+        "No overlength truncation or fake uncertainty heads",
+        "Acquisition benefit distinct from actor learning"
+      ],
+      "completion_criterion": "A critic becomes active only with independent same-pool and live-cost evidence; negative result retains baseline.",
+      "source_sections": [
+        "S1:9.1-9.3",
+        "S4:9",
+        "S5:5.8,9",
+        "S6:9"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I34",
+      "title": "Add typed edit and column-pointer challenger policy",
+      "area": "ml",
+      "dependencies": [
+        "I06",
+        "I08",
+        "I14",
+        "I25",
+        "I33"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-policy/src/grammar.rs",
+        "crates/jope-policy/src/producer.rs",
+        "crates/jope-engine/src/neural.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-policy/src/edit_policy.rs",
+        "crates/jope-engine/src/neural/edit_policy.rs"
+      ],
+      "symbols": [
+        "EditPolicy",
+        "ColumnPointer",
+        "ContextAbiV2"
+      ],
+      "steps": [
+        "Freeze one proposed architecture ABI after review; keep N1-N4 and KernelNet recipes as alternative candidates",
+        "Factor kind/site/operator/parameter/fidelity/stop with legal normalization",
+        "Preserve native401 and CLOVER282 controls, token meanings and explicit migration map",
+        "Compute column/residual tokens inside correct fold closure; bind all selection/remapping"
+      ],
+      "acceptance_cases": [
+        "Column17/63 addressing and schema permutation equivariance",
+        "EOS/continuous density/discrete mixture sampler-scorer conformance",
+        "Unsupported backend/length/schema refused"
+      ],
+      "completion_criterion": "An open challenger can represent novel edits without changing accepted model semantics.",
+      "source_sections": [
+        "S1:9.2",
+        "S4:9",
+        "S5:6,9",
+        "S6:9.3-9.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I35",
+      "title": "Version objectives, optimizer recipes and continual controls",
+      "area": "ml",
+      "dependencies": [
+        "I11",
+        "I12",
+        "I31",
+        "I33"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-engine/src/training/objective.rs",
+        "crates/jope-engine/src/training/continuation.rs",
+        "crates/jope-engine/src/training.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-engine/src/training/optimizer_recipe.rs",
+        "crates/jope-engine/src/training/loss_admission.rs"
+      ],
+      "symbols": [
+        "ObjectiveId",
+        "OptimizerRecipe",
+        "PerHeadEligibility",
+        "StickyKlGuard"
+      ],
+      "steps": [
+        "Keep accepted objective/1e-4 recipe as a control; change one hypothesis per new ID",
+        "Port required RLOO/PKPO/KL math with shared committed differential fixtures only",
+        "Define AWR/logprob eligibility, sibling baseline, clipped corrections and measured support assumptions",
+        "Treat WSD/cosine/EMA/Muon/plasticity and replay mixtures as alternative preregistered ablations, not universal defaults"
+      ],
+      "acceptance_cases": [
+        "Zero/tied sibling groups and zero scale safe",
+        "Moment carry versus reset and schedule state explicit",
+        "Computed/applied/committed active updates and per-head gradients recorded"
+      ],
+      "completion_criterion": "Recipe changes are reproducible and cannot be mislabeled exact resume or accepted numerical parity.",
+      "source_sections": [
+        "S1:9.4-9.5",
+        "S3:6",
+        "S4:10",
+        "S5:5.8",
+        "S6:10"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I36",
+      "title": "Bound replay without unsupported unbiasedness claims",
+      "area": "storage",
+      "dependencies": [
+        "I04",
+        "I16",
+        "I27",
+        "I31"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/retention/policy.rs",
+        "crates/jope-learning/src/retention/distilled.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/replay/sample.rs",
+        "crates/jope-learning/tests/replay_sampling_design.rs"
+      ],
+      "symbols": [
+        "ReplayDesign",
+        "InclusionProbability",
+        "BottomKSnapshot"
+      ],
+      "steps": [
+        "Start exact deterministic bottom-k/stratified bounded snapshots with defined sampling design",
+        "Distinguish retention inclusion probability from training selection and repeat exposure",
+        "Do not assume adaptive model-dependent reused-hash thresholds yield known unconditional pi",
+        "Validate totals versus ratio estimators and positivity before any HT claim; retain protected lineage obligations"
+      ],
+      "acceptance_cases": [
+        "Restart/merge exact selected set and bounded bytes",
+        "Adaptive-surprise counterexample",
+        "Rare failures/parents/accepted exposure remain reconstructible"
+      ],
+      "completion_criterion": "Bounded useful replay with honest estimator limits; no deletion implied.",
+      "source_sections": [
+        "S1:11.5",
+        "S4:13,14",
+        "S5:8",
+        "S6:13.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I37",
+      "title": "Build planted-program developmental tasks",
+      "area": "ml",
+      "dependencies": [
+        "I04",
+        "I08",
+        "I19",
+        "I31"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-cli/src/generator/mod.rs",
+        "crates/feat-math/src/model.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-cli/src/generator/planted.rs",
+        "schemas/jope.dream-task.v1.schema.json"
+      ],
+      "symbols": [
+        "PlantedTask",
+        "OracleRefit",
+        "SolvabilityGuard"
+      ],
+      "steps": [
+        "Sample permitted TRAIN-only X/program/noise under pinned generator identity",
+        "Retain hidden structure/weights separately from solver input",
+        "Compare known construction/oracle refit without asserting it is global optimum",
+        "Introduce misspecification and sim-to-real controls before adaptive curriculum"
+      ],
+      "acceptance_cases": [
+        "Hidden answer cannot leak into context/retrieval",
+        "Finite-probe similarity is not proof of semantic invention",
+        "Noise floor and repeated fits charged honestly"
+      ],
+      "completion_criterion": "Synthetic recovery and real transfer are separately measured; no campaign launched by this plan.",
+      "source_sections": [
+        "S1:6.7,9.3",
+        "S4:15",
+        "S5:7",
+        "S6:6.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I38",
+      "title": "Qualify a stronger teacher before distillation",
+      "area": "evaluation",
+      "dependencies": [
+        "I16",
+        "I19",
+        "I30",
+        "I35"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/qualify/promotion.rs",
+        "crates/jope-learning/src/pools/bootstrap.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/qualify/teacher.rs"
+      ],
+      "symbols": [
+        "TeacherQualification",
+        "DistillationAdmission"
+      ],
+      "steps": [
+        "Freeze raw-prior/best-of-N expert contrast and equal charged resource",
+        "Use independent development contexts and selected-set inclusion law",
+        "Admit only supported measured teacher targets with exact provenance",
+        "Keep unqualified teacher rows usable only for separately eligible supervised labels"
+      ],
+      "acceptance_cases": [
+        "Weak teacher cannot create policy CE authority",
+        "Selected root win alone does not prove expected policy improvement",
+        "Missing cost or changed support invalidates contrast"
+      ],
+      "completion_criterion": "Search distillation has a prospective defensible teacher-benefit gate.",
+      "source_sections": [
+        "S1:8.5,9.4",
+        "S3:6",
+        "S4:10,15",
+        "S6:6.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I39",
+      "title": "Evaluate measured-leaf Gumbel root search",
+      "area": "search",
+      "dependencies": [
+        "I08",
+        "I16",
+        "I19",
+        "I34",
+        "I38"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/kernel/search.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/kernel/strategy/gumbel_root.rs"
+      ],
+      "symbols": [
+        "GumbelRoot",
+        "CompletedQ",
+        "MeasuredFitBudget"
+      ],
+      "steps": [
+        "Implement sampled legal edits and sequential halving with explicit without-replacement law",
+        "Keep fidelity-specific measured values separate from completed surrogate values",
+        "Charge prior argmax control and all measured leaves; report visits separately",
+        "Do not import board-game improvement guarantee into noisy adaptive multi-fidelity setting without proof"
+      ],
+      "acceptance_cases": [
+        "n smaller than action count and incomplete halving",
+        "Equal-fit and equal-CPU controls including best-of-N",
+        "Teacher targets refused on unsupported sampling law"
+      ],
+      "completion_criterion": "Root search is an experimental strategy; deeper tree search remains gated by calibrated value and matched wins.",
+      "source_sections": [
+        "S1:8.5",
+        "S4:11,15",
+        "S5:7",
+        "S6:6.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I40",
+      "title": "Extend bounded native rounds with explicit rejection",
+      "area": "integration",
+      "dependencies": [
+        "I13",
+        "I14",
+        "I15",
+        "I31",
+        "I32",
+        "I44"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-engine/src/native_loop.rs",
+        "crates/jope-engine/src/native_observer/science.rs",
+        "crates/jope-learning/src/progress/engine.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.native-loop.v3.schema.json",
+        "schemas/jope.native-loop-completion.v3.schema.json"
+      ],
+      "symbols": [
+        "Loop",
+        "RunCompletionV3",
+        "RoundEvent",
+        "ResearchParentDecision"
+      ],
+      "steps": [
+        "Keep existing native scheduler and run approval; no second controller",
+        "Version successors and event state machine with campaign aggregate caps/max rounds/deadline",
+        "Require compatible intent/committed child/assessment before next-parent use",
+        "Emit terminal capsule for accepted/rejected/inconclusive/quarantined/aborted states"
+      ],
+      "acceptance_cases": [
+        "Three miniature fixture rounds including deliberate rejection",
+        "Budget/deadline cannot reset on resume",
+        "Crash at every state recovers idempotently without rerunning committed updates"
+      ],
+      "completion_criterion": "Multi-round mechanism works under an existing bounded grant; scientific qualification remains separate.",
+      "source_sections": [
+        "S1:9.6",
+        "S3:3",
+        "S4:6,17",
+        "S5:5.3,5.10",
+        "S6:11.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I41",
+      "title": "Freeze a prospective policy-discovery estimand and controls",
+      "area": "science",
+      "dependencies": [
+        "I03",
+        "I04",
+        "I16",
+        "I20",
+        "I30"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/src/qualify/promotion.rs",
+        "docs/adr/ADR-0005-canonical-learning-loop.md"
+      ],
+      "proposed_write_paths": [
+        "docs/protocols/policy-discovery-qualification.v1.md",
+        "schemas/jope.policy-arena.v2.schema.json"
+      ],
+      "symbols": [
+        "PolicyDelta",
+        "DiscoveryAuc",
+        "ArenaManifest",
+        "FamilyWeighting"
+      ],
+      "steps": [
+        "Define incumbent, paired AUC clock, primary comparison and practical margin before outcomes",
+        "Separate ProgramDelta, critic allocation, actor PolicyDelta and fresh-feedback causal contrast",
+        "Freeze parent, strongest simple baseline, shuffled context and matched-update no-fresh controls as applicable",
+        "Keep F10 accepted rule unchanged; proposed discovery rule needs separately adopted ADR/roster and authority"
+      ],
+      "acceptance_cases": [
+        "Unequal family/seed counts golden equal-family weighting",
+        "Failed/missing contexts retained under fixed rule",
+        "Repeated candidate/budget selection receives explicit multiplicity/outer holdout treatment"
+      ],
+      "completion_criterion": "A complete preregistered protocol with independent evidence boundary; this is not execution authorization.",
+      "source_sections": [
+        "S1:6.4,10",
+        "S3:6",
+        "S4:12",
+        "S5:5.7,7",
+        "S6:11.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I42",
+      "title": "Authenticate roster, exposure, raw results and assessment",
+      "area": "science",
+      "dependencies": [
+        "I02",
+        "I04",
+        "I41"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/src/qualify/roster.rs",
+        "crates/jope-learning/src/qualify/gate.rs",
+        "crates/jope-learning/src/qualify/promotion.rs",
+        "crates/jope-learning/src/clover/round_qual.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/qualify/evidence.rs",
+        "crates/jope-learning/src/qualify/exposure.rs"
+      ],
+      "symbols": [
+        "VerifiedAssessment",
+        "RosterIssuer",
+        "QualTestScore",
+        "LookLedger"
+      ],
+      "steps": [
+        "Verify actual issuer/signature/capability, not nonempty reviewer string",
+        "Recompute statistics from full raw closure and selected incumbent",
+        "Adopt independent family roster only through governing decision; settle min_families and look allocation",
+        "Keep existing diagnostic SPQ-1 literal-false semantics for old versions"
+      ],
+      "acceptance_cases": [
+        "Forged issuer, altered raw metrics/roster/alpha/use refused",
+        "Second unallocated efficacy look refused across hosts",
+        "Complete evidence positive path reaches only declared report/adoption permission"
+      ],
+      "completion_criterion": "A new verified adapter cannot be confused with the old offline diagnostic or serving authorization.",
+      "source_sections": [
+        "S4:12,18",
+        "S5:5.7,5.10",
+        "S6:11.5-11.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I43",
+      "title": "Implement non-regressing accepted-root publication",
+      "area": "publication",
+      "dependencies": [
+        "I15",
+        "I41",
+        "I42"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/mirror.rs",
+        "crates/jope-learning/src/sync.rs",
+        "crates/jope-engine/src/native_loop.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/selfplay/promote.rs"
+      ],
+      "symbols": [
+        "ResearchParentDecision",
+        "ServingPromotionDecision",
+        "RollbackRoot"
+      ],
+      "steps": [
+        "Treat checkpoint commit, research-parent adoption and serving promotion as separate events",
+        "Use exact expected parent/generation and current compatible closure",
+        "Retain parent on negative/inconclusive result and preserve candidate evidence",
+        "Verify rollback and pin obligations before advancing accepted root"
+      ],
+      "acceptance_cases": [
+        "Two publisher CAS contenders and stale grant",
+        "Missing remote closure/retired strong ref block promotion",
+        "Rollback changes pointer without deleting ledger or child"
+      ],
+      "completion_criterion": "No regression in accepted default; only independently qualified decisions move intended authority.",
+      "source_sections": [
+        "S3:3",
+        "S4:6,18",
+        "S5:5.7",
+        "S6:11"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I44",
+      "title": "Compile deterministic capsules from authoritative evidence",
+      "area": "memory",
+      "dependencies": [
+        "I02",
+        "I05",
+        "I27",
+        "I41"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-records/src/claims.rs",
+        "crates/jope-records/src/paper_trace.rs",
+        "docs/experiments/experiments.jsonl"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-records/src/research/mod.rs",
+        "crates/jope-records/src/research/capsule.rs",
+        "crates/jope-records/src/research/compile.rs",
+        "crates/jope-records/src/research/render.rs",
+        "schemas/jope.research-capsule.v2.schema.json"
+      ],
+      "symbols": [
+        "compile",
+        "verify",
+        "EvidenceResolver",
+        "ResearchCapsuleV2"
+      ],
+      "steps": [
+        "Use one compiler in records; learning adapters supply immutable evidence views without cycle",
+        "Resolve every numeric claim by exact locator/denominator; retain unknown source commits as unknown",
+        "Separate facts, inference, limitations, program/policy effects and qualification stage",
+        "Emit failure/abort capsules; absent capsule publication retries without retraining"
+      ],
+      "acceptance_cases": [
+        "Byte-stable repeated compilation and revoked/missing evidence",
+        "CI includes0 is inconclusive, not proof of equivalence/null",
+        "Derived prose cannot upgrade shadow/adaptive evidence"
+      ],
+      "completion_criterion": "Every round has a small truthful evidence-linked memory artifact; historical original records preserved.",
+      "source_sections": [
+        "S1:12",
+        "S3:7",
+        "S4:13",
+        "S5:9PR09",
+        "S6:14"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I45",
+      "title": "Generate compact state, index and non-repeat guidance",
+      "area": "memory",
+      "dependencies": [
+        "I01",
+        "I44"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-records/src/main.rs",
+        "crates/jope-records/src/paper_trace.rs",
+        "AGENTS.md",
+        "MASTER_PLAN.md"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-records/src/research/state.rs",
+        "docs/STATE.md",
+        "docs/research/INDEX.tsv",
+        "docs/research/beliefs.jsonl",
+        "docs/research/hypotheses.json"
+      ],
+      "symbols": [
+        "brief",
+        "state_check",
+        "DoNotRepeat",
+        "BeliefRecord"
+      ],
+      "steps": [
+        "Generate one canonical docs/STATE.md target with explicit8000-byte cap; byte cap is not exact tokenizer count",
+        "Keep protocol/master-plan ownership and append records intact",
+        "Match repeat signatures with explicit override reason, not blanket ban on replication",
+        "Do not pool correlated experiments or incompatible endpoints into automatic meta-analysis qualification"
+      ],
+      "acceptance_cases": [
+        "Unresolved source/CI cannot appear current-green",
+        "Repeat warning preserves legitimate preregistered replication",
+        "Only valid independent compatible evidence enters any pooled descriptive summary"
+      ],
+      "completion_criterion": "A concise current entry point with links; no destruction or silent relocation of coordination history.",
+      "source_sections": [
+        "S1:12.5-13",
+        "S3:7",
+        "S4:13",
+        "S5:9",
+        "S6:14-15"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I46",
+      "title": "Verify immutable publication by content, not size",
+      "area": "storage",
+      "dependencies": [
+        "I02"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-models/src/publish.rs",
+        "crates/jope-datasets/src/store.rs",
+        "crates/jope-learning/src/mirror.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-datasets/src/verified_object.rs"
+      ],
+      "symbols": [
+        "VerifiedObject",
+        "put_if_absent",
+        "put_conditional"
+      ],
+      "steps": [
+        "Reproduce same-size wrong-existing-object case before changing behavior",
+        "Verify exact bytes/hash/version on existing/create-race/lost-response branches",
+        "Detect source changed after prehash and before upload",
+        "Preserve current conditional-write semantics; never overwrite corrupt immutable key to make publication pass"
+      ],
+      "acceptance_cases": [
+        "Existing same-size wrong hash",
+        "Concurrent create race with wrong body",
+        "Readback integrity failure and denied credential remain truthful"
+      ],
+      "completion_criterion": "Published immutable references identify verified content and physical version.",
+      "source_sections": [
+        "S4:14F08",
+        "S5:2F06,9PR02",
+        "S6:2K6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I47",
+      "title": "Pack evidence and cache reproducible emitted executables",
+      "area": "storage",
+      "dependencies": [
+        "I09",
+        "I16",
+        "I26",
+        "I46"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/retention/pack.rs",
+        "crates/jope-learning/src/retention/tags.rs",
+        "crates/jope-learning/src/progress/publish.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/exe_cache.rs"
+      ],
+      "symbols": [
+        "PackManifest",
+        "ExecutableCacheKey",
+        "KeeperPolicy"
+      ],
+      "steps": [
+        "Keep exact member/version/hash/range identity and required reconstruction closure",
+        "Key executable cache by program/emitter/toolchain/target and verify double builds",
+        "Batch low-cost evidence without weakening claimed keeper/parity custody",
+        "Measure requests/bytes/latency and custody share; target1.2objects/50KB/30percent are hypotheses only"
+      ],
+      "acceptance_cases": [
+        "Malformed/overlapping pack ranges and same-key new version refused",
+        "Crash/lost ack leaves retryable immutable closure",
+        "Nonkeeper evidence omitted only under declared proof/retention obligation"
+      ],
+      "completion_criterion": "Fewer objects with verified recovery; no claimed cost improvement until measured.",
+      "source_sections": [
+        "S1:11.2",
+        "S4:14",
+        "S5:8",
+        "S6:13.2-13.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I48",
+      "title": "Bound event outbox and recover derived progress",
+      "area": "storage",
+      "dependencies": [
+        "I05",
+        "I16",
+        "I26"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/progress/outbox.rs",
+        "crates/jope-learning/src/progress/rebuild.rs",
+        "crates/jope-learning/src/progress/reconcile.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/progress/segment.rs",
+        "crates/jope-learning/src/progress/checkpoint.rs"
+      ],
+      "symbols": [
+        "CommittedUpdate",
+        "SegmentCheckpoint",
+        "ProgressRebuild"
+      ],
+      "steps": [
+        "Use durable dedup over committed history rather than unbounded hot set",
+        "Reserve inflight completion space before admission",
+        "Segment/compact only through owning protocol with bound historical lookup",
+        "Rebuild progress from committed source receipts and idempotent checkpoint/intent keys"
+      ],
+      "acceptance_cases": [
+        "Crash at every compaction boundary",
+        "Duplicate ack cannot inflate updates",
+        "Bound startup/hot memory/on-disk state explicitly"
+      ],
+      "completion_criterion": "Progress stays bounded and truthful without deleting required proof.",
+      "source_sections": [
+        "S4:13,14",
+        "S5:5.6,9PR10",
+        "S6:11.7"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I49",
+      "title": "Design least-privilege roles and refresh behavior",
+      "area": "operations",
+      "dependencies": [
+        "I04",
+        "I15",
+        "I28",
+        "I46"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-datasets/src/credentials.rs",
+        "docs/runbooks/rotate-credentials.md",
+        "AGENTS.md"
+      ],
+      "proposed_write_paths": [
+        "deploy/iam/jope-research-role-candidates.json",
+        "docs/runbooks/research-role-admission.md"
+      ],
+      "symbols": [
+        "CredentialProvider",
+        "RoleCapability",
+        "doctor"
+      ],
+      "steps": [
+        "Acknowledge credential_process adapter already exists; verify refresh limits rather than reimplementing stale bug",
+        "Prepare policies/principal matrix and offline denied-operation fixtures",
+        "Separate actor/evaluator/trainer/judge/publisher/curator roles and strong role enforcement",
+        "Do not provision IAM, access live sealed keys or give admin credentials to CI under this plan"
+      ],
+      "acceptance_cases": [
+        "Expired credential refresh and denied role simulation",
+        "Actor cannot read judge rows or write accepted pointers",
+        "Live positive/denied tests remain NOT_EXECUTED until operational admission"
+      ],
+      "completion_criterion": "Reviewable role design with explicit external provisioning blocker; no false installed-role claim.",
+      "source_sections": [
+        "S1:11.6",
+        "S3:7-8",
+        "S4:14",
+        "S5:8",
+        "S6:13.6"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I50",
+      "title": "Model storage dependencies and retention obligations",
+      "area": "retention",
+      "dependencies": [
+        "I15",
+        "I36",
+        "I46",
+        "I47"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/src/retention/refs.rs",
+        "crates/jope-learning/src/retention/plan.rs",
+        "crates/jope-learning/src/retention/lifecycle.rs"
+      ],
+      "proposed_write_paths": [
+        "schemas/jope.retention-plan.v2.schema.json",
+        "crates/jope-learning/src/retention/obligations.rs"
+      ],
+      "symbols": [
+        "StrongPhysicalRef",
+        "ProvenanceRef",
+        "RecoveryPromise",
+        "PinGeneration"
+      ],
+      "steps": [
+        "Inventory exact versions and whole dependency closure under current root/pin generation",
+        "Distinguish resume/rollback/exact-retraining/claim-reproduction promises from provenance-only metadata",
+        "Replacement must prove requested runtime restoration, not hash or same bytes alone",
+        "Unknown locks/lifecycle/future consumers remain HOLD"
+      ],
+      "acceptance_cases": [
+        "Ancestor checkpoint/corpus/optimizer still promised",
+        "Retired version cannot resurrect via delayed publisher",
+        "Lifecycle/tag bypass and unknown configuration block plan"
+      ],
+      "completion_criterion": "A complete non-destructive retention proof model; existing custody holds preserved.",
+      "source_sections": [
+        "S1:11.5",
+        "S4:14",
+        "S5:8",
+        "S6:13.4-13.8"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I51",
+      "title": "Produce non-destructive retention value and packing plans",
+      "area": "retention",
+      "dependencies": [
+        "I36",
+        "I47",
+        "I50"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/retention/classify.rs",
+        "crates/jope-learning/src/retention/policy.rs",
+        "crates/jope-learning/src/retention/plan.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/retention/value.rs"
+      ],
+      "symbols": [
+        "classify",
+        "RetentionValue",
+        "RetentionPlanV2"
+      ],
+      "steps": [
+        "Wire only validated dormant policy knobs under a new version",
+        "Prioritize verified duplicates/supersession while preserving all T0 and active obligations",
+        "Treat learner influence/surprise as prioritization only, never sufficient deletion proof",
+        "Emit exact proposed changes, unresolved dependencies and net storage accounting without apply"
+      ],
+      "acceptance_cases": [
+        "Static no-write/no-delete classifier guard remains green",
+        "Every candidate has specific recovery/consumer gap or complete proof",
+        "Stale September inventory cannot establish present deletability"
+      ],
+      "completion_criterion": "Owner-reviewable dry-run plan that changes nothing.",
+      "source_sections": [
+        "S1:11.5",
+        "S4:14",
+        "S5:8",
+        "S6:13"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I52",
+      "title": "Design fenced exact-version retirement executor",
+      "area": "retention",
+      "dependencies": [
+        "I49",
+        "I50",
+        "I51"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-learning/src/retention/plan.rs",
+        "crates/jope-learning/src/retention/lifecycle.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/retention/executor_candidate.rs",
+        "docs/runbooks/retention-execution-candidate.md"
+      ],
+      "symbols": [
+        "RetirementReservation",
+        "Tombstone",
+        "ExactVersionExecutor"
+      ],
+      "steps": [
+        "Implement offline/mock candidate only behind disabled feature; classifier remains read-only",
+        "Require exact signed approved plan, current pin/root/lifecycle generation and independent recovery proof",
+        "Fence publisher/retirer races and reconcile exact-version delete response loss",
+        "No live delete/lifecycle change until separate concrete admission; reject blanket30day prefix expiry proposal"
+      ],
+      "acceptance_cases": [
+        "Publisher adds pin during plan/reservation",
+        "Crash before/after exact-version request",
+        "Mock restore with original absent; no prefix-delete retries"
+      ],
+      "completion_criterion": "Reviewable disabled executor with proven mock races; zero live removals from this workstream.",
+      "source_sections": [
+        "S1:11.5",
+        "S4:14",
+        "S5:8",
+        "S6:13.4-13.8"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I53",
+      "title": "Plan safe local worktree retirement separately",
+      "area": "operations",
+      "dependencies": [
+        "I01",
+        "I50"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "AGENTS.md",
+        "MASTER_CLEAN_UP.md",
+        "deploy/maintenance/README.md"
+      ],
+      "proposed_write_paths": [
+        "docs/plans/algorithmic-selfplay-20261017/LOCAL_CUSTODY_CHECKLIST.md"
+      ],
+      "symbols": [
+        "lstat",
+        "git worktree remove",
+        "IndependentRecovery",
+        "ConsumerClosure"
+      ],
+      "steps": [
+        "Retain active/private/dirty/ignored/foreign contents; never delete symlink folders or trees containing protected links",
+        "Require stopped-head owner release and specific merged successor",
+        "Independently restore exact Git and complete filesystem/admin/index/xattr/hardlink obligations",
+        "Only after fresh process/mount/configured-future closure consider normal nonforce removal; no prune/force/reset/clean"
+      ],
+      "acceptance_cases": [
+        "Symlink component/contained .venv link is HOLD",
+        "Merged commit alone does not prove filesystem disposable",
+        "Retired exp-next-02 remains unprobed; old paper tree remains held"
+      ],
+      "completion_criterion": "Specific retain/remove evidence for future owner action; no deletion authority created by a task checkbox.",
+      "source_sections": [
+        "Human:safe cleanup and never delete symlink",
+        "S1:13",
+        "S4:14",
+        "S5:8",
+        "S6:15"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I54",
+      "title": "Add OOF residual and stacking composition",
+      "area": "language",
+      "dependencies": [
+        "I08",
+        "I09",
+        "I10",
+        "I19"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/stack.rs",
+        "crates/feat-math/src/members.rs",
+        "crates/feat-math/src/genome.rs",
+        "crates/feat-math/src/model.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/combinators/residual.rs"
+      ],
+      "symbols": [
+        "BoostCombinator",
+        "StackOf",
+        "OOFFitPlan"
+      ],
+      "steps": [
+        "Version boost/stack_of semantics and cross-fit entire member pipelines",
+        "Bind fold reuse/seed/shrinkage and no-leak fit effects",
+        "Declare target support and portable emission honestly",
+        "Measure extra fits and preserve incumbent fallback"
+      ],
+      "acceptance_cases": [
+        "Permuted-label and held-label canaries",
+        "Member failure/unequal widths/target transform",
+        "Interpreter versus emitted fitted predictions"
+      ],
+      "completion_criterion": "Composable candidates with exact fit boundaries; no assumed benchmark gain.",
+      "source_sections": [
+        "S1:7.6",
+        "S3:4",
+        "S4:7",
+        "S5:6",
+        "S6:7.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I55",
+      "title": "Add DAG union, routing and wide-column actions",
+      "area": "language",
+      "dependencies": [
+        "I08",
+        "I09",
+        "I54"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/feat-math/src/math_expr/evolution/v2/mod.rs",
+        "crates/feat-math/src/kernel/profile.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/combinators/union.rs",
+        "crates/feat-math/src/combinators/route.rs"
+      ],
+      "symbols": [
+        "ColumnRef",
+        "Union",
+        "Route",
+        "SharedFitNode"
+      ],
+      "steps": [
+        "Bound DAG sharing/width/depth and fit effects",
+        "Make column references schema-bound rather than first8 truncation",
+        "Define lazy routing versus eagerly fit branches explicitly",
+        "Register new IDs and old-byte compatible bridges"
+      ],
+      "acceptance_cases": [
+        "Columns17/63 and shuffled schema preserve intended meaning",
+        "Cycle/shared target-aware fit refusal",
+        "Worst-case width/fuel and unsupported emitter target"
+      ],
+      "completion_criterion": "New representation expands reachable programs through validated typed actions.",
+      "source_sections": [
+        "S1:7.6",
+        "S3:4",
+        "S4:7",
+        "S5:6",
+        "S6:7.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I56",
+      "title": "Qualify motifs as additive search macros",
+      "area": "language",
+      "dependencies": [
+        "I08",
+        "I19",
+        "I24",
+        "I38",
+        "I44"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-motifs/src/mine.rs",
+        "crates/jope-motifs/src/validate.rs",
+        "crates/jope-motifs/src/export.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-motifs/src/promote.rs"
+      ],
+      "symbols": [
+        "MotifAdmission",
+        "ExpansionWitness",
+        "VocabularyMigration"
+      ],
+      "steps": [
+        "Preserve existing quarantine and exact expansion",
+        "Propose compression/reuse benefit without treating it as measured search gain",
+        "Run preregistered with/without macro contrast only after admission",
+        "New macro token/vocabulary migration explicit; old policies see expansion under old semantics"
+      ],
+      "acceptance_cases": [
+        "Expansion exactness and nested macro limits",
+        "Finite probe similarity not semantic proof",
+        "No archive leakage from judge or protected family"
+      ],
+      "completion_criterion": "Only validated empirically useful macros enter declared research profile.",
+      "source_sections": [
+        "S1:7.7",
+        "S3:4",
+        "S4:15",
+        "S5:7",
+        "S6:6.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I57",
+      "title": "Gate foundation-model primitives and distilled emission",
+      "area": "language",
+      "dependencies": [
+        "I04",
+        "I08",
+        "I09",
+        "I54"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-encoders/src/foundation.rs",
+        "crates/jope-models/src/publish.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/feat-math/src/fm_oof.rs",
+        "docs/contracts/foundation-operator-admission.md"
+      ],
+      "symbols": [
+        "FoundationOp",
+        "LicenseAdmission",
+        "DistillationReceipt"
+      ],
+      "steps": [
+        "Verify actual license, model checksum, runtime and product eligibility from current primary source before selection",
+        "Fit OOF features strictly inside train closure",
+        "Charge inference/model load and declare heavy runtime support",
+        "Distilled portable head is a separate candidate requiring its own parity/quality proof, not equivalent by assertion"
+      ],
+      "acceptance_cases": [
+        "Sealed/context target exposure denied",
+        "Unavailable license/runtime remains research-disabled",
+        "Teacher versus distilled predictions and artifact identities kept separate"
+      ],
+      "completion_criterion": "Optional capability with explicit license/compute/semantic gates; no external model download or spend now.",
+      "source_sections": [
+        "S1:7.6",
+        "S3:4",
+        "S4:15",
+        "S5:7",
+        "S6:7.5"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I58",
+      "title": "Constrain generated kernels below scientific authority",
+      "area": "security",
+      "dependencies": [
+        "I08",
+        "I09",
+        "I16",
+        "I42"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/feat-math/src/math_expr.rs",
+        "crates/jope-pipeline/src/execution.rs",
+        "docs/parity/capability-matrix.md"
+      ],
+      "proposed_write_paths": [
+        "docs/contracts/restricted-kernel-candidate.md",
+        "crates/feat-math/src/kernel/restricted_candidate.rs"
+      ],
+      "symbols": [
+        "RestrictedKernel",
+        "FuelBound",
+        "SandboxCapability"
+      ],
+      "steps": [
+        "Define total pure numeric subset and bounded fold/scan without network/files/processes",
+        "Keep generated code outside trusted evaluator/splits/receipt/promotion kernel",
+        "Require existing verified confinement plus adversarial isolation review; cgroups alone insufficient",
+        "Admit staged interpreter/isolatedcompile/parity/research only after evidence"
+      ],
+      "acceptance_cases": [
+        "Escape attempts, resource exhaustion, nondeterminism and hidden external state",
+        "Wrong toolchain/target/source digest refused",
+        "No self-issued certificate or scientific-kernel modification"
+      ],
+      "completion_criterion": "Disabled experimental design with tested constraints before any code-invention campaign.",
+      "source_sections": [
+        "S1:7.6",
+        "S3:8",
+        "S4:15",
+        "S5:7",
+        "S6:7.5",
+        "S8:8"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I59",
+      "title": "Evaluate ranked reward and curriculum without promotion shortcuts",
+      "area": "science",
+      "dependencies": [
+        "I37",
+        "I40",
+        "I41"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-learning/src/clover/round_qual.rs",
+        "crates/jope-learning/src/pools/bootstrap.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/selfplay/ranked.rs",
+        "crates/jope-learning/src/selfplay/curriculum.rs"
+      ],
+      "symbols": [
+        "RankedRewardView",
+        "CurriculumSnapshot"
+      ],
+      "steps": [
+        "Freeze raw utility, buffer, alpha/tie rule and policy generation for every view",
+        "Do not replace raw outcomes or qualification endpoint with ranked sign",
+        "Start fixed planted task schedule; learned adversary requires solvability and real-transfer evidence",
+        "Maintain actual curriculum exposure ancestry and bounded replay"
+      ],
+      "acceptance_cases": [
+        "Cold/empty buffer and ties deterministic under pinned RNG",
+        "Changing alpha creates a new view not changed raw measurement",
+        "Synthetic success never qualifies real-family improvement"
+      ],
+      "completion_criterion": "A reproducible training curriculum candidate, separate from accepted policy evidence.",
+      "source_sections": [
+        "S1:6.7",
+        "S4:15",
+        "S5:7",
+        "S6:6.3-6.4"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I60",
+      "title": "Defer league complexity until accepted competitors exist",
+      "area": "science",
+      "dependencies": [
+        "I40",
+        "I41",
+        "I43"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-arena/src/lib.rs",
+        "crates/jope-bench/src/methods.rs"
+      ],
+      "proposed_write_paths": [
+        "crates/jope-learning/src/selfplay/league.rs"
+      ],
+      "symbols": [
+        "LeagueMember",
+        "PayoffManifest",
+        "PFSP"
+      ],
+      "steps": [
+        "Always retain frozen parent/simple controls; distinguish baseline table from adaptive league",
+        "Resolve2/3/5member entry proposals conservatively through evidence, not a magic count",
+        "Require actual accepted competitive policies and demonstrated specialization/nontransitivity before PSRO",
+        "Never use descriptive Elo to authorize serving promotion"
+      ],
+      "acceptance_cases": [
+        "Partial coverage and changed protocol cannot join one payoff table",
+        "Historical member identity and cost preserved",
+        "No qualification outcomes enter training matchmaking memory"
+      ],
+      "completion_criterion": "Minimal frozen comparison registry first; advanced league remains explicitly deferred.",
+      "source_sections": [
+        "S1:6.6,10.5",
+        "S3:3",
+        "S4:15",
+        "S5:7",
+        "S6:6.7"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I61",
+      "title": "Expose thin research CLI and receipt-backed status",
+      "area": "operations",
+      "dependencies": [
+        "I15",
+        "I30",
+        "I40",
+        "I44",
+        "I45"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "crates/jope-cli/src/main.rs",
+        "crates/jope-records/src/main.rs",
+        "crates/jope-learning/src/main.rs"
+      ],
+      "proposed_write_paths": [
+        "docs/runbooks/research-workflow.md"
+      ],
+      "symbols": [
+        "research doctor",
+        "research status",
+        "research verify",
+        "research brief"
+      ],
+      "steps": [
+        "Choose one public CLI route with thin existing-library adapters",
+        "Preserve existing binaries as compatibility aliases until consumers migrate",
+        "Every mutating verb has explicit intent/grant and dry-run; no business rules in UI",
+        "Show source/fixture/CI/live/science/serving as distinct states from receipts"
+      ],
+      "acceptance_cases": [
+        "Unavailable capability yields stable nonzero code and machine reason",
+        "No command existence presented as executed proof",
+        "Status stale evidence labeled dated, not producer-freshened"
+      ],
+      "completion_criterion": "Operators and agents can reproduce exact state without reading competing narrative boards.",
+      "source_sections": [
+        "S1:13M6",
+        "S3:12",
+        "S4:16",
+        "S5:9",
+        "S6:15R10"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I62",
+      "title": "Plan maintainability changes without disrupting held consumers",
+      "area": "operations",
+      "dependencies": [
+        "I01",
+        "I18",
+        "I45",
+        "I53"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "docs/adr/ADR-0006-rust-only-stack.md",
+        "crates/jope-campaigns/src/evaluation_v2.rs",
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "proposed_write_paths": [
+        "docs/plans/algorithmic-selfplay-20261017/ARCHIVE_CANDIDATES.md",
+        "docs/subsystems/algorithmic-selfplay.md"
+      ],
+      "symbols": [
+        "EvaluatorIdentityV1",
+        "ArchiveManifest",
+        "OwnerMap"
+      ],
+      "steps": [
+        "Verify ADR0006 actual filename and active caller graph before any moves",
+        "Keep plans for campaign/evolve/Python split separate from execution-critical changes",
+        "Preserve source-byte evaluator identity inputs and independent old replay route",
+        "No delete/move of active logs/locks/history or Python runtime until owner release and parity/custody proof"
+      ],
+      "acceptance_cases": [
+        "Unknown consumers block archive",
+        "Module/feature test inventories compared before/after proposed transition",
+        "Source hashing changes get explicit identity migration"
+      ],
+      "completion_criterion": "Reviewable ownership/archive plan; no broad source or documentation churn in the first closure path.",
+      "source_sections": [
+        "S1:13",
+        "S4:16,17",
+        "S5:9",
+        "S6:15"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I63",
+      "title": "Make the one integration PR reviewable and continuously current",
+      "area": "delivery",
+      "dependencies": [
+        "I01",
+        "I02"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "AGENTS.md",
+        ".github/workflows/ci.yml",
+        ".github/workflows/full-main.yml",
+        "docs/runbooks/runner.md"
+      ],
+      "proposed_write_paths": [
+        "docs/plans/algorithmic-selfplay-20261017/PR_ACCEPTANCE.md"
+      ],
+      "symbols": [
+        "ExactHeadGate",
+        "IndependentReview",
+        "ReceivingMainReceipt"
+      ],
+      "steps": [
+        "Wait for355 reviewed merge and receiving-main green; preserve its owner and original receipts",
+        "Claim one source branch/worktree under shared .agent root; no stacked PRs or sibling clones",
+        "Use ordered focused commits and feature gates inside one PR; no automatic opening of34/36spec PRs",
+        "Pin exact final head, full current-attempt CI and independent eligible review; changed head invalidates both"
+      ],
+      "acceptance_cases": [
+        "Paginated associated author/committer eligibility versus reviewer",
+        "Full-attempt CI not mixed partial rerun or stale head",
+        "Original rebase command/result receipt plus receiving main guard retained"
+      ],
+      "completion_criterion": "One PR, exact-head source tests and genuine independent review; receiving evidence before any completion claim.",
+      "source_sections": [
+        "Human:one large PR and no stacking",
+        "S1:14",
+        "S3:9",
+        "S4:17",
+        "S5:9",
+        "S6:16"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I64",
+      "title": "Validate local CI placement and preserve runner guards",
+      "area": "delivery",
+      "dependencies": [
+        "I01",
+        "I16",
+        "I63"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 3,
+      "existing_read_first": [
+        "docs/runbooks/runner.md",
+        ".github/workflows/ci.yml",
+        ".github/workflows/full-main.yml"
+      ],
+      "proposed_write_paths": [
+        "docs/plans/algorithmic-selfplay-20261017/CI_PLACEMENT.md"
+      ],
+      "symbols": [
+        "RunId",
+        "Attempt",
+        "RunnerName",
+        "JobId"
+      ],
+      "steps": [
+        "Read actual current runner labels/status and workflow paths before dispatch",
+        "Use existing xbabe1/2/3 local CI with one reused job-scoped target and trusted-main separation",
+        "Record physical job host, SHA, attempt, timestamps and declared skips",
+        "xbabe3 protective50GiB gate stays; no threshold weakening, blind restart or unqualified reclamation"
+      ],
+      "acceptance_cases": [
+        "Offline/blocked runner not passed coverage",
+        "Cancelled/missing/zero-collected lane blocks relevant gate",
+        "Documentation path skips recorded as skipped-by-path"
+      ],
+      "completion_criterion": "CI evidence states exactly which tests actually ran on which host and preserves capacity blockers.",
+      "source_sections": [
+        "Human:local CI on3hosts",
+        "AGENTS:verification and runner contract"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I65",
+      "title": "Run separate prospective experiments only after admission",
+      "area": "science",
+      "dependencies": [
+        "I30",
+        "I32",
+        "I38",
+        "I40",
+        "I41",
+        "I42",
+        "I44",
+        "I64",
+        "I66"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "docs/experiments/experiments.jsonl",
+        "docs/internal/clover/selfplay-round1-prereg.v1.json"
+      ],
+      "proposed_write_paths": [
+        "docs/plans/algorithmic-selfplay-20261017/EXPERIMENT_QUEUE.md"
+      ],
+      "symbols": [
+        "Preregistration",
+        "ExecutionGrant",
+        "CampaignBudget"
+      ],
+      "steps": [
+        "Preserve each spec wave hypothesis under origin IDs; allocate new actual experiment IDs only under ledger lock",
+        "First calibrate development throughput/variance/support coverage; do not assume stale cost forecasts",
+        "Freeze budget/device/roster/deadline/primary/controls/stop rules before first outcome",
+        "Keep null/negative/inconclusive and benchmark records separate; no restart of expired X2/X4 or old rounds"
+      ],
+      "acceptance_cases": [
+        "Receipt closure and actual optimizer updates/changed child/next use",
+        "Powered family transfer and fresh-feedback contrast distinct",
+        "Full-coverage frozen benchmark separate from self-play qualification"
+      ],
+      "completion_criterion": "Every execution has prospective specific admission and truthful terminal capsule, including valid failure.",
+      "source_sections": [
+        "S1:15",
+        "S3:10",
+        "S4:12,17",
+        "S5:7",
+        "S6:17",
+        "S8:10"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    },
+    {
+      "id": "I66",
+      "title": "Preserve detailed per-wave training evidence and compact Git context",
+      "area": "memory",
+      "dependencies": [
+        "I02",
+        "I05",
+        "I13",
+        "I27",
+        "I44",
+        "I46",
+        "I48"
+      ],
+      "status": "PROPOSED_NOT_EXECUTED",
+      "owner": "UNASSIGNED_IMPLEMENTATION",
+      "weight": 5,
+      "existing_read_first": [
+        "crates/jope-engine/src/training/consumption.rs",
+        "crates/jope-engine/src/training/checkpoint_commit.rs",
+        "crates/jope-learning/src/progress/engine.rs",
+        "crates/jope-records/src/paper_trace.rs"
+      ],
+      "proposed_write_paths": [
+        "docs/contracts/wave-evidence-and-git-context.v1.md",
+        "schemas/jope.wave-evidence.v1.schema.json",
+        "crates/jope-learning/src/research/wave_archive.rs",
+        "crates/jope-records/src/research/wave_git.rs",
+        "docs/research/waves/INDEX.jsonl"
+      ],
+      "symbols": [
+        "WaveEvidenceManifest",
+        "TrainingTraceShard",
+        "CompressedContext",
+        "GitPublicationReceipt"
+      ],
+      "steps": [
+        "Capture every version/wave including aborted/rejected/inconclusive: immutable intent, input/role/support versions, draw/attempt lineage, detailed per-step/per-head telemetry, consumed replay/update evidence, optimizer/checkpoint ancestry and terminal outcomes",
+        "Pack numeric/event traces in versioned columnar Zstd shards, content-addressed and manifest-last under the existing state/mirror abstraction; retain actual source evidence and failure/censoring detail",
+        "Compile a small deterministic Git record and semantically compressed context with exact references, unknowns, causal limits and next falsifier; never put bulk tensors/datasets/private rows/secrets in Git",
+        "Require offline manifest verification and a clean reconstruction drill for declared review/resume promises; publish Git records through the sole reviewed PR writer and report local/remote/Git pending states honestly"
+      ],
+      "acceptance_cases": [
+        "Each wave/version has complete detailed data closure or explicit missing-data reason; no silent success-only archive",
+        "Byte-stable compact context resolves every number to detailed evidence; Git byte budgets enforced",
+        "Crash/lost response resumes archive and Git-publication bookkeeping without retraining; Git publication cannot create hash cycle or claim unearned remote durability"
+      ],
+      "completion_criterion": "Every wave/version is reviewable from a compact Git entry plus verified detailed evidence roots, with measured information/byte and complete provenance.",
+      "source_sections": [
+        "Human:2026-10-17 detailed training data and compressed context per version/wave saved and managed with Git",
+        "S1:11-12",
+        "S4:13-14",
+        "S5:5.6,8",
+        "S6:13-14"
+      ],
+      "execution_grant": "NONE; planning is not campaign admission",
+      "validation_tier": "fixture first; runtime/science separately admitted",
+      "rollback": "Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history."
+    }
+  ]
+}

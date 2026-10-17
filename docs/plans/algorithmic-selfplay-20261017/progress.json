@@ -1,0 +1,52 @@
+{
+  "schema": "jope.unified-workplan.progress/v1",
+  "revision": 3,
+  "updated_at": "2026-10-17T20:31:25.348928+00:00",
+  "planning": {
+    "input_files_verified": 8,
+    "unique_inputs": 6,
+    "sections_indexed": 123,
+    "units_indexed": 2427,
+    "semantic_review": "COMPLETE_TEXT_RECONCILIATION_WITH_EXPLICIT_LIMITS; see SEMANTIC_REVIEW.md",
+    "detailed_implementation_packets": 66,
+    "decisions": 26,
+    "validation": "STATIC_PASS; see VALIDATION.json; source CI separate",
+    "pr": "VALIDATED_PACKET_HANDOFF_TO_EXISTING_WRITER"
+  },
+  "implementation": {
+    "tasks": 66,
+    "verified_done": 0,
+    "weighted_verified_done": 0,
+    "weighted_total": 230,
+    "percent_verified_of_this_new_programme": 0,
+    "meaning": "No newly planned implementation packet has been proved complete by this preparation. Existing related capabilities are not scored as absent."
+  },
+  "science": {
+    "new_campaigns_started": 0,
+    "new_qualified_policy_improvements": 0,
+    "new_benchmark_records": 0,
+    "completion_percent": null,
+    "reason": "No adopted complete scientific denominator/admission; specification scores are not completion percentages."
+  },
+  "serving": {
+    "changed": false,
+    "qualified_promotion": false
+  },
+  "native_reviews": {
+    "grok": "BLOCKED_HTTP402_USAGE_BALANCE_EXHAUSTED",
+    "claude": "REQUEUED_AFTER_NO_STAY_PARKED_OLD_TRAINING_PROMPT;ACTUAL_ACK_PENDING",
+    "codex": "COMPLETED_NATIVE_READ_ONLY_REVIEW;30findings26packets;exactmodelUNKNOWN"
+  },
+  "holds": [
+    "canonical dirty/private notes",
+    "original native GPU grant",
+    "scientific roster/one-look/admission",
+    "custody/fullfilesystem/protectedmissingrecord"
+  ],
+  "ledger_writer": "Codex Root chat01a13a98",
+  "capacity": {
+    "observed_at": "2026-10-17T20:19:49Z",
+    "all_three_hosts_local_CI": "ONLINE_IDLE",
+    "xbabe3_prior_disk_hold": "HISTORICAL;guard unchanged;freshroot_available193779666944"
+  }
+}

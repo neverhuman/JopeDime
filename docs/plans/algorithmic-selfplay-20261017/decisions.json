@@ -1,0 +1,283 @@
+{
+  "schema": "jope.unified-workplan.decisions/v1",
+  "decisions": [
+    {
+      "id": "D01",
+      "status": "ADOPT",
+      "title": "One human-requested integration PR",
+      "decision": "Convert every embedded PR sequence to ordered internal work packets/commits. Finish existing355 lifecycle first. A planning PR is not the full implemented or scientifically qualified system.",
+      "task_ids": [
+        "I63"
+      ]
+    },
+    {
+      "id": "D02",
+      "status": "ADOPT",
+      "title": "Existing authority and source pin",
+      "decision": "Read actual current code and AGENTS; preserve dirty canonical797f and private310 notes.8fc is a dated planning pin; revalidate against receiving main.",
+      "task_ids": [
+        "I01",
+        "I63"
+      ]
+    },
+    {
+      "id": "D03",
+      "status": "ADOPT",
+      "title": "Existing updates versus closure",
+      "decision": "Do not describe all learning as zero-update. Historical optimizer updates, fresh-loop closure, benefit at discovery, serving adoption and sustained improvement are separate proof obligations.",
+      "task_ids": [
+        "I31",
+        "I32",
+        "I40",
+        "I41"
+      ]
+    },
+    {
+      "id": "D04",
+      "status": "ADOPT_WITH_LIMITS",
+      "title": "Development discovery scoreboard",
+      "decision": "Add exact best-of-B/AUC only with declared law/support/cost. L6 can remain stability diagnostic. Do not retroactively rejudge previous confirmatory decisions or erase negative outcomes.",
+      "task_ids": [
+        "I29",
+        "I30",
+        "I41"
+      ]
+    },
+    {
+      "id": "D05",
+      "status": "HOLD_SCIENTIFIC_ADOPTION",
+      "title": "Changing F10 or sealed-family authority",
+      "decision": "S1 changes endpoint/contexts while saying F10 unchanged; S5/S6 require adopted roster. Existing accepted F10 remains; a new discovery protocol needs prospective ADR, exposure boundary, independent issuer and look budget.",
+      "task_ids": [
+        "I41",
+        "I42",
+        "I43"
+      ]
+    },
+    {
+      "id": "D06",
+      "status": "ADOPT",
+      "title": "One existing native trainer",
+      "decision": "Reuse jope-parallel native trainer/coordinator/checkpoint/consumption. Preserve original GPU dispatch hold. No fourth trainer, second scheduler, silent Python exception or moment fabrication.",
+      "task_ids": [
+        "I11",
+        "I12",
+        "I13",
+        "I31"
+      ]
+    },
+    {
+      "id": "D07",
+      "status": "ADOPT",
+      "title": "Ancestry versus numeric step",
+      "decision": "A legitimate epoch3000 descendant may be a challenger; random70000 is not. Version new export/lineage path without weakening exact accepted release checks.",
+      "task_ids": [
+        "I11",
+        "I14"
+      ]
+    },
+    {
+      "id": "D08",
+      "status": "ADOPT",
+      "title": "Strategy versus vocabulary",
+      "decision": "Existing SearchProfile is vocabulary; new SearchStrategy is algorithm. Preserve two orthogonal IDs and inject learning/store adapters to avoid dependency cycle.",
+      "task_ids": [
+        "I17",
+        "I18"
+      ]
+    },
+    {
+      "id": "D09",
+      "status": "DEFER_DEFAULT_CHOICE",
+      "title": "Conflicting modern-GP defaults",
+      "decision": "S1 proposes8x16islands; S6 steady-state16-64aging; S4/S5 common controller. Preserve as candidate profiles with component ablations; no universal new default or claimed benefit.",
+      "task_ids": [
+        "I19",
+        "I65"
+      ]
+    },
+    {
+      "id": "D10",
+      "status": "ADOPT",
+      "title": "Typed additive semantics and generated registry",
+      "decision": "Preserve stable IDs/frozen RNG arrays and old grammar bytes. Distinguish lag dialects, strict parameters for new versions, nested fit effects and numeric identity changes.",
+      "task_ids": [
+        "I07",
+        "I08",
+        "I10"
+      ]
+    },
+    {
+      "id": "D11",
+      "status": "ADOPT_WITH_LIMITS",
+      "title": "Exact arena conditions",
+      "decision": "F(x)^B requires IID replacement draws from fixed fully measured law.95percent support does not make full-policy result exact. Conditional/partial/adaptive results have explicit different labels/estimands.",
+      "task_ids": [
+        "I29",
+        "I30"
+      ]
+    },
+    {
+      "id": "D12",
+      "status": "ADOPT_WITH_LIMITS",
+      "title": "Behavior probability",
+      "decision": "Thompson posterior samples are not action propensities. Continuous density and discrete probability differ. GP ancestry is not its seed density; unknown behavior law excludes unbiased PG/OPE claims.",
+      "task_ids": [
+        "I05",
+        "I06",
+        "I23",
+        "I35"
+      ]
+    },
+    {
+      "id": "D13",
+      "status": "ADOPT_WITH_LIMITS",
+      "title": "Fingerprint similarity",
+      "decision": "Finite probe agreement does not justify copying full measured outcomes or proving semantic equivalence. Use advisory novelty/screening until a valid equivalence proof.",
+      "task_ids": [
+        "I22",
+        "I37",
+        "I56"
+      ]
+    },
+    {
+      "id": "D14",
+      "status": "DEFER_ARCHITECTURE_CHOICE",
+      "title": "Native critic, v3 family and KernelNet",
+      "decision": "S1 Kumo2051/open401 and S6 native2048columnKernelNet are incompatible proposals. First close existing native lineage; critic-only candidate first; architecture/context migration is explicit independent experiment.",
+      "task_ids": [
+        "I33",
+        "I34",
+        "I35"
+      ]
+    },
+    {
+      "id": "D15",
+      "status": "DEFER_RECIPE_CHOICE",
+      "title": "Objectives and schedules",
+      "decision": "AWR/PKPO/HLGauss/quantile/EMA/WSD/cosine/shrinkperturb are ablation proposals with conflicting coefficients. Preserve current controls and objective IDs; freeze only after eligibility/parity review.",
+      "task_ids": [
+        "I35",
+        "I65"
+      ]
+    },
+    {
+      "id": "D16",
+      "status": "ADOPT",
+      "title": "No exposure laundering",
+      "decision": "Reject historical test_adaptive representation pretraining by default despite S1 suggestion. Any later reuse needs governed role revision and independent future qualification boundary; no old claim upgrade.",
+      "task_ids": [
+        "I04",
+        "I28"
+      ]
+    },
+    {
+      "id": "D17",
+      "status": "ADOPT",
+      "title": "Existing CAS and credentials",
+      "decision": "Conditional writes and credential_process already exist. Fix exact verified remaining content/refresh gaps, not a duplicate store or stale IMDS diagnosis. Live IAM/S3 operations remain separately admitted.",
+      "task_ids": [
+        "I46",
+        "I49"
+      ]
+    },
+    {
+      "id": "D18",
+      "status": "ADOPT_WITH_LIMITS",
+      "title": "One authority namespace and derived lake",
+      "decision": "Use research/v2 design namespace; lake/outcome tables are derived role-filtered views. Do not promote staging or infer current estate from September inventory. Final installed prefix needs owner decision.",
+      "task_ids": [
+        "I15",
+        "I28"
+      ]
+    },
+    {
+      "id": "D19",
+      "status": "HOLD_STATISTICAL_CLAIM",
+      "title": "Adaptive thinning unbiasedness",
+      "decision": "S6 adaptive surprise with reused deterministic u does not establish known marginal inclusion pi. HT totals differ from ratio means; repeated adaptive designs require full selection-history proof. Start fixed bounded replay; no automatic unbiasedness claim.",
+      "task_ids": [
+        "I36",
+        "I51"
+      ]
+    },
+    {
+      "id": "D20",
+      "status": "REJECT_AUTOMATIC_APPLY",
+      "title": "Expiry and cleanup",
+      "decision": "No blanket30day noncurrent expiry, tensor expiry or signed-plan-only bypass of live pins. Exact physical versions, recovery obligations, publisher fencing, independent restoration and separate execution admission are required. Never delete symlink folders.",
+      "task_ids": [
+        "I50",
+        "I51",
+        "I52",
+        "I53"
+      ]
+    },
+    {
+      "id": "D21",
+      "status": "ADOPT_WITH_LIMITS",
+      "title": "Memory truth",
+      "decision": "CI containing0 is inconclusive unless an equivalence design establishes a null. Do not automatically pool correlated/adaptively selected experiments into qualified beliefs. Memory is derived; unknowns/nulls and limitations survive.",
+      "task_ids": [
+        "I44",
+        "I45"
+      ]
+    },
+    {
+      "id": "D22",
+      "status": "DEFER",
+      "title": "Deep MCTS, league and code evolution",
+      "decision": "Root search only after measured teacher review; deeper search after calibrated value and matched wins. League2/3/5member thresholds conflict: require actual accepted competitive policies and evidence of need. Generated code cannot edit scientific kernel.",
+      "task_ids": [
+        "I38",
+        "I39",
+        "I58",
+        "I60"
+      ]
+    },
+    {
+      "id": "D23",
+      "status": "ADOPT",
+      "title": "Conservative maintainability",
+      "decision": "No compulsory wholesale history moves, source deletion, Python archive or campaign split on critical path. Preserve locks, held consumers and source-byte evaluator identities. Generated concise state is additive first.",
+      "task_ids": [
+        "I45",
+        "I53",
+        "I62"
+      ]
+    },
+    {
+      "id": "D24",
+      "status": "ADOPT",
+      "title": "Honest progress and review identity",
+      "decision": "Plan indexing, semantic review, source implementation, fixture proof, CI, live execution, science and serving have separate percentages/states. Grok402 is blocked; real contributions/identity needed, process names are insufficient.",
+      "task_ids": [
+        "I01",
+        "I63",
+        "I65"
+      ]
+    },
+    {
+      "id": "D25",
+      "status": "ADOPT_HUMAN_REQUIREMENT",
+      "title": "Per-version/wave detailed data plus compact Git context",
+      "decision": "Every wave including failure saves detailed compressed training/outcome evidence and a deterministic compact Git manifest/context. Bulk evidence remains in verified content-addressed state/mirror storage; Git carries schemas, compact facts, evidence roots and tiny fixtures. Optimize measured information/byte, never erase scientific detail or retention obligations.",
+      "task_ids": [
+        "I44",
+        "I48",
+        "I66"
+      ]
+    },
+    {
+      "id": "D26",
+      "status": "HOLD_SCIENTIFIC_ADOPTION",
+      "title": "Competing discovery endpoints and calculators",
+      "decision": "S4 terminal regularized log-MSE, S5 selected-artifact log-RMSE AUC on log-budget, and S1 linear-budget q-AUC/best-of-B differ. Freeze one prospective primary/margin/cost/alpha contract before outcomes; others remain named diagnostics. Reuse qualify::promotion::decide and its exact SplitMix64/type1 quantile convention rather than silently mixing context-weighted bootstrap calculators.",
+      "task_ids": [
+        "I30",
+        "I41",
+        "I42"
+      ]
+    }
+  ]
+}

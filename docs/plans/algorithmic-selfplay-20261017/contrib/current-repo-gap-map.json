@@ -1,0 +1,295 @@
+{
+  "gaps_by_subsystem": [
+    {
+      "exact_gap": "(1) In `ContextualSurrogateQHat::fit`, failed or single-parent LOPO ridge subfits fall back via `.unwrap_or(&model.ridge)` (in-sample ridge) and report `inner_cv_loss = 0.0`, conflating unavailable OOF estimation with zero error. (2) Target-derived program priors/kNN/SoS statistics are computed over the outer-training pool before the inner LOPO lambda-selection loop rather than refitted per inner fold. (3) No `GbdtSurrogate` (using `feat_math::boost2`) ladder rung R2 comparator exists yet alongside `ContextualSurrogateQHat`.",
+      "existing_code_pins": [
+        "crates/jope-learning/src/pools/selectors.rs:523,983,1011,1131,1329 (`ContextualSurrogateQHat`, `let oof_ridge = oof_ridges[f].as_ref().unwrap_or(&model.ridge);`, `inner_cv_loss: 0.0` when <2 parents)",
+        "crates/jope-learning/src/pools/evaluate.rs:1-420",
+        "crates/jope-learning/src/pools/flywheel.rs:1-510"
+      ],
+      "existing_tests": [
+        "crates/jope-learning/src/pools/selectors.rs:1305 (`test_single_parent_qhat`)",
+        "crates/jope-learning/tests/pools_cli.rs"
+      ],
+      "gap_id": "GAP-01-SURROGATE-INNER-CV-AND-FOLD-LOCAL-FEATURES",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "selectors::tests::inner_cv_never_falls_back_to_in_sample_ridge",
+          "selectors::tests::inner_cv_target_priors_are_fold_local_under_label_permutation",
+          "selectors::tests::legacy_v2_method_id_preserved_for_c190_reproduction"
+        ],
+        "files": [
+          "crates/jope-learning/src/pools/selectors.rs",
+          "crates/jope-learning/src/pools/evaluate.rs"
+        ],
+        "functions_and_types": [
+          "InnerCvEstimate::{VerifiedOof { loss: f64, folds: usize }, Unavailable { reason: InnerCvUnavailableReason }}",
+          "fit_fold_local_target_priors(rows, held_out_parent_cluster)",
+          "GbdtSurrogate::fit_lopo(pool_rows, config) (optional R2 comparator)"
+        ]
+      },
+      "source_specs": [
+        "S4:F01,P02,P03",
+        "S6:K7,PR19",
+        "S8:A04"
+      ],
+      "status_at_head": "PARTIAL_WITH_CONTAMINATION_AND_FALLBACK_RISK"
+    },
+    {
+      "exact_gap": "(1) `selfplay-round1-prereg.v1.json` declares `seed_cap_b: 8` while `run_selfplay_ratchet` (`expansion.rs:952`) rejects `seed_cap_b > search::ELITES` (`4`). (2) Under measured tilt (`tau=0.25, A_max=2, eta=0.2, q_new=0.05, p_new_cap=0.12`), within-block logits span at most `0.8` so maximum KL is ~0.0725 < 0.10 (`S6:K4`); full-support KL and effective-sample-size diagnostics must be reported explicitly. (3) `run_selfplay_ratchet` is an offline surrogate simulation (`policy_optimizer_updates: 0`); it is not yet bridged to a real child checkpoint export (`jope.checkpoint_export.v2` / `jope.policy-lineage/v1`) and equal-resource `PolicyVsParentAtEqualResources` evaluation.",
+      "existing_code_pins": [
+        "crates/jope-learning/src/clover/expansion.rs:572,915,925,952,1461 (`run_selfplay_ratchet` enforces `(1..=search::ELITES).contains(&seed_cap_b)` where `ELITES = 4` and hardcodes `policy_optimizer_updates: 0`)",
+        "crates/jope-learning/src/clover/round_qual.rs:9,581,2059 (`RoundQualReport` unconditionally sets `qualified_claim: false`, `promotion: false`, `l6_claim: false`)",
+        "docs/internal/clover/selfplay-round1-prereg.v1.json (`seed_cap_b: 8`, `PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT`)",
+        "crates/jope-learning/src/qualify/promotion.rs:103,322,643 (`min_families >= 2` guard)",
+        "crates/jope-engine/src/native_loop.rs & crates/jope-engine/src/training.rs (`AdamW::new(1e-4, 0.01)`)"
+      ],
+      "existing_tests": [
+        "crates/jope-learning/tests/selfplay_round_qual.rs (11 integration tests)",
+        "crates/jope-learning/src/clover/round_qual.rs (2 unit tests)",
+        "crates/jope-learning/src/clover/expansion.rs (12 unit tests)"
+      ],
+      "gap_id": "GAP-02-SELFPLAY-ROUND-CLOSURE-KL-GUARD-AND-SEED-CAP",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "selfplay_round_qual::prereg_seed_cap_reconciles_with_ratchet_elites_cap",
+          "selfplay_round_qual::tilt_diagnostics_report_theoretical_kl_ceiling_and_ess",
+          "selfplay_round_qual::teacher_gate_blocks_unqualified_search_distillation"
+        ],
+        "files": [
+          "crates/jope-learning/src/clover/expansion.rs",
+          "crates/jope-learning/src/clover/round_qual.rs",
+          "crates/jope-learning/src/qualify/promotion.rs",
+          "crates/jope-learning/src/support/probability.rs"
+        ],
+        "functions_and_types": [
+          "TiltDiagnostics { kl_to_base: f64, theoretical_max_kl: f64, effective_sample_size_ratio: f64 }",
+          "Endpoint::PolicyVsParentAtEqualResources",
+          "TeacherQualificationGate::verify_equal_fit_dominance"
+        ]
+      },
+      "source_specs": [
+        "S1:PR-28,PR-30",
+        "S3:PR12,PR13",
+        "S4:F02,F06,P06,P10,P11",
+        "S5:F01,F04,F08,PR04-PR08",
+        "S6:K4,K5,PR22,PR24,PR25,PR28",
+        "S8:A01,A03,A08"
+      ],
+      "status_at_head": "DIAGNOSTIC_VERIFIER_ONLY_ZERO_OPTIMIZER_UPDATES"
+    },
+    {
+      "exact_gap": "(1) `feat-math/src/stage_cache.rs` is already implemented and tested in `feat-math`, but `jope-pipeline/src/search.rs::evaluate` does not wire `fit_with_stage_cache` or record cache hit/miss telemetry and per-fit CPU usage in receipts (`S6:K8,PR07`). (2) Shipped `jope-pipeline` search and `jope-bench` search profiles (`legacy`, `lite_race`, `kernel2`) are configured separately rather than sharing one versioned `SearchProfile` / `SearchStrategy` descriptor recorded in receipts.",
+      "existing_code_pins": [
+        "crates/feat-math/src/stage_cache.rs:35,94 (`StageCacheCtx`, `StageCache` with SHA-256 chain keys and 6 GiB cap)",
+        "crates/feat-math/src/evolve.rs (`evolve_with_config`, `evolve_lite_race`, `fit_with_stage_cache`)",
+        "crates/jope-pipeline/src/search.rs (`evaluate` calls `feat_math::fit` without `StageCache`)",
+        "crates/jope-pipeline/src/neural_search.rs",
+        "crates/jope-bench/src/methods.rs"
+      ],
+      "existing_tests": [
+        "crates/feat-math/src/stage_cache.rs (unit tests)",
+        "crates/jope-pipeline/src/search.rs (unit tests)"
+      ],
+      "gap_id": "GAP-03-SEARCH-PROFILE-UNIFICATION-AND-STAGE-CACHE",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "search::tests::stage_cache_on_off_produces_bitwise_identical_predictions_and_scores",
+          "search::tests::receipt_records_search_profile_descriptor_and_cache_telemetry"
+        ],
+        "files": [
+          "crates/jope-pipeline/src/search.rs",
+          "crates/jope-pipeline/src/receipt.rs"
+        ],
+        "functions_and_types": [
+          "SearchProfileDescriptor { profile_id, pop_size, generations, elites, stage_cache_enabled, seed_source }",
+          "StageCacheTelemetry { hits: u64, misses: u64, bytes_cached: usize }"
+        ]
+      },
+      "source_specs": [
+        "S1:PR-11..13",
+        "S3:PR02,PR10",
+        "S4:F03,P05,P16",
+        "S5:PR11",
+        "S6:K8,PR07,PR08,PR10",
+        "S8:A01,A05"
+      ],
+      "status_at_head": "DIVERGENT_PIPELINE_AND_BENCH_PROFILES_STAGE_CACHE_UNWIRED_IN_PIPELINE"
+    },
+    {
+      "exact_gap": "(1) Five separate head/operator tables across `spec.rs`, `evolve.rs`, `heads.rs`, `full_rust.rs`, and `kernel/capabilities.rs` disagree on `hurdle2` vs `portfolio` (`S6:K10`). (2) `EmitOptions::partition_point_quantile_bounds` is proven to fix all 6/6 `EXP-008` inner-cut parity failures (`C191`), while `EmitOptions::default()` preserves legacy midpoint search for ADR-0004 backwards compatibility. (3) Emitter target capability matrix (Python, Rust, C++17, C++17-recipe-v2, C++20, JS) and per-target artifact digest binding (`battle-artifact/v2`) need explicit machine-readable declaration so unsupported head/target combinations fail closed.",
+      "existing_code_pins": [
+        "crates/feat-math/src/spec.rs:304 (`HEAD_OPS` has `portfolio` but omits `hurdle2`)",
+        "crates/feat-math/src/evolve.rs:45 (`HEAD_OPS` has `hurdle2` but omits `portfolio`)",
+        "crates/feat-math/src/transpile.rs:115,247 (`EmitOptions::partition_point_quantile_bounds` defaults to `false`)",
+        "crates/feat-math/src/emit_cpp.rs:221-226 & crates/feat-math/src/emit_js.rs:146-151 (C++17 recipe and JS emitters support only `ridge`/`elasticnet` heads and no target transforms)",
+        "crates/feat-math/src/ops.rs (`poly_interact` parses `topk` parameter in DSL but ignores it during execution, `S6:L3`)"
+      ],
+      "existing_tests": [
+        "crates/feat-math/tests/clover_quantile.rs (verifies 6/6 EXP-008 cuts pass at 0.0 max delta under `partition_point_quantile_bounds: true`)",
+        "crates/feat-math/src/transpile.rs (unit tests)"
+      ],
+      "gap_id": "GAP-04-GP-OPERATOR-REGISTRY-HEAD-LIST-DRIFT-AND-EMITTER-BINDING",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "capabilities::tests::all_head_lists_and_emitter_capabilities_are_consistent",
+          "transpile::tests::unsupported_target_head_combination_fails_closed_with_diagnostic"
+        ],
+        "files": [
+          "crates/feat-math/src/kernel/capabilities.rs",
+          "crates/feat-math/src/spec.rs",
+          "crates/feat-math/src/transpile.rs"
+        ],
+        "functions_and_types": [
+          "verify_head_list_consistency() / unified operator capability matrix",
+          "EmitterTargetSupportMatrix::check_program_support(genome, target)"
+        ]
+      },
+      "source_specs": [
+        "S1:PR-03,PR-18..20",
+        "S3:PR04,PR15",
+        "S4:F04,F05,P13..P15",
+        "S5:F05,PR16,PR17,PR22",
+        "S6:K10,K11,L3,PR02..PR06,PR14",
+        "S8:A02,A09"
+      ],
+      "status_at_head": "FIVE_HEAD_LISTS_DISAGREE_AND_QUANTILE_FIX_OPT_IN_ONLY"
+    },
+    {
+      "exact_gap": "(1) The production `reward_runtime_encoded` branch mean-pools token embeddings without positions or AST structure (`S5:F02`, `S6:Appendix A`), making `(pipe X (standardize) (winsor))` and `(pipe X (winsor) (standardize))` identical to the reward head. (2) `AdamW` in `neural.rs:919-920` decays 1D bias and `LayerNorm` parameters alongside 2D weight matrices (`S6:K9`).",
+      "existing_code_pins": [
+        "crates/jope-engine/src/neural.rs:514-515 (`reward_runtime_encoded` uses masked mean pooling `(self.reward_token.forward(tokens) * &mask).sum_dim_intlist(...)`)",
+        "crates/jope-engine/src/neural.rs:205 (`parallel.reward_program_attention_2x256x4.v1` experimental attention encoder)",
+        "crates/jope-engine/src/neural.rs:919-920 & crates/jope-engine/src/training.rs:332,1463 (`AdamW::new(1e-4, 0.01)` applies weight decay uniformly to all tensors including biases and LayerNorm gains, with constant LR 1e-4)"
+      ],
+      "existing_tests": [
+        "crates/jope-engine/src/neural.rs (unit tests)",
+        "crates/jope-engine/src/training.rs (unit tests)"
+      ],
+      "gap_id": "GAP-05-NEURAL-CRITIC-ORDER-BLINDNESS-AND-OPTIMIZER-DECAY-GROUPS",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "neural::tests::order_sensitive_attention_encoder_distinguishes_non_commuting_stages",
+          "neural::tests::param_group_weight_decay_exempts_biases_and_layernorm"
+        ],
+        "files": [
+          "crates/jope-engine/src/neural.rs",
+          "crates/jope-engine/src/training.rs"
+        ],
+        "functions_and_types": [
+          "AdamWParamGroupRule::DecayMatrixOnly (exempting bias and LayerNorm/embedding parameters when opted in by recipe version)",
+          "Order-sensitive program-encoder test fixture contrasting non-commuting operator permutations"
+        ]
+      },
+      "source_specs": [
+        "S1:PR-27,PR-28",
+        "S4:P18,P19",
+        "S5:F02,F03,PR12,PR14",
+        "S6:K7,K9,PR20,PR21",
+        "S8:A03"
+      ],
+      "status_at_head": "MEAN_POOL_REWARD_ENCODER_AND_UNIFORM_ADAMW_WEIGHT_DECAY"
+    },
+    {
+      "exact_gap": "(1) `crates/jope-models/src/publish.rs:48-55` checks only `size == f.bytes` when a blob key already exists in the store (`S5:F06`), rather than verifying content SHA-256 on readback or racing create. (2) `distill_gp_results_index_with_stats` (`distilled.rs:688-809`) drops unscored/failed attempts rather than emitting an all-attempt observation summary (`S1:PR-05`, `S5:F07,PR03`). (3) Retention `refs.rs` / `inventory.rs` remain read-only classifiers (`EXPIRE: 0 groups`), which is safe and must stay non-destructive under current custody holds.",
+      "existing_code_pins": [
+        "crates/jope-models/src/publish.rs:48-55 (`if let Some(size) = store.size(&key).await?` accepts pre-existing blob on byte-size match without verifying SHA-256 digest)",
+        "crates/jope-datasets/src/credentials.rs:88-145 (`aws configure export-credentials --format env` already implemented)",
+        "crates/jope-learning/src/mirror.rs (conditional `PutMode::Update{e_tag, version}` already implemented)",
+        "crates/jope-learning/src/retention/distilled.rs:688-809 (`distill_gp_results_index_with_stats` skips unscored runs)",
+        "crates/jope-learning/src/retention/plan.rs:640,1062 (`EXPIRE` refused without object-level E1-E5 evidence)"
+      ],
+      "existing_tests": [
+        "crates/jope-models/src/publish.rs (unit tests)",
+        "crates/jope-learning/src/retention/plan.rs (unit tests)",
+        "crates/jope-learning/src/retention/distilled.rs (unit tests)"
+      ],
+      "gap_id": "GAP-06-S3-MODEL-PUBLISH-HASH-CHECK-AND-RETENTION-PROOFS",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "publish::tests::existing_blob_with_matching_size_but_corrupt_bytes_is_rejected",
+          "distilled::tests::attempt_census_accounts_for_every_input_index_entry"
+        ],
+        "files": [
+          "crates/jope-models/src/publish.rs",
+          "crates/jope-learning/src/retention/distilled.rs"
+        ],
+        "functions_and_types": [
+          "publish.rs: verify SHA-256 digest of existing remote blob when `store.size(&key)` matches `f.bytes`",
+          "DistillAttemptCensus { total_entries, scored_rows, unscored_rows, incomplete_provenance_rows }"
+        ]
+      },
+      "source_specs": [
+        "S1:PR-05,PR-31,PR-32",
+        "S3:PR05,PR06",
+        "S4:F07..F10,P08,P21..P26",
+        "S5:F06,F07,PR02,PR03,PR10,PR26..PR29",
+        "S6:K1,K2,K6,PR16,PR17,PR31",
+        "S8:A06"
+      ],
+      "status_at_head": "PUBLISH_SIZE_ONLY_CHECK_ON_EXISTING_BLOBS_AND_RETENTION_READ_ONLY"
+    },
+    {
+      "exact_gap": "PR #354 and PR #355 establish deterministic CI verification over `claims.json`, the 4 SVG figures, `experiments.jsonl` (`EXP-001`..`EXP-018`), `docs/experiments/README.md`, and `SYNTHESIS_AND_NEXT_EXPERIMENTS.md`. Remaining additive items from S1/S3/S4/S5/S6/S8 are deterministic `ResearchCapsuleV2` / `baseline_facts` projection views in `jope-records` that compile directly from committed receipts and `experiments.jsonl` without LLM prose.",
+      "existing_code_pins": [
+        "crates/jope-records/src/paper_trace.rs (extended in PR #354 `8fcf7c62` and PR #355 `2563bff2` to verify `claims.json`, `NUMBERS_TRACE.md`, `TECHNICAL_WRITEUP.md`, `README.md`, 4 SVG figures, `docs/experiments/experiments.jsonl`, `docs/experiments/README.md`, and `docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md`)",
+        "docs/experiments/schema.v1.json & docs/experiments/experiments.jsonl (18 records `EXP-001`..`EXP-018`)"
+      ],
+      "existing_tests": [
+        "crates/jope-records/src/paper_trace.rs (`the_committed_documents_agree`, `source_parts_resolve_to_single_files_only`)",
+        "crates/jope-records/tests/records.rs"
+      ],
+      "gap_id": "GAP-07-RESEARCH-CAPSULE-V2-AND-BASELINE-FACTS-VERIFICATION",
+      "proposed_integration_targets": {
+        "acceptance_tests": [
+          "paper_trace::tests::the_committed_documents_agree"
+        ],
+        "files": [
+          "crates/jope-records/src/paper_trace.rs",
+          "crates/jope-records/src/lib.rs"
+        ],
+        "functions_and_types": [
+          "deterministic capsule/baseline-facts summary check in `jope-records`"
+        ]
+      },
+      "source_specs": [
+        "S1:PR-01,PR-02",
+        "S3:PR01,PR08",
+        "S4:P01,P09",
+        "S5:PR01,PR09",
+        "S6:PR01,PR11",
+        "S8:A07"
+      ],
+      "status_at_head": "PAPER_TRACE_AND_EXPERIMENTS_V1_ACTIVE_IN_PR354_AND_PR355"
+    }
+  ],
+  "request_id": "JOPEDIME-8SPEC-20261017",
+  "schema": "jope.8spec-current-repo-gap-map/v1",
+  "single_post_pr355_integration_pr_plan": {
+    "human_constraint": "One cohesive integration PR after PR #355 merges via rebase and receiving main CI is green; no stacking while PR #355 is open; no new training/science campaigns, S3/IAM mutations, or cleanup releases.",
+    "planned_modules_in_single_pr": [
+      "1. `crates/jope-models/src/publish.rs`: reject pre-existing remote blobs whose byte size matches `f.bytes` but whose SHA-256 content digest mismatches (`GAP-06`, S5 F06).",
+      "2. `crates/jope-learning/src/pools/selectors.rs`: add explicit typed `InnerCvStatus` / fold-local target-prior refit option and non-fallback verification while preserving `contextual_surrogate_qhat/v2` backwards reproduction (`GAP-01`, S4 F01).",
+      "3. `crates/jope-learning/src/clover/expansion.rs` & `round_qual.rs`: add explicit `TiltDiagnostics` (theoretical max KL ceiling + ESS ratio under measured tilt `S6:K4`) and reconcile `seed_cap_b` validation with preregistered `ELITES` bounds (`GAP-02`, S6 K4/K5).",
+      "4. `crates/feat-math/src/kernel/capabilities.rs` & `spec.rs`: add unified head-list / emitter-target capability consistency check (`GAP-04`, S6 K10/K11).",
+      "5. `crates/jope-pipeline/src/search.rs` & `receipt.rs`: wire optional `StageCache` telemetry and `SearchProfileDescriptor` reporting in search receipts (`GAP-03`, S6 K8/PR07/PR08)."
+    ]
+  },
+  "timestamp_utc": "2026-10-17T17:35:00Z",
+  "verified_repo_baseline": {
+    "canonical_main_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+    "experiment_records": 18,
+    "governing_contracts": [
+      "AGENTS.md",
+      "docs/adr/ADR-0005-canonical-learning-loop.md",
+      "docs/adr/ADR-0004-evaluator-identity.md",
+      "docs/adr/ADR-0006-rust-consolidation.md",
+      "MASTER_PLAN.md"
+    ],
+    "open_pr355_head_sha": "2563bff23a5a936d0e0ce5b87af5404baac57a55",
+    "paper_claims": 186,
+    "rust_tests_listed": 5010,
+    "tracked_paths": 4576,
+    "workspace_members": 26
+  }
+}
