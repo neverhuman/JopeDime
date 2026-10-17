@@ -439,3 +439,14 @@ the text no longer occurs in the write-up.
 | `If $r = (0.5, 0.5)$ and $b = (1, 1)$` | 0.5, 0.693 | Appendix A worked numbers, illustrative arithmetic |
 | `A program ten times better than the mean predictor on both folds` | 10, 2.303 | Appendix A worked numbers, illustrative arithmetic |
 | `The clip at $\log 1000 \approx 6.908$` | 6.908 | Appendix A worked numbers, illustrative arithmetic |
+
+## Committed SVG figures
+
+Every SVG figure in `docs/paper/figures/` is generated deterministically from committed repository inputs with zero hardcoded coordinates:
+
+| Figure | Path | SHA-256 | Committed inputs and claims |
+| --- | --- | --- | --- |
+| Write-up Figure 1 (page 1) | `docs/paper/figures/why-it-matters.svg` | `af0b272a9440bf657343d3240a76db87fd9f4a50208064b42fd4efac63de65cd` | `docs/paper/figures/v1_full_validation.dat` (`C26`, `C27`), `docs/paper/claims.json` (`C76`, `C190`), verified by `jope-records paper-trace` (`crates/jope-records/src/paper_figure.rs`) |
+| Write-up Figure 2 (§10.3.2) | `docs/paper/figures/clover-why-it-matters-3panel.svg` | `04590ecc014a7856f1a97751cb6d3e7115b4efc6886bcc45c7f886503f42669d` | `docs/paper/figures/v1_full_validation.dat` (`C26`, `C27`), `docs/paper/claims.json` (`C76`, `C174`, `C186`–`C190`), `docs/experiments/experiments.jsonl` (`EXP-007`, `EXP-014`–`EXP-018`) |
+| Write-up Figure 3 (§10.3.2) | `docs/paper/figures/parity-census-and-exp008-replay.svg` | `d5195b56e8b03e3718355e2f58e472c037cc8bbe2b7c988c1dcb33cad6c04f84` | `docs/paper/claims.json` (`C41`–`C43`, `C49`, `C167`, `C191`), `docs/internal/clover/exp-008-quantile-parity-replay.20261017.json`, `docs/experiments/experiments.jsonl` (`EXP-008`) |
+| `README.md` Measured results overview | `docs/paper/figures/readme-clover-overview.svg` | `9128edc49717eb138f2b49f45ecc25ec00c61fe91b5358ff1b631bfa057367f7` | `assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv`, `docs/paper/claims.json` (`C76`, `C190`), `docs/experiments/experiments.jsonl` (`EXP-018`) |
