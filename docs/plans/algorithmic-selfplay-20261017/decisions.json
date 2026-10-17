@@ -278,6 +278,59 @@
         "I41",
         "I42"
       ]
+    },
+    {
+      "id": "D27",
+      "status": "ADOPT",
+      "title": "Native fixture feature gates and zero-test trap",
+      "decision": "Current objective_fixtures, continuation_modes, checkpoint_commit and committed_updates are cfg(neural). Explicit --features neural plus supported LibTorch are required to collect them; default-feature CI success is not their coverage. Native_loop_continuation is a distinct CPU/default protocol test.",
+      "task_ids": [
+        "I11",
+        "I12",
+        "I13",
+        "I14",
+        "I31",
+        "I32",
+        "I35",
+        "I64"
+      ]
+    },
+    {
+      "id": "D28",
+      "status": "ADOPT",
+      "title": "Witness epoch compatibility is part of successor design",
+      "decision": "Claude located eval_registry/witness/epochs.rs numeric-step window restriction. Versioned successor design must cover witness window rules as well as native_loop and challenger loader; it cannot just lower a step threshold or release original numerical/adoption holds.",
+      "task_ids": [
+        "I11",
+        "I12",
+        "I14",
+        "I40",
+        "I42"
+      ]
+    },
+    {
+      "id": "D29",
+      "status": "ADOPT",
+      "title": "One state/claim vocabulary; historical partial waves",
+      "decision": "Use proposed versioned round-event states with distinct research/serving decisions and capsule-publication-pending state. Do not reuse L6 as claim-level name. Archive truncated/aborted historical waves only as HISTORICAL_PARTIAL from admitted retained evidence, with missing prefixes/admission/stop-label caveats. No protected-history rescan or synthetic field reconstruction.",
+      "task_ids": [
+        "I40",
+        "I44",
+        "I45",
+        "I66"
+      ]
+    },
+    {
+      "id": "D30",
+      "status": "ADOPT",
+      "title": "Disclosure-filter Git context and resolve real content identities",
+      "decision": "Git is an export boundary: role/disclosure policy applies to compact context and aggregate metrics too. Do not publish sealed family IDs, targets, protected feedback, private rows or secrets by summarizing them. Pin source content/custody object hashes and physical versions rather than a scratch symlink path; never delete that symlink or probe protected old assets to fill gaps.",
+      "task_ids": [
+        "I04",
+        "I44",
+        "I49",
+        "I66"
+      ]
     }
   ]
 }

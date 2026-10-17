@@ -87,7 +87,7 @@ Candidate commands after confirming features/targets and ownership (not executed
 rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 cargo test -p jope-learning --test selfplay_round_qual
 rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 cargo test -p feat-math --test kernel_codec
 rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 cargo test -p jope-policy --test grammar_differential
-rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 cargo test -p jope-parallel --test objective_fixtures
+rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 cargo test -p jope-parallel --features neural --test objective_fixtures
 rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_BUILD_JOBS=4 cargo test -p jope-learning --test mirror_reconcile
 rtk git diff --check
 ```
@@ -103,6 +103,8 @@ CI: preserve all declared exact-head PR/manual lanes, attempt IDs and physical p
 `tasks.json` is the single implementation backlog; `TODO.md` is its readable projection. `requirements.json` retains every indexed source paragraph/block and original work row with hash/lines and proposed routing. Indexing does not certify semantic acceptance. `decisions.json` records substantive choices/holds. `progress.json` separates planning, implementation, fixture, CI, live science and serving. `events.jsonl` is append-only with previous-event hash and revision; one Root ledger writer. Contributors append only their assigned `contrib/` file and report an exact stopped state. Unknowns remain null/unknown.
 
 Every handoff names full stoppedHEAD/base/branch/worktree, changed/dirty files, owner and path claim, source-spec hashes, commands/caps/exits/testcounts, durable receipt hashes, unresolved findings, live campaign/grant/deadline (orNONE), accepted pointer disposition and next permitted action. Never infer proof from a narrative. Independent review binds exact full finalHEAD and actual eligible identity; writer cannot become independent by switching login. Preserve original merge command/response receipt prospectively; do not reconstruct old missingmethod/modelsession evidence. After rebase merge verify remote state, main-guard and required receiving full-main jobs before closing source lifecycle. Custody retirement is a later separate evidence decision.
+
+See VALIDATION_MATRIX.md for per-packet exact baseline commands and the neural-feature zero-collection trap. Baseline regression checks do not prove newly added cases.
 
 ## Worker packets
 
@@ -542,6 +544,8 @@ Done: Legitimate low-step warm-start descendants are representable without prete
 Rollback: Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history.
 
 Source proposals: S5:5.1-5.3,5.9,5.10; S4:6,10; S6:10.1.
+
+I11 additional existing read-first anchor: crates/jope-engine/src/eval_registry/witness/epochs.rs. Its numeric-step window restriction must be covered by versioned compatibility, not bypassed.
 
 ### I12 — Freeze replay, numerical recipe and execution intent
 
@@ -2576,6 +2580,8 @@ Done: Every execution has prospective specific admission and truthful terminal c
 Rollback: Disable the new version/profile; preserve legacy readers, input identities, accepted parent, candidate evidence and failed receipts. Revert through the same reviewed PR; never reset shared history.
 
 Source proposals: S1:15; S3:10; S4:12,17; S5:7; S6:17; S8:10.
+
+D27-D30 supplemental decisions are in decisions.json and CLAUDE_RECONCILIATION.md: neural fixture feature gates, witness epochs, historical partial archives and disclosure-filtered Git exports.
 
 ### I66 — Preserve detailed per-wave training evidence and compact Git context
 
