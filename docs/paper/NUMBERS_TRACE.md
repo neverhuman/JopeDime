@@ -105,7 +105,7 @@ the `--help` count, which needs a build; the fresh-clone run printed it.
 | 26 members; 19 at 0.3.0, 7 at 8.0.0; 8 default | `cargo metadata --locked --no-deps` | 26; 19 + 7; 8 |
 | 17 subcommands plus hidden `motifs` | `jope --help` and `jope motifs --help` from the fresh clone of `73f9327fc` (logs in the audit directory, `fresh-clone-73f9327fc-help/`) | 17 listed, plus clap's own `help`; `motifs` is hidden and its help works |
 | 6 emit targets | the single-language arms of `fn languages` in `crates/jope-cli/src/kernel.rs` | 6 |
-| Rust 5,009 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (4,993 at the initial 2026-10-16 audit, then 5,009 after PRs #343, #346 and #349) | 5,009; 26; 72; 182 |
+| Rust 5,010 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (4,993 at the initial 2026-10-16 audit, then 5,010 after PRs #343, #346, #349 and the `EXP-008` parity replay test) | 5,010; 26; 72; 182 |
 | 9 PR jobs; 11 `full-` families | `.github/workflows/ci.yml` jobs; `deploy/ci/coverage.json` lanes | 9; 11 |
 | 679 coverage items, 24 lanes | `deploy/ci/coverage.json` (678 at the initial 2026-10-16 audit, 679 after PR #343) | 679; 24 |
 | Capability matrix 824 / 353 / 61 / 1 / 402 / 7 | the total row of `docs/parity/capability-matrix.md` | as printed |
@@ -121,7 +121,7 @@ reproduced their committed ladders byte for byte from a fresh clone.
 | Where | Problem | Change |
 | --- | --- | --- |
 | Arena block (generated) | cited `python/src/jope/research/index_combined_regression_evolution.py:183`, a file the Python removal archived | the renderer writes archived references as `8a55c4fef:<path>:<line>`, which `git show` reads; line 183 is the `best_rmse` minimum |
-| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` listed 4,993 (72 ignored) at the initial audit (now 5,009 with PRs #343, #346 and #349) | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
+| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` listed 4,993 (72 ignored) at the initial audit (now 5,010 with PRs #343, #346, #349 and the `EXP-008` parity replay test) | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
 | Install and check | `pipeline run --emit rust,python,cpp17,cpp20,js` emitted 2 artifacts in the fresh-clone run (the selected head has no C++ or JavaScript emitter) and the README did not say this can happen | a comment says unsupported targets are reported as not emitted |
 | CLOVER quick start, steps 3–5 | their inputs (`coverage.json`, `protocol.json`, the roster and its pack, `GP_RESULTS_INDEX.json`) are not in Git, so they cannot run from a clone; `ingest-coverage` left out the held-out context list that the pre-registered J9 run excluded | a host-inputs table; `--exclude-contexts`; the protocol identity read from the run receipt instead of hashing a `protocol.json` |
 | CLOVER quick start, steps 3–5 | `cargo run` without `--release`: in the fresh-clone run, `evaluate` took 767 s and `flywheel-distill` 8,125 s (2 h 15 min) in the debug profile, against 44 s and 570 s in release | the commands use `--release`, and a sentence gives both timings |
