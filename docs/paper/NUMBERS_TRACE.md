@@ -72,8 +72,10 @@ write-up. No pending claim was filled, and no sealed or held-out data was opened
 | 15 | Section 6.4, C93 | "About 98% of proposals" | about 98.5% of outbox rows (line 43); the "about 98% native" at line 39 counts verified outcomes, not proposals | 98.5% |
 | 16 | `claims.json` `tex`, C140, C93, C168 | C140 $[0.8964, 0.9022]$; C93 ≈98%; C168 "17 of 24", which its statement and value did not hold | the corrected record; for C168, the paired summary covers 17 of the 24 planned contexts (`GP_EXPANSION_STUDY.md:89-91,222`) | C140 and C93 `tex` print their record: $[0.8963, 0.9022]$, ≈98.5%; C168's statement and value now hold the 17 of 24 |
 
-Ledger totals move from 171 claims (112 established, 20 preliminary, 16 non-qualifying,
-23 pending) to 177 (118, 20, 16, 23), with the six new established claims C178–C183.
+Ledger totals moved from 171 claims (112 established, 20 preliminary, 16 non-qualifying,
+23 pending) to 177 (118, 20, 16, 23) with the six new established claims C178–C183, and then to
+184 (119 established, 20 preliminary, 22 non-qualifying, 23 pending) with the C184–C190 addendum
+(established C184; non-qualifying C185–C190).
 
 The Section 10 values were re-derived in a separate pass: 182 printed values in Sections 10.2, 10.3
 and 10.3.1, recomputed from the run receipts and judge records. 177 matched at the printed
@@ -103,9 +105,9 @@ the `--help` count, which needs a build; the fresh-clone run printed it.
 | 26 members; 19 at 0.3.0, 7 at 8.0.0; 8 default | `cargo metadata --locked --no-deps` | 26; 19 + 7; 8 |
 | 17 subcommands plus hidden `motifs` | `jope --help` and `jope motifs --help` from the fresh clone of `73f9327fc` (logs in the audit directory, `fresh-clone-73f9327fc-help/`) | 17 listed, plus clap's own `help`; `motifs` is hidden and its help works |
 | 6 emit targets | the single-language arms of `fn languages` in `crates/jope-cli/src/kernel.rs` | 6 |
-| Rust 4,993 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (it recorded 4,189 and 66, and missed 785 tests that `main` lists) | 4,993; 26; 72; 182 |
+| Rust 5,009 listed, 26 packages, 72 ignored; Python 182 | `docs/parity/test-inventory.json`, refreshed by `deploy/ci/test-inventory.sh --update` (4,993 at the initial 2026-10-16 audit, then 5,009 after PRs #343, #346 and #349) | 5,009; 26; 72; 182 |
 | 9 PR jobs; 11 `full-` families | `.github/workflows/ci.yml` jobs; `deploy/ci/coverage.json` lanes | 9; 11 |
-| 678 coverage items, 24 lanes | `deploy/ci/coverage.json` | 678; 24 |
+| 679 coverage items, 24 lanes | `deploy/ci/coverage.json` (678 at the initial 2026-10-16 audit, 679 after PR #343) | 679; 24 |
 | Capability matrix 824 / 353 / 61 / 1 / 402 / 7 | the total row of `docs/parity/capability-matrix.md` | as printed |
 | 40 synthetic fixtures, 10 test datasets | `datasets/synthetic/catalog.json`, `datasets/manifest.json` | 40; 10 |
 | 1,184 `.py` files, 159 under `python/`; 6 ADRs | `git ls-files` | 1,184; 159; 6 |
@@ -119,7 +121,7 @@ reproduced their committed ladders byte for byte from a fresh clone.
 | Where | Problem | Change |
 | --- | --- | --- |
 | Arena block (generated) | cited `python/src/jope/research/index_combined_regression_evolution.py:183`, a file the Python removal archived | the renderer writes archived references as `8a55c4fef:<path>:<line>`, which `git show` reads; line 183 is the `best_rmse` minimum |
-| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` on this tree lists 4,993 (72 ignored): 785 that `main` already had and the inventory missed, and 19 added by this change | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
+| At a glance, Rust tests | `docs/parity/test-inventory.json` recorded 4,189 tests (66 ignored); its own guard adds tests without failing, and `cargo nextest list` listed 4,993 (72 ignored) at the initial audit (now 5,009 with PRs #343, #346 and #349) | inventory refreshed with `deploy/ci/test-inventory.sh --update`; README row updated |
 | Install and check | `pipeline run --emit rust,python,cpp17,cpp20,js` emitted 2 artifacts in the fresh-clone run (the selected head has no C++ or JavaScript emitter) and the README did not say this can happen | a comment says unsupported targets are reported as not emitted |
 | CLOVER quick start, steps 3–5 | their inputs (`coverage.json`, `protocol.json`, the roster and its pack, `GP_RESULTS_INDEX.json`) are not in Git, so they cannot run from a clone; `ingest-coverage` left out the held-out context list that the pre-registered J9 run excluded | a host-inputs table; `--exclude-contexts`; the protocol identity read from the run receipt instead of hashing a `protocol.json` |
 | CLOVER quick start, steps 3–5 | `cargo run` without `--release`: in the fresh-clone run, `evaluate` took 767 s and `flywheel-distill` 8,125 s (2 h 15 min) in the debug profile, against 44 s and 570 s in release | the commands use `--release`, and a sentence gives both timings |
@@ -133,25 +135,29 @@ The quick start was run from fresh clones; see [Fresh-clone run](#fresh-clone-ru
 
 ## Figure 1
 
-Figure 1 (`figures/why-it-matters.svg`, under the abstract) is drawn only from established claims.
-It shows why the work matters: what the frozen first generation could not do.
+Figure 1 (`figures/why-it-matters.svg`, under the abstract) is drawn from established claims C26,
+C27 and C76 plus non-qualifying shadow-pool claim C190, with no hand-typed coordinates in prose. It
+shows why the work matters: the first generation stopped improving, its outcome head ranked fresh
+programs at chance, and the post-C183 S3 SoS-debiased contextual surrogate shadow lift remains
+explicitly non-qualifying.
 
 | Panel | Data | How it was checked |
 | --- | --- | --- |
 | (a) full validation loss by closed epoch, the plateau shaded | `figures/v1_full_validation.dat`, SHA-256 `8155223d…35e3`: C27's pin | `extract_v1_curves.sh` (scaffold, `tex/figures/scripts/`) re-run on 2026-10-16 against the CAPTURE root's `copy/training/`. It reproduced the file byte for byte, and its 40 input hashes match the scaffold's `SOURCES.sha256`. |
-| (b) the outcome head's pairwise ranking accuracy on fresh programs, chance marked | C76's value and lineage count, read from `claims.json` | C76's pin re-hashed on xbabe2 (Claim trace below) |
+| (b) fresh-program pairwise ranking accuracy (established C76) vs. S3 SoS-debiased surrogate shadow progression on `shadow-pool-v2` (non-qualifying C190), chance marked | C76's value and lineage count (`0.5056656 [0.4412160, 0.5684545]`, 32 lineages) and C190's `shadow-pool-v2` pairwise values (`R0 0.634318 -> R4 0.680342`, lift `+0.046025 [+0.039928, +0.051692]`, 255 parent clusters), read from `claims.json` | C76's and C190's pins re-hashed on xbabe2 (Claim trace below) |
 
-`paper-trace` re-renders the SVG from those two inputs and fails when:
+`paper-trace` re-renders the SVG from those inputs and fails when:
 
 - the data file is not C27's pin;
 - the plateau recomputed from the data is not C27's value (`[0.8968201, 0.8978393] over 31 epochs` from epoch 10, with epoch 9 outside the band);
 - the first, best and last losses are not C26's value;
-- C76 cannot be read;
+- C76 or C190 cannot be read;
 - the committed SVG differs from the rendering;
 - the write-up no longer shows the figure.
 
-`jope-records paper-trace --write-figure` rewrites the SVG. The planned three-panel teaser is still
-only a specification, because its panels need qualified receipts that do not exist yet (C114).
+`jope-records paper-trace --write-figure` rewrites the SVG. The planned three-panel confirmatory
+teaser is still only a specification, because its panels need qualified receipts that do not exist
+yet (C114).
 
 ## Other documents
 
