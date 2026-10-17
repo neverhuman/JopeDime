@@ -13,3 +13,5 @@ Every version/wave: detailed immutable training/outcome/consumption/checkpoint t
 Do not: changeF10 by proposal; call adaptive/missing-support arena exact; treat fingerprints as equality, Thompson scores as propensities or spec scores as progress; publish sealed summaries; delete by age/low value; weaken guards; forcepush; restart expired campaigns. New numeric/ABI semantics versioned. Protected links and recovery evidence remain.
 
 Static planning integrity passes; new programme implementation verified0/66 so far does not mean existing substrate missing. Qualified-science percentage unknown; no new benchmark or promotion claimed.
+
+Traceability correction (revision5): requirements.json now explicitly routes all232rows in22 reviewed work/slice/wave/delivery tables, including numeric-only IDs. SOURCE_TABLES.json inventories every Markdown table by exact source range/hash. The initial166-row heuristic is preserved as legacy_heuristic_context_rows and is not a complete work-item denominator. All123sections/2427source blocks and all6unique source bytes remain unchanged. Routing does not authorize execution.

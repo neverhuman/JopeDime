@@ -2625,3 +2625,5 @@ Rollback: Disable the new version/profile; preserve legacy readers, input identi
 
 Source proposals: Human:2026-10-17 detailed training data and compressed context per version/wave saved and managed with Git; S1:11-12; S4:13-14; S5:5.6,8; S6:13-14.
 
+
+Traceability correction (revision5): requirements.json now explicitly routes all232rows in22 reviewed work/slice/wave/delivery tables, including numeric-only IDs. SOURCE_TABLES.json inventories every Markdown table by exact source range/hash. The initial166-row heuristic is preserved as legacy_heuristic_context_rows and is not a complete work-item denominator. All123sections/2427source blocks and all6unique source bytes remain unchanged. Routing does not authorize execution.

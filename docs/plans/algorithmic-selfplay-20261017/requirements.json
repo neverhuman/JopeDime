@@ -1,5 +1,5 @@
 {
-  "schema": "jope.unified-workplan.source-index/v1",
+  "schema": "jope.unified-workplan.source-index/v2",
   "warning": "Complete source indexing is not semantic approval, implementation, CI, science or custody qualification.",
   "source_sections": [
     {
@@ -21897,6 +21897,3097 @@
   "original_work_items": [
     {
       "source_id": "S1",
+      "line": 1255,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-01**",
+      "original_row": "| **PR-01** | Generated `STATE.md`; root docs diet; `docs/INDEX.md` from front-matter (§13 M1, M2) | new `crates/jope-records/src/state.rs`, `crates/jope-records/src/doc_index.rs`; `crates/jope-records/src/main.rs` (subcommands `state`, `doc-index`); moves of `AGENT_CHAT.md`, `MASTER_PLAN.md` history, `MASTER_CLEAN_UP.md` into `docs/coordination/`; `AGENTS.md`, `CLAUDE.md` pointers; `deploy/ci/check.sh` (`--check` both) | moves only (`git log --follow` byte-identical); root Markdown ≤ 100 KB; `jope-records state --check` and `doc-index --check` in hygiene lane | 1 |",
+      "canonical_task_ids": [
+        "I45",
+        "I62"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1256,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-02**",
+      "original_row": "| **PR-02** | Research capsule compiler v2; backfill EXP-001…018; L0 index; belief ledger; CI verification (§12) | new `crates/jope-records/src/research/{mod,capsule,compile,verdict,render,index,dedupe}.rs`, new `schemas/jope.research-capsule.v2.schema.json`, generated `docs/research/{index.l0.txt,beliefs.jsonl,capsules/*.json}`; `crates/jope-records/src/claims.rs` (reuse evidence-graph types); `deploy/ci/check.sh` | `jope-records research verify --check` regenerates every capsule byte-identically; every numeric field resolves to a claim or receipt; `verdict.rs` reproduces the verdict of all 18 existing records; experiments.jsonl becomes a generated view | 1.5 |",
+      "canonical_task_ids": [
+        "I44",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1257,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-03**",
+      "original_row": "| **PR-03** | `battle-artifact-v2`: per-target digests for python, rust, cpp17, cpp20, javascript, cpp17-recipe-v2; fail on any requested-but-unbound target; `jope emit` writes the manifest (G4, issue #48) | `crates/feat-math/src/transpile.rs`, `crates/jope-pipeline/src/emit.rs` (`read_identity`), `crates/jope-pipeline/src/kernel2/publication.rs`, `crates/jope-cli/src/kernel.rs`, `crates/feat-math/examples/emit.rs`, `docs/emitters.md` | adversarial test: substitute a C++/JS file → verification fails for every target; v1 manifests still read (grandfathered, flagged) | 0.5 |",
+      "canonical_task_ids": [
+        "I09"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1258,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-04**",
+      "original_row": "| **PR-04** | Transition and decision logging in the shipped search, behaviour-preserving; lake row writers; `--seed-source {own_incumbent, knn_retrieval, policy}` with Kumo k-NN over the training roster, own-parent-lineage exclusion, and seed ancestry written to every receipt (W-04) | `crates/jope-pipeline/src/search.rs` (`offspring`, admission), migration events from `migrate` (`search.rs:449-486`), new `crates/jope-learning/src/lake/{mod,writer,schema}.rs`, new `schemas/jope.lake-{outcomes,edit-transitions,search-decisions}.v1.schema.json` | golden trace: identical champions, receipts and RNG streams with logging on vs off; 100% of measured children have a transition row with parent, operator and Δq | 1 |",
+      "canonical_task_ids": [
+        "I05",
+        "I20"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1259,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-05**",
+      "original_row": "| **PR-05** | Distiller keeps failures/unscored runs, per-row `split_role`, Parquet row groups with statistics and dictionaries; commit the `GP_RESULTS_INDEX.json` producer | `crates/jope-learning/src/retention/distilled.rs` (`distill_gp_results_index_with_stats`), `crates/jope-learning/src/retention/parquet.rs`, `crates/jope-learning/src/bin/jope_retention.rs`; new `crates/jope-learning/src/retention/index_producer.rs` | re-distilling the C190 index yields 18,380 rows (8,908 `completed` + 9,383 non-completed with reasons + 89 provenance-incomplete flagged); EXP-018's scored-row results reproduce exactly; DuckDB prunes by `family`/`date` | 1 |",
+      "canonical_task_ids": [
+        "I27"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1260,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-06**",
+      "original_row": "| **PR-06** | Lake v1 layout and role-filtered readers (§11.3) | `crates/jope-learning/src/lake/{reader,roles,compact}.rs` (new); `crates/jope-learning/Cargo.toml` (DuckDB, feature `lake`) | reader rejects `dconfirm`/`sealed`/`test_adaptive` for training and everything but `dtune` for the arena (tests); daily compaction to ≥ 128 MB row groups | 1 |",
+      "canonical_task_ids": [
+        "I28"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1261,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-07**",
+      "original_row": "| **PR-07** | Measured Universe + bulk measurement job (W-01) | new `crates/jope-learning/src/universe.rs`, new `crates/jope-learning/src/bin/jope_research.rs` (`measure` subcommand), in-process `feat_math::fit` fidelity levels | 6,640 × 26 D-tune table built; coverage report; every row carries `evaluator_id` and `role=dtune` | 1 |",
+      "canonical_task_ids": [
+        "I29"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1262,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-08**",
+      "original_row": "| **PR-08** | Exact arena: `J_B` by `F_π(x)^B`, coverage, simulated search harness (§6.5) | `crates/jope-learning/src/universe.rs` (`exact_best_of_b`, `coverage`), new `crates/jope-learning/src/arena_exact.rs`; port the exact trie log-prob (#278/#289; today Python only, `deploy/dl-flywheel/pipelines/rlfw/trie_logprob.py`) to Rust for catalog policies | closed form matches Monte-Carlo best-of-B within 3 s.e. on synthetic tables; W-02 runs in < 1 h | 1 |",
+      "canonical_task_ids": [
+        "I30"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1263,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-09**",
+      "original_row": "| **PR-09** | Scoped IAM roles and `jope research doctor --check-s3` (§11.6) | new `deploy/iam/*.json` policies; `crates/jope-datasets/src/credentials.rs` (role selection); `jope_research doctor` | each role can do exactly its allowed operations and is denied the rest, verified live; administrator principal no longer used by automation | 0.5 |",
+      "canonical_task_ids": [
+        "I49"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1264,
+      "table_id": "S1-T1253",
+      "original_id": "**PR-10**",
+      "original_row": "| **PR-10** | Quarantine the lineage-A control plane (§13 M3) | move `crates/jope-campaigns/src/bin/jope_selfplay_*`, `jope_task_learning_controller.rs`, `jope_queue_control.rs`, `src/selfplay_*`, `src/test_adaptive*` → new `crates/legacy/jope-lineage-a/`; root `Cargo.toml` members | identical workspace test pass set (nextest JSON diff); ADR-0004 identity unchanged; not in `default-members` or PR tier | 1 |",
+      "canonical_task_ids": [
+        "I62"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1270,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-11**",
+      "original_row": "| **PR-11** | `feat_math::kernel::strategy` + `SearchStrategy` (orthogonal to the existing vocabulary `kernel::profile::SearchProfile`); port `legacy_v1` | new `crates/feat-math/src/kernel/strategy/{mod,strategy,state,recorder}.rs` reusing `kernel::search` moves; `crates/jope-pipeline/src/search.rs` becomes a driver | `legacy_v1` reproduces current `jope pipeline run` receipts byte-for-byte on the 10 test datasets and the 10 regression synthetic fixtures (`jope pipeline run` is regression-only) | 1.5 |",
+      "canonical_task_ids": [
+        "I17",
+        "I18"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1271,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-12**",
+      "original_row": "| **PR-12** | Port `lite_race_v1` and `islands_lambda_v1`; `jope-bench` and `jope-pipeline` both call the kernel; strategy id and vocabulary-profile id in every receipt | `crates/feat-math/src/evolve.rs` (`evolve_lite_race_impl` → profile), `crates/jope-bench/src/methods.rs`, `crates/jope-bench/src/protocol.rs`, `crates/jope-pipeline/src/kernel2/cli.rs` (new `--search-strategy` beside the existing `--search-profile` in `ProfileArgs`), `deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs` (reference only) | `afm.lite-race.v1.resampled` same-cut ladder reproduces byte-for-byte via the kernel (`crates/jope-bench/tests/committed_evidence.rs`); README ladder now names the strategy it measured | 1.5 |",
+      "canonical_task_ids": [
+        "I17",
+        "I18"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1272,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-13**",
+      "original_row": "| **PR-13** | `modern_gp_v1` (§8.2): fidelity-ladder racing, head-aware promotion, per-island parent policies (ε-lexicase, tournament, novelty-quality, ALPS), ring migration with novelty, `stage_cache`, probe-hash dedup, best-child parent scoring; an `Allocator` wrapping `ContextualSurrogateQHat` (`crates/jope-learning/src/pools/selectors.rs`) as the core strategy's default (§6.2 Game A, §8.2 staging) | `crates/feat-math/src/kernel/strategy/{race,selection,migration,dedup}.rs` (new); `crates/feat-math/src/stage_cache.rs`; `crates/feat-math/src/kernel/lexicase.rs` (reuse) | W-05: beats `legacy_v1` and `lite_race_v1` on rung-2 discovery-AUC at equal CPU, or `lite_race_v1` becomes default | 2 |",
+      "canonical_task_ids": [
+        "I19"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1273,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-14**",
+      "original_row": "| **PR-14** | QD archive + island resets + power-law archive parent sampling (§8.7, §8.8) | new `crates/feat-math/src/kernel/strategy/qd.rs`, archive persistence in `crates/jope-learning/src/lake/` | versioned descriptors; QD-score and occupancy in round metrics; deterministic replay | 1 |",
+      "canonical_task_ids": [
+        "I24"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1274,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-15**",
+      "original_row": "| **PR-15** | Contextual Thompson operator bandit (§8.3) | new `crates/feat-math/src/kernel/strategy/bandit.rs` | exact propensities in transitions; uniform floor enforced; W-07 | 0.5 |",
+      "canonical_task_ids": [
+        "I23"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1275,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-16**",
+      "original_row": "| **PR-16** | Residual-guided edits (§8.4) | new `crates/feat-math/src/kernel/strategy/residual.rs` | diagnostics computed on train folds only (leakage test); proposals logged with `operator_source=residual` | 0.5 |",
+      "canonical_task_ids": [
+        "I25"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1276,
+      "table_id": "S1-T1268",
+      "original_id": "**PR-17**",
+      "original_row": "| **PR-17** | Gumbel root search with measured leaves; qualified-root teacher targets (§8.5) | new `crates/feat-math/src/kernel/strategy/gumbel_root.rs` (uses legacy mutation sampling until PR-19's edit ABI lands) | W-08; teacher targets written only for qualified roots | 1 |",
+      "canonical_task_ids": [
+        "I38",
+        "I39"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1282,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-18**",
+      "original_row": "| **PR-18** | `operators.toml` + codegen of all operator tables (§7.4); one `HEAD_OPS`; dead genes removed from new profiles; distinct ids for same-name operators (G1, G2, G5, G13) | new `crates/feat-math/registry/operators.toml`, extend the existing `crates/feat-math/build.rs` (today it compiles `cpp/fitted_runtime.cpp`); `crates/feat-math/src/{evolve.rs,spec.rs,registry.rs,kernel/profile.rs}`; `crates/jope-engine/assets/grammar/featmath.json` (generated); `docs/emitters.md` (generated) | legacy frozen arrays generated to identical bytes (`tests/compat_freeze.rs` green); a CI test fails on any hand-written operator list; portfolio-seeded programs survive mutation | 1.5 |",
+      "canonical_task_ids": [
+        "I07"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1283,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-19**",
+      "original_row": "| **PR-19** | `ProgramGraph` effect layer, `program_id_v2`, edit ABI, OOF fit plan for `FitTargetAware` (§7.3, §7.5; G3, G6, G7, G12; policy-vocabulary column pointers for G11) | new `crates/feat-math/src/ir/{graph,types,effects,canon,edit,legacy_bridge}.rs`; types sourced from `crates/feat-math/src/advanced_v3/grammar.rs` (remove `allow(dead_code)`) | round-trip of all lineage-B winners, `gp_distilled` programs and committed champions; legacy ids unchanged; OOF plan test on `target_bin_encode` | 2 |",
+      "canonical_task_ids": [
+        "I08"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1284,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-20**",
+      "original_row": "| **PR-20** | Numeric correctness under a new evaluator identity: NaN-aware ingest and impute, seeded GBM column subsampling, importance-based width cap, scale-relative clamp, shuffled `stack`/`ensemble` folds; generated target transforms (G8–G10, G14) | `crates/feat-math/src/{lib.rs,ops.rs,heads.rs,stack.rs,gpr.rs,krr.rs,ksmooth.rs,target_transform.rs}` | old identity row preserved in `crates/jope-campaigns/known-evaluator-identities.json`; differential tests old vs new; raw-target fixture with \\|y\\| > 60 no longer saturates | 1.5 |",
+      "canonical_task_ids": [
+        "I10"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1285,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-21**",
+      "original_row": "| **PR-21** | General OOF stacking, main-dialect categorical/missing handling, GBM fidelity (§7.6 P1) | `crates/feat-math/src/{stack.rs,members.rs,dsl.rs}`, `crates/feat-math/src/advanced_v3/input.rs` (port) | emitters cover `stack_of` in python and rust; parity census | 1.5 |",
+      "canonical_task_ids": [
+        "I54"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1286,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-22**",
+      "original_row": "| **PR-22** | Column-pointer expressions, `union`, `gate`, monotone, quantile heads (§7.6 P2; G11) | `crates/feat-math/src/math_expr/evolution/v2/mod.rs` (`.min(8)`), `crates/feat-math/src/kernel/profile.rs`, new ops in `operators.toml` | expression search reaches column ≥ 8 on a wide synthetic fixture | 2 |",
+      "canonical_task_ids": [
+        "I55"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1287,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-23**",
+      "original_row": "| **PR-23** | Motif promotion path (§7.7; W-15) | `crates/jope-motifs/src/{mine.rs,validate.rs}`, new `crates/jope-motifs/src/promote.rs`; registry `kind = \"macro\"` | simulated-search A/B harness; promotion receipt; vocabulary version bump | 1 |",
+      "canonical_task_ids": [
+        "I56"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1288,
+      "table_id": "S1-T1280",
+      "original_id": "**PR-24**",
+      "original_row": "| **PR-24** | FM components, licence-gated, with distilled heads for emission (§7.6 P2) | new `crates/feat-math/src/fm_oof.rs` (calls `jope-encoders`), registry entries | licence check refuses non-commercial weights for product profiles; emitted artifact is the distilled head with both program ids recorded | 2 |",
+      "canonical_task_ids": [
+        "I57"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1294,
+      "table_id": "S1-T1292",
+      "original_id": "**PR-25**",
+      "original_row": "| **PR-25** | Reproducible emitted builds + executable CAS cache (§11.2) | emitter build scripts under `deploy/ci/emitters/`; new `crates/jope-learning/src/exe_cache.rs` (generalising lineage A's `compiled_cache_key` in `crates/jope-campaigns/src/selfplay_core.rs` and the `jope_compile_cache` binary, which key on non-reproducible builds) | double-build byte-identity in CI; executable written once per distinct program | 1 |",
+      "canonical_task_ids": [
+        "I47"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1295,
+      "table_id": "S1-T1292",
+      "original_id": "**PR-26**",
+      "original_row": "| **PR-26** | Evaluation packs (call the existing `retention/pack.rs` and `tags.rs`), batched custody, in-process fidelity levels, keepers-only full custody | `crates/jope-learning/src/progress/{outbox,publish,cadence}.rs`, `crates/jope-learning/src/retention/{pack,tags}.rs` (first non-test callers) | ≤ 1.2 objects and ≤ 50 KB per non-keeper evaluation; custody share of wall time ≤ 30% measured | 1.5 |",
+      "canonical_task_ids": [
+        "I47",
+        "I50"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1301,
+      "table_id": "S1-T1299",
+      "original_id": "**PR-27**",
+      "original_row": "| **PR-27** | Value model V (N1, N2, N4): HL-Gauss `q`, binary comparator, censored runtime, within-context listwise (§9.2–9.4) | new `crates/jope-policy/src/v3/{context,program,value}.rs` (inference); training module (see PR-28 for trainer authority) | W-09 gate vs `ContextualSurrogateQHat` (`crates/jope-learning/src/pools/selectors.rs`) | 2 |",
+      "canonical_task_ids": [
+        "I33"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1302,
+      "table_id": "S1-T1299",
+      "original_id": "**PR-28**",
+      "original_row": "| **PR-28** | ADR-0007 one policy family; edit policy N3; AWR trainer on transitions; tch trainer grant verifier replacing the always-refusing hold (§9.7) | new `docs/adr/ADR-0007-one-policy-family.md`; new `crates/jope-policy/src/v3/edit_policy.rs`; `crates/jope-engine/src/training.rs`, `crates/jope-engine/src/training/objective.rs` (new objective id), `crates/jope-engine/src/task_contract.rs` (`require_original_gpu_grant` → scoped grant verifier) | EXP-005 recipe: bitwise CUDA next-update parity + CPU fixtures for the new step; W-11 | 3 |",
+      "canonical_task_ids": [
+        "I06",
+        "I31",
+        "I34",
+        "I35"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1303,
+      "table_id": "S1-T1299",
+      "original_id": "**PR-29**",
+      "original_row": "| **PR-29** | Planted-program task generator (Alice) and synthetic pre-training (§6.7, §9.3) | new `crates/jope-cli/src/generator/planted.rs` (extends `jope generate-fixtures`, `crates/jope-cli/src/generator/`); `jope_research synth` | solvability guard; `role=synthetic` enforced; W-10, W-16 | 1.5 |",
+      "canonical_task_ids": [
+        "I37"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1304,
+      "table_id": "S1-T1299",
+      "original_id": "**PR-30**",
+      "original_row": "| **PR-30** | Expert-iteration round state machine with controls and F10-on-discovery promotion (§9.6, §10.3) | new `crates/jope-learning/src/selfplay/{round,state,controls,promote}.rs`; `crates/jope-learning/src/clover/round_qual.rs` (accept `jope.selfplay-round/v2`); new `schemas/jope.selfplay-round.v2.schema.json` | every terminal state reachable in a fixture round; crash-resume at each transition idempotent; capsule emitted in all outcomes; W-12 | 2.5 |",
+      "canonical_task_ids": [
+        "I40",
+        "I41",
+        "I42",
+        "I43"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1310,
+      "table_id": "S1-T1308",
+      "original_id": "**PR-31**",
+      "original_row": "| **PR-31** | Retention brain v2 (§11.5): wire dormant knobs, per-group marginal value, supersession, E-rule provers (E1–E4 in `plan.rs`), separate apply tool with tombstones | `crates/jope-learning/src/retention/{classify,policy,plan}.rs`, `crates/jope-learning/src/retention/policy.v1.json` → `policy.v2.json`; new `crates/jope-learning/src/bin/jope_retention_apply.rs` (outside the statically guarded sources) | dry-run report on the live estate; static guard still passes for the classifier; apply refuses any plan whose sha the owner has not approved | 1.5 |",
+      "canonical_task_ids": [
+        "I50",
+        "I51",
+        "I52"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1311,
+      "table_id": "S1-T1308",
+      "original_id": "**PR-32**",
+      "original_row": "| **PR-32** | Populate the canonical learning layout; per-batch Parquet HWM snapshot; live two-writer and restore drill (§11.4) | `crates/jope-learning/src/{hwm.rs,sync.rs,mirror.rs}`; `catalogs/s3.json` regenerated from S3 Inventory | drill receipts; `learning-usw2` replica non-empty; `docs/learning.md:252-256` \"untested\" item closed | 1 |",
+      "canonical_task_ids": [
+        "I15",
+        "I46"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1312,
+      "table_id": "S1-T1308",
+      "original_id": "**PR-33**",
+      "original_row": "| **PR-33** | League registry, PFSP matchmaking, baseline opponents from `jope-bench` adapters; separate frozen Golden45 record campaign | new `crates/jope-learning/src/selfplay/league.rs`; `crates/jope-arena` (report) | league non-inferiority check in every promotion | 1.5 |",
+      "canonical_task_ids": [
+        "I60",
+        "I65"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1313,
+      "table_id": "S1-T1308",
+      "original_id": "**PR-34**",
+      "original_row": "| **PR-34** | `jope research` CLI consolidation; `OWNERS.toml` and subsystem cards (§13 M6, M8) | `crates/jope-learning/src/bin/jope_research.rs`; aliases for `jope_pools`, `jope_retention`, `jope_support`, `jope_custody`; new `docs/subsystems/*.md` | old binaries still work for one release | 1 |",
+      "canonical_task_ids": [
+        "I45",
+        "I61",
+        "I62"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1352,
+      "table_id": "S1-T1350",
+      "original_id": "**W-01**",
+      "original_row": "| **W-01** | Build the D-tune exact table | 6,640 catalog × 26 D-tune contexts, fold2 (172,640 evaluations) | — (infrastructure) | < 95% of the 6,640 × 26 cells measured after budget | ~50–300 C (0.125 s mean native two-fold eval in-process; the uncached verification stage alone adds 2.64 s per evaluation) | PR-07 |",
+      "canonical_task_ids": [
+        "I29",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1353,
+      "table_id": "S1-T1350",
+      "original_id": "**W-02**",
+      "original_row": "| **W-02** | Were the EI fine-tunes actually better *at the game*? | each R22–R27, EI-0…EI-4 checkpoint vs frozen v1, `J_1, J_8` exact | 1 | — (any answer is informative; §10.2) | ~0 (table lookups) | W-01, PR-08 |",
+      "canonical_task_ids": [
+        "I30",
+        "I41",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1354,
+      "table_id": "S1-T1350",
+      "original_id": "**W-03**",
+      "original_row": "| **W-03** | How noisy is discovery-AUC? | legacy_v1 search, 3 seeds × 26 D-tune contexts | 2 | — (power calculation for all later waves) | ~300 C | PR-04 |",
+      "canonical_task_ids": [
+        "I41",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1355,
+      "table_id": "S1-T1350",
+      "original_id": "**W-04**",
+      "original_row": "| **W-04** | Does *other-lineage* retrieval beat ordinary GP, once own-HWM seeds are excluded? | `knn_retrieval` (own parent lineage excluded, ancestry recorded) vs `own_incumbent` vs ordinary vs v1-policy seeds | 2 | knn ≤ ordinary ⇒ retrieval is not the hurdle; drop it from the gen-0 prior weight | ~400 C | PR-04 |",
+      "canonical_task_ids": [
+        "I20",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1356,
+      "table_id": "S1-T1350",
+      "original_id": "**W-05**",
+      "original_row": "| **W-05** | Which search kernel is strongest? | `modern_gp_v1` (PR-13 core) vs `lite_race_v1` vs `legacy_v1` at equal CPU | 2 → 3 | modern ≤ lite ⇒ ship lite_race as default instead | ~800 C | PR-11…PR-13 |",
+      "canonical_task_ids": [
+        "I18",
+        "I19",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1357,
+      "table_id": "S1-T1350",
+      "original_id": "**W-06**",
+      "original_row": "| **W-06** | Firehose campaign: log transitions at scale | `modern_gp_v1` over the real regression tier, 2 cuts each, full logging | — (data) | < 10⁶ transitions or > 5% unlogged children | ~6,000 C | PR-04, PR-13 |",
+      "canonical_task_ids": [
+        "I05",
+        "I28",
+        "I65",
+        "I66"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1358,
+      "table_id": "S1-T1350",
+      "original_id": "**W-07**",
+      "original_row": "| **W-07** | Does a contextual operator bandit help? | bandit vs uniform operator choice, same kernel | 2 | no AUC lift and no lift in child-improvement rate | ~400 C | PR-15 |",
+      "canonical_task_ids": [
+        "I23",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1359,
+      "table_id": "S1-T1350",
+      "original_id": "**W-08**",
+      "original_row": "| **W-08** | Does Gumbel root search with measured leaves help? | root search on vs off at equal CPU | 2 | no AUC lift twice ⇒ research-only (SP5's kill rule) | ~500 C | PR-17 |",
+      "canonical_task_ids": [
+        "I38",
+        "I39",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1360,
+      "table_id": "S1-T1350",
+      "original_id": "**W-09**",
+      "original_row": "| **W-09** | Can a value model beat `ContextualSurrogateQHat` as an allocator? | V (N1+N2+N4) vs ridge surrogate on shadow-pool-v2 *and* exact arena allocation | shadow + 1 | V ≤ ridge on B=1 gain ⇒ keep ridge; V stays a candidate | ~40 G | PR-27, PR-08 |",
+      "canonical_task_ids": [
+        "I33",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1361,
+      "table_id": "S1-T1350",
+      "original_id": "**W-10**",
+      "original_row": "| **W-10** | Does synthetic planted-task pre-training help V? | V pretrained on Alice tasks + real fine-tune vs real-only | shadow + 1 | no calibration or B=1 gain ⇒ drop synthetic pre-training | ~80 G, ~2,000 C | PR-29 |",
+      "canonical_task_ids": [
+        "I37",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1362,
+      "table_id": "S1-T1350",
+      "original_id": "**W-11**",
+      "original_row": "| **W-11** | First apprentice: does an AWR edit policy beat the bandit as `π_prior`? | edit policy (N3) trained on W-06 transitions vs bandit, same search; ReST-EM control; §9.4 challenger arms | 1 → 2 | no lift ⇒ policy stays off; bandit remains prior | ~60 G | PR-28, W-06, PR-15 |",
+      "canonical_task_ids": [
+        "I34",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1363,
+      "table_id": "S1-T1350",
+      "original_id": "**W-12**",
+      "original_row": "| **W-12** | Does fresh feedback help? (H3, done right) | round-1 policy vs (a) frozen round-0, (b) re-warm only, (c) offline-replay only | 2 → 3 | not better than all three controls ⇒ H3 not shown; capsule says so | ~2,000 C, ~60 G | PR-30, W-11 |",
+      "canonical_task_ids": [
+        "I40",
+        "I41",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1364,
+      "table_id": "S1-T1350",
+      "original_id": "**W-13**",
+      "original_row": "| **W-13** | Does search distillation add to AWR? | `λ_SD > 0` vs `= 0`, qualified roots only; §9.4 challenger arms | 1 → 2 | no lift ⇒ keep AWR-only | ~40 G | W-08, W-12 |",
+      "canonical_task_ids": [
+        "I35",
+        "I38",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1365,
+      "table_id": "S1-T1350",
+      "original_id": "**W-14**",
+      "original_row": "| **W-14** | Repeatability: three consecutive promoted rounds | rounds 2–3 with F10-on-discovery | 3 | any round regresses vs league ⇒ freeze lineage | ~6,000 C, ~180 G | W-12 |",
+      "canonical_task_ids": [
+        "I40",
+        "I42",
+        "I43",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1366,
+      "table_id": "S1-T1350",
+      "original_id": "**W-15**",
+      "original_row": "| **W-15** | Do promoted motifs make search better? | registry + top motifs vs registry only, same kernel and policy | 2 | no AUC lift per evaluation ⇒ motifs stay quarantined | ~400 C | PR-23 |",
+      "canonical_task_ids": [
+        "I56",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S1",
+      "line": 1367,
+      "table_id": "S1-T1350",
+      "original_id": "**W-16**",
+      "original_row": "| **W-16** | Invention test: planted off-catalog structures | Bob recovers held-out planted structures not in catalog/archive | synthetic | recovery rate ≤ random-search recovery rate | ~1,000 C | PR-29 |",
+      "canonical_task_ids": [
+        "I37",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 245,
+      "table_id": "S3-T0243",
+      "original_id": "01",
+      "original_row": "| 01 | P0 | Pin HEAD, measure shipped vs bench, policy families, S3 roles, emitter status; publish probe suite | All reported findings confirmed/rejected/unknown with exact source |",
+      "canonical_task_ids": [
+        "I01"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 246,
+      "table_id": "S3-T0243",
+      "original_id": "02",
+      "original_row": "| 02 | P0 | Unify SearchKernel profile identity across pipeline and bench | Golden traces match; old profiles preserved |",
+      "canonical_task_ids": [
+        "I17",
+        "I18"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 247,
+      "table_id": "S3-T0243",
+      "original_id": "03",
+      "original_row": "| 03 | P0 | Typed EvalRequest/Outcome with fold/fit/role identity | Malformed attempts fail closed |",
+      "canonical_task_ids": [
+        "I02",
+        "I03",
+        "I04"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 248,
+      "table_id": "S3-T0243",
+      "original_id": "04",
+      "original_row": "| 04 | P0 | Complete emitter target digests and parity binding | Claimed targets verified or marked unsupported |",
+      "canonical_task_ids": [
+        "I09"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 249,
+      "table_id": "S3-T0243",
+      "original_id": "05",
+      "original_row": "| 05 | P0 | S3 credential chain, IAM segregation, restore drill | Create/readback/denied-role tests pass |",
+      "canonical_task_ids": [
+        "I46",
+        "I49"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 250,
+      "table_id": "S3-T0243",
+      "original_id": "06",
+      "original_row": "| 06 | P0 | Durable proposal outbox (lease, retry, ack, dedup) | Kill/restart loses no proposals, charges no duplicates |",
+      "canonical_task_ids": [
+        "I26"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 251,
+      "table_id": "S3-T0243",
+      "original_id": "07",
+      "original_row": "| 07 | P0 | ResearchEpisode + SearchAction schemas with sealed logs | Deterministic action replay including failures |",
+      "canonical_task_ids": [
+        "I02",
+        "I05"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 252,
+      "table_id": "S3-T0243",
+      "original_id": "08",
+      "original_row": "| 08 | P0 | ResearchCapsule compiler v2 from receipts | 100% waves emit valid capsules; no unsupported claims |",
+      "canonical_task_ids": [
+        "I44",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 253,
+      "table_id": "S3-T0243",
+      "original_id": "09",
+      "original_row": "| 09 | P0 | Three evidence lanes + contamination tests | Adaptive test reuse cannot become sealed |",
+      "canonical_task_ids": [
+        "I04",
+        "I42"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 254,
+      "table_id": "S3-T0243",
+      "original_id": "10",
+      "original_row": "| 10 | P0 | Modern GP baseline + full inner-CV / head-aware final | Same profile in shipped and bench |",
+      "canonical_task_ids": [
+        "I03",
+        "I19"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 255,
+      "table_id": "S3-T0243",
+      "original_id": "11",
+      "original_row": "| 11 | P0 | Unified CPU/GPU/custody budget ledger | Resource comparisons reconcile to telemetry |",
+      "canonical_task_ids": [
+        "I16"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 256,
+      "table_id": "S3-T0243",
+      "original_id": "12",
+      "original_row": "| 12 | P0 | Real snapshot-to-trainer adapter + child checkpoint | ≥1 nonzero optimizer update, changed weights |",
+      "canonical_task_ids": [
+        "I11",
+        "I12",
+        "I13",
+        "I14",
+        "I31",
+        "I32"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 257,
+      "table_id": "S3-T0243",
+      "original_id": "13",
+      "original_row": "| 13 | P0 | Frozen matched policy arena + independent judge | Parent retained by default; promotion only with full record |",
+      "canonical_task_ids": [
+        "I41",
+        "I42"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 258,
+      "table_id": "S3-T0243",
+      "original_id": "14",
+      "original_row": "| 14 | P0 | End-to-end CI smoke + negative canaries | Deterministic synthetic loop green |",
+      "canonical_task_ids": [
+        "I32",
+        "I64"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 259,
+      "table_id": "S3-T0243",
+      "original_id": "15–17",
+      "original_row": "| 15–17 | P1 | ProgramGraphV2 adapter, typed edits, propensity logging | Round-trip, type-check, off-policy flags |",
+      "canonical_task_ids": [
+        "I05",
+        "I06",
+        "I08",
+        "I34"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 260,
+      "table_id": "S3-T0243",
+      "original_id": "18–21",
+      "original_row": "| 18–21 | P1 | Source-mixture ablation, operator bandit, QD, classical acquisition | Paired family-level results at equal resource |",
+      "canonical_task_ids": [
+        "I20",
+        "I23",
+        "I24",
+        "I33"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 261,
+      "table_id": "S3-T0243",
+      "original_id": "22–25",
+      "original_row": "| 22–25 | P1 | Hierarchical policy, paired advantage, Gumbel teacher, distillation | Child beats or is rejected reproducibly |",
+      "canonical_task_ids": [
+        "I33",
+        "I34",
+        "I35",
+        "I38",
+        "I39"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 262,
+      "table_id": "S3-T0243",
+      "original_id": "26–30",
+      "original_row": "| 26–30 | P2/P3 | League, motifs, curriculum, OOF FM, sandboxed kernels | Independent qualification + security tests |",
+      "canonical_task_ids": [
+        "I37",
+        "I54",
+        "I56",
+        "I57",
+        "I58",
+        "I59",
+        "I60"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 281,
+      "table_id": "S3-T0279",
+      "original_id": "01",
+      "original_row": "| 01 | Head-aware full-rung scoring repairs weak tail | Shipped old vs modern GP | No out-of-family gain |",
+      "canonical_task_ids": [
+        "I03",
+        "I19",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 282,
+      "table_id": "S3-T0279",
+      "original_id": "02",
+      "original_row": "| 02 | Strong incumbent/portfolio avoids regressions | Modern GP vs +frozen fallback | Worse quality or runtime harm |",
+      "canonical_task_ids": [
+        "I18",
+        "I19",
+        "I43",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 283,
+      "table_id": "S3-T0279",
+      "original_id": "03",
+      "original_row": "| 03 | Retrieval adds value | GP_random vs GP_retrieval | No positive AUC |",
+      "canonical_task_ids": [
+        "I20",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 284,
+      "table_id": "S3-T0279",
+      "original_id": "04",
+      "original_row": "| 04 | Policy seeding adds value | Retrieval vs mixed frozen policy | No incremental value |",
+      "canonical_task_ids": [
+        "I20",
+        "I34",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 285,
+      "table_id": "S3-T0279",
+      "original_id": "05",
+      "original_row": "| 05 | Stage cache improves resource-normalized discovery | Cold vs warm | No compute benefit |",
+      "canonical_task_ids": [
+        "I21",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 286,
+      "table_id": "S3-T0279",
+      "original_id": "06",
+      "original_row": "| 06 | Typed GP improves validity | Legacy vs typed homologous | No effect or more broken programs |",
+      "canonical_task_ids": [
+        "I08",
+        "I19",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 287,
+      "table_id": "S3-T0279",
+      "original_id": "07",
+      "original_row": "| 07 | Contextual operator bandit | Fixed vs learned bandit | No cross-family AUC gain |",
+      "canonical_task_ids": [
+        "I23",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 288,
+      "table_id": "S3-T0279",
+      "original_id": "08",
+      "original_row": "| 08 | QD preserves stepping stones | Scalar top-k vs archive | Worse scientific quality |",
+      "canonical_task_ids": [
+        "I24",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 289,
+      "table_id": "S3-T0279",
+      "original_id": "09",
+      "original_row": "| 09 | LightGBM acquisition | FIFO/ridge vs LightGBM | No same-pool lift |",
+      "canonical_task_ids": [
+        "I23",
+        "I33",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 290,
+      "table_id": "S3-T0279",
+      "original_id": "10",
+      "original_row": "| 10 | Structural neural critic | Classical vs new critic | No calibration/value lift |",
+      "canonical_task_ids": [
+        "I33",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 291,
+      "table_id": "S3-T0279",
+      "original_id": "11",
+      "original_row": "| 11 | Edit policy | Fixed parent vs trained edit sampler | No time-to-target lift |",
+      "canonical_task_ids": [
+        "I34",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 292,
+      "table_id": "S3-T0279",
+      "original_id": "12",
+      "original_row": "| 12 | Gumbel root | Sampled policy vs completed-Q | Teacher not stronger |",
+      "canonical_task_ids": [
+        "I38",
+        "I39",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 293,
+      "table_id": "S3-T0279",
+      "original_id": "13",
+      "original_row": "| 13 | Search distillation | Frozen parent vs child | No qualified improvement |",
+      "canonical_task_ids": [
+        "I35",
+        "I38",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 294,
+      "table_id": "S3-T0279",
+      "original_id": "14",
+      "original_row": "| 14 | Improvement compounds | 3-round feedback vs frozen/restart | Gains explained by extra compute alone |",
+      "canonical_task_ids": [
+        "I40",
+        "I41",
+        "I42",
+        "I43",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S3",
+      "line": 295,
+      "table_id": "S3-T0279",
+      "original_id": "15",
+      "original_row": "| 15 | Typed motifs transfer | Primitives-only vs macro library | Novel motifs fail independent transfer |",
+      "canonical_task_ids": [
+        "I56",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2459,
+      "table_id": "S4-T2457",
+      "original_id": "P01",
+      "original_row": "| P01 | Existing `Cargo.toml`, `rust-toolchain.toml`, `crates/jope-records/src/repo_layout.rs`, `docs/adr/ADR-0005-canonical-learning-loop.md`; **NEW** `docs/architecture/ACTIVE_PATHS.md`, `docs/architecture/CAPABILITY_STATUS.json` | Generate active import/feature/package/lineage map; pin accepted and research baseline manifests; classify historical reports | Every important path has source/config/runtime identity; 2048/401 and 2051/282 remain distinct; no runtime behavior change |",
+      "canonical_task_ids": [
+        "I01"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2460,
+      "table_id": "S4-T2457",
+      "original_id": "P02",
+      "original_row": "| P02 | Existing `crates/jope-learning/src/pools/selectors.rs`, `crates/jope-learning/src/pools/evaluate.rs`, `crates/jope-learning/src/pools/metrics.rs`, `crates/jope-learning/tests/pools.rs`; **NEW** `crates/jope-learning/src/pools/cv_estimate.rs` | Add tagged CV estimate/status; remove zero-for-unavailable and in-sample fallback labeled OOF; update callers/report version | Singular/insufficient parent cases cannot look perfect; existing zero-expecting fixture changes intentionally; old receipts retain old semantics |",
+      "canonical_task_ids": [
+        "I03"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2461,
+      "table_id": "S4-T2457",
+      "original_id": "P03",
+      "original_row": "| P03 | Existing selectors and pool tests; **NEW** `crates/jope-learning/src/pools/contextual_features.rs` | Extract fold-fitted target-derived features and strictly nested penalty selection | Inner-held outcome perturbation leaves fitted state/predictions unchanged before scoring; outer parent isolation retained; new method ID |",
+      "canonical_task_ids": [
+        "I03"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2462,
+      "table_id": "S4-T2457",
+      "original_id": "P04",
+      "original_row": "| P04 | Existing `crates/jope-records/src/lib.rs`, `schemas/jope.experiment.v1.schema.json`, `schemas/jope.evaluation-request.v1.schema.json`, `schemas/jope.evaluation-result.v2.schema.json`; **NEW** `crates/jope-records/src/discovery.rs`, `schemas/jope.discovery-event.v1.schema.json` | Define shared proposal/edit/request/attempt/outcome envelopes and versioned compatibility adapters | Canonical payload excludes self-hash; strict limits; all failure/missing states represented; no changed legacy hash codec |",
+      "canonical_task_ids": [
+        "I02",
+        "I04"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2463,
+      "table_id": "S4-T2457",
+      "original_id": "P05",
+      "original_row": "| P05 | Existing `crates/jope-pipeline/src/neural_search.rs`, `crates/jope-engine/src/gp.rs`, `crates/feat-math/src/evolve.rs`; **NEW** `crates/jope-pipeline/src/discovery_events.rs` | Emit real proposal/edit/repair/evaluation events from the first product route; adapt engine events separately | Every physical attempt and logical draw reconciles; rank weights never become propensities; unchanged baseline candidate/selection behavior |",
+      "canonical_task_ids": [
+        "I05"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2464,
+      "table_id": "S4-T2457",
+      "original_id": "P06",
+      "original_row": "| P06 | Existing `crates/jope-learning/src/support/version.rs`, `tokenizer.rs`, `trie.rs`, `probability.rs` in that support directory; existing `crates/jope-learning/tests/support.rs`; **NEW** `crates/jope-learning/src/support/transition.rs` | Export versioned legal-child/support transition contract; retain old leaves; separate support and target admission | Same-law sampler/scorer/KL fixtures; forbidden roles refused; ≥2 novel leaves for a probability-learning fixture; singleton reachability tested separately |",
+      "canonical_task_ids": [
+        "I06"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2465,
+      "table_id": "S4-T2457",
+      "original_id": "P07",
+      "original_row": "| P07 | Existing v6 and continuous modules as frozen reference; **NEW** `deploy/dl-flywheel/pipelines/continuous_v7/__init__.py`, `config.py`, `support_adapter.py`, `support_transition.py`, `archive_imitation.py`, `runner.py`, `resume.py` in that directory | Implement a narrow successor adapter around pinned existing model/objective/runtime; explicit mixture law and first ExIt loss; no copy of the entire historical package | Real changed parameters, exact before/after state, resume conformance, no hidden import-path substitution, explicit separate research lineage |",
+      "canonical_task_ids": [
+        "I06",
+        "I31",
+        "I35"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2466,
+      "table_id": "S4-T2457",
+      "original_id": "P08",
+      "original_row": "| P08 | Existing `crates/jope-learning/src/progress/inventory.rs`, `outbox.rs`, `publish.rs`, `product.rs`, `rebuild.rs`; existing `crates/jope-learning/src/main.rs`; **NEW** `crates/jope-learning/src/discovery/mod.rs`, `episode.rs`, `round.rs`, `epoch.rs` in that directory | Implement the round state machine and accepted-state object with existing progress machinery; receive P05 events and P07 updates | Crash boundaries reconcile; one coherent pointer; NO_UPDATE/INCONCLUSIVE remain legal; current v1 progress behavior preserved |",
+      "canonical_task_ids": [
+        "I15",
+        "I26",
+        "I40",
+        "I48"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2467,
+      "table_id": "S4-T2457",
+      "original_id": "P09",
+      "original_row": "| P09 | Existing `crates/jope-records/src/claims.rs`, `claim_inventory.rs`, `progress_view.rs`; existing `docs/experiments/experiments.jsonl`; **NEW** `crates/jope-records/src/research_capsule.rs`, `schemas/jope.research-capsule.v1.schema.json` | Deterministic capsule payload and brief renderer; source/fact/inference separation; record every round disposition | All numerical fields reconstruct; no qualified claims from unverified inputs; payload and rendering IDs acyclic |",
+      "canonical_task_ids": [
+        "I44",
+        "I45",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2468,
+      "table_id": "S4-T2457",
+      "original_id": "P10",
+      "original_row": "| P10 | Existing `crates/jope-learning/src/pools/bootstrap.rs`, `deploy/dl-flywheel/pipelines/rlfw/judge/cluster.py`, `power.py`, `roster.py`, `seal.py`; **NEW** `crates/jope-learning/src/discovery/statistics.rs`, `schemas/jope.discovery-protocol.v1.schema.json` | Implement family-balanced selected-incumbent endpoint, grid AUC, frozen family mapping, power/config and one-look plan | Golden paired examples, missing-run policy, exact numerical reproduction; old context-weighted bootstrap retains its version |",
+      "canonical_task_ids": [
+        "I41"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2469,
+      "table_id": "S4-T2457",
+      "original_id": "P11",
+      "original_row": "| P11 | Existing `crates/jope-learning/src/clover/round_qual.rs`, `crates/jope-learning/src/eligibility.rs`, `crates/jope-records/src/claims.rs`; **NEW** `crates/jope-learning/src/discovery/qualify.rs`, `evidence_resolver.rs` | Add verified producer/grant/raw-evidence resolution and distinct qualification schema; preserve diagnostic qualifier | Hash-shaped strings alone cannot qualify; forged roles/metrics/grants rejected; only complete valid evidence can produce an acceptance decision |",
+      "canonical_task_ids": [
+        "I41",
+        "I42",
+        "I43"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2470,
+      "table_id": "S4-T2457",
+      "original_id": "P12",
+      "original_row": "| P12 | Existing product/learning CLI and experiment index; **NEW** `docs/experiments/discovery-loop-v1/protocol.json`, `baseline-manifest.json`, `README.md` in that directory; **NEW** `crates/jope-records/src/discovery_replay.rs` | Run the bounded development closure and produce evidence-driven replay; then prepare independent L2 study | Fresh search → update → reload → new search demonstrated; no claim of superiority until the separate statistical gate passes |",
+      "canonical_task_ids": [
+        "I32",
+        "I41",
+        "I65"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2484,
+      "table_id": "S4-T2482",
+      "original_id": "P13",
+      "original_row": "| P13 | Existing `crates/feat-math/src/genome.rs`, `kernel/program.rs`, `kernel/wire_v2.rs`, `kernel/capabilities.rs`, `kernel/search.rs`, `advanced_v3/grammar.rs`; **NEW** `crates/feat-math/src/program_graph/mod.rs`, `adapters.rs`, `effects.rs`, `edits.rs` in that directory | Common analysis/edit graph and generated capability intersection | Lossless/analysis-only/unsupported adapters explicit; original bytes/hashes preserved; existing advanced-v3 constraints reused |",
+      "canonical_task_ids": [
+        "I08"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2485,
+      "table_id": "S4-T2482",
+      "original_id": "P14",
+      "original_row": "| P14 | Existing `crates/feat-math/src/math_expr.rs`, `kernel/search.rs`, `kernel/capabilities.rs`, `kernel/scalar_program.rs`, `kernel/row_vector.rs`; **NEW** `crates/feat-math/src/program_graph/feature_refs.rs` | Schema-bound column selection and typed expression/subtree edits; use actual wide-table schema | Column-17/63 fixture, feature permutation remapping, bounded width/size, compiler/decoder/emit capability agreement |",
+      "canonical_task_ids": [
+        "I55"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2486,
+      "table_id": "S4-T2482",
+      "original_id": "P15",
+      "original_row": "| P15 | Existing `crates/feat-math/src/model.rs`, `target_transform.rs`, `transpile.rs`, `emit_py.rs`, `emit_rs.rs`, `emit_cpp.rs`, `emit_js.rs`, `advanced_v3/emit/mod.rs`; `crates/jope-pipeline/src/emit.rs`, `emit/fitted.rs`, `cli.rs`, `receipt.rs`; `crates/jope-cli/src/kernel.rs`; **NEW** `crates/feat-math/src/numerical_profile.rs` | Named numerical profile and actual product propagation of quantile/range behavior | Legacy defaults and receipts unchanged; new profile passes scale, tie, clipping, target-inverse and backend fixtures |",
+      "canonical_task_ids": [
+        "I09",
+        "I10"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2487,
+      "table_id": "S4-T2482",
+      "original_id": "P16",
+      "original_row": "| P16 | Existing `crates/feat-math/src/evolve.rs`, `crates/jope-pipeline/src/neural_search.rs`, `search.rs`; **NEW** `crates/jope-pipeline/src/variation_controller.rs`, `fidelity_policy.rs` | Contextual operator controller and explicit true-head fidelity schedule | Full cost/attempt logging, exploration floor, screened-out full-fit audit, no surrogate-created winners |",
+      "canonical_task_ids": [
+        "I23"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2488,
+      "table_id": "S4-T2482",
+      "original_id": "P17",
+      "original_row": "| P17 | Existing `crates/jope-campaigns/src/jope_generalized_gp/evolution.rs`, `crates/jope-learning/src/pools/flywheel.rs`; **NEW** `crates/jope-learning/src/discovery/archive.rs`, `source_mixture.rs` | Bounded source mixture and QD/Pareto archive experiment | Equal total capacity/cost controls; semantic novelty separate from hash changes; role-filtered retrieval |",
+      "canonical_task_ids": [
+        "I20",
+        "I24"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2489,
+      "table_id": "S4-T2482",
+      "original_id": "P18",
+      "original_row": "| P18 | Existing `crates/jope-engine/src/neural.rs`, `crates/jope-policy/src/model.rs`, native `PolicyLM` reference; P13 graph; **NEW** `deploy/dl-flywheel/pipelines/continuous_v7/program_encoder.py`, `context_adapter.py` | Lineage-specific order/graph/context encoder experiments | Compare with native EOS baseline, not only legacy mean encoder; calibrated held-family search benefit; new ABI if tensors change |",
+      "canonical_task_ids": [
+        "I33",
+        "I34"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2490,
+      "table_id": "S4-T2482",
+      "original_id": "P19",
+      "original_row": "| P19 | Existing `deploy/dl-flywheel/pipelines/rlfw/onpolicy/objective.py`, `frozen_round.py`, exact trie and ablation modules; **NEW** `deploy/dl-flywheel/pipelines/continuous_v7/onpolicy_driver.py` | True direct-draw RLOO and later justified PKPO/PPO experiments | One valid behavior/update contract, exact likelihood, support/lag/ESS checks, independent equal-cost evaluation |",
+      "canonical_task_ids": [
+        "I06",
+        "I35"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2491,
+      "table_id": "S4-T2482",
+      "original_id": "P20",
+      "original_row": "| P20 | Existing `crates/jope-motifs/src/mine.rs`, `table.rs`, `expand.rs`, `validate.rs`, `teaching.rs`; **NEW** `crates/jope-motifs/src/promotion.rs` | Evidence-backed macro qualification and support integration | Exact expansion; no promotion by frequency/Boolean; transfer win and expanded-cost accounting; versioned macro registry |",
+      "canonical_task_ids": [
+        "I56"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2499,
+      "table_id": "S4-T2497",
+      "original_id": "P21",
+      "original_row": "| P21 | Existing `crates/jope-learning/src/retention/refs.rs`, `inventory.rs`, `plan.rs`, `classify.rs`, `distilled.rs`; **NEW** `crates/jope-learning/src/retention/identity.rs`, `roots.rs`, `distilled_v2.rs` | Exact version/observation identities; complete root/parser status; independent raw manifest and distillation proof; fix overstated report wording | Same-key/different-version cases distinct; skipped failures/provenance prevent complete proof; existing classifier remains non-destructive |",
+      "canonical_task_ids": [
+        "I27",
+        "I50"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2500,
+      "table_id": "S4-T2497",
+      "original_id": "P22",
+      "original_row": "| P22 | Existing retention policy and producer integration; **NEW** `crates/jope-learning/src/retention/reservoir.rs`, `policy.v2.json`; **NEW** `crates/jope-learning/src/discovery/replay.rs` | Bounded reservoir and value-selected replay; producer retention contracts and compact observations | Restart/merge sampling law correct; finite byte/count envelope; inclusion probabilities logged; no winner-only coverage claim |",
+      "canonical_task_ids": [
+        "I36",
+        "I51"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2501,
+      "table_id": "S4-T2497",
+      "original_id": "P23",
+      "original_row": "| P23 | Existing `crates/jope-learning/src/retention/pack.rs`, `progress/remote.rs`, `progress/publish.rs`; **NEW** `crates/jope-learning/src/retention/restore.rs`, `crates/jope-learning/src/artifact_resolver.rs` | Harden pack identity/bounds; remote restore and typed immutable resolution | Every v1 byte obligation remains resolvable; pointer CAS stays physical; missing/corrupt pack/index fails |",
+      "canonical_task_ids": [
+        "I46",
+        "I47"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2502,
+      "table_id": "S4-T2497",
+      "original_id": "P24",
+      "original_row": "| P24 | Existing `crates/jope-learning/src/progress/inventory.rs`, `publish.rs`, `rebuild.rs`; **NEW** `crates/jope-learning/src/progress/snapshot.rs` | Versioned snapshot/root/commit semantics with strong/history edges and migration receipts | New root stops unintended ancestral byte obligations only after explicit release; legacy roots remain fully restorable; revocation ancestry retained |",
+      "canonical_task_ids": [
+        "I15",
+        "I48",
+        "I50"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2503,
+      "table_id": "S4-T2497",
+      "original_id": "P25",
+      "original_row": "| P25 | Existing `crates/jope-learning/src/retention/lifecycle.rs`, `policy.rs`, `src/bin/jope_retention.rs`; **NEW** `crates/jope-learning/src/retention/proof.rs`, `retirement_plan.rs`, `verify.rs`, `cost.rs` | Object-level plan, independent proof checker, complete lifecycle/unknown handling, before/peak/after cost | No destructive operation; exact targets/replacements and current proof; old count/byte equality not called snapshot safety |",
+      "canonical_task_ids": [
+        "I50",
+        "I51"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2504,
+      "table_id": "S4-T2497",
+      "original_id": "P26",
+      "original_row": "| P26 | Existing progress publisher pin hooks; **NEW** `crates/jope-learning/src/retention/catalog.rs`, `commit.rs`, `crates/jope-learning/src/bin/jope_retention_apply.rs` | CAS catalog, durable pins/reservations, exact-version executor, intent/outcome recovery | Race/crash/stale-worker tests pass; separately authorized bounded scope; no prefix deletion; protected closure and actual savings verified |",
+      "canonical_task_ids": [
+        "I52"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2512,
+      "table_id": "S4-T2510",
+      "original_id": "P27",
+      "original_row": "| P27 | Existing `rlfw/ablations`, `jope-motifs`, typed graph/evaluator worker seams; **NEW** `crates/jope-learning/src/discovery/curriculum.rs`, `planning.rs`, `code_lane.rs` only when their experiment is approved | Implement one advanced method at a time, with finite campaign config | Entry gate, comparator, cost cap, negative-result capsule; no evaluator mutation |",
+      "canonical_task_ids": [
+        "I37",
+        "I38",
+        "I39",
+        "I57",
+        "I58",
+        "I59",
+        "I60"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2513,
+      "table_id": "S4-T2510",
+      "original_id": "P28",
+      "original_row": "| P28 | Existing `.github/workflows/ci.yml`, `full-main.yml`, `main-guard.yml`, `crates/jope-records/src/repo_layout.rs`, experiment/architecture docs | Generated ownership/capability/claim views; active versus frozen package map; focused test routing | One active path documented per lineage; historical replay sources preserved; CI reflects actual package/features |",
+      "canonical_task_ids": [
+        "I45",
+        "I62",
+        "I63",
+        "I64"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2575,
+      "table_id": "S4-T2573",
+      "original_id": "G0: reproducible starting point",
+      "original_row": "| G0: reproducible starting point | P01 | Pinned source and available checkpoint/source manifests | Active-path map, runnable baseline instructions, explicit unsupported runtime combinations |",
+      "canonical_task_ids": [
+        "I01"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2576,
+      "table_id": "S4-T2573",
+      "original_id": "G1: trustworthy labels and events",
+      "original_row": "| G1: trustworthy labels and events | P02–P05 | G0; P03 before any target-derived contextual selector enters training/selection | Typed failures, nested feature fitting, reconciled fresh-search ledger |",
+      "canonical_task_ids": [
+        "I02",
+        "I03",
+        "I04",
+        "I05"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2577,
+      "table_id": "S4-T2573",
+      "original_id": "G2: learn a supported discovery",
+      "original_row": "| G2: learn a supported discovery | P06–P07 | G1 for eligible measurements; exact support export | New TRAIN-only leaves, explicit probability law, actual gradient update and reload |",
+      "canonical_task_ids": [
+        "I06",
+        "I31"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2578,
+      "table_id": "S4-T2573",
+      "original_id": "G3: durable development closure",
+      "original_row": "| G3: durable development closure | P08–P10 and developmental P12 | G1–G2 | One complete round, recoverable state, compact capsule, fresh child search; L1 evidence |",
+      "canonical_task_ids": [
+        "I15",
+        "I26",
+        "I32",
+        "I40",
+        "I44",
+        "I48",
+        "I66"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2579,
+      "table_id": "S4-T2573",
+      "original_id": "G4: independent learned-transfer study",
+      "original_row": "| G4: independent learned-transfer study | P11 and confirmatory P12 | G3; frozen protocol, roles, controls, sufficient families and resources | Verified L2 decision, including valid negative or inconclusive outcomes |",
+      "canonical_task_ids": [
+        "I41",
+        "I42",
+        "I43",
+        "I65"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2580,
+      "table_id": "S4-T2573",
+      "original_id": "G5: targeted search/language extensions",
+      "original_row": "| G5: targeted search/language extensions | Selected P13–P20 | G3; P13 before wider typed graph edits | One extension at a time evaluated against a fixed strong baseline |",
+      "canonical_task_ids": [
+        "I08",
+        "I09",
+        "I10",
+        "I20",
+        "I23",
+        "I24",
+        "I33",
+        "I34",
+        "I35",
+        "I55",
+        "I56"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2581,
+      "table_id": "S4-T2573",
+      "original_id": "G6: bounded memory without deletion",
+      "original_row": "| G6: bounded memory without deletion | P21–P25 | P04/P08 identities and current progress semantics; P22 uses P09 evidence | Bounded replay, verified packs, snapshot migration and independently checked retirement plans |",
+      "canonical_task_ids": [
+        "I15",
+        "I27",
+        "I36",
+        "I46",
+        "I47",
+        "I48",
+        "I50",
+        "I51"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2582,
+      "table_id": "S4-T2573",
+      "original_id": "G7: bounded retirement application",
+      "original_row": "| G7: bounded retirement application | P26 | G6 plus publisher pins, lifecycle constraints, tested recovery, explicit execution authority | Exact-version retirement with protected dependency closure and measured savings |",
+      "canonical_task_ids": [
+        "I52"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2583,
+      "table_id": "S4-T2573",
+      "original_id": "G8: advanced discovery lane",
+      "original_row": "| G8: advanced discovery lane | Selected P27 | G4 and the specific §15 entry gate | Finite experiment and evidence-backed keep/defer decision |",
+      "canonical_task_ids": [
+        "I37",
+        "I38",
+        "I39",
+        "I57",
+        "I58",
+        "I59",
+        "I60"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S4",
+      "line": 2584,
+      "table_id": "S4-T2573",
+      "original_id": "Continuous maintainability",
+      "original_row": "| Continuous maintainability | P28 | Starts with G0; follows each changed capability | Current ownership map, focused CI, stable historical replay |",
+      "canonical_task_ids": [
+        "I45",
+        "I62",
+        "I63",
+        "I64"
+      ],
+      "classification": "DELIVERY_GATE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 553,
+      "table_id": "S5-T0551",
+      "original_id": "L1 lineage",
+      "original_row": "| L1 lineage | `jope-engine/src/native_loop.rs`, `native_loop/warm_start.rs`, `training/continuation.rs` | `native_loop/lineage.rs`; two lineage/intent schemas | V2 descendant enters an explicitly compatible v3 third round |",
+      "canonical_task_ids": [
+        "I11",
+        "I12"
+      ],
+      "classification": "NATIVE_SLICE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 554,
+      "table_id": "S5-T0551",
+      "original_id": "L2 update closure",
+      "original_row": "| L2 update closure | `training.rs`, `training/consumption.rs`, `training/checkpoint_commit.rs`, `checkpoint_recovery.rs` | New complete commit-format branch and fixtures | Intent/lineage/journals/model/optimizer commit and restore together |",
+      "canonical_task_ids": [
+        "I13"
+      ],
+      "classification": "NATIVE_SLICE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 555,
+      "table_id": "S5-T0551",
+      "original_id": "L3 challenger",
+      "original_row": "| L3 challenger | `policy_export.rs`; `jope-policy/src/config.rs`, `producer.rs`, `challenger_tests.rs` | `config/lineage.rs`; export-v2 schema/fixtures | Step3000/6000 descendant exports and loads by ancestry |",
+      "canonical_task_ids": [
+        "I14"
+      ],
+      "classification": "NATIVE_SLICE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 556,
+      "table_id": "S5-T0551",
+      "original_id": "L4 qualification",
+      "original_row": "| L4 qualification | `native_loop.rs`, `native_observer/science.rs`; `jope-learning/src/qualify/{promotion,roster,gate}.rs` | Authenticated decision/closure adapter | Recomputed independent eligible result can authorize correct use |",
+      "canonical_task_ids": [
+        "I40",
+        "I41",
+        "I42",
+        "I43"
+      ],
+      "classification": "NATIVE_SLICE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 557,
+      "table_id": "S5-T0551",
+      "original_id": "L5 visibility",
+      "original_row": "| L5 visibility | `jope-learning/src/progress/{engine,outbox,publish,reconcile,rebuild}.rs` | Versioned lineage/update event fields | No duplicate counters; reproducible card from committed closure |",
+      "canonical_task_ids": [
+        "I15",
+        "I44",
+        "I48",
+        "I66"
+      ],
+      "classification": "NATIVE_SLICE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 558,
+      "table_id": "S5-T0551",
+      "original_id": "L6 critic",
+      "original_row": "| L6 critic | `jope-engine/src/neural.rs`, `training/objective.rs`; `jope-policy/src/{model,config}.rs` | Architecture manifest and structured-rank module(s) | Semantic collision discrimination, inference parity, measured acquisition benefit |",
+      "canonical_task_ids": [
+        "I33"
+      ],
+      "classification": "NATIVE_SLICE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1276,
+      "table_id": "S5-T1274",
+      "original_id": "01 — Contract baseline",
+      "original_row": "| 01 — Contract baseline | P0; none | E `docs/adr/ADR-0005-canonical-learning-loop.md`, ADR-0006 references, `docs/experiments/README.md`; N `docs/architecture/learning-loop.md`, `docs/contracts/identity.md`; register schema catalogue and current capability ownership without changing old ADR decisions | Golden canonical vectors, explicit source/version catalogue, no changed legacy hashes; documentation/contract-only rollback |",
+      "canonical_task_ids": [
+        "I01",
+        "I02"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1277,
+      "table_id": "S5-T1274",
+      "original_id": "02 — Immutable model publication",
+      "original_row": "| 02 — Immutable model publication | P0; 01 | E `crates/jope-models/src/publish.rs`, `crates/jope-datasets/src/store.rs`, `crates/jope-learning/src/mirror.rs`; N `crates/jope-datasets/src/verified_object.rs` | `existing_same_size_wrong_hash`, `source_changed_after_prehash`, `create_race_wrong_body`, lost-response reconciliation; retain original blobs and fail closed |",
+      "canonical_task_ids": [
+        "I46"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1278,
+      "table_id": "S5-T1274",
+      "original_id": "03 — All-attempt observation bridge",
+      "original_row": "| 03 — All-attempt observation bridge | P0; 01 | E `crates/jope-learning/src/retention/distilled.rs`, `eligibility.rs`, `eligibility/context.rs`, `progress/census.rs`, `pools/source.rs`; N `replay/mod.rs`, `replay/observation.rs`, `replay/admission.rs` under that crate | Exact logical/physical attempt reconciliation; no global-role upgrade; canonical tokenization and per-head masks; historical importer retained as shadow |",
+      "canonical_task_ids": [
+        "I04",
+        "I05",
+        "I27",
+        "I28"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1279,
+      "table_id": "S5-T1274",
+      "original_id": "04 — Native lineage and successor",
+      "original_row": "| 04 — Native lineage and successor | P0; 01 | E `crates/jope-engine/src/native_loop.rs`, `native_loop/warm_start.rs`, `training/ancestry.rs`, `training/continuation.rs`; N `native_loop/lineage.rs`, lineage/intent schemas and fixtures | 60,000 anchor→3,000 warm start→6,000 continuation→later v3 successor; cycles, fake counters, objective mismatch and unauthorized window extension refused |",
+      "canonical_task_ids": [
+        "I11",
+        "I12"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1280,
+      "table_id": "S5-T1274",
+      "original_id": "05 — Ancestry-aware export",
+      "original_row": "| 05 — Ancestry-aware export | P0; 04 | E `crates/jope-engine/src/policy_export.rs`, `crates/jope-policy/src/config.rs`, `challenger_tests.rs`; N `crates/jope-policy/src/config/lineage.rs` and export-v2 schema fixtures | Warm-start child roundtrip; step-70,000 impostor rejected; exact accepted/rejected identities unchanged; candidate lane can be disabled |",
+      "canonical_task_ids": [
+        "I14"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1281,
+      "table_id": "S5-T1274",
+      "original_id": "06 — Compatible snapshot authority",
+      "original_row": "| 06 — Compatible snapshot authority | P0; 01–05 | E `crates/jope-learning/src/progress/{inventory,publish,reconcile}.rs`, `clover/store.rs`; N `selfplay/{mod,snapshot,authority,pins}.rs`, payload/snapshot/authority schemas | One CAS wins concurrent incompatible adoptions; no mixed vocabulary/critic/replay; root/pin/retired generation is atomic; per-run aliases lack authority |",
+      "canonical_task_ids": [
+        "I15"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1282,
+      "table_id": "S5-T1274",
+      "original_id": "07 — Minimal native closure",
+      "original_row": "| 07 — Minimal native closure | P0; 03–06 | E `crates/jope-engine/src/training.rs`, `checkpoint_recovery.rs`, `training/{inputs,consumption,checkpoint_commit}.rs`, `native_loop.rs`; E learning progress adapters; N focused native-loop-v3 integration fixture and contract tests | Fresh exact label affects a supervised gradient/update, committed child changes next actor likelihood/proposal, restore reaches same declared state; current fixtures stay valid |",
+      "canonical_task_ids": [
+        "I13",
+        "I31",
+        "I32"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1283,
+      "table_id": "S5-T1274",
+      "original_id": "08 — Prospective qualification",
+      "original_row": "| 08 — Prospective qualification | P0; 01,03,06 | E `crates/jope-learning/src/qualify/{promotion,roster,gate}.rs`, `clover/round_qual.rs`; E `crates/jope-engine/src/native_loop.rs`, `native_observer/science.rs`; N `qualify/{evidence,budget_metric,exposure}.rs`, arena-v2 schema and deterministic data fixtures | Recompute receipts/selected-incumbent step integral, authenticated roster/exposure, dual-control family bounds and all-attempt costs; missing proof remains inconclusive; no automatic serving flip |",
+      "canonical_task_ids": [
+        "I41",
+        "I42",
+        "I43"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1284,
+      "table_id": "S5-T1274",
+      "original_id": "09 — Compiled research memory",
+      "original_row": "| 09 — Compiled research memory | P0/P1; 03,06,08 | E `docs/experiments/experiments.jsonl`, README; N `docs/experiments/schema.v2.json`, `crates/jope-learning/src/research/{mod,capsule,compile,query}.rs` | Byte-stable rebuild, exact denominators/results, contradiction/supersession, temporal/role filters; human interpretation cannot edit numeric authority |",
+      "canonical_task_ids": [
+        "I44",
+        "I45",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1285,
+      "table_id": "S5-T1274",
+      "original_id": "10 — Bounded outbox",
+      "original_row": "| 10 — Bounded outbox | P1; 02,06 | E `crates/jope-learning/src/progress/{outbox,rebuild,reconcile}.rs`; N `progress/{segment,checkpoint}.rs` | Crash at each compaction boundary, on-disk historical dedup, inflight completion reserve and bounded startup/hot-state footprint |",
+      "canonical_task_ids": [
+        "I48"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1286,
+      "table_id": "S5-T1274",
+      "original_id": "11 — Common search profile and paired harness",
+      "original_row": "| 11 — Common search profile and paired harness | P1; 01,03,08 | E `crates/jope-pipeline/src/{search,neural_search,execution,run}.rs`, `kernel2/{search,measurement,receipt}.rs`; N `search_profile.rs`, `paired_protocol.rs` | Shared budgets, admission and emitter profile; counterbalanced order and deterministic random streams; genuine generic/neural/fallback origin preservation |",
+      "canonical_task_ids": [
+        "I17",
+        "I18",
+        "I20"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1287,
+      "table_id": "S5-T1274",
+      "original_id": "12 — Structural critic artifact",
+      "original_row": "| 12 — Structural critic artifact | P1; 04,05,11 | E `crates/jope-engine/src/neural.rs`, `training/objective.rs`, `policy_export.rs`; E `crates/jope-policy/src/model.rs`, `config.rs`; N `crates/jope-engine/src/neural/critic.rs`, matching inference module | Valid same-token-multiset fixtures distinguish representation; no overlength truncation; tensor/ABI parity; acquisition study before deployment |",
+      "canonical_task_ids": [
+        "I33"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1288,
+      "table_id": "S5-T1274",
+      "original_id": "13 — Critic-guided search",
+      "original_row": "| 13 — Critic-guided search | P1; 08,11,12 | E `crates/jope-pipeline/src/neural_search.rs`, `crates/jope-policy/src/producer.rs`, kernel2 candidate scoring; N scorer selection-profile tests | Fixed-pool top-budget selection and full-search cost gains versus classical/current critics; rejected hypothesis leaves actor baseline unchanged |",
+      "canonical_task_ids": [
+        "I33",
+        "I38"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1289,
+      "table_id": "S5-T1274",
+      "original_id": "14 — Objective/optimizer recipe",
+      "original_row": "| 14 — Objective/optimizer recipe | P1; 04,07,08 | E `crates/jope-engine/src/training/objective.rs`, `neural.rs`, `training/continuation.rs`; N `training/{optimizer_recipe,loss_admission}.rs` | Per-head eligibility and gradients, inactive-head telemetry, schedule step accounting, reset/carry refusal and one-hypothesis ablations |",
+      "canonical_task_ids": [
+        "I35"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1290,
+      "table_id": "S5-T1274",
+      "original_id": "15 — Encoder and feature-pointer ablations",
+      "original_row": "| 15 — Encoder and feature-pointer ablations | P1; 08,11,14 | E `crates/jope-policy/src/context_producer.rs`, `config.rs`, decoder/grammar files selected by current owner; E `crates/jope-encoders/src`; N versioned sketch/pointer modules | Train-only provenance; row invariance where appropriate, column-reference equivariance, missingness/category/width handling; encoder cost included |",
+      "canonical_task_ids": [
+        "I34",
+        "I55"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1291,
+      "table_id": "S5-T1274",
+      "original_id": "16 — Capability-generated admission",
+      "original_row": "| 16 — Capability-generated admission | P1; 01,11 | E `crates/feat-math/src/{registry.rs,kernel/capabilities.rs,kernel/profile.rs,kernel/scope.rs,kernel/wire_v2.rs}`; CLI dump adapter | All 53 legacy rows and separate reserved/runtime routes represented; reachable actions have exact fit/export support; unsupported IDs cannot be generated |",
+      "canonical_task_ids": [
+        "I07"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1292,
+      "table_id": "S5-T1274",
+      "original_id": "17 — Quantile emitter rollout",
+      "original_row": "| 17 — Quantile emitter rollout | P1 correctness; 01,16 | E `crates/feat-math/src/transpile.rs` and existing language emitter/caller paths located by option census; Reference only: `docs/internal/clover/exp-008-quantile-parity-replay.20261017.json`, preserved unchanged; N new rollout fixtures/receipt | Near-tie counterexamples across actual recipe/fitted callers; legacy IDs unchanged; explicit new numerical profile and rollback |",
+      "canonical_task_ids": [
+        "I09",
+        "I10"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1293,
+      "table_id": "S5-T1274",
+      "original_id": "18 — Typed variation and selection",
+      "original_row": "| 18 — Typed variation and selection | P1; 11,16 | E `crates/feat-math/src/kernel/{pipeline,lexicase,expression_search}.rs`; E `crates/jope-pipeline/src/kernel2/search/{moves,offspring,generation}.rs`, `engine.rs`; N decision/selection policy module | Type/effect-correct edits, both-parent lineage, bounded repair, actual lexicase use; matched-cost gen0/periodic/every-generation study |",
+      "canonical_task_ids": [
+        "I08",
+        "I19"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1294,
+      "table_id": "S5-T1274",
+      "original_id": "19 — Allocation and fidelity audits",
+      "original_row": "| 19 — Allocation and fidelity audits | P2; 08,11,13,18 | N `crates/jope-pipeline/src/search_allocation/{mod,bandit,fidelity,audit}.rs`; E existing measurement/receipt path | Logged actual probabilities, cost-normalized gain, randomized rejected-candidate audit; no role upgrade through fidelity; fixed-mixture control |",
+      "canonical_task_ids": [
+        "I16",
+        "I23"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1295,
+      "table_id": "S5-T1274",
+      "original_id": "20 — Bounded QD selection",
+      "original_row": "| 20 — Bounded QD selection | P2; 08,18 | E `crates/feat-math/src/kernel/pareto.rs`, `crates/jope-pipeline/src/kernel2/{archive,engine}.rs`; N descriptor/version module | Archive actually affects selected policy when enabled; 128-member cap, stable descriptor version, bloat/cost accounting, transfer test |",
+      "canonical_task_ids": [
+        "I24"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1296,
+      "table_id": "S5-T1274",
+      "original_id": "21 — Optional exact-transition planner",
+      "original_row": "| 21 — Optional exact-transition planner | P2; 08,13,18,19 | N `crates/jope-pipeline/src/planner/{mod,state,puct,teacher}.rs`; reuse evaluator and variation | Full-state transpositions, single-player backup, real vs predicted outcome separation, budget/tree bounds; beats beam/restarts or stops |",
+      "canonical_task_ids": [
+        "I38",
+        "I39"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1297,
+      "table_id": "S5-T1274",
+      "original_id": "22 — Graph reader and verifier",
+      "original_row": "| 22 — Graph reader and verifier | P2; 16,18 | E `crates/feat-math/src/kernel/{program,codec,export,scope}.rs`; N `kernel/graph/{mod,types,effects,canonical,verify}.rs` | Reader-first rejection, legacy exact goldens, no cycles/effect leaks/shape explosions; no generation enabled yet |",
+      "canonical_task_ids": [
+        "I08"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1298,
+      "table_id": "S5-T1274",
+      "original_id": "23 — Fitted graph and OOF routes",
+      "original_row": "| 23 — Fitted graph and OOF routes | P2; 08,22 | N `kernel/graph/{fit,predict,crossfit,lower}.rs`; E existing fitted-state and emitter owners | True OOF training features, full-train refit export, fold-local cache isolation, per-backend numerical/resource qualification |",
+      "canonical_task_ids": [
+        "I54",
+        "I55"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1299,
+      "table_id": "S5-T1274",
+      "original_id": "24 — Learned library",
+      "original_row": "| 24 — Learned library | P2 research; 08,18,22,23 | N `crates/jope-learning/src/program_library/{mod,mine,qualify,manifest}.rs`; E policy support/grammar adapters | Definition cost plus transfer/search savings on held families; exact expansion and token migration; reject one-family-only macro |",
+      "canonical_task_ids": [
+        "I56"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1300,
+      "table_id": "S5-T1274",
+      "original_id": "25 — Bounded learner programs",
+      "original_row": "| 25 — Bounded learner programs | P3 research; 08,22,23 | N `crates/feat-math/src/kernel/fit_program/{mod,verify,interpreter}.rs`; E `crates/jope-pipeline/src/execution.rs`; isolated execution adapter | Fuel/loop/state bounds, no label/capability escape, reference/export parity, real learner transfer; never use trusted same-UID cgroup worker alone |",
+      "canonical_task_ids": [
+        "I58"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1301,
+      "table_id": "S5-T1274",
+      "original_id": "26 — Exact-version custody",
+      "original_row": "| 26 — Exact-version custody | P1; 02,06 | E `crates/jope-datasets/src/store.rs`, `credentials.rs`; E `crates/jope-learning/src/custody/{reader,cost}.rs`; N live read-only adapter | Exact version/range/checksum tests, redacted credential refresh, request/byte cap and current/noncurrent accounting |",
+      "canonical_task_ids": [
+        "I46",
+        "I49",
+        "I50"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1302,
+      "table_id": "S5-T1274",
+      "original_id": "27 — Replay value/forgetting",
+      "original_row": "| 27 — Replay value/forgetting | P1; 03,08,10 | E `crates/jope-learning/src/pools/{pool,selectors,flywheel,evaluate}.rs`, existing replay sampler; N replay retention-policy module | Uniform/stratified/champion-only/curated comparison at equal bytes/updates; forgetting and fresh transfer, correct inclusion probabilities |",
+      "canonical_task_ids": [
+        "I36",
+        "I51"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1303,
+      "table_id": "S5-T1274",
+      "original_id": "28 — Retention proof and relocation",
+      "original_row": "| 28 — Retention proof and relocation | P1; 06,09,10,26,27 | E `crates/jope-learning/src/retention/{classify,plan,refs,pack,distilled}.rs`; N `retention/{graph,proof,relocation}.rs` | Exact record multiset and physical identity, independent marks, verified pack/restore, no live delete calls; old pins protect old versions |",
+      "canonical_task_ids": [
+        "I47",
+        "I50",
+        "I51"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1304,
+      "table_id": "S5-T1274",
+      "original_id": "29 — Monotonic version retirement",
+      "original_row": "| 29 — Monotonic version retirement | P2; 06,28 | Extend `selfplay/{authority,pins}.rs` introduced in PR06; N `retention/retired.rs`, certificate schema, finite-state concurrency model | Root/pin/publication versus retirement interleavings; no retired-version resurrection; unknown legacy namespaces HOLD |",
+      "canonical_task_ids": [
+        "I50",
+        "I52"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1305,
+      "table_id": "S5-T1274",
+      "original_id": "30 — Constrained reclamation executor",
+      "original_row": "| 30 — Constrained reclamation executor | P2 operational; 26,28,29 and separately authorized maintenance rollout | N `retention/apply.rs`, CLI subcommand and exact-version action receipt; scoped deployment policy | Only committed eligible exact versions, held objects refused, stale executor harmless, lost deletes reconciled, actual reclaimed bytes verified |",
+      "canonical_task_ids": [
+        "I52"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1306,
+      "table_id": "S5-T1274",
+      "original_id": "31 — Source layout and contract CI",
+      "original_row": "| 31 — Source layout and contract CI | Continuous, initial slice after 01 | E large native/search/campaign modules, `crates/jope-campaigns/src/bin/jope_selfplay_tui.rs`, `.github/workflows/{ci,full-main}.yml`; N owner/dependency/schema checks in existing Rust verification tool | UI imports decisions rather than implements them; no reverse dependency; required test family cannot silently skip; each extraction preserves fixtures |",
+      "canonical_task_ids": [
+        "I62",
+        "I63",
+        "I64"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S5",
+      "line": 1307,
+      "table_id": "S5-T1274",
+      "original_id": "32 — Demonstration and release readiness",
+      "original_row": "| 32 — Demonstration and release readiness | P1 product; 07–13,17,26; advanced features only if qualified | E existing CLI/TUI, front-door capability report and docs; N deterministic demonstration manifest and machine-readable progress/capsule view | Restored bounded run, fresh consumption, parent/child comparison and emitted model inspection; claims visibly reflect exploratory/inconclusive/qualified state |",
+      "canonical_task_ids": [
+        "I32",
+        "I43",
+        "I61",
+        "I65"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1515,
+      "table_id": "S6-T1513",
+      "original_id": "01",
+      "original_row": "| 01 | Baseline facts | **`crates/jope-records/src/baseline_facts.rs`**, **`docs/baseline-facts.json`** (generated: HEAD, crate sizes, search constants, registry lists, emitter matrix, S3 catalog summary, claim/experiment counts) | `baseline_facts --check` in hygiene lane | regenerates byte-identically | — |",
+      "canonical_task_ids": [
+        "I01"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1516,
+      "table_id": "S6-T1513",
+      "original_id": "02",
+      "original_row": "| 02 | Generated operator registry | **`feat-math/src/registry/{mod,ops,heads,targets,generate}.rs`**; `spec.rs`, `evolve.rs`, `full_rust.rs`, `heads.rs` consume generated lists; `jope-engine/assets/grammar/featmath.v2.json` | **`feat-math/tests/registry_agreement.rs`**; compat-freeze | L1, L2, L7 closed; `hurdle2` emitted or marked unsupported | 01 |",
+      "canonical_task_ids": [
+        "I07"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1517,
+      "table_id": "S6-T1513",
+      "original_id": "03",
+      "original_row": "| 03 | Strict parameters, `poly_interact.topk` | `dsl.rs` (strict mode), `ops.rs` (implement or reject `topk`, op version 2), canonical v2 | parser property tests; transition fixture | L3, L4 closed; old canonical identities preserved | 02 |",
+      "canonical_task_ids": [
+        "I08",
+        "I10"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1518,
+      "table_id": "S6-T1513",
+      "original_id": "04",
+      "original_row": "| 04 | All-target artefact binding | `feat-math/src/transpile.rs` (`battle-artifact/v3`), `jope-pipeline/src/emit.rs`, `kernel2/publication.rs`, `emit/fitted.rs`; **`schemas/jope.battle-artifact.v3.schema.json`** | wrong-program injection for every target; missing-target refusal | #48 closed | 02 |",
+      "canonical_task_ids": [
+        "I09"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1519,
+      "table_id": "S6-T1513",
+      "original_id": "05",
+      "original_row": "| 05 | Partition-point quantiles by default | `transpile.rs` `EmitOptions::default()`; emitter version label; ADR-0004 transition | `tests/clover_quantile.rs` default-path variant | EXP-008 replay 6/6 bitwise under the default | 02 |",
+      "canonical_task_ids": [
+        "I10"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1520,
+      "table_id": "S6-T1513",
+      "original_id": "06",
+      "original_row": "| 06 | Shuffled internal splits | `heads.rs` (`ensemble`, `stack`), `boost2.rs` (`histgbm2`), new head versions | row-permutation metamorphic test | L8 closed | 02 |",
+      "canonical_task_ids": [
+        "I03",
+        "I10"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1521,
+      "table_id": "S6-T1513",
+      "original_id": "07",
+      "original_row": "| 07 | CPU accounting and stage cache in the pipeline | `jope-pipeline/src/search.rs::evaluate` → `fit_with_stage_cache`; `getrusage` per fit; **`receipt.rs` v5 fields** | determinism with cache on/off; cache-key collision test | identical selections with and without cache | — |",
+      "canonical_task_ids": [
+        "I16",
+        "I21"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1522,
+      "table_id": "S6-T1513",
+      "original_id": "08",
+      "original_row": "| 08 | `SearchProfile` | **`jope-pipeline/src/profile.rs`**; `legacy`, `lite_race`, `kernel2-*` as profiles; `jope-bench/src/methods.rs` calls profiles | golden traces for `legacy` and `lite_race` | bench and pipeline record the same profile digest | 07 |",
+      "canonical_task_ids": [
+        "I17",
+        "I18"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1523,
+      "table_id": "S6-T1513",
+      "original_id": "09",
+      "original_row": "| 09 | F1 probe, fingerprints, FEC | **`jope-pipeline/src/fidelity.rs`**, **`fingerprint.rs`** | FEC false-hit audit test | false-hit rate reported | 08 |",
+      "canonical_task_ids": [
+        "I21",
+        "I22"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1524,
+      "table_id": "S6-T1513",
+      "original_id": "10",
+      "original_row": "| 10 | `modern_gp` | **`jope-pipeline/src/modern_gp/{mod, aging, lexicase, operators, bandit, qd, refine, ladder, migrate}.rs`** (reuse `feat-math/src/kernel/lexicase.rs`, `refinement`, `CanonicalMutationArm`); `seeds.rs` → `jope.pipeline-seeds/v2` (`source` + propensity per seed) and a `ProposalSource` trait, so the pipeline still never depends on `jope-learning` | replay determinism under the evaluation bound; bandit propensity logging | profile digest in receipt | 08, 09 |",
+      "canonical_task_ids": [
+        "I19"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1525,
+      "table_id": "S6-T1513",
+      "original_id": "11",
+      "original_row": "| 11 | Experiments compiler v2 and `STATE.md` | **`jope-records/src/experiments/{mod, record, meta, state}.rs`**; **`schemas/jope.experiment-record.v2.schema.json`**; migrate the 18 records; **`docs/experiments/hypotheses.yaml`**; **`docs/STATE.md`** | deterministic compile; number resolution reusing `paper_trace` | CI hygiene lane green; `STATE.md` ≤ 8,000 bytes | 01 |",
+      "canonical_task_ids": [
+        "I44",
+        "I45",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1526,
+      "table_id": "S6-T1513",
+      "original_id": "12",
+      "original_row": "| 12 | Delete `campaign.rs`; archive manifest | `jope-campaigns/src/campaign.rs` (removed), `docs/archive/…` | build + coverage | R1 | — |",
+      "canonical_task_ids": [
+        "I62"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1527,
+      "table_id": "S6-T1513",
+      "original_id": "13",
+      "original_row": "| 13 | EXP-019 preregistration | `docs/internal/kernel-game/exp-019-prereg.json` | prereg verifier | pinned before any run | 10, 11 |",
+      "canonical_task_ids": [
+        "I41",
+        "I65"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1533,
+      "table_id": "S6-T1531",
+      "original_id": "14",
+      "original_row": "| 14 | Effect checker | **`feat-math/src/registry/effects.rs`**; evaluator F0 integration | permuted-label leakage canaries; stacked target-aware rejection | §7.4 rules enforced | 02 |",
+      "canonical_task_ids": [
+        "I08"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1534,
+      "table_id": "S6-T1531",
+      "original_id": "15",
+      "original_row": "| 15 | `boost` combinator | `dsl.rs`, `genome.rs`, `model.rs`, `spec.rs`, emitters (Py/Rust/fitted-C++; recipe/JS unsupported) | OOF residual correctness; emitter parity | registry status `SearchEnabled` | 14 |",
+      "canonical_task_ids": [
+        "I08",
+        "I54"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1535,
+      "table_id": "S6-T1531",
+      "original_id": "16",
+      "original_row": "| 16 | Rust proposal outbox | **`jope-learning/src/proposals/outbox.rs`** | 10,000 duplicate inserts; crash at every state | per-draw log-probs preserved; draws in `jope.proposal-ledger/v1` format | — |",
+      "canonical_task_ids": [
+        "I26"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1536,
+      "table_id": "S6-T1531",
+      "original_id": "17",
+      "original_row": "| 17 | `research/v2` store: episodes, decisions, manifests | **`jope-learning/src/research_store/{episodes, decisions, manifest}.rs`** (uses the in-repo minimal Parquet writer `jope-learning/src/retention/parquet.rs`, extended to multiple row groups, and `jope-datasets::store`) | readback, conditional-write races, stale listing | first live write to `research/v2` with receipt (also closes the receipted half of #62) | 16 |",
+      "canonical_task_ids": [
+        "I28",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1537,
+      "table_id": "S6-T1531",
+      "original_id": "18",
+      "original_row": "| 18 | Dream worker | **`jope-learning/src/dream/{generator, noise, oracle, equivalence, plr}.rs`**, **`src/bin/jope_dream.rs`** | known-σ recovery tests; oracle-refit identity; IAM-denied sealed read | dream tasks recover hidden structure on easy settings (ρ = 20) in ≥ 90% of cases with `modern_gp` at B = 128 | 10, 17 |",
+      "canonical_task_ids": [
+        "I37"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1538,
+      "table_id": "S6-T1531",
+      "original_id": "19",
+      "original_row": "| 19 | GBDT allocator (R2) | `jope-learning/src/pools/selectors.rs` (**`GbdtSurrogate`** using `feat_math::boost2`) | LOPO evaluation on `shadow-pool-v2` | ladder rung R2 reported vs C190 | — |",
+      "canonical_task_ids": [
+        "I23",
+        "I33"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1539,
+      "table_id": "S6-T1531",
+      "original_id": "20",
+      "original_row": "| 20 | KernelNet v2 (tch) and its candle port | **`jope-engine/src/kernelnet/{config, columns, program, memory, decoder, heads}.rs`**; **`jope-policy/src/kernelnet/`** | numeric parity tch↔candle; legal-mask exactness; per-factor log-prob normalisation | ≤ 5 ms per proposal on CPU (128-token program) | 02 |",
+      "canonical_task_ids": [
+        "I33",
+        "I34"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1540,
+      "table_id": "S6-T1531",
+      "original_id": "21",
+      "original_row": "| 21 | Objective v2, schedule, parameter groups | **`jope-engine/src/training/{objective_v2, schedule, param_groups}.rs`**; ported `rloo_weights`/`pkpo_weights` from `deploy/dl-flywheel/pipelines/rlfw/onpolicy/objective.py` and the sticky KL guard from `continuous_v6/kl_guard.py` | differential tests vs committed Python fixtures (ADR-0006 P3 pattern) | gradient-norm balance report | 20 |",
+      "canonical_task_ids": [
+        "I35"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1541,
+      "table_id": "S6-T1531",
+      "original_id": "22",
+      "original_row": "| 22 | Training bundle and checkpoint ancestry | **`jope-engine/src/training/bundle.rs`**; checkpoint manifest names the bundle SHA-256 | interrupted-resume parity; zero-gradient refusal | `optimizer_updates > 0`, new parameter SHA-256 | 17, 21 |",
+      "canonical_task_ids": [
+        "I11",
+        "I12",
+        "I13"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1542,
+      "table_id": "S6-T1531",
+      "original_id": "23",
+      "original_row": "| 23 | Residual tokens and `PolicyEdit` arm | **`jope-pipeline/src/modern_gp/policy_edit.rs`**; `jope-policy` call | deterministic proposals under fixed seeds | arm propensities logged | 10, 20 |",
+      "canonical_task_ids": [
+        "I25",
+        "I34"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1543,
+      "table_id": "S6-T1531",
+      "original_id": "24",
+      "original_row": "| 24 | Rounds ledger and state machine | **`jope-learning/src/rounds/{mod, events, machine}.rs`** | crash at every transition; idempotent retry | §11.4 | 16, 17, 22 |",
+      "canonical_task_ids": [
+        "I40"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1544,
+      "table_id": "S6-T1531",
+      "original_id": "25",
+      "original_row": "| 25 | Verifier fixes and roster adoption | `clover/round_qual.rs` (`PolicyVsParentAtEqualResources`), `qualify/promotion.rs` (`PolicyDelta` rows; adopt the first sealed independent-family roster, G36 `min_families`), KL measured on actual seed distribution, prereg `seed_cap_b` | refusal tests; sealed-roster look accepted exactly once | K4, K5 closed; Gate F accepts a sealed roster | 24 |",
+      "canonical_task_ids": [
+        "I41",
+        "I42",
+        "I43"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1545,
+      "table_id": "S6-T1531",
+      "original_id": "26",
+      "original_row": "| 26 | EXP-024 first learning round | prereg + run receipts | — | Gate F + SPQ-1 reports exist (any verdict) | 18–25 |",
+      "canonical_task_ids": [
+        "I40",
+        "I41",
+        "I65"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1551,
+      "table_id": "S6-T1549",
+      "original_id": "27",
+      "original_row": "| 27 | Ranked-reward views | **`jope-learning/src/rounds/ranked.rs`** | buffer snapshot hashing; tie rule | views recomputable from raw `g` | 24 |",
+      "canonical_task_ids": [
+        "I59"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1552,
+      "table_id": "S6-T1549",
+      "original_id": "28",
+      "original_row": "| 28 | Teacher-qualification gate | **`jope-learning/src/qualify/teacher.rs`** | equal-fit comparison fixtures | §6.6 gate enforced before any search-output CE target (`L_π`, \"qualified search output\" row, §10.2) | 24 |",
+      "canonical_task_ids": [
+        "I38"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1553,
+      "table_id": "S6-T1549",
+      "original_id": "29",
+      "original_row": "| 29 | `gumbel_root` profile | **`jope-pipeline/src/gumbel_root.rs`** | sequential-halving budget accounting; completed-Q target tests | measured fits reported separately from visits | 10, 20, 28 |",
+      "canonical_task_ids": [
+        "I39"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1554,
+      "table_id": "S6-T1549",
+      "original_id": "30",
+      "original_row": "| 30 | Plasticity mechanisms and re-distillation | `jope-engine/src/training/{continual, distill}.rs` | dead-unit and effective-rank monitors | §10.5 | 22 |",
+      "canonical_task_ids": [
+        "I35"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1555,
+      "table_id": "S6-T1549",
+      "original_id": "31",
+      "original_row": "| 31 | Retention plan/apply | **`jope-learning/src/retention/{value, apply, tombstone}.rs`**; `src/bin/jope_retention.rs` (`plan`, `apply`); **`deploy/s3/learning-lifecycle.research-v2.json`** | HT-unbiasedness simulation test; restore drill; signed-plan refusal | E6 rule; first applied plan on `research/v2` only | 17 |",
+      "canonical_task_ids": [
+        "I50",
+        "I51",
+        "I52"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1556,
+      "table_id": "S6-T1549",
+      "original_id": "32",
+      "original_row": "| 32 | Library game promotion path | **`jope-motifs/src/promote.rs`** | expansion exactness (exists) + A/B harness | first motif promoted only after a preregistered efficiency win | 10, 11 |",
+      "canonical_task_ids": [
+        "I56"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1557,
+      "table_id": "S6-T1549",
+      "original_id": "33",
+      "original_row": "| 33 | Foundation-model primitives | `feat-math` registry ops `fm_feat` (Starlight, `jope-encoders/src/foundation.rs`) and `fm_oof` (pinned external, licence-gated) | OOF leakage canary; CPU budget class | registry status `Research` until EXP-029 | 14 |",
+      "canonical_task_ids": [
+        "I57"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1558,
+      "table_id": "S6-T1549",
+      "original_id": "34",
+      "original_row": "| 34 | `union` and `route` combinators | `feat-math` registry + model + emitters | effect rules; width caps | registry status `SearchEnabled` | 14 |",
+      "canonical_task_ids": [
+        "I55"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1559,
+      "table_id": "S6-T1549",
+      "original_id": "35",
+      "original_row": "| 35 | Campaigns split and ADR-0006 P3 learning ports | `crates/legacy/…`, archive manifests | identity transition fixture | R2, R6 | 21 |",
+      "canonical_task_ids": [
+        "I62"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1560,
+      "table_id": "S6-T1549",
+      "original_id": "36",
+      "original_row": "| 36 | Optional: S3 Vectors index | **`jope-learning/src/research_store/vectors.rs`** | rebuild-from-Parquet test | derived only | 17, 20 |",
+      "canonical_task_ids": [
+        "I28"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1596,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-019**",
+      "original_row": "| **EXP-019** | `modern_gp` finds better programs than `legacy` (H-SEARCH-MODERN) | `legacy`, `lite_race`, `modern_gp` at B ∈ {64, 256} | paired ln-RMSE at F4 vs bootstrap, parent-cluster bootstrap over the frozen train-24 roster and a train-role family panel disjoint from L6-1148 (kept clean as the training safety panel) | research_adaptive → development_confirmatory on a held-out family panel | CI on `modern_gp − legacy` includes 0 at both budgets |",
+      "canonical_task_ids": [
+        "I18",
+        "I19",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1597,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-020**",
+      "original_row": "| **EXP-020** | stage cache + FEC raise fits per CPU-hour without changing selections (H-THROUGHPUT) | cache/FEC off vs on | fits per CPU-hour; selection agreement; FEC false-hit rate | research_adaptive | < 1.5× throughput, or any selection change attributable to a false hit |",
+      "canonical_task_ids": [
+        "I21",
+        "I22",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1598,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-021**",
+      "original_row": "| **EXP-021** | retrieval seeding beats policy seeding at equal attempts (H-SEED-RETRIEVAL), and a mixture beats both (H-SEED-MIX) | `modern_gp` seeded by: none, retrieval, step-60000 policy, mixture (randomised slot shares) | paired ln-RMSE; slot-level causal contribution from the randomised shares | development_confirmatory | mixture not better than the best single source |",
+      "canonical_task_ids": [
+        "I20",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1599,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-022**",
+      "original_row": "| **EXP-022** | a GBDT allocator beats `ContextualSurrogateQHat` (H-ALLOC-GBDT) | R1 vs R2 (§9.6) on LOPO `shadow-pool-v2` | pairwise accuracy; B = 1/4/8 top-1 gain | research_adaptive (shadow) | CI on B=1 gain includes 0 |",
+      "canonical_task_ids": [
+        "I23",
+        "I33",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1600,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-023**",
+      "original_row": "| **EXP-023** | the four training-recipe hypotheses (H-T, H-K, H-P, H-C, §10.7) | four paired ablations on the L6-1148 panel | L6 and fresh-program pairwise accuracy at equal steps | research_adaptive | as in §10.7 |",
+      "canonical_task_ids": [
+        "I35",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1601,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-024**",
+      "original_row": "| **EXP-024** | a KernelNet child trained on dreams + real episodes improves search over `modern_gp` without a policy (H-POLICY-DELTA-1) | `modern_gp` + KernelNet edits/seeds vs `modern_gp` alone vs `modern_gp` + shuffled-context KernelNet | Gate F family effect on independent families at equal resources | sealed_qualification (Gate F, after PR 25 adopts a sealed roster) | lower bound below the practical margin |",
+      "canonical_task_ids": [
+        "I31",
+        "I33",
+        "I34",
+        "I40",
+        "I41",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1602,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-025–027**",
+      "original_row": "| **EXP-025–027** | ranked self-play rounds 1–3 improve successively (H-SELFPLAY) | child_t vs parent_{t−1} vs `modern_gp`-only | Gate F per round; trend across rounds | sealed_qualification per round, new families each round | two consecutive rounds fail |",
+      "canonical_task_ids": [
+        "I40",
+        "I42",
+        "I43",
+        "I59",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1603,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-028**",
+      "original_row": "| **EXP-028** | Gumbel root search beats `modern_gp` at equal measured fits and qualifies as a teacher (H-TEACHER) | `gumbel_root` vs `modern_gp` | paired ln-RMSE at equal fits; teacher-qualification report | development_confirmatory | CI includes 0 → no search-distillation loss |",
+      "canonical_task_ids": [
+        "I38",
+        "I39",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1604,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-029**",
+      "original_row": "| **EXP-029** | `boost` and foundation-model primitives close the tail gap (H-FM-PRIMITIVE) | registry with/without `boost`, `fm_feat`, `fm_oof` | paired ln-RMSE on the Golden45-like *train-role* families with the largest gaps | development_confirmatory | no improvement on the tail families |",
+      "canonical_task_ids": [
+        "I54",
+        "I57",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1605,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-030**",
+      "original_row": "| **EXP-030** | a frozen `modern_gp` + KernelNet procedure improves the benchmark-valid Golden45 standing (H-BENCH) | one frozen procedure, full 45/45 coverage, one look | Elo with CI, coverage | separate benchmark campaign | — (reported whatever the rank) |",
+      "canonical_task_ids": [
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1606,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-031**",
+      "original_row": "| **EXP-031** | a promoted motif makes search more efficient (H-MOTIF) | grammar with vs without motif | best-so-far AUC at equal fits | development_confirmatory | CI includes 0 |",
+      "canonical_task_ids": [
+        "I56",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S6",
+      "line": 1607,
+      "table_id": "S6-T1594",
+      "original_id": "**EXP-032**",
+      "original_row": "| **EXP-032** | `STATE.md` + cards let an agent answer research questions better and cheaper (H-MEMORY) | agents with `STATE.md` + cards vs raw documents | correctness on 30 fixed questions; citation validity; tokens | research_adaptive | no gain in correctness at lower tokens |",
+      "canonical_task_ids": [
+        "I44",
+        "I45",
+        "I66",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 283,
+      "table_id": "S8-T0281",
+      "original_id": "01",
+      "original_row": "| 01 | P0 | Pin HEAD, measure shipped pipeline/bench/policy/S3, publish probe suite | All reported audit findings confirmed/rejected/unknown with executable results |",
+      "canonical_task_ids": [
+        "I01"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 284,
+      "table_id": "S8-T0281",
+      "original_id": "02",
+      "original_row": "| 02 | P0 | Unify bench and shipped SearchKernel profile; emit profile hash | Golden trace, same implementation under both |",
+      "canonical_task_ids": [
+        "I17",
+        "I18"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 285,
+      "table_id": "S8-T0281",
+      "original_id": "03–05",
+      "original_row": "| 03–05 | P0 | Typed EvalRequest/Outcome, emitter binding closure, S3 credential/role repair | Fail-closed on malformed fit, full claimed-target digests, restore drill |",
+      "canonical_task_ids": [
+        "I02",
+        "I03",
+        "I04",
+        "I09",
+        "I46",
+        "I49"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 286,
+      "table_id": "S8-T0281",
+      "original_id": "06",
+      "original_row": "| 06 | P0 | Durable proposal outbox (lease, retry, ack, dedup) | No lost proposals or uncharged duplicates after crash injection |",
+      "canonical_task_ids": [
+        "I26"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 287,
+      "table_id": "S8-T0281",
+      "original_id": "07",
+      "original_row": "| 07 | P0 | ResearchEpisode + SearchAction schemas with sealed action logs | Deterministic replay including failures |",
+      "canonical_task_ids": [
+        "I02",
+        "I05"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 288,
+      "table_id": "S8-T0281",
+      "original_id": "08",
+      "original_row": "| 08 | P0 | ResearchCapsule compiler v2 | 100% waves emit schema-valid cards; no unsupported claims |",
+      "canonical_task_ids": [
+        "I44",
+        "I66"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 289,
+      "table_id": "S8-T0281",
+      "original_id": "09–11",
+      "original_row": "| 09–11 | P0 | Evidence lanes, modern GP baseline, full resource ledger | Same profile, no head-blind promotion, resource reconciliation |",
+      "canonical_task_ids": [
+        "I03",
+        "I04",
+        "I16",
+        "I19",
+        "I42"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 290,
+      "table_id": "S8-T0281",
+      "original_id": "12",
+      "original_row": "| 12 | P0 | Real snapshot-to-trainer adapter; child checkpoint | ≥1 nonzero optimizer update, changed weights |",
+      "canonical_task_ids": [
+        "I11",
+        "I12",
+        "I13",
+        "I14",
+        "I31",
+        "I32"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 291,
+      "table_id": "S8-T0281",
+      "original_id": "13",
+      "original_row": "| 13 | P0 | Frozen matched policy arena + independent judge | Parent retained by default; promotion only with qualified record |",
+      "canonical_task_ids": [
+        "I41",
+        "I42"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 292,
+      "table_id": "S8-T0281",
+      "original_id": "14",
+      "original_row": "| 14 | P0 | End-to-end CI smoke + negative canaries | Deterministic synthetic loop green |",
+      "canonical_task_ids": [
+        "I32",
+        "I64"
+      ],
+      "classification": "IMPLEMENTATION_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 318,
+      "table_id": "S8-T0316",
+      "original_id": "01",
+      "original_row": "| 01 | Head-aware full-rung scoring repairs weak tail | Shipped old vs modern GP | No out-of-family gain |",
+      "canonical_task_ids": [
+        "I03",
+        "I19",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 319,
+      "table_id": "S8-T0316",
+      "original_id": "02",
+      "original_row": "| 02 | Incumbent/portfolio fallback avoids regressions | Modern GP vs GP+frozen fallback | Worse held-out quality |",
+      "canonical_task_ids": [
+        "I18",
+        "I19",
+        "I43",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 320,
+      "table_id": "S8-T0316",
+      "original_id": "03",
+      "original_row": "| 03 | Retrieval adds value | GP_random vs GP_retrieval | No positive AUC |",
+      "canonical_task_ids": [
+        "I20",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 321,
+      "table_id": "S8-T0316",
+      "original_id": "04",
+      "original_row": "| 04 | Policy seeding adds value beyond retrieval | GP_retrieval vs mixed frozen policy | No incremental value |",
+      "canonical_task_ids": [
+        "I20",
+        "I34",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 322,
+      "table_id": "S8-T0316",
+      "original_id": "05",
+      "original_row": "| 05 | Stage cache improves resource-normalized discovery | Cold vs warm | No compute benefit |",
+      "canonical_task_ids": [
+        "I21",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 323,
+      "table_id": "S8-T0316",
+      "original_id": "06",
+      "original_row": "| 06 | Typed GP improves validity | Legacy vs typed homologous | No effect or more broken programs |",
+      "canonical_task_ids": [
+        "I08",
+        "I19",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 324,
+      "table_id": "S8-T0316",
+      "original_id": "07",
+      "original_row": "| 07 | Contextual operator bandit | Fixed vs learned | No cross-family AUC gain |",
+      "canonical_task_ids": [
+        "I23",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 325,
+      "table_id": "S8-T0316",
+      "original_id": "08",
+      "original_row": "| 08 | QD preserves productive stepping stones | Scalar top-k vs archive | More novelty but worse quality |",
+      "canonical_task_ids": [
+        "I24",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 326,
+      "table_id": "S8-T0316",
+      "original_id": "09",
+      "original_row": "| 09 | LightGBM acquisition | FIFO/random/ridge vs LightGBM | No same-pool lift |",
+      "canonical_task_ids": [
+        "I23",
+        "I33",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 327,
+      "table_id": "S8-T0316",
+      "original_id": "10",
+      "original_row": "| 10 | Structural neural critic | Classical vs neural (same pool) | No held-out calibration/value lift |",
+      "canonical_task_ids": [
+        "I33",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 328,
+      "table_id": "S8-T0316",
+      "original_id": "11",
+      "original_row": "| 11 | Edit policy beats gen0-only | Fixed parent vs trained edit sampler | No time-to-target lift |",
+      "canonical_task_ids": [
+        "I34",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 329,
+      "table_id": "S8-T0316",
+      "original_id": "12",
+      "original_row": "| 12 | Gumbel root improves targets | Sampled policy vs completed-Q teacher | Teacher not stronger |",
+      "canonical_task_ids": [
+        "I38",
+        "I39",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 330,
+      "table_id": "S8-T0316",
+      "original_id": "13",
+      "original_row": "| 13 | Search distillation improves child | Frozen parent vs child | No qualified improvement |",
+      "canonical_task_ids": [
+        "I35",
+        "I38",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 331,
+      "table_id": "S8-T0316",
+      "original_id": "14",
+      "original_row": "| 14 | Improvement compounds | 3-round feedback vs frozen/restart | Gains explained by extra compute alone |",
+      "canonical_task_ids": [
+        "I40",
+        "I41",
+        "I42",
+        "I43",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    },
+    {
+      "source_id": "S8",
+      "line": 332,
+      "table_id": "S8-T0316",
+      "original_id": "15",
+      "original_row": "| 15 | Typed motifs transfer | Primitives-only vs macro-library | Novel motifs fail transfer |",
+      "canonical_task_ids": [
+        "I56",
+        "I65"
+      ],
+      "classification": "RESEARCH_WAVE_PROPOSAL",
+      "disposition": "PROPOSAL_ONLY; conflicts resolved by decisions.json and canonical task cards; no new PR or execution grant"
+    }
+  ],
+  "duplicate_aliases": {
+    "S2": "S1",
+    "S7": "S6"
+  },
+  "routing_semantics": "Section-level topic routing is navigation, not automatic approval or a claim every paragraph is a standalone requirement. Material decisions and65original packets plus humanI66 are in WORKPLAN/decisions; original rows remain immutable.",
+  "legacy_heuristic_context_rows": [
+    {
+      "source_id": "S1",
       "line": 25,
       "original_row": "| EI-0…EI-4, archive-CE, L_PI | Expert-iteration studies EXP-013…017. archive-CE = cross-entropy toward the 52 GP-winner programs of the r48 archive (from 42 contexts of a disjoint roster); L_PI (weight λ_PI) = the measured-tilt policy-improvement term |",
       "canonical_task_ids": [
@@ -24738,9 +27829,12 @@
       "disposition": "INTERNAL_PACKET_OR_PROPOSED_EXPERIMENT; not a new PR or execution grant"
     }
   ],
-  "duplicate_aliases": {
-    "S2": "S1",
-    "S7": "S6"
-  },
-  "routing_semantics": "Section-level topic routing is navigation, not automatic approval or a claim every paragraph is a standalone requirement. Material decisions and65original packets plus humanI66 are in WORKPLAN/decisions; original rows remain immutable."
+  "work_item_index_method": {
+    "selected_tables": 22,
+    "work_rows": 232,
+    "source_tables": "SOURCE_TABLES.json: every Markdown table, including context tables",
+    "method": "22 explicitly reviewed work/slice/wave/delivery tables, including bare numeric PR IDs; exact original row plus explicit canonical packet links",
+    "legacy": "166 initial regex-selected context/work rows retained as a dated heuristic subset, not a complete work-item denominator",
+    "interpretation": "Routing preserves scope and conflicts; proposed PR IDs are internal work, not permission for a PR stack; I66 applies to every research wave including rejected/failed/truncated outcomes"
+  }
 }

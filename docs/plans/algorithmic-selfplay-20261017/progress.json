@@ -1,7 +1,7 @@
 {
   "schema": "jope.unified-workplan.progress/v1",
-  "revision": 4,
-  "updated_at": "2026-10-17T20:39:40.751449+00:00",
+  "revision": 5,
+  "updated_at": "2026-10-17T20:52:42.607366+00:00",
   "planning": {
     "input_files_verified": 8,
     "unique_inputs": 6,
@@ -10,15 +10,19 @@
     "semantic_review": "COMPLETE_TEXT_RECONCILIATION_WITH_EXPLICIT_LIMITS; see SEMANTIC_REVIEW.md",
     "detailed_implementation_packets": 66,
     "decisions": 30,
-    "validation": "STATIC_PASS;11379checks before archival-manifest copy; final VALIDATION.json authoritative",
+    "validation": "See final VALIDATION.json; static integrity only",
     "pr": {
       "number": 356,
       "url": "https://github.com/neverhuman/JopeDime/pull/356",
       "initial_head": "15c0c9120d14d0ca40bf8906735a252db44c187d",
-      "state": "OPEN_FINAL_REVIEW_AMENDMENT",
-      "full_CI": "HOLD_UNTIL_FINAL_HEAD_FREEZE"
+      "state": "OPEN_FINAL_TRACEABILITY_AMENDMENT",
+      "full_CI": "HOLD_UNTIL_FINAL_HEAD_FREEZE",
+      "last_published_head": "f383d1231a6e7f015016c8c5c549b4918445246c"
     },
-    "source_and_test_anchors_verified": 134
+    "source_and_test_anchors_verified": 134,
+    "original_work_rows": 232,
+    "all_source_tables": 178,
+    "work_tables": 22
   },
   "implementation": {
     "tasks": 66,

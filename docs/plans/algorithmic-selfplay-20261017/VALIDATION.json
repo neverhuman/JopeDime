@@ -1,13 +1,13 @@
 {
   "schema": "jope.planning-validation/v1",
   "result": "PASS",
-  "checks": 11380,
+  "checks": 11700,
   "errors": [],
   "input_files": 8,
   "unique_inputs": 6,
   "source_sections": 123,
   "source_units": 2427,
-  "original_work_rows": 166,
+  "original_work_rows": 232,
   "implementation_packets": 66,
   "scope": "Static planning/reference/hash/DAG/coverage integrity only; not product CI, semantic approval, science, custody or serving."
 }
