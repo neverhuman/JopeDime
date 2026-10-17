@@ -226,6 +226,31 @@ fn read(path: &Path) -> Result<Vec<u8>> {
     fs::read(path).with_context(|| format!("read {}", path.display()))
 }
 
+fn read_bounded(path: &Path, max_bytes: usize) -> Result<Vec<u8>> {
+    use std::io::Read;
+    let meta = fs::metadata(path).with_context(|| format!("stat {}", path.display()))?;
+    anyhow::ensure!(meta.is_file(), "{} must be a regular file", path.display());
+    anyhow::ensure!(
+        meta.len() <= max_bytes as u64,
+        "{} size ({} bytes) exceeds maximum allowed {} bytes",
+        path.display(),
+        meta.len(),
+        max_bytes
+    );
+    let f = fs::File::open(path).with_context(|| format!("open {}", path.display()))?;
+    let mut buf = Vec::with_capacity((meta.len() as usize).min(max_bytes));
+    f.take((max_bytes as u64).saturating_add(1))
+        .read_to_end(&mut buf)
+        .with_context(|| format!("read {}", path.display()))?;
+    anyhow::ensure!(
+        buf.len() <= max_bytes,
+        "{} exceeds maximum allowed {} bytes",
+        path.display(),
+        max_bytes
+    );
+    Ok(buf)
+}
+
 fn parse_json_or_jsonl<T: serde::de::DeserializeOwned>(bytes: &[u8], what: &str) -> Result<Vec<T>> {
     let text = std::str::from_utf8(bytes).with_context(|| format!("{what}: invalid UTF-8"))?;
     let trimmed = text.trim();
@@ -240,6 +265,27 @@ fn parse_json_or_jsonl<T: serde::de::DeserializeOwned>(bytes: &[u8], what: &str)
         .enumerate()
         .filter(|(_, l)| !l.trim().is_empty())
         .map(|(i, l)| serde_json::from_str(l).with_context(|| format!("{what} line {}", i + 1)))
+        .collect()
+}
+
+fn parse_strict_json_or_jsonl(bytes: &[u8], what: &str) -> Result<Vec<serde_json::Value>> {
+    use jope_learning::clover::round_qual::parse_strict_json_value;
+    let text = std::str::from_utf8(bytes).with_context(|| format!("{what}: invalid UTF-8"))?;
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+    if trimmed.starts_with('[') {
+        match parse_strict_json_value(trimmed.as_bytes(), what)? {
+            serde_json::Value::Array(items) => return Ok(items),
+            _ => anyhow::bail!("{what}: expected JSON array"),
+        }
+    }
+    trimmed
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty())
+        .map(|(i, l)| parse_strict_json_value(l.as_bytes(), &format!("{what} line {}", i + 1)))
         .collect()
 }
 
@@ -671,23 +717,24 @@ fn main() -> Result<()> {
             out,
         } => {
             use jope_learning::clover::round_qual::{
-                parse_parent_map, qualify_rounds_with_prereg, ParityRecord, QualTestScore,
-                RoundQualInputs, RoundQualPlan,
+                parse_parent_map, parse_strict_json_value, qualify_rounds_with_prereg,
+                ParityRecord, QualTestScore, RoundQualInputs, RoundQualPlan,
             };
             use jope_learning::clover::ExperimentIdentity;
 
-            let plan: RoundQualPlan =
-                serde_json::from_slice(&read(&plan)?).context("parse --plan")?;
+            let plan_val = parse_strict_json_value(&read(&plan)?, "--plan")?;
+            let plan: RoundQualPlan = serde_json::from_value(plan_val).context("parse --plan")?;
+            let identity_val = parse_strict_json_value(&read(&identity)?, "--identity")?;
             let identity: ExperimentIdentity =
-                serde_json::from_slice(&read(&identity)?).context("parse --identity")?;
+                serde_json::from_value(identity_val).context("parse --identity")?;
             let ratchets: Vec<serde_json::Value> =
-                parse_json_or_jsonl(&read(&ratchets)?, "--ratchets")?;
+                parse_strict_json_or_jsonl(&read(&ratchets)?, "--ratchets")?;
             let test_scores: Vec<QualTestScore> =
                 parse_json_or_jsonl(&read(&test_scores)?, "--test-scores")?;
             let parity: Vec<ParityRecord> = parse_json_or_jsonl(&read(&parity)?, "--parity")?;
             let parent_map = parse_parent_map(&read(&parent_map)?)?;
             let prereg_bytes = match prereg.as_deref() {
-                Some(p) => Some(read(p)?),
+                Some(p) => Some(read_bounded(p, 1024 * 1024)?),
                 None => None,
             };
 
@@ -705,12 +752,13 @@ fn main() -> Result<()> {
             let digest = report.canonical_sha256()?;
             create_new(&out, &pretty(&report)?)?;
             println!(
-                "{} contexts ({} complete paired across {} parent clusters); verdict {:?}; margin_cleared {}; qualified_claim {}; report_sha256 {}",
+                "{} contexts ({} complete paired across {} parent clusters); verdict {:?}; margin_cleared {}; provenance_binding_status {}; qualified_claim {}; report_sha256 {}",
                 report.n_ratchet_contexts,
                 report.n_complete_paired_contexts,
                 report.n_observed_parent_clusters,
                 report.verdict,
                 report.margin_cleared,
+                report.provenance_binding_status,
                 report.qualified_claim,
                 digest
             );

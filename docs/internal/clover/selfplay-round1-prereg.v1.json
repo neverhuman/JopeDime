@@ -3,13 +3,13 @@
   "study_id": "clover-selfplay-round1-confirmatory",
   "status": "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
   "qualification_report_schema": "jope.selfplay-round-qualification/v1",
-  "provenance_binding_status": "prereg_verified_unpinned_no_execution_grant",
+  "provenance_binding_status": "prereg_contract_fields_checked_unpinned_no_execution_grant",
   "experiment_identity_sha256": "UNPINNED",
   "source_commit_at_draft": "525be65b38540eb64b84c9bf36f7da6812812f2f",
   "endpoints": {
     "primary": "final_vs_round0_incumbent",
     "secondary": "ratchet_vs_ordinary_final_round",
-    "secondary_status": "SUPPORTED_VIA_ORDINARY_CHAMPION_GENOME_SINGLE_ENDPOINT_ALPHA_0_025",
+    "secondary_status": "DIAGNOSTIC_VERIFIER_ONLY_PRODUCER_SCRATCH_UNEQUAL_RESOURCES_SINGLE_ENDPOINT_ALPHA_0_025",
     "multiplicity_procedure": "manual_g_judge_holm_bonferroni_k2_unimplemented_in_cli",
     "cli_single_endpoint_alpha_cap": 0.025,
     "alpha_total": 0.05,
@@ -48,8 +48,7 @@
       "max_new_support_mass": 0.15,
       "allow_kl_frozen_rounds": false,
       "allowlisted_measured_sources": [
-        "measured_tilt_leaf_policy",
-        "caller_evaluated_leaf_log_probs"
+        "measured_tilt_leaf_policy"
       ]
     }
   },
