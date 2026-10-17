@@ -230,7 +230,7 @@ const BOTTOM: f64 = 260.0;
 const TAKEAWAY: &str =
     "Why it matters: the first generation stopped improving, and its outcome head ranked new programs at chance.";
 const TAKEAWAY_SURROGATE: &str =
-    "Why it matters: v1 plateaued with fresh-program q-hat at chance (0.506); shadow surrogate rose 0.634 to 0.680 (non-qualifying).";
+    "Why it matters: v1 plateaued with fresh-program q-hat at chance; shadow-pool lift is non-qualifying.";
 const INK: &str = "#222222";
 const AXIS: &str = "#555555";
 const LINE: &str = "#1f4e79";
@@ -683,7 +683,7 @@ mod tests {
         let f = figure(DAT.as_bytes(), &with_c190, &mut found).expect("parses");
         let svg = render(&f);
         assert!(svg.contains("(b) Ranking: fresh programs vs. shadow pool"));
-        assert!(svg.contains("shadow surrogate rose 0.634 to 0.680 (non-qualifying)"));
+        assert!(svg.contains("fresh-program q-hat at chance; shadow-pool lift is non-qualifying."));
         assert!(svg.contains("v1 q-hat (fresh)"));
         assert!(svg.contains("R0 0.634 -> R4 0.680"));
         assert!(svg.contains("lift +0.046 [+0.040, +0.052]"));

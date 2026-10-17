@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="324" viewBox="0 0 800 324" font-family="Helvetica, Arial, sans-serif">
 <rect x="0" y="0" width="800" height="324" fill="white"/>
-<text x="26.0" y="24.0" text-anchor="start" font-size="13" font-weight="bold" fill="#222222">Why it matters: v1 plateaued with fresh-program q-hat at chance (0.506); shadow surrogate rose 0.634 to 0.680 (non-qualifying).</text>
+<text x="26.0" y="24.0" text-anchor="start" font-size="13" font-weight="bold" fill="#222222">Why it matters: v1 plateaued with fresh-program q-hat at chance; shadow-pool lift is non-qualifying.</text>
 <text x="26.0" y="52.0" text-anchor="start" font-size="13" fill="#222222">(a) First generation: full validation loss by epoch</text>
 <rect x="174.5" y="76.0" width="295.5" height="184.0" fill="#e3efe6"/>
 <text x="322.2" y="98.0" text-anchor="middle" font-size="12" fill="#222222">31 epochs (10–40) within</text>
