@@ -1,16 +1,17 @@
-//! Figure 1 of the white paper: the first generation's validation plateau and its outcome head at
-//! chance, drawn only from established claims.
+//! Figure 1 of the white paper: the first generation's validation plateau, its outcome head at
+//! chance, and the post-C183 S3 SoS-debiased contextual surrogate shadow progression.
 //!
 //! `docs/paper/figures/why-it-matters.svg` is rendered from
 //! `docs/paper/figures/v1_full_validation.dat`, the per-epoch full validation pass that claim C27
-//! pins, and from claim C76's value in `docs/paper/claims.json`. `paper-trace` re-renders it and
+//! pins, and from claims C76 and C190 in `docs/paper/claims.json`. `paper-trace` re-renders it and
 //! fails when:
 //!
 //! 1. the data file's SHA-256 is not C27's pin, or its epochs are not consecutive;
 //! 2. the plateau recomputed from the data (its band, its length and the epoch it starts at) is
 //!    not C27's value;
 //! 3. the epoch-2, best and last losses recomputed from the data are not C26's value;
-//! 4. C76's value or lineage count cannot be read;
+//! 4. C76's value or lineage count (or C190's shadow-pool-v2 pairwise values when present) cannot
+//!    be read;
 //! 5. the committed SVG is not the rendering of the data and the ledger
 //!    (`jope-records paper-trace --write-figure` rewrites it), or the write-up does not show it.
 
@@ -35,6 +36,12 @@ static RANKING: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(\d\.\d+) \[(\d\.\d+), (\d\.\d+)\]$").expect("static pattern"));
 static LINEAGES: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"over (\d+) lineages").expect("static pattern"));
+static SURROGATE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"shadow-pool-v2 \(\d[\d,]* contexts, (\d+) clusters\) R0->R4 pairwise (\d\.\d+) -> (\d\.\d+) \(\+(\d\.\d+) \[\+(\d\.\d+), \+(\d\.\d+)\] GREATER\)",
+    )
+    .expect("static pattern")
+});
 
 #[derive(Debug, Clone, Copy)]
 struct Epoch {
@@ -42,7 +49,18 @@ struct Epoch {
     loss: f64,
 }
 
-/// What the figure draws: every epoch's loss, the plateau band and the C76 ranking accuracy.
+#[derive(Debug, Clone)]
+struct Surrogate {
+    r0: f64,
+    r4: f64,
+    lift: f64,
+    low: f64,
+    high: f64,
+    clusters: String,
+}
+
+/// What the figure draws: every epoch's loss, the plateau band, C76 ranking accuracy, and
+/// optional C190 shadow-pool surrogate progression.
 #[derive(Debug)]
 pub struct Figure {
     epochs: Vec<Epoch>,
@@ -50,6 +68,7 @@ pub struct Figure {
     last_epoch: u32,
     ranking: (f64, f64, f64),
     lineages: String,
+    surrogate: Option<Surrogate>,
 }
 
 fn row(line: &str) -> Option<Epoch> {
@@ -107,7 +126,12 @@ pub fn figure(dat: &[u8], ledger_text: &str, problems: &mut Vec<String>) -> Resu
 
     let doc = pyjson::parse_str(ledger_text)
         .map_err(|m| Error::parse(Path::new(crate::paper_trace::LEDGER), m))?;
-    let (c26, c27, c76) = (claim(&doc, "C26"), claim(&doc, "C27"), claim(&doc, "C76"));
+    let (c26, c27, c76, c190) = (
+        claim(&doc, "C26"),
+        claim(&doc, "C27"),
+        claim(&doc, "C76"),
+        claim(&doc, "C190"),
+    );
 
     let digest = py::sha256_hex(dat);
     if digest != text(c27, "sha256") {
@@ -166,11 +190,33 @@ pub fn figure(dat: &[u8], ledger_text: &str, problems: &mut Vec<String>) -> Resu
         problems
             .push("figure: C76 is not `<accuracy> [<low>, <high>]` over `<n> lineages`".to_owned());
     }
+    let surrogate = if c190.is_some() {
+        let parsed = SURROGATE.captures(text(c190, "value")).and_then(|c| {
+            Some(Surrogate {
+                clusters: c[1].to_owned(),
+                r0: c[2].parse().ok()?,
+                r4: c[3].parse().ok()?,
+                lift: c[4].parse().ok()?,
+                low: c[5].parse().ok()?,
+                high: c[6].parse().ok()?,
+            })
+        });
+        if parsed.is_none() {
+            problems.push(
+                "figure: C190 is not `shadow-pool-v2 (<contexts> contexts, <clusters> clusters) R0->R4 pairwise <r0> -> <r4> (+<lift> [+<low>, +<high>] GREATER)`"
+                    .to_owned(),
+            );
+        }
+        parsed
+    } else {
+        None
+    };
     Ok(Figure {
         band: (lo, hi),
         last_epoch: last.epoch,
         ranking: ranking.unwrap_or((0.5, 0.5, 0.5)),
         lineages: lineages.unwrap_or_default(),
+        surrogate,
         epochs,
     })
 }
@@ -184,9 +230,12 @@ const BOTTOM: f64 = 260.0;
 /// The figure's one-line takeaway, so the image keeps its point when it is shown alone.
 const TAKEAWAY: &str =
     "Why it matters: the first generation stopped improving, and its outcome head ranked new programs at chance.";
+const TAKEAWAY_SURROGATE: &str =
+    "Why it matters: v1 plateaued with its outcome head at chance (0.506); SoS surrogate distillation lifts ranking (0.634 to 0.680).";
 const INK: &str = "#222222";
 const AXIS: &str = "#555555";
 const LINE: &str = "#1f4e79";
+const SURR: &str = "#2e6b3e";
 const SHADE: &str = "#e3efe6";
 
 /// Linear map of `v` in `[a, b]` to `[p, q]`.
@@ -235,9 +284,14 @@ pub fn render(f: &Figure) -> String {
         svg,
         r#"<rect x="0" y="0" width="{WIDTH}" height="{HEIGHT}" fill="white"/>"#
     );
+    let takeaway = if f.surrogate.is_some() {
+        TAKEAWAY_SURROGATE
+    } else {
+        TAKEAWAY
+    };
     let _ = writeln!(
         svg,
-        r#"<text x="26.0" y="24.0" text-anchor="start" font-size="13" font-weight="bold" fill="{INK}">{TAKEAWAY}</text>"#
+        r#"<text x="26.0" y="24.0" text-anchor="start" font-size="13" font-weight="bold" fill="{INK}">{takeaway}</text>"#
     );
 
     // (a) Full validation loss by closed epoch, the plateau shaded.
@@ -317,80 +371,217 @@ pub fn render(f: &Figure) -> String {
         );
     }
 
-    // (b) Pairwise ranking accuracy of the outcome head on freshly executed programs.
-    let (xs, ys) = ((612.0, 772.0), (0.40, 0.70));
-    let y = |a: f64| scale(a, ys, (BOTTOM, TOP));
-    label(
-        &mut svg,
-        xs.0 - 60.0,
-        PANEL_TITLE,
-        "start",
-        13,
-        "(b) Outcome head on fresh programs",
-    );
-    axes(
-        &mut svg,
-        xs,
-        ys,
-        &[0.40, 0.50, 0.60, 0.70],
-        "pairwise ranking accuracy",
-    );
-    let chance = y(0.5);
-    line(
-        &mut svg,
-        (xs.0, chance),
-        (xs.1, chance),
-        r#" stroke-dasharray="4 3""#,
-    );
-    label(&mut svg, xs.0 + 4.0, chance - 5.0, "start", 11, "chance");
-    let (value, low, high) = f.ranking;
-    let cx = (xs.0 + xs.1) / 2.0 - 16.0;
-    let _ = writeln!(
-        svg,
-        r#"<line x1="{cx:.1}" y1="{:.1}" x2="{cx:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
-        y(low),
-        y(high)
-    );
-    for end in [low, high] {
+    // (b) Pairwise ranking accuracy on freshly executed programs.
+    if let Some(s) = &f.surrogate {
+        let (xs, ys) = ((566.0, 776.0), (0.40, 0.72));
+        let y = |a: f64| scale(a, ys, (BOTTOM, TOP));
+        label(
+            &mut svg,
+            xs.0 - 44.0,
+            PANEL_TITLE,
+            "start",
+            13,
+            "(b) Fresh-program pairwise ranking accuracy",
+        );
+        axes(
+            &mut svg,
+            xs,
+            ys,
+            &[0.40, 0.50, 0.60, 0.70],
+            "pairwise ranking accuracy",
+        );
+        let chance = y(0.5);
+        line(
+            &mut svg,
+            (xs.0, chance),
+            (xs.1, chance),
+            r#" stroke-dasharray="4 3""#,
+        );
+        label(&mut svg, xs.0 + 4.0, chance - 5.0, "start", 11, "chance");
+
+        let (value, low, high) = f.ranking;
+        let cx1 = 612.0;
         let _ = writeln!(
             svg,
-            r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
-            cx - 6.0,
-            y(end),
-            cx + 6.0,
-            y(end)
+            r#"<line x1="{cx1:.1}" y1="{:.1}" x2="{cx1:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
+            y(low),
+            y(high)
+        );
+        for end in [low, high] {
+            let _ = writeln!(
+                svg,
+                r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
+                cx1 - 6.0,
+                y(end),
+                cx1 + 6.0,
+                y(end)
+            );
+        }
+        let _ = writeln!(
+            svg,
+            r#"<circle cx="{cx1:.1}" cy="{:.1}" r="4" fill="{LINE}"/>"#,
+            y(value)
+        );
+        label(
+            &mut svg,
+            cx1,
+            y(high) - 18.0,
+            "middle",
+            11,
+            &format!("{value:.3}"),
+        );
+        label(
+            &mut svg,
+            cx1,
+            y(high) - 5.0,
+            "middle",
+            10,
+            &format!("[{low:.3}, {high:.3}]"),
+        );
+        label(&mut svg, cx1, BOTTOM + 17.0, "middle", 11, "v1 q-hat");
+        label(
+            &mut svg,
+            cx1,
+            BOTTOM + 31.0,
+            "middle",
+            10,
+            &format!("({} lineages)", f.lineages),
+        );
+
+        let cx2 = 716.0;
+        let _ = writeln!(
+            svg,
+            r#"<line x1="{cx2:.1}" y1="{:.1}" x2="{cx2:.1}" y2="{:.1}" stroke="{SURR}" stroke-width="1.5"/>"#,
+            y(s.r0),
+            y(s.r4)
+        );
+        for end in [s.r0 + s.low, s.r0 + s.high] {
+            let _ = writeln!(
+                svg,
+                r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" stroke="{SURR}" stroke-width="1.5"/>"#,
+                cx2 - 6.0,
+                y(end),
+                cx2 + 6.0,
+                y(end)
+            );
+        }
+        let _ = writeln!(
+            svg,
+            r#"<circle cx="{cx2:.1}" cy="{:.1}" r="3.5" fill="white" stroke="{SURR}" stroke-width="1.5"/>"#,
+            y(s.r0)
+        );
+        let _ = writeln!(
+            svg,
+            r#"<circle cx="{cx2:.1}" cy="{:.1}" r="4" fill="{SURR}"/>"#,
+            y(s.r4)
+        );
+        label(
+            &mut svg,
+            cx2,
+            y(s.r4) - 18.0,
+            "middle",
+            11,
+            &format!("R0 {:.3} -> R4 {:.3}", s.r0, s.r4),
+        );
+        label(
+            &mut svg,
+            cx2,
+            y(s.r4) - 5.0,
+            "middle",
+            10,
+            &format!("+{:.3} [+{:.3}, +{:.3}]", s.lift, s.low, s.high),
+        );
+        label(
+            &mut svg,
+            cx2,
+            BOTTOM + 17.0,
+            "middle",
+            11,
+            "SoS surrogate (shadow)",
+        );
+        label(
+            &mut svg,
+            cx2,
+            BOTTOM + 31.0,
+            "middle",
+            10,
+            &format!("({} clusters, R0–R4)", s.clusters),
+        );
+    } else {
+        let (xs, ys) = ((612.0, 772.0), (0.40, 0.70));
+        let y = |a: f64| scale(a, ys, (BOTTOM, TOP));
+        label(
+            &mut svg,
+            xs.0 - 60.0,
+            PANEL_TITLE,
+            "start",
+            13,
+            "(b) Outcome head on fresh programs",
+        );
+        axes(
+            &mut svg,
+            xs,
+            ys,
+            &[0.40, 0.50, 0.60, 0.70],
+            "pairwise ranking accuracy",
+        );
+        let chance = y(0.5);
+        line(
+            &mut svg,
+            (xs.0, chance),
+            (xs.1, chance),
+            r#" stroke-dasharray="4 3""#,
+        );
+        label(&mut svg, xs.0 + 4.0, chance - 5.0, "start", 11, "chance");
+        let (value, low, high) = f.ranking;
+        let cx = (xs.0 + xs.1) / 2.0 - 16.0;
+        let _ = writeln!(
+            svg,
+            r#"<line x1="{cx:.1}" y1="{:.1}" x2="{cx:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
+            y(low),
+            y(high)
+        );
+        for end in [low, high] {
+            let _ = writeln!(
+                svg,
+                r#"<line x1="{:.1}" y1="{:.1}" x2="{:.1}" y2="{:.1}" stroke="{LINE}" stroke-width="1.5"/>"#,
+                cx - 6.0,
+                y(end),
+                cx + 6.0,
+                y(end)
+            );
+        }
+        let _ = writeln!(
+            svg,
+            r#"<circle cx="{cx:.1}" cy="{:.1}" r="4" fill="{LINE}"/>"#,
+            y(value)
+        );
+        // Beside the upper cap, clear of the chance line.
+        label(
+            &mut svg,
+            cx + 12.0,
+            y(high) + 4.0,
+            "start",
+            12,
+            &format!("{value:.3}"),
+        );
+        label(
+            &mut svg,
+            cx + 12.0,
+            y(high) + 19.0,
+            "start",
+            11,
+            &format!("[{low:.3}, {high:.3}]"),
+        );
+        label(
+            &mut svg,
+            (xs.0 + xs.1) / 2.0,
+            BOTTOM + 17.0,
+            "middle",
+            11,
+            &format!("{} lineages", f.lineages),
         );
     }
-    let _ = writeln!(
-        svg,
-        r#"<circle cx="{cx:.1}" cy="{:.1}" r="4" fill="{LINE}"/>"#,
-        y(value)
-    );
-    // Beside the upper cap, clear of the chance line.
-    label(
-        &mut svg,
-        cx + 12.0,
-        y(high) + 4.0,
-        "start",
-        12,
-        &format!("{value:.3}"),
-    );
-    label(
-        &mut svg,
-        cx + 12.0,
-        y(high) + 19.0,
-        "start",
-        11,
-        &format!("[{low:.3}, {high:.3}]"),
-    );
-    label(
-        &mut svg,
-        (xs.0 + xs.1) / 2.0,
-        BOTTOM + 17.0,
-        "middle",
-        11,
-        &format!("{} lineages", f.lineages),
-    );
     svg.push_str("</svg>\n");
     svg
 }
@@ -404,6 +595,9 @@ pub fn check(root: &Path, writeup: &str, ledger_text: &str, write: bool) -> Resu
         ledger_text,
         &mut problems,
     )?;
+    if f.surrogate.is_none() {
+        problems.push("figure: C190 is missing from claims.json".to_owned());
+    }
     let svg = render(&f);
     let path = root.join(FIGURE);
     if write {
@@ -471,6 +665,28 @@ mod tests {
         // An unreadable C76 value.
         let found = problems(DAT, &ledger(DAT, "x", "about half"));
         assert!(found.iter().any(|p| p.contains("C76 is not")), "{found:?}");
+
+        // Valid and unreadable C190 values.
+        let pin = py::sha256_hex(DAT.as_bytes());
+        let with_c190 = format!(
+            r#"{{"claims": [
+              {{"id": "C26", "value": "1.2500000000 -> 0.9001000000 (ep 4) -> 0.9002000000 (ep 6)"}},
+              {{"id": "C27", "value": "x", "sha256": "{pin}"}},
+              {{"id": "C76", "statement": "accuracy over 32 lineages", "value": "{c76}"}},
+              {{"id": "C190", "value": "8,908 S3 rows; shadow-pool-v2 (1,136 contexts, 255 clusters) R0->R4 pairwise 0.634318 -> 0.680342 (+0.046025 [+0.039928, +0.051692] GREATER)"}}
+            ]}}"#
+        );
+        assert_eq!(problems(DAT, &with_c190), Vec::<String>::new());
+        let mut found = vec![];
+        let f = figure(DAT.as_bytes(), &with_c190, &mut found).expect("parses");
+        let svg = render(&f);
+        assert!(svg.contains("R0 0.634 -> R4 0.680"));
+        assert!(svg.contains("+0.046 [+0.040, +0.052]"));
+        assert!(svg.contains("(255 clusters, R0–R4)"));
+
+        let bad_c190 = with_c190.replace("R0->R4 pairwise", "broken");
+        let found = problems(DAT, &bad_c190);
+        assert!(found.iter().any(|p| p.contains("C190 is not")), "{found:?}");
     }
 
     #[test]
