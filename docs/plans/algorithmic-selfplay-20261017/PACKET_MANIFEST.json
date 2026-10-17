@@ -1,11 +1,18 @@
 {
   "schema": "jope.planning-packet-manifest/v1",
-  "created_at": "2026-10-17T20:31:25.348928+00:00",
+  "created_at": "2026-10-17T20:40:20.660211+00:00",
+  "revision": 2,
+  "previous_packet_manifest_sha256": "ba0bbdd20d58fbfa4fedf6cca0e70ebb6029ea70c412e621d6ab492977b7918e",
   "files": [
     {
       "path": "BASELINE_CURRENT.md",
       "bytes": 2179,
       "sha256": "5bbd951bded5ec12659e1ec612f09c5878c19f6a01d196d9b93e896c19c0e2d7"
+    },
+    {
+      "path": "CLAUDE_RECONCILIATION.md",
+      "bytes": 2850,
+      "sha256": "9ae093efb23c651ceac32ad8bf597bf98ab97393e7f2a900906873b09b15bfd6"
     },
     {
       "path": "CURRENT_SOURCE_SLOT_AND_RUNNERS.json",
@@ -14,8 +21,8 @@
     },
     {
       "path": "FILE_MAP.json",
-      "bytes": 11940,
-      "sha256": "2ee82f3e3372b61c6c575fd4513797f4f0f69be447aa2e6c3b0138af35edfae4"
+      "bytes": 12046,
+      "sha256": "7c2eca800309a520aacf38c6fdf0af0929d9a8c497efcc08d03d9d98954cb2c2"
     },
     {
       "path": "INPUT_MANIFEST.json",
@@ -23,14 +30,24 @@
       "sha256": "cba123a7b48e240eb5b09c1ea84e010d4426f7afe6a47a10150b59076e2d80aa"
     },
     {
+      "path": "PACKET_MANIFEST.v1.json",
+      "bytes": 4528,
+      "sha256": "ba0bbdd20d58fbfa4fedf6cca0e70ebb6029ea70c412e621d6ab492977b7918e"
+    },
+    {
+      "path": "PLAN_BRIEF.md",
+      "bytes": 2274,
+      "sha256": "14cb455754f0980e845780d947af2450d314583f57e1dec27b3134d70bb80b72"
+    },
+    {
       "path": "README.md",
-      "bytes": 971,
-      "sha256": "df8346cc065d7f6efae557801baadd8072556a1fa98fb4d199d42e17e58fc3bf"
+      "bytes": 1234,
+      "sha256": "2501a831a409671f4d6e547644445bbf8eb69616672dbd289babbc8945e71337"
     },
     {
       "path": "SEMANTIC_REVIEW.md",
-      "bytes": 2782,
-      "sha256": "c6503ef5cf4a54de22938d3468acc969cd49bcb942c812a80b101d69af3aae3e"
+      "bytes": 3138,
+      "sha256": "48c9bc563047eb7c1d394217e0006224753a06add4cfceb275df0ccc9d9c4913"
     },
     {
       "path": "SOURCE_SYMBOLS.json",
@@ -45,22 +62,32 @@
     {
       "path": "VALIDATION.json",
       "bytes": 392,
-      "sha256": "4053845edb96f77436c8492519adf3d8ffb01d03123ddbbbc425a3a58c9ccc24"
+      "sha256": "f4575660dcc7f943eca606735edc23127ad62748bc8dbff19f64e5fc547e3020"
+    },
+    {
+      "path": "VALIDATION_MATRIX.md",
+      "bytes": 22052,
+      "sha256": "8cb95fe7ffa326ed6d54f8a9051f7ebd32b0e00e928a65b792d6111d339f3f62"
     },
     {
       "path": "WAVE_DATA_AND_GIT_CONTEXT.md",
-      "bytes": 9253,
-      "sha256": "cb32b345c767d90399d65b16aacb45b8f8ea533717721541656a6b2e4aa38b54"
+      "bytes": 10455,
+      "sha256": "241fa5d97e147e65d78e17f9bb367b1f247c09222991b340f7d0743d22dbe55e"
     },
     {
       "path": "WORKPLAN.md",
-      "bytes": 156781,
-      "sha256": "bc0fb100ea91704e56ad5daa1bb0ca11b0d16cefefe200a9506817856307f2ea"
+      "bytes": 157357,
+      "sha256": "1f2219eea104b5497f1bc6bb8b690d749fc572cbee54556e086cad7771bebbf4"
     },
     {
       "path": "contrib/PR355-disposition.json",
       "bytes": 4611,
       "sha256": "e8486a00ca33a453e356decddf5f53e77c8e3c550fcb7b8e00dec04691b5509c"
+    },
+    {
+      "path": "contrib/claude-review.json",
+      "bytes": 23941,
+      "sha256": "ba4b86ad7d81dea8451c18dd8eaa8af3980d347beddb94e38c3e70b155af2e2a"
     },
     {
       "path": "contrib/codex-review.json",
@@ -89,18 +116,18 @@
     },
     {
       "path": "decisions.json",
-      "bytes": 10970,
-      "sha256": "d70599ef2868b68ba6cbefc1062c532b3c702baa25ff6fd966eff7dfee56425a"
+      "bytes": 13329,
+      "sha256": "e7bf91b12b96413328789bf1636b834b0e4e22e6ae10bba2ac47b316aaee25ac"
     },
     {
       "path": "events.jsonl",
-      "bytes": 1536,
-      "sha256": "25a9f8445689440dd2bbb56597014e26ac47aa8a15c9524b3ee9adcfb604db48"
+      "bytes": 2127,
+      "sha256": "2467bbfd44d8c2b7e06d082414d489ba2bd0aa032871c4d0402e506c94fdeb60"
     },
     {
       "path": "progress.json",
-      "bytes": 1927,
-      "sha256": "246cab70d99d5ab5f9c61dbac8ad70e264afd01836c1d3e81a3db3fb27c5579b"
+      "bytes": 2305,
+      "sha256": "224577ba9d260b07486f70096c86b6d8ae8cc3f90cc8ff8af2d0e2a782e54b6c"
     },
     {
       "path": "reference-specs/S1.md",
@@ -139,9 +166,9 @@
     },
     {
       "path": "tasks.json",
-      "bytes": 134354,
-      "sha256": "9f844bacf4579292d1e0713aaeb40a9dba9e51eeb4fd07ce4d723015103b521e"
+      "bytes": 135215,
+      "sha256": "7e471e43c41d8203b3c840796111017f724a4c26786af8437a57b50f49d36ede"
     }
   ],
-  "total_bytes": 2313228
+  "total_bytes": 2375565
 }

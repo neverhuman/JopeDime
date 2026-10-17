@@ -1,7 +1,7 @@
 {
   "schema": "jope.unified-workplan.progress/v1",
-  "revision": 3,
-  "updated_at": "2026-10-17T20:31:25.348928+00:00",
+  "revision": 4,
+  "updated_at": "2026-10-17T20:39:40.751449+00:00",
   "planning": {
     "input_files_verified": 8,
     "unique_inputs": 6,
@@ -9,9 +9,16 @@
     "units_indexed": 2427,
     "semantic_review": "COMPLETE_TEXT_RECONCILIATION_WITH_EXPLICIT_LIMITS; see SEMANTIC_REVIEW.md",
     "detailed_implementation_packets": 66,
-    "decisions": 26,
-    "validation": "STATIC_PASS; see VALIDATION.json; source CI separate",
-    "pr": "VALIDATED_PACKET_HANDOFF_TO_EXISTING_WRITER"
+    "decisions": 30,
+    "validation": "STATIC_PASS;11379checks before archival-manifest copy; final VALIDATION.json authoritative",
+    "pr": {
+      "number": 356,
+      "url": "https://github.com/neverhuman/JopeDime/pull/356",
+      "initial_head": "15c0c9120d14d0ca40bf8906735a252db44c187d",
+      "state": "OPEN_FINAL_REVIEW_AMENDMENT",
+      "full_CI": "HOLD_UNTIL_FINAL_HEAD_FREEZE"
+    },
+    "source_and_test_anchors_verified": 134
   },
   "implementation": {
     "tasks": 66,
@@ -33,8 +40,8 @@
     "qualified_promotion": false
   },
   "native_reviews": {
-    "grok": "BLOCKED_HTTP402_USAGE_BALANCE_EXHAUSTED",
-    "claude": "REQUEUED_AFTER_NO_STAY_PARKED_OLD_TRAINING_PROMPT;ACTUAL_ACK_PENDING",
+    "grok": "BLOCKED_HTTP402_USAGE_BALANCE_EXHAUSTED;existingGJudgeparked;noautoRetryOrPurchase",
+    "claude": "COMPLETED_EXISTING_NATIVE_FULL_S3_S8_AND_WAVE_CONTRACT;15numberedCfindings;actoridentityattested_notcryptographic",
     "codex": "COMPLETED_NATIVE_READ_ONLY_REVIEW;30findings26packets;exactmodelUNKNOWN"
   },
   "holds": [

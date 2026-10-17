@@ -516,7 +516,8 @@
         "crates/jope-engine/src/native_loop.rs",
         "crates/jope-engine/src/native_loop/warm_start.rs",
         "crates/jope-engine/src/training/continuation.rs",
-        "crates/jope-engine/src/training/ancestry.rs"
+        "crates/jope-engine/src/training/ancestry.rs",
+        "crates/jope-engine/src/eval_registry/witness/epochs.rs"
       ],
       "proposed_write_paths": [
         "crates/jope-engine/src/native_loop/lineage.rs",
@@ -527,13 +528,15 @@
         "verify_successor",
         "ContinuationMode",
         "PolicyLineage",
-        "OptimizerEpoch"
+        "OptimizerEpoch",
+        "witness epoch/window verifier (exact function name refreshed before edit)"
       ],
       "steps": [
         "Preserve existing cold-init/weight-warm-start/new-corpus/exact-resume wire values; add architecture-migration only in a new version",
         "Bind anchor, immediate parent, objective/recipe, intent and committed exposure",
         "Version-dispatch v3 successor validation; preserve v1/v2 windows and refusal tests",
-        "Verify bounded acyclic ancestry and positive committed delta without numeric-step impersonation"
+        "Verify bounded acyclic ancestry and positive committed delta without numeric-step impersonation",
+        "Extend versioned witness epoch/window compatibility too; lowering numeric-step checks alone cannot authorize v3 descendants"
       ],
       "acceptance_cases": [
         "60000 anchor→fresh epoch3000→6000→v3 successor fixture",
@@ -2142,7 +2145,8 @@
         "Use one compiler in records; learning adapters supply immutable evidence views without cycle",
         "Resolve every numeric claim by exact locator/denominator; retain unknown source commits as unknown",
         "Separate facts, inference, limitations, program/policy effects and qualification stage",
-        "Emit failure/abort capsules; absent capsule publication retries without retraining"
+        "Emit failure/abort capsules; absent capsule publication retries without retraining",
+        "Treat capsule/card/index as projections of one versioned existing experiment-record family; preserve v1 import and current paper_trace checks rather than creating a second experiment authority"
       ],
       "acceptance_cases": [
         "Byte-stable repeated compilation and revoked/missing evidence",
@@ -2969,7 +2973,8 @@
         "Choose one public CLI route with thin existing-library adapters",
         "Preserve existing binaries as compatibility aliases until consumers migrate",
         "Every mutating verb has explicit intent/grant and dry-run; no business rules in UI",
-        "Show source/fixture/CI/live/science/serving as distinct states from receipts"
+        "Show source/fixture/CI/live/science/serving as distinct states from receipts",
+        "Extend existing jope doctor and jope train routes first; any research alias must remain a thin compatibility view with no duplicate authority"
       ],
       "acceptance_cases": [
         "Unavailable capability yields stable nonzero code and machine reason",
@@ -3226,7 +3231,8 @@
         "Capture every version/wave including aborted/rejected/inconclusive: immutable intent, input/role/support versions, draw/attempt lineage, detailed per-step/per-head telemetry, consumed replay/update evidence, optimizer/checkpoint ancestry and terminal outcomes",
         "Pack numeric/event traces in versioned columnar Zstd shards, content-addressed and manifest-last under the existing state/mirror abstraction; retain actual source evidence and failure/censoring detail",
         "Compile a small deterministic Git record and semantically compressed context with exact references, unknowns, causal limits and next falsifier; never put bulk tensors/datasets/private rows/secrets in Git",
-        "Require offline manifest verification and a clean reconstruction drill for declared review/resume promises; publish Git records through the sole reviewed PR writer and report local/remote/Git pending states honestly"
+        "Require offline manifest verification and a clean reconstruction drill for declared review/resume promises; publish Git records through the sole reviewed PR writer and report local/remote/Git pending states honestly",
+        "Apply role/disclosure export policy to Git cards/metrics/context; historical truncated runs remain HISTORICAL_PARTIAL with original data/admission gaps, actual content identities and no reconstructed fields"
       ],
       "acceptance_cases": [
         "Each wave/version has complete detailed data closure or explicit missing-data reason; no silent success-only archive",
