@@ -28,7 +28,7 @@
 //! | [`parity`] | `parity-check` | `docs/parity/capability-matrix.md` rows and counts |
 //! | [`readme`] | `readme-benchmarks --check\|--write` | the README's measured-results blocks |
 //! | [`repo_layout`] | `repo-layout` | root Markdown, tracked logs, member and package names (manifests read as TOML 1.0), test temp dirs, tracked paths that are not UTF-8 (no Python predecessor) |
-//! | [`paper_trace`] | `paper-trace` | the white paper's printed numbers against `docs/paper/claims.json`, its Figure 1 ([`paper_figure`]) against its data and claims, and the README's version and "At a glance" counts against the files their footnotes name (no Python predecessor) |
+//! | [`paper_trace`] | `paper-trace` | the white paper's printed numbers against `docs/paper/claims.json`, its Figure 1 ([`paper_figure`]) and `NUMBERS_TRACE.md` committed SVG figures against their data and claims, `docs/experiments/experiments.jsonl` against `claims.json` and tracked artifacts, and the README's version and "At a glance" counts against the files their footnotes name (no Python predecessor) |
 //!
 //! Records were written and read by Python, so [`pyjson`], [`pycsv`] and [`py`] reproduce the
 //! parts of Python's `json` and `csv` modules and built-ins the rules depend on
