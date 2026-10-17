@@ -27,8 +27,11 @@
 //!    `parity-census-and-exp008-replay.svg`, `readme-clover-overview.svg`) against their SHA-256
 //!    pins, markdown links in `TECHNICAL_WRITEUP.md` / `README.md`, and embedded numerical tokens;
 //! 9. curated experiment digest: all 18 rows (`EXP-001`–`EXP-018`) in
-//!    `docs/experiments/experiments.jsonl` against `jope.experiment-record/v1`,
-//!    `docs/experiments/README.md`, `docs/paper/claims.json`, and tracked repository artifacts;
+//!    `docs/experiments/experiments.jsonl`, `docs/experiments/README.md` (`## Master Experiment
+//!    Matrix` and `## Compressed Experiment Cards`), and
+//!    `docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md` against `jope.experiment-record/v1`,
+//!    `docs/paper/claims.json`, markdown heading `#anchor` targets, and tracked repository
+//!    artifacts;
 //! 10. no unfilled marker (`...PLACEHOLDER...`, `TODO`, `TBD`) in the write-up or the trace.
 //!
 //! Numbers inside identifiers (`C26`, `R23`, `H1`, `v2`, `r3.1`, `p50`, `float32`, `SHA-256`),
@@ -53,6 +56,7 @@ pub const TRACE: &str = "docs/paper/NUMBERS_TRACE.md";
 pub const README: &str = "README.md";
 pub const EXPERIMENTS_JSONL: &str = "docs/experiments/experiments.jsonl";
 pub const EXPERIMENTS_README: &str = "docs/experiments/README.md";
+pub const EXPERIMENTS_SYNTHESIS: &str = "docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md";
 const REPLAY_JSON: &str = "docs/internal/clover/exp-008-quantile-parity-replay.20261017.json";
 const SAMECUT_CSV: &str = "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv";
 const SVG_PATHS: [&str; 4] = [
@@ -1267,13 +1271,77 @@ pub fn check_svg_figures(
     Ok(problems)
 }
 
+fn slugify_markdown_heading(heading_text: &str) -> String {
+    let filtered: String = heading_text
+        .trim()
+        .to_ascii_lowercase()
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '-' || c.is_whitespace())
+        .collect();
+    re(r"\s+").replace_all(&filtered, "-").into_owned()
+}
+
+fn markdown_heading_anchors(md_text: &str) -> BTreeSet<String> {
+    let heading_re = re(r"^#{1,6}\s+(.*)$");
+    md_text
+        .lines()
+        .filter_map(|line| heading_re.captures(line))
+        .map(|c| slugify_markdown_heading(&c[1]))
+        .collect()
+}
+
+fn expand_prose_claims(text: &str) -> (BTreeSet<String>, Vec<String>) {
+    let claim_re = re(r"\bC(\d{2,3})(?:\s*[-–]\s*C(\d{2,3}))?\b");
+    let mut cited = BTreeSet::new();
+    let mut errs = vec![];
+    for c in claim_re.captures_iter(text) {
+        let lo: u32 = c[1].parse().unwrap_or(0);
+        if let Some(m2) = c.get(2) {
+            let hi: u32 = m2.as_str().parse().unwrap_or(0);
+            if lo > hi {
+                errs.push(format!("invalid claim range {:?}", &c[0]));
+            } else {
+                for n in lo..=hi {
+                    cited.insert(format!("C{n:02}"));
+                }
+            }
+        } else {
+            cited.insert(format!("C{lo:02}"));
+        }
+    }
+    (cited, errs)
+}
+
+fn resolve_experiments_rel_path(rel: &str) -> Option<String> {
+    if rel.is_empty() || rel.starts_with('/') || rel.contains('\\') || rel.contains(':') {
+        return None;
+    }
+    let mut stack = vec!["docs", "experiments"];
+    for seg in rel.split('/') {
+        match seg {
+            "" | "." => return None,
+            ".." => {
+                stack.pop()?;
+            }
+            s => stack.push(s),
+        }
+    }
+    if stack.is_empty() {
+        None
+    } else {
+        Some(stack.join("/"))
+    }
+}
+
 /// Verify `docs/experiments/experiments.jsonl` (`EXP-001`–`EXP-018`) against
-/// `jope.experiment-record/v1`, `docs/experiments/README.md`, `docs/paper/claims.json`, and the
+/// `jope.experiment-record/v1`, `docs/experiments/README.md`,
+/// `docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md`, `docs/paper/claims.json`, and the
 /// repository's tracked files.
 pub fn check_experiments(
     root: &Path,
     jsonl_text: &str,
     exp_readme: &str,
+    exp_synthesis: &str,
     ledger_text: &str,
 ) -> Result<Vec<String>> {
     const HYPOTHESES: [&str; 6] = [
@@ -1327,7 +1395,18 @@ pub fn check_experiments(
         ));
     }
 
+    let mut anchor_cache: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    anchor_cache.insert(
+        EXPERIMENTS_README.to_owned(),
+        markdown_heading_anchors(exp_readme),
+    );
+    anchor_cache.insert(
+        EXPERIMENTS_SYNTHESIS.to_owned(),
+        markdown_heading_anchors(exp_synthesis),
+    );
+
     let mut seen_ids = BTreeSet::new();
+    let mut row_metas = vec![];
     for (idx, line) in lines.iter().enumerate() {
         let row_num = idx + 1;
         let rec = pyjson::parse_str(line).map_err(|m| {
@@ -1385,6 +1464,13 @@ pub fn check_experiments(
                 ));
             }
         }
+        row_metas.push((
+            row_num,
+            id.to_owned(),
+            date.to_owned(),
+            src_commit.to_owned(),
+            qstat.to_owned(),
+        ));
 
         let mut row_claims = BTreeSet::new();
         for cid_val in rec
@@ -1402,6 +1488,23 @@ pub fn check_experiments(
             if !known_claims.contains(cid) {
                 problems.push(format!(
                     "{EXPERIMENTS_JSONL}:{row_num}: {id} cites unknown claim_id {cid:?}"
+                ));
+            }
+        }
+
+        let (prose_claims, range_errs) = expand_prose_claims(line);
+        for err in range_errs {
+            problems.push(format!("{EXPERIMENTS_JSONL}:{row_num}: {id} has {err}"));
+        }
+        for cid in prose_claims {
+            if !known_claims.contains(&cid) {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} cites unknown prose claim {cid}"
+                ));
+            }
+            if !row_claims.contains(&cid) {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} cites {cid} in prose but omits it from claim_ids"
                 ));
             }
         }
@@ -1437,7 +1540,7 @@ pub fn check_experiments(
         }
         for src in sources.into_iter().flatten() {
             let p = src.as_str().unwrap_or("");
-            let file_part = p.split('#').next().unwrap_or("");
+            let (file_part, anchor_part) = p.split_once('#').unwrap_or((p, ""));
             if file_part.is_empty() || has_unsafe_path_component(file_part) {
                 problems.push(format!(
                     "{EXPERIMENTS_JSONL}:{row_num}: {id} has unsafe data.sources path {p:?}"
@@ -1446,6 +1549,17 @@ pub fn check_experiments(
                 problems.push(format!(
                     "{EXPERIMENTS_JSONL}:{row_num}: {id} data.sources {file_part} does not exist"
                 ));
+            } else if !anchor_part.is_empty() {
+                if !anchor_cache.contains_key(file_part) {
+                    let target_text = py::read_text(&root.join(file_part))?;
+                    anchor_cache
+                        .insert(file_part.to_owned(), markdown_heading_anchors(&target_text));
+                }
+                if !anchor_cache[file_part].contains(anchor_part) {
+                    problems.push(format!(
+                        "{EXPERIMENTS_JSONL}:{row_num}: {id} data.sources {p} has missing anchor #{anchor_part}"
+                    ));
+                }
             }
         }
 
@@ -1456,6 +1570,142 @@ pub fn check_experiments(
                 {
                     problems.push(format!(
                         "{EXPERIMENTS_JSONL}:{row_num}: {id} metric {k} is not a 64-hex sha256"
+                    ));
+                }
+            }
+        }
+    }
+
+    // Verify `## Master Experiment Matrix` and `## Compressed Experiment Cards` in `docs/experiments/README.md`.
+    let mut in_matrix = false;
+    let mut in_cards = false;
+    let mut matrix_rows: Vec<Vec<String>> = vec![];
+    let mut card_ids: Vec<String> = vec![];
+    let card_re = re(r"^### `(EXP-\d{3}-[a-z0-9-]+)`\s+—\s+");
+    for line in exp_readme.lines() {
+        if line.starts_with("## ") {
+            in_matrix = line.starts_with("## Master Experiment Matrix");
+            in_cards = line.starts_with("## Compressed Experiment Cards");
+            continue;
+        }
+        if in_matrix {
+            let cells: Vec<&str> = line.split('|').map(str::trim).collect();
+            if cells.len() >= 8 && cells[1].starts_with("**`EXP-") {
+                matrix_rows.push(cells.into_iter().map(str::to_owned).collect());
+            }
+        } else if in_cards {
+            if let Some(c) = card_re.captures(line) {
+                card_ids.push(c[1].to_owned());
+            }
+        }
+    }
+    if matrix_rows.len() != row_metas.len() {
+        problems.push(format!(
+            "{EXPERIMENTS_README}: Master Experiment Matrix has {} rows, expected {}",
+            matrix_rows.len(),
+            row_metas.len()
+        ));
+    } else {
+        for (idx, (row_num, id, date, src_commit, qstat)) in row_metas.iter().enumerate() {
+            let cells = &matrix_rows[idx];
+            let exp_cell = format!("**`EXP-{row_num:03}`**");
+            if cells[1] != exp_cell {
+                problems.push(format!(
+                    "{EXPERIMENTS_README}: Master Experiment Matrix row {row_num} has ID {:?}, expected {exp_cell:?}",
+                    cells[1]
+                ));
+            }
+            if cells[2].trim_matches('`') != date {
+                problems.push(format!(
+                    "{EXPERIMENTS_README}: Master Experiment Matrix {id} has date {:?}, expected {date:?}",
+                    cells[2]
+                ));
+            }
+            let commit_ok = if src_commit == "unknown" {
+                cells[3] == "`unknown`"
+            } else {
+                src_commit.len() >= 10 && cells[3].starts_with(&format!("`{}", &src_commit[..10]))
+            };
+            if !commit_ok {
+                problems.push(format!(
+                    "{EXPERIMENTS_README}: Master Experiment Matrix {id} has source_commit cell {:?}, expected {src_commit:?}",
+                    cells[3]
+                ));
+            }
+            if cells[7].trim_matches('`') != qstat {
+                problems.push(format!(
+                    "{EXPERIMENTS_README}: Master Experiment Matrix {id} has status {:?}, expected {qstat:?}",
+                    cells[7]
+                ));
+            }
+        }
+    }
+    if card_ids.len() != row_metas.len() {
+        problems.push(format!(
+            "{EXPERIMENTS_README}: Compressed Experiment Cards has {} headings, expected {}",
+            card_ids.len(),
+            row_metas.len()
+        ));
+    } else {
+        for (idx, (row_num, id, _, _, _)) in row_metas.iter().enumerate() {
+            if card_ids[idx] != *id {
+                problems.push(format!(
+                    "{EXPERIMENTS_README}: Compressed Experiment Cards heading {row_num} is {:?}, expected {id:?}",
+                    card_ids[idx]
+                ));
+            }
+        }
+    }
+
+    let md_link_re = re(r"\]\(([^)]+)\)");
+    for (doc_name, doc_text) in [
+        (EXPERIMENTS_README, exp_readme),
+        (EXPERIMENTS_SYNTHESIS, exp_synthesis),
+    ] {
+        let (prose_claims, range_errs) = expand_prose_claims(doc_text);
+        for err in range_errs {
+            problems.push(format!("{doc_name}: {err}"));
+        }
+        for cid in prose_claims {
+            if !known_claims.contains(&cid) {
+                problems.push(format!("{doc_name}: cites unknown claim {cid}"));
+            }
+        }
+        for svg_rel in [
+            "../paper/figures/clover-why-it-matters-3panel.svg",
+            "../paper/figures/parity-census-and-exp008-replay.svg",
+        ] {
+            if !doc_text.contains(&format!("]({svg_rel})")) {
+                problems.push(format!("{doc_name}: does not link {svg_rel}"));
+            }
+        }
+        for c in md_link_re.captures_iter(doc_text) {
+            let target = &c[1];
+            if target.starts_with("http://") || target.starts_with("https://") {
+                continue;
+            }
+            let (file_part, anchor_part) = target.split_once('#').unwrap_or((target, ""));
+            let resolved_opt = if file_part.is_empty() {
+                Some(doc_name.to_owned())
+            } else {
+                resolve_experiments_rel_path(file_part)
+            };
+            let Some(resolved) = resolved_opt else {
+                problems.push(format!("{doc_name}: unsafe markdown link {target:?}"));
+                continue;
+            };
+            if !root.join(&resolved).is_file() {
+                problems.push(format!(
+                    "{doc_name}: broken markdown link {target:?} (resolved {resolved})"
+                ));
+            } else if !anchor_part.is_empty() {
+                if !anchor_cache.contains_key(&resolved) {
+                    let target_text = py::read_text(&root.join(&resolved))?;
+                    anchor_cache.insert(resolved.clone(), markdown_heading_anchors(&target_text));
+                }
+                if !anchor_cache[&resolved].contains(anchor_part) {
+                    problems.push(format!(
+                        "{doc_name}: broken anchor #{anchor_part} in link {target:?}"
                     ));
                 }
             }
@@ -1475,6 +1725,7 @@ pub fn check(root: &Path, sources: bool, write_figure: bool) -> Result<(String, 
     let readme_text = py::read_text(&root.join(README))?;
     let exp_jsonl = py::read_text(&root.join(EXPERIMENTS_JSONL))?;
     let exp_readme = py::read_text(&root.join(EXPERIMENTS_README))?;
+    let exp_synthesis = py::read_text(&root.join(EXPERIMENTS_SYNTHESIS))?;
     let (mut problems, mut summary) = check_paper(&writeup, &ledger_text, &trace)?;
     problems.extend(crate::paper_figure::check(
         root,
@@ -1493,6 +1744,7 @@ pub fn check(root: &Path, sources: bool, write_figure: bool) -> Result<(String, 
         root,
         &exp_jsonl,
         &exp_readme,
+        &exp_synthesis,
         &ledger_text,
     )?);
     summary = format!(
@@ -1899,9 +2151,17 @@ The 26 workspace members, by directory.
             std::fs::read_to_string(root.join(EXPERIMENTS_JSONL)).expect("experiments readable");
         let exp_readme = std::fs::read_to_string(root.join(EXPERIMENTS_README))
             .expect("experiments readme readable");
+        let exp_synthesis = std::fs::read_to_string(root.join(EXPERIMENTS_SYNTHESIS))
+            .expect("experiments synthesis readable");
         let bad_exp_claim = exp_jsonl.replacen("\"C01\"", "\"C999\"", 1);
-        let exp_probs = check_experiments(&root, &bad_exp_claim, &exp_readme, &ledger_text)
-            .expect("exp check runs");
+        let exp_probs = check_experiments(
+            &root,
+            &bad_exp_claim,
+            &exp_readme,
+            &exp_synthesis,
+            &ledger_text,
+        )
+        .expect("exp check runs");
         assert!(
             exp_probs
                 .iter()
@@ -1909,11 +2169,17 @@ The 26 workspace members, by directory.
             "{exp_probs:?}"
         );
         let bad_exp_commit = exp_readme.replace(
-            "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
+            "8fcf7c62f4a4de7973193dd2407803387c9e6851",
             "0000000000000000000000000000000000000000",
         );
-        let commit_probs = check_experiments(&root, &exp_jsonl, &bad_exp_commit, &ledger_text)
-            .expect("exp commit check runs");
+        let commit_probs = check_experiments(
+            &root,
+            &exp_jsonl,
+            &bad_exp_commit,
+            &exp_synthesis,
+            &ledger_text,
+        )
+        .expect("exp commit check runs");
         assert!(
             commit_probs
                 .iter()
@@ -1922,13 +2188,80 @@ The 26 workspace members, by directory.
         );
         let bad_exp_path =
             exp_jsonl.replacen("\"docs/paper/claims.json\"", "\"../outside.json\"", 1);
-        let path_probs = check_experiments(&root, &bad_exp_path, &exp_readme, &ledger_text)
-            .expect("exp path check runs");
+        let path_probs = check_experiments(
+            &root,
+            &bad_exp_path,
+            &exp_readme,
+            &exp_synthesis,
+            &ledger_text,
+        )
+        .expect("exp path check runs");
         assert!(
             path_probs
                 .iter()
                 .any(|p| p.contains("unsafe data.sources path")),
             "{path_probs:?}"
+        );
+        let undeclared_prose_claim = exp_jsonl.replacen(
+            "\"summary\": \"Trained the",
+            "\"summary\": \"Trained the (C03)",
+            1,
+        );
+        let undeclared_probs = check_experiments(
+            &root,
+            &undeclared_prose_claim,
+            &exp_readme,
+            &exp_synthesis,
+            &ledger_text,
+        )
+        .expect("undeclared prose claim check runs");
+        assert!(
+            undeclared_probs.iter().any(|p| p.contains(
+                "EXP-001-v1-flywheel-baseline cites C03 in prose but omits it from claim_ids"
+            )),
+            "{undeclared_probs:?}"
+        );
+        let bad_anchor = exp_synthesis.replacen(
+            "../paper/NUMBERS_TRACE.md#fresh-clone-run",
+            "../paper/NUMBERS_TRACE.md#no-such-anchor",
+            1,
+        );
+        let anchor_probs =
+            check_experiments(&root, &exp_jsonl, &exp_readme, &bad_anchor, &ledger_text)
+                .expect("bad anchor check runs");
+        assert!(
+            anchor_probs
+                .iter()
+                .any(|p| p.contains("broken anchor #no-such-anchor")),
+            "{anchor_probs:?}"
+        );
+        let bad_matrix = exp_readme.replacen("| `ESTABLISHED` |", "| `PENDING` |", 1);
+        let matrix_probs =
+            check_experiments(&root, &exp_jsonl, &bad_matrix, &exp_synthesis, &ledger_text)
+                .expect("bad matrix check runs");
+        assert!(
+            matrix_probs.iter().any(|p| p.contains(
+                "Master Experiment Matrix EXP-001-v1-flywheel-baseline has status \"`PENDING`\""
+            )),
+            "{matrix_probs:?}"
+        );
+        let unlinked_synthesis = exp_synthesis.replace(
+            "../paper/figures/clover-why-it-matters-3panel.svg",
+            "../paper/figures/why-it-matters.svg",
+        );
+        let synth_svg_probs = check_experiments(
+            &root,
+            &exp_jsonl,
+            &exp_readme,
+            &unlinked_synthesis,
+            &ledger_text,
+        )
+        .expect("unlinked synthesis check runs");
+        assert!(
+            synth_svg_probs.iter().any(|p| p.contains(
+                "SYNTHESIS_AND_NEXT_EXPERIMENTS.md: does not link ../paper/figures/clover-why-it-matters-3panel.svg"
+            )),
+            "{synth_svg_probs:?}"
         );
     }
 
