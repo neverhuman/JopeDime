@@ -5,30 +5,41 @@
 //! mapping, and an optional pre-registration packet (`jope.selfplay-round1-prereg/v1`) against a
 //! caller-supplied [`ExperimentIdentity`] and [`RoundQualPlan`].
 //!
-//! **Provenance and pre-registration binding (`B2`):**
+//! **Provenance and pre-registration binding (`B2`) and offline hard stop (`R1`/`R2`/`R3`):**
+//! - Every [`RoundQualReport`] emitted by this offline verifier sets `qualified_claim: false`,
+//!   `promotion: false`, and `l6_claim: false` **unconditionally** (literal `false`, never derived
+//!   solely from `qualify::promotion::GENERALIZATION_CLAIM`).
 //! - When no pre-registration packet is supplied (`prereg_bytes: None`), the report sets
 //!   `provenance_binding_status: "unverified_caller_asserted_inputs"` and includes
 //!   `"provenance_and_prereg_binding_unimplemented"` in `disqualification_reasons`.
 //! - When `prereg_bytes: Some(bytes)` is supplied (`qualify_rounds_with_prereg` or
-//!   `jope-pools qualify-rounds --prereg <PATH>`), the verifier cryptographically checks
-//!   `plan.prereg_sha256` against `bytes`, validates the `jope.selfplay-round1-prereg/v1` schema,
-//!   verifies all pinned plan/identity/parent-map/ratchet parameters and per-round search and
-//!   observation SHA-256 digests, and checks the explicit admission gate (`execution_grant.authorized`
-//!   and `UNPINNED` fields). While any pre-registration field is `"UNPINNED"` or
-//!   `execution_grant.authorized == false`, the report sets
-//!   `provenance_binding_status: "prereg_verified_unpinned_no_execution_grant"` and includes
-//!   `"prereg_unpinned_or_no_execution_grant"` in `disqualification_reasons`. When all pre-registration
-//!   fields are pinned and `execution_grant.authorized == true`, the report sets
-//!   `provenance_binding_status: "prereg_and_local_receipt_digests_verified"`; `qualified_claim`,
-//!   `promotion`, and `l6_claim` remain `false` whenever `sealed_family_boundary_adopted` is `false`
-//!   (`"no_adopted_sealed_family_boundary"`) or any disqualification reason is present.
+//!   `jope-pools qualify-rounds --prereg <PATH>`), the verifier parses `bytes` through a strict
+//!   recursive JSON visitor that rejects duplicate object keys at every depth before constructing
+//!   `serde_json::Value`, checks `plan.prereg_sha256` against either raw `sha256_hex(bytes)` or
+//!   `canonical_sha256(prereg)`, validates the `jope.selfplay-round1-prereg/v1` schema, cross-checks
+//!   all pinned contract fields against `plan`, `identity`, `parent_of_context`, and the caller-supplied
+//!   ratchet outputs (`seed_cap_b`, `rounds.len()`, `measured_tilt_policy`, `max_conditional_base_kl`,
+//!   `max_new_support_mass`, and per-round `kl_source == "measured_tilt_leaf_policy"`), and checks
+//!   that per-round `ordinary_search_sha256`, `ordinary_observations_sha256`,
+//!   `ratchet_search_sha256`, and `ratchet_observations_sha256` are 64-character lowercase hex
+//!   strings (`is_hex64` format check only). Because this offline verifier does not ingest or
+//!   re-hash the underlying search/observation artifact files or authenticate the caller-supplied
+//!   `execution_grant`, every `--prereg` report (both unpinned and pinned) appends
+//!   `"prereg_receipts_and_execution_grant_caller_asserted_unverified"` and
+//!   `"qualified_execution_mode_disabled_offline_verifier_only"` to `disqualification_reasons`.
+//!   While any pre-registration field is `"UNPINNED"` or `execution_grant.authorized == false`, the
+//!   report sets
+//!   `provenance_binding_status: "prereg_contract_fields_checked_unpinned_no_execution_grant"` and
+//!   also appends `"prereg_unpinned_or_no_execution_grant"`. When all pre-registration fields are
+//!   syntactically pinned and `execution_grant.authorized == true`, the report sets
+//!   `provenance_binding_status: "prereg_contract_fields_checked_receipts_and_grant_caller_asserted_unverified"`.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use anyhow::{bail, ensure, Context, Result};
 use jope_pipeline::test_score::{ScoredDataset, TEST_SCORE_SCHEMA_ID};
-use serde::de::{self, MapAccess, Visitor};
+use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
@@ -48,6 +59,10 @@ pub const RATCHET_SCHEMA: &str = "clover.selfplay-ratchet/v1";
 /// Expected schema identifier for the Round-1 pre-registration packet.
 pub const PREREG_SCHEMA: &str = "jope.selfplay-round1-prereg/v1";
 
+/// Expected `endpoints.secondary_status` disclosure string in `jope.selfplay-round1-prereg/v1`.
+pub const PREREG_SECONDARY_STATUS: &str =
+    "DIAGNOSTIC_VERIFIER_ONLY_PRODUCER_SCRATCH_UNEQUAL_RESOURCES_SINGLE_ENDPOINT_ALPHA_0_025";
+
 /// F10 tie tolerance on log-RMSE ratios: `|ln(cand) - ln(ref)| <= 1e-12` is treated as zero (`0.0`).
 pub const F10_TIE_TOLERANCE: f64 = 1e-12;
 
@@ -57,21 +72,148 @@ pub const MAX_SINGLE_ENDPOINT_ALPHA: f64 = 0.025;
 /// Provenance binding disclosure string emitted when no `--prereg` packet is supplied.
 pub const PROVENANCE_BINDING_STATUS: &str = "unverified_caller_asserted_inputs";
 
-/// Provenance binding disclosure string emitted when `--prereg` is cryptographically verified
-/// against `plan.prereg_sha256` and all pinned fields match, but one or more fields remain
+/// Provenance binding disclosure string emitted when `--prereg` matches `plan.prereg_sha256`
+/// (raw or canonical) and all pinned contract fields match, but one or more fields remain
 /// `"UNPINNED"` or `execution_grant.authorized == false`.
-pub const PREREG_UNPINNED_BINDING_STATUS: &str = "prereg_verified_unpinned_no_execution_grant";
+pub const PREREG_UNPINNED_BINDING_STATUS: &str =
+    "prereg_contract_fields_checked_unpinned_no_execution_grant";
 
-/// Provenance binding disclosure string emitted when `--prereg` is cryptographically verified,
-/// all pre-registration fields are pinned with `execution_grant.authorized == true`, and all
-/// per-round search/observation SHA-256 digests are verified.
-pub const PREREG_PINNED_BINDING_STATUS: &str = "prereg_and_local_receipt_digests_verified";
+/// Provenance binding disclosure string emitted when `--prereg` matches `plan.prereg_sha256`
+/// (raw or canonical), all pre-registration contract fields are syntactically pinned with
+/// `execution_grant.authorized == true`, and per-round search/observation digest fields pass
+/// 64-hex format checks, while underlying search/observation artifacts and the execution grant
+/// remain caller-asserted and unverified by this offline tool.
+pub const PREREG_PINNED_BINDING_STATUS: &str =
+    "prereg_contract_fields_checked_receipts_and_grant_caller_asserted_unverified";
+
+/// Disqualification reason appended on every `--prereg` report because underlying search/observation
+/// artifacts and the execution grant are caller-asserted rather than externally verified.
+pub const PREREG_CALLER_ASSERTED_REASON: &str =
+    "prereg_receipts_and_execution_grant_caller_asserted_unverified";
 
 /// Multiplicity adjustment disclosure string emitted on every report in this build.
 pub const MULTIPLICITY_ADJUSTMENT_STATUS: &str = "unimplemented_single_endpoint_alpha_cap_0_025";
 
 fn default_alpha() -> f64 {
     MAX_SINGLE_ENDPOINT_ALPHA
+}
+
+/// True if `s` is empty/whitespace or matches a case-insensitive placeholder sentinel
+/// (`UNPINNED`, `TBD`, `TODO`, `PENDING`, `PLACEHOLDER`, `UNBOUND`).
+fn is_placeholder_sentinel(s: &str) -> bool {
+    let trimmed = s.trim();
+    trimmed.is_empty()
+        || matches!(
+            trimmed.to_ascii_uppercase().as_str(),
+            "UNPINNED" | "TBD" | "TODO" | "PENDING" | "PLACEHOLDER" | "UNBOUND"
+        )
+}
+
+fn value_contains_placeholder_sentinel(v: &Value) -> Option<String> {
+    match v {
+        Value::String(s) => is_placeholder_sentinel(s).then(|| s.clone()),
+        Value::Array(arr) => arr.iter().find_map(value_contains_placeholder_sentinel),
+        Value::Object(map) => map.values().find_map(value_contains_placeholder_sentinel),
+        _ => None,
+    }
+}
+
+/// Recursive `serde_json::Value` wrapper whose `Deserialize` implementation rejects duplicate
+/// object keys at every nesting depth (including inside arrays and nested maps) before
+/// constructing a `serde_json::Map`.
+struct StrictJsonValue(Value);
+
+impl<'de> Deserialize<'de> for StrictJsonValue {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+        struct StrictValueVisitor;
+
+        impl<'de> Visitor<'de> for StrictValueVisitor {
+            type Value = StrictJsonValue;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a valid JSON value without duplicate object keys")
+            }
+
+            fn visit_bool<E>(self, v: bool) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::Bool(v)))
+            }
+
+            fn visit_i64<E>(self, v: i64) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::Number(v.into())))
+            }
+
+            fn visit_u64<E>(self, v: u64) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::Number(v.into())))
+            }
+
+            fn visit_f64<E: de::Error>(self, v: f64) -> std::result::Result<Self::Value, E> {
+                serde_json::Number::from_f64(v)
+                    .map(|n| StrictJsonValue(Value::Number(n)))
+                    .ok_or_else(|| de::Error::custom("non-finite float in JSON"))
+            }
+
+            fn visit_str<E>(self, v: &str) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::String(v.to_owned())))
+            }
+
+            fn visit_string<E>(self, v: String) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::String(v)))
+            }
+
+            fn visit_none<E>(self) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::Null))
+            }
+
+            fn visit_unit<E>(self) -> std::result::Result<Self::Value, E> {
+                Ok(StrictJsonValue(Value::Null))
+            }
+
+            fn visit_some<D: Deserializer<'de>>(
+                self,
+                deserializer: D,
+            ) -> std::result::Result<Self::Value, D::Error> {
+                Deserialize::deserialize(deserializer)
+            }
+
+            fn visit_seq<A: SeqAccess<'de>>(
+                self,
+                mut seq: A,
+            ) -> std::result::Result<Self::Value, A::Error> {
+                let mut vec = Vec::new();
+                while let Some(elem) = seq.next_element::<StrictJsonValue>()? {
+                    vec.push(elem.0);
+                }
+                Ok(StrictJsonValue(Value::Array(vec)))
+            }
+
+            fn visit_map<M: MapAccess<'de>>(
+                self,
+                mut access: M,
+            ) -> std::result::Result<Self::Value, M::Error> {
+                let mut map = serde_json::Map::new();
+                while let Some((k, v)) = access.next_entry::<String, StrictJsonValue>()? {
+                    if map.contains_key(&k) {
+                        return Err(de::Error::custom(format!("duplicate JSON object key: {k}")));
+                    }
+                    map.insert(k, v.0);
+                }
+                Ok(StrictJsonValue(Value::Object(map)))
+            }
+        }
+
+        deserializer.deserialize_any(StrictValueVisitor)
+    }
+}
+
+/// Parse a JSON document into [`serde_json::Value`], rejecting duplicate object keys at all
+/// nesting depths and rejecting trailing characters after the root value.
+pub fn parse_strict_json_value(bytes: &[u8], what: &str) -> Result<Value> {
+    let mut de = serde_json::Deserializer::from_slice(bytes);
+    let StrictJsonValue(val) = StrictJsonValue::deserialize(&mut de)
+        .with_context(|| format!("{what}: invalid JSON or duplicate object key"))?;
+    de.end()
+        .with_context(|| format!("{what}: trailing characters after JSON value"))?;
+    Ok(val)
 }
 
 /// Pre-registration field that is either explicitly marked `"UNPINNED"` or bound to a value `T`.
@@ -105,9 +247,14 @@ impl<T: Serialize> Serialize for UnpinnedOr<T> {
 
 impl<'de, T: serde::de::DeserializeOwned> Deserialize<'de> for UnpinnedOr<T> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
-        let val = Value::deserialize(deserializer)?;
+        let StrictJsonValue(val) = StrictJsonValue::deserialize(deserializer)?;
         if val.as_str() == Some("UNPINNED") {
             return Ok(Self::Unpinned);
+        }
+        if let Some(bad) = value_contains_placeholder_sentinel(&val) {
+            return Err(de::Error::custom(format!(
+                "invalid placeholder or case/whitespace sentinel {bad:?}; use exact \"UNPINNED\" or a concrete pinned value"
+            )));
         }
         serde_json::from_value(val)
             .map(Self::Pinned)
@@ -587,11 +734,7 @@ fn validate_and_bind_prereg(
     parent_of_context: &BTreeMap<String, String>,
 ) -> Result<(SelfPlayPrereg, bool)> {
     let raw_sha = sha256_hex(prereg_bytes);
-    let mut val_de = serde_json::Deserializer::from_slice(prereg_bytes);
-    let prereg_val = Value::deserialize(&mut val_de).context("prereg: invalid JSON object")?;
-    val_de
-        .end()
-        .context("prereg: trailing characters after JSON object")?;
+    let prereg_val = parse_strict_json_value(prereg_bytes, "prereg")?;
     let canon_sha = canonical_sha256(&prereg_val).context("prereg: canonical sha256")?;
     ensure!(
         plan.prereg_sha256 == raw_sha || plan.prereg_sha256 == canon_sha,
@@ -607,8 +750,8 @@ fn validate_and_bind_prereg(
         prereg.schema
     );
     ensure!(
-        !prereg.study_id.trim().is_empty() && !prereg.status.trim().is_empty(),
-        "prereg study_id and status must be non-empty"
+        !is_placeholder_sentinel(&prereg.study_id) && !is_placeholder_sentinel(&prereg.status),
+        "prereg study_id and status must be non-empty and not placeholder sentinels"
     );
     ensure!(
         prereg.qualification_report_schema == ROUND_QUAL_SCHEMA,
@@ -629,6 +772,11 @@ fn validate_and_bind_prereg(
         prereg.endpoints.primary == Endpoint::FinalVsRound0Incumbent
             && prereg.endpoints.secondary == Endpoint::RatchetVsOrdinaryFinalRound,
         "prereg endpoints must bind primary=final_vs_round0_incumbent and secondary=ratchet_vs_ordinary_final_round"
+    );
+    ensure!(
+        prereg.endpoints.secondary_status == PREREG_SECONDARY_STATUS,
+        "prereg secondary_status {:?} != {PREREG_SECONDARY_STATUS}",
+        prereg.endpoints.secondary_status
     );
     ensure!(
         prereg.endpoints.cli_single_endpoint_alpha_cap.is_finite()
@@ -689,8 +837,8 @@ fn validate_and_bind_prereg(
         .as_pinned()
     {
         ensure!(
-            !ruling.trim().is_empty(),
-            "prereg g23_sealed_boundary_ruling must be non-empty when pinned"
+            !is_placeholder_sentinel(ruling),
+            "prereg g23_sealed_boundary_ruling must be non-empty and not a placeholder when pinned"
         );
     }
 
@@ -741,8 +889,8 @@ fn validate_and_bind_prereg(
         .as_pinned()
     {
         ensure!(
-            !c158.trim().is_empty(),
-            "prereg c158_g_judge_binding_receipt must be non-empty when pinned"
+            !is_placeholder_sentinel(c158),
+            "prereg c158_g_judge_binding_receipt must be non-empty and not a placeholder when pinned"
         );
     }
 
@@ -790,11 +938,8 @@ fn validate_and_bind_prereg(
     );
     ensure!(
         prereg.arms_and_rounds.kl_guard.allowlisted_measured_sources
-            == vec![
-                "measured_tilt_leaf_policy".to_owned(),
-                "caller_evaluated_leaf_log_probs".to_owned()
-            ],
-        "prereg allowlisted_measured_sources must match [\"measured_tilt_leaf_policy\", \"caller_evaluated_leaf_log_probs\"]"
+            == vec!["measured_tilt_leaf_policy".to_owned()],
+        "prereg allowlisted_measured_sources must match [\"measured_tilt_leaf_policy\"]"
     );
 
     // 5. Held-out test-score and parity rules
@@ -809,7 +954,7 @@ fn validate_and_bind_prereg(
         .as_pinned()
     {
         ensure!(
-            !reg.trim().is_empty() && reg == &plan.pinned_test_score_registry,
+            !is_placeholder_sentinel(reg) && reg == &plan.pinned_test_score_registry,
             "prereg pinned_test_score_registry ({reg}) != plan.pinned_test_score_registry ({})",
             plan.pinned_test_score_registry
         );
@@ -849,14 +994,14 @@ fn validate_and_bind_prereg(
     }
     if let Some(loc) = prereg.execution_grant.owner_admission_locator.as_pinned() {
         ensure!(
-            !loc.trim().is_empty(),
-            "prereg owner_admission_locator must be non-empty when pinned"
+            !is_placeholder_sentinel(loc),
+            "prereg owner_admission_locator must be non-empty and not a placeholder when pinned"
         );
     }
     if let Some(hosts) = prereg.execution_grant.hosts.as_pinned() {
         ensure!(
-            !hosts.is_empty() && hosts.iter().all(|h| !h.trim().is_empty()),
-            "prereg execution_grant.hosts must be non-empty when pinned"
+            !hosts.is_empty() && hosts.iter().all(|h| !is_placeholder_sentinel(h)),
+            "prereg execution_grant.hosts must be non-empty and contain no placeholders when pinned"
         );
     }
     if let Some(&cpu_cap) = prereg.execution_grant.cpu_ceiling_percent.as_pinned() {
@@ -865,22 +1010,51 @@ fn validate_and_bind_prereg(
             "prereg execution_grant.cpu_ceiling_percent ({cpu_cap}) must be in 1..=100"
         );
     }
+    ensure!(
+        (1..=100).contains(&prereg.execution_grant.memory_floor_free_percent),
+        "prereg execution_grant.memory_floor_free_percent ({}) must be in 1..=100",
+        prereg.execution_grant.memory_floor_free_percent
+    );
     if let Some(deadline) = prereg.execution_grant.deadline_utc.as_pinned() {
         ensure!(
-            !deadline.trim().is_empty(),
-            "prereg execution_grant.deadline_utc must be non-empty when pinned"
+            !is_placeholder_sentinel(deadline),
+            "prereg execution_grant.deadline_utc must be non-empty and not a placeholder when pinned"
         );
     }
 
+    ensure!(
+        !is_placeholder_sentinel(&prereg.study_id),
+        "prereg study_id must be non-empty and not a placeholder"
+    );
     let has_unpinned = prereg.has_unpinned_fields();
     if prereg.execution_grant.authorized {
         ensure!(
             !has_unpinned,
             "prereg execution_grant.authorized is true while one or more required prereg fields remain UNPINNED"
         );
+        let status_upper = prereg.status.to_ascii_uppercase();
         ensure!(
-            prereg.status != "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
-            "prereg execution_grant.authorized is true while status is PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT"
+            !is_placeholder_sentinel(&prereg.status)
+                && !status_upper.contains("UNPINNED")
+                && !status_upper.contains("NO_EXECUTION_GRANT"),
+            "prereg execution_grant.authorized is true while status {:?} indicates unpinned or no execution grant",
+            prereg.status
+        );
+        ensure!(
+            prereg.provenance_binding_status == PREREG_PINNED_BINDING_STATUS,
+            "prereg provenance_binding_status {:?} != {PREREG_PINNED_BINDING_STATUS} when authorized",
+            prereg.provenance_binding_status
+        );
+    } else {
+        ensure!(
+            prereg.status == "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
+            "prereg status {:?} must be PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT when execution_grant.authorized is false",
+            prereg.status
+        );
+        ensure!(
+            prereg.provenance_binding_status == PREREG_UNPINNED_BINDING_STATUS,
+            "prereg provenance_binding_status {:?} != {PREREG_UNPINNED_BINDING_STATUS} when execution_grant.authorized is false",
+            prereg.provenance_binding_status
         );
     }
     let fully_pinned_and_authorized = !has_unpinned && prereg.execution_grant.authorized;
@@ -904,6 +1078,61 @@ fn ensure_prereg_round_provenance(
         "context {context_id} seed_cap_b ({observed_seed_cap}) != prereg arms_and_rounds.seed_cap_b ({})",
         prereg.arms_and_rounds.seed_cap_b
     );
+    let observed_max_base_kl = raw_ratchet
+        .get("max_conditional_base_kl")
+        .and_then(Value::as_f64)
+        .filter(|v| v.is_finite())
+        .with_context(|| {
+            format!(
+                "context {context_id} missing finite 'max_conditional_base_kl' required by prereg binding"
+            )
+        })?;
+    ensure!(
+        (observed_max_base_kl - prereg.arms_and_rounds.kl_guard.max_conditional_base_kl).abs()
+            <= 1e-12,
+        "context {context_id} max_conditional_base_kl ({observed_max_base_kl}) != prereg max_conditional_base_kl ({})",
+        prereg.arms_and_rounds.kl_guard.max_conditional_base_kl
+    );
+    let observed_max_new_mass = raw_ratchet
+        .get("max_new_support_mass")
+        .and_then(Value::as_f64)
+        .filter(|v| v.is_finite())
+        .with_context(|| {
+            format!(
+                "context {context_id} missing finite 'max_new_support_mass' required by prereg binding"
+            )
+        })?;
+    ensure!(
+        (observed_max_new_mass - prereg.arms_and_rounds.kl_guard.max_new_support_mass).abs()
+            <= 1e-12,
+        "context {context_id} max_new_support_mass ({observed_max_new_mass}) != prereg max_new_support_mass ({})",
+        prereg.arms_and_rounds.kl_guard.max_new_support_mass
+    );
+    let policy_val = raw_ratchet
+        .get("measured_tilt_policy")
+        .filter(|v| !v.is_null())
+        .with_context(|| {
+            format!(
+                "context {context_id} missing 'measured_tilt_policy' object required by prereg binding"
+            )
+        })?;
+    let observed_policy: MeasuredTiltPolicyConfig = serde_json::from_value(policy_val.clone())
+        .with_context(|| format!("context {context_id} invalid 'measured_tilt_policy'"))?;
+    observed_policy
+        .validate()
+        .with_context(|| format!("context {context_id} invalid 'measured_tilt_policy'"))?;
+    let expected_policy = &prereg.arms_and_rounds.measured_tilt_policy;
+    ensure!(
+        (observed_policy.temperature_tau - expected_policy.temperature_tau).abs() <= 1e-12
+            && (observed_policy.advantage_clip - expected_policy.advantage_clip).abs() <= 1e-12
+            && (observed_policy.ref_new_support_mass - expected_policy.ref_new_support_mass).abs()
+                <= 1e-12
+            && (observed_policy.policy_new_support_cap - expected_policy.policy_new_support_cap)
+                .abs()
+                <= 1e-12
+            && (observed_policy.step_size_eta - expected_policy.step_size_eta).abs() <= 1e-12,
+        "context {context_id} measured_tilt_policy ({observed_policy:?}) != prereg measured_tilt_policy ({expected_policy:?})"
+    );
     ensure!(
         rounds.len() == prereg.arms_and_rounds.rounds,
         "context {context_id} rounds.len() ({}) != prereg arms_and_rounds.rounds ({})",
@@ -911,12 +1140,17 @@ fn ensure_prereg_round_provenance(
         prereg.arms_and_rounds.rounds
     );
     for (round_idx, round) in rounds.iter().enumerate() {
+        let kl_source = round.get("kl_source").and_then(Value::as_str);
+        ensure!(
+            kl_source == Some("measured_tilt_leaf_policy"),
+            "context {context_id} round {round_idx} kl_source {:?} != \"measured_tilt_leaf_policy\" required by prereg binding",
+            kl_source
+        );
         for genome_field in ["ratchet_champion_genome", "ordinary_champion_genome"] {
             let valid_str = round
                 .get(genome_field)
                 .and_then(Value::as_str)
-                .map(str::trim)
-                .is_some_and(|s| !s.is_empty());
+                .is_some_and(|s| !is_placeholder_sentinel(s));
             ensure!(
                 valid_str,
                 "context {context_id} round {round_idx} missing non-empty string '{genome_field}' required by prereg binding"
@@ -1039,8 +1273,7 @@ fn ensure_valid_round_structure(context_id: &str, round_idx: usize, round: &Valu
         ensure!(
             ord_genome
                 .as_str()
-                .map(str::trim)
-                .is_some_and(|s| !s.is_empty()),
+                .is_some_and(|s| !is_placeholder_sentinel(s)),
             "context {context_id} round {round_idx} field ordinary_champion_genome must be a non-empty string"
         );
     }
@@ -1493,7 +1726,7 @@ pub fn qualify_rounds_with_prereg(
                     .get("ordinary_champion_genome")
                     .and_then(Value::as_str)
                     .map(str::trim)
-                    .filter(|s| !s.is_empty())
+                    .filter(|s| !is_placeholder_sentinel(s))
                     .map(str::to_owned)
                     .with_context(|| {
                         format!(
@@ -1766,16 +1999,23 @@ pub fn qualify_rounds_with_prereg(
             disqualification_reasons.push("provenance_and_prereg_binding_unimplemented".to_owned());
             PROVENANCE_BINDING_STATUS.to_owned()
         }
-        Some((_, false)) => {
-            disqualification_reasons.push("prereg_unpinned_or_no_execution_grant".to_owned());
-            PREREG_UNPINNED_BINDING_STATUS.to_owned()
+        Some((_, pinned)) => {
+            if !pinned {
+                disqualification_reasons.push("prereg_unpinned_or_no_execution_grant".to_owned());
+            }
+            disqualification_reasons.push(PREREG_CALLER_ASSERTED_REASON.to_owned());
+            disqualification_reasons
+                .push("qualified_execution_mode_disabled_offline_verifier_only".to_owned());
+            if pinned {
+                PREREG_PINNED_BINDING_STATUS.to_owned()
+            } else {
+                PREREG_UNPINNED_BINDING_STATUS.to_owned()
+            }
         }
-        Some((_, true)) => PREREG_PINNED_BINDING_STATUS.to_owned(),
     };
     if !sealed_family_boundary_adopted {
         disqualification_reasons.push("no_adopted_sealed_family_boundary".to_owned());
     }
-    let qualified_claim = disqualification_reasons.is_empty() && sealed_family_boundary_adopted;
 
     Ok(RoundQualReport {
         schema: ROUND_QUAL_SCHEMA.to_owned(),
@@ -1816,9 +2056,9 @@ pub fn qualify_rounds_with_prereg(
         margin_cleared,
         sealed_family_boundary_adopted,
         caller_asserted_diagnostic_checks_passed,
-        qualified_claim,
-        promotion: qualified_claim,
-        l6_claim: qualified_claim,
+        qualified_claim: false,
+        promotion: false,
+        l6_claim: false,
         generalization_claim: GENERALIZATION_CLAIM.to_owned(),
         disqualification_reasons,
         contexts: context_rows,

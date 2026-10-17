@@ -820,6 +820,13 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
     assert_eq!(receipt["matched_or_beat_ordinary_in_final_round"], true);
     assert_eq!(receipt["policy_optimizer_updates"], 0);
     assert_eq!(receipt["measured_tilt_rounds_admissible"], 3);
+    assert_eq!(receipt["max_conditional_base_kl"], 0.05);
+    assert_eq!(receipt["max_new_support_mass"], 0.15);
+    assert_eq!(
+        serde_json::from_value::<MeasuredTiltPolicyConfig>(receipt["measured_tilt_policy"].clone())
+            .unwrap(),
+        tilt_cfg
+    );
     for r in receipt["rounds"].as_array().unwrap() {
         assert_eq!(r["kl_source"], "measured_tilt_leaf_policy");
         assert!(r["kl_malformed_reason"].is_null());
@@ -829,4 +836,18 @@ fn closed_loop_surrogate_funnel_and_measured_tilt_selfplay_ratchet() {
         assert_eq!(r["seed_update_frozen_by_kl_guard"], false);
         assert_eq!(r["next_round_seed_selector"], "measured_tilt_leaf_policy");
     }
+
+    // P3-3 compatibility: a legacy round receipt JSON that omits `ordinary_champion_genome`
+    // still decodes into `SelfPlayRoundReceipt` (with empty `ordinary_champion_genome`) and
+    // round-trips without emitting the omitted field.
+    let mut legacy_round_val = receipt["rounds"][0].clone();
+    legacy_round_val
+        .as_object_mut()
+        .unwrap()
+        .remove("ordinary_champion_genome");
+    let decoded_legacy: SelfPlayRoundReceipt =
+        serde_json::from_value(legacy_round_val.clone()).expect("decode legacy round receipt");
+    assert!(decoded_legacy.ordinary_champion_genome.is_empty());
+    let reencoded_legacy = serde_json::to_value(&decoded_legacy).unwrap();
+    assert_eq!(reencoded_legacy, legacy_round_val);
 }

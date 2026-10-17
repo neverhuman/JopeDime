@@ -884,6 +884,7 @@ pub struct SelfPlayRoundReceipt {
     pub seed_consumption: Vec<Value>,
     pub ordinary_best_rmse: f64,
     pub ordinary_best_q: f64,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub ordinary_champion_genome: String,
     pub ordinary_evals_to_best: usize,
     pub ordinary_search_sha256: String,
@@ -1439,6 +1440,9 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         "roster_sha256": roster.digest()?,
         "context_sha256": context_sha256,
         "seed_cap_b": seed_cap_b,
+        "max_conditional_base_kl": max_conditional_base_kl,
+        "max_new_support_mass": max_new_support_mass,
+        "measured_tilt_policy": measured_tilt_policy,
         "rounds": round_receipts,
         "monotonic_non_decreasing_best_q": monotonic_non_decreasing_best_q,
         "strictly_improved_over_round0": strictly_improved_over_round0,
