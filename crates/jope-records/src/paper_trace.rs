@@ -22,7 +22,14 @@
 //! 6. the README: the version and the "At a glance" counts, recomputed from the committed files
 //!    their footnotes name;
 //! 7. Figure 1: its data, the claims it draws and its rendering ([`crate::paper_figure`]);
-//! 8. no unfilled marker (`...PLACEHOLDER...`, `TODO`, `TBD`) in the write-up or the trace.
+//! 8. committed SVG figures: all four rows in `NUMBERS_TRACE.md` `## Committed SVG figures`
+//!    (`why-it-matters.svg`, `clover-why-it-matters-3panel.svg`,
+//!    `parity-census-and-exp008-replay.svg`, `readme-clover-overview.svg`) against their SHA-256
+//!    pins, markdown links in `TECHNICAL_WRITEUP.md` / `README.md`, and embedded numerical tokens;
+//! 9. curated experiment digest: all 18 rows (`EXP-001`–`EXP-018`) in
+//!    `docs/experiments/experiments.jsonl` against `jope.experiment-record/v1`,
+//!    `docs/experiments/README.md`, `docs/paper/claims.json`, and tracked repository artifacts;
+//! 10. no unfilled marker (`...PLACEHOLDER...`, `TODO`, `TBD`) in the write-up or the trace.
 //!
 //! Numbers inside identifiers (`C26`, `R23`, `H1`, `v2`, `r3.1`, `p50`, `float32`, `SHA-256`),
 //! inline code, author-year references, dates, clock times and single-digit integers are not
@@ -44,6 +51,16 @@ pub const WRITEUP: &str = "docs/paper/TECHNICAL_WRITEUP.md";
 pub const LEDGER: &str = "docs/paper/claims.json";
 pub const TRACE: &str = "docs/paper/NUMBERS_TRACE.md";
 pub const README: &str = "README.md";
+pub const EXPERIMENTS_JSONL: &str = "docs/experiments/experiments.jsonl";
+pub const EXPERIMENTS_README: &str = "docs/experiments/README.md";
+const REPLAY_JSON: &str = "docs/internal/clover/exp-008-quantile-parity-replay.20261017.json";
+const SAMECUT_CSV: &str = "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv";
+const SVG_PATHS: [&str; 4] = [
+    "docs/paper/figures/why-it-matters.svg",
+    "docs/paper/figures/clover-why-it-matters-3panel.svg",
+    "docs/paper/figures/parity-census-and-exp008-replay.svg",
+    "docs/paper/figures/readme-clover-overview.svg",
+];
 
 const STATUSES: [&str; 4] = ["established", "preliminary", "non-qualifying", "pending"];
 
@@ -69,10 +86,10 @@ static NOT_NUMBERS: LazyLock<Regex> = LazyLock::new(|| {
         r"|\bp\d{2}\b",
         r"|\bfloat\d+\b",
         r"|SHA-256",
-        r"|\b(?:Sections?|Figure|Appendix|Phase|Equations?) \d+(?:\.\d+)*(?:(?:, | and | to |–|-)\d+(?:\.\d+)*)*",
+        r"|\b(?:Sections?|Figures?|Appendix|Phase|Equations?) \d+(?:\.\d+)*(?:\([a-z]\))?(?:(?:, | and | to |–|-)\d+(?:\.\d+)*(?:\([a-z]\))?)*",
         // Author-year references only in their citation shapes: "(Chen et al., 2021;", "Hutter,
         // 2017)" and the narrative "Parisi et al. (2019)". A bare capitalised word before a
-        // number ("At 2,000", read as "At 2000" after normalisation) is not a reference.
+        // number ("At 2,000", read as "At 2000" once grouping commas go) is not a reference.
         r"|[A-Z][\p{L}'-]+(?: et al\.| and [A-Z][\p{L}'-]+)?, (?:19|20)\d{2}[a-z]?[);]",
         r"|[A-Z][\p{L}'-]+(?: et al\.| and [A-Z][\p{L}'-]+) \((?:19|20)\d{2}[a-z]?\)",
     ))
@@ -958,13 +975,506 @@ pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
     Ok((problems, summary))
 }
 
-/// The report and whether the paper, its Figure 1 and the README agree with their records; with
-/// `sources`, also whether every claim source on this host still hashes to its pin. With
-/// `write_figure`, Figure 1 is re-rendered first.
+fn is_lower_hex(s: &str, len: usize) -> bool {
+    s.len() == len
+        && s.bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+
+/// Verify the `## Committed SVG figures` table in `docs/paper/NUMBERS_TRACE.md`:
+/// - all four expected SVG paths exist in the table with valid 64-hex SHA-256 digests and no
+///   duplicates or unsafe paths;
+/// - each SVG file on disk matches its pinned SHA-256 and is linked from `TECHNICAL_WRITEUP.md`
+///   or `README.md`;
+/// - each SVG embeds the exact numerical tokens derived from its committed sources (`claims.json`,
+///   `exp-008-quantile-parity-replay.20261017.json`, and
+///   `leaderboard-jope-same-cut-v1-deep.csv`).
+pub fn check_svg_figures(
+    root: &Path,
+    trace: &str,
+    writeup: &str,
+    readme: &str,
+    ledger_text: &str,
+) -> Result<Vec<String>> {
+    let mut problems = vec![];
+    let mut table_rows: BTreeMap<String, String> = BTreeMap::new();
+    let mut in_section = false;
+    for line in trace.lines() {
+        if line.starts_with("## ") {
+            in_section = line.trim() == "## Committed SVG figures";
+            continue;
+        }
+        if !in_section || !line.starts_with('|') {
+            continue;
+        }
+        let cols: Vec<&str> = line
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().trim_matches('`'))
+            .collect();
+        if cols.len() < 3 || cols[1] == "Path" || cols[1].starts_with("---") {
+            continue;
+        }
+        let path = cols[1].to_owned();
+        let sha = cols[2].to_owned();
+        if table_rows.insert(path.clone(), sha).is_some() {
+            problems.push(format!(
+                "{TRACE}: duplicate Committed SVG figures row for {path}"
+            ));
+        }
+    }
+    if table_rows.is_empty() {
+        problems.push(format!("{TRACE}: missing ## Committed SVG figures table"));
+        return Ok(problems);
+    }
+    for expected in SVG_PATHS {
+        if !table_rows.contains_key(expected) {
+            problems.push(format!(
+                "{TRACE}: Committed SVG figures table is missing {expected}"
+            ));
+        }
+    }
+    for path in table_rows.keys() {
+        if !SVG_PATHS.contains(&path.as_str()) {
+            problems.push(format!(
+                "{TRACE}: unexpected row {path} in Committed SVG figures table"
+            ));
+        }
+    }
+
+    let doc = pyjson::parse_str(ledger_text).map_err(|m| Error::parse(Path::new(LEDGER), m))?;
+    let claims_by_id: BTreeMap<&str, &Value> = doc
+        .get("claims")
+        .and_then(Value::as_list)
+        .into_iter()
+        .flatten()
+        .map(|c| (field(c, "id"), c))
+        .collect();
+
+    for (path, expected_sha) in &table_rows {
+        if has_unsafe_path_component(path) {
+            problems.push(format!("{TRACE}: unsafe SVG path {path:?}"));
+            continue;
+        }
+        if !is_lower_hex(expected_sha, 64) {
+            problems.push(format!(
+                "{TRACE}: {path} pins invalid 64-hex sha256 {expected_sha:?}"
+            ));
+            continue;
+        }
+        let full = root.join(path);
+        let Ok(bytes) = std::fs::read(&full) else {
+            problems.push(format!("{path}: file does not exist"));
+            continue;
+        };
+        let actual_sha = sha256_hex(&bytes);
+        if &actual_sha != expected_sha {
+            problems.push(format!(
+                "{TRACE}: {path} pins {expected_sha}, but file on disk hashes to {actual_sha}"
+            ));
+        }
+        let svg = String::from_utf8_lossy(&bytes);
+        if path == "docs/paper/figures/readme-clover-overview.svg" {
+            let link = format!("]({path})");
+            if !readme.contains(&link) {
+                problems.push(format!("{README}: does not link {path}"));
+            }
+        } else {
+            let rel = path.strip_prefix("docs/paper/").unwrap_or(path.as_str());
+            let link = format!("]({rel})");
+            if !writeup.contains(&link) {
+                problems.push(format!("{WRITEUP}: does not link {rel}"));
+            }
+        }
+
+        match path.as_str() {
+            "docs/paper/figures/clover-why-it-matters-3panel.svg" => {
+                for (cid, needle) in [
+                    ("C27", "0.8968201"),
+                    ("C27", "0.8978393"),
+                    ("C76", "0.506"),
+                    ("C169", "0.1079"),
+                    ("C171", "0.0106"),
+                    ("C174", "+0.00511"),
+                    ("C174", "+0.00333"),
+                    ("C186", "0.079634"),
+                    ("C186", "+0.004297"),
+                    ("C187", "0.022950"),
+                    ("C187", "+0.000378"),
+                    ("C188", "0.080342"),
+                    ("C188", "+0.003962"),
+                    ("C189", "0.008758"),
+                    ("C189", "+0.000082"),
+                    ("C190", "0.634318"),
+                    ("C190", "0.680342"),
+                    ("C190", "+0.046025"),
+                    ("C190", "0.785168"),
+                    ("C190", "0.919919"),
+                    ("C190", "+0.134751"),
+                ] {
+                    let present = claims_by_id.get(cid).is_some_and(|c| {
+                        field(c, "statement").contains(needle) || field(c, "value").contains(needle)
+                    });
+                    if !present {
+                        problems.push(format!("{LEDGER}: {cid} no longer records {needle}"));
+                    }
+                }
+                for tok in [
+                    "[0.8968, 0.8978]",
+                    "0.506",
+                    "+0.0051",
+                    "+0.0040",
+                    "+0.0043",
+                    "+0.0033",
+                    "+0.0004",
+                    "+0.0001",
+                    "0.634→0.680",
+                    "+0.046",
+                    "0.785→0.920",
+                    "+0.135",
+                ] {
+                    if !svg.contains(tok) {
+                        problems.push(format!("{path}: missing rendered token {tok:?}"));
+                    }
+                }
+            }
+            "docs/paper/figures/parity-census-and-exp008-replay.svg" => {
+                let replay_path = root.join(REPLAY_JSON);
+                let replay_bytes =
+                    std::fs::read(&replay_path).map_err(|e| Error::io(&replay_path, e))?;
+                let replay_sha = sha256_hex(&replay_bytes);
+                let c191_pin = claims_by_id
+                    .get("C191")
+                    .map(|c| field(c, "sha256"))
+                    .unwrap_or("");
+                if replay_sha != c191_pin {
+                    problems.push(format!(
+                        "{REPLAY_JSON}: sha256 {replay_sha} does not match C191 pin {c191_pin}"
+                    ));
+                }
+                let replay_doc = pyjson::parse_str(&String::from_utf8_lossy(&replay_bytes))
+                    .map_err(|m| Error::parse(&replay_path, m))?;
+                let pass_def = replay_doc
+                    .get("default_emit_options_bitwise_pass_cuts")
+                    .and_then(Value::as_int)
+                    .unwrap_or(-1);
+                let fail_def = replay_doc
+                    .get("default_emit_options_bitwise_fail_cuts")
+                    .and_then(Value::as_int)
+                    .unwrap_or(-1);
+                let pass_opt = replay_doc
+                    .get("partition_point_rust_bitwise_pass_cuts")
+                    .and_then(Value::as_int)
+                    .unwrap_or(-1);
+                let ratio_tok = format!(
+                    "{pass_def}/{} → {pass_opt}/{}",
+                    pass_def + fail_def,
+                    pass_def + fail_def
+                );
+                if !svg.contains(&ratio_tok) {
+                    problems.push(format!("{path}: missing replay ratio token {ratio_tok:?}"));
+                }
+                for ch in replay_doc
+                    .get("champions")
+                    .and_then(Value::as_list)
+                    .into_iter()
+                    .flatten()
+                {
+                    let max_delta = ch
+                        .get("cuts")
+                        .and_then(Value::as_list)
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|cut| match cut.get("default_rust_max_absolute_delta") {
+                            Some(Value::Float(f)) => Some(*f),
+                            Some(Value::Int(i)) => Some(*i as f64),
+                            _ => None,
+                        })
+                        .fold(0.0_f64, f64::max);
+                    let delta_tok = format!("default max |Δ| = {max_delta:.6}");
+                    if !svg.contains(&delta_tok) {
+                        problems.push(format!("{path}: missing champion delta {delta_tok:?}"));
+                    }
+                }
+                for tok in [
+                    "41/342",
+                    "12.0% [8.7, 15.9%]",
+                    "0/1,212",
+                    "0.25%",
+                    "48/51 pass",
+                ] {
+                    if !svg.contains(tok) {
+                        problems.push(format!("{path}: missing census token {tok:?}"));
+                    }
+                }
+            }
+            "docs/paper/figures/readme-clover-overview.svg" => {
+                let csv_path = root.join(SAMECUT_CSV);
+                let csv_text = py::read_text(&csv_path)?;
+                let wanted: BTreeSet<&str> = ["1", "2", "3", "4", "5", "8", "9", "12"].into();
+                let mut matched_ranks = 0usize;
+                for line in csv_text.lines().skip(1) {
+                    let row: Vec<&str> = line.split(',').collect();
+                    if row.len() < 13 {
+                        continue;
+                    }
+                    let rank = row[0];
+                    if !wanted.contains(rank) {
+                        continue;
+                    }
+                    matched_ranks += 1;
+                    let method = row[3];
+                    let elo: f64 = row[4].parse().unwrap_or(0.0);
+                    let cov = row[12];
+                    let label_tok = format!("#{rank} {method}");
+                    let val_tok = format!("{elo:.1} ({cov})");
+                    if !svg.contains(&label_tok) || !svg.contains(&val_tok) {
+                        problems.push(format!(
+                            "{path}: missing same-cut bar token {label_tok:?} / {val_tok:?}"
+                        ));
+                    }
+                }
+                if matched_ranks != wanted.len() {
+                    problems.push(format!(
+                        "{SAMECUT_CSV}: expected {} selected ranks, found {matched_ranks}",
+                        wanted.len()
+                    ));
+                }
+                for tok in [
+                    "datasets_scored/10",
+                    "0.506",
+                    "0.634→0.680",
+                    "+0.046",
+                    "0.785→0.920",
+                    "+0.135",
+                ] {
+                    if !svg.contains(tok) {
+                        problems.push(format!("{path}: missing overview token {tok:?}"));
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(problems)
+}
+
+/// Verify `docs/experiments/experiments.jsonl` (`EXP-001`–`EXP-018`) against
+/// `jope.experiment-record/v1`, `docs/experiments/README.md`, `docs/paper/claims.json`, and the
+/// repository's tracked files.
+pub fn check_experiments(
+    root: &Path,
+    jsonl_text: &str,
+    exp_readme: &str,
+    ledger_text: &str,
+) -> Result<Vec<String>> {
+    const HYPOTHESES: [&str; 6] = [
+        "H1_GP_Vocabulary_Expansion",
+        "H2_Outcome_Prediction_and_Selection",
+        "H3_Closed_Loop_Distillation",
+        "H4_End_to_End_Task_Win",
+        "Phase_0_Evidence_and_Parity",
+        "Benchmarks_and_Infrastructure",
+    ];
+    const QUAL_STATUSES: [&str; 6] = [
+        "ESTABLISHED",
+        "PRELIMINARY",
+        "NON_QUALIFYING",
+        "DIAGNOSTIC_ONLY",
+        "PENDING",
+        "FAILED_BEFORE_EXECUTION",
+    ];
+
+    let mut problems = vec![];
+    let doc = pyjson::parse_str(ledger_text).map_err(|m| Error::parse(Path::new(LEDGER), m))?;
+    let known_claims: BTreeSet<String> = doc
+        .get("claims")
+        .and_then(Value::as_list)
+        .into_iter()
+        .flatten()
+        .map(|c| field(c, "id").to_owned())
+        .collect();
+
+    let commit_re = re(r"compiled at `main` commit `([0-9a-f]{40})`");
+    let readme_commit = commit_re
+        .captures(exp_readme)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().to_owned());
+    if readme_commit.is_none() {
+        problems.push(format!(
+            "{EXPERIMENTS_README}: missing `compiled at `main` commit `<40-hex>`` header"
+        ));
+    }
+
+    let id_re = re(r"^EXP-(\d{3})-[a-z0-9-]+$");
+    let date_re = re(r"^\d{4}-\d{2}-\d{2}$");
+    let lines: Vec<&str> = jsonl_text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .collect();
+    if lines.len() != 18 {
+        problems.push(format!(
+            "{EXPERIMENTS_JSONL}: expected 18 experiment records, found {}",
+            lines.len()
+        ));
+    }
+
+    let mut seen_ids = BTreeSet::new();
+    for (idx, line) in lines.iter().enumerate() {
+        let row_num = idx + 1;
+        let rec = pyjson::parse_str(line).map_err(|m| {
+            Error::parse(Path::new(EXPERIMENTS_JSONL), format!("line {row_num}: {m}"))
+        })?;
+        let id = field(&rec, "id");
+        if !seen_ids.insert(id.to_owned()) {
+            problems.push(format!("{EXPERIMENTS_JSONL}:{row_num}: duplicate id {id}"));
+        }
+        let expected_prefix = format!("EXP-{row_num:03}-");
+        if !id.starts_with(&expected_prefix) || !id_re.is_match(id) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: id {id:?} must start with {expected_prefix:?} and match ^EXP-\\d{{3}}-[a-z0-9-]+$"
+            ));
+        }
+        if field(&rec, "schema_version") != "jope.experiment-record/v1" {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} has schema_version {:?}",
+                field(&rec, "schema_version")
+            ));
+        }
+        let hyp = field(&rec, "phase_hypothesis");
+        if !HYPOTHESES.contains(&hyp) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} has unknown phase_hypothesis {hyp:?}"
+            ));
+        }
+        let qstat = field(&rec, "qualification_status");
+        if !QUAL_STATUSES.contains(&qstat) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} has unknown qualification_status {qstat:?}"
+            ));
+        }
+        let date = field(&rec, "date_utc");
+        if !date_re.is_match(date) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} has invalid date_utc {date:?}"
+            ));
+        }
+        let src_commit = field(&rec, "source_commit");
+        if src_commit != "unknown" && !is_lower_hex(src_commit, 40) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} has invalid source_commit {src_commit:?}"
+            ));
+        }
+        let snap_commit = field(&rec, "catalog_snapshot_commit");
+        if !is_lower_hex(snap_commit, 40) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} has invalid catalog_snapshot_commit {snap_commit:?}"
+            ));
+        } else if let Some(ref rc) = readme_commit {
+            if snap_commit != rc {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} catalog_snapshot_commit {snap_commit} != {EXPERIMENTS_README} {rc}"
+                ));
+            }
+        }
+
+        let mut row_claims = BTreeSet::new();
+        for cid_val in rec
+            .get("claim_ids")
+            .and_then(Value::as_list)
+            .into_iter()
+            .flatten()
+        {
+            let cid = cid_val.as_str().unwrap_or("");
+            if !row_claims.insert(cid.to_owned()) {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} lists duplicate claim_id {cid}"
+                ));
+            }
+            if !known_claims.contains(cid) {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} cites unknown claim_id {cid:?}"
+                ));
+            }
+        }
+
+        let artifacts = rec.get("artifacts").and_then(Value::as_list);
+        if artifacts.is_none_or(Vec::is_empty) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} must list at least one artifact"
+            ));
+        }
+        for art in artifacts.into_iter().flatten() {
+            let p = art.as_str().unwrap_or("");
+            let file_part = p.split('#').next().unwrap_or("");
+            if file_part.is_empty() || has_unsafe_path_component(file_part) {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} has unsafe artifact path {p:?}"
+                ));
+            } else if !root.join(file_part).is_file() {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} artifact {file_part} does not exist"
+                ));
+            }
+        }
+
+        let sources = rec
+            .get("data")
+            .and_then(|d| d.get("sources"))
+            .and_then(Value::as_list);
+        if sources.is_none_or(Vec::is_empty) {
+            problems.push(format!(
+                "{EXPERIMENTS_JSONL}:{row_num}: {id} data.sources must be non-empty"
+            ));
+        }
+        for src in sources.into_iter().flatten() {
+            let p = src.as_str().unwrap_or("");
+            let file_part = p.split('#').next().unwrap_or("");
+            if file_part.is_empty() || has_unsafe_path_component(file_part) {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} has unsafe data.sources path {p:?}"
+                ));
+            } else if !root.join(file_part).is_file() {
+                problems.push(format!(
+                    "{EXPERIMENTS_JSONL}:{row_num}: {id} data.sources {file_part} does not exist"
+                ));
+            }
+        }
+
+        if let Some(metrics) = rec.get("metrics").and_then(Value::as_dict) {
+            for (k, v) in metrics.iter() {
+                if (k.ends_with("_sha256") || k.contains("_sha256_"))
+                    && v.as_str().is_none_or(|s| !is_lower_hex(s, 64))
+                {
+                    problems.push(format!(
+                        "{EXPERIMENTS_JSONL}:{row_num}: {id} metric {k} is not a 64-hex sha256"
+                    ));
+                }
+            }
+        }
+    }
+    Ok(problems)
+}
+
+/// The report and whether the paper, its Figure 1, the committed SVG figures, the curated
+/// experiment digest, and the README agree with their records; with `sources`, also whether every
+/// claim source on this host still hashes to its pin. With `write_figure`, Figure 1 is
+/// re-rendered first.
 pub fn check(root: &Path, sources: bool, write_figure: bool) -> Result<(String, bool)> {
     let writeup = py::read_text(&root.join(WRITEUP))?;
     let ledger_text = py::read_text(&root.join(LEDGER))?;
     let trace = py::read_text(&root.join(TRACE))?;
+    let readme_text = py::read_text(&root.join(README))?;
+    let exp_jsonl = py::read_text(&root.join(EXPERIMENTS_JSONL))?;
+    let exp_readme = py::read_text(&root.join(EXPERIMENTS_README))?;
     let (mut problems, mut summary) = check_paper(&writeup, &ledger_text, &trace)?;
     problems.extend(crate::paper_figure::check(
         root,
@@ -972,14 +1482,29 @@ pub fn check(root: &Path, sources: bool, write_figure: bool) -> Result<(String, 
         &ledger_text,
         write_figure,
     )?);
-    summary = format!("{summary}; Figure 1 against its data and C26, C27 and C76");
+    problems.extend(check_svg_figures(
+        root,
+        &trace,
+        &writeup,
+        &readme_text,
+        &ledger_text,
+    )?);
+    problems.extend(check_experiments(
+        root,
+        &exp_jsonl,
+        &exp_readme,
+        &ledger_text,
+    )?);
+    summary = format!(
+        "{summary}; Figure 1 against its data and C26, C27, C76 and C190; 4 committed SVG figures; 18 experiment records"
+    );
     if sources {
         let (found, line) = check_sources(&ledger_text)?;
         problems.extend(found);
         summary = format!("{summary}\n{line}");
     }
     let g = glance(root)?;
-    problems.extend(check_readme(&py::read_text(&root.join(README))?, &g));
+    problems.extend(check_readme(&readme_text, &g));
     let mut out = String::new();
     for p in &problems {
         out.push_str(p);
@@ -1329,6 +1854,82 @@ The 26 workspace members, by directory.
                 );
             }
         }
+
+        let trace_text = std::fs::read_to_string(root.join(TRACE)).expect("trace readable");
+        let writeup_text = std::fs::read_to_string(root.join(WRITEUP)).expect("writeup readable");
+        let readme_text = std::fs::read_to_string(root.join(README)).expect("readme readable");
+        let bad_svg_sha = trace_text.replace(
+            "04590ecc014a7856f1a97751cb6d3e7115b4efc6886bcc45c7f886503f42669d",
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        let svg_probs = check_svg_figures(
+            &root,
+            &bad_svg_sha,
+            &writeup_text,
+            &readme_text,
+            &ledger_text,
+        )
+        .expect("svg check runs");
+        assert!(
+            svg_probs
+                .iter()
+                .any(|p| p.contains("clover-why-it-matters-3panel.svg pins ffffffff")),
+            "{svg_probs:?}"
+        );
+        let unlinked_readme = readme_text.replace(
+            "](docs/paper/figures/readme-clover-overview.svg)",
+            "](nope)",
+        );
+        let link_probs = check_svg_figures(
+            &root,
+            &trace_text,
+            &writeup_text,
+            &unlinked_readme,
+            &ledger_text,
+        )
+        .expect("svg link check runs");
+        assert!(
+            link_probs.iter().any(|p| p.contains(
+                "README.md: does not link docs/paper/figures/readme-clover-overview.svg"
+            )),
+            "{link_probs:?}"
+        );
+
+        let exp_jsonl =
+            std::fs::read_to_string(root.join(EXPERIMENTS_JSONL)).expect("experiments readable");
+        let exp_readme = std::fs::read_to_string(root.join(EXPERIMENTS_README))
+            .expect("experiments readme readable");
+        let bad_exp_claim = exp_jsonl.replacen("\"C01\"", "\"C999\"", 1);
+        let exp_probs = check_experiments(&root, &bad_exp_claim, &exp_readme, &ledger_text)
+            .expect("exp check runs");
+        assert!(
+            exp_probs
+                .iter()
+                .any(|p| p.contains("cites unknown claim_id \"C999\"")),
+            "{exp_probs:?}"
+        );
+        let bad_exp_commit = exp_readme.replace(
+            "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
+            "0000000000000000000000000000000000000000",
+        );
+        let commit_probs = check_experiments(&root, &exp_jsonl, &bad_exp_commit, &ledger_text)
+            .expect("exp commit check runs");
+        assert!(
+            commit_probs
+                .iter()
+                .any(|p| p.contains("catalog_snapshot_commit")),
+            "{commit_probs:?}"
+        );
+        let bad_exp_path =
+            exp_jsonl.replacen("\"docs/paper/claims.json\"", "\"../outside.json\"", 1);
+        let path_probs = check_experiments(&root, &bad_exp_path, &exp_readme, &ledger_text)
+            .expect("exp path check runs");
+        assert!(
+            path_probs
+                .iter()
+                .any(|p| p.contains("unsafe data.sources path")),
+            "{path_probs:?}"
+        );
     }
 
     #[test]
