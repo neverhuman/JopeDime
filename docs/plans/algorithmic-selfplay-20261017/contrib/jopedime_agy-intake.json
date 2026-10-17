@@ -1,0 +1,180 @@
+{
+  "attesting_owner": {
+    "active_branch": "feat/paper-readme-sync-20261017",
+    "active_pr": {
+      "base_main_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+      "head_sha": "2563bff23a5a936d0e0ce5b87af5404baac57a55",
+      "merged_main_sha": "0b7eb89075b8186f1aacf1643725432e75e8fe56",
+      "number": 355,
+      "receiving_main_runs": {
+        "full_main_cpu": {
+          "conclusion": "success",
+          "run_id": 39054417420,
+          "status": "completed"
+        },
+        "main_guard": {
+          "conclusion": "success",
+          "run_id": 39054417434,
+          "status": "completed"
+        }
+      },
+      "stacking": false,
+      "state": "MERGED",
+      "url": "https://github.com/neverhuman/JopeDime/pull/355"
+    },
+    "active_worktree_slot": "NONE (PR #355 merged via rebase into main 0b7eb89075b8186f1aacf1643725432e75e8fe56; receiving main-guard 39054417434 and full-main-cpu 39054417420 both completed/success; 0 open PRs; standing by for Root JOPEDIME-8SPEC-20261017 single-PR execution grant)",
+    "agent_cli": "agy --dangerously-skip-permissions",
+    "agent_process_pid": 2843538,
+    "canonical_checkout_preserved": {
+      "head_sha": "797f2863a10e9e4252b1fc3000f07fd75f055e69",
+      "local_dirty_and_private_310_notes_preserved": true,
+      "mutated": false,
+      "path": "/home/ubuntu/JopeDime"
+    },
+    "conversation_id": "63b73e0d-b9d7-468e-9a65-65a1925fe756",
+    "github_reviewer_identity": "neverhumanbot (independent reviewer session dope_gemini via /home/ubuntu/.local/bin/gh-role reviewer)",
+    "github_writer_identity": "jepsontaylor (via /home/ubuntu/.local/bin/gh-role writer)",
+    "role": "JopeDime canonical writer / implementation owner (jopedime_agy)",
+    "screen_pid": 2830191,
+    "screen_session": "2830191.jopedime_agy"
+  },
+  "eight_spec_inventory_and_byte_identities": [
+    {
+      "baseline_commit_cited": "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
+      "bytes": 233292,
+      "core_thesis": "Contextual single-player search & Expert Iteration over a Measured Universe (F1/F2/F3 fidelity ladder), unified feat_math::kernel::strategy::SearchStrategy (legacy_v1, lite_race_v1, modern_gp_v1), operators.toml codegen, ProgramGraph effect checker, ResearchCapsule v2, and value/edit policy N1-N4.",
+      "id": "S1",
+      "identical_to": "S2",
+      "lines": 1719,
+      "name": "JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17 (1).md",
+      "sha256": "63b7a39e4bcfc854bb809f459c6408cf4d5c03c76ce773bec6404a210b5c5b1f",
+      "unique_identity_group": "U_ALGO_SELFPLAY_V1"
+    },
+    {
+      "baseline_commit_cited": "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
+      "bytes": 233292,
+      "core_thesis": "Byte-identical duplicate of S1.",
+      "id": "S2",
+      "identical_to": "S1",
+      "lines": 1719,
+      "name": "JOPEDIME_ALGORITHMIC_SELFPLAY_SPEC_v1_2026-10-17.md",
+      "sha256": "63b7a39e4bcfc854bb809f459c6408cf4d5c03c76ce773bec6404a210b5c5b1f",
+      "unique_identity_group": "U_ALGO_SELFPLAY_V1"
+    },
+    {
+      "baseline_commit_cited": "2026-10-17 live state",
+      "bytes": 27150,
+      "core_thesis": "Concise Algorithm Foundry architecture: SearchKernel profile unification, Typed EvalRequest/Outcome, complete emitter target binding, durable proposal outbox, ResearchEpisode/SearchAction schemas, ResearchCapsule v2, and snapshot-to-trainer adapter.",
+      "id": "S3",
+      "identical_to": null,
+      "lines": 372,
+      "name": "JOPEDIME_FINAL_AUTHORITATIVE_ENGINEERING_SPEC.md",
+      "sha256": "ca505ef920804f832d5f8141d691766d058ad5931742b29979dcd180e4f2a90a",
+      "unique_identity_group": "U_AUTHORITATIVE_FOUNDRY_CONCISE"
+    },
+    {
+      "baseline_commit_cited": "873fb406a8ef4985565617bc812fe497bd4584f1",
+      "bytes": 310695,
+      "core_thesis": "28 work packages (P01-P28) grounded in code audit findings F01-F10: fix inner-CV ridge fallback/0.0 loss & fold-local target-derived features in selectors.rs (F01), atomic support/checkpoint epoch closure (F02), DiscoveryEvent leaf schema in jope-records, ResearchCapsuleV2, and verified retention proofs (F08-F09).",
+      "id": "S4",
+      "identical_to": null,
+      "lines": 3334,
+      "name": "JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17 (1).md",
+      "sha256": "1c0623bc809f4e95109dafd99ed415ca97a00a0b185b6c87174fcc28f1870b16",
+      "unique_identity_group": "U_FINAL_ENG_SPEC_P01_P28"
+    },
+    {
+      "baseline_commit_cited": "873fb406a8ef4985565617bc812fe497bd4584f1",
+      "bytes": 278223,
+      "core_thesis": "29 work packages (PR01-PR29) grounded in findings F01-F10: join native_loop v2 continuation with policy lineage & ancestry-aware export (F01, F03), replace order-blind reward mean-pooling with structural critic (F02), fix publish.rs size-only pre-existing blob check (F06), all-attempt observation bridge (F07), and jope.canonical-json/v1.",
+      "id": "S5",
+      "identical_to": null,
+      "lines": 1758,
+      "name": "JOPEDIME_FINAL_ENGINEERING_SPEC_2026-10-17.md",
+      "sha256": "2f0651d23a11b7b151b64210807a560f614b706f08ed5b5cff1ec6eab50d89a5",
+      "unique_identity_group": "U_FINAL_ENG_SPEC_PR01_PR29"
+    },
+    {
+      "baseline_commit_cited": "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
+      "bytes": 195700,
+      "core_thesis": "36 work packages across M1-M3 grounded in HEAD corrections K1-K12: baseline_facts generator, generated operator registry (closing 5-way HEAD_OPS drift K10 and poly_interact.topk L3), stage_cache in pipeline search (K8), partition_point_quantile_bounds transition, modern_gp profile, GbdtSurrogate (K7), and teacher-qualification gate.",
+      "id": "S6",
+      "identical_to": "S7",
+      "lines": 1824,
+      "name": "JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC (1).md",
+      "sha256": "ffce4d7d4b1045cbd70e005d8b59b0229f12bcec01422d2b58d5fa443898d2b1",
+      "unique_identity_group": "U_KERNEL_GAME_M1_M3"
+    },
+    {
+      "baseline_commit_cited": "5b8b8d56b4ff2458c97486c2ba6f1ebcd9a887bc",
+      "bytes": 195700,
+      "core_thesis": "Byte-identical duplicate of S6.",
+      "id": "S7",
+      "identical_to": "S6",
+      "lines": 1824,
+      "name": "JOPEDIME_KERNEL_GAME_ENGINEERING_SPEC.md",
+      "sha256": "ffce4d7d4b1045cbd70e005d8b59b0229f12bcec01422d2b58d5fa443898d2b1",
+      "unique_identity_group": "U_KERNEL_GAME_M1_M3"
+    },
+    {
+      "baseline_commit_cited": "873fb406a8ef4985565617bc812fe497bd4584f1",
+      "bytes": 35445,
+      "core_thesis": "Executive synthesis & 11 ADRs (A01-A11): single SearchKernel + ResearchEpisode state machine, additive ProgramGraphV2 preserving legacy hashes, single Rust/tch production trainer authority, exact evaluator sole truth, retrieval+modern_gp+QD before MCTS, and deterministic ResearchCapsuleV2.",
+      "id": "S8",
+      "identical_to": null,
+      "lines": 461,
+      "name": "JOPEDIME_ULTIMATE_FINAL_ENGINEERING_SPEC.md",
+      "sha256": "836ff49ef3f34c74f9594c493d4cfa45a4eec444d548bb317c5d1fd9ecb4afb8",
+      "unique_identity_group": "U_ULTIMATE_SYNTHESIS_ADRS"
+    }
+  ],
+  "reconciliation_synthesis": {
+    "human_override_acknowledged": "Human one-PR integration direction overrides embedded split-PR instructions (34 PRs in S1/S2, 30 in S3/S8, 28 in S4, 29 in S5, 36 in S6/S7). No new source branch/PR will be opened while PR #355 remains open; after PR #355 merges via rebase and receiving main CI is green, one cohesive integration branch/PR will be prepared off verified main.",
+    "preserved_holds_and_constraints": {
+      "no_new_training_or_science_campaigns": true,
+      "no_s3_iam_or_cleanup_mutations": true,
+      "pr352_historical_squash_and_pr354_provenance_holds_preserved": true,
+      "rebase_only_merges": true,
+      "xbabe3_disk_guard_50gib_hold_preserved": true
+    },
+    "stale_spec_claims_corrected_against_current_main_8fcf7c62": [
+      {
+        "actual_repo_state": "Already fixed in crates/jope-datasets/src/credentials.rs:88-145 via `aws configure export-credentials --format env` for JOPE_AWS_PROFILE/AWS_PROFILE (noted in S4 F10, S5 F10, S6 K1). Remaining gap is only long-run credential refresh and strict content-hash verification on existing blobs in crates/jope-models/src/publish.rs:48-51.",
+        "claim_in_specs": "S3/S8 claim object_store ignores AWS credential_process and falls back to IMDS (P0 credential chain bug)."
+      },
+      {
+        "actual_repo_state": "Verified in S6 K2: crates/jope-learning/src/progress/outbox.rs implements the fsynced evaluation-event outbox (`jope.learning-progress/v1`), whereas the neural proposal outbox (`jope.flywheel-neural-outbox/v1`) exists only in Python under deploy/dl-flywheel.",
+        "claim_in_specs": "Some specs assume a Rust proposal outbox already exists in jope-engine and merely needs repair."
+      },
+      {
+        "actual_repo_state": "Verified in S6 K6: crates/jope-learning/src/mirror.rs uses conditional PutMode::Update{e_tag, version} via CAS.",
+        "claim_in_specs": "Some specs refer to MASTER_PLAN.md compare-then-put race in mirror.rs as still unfixed."
+      },
+      {
+        "actual_repo_state": "PR #353 (5b8b8d56) and PR #354 (8fcf7c62) added committed SVG figures, EXP-008 opt-in quantile parity replay (6/6 inner cuts at 0.0 delta), and jope-records paper-trace SVG + experiments.jsonl verification; PR #355 (2563bff2) extends paper-trace to verify docs/experiments/README.md and SYNTHESIS_AND_NEXT_EXPERIMENTS.md.",
+        "claim_in_specs": "Specs written at 873fb406 or 5b8b8d56 predate PR #353, PR #354, and PR #355."
+      }
+    ]
+  },
+  "request_id": "JOPEDIME-8SPEC-20261017",
+  "root_authority_acknowledgement": {
+    "owner_written_files": [
+      "contrib/jopedime_agy-intake.json",
+      "contrib/screen-owner-attestations.json",
+      "contrib/current-repo-gap-map.json",
+      "contrib/PR355-disposition.json"
+    ],
+    "root_owned_files_untouched": [
+      "WORKPLAN.md",
+      "TODO.md",
+      "tasks.json",
+      "progress.json",
+      "events.jsonl",
+      "requirements.json",
+      "decisions.json"
+    ],
+    "root_owner": "Codex Root chat01a13a98"
+  },
+  "schema": "jope.8spec-owner-intake/v1",
+  "timestamp_utc": "2026-10-17T18:17:00Z"
+}

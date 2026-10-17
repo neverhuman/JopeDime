@@ -1,0 +1,112 @@
+{
+  "base_main_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+  "branch": "feat/paper-readme-sync-20261017",
+  "ci_status_at_exact_head_2563bff23a5a936d0e0ce5b87af5404baac57a55": {
+    "pull_request_run": {
+      "attempt": 1,
+      "conclusion": "success",
+      "custody_receipt": "/home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/pr355-run-39051561033-pr.json",
+      "head_sha": "2563bff23a5a936d0e0ce5b87af5404baac57a55",
+      "jobs_summary": "6 active jobs PASS (changes, hygiene, rust-check, rust-test (1), rust-test (2), aggregate) + 4 declared skipped-by-path (python, e2e-smoke, inputs, emitters)",
+      "run_id": 39051561033,
+      "status": "completed"
+    },
+    "workflow_dispatch_full_run": {
+      "attempt": 1,
+      "conclusion": "success",
+      "custody_receipt": "/home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/pr355-run-39051560176-dispatch.json",
+      "head_sha": "2563bff23a5a936d0e0ce5b87af5404baac57a55",
+      "jobs_summary": "10/10 jobs PASS (changes, hygiene, inputs, python, e2e-smoke, emitters, rust-check, rust-test (1), rust-test (2), aggregate)",
+      "run_id": 39051560176,
+      "status": "completed"
+    }
+  },
+  "designated_independent_reviewer": {
+    "gh_role_eligible_verdict": "VERDICT: eligible (jepsontaylor excluded as PR opener and sole commit author/committer)",
+    "login": "neverhumanbot",
+    "reviewer_session": "300394.dope_gemini"
+  },
+  "head_sha": "2563bff23a5a936d0e0ce5b87af5404baac57a55",
+  "merge_details": {
+    "exact_head_approved_review": {
+      "commit_id": "2563bff23a5a936d0e0ce5b87af5404baac57a55",
+      "custody_receipt": "/home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/pr355-reviews.json",
+      "review_id": 5559113460,
+      "reviewer": "neverhumanbot",
+      "state": "APPROVED",
+      "submitted_at": "2026-10-17T17:35:07Z"
+    },
+    "merged_at": "2026-10-17T17:35:17Z",
+    "merged_by": "jepsontaylor",
+    "method": "rebase",
+    "parent_main_sha": "8fcf7c62f4a4de7973193dd2407803387c9e6851",
+    "resulting_main_sha": "0b7eb89075b8186f1aacf1643725432e75e8fe56",
+    "resulting_main_tree_sha": "1244b1bf83141c3f6a456107c788cfc7a17ef7dc",
+    "worktree_cleanup": {
+      "bundle_path": "/home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/pr355-2563bff2.bundle",
+      "bundle_verified": true,
+      "open_prs_remaining": 0,
+      "worktree_removed": true
+    }
+  },
+  "pr_number": 355,
+  "pr_url": "https://github.com/neverhuman/JopeDime/pull/355",
+  "receiving_main_ci_at_0b7eb89075b8186f1aacf1643725432e75e8fe56": {
+    "full_main_cpu": {
+      "attempt": 1,
+      "conclusion": "success",
+      "custody_receipt": "/home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/pr355-full-main-cpu-39054417420.json",
+      "jobs": [
+        [
+          "cpu (cpu-1)",
+          "completed",
+          "success"
+        ],
+        [
+          "cpu (cpu-2)",
+          "completed",
+          "success"
+        ],
+        [
+          "aggregate",
+          "completed",
+          "success"
+        ]
+      ],
+      "run_id": 39054417420,
+      "status": "completed"
+    },
+    "main_guard": {
+      "attempt": 1,
+      "conclusion": "success",
+      "custody_receipt": "/home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/pr355-main-guard-39054417434.json",
+      "jobs": [
+        [
+          "guard",
+          "completed",
+          "success"
+        ]
+      ],
+      "run_id": 39054417434,
+      "status": "completed"
+    },
+    "status": "COMPLETED_100_PERCENT_GREEN"
+  },
+  "request_id": "JOPEDIME-8SPEC-20261017",
+  "review_and_merge_lifecycle": {
+    "allowed_merge_command": "/home/ubuntu/.local/bin/gh-role writer pr merge 355 -R neverhuman/JopeDime --rebase --match-head-commit 2563bff23a5a936d0e0ce5b87af5404baac57a55",
+    "current_stage": "RECEIVING_MAIN_CI_100_PERCENT_GREEN_LIFECYCLE_COMPLETE_AWAITING_ROOT_8SPEC_GO",
+    "no_stacking_enforced": true,
+    "post_merge_requirements": [
+      "Verify merged_at and resulting main commit SHA via GitHub API",
+      "Watch receiving main-guard and full-main-cpu to 100% green before opening the post-#355 8-spec integration PR",
+      "Preserve PR #355 custody receipts in /home/ubuntu/jope-evidence/pr355-paper-readme-sync-20261017/ and remove closed worktree with git worktree remove"
+    ]
+  },
+  "schema": "jope.pr355-disposition/v1",
+  "state": "MERGED",
+  "timestamp_utc": "2026-10-17T18:17:00Z",
+  "title": "feat(records,paper,docs): enforce experiment digest trace & embed SVG figures",
+  "worktree": "/home/ubuntu/JopeDime/.agent/worktrees/paper-readme-sync-20261017",
+  "writer_login": "jepsontaylor"
+}

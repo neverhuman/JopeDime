@@ -1,0 +1,9 @@
+{
+  "observed_at": "2026-10-17T17:31:49.402487+00:00",
+  "status": "BLOCKED",
+  "actual_provider": "Grok Build",
+  "message": "HTTP402 Payment Required: Grok Build usage balance exhausted",
+  "review_coverage": 0,
+  "no_retry_or_purchase": true,
+  "launch_receipt": "contrib/grok-launch-status.json"
+}
