@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5007,
+  "count": 5009,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -4344,7 +4344,7 @@
     }
    },
    "jope-learning": {
-    "count": 409,
+    "count": 411,
     "ignored": 0,
     "binaries": {
      "jope-learning": {
@@ -4878,7 +4878,7 @@
      },
      "jope-learning::selfplay_round_qual": {
       "kind": "test",
-      "count": 9,
+      "count": 11,
       "ignored": 0,
       "tests": [
        "b1_sequential_same_registry_looks_and_violations",
@@ -4888,6 +4888,8 @@
        "downgrades_missing_or_failed_parity_without_dropping_r5_failures",
        "downgrades_scratch_and_reused_development_sources",
        "downgrades_unequal_attempts_unequal_resources_and_insufficient_rounds",
+       "exp_next_02_producer_selfplay_ratchet_to_round_qual_bridge",
+       "exp_next_02_secondary_endpoint_and_prereg_binding_verification",
        "m3_requires_at_least_two_parent_clusters_and_checks_practical_margin",
        "refuses_malformed_inputs_and_identity_mismatch"
       ]

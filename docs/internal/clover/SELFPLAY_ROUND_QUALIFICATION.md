@@ -1,37 +1,37 @@
 # Self-play round qualification diagnostic (`jope.selfplay-round-qualification/v1`)
 
-> **Status:** Offline caller-asserted diagnostic verifier and CLI subcommand (`jope-pools qualify-rounds`) implemented in `crates/jope-learning/src/clover/round_qual.rs`. It performs no search, no fitting, no policy training, and no S3 reads or writes. Because cryptographic provenance and pre-registration payload binding are not yet implemented (`provenance_binding_status: "unverified_caller_asserted_inputs"`), every report sets `qualified_claim: false`, `promotion: false`, and `l6_claim: false` unconditionally.
+> **Status:** Offline diagnostic and pre-registration verifier (`jope-pools qualify-rounds`) implemented in `crates/jope-learning/src/clover/round_qual.rs`. It performs no search, no fitting, no policy training, and no S3 reads or writes. When `--prereg <PATH>` (`jope.selfplay-round1-prereg/v1`) is supplied, `qualify_rounds_with_prereg` cryptographically verifies `plan.prereg_sha256`, checks all pinned parameters and per-round search/observation digests, and enforces the explicit admission gate (`execution_grant.authorized` and `UNPINNED` fields). Because `qualify::promotion::GENERALIZATION_CLAIM` is `"none: no adopted sealed-family boundary in this build"` (`sealed_family_boundary_adopted: false`) and the committed `selfplay-round1-prereg.v1.json` remains `UNPINNED` (`authorized: false`), `qualified_claim`, `promotion`, and `l6_claim` remain `false`.
 
 ## Purpose and diagnostic scope (`B2`)
 
 `run_selfplay_ratchet` (`crates/jope-learning/src/clover/expansion.rs`) and `run_distilled_flywheel_with_s3_prior` (`crates/jope-learning/src/pools/flywheel.rs`) produce offline inner-cut or shadow-pool receipts (`clover.selfplay-ratchet/v1` and `jope.j9-distilled-flywheel-receipt/v1`) with `policy_optimizer_updates: 0`, `"qualification": "scratch_only"`, and `"equal_resource_comparison": false`. Inner-cut RMSE is selection-biased when rounds reuse inner folds (`SP-1`), and shadow-pool evaluation is a screening signal (`ESTABLISHED_SHADOW`), not an independent confirmation.
 
-`clover::round_qual::qualify_rounds` checks a caller-supplied bundle of:
+`clover::round_qual::qualify_rounds` and `qualify_rounds_with_prereg` check a caller-supplied bundle of:
 
 1. an [`ExperimentIdentity`](../../../crates/jope-learning/src/clover/identity.rs) (`clover.experiment/v1`) whose canonical SHA-256 equals `plan.experiment_identity_sha256` and whose `data_roster_sha256` equals every ratchet output's `roster_sha256`,
-2. a [`RoundQualPlan`](../../../crates/jope-learning/src/clover/round_qual.rs) carrying a 64-hex `prereg_sha256`, `pinned_test_score_registry`, `min_parent_clusters >= 2`, `practical_margin_log_ratio >= 0`, `bootstrap_resamples >= 1000`, `alpha in (0, 0.025]`, `max_conditional_base_kl >= 0`, and `max_new_support_mass in [0, 1]`,
+2. a [`RoundQualPlan`](../../../crates/jope-learning/src/clover/round_qual.rs) carrying a 64-hex `prereg_sha256`, `pinned_test_score_registry`, `min_parent_clusters >= 2`, `practical_margin_log_ratio >= 0`, `bootstrap_resamples >= 1000`, `alpha in (0, 0.025]`, `endpoint` (`FinalVsRound0Incumbent` or `RatchetVsOrdinaryFinalRound`), `max_conditional_base_kl >= 0`, and `max_new_support_mass in [0, 1]`,
 3. strict held-out test-split score receipts (`QualTestScore`, schema `jope.pipeline-test-score/v1`) preserving raw `earlier_looks` presence (`Option<Vec<String>>`),
-4. R5 cross-language / runtime parity records (`ParityRecord`), and
-5. a duplicate-checked context-to-parent-cluster mapping (`parent_of_context`) for parent-cluster bootstrap inference (`cluster_bootstrap_ci`).
-
-Hashing a supplied `ExperimentIdentity` and checking a 64-hex `prereg_sha256` format does **not** bind ratchet outputs, score receipts, or plan parameters to a sealed pre-registration document. `caller_asserted_diagnostic_checks_passed` records whether the supplied inputs passed the checks below, while `qualified_claim` remains unconditionally `false` (`"provenance_and_prereg_binding_unimplemented"`).
+4. R5 cross-language / runtime parity records (`ParityRecord`),
+5. a duplicate-checked context-to-parent-cluster mapping (`parent_of_context`) for parent-cluster bootstrap inference (`cluster_bootstrap_ci`), and
+6. an optional pre-registration packet (`SelfPlayPrereg`, schema `jope.selfplay-round1-prereg/v1`, passed via `--prereg <PATH>`) whose SHA-256 matches `plan.prereg_sha256`.
 
 ## Input refusals (`Err`) vs. diagnostic disqualifications (`qualified_claim: false`)
 
 ### Hard refusals (`Err`, no report emitted)
 
-`qualify_rounds` and `parse_parent_map` return `Err` when an input is structurally malformed or ambiguous:
+`qualify_rounds`, `qualify_rounds_with_prereg`, and `parse_parent_map` return `Err` when an input is structurally malformed or ambiguous:
 
 - `ExperimentIdentity::validate()` fails or `identity.sha256() != plan.experiment_identity_sha256`.
 - `plan.prereg_sha256` is not a 64-character lowercase hex digest, or `plan.pinned_test_score_registry` is empty.
 - `plan.min_parent_clusters < 2`, `plan.practical_margin_log_ratio` is non-finite or negative, `plan.bootstrap_resamples < 1000` (`qualify::promotion::MIN_RESAMPLES`), `plan.alpha` is outside `(0, 0.025]` (`MAX_SINGLE_ENDPOINT_ALPHA`, required because joint Holm-Bonferroni adjustment is unimplemented), `plan.max_conditional_base_kl` is non-finite or negative, or `plan.max_new_support_mass` is outside `[0, 1]`.
-- `plan.endpoint == Endpoint::RatchetVsOrdinaryFinalRound` (unsupported because `SelfPlayRoundReceipt` does not emit `ordinary_champion_genome`).
+- `plan.endpoint == Endpoint::RatchetVsOrdinaryFinalRound` and any context's final round omits a non-empty string `ordinary_champion_genome` (or any round carries a malformed/empty `ordinary_champion_genome`).
+- When `--prereg` (`prereg_bytes`) is supplied: `sha256(prereg_bytes)` (and `canonical_sha256`) disagrees with `plan.prereg_sha256`; `SelfPlayPrereg` fails schema/unknown-field validation; `execution_grant.authorized` is `true` while any required field is `"UNPINNED"` or `status == "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT"`; any pinned parameter (`experiment_identity_sha256`, `sealed_roster_sha256`, `parent_cluster_map_sha256`, `min_parent_clusters`, `practical_margin_log_ratio`, `bootstrap_resamples`, `bootstrap_seed`, `pinned_test_score_registry`, `max_conditional_base_kl`, `max_new_support_mass`, `allow_kl_frozen_rounds`) disagrees with `plan` / `identity` / `parent_of_context`; or any context's `seed_cap_b`, `rounds.len()`, champion genome strings, or 64-hex round search/observation digests (`ordinary_search_sha256`, `ordinary_observations_sha256`, `ratchet_search_sha256`, `ratchet_observations_sha256`) fail validation.
 - `parent_map` is empty, contains duplicate context keys in JSON or TSV, or has TSV lines with fewer or more than 2 tab-separated columns.
 - `ratchet_outputs` is empty, has `schema != "clover.selfplay-ratchet/v1"`, omits or repeats `context_sha256`, has `roster_sha256 != identity.data_roster_sha256`, omits integer `policy_optimizer_updates`, omits the `rounds` array, has non-contiguous/reordered `rounds[i].round != i` or `cumulative_prior_rounds != i`, or contains non-finite (`NaN`/`inf`) round metrics.
 - Any `context_sha256` in `ratchet_outputs` is absent from `parent_of_context` (or `plan.expected_contexts` when specified).
 - Any `QualTestScore` has `schema != "jope.pipeline-test-score/v1"`, `split != "test"`, empty dataset identifiers or zero row counts, `program_sha256 != sha256(genome)`, non-finite or non-positive (`<= 0.0`) `test_rmse`, inconsistent `ScoredDataset` fingerprints for the same dataset `id` or `dataset_hash`, cross-dataset `id`/`dataset_hash` alias collisions, or duplicate `(dataset.id, genome)` / `(dataset.dataset_hash, program_sha256)`.
 
-### Diagnostic disqualifications (`Ok(RoundQualReport)`, `caller_asserted_diagnostic_checks_passed: false`)
+### Diagnostic disqualifications (`Ok(RoundQualReport)`, `qualified_claim: false`)
 
 | Reason code | Condition |
 | --- | --- |
@@ -53,7 +53,8 @@ Hashing a supplied `ExperimentIdentity` and checking a 64-hex `prereg_sha256` fo
 | `insufficient_parent_clusters` | Complete paired parent clusters `< plan.min_parent_clusters`. |
 | `paired_interval_not_computed` | Fewer than 2 complete paired contexts or fewer than 2 observed parent clusters. |
 | `margin_not_cleared` | Parent-cluster bootstrap lower bound on `ln(test_rmse_reference) - ln(test_rmse_candidate)` is `<= plan.practical_margin_log_ratio`. |
-| `provenance_and_prereg_binding_unimplemented` | Always appended in this build (`provenance_binding_status: "unverified_caller_asserted_inputs"`). |
+| `provenance_and_prereg_binding_unimplemented` | Appended when `--prereg` (`prereg_bytes`) is omitted (`provenance_binding_status: "unverified_caller_asserted_inputs"`). |
+| `prereg_unpinned_or_no_execution_grant` | Appended when `--prereg` is verified against `plan.prereg_sha256` and all pinned fields match, but one or more fields remain `"UNPINNED"` or `execution_grant.authorized == false` (`provenance_binding_status: "prereg_verified_unpinned_no_execution_grant"`). |
 | `no_adopted_sealed_family_boundary` | `qualify::promotion::GENERALIZATION_CLAIM` begins with `"none:"` (always true in this build until G23 sealed-family boundary adoption). |
 
 ## Paired statistic and tie convention
@@ -69,9 +70,9 @@ For each context with complete candidate and reference test scores and passing p
 
 Every `RoundQualReport` sets:
 
-- `provenance_binding_status: "unverified_caller_asserted_inputs"`
+- `provenance_binding_status`: `"unverified_caller_asserted_inputs"` (no `--prereg`), `"prereg_verified_unpinned_no_execution_grant"` (`--prereg` verified with `UNPINNED` fields or `authorized: false`), or `"prereg_and_local_receipt_digests_verified"` (`--prereg` verified with all fields pinned and `authorized: true`)
 - `multiplicity_adjustment: "unimplemented_single_endpoint_alpha_cap_0_025"`
-- `qualified_claim: false`
+- `qualified_claim: false` (requires `disqualification_reasons.is_empty() && sealed_family_boundary_adopted`)
 - `promotion: false`
 - `l6_claim: false`
 - `generalization_claim: "none: no adopted sealed-family boundary in this build"`
@@ -86,6 +87,7 @@ cargo run --locked -p jope-learning --bin jope_pools -- qualify-rounds \
   --test-scores path/to/test-scores.jsonl \
   --parity path/to/parity.jsonl \
   --parent-map path/to/parent-map.json \
+  [--prereg docs/internal/clover/selfplay-round1-prereg.v1.json] \
   --out path/to/report.json
 ```
 

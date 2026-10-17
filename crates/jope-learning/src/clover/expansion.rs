@@ -210,7 +210,7 @@ pub struct PolicySeeds {
     pub surrogate_funnel: Option<SurrogateFunnelProvenance>,
 }
 
-fn canonical_genome(raw: &str) -> Result<String> {
+pub fn canonical_genome(raw: &str) -> Result<String> {
     // The production pipeline's parser/canonicalizer. One item avoids its top-K cap
     // skipping validation of later inputs.
     let admitted = seeds::admit(&[(raw.to_owned(), seeds::FROM_SEEDS_FILE)])?;
@@ -884,6 +884,7 @@ pub struct SelfPlayRoundReceipt {
     pub seed_consumption: Vec<Value>,
     pub ordinary_best_rmse: f64,
     pub ordinary_best_q: f64,
+    pub ordinary_champion_genome: String,
     pub ordinary_evals_to_best: usize,
     pub ordinary_search_sha256: String,
     pub ordinary_observations_sha256: String,
@@ -1058,17 +1059,25 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             "ordinary arm produced no measured candidates in round {round_idx}"
         );
         let mut ordinary_best_rmse = f64::INFINITY;
+        let mut ordinary_champion_genome = String::new();
         let mut ordinary_evals_to_best = 1usize;
         for (idx, obs) in ordinary.observations.iter().enumerate() {
             if obs.measured() {
                 if let Some(r) = obs.rmse {
-                    if r + 1e-12 < ordinary_best_rmse {
+                    if r.is_finite()
+                        && (ordinary_champion_genome.is_empty() || r + 1e-12 < ordinary_best_rmse)
+                    {
                         ordinary_best_rmse = r;
+                        ordinary_champion_genome = obs.genome.clone();
                         ordinary_evals_to_best = idx + 1;
                     }
                 }
             }
         }
+        ensure!(
+            !ordinary_champion_genome.is_empty(),
+            "ordinary arm produced no finite measured champion genome in round {round_idx}"
+        );
         let ordinary_best_q = 1.0 / (1.0 + ordinary_best_rmse);
 
         // 2. Run self-play ratchet GP arm seeded with `current_seeds` (already admitted via seeds::admit).
@@ -1370,6 +1379,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             seed_consumption,
             ordinary_best_rmse,
             ordinary_best_q,
+            ordinary_champion_genome,
             ordinary_evals_to_best,
             ordinary_search_sha256: ordinary.search_sha256.clone(),
             ordinary_observations_sha256: ordinary.observations_sha256.clone(),

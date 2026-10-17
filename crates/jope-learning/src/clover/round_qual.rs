@@ -1,17 +1,27 @@
 //! Offline self-play round qualification diagnostic report (`jope.selfplay-round-qualification/v1`).
 //!
 //! Evaluates multi-round self-play ratchet outputs (`clover.selfplay-ratchet/v1`), once-only
-//! test-split score receipts (`jope.pipeline-test-score/v1`), R5 parity records, and a parent-cluster
-//! mapping against a caller-supplied [`ExperimentIdentity`] and [`RoundQualPlan`].
+//! test-split score receipts (`jope.pipeline-test-score/v1`), R5 parity records, a parent-cluster
+//! mapping, and an optional pre-registration packet (`jope.selfplay-round1-prereg/v1`) against a
+//! caller-supplied [`ExperimentIdentity`] and [`RoundQualPlan`].
 //!
-//! **Diagnostic scope (`B2`):** Hashing a caller-supplied `ExperimentIdentity` and checking a
-//! 64-hex `prereg_sha256` format does not cryptographically bind ratchet outputs, test-score
-//! receipts, or pre-registration parameters to a sealed confirmation run. Every report therefore
-//! sets `provenance_binding_status: "unverified_caller_asserted_inputs"`, keeps `qualified_claim`,
-//! `promotion`, and `l6_claim` unconditionally `false`, and includes
-//! `"provenance_and_prereg_binding_unimplemented"` in `disqualification_reasons`.
-//! `caller_asserted_diagnostic_checks_passed` records whether the caller-supplied bundle passed all
-//! statistical, parity, budget, KL, and sequential test-look checks.
+//! **Provenance and pre-registration binding (`B2`):**
+//! - When no pre-registration packet is supplied (`prereg_bytes: None`), the report sets
+//!   `provenance_binding_status: "unverified_caller_asserted_inputs"` and includes
+//!   `"provenance_and_prereg_binding_unimplemented"` in `disqualification_reasons`.
+//! - When `prereg_bytes: Some(bytes)` is supplied (`qualify_rounds_with_prereg` or
+//!   `jope-pools qualify-rounds --prereg <PATH>`), the verifier cryptographically checks
+//!   `plan.prereg_sha256` against `bytes`, validates the `jope.selfplay-round1-prereg/v1` schema,
+//!   verifies all pinned plan/identity/parent-map/ratchet parameters and per-round search and
+//!   observation SHA-256 digests, and checks the explicit admission gate (`execution_grant.authorized`
+//!   and `UNPINNED` fields). While any pre-registration field is `"UNPINNED"` or
+//!   `execution_grant.authorized == false`, the report sets
+//!   `provenance_binding_status: "prereg_verified_unpinned_no_execution_grant"` and includes
+//!   `"prereg_unpinned_or_no_execution_grant"` in `disqualification_reasons`. When all pre-registration
+//!   fields are pinned and `execution_grant.authorized == true`, the report sets
+//!   `provenance_binding_status: "prereg_and_local_receipt_digests_verified"`; `qualified_claim`,
+//!   `promotion`, and `l6_claim` remain `false` whenever `sealed_family_boundary_adopted` is `false`
+//!   (`"no_adopted_sealed_family_boundary"`) or any disqualification reason is present.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -19,10 +29,11 @@ use std::fmt;
 use anyhow::{bail, ensure, Context, Result};
 use jope_pipeline::test_score::{ScoredDataset, TEST_SCORE_SCHEMA_ID};
 use serde::de::{self, MapAccess, Visitor};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::canon::{canonical_sha256, is_hex64, sha256_hex};
+use crate::clover::expansion::MeasuredTiltPolicyConfig;
 use crate::clover::ExperimentIdentity;
 use crate::pools::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
 use crate::qualify::promotion::{GENERALIZATION_CLAIM, MIN_RESAMPLES};
@@ -34,20 +45,215 @@ pub const ROUND_QUAL_SCHEMA: &str = "jope.selfplay-round-qualification/v1";
 /// Expected schema identifier for per-context self-play ratchet outputs.
 pub const RATCHET_SCHEMA: &str = "clover.selfplay-ratchet/v1";
 
+/// Expected schema identifier for the Round-1 pre-registration packet.
+pub const PREREG_SCHEMA: &str = "jope.selfplay-round1-prereg/v1";
+
 /// F10 tie tolerance on log-RMSE ratios: `|ln(cand) - ln(ref)| <= 1e-12` is treated as zero (`0.0`).
 pub const F10_TIE_TOLERANCE: f64 = 1e-12;
 
 /// Maximum single-endpoint alpha permitted while joint Holm-Bonferroni multiplicity is unimplemented.
 pub const MAX_SINGLE_ENDPOINT_ALPHA: f64 = 0.025;
 
-/// Provenance binding disclosure string emitted on every report in this build.
+/// Provenance binding disclosure string emitted when no `--prereg` packet is supplied.
 pub const PROVENANCE_BINDING_STATUS: &str = "unverified_caller_asserted_inputs";
+
+/// Provenance binding disclosure string emitted when `--prereg` is cryptographically verified
+/// against `plan.prereg_sha256` and all pinned fields match, but one or more fields remain
+/// `"UNPINNED"` or `execution_grant.authorized == false`.
+pub const PREREG_UNPINNED_BINDING_STATUS: &str = "prereg_verified_unpinned_no_execution_grant";
+
+/// Provenance binding disclosure string emitted when `--prereg` is cryptographically verified,
+/// all pre-registration fields are pinned with `execution_grant.authorized == true`, and all
+/// per-round search/observation SHA-256 digests are verified.
+pub const PREREG_PINNED_BINDING_STATUS: &str = "prereg_and_local_receipt_digests_verified";
 
 /// Multiplicity adjustment disclosure string emitted on every report in this build.
 pub const MULTIPLICITY_ADJUSTMENT_STATUS: &str = "unimplemented_single_endpoint_alpha_cap_0_025";
 
 fn default_alpha() -> f64 {
     MAX_SINGLE_ENDPOINT_ALPHA
+}
+
+/// Pre-registration field that is either explicitly marked `"UNPINNED"` or bound to a value `T`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum UnpinnedOr<T> {
+    Unpinned,
+    Pinned(T),
+}
+
+impl<T> UnpinnedOr<T> {
+    pub fn is_unpinned(&self) -> bool {
+        matches!(self, Self::Unpinned)
+    }
+
+    pub fn as_pinned(&self) -> Option<&T> {
+        match self {
+            Self::Unpinned => None,
+            Self::Pinned(v) => Some(v),
+        }
+    }
+}
+
+impl<T: Serialize> Serialize for UnpinnedOr<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+        match self {
+            Self::Unpinned => serializer.serialize_str("UNPINNED"),
+            Self::Pinned(v) => v.serialize(serializer),
+        }
+    }
+}
+
+impl<'de, T: serde::de::DeserializeOwned> Deserialize<'de> for UnpinnedOr<T> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+        let val = Value::deserialize(deserializer)?;
+        if val.as_str() == Some("UNPINNED") {
+            return Ok(Self::Unpinned);
+        }
+        serde_json::from_value(val)
+            .map(Self::Pinned)
+            .map_err(de::Error::custom)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregEndpoints {
+    pub primary: Endpoint,
+    pub secondary: Endpoint,
+    pub secondary_status: String,
+    pub multiplicity_procedure: String,
+    pub cli_single_endpoint_alpha_cap: f64,
+    pub alpha_total: f64,
+    pub alpha_primary_strict: f64,
+    pub f10_tie_tolerance_log_ratio: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregRosterAndFamilies {
+    pub unit_of_inference: String,
+    pub roster_role: String,
+    pub sealed_roster_sha256: UnpinnedOr<String>,
+    pub parent_cluster_map_sha256: UnpinnedOr<String>,
+    pub g23_sealed_boundary_ruling: UnpinnedOr<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregSampleSizeAndMargin {
+    pub min_parent_clusters: UnpinnedOr<usize>,
+    pub practical_margin_log_ratio: UnpinnedOr<f64>,
+    pub c158_g_judge_binding_receipt: UnpinnedOr<String>,
+    pub bootstrap_resamples: u32,
+    pub bootstrap_seed: u64,
+    pub bootstrap_method: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregKlGuard {
+    pub max_conditional_base_kl: f64,
+    pub max_new_support_mass: f64,
+    pub allow_kl_frozen_rounds: bool,
+    pub allowlisted_measured_sources: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregArmsAndRounds {
+    pub rounds: usize,
+    pub seed_cap_b: usize,
+    pub equal_attempts_per_round_required: bool,
+    pub equal_resource_comparison_required: bool,
+    pub measured_tilt_policy: MeasuredTiltPolicyConfig,
+    pub kl_guard: PreregKlGuard,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregSequentialLooks {
+    pub reference_earlier_looks: Vec<String>,
+    pub candidate_earlier_looks_when_distinct: Vec<String>,
+    pub reject_omitted_earlier_looks_field: bool,
+    pub reject_registry_reset_both_empty_when_distinct: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregHeldOutAndParityRules {
+    pub test_score_schema: String,
+    pub pinned_test_score_registry: UnpinnedOr<String>,
+    pub sequential_same_registry_looks: PreregSequentialLooks,
+    pub require_feeds_selection_false: bool,
+    pub r5_parity_failure_disposition: String,
+    pub reject_unreferenced_score_or_parity_records: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregExecutionGrant {
+    pub authorized: bool,
+    pub owner_admission_locator: UnpinnedOr<String>,
+    pub hosts: UnpinnedOr<Vec<String>>,
+    pub cpu_ceiling_percent: UnpinnedOr<u32>,
+    pub memory_floor_free_percent: u32,
+    pub gpu_seconds_budget: u64,
+    pub deadline_utc: UnpinnedOr<String>,
+}
+
+/// Pre-registration packet (`jope.selfplay-round1-prereg/v1`) for Round-1 self-play qualification.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SelfPlayPrereg {
+    pub schema: String,
+    pub study_id: String,
+    pub status: String,
+    pub qualification_report_schema: String,
+    pub provenance_binding_status: String,
+    pub experiment_identity_sha256: UnpinnedOr<String>,
+    pub source_commit_at_draft: String,
+    pub endpoints: PreregEndpoints,
+    pub roster_and_families: PreregRosterAndFamilies,
+    pub sample_size_and_margin: PreregSampleSizeAndMargin,
+    pub arms_and_rounds: PreregArmsAndRounds,
+    pub held_out_and_parity_rules: PreregHeldOutAndParityRules,
+    pub execution_grant: PreregExecutionGrant,
+}
+
+impl SelfPlayPrereg {
+    /// True if any required pre-registration field remains `"UNPINNED"`.
+    pub fn has_unpinned_fields(&self) -> bool {
+        self.experiment_identity_sha256.is_unpinned()
+            || self.roster_and_families.sealed_roster_sha256.is_unpinned()
+            || self
+                .roster_and_families
+                .parent_cluster_map_sha256
+                .is_unpinned()
+            || self
+                .roster_and_families
+                .g23_sealed_boundary_ruling
+                .is_unpinned()
+            || self
+                .sample_size_and_margin
+                .min_parent_clusters
+                .is_unpinned()
+            || self
+                .sample_size_and_margin
+                .practical_margin_log_ratio
+                .is_unpinned()
+            || self
+                .sample_size_and_margin
+                .c158_g_judge_binding_receipt
+                .is_unpinned()
+            || self
+                .held_out_and_parity_rules
+                .pinned_test_score_registry
+                .is_unpinned()
+            || self.execution_grant.owner_admission_locator.is_unpinned()
+            || self.execution_grant.hosts.is_unpinned()
+            || self.execution_grant.cpu_ceiling_percent.is_unpinned()
+            || self.execution_grant.deadline_utc.is_unpinned()
+    }
 }
 
 /// Caller-asserted provenance grade of the candidate and reference runs.
@@ -68,8 +274,8 @@ pub enum SourceGrade {
 pub enum Endpoint {
     /// Final ratchet round champion vs. Round-0 ratchet incumbent on the held-out test split.
     FinalVsRound0Incumbent,
-    /// Final ratchet round champion vs. final ordinary-GP round champion on the held-out test split.
-    /// Currently unsupported because `SelfPlayRoundReceipt` does not emit `ordinary_champion_genome`.
+    /// Final ratchet round champion vs. final ordinary-GP round champion (`ordinary_champion_genome`)
+    /// on the held-out test split.
     RatchetVsOrdinaryFinalRound,
 }
 
@@ -140,7 +346,7 @@ pub struct ParityRecord {
     pub failure_reason: Option<String>,
 }
 
-/// Borrowed inputs to [`qualify_rounds`].
+/// Borrowed inputs to [`qualify_rounds`] and [`qualify_rounds_with_prereg`].
 pub struct RoundQualInputs<'a> {
     pub plan: &'a RoundQualPlan,
     pub identity: &'a ExperimentIdentity,
@@ -371,12 +577,368 @@ fn validate_plan_and_identity(
         "plan.max_new_support_mass ({}) must be finite and in [0, 1]",
         plan.max_new_support_mass
     );
-    if plan.endpoint == Endpoint::RatchetVsOrdinaryFinalRound {
-        bail!(
-            "Endpoint::RatchetVsOrdinaryFinalRound is unsupported: clover.selfplay-ratchet/v1 SelfPlayRoundReceipt does not emit ordinary_champion_genome"
+    Ok(computed_id)
+}
+
+fn validate_and_bind_prereg(
+    prereg_bytes: &[u8],
+    plan: &RoundQualPlan,
+    identity: &ExperimentIdentity,
+    parent_of_context: &BTreeMap<String, String>,
+) -> Result<(SelfPlayPrereg, bool)> {
+    let raw_sha = sha256_hex(prereg_bytes);
+    let mut val_de = serde_json::Deserializer::from_slice(prereg_bytes);
+    let prereg_val = Value::deserialize(&mut val_de).context("prereg: invalid JSON object")?;
+    val_de
+        .end()
+        .context("prereg: trailing characters after JSON object")?;
+    let canon_sha = canonical_sha256(&prereg_val).context("prereg: canonical sha256")?;
+    ensure!(
+        plan.prereg_sha256 == raw_sha || plan.prereg_sha256 == canon_sha,
+        "prereg_sha256 mismatch: plan.prereg_sha256={} != sha256(prereg_bytes)={raw_sha} (canonical={canon_sha})",
+        plan.prereg_sha256
+    );
+
+    let prereg: SelfPlayPrereg =
+        serde_json::from_value(prereg_val).context("prereg: schema validation")?;
+    ensure!(
+        prereg.schema == PREREG_SCHEMA,
+        "unsupported prereg schema {:?}; expected {PREREG_SCHEMA}",
+        prereg.schema
+    );
+    ensure!(
+        !prereg.study_id.trim().is_empty() && !prereg.status.trim().is_empty(),
+        "prereg study_id and status must be non-empty"
+    );
+    ensure!(
+        prereg.qualification_report_schema == ROUND_QUAL_SCHEMA,
+        "prereg qualification_report_schema {:?} != {ROUND_QUAL_SCHEMA}",
+        prereg.qualification_report_schema
+    );
+    ensure!(
+        prereg.source_commit_at_draft.len() == 40
+            && prereg
+                .source_commit_at_draft
+                .bytes()
+                .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()),
+        "prereg source_commit_at_draft must be a 40-character lowercase hex commit sha"
+    );
+
+    // 1. Endpoints and multiplicity invariants
+    ensure!(
+        prereg.endpoints.primary == Endpoint::FinalVsRound0Incumbent
+            && prereg.endpoints.secondary == Endpoint::RatchetVsOrdinaryFinalRound,
+        "prereg endpoints must bind primary=final_vs_round0_incumbent and secondary=ratchet_vs_ordinary_final_round"
+    );
+    ensure!(
+        prereg.endpoints.cli_single_endpoint_alpha_cap.is_finite()
+            && (prereg.endpoints.cli_single_endpoint_alpha_cap - MAX_SINGLE_ENDPOINT_ALPHA).abs()
+                <= 1e-15,
+        "prereg cli_single_endpoint_alpha_cap ({}) != {MAX_SINGLE_ENDPOINT_ALPHA}",
+        prereg.endpoints.cli_single_endpoint_alpha_cap
+    );
+    ensure!(
+        prereg.endpoints.alpha_primary_strict.is_finite()
+            && (prereg.endpoints.alpha_primary_strict - MAX_SINGLE_ENDPOINT_ALPHA).abs() <= 1e-15,
+        "prereg alpha_primary_strict ({}) != {MAX_SINGLE_ENDPOINT_ALPHA}",
+        prereg.endpoints.alpha_primary_strict
+    );
+    ensure!(
+        prereg.endpoints.f10_tie_tolerance_log_ratio.is_finite()
+            && (prereg.endpoints.f10_tie_tolerance_log_ratio - F10_TIE_TOLERANCE).abs() <= 1e-18,
+        "prereg f10_tie_tolerance_log_ratio ({}) != {F10_TIE_TOLERANCE}",
+        prereg.endpoints.f10_tie_tolerance_log_ratio
+    );
+    ensure!(
+        plan.alpha <= prereg.endpoints.cli_single_endpoint_alpha_cap + 1e-15,
+        "plan.alpha ({}) exceeds prereg cli_single_endpoint_alpha_cap ({})",
+        plan.alpha,
+        prereg.endpoints.cli_single_endpoint_alpha_cap
+    );
+
+    // 2. Roster and parent-cluster invariants
+    ensure!(
+        prereg.roster_and_families.unit_of_inference == "parent_dataset_cluster",
+        "prereg unit_of_inference must be \"parent_dataset_cluster\""
+    );
+    ensure!(
+        prereg.roster_and_families.roster_role == "confirmation_family_held_out",
+        "prereg roster_role must be \"confirmation_family_held_out\""
+    );
+    if let Some(roster_sha) = prereg.roster_and_families.sealed_roster_sha256.as_pinned() {
+        ensure!(
+            is_hex64(roster_sha) && roster_sha == &identity.data_roster_sha256,
+            "prereg sealed_roster_sha256 ({roster_sha}) != identity.data_roster_sha256 ({})",
+            identity.data_roster_sha256
         );
     }
-    Ok(computed_id)
+    if let Some(parent_sha) = prereg
+        .roster_and_families
+        .parent_cluster_map_sha256
+        .as_pinned()
+    {
+        let expected_parent_sha = canonical_sha256(parent_of_context)?;
+        ensure!(
+            is_hex64(parent_sha) && parent_sha == &expected_parent_sha,
+            "prereg parent_cluster_map_sha256 ({parent_sha}) != canonical_sha256(parent_of_context) ({expected_parent_sha})"
+        );
+    }
+    if let Some(ruling) = prereg
+        .roster_and_families
+        .g23_sealed_boundary_ruling
+        .as_pinned()
+    {
+        ensure!(
+            !ruling.trim().is_empty(),
+            "prereg g23_sealed_boundary_ruling must be non-empty when pinned"
+        );
+    }
+
+    // 3. Sample size, margin, and bootstrap invariants
+    ensure!(
+        prereg.sample_size_and_margin.bootstrap_resamples == plan.bootstrap_resamples,
+        "prereg bootstrap_resamples ({}) != plan.bootstrap_resamples ({})",
+        prereg.sample_size_and_margin.bootstrap_resamples,
+        plan.bootstrap_resamples
+    );
+    ensure!(
+        prereg.sample_size_and_margin.bootstrap_seed == plan.bootstrap_seed,
+        "prereg bootstrap_seed ({}) != plan.bootstrap_seed ({})",
+        prereg.sample_size_and_margin.bootstrap_seed,
+        plan.bootstrap_seed
+    );
+    ensure!(
+        prereg.sample_size_and_margin.bootstrap_method == "parent_cluster_percentile_splitmix64",
+        "prereg bootstrap_method must be \"parent_cluster_percentile_splitmix64\""
+    );
+    if let Some(&min_clusters) = prereg
+        .sample_size_and_margin
+        .min_parent_clusters
+        .as_pinned()
+    {
+        ensure!(
+            min_clusters >= 2 && min_clusters == plan.min_parent_clusters,
+            "prereg min_parent_clusters ({min_clusters}) != plan.min_parent_clusters ({})",
+            plan.min_parent_clusters
+        );
+    }
+    if let Some(&margin) = prereg
+        .sample_size_and_margin
+        .practical_margin_log_ratio
+        .as_pinned()
+    {
+        ensure!(
+            margin.is_finite()
+                && margin >= 0.0
+                && (margin - plan.practical_margin_log_ratio).abs() <= 1e-12,
+            "prereg practical_margin_log_ratio ({margin}) != plan.practical_margin_log_ratio ({})",
+            plan.practical_margin_log_ratio
+        );
+    }
+    if let Some(c158) = prereg
+        .sample_size_and_margin
+        .c158_g_judge_binding_receipt
+        .as_pinned()
+    {
+        ensure!(
+            !c158.trim().is_empty(),
+            "prereg c158_g_judge_binding_receipt must be non-empty when pinned"
+        );
+    }
+
+    // 4. Arms, rounds, measured-tilt policy, and KL guard invariants
+    ensure!(
+        prereg.arms_and_rounds.rounds >= 2,
+        "prereg arms_and_rounds.rounds ({}) must be >= 2",
+        prereg.arms_and_rounds.rounds
+    );
+    ensure!(
+        prereg.arms_and_rounds.seed_cap_b >= 1,
+        "prereg arms_and_rounds.seed_cap_b ({}) must be >= 1",
+        prereg.arms_and_rounds.seed_cap_b
+    );
+    ensure!(
+        prereg.arms_and_rounds.equal_attempts_per_round_required
+            && prereg.arms_and_rounds.equal_resource_comparison_required,
+        "prereg equal_attempts_per_round_required and equal_resource_comparison_required must be true"
+    );
+    prereg
+        .arms_and_rounds
+        .measured_tilt_policy
+        .validate()
+        .context("prereg measured_tilt_policy invalid")?;
+    ensure!(
+        (prereg.arms_and_rounds.kl_guard.max_conditional_base_kl - plan.max_conditional_base_kl)
+            .abs()
+            <= 1e-12,
+        "prereg max_conditional_base_kl ({}) != plan.max_conditional_base_kl ({})",
+        prereg.arms_and_rounds.kl_guard.max_conditional_base_kl,
+        plan.max_conditional_base_kl
+    );
+    ensure!(
+        (prereg.arms_and_rounds.kl_guard.max_new_support_mass - plan.max_new_support_mass).abs()
+            <= 1e-12,
+        "prereg max_new_support_mass ({}) != plan.max_new_support_mass ({})",
+        prereg.arms_and_rounds.kl_guard.max_new_support_mass,
+        plan.max_new_support_mass
+    );
+    ensure!(
+        prereg.arms_and_rounds.kl_guard.allow_kl_frozen_rounds == plan.allow_kl_frozen_rounds,
+        "prereg allow_kl_frozen_rounds ({}) != plan.allow_kl_frozen_rounds ({})",
+        prereg.arms_and_rounds.kl_guard.allow_kl_frozen_rounds,
+        plan.allow_kl_frozen_rounds
+    );
+    ensure!(
+        prereg.arms_and_rounds.kl_guard.allowlisted_measured_sources
+            == vec![
+                "measured_tilt_leaf_policy".to_owned(),
+                "caller_evaluated_leaf_log_probs".to_owned()
+            ],
+        "prereg allowlisted_measured_sources must match [\"measured_tilt_leaf_policy\", \"caller_evaluated_leaf_log_probs\"]"
+    );
+
+    // 5. Held-out test-score and parity rules
+    ensure!(
+        prereg.held_out_and_parity_rules.test_score_schema == TEST_SCORE_SCHEMA_ID,
+        "prereg test_score_schema {:?} != {TEST_SCORE_SCHEMA_ID}",
+        prereg.held_out_and_parity_rules.test_score_schema
+    );
+    if let Some(reg) = prereg
+        .held_out_and_parity_rules
+        .pinned_test_score_registry
+        .as_pinned()
+    {
+        ensure!(
+            !reg.trim().is_empty() && reg == &plan.pinned_test_score_registry,
+            "prereg pinned_test_score_registry ({reg}) != plan.pinned_test_score_registry ({})",
+            plan.pinned_test_score_registry
+        );
+    }
+    let looks = &prereg
+        .held_out_and_parity_rules
+        .sequential_same_registry_looks;
+    ensure!(
+        looks.reference_earlier_looks.is_empty()
+            && looks.candidate_earlier_looks_when_distinct
+                == vec!["<reference.program_sha256>".to_owned()]
+            && looks.reject_omitted_earlier_looks_field
+            && looks.reject_registry_reset_both_empty_when_distinct,
+        "prereg sequential_same_registry_looks contract does not match B1 verifier rules"
+    );
+    ensure!(
+        prereg
+            .held_out_and_parity_rules
+            .require_feeds_selection_false
+            && prereg
+                .held_out_and_parity_rules
+                .r5_parity_failure_disposition
+                == "charge_as_program_failure_never_drop"
+            && prereg
+                .held_out_and_parity_rules
+                .reject_unreferenced_score_or_parity_records,
+        "prereg held_out_and_parity_rules contract does not match R5/M5 verifier rules"
+    );
+
+    // 6. Experiment identity & execution grant admission gate
+    if let Some(id_sha) = prereg.experiment_identity_sha256.as_pinned() {
+        ensure!(
+            is_hex64(id_sha) && id_sha == &plan.experiment_identity_sha256,
+            "prereg experiment_identity_sha256 ({id_sha}) != plan.experiment_identity_sha256 ({})",
+            plan.experiment_identity_sha256
+        );
+    }
+    if let Some(loc) = prereg.execution_grant.owner_admission_locator.as_pinned() {
+        ensure!(
+            !loc.trim().is_empty(),
+            "prereg owner_admission_locator must be non-empty when pinned"
+        );
+    }
+    if let Some(hosts) = prereg.execution_grant.hosts.as_pinned() {
+        ensure!(
+            !hosts.is_empty() && hosts.iter().all(|h| !h.trim().is_empty()),
+            "prereg execution_grant.hosts must be non-empty when pinned"
+        );
+    }
+    if let Some(&cpu_cap) = prereg.execution_grant.cpu_ceiling_percent.as_pinned() {
+        ensure!(
+            (1..=100).contains(&cpu_cap),
+            "prereg execution_grant.cpu_ceiling_percent ({cpu_cap}) must be in 1..=100"
+        );
+    }
+    if let Some(deadline) = prereg.execution_grant.deadline_utc.as_pinned() {
+        ensure!(
+            !deadline.trim().is_empty(),
+            "prereg execution_grant.deadline_utc must be non-empty when pinned"
+        );
+    }
+
+    let has_unpinned = prereg.has_unpinned_fields();
+    if prereg.execution_grant.authorized {
+        ensure!(
+            !has_unpinned,
+            "prereg execution_grant.authorized is true while one or more required prereg fields remain UNPINNED"
+        );
+        ensure!(
+            prereg.status != "PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT",
+            "prereg execution_grant.authorized is true while status is PRE_REGISTERED_UNPINNED_NO_EXECUTION_GRANT"
+        );
+    }
+    let fully_pinned_and_authorized = !has_unpinned && prereg.execution_grant.authorized;
+    Ok((prereg, fully_pinned_and_authorized))
+}
+
+fn ensure_prereg_round_provenance(
+    context_id: &str,
+    raw_ratchet: &Value,
+    rounds: &[Value],
+    prereg: &SelfPlayPrereg,
+) -> Result<()> {
+    let observed_seed_cap = raw_ratchet
+        .get("seed_cap_b")
+        .and_then(Value::as_u64)
+        .with_context(|| {
+            format!("context {context_id} missing integer 'seed_cap_b' required by prereg binding")
+        })?;
+    ensure!(
+        observed_seed_cap == prereg.arms_and_rounds.seed_cap_b as u64,
+        "context {context_id} seed_cap_b ({observed_seed_cap}) != prereg arms_and_rounds.seed_cap_b ({})",
+        prereg.arms_and_rounds.seed_cap_b
+    );
+    ensure!(
+        rounds.len() == prereg.arms_and_rounds.rounds,
+        "context {context_id} rounds.len() ({}) != prereg arms_and_rounds.rounds ({})",
+        rounds.len(),
+        prereg.arms_and_rounds.rounds
+    );
+    for (round_idx, round) in rounds.iter().enumerate() {
+        for genome_field in ["ratchet_champion_genome", "ordinary_champion_genome"] {
+            let valid_str = round
+                .get(genome_field)
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .is_some_and(|s| !s.is_empty());
+            ensure!(
+                valid_str,
+                "context {context_id} round {round_idx} missing non-empty string '{genome_field}' required by prereg binding"
+            );
+        }
+        for sha_field in [
+            "ordinary_search_sha256",
+            "ordinary_observations_sha256",
+            "ratchet_search_sha256",
+            "ratchet_observations_sha256",
+        ] {
+            let valid_sha = round
+                .get(sha_field)
+                .and_then(Value::as_str)
+                .is_some_and(is_hex64);
+            ensure!(
+                valid_sha,
+                "context {context_id} round {round_idx} field '{sha_field}' must be a 64-hex lowercase digest"
+            );
+        }
+    }
+    Ok(())
 }
 
 fn find_unique_test_score<'a>(
@@ -473,6 +1035,15 @@ fn ensure_valid_round_structure(context_id: &str, round_idx: usize, round: &Valu
             "context {context_id} round {round_idx} field {field} is non-finite"
         );
     }
+    if let Some(ord_genome) = round.get("ordinary_champion_genome") {
+        ensure!(
+            ord_genome
+                .as_str()
+                .map(str::trim)
+                .is_some_and(|s| !s.is_empty()),
+            "context {context_id} round {round_idx} field ordinary_champion_genome must be a non-empty string"
+        );
+    }
     Ok(())
 }
 
@@ -551,8 +1122,17 @@ fn evaluate_round_kl_guard(
 }
 
 /// Evaluate multi-round self-play outputs against test-split scores, parity records, parent
-/// lineage clusters, and pre-registered diagnostic checks.
+/// lineage clusters, and pre-registered diagnostic checks without an external pre-registration packet.
 pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
+    qualify_rounds_with_prereg(inputs, None)
+}
+
+/// Evaluate multi-round self-play outputs against test-split scores, parity records, parent
+/// lineage clusters, and an optional pre-registration packet (`jope.selfplay-round1-prereg/v1`).
+pub fn qualify_rounds_with_prereg(
+    inputs: RoundQualInputs<'_>,
+    prereg_bytes: Option<&[u8]>,
+) -> Result<RoundQualReport> {
     let RoundQualInputs {
         plan,
         identity,
@@ -577,6 +1157,16 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
             "parent_of_context contains empty context or parent cluster id"
         );
     }
+
+    let verified_prereg = match prereg_bytes {
+        Some(bytes) => Some(validate_and_bind_prereg(
+            bytes,
+            plan,
+            identity,
+            parent_of_context,
+        )?),
+        None => None,
+    };
 
     let mut expected_context_set: BTreeSet<String> = if plan.expected_contexts.is_empty() {
         parent_of_context.keys().cloned().collect()
@@ -817,6 +1407,9 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
         for (idx, round) in rounds.iter().enumerate() {
             ensure_valid_round_structure(&context_id, idx, round)?;
         }
+        if let Some((ref prereg, _)) = verified_prereg {
+            ensure_prereg_round_provenance(&context_id, raw, rounds, prereg)?;
+        }
 
         let mut exclusion_reasons = Vec::new();
         if rounds.len() < 2 {
@@ -882,13 +1475,34 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
             .filter(|s| !s.is_empty())
             .map(str::to_owned);
 
-        let reference_genome = rounds
-            .first()
-            .and_then(|r| r.get("ratchet_champion_genome"))
-            .and_then(Value::as_str)
-            .map(str::trim)
-            .filter(|s| !s.is_empty())
-            .map(str::to_owned);
+        let reference_genome = match plan.endpoint {
+            Endpoint::FinalVsRound0Incumbent => rounds
+                .first()
+                .and_then(|r| r.get("ratchet_champion_genome"))
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned),
+            Endpoint::RatchetVsOrdinaryFinalRound => {
+                let Some(last_round) = rounds.last() else {
+                    bail!(
+                        "context {context_id} has no rounds for Endpoint::RatchetVsOrdinaryFinalRound"
+                    );
+                };
+                let ord = last_round
+                    .get("ordinary_champion_genome")
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_owned)
+                    .with_context(|| {
+                        format!(
+                            "context {context_id} final round missing non-empty string 'ordinary_champion_genome' required by Endpoint::RatchetVsOrdinaryFinalRound"
+                        )
+                    })?;
+                Some(ord)
+            }
+        };
 
         let cand_ts = match candidate_genome.as_deref() {
             Some(g) => {
@@ -1147,16 +1761,27 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
     }
 
     let caller_asserted_diagnostic_checks_passed = disqualification_reasons.is_empty();
-    disqualification_reasons.push("provenance_and_prereg_binding_unimplemented".to_owned());
+    let provenance_binding_status = match verified_prereg {
+        None => {
+            disqualification_reasons.push("provenance_and_prereg_binding_unimplemented".to_owned());
+            PROVENANCE_BINDING_STATUS.to_owned()
+        }
+        Some((_, false)) => {
+            disqualification_reasons.push("prereg_unpinned_or_no_execution_grant".to_owned());
+            PREREG_UNPINNED_BINDING_STATUS.to_owned()
+        }
+        Some((_, true)) => PREREG_PINNED_BINDING_STATUS.to_owned(),
+    };
     if !sealed_family_boundary_adopted {
         disqualification_reasons.push("no_adopted_sealed_family_boundary".to_owned());
     }
+    let qualified_claim = disqualification_reasons.is_empty() && sealed_family_boundary_adopted;
 
     Ok(RoundQualReport {
         schema: ROUND_QUAL_SCHEMA.to_owned(),
         experiment_identity_sha256: identity_sha,
         prereg_sha256: plan.prereg_sha256.clone(),
-        provenance_binding_status: PROVENANCE_BINDING_STATUS.to_owned(),
+        provenance_binding_status,
         multiplicity_adjustment: MULTIPLICITY_ADJUSTMENT_STATUS.to_owned(),
         source_grade: plan.source_grade,
         pinned_test_score_registry: plan.pinned_test_score_registry.clone(),
@@ -1191,9 +1816,9 @@ pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
         margin_cleared,
         sealed_family_boundary_adopted,
         caller_asserted_diagnostic_checks_passed,
-        qualified_claim: false,
-        promotion: false,
-        l6_claim: false,
+        qualified_claim,
+        promotion: qualified_claim,
+        l6_claim: qualified_claim,
         generalization_claim: GENERALIZATION_CLAIM.to_owned(),
         disqualification_reasons,
         contexts: context_rows,
