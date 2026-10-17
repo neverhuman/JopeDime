@@ -1,6 +1,6 @@
 # JopeDime / CLOVER Curated Experiment Digest (`docs/experiments/`)
 
-This directory provides a **curated, non-exhaustive 18-record digest (`EXP-001`–`EXP-018`) as of 2026-10-17** (compiled at `main` commit `5be5ac4dc9d5c0494aeb2964e9a755ff3e022dff`) in a structured JSONL + Markdown format for LLM and script consumption.
+This directory provides a **curated, non-exhaustive 18-record digest (`EXP-001`–`EXP-018`) as of 2026-10-17** (compiled at `main` commit `d14c06a9123d723256f4f0784a1cb5c58ebc2182`) in a structured JSONL + Markdown format for LLM and script consumption.
 
 > **Authoritative Ledger & Scope Note:** [`docs/paper/claims.json`](../paper/claims.json) (`186` claims: `121` established, `20` preliminary, `22` non-qualifying, `23` pending, traced in [`docs/paper/NUMBERS_TRACE.md`](../paper/NUMBERS_TRACE.md)) remains the repository's authoritative claim ledger. Every numerical value in this folder is taken directly from a cited `Cxx` entry in `claims.json`, from a named tracked receipt (`gp-h1-readout.20261013.json`, `exp-008-quantile-parity-replay.20261017.json`, `gpu-closeout.json`, `selfplay-round1-prereg.v1.json`, `NUMBERS_TRACE.md#fresh-clone-run`), or from a SHA-256-pinned host-local receipt under `/home/ubuntu/jope-evidence/` (`rlfw-g-abl`, `jopedime-flywheel-ei1`, `jopedime-flywheel-ei2`, `ei3-study-20261015`, `ei4-study-20261015`, `selfplay-s3-sos-debiased-flywheel-20261016`) and `/home/ubuntu/JopeDime/.agent/rlfw-coord/lanes/G-JUDGE/`.
 

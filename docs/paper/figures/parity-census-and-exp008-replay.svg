@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 290" width="920" height="290" font-family="DejaVu Sans, Liberation Sans, sans-serif">
+<rect width="920" height="290" fill="#ffffff"/>
+<text x="24" y="24" font-size="13" font-weight="bold" fill="#1f2328">Emitter parity: quantile-binning census [C41–C43, C49] (left) and EXP-008 opt-in partition_point replay [C167, C191] (right)</text>
+<text x="24" y="52" font-size="11.5" font-weight="bold" fill="#1f2328">(a) 1,554-pair parity census failure rate [C41–C43] (established)</text>
+<text x="207.0" y="104.0" text-anchor="end" font-size="10" fill="#1f2328">With quantile binning (41/342)</text>
+<rect x="215.0" y="92.0" width="136.7" height="18" fill="#a40e26" rx="2"/>
+<line x1="314.1" y1="101.0" x2="396.1" y2="101.0" stroke="#1f2328" stroke-width="1.8"/>
+<text x="402.1" y="105.0" font-size="10" font-weight="bold" fill="#a40e26">12.0% [8.7, 15.9%]</text>
+<text x="207.0" y="148.0" text-anchor="end" font-size="10" fill="#1f2328">Without binning (0/1,212)</text>
+<rect x="215.0" y="136.0" width="3.0" height="18" fill="#2e6b3e" rx="2"/>
+<text x="224.0" y="149.0" font-size="10" font-weight="bold" fill="#2e6b3e">0.0% (&lt;= 0.25%)</text>
+<text x="207.0" y="192.0" text-anchor="end" font-size="10" fill="#1f2328">EXP-008 default emit (3/51 fail)</text>
+<rect x="215.0" y="180.0" width="67.0" height="18" fill="#1f4e79" rx="2"/>
+<text x="288.0" y="193.0" font-size="10" fill="#1f4e79">5.9% (48/51 pass [C167])</text>
+<text x="24" y="236" font-size="9.5" fill="#57606a">Root cause [C49]: Rust 1.82.0 (#128254) binary_search probe order vs. NumPy 1.97.1 on plateau ties.</text>
+<text x="488" y="52" font-size="11.5" font-weight="bold" fill="#1f2328">(b) EXP-008 3 failing champions: default vs. opt-in [C191]</text>
+<text x="632.0" y="94.0" text-anchor="end" font-size="10" fill="#1f2328">ctx 14 retrieval_seeded (cut 1)</text>
+<rect x="640.0" y="84.0" width="3.2" height="13" fill="#a40e26" rx="2"/>
+<text x="649.2" y="94.0" font-size="9.5" fill="#a40e26">default max |Δ| = 0.002113</text>
+<rect x="640.0" y="100.0" width="4.0" height="13" fill="#2e6b3e" rx="2"/>
+<text x="650.0" y="110.0" font-size="9.5" font-weight="bold" fill="#2e6b3e">opt-in partition_point max |Δ| = 0.0</text>
+<text x="632.0" y="140.0" text-anchor="end" font-size="10" fill="#1f2328">ctx 18 ordinary (cut 0)</text>
+<rect x="640.0" y="130.0" width="48.2" height="13" fill="#a40e26" rx="2"/>
+<text x="694.2" y="140.0" font-size="9.5" fill="#a40e26">default max |Δ| = 0.032100</text>
+<rect x="640.0" y="146.0" width="4.0" height="13" fill="#2e6b3e" rx="2"/>
+<text x="650.0" y="156.0" font-size="9.5" font-weight="bold" fill="#2e6b3e">opt-in partition_point max |Δ| = 0.0</text>
+<text x="632.0" y="186.0" text-anchor="end" font-size="10" fill="#1f2328">ctx 18 policy_seeded (cut 0)</text>
+<rect x="640.0" y="176.0" width="205.1" height="13" fill="#a40e26" rx="2"/>
+<text x="851.1" y="186.0" font-size="9.5" fill="#a40e26">default max |Δ| = 0.136721</text>
+<rect x="640.0" y="192.0" width="4.0" height="13" fill="#2e6b3e" rx="2"/>
+<text x="650.0" y="202.0" font-size="9.5" font-weight="bold" fill="#2e6b3e">opt-in partition_point max |Δ| = 0.0</text>
+<text x="488" y="236" font-size="9.5" fill="#57606a">Replay [C191]: 3/6 → 6/6 inner cuts pass at 0.0 max delta (opt-in flag default false).</text>
+<text x="24" y="278.0" font-size="10" fill="#57606a">Scope note: C41–C43 and C49 are established census claims; C167 (EXP-008 24-context pilot) and C191 (offline 3-champion replay) are non-qualifying.</text>
+</svg>
