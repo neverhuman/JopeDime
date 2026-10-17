@@ -44,9 +44,10 @@ re-read the value.
 
 On xbabe2, `paper-trace --sources` also re-hashes every claim source under the roots that
 `claims.json` declares. On the initial 2026-10-16 audit of `C01`–`C183` (177 claims) it reported
-175 claims re-hashed to their pin, and with the `C184`–`C190` addendum (184 claims total) it
-reports 182 claims re-hashed to their pin, plus 2 that name no single file (C24 is derived from C10
-and C23; C115 is a pending result that names a directory).
+175 claims re-hashed to their pin, with the `C184`–`C190` addendum (184 claims) it reported 182,
+and with the `C191`–`C192` addendum (186 claims total) it reports 184 claims re-hashed to their
+pin, plus 2 that name no single file (C24 is derived from C10 and C23; C115 is a pending result
+that names a directory).
 
 ## Findings and corrections
 
@@ -73,9 +74,10 @@ write-up. No pending claim was filled, and no sealed or held-out data was opened
 | 16 | `claims.json` `tex`, C140, C93, C168 | C140 $[0.8964, 0.9022]$; C93 ≈98%; C168 "17 of 24", which its statement and value did not hold | the corrected record; for C168, the paired summary covers 17 of the 24 planned contexts (`GP_EXPANSION_STUDY.md:89-91,222`) | C140 and C93 `tex` print their record: $[0.8963, 0.9022]$, ≈98.5%; C168's statement and value now hold the 17 of 24 |
 
 Ledger totals moved from 171 claims (112 established, 20 preliminary, 16 non-qualifying,
-23 pending) to 177 (118, 20, 16, 23) with the six new established claims C178–C183, and then to
-184 (119 established, 20 preliminary, 22 non-qualifying, 23 pending) with the C184–C190 addendum
-(established C184; non-qualifying C185–C190).
+23 pending) to 177 (118, 20, 16, 23) with the six new established claims C178–C183, to 184
+(119 established, 20 preliminary, 22 non-qualifying, 23 pending) with the C184–C190 addendum
+(established C184; non-qualifying C185–C190), and to 186 (121 established, 20 preliminary,
+22 non-qualifying, 23 pending) with the C191–C192 addendum (established C191 and C192).
 
 The Section 10 values were re-derived in a separate pass: 182 printed values in Sections 10.2, 10.3
 and 10.3.1, recomputed from the run receipts and judge records. 177 matched at the printed
@@ -420,6 +422,8 @@ JSON path. Rows with a note were derived or corrected as the note says.
 | C188 | non-qualifying | xbabe2 frozen at ep 3 (1,056 updates, kl_stop; KL 0.039816 ep2, 0.080342 ep3); 3-host paired_k_star_e3 L6-1148 mean +0.003962 [+0.003222, +0.004744] (H +0.003969, A +0.003940) | `EVIDENCE:ei3-study-20261015/EI3_3HOST_SUMMARY.json` | matches | new: EI3_3HOST_SUMMARY.json and xbabe2 receipt.json |
 | C189 | non-qualifying | 1,408 updates, 0 KL alarms; in-run receipt delta +0.000720 at ep 3 (H +0.000378, A +0.001870), +0.000082 at ep 4 (H +0.000051, A +0.000187); CPU row-file delta +0.000518 ep 3, +0.000106 ep 4 | `EVIDENCE:ei4-study-20261015/xbabe2-run/ei4-xbabe2-armctrl-20261015/receipt.json` | matches | new: ei4-xbabe2-armctrl-20261015/receipt.json (49.5 KiB) |
 | C190 | non-qualifying | 8,908 S3 rows; shadow-pool-v2 (1,136 contexts, 255 clusters) R0->R4 pairwise 0.634318 -> 0.680342 (+0.046025 [+0.039928, +0.051692] GREATER), B=1 gain 0.785168 -> 0.919919 (+0.134751 [+0.067497, +0.215110] GREATER), ESTABLISHED_SHADOW, flywheel_established = false | `EVIDENCE:selfplay-s3-sos-debiased-flywheel-20261016/gp-results-index-s3-receipt.json` | matches | new: gp-results-index-s3-receipt.json and bounded PR #339 r3 review extracts (`scratch-r3-extract.txt`, `scratch-extract-rounds.txt`, `VERDICT-source.md`) |
+| C191 | established | 5 tests in `clover_quantile.rs`; 4 languages + bound Python on synthetic 24x3 fixture; 3/6 -> 6/6 inner cuts (0/3 -> 3/3 EXP-008 failing champions) at 0.0 max delta in emitted Rust under opt-in mode; default false | `MAIN351:docs/internal/clover/exp-008-quantile-parity-replay.20261017.json` | matches | new: PR #346 (`c509ba0304f4fbdf61da3b97831fc5877b7421fc`) and PR #351 (`5be5ac4dc9d5c0494aeb2964e9a755ff3e022dff`) opt-in `partition_point_quantile_bounds` emitter and offline pilot parity replay receipt |
+| C192 | established | PR #349; 13 SPQ-1 tests (2 unit in `round_qual.rs` + 11 integration in `selfplay_round_qual.rs`) + 12 unit in `expansion.rs`; `--prereg` + `ratchet_vs_ordinary_final_round`; UNPINNED, 0 GPU s | `MAIN351:crates/jope-learning/src/clover/round_qual.rs` | matches | new: PR #349 (`797f2863a10e9e4252b1fc3000f07fd75f055e69`) `SelfPlayPrereg`, `UnpinnedOr<T>`, `ordinary_champion_genome`, `qualify_rounds_with_prereg`, and `--prereg` secondary endpoint |
 
 ## Exempt numbers
 
