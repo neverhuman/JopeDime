@@ -234,14 +234,14 @@ tool must be installed.
 
 ### CLOVER self-play flywheel quick start
 
-`jope-learning` holds the CLOVER self-play ratchet (`run_selfplay_ratchet`), surrogate-screened seed selection (`select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), non-parametric measured-tilt leaf proposal (`measured_tilt_leaf_log_probs` bounded by `decomposed_support_kl`), and the `gp_distilled/v1` Parquet distillation bridge into `ContextualSurrogateQHat`. All of it is offline and shadow-only: it fits selectors and surrogates on local files, trains no policy and writes nothing to S3. Steps 1 and 2 run from a clone:
+`jope-learning` holds the CLOVER self-play ratchet (`run_selfplay_ratchet`), surrogate-screened seed selection (`select_seeds_with_surrogate_funnel` under `surrogate_funnel_topb_v1`), non-parametric measured-tilt leaf proposal (`measured_tilt_leaf_log_probs` bounded by `decomposed_support_kl`), the `gp_distilled/v1` Parquet distillation bridge into `ContextualSurrogateQHat`, and the offline round-qualification verifier (`jope_pools qualify-rounds [--prereg <PATH>]`). All of it is offline and shadow-only: it fits selectors and surrogates on local files, trains no policy and writes nothing to S3. Steps 1 and 2 run from a clone:
 
 ```sh
 # 1. Verify the multi-round self-play ratchet, surrogate funnel, and measured-tilt leaf policy:
 cargo test --locked -p jope-learning --lib clover::expansion::tests::
 
-# 2. Verify the gp_distilled/v1 S3 Parquet distillation bridge and ContextualSurrogateQHat loop:
-cargo test --locked -p jope-learning --test retention --test retention_pack --test pools
+# 2. Verify the gp_distilled/v1 S3 Parquet distillation bridge, ContextualSurrogateQHat loop, and round qualification:
+cargo test --locked -p jope-learning --test retention --test retention_pack --test pools --test selfplay_round_qual
 ```
 
 Steps 3 to 5 adapt R22 coverage, freeze candidate pools, evaluate selectors and run the flywheel. They read host inputs that are not in Git; [`docs/clover-host-steps.md`](docs/clover-host-steps.md) lists the inputs and the commands.

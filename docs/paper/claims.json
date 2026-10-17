@@ -2,7 +2,7 @@
  "schema": "jope.paper-claim-ledger/v1",
  "document": "CLOVER technical write-up (TECHNICAL_WRITEUP.md, revision 2026-10-13, GB-11, audited 2026-10-16) and its LaTeX scaffold (tex/, not yet regenerated)",
  "drafted_utc": "2026-10-10T05:00Z",
- "revised_utc": "2026-10-17T00:05Z",
+ "revised_utc": "2026-10-17T11:06Z",
  "supersedes": {
   "path": "LANE:paper/claims.json",
   "sha256": "429f72ff7ff4a0f0e3c5e48ed320108c3aadc15597492f7802bba75f2ee6fa09"
@@ -32,7 +32,8 @@
    "PROBE": "/home/ubuntu/jope-evidence/jopedime_probe_exp (outcome-predictor research records of 2026-10-07 to 2026-10-09; read-only)",
    "CANON": "/home/ubuntu/JopeDime (the canonical checkout on xbabe2; its untracked coordination records, read-only here)",
    "EVIDENCE": "/home/ubuntu/jope-evidence (consolidated host evidence and run receipts on xbabe2; read-only here)",
-   "MAIN343": "/home/ubuntu/jope-evidence/pr347-repair-20261017/main-c402b211 (byte copies from git show c402b21183670d3e4df73b835292a385a04db30f:<path>, origin/main after #339 and #343)"
+   "MAIN343": "/home/ubuntu/jope-evidence/pr347-repair-20261017/main-c402b211 (byte copies from git show c402b21183670d3e4df73b835292a385a04db30f:<path>, origin/main after #339 and #343)",
+   "MAIN351": "/home/ubuntu/jope-evidence/pr351-exp008-parity-replay-20261017/main-5be5ac4d (byte copies from git show 5be5ac4dc9d5c0494aeb2964e9a755ff3e022dff:<path>, origin/main after #346, #349 and #351)"
   },
   "restricted_locators": "sources whose paths would break the public wording rule are cited by sha256 only; their paths are listed in the internal companion"
  },
@@ -1693,6 +1694,24 @@
    "source": "EVIDENCE:selfplay-s3-sos-debiased-flywheel-20261016/gp-results-index-s3-receipt.json#.receipt; EVIDENCE:review-pr339-0b9bc150a99ee1921cdce6908cc60c4346d3bac4-r3/scratch-r3-extract.txt:1-51; EVIDENCE:review-pr339-0b9bc150a99ee1921cdce6908cc60c4346d3bac4-r3/scratch-r3-receipts-bins.txt:1-24; EVIDENCE:review-pr339-0b9bc150a99ee1921cdce6908cc60c4346d3bac4-r3/scripts/extract.sh:8-17; EVIDENCE:review-pr339-0b9bc150a99ee1921cdce6908cc60c4346d3bac4-r3/VERDICT-source.md:49-58; EVIDENCE:review-pr339-0b9bc150a99ee1921cdce6908cc60c4346d3bac4-r2/scratch-extract-rounds.txt:1-10; EVIDENCE:selfplay-s3-sos-debiased-flywheel-20261016/pr339-body.md:25-95; EVIDENCE:selfplay-s3-sos-debiased-flywheel-20261016/inner-cv-tuning-log.md:14-65; EVIDENCE:experiments-catalog-20261016/EXP_NEXT_01_EVIDENCE_AUDIT.md:46-55; MAIN343:crates/jope-learning/src/pools/selectors.rs:581-729",
    "sha256": "f9415faf7072064b3cb2f9e94f7194d18c19a844fc723626abed99c205bed1f6",
    "status": "non-qualifying"
+  },
+  {
+   "id": "C191",
+   "statement": "Opt-in partition-point quantile bounds emitter (EXP-NEXT-04, PR #346 commit c509ba0304f4fbdf61da3b97831fc5877b7421fc; PR #351 commit 5be5ac4dc9d5c0494aeb2964e9a755ff3e022dff, 6 tests in crates/feat-math/tests/clover_quantile.rs): setting EmitOptions::partition_point_quantile_bounds to true replaces strict-inequality binary-search quantile bin lookup with upper_bound(x) - 1 across Rust, Python, C++17 and JavaScript emitters to match native Rust partition_point(|&b| b <= x) - 1 on duplicate quantile plateau edges while keeping EmitOptions::default() false and R5 parity charging unchanged. Replaying the 3 failing EXP-008 pilot champion programs (context 14 OpenML 42570 arms B and C, 5,000 rows x 15 features, max absolute prediction delta 1.2952601953960037 on cut 0 and 1.2921125828558328 on cut 1 under default emit; context 18 OpenML 41960 arm C, 35,786 rows x 7 features, max delta 0.14309561997542758 on cut 1 under default emit) raises inner-cut parity from 3/6 to 6/6 cuts and 0/3 to 3/3 programs at 0.0 max absolute prediction delta across all 4 target languages without re-classifying EXP-008's 48/51 parity figure",
+   "value": "6 tests; 3/6 -> 6/6 inner cuts (0/3 -> 3/3 programs) at 0.0 max delta across 4 languages under opt-in mode; default false",
+   "tex": "$3/6 \\to 6/6$ cuts ($0.0$ max delta)",
+   "source": "MAIN351:docs/internal/clover/exp-008-quantile-parity-replay.20261017.json#.summary; MAIN351:crates/feat-math/tests/clover_quantile.rs; MAIN351:crates/feat-math/src/transpile.rs",
+   "sha256": "7449acb59663905be6c9f7f566e8eb74f8d662f3c7b7a91232a193afb21e10c0",
+   "status": "established"
+  },
+  {
+   "id": "C192",
+   "statement": "Self-play round qualification prereg-loading and secondary-endpoint verifier extension (SPQ-1 follow-up, PR #349 commit 797f2863a10e9e4252b1fc3000f07fd75f055e69, 35 dedicated unit and integration tests: 12 unit in round_qual.rs and 23 integration in selfplay_round_qual.rs; 5,010 workspace Rust tests after PR #351): SelfPlayRoundReceipt carries optional ordinary_champion_genome (populated by run_expansion_round), SelfPlayPrereg and UnpinnedOr<T> parse jope.selfplay-round1-prereg/v1 packets with fail-closed unpinned-sentinel and round_count / seed_budget_b / bootstrap / stopping_rules / kl_and_support_guards cross-checks, qualify_rounds_with_prereg and jope_pools qualify-rounds --prereg <PATH> evaluate the secondary endpoint ratchet_vs_ordinary_final_round alongside round4_vs_round0 when final-round ordinary_champion_genome entries are complete across all contexts, and provenance_binding_status distinguishes unverified_prereg_and_caller_asserted_inputs (prereg-loaded) from unverified_caller_asserted_inputs while keeping qualified_claim, promotion and l6_claim false with 0 GPU seconds authorized",
+   "value": "PR #349; 35 SPQ-1 tests (12 unit + 23 integration); --prereg + ratchet_vs_ordinary_final_round; UNPINNED, 0 GPU s",
+   "tex": "$35$ tests (`--prereg`)",
+   "source": "MAIN351:crates/jope-learning/src/clover/round_qual.rs; MAIN351:crates/jope-learning/src/clover/expansion.rs; MAIN351:crates/jope-learning/tests/selfplay_round_qual.rs; MAIN351:docs/internal/clover/selfplay-round1-prereg.v1.json",
+   "sha256": "2c9280146786979fef1cfaa4087f26137fbefa042580939c8eeaabaa2bf8c6a5",
+   "status": "established"
   }
  ]
 }
