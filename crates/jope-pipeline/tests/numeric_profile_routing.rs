@@ -13,81 +13,116 @@ fn scratch() -> tempfile::TempDir {
 #[test]
 fn fitted_product_emit_reload_and_execute() {
     let dir = scratch();
-    let schema = vec!["c0".into()];
-    let p = NumericProfileV2::new(schema.clone());
-    let x = vec![vec![0.], vec![1.], vec![2.]];
-    let y = vec![-200., 0., 200.];
-    for target in [TargetV2::Python, TargetV2::Rust] {
-        let root = dir.path().join(format!("{target:?}"));
-        let opts = OptionsV2::new(target);
-        let a = emit::emit_numeric_v2(
-            "(pipe X (quantile_bins bins=4) (ridge))",
-            p.clone(),
-            &x,
-            &y,
-            opts.clone(),
-            &root,
-        )
-        .unwrap();
-        let m = emit::reload_numeric_v2(&root, &opts, &a.model_sha256).unwrap();
-        let want = m.predict(&schema, &x).unwrap();
-        assert!(want[2] > 60. && want[0] < -60.);
-        assert!(emit::reload_numeric_v2(
-            &root,
-            &OptionsV2::new(if target == TargetV2::Rust {
-                TargetV2::Python
-            } else {
-                TargetV2::Rust
-            }),
-            &a.model_sha256
-        )
-        .is_err());
-        let source = root.join(if target == TargetV2::Python {
-            "model.py"
-        } else {
-            "model.rs"
-        });
-        let out = if target == TargetV2::Python {
-            Command::new("python3").arg("-c").arg("import runpy,sys; print(*runpy.run_path(sys.argv[1])['predict']([[0.],[1.],[2.]]),sep='\\n')").arg(&source).output().unwrap()
-        } else {
-            let driver = root.join("driver.rs");
-            fs::write(&driver,format!("include!({source:?}); fn main() {{for v in predict(&[vec![0.],vec![1.],vec![2.]]).unwrap(){{println!(\"{{:.17}}\",v);}}}}")).unwrap();
-            let bin = root.join("driver");
-            let c = Command::new("rustc")
-                .args(["--edition=2021", "-Awarnings"])
-                .arg(&driver)
-                .arg("-o")
-                .arg(&bin)
-                .output()
-                .unwrap();
-            assert!(c.status.success(), "{}", String::from_utf8_lossy(&c.stderr));
-            Command::new(bin).output().unwrap()
-        };
-        assert!(
-            out.status.success(),
-            "{}",
-            String::from_utf8_lossy(&out.stderr)
-        );
-        let got: Vec<f64> = String::from_utf8(out.stdout)
-            .unwrap()
-            .lines()
-            .map(|s| s.parse().unwrap())
-            .collect();
-        assert_eq!(got.len(), want.len());
-        for (a, b) in got.iter().zip(want) {
-            assert!((a - b).abs() < 1e-10);
+    for width in [1, 64] {
+        let schema: Vec<String> = (0..width).map(|i| format!("c{i}")).collect();
+        let mut p = NumericProfileV2::new(schema.clone());
+        if width == 64 {
+            p.selected_columns = vec!["c17".into(), "c63".into()];
         }
-        let mut bytes = fs::read(&source).unwrap();
-        bytes[0] ^= 1;
-        fs::write(&source, &bytes).unwrap();
-        assert!(emit::reload_numeric_v2(&root, &opts, &a.model_sha256).is_err());
-        fs::write(&source, &a.source).unwrap();
-        fs::write(
-            root.join("model.codec.json"),
-            a.codec.replace("numeric-profile-v2", "numeric-profile-v1"),
-        )
-        .unwrap();
-        assert!(emit::reload_numeric_v2(&root, &opts, &a.model_sha256).is_err());
+        let x: Vec<Vec<f64>> = (0..3)
+            .map(|i| {
+                let mut row = vec![0.0; width];
+                row[width - 1] = i as f64;
+                if width == 64 {
+                    row[17] = 1.0;
+                }
+                row
+            })
+            .collect();
+        let y = vec![-200., 0., 200.];
+        for target in [TargetV2::Python, TargetV2::Rust] {
+            let root = dir.path().join(format!("{width}-{target:?}"));
+            let opts = OptionsV2::new(target);
+            let a = emit::emit_numeric_v2(
+                "(pipe X (quantile_bins bins=4) (ridge))",
+                p.clone(),
+                &x,
+                &y,
+                opts.clone(),
+                &root,
+            )
+            .unwrap();
+            let m = emit::reload_numeric_v2(&root, &opts, &a.model_sha256).unwrap();
+            let want = m.predict(&schema, &x).unwrap();
+            assert!(want[2] > 60. && want[0] < -60.);
+            assert!(emit::reload_numeric_v2(
+                &root,
+                &OptionsV2::new(if target == TargetV2::Rust {
+                    TargetV2::Python
+                } else {
+                    TargetV2::Rust
+                }),
+                &a.model_sha256
+            )
+            .is_err());
+            let source = root.join(if target == TargetV2::Python {
+                "model.py"
+            } else {
+                "model.rs"
+            });
+            let out = if target == TargetV2::Python {
+                Command::new("python3").arg("-c").arg(format!("import runpy,sys; print(*runpy.run_path(sys.argv[1])['predict']({}),sep='\\n')",serde_json::to_string(&x).unwrap())).arg(&source).output().unwrap()
+            } else {
+                let driver = root.join("driver.rs");
+                let rows = x
+                    .iter()
+                    .map(|row| format!("vec!{row:?}"))
+                    .collect::<Vec<_>>()
+                    .join(",");
+                fs::write(&driver,format!("include!({source:?}); fn main() {{for v in predict(&[{rows}]).unwrap(){{println!(\"{{:.17}}\",v);}}}}")).unwrap();
+                let bin = root.join("driver");
+                let c = Command::new("rustc")
+                    .args(["--edition=2021", "-Awarnings"])
+                    .arg(&driver)
+                    .arg("-o")
+                    .arg(&bin)
+                    .output()
+                    .unwrap();
+                assert!(c.status.success(), "{}", String::from_utf8_lossy(&c.stderr));
+                Command::new(bin).output().unwrap()
+            };
+            assert!(
+                out.status.success(),
+                "{}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            let evidence = std::path::PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
+                .join("numeric-v2-product-artifacts")
+                .join(format!("width-{width}-{target:?}"));
+            fs::create_dir_all(&evidence).unwrap();
+            fs::write(
+                evidence.join("artifact.json"),
+                serde_json::to_vec_pretty(&a).unwrap(),
+            )
+            .unwrap();
+            fs::write(
+                evidence.join("inputs.json"),
+                serde_json::to_vec(&x).unwrap(),
+            )
+            .unwrap();
+            fs::write(evidence.join("stdout.txt"), &out.stdout).unwrap();
+            fs::write(evidence.join("stderr.txt"), &out.stderr).unwrap();
+            let got: Vec<f64> = String::from_utf8(out.stdout)
+                .unwrap()
+                .lines()
+                .map(|s| s.parse().unwrap())
+                .collect();
+            assert_eq!(got.len(), want.len());
+            for (a, b) in got.iter().zip(want) {
+                assert!((a - b).abs() < 1e-10);
+            }
+            let mut bytes = fs::read(&source).unwrap();
+            bytes[0] ^= 1;
+            fs::write(&source, &bytes).unwrap();
+            assert!(emit::reload_numeric_v2(&root, &opts, &a.model_sha256).is_err());
+            fs::write(&source, &a.source).unwrap();
+            fs::write(
+                root.join("model.codec.json"),
+                a.codec.replace("numeric-profile-v2", "numeric-profile-v1"),
+            )
+            .unwrap();
+            assert!(emit::reload_numeric_v2(&root, &opts, &a.model_sha256).is_err());
+        }
     }
 }
 #[test]
