@@ -52,6 +52,7 @@ pub mod parallel;
 pub mod prepare;
 pub mod prepared_data;
 pub mod receipt;
+pub mod resource_ledger;
 pub mod run;
 pub mod search;
 pub mod search_cache;

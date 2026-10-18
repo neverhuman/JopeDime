@@ -258,6 +258,35 @@ impl Default for Budget {
 }
 
 impl Budget {
+    /// Opt-in I16 resource vector. This does not change legacy search admission
+    /// or make an in-process fit preemptible. Callers reserve all other stages
+    /// and terminal headroom separately in the original experiment window.
+    pub fn resource_cap_v1(
+        &self,
+        cpu_slots: u64,
+        memory_bytes: u64,
+    ) -> Result<crate::resource_ledger::Amounts> {
+        use crate::resource_ledger::{Amounts, Unit};
+        self.check()?;
+        ensure!(
+            cpu_slots > 0 && memory_bytes > 0,
+            "empty resource allocation"
+        );
+        let wall = self
+            .seconds
+            .checked_mul(1_000_000)
+            .context("wall cap overflow")?;
+        Ok(Amounts::new([
+            (Unit::AttemptWallMicros, wall),
+            (
+                Unit::CpuCoreMicros,
+                wall.checked_mul(cpu_slots).context("CPU cap overflow")?,
+            ),
+            (Unit::PeakMemoryBytes, memory_bytes),
+            (Unit::Evaluations, u64::try_from(self.evaluations)?),
+        ]))
+    }
+
     /// `evaluations=N,seconds=S`, in either order, both optional.
     pub fn parse(value: &str) -> Result<Budget> {
         let mut budget = Budget::default();
@@ -333,6 +362,80 @@ pub struct Observation {
 }
 
 impl Observation {
+    /// Physical in-process observation adapter; wall is measured, CPU and
+    /// memory remain explicitly unknown. This cannot qualify a hard fit bound.
+    pub fn resource_cost_v1(
+        &self,
+        reservation: &crate::resource_ledger::Reservation,
+        ended_unix_us: u64,
+    ) -> Result<crate::resource_ledger::AttemptCost> {
+        use crate::resource_ledger::{
+            AttemptCost, Disposition, Measurement, Reading, Unit, SCHEMA,
+        };
+        ensure!(
+            matches!(
+                reservation.request.stage,
+                crate::resource_ledger::Stage::Fit | crate::resource_ledger::Stage::Evaluate
+            ),
+            "search observation requires fit/evaluation reservation"
+        );
+        let mut measurements = std::collections::BTreeMap::new();
+        for &unit in reservation.request.requested.0.keys() {
+            let reading = match unit {
+                Unit::AttemptWallMicros => {
+                    Reading::exact(crate::resource_ledger::seconds_to_micros(self.seconds)?)
+                }
+                Unit::Evaluations => Reading::exact(1),
+                Unit::Retries => Reading::exact(u64::from(reservation.request.retry_of.is_some())),
+                _ => Reading::unknown(
+                    "legacy in-process search has no physical collector for this dimension",
+                ),
+            };
+            measurements.insert(
+                unit,
+                Measurement {
+                    reading,
+                    collector: "search-observation:nonpreemptive-v1".into(),
+                    clock: "active-wall:search-clock".into(),
+                    allocation: reservation.request.ids.experiment_sha256.clone(),
+                    scope: vec![
+                        "experiment".into(),
+                        reservation.request.ids.attempt_id.clone(),
+                    ],
+                    from_unix_us: reservation.reserved_unix_us,
+                    to_unix_us: ended_unix_us,
+                },
+            );
+        }
+        let digest = crate::sha256_hex(&serde_json::to_vec(self)?);
+        Ok(AttemptCost {
+            schema: SCHEMA.into(),
+            reservation_sha256: reservation.identity()?,
+            ids: reservation.request.ids.clone(),
+            disposition: if self.measured() {
+                Disposition::Completed
+            } else {
+                Disposition::Failed
+            },
+            ended_unix_us,
+            exit_code: None,
+            signal: None,
+            measurements,
+            evidence_sha256: [digest.clone()].into(),
+            retained_bytes: Reading::unknown(
+                "search observation has no retained storage byte collector",
+            ),
+            retained_sha256: if self.measured() {
+                [digest].into()
+            } else {
+                Default::default()
+            },
+            reason: self.failure.clone().unwrap_or_else(|| {
+                "measured in-process; nonpreemptive; CPU/memory unavailable".into()
+            }),
+        })
+    }
+
     pub fn measured(&self) -> bool {
         self.status == MEASURED
     }
@@ -559,7 +662,7 @@ pub(crate) fn evaluate(
                 PARSE_FAILED,
                 Some(error.to_string()),
                 started.elapsed().as_secs_f64(),
-            )
+            );
         }
     };
 
@@ -1998,10 +2101,11 @@ mod tests {
         let eight = run(8, "eight");
         assert_eq!(published(&one), published(&eight));
         // Past generation 0, and through the comparison phase: both paths were exercised.
-        assert!(one.iter().all(|s| s
-            .observations
-            .iter()
-            .any(|o| o.generation >= 1 && o.measured())));
+        assert!(one.iter().all(|s| {
+            s.observations
+                .iter()
+                .any(|o| o.generation >= 1 && o.measured())
+        }));
         assert!(one.iter().all(|s| s.comparison.completed_evaluations > 0));
     }
 
