@@ -1,0 +1,1 @@
+{"schema":"jope.proposal-delivery.ack/v1","request_key":"derived-from-request-context","proposal_record_sha256":"derived-from-immutable-bundle","generation":1,"physical_cost_units":7,"content_addressed":true,"committed_update_credit":0}
