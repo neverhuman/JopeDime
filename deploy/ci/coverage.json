@@ -1240,7 +1240,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Direct stdlib unittest execution of the strict DL offline shard group's ONE common deadline (deploy/ci/dl-offline-group.sh) with a fake sleeping runner: steps that each fit but exceed the budget together, and combine pushing past it, are rejected (124); a group within the budget passes in shard order; a bad budget is refused. Seconds stand in for the real 900 s; no DL fixtures run."
+      "scope": "Direct stdlib unittest execution of the strict DL offline shard group's ONE common deadline (deploy/ci/dl-offline-group.sh) with a fake sleeping runner: all three parallel shards finish within budget when their serial sum exceeds it; combine expiry is rejected (124); a bad budget is refused. Seconds stand in for the real 900 s; no DL fixtures run."
     },
     "python:deploy/ci/test-full-main.py": {
       "discovery": {
@@ -1250,7 +1250,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
+      "scope": "Direct stdlib unittest execution of CPU runner admission/resources, independent family failure retention, and zero-SHA push-base fallback to origin/main."
     },
     "python:deploy/ci/test-install-private.py": {
       "discovery": {
@@ -10600,7 +10600,7 @@
         "collection/execution/deselection counts",
         "pytest results",
         "Ruff exit",
-        "DL offline subreceipts: 3 pinned module shards plus --combine under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh), combined to 770 collected identities, 729 synthetic executions, 41 exact named host-input/subprocess exclusions, dependencies/source pins and log hashes; separate from pytest",
+        "DL offline subreceipts: 3 pinned module shards run concurrently plus --combine under ONE common 900 s deadline (deploy/ci/dl-offline-group.sh), combined to 770 collected identities, 729 synthetic executions, 41 exact named host-input/subprocess exclusions, dependencies/source pins and log hashes; separate from pytest",
         "Flywheel offline subreceipts:226 original+74 native/growth collected/executed identities (300 total), zero skips, log hash; separate from pytest totals.",
         "Research offline receipt: exact collected/executed test identities and source hashes; toy trie math, concurrent ledger, decision replay and pin refusals; no checkpoint qualification claimed.",
         "Flywheel aggregate runner additionally wires native pool21 and RL math9 after original587 (617 total). Collection/execution receipts must prove each family independently; source import ran only the30 added fixtures and does not claim a full617 rerun. RLFW remains a separate lane command.",

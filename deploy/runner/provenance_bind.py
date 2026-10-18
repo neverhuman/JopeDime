@@ -49,6 +49,8 @@ def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
             raise ValueError(
                 f"BASE_SHA must be exactly 40 lowercase hex characters, got {sha!r}"
             )
+        if sha == "0" * 40:
+            raise ValueError("BASE_SHA cannot be the all-zero push sentinel")
         return sha
     return None
 

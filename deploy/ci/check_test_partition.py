@@ -152,8 +152,15 @@ def declared_families(text):
     return sorted(name for name in json.loads(text)["lanes"] if name.startswith("full-"))
 
 
+def static_base(base):
+    """Resolve a new-push zero-SHA sentinel to the default branch comparison ref."""
+    return "origin/main" if base == "0" * 40 else base
+
+
 def static(base=None):
     errors, full = [], load_full_main()
+    # New-branch pushes have no usable before-SHA; compare their declarations to main.
+    base = static_base(base)
     families = declared_families((ROOT / "deploy/ci/coverage.json").read_text())
     groups = {name: list(members) for name, members in full.GROUPS.items()}
     errors += full.partition_errors(families, full.GROUPS)

@@ -250,8 +250,11 @@ class ProvenanceBindTests(unittest.TestCase):
     def test_unfetchable_base_fails_closed(self):
         clone = self._shallow_clone()
         env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": "0" * 40}
-        with self.assertRaises((subprocess.CalledProcessError, ValueError)):
-            bind.ensure_bind_rev(clone, env)
+        with mock.patch.object(bind, "has_commit", return_value=False), \
+                mock.patch.object(bind.subprocess, "Popen") as popen:
+            with self.assertRaisesRegex(ValueError, "all-zero push sentinel"):
+                bind.ensure_bind_rev(clone, env)
+            popen.assert_not_called()
 
     def test_fetch_token_goes_through_git_config_env_not_argv(self):
         env = bind.fetch_env(
