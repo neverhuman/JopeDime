@@ -1,0 +1,14 @@
+{
+  "schema": "jope.lake-manifest/v1",
+  "evaluator": "fixture-evaluator-v1",
+  "profile": "fixture-profile-v1",
+  "source_objects": [
+    {
+      "key": "receipts/row.bin",
+      "version_id": "version-1",
+      "sha256": "5d4c5666db49e8f1b703412652f4ff8ba9f91308503331ec14666050ebef7d87",
+      "role": "train",
+      "exposure_ancestry_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ]
+}
