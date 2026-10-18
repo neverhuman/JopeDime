@@ -34,7 +34,7 @@
   },
   "total_source_work_packets": 69,
   "mapping_rule": "All required_tasks_all are required for a packet; a name match, subfixture, stale receipt or PASS on one member cannot close the source packet.",
-  "source_namespace_rule": "SPEC_A gates G0..G10, SPEC_B G00..G20, SPEC_C G00..G14 and unified release gates are separate namespaces; read the source criterion, not the bare number.",
+  "source_namespace_rule": "SPEC_A G0..G10, SPEC_B G00..G20, SPEC_C G00..G14 and unified gates have distinct meanings. Witness/experiment/gate references are retained separately from work-packet IDs.",
   "scope_limit": "Work-package coverage audit, not proof that every source paragraph is semantically accepted or that any capability is implemented. Original six unique October-17 self-play specs and 66-task ledger remain preserved.",
   "packets": [
     {
@@ -76,8 +76,10 @@
       "source_text": "| P02 | Strict successor ingress and exact bridge | kernel/ir/canon, legacy_bridge, versioned parser | P00–P01 | G2; duplicate/numeric/nesting and opaque preservation cases |",
       "source_text_sha256": "8cf19c017a46517b77e0cb64399650bd2ecad66067f2e4f2d0b2fbca0e2325ea",
       "required_tasks_all": [
-        "MR13",
-        "MR16"
+        "MR14",
+        "MR15",
+        "MR16",
+        "MR46"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -91,7 +93,6 @@
       "source_text": "| P03 | Numeric-v2 route completion | numeric_v2, numeric_v2_emit, pipeline/CLI kernel adapters | P00–P02 | Supported caller/target subset executes without old default change |",
       "source_text_sha256": "f624804dc2dbc10ad66d0ef43a1bb5f7992cb772a0c91462b9240658a920496e",
       "required_tasks_all": [
-        "MR15",
         "MR44"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
@@ -135,8 +136,7 @@
       "source_text": "| P06 | GP constructor/mutation/crossover closure | existing legal_edits/apply; new region edit adapters | P04–P05 | G3 for enabled subset; no invalid committed children |",
       "source_text_sha256": "f3f4eb8f6d5a0151f330bb769a6268f7407ec7a7bc0306719d5d03dce5e68309",
       "required_tasks_all": [
-        "MR20",
-        "MR43"
+        "MR20"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -150,8 +150,7 @@
       "source_text": "| P07 | First portable export slice | existing Rust/Python emit ownership and artifact manifests | P03–P06 | G6 on W01–W03; unsupported targets explicit |",
       "source_text_sha256": "2741337de674e512ac074f7a2f48e2475175e3b4167d264fa137f262de2e4648",
       "required_tasks_all": [
-        "MR21",
-        "MR42"
+        "MR21"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -182,8 +181,7 @@
       "source_text_sha256": "00ce0a2be6b7415531efd4f63ca31a862b000eb17756c207cad71d875c92a7b6",
       "required_tasks_all": [
         "MR26",
-        "MR27",
-        "MR41"
+        "MR27"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -215,7 +213,7 @@
         "MR32",
         "MR41",
         "MR42",
-        "MR43"
+        "MR45"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -373,8 +371,7 @@
       "source_text": "| GP-02 | Strict successor parameter ingress and parameter-effect fixtures | GP-01 | Invalid ratio/dimension/duplicate/unknown cases refuse; every advertised active gene has an existential effect witness; G02/G04. |",
       "source_text_sha256": "b08e744e80ed1cfcf4903d73bc617c0e43a5e85f995c9ba65b6f54d1c4f36285",
       "required_tasks_all": [
-        "MR14",
-        "MR16"
+        "MR14"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -389,7 +386,6 @@
       "source_text_sha256": "6364b34f29fdb4f338dc70c48fd5e33ec828a96a2332f623b00640c4c87c9107",
       "required_tasks_all": [
         "MR15",
-        "MR17",
         "MR44"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
@@ -494,8 +490,7 @@
       "source_text": "| GP-10 | Standalone Rust fitted emitter for the tiny subset | GP-08 | Fresh compiled artifact predicts on runtime inputs; state/schema errors visible; G09 fitted product. |",
       "source_text_sha256": "641a34fbd1fc4ea608e1517b24d26de2125099bbc34e9693dfb6e8f2b4e20675",
       "required_tasks_all": [
-        "MR21",
-        "MR42"
+        "MR21"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -523,7 +518,8 @@
       "source_text": "| GP-12 | First-order JVP/VJP and bounded-scan AD | GP-07, GP-08 | Shared/broadcast/branch derivatives match independent references; analytical learner control retained; G08. |",
       "source_text_sha256": "d34f1e84aedd3674f777c686cee281dabac1de7b929929628e634343b6d3a4ee",
       "required_tasks_all": [
-        "MR30"
+        "MR30",
+        "MR43"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -636,8 +632,7 @@
       "source_text": "| GP-20 | Matched-resource runner, expected-cell roster and statistical report | GP-00; integrate progressively | Full assigned outcomes, frozen hardware/budgets, failure/fallback policy and reproducible analysis; no paid/live campaign implicit. |",
       "source_text_sha256": "f59779950a72926eb9b9dca6bc944072d59c6d1941a4527c6293f96f0f3b87c2",
       "required_tasks_all": [
-        "MR36",
-        "MR37"
+        "MR36"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -693,7 +688,6 @@
       "source_text": "| GP-24 | Convex-potential and learned-geometry research slice | GP-12, GP-16 | P1 quadratic learned-potential derivative fixture plus E05; no dependency for the early tabular release. |",
       "source_text_sha256": "d5e1444e29a6dbb7d5677cfc01fb7677473155ffaf3dd5733c7c4f5c306ca6f0",
       "required_tasks_all": [
-        "MR29",
         "MR39"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
@@ -752,7 +746,8 @@
       "required_tasks_all": [
         "MR14",
         "MR15",
-        "MR44"
+        "MR44",
+        "MR46"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -780,8 +775,7 @@
       "source_text": "**WP04 — Exact-or-opaque legacy bridge.**  \nOwner competency: compiler/runtime. Depends: WP03.  \nArea: existing legacy bridge plus successor wrapper.\n\nStore original bytes/identity and relation proof. Keep unsupported exact conversions opaque; bind execution/export to the old qualified path.\n\n**Done when:** all W01 fixtures retain their promised behavior and targets; conversion failure does not remove capability; old/source/successor identities cannot collide. Gate: G01.",
       "source_text_sha256": "a8c40dfe22eb7eb0b0894f4c95e4616f0423237e68a3529f258fbf2704915198",
       "required_tasks_all": [
-        "MR13",
-        "MR16"
+        "MR13"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -869,8 +863,7 @@
       "source_text_sha256": "93b29210c885d9bebc00ce6c14c7f25695651d057b033966a868640bbe2f9d2f",
       "required_tasks_all": [
         "MR26",
-        "MR27",
-        "MR41"
+        "MR27"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -885,7 +878,6 @@
       "source_text_sha256": "f530db53a7d0a3634a5308520f9572ace62c1fe0a5c878e96876de7cb79fbc75",
       "required_tasks_all": [
         "MR28",
-        "MR32",
         "MR41",
         "MR42"
       ],
@@ -958,9 +950,7 @@
       "source_text": "**WP15 — Full learner recipe export.**  \nOwner competency: compiler/numerical. Depends: WP11; extend with WP12 as derivative support qualifies.\n\nEmit the training schedule, update/derivative runtime, finalization and prediction. Begin with Rust; then qualify Python/C++17 subsets. Keep fitted exports from earlier slices.\n\n**Done when:** a fresh process fits new authorized data using the generated recipe, freezes/reloads/predicts, and agrees under the declared numerical contract without the original repository. Gate: G08.",
       "source_text_sha256": "aac7275cd1497ada3762ea56704222776a4e5cb48b5539385f8c213ed2808b70",
       "required_tasks_all": [
-        "MR31",
-        "MR32",
-        "MR42"
+        "MR31"
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     },
@@ -1049,5 +1039,39 @@
       ],
       "coverage_state": "PLANNED_NOT_QUALIFIED"
     }
-  ]
+  ],
+  "reviewed_pr_head": "118f25cbdf3e148dc96abbaa2cbd5fb5c46090b6",
+  "additional_scope_preserved": {
+    "MR45": {
+      "completion_criterion": "Witnesses not previously covered: SPEC_C W15 GAM/basis, W16 PCA/low-rank (train-only centering/factorization), and SPEC_B W08 stateful centroid learner.",
+      "exact_acceptance_test": "cargo test -p feat-math --test w15_gam_w16_pca_w08_centroid_witnesses -- --exact verify_gam_basis_train_only_pca_and_stateful_centroid_learner",
+      "spec_mapping": {
+        "spec_a": "P11",
+        "spec_b": "W08",
+        "spec_c": "W15,W16",
+        "legacy_or_gate": "SPEC_C:W15,SPEC_C:W16,SPEC_B:W08,G06,G08"
+      }
+    },
+    "MR46": {
+      "completion_criterion": "SPEC_B E01 closure-repairs experiment (old route vs repaired profile on same downstream search; keep defaults if no value).",
+      "exact_acceptance_test": "cargo test -p jope-learning --test e01_closure_repairs_experiment -- --exact compare_old_route_vs_repaired_profile_same_downstream_search",
+      "spec_mapping": {
+        "spec_a": "P02",
+        "spec_b": "E01",
+        "spec_c": "WP02",
+        "legacy_or_gate": "SPEC_B:E01,G01,G02"
+      }
+    },
+    "MRFV": {
+      "completion_criterion": "FINAL VALIDATION (Jepson 10:58 ruling #4, mandatory): full CI (GitHub or self-hosted) on final main SHA, re-verify ALL MR01..MR46 and I01..I66 receipts on that exact SHA, re-run every 'local-CI only' merge's tests, and obtain independent red-team signoff from 487851.jope_review_claude; release is not done until PASS.",
+      "exact_acceptance_test": "cargo test --workspace --all-targets && python3 scripts/verify_all_mr_receipts_on_main.py",
+      "spec_mapping": {
+        "spec_a": "G10",
+        "spec_b": "G20",
+        "spec_c": "G14",
+        "legacy_or_gate": "JEPSON-RULING-1058-RULE4,SPEC_A:G10,SPEC_B:G20,SPEC_C:G14"
+      }
+    }
+  },
+  "coverage_state": "69_SOURCE_WORK_PACKETS_MAPPED; semantic review and every applicable acceptance gate remain required"
 }

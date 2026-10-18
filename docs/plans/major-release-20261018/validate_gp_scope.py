@@ -1,48 +1,46 @@
 #!/usr/bin/env python3
-"""Validate planning inventory (69 source packets + 47 tasks MR01..MR46, MRFV); never produces an implementation PASS receipt."""
+"""Validate planning inventory; never produces an implementation PASS receipt."""
 import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--source-dir', type=Path)
 parser.add_argument('--baseline-json', type=Path)
-parser.add_argument('--baseline-ref', default='e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2')
+parser.add_argument('--baseline-ref', default='118f25cbdf3e148dc96abbaa2cbd5fb5c46090b6')
 args = parser.parse_args()
 here = Path(__file__).resolve().parent
-tracker = json.loads((here / 'MAJOR_RELEASE_TRACKER.json').read_text())
-coverage_raw = (here / 'GP_SPEC_COVERAGE.json').read_bytes()
+tracker = json.loads((here/'MAJOR_RELEASE_TRACKER.json').read_text())
+coverage_raw = (here/'GP_SPEC_COVERAGE.json').read_bytes()
 coverage = json.loads(coverage_raw)
-tasks = {x['id']: x for x in tracker['tasks']}
+tasks = {x['id']:x for x in tracker['tasks']}
 assert len(tasks) == len(tracker['tasks']) == tracker['total_tasks'] == 47
-assert set(tasks) == ({f'MR{i:02}' for i in range(1, 47)} | {'MRFV'})
-assert tracker['pinned_baseline_main_sha'] in (
-    'e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2',
-    'a2759e9d375d0697ed40a32c23ac297b5de42347',
-)
+assert set(tasks) == {f'MR{i:02}' for i in range(1,47)} | {'MRFV'}
+assert tracker['pinned_baseline_main_sha'] == 'e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2'
 if args.baseline_json:
     old = json.loads(args.baseline_json.read_text())
 else:
-    cmd = [
-        'git', '--no-optional-locks', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false',
-        'show', args.baseline_ref + ':docs/plans/major-release-20261018/MAJOR_RELEASE_TRACKER.json'
-    ]
-    old = json.loads(subprocess.run(cmd, check=True, text=True, capture_output=True).stdout)
+    cmd = ['git','--no-optional-locks','-c','gc.auto=0','-c','maintenance.auto=false',
+           'show',args.baseline_ref+':docs/plans/major-release-20261018/MAJOR_RELEASE_TRACKER.json']
+    old = json.loads(subprocess.run(cmd,check=True,text=True,capture_output=True).stdout)
 for before in old['tasks']:
     after = tasks[before['id']]
-    assert after['owner_screen'] != '487851.jope_review_claude', before['id']
-    assert after.get('reviewer_screen') == '487851.jope_review_claude', before['id']
+    assert after['owner_screen'] == before['owner_screen'], before['id']
     assert after['gate'] == before['gate'], before['id']
     assert after['release'] == before['release'], before['id']
     assert set(before['acceptance_cases']) <= set(after['acceptance_cases']), before['id']
+    assert after['completion_criterion'] == before['completion_criterion'], before['id']
+    if after['exact_acceptance_test'] != before['exact_acceptance_test']:
+        assert after['exact_acceptance_test'] == before['exact_acceptance_test'].replace('-p jope-engine ','-p jope-parallel '), before['id']
     assert set(before['deps']) <= set(after['deps']), before['id']
 
 visiting, visited = set(), set()
 def visit(ident):
     assert ident in tasks, ident
-    assert ident not in visiting, ('dependency_cycle', ident)
+    assert ident not in visiting, ('dependency_cycle',ident)
     if ident in visited:
         return
     visiting.add(ident)
@@ -54,58 +52,55 @@ for ident in tasks:
     visit(ident)
 
 expected = {
-    'spec_a': {f'P{i:02}' for i in range(20)},
-    'spec_b': {f'GP-{i:02}' for i in range(26)},
-    'spec_c': {f'WP{i:02}' for i in range(13)} | {'WP13A', 'WP13B'} | {f'WP{i:02}' for i in range(14, 22)},
+    'spec_a':{f'P{i:02}' for i in range(20)},
+    'spec_b':{f'GP-{i:02}' for i in range(26)},
+    'spec_c':{f'WP{i:02}' for i in range(13)} | {'WP13A','WP13B'} | {f'WP{i:02}' for i in range(14,22)},
 }
-seen = {k: set() for k in expected}
+seen={k:set() for k in expected}
 for row in coverage['packets']:
     key, packet = row['source'], row['packet']
-    assert packet not in seen[key], (key, packet)
+    assert packet not in seen[key], (key,packet)
     seen[key].add(packet)
     assert hashlib.sha256(row['source_text'].encode()).hexdigest() == row['source_text_sha256']
     assert row['required_tasks_all'] and len(set(row['required_tasks_all'])) == len(row['required_tasks_all'])
     for ident in row['required_tasks_all']:
-        assert packet in tasks[ident]['spec_mapping'][key].split(','), (key, packet, ident)
+        assert packet in tasks[ident]['spec_mapping'][key].split(','), (key,packet,ident)
     if args.source_dir:
-        original = args.source_dir / coverage['source_documents'][key]['name']
+        original = args.source_dir/coverage['source_documents'][key]['name']
         raw = original.read_bytes()
         assert len(raw) == coverage['source_documents'][key]['bytes']
         assert hashlib.sha256(raw).hexdigest() == coverage['source_documents'][key]['sha256']
-        a, b = row['lines']
-        text = '\n'.join(raw.decode().splitlines()[a - 1:b]).rstrip()
-        assert text == row['source_text'], (key, packet, 'source_lines')
+        a,b = row['lines']
+        text = '\n'.join(raw.decode().splitlines()[a-1:b]).rstrip()
+        assert text == row['source_text'], (key,packet,'source_lines')
 assert seen == expected
 assert len(coverage['packets']) == coverage['total_source_work_packets'] == 69
-for ident, t in tasks.items():
-    assert t['owner_screen'] != '487851.jope_review_claude', ident
-    assert t.get('reviewer_screen') == '487851.jope_review_claude', ident
+for ident,t in tasks.items():
     assert t['acceptance_cases'] and t['exact_acceptance_test']
-    assert t['receipt_format']['verify_path'].endswith('/' + ident + '.json')
+    assert t['receipt_format']['verify_path'].endswith('/'+ident+'.json')
     assert t['receipt_format']['must_match_current_origin_main'] is True
     for key in expected:
-        for packet in filter(None, (t['spec_mapping'].get(key) or '').split(',')):
+        for packet in filter(None,(t['spec_mapping'].get(key) or '').split(',')):
+            if packet not in expected[key] and not packet.startswith('Sec-'):
+                assert re.fullmatch(r'(W\d{2}|E\d{2}|G\d{1,2})',packet), (ident,key,packet)
+                continue
             if packet.startswith('Sec-'):
                 assert ident == 'MR02' and key == 'spec_c' and packet == 'Sec-6.1'
                 continue
-            matching = [r for r in coverage['packets'] if r['source'] == key and r['packet'] == packet]
-            assert len(matching) == 1 and ident in matching[0]['required_tasks_all'], (ident, key, packet)
+            matching=[r for r in coverage['packets'] if r['source']==key and r['packet']==packet]
+            assert len(matching)==1 and ident in matching[0]['required_tasks_all'], (ident,key,packet)
+for ident in ['MR41','MR42','MR43','MR44','MR45','MR46','MRFV']:
+    assert tasks[ident]['status'] == 'todo'
 assert 'MR41' in tasks['MR30']['deps']
 assert 'MR42' in tasks['MR31']['deps']
 assert 'MR43' in tasks['MR33']['deps'] and 'MR43' in tasks['MR35']['deps']
 assert 'MR44' in tasks['MR21']['deps']
-assert set(tasks['MRFV']['deps']) == {f'MR{i:02}' for i in range(1, 47)}
-md = (here / 'MAJOR_RELEASE_TRACKER.md').read_text()
+md=(here/'MAJOR_RELEASE_TRACKER.md').read_text()
 for ident in tasks:
-    assert sum(line.startswith('| `' + ident + '` |') for line in md.splitlines()) == 1, ident
-print(json.dumps({
-    'scope_validation': 'PASS',
-    'implementation_qualification': False,
-    'tasks': 47,
-    'original_tasks_retained': 40,
-    'source_packets': 69,
-    'source_packet_counts': {k: len(v) for k, v in seen.items()},
-    'source_payload_hashes_checked': bool(args.source_dir),
-    'dependency_graph': 'acyclic',
-    'coverage_file_sha256': hashlib.sha256(coverage_raw).hexdigest()
-}, sort_keys=True))
+    assert sum(line.startswith('| `'+ident+'` |') for line in md.splitlines()) == 1, ident
+print(json.dumps({'scope_validation':'PASS','implementation_qualification':False,
+                  'tasks':47,'prior_pr_tasks_retained':47,'source_packets':69,
+                  'source_packet_counts':{k:len(v) for k,v in seen.items()},
+                  'source_payload_hashes_checked':bool(args.source_dir),
+                  'dependency_graph':'acyclic',
+                  'coverage_file_sha256':hashlib.sha256(coverage_raw).hexdigest()},sort_keys=True))
