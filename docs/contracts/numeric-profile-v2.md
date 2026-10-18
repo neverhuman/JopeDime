@@ -40,7 +40,8 @@ edge greater than or equal to the value. This fitted-edge repair has a distinct
 semantic identity from the existing opt-in legacy partition-point emitter.
 
 `predict_oof_iid` requires declared IID row semantics and uses seeded shuffled,
-balanced assignments. Each fold refits selection/imputation/transforms/ridge on
+balanced assignments. Its result carries the split protocol ID, seed, assignments
+and SHA256 of that complete fold identity alongside predictions. Each fold refits selection/imputation/transforms/ridge on
 its training rows only. Ordered/grouped/temporal data are refused by this OOF
 caller; their existing split paths remain available through legacy callers.
 The legacy `StackModel` and its contiguous folds remain unchanged. V2 does not
@@ -70,7 +71,7 @@ claim to repair stack's complete multi-head training/emission implementation.
 | `numeric_v2::NumericModelV2` | Explicit profile | Supported fitted ridge/transforms above |
 | `numeric_v2_emit::emit` | Explicit `OptionsV2` target | Python and Rust prediction-only fitted artifacts |
 | `jope_pipeline::emit::emit_numeric_v2` | Profile, train rows, target | Exact source/codec/manifest write and verified reload |
-| `jope_cli::kernel::emit_numeric_v2` | Profile, bounded training CSV, target | Kernel API; CSV still requires finite inputs |
+| `jope_cli::kernel::emit_numeric_v2` | Profile, bounded training CSV, target | Kernel API; CSV requires finite inputs and exact profile/header order |
 | Existing bound/fitted/full emitters | Their existing options | No numeric-v2 support is claimed |
 | Root CLI flags, I08/I09 canonical hooks | Integrator-owned | Pending; no automatic default rollout |
 | C++/JS numeric-v2 fitted models | No target enum variant | Explicitly unavailable |
