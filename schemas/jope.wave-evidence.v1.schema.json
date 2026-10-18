@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jopedime.dev/schemas/jope.wave-evidence.v1.schema.json",
+  "title": "JOPE wave evidence manifest v1",
+  "type": "object",
+  "required": ["schema", "wave_id", "version", "disposition", "archive_status", "capture_status", "identity", "missing_fields", "expected_events", "shards", "manifest_sha256"],
+  "properties": {
+    "schema": {"const": "jope.wave-evidence/v1"},
+    "wave_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+    "version": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+    "disposition": {"enum": ["success", "rejected_child", "aborted", "timeout_only", "inconclusive", "interrupted_resumed", "zero_update", "historical_partial"]},
+    "archive_status": {"enum": ["LOCAL_COMMITTED_REMOTE_PENDING", "HISTORICAL_PARTIAL"]},
+    "capture_status": {"enum": ["COMPLETE", "INCOMPLETE_BLOCKED", "HISTORICAL_PARTIAL"]},
+    "identity": {"type": "object", "additionalProperties": {"oneOf": [{"type": "object", "required": ["state", "value"], "properties": {"state": {"const": "known"}, "value": {}}, "additionalProperties": false}, {"type": "object", "required": ["state", "value"], "properties": {"state": {"const": "missing"}, "value": {"type": "object", "required": ["reason"], "properties": {"reason": {"type": "string", "minLength": 1}}, "additionalProperties": false}}, "additionalProperties": false}] }},
+    "missing_fields": {"type": "object", "additionalProperties": {"type": "string"}},
+    "expected_events": {"type": "integer", "minimum": 0},
+    "shards": {"type": "array", "items": {"type": "object", "required": ["ordinal", "sha256", "blob_key", "codec", "schema", "rows", "decoded_bytes", "compressed_bytes", "member_sha256", "physical_version", "first_sequence", "last_sequence"], "properties": {"ordinal": {"type": "integer", "minimum": 0}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "blob_key": {"type": "string"}, "codec": {"const": "parquet-zstd"}, "schema": {"const": "jope.wave-evidence/v1"}, "rows": {"type": "integer", "minimum": 1, "maximum": 512}, "decoded_bytes": {"type": "integer", "minimum": 1, "maximum": 8388608}, "compressed_bytes": {"type": "integer", "minimum": 1}, "member_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "physical_version": {"type": ["string", "null"]}, "first_sequence": {"type": "integer", "minimum": 0}, "last_sequence": {"type": "integer", "minimum": 0}}, "additionalProperties": false}},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

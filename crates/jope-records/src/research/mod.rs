@@ -5,6 +5,7 @@ mod compile;
 mod render;
 
 pub mod state;
+pub mod wave_git;
 
 pub use capsule::{EvidenceLocator, EvidenceValue, ResearchCapsuleV2, RoundInput, Stage};
 pub use compile::{compile, CompileError, EvidenceResolver};
