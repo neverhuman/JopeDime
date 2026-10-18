@@ -5,6 +5,19 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Additive registry policy; existing profile ID/revision pairs stay unchanged.
+pub fn registry_v2_profile(dialect: &str) -> Option<super::registry_v2::RegistryProfile> {
+    match dialect {
+        "legacy_recipe" => Some(super::registry_v2::RegistryProfile {
+            dialect: "legacy_recipe",
+        }),
+        "advanced_v3" => Some(super::registry_v2::RegistryProfile {
+            dialect: "advanced_v3",
+        }),
+        _ => None,
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ElementKind {

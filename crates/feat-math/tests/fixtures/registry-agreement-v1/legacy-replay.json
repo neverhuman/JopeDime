@@ -1,0 +1,7 @@
+[
+  {"seed": 0, "canonical": "(pipe X (target kind=winsor q=0.0) (rff_cos append=true gamma=0.5 n=32 seed=9999) (polar append=true) (cheb append=true degree=4) (krr m=1025))"},
+  {"seed": 1, "canonical": "(pipe X (polar) (landmark_dist gamma=0.1 k=16 seed=7) (ksmooth gamma=0.000001 k=1))"},
+  {"seed": 7, "canonical": "(pipe X (landmark_dist gamma=0.1 k=64 seed=1) (ksmooth gamma=0.000001 k=256))"},
+  {"seed": 42, "canonical": "(pipe X (step append=true t=0.5) (nystrom gamma=2.0 k=64 seed=9999) (nystrom append=true gamma=0.5 k=128 seed=7) (ensemble bins=2 depth=1 lambda=5.0 lambda_frac=0.5 lr=0.01 max_features=50 min_leaf=10 rounds=150))"},
+  {"seed": 4096, "canonical": "(pipe X (map expr=\"abs(min(col(0), col(2)))\") (blom append=true) (elasticnet alpha=0.0001 l1_ratio=0.0 sweeps=1))"}
+]
