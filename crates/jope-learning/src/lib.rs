@@ -23,6 +23,7 @@ pub mod clover;
 pub mod custody;
 pub mod eligibility;
 pub mod encoder_receipt;
+pub mod exe_cache;
 pub mod hwm;
 pub mod ledger;
 pub mod metric;
