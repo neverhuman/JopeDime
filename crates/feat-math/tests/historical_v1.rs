@@ -441,6 +441,20 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let exp_next_04 = old_fixture("transitions/exp_next_04_identity_rebaseline.v1.json");
     assert_eq!(exp_next_04["fixtures"].as_array().unwrap().len(), 1);
     assert_eq!(exp_next_04["fixtures"][0]["path"], changed_fixtures[0]);
+    // I09 opt-in v3 emitted artifact target binding: evaluator identity only.
+    let i09_artifact_target_binding =
+        old_fixture("transitions/i09_artifact_target_binding_identity_rebaseline.v1.json");
+    assert_eq!(
+        i09_artifact_target_binding["fixtures"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(
+        i09_artifact_target_binding["fixtures"][0]["path"],
+        changed_fixtures[0]
+    );
     let identity_chain = [
         transition,
         successor,
@@ -458,6 +472,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         eval_isolation,
         release_0_3_0,
         exp_next_04,
+        i09_artifact_target_binding,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

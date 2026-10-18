@@ -1,0 +1,14 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity-only successor for I09 opt-in v3 emitted artifact target binding. Updating crates/feat-math/src/{lib.rs,transpile.rs} moves the ADR-0004 evaluator identity. All default v1/v2 emitted bytes, behavior fixtures, lineage source hashes, historical-v1 objects and earlier transition ledgers remain byte-identical.",
+  "plan_reference": "docs/plans/algorithmic-selfplay-20261017/UNIFIED_SELFPLAY_WORKPLAN.md §I09",
+  "pr_reference": "PR #358: feat(emit): bind requested artifacts with opt-in v3 manifests (I09)",
+  "source_commit": "beb59847485373f4e77cbd758fc86af3c1159b5b",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "adfc06419eebf824b4713c3c0a900e4104896c6ec65f44a2be9df27f9809b50c",
+      "after": "e4bb2d24b3c1257f2215a0c4223b1ac95d5865f9acdf44659b69ad3ec8a6af46"
+    }
+  ]
+}
