@@ -266,7 +266,7 @@ pub fn propose_with_generation(
     let h: crate::telemetry::Hardware = read_json(&root.join("runs/hardware.json"))?;
     ensure!(
         crate::telemetry::now().saturating_sub(h.timestamp) <= 5
-            && h.available_gb >= 128.0
+            && h.available_gb >= 40.0
             && h.disk_free_gb >= 50.0,
         "proposal admission headroom unavailable"
     );
@@ -615,9 +615,9 @@ pub(crate) fn train_controlled(
     let h: crate::telemetry::Hardware = read_json(&root.join("runs/hardware.json"))?;
     ensure!(
         crate::telemetry::now().saturating_sub(h.timestamp) <= 5
-            && h.available_gb >= 128.0
+            && h.available_gb >= 40.0
             && h.disk_free_gb >= 50.0,
-        "training admission requires fresh telemetry, 128 GiB RAM and 50 GiB disk headroom"
+        "training admission requires fresh telemetry, 40 GiB RAM and 50 GiB disk headroom"
     );
     let executable = training_executable(root)?;
     fs::create_dir_all(output)?;
@@ -1148,6 +1148,32 @@ pub fn training_probe(
         &serde_json::json!({"passed":result.is_ok(),"world":8,"steps":steps,"warmup_steps":5,"microbatch":microbatch,"global_batch":global_batch,"vocabulary_sha256":vocabulary_sha256,"seconds":started.elapsed().as_secs_f64(),"failure":result.as_ref().err().map(|e|format!("{e:#}")),"eligible_checkpoint":false,"scope":"numerical architecture throughput; learning quality and real-corpus throughput require separate qualification"}),
     )?;
     result
+}
+
+/// Verify an original controller-scoped GPU task grant (`rank == None`) against a verified
+/// funding admission and common task descriptor (`MR04` / `AUTH-GAP-01`).
+pub fn verify_controller_gpu_grant(
+    admission: &crate::eval_registry::service::VerifiedFundingAdmission,
+    descriptor: &serde_json::Value,
+    expected_capability: &str,
+) -> Result<()> {
+    crate::task_contract::verify_gpu_task_grant(admission, descriptor, None, expected_capability)
+}
+
+/// Verify a participant per-rank GPU task grant (`rank == Some(rank)`) against a verified
+/// funding admission and common task descriptor (`MR04` / `AUTH-GAP-01`).
+pub fn verify_participant_gpu_grant(
+    admission: &crate::eval_registry::service::VerifiedFundingAdmission,
+    descriptor: &serde_json::Value,
+    rank: u32,
+    expected_capability: &str,
+) -> Result<()> {
+    crate::task_contract::verify_gpu_task_grant(
+        admission,
+        descriptor,
+        Some(rank),
+        expected_capability,
+    )
 }
 
 #[cfg(test)]

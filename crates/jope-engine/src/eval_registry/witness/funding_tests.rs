@@ -31,6 +31,14 @@ pub(crate) struct Fixture {
 
 impl Fixture {
     pub(crate) fn new() -> Self {
+        Self::build(false)
+    }
+
+    pub(crate) fn new_resident_training() -> Self {
+        Self::build(true)
+    }
+
+    fn build(resident_training: bool) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let authority = temp.path().join("authority");
         let watermark = temp.path().join("local-watermark");
@@ -54,9 +62,22 @@ impl Fixture {
         let authorizer = SigningKey::from_bytes(&[11; 32]);
         let delegate = SigningKey::from_bytes(&[37; 32]);
         let delegated = hex::encode(delegate.verifying_key().to_bytes());
-        let descriptor = serde_json::to_vec(&json!({"schema":"private.funding_task.v1",
-            "task":"metadata-only witness fixture"}))
-        .unwrap();
+        let descriptor = if resident_training {
+            serde_json::to_vec(&json!({
+                "schema": "parallel.resident_common_task.v1",
+                "root": "/private-fixture",
+                "task": {"kind": "Train", "world": 2},
+                "environment": {},
+                "input_artifacts": {},
+                "executable_sha256": executable,
+                "deadline_unix_ms": clock.unix_ms + 120_000,
+            }))
+            .unwrap()
+        } else {
+            serde_json::to_vec(&json!({"schema":"private.funding_task.v1",
+                "task":"metadata-only witness fixture"}))
+            .unwrap()
+        };
         let body = f::FundingAuthorization {
             schema: "parallel.funding_authorization.v1".into(),
             domain_id: "private-witness-fixture".into(),
