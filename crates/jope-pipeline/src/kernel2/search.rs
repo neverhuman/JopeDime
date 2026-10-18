@@ -238,3 +238,29 @@ pub fn run_cut(cut: &Cut, options: &Options) -> Result<CutSearch> {
     generation::check(cut, options)?;
     crate::parallel::on_evaluation_stack(|| generation::run(cut, options))?
 }
+
+/// Explicit opt-in route using the shared feat-math strategy state machine. The existing
+/// `run_cut` policy and receipts remain unchanged; this route returns its versioned trace beside
+/// actual kernel2 measurements so callers cannot mistake a legacy result for shared-strategy
+/// evidence.
+pub fn run_cut_shared_strategy(
+    cut: &Cut,
+    options: &Options,
+    source_commit: &str,
+    max_attempts: usize,
+) -> Result<crate::search_strategy::ProductRun> {
+    generation::check(cut, options)?;
+    ensure!(
+        max_attempts <= options.search.budget.evaluations,
+        "shared strategy attempts exceed the cut evaluation budget"
+    );
+    crate::parallel::on_evaluation_stack(|| {
+        crate::search_strategy::run_kernel2(
+            cut,
+            &options.evaluator,
+            options.search.rng_seed,
+            source_commit,
+            max_attempts,
+        )
+    })?
+}

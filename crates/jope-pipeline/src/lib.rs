@@ -60,6 +60,7 @@ pub mod search_cache;
 pub mod search_context;
 pub mod search_events;
 pub mod search_plan;
+pub mod search_strategy;
 pub mod seeds;
 pub mod select;
 #[cfg(target_os = "linux")]
