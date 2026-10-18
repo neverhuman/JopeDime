@@ -1,5 +1,6 @@
 //! Versioned candidate policies and pure deterministic search control.
 
+pub mod gumbel_root;
 pub mod migration;
 pub mod modern_gp;
 pub mod race;
