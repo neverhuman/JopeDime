@@ -39,6 +39,7 @@ pub mod metric;
 pub mod mirror;
 pub mod pools;
 pub mod progress;
+pub mod proposals;
 pub mod qualify;
 pub mod record;
 pub mod replay;
