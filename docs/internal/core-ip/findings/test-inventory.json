@@ -1963,6 +1963,14 @@
         "export"
       ]
     },
+    "target:feat-math/test/gpr_cuda_bench_cases": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/gpr_cuda_bench_cases.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
     "target:feat-math/test/gumbel_root": {
       "role": "regression",
       "source": "crates/feat-math/tests/gumbel_root.rs",
@@ -2063,6 +2071,14 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/legacy_bridge_compatibility": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/legacy_bridge_compatibility.rs",
+      "subsystems": [
+        "gp",
+        "export"
+      ]
+    },
     "target:feat-math/test/legacy_v2_freeze": {
       "role": "regression",
       "subsystems": [
@@ -2158,6 +2174,14 @@
       "role": "regression",
       "subsystems": [
         "export"
+      ]
+    },
+    "target:feat-math/test/r0_baseline_golden_bank": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/r0_baseline_golden_bank.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
       ]
     },
     "target:feat-math/test/realized_path_stats_v2": {
@@ -3336,6 +3360,13 @@
         "gp"
       ]
     },
+    "target:jope-motifs/test/legacy_prototype_seam_regression": {
+      "role": "regression",
+      "source": "crates/jope-motifs/tests/legacy_prototype_seam_regression.rs",
+      "subsystems": [
+        "gp"
+      ]
+    },
     "target:jope-motifs/test/motif_admission": {
       "role": "regression",
       "source": "crates/jope-motifs/tests/motif_admission.rs",
@@ -3763,6 +3794,13 @@
         "training"
       ]
     },
+    "target:jope-parallel/test/native_gpu_grant_installed_policy": {
+      "role": "regression",
+      "source": "crates/jope-engine/tests/native_gpu_grant_installed_policy.rs",
+      "subsystems": [
+        "policy"
+      ]
+    },
     "target:jope-parallel/test/native_loop_continuation": {
       "role": "regression",
       "subsystems": [
@@ -4015,6 +4053,13 @@
         "orchestration"
       ]
     },
+    "target:jope-pipeline/test/legacy_prototype_seam_regression": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/legacy_prototype_seam_regression.rs",
+      "subsystems": [
+        "gp"
+      ]
+    },
     "target:jope-pipeline/test/modern_gp_candidate": {
       "role": "regression",
       "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs",
@@ -4165,6 +4210,13 @@
       "role": "regression",
       "subsystems": [
         "evidence"
+      ]
+    },
+    "target:jope-records/test/i53_i62_executable_receipts": {
+      "role": "regression",
+      "source": "crates/jope-records/tests/i53_i62_executable_receipts.rs",
+      "subsystems": [
+        "encoders"
       ]
     },
     "target:jope-records/test/python_parity": {
