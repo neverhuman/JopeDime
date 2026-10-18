@@ -79,6 +79,10 @@ fn frozen_bundle_selects_complete_occurrences_and_rejects_label_edits() {
         .all(|x| x.evidence_sha256.len() == 64));
     assert!(objective::supervision(&selected.labels, &selected.token_lengths).is_ok());
 
+    let mut incomplete = group("incomplete", 16, None);
+    incomplete.pop();
+    assert!(ReplayBundle::seal(identity(), incomplete).is_err());
+
     let mut repeated = group("comparison-a", 0, None);
     repeated.extend(group("comparison-b", 0, None));
     let repeated = ReplayBundle::seal(identity(), repeated).unwrap();
