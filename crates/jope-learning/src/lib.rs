@@ -44,6 +44,7 @@ pub mod replay;
 pub mod retention;
 pub mod revocation;
 pub mod scores;
+pub mod selfplay;
 pub mod sources;
 pub mod state;
 pub mod support;
