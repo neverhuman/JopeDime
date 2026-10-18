@@ -166,6 +166,78 @@ pub const SEARCH_METHOD_ID: &str = "afm.lite-race.v1";
 /// Method id of the searched program when the deep stage re-runs the search per cut. A
 /// different id, so a ladder built from mixed reports never merges the two numbers.
 pub const RESAMPLED_SEARCH_METHOD_ID: &str = "afm.lite-race.v1.resampled";
+/// Additive benchmark method executed by the shared product/feat-math strategy kernel.
+pub const SHARED_STRATEGY_METHOD_ID: &str = "afm.shared-strategy.v1";
+
+/// A benchmark invocation and the full shared trace needed to establish method identity.
+#[derive(Clone, Debug)]
+pub struct SharedStrategyResult {
+    pub method: Method,
+    pub product_run: jope_pipeline::search_strategy::ProductRun,
+}
+
+/// Run the explicit shared-strategy method on a product cut. Its identity and trace are returned
+/// alongside the benchmark row; historical lite-race IDs remain untouched.
+pub fn shared_strategy(
+    cut: &jope_pipeline::prepare::Cut,
+    options: &jope_pipeline::kernel2::search::Options,
+    source_commit: &str,
+    max_attempts: usize,
+) -> Result<SharedStrategyResult> {
+    let started = std::time::Instant::now();
+    let product_run = jope_pipeline::kernel2::search::run_cut_shared_strategy(
+        cut,
+        options,
+        source_commit,
+        max_attempts,
+    )?;
+    let best = product_run
+        .run
+        .best
+        .and_then(|index| product_run.run.outcomes.get(index))
+        .context("shared strategy produced no rankable measurement")?;
+    let dsl = canonical(std::str::from_utf8(&best.candidate.bytes)?)?;
+    Ok(SharedStrategyResult {
+        method: Method {
+            id: SHARED_STRATEGY_METHOD_ID.to_owned(),
+            kind: MethodKind::Search,
+            dsl,
+            produce_seconds: started.elapsed().as_secs_f64(),
+            resample: None,
+            adapter: None,
+        },
+        product_run,
+    })
+}
+
+/// Refuse to treat a historical lite-race row or a mismatched strategy trace as current shared
+/// strategy evidence. The expected profile and evaluator version come from the caller's frozen
+/// run identity.
+pub fn validate_shared_strategy_evidence(
+    method_id: &str,
+    product_run: &jope_pipeline::search_strategy::ProductRun,
+    expected_source_commit: &str,
+    expected_profile_sha256: &str,
+    expected_evaluator_version: &str,
+) -> Result<()> {
+    anyhow::ensure!(
+        method_id == SHARED_STRATEGY_METHOD_ID,
+        "benchmark method is not shared-strategy v1"
+    );
+    let identity = &product_run.run.identity;
+    anyhow::ensure!(
+        identity.strategy_id == feat_math::kernel::strategy::STRATEGY_ID
+            && identity.strategy_version == feat_math::kernel::strategy::STRATEGY_VERSION
+            && identity.source_id == expected_source_commit
+            && identity.profile_sha256 == expected_profile_sha256
+            && identity.evaluator_version == expected_evaluator_version
+            && product_run.run.trace.identity_sha256 == identity.sha256()
+            && product_run.run.trace.event_version
+                == feat_math::kernel::strategy::STRATEGY_EVENT_VERSION,
+        "shared strategy evidence identity mismatch"
+    );
+    Ok(())
+}
 
 struct Quiet;
 
