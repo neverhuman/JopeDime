@@ -10,6 +10,9 @@ use std::{
 };
 use tch::{nn, nn::Module, nn::ModuleT, Device, Kind, Tensor};
 
+/// Independent, default-off scoring candidate; does not mutate the actor or its optimizer.
+pub mod critic;
+
 pub const RANKING_BACKWARD_ID: &str = "dense_pairwise_v2";
 /// Objective literals bound into `training::objective::identity` (W6-T06).
 /// Uniform label smoothing over the grammar-legal set in `sequence_nll`.
