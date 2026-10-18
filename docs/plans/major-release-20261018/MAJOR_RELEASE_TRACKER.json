@@ -1,10 +1,10 @@
 {
   "schema": "jope.major_release_tracker.v1",
   "created_utc": "2026-10-18T16:24:00Z",
-  "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+  "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
   "reconciled_spec_path": "docs/plans/major-release-20261018/RECONCILED_SPEC.md",
   "verify_dir": "/home/ubuntu/jope-evidence/major-release-20261018/verify",
-  "total_tasks": 40,
+  "total_tasks": 47,
   "tasks": [
     {
       "id": "MR01",
@@ -26,7 +26,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -35,6 +35,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -50,12 +51,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR01.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR02",
       "release": "W0",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "2830191.jopedime_agy",
       "deps": [],
       "gate": "G00",
       "spec_mapping": {
@@ -73,7 +76,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -82,6 +85,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -97,7 +101,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR02.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR03",
@@ -119,7 +125,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -128,6 +134,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -143,7 +150,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR03.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "pass"
     },
     {
       "id": "MR04",
@@ -166,7 +175,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -175,6 +184,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -190,7 +200,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR04.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "in_progress"
     },
     {
       "id": "MR05",
@@ -214,7 +226,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -223,6 +235,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -238,7 +251,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR05.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR06",
@@ -262,7 +277,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -271,6 +286,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -286,7 +302,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR06.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "partial"
     },
     {
       "id": "MR07",
@@ -310,7 +328,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -319,6 +337,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -334,7 +353,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR07.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR08",
@@ -356,7 +377,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -365,6 +386,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -380,7 +402,10 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR08.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "pass",
+      "evidence_completed": "/home/ubuntu/jope-evidence/major-release-20261018/MR08/reference_cpu.json"
     },
     {
       "id": "MR09",
@@ -405,7 +430,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -414,6 +439,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -429,7 +455,10 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR09.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "pass",
+      "evidence_completed": "/home/ubuntu/jope-evidence/major-release-20261018/MR09/bench_xbabe1_cuda0.json,bench_xbabe2_cuda0.json,bench_xbabe3_cuda0.json"
     },
     {
       "id": "MR10",
@@ -455,7 +484,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -464,6 +493,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -479,12 +509,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR10.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR11",
       "release": "R0",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "2830191.jopedime_agy",
       "deps": [],
       "gate": "G00",
       "spec_mapping": {
@@ -501,7 +533,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -510,6 +542,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -525,7 +558,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR11.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR12",
@@ -549,7 +584,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -558,6 +593,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -573,12 +609,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR12.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "in_progress"
     },
     {
       "id": "MR13",
       "release": "R0",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "2830191.jopedime_agy",
       "deps": [
         "MR11"
       ],
@@ -597,7 +635,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -606,6 +644,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -621,7 +660,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR13.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR14",
@@ -645,7 +686,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -654,6 +695,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -669,7 +711,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR14.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR15",
@@ -680,21 +724,22 @@
       ],
       "gate": "G01",
       "spec_mapping": {
-        "spec_a": "P03",
+        "spec_a": "P02",
         "spec_b": "GP-03",
         "spec_c": "WP02",
         "legacy_or_gate": "A02,A04,A12,A14,G01"
       },
-      "completion_criterion": "Repair NaN -> 0.0 missingness conflation (A02/A12, ValueMask), remove silent +-60 linear output clamp (A04/A14, OutputTransformPolicy), and enforce exact post-expansion width admission",
+      "completion_criterion": "Fix NaN -> 0.0 conflation (A02/A12), remove silent +-60 linear clamp (A04/A14), enforce exact width check, and ensure mask/clamp semantics propagate identically across Rust, Python, and C++17 recipe export subset (WP15).",
       "exact_acceptance_test": "cargo test -p feat-math --test missingness_mask_and_output_policy -- --exact nan_distinct_from_zero_and_linear_unclamped",
       "acceptance_cases": [
         "nan_mask_distinct_from_zero",
         "linear_output_unclamped_at_1e4",
-        "post_expansion_width_admitted_exact"
+        "post_expansion_width_admitted_exact",
+        "wp15_mask_and_clamp_export_subset_parity"
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -703,6 +748,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -718,7 +764,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR15.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR16",
@@ -744,7 +792,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -753,6 +801,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -768,7 +817,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR16.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR17",
@@ -793,7 +844,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -802,6 +853,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -817,7 +869,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR17.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR18",
@@ -841,7 +895,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -850,6 +904,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -865,7 +920,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR18.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR19",
@@ -889,7 +946,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -898,6 +955,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -913,7 +971,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR19.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR20",
@@ -927,18 +987,20 @@
       "spec_mapping": {
         "spec_a": "P06",
         "spec_b": "GP-09",
-        "spec_c": "WP10",
-        "legacy_or_gate": "G09"
+        "spec_c": "WP13A",
+        "legacy_or_gate": "G09,SPEC_B:G11,SPEC_A:G3"
       },
-      "completion_criterion": "Upgrade GP generation, typed mutation, and two-parent crossover to jope.learning-program/v1 with alpha-renaming, capture avoidance, and 100,000-edit soundness suite",
+      "completion_criterion": "Constructive GP generation, typed mutation & two-parent crossover: 100,000 random edits with 0 panics/unbound pointers/invalid survivors (G09), plus SPEC_B G11 genetic usefulness (changed/no-op/rejection yields reported on fixed parent cohort; nontrivial executable children per edit family) and SPEC_A G3 pilot (>= 80% admitted changed children).",
       "exact_acceptance_test": "cargo test -p feat-math --test gp_constructive_edit_soundness -- --exact hundred_thousand_edits_zero_invalid_survivors",
       "acceptance_cases": [
-        "alpha_renaming_and_capture_avoidance",
-        "gp_100k_mutations_and_crossovers_sound"
+        "hundred_thousand_random_mutations_and_crossovers_zero_panics",
+        "zero_unbound_variables_or_schema_pointers_in_survivors",
+        "spec_b_g11_genetic_usefulness_changed_noop_rejection_yields_and_nontrivial_children",
+        "spec_a_g3_pilot_at_least_80pct_admitted_changed_children"
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -947,6 +1009,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -962,12 +1025,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR20.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR21",
       "release": "R1",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "1061448.jopedime_flywheel",
       "deps": [
         "MR18",
         "MR19"
@@ -987,7 +1052,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -996,6 +1061,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1011,7 +1077,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR21.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR22",
@@ -1035,7 +1103,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1044,6 +1112,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1059,7 +1128,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR22.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR23",
@@ -1084,7 +1155,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1093,6 +1164,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1108,12 +1180,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR23.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR24",
       "release": "R2",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "2830191.jopedime_agy",
       "deps": [
         "MR21",
         "MR23"
@@ -1133,7 +1207,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1142,6 +1216,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1157,7 +1232,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR24.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR25",
@@ -1182,7 +1259,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1191,6 +1268,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1206,7 +1284,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR25.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR26",
@@ -1231,7 +1311,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1240,6 +1320,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1255,12 +1336,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR26.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR27",
       "release": "R3",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "2830191.jopedime_agy",
       "deps": [
         "MR25",
         "MR26"
@@ -1280,7 +1363,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1289,6 +1372,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1304,7 +1388,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR27.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR28",
@@ -1328,7 +1414,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1337,6 +1423,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1352,7 +1439,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR28.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR29",
@@ -1365,7 +1454,7 @@
       "spec_mapping": {
         "spec_a": "P12",
         "spec_b": "GP-16",
-        "spec_c": "WP14",
+        "spec_c": "WP16",
         "legacy_or_gate": "W08,W09,E04,G06"
       },
       "completion_criterion": "Implement elementary loss and proximal library (Squared, Huber, Logistic, SoftThreshold, L2Shrink, ProjectBox, ProjectL2Ball, ProjectSimplex, SPD metric M)",
@@ -1376,7 +1465,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1385,6 +1474,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1400,7 +1490,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR29.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR30",
@@ -1426,7 +1518,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1435,6 +1527,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1450,12 +1543,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR30.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR31",
       "release": "R4",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "1061448.jopedime_flywheel",
       "deps": [
         "MR30"
       ],
@@ -1463,18 +1558,20 @@
       "spec_mapping": {
         "spec_a": "P13",
         "spec_b": "GP-13",
-        "spec_c": "WP13",
+        "spec_c": "WP15",
         "legacy_or_gate": "W08,W10,W11,G08"
       },
-      "completion_criterion": "Implement tiny MLP and exact SGD/Momentum/Adam reference learners plus standalone Rust training recipe emission (retrains from scratch in fresh process)",
-      "exact_acceptance_test": "cargo test -p jope-pipeline --test tiny_mlp_and_training_recipe_export -- --exact w10_w11_standalone_rust_recipe_retrains_on_fresh_data",
+      "completion_criterion": "Tiny MLP & SGD/Momentum/Adam learners + standalone training recipe export qualifying Rust, Python, and C++17 subset (SPEC_C WP15, W08/W10/W11) retraining from scratch in a fresh process within <= 1e-10.",
+      "exact_acceptance_test": "cargo test -p jope-pipeline --test tiny_mlp_and_training_recipe_export -- --exact w10_w11_standalone_rust_python_cpp17_recipe_retrains_on_fresh_data",
       "acceptance_cases": [
-        "tiny_mlp_and_adam_reference_learners",
-        "standalone_rust_training_recipe_fresh_process_parity"
+        "w10_tiny_mlp_sgd_momentum_adam_convergence",
+        "w11_standalone_rust_recipe_fresh_process_retrain",
+        "wp15_standalone_python_recipe_fresh_process_retrain",
+        "wp15_standalone_cpp17_subset_recipe_fresh_process_retrain"
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1483,6 +1580,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1498,7 +1596,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR31.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR32",
@@ -1510,8 +1610,8 @@
       "gate": "G08",
       "spec_mapping": {
         "spec_a": "P11",
-        "spec_b": "GP-11",
-        "spec_c": "WP15",
+        "spec_b": null,
+        "spec_c": null,
         "legacy_or_gate": "W12,W13,G08"
       },
       "completion_criterion": "Implement non-AD discrete and support-set learners (W12 bounded tree stump split search, W13 kNN/support learner, weighted PAVA isotonic with tie multiplicities)",
@@ -1522,7 +1622,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1531,6 +1631,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1546,7 +1647,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR32.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR33",
@@ -1560,19 +1663,21 @@
       "spec_mapping": {
         "spec_a": "P14",
         "spec_b": "GP-17",
-        "spec_c": "WP16",
-        "legacy_or_gate": "G10,G12,G13"
+        "spec_c": "WP14",
+        "legacy_or_gate": "G10,SPEC_A:G7,SPEC_B:G12,SPEC_B:G13"
       },
-      "completion_criterion": "Implement factored grammar-masked typed-edit action space, trace vs program probability accounting, and all-attempt trajectory logging",
-      "exact_acceptance_test": "cargo test -p jope-policy --test factored_edit_policy_and_trace_accounting -- --exact grammar_mask_under_0p1pct_invalid_and_all_attempts_logged",
+      "completion_criterion": "Factored grammar-masked typed-edit action space: ZERO silently truncated/misbound accepted children over >= 10,000 free-running attempts, legacy-mode legal sets/decode traces byte-identical to old route (SPEC_A G7), off-bin descendants never inherit projected scores and unsupported records counted (SPEC_B G12), enumerated action laws normalize with no minted propensity (SPEC_B G13), and 100% all-attempt trajectory logging (G10).",
+      "exact_acceptance_test": "cargo test -p jope-policy --test factored_edit_policy_and_trace_accounting -- --exact zero_truncated_misbound_over_10k_legacy_trace_parity_and_g12_g13",
       "acceptance_cases": [
-        "factored_grammar_mask_validity_rate",
-        "trace_vs_program_probability_accounting",
-        "all_attempt_trajectory_corpus_complete"
+        "spec_a_g7_zero_silently_truncated_or_misbound_accepted_children_over_10k_attempts",
+        "spec_a_g7_legacy_mode_legal_sets_and_decode_traces_exact_equality",
+        "spec_b_g12_off_bin_descendants_never_inherit_projected_scores_and_unsupported_counted",
+        "spec_b_g13_enumerated_action_laws_normalize_no_minted_propensity",
+        "g10_all_attempt_trajectory_logging_and_trace_vs_lower_bound_accounting"
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1581,6 +1686,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1596,7 +1702,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR33.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR34",
@@ -1609,7 +1717,7 @@
       "spec_mapping": {
         "spec_a": "P14",
         "spec_b": "GP-18",
-        "spec_c": "WP16",
+        "spec_c": "WP14",
         "legacy_or_gate": "E07,G14"
       },
       "completion_criterion": "Wire challenger typed-edit policy training, checkpoint export/reload, and proposal execution (preserving frozen 401-token native actor) plus equal-compute ablation",
@@ -1621,7 +1729,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1630,6 +1738,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1645,12 +1754,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR34.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR35",
       "release": "R5",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "1061448.jopedime_flywheel",
       "deps": [
         "MR20",
         "MR33"
@@ -1670,7 +1781,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1679,6 +1790,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1694,7 +1806,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR35.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR36",
@@ -1709,18 +1823,18 @@
         "spec_a": "P16",
         "spec_b": "GP-20,GP-21",
         "spec_c": "WP18",
-        "legacy_or_gate": "E08,G11,G16,G17"
+        "legacy_or_gate": "E08,SPEC_A:G8,G11,G16,G17"
       },
-      "completion_criterion": "Enforce 3-tier resource profiles (compose-small, learner-tiny, learner-small) with pre-allocation checked arithmetic, fuel ledger, overhead <= 1.02, and 10% pruned-candidate fidelity audit",
+      "completion_criterion": "3-tier resource profiles (compose-small, learner-tiny, learner-small), pre-allocation checked bounds (<50ms bomb catch), default-off overhead mean ratio UCB <= 1.02 AND p95 ratio <= 1.05 across >= 30 blocked process-level replications (SPEC_A G8), and 10% randomized pruned-candidate high-fidelity audit (E08).",
       "exact_acceptance_test": "cargo test -p jope-pipeline --test resource_profiles_and_fidelity_audit -- --exact prealloc_catches_bombs_under_50ms_and_fidelity_audit_pass",
       "acceptance_cases": [
-        "three_tier_resource_profiles_enforced",
-        "default_off_overhead_ucb_le_1p02",
-        "e08_pruned_candidate_fidelity_audit_pass"
+        "preallocation_checked_arithmetic_catches_bombs_under_50ms",
+        "spec_a_g8_default_off_mean_ratio_le_1p02_and_p95_ratio_le_1p05_over_30_blocked_process_reps",
+        "e08_ten_percent_pruned_candidate_high_fidelity_audit_rank_corr_ge_0p70"
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1729,6 +1843,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1744,7 +1859,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR36.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR37",
@@ -1770,7 +1887,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1779,6 +1896,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1794,7 +1912,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR37.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR38",
@@ -1807,18 +1927,19 @@
       "spec_mapping": {
         "spec_a": "P18",
         "spec_b": "GP-23",
-        "spec_c": "WP19",
-        "legacy_or_gate": "G10,G20"
+        "spec_c": "WP20",
+        "legacy_or_gate": "SPEC_A:G10,G20,MRFV"
       },
-      "completion_criterion": "Implement atomic compare-and-swap bundle activation (Available, ExperimentalSearch, Default), pinned in-flight job manifests, and rehearsed <60s rollback drill",
+      "completion_criterion": "Atomic compare-and-swap bundle activation, pinned in-flight jobs, rehearsed <60s rollback drill (G20), and SPEC_A G10 exact-head CI + independent review gate wired into mandatory final validation task MRFV.",
       "exact_acceptance_test": "cargo test -p jope-engine --test atomic_bundle_activation_and_rollback -- --exact cas_bundle_switch_and_under_60s_rollback_drill",
       "acceptance_cases": [
         "atomic_cas_bundle_switch_preserves_inflight",
-        "rehearsed_rollback_under_60s_zero_failures"
+        "rehearsed_rollback_under_60s_zero_failures",
+        "spec_a_g10_exact_head_ci_and_independent_review_bound_to_mrfv"
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1827,6 +1948,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1842,7 +1964,9 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR38.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR39",
@@ -1855,7 +1979,7 @@
       "spec_mapping": {
         "spec_a": "P19",
         "spec_b": "GP-24",
-        "spec_c": "WP20",
+        "spec_c": "WP16",
         "legacy_or_gate": "W17,E05,G07"
       },
       "completion_criterion": "Implement convex output potential layer (Omega_alpha(p) = alpha * ||p||_2^2 / 2) with learned alpha > 0 derivative witness (W17/E05)",
@@ -1866,7 +1990,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1875,6 +1999,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1890,12 +2015,14 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR39.json"
-      }
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
     },
     {
       "id": "MR40",
       "release": "R6",
-      "owner_screen": "487851.jope_review_claude",
+      "owner_screen": "2724936.captain_jopedime",
       "deps": [
         "MR38",
         "MR39"
@@ -1904,7 +2031,7 @@
       "spec_mapping": {
         "spec_a": "P19",
         "spec_b": "GP-25",
-        "spec_c": "WP20",
+        "spec_c": "WP21",
         "legacy_or_gate": "M10,M11,M12,M13,G20"
       },
       "completion_criterion": "Implement task-gated domain extension packs (M10 implicit inference, M11 calibration, M12 semirings/graphs, M13 symmetry/dynamics/OT) behind feature flags",
@@ -1915,7 +2042,7 @@
       ],
       "receipt_format": {
         "schema": "jope.major_release_receipt.v1",
-        "pinned_baseline_main_sha": "a2759e9d375d0697ed40a32c23ac297b5de42347",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
         "must_match_current_origin_main": true,
         "required_fields": [
           "id",
@@ -1924,6 +2051,7 @@
           "checkout_sha",
           "verified_at_utc",
           "owner_screen",
+          "reviewer_screen",
           "gate",
           "completion_criterion",
           "completion_criterion_proof",
@@ -1939,7 +2067,439 @@
           "log_sha256"
         ],
         "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR40.json"
+      },
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo"
+    },
+    {
+      "id": "MR41",
+      "release": "R4",
+      "owner_screen": "2830191.jopedime_agy",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR28"
+      ],
+      "gate": "G05,G06",
+      "spec_mapping": {
+        "spec_a": "P11",
+        "spec_b": "GP-08,W01",
+        "spec_c": "WP11,W06",
+        "legacy_or_gate": "GP-08,SPEC_C:W06,SPEC_B:W01,G05,G06"
+      },
+      "completion_criterion": "SPEC_B GP-08: small tensor/linear-solve reference subset + ridge witness (independent solve/centering/intercept/state refs, failed solve explicit). Also closes SPEC_C W06 Ridge/OLS and SPEC_B W01.",
+      "exact_acceptance_test": "cargo test -p feat-math --test gp08_tensor_linear_solve_and_ridge_witness -- --exact verify_independent_solve_centering_intercept_and_explicit_failed_solve",
+      "acceptance_cases": [
+        "gp08_small_tensor_linear_solve_reference_subset",
+        "spec_c_w06_spec_b_w01_ridge_ols_centering_intercept_state_refs",
+        "explicit_failed_solve_handling_without_silent_fallback"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR41.json"
+      }
+    },
+    {
+      "id": "MR42",
+      "release": "R4",
+      "owner_screen": "1061448.jopedime_flywheel",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR20",
+        "MR21",
+        "MR22",
+        "MR28",
+        "MR41"
+      ],
+      "gate": "G08,G09",
+      "spec_mapping": {
+        "spec_a": "P11",
+        "spec_b": "GP-11",
+        "spec_c": "WP11",
+        "legacy_or_gate": "GP-11,G08,G09"
+      },
+      "completion_criterion": "SPEC_B GP-11: complete vertical-slice pipeline integration: fit -> mutate -> crossover -> refit -> freeze -> emit -> fresh-process replay, every op charged, old route unchanged.",
+      "exact_acceptance_test": "cargo test -p jope-pipeline --test gp11_vertical_slice_e2e -- --exact fit_mutate_crossover_refit_freeze_emit_fresh_process_replay_charged",
+      "acceptance_cases": [
+        "vertical_slice_fit_mutate_crossover_refit_freeze_emit_fresh_process_replay",
+        "every_op_charged_against_fuel_and_complexity_ledger",
+        "legacy_route_bit_identical_when_vertical_slice_disabled"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR42.json"
+      }
+    },
+    {
+      "id": "MR43",
+      "release": "R4",
+      "owner_screen": "2830191.jopedime_agy",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR20",
+        "MR28",
+        "MR30"
+      ],
+      "gate": "G09,G08",
+      "spec_mapping": {
+        "spec_a": "P13",
+        "spec_b": "GP-09,GP-12",
+        "spec_c": "WP13B",
+        "legacy_or_gate": "WP13B,G09,G08"
+      },
+      "completion_criterion": "SPEC_C WP13B: state/update genetic edits (param ties, state fields, scan bodies, update equations); GP changes a learning procedure, refits, emits valid artifact; no donated fitted state.",
+      "exact_acceptance_test": "cargo test -p feat-math --test wp13b_state_update_genetic_edits -- --exact gp_mutates_learning_procedure_refits_and_emits_without_donated_state",
+      "acceptance_cases": [
+        "wp13b_genetic_edits_on_param_ties_state_fields_scan_bodies_and_update_equations",
+        "mutated_learning_procedure_refits_from_scratch_with_zero_donated_fitted_state",
+        "mutated_learner_emits_valid_standalone_artifact"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR43.json"
+      }
+    },
+    {
+      "id": "MR44",
+      "release": "R0",
+      "owner_screen": "2830191.jopedime_agy",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR12",
+        "MR15"
+      ],
+      "gate": "G01,G02",
+      "spec_mapping": {
+        "spec_a": "P03",
+        "spec_b": "GP-03",
+        "spec_c": "WP03",
+        "legacy_or_gate": "SPEC_A:P03,G01,G02"
+      },
+      "completion_criterion": "SPEC_A P03: numeric-v2 route completion (numeric_v2, numeric_v2_emit, pipeline/CLI kernel adapters; supported caller/target subset executes with old default unchanged).",
+      "exact_acceptance_test": "cargo test -p jope-pipeline --test p03_numeric_v2_route_and_emit -- --exact numeric_v2_and_emit_adapters_execute_with_legacy_default_unchanged",
+      "acceptance_cases": [
+        "p03_numeric_v2_and_numeric_v2_emit_execute_on_supported_subset",
+        "pipeline_and_cli_kernel_adapters_wired",
+        "old_default_route_outputs_unchanged"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR44.json"
+      }
+    },
+    {
+      "id": "MR45",
+      "release": "R4",
+      "owner_screen": "1061448.jopedime_flywheel",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR28",
+        "MR32"
+      ],
+      "gate": "G06,G08",
+      "spec_mapping": {
+        "spec_a": "P11",
+        "spec_b": "W08",
+        "spec_c": "W15,W16",
+        "legacy_or_gate": "SPEC_C:W15,SPEC_C:W16,SPEC_B:W08,G06,G08"
+      },
+      "completion_criterion": "Witnesses not previously covered: SPEC_C W15 GAM/basis, W16 PCA/low-rank (train-only centering/factorization), and SPEC_B W08 stateful centroid learner.",
+      "exact_acceptance_test": "cargo test -p feat-math --test w15_gam_w16_pca_w08_centroid_witnesses -- --exact verify_gam_basis_train_only_pca_and_stateful_centroid_learner",
+      "acceptance_cases": [
+        "spec_c_w15_gam_spline_basis_witness",
+        "spec_c_w16_pca_low_rank_train_only_centering_and_factorization_witness",
+        "spec_b_w08_stateful_centroid_learner_witness"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR45.json"
+      }
+    },
+    {
+      "id": "MR46",
+      "release": "R0",
+      "owner_screen": "1061448.jopedime_flywheel",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR14",
+        "MR15"
+      ],
+      "gate": "G01,G02",
+      "spec_mapping": {
+        "spec_a": "P02",
+        "spec_b": "E01",
+        "spec_c": "WP02",
+        "legacy_or_gate": "SPEC_B:E01,G01,G02"
+      },
+      "completion_criterion": "SPEC_B E01 closure-repairs experiment (old route vs repaired profile on same downstream search; keep defaults if no value).",
+      "exact_acceptance_test": "cargo test -p jope-learning --test e01_closure_repairs_experiment -- --exact compare_old_route_vs_repaired_profile_same_downstream_search",
+      "acceptance_cases": [
+        "e01_paired_comparison_old_route_vs_repaired_profile_on_downstream_search",
+        "e01_decision_rule_retains_defaults_if_no_statistically_verified_gain"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MR46.json"
+      }
+    },
+    {
+      "id": "MRFV",
+      "release": "R7",
+      "owner_screen": "2724936.captain_jopedime",
+      "reviewer_screen": "487851.jope_review_claude",
+      "status": "todo",
+      "deps": [
+        "MR01",
+        "MR02",
+        "MR03",
+        "MR04",
+        "MR05",
+        "MR06",
+        "MR07",
+        "MR08",
+        "MR09",
+        "MR10",
+        "MR11",
+        "MR12",
+        "MR13",
+        "MR14",
+        "MR15",
+        "MR16",
+        "MR17",
+        "MR18",
+        "MR19",
+        "MR20",
+        "MR21",
+        "MR22",
+        "MR23",
+        "MR24",
+        "MR25",
+        "MR26",
+        "MR27",
+        "MR28",
+        "MR29",
+        "MR30",
+        "MR31",
+        "MR32",
+        "MR33",
+        "MR34",
+        "MR35",
+        "MR36",
+        "MR37",
+        "MR38",
+        "MR39",
+        "MR40",
+        "MR41",
+        "MR42",
+        "MR43",
+        "MR44",
+        "MR45",
+        "MR46"
+      ],
+      "gate": "G-FINAL",
+      "spec_mapping": {
+        "spec_a": "G10",
+        "spec_b": "G20",
+        "spec_c": "G14",
+        "legacy_or_gate": "JEPSON-RULING-1058-RULE4,SPEC_A:G10,SPEC_B:G20,SPEC_C:G14"
+      },
+      "completion_criterion": "FINAL VALIDATION (Jepson 10:58 ruling #4, mandatory): full CI (GitHub or self-hosted) on final main SHA, re-verify ALL MR01..MR46 and I01..I66 receipts on that exact SHA, re-run every 'local-CI only' merge's tests, and obtain independent red-team signoff from 487851.jope_review_claude; release is not done until PASS.",
+      "exact_acceptance_test": "cargo test --workspace --all-targets && python3 scripts/verify_all_mr_receipts_on_main.py",
+      "acceptance_cases": [
+        "full_ci_green_on_final_main_sha",
+        "all_mr01_mr46_and_i01_i66_receipts_reverified_on_final_main_sha",
+        "all_local_ci_only_merges_retested_and_verified",
+        "independent_red_team_signoff_by_jope_review_claude"
+      ],
+      "receipt_format": {
+        "schema": "jope.major_release_receipt.v1",
+        "pinned_baseline_main_sha": "e0e14ddb8646deff34e3c9d45b46cc236c2fdcc2",
+        "must_match_current_origin_main": true,
+        "required_fields": [
+          "id",
+          "status",
+          "sha",
+          "checkout_sha",
+          "verified_at_utc",
+          "owner_screen",
+          "reviewer_screen",
+          "gate",
+          "completion_criterion",
+          "completion_criterion_proof",
+          "case_to_test_map"
+        ],
+        "case_entry_required_fields": [
+          "acceptance_case",
+          "command",
+          "test_or_code",
+          "exit_code",
+          "passed",
+          "log_path",
+          "log_sha256"
+        ],
+        "verify_path": "/home/ubuntu/jope-evidence/major-release-20261018/verify/MRFV.json"
       }
     }
-  ]
+  ],
+  "updated_utc": "2026-10-18T17:20:00Z",
+  "status_counts": {
+    "todo": 41,
+    "pass": 1,
+    "in_progress": 4,
+    "partial": 1
+  },
+  "owner_counts": {
+    "2830191.jopedime_agy": 21,
+    "2724936.captain_jopedime": 8,
+    "1061448.jopedime_flywheel": 18
+  }
 }
