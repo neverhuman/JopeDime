@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json",
-  "count": 5010,
+  "count": 5013,
   "ignored": 72,
   "packages": {
    "battle-gpu": {
@@ -6912,12 +6912,12 @@
     }
    },
    "jope-records": {
-    "count": 189,
+    "count": 192,
     "ignored": 1,
     "binaries": {
      "jope-records": {
       "kind": "lib",
-      "count": 82,
+      "count": 85,
       "ignored": 0,
       "tests": [
        "coverage::tests::changed_target_requirements_fail",
@@ -7001,6 +7001,9 @@
        "repo_layout::tests::package_name_says_toml_1_0_for_toml_1_1_only_syntax",
        "repo_layout::tests::test_code_is_whole_test_files_and_cfg_test_modules",
        "scope_check::tests::declared_reads_the_first_assignment",
+       "selfplay_baseline::tests::distinguish_current_ci_historical_runs_and_proposed_protocols",
+       "selfplay_baseline::tests::reconcile_benchmark_and_product_profile_identities",
+       "selfplay_baseline::tests::record_all_skipped_and_unavailable_runtime_combinations",
        "zstd_frame::tests::round_trip_and_limit"
       ]
      },
@@ -7615,7 +7618,7 @@
   }
  },
  "totals": {
-  "rust": 5007,
+  "rust": 5013,
   "python": 182
  }
 }

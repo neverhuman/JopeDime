@@ -5,7 +5,7 @@
   "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
   "source_tree": "885189fe077e4a23acd7333370c1e95b57193bc4",
   "parent_sha": "0e063f4ce110dd142f18f8482867c2d3d237598c",
-  "write_scope_note": "Strictly scoped to I01.proposed_write_paths (docs/plans/algorithmic-selfplay-20261017/BASELINE.md, docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json as the versioned successor to immutable FILE_MAP.json, and crates/jope-records). docs/parity/test-inventory.json and README.md are intentionally left untouched because they are outside I01.proposed_write_paths, paper-trace couples them to docs/paper/NUMBERS_TRACE.md, and deploy/ci/test-inventory.sh:185-186 allows adding unit tests inside an existing target (jope-records/lib) without rewriting the committed floor inventory.",
+  "write_scope_note": "Scoped to I01.proposed_write_paths (docs/plans/algorithmic-selfplay-20261017/BASELINE.md, docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json as the versioned successor to immutable FILE_MAP.json, and crates/jope-records) plus docs/parity/test-inventory.json and README.md (At a glance Rust tests row 5,010 -> 5,013 per F7, with scope amendment recorded in COMMS.md).",
   "historical_baseline_pins": [
     {
       "role": "initial_workplan_symbol_and_spec_pin",
@@ -54,11 +54,11 @@
       "defining_file_sha256": "5185693d9b52a411e14daa1c7a5f01f571dba72e4c06227751ae81b2e9e27bd3",
       "package_name": "jope-parallel",
       "callers": [
-        "crates/jope-engine/src/native_loop.rs:1435 (Loop::preflight)",
-        "crates/jope-engine/src/native_loop.rs:2263 (tests)",
-        "crates/jope-engine/src/native_loop.rs:2266 (tests)",
-        "crates/jope-engine/src/native_loop.rs:2269 (tests)",
-        "crates/jope-engine/src/native_loop.rs:2314 (tests)"
+        "crates/jope-engine/src/native_loop.rs:1435 (Loop::tick)",
+        "crates/jope-engine/src/native_loop.rs:2263 (successor_requires_exact_completed_window_and_new_run_identity)",
+        "crates/jope-engine/src/native_loop.rs:2266 (successor_requires_exact_completed_window_and_new_run_identity)",
+        "crates/jope-engine/src/native_loop.rs:2269 (successor_requires_exact_completed_window_and_new_run_identity)",
+        "crates/jope-engine/src/native_loop.rs:2314 (successor_requires_exact_completed_window_and_new_run_identity)"
       ],
       "related_witness_constraint": {
         "path": "crates/jope-engine/src/eval_registry/witness/epochs.rs",
@@ -78,10 +78,10 @@
       "defining_file_sha256": "14394ce283b00468fba41ab8f0b2e3a26217db040a3b4a1a4d2463b36e60b490",
       "package_name": "jope-policy",
       "callers": [
-        "crates/jope-policy/src/config.rs:576 (CheckpointBinding::parse at crates/jope-policy/src/config.rs:468)",
+        "crates/jope-policy/src/config.rs:576 (CheckpointBinding::parse)",
         "crates/jope-policy/src/seeds.rs:542 (seeds::propose_challenger)",
-        "crates/jope-policy/src/challenger_tests.rs:287 (tests)",
-        "crates/jope-policy/src/challenger_tests.rs:291 (tests)"
+        "crates/jope-policy/src/challenger_tests.rs:287 (challenger_receipt_binds_every_pin)",
+        "crates/jope-policy/src/challenger_tests.rs:291 (challenger_receipt_binds_every_pin)"
       ],
       "current_behavior": "Refuses REJECTED_STEP (69000, crates/jope-policy/src/lib.rs:173) and REJECTED_STATE_SHA256 / REJECTED_MODEL_SHA256, requires self.step > ACCEPTED_STEP (60000, crates/jope-policy/src/lib.rs:153), self.model_sha256 != ACCEPTED_MODEL_SHA256, exact state/parameter/config/policy_safetensors SHA-256 matches, and self.vocabulary_sha256 == CHECKPOINT_VOCABULARY_SHA256.",
       "capability_gap": "Numeric step check self.step > 60000 rejects legitimate low-step warm-start descendants (e.g. 3000-step optimizer-reset epochs) while numeric step alone would not prove ancestry without state/parent chain; addressed by I11 and I14 while keeping accepted serving checks strict."
@@ -279,8 +279,8 @@
       "package_name": "jope-learning",
       "callers": [
         "crates/jope-learning/src/clover/round_qual.rs:1359 (qualify_rounds)",
-        "crates/jope-learning/src/clover/round_qual.rs:1364 (qualify_rounds_with_prereg)",
-        "crates/jope-learning/src/bin/jope_pools.rs:197,709,741 (jope_pools qualify-rounds)"
+        "crates/jope-learning/src/clover/round_qual.rs:1365 (qualify_rounds_with_prereg)",
+        "crates/jope-learning/src/bin/jope_pools.rs:197,709,741 (cmd_qualify_rounds)"
       ],
       "current_behavior": "Offline diagnostic verifier (jope.selfplay-round-qualification/v1) that unconditionally sets qualified_claim: false, promotion: false, and l6_claim: false, checking either unpinned/no-grant prereg contracts or caller-asserted receipts with create-only O_EXCL output.",
       "capability_gap": "Offline verifier does not re-hash raw search/observation payloads or authenticate external execution grants; prospective estimand/roster/exposure/authority authentication is scheduled in I41-I43."
@@ -362,7 +362,7 @@
           "benchmark_path": "crates/jope-bench/src/ablation.rs:109-112,133,156-157 (Profile::Legacy::id() == \"legacy\" -> Ok(None), routes to run_cuts_with with SearchOptions::new and feat_math::evolve v1 canonical-pipeline wrappers)",
           "resolved_registry_id": "legacy-wrappers-v1",
           "resolved_registry_revision": 1,
-          "resolution_mechanism": "semantic_v1_wrapper_equivalence_not_direct_profile_lookup (ablation.rs:110-111 documents v1 canonical-pipeline wrappers; neither product nor benchmark calls feat_math::kernel::profile::profile(\"legacy-wrappers-v1\", 1) directly)"
+          "resolution_mechanism": "semantic_v1_wrapper_equivalence_not_direct_profile_lookup (crates/jope-bench/src/ablation.rs:110-111 documents v1 canonical-pipeline wrappers; neither product nor benchmark calls feat_math::kernel::profile::profile(\"legacy-wrappers-v1\", 1) directly)"
         },
         {
           "cli_and_bench_id": "kernel2-baseline",
@@ -397,33 +397,38 @@
         "ffn": 2048,
         "max_seq": 128,
         "architecture_witness_path": "crates/jope-policy/src/config.rs",
-        "architecture_witness_line": 39,
         "vocabulary_tokens": 401,
         "vocabulary_witness_path": "crates/jope-engine/assets/grammar/featmath.json",
-        "vocabulary_witness_line": 1,
         "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
         "vocabulary_constant_witness": "crates/jope-policy/src/lib.rs:162,175-181",
         "context_length": 2048,
         "context_witness_path": "crates/jope-policy/src/context.rs",
-        "context_witness_line": 53,
         "accepted_step": 60000,
         "accepted_step_witness": "crates/jope-policy/src/lib.rs:153",
         "rejected_checkpoint_step": 69000,
         "rejected_checkpoint_witness": "crates/jope-policy/src/lib.rs:173",
         "historical_rtx3090_continuation_step": 60100,
-        "historical_rtx3090_witness": "docs/adr/ADR-0005-canonical-learning-loop.md:53",
+        "historical_rtx3090_witness": "docs/adr/ADR-0005-canonical-learning-loop.md:33",
         "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
         "state_sha256_witness": "crates/jope-policy/src/lib.rs:147-148",
         "defining_path": "crates/jope-policy/src/lib.rs",
         "defining_file_sha256": "afc93bdf7f30363abef49ae087e2ce5ca6e9604447c4d523be42d324d19bce29",
-        "status": "CONFIRMED_ACCEPTED_SERVING_BASELINE"
+        "status": "CONFIRMED_ACCEPTED_SERVING_BASELINE",
+        "architecture_witness_cites": [
+          "crates/jope-policy/src/config.rs:44",
+          "crates/jope-policy/src/config.rs:45",
+          "crates/jope-policy/src/config.rs:46",
+          "crates/jope-policy/src/config.rs:47",
+          "crates/jope-policy/src/config.rs:50"
+        ],
+        "vocabulary_witness_cite": "crates/jope-engine/assets/grammar/featmath.json:1",
+        "context_witness_cite": "crates/jope-policy/src/context.rs:53"
       },
       {
         "lineage_id": "clover_rlfw_prefix_trie_282",
         "architecture": "CLOVER / RLFW byte-piece prefix-trie policy (282-token vocabulary; dynamic jope.flywheel-full-catalog-trie/v1 trie)",
         "vocabulary_tokens": 282,
         "vocabulary_witness_path": "crates/jope-learning/src/support/tokenizer.rs",
-        "vocabulary_witness_line": 64,
         "logit_geometry_witness": "crates/jope-learning/src/support/probability.rs:38",
         "trie_schema": "jope.flywheel-full-catalog-trie/v1",
         "trie_schema_witness": "crates/jope-learning/src/support/version.rs:88",
@@ -431,7 +436,8 @@
         "trie_nodes_note": "Trie<'a> in crates/jope-learning/src/support/trie.rs:6 is constructed dynamically from a loaded catalog artifact; no compiled node-count constant exists in crates/ at 22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d (2051 in decisions.json:147 is the proposal label Kumo2051).",
         "defining_path": "crates/jope-learning/src/support/tokenizer.rs",
         "defining_file_sha256": "564dcc76518f69580750b733245767141ef25d021bea8db3677121c05725db3c",
-        "status": "CONFIRMED_RESEARCH_SHADOW_NON_SERVING"
+        "status": "CONFIRMED_RESEARCH_SHADOW_NON_SERVING",
+        "vocabulary_witness_cite": "crates/jope-learning/src/support/tokenizer.rs:64"
       },
       {
         "lineage_id": "native_loop_v2_weight_warm_start",
@@ -444,9 +450,9 @@
         "warm_start_override_width_layers": "unknown",
         "warm_start_override_note": "crates/jope-engine/src/native_loop/warm_start.rs:24-83 binds parent checkpoint weights and optimizer reset windows (0->3000->6000) without overriding model width/layers; 256x2 appears only in planning docs (WORKPLAN.md / decisions.json D07) for prospective warm-start sizing, while neural::Config::regression in crates/jope-engine/src/neural.rs:45-60 defaults to width=512, layers=6.",
         "defining_path": "crates/jope-engine/src/native_loop/warm_start.rs",
-        "defining_line": 24,
         "defining_file_sha256": "a833660625ccedd7b592192d8b918b85ff8576fb3a328467a4898308d07f6025",
-        "status": "CONFIRMED_EXPERIMENTAL_NO_SUCCESSOR_PROTOCOL"
+        "status": "CONFIRMED_EXPERIMENTAL_NO_SUCCESSOR_PROTOCOL",
+        "defining_cite": "crates/jope-engine/src/native_loop/warm_start.rs:35"
       }
     ]
   },
@@ -549,7 +555,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "docs/internal/clover/selfplay-round1-prereg.v1.json",
       "witness_line": 1,
-      "evidence_sha256": "unknown",
+      "evidence_sha256": "83600d4c12467ddc3ffc9977cd5d073ef166e080f3ff69adc90447818e31d34a",
       "resolution_gate": "Requires prospective preregistration and owner/G-JUDGE sign-off under I41-I43 and I65 before any round-qualification claim.",
       "live_qualification_active": false
     },
@@ -561,7 +567,7 @@
       "source_sha": "22939ca1c67bdcc4beb54c5a4fbdb9e24073db2d",
       "path": "AGENTS.md",
       "witness_line": 1,
-      "evidence_sha256": "unknown",
+      "evidence_sha256": "df66cbdccad23c9c19965e38f9984b04b711fdbcf1ed4db9b1d54853afb3a097",
       "resolution_gate": "Requires external AWS IAM provisioning (I49) and independent full-filesystem restore + zero-consumer verification (I53).",
       "live_qualification_active": false
     }
@@ -569,7 +575,7 @@
   "skipped_and_unavailable_runtimes": [
     {
       "id": "RT01",
-      "combination": "jope-parallel integration tests gated by feature = \"neural\" (18 whole-file #![cfg(feature = \"neural\")] test targets + 3 partially #[cfg(feature = \"neural\")] gated test targets) run without --features neural",
+      "combination": "jope-parallel integration tests gated by feature = \"neural\" (18 whole-file #![cfg(feature = \"neural\")] test targets + 4 partially/negated #[cfg(feature = \"neural\")] / #[cfg(not(feature = \"neural\"))] gated test targets) run without --features neural",
       "status": "SKIPPED_ZERO_TESTS_WITHOUT_FEATURE",
       "package_name": "jope-parallel",
       "required_flag": "--features neural (executed in full-neural lane; 0-collected test filter is never counted as PASS)",
@@ -594,6 +600,7 @@
         "training_ancestry"
       ],
       "partially_gated_targets": [
+        "crates/jope-engine/tests/bounded_training.rs:367",
         "crates/jope-engine/tests/corpus.rs:29",
         "crates/jope-engine/tests/request_integrity.rs:204",
         "crates/jope-engine/tests/training_inputs.rs:184"
@@ -617,6 +624,7 @@
         "trainer_topology",
         "training",
         "training_ancestry",
+        "bounded_training",
         "corpus",
         "request_integrity",
         "training_inputs"
@@ -626,7 +634,7 @@
     },
     {
       "id": "RT02",
-      "combination": "jope-policy integration test targets jope_dime and decode_outcomes with required-features = [\"testing\"] and #![cfg(feature = \"testing\")] run without --features testing (note: src/challenger_tests.rs is #[cfg(test)] in src/lib.rs:114-115 and runs in default rust-test)",
+      "combination": "jope-policy integration test targets jope_dime and decode_outcomes with required-features = [\"testing\"] and #![cfg(feature = \"testing\")] run without --features testing",
       "status": "GATED_BY_TESTING_FEATURE",
       "package_name": "jope-policy",
       "required_flag": "--features testing (executed in full-policy lane; crates/jope-policy/Cargo.toml:39-45)",
@@ -1477,6 +1485,7 @@
         "training_ancestry"
       ],
       "partially_neural_gated_integration_tests": [
+        "bounded_training",
         "corpus",
         "request_integrity",
         "training_inputs"
