@@ -455,6 +455,11 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         i09_artifact_target_binding["fixtures"][0]["path"],
         changed_fixtures[0]
     );
+    // Batch 4 algorithmic self-play additive feat-math modules: evaluator identity only.
+    let batch4_selfplay =
+        old_fixture("transitions/batch4_selfplay_identity_rebaseline.v1.json");
+    assert_eq!(batch4_selfplay["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(batch4_selfplay["fixtures"][0]["path"], changed_fixtures[0]);
     let identity_chain = [
         transition,
         successor,
@@ -473,6 +478,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         release_0_3_0,
         exp_next_04,
         i09_artifact_target_binding,
+        batch4_selfplay,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

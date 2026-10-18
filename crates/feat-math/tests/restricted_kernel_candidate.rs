@@ -1,7 +1,4 @@
-#[path = "../src/kernel/restricted_candidate.rs"]
-mod restricted_candidate;
-
-use restricted_candidate::{
+use feat_math::kernel::restricted_candidate::{
     artifact_digest, source_digest, CandidateArtifact, ForbiddenOperation, FuelBound, Instruction,
     KernelError, RestrictedKernel, SandboxCapability,
 };

@@ -4211,6 +4211,23 @@
       ],
       "scope": "B14 opt-in causal cumulative integration: wire60, explicit initial state, guarded positive time gaps, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, rational boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
+    "target:feat-math/test/dag_composition": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/dag_composition.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/export_report": {
       "discovery": {
         "doctest": false,
@@ -4275,6 +4292,23 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/foundation_operator_admission": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/foundation_operator_admission.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/golden": {
       "discovery": {
         "doctest": false,
@@ -4323,6 +4357,23 @@
         "full-default"
       ],
       "scope": "Concrete GP grammar constructions for regression, links, splines, finite decision trees/ensembles, kernels, transforms and reductions; real Python/Rust/strict C++17 compilation, exact evaluator words plus separate mathematical references. Explicit eager selection/protected arithmetic/resource boundaries; no universal grammar, fit or shared harness claim."
+    },
+    "target:feat-math/test/gumbel_root": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/gumbel_root.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:feat-math/test/historical_v1": {
       "discovery": {
@@ -4634,6 +4685,23 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/numeric_profile_v2": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/numeric_profile_v2.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/numerical_policy_execution": {
       "discovery": {
         "doctest": false,
@@ -4681,6 +4749,40 @@
         "full-default"
       ],
       "scope": "B07 opt-in numerical helper prerequisite: fdlibm-style asinh, retained-partial reductions and exact-square scaled L2, independent boundary/whole-family oracles, exact value/fault parity in Rust/Python/C++17 and C++20/sanitizer matrix, and old v1 behavior. Full program/model/recipe/profile/generation/EEC admission remains held."
+    },
+    "target:feat-math/test/oof_composition": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/oof_composition.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/operator_bandit": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/operator_bandit.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:feat-math/test/ordered_axis_contract": {
       "discovery": {
@@ -4781,6 +4883,23 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/restricted_kernel_candidate": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/restricted_kernel_candidate.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/ridge_press_oracle": {
       "discovery": {
         "doctest": false,
@@ -4841,6 +4960,23 @@
       "lanes": [
         "rust-check",
         "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:feat-math/test/search_strategy": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/search_strategy.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
@@ -5494,6 +5630,38 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-bench/test/shared_strategy": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-bench/tests/shared_strategy.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-bench/test/strategy_controls": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-bench/tests/strategy_controls.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-bench/test/transfer_independent": {
       "discovery": {
         "doctest": false,
@@ -5704,6 +5872,38 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. X1 additionally executes jope pipeline run --emit cpp17-fitted, compiles the recorded standalone build and re-derives its receipt. E6 umbrella CLI tests additionally execute kernel2 profile dispatch, default fitted-C++ emission, v4 publication/evidence verification and refusal exit codes for unsupported cut/concurrency/incumbent configurations."
+    },
+    "target:jope-cli/test/planted_tasks": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-cli/tests/planted_tasks.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-cli/test/research_workflow": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-cli/tests/research_workflow.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-datasets/bin/jope-datasets": {
       "discovery": {
@@ -7139,6 +7339,38 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-learning/test/accepted_root_publication": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/accepted_root_publication.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/arena_exact": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/arena_exact.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-learning/test/champions_fixture": {
       "discovery": {
         "doctest": false,
@@ -7219,6 +7451,22 @@
       ],
       "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
     },
+    "target:jope-learning/test/league_registry": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/league_registry.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-learning/test/learning_snapshot": {
       "discovery": {
         "doctest": false,
@@ -7241,6 +7489,22 @@
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-learning/tests/ledger_tamper.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/measured_universe": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/measured_universe.rs",
         "test": true
       },
       "dispositions": [],
@@ -7347,6 +7611,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-learning/test/policy_discovery_protocol": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/policy_discovery_protocol.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-learning/test/pools": {
       "discovery": {
         "doctest": false,
@@ -7395,6 +7675,54 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-learning/test/progress_segments": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/progress_segments.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/proposal_delivery": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/proposal_delivery.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/qd_archive": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/qd_archive.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-learning/test/qualify_gate": {
       "discovery": {
         "doctest": false,
@@ -7411,12 +7739,92 @@
       ],
       "scope": "G23/G36 flag-off qualify gate fixtures: JOPE_SEAL_GATE_ENABLED is off by default and only the exact value 1 turns it on; seal and promotion requests are refused before their input is read, and still refused with the flag on (not ready, or owner ruling pending: this build has no seal or promotion path). Read-only roster readiness on synthetic proposals and the committed judge/SEALED_ROSTER_PROPOSAL.json; Gate F promotion verdicts on synthetic confirmation arenas. No seal, adoption, promotion, corpus, network or GPU."
     },
+    "target:jope-learning/test/ranked_curriculum": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/ranked_curriculum.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-learning/test/recovery_cli": {
       "discovery": {
         "doctest": false,
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-learning/tests/recovery_cli.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/replay_admission": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/replay_admission.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/replay_sampling_design": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/replay_sampling_design.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/research_loop_smoke": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/research_loop_smoke.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/research_roles": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/research_roles.rs",
         "test": true
       },
       "dispositions": [],
@@ -7443,6 +7851,22 @@
       ],
       "scope": "S3 retention brain fixtures: every action path, hard-T0 guard, reference roles, lifecycle hazards and fail-closed inputs on synthetic ledgers. Offline; no S3 call, no apply path."
     },
+    "target:jope-learning/test/retention_obligations": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/retention_obligations.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-learning/test/retention_pack": {
       "discovery": {
         "doctest": false,
@@ -7458,6 +7882,54 @@
         "full-default"
       ],
       "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
+    },
+    "target:jope-learning/test/retention_value": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/retention_value.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/retirement_candidate": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/retirement_candidate.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/retrieval_exposure": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/retrieval_exposure.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-learning/test/schema_agreement": {
       "discovery": {
@@ -7481,6 +7953,22 @@
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-learning/tests/score_import.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/search_event_ingest": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/search_event_ingest.rs",
         "test": true
       },
       "dispositions": [],
@@ -7571,6 +8059,54 @@
       ],
       "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
     },
+    "target:jope-learning/test/teacher_qualification": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/teacher_qualification.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/verified_assessment": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/verified_assessment.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-learning/test/wave_archive": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/wave_archive.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-models/bin/jope-models": {
       "discovery": {
         "doctest": false,
@@ -7652,6 +8188,22 @@
         "rust-test",
         "full-default",
         "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-motifs/test/motif_admission": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-motifs/tests/motif_admission.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
@@ -8049,6 +8601,24 @@
         "rust-check"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
+    "target:jope-parallel/example/research_loop_fixture": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "neural"
+        ],
+        "source": "crates/jope-engine/examples/research_loop_fixture.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [
+        "full-neural"
+      ],
+      "scope": "Explicit jope-parallel --features neural example build/check under full-neural. Binary/example runtime behavior is not claimed by build or its unit-test harness."
     },
     "target:jope-parallel/example/select_cohort": {
       "discovery": {
@@ -8684,6 +9254,22 @@
       ],
       "scope": "W6 follow-up: native-loop training inputs declare their continuation mode at jope.smartcluster_input.v2; inputs frozen as v1 re-materialize byte for byte undeclared; the worker and native graph refuse any other schema/declaration pairing; CPU contract fixtures, no worker executed."
     },
+    "target:jope-parallel/test/native_loop_v3": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/native_loop_v3.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-parallel/test/objective_fixtures": {
       "discovery": {
         "doctest": false,
@@ -8698,6 +9284,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check compiles an empty neural-gated target; under the neural feature, CPU-only independent f64 fixtures for the lineage-B objective terms, gradients, partition dependence and inactive tensors. No GPU, BF16 or training qualification."
+    },
+    "target:jope-parallel/test/optimizer_recipes": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/optimizer_recipes.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-parallel/test/outer_release_cli": {
       "discovery": {
@@ -8740,6 +9342,22 @@
       "dispositions": [],
       "lanes": [
         "rust-check",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-parallel/test/policy_lineage": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/policy_lineage.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
@@ -8830,6 +9448,22 @@
       "dispositions": [],
       "lanes": [
         "rust-check",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-parallel/test/replay_bridge": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/replay_bridge.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
@@ -9029,6 +9663,22 @@
       ],
       "scope": "CPU-only fixtures: corpus runtime-observation exclusion and refusal (default features); comparison, group and label validation at the objective boundary (neural feature). No GPU or training qualification."
     },
+    "target:jope-parallel/test/training_intent": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/training_intent.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-parallel/test/view_contracts": {
       "discovery": {
         "doctest": false,
@@ -9179,12 +9829,44 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-pipeline/test/fingerprint_false_hits": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/fingerprint_false_hits.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-pipeline/test/modern_gp_candidate": {
       "discovery": {
         "doctest": false,
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/numeric_profile_routing": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/numeric_profile_routing.rs",
         "test": true
       },
       "dispositions": [],
@@ -9211,6 +9893,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-pipeline/test/resource_accounting": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/resource_accounting.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-pipeline/test/schema_agreement": {
       "discovery": {
         "doctest": false,
@@ -9227,12 +9925,60 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-pipeline/test/search_events": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/search_events.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/seed_set_v2": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/seed_set_v2.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-pipeline/test/stage_cache_identity": {
       "discovery": {
         "doctest": false,
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-pipeline/tests/stage_cache_identity.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/strategy_controls": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/strategy_controls.rs",
         "test": true
       },
       "dispositions": [],
@@ -9391,6 +10137,22 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Grammar masks versus the typed parser over the committed vocabularies; no model, GPU or proposal-quality claim."
     },
+    "target:jope-policy/test/typed_edit_policy": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-policy/tests/typed_edit_policy.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-records/bin/jope-records": {
       "discovery": {
         "doctest": false,
@@ -9459,6 +10221,22 @@
       ],
       "scope": "Core-IP record verifiers and STATUS/PROGRESS renderers against the committed records and adversarial fixtures: findings inventory integrity, disposition evidence binding, claim-to-evidence binding and revocation closure (synthetic evidence never backs live, measurement or promotion claims), test-inventory completeness against this map, task-state evidence rules, and byte-identical STATUS.md/PROGRESS.md renders with stale-view detection; the accepted tensor-inventory verifier on synthetic safetensors fixtures (layout, per-tensor digests, dtype/field closure, role accounting, Candle forward references, optimizer moments; the real asset is verified on the host) and tensors.json against the documented geometry; and the independent replay of every retained reproducible Elo ladder (Golden45 included, zstd decoded in process) with substitution, duplicate-delivery and disposition-upgrade refusals, historical-ranking-only consumers, lineage continuity/exposure refusals and derived plot-table consistency. Records status only; it qualifies nothing."
     },
+    "target:jope-records/test/research_capsule": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-records/tests/research_capsule.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-records/test/research_state": {
       "discovery": {
         "doctest": false,
@@ -9474,6 +10252,22 @@
         "full-default"
       ],
       "scope": "Additive jope.canonical-json/v1 wire-contract conformance suite (I02): positive canonical payload byte and length-prefixed domain-separated SHA-256 vectors (reordered nested keys, Unicode precomposed vs combining preservation, array order, ExactF32/ExactF64 +0/-0/subnormal bit tags, display_f64 stripping), negative lexical/numeric/cycle/authority refusals (duplicate keys at all depths, unpaired surrogates, -0/leading-zero/overflow integers, raw floats, NaN/Inf bits, self-referential own_id/signature/later_assessment_id cycles, unknown fields/enums), native/inference/storage adapter golden-byte equality, VerifiedMeasuredOutcome proof verification, independent Node.js cross-language vector verification, and 29 legacy schema + historical hash preservation."
+    },
+    "target:jope-records/test/wave_git": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-records/tests/wave_git.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
     "target:jope-records/test/wire_contract": {
       "discovery": {

@@ -1813,11 +1813,11 @@
     },
     "target:feat-math/test/artifact_target_binding": {
       "role": "regression",
+      "source": "crates/feat-math/tests/artifact_target_binding.rs",
       "subsystems": [
         "gp",
         "policy"
-      ],
-      "source": "crates/feat-math/tests/artifact_target_binding.rs"
+      ]
     },
     "target:feat-math/test/bench": {
       "role": "regression",
@@ -1899,6 +1899,14 @@
         "export"
       ]
     },
+    "target:feat-math/test/dag_composition": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/dag_composition.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
     "target:feat-math/test/export_report": {
       "role": "regression",
       "subsystems": [
@@ -1927,6 +1935,14 @@
         "fitting"
       ]
     },
+    "target:feat-math/test/foundation_operator_admission": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/foundation_operator_admission.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
     "target:feat-math/test/golden": {
       "role": "regression",
       "subsystems": [
@@ -1945,6 +1961,14 @@
       "subsystems": [
         "gp",
         "export"
+      ]
+    },
+    "target:feat-math/test/gumbel_root": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/gumbel_root.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
       ]
     },
     "target:feat-math/test/historical_v1": {
@@ -2073,6 +2097,14 @@
         "gp"
       ]
     },
+    "target:feat-math/test/numeric_profile_v2": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/numeric_profile_v2.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
     "target:feat-math/test/numerical_policy_execution": {
       "role": "regression",
       "subsystems": [
@@ -2092,6 +2124,22 @@
       "subsystems": [
         "gp",
         "export"
+      ]
+    },
+    "target:feat-math/test/oof_composition": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/oof_composition.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
+      ]
+    },
+    "target:feat-math/test/operator_bandit": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/operator_bandit.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
       ]
     },
     "target:feat-math/test/ordered_axis_contract": {
@@ -2122,17 +2170,25 @@
     },
     "target:feat-math/test/registry_agreement": {
       "role": "regression",
+      "source": "crates/feat-math/tests/registry_agreement.rs",
       "subsystems": [
         "gp",
         "policy"
-      ],
-      "source": "crates/feat-math/tests/registry_agreement.rs"
+      ]
     },
     "target:feat-math/test/registry_vocabulary": {
       "role": "regression",
       "subsystems": [
         "gp",
         "policy"
+      ]
+    },
+    "target:feat-math/test/restricted_kernel_candidate": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/restricted_kernel_candidate.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
       ]
     },
     "target:feat-math/test/ridge_press_oracle": {
@@ -2161,6 +2217,14 @@
       "subsystems": [
         "fitting",
         "gp"
+      ]
+    },
+    "target:feat-math/test/search_strategy": {
+      "role": "regression",
+      "source": "crates/feat-math/tests/search_strategy.rs",
+      "subsystems": [
+        "gp",
+        "fitting"
       ]
     },
     "target:feat-math/test/stable_exponential_execution_v2": {
@@ -2208,11 +2272,11 @@
     },
     "target:feat-math/test/typed_graph": {
       "role": "regression",
+      "source": "crates/feat-math/tests/typed_graph.rs",
       "subsystems": [
         "gp",
         "policy"
-      ],
-      "source": "crates/feat-math/tests/typed_graph.rs"
+      ]
     },
     "target:feat-math/test/versioned_conversion": {
       "role": "regression",
@@ -2413,6 +2477,20 @@
         "fitting"
       ]
     },
+    "target:jope-bench/test/shared_strategy": {
+      "role": "regression",
+      "source": "crates/jope-bench/tests/shared_strategy.rs",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
+    "target:jope-bench/test/strategy_controls": {
+      "role": "regression",
+      "source": "crates/jope-bench/tests/strategy_controls.rs",
+      "subsystems": [
+        "evaluation"
+      ]
+    },
     "target:jope-bench/test/transfer_independent": {
       "role": "regression",
       "subsystems": [
@@ -2473,6 +2551,22 @@
     },
     "target:jope-cli/test/pipeline_cli": {
       "role": "regression",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-cli/test/planted_tasks": {
+      "role": "regression",
+      "source": "crates/jope-cli/tests/planted_tasks.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-cli/test/research_workflow": {
+      "role": "regression",
+      "source": "crates/jope-cli/tests/research_workflow.rs",
       "subsystems": [
         "gp",
         "orchestration"
@@ -2861,6 +2955,22 @@
         "storage"
       ]
     },
+    "target:jope-learning/test/accepted_root_publication": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/accepted_root_publication.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/arena_exact": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/arena_exact.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/champions_fixture": {
       "role": "regression",
       "subsystems": [
@@ -2883,35 +2993,51 @@
     "target:jope-learning/test/executable_cache": {
       "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
       "role": "regression",
+      "source": "crates/jope-learning/tests/executable_cache.rs",
       "subsystems": [
         "storage",
         "evidence"
-      ],
-      "source": "crates/jope-learning/tests/executable_cache.rs"
+      ]
     },
     "target:jope-learning/test/lake_views": {
       "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
       "role": "regression",
+      "source": "crates/jope-learning/tests/lake_views.rs",
       "subsystems": [
         "storage",
         "evidence"
-      ],
-      "source": "crates/jope-learning/tests/lake_views.rs"
+      ]
+    },
+    "target:jope-learning/test/league_registry": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/league_registry.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
     },
     "target:jope-learning/test/learning_snapshot": {
       "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
       "role": "regression",
+      "source": "crates/jope-learning/tests/learning_snapshot.rs",
       "subsystems": [
         "storage",
         "evidence"
-      ],
-      "source": "crates/jope-learning/tests/learning_snapshot.rs"
+      ]
     },
     "target:jope-learning/test/ledger_tamper": {
       "role": "regression",
       "subsystems": [
         "storage",
         "teaching"
+      ]
+    },
+    "target:jope-learning/test/measured_universe": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/measured_universe.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
       ]
     },
     "target:jope-learning/test/mirror_lost_update": {
@@ -2935,11 +3061,11 @@
     "target:jope-learning/test/observation_import": {
       "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
       "role": "regression",
+      "source": "crates/jope-learning/tests/observation_import.rs",
       "subsystems": [
         "storage",
         "evidence"
-      ],
-      "source": "crates/jope-learning/tests/observation_import.rs"
+      ]
     },
     "target:jope-learning/test/pipeline_bank": {
       "role": "regression",
@@ -2950,6 +3076,14 @@
     },
     "target:jope-learning/test/pipeline_hwm": {
       "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/policy_discovery_protocol": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/policy_discovery_protocol.rs",
       "subsystems": [
         "storage",
         "evidence"
@@ -2970,11 +3104,43 @@
         "storage"
       ]
     },
+    "target:jope-learning/test/progress_segments": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/progress_segments.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/proposal_delivery": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/proposal_delivery.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/qd_archive": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/qd_archive.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/qualify_gate": {
       "note": "G23/G36 preparation: flag-off refusal and read-only roster and promotion evaluator fixtures. No seal, adoption or promotion path exists in this build; the owner rulings are pending.",
       "role": "regression",
       "subsystems": [
         "evaluation",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/ranked_curriculum": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/ranked_curriculum.rs",
+      "subsystems": [
+        "storage",
         "evidence"
       ]
     },
@@ -2985,6 +3151,38 @@
         "teaching"
       ]
     },
+    "target:jope-learning/test/replay_admission": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/replay_admission.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/replay_sampling_design": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/replay_sampling_design.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/research_loop_smoke": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/research_loop_smoke.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/research_roles": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/research_roles.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/retention": {
       "note": "S3 retention brain: read-only dry-run classifier fixtures (hard T0, roster/val263 pins, fail-closed inputs, lifecycle hazards). Offline fixture proof; no S3 access, not an applied plan.",
       "role": "regression",
@@ -2993,9 +3191,41 @@
         "evidence"
       ]
     },
+    "target:jope-learning/test/retention_obligations": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/retention_obligations.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-learning/test/retention_pack": {
       "note": "S3 retention write side: tag invariants, verifiable zstd packs and the gp_distilled/v1 Parquet table on fixtures. Offline; no writer integration.",
       "role": "regression",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/retention_value": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/retention_value.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/retirement_candidate": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/retirement_candidate.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/retrieval_exposure": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/retrieval_exposure.rs",
       "subsystems": [
         "storage",
         "evidence"
@@ -3011,6 +3241,14 @@
       "role": "regression",
       "subsystems": [
         "teaching"
+      ]
+    },
+    "target:jope-learning/test/search_event_ingest": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/search_event_ingest.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
       ]
     },
     "target:jope-learning/test/selfplay_round_qual": {
@@ -3042,6 +3280,30 @@
       "role": "research",
       "source": "crates/jope-learning/tests/support_transition.rs"
     },
+    "target:jope-learning/test/teacher_qualification": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/teacher_qualification.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/verified_assessment": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/verified_assessment.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
+    "target:jope-learning/test/wave_archive": {
+      "role": "regression",
+      "source": "crates/jope-learning/tests/wave_archive.rs",
+      "subsystems": [
+        "storage",
+        "evidence"
+      ]
+    },
     "target:jope-models/bin/jope-models": {
       "role": "regression",
       "subsystems": [
@@ -3070,6 +3332,13 @@
     },
     "target:jope-motifs/lib/jope_motifs": {
       "role": "regression",
+      "subsystems": [
+        "gp"
+      ]
+    },
+    "target:jope-motifs/test/motif_admission": {
+      "role": "regression",
+      "source": "crates/jope-motifs/tests/motif_admission.rs",
       "subsystems": [
         "gp"
       ]
@@ -3482,11 +3751,11 @@
     },
     "target:jope-parallel/test/lineage_checkpoint_recovery": {
       "role": "regression",
+      "source": "crates/jope-engine/tests/lineage_checkpoint_recovery.rs",
       "subsystems": [
         "training",
         "storage"
-      ],
-      "source": "crates/jope-engine/tests/lineage_checkpoint_recovery.rs"
+      ]
     },
     "target:jope-parallel/test/lossless_partition": {
       "role": "regression",
@@ -3501,10 +3770,26 @@
         "orchestration"
       ]
     },
+    "target:jope-parallel/test/native_loop_v3": {
+      "role": "regression",
+      "source": "crates/jope-engine/tests/native_loop_v3.rs",
+      "subsystems": [
+        "training",
+        "storage"
+      ]
+    },
     "target:jope-parallel/test/objective_fixtures": {
       "role": "regression",
       "subsystems": [
         "training"
+      ]
+    },
+    "target:jope-parallel/test/optimizer_recipes": {
+      "role": "regression",
+      "source": "crates/jope-engine/tests/optimizer_recipes.rs",
+      "subsystems": [
+        "training",
+        "storage"
       ]
     },
     "target:jope-parallel/test/outer_release_cli": {
@@ -3522,11 +3807,19 @@
     },
     "target:jope-parallel/test/policy_export_lineage": {
       "role": "regression",
+      "source": "crates/jope-engine/tests/policy_export_lineage.rs",
       "subsystems": [
         "policy",
         "training"
-      ],
-      "source": "crates/jope-engine/tests/policy_export_lineage.rs"
+      ]
+    },
+    "target:jope-parallel/test/policy_lineage": {
+      "role": "regression",
+      "source": "crates/jope-engine/tests/policy_lineage.rs",
+      "subsystems": [
+        "training",
+        "storage"
+      ]
     },
     "target:jope-parallel/test/preparation_semantics": {
       "role": "regression",
@@ -3563,6 +3856,14 @@
       "role": "regression",
       "subsystems": [
         "preparation"
+      ]
+    },
+    "target:jope-parallel/test/replay_bridge": {
+      "role": "regression",
+      "source": "crates/jope-engine/tests/replay_bridge.rs",
+      "subsystems": [
+        "training",
+        "storage"
       ]
     },
     "target:jope-parallel/test/replay_training": {
@@ -3611,11 +3912,11 @@
     },
     "target:jope-parallel/test/structured_critic": {
       "role": "regression",
+      "source": "crates/jope-engine/tests/structured_critic.rs",
       "subsystems": [
         "training",
         "storage"
-      ],
-      "source": "crates/jope-engine/tests/structured_critic.rs"
+      ]
     },
     "target:jope-parallel/test/teacher_counterfactuals": {
       "role": "regression",
@@ -3648,6 +3949,14 @@
       "subsystems": [
         "training",
         "teaching"
+      ]
+    },
+    "target:jope-parallel/test/training_intent": {
+      "role": "regression",
+      "source": "crates/jope-engine/tests/training_intent.rs",
+      "subsystems": [
+        "training",
+        "storage"
       ]
     },
     "target:jope-parallel/test/view_contracts": {
@@ -3685,11 +3994,11 @@
     },
     "target:jope-pipeline/test/artifact_target_binding": {
       "role": "regression",
+      "source": "crates/jope-pipeline/tests/artifact_target_binding.rs",
       "subsystems": [
         "gp",
         "orchestration"
-      ],
-      "source": "crates/jope-pipeline/tests/artifact_target_binding.rs"
+      ]
     },
     "target:jope-pipeline/test/dependency_fence": {
       "role": "regression",
@@ -3698,21 +4007,45 @@
         "orchestration"
       ]
     },
-    "target:jope-pipeline/test/modern_gp_candidate": {
+    "target:jope-pipeline/test/fingerprint_false_hits": {
       "role": "regression",
+      "source": "crates/jope-pipeline/tests/fingerprint_false_hits.rs",
       "subsystems": [
         "gp",
         "orchestration"
-      ],
-      "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs"
+      ]
+    },
+    "target:jope-pipeline/test/modern_gp_candidate": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-pipeline/test/numeric_profile_routing": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/numeric_profile_routing.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
     },
     "target:jope-pipeline/test/residual_closure": {
       "role": "regression",
+      "source": "crates/jope-pipeline/tests/residual_closure.rs",
       "subsystems": [
         "gp",
         "orchestration"
-      ],
-      "source": "crates/jope-pipeline/tests/residual_closure.rs"
+      ]
+    },
+    "target:jope-pipeline/test/resource_accounting": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/resource_accounting.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
     },
     "target:jope-pipeline/test/schema_agreement": {
       "role": "regression",
@@ -3721,13 +4054,37 @@
         "policy"
       ]
     },
-    "target:jope-pipeline/test/stage_cache_identity": {
+    "target:jope-pipeline/test/search_events": {
       "role": "regression",
+      "source": "crates/jope-pipeline/tests/search_events.rs",
       "subsystems": [
         "gp",
         "orchestration"
-      ],
-      "source": "crates/jope-pipeline/tests/stage_cache_identity.rs"
+      ]
+    },
+    "target:jope-pipeline/test/seed_set_v2": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/seed_set_v2.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-pipeline/test/stage_cache_identity": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/stage_cache_identity.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
+    },
+    "target:jope-pipeline/test/strategy_controls": {
+      "role": "regression",
+      "source": "crates/jope-pipeline/tests/strategy_controls.rs",
+      "subsystems": [
+        "gp",
+        "orchestration"
+      ]
     },
     "target:jope-policy/bin/jope-context-worker": {
       "role": "regression",
@@ -3752,10 +4109,10 @@
     },
     "target:jope-policy/test/challenger_lineage": {
       "role": "regression",
+      "source": "crates/jope-policy/tests/challenger_lineage.rs",
       "subsystems": [
         "policy"
-      ],
-      "source": "crates/jope-policy/tests/challenger_lineage.rs"
+      ]
     },
     "target:jope-policy/test/decode_outcomes": {
       "role": "regression",
@@ -3786,10 +4143,17 @@
     },
     "target:jope-policy/test/support_transition": {
       "role": "regression",
+      "source": "crates/jope-policy/tests/support_transition.rs",
       "subsystems": [
         "policy"
-      ],
-      "source": "crates/jope-policy/tests/support_transition.rs"
+      ]
+    },
+    "target:jope-policy/test/typed_edit_policy": {
+      "role": "regression",
+      "source": "crates/jope-policy/tests/typed_edit_policy.rs",
+      "subsystems": [
+        "policy"
+      ]
     },
     "target:jope-records/bin/jope-records": {
       "role": "regression",
@@ -3815,12 +4179,26 @@
         "policy"
       ]
     },
-    "target:jope-records/test/research_state": {
+    "target:jope-records/test/research_capsule": {
       "role": "regression",
+      "source": "crates/jope-records/tests/research_capsule.rs",
       "subsystems": [
         "evidence"
-      ],
-      "source": "crates/jope-records/tests/research_state.rs"
+      ]
+    },
+    "target:jope-records/test/research_state": {
+      "role": "regression",
+      "source": "crates/jope-records/tests/research_state.rs",
+      "subsystems": [
+        "evidence"
+      ]
+    },
+    "target:jope-records/test/wave_git": {
+      "role": "regression",
+      "source": "crates/jope-records/tests/wave_git.rs",
+      "subsystems": [
+        "evidence"
+      ]
     },
     "target:jope-records/test/wire_contract": {
       "role": "regression",
