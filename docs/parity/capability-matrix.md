@@ -25,7 +25,7 @@ you saw.
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-example | 4 | 0 | 4 | 0 | 0 | 0 |
+| new-example | 5 | 0 | 5 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -42,7 +42,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **824** | **353** | **61** | **1** | **402** | **7** |
+| **total** | **825** | **353** | **62** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 298.
 
@@ -840,6 +840,7 @@ you saw.
 | new-example | (new) pipeline receipt schema | crates/jope-pipeline/examples/receipt_schema.rs (receipt_schema) | jope-pipeline::schema_agreement committed_schema_is_generated_from_code_exactly | new | Regenerate the v3 receipt schema from the Rust contract; v1 and v2 retained for reading. |
 | new-example | (new) W7 test-only native-loop fixture executable | crates/jope-engine/tests/support/native_loop_fixture.rs (jope-native-loop-fixture) | jope-parallel::bounded_census cli_collect_merge_and_preflight_round_trip_without_side_effects; jope-parallel::bounded_smartcluster smartcluster_ranks_commit_the_whole_group_exactly_once | new | Test-only, not a product binary: the `jope-native-loop` command line (`native_loop::cli`) observing the checked-in fixture host (`tests/fixtures/host`) instead of the machine the tests run on, so the census and SmartCluster fixtures pass in the read-only runner container whose `/etc/machine-id` is empty. Cargo's default test target selection builds it; the default `cargo build` and `cargo install` do not produce it. The product binary hardwires `HostSources::system()` |
 | new-example | (new) kernel2 capability report | crates/feat-math/examples/capability_dump.rs (capability_dump) | feat-math::kernel::capabilities::tests::rendered_text_is_lint_clean_and_document_is_fresh; feat-math::capability_manifest kernel_profiles_equal_the_manifest_tier_in_both_directions | new | Print the current capability declaration, four revisioned search profiles, or the generated Markdown. |
+| new-example | (new) operator registry v2 codegen | crates/feat-math/examples/registry_codegen.rs (registry_codegen) | feat-math::registry_agreement generator_is_reproducible_and_checked_in_bytes_match | new | Deterministic codegen and freshness verifier for `crates/feat-math/registry/operators.toml` (`I07`). |
 | new-bin | (new) bounded CPU context proof | crates/jope-pipeline/src/bin/jope-context-proof.rs (jope-context-proof) | none | new | Private controller behind qualified-context; authentic bounded reference execution and numerical qualification remain separate host evidence. |
 | new-bin | (new) CPU context worker | crates/jope-policy/src/bin/jope-context-worker.rs (jope-context-worker) | none | new | Private context-producer feature worker; accepted assets, fixed numerical policy, no GPU hold bypass. Library contracts do not establish model parity. |
 | new-bin | (new) policy proposal worker | crates/jope-policy/src/bin/jope-policy-producer.rs (jope-policy-producer) | none | new | Private regression proposal worker for the accepted checkpoint or exactly one pinned native challenger (DEMO-3); source implementation is distinct from actual bounded model/proposal/fit qualification. |

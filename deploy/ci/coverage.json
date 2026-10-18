@@ -4016,6 +4016,23 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/artifact_target_binding": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/feat-math/tests/artifact_target_binding.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "emitters",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/bench": {
       "discovery": {
         "doctest": false,
@@ -7170,6 +7187,54 @@
       ],
       "scope": "GB02 Rust custody-v2 local dry-run: all original69 scenarios/28 identities, keeper/version/hold boundaries,25GB-day alarm/refusal, exact local pack/readback/SHA joins, bounded PAX/gzip/TAR and durable failure/fresh-process fixtures. Nonqualifying; no live S3 adapter, remote mutations, retention application or scoring/training authority."
     },
+    "target:jope-learning/test/executable_cache": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/executable_cache.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
+    },
+    "target:jope-learning/test/lake_views": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/lake_views.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
+    },
+    "target:jope-learning/test/learning_snapshot": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/learning_snapshot.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Write-time tags, jope.s3-pack/v1 pack round-trip/tamper checks and gp_distilled/v1 Parquet round-trip/validation on fixtures. Offline; no S3 call."
+    },
     "target:jope-learning/test/ledger_tamper": {
       "discovery": {
         "doctest": false,
@@ -7480,6 +7545,22 @@
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-learning/tests/support.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "GB05/J13 CPU fixtures: immutable versioned successor availability, TRAIN role/hash/token/consuming-path refusals, pinned real-v1 forward golden, EOS-inclusive shared masks and seeded sampling. All supports nonqualifying; no learner/objective switch, program execution or promotion."
+    },
+    "target:jope-learning/test/support_transition": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-learning/tests/support_transition.rs",
         "test": true
       },
       "dispositions": [],
@@ -8558,6 +8639,21 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-parallel/test/lineage_checkpoint_recovery": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/lineage_checkpoint_recovery.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "scope": "Neural-gated CPU fixtures: atomic checkpoint publication with phase-by-phase stop injection, stale-temporary tolerance, commit-time and load-time refusal matrix, legacy classification and exact reload. No GPU, NCCL, multi-host or remote publication."
+    },
     "target:jope-parallel/test/lossless_partition": {
       "discovery": {
         "doctest": false,
@@ -8843,6 +8939,21 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:jope-parallel/test/structured_critic": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-engine/tests/structured_critic.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "full-default"
+      ],
+      "scope": "Neural-gated CPU fixtures: atomic checkpoint publication with phase-by-phase stop injection, stale-temporary tolerance, commit-time and load-time refusal matrix, legacy classification and exact reload. No GPU, NCCL, multi-host or remote publication."
+    },
     "target:jope-parallel/test/teacher_counterfactuals": {
       "discovery": {
         "doctest": false,
@@ -9036,12 +9147,60 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Track E4/E5 library tests additionally cover traced kernel2 measurement, Hard refusal, Domain/constant evidence, WP1.5 penalty/anchored ties, training-only whole-pipeline constant refinement, shared evaluation-budget accounting, poisoned held-out isolation and deterministic replay. Shipping search/CLI/receipt integration is the separate E6 gate. Review regressions additionally cover rectangular training/holdout admission, both fitted-width mismatch directions, retained completed-stage fault counts on downstream failure, preflight refinement refusal and unchanged reference model/prediction bits. E6 refinement admission tests cover caller cancellation/deadline checks before prefixes, every trial and child remeasurement; stopped-versus-faulted accounting; shared trial/child allowance; exact always-admitted compatibility; and training-only refinement under held-out poison. The shipping coordinator, CLI and v4 receipt remain separate gates. X1 fitted pipeline export tests additionally prove opt-in training-partition refit, unchanged legacy/default artifact bytes, standalone strict C++17 inference bit parity for expressions and fitted heads, a generated expression-growth child, numeric CSV refusal, artifact coexistence and receipt hash verification. Shipping kernel2 search/v4 receipts/EEC remain separate gates. E6 single-cut coordinator tests cover shipped-profile offspring, canonical admission, fault-aware unique parents, shared candidate/trial allowance, training-only generation refinement, deterministic byte replay and cancellation/deadline refusal. CLI/v4, multiple cuts and concurrent kernel2 runs remain separate E6 gates; legacy entry points are unchanged. E6 opt-in CLI/v4 tests cover explicit shipped-profile/fault/refinement admission, lossless fault sidecars, shared trial/measurement accounting, evidence re-derivation, safe paths, tamper refusal, cancellation, deterministic replay and unchanged implicit/explicit legacy receipt bytes. Multiple cuts/concurrency/EEC qualification remain separate gates. Review correction proves that rehashed Rust/Python artifacts still match the selected emission manifest and that renamed paths cannot bypass that binding; valid artifacts continue to verify."
     },
+    "target:jope-pipeline/test/artifact_target_binding": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/artifact_target_binding.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:jope-pipeline/test/dependency_fence": {
       "discovery": {
         "doctest": false,
         "kind": "target",
         "required_features": [],
         "source": "crates/jope-pipeline/tests/dependency_fence.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/modern_gp_candidate": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/modern_gp_candidate.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-pipeline/test/residual_closure": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-pipeline/tests/residual_closure.rs",
         "test": true
       },
       "dispositions": [],
@@ -9215,6 +9374,22 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Structural scorer dependency and token-multiset collision fixture on synthetic CPU weights; no accepted-weight, GPU or ranking-utility claim."
+    },
+    "target:jope-policy/test/support_transition": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-policy/tests/support_transition.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile. Grammar masks versus the typed parser over the committed vocabularies; no model, GPU or proposal-quality claim."
     },
     "target:jope-records/bin/jope-records": {
       "discovery": {
