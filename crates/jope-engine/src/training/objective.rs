@@ -149,7 +149,7 @@ pub const REWARD_HEADS: i64 = 4;
 /// The per-record labels the objective consumes. `record` is the corpus record
 /// identity the row was sampled as; it is what makes duplicate detection and
 /// group membership checkable at the objective boundary.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize)]
 pub struct RowLabels {
     pub record: usize,
     pub context: usize,
