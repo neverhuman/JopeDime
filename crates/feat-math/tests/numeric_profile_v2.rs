@@ -193,9 +193,22 @@ fn iid_oof_refits_without_held_labels() {
         42,
     )
     .unwrap();
+    assert_eq!(p.assignment, a);
+    assert_eq!(p.fold_identity_sha256, q.fold_identity_sha256);
+    assert_eq!(p.fold_identity_sha256.len(), 64);
+    let other = feat_math::numeric_v2::predict_oof_iid(
+        profile(1),
+        &genome("(pipe X (ridge))"),
+        &x,
+        &y,
+        3,
+        43,
+    )
+    .unwrap();
+    assert_ne!(p.fold_identity_sha256, other.fold_identity_sha256);
     for i in 0..18 {
         if a[i] == a[0] {
-            assert_eq!(p[i], q[i]);
+            assert_eq!(p.predictions[i], q.predictions[i]);
         }
     }
 }

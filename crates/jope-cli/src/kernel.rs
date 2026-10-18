@@ -282,6 +282,13 @@ fn emit_genome_with_options_impl(
 }
 
 fn read_numeric_training_csv(path: &Path) -> Result<(feat_math::Rows, Vec<f64>)> {
+    let (x, y, _) = read_numeric_training_csv_with_schema(path)?;
+    Ok((x, y))
+}
+
+fn read_numeric_training_csv_with_schema(
+    path: &Path,
+) -> Result<(feat_math::Rows, Vec<f64>, Vec<String>)> {
     let parent = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -317,7 +324,7 @@ fn read_numeric_training_csv(path: &Path) -> Result<(feat_math::Rows, Vec<f64>)>
         x.push(numbers[..width].to_vec());
         y.push(numbers[width]);
     }
-    Ok((x, y))
+    Ok((x, y, table.headers[..width].to_vec()))
 }
 
 const FITTED_STANDALONE: &str = jope_pipeline::emit::fitted::STANDALONE;
@@ -546,7 +553,11 @@ pub fn emit_numeric_v2(
     options: feat_math::numeric_v2_emit::OptionsV2,
     output: &Path,
 ) -> Result<feat_math::numeric_v2_emit::FittedArtifactV2> {
-    let (x, y) = read_numeric_training_csv(train)?;
+    let (x, y, schema) = read_numeric_training_csv_with_schema(train)?;
+    anyhow::ensure!(
+        profile.schema == schema,
+        "numeric profile/CSV schema order mismatch"
+    );
     jope_pipeline::emit::emit_numeric_v2(genome, profile, &x, &y, options, output)
 }
 
@@ -572,6 +583,14 @@ mod numeric_v2_tests {
             dir.path(),
         )
         .unwrap();
+        assert!(emit_numeric_v2(
+            "(pipe X (ridge))",
+            &csv,
+            feat_math::numeric_v2::NumericProfileV2::new(vec!["wrong".into()]),
+            options.clone(),
+            dir.path()
+        )
+        .is_err());
         let model =
             jope_pipeline::emit::reload_numeric_v2(dir.path(), &options, &artifact.model_sha256)
                 .unwrap();

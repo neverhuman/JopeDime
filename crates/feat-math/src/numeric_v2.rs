@@ -411,6 +411,19 @@ impl TransformV2 {
     }
 }
 
+/// Split identity travels with predictions so a caller cannot mistake another
+/// seed or row assignment for the same out-of-fold evaluation.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct IidOofV2 {
+    pub split_id: String,
+    pub seed: u64,
+    pub folds: usize,
+    pub assignment: Vec<usize>,
+    pub fold_identity_sha256: String,
+    pub predictions: Vec<f64>,
+}
+
 /// Honest IID out-of-fold prediction. Ordered/grouped/temporal semantics are
 /// deliberately unavailable here rather than silently shuffled.
 pub fn predict_oof_iid(
@@ -420,7 +433,7 @@ pub fn predict_oof_iid(
     y: &[f64],
     folds: usize,
     seed: u64,
-) -> Result<Vec<f64>> {
+) -> Result<IidOofV2> {
     ensure!(x.len() == y.len(), "unaligned targets");
     ensure!(
         profile.row_semantics == crate::RowSemantics::Iid,
@@ -446,5 +459,20 @@ pub fn predict_oof_iid(
             output[i] = model.predict(&profile.schema, &vec![row.clone()])?[0];
         }
     }
-    Ok(output)
+    let split_id = "numeric-v2-iid-shuffle-v1";
+    let fold_identity_sha256 = crate::numeric_v2_emit::hash(&serde_json::to_vec(&(
+        split_id,
+        x.len(),
+        folds,
+        seed,
+        &assignment,
+    ))?);
+    Ok(IidOofV2 {
+        split_id: split_id.into(),
+        seed,
+        folds,
+        assignment,
+        fold_identity_sha256,
+        predictions: output,
+    })
 }
